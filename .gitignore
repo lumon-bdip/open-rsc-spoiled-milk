@@ -156,6 +156,7 @@ Client_Base/Cache/discord_inuse.txt
 server/create_db.log
 server/create_db_error.log
 server/inc/sqlite/myworld_dev.db
+server/inc/sqlite/spoiled_milk_alpha.db
 
 .idea/sqldialects.xml
 server/conf/server/data/specialsleepwords/

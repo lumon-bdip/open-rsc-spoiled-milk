@@ -4,7 +4,7 @@
 
 PYTHON ?= python3
 
-.PHONY: help build-client build-server build compile run run-server run-client run-zgc start-fresh check test smoke pre-field-test download-windows-jre package-player-release generators sync-generated list dry-run benchmark benchmark-matrix combat-check prayer-check items-check npcs-check generator-tests layout-check boundary-check start-linux combined-install get-updates
+.PHONY: help build-client build-server build compile run run-server run-client run-hosted-server run-zgc start-fresh check test smoke pre-field-test download-windows-jre package-player-release generators sync-generated list dry-run benchmark benchmark-matrix combat-check prayer-check items-check npcs-check generator-tests layout-check boundary-check start-linux combined-install get-updates
 
 help:
 	@printf '%s\n' \
@@ -14,6 +14,7 @@ help:
 		'  make build-server      # validate generated artifacts and compile server/plugins' \
 		'  make build             # alias for build-server' \
 		'  make run               # validate generated artifacts and run the MyWorld server' \
+		'  make run-hosted-server # run the hosted alpha server on TCP 43605 without resetting live DB' \
 		'  make run-zgc           # run the MyWorld server with the Java 17+ ZGC launcher' \
 		'  make start-fresh       # reset SQLite dev DB, compile, and run' \
 		'  make check             # validate prerequisites and generated artifacts' \
@@ -48,6 +49,9 @@ build: build-server
 
 run:
 	./scripts/run-server.sh
+
+run-hosted-server:
+	./scripts/run-hosted-server.sh
 
 run-zgc:
 	./scripts/run-server-zgc.sh

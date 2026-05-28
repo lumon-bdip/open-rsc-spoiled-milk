@@ -5,9 +5,9 @@ client archive configured for `localhost` or for the development database.
 
 ## Live Configuration
 
-Create a deployment-only copy of `server/myworld.conf` on the host, outside the
-repository working tree if it contains operational details. Use these required
-changes from the development configuration:
+Use `server/myworld-host.conf` for the local-PC hosted alpha. It keeps the live
+database separate from the development reset workflow and listens on the game
+port expected by the release packager:
 
 ```yaml
 database:
@@ -26,12 +26,13 @@ same port to `scripts/package-player-release.sh`.
 
 ## Initial Deployment
 
-1. Create `server/inc/sqlite/spoiled_milk_alpha.db` from
-   `server/inc/sqlite/myworld_seed.db` once for the new hosted world.
-2. Configure the host firewall and port forwarding for the selected TCP server
-   port; expose the websocket port only if it is needed by the selected client.
-3. Start the server with the live config file, not `scripts/start-fresh.sh`;
-   that development command recreates local state.
+1. Configure the host firewall and router port forwarding for TCP `43605` only.
+   Do not forward the websocket port unless a selected client explicitly needs it.
+2. Start the hosted server with `./scripts/run-hosted-server.sh` or
+   `make run-hosted-server`. This creates `spoiled_milk_alpha.db` from the seed
+   database only if the live database does not already exist.
+3. Do not use `scripts/start-fresh.sh` for hosted play; that command recreates
+   local development state.
 4. Start a configured release client, register a test account, log out, restart
    the server, and confirm the account and character progress persist.
 
