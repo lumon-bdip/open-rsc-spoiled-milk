@@ -34,13 +34,18 @@ From the packaged revision:
 ./scripts/test.sh
 ./scripts/build-server.sh
 ./scripts/download-windows-jre.sh
+./scripts/run-hosted-server.sh
 ./scripts/package-player-release.sh \
   --version v0.1.0-alpha.1 \
-  --host game.example.org \
+  --host YOUR_PUBLIC_HOST_OR_IP \
   --port 43605 \
   --windows-jre output/runtimes/temurin-17-windows-x64-jre \
   --assets-cleared
 ```
+
+Use the same public host/IP and TCP port that your router forwards to the
+machine running `scripts/run-hosted-server.sh`. Do not upload packages built
+with a placeholder host.
 
 The packager writes ignored artifacts under
 `output/releases/v0.1.0-alpha.1/`:
@@ -62,16 +67,18 @@ verification still requires a Windows machine or a tester.
 1. Extract each archive into a clean directory and confirm it contains no
    `uid.dat`, saved credentials, local settings, server database, or inherited
    OpenRSC launcher.
-2. Launch the Windows archive on Windows and the Java archive with Java 17+,
+2. Confirm the archive endpoint files contain the public host/IP and port:
+   `Cache/ip.txt` and `Cache/port.txt`.
+3. Launch the Windows archive on Windows and the Java archive with Java 17+,
    then connect to the hosted candidate server.
-3. Verify account creation, login, logout, and reconnect before publication.
-4. Create GitHub release `v0.1.0-alpha.1` as a prerelease and upload the two
+4. Verify account creation, login, logout, and reconnect before publication.
+5. Create GitHub release `v0.1.0-alpha.1` as a prerelease and upload the two
    zip files and `SHA256SUMS.txt`.
-5. Download the uploaded files again and run:
+6. Download the uploaded files again and run:
 
 ```bash
 sha256sum -c SHA256SUMS.txt
 ```
 
-6. Link invited testers to the GitHub prerelease and
+7. Link invited testers to the GitHub prerelease and
    [PLAYER-DOWNLOADS.md](PLAYER-DOWNLOADS.md).
