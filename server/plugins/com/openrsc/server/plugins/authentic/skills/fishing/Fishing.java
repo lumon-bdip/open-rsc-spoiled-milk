@@ -944,11 +944,15 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 				player.getWorld().replaceGameObject(object, newObject);
 				player.getWorld().delayedSpawnObject(
 						obj.getLoc(),
-						def.getRespawnTime() * config().GAME_TICK,
+						resourceRespawnMillis(def.getRespawnTime()),
 						true
 				);
 			}
 		}
+	}
+
+	private int resourceRespawnMillis(int respawnTicks) {
+		return Math.max(1, (respawnTicks * config().GAME_TICK) / 2);
 	}
 
 	private int doBigNetFishingRoll(List<ObjectFishDef> fishLst, ObjectFishingDef bigNet, int playerLevel) {

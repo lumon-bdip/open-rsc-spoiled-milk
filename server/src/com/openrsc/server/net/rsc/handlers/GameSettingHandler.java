@@ -96,6 +96,12 @@ public final class GameSettingHandler implements PayloadProcessor<GameSettingStr
 				player.getCache().store("want_nature_rune_protection", value == 1);
 			} else if (idx == 47) {
 				player.getCache().store("setting_auto_retaliate", value == 1);
+			} else if (idx == 48) {
+				int focusMenuValue = value;
+				if (focusMenuValue < 0 || focusMenuValue > 2) {
+					focusMenuValue = 1;
+				}
+				player.getCache().set("setting_gathering_focus_menu", focusMenuValue);
 			}
 			return;
 		}

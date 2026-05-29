@@ -138,13 +138,16 @@ def main() -> None:
     require(
         handler_text,
         "handleLegacyProductionOption(player, option);",
-        "InterfaceOptionHandler should explicitly reject legacy production option packets",
+        "InterfaceOptionHandler should explicitly handle legacy production option packets",
     )
     require(
         handler_text,
-        '"unexpected legacy production option: " + option.name()',
-        "InterfaceOptionHandler should flag legacy production option packets as suspicious",
+        'LOGGER.debug("Ignoring legacy production option player={} option={}", player.getUsername(), option.name())',
+        "InterfaceOptionHandler should ignore legacy production option packets without flagging players",
     )
+    forbidden = 'player.setSuspiciousPlayer(true, "unexpected legacy production option: " + option.name())'
+    if forbidden in handler_text:
+        fail("Legacy production option packets should not flag players as suspicious")
     require(
         crafting_text,
         "!session.isType(ProductionSession.TYPE_CRAFTING)",

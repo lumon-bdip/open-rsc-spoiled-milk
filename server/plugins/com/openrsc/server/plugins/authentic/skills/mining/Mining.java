@@ -404,7 +404,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 					player.getCache().set("tutorial", 52);
 				}
 				if (def.getRespawnTime() > 0) {
-					changeloc(rock, def.getRespawnTime() * 1000, SceneryId.ROCK_GENERIC.id());
+					changeloc(rock, resourceRespawnMillis(def.getRespawnTime()), SceneryId.ROCK_GENERIC.id());
 				}
 				return;
 		} else {
@@ -486,6 +486,10 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		player.playerServerMessage(MessageType.QUEST, "You swing your pick at the rock...");
 		delay(3);
 		player.playerServerMessage(MessageType.QUEST, "There is currently no ore available in this rock");
+	}
+
+	private int resourceRespawnMillis(int respawnSeconds) {
+		return Math.max(1, (respawnSeconds * 1000) / 2);
 	}
 
 	private void handleStoneMining(final GameObject rock, Player player, int click) {

@@ -336,7 +336,7 @@ public final class Harvesting implements OpLocTrigger {
 				if (obj != null && obj.getID() == object.getID()) {
 					GameObject newObject = new GameObject(player.getWorld(), object.getLocation(), depletedId, object.getDirection(), object.getType());
 					player.getWorld().replaceGameObject(object, newObject);
-					player.getWorld().delayedSpawnObject(obj.getLoc(), 300 * 1000);
+					player.getWorld().delayedSpawnObject(obj.getLoc(), resourceRespawnMillis(300));
 				}
 				return;
 			}
@@ -465,7 +465,7 @@ public final class Harvesting implements OpLocTrigger {
 		if (obj != null && obj.getID() == object.getID()) {
 			GameObject newObject = new GameObject(player.getWorld(), object.getLocation(), depId, object.getDirection(), object.getType());
 			player.getWorld().replaceGameObject(object, newObject);
-			player.getWorld().delayedSpawnObject(obj.getLoc(), DataConversions.random(60, 240) * 1000);
+			player.getWorld().delayedSpawnObject(obj.getLoc(), resourceRespawnMillis(DataConversions.random(60, 240)));
 			return;
 		}
 
@@ -618,7 +618,7 @@ public final class Harvesting implements OpLocTrigger {
 			if (obj != null && obj.getID() == object.getID() && def.getRespawnTime() > 0) {
 				GameObject newObject = new GameObject(player.getWorld(), object.getLocation(), depId, object.getDirection(), object.getType());
 				player.getWorld().replaceGameObject(object, newObject);
-				player.getWorld().delayedSpawnObject(obj.getLoc(), def.getRespawnTime() * 1000);
+				player.getWorld().delayedSpawnObject(obj.getLoc(), resourceRespawnMillis(def.getRespawnTime()));
 			}
 			return;
 		}
@@ -651,6 +651,10 @@ public final class Harvesting implements OpLocTrigger {
 			}
 		}
 		return fallbackId;
+	}
+
+	private int resourceRespawnMillis(int respawnSeconds) {
+		return Math.max(1, (respawnSeconds * 1000) / 2);
 	}
 
 	@Override

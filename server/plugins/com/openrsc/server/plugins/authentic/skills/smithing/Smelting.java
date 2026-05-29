@@ -248,8 +248,8 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			player.message("Choose at least one item to make");
 			return false;
 		}
-		startbatch(quantity);
-		new Smelting().handleCannonBallSmelting(player);
+			startbatch(player, quantity);
+			new Smelting().handleCannonBallSmelting(player);
 		return true;
 	}
 
@@ -271,7 +271,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		}
 
 		int made = 0;
-		startbatch(requestedCount);
+		startbatch(player, requestedCount);
 		while (!ifinterrupted() && !isbatchcomplete()) {
 			if (!recipe.hasMaterials(player)) {
 				break;

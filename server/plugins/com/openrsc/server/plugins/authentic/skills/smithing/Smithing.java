@@ -437,7 +437,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 			return false;
 		}
 
-		startbatch(makeCount);
+		startbatch(player, makeCount);
 		smithing.batchSmithing(player, bar, def);
 		return true;
 	}

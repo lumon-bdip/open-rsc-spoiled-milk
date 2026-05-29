@@ -544,7 +544,7 @@ public class Fletching implements UseInvTrigger {
 			return false;
 		}
 		Item log = new Item(session.getInputItemId());
-		startbatch(makeCount);
+		startbatch(player, makeCount);
 		fletching.batchLogCutting(player, log, recipe.resultId, recipe.requiredLevel, recipe.exp, recipe.message, recipe.craftingRecipe);
 		return true;
 	}

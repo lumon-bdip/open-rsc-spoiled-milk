@@ -1777,7 +1777,7 @@ public class Crafting implements UseInvTrigger,
 			};
 			AtomicReference<String> reply = new AtomicReference<>(player.getWorld().getServer().getEntityHandler().getItemDef(results[type]).getName());
 			Item silverBar = new Item(ItemId.SILVER_BAR.id());
-			startbatch(makeCount);
+			startbatch(player, makeCount);
 			crafting.batchSilverJewelry(player, silverBar, results, type, reply);
 			return true;
 		}
@@ -1801,7 +1801,7 @@ public class Crafting implements UseInvTrigger,
 				return false;
 			}
 			Item goldBar = new Item(ItemId.GOLD_BAR.id());
-			startbatch(makeCount);
+			startbatch(player, makeCount);
 			crafting.batchGoldJewelry(player, goldBar, def);
 			return true;
 		}
@@ -1816,7 +1816,7 @@ public class Crafting implements UseInvTrigger,
 				player.message("You need more materials to make that");
 				return false;
 			}
-			startbatch(makeCount);
+			startbatch(player, makeCount);
 			crafting.batchWoolGarment(player, recipe);
 			return true;
 		}
@@ -1834,7 +1834,7 @@ public class Crafting implements UseInvTrigger,
 			Item softClay = new Item(ItemId.SOFT_CLAY.id());
 			Item result = new Item(recipe.resultId, 1);
 			AtomicReference<String> msg = new AtomicReference<>(crafting.getPotteryBatchMessage(recipe.resultId));
-			startbatch(makeCount);
+			startbatch(player, makeCount);
 			crafting.batchPotteryMoulding(player, softClay, recipe.reqLvl, result, msg, recipe.exp);
 			return true;
 		}
@@ -1851,7 +1851,7 @@ public class Crafting implements UseInvTrigger,
 			}
 			Item glass = new Item(ItemId.MOLTEN_GLASS.id());
 			Item result = new Item(recipe.resultId, 1);
-			startbatch(makeCount);
+			startbatch(player, makeCount);
 			crafting.batchGlassBlowing(player, glass, result, recipe.reqLvl, recipe.exp, recipe.resultGen);
 			return true;
 		}
@@ -1867,7 +1867,7 @@ public class Crafting implements UseInvTrigger,
 				return false;
 			}
 			Item bar = new Item(inputId);
-			startbatch(makeCount);
+			startbatch(player, makeCount);
 			crafting.batchRangedMouldCasting(player, bar, recipe);
 			return true;
 		}
@@ -1889,7 +1889,7 @@ public class Crafting implements UseInvTrigger,
 		}
 		Item leather = new Item(inputId);
 		Item result = new Item(piece.resultId, 1);
-		startbatch(makeCount);
+		startbatch(player, makeCount);
 		crafting.batchLeather(player, leather, result, piece.materialCost, piece.reqLvl, piece.exp);
 		return true;
 	}

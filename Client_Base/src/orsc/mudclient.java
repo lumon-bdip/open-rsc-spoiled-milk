@@ -236,6 +236,10 @@ public final class mudclient implements Runnable {
 	private static final String[] ALTAR_ELEMENTS = new String[] {
 		"air", "water", "earth", "fire", "mind", "body", "cosmic", "chaos", "nature", "law", "death", "blood", "soul", "life"
 	};
+	private static final int[] ALTAR_ELEMENT_COLORS = new int[] {
+		0xD8F7FF, 0x3D78FF, 0x7A4C28, 0xFF5A24, 0xDFA8FF, 0x7DD6B1, 0x6D48B8, 0x8B1E1E,
+		0x3FBF4A, 0xF1F1D0, 0x4C5666, 0xA31324, 0xA6D8FF, 0xF3DD59
+	};
 	private static final int[][] ALTAR_TILES = new int[][] {
 		{306, 593}, {147, 684}, {62, 464}, {50, 633}, {297, 438}, {259, 503}, {106, 3565},
 		{232, 375}, {392, 804}, {409, 534}, {151, 212}, {247, 102}, {988, 176}, {283, 694}
@@ -300,6 +304,7 @@ public final class mudclient implements Runnable {
 	private int actionProgressItemId = -1;
 	private long actionProgressStartTime = 0L;
 	private long actionProgressDurationMs = 1L;
+	private long gatheringFocusMenuHideAt = 0L;
 	private final int[] characterDialogHalfWidth = new int[150];
 	private final int[] characterDialogHeight = new int[150];
 	private final String[] characterDialogString = new String[150];
@@ -3208,6 +3213,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().newPacket(29);
 						this.packetHandler.getClientStream().bufferBits.putByte(this.combatStyle);
 						this.packetHandler.getClientStream().finishPacket();
+						this.extendGatheringFocusMenuLinger();
 						break;
 					}
 				}
@@ -8346,7 +8352,7 @@ public final class mudclient implements Runnable {
 					this.drawDialogOptionsMenu(-312);
 				}
 
-				if (hasEquippedGatheringFocusTool()) {
+				if (shouldDrawGatheringFocusMenu()) {
 					this.drawDialogCombatStyle();
 				}
 
@@ -11504,6 +11510,9 @@ public final class mudclient implements Runnable {
 			}
 		}
 
+		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
+			"@whi@Tool Focus Menu - " + getGatheringFocusMenuLabel(), 52, null, null);
+
 		// experience drops
 		if (S_EXPERIENCE_DROPS_TOGGLE) {
 			if (!C_EXPERIENCE_DROPS) {
@@ -12073,6 +12082,19 @@ public final class mudclient implements Runnable {
 				this.packetHandler.getClientStream().bufferBits.putByte(optionBatchProgressBar ? 1 : 0);
 				this.packetHandler.getClientStream().finishPacket();
 			}
+		}
+
+		if (settingIndex == 52 && this.mouseButtonClick == 1) {
+			C_GATHERING_FOCUS_MENU = (C_GATHERING_FOCUS_MENU + 1) % 3;
+			if (C_GATHERING_FOCUS_MENU == 0) {
+				this.gatheringFocusMenuHideAt = 0L;
+			} else if (C_GATHERING_FOCUS_MENU == 1) {
+				this.extendGatheringFocusMenuLinger();
+			}
+			this.packetHandler.getClientStream().newPacket(111);
+			this.packetHandler.getClientStream().bufferBits.putByte(48);
+			this.packetHandler.getClientStream().bufferBits.putByte(C_GATHERING_FOCUS_MENU);
+			this.packetHandler.getClientStream().finishPacket();
 		}
 
 		// experience drops - byte index 25
@@ -17329,6 +17351,12 @@ public final class mudclient implements Runnable {
 		for (int i = 0; i < ALTAR_ELEMENTS.length; i++) {
 			this.worldGlyphSprites[i] = loadExternalWorldSprite(getExternalGlyphTextureFile(ALTAR_ELEMENTS[i]), 52);
 			this.worldOrbSprites[i] = loadExternalWorldSprite(getExternalOrbTextureFile(ALTAR_ELEMENTS[i]), 44);
+			if (this.worldGlyphSprites[i] == null) {
+				this.worldGlyphSprites[i] = createProceduralAltarWorldSprite(ALTAR_ELEMENT_COLORS[i], true);
+			}
+			if (this.worldOrbSprites[i] == null) {
+				this.worldOrbSprites[i] = createProceduralAltarWorldSprite(ALTAR_ELEMENT_COLORS[i], false);
+			}
 		}
 	}
 
@@ -18255,6 +18283,53 @@ public final class mudclient implements Runnable {
 			System.out.println("Failed to load external world sprite: " + e.getMessage());
 			return null;
 		}
+	}
+
+	private Sprite createProceduralAltarWorldSprite(int color, boolean glyph) {
+		int[] pixels = new int[64 * 64];
+		int bright = adjustColor(color, 58);
+		int dim = adjustColor(color, -62);
+		for (int y = 0; y < 64; y++) {
+			for (int x = 0; x < 64; x++) {
+				int dx = x - 32;
+				int dy = y - 32;
+				int d2 = dx * dx + dy * dy;
+				int pixel = 0;
+				if (glyph) {
+					int diamond = Math.abs(dx) + Math.abs(dy);
+					if ((d2 >= 19 * 19 && d2 <= 24 * 24) || (diamond >= 23 && diamond <= 26)
+						|| Math.abs(dx) <= 2 && Math.abs(dy) <= 20 || Math.abs(dy) <= 2 && Math.abs(dx) <= 20) {
+						pixel = color;
+					}
+					if (d2 >= 22 * 22 && d2 <= 24 * 24) {
+						pixel = bright;
+					}
+				} else if (d2 <= 22 * 22) {
+					pixel = color;
+					if (d2 > 17 * 17) {
+						pixel = dim;
+					}
+					int hx = x - 24;
+					int hy = y - 23;
+					if (hx * hx + hy * hy <= 7 * 7) {
+						pixel = bright;
+					}
+				}
+				pixels[y * 64 + x] = pixel;
+			}
+		}
+		Sprite sprite = new Sprite(pixels, 64, 64);
+		sprite.setShift(0, 0);
+		sprite.setRequiresShift(false);
+		sprite.setSomething(64, 64);
+		return sprite;
+	}
+
+	private int adjustColor(int color, int amount) {
+		int red = Math.max(1, Math.min(255, ((color >> 16) & 0xFF) + amount));
+		int green = Math.max(1, Math.min(255, ((color >> 8) & 0xFF) + amount));
+		int blue = Math.max(1, Math.min(255, (color & 0xFF) + amount));
+		return (red << 16) | (green << 8) | blue;
 	}
 
 	public Sprite getWorldGlyphSprite(int index) {
@@ -19710,11 +19785,13 @@ public final class mudclient implements Runnable {
 		this.actionProgressStartTime = System.currentTimeMillis();
 		this.actionProgressDurationMs = Math.max(1, delayMillis);
 		this.actionProgressActive = true;
+		this.showGatheringFocusMenuTemporarily();
 	}
 
 	public final void clearActionProgressBar() {
 		this.actionProgressActive = false;
 		this.actionProgressItemId = -1;
+		this.extendGatheringFocusMenuLinger();
 	}
 
 	private void drawActionProgressBar(int centerX, int actorTopY, int scale) {
@@ -20532,6 +20609,37 @@ public final class mudclient implements Runnable {
 
 	private boolean hasEquippedGatheringFocusTool() {
 		return hasEquippedMiningTool() || hasEquippedFishingRod() || hasEquippedWoodcuttingTool() || hasEquippedHarvestingShears();
+	}
+
+	public void showGatheringFocusMenuTemporarily() {
+		if (C_GATHERING_FOCUS_MENU == 1 && hasEquippedGatheringFocusTool()) {
+			long now = System.currentTimeMillis();
+			long actionEnd = now + Math.max(1L, this.actionProgressDurationMs);
+			this.gatheringFocusMenuHideAt = actionEnd + 2500L;
+		}
+	}
+
+	private void extendGatheringFocusMenuLinger() {
+		if (C_GATHERING_FOCUS_MENU == 1 && hasEquippedGatheringFocusTool()) {
+			this.gatheringFocusMenuHideAt = System.currentTimeMillis() + 2500L;
+		}
+	}
+
+	private boolean shouldDrawGatheringFocusMenu() {
+		if (!hasEquippedGatheringFocusTool() || C_GATHERING_FOCUS_MENU == 0) {
+			return false;
+		}
+		return C_GATHERING_FOCUS_MENU == 2 || System.currentTimeMillis() < this.gatheringFocusMenuHideAt;
+	}
+
+	private String getGatheringFocusMenuLabel() {
+		if (C_GATHERING_FOCUS_MENU == 0) {
+			return "@red@Off";
+		}
+		if (C_GATHERING_FOCUS_MENU == 2) {
+			return "@gre@Always";
+		}
+		return "@yel@Temporary";
 	}
 
 	private String[] getGatheringFocusLabels() {
@@ -22469,6 +22577,16 @@ public final class mudclient implements Runnable {
 
 	public void setFightModeSelectorToggle(int i) {
 		C_FIGHT_MENU = 1;
+	}
+
+	public void setGatheringFocusMenuToggle(int i) {
+		if (i < 0 || i > 2) {
+			i = 1;
+		}
+		C_GATHERING_FOCUS_MENU = i;
+		if (i == 0) {
+			this.gatheringFocusMenuHideAt = 0L;
+		}
 	}
 
 	public void setExperienceCounterToggle(int i) {

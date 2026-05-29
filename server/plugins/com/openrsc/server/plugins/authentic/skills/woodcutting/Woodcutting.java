@@ -255,7 +255,7 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 		if (obj != null && obj.getID() == object.getID() && def.getRespawnTime() > 0) {
 			GameObject newObject = new GameObject(player.getWorld(), object.getLocation(), stumpId, object.getDirection(), object.getType());
 			player.getWorld().replaceGameObject(object, newObject);
-			player.getWorld().delayedSpawnObject(obj.getLoc(), def.getRespawnTime() * 1000);
+			player.getWorld().delayedSpawnObject(obj.getLoc(), resourceRespawnMillis(def.getRespawnTime()));
 			return;
 		}
 
@@ -272,6 +272,10 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 			delay();
 			batchWoodcutting(player, object, def, axeId);
 		}
+	}
+
+	private int resourceRespawnMillis(int respawnSeconds) {
+		return Math.max(1, (respawnSeconds * 1000) / 2);
 	}
 
 	@Override

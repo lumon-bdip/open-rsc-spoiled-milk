@@ -236,7 +236,8 @@ def require_mining_uses_guaranteed_yield() -> None:
         "Formulae.calcGatheringYield(def.getReqLevel(), mineLvl, getPickaxeTier(axeId))",
         "Formulae.calcGatheringYield(1, player.getSkills().getLevel(Skill.MINING.id()), getPickaxeTier(axeId))",
         "player.incExp(Skill.MINING.id(), def.getExp() * quantity, true)",
-        "changeloc(rock, def.getRespawnTime() * 1000, SceneryId.ROCK_GENERIC.id())",
+        "changeloc(rock, resourceRespawnMillis(def.getRespawnTime()), SceneryId.ROCK_GENERIC.id())",
+        "return Math.max(1, (respawnSeconds * 1000) / 2);",
         "Any excess falls to the ground because you have no room",
     )
     for snippet in snippets:

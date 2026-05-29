@@ -71,7 +71,7 @@ def main() -> None:
     )
     require(
         smithing_text,
-        "startbatch(makeCount);",
+        "startbatch(player, makeCount);",
         "Smithing production should start the live batch with the clamped quantity",
     )
     require(
@@ -87,7 +87,7 @@ def main() -> None:
         "int makeCount = Math.min(quantity, Math.min(availableBars, availableGems));",
         "int makeCount = Math.min(quantity, available);",
         "int makeCount = Math.min(quantity, Math.min(availableMaterial, availableThreadUses));",
-        "startbatch(makeCount);",
+        "startbatch(player, makeCount);",
         "crafting.batchSilverJewelry(player, silverBar, results, type, reply);",
         "crafting.batchGoldJewelry(player, goldBar, def);",
         "crafting.batchWoolGarment(player, recipe);",
@@ -171,7 +171,7 @@ def main() -> None:
     )
     require(
         fletching_text,
-        "startbatch(makeCount);",
+        "startbatch(player, makeCount);",
         "Fletching production should start the live batch with the clamped quantity",
     )
     if "PluginTask" in fletching_text or "PluginTickEvent" in fletching_text or '"Crafting.logShapingStart"' in fletching_text:

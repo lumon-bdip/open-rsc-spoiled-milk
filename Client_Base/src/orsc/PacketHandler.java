@@ -361,7 +361,7 @@ public class PacketHandler {
 			else if (opcode == 15) tradeSelfDecision();
 
 				// Options Menu Settings
-			else if (opcode == 240) updateOptionsMenuSettings();
+			else if (opcode == 240) updateOptionsMenuSettings(length);
 
 			else if (opcode == 206) togglePrayer(length);
 
@@ -2289,7 +2289,7 @@ public class PacketHandler {
 		}
 	}
 
-	private void updateOptionsMenuSettings() {
+	private void updateOptionsMenuSettings(int length) {
 		mc.setOptionCameraModeAuto(packetsIncoming.getUnsignedByte() == 1); // byte index 0
 		mc.setOptionMouseButtonOne(packetsIncoming.getUnsignedByte() == 1); // 1
 		mc.setOptionSoundDisabled(packetsIncoming.getUnsignedByte() == 1); // 2
@@ -2328,6 +2328,7 @@ public class PacketHandler {
 		mc.setGroundItemNames(packetsIncoming.getUnsignedByte() == 1); // 45
 		mc.setNatureRuneProtection(packetsIncoming.getUnsignedByte() == 1); // 46
 		mc.setAutoRetaliate(packetsIncoming.getUnsignedByte() == 1); // 47
+		mc.setGatheringFocusMenuToggle(packetsIncoming.packetEnd < length ? packetsIncoming.getUnsignedByte() : 1); // 48
 	}
 
 	private void togglePrayer(int length) {

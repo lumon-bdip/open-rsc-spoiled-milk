@@ -193,12 +193,9 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 	private void handleLegacyProductionOption(Player player, InterfaceOptions option) {
 		ProductionSession session = player.getAttribute("production_session", null);
 		if (session == null) {
-			player.message("That production option is no longer available");
 			return;
 		}
-		player.setSuspiciousPlayer(true, "unexpected legacy production option: " + option.name());
-		player.message("That production option is no longer available");
-		clearProductionState(player, session);
+		LOGGER.debug("Ignoring legacy production option player={} option={}", player.getUsername(), option.name());
 	}
 
 	private void clearProductionState(Player player, ProductionSession session) {

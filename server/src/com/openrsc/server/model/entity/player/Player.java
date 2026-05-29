@@ -4286,6 +4286,14 @@ public final class Player extends Mob {
 		return true;
 	}
 
+	public int getGatheringFocusMenuToggle() {
+		if (getCache().hasKey("setting_gathering_focus_menu")) {
+			int value = getCache().getInt("setting_gathering_focus_menu");
+			return value >= 0 && value <= 2 ? value : 1;
+		}
+		return 1;
+	}
+
 	public boolean shouldAvoidCombatEngagement() {
 		return !getAutoRetaliate();
 	}

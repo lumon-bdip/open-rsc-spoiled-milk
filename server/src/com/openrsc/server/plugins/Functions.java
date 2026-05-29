@@ -108,6 +108,7 @@ public class Functions {
 	 * The asynchronous logger.
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final ThreadLocal<Player> fallbackBatchPlayer = new ThreadLocal<Player>();
 
 	/**
 	 * Used for the ifstatrandom RuneScript function.
@@ -1080,10 +1081,13 @@ public class Functions {
 	}
 
 	public static boolean ifinterrupted() {
-		final ScriptContext scriptContext = PluginTask.getContextPluginTask().getScriptContext();
+		PluginTask pluginTask = PluginTask.getContextPluginTask();
+		if (pluginTask == null) {
+			return false;
+		}
+		final ScriptContext scriptContext = pluginTask.getScriptContext();
 		if (scriptContext == null) return true;
-		final PluginTask contextPlugin = PluginTask.getContextPluginTask();
-		if(!contextPlugin.getWorld().getServer().getConfig().BATCH_PROGRESSION) {
+		if(!pluginTask.getWorld().getServer().getConfig().BATCH_PROGRESSION) {
 			return false;
 		}
 		return scriptContext.getInterrupted();
@@ -1094,7 +1098,11 @@ public class Functions {
 	 * @param totalBatch The total repetitions of a task
 	 */
 	public static void startbatch(int totalBatch) {
-		final ScriptContext scriptContext = PluginTask.getContextPluginTask().getScriptContext();
+		PluginTask pluginTask = PluginTask.getContextPluginTask();
+		if (pluginTask == null) {
+			return;
+		}
+		final ScriptContext scriptContext = pluginTask.getScriptContext();
 		if (scriptContext == null) {
 			return;
 		}
@@ -1109,8 +1117,32 @@ public class Functions {
 		scriptContext.setBatch(batch);
 	}
 
+	public static void startbatch(Player player, int totalBatch) {
+		if (player == null) {
+			return;
+		}
+		Batch batch = new Batch(player);
+		batch.initialize(totalBatch);
+		batch.start();
+		player.setBatch(batch);
+		fallbackBatchPlayer.set(player);
+
+		PluginTask pluginTask = PluginTask.getContextPluginTask();
+		if (pluginTask != null && pluginTask.getScriptContext() != null) {
+			pluginTask.getScriptContext().setBatch(batch);
+		}
+	}
+
 	private static Batch sniffBatchFromCurrentThread() {
-		ScriptContext scriptContext = PluginTask.getContextPluginTask().getScriptContext();
+		PluginTask pluginTask = PluginTask.getContextPluginTask();
+		if (pluginTask == null) {
+			Player player = fallbackBatchPlayer.get();
+			return player == null ? null : player.getBatch();
+		}
+		ScriptContext scriptContext = pluginTask.getScriptContext();
+		if (scriptContext == null) {
+			return null;
+		}
 		Player player = scriptContext.getContextPlayer();
 		if (player == null) {
 			return null;
@@ -1119,8 +1151,12 @@ public class Functions {
 	}
 
 	public static void stopbatch() {
-		Optional.ofNullable(sniffBatchFromCurrentThread()).ifPresent(batch -> batch.getPlayer().setBatch(null));
-		Optional.ofNullable(sniffBatchFromCurrentThread()).ifPresent(Batch::stop);
+		Batch batch = sniffBatchFromCurrentThread();
+		if (batch != null) {
+			batch.getPlayer().setBatch(null);
+			batch.stop();
+		}
+		fallbackBatchPlayer.remove();
 	}
 
 	public static void updatebatchlocation(Point location) {
