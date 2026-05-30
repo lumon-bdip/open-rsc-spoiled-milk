@@ -14,6 +14,18 @@ Install Java 17 or newer, then:
 - Windows: double-click "Play Spoiled Milk.cmd"
 - macOS/Linux: run "./play-spoiled-milk.sh" in a terminal
 
+Updating
+--------
+Run the updater from this folder to check GitHub for a newer limited-alpha
+client package:
+
+- Windows: double-click "Update Spoiled Milk.cmd"
+- macOS/Linux: run "./update-spoiled-milk.sh" in a terminal
+
+If no newer package is available, the updater will say the client is already
+up to date. If a newer package is available, it downloads and installs the
+matching package type into this folder.
+
 Testing notes
 -------------
 This is an alpha playtest release. Progress is stored on the hosted server,

@@ -120,7 +120,10 @@ for required_path in \
   "$PACKAGE_ASSETS/PLAYER-README.txt" \
   "$PACKAGE_ASSETS/ASSET-SOURCES.txt" \
   "$PACKAGE_ASSETS/play-spoiled-milk.sh" \
+  "$PACKAGE_ASSETS/update-spoiled-milk.sh" \
+  "$PACKAGE_ASSETS/update-spoiled-milk.ps1" \
   "$PACKAGE_ASSETS/Play Spoiled Milk.cmd" \
+  "$PACKAGE_ASSETS/Update Spoiled Milk.cmd" \
   "$PACKAGE_ASSETS/Play Spoiled Milk Windows.cmd"; do
   [[ -e "$required_path" ]] || fail "Missing release input: $required_path"
 done
@@ -150,6 +153,7 @@ stage_client_files() {
   cp "$ROOT_DIR/LICENSE" "$destination/LICENSE"
   cp "$PACKAGE_ASSETS/ASSET-SOURCES.txt" "$destination/ASSET-SOURCES.txt"
   sed "s/@VERSION@/$VERSION/g" "$PACKAGE_ASSETS/PLAYER-README.txt" > "$destination/README.txt"
+  printf '%s\n' "$VERSION" > "$destination/VERSION.txt"
 }
 
 stage_client_files "$JAVA_DIR"
@@ -157,9 +161,15 @@ stage_client_files "$WINDOWS_DIR"
 
 cp "$PACKAGE_ASSETS/play-spoiled-milk.sh" "$JAVA_DIR/play-spoiled-milk.sh"
 cp "$PACKAGE_ASSETS/Play Spoiled Milk.cmd" "$JAVA_DIR/Play Spoiled Milk.cmd"
+sed "s/@VERSION@/$VERSION/g" "$PACKAGE_ASSETS/update-spoiled-milk.sh" > "$JAVA_DIR/update-spoiled-milk.sh"
+sed "s/@VERSION@/$VERSION/g; s/@PACKAGE_KIND@/java/g" "$PACKAGE_ASSETS/update-spoiled-milk.ps1" > "$JAVA_DIR/update-spoiled-milk.ps1"
+cp "$PACKAGE_ASSETS/Update Spoiled Milk.cmd" "$JAVA_DIR/Update Spoiled Milk.cmd"
 chmod +x "$JAVA_DIR/play-spoiled-milk.sh"
+chmod +x "$JAVA_DIR/update-spoiled-milk.sh"
 
 cp "$PACKAGE_ASSETS/Play Spoiled Milk Windows.cmd" "$WINDOWS_DIR/Play Spoiled Milk.cmd"
+sed "s/@VERSION@/$VERSION/g; s/@PACKAGE_KIND@/windows-x64/g" "$PACKAGE_ASSETS/update-spoiled-milk.ps1" > "$WINDOWS_DIR/update-spoiled-milk.ps1"
+cp "$PACKAGE_ASSETS/Update Spoiled Milk.cmd" "$WINDOWS_DIR/Update Spoiled Milk.cmd"
 mkdir -p "$WINDOWS_DIR/runtime"
 cp -R "$WINDOWS_JRE"/. "$WINDOWS_DIR/runtime/"
 

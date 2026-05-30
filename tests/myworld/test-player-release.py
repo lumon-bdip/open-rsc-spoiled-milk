@@ -102,7 +102,10 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     f"{package_name}/LICENSE",
                     f"{package_name}/README.txt",
                     f"{package_name}/ASSET-SOURCES.txt",
+                    f"{package_name}/VERSION.txt",
                     f"{package_name}/Play Spoiled Milk.cmd",
+                    f"{package_name}/Update Spoiled Milk.cmd",
+                    f"{package_name}/update-spoiled-milk.ps1",
                 }
                 missing = required - names
                 if missing:
@@ -124,13 +127,39 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     fail(f"{archive.name} does not carry the requested endpoint host")
                 if package.read(f"{package_name}/Cache/port.txt").decode() != "43605\n":
                     fail(f"{archive.name} does not carry the requested endpoint port")
+                if package.read(f"{package_name}/VERSION.txt").decode() != f"{VERSION}\n":
+                    fail(f"{archive.name} does not carry the packaged version stamp")
+                updater = package.read(f"{package_name}/update-spoiled-milk.ps1").decode()
+                expected_kind = "windows-x64" if archive == windows else "java"
+                for snippet in [
+                    f'$CurrentVersion = "{VERSION}"',
+                    f'$PackageKind = "{expected_kind}"',
+                    "Invoke-RestMethod -Uri $ApiUrl",
+                    "Invoke-WebRequest -Uri $asset.browser_download_url",
+                    "Expand-Archive -Path $archive",
+                ]:
+                    if snippet not in updater:
+                        fail(f"{archive.name} updater is missing {snippet!r}")
 
         with zipfile.ZipFile(generic) as package:
             if f"spoiled-milk-{VERSION}-java/play-spoiled-milk.sh" not in package.namelist():
                 fail("generic Java package must contain its shell launcher")
+            if f"spoiled-milk-{VERSION}-java/update-spoiled-milk.sh" not in package.namelist():
+                fail("generic Java package must contain its shell updater")
+            shell_updater = package.read(f"spoiled-milk-{VERSION}-java/update-spoiled-milk.sh").decode()
+            for snippet in [
+                f'CURRENT_VERSION="{VERSION}"',
+                'PACKAGE_KIND="java"',
+                "curl -fsSL \"$API_URL\"",
+                "unzip -q \"$archive\"",
+            ]:
+                if snippet not in shell_updater:
+                    fail(f"generic Java shell updater is missing {snippet!r}")
         with zipfile.ZipFile(windows) as package:
             if f"spoiled-milk-{VERSION}-windows-x64/runtime/bin/java.exe" not in package.namelist():
                 fail("Windows package must contain its bundled runtime")
+            if f"spoiled-milk-{VERSION}-windows-x64/update-spoiled-milk.sh" in package.namelist():
+                fail("Windows package should use the PowerShell updater, not the POSIX shell updater")
 
         expected = {}
         for line in checksum_file.read_text(encoding="utf-8").splitlines():
