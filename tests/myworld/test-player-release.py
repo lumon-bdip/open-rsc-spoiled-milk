@@ -129,6 +129,14 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     fail(f"{archive.name} does not carry the requested endpoint port")
                 if package.read(f"{package_name}/VERSION.txt").decode() != f"{VERSION}\n":
                     fail(f"{archive.name} does not carry the packaged version stamp")
+                launcher = package.read(f"{package_name}/Play Spoiled Milk.cmd").decode()
+                for snippet in [
+                    'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-spoiled-milk.ps1"',
+                    "if errorlevel 1 pause & exit /b 1",
+                    "Spoiled_Milk_Client.jar",
+                ]:
+                    if snippet not in launcher:
+                        fail(f"{archive.name} launcher must update synchronously before launch: {snippet!r}")
                 updater = package.read(f"{package_name}/update-spoiled-milk.ps1").decode()
                 expected_kind = "windows-x64" if archive == windows else "java"
                 for snippet in [
@@ -146,6 +154,13 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                 fail("generic Java package must contain its shell launcher")
             if f"spoiled-milk-{VERSION}-java/update-spoiled-milk.sh" not in package.namelist():
                 fail("generic Java package must contain its shell updater")
+            shell_launcher = package.read(f"spoiled-milk-{VERSION}-java/play-spoiled-milk.sh").decode()
+            for snippet in [
+                '"$GAME_DIR/update-spoiled-milk.sh"',
+                'exec java -jar "$GAME_DIR/Spoiled_Milk_Client.jar"',
+            ]:
+                if snippet not in shell_launcher:
+                    fail(f"generic Java shell launcher must update synchronously before launch: {snippet!r}")
             shell_updater = package.read(f"spoiled-milk-{VERSION}-java/update-spoiled-milk.sh").decode()
             for snippet in [
                 f'CURRENT_VERSION="{VERSION}"',
