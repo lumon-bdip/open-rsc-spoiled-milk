@@ -253,8 +253,12 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 
 		int stumpId = getTreeStumpId(object, def);
 		if (obj != null && obj.getID() == object.getID() && def.getRespawnTime() > 0) {
-			GameObject newObject = new GameObject(player.getWorld(), object.getLocation(), stumpId, object.getDirection(), object.getType());
-			player.getWorld().replaceGameObject(object, newObject);
+			if (stumpId < 0) {
+				player.getWorld().unregisterGameObject(object);
+			} else {
+				GameObject newObject = new GameObject(player.getWorld(), object.getLocation(), stumpId, object.getDirection(), object.getType());
+				player.getWorld().replaceGameObject(object, newObject);
+			}
 			player.getWorld().delayedSpawnObject(obj.getLoc(), resourceRespawnMillis(def.getRespawnTime()));
 			return;
 		}
@@ -319,6 +323,9 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 	}
 
 	private int getTreeStumpId(GameObject object, ObjectWoodcuttingDef def) {
+		if (def.getLogId() == ItemId.PALM_LOGS.id()) {
+			return -1;
+		}
 		if (def.getLogId() == ItemId.LOGS.id() || def.getLogId() == ItemId.MAGIC_LOGS.id()) {
 			return 4;
 		}

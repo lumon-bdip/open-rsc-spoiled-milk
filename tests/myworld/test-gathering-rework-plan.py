@@ -255,6 +255,8 @@ def require_woodcutting_uses_guaranteed_yield() -> None:
         "Formulae.calcGatheringYield(def.getReqLevel(), player.getSkills().getLevel(Skill.WOODCUTTING.id()), getAxeTier(axeId))",
         "player.incExp(Skill.WOODCUTTING.id(), def.getExp() * quantity, true)",
         "player.getWorld().replaceGameObject(object, newObject)",
+        "if (def.getLogId() == ItemId.PALM_LOGS.id())",
+        "player.getWorld().unregisterGameObject(object);",
         "Any excess falls to the ground because you have no room",
     )
     for snippet in snippets:

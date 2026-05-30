@@ -65,7 +65,11 @@ def main() -> None:
     require(guide, 'addAmmoMouldGuide("Rune", 70, 674, 646, 1070, 1080);', "rune ammo crafting guide")
     require(guide, 'addWoodcraftGuide("Pine", 15, 8, 2116, 12, 2115, 15, 59, 16, 2131, 8);', "pine woodcraft recipe guide")
     require(guide, 'addWoodcraftGuide("Blood", 55, 70, 2128, 67, 2127, 70, 2176, 72, 2146, 70);', "blood woodcraft recipe guide")
-    require(guide, 'new SkillMenuItem(825, "62", "Soul Rune")', "soul rune guide item id")
+    require(guide, 'addAltarGuide(33, 1, "Air Rune", "306,593");', "air altar coordinate guide")
+    require(guide, 'addAltarGuide(37, 1, "Life Rune", "283,694");', "life altar coordinate guide")
+    require(guide, 'addAltarGuide(46, 30, "Cosmic Rune", "106,3565");', "cosmic altar coordinate guide")
+    require(guide, 'addAltarGuide(825, 62, "Soul Rune", "988,176");', "soul altar coordinate guide")
+    require(guide, 'addAltarGuide(619, 70, "Blood Rune", "247,102");', "blood altar coordinate guide")
 
     require(client, 'skillGuideChosenTabs.add("MyWorld");', "retired fletching guide tab replacement")
     require(client, 'skillGuideChosenTabs.add("Ammo");', "crafting ammo tab")

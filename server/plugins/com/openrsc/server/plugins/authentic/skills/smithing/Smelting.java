@@ -98,7 +98,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 				&& player.getConfig().MEMBER_WORLD) {
 				if (player.getCarriedItems().hasCatalogID(ItemId.CANNON_AMMO_MOULD.id())) {
 					int repeat = 1;
-					if (config().BATCH_PROGRESSION) {
+					if (player.getConfig().BATCH_PROGRESSION) {
 						repeat = player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false));
 					}
 					startbatch(repeat);
@@ -111,7 +111,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			SmeltRecipe directRecipe = getDirectOreRecipe(item.getCatalogId());
 			if (directRecipe != null) {
 				int repeat = 1;
-				if (config().BATCH_PROGRESSION) {
+				if (player.getConfig().BATCH_PROGRESSION) {
 					repeat = maxDirectSmelts(player, directRecipe);
 				}
 				makeSmeltingProduction(player, directRecipe, repeat);
@@ -264,7 +264,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			player.playerServerMessage(MessageType.QUEST, recipe.requirementMessage(player));
 			return false;
 		}
-		if (config().WANT_FATIGUE && config().STOP_SKILLING_FATIGUED >= 2
+		if (player.getConfig().WANT_FATIGUE && player.getConfig().STOP_SKILLING_FATIGUED >= 2
 			&& player.getFatigue() >= player.MAX_FATIGUE) {
 			player.message("You are too tired to smelt this ore");
 			return false;
@@ -276,7 +276,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			if (!recipe.hasMaterials(player)) {
 				break;
 			}
-			if (config().WANT_FATIGUE && config().STOP_SKILLING_FATIGUED >= 2
+			if (player.getConfig().WANT_FATIGUE && player.getConfig().STOP_SKILLING_FATIGUED >= 2
 				&& player.getFatigue() >= player.MAX_FATIGUE) {
 				player.message("You are too tired to smelt this ore");
 				break;
@@ -383,7 +383,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			player.message("You need to complete the dwarf cannon quest");
 			return;
 		}
-		if (config().WANT_FATIGUE && config().STOP_SKILLING_FATIGUED >= 2
+		if (player.getConfig().WANT_FATIGUE && player.getConfig().STOP_SKILLING_FATIGUED >= 2
 			&& player.getFatigue() >= player.MAX_FATIGUE) {
 			player.message("You are too tired to smelt a cannon ball");
 			return;
@@ -394,7 +394,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		}
 
 		thinkbubble(new Item(ItemId.MULTI_CANNON_BALL.id(), 1));
-		int messagedelay = config().BATCH_PROGRESSION ? 1 : 2;
+		int messagedelay = player.getConfig().BATCH_PROGRESSION ? 1 : 2;
 		mes("you heat the steel bar into a liquid state");
 		delay(messagedelay);
 		mes("and pour it into your cannon ball mould");
@@ -403,7 +403,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		delay(messagedelay);
 
 		player.getCarriedItems().remove(new Item(ItemId.STEEL_BAR.id()));
-		if (config().WANT_FATIGUE && config().STOP_SKILLING_FATIGUED == 1
+		if (player.getConfig().WANT_FATIGUE && player.getConfig().STOP_SKILLING_FATIGUED == 1
 			&& player.getFatigue() >= player.MAX_FATIGUE) {
 			player.message("you are too tired to lift the ammo");
 			player.getWorld().registerItem(new GroundItem(player.getWorld(),
@@ -412,8 +412,8 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		}
 		player.incExp(Skill.SMITHING.id(), 100, true);
 		player.getCarriedItems().getInventory().add(new Item(ItemId.MULTI_CANNON_BALL.id()));
-		if (config().DWARVEN_RING_BONUS > 0) {
-			player.getCarriedItems().getInventory().add(new Item(ItemId.MULTI_CANNON_BALL.id(), config().DWARVEN_RING_BONUS));
+		if (player.getConfig().DWARVEN_RING_BONUS > 0) {
+			player.getCarriedItems().getInventory().add(new Item(ItemId.MULTI_CANNON_BALL.id(), player.getConfig().DWARVEN_RING_BONUS));
 		}
 		player.message("it's very heavy");
 

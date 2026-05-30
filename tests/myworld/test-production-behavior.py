@@ -21,6 +21,19 @@ SMITHING = (
     / "smithing"
     / "Smithing.java"
 )
+SMELTING = (
+    ROOT
+    / "server"
+    / "plugins"
+    / "com"
+    / "openrsc"
+    / "server"
+    / "plugins"
+    / "authentic"
+    / "skills"
+    / "smithing"
+    / "Smelting.java"
+)
 CRAFTING = (
     ROOT
     / "server"
@@ -33,6 +46,18 @@ CRAFTING = (
     / "skills"
     / "crafting"
     / "Crafting.java"
+)
+INTERFACE_OPTION_HANDLER = (
+    ROOT
+    / "server"
+    / "src"
+    / "com"
+    / "openrsc"
+    / "server"
+    / "net"
+    / "rsc"
+    / "handlers"
+    / "InterfaceOptionHandler.java"
 )
 FLETCHING = (
     ROOT
@@ -62,8 +87,10 @@ def require(text: str, snippet: str, message: str) -> None:
 def main() -> None:
     session_text = PRODUCTION_SESSION.read_text(encoding="utf-8")
     smithing_text = SMITHING.read_text(encoding="utf-8")
+    smelting_text = SMELTING.read_text(encoding="utf-8")
     crafting_text = CRAFTING.read_text(encoding="utf-8")
     fletching_text = FLETCHING.read_text(encoding="utf-8")
+    interface_handler_text = INTERFACE_OPTION_HANDLER.read_text(encoding="utf-8")
 
     require(
         session_text,
@@ -94,6 +121,33 @@ def main() -> None:
         crafting_text,
         "materialCount >= piece.materialCost && threadUses >= 1",
         "Leather crafting production recipes should reflect both material and thread requirements",
+    )
+    require(
+        crafting_text,
+        "player.getConfig().WANT_FATIGUE",
+        "Crafting interface production should use player config outside plugin callback context",
+    )
+    require(
+        smelting_text,
+        "player.getConfig().WANT_FATIGUE",
+        "Smelting interface production should use player config outside plugin callback context",
+    )
+    require(
+        smithing_text,
+        "player.getConfig().WANT_FATIGUE",
+        "Smithing interface production should use player config outside plugin callback context",
+    )
+    for label, text in (
+        ("crafting", crafting_text),
+        ("smelting", smelting_text),
+        ("smithing", smithing_text),
+    ):
+        if "config()" in text:
+            fail(f"{label} production-heavy plugin should not depend on plugin-thread config()")
+    require(
+        interface_handler_text,
+        "catch (RuntimeException e)",
+        "Production starts should fail gracefully instead of bubbling packet handler exceptions",
     )
     require(
         crafting_text,

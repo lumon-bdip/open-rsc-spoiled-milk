@@ -1116,20 +1116,25 @@ public final class SkillGuideInterface {
 	}
 
 	private void addRuneTierGuide() {
-		skillMenuEntries.add(new SkillMenuItem(33, "1", "Air Rune"));
-		skillMenuEntries.add(new SkillMenuItem(32, "1", "Water Rune"));
-		skillMenuEntries.add(new SkillMenuItem(34, "1", "Earth Rune"));
-		skillMenuEntries.add(new SkillMenuItem(31, "1", "Fire Rune"));
-		skillMenuEntries.add(new SkillMenuItem(37, "1", "Life Rune"));
-		skillMenuEntries.add(new SkillMenuItem(35, "8", "Mind Rune"));
-		skillMenuEntries.add(new SkillMenuItem(36, "15", "Body Rune"));
-		skillMenuEntries.add(new SkillMenuItem(41, "22", "Chaos Rune"));
-		skillMenuEntries.add(new SkillMenuItem(46, "30", "Cosmic Rune"));
-		skillMenuEntries.add(new SkillMenuItem(40, "38", "Nature Rune"));
-		skillMenuEntries.add(new SkillMenuItem(42, "46", "Law Rune"));
-		skillMenuEntries.add(new SkillMenuItem(38, "54", "Death Rune"));
-		skillMenuEntries.add(new SkillMenuItem(825, "62", "Soul Rune"));
-		skillMenuEntries.add(new SkillMenuItem(619, "70", "Blood Rune"));
+		addAltarGuide(33, 1, "Air Rune", "306,593");
+		addAltarGuide(32, 1, "Water Rune", "147,684");
+		addAltarGuide(34, 1, "Earth Rune", "62,464");
+		addAltarGuide(31, 1, "Fire Rune", "50,633");
+		addAltarGuide(37, 1, "Life Rune", "283,694");
+		addAltarGuide(35, 8, "Mind Rune", "297,438");
+		addAltarGuide(36, 15, "Body Rune", "259,503");
+		addAltarGuide(41, 22, "Chaos Rune", "232,375");
+		addAltarGuide(46, 30, "Cosmic Rune", "106,3565");
+		addAltarGuide(40, 38, "Nature Rune", "392,804");
+		addAltarGuide(42, 46, "Law Rune", "409,534");
+		addAltarGuide(38, 54, "Death Rune", "151,212");
+		addAltarGuide(825, 62, "Soul Rune", "988,176");
+		addAltarGuide(619, 70, "Blood Rune", "247,102");
+	}
+
+	private void addAltarGuide(int itemId, int level, String runeName, String coordinate) {
+		skillMenuEntries.add(new SkillMenuItem(itemId, String.valueOf(level),
+			runeName + " - altar at " + coordinate));
 	}
 
 	private void addRobeTierGuide() {
@@ -1372,6 +1377,7 @@ public final class SkillGuideInterface {
 		} else if (curTab == 6) {
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor has set effects if all five pieces are worn"));
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor mimics the defenses of it's creature"));
+			skillMenuEntries.add(new SkillMenuItem(148, "", "Hides and carapaces must be tanned at tanning racks"));
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Examine armor pieces to read their trait"));
 			skillMenuEntries.add(new SkillMenuItem(1869, "", "Set traits can grant stats, procs, or spirits"));
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Major leather slots lower Magic Power"));

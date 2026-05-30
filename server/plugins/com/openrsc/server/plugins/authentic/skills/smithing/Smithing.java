@@ -256,7 +256,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 
 		if (goldOption == 1) return;
 
-		if (!config().MEMBER_WORLD) {
+		if (!player.getConfig().MEMBER_WORLD) {
 			player.message("This feature is members only");
 			return;
 		}
@@ -275,7 +275,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return;
 			}
 
-			final int toMake = config().BATCH_PROGRESSION ?
+			final int toMake = player.getConfig().BATCH_PROGRESSION ?
 				(player.getCarriedItems().getInventory().countId(ItemId.GOLD_BAR.id(), Optional.of(false)) / 2) : 1;
 			startbatch(toMake);
 			batchGoldSmithing(player);
@@ -376,8 +376,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 			player.message("You need " + def.getRequiredBars() + " bars of metal to make this item");
 			return;
 		}
-		if (config().WANT_FATIGUE) {
-			if (config().STOP_SKILLING_FATIGUED >= 2
+		if (player.getConfig().WANT_FATIGUE) {
+			if (player.getConfig().STOP_SKILLING_FATIGUED >= 2
 				&& player.getFatigue() >= player.MAX_FATIGUE) {
 				player.message("You are too tired to smith");
 				return;
@@ -807,7 +807,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 
 		if (bronzeWireOption == 1) return;
 
-		if (!config().MEMBER_WORLD) {
+		if (!player.getConfig().MEMBER_WORLD) {
 			player.message("This feature is members only");
 			return;
 		}
@@ -843,7 +843,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 
 			// Throwing Knife
 		else if (secondType == 1) {
-			if (!config().MEMBER_WORLD) {
+			if (!player.getConfig().MEMBER_WORLD) {
 				player.message("This feature is members only");
 				return -1;
 			}
@@ -913,7 +913,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		options.add("Plate mail body (5 bars)");
 		options.add("Plate mail legs (3 bars)");
 		options.add("Plated Skirt (3 bars)");
-		if (config().WANT_CUSTOM_SPRITES) {
+		if (player.getConfig().WANT_CUSTOM_SPRITES) {
 			options.add("Plate mail top (5 bars)");
 		}
 
@@ -924,7 +924,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		if (option == 0) return 15; // Plate Mail Body
 		else if (option == 1) return 16; // Plate Mail Legs
 		else if (option == 2) return 17; // Plated Skirt
-		else if (config().WANT_CUSTOM_SPRITES) {
+		else if (player.getConfig().WANT_CUSTOM_SPRITES) {
 			if (option == 3) {
 				return 23; // Plate mail top
 			}
@@ -934,7 +934,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 
 	private int getCount(ItemSmithingDef def, Item item, Player player) {
 		int count = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			String[] options = {
 				"Make 1",
 				"Make 5",

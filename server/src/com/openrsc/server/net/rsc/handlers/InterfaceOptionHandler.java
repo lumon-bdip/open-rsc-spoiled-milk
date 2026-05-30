@@ -169,7 +169,16 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			return;
 		}
 
-		boolean started = starter.start(player, session, payload.id, payload.amount);
+		boolean started;
+		try {
+			started = starter.start(player, session, payload.id, payload.amount);
+		} catch (RuntimeException e) {
+			LOGGER.error("Production start failed player={} itemId={} amount={} sessionType={}",
+				player.getUsername(), payload.id, payload.amount, session.getType(), e);
+			player.message("Unable to start production");
+			clearProductionState(player, session);
+			return;
+		}
 		ProductionSession currentSession = player.getAttribute("production_session", null);
 		if (currentSession != session) {
 			return;

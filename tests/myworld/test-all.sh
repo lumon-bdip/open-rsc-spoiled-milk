@@ -61,6 +61,7 @@ python3 ./tests/myworld/test-god-knight-drops-and-pvm-population.py
 python3 ./tests/myworld/test-firemaking-rework.py
 python3 ./tests/myworld/test-fishing-rework.py
 python3 ./tests/myworld/test-ground-item-cleanup.py
+python3 ./tests/myworld/test-ground-item-rendering.py
 python3 ./tests/myworld/test-herblaw-cleanup.py
 python3 ./tests/myworld/test-herblaw-remap.py
 python3 ./tests/myworld/test-hide-armor-coverage.py

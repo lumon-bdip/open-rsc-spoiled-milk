@@ -338,7 +338,8 @@ public final class mudclient implements Runnable {
 	private final int[] groundItemZ = new int[5000];
 	private final ArrayList<GroundItem> groundItems = new ArrayList<GroundItem>();
 	private final ArrayList<Integer> groundItemRenderOrder = new ArrayList<Integer>(5000);
-	private final int[] groundItemRenderTopByTile = new int[96 * 96];
+	private final int[] groundItemRenderCountByTile = new int[96 * 96];
+	private final int[] groundItemRenderStackIndex = new int[5000];
 	private final Item[] inventory = new Item[S_PLAYER_INVENTORY_SLOTS];
 	private final ORSCharacter[] knownPlayers = new ORSCharacter[500];
 	private final String[] optionsMenuText = new String[20];
@@ -5461,8 +5462,10 @@ public final class mudclient implements Runnable {
 
 						for (int renderIndex = 0; renderIndex < this.groundItemRenderOrder.size(); ++renderIndex) {
 							centerX = this.groundItemRenderOrder.get(renderIndex);
-							centerZ = this.groundItemX[centerX] * this.tileSize + 64;
-							int var4 = this.tileSize * this.groundItemZ[centerX] + 64;
+							int stackOffsetX = this.getGroundItemStackOffsetX(this.groundItemRenderStackIndex[centerX]);
+							int stackOffsetZ = this.getGroundItemStackOffsetZ(this.groundItemRenderStackIndex[centerX]);
+							centerZ = this.groundItemX[centerX] * this.tileSize + 64 + stackOffsetX;
+							int var4 = this.tileSize * this.groundItemZ[centerX] + 64 + stackOffsetZ;
 							if (S_WANT_BANK_NOTES && this.groundItemNoted[centerX]) {
 								this.scene.drawSprite(-1, var4, centerX + 20000, centerZ,
 									-this.world.getElevation(centerZ, var4) - this.groundItemHeight[centerX], 96, 64, (byte) 109);
@@ -6553,29 +6556,13 @@ public final class mudclient implements Runnable {
 
 	private void rebuildGroundItemRenderOrder() {
 		this.groundItemRenderOrder.clear();
-		Arrays.fill(this.groundItemRenderTopByTile, -1);
+		Arrays.fill(this.groundItemRenderStackIndex, 0);
 		for (int index = 0; index < this.groundItemCount; index++) {
 			if (!this.isGroundItemVisibleByFilter(index)) {
 				continue;
 			}
 
-			int tileKey = this.getGroundItemTileKey(this.groundItemX[index], this.groundItemZ[index]);
-			if (tileKey < 0) {
-				this.groundItemRenderOrder.add(index);
-				continue;
-			}
-
-			int currentTopIndex = this.groundItemRenderTopByTile[tileKey];
-			if (currentTopIndex < 0 || this.compareGroundItemLayerOrder(currentTopIndex, index) < 0) {
-				this.groundItemRenderTopByTile[tileKey] = index;
-			}
-		}
-
-		for (int tileKey = 0; tileKey < this.groundItemRenderTopByTile.length; tileKey++) {
-			int index = this.groundItemRenderTopByTile[tileKey];
-			if (index >= 0) {
-				this.groundItemRenderOrder.add(index);
-			}
+			this.groundItemRenderOrder.add(index);
 		}
 
 		Collections.sort(this.groundItemRenderOrder, new Comparator<Integer>() {
@@ -6584,6 +6571,54 @@ public final class mudclient implements Runnable {
 				return compareGroundItemLayerOrder(leftIndex, rightIndex);
 			}
 		});
+		this.assignGroundItemStackOffsets();
+	}
+
+	private void assignGroundItemStackOffsets() {
+		Arrays.fill(this.groundItemRenderCountByTile, 0);
+		for (int renderIndex = 0; renderIndex < this.groundItemRenderOrder.size(); ++renderIndex) {
+			int index = this.groundItemRenderOrder.get(renderIndex);
+			int tileKey = this.getGroundItemTileKey(this.groundItemX[index], this.groundItemZ[index]);
+			if (tileKey < 0) {
+				this.groundItemRenderStackIndex[index] = 0;
+				continue;
+			}
+			this.groundItemRenderStackIndex[index] = this.groundItemRenderCountByTile[tileKey]++;
+		}
+	}
+
+	private int getGroundItemStackOffsetX(int stackIndex) {
+		switch (stackIndex % 9) {
+			case 1:
+			case 3:
+				return -10;
+			case 2:
+			case 4:
+				return 10;
+			case 7:
+				return -16;
+			case 8:
+				return 16;
+			default:
+				return 0;
+		}
+	}
+
+	private int getGroundItemStackOffsetZ(int stackIndex) {
+		switch (stackIndex % 9) {
+			case 1:
+			case 2:
+				return -10;
+			case 3:
+			case 4:
+				return 10;
+			case 5:
+				return -16;
+			case 6:
+				return 16;
+			default:
+				return 0;
+		}
 	}
 
 	private int getGroundItemTileKey(int tileX, int tileZ) {

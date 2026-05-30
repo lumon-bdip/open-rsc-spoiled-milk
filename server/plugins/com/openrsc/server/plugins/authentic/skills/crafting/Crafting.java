@@ -449,7 +449,7 @@ public class Crafting implements UseInvTrigger,
 		}
 
 		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			if (goldBarItem.getCatalogId() != ItemId.GOLD_BAR_FAMILYCREST.id()) { // Perfect gold bars shouldn't be batched
 				int mostThatCouldBeMade = 0;
 				if (def.getReqGem() == ItemId.NOTHING.id()) {
@@ -593,7 +593,7 @@ public class Crafting implements UseInvTrigger,
 	private ItemCraftingDef getDesiredGoldCraftingAuthentic(Item item, Player player) {
 		// select type
 		String[] options;
-		if (!config().WANT_EQUIPMENT_TAB) { // TODO: this is not a very good way to detect other than Cabbage server config
+		if (!player.getConfig().WANT_EQUIPMENT_TAB) { // TODO: this is not a very good way to detect other than Cabbage server config
 			options = new String[]{
 				ring,
 				Necklace,
@@ -617,7 +617,7 @@ public class Crafting implements UseInvTrigger,
 		if (!hasRequiredMould(player, jewelryShape)) return null;
 
 		boolean gemUsed = false;
-		if (!config().WANT_EQUIPMENT_TAB) { // TODO: this is not a very good way to detect other than Cabbage server config
+		if (!player.getConfig().WANT_EQUIPMENT_TAB) { // TODO: this is not a very good way to detect other than Cabbage server config
 			player.playerServerMessage(MessageType.QUEST,
 				"Would you like to put a gem in the " + jewelryShape.toLowerCase() + "?");
 			options = new String[]{
@@ -636,8 +636,8 @@ public class Crafting implements UseInvTrigger,
 			Ruby,
 			Diamond
 		};
-		if (config().MEMBER_WORLD) {
-			if (config().WANT_EQUIPMENT_TAB) { // TODO: this is not a very good way to detect Cabbage server config
+		if (player.getConfig().MEMBER_WORLD) {
+			if (player.getConfig().WANT_EQUIPMENT_TAB) { // TODO: this is not a very good way to detect Cabbage server config
 				options = new String[]{
 					Gold,
 					Sapphire,
@@ -985,7 +985,7 @@ public class Crafting implements UseInvTrigger,
 		}
 
 		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			repeat = player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false));
 		}
 
@@ -1074,14 +1074,14 @@ public class Crafting implements UseInvTrigger,
 				break;
 			case 0:
 				result = new Item(ItemId.UNFIRED_PIE_DISH.id(), 1);
-				reqLvl = !config().OLD_SKILL_DEFS ? 4 : 3;
-				exp = !config().OLD_SKILL_DEFS ? 60 : 30;
+				reqLvl = !player.getConfig().OLD_SKILL_DEFS ? 4 : 3;
+				exp = !player.getConfig().OLD_SKILL_DEFS ? 60 : 30;
 				msg.set("pie dishes");
 				break;
 			case 2:
 				result = new Item(ItemId.UNFIRED_BOWL.id(), 1);
-				reqLvl = !config().OLD_SKILL_DEFS ? 7 : 5;
-				exp = !config().OLD_SKILL_DEFS ? 40 : 30;
+				reqLvl = !player.getConfig().OLD_SKILL_DEFS ? 7 : 5;
+				exp = !player.getConfig().OLD_SKILL_DEFS ? 40 : 30;
 				msg.set("a bowl");
 				break;
 			default:
@@ -1090,7 +1090,7 @@ public class Crafting implements UseInvTrigger,
 		}
 
 		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			repeat = player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false));
 		}
 
@@ -1134,20 +1134,20 @@ public class Crafting implements UseInvTrigger,
 			case UNFIRED_POT:
 				result = new Item(ItemId.POT.id(), 1);
 				reqLvl = 1;
-				xp = !config().OLD_SKILL_DEFS ? 25 : 0;
+				xp = !player.getConfig().OLD_SKILL_DEFS ? 25 : 0;
 				// should not use this, as pot is made at level 1
 				msg.set("a pot");
 				break;
 			case UNFIRED_PIE_DISH:
 				result = new Item(ItemId.PIE_DISH.id(), 1);
-				reqLvl = !config().OLD_SKILL_DEFS ? 4 : 3;
-				xp = !config().OLD_SKILL_DEFS ? 40 : 30;
+				reqLvl = !player.getConfig().OLD_SKILL_DEFS ? 4 : 3;
+				xp = !player.getConfig().OLD_SKILL_DEFS ? 40 : 30;
 				msg.set("pie dishes");
 				break;
 			case UNFIRED_BOWL:
 				result = new Item(ItemId.BOWL.id(), 1);
-				reqLvl = !config().OLD_SKILL_DEFS ? 7 : 5;
-				xp = !config().OLD_SKILL_DEFS ? 60 : 30;
+				reqLvl = !player.getConfig().OLD_SKILL_DEFS ? 7 : 5;
+				xp = !player.getConfig().OLD_SKILL_DEFS ? 60 : 30;
 				msg.set("a bowl");
 				break;
 			default:
@@ -1158,7 +1158,7 @@ public class Crafting implements UseInvTrigger,
 		final int exp = xp;
 
 		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			repeat = player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false));
 		}
 
@@ -1215,7 +1215,7 @@ public class Crafting implements UseInvTrigger,
 	private void doGlassMaking(final Item item, final Player player) {
 		int otherItem = item.getCatalogId() == ItemId.SAND.id() ? ItemId.SODA_ASH.id() : ItemId.SAND.id();
 		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			repeat = player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false));
 			repeat = Math.min(player.getCarriedItems().getInventory().countId(otherItem, Optional.of(false)), repeat);
 		}
@@ -1306,7 +1306,7 @@ public class Crafting implements UseInvTrigger,
 		}
 
 		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			repeat = player.getCarriedItems().getInventory().countId(glass.getCatalogId(), Optional.of(false));
 		}
 
@@ -1320,7 +1320,7 @@ public class Crafting implements UseInvTrigger,
 			return;
 		}
 		Inventory inventory = player.getCarriedItems().getInventory();
-		ServerConfiguration config = config();
+		ServerConfiguration config = player.getConfig();
 		if (player.getSkills().getLevel(Skill.CRAFTING.id()) < reqLvl) {
 			player.message(
 				"You need a crafting level of " + reqLvl + " to make " + resultGen);
@@ -1384,7 +1384,7 @@ public class Crafting implements UseInvTrigger,
 				if (player.getCarriedItems().remove(new Item(ItemId.KING_BLACK_DRAGON_SCALE.id(), 1)) > -1) {
 					player.message("You chip the massive scale into 5 pieces");
 					give(player, ItemId.CHIPPED_DRAGON_SCALE.id(), 5);
-					player.incExp(Skill.CRAFTING.id(), config().GAME_TICK * 2, true);
+					player.incExp(Skill.CRAFTING.id(), player.getConfig().GAME_TICK * 2, true);
 				}
 			} else {
 				player.message("Nothing interesting happens");
@@ -1393,7 +1393,7 @@ public class Crafting implements UseInvTrigger,
 		}
 
 		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			repeat = player.getCarriedItems().getInventory().countId(gem.getCatalogId(), Optional.of(false));
 		}
 
@@ -1504,7 +1504,7 @@ public class Crafting implements UseInvTrigger,
 		}
 
 		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			repeat = Math.max(1, availableMaterial / piece.materialCost);
 		}
 
@@ -2145,7 +2145,7 @@ public class Crafting implements UseInvTrigger,
 		if (!canStartRangedMouldRecipe(player, bar.getCatalogId(), recipe)) {
 			return;
 		}
-		startbatch(config().BATCH_PROGRESSION
+		startbatch(player.getConfig().BATCH_PROGRESSION
 			? player.getCarriedItems().getInventory().countId(bar.getCatalogId(), Optional.of(false))
 			: 1);
 		batchRangedMouldCasting(player, bar, recipe);
@@ -2848,7 +2848,7 @@ public class Crafting implements UseInvTrigger,
 		int amuletAmount = player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false));
 
 		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			repeat = Math.min(woolAmount, amuletAmount);
 		}
 
@@ -2878,7 +2878,7 @@ public class Crafting implements UseInvTrigger,
 
 	private void useWater(Player player, Item water, Item item) {
 		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
+		if (player.getConfig().BATCH_PROGRESSION) {
 			repeat = Math.min(player.getCarriedItems().getInventory().countId(water.getCatalogId(), Optional.of(false)),
 				player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false)));
 		}
@@ -2938,8 +2938,8 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private boolean checkFatigue(Player player) {
-		if (config().WANT_FATIGUE
-				&& config().STOP_SKILLING_FATIGUED >= 2
+		if (player.getConfig().WANT_FATIGUE
+				&& player.getConfig().STOP_SKILLING_FATIGUED >= 2
 				&& player.getFatigue() >= player.MAX_FATIGUE) {
 			player.message("You are too tired to craft");
 			return true;
