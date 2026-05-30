@@ -55,10 +55,11 @@ public class Thrander extends AbstractShop {
 	public void onTalkNpc(Player player, Npc n) {
 		npcsay(player, n, "Hello I'm Thrander the smith",
 			"I sell practical armour for adventurers");
-		int option = multi(player, n, false,
-			"What armour do you have?",
+		int option = multi(player, n,
+			"Do you want to trade?",
 			"No thank you");
 		if (option == 0) {
+			npcsay(player, n, "Yes, I have a practical selection of armour");
 			player.setAccessingShop(shop);
 			ActionSender.showShop(player, shop);
 		}

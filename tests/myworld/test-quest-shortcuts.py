@@ -163,6 +163,11 @@ def main() -> None:
         require(text, "MyWorldQuestShortcuts.ALREADY_DONE_OPTION", f"{rel} shortcut option")
         require(text, method, f"{rel} shortcut call")
 
+    biohazard = read("server/plugins/com/openrsc/server/plugins/authentic/quests/members/BioHazard.java")
+    guidor_wife_branch = biohazard.split("else if (n.getID() == NpcId.GUIDORS_WIFE.id()) {", 1)[1].split("else if (n.getID() == NpcId.GUIDOR.id())", 1)[0]
+    require(guidor_wife_branch, 'npcsay(player, n, "Oh dear! Oh dear!",', "Guidor's wife early-stage fallback dialogue")
+    require(guidor_wife_branch, "return;", "Guidor's wife stage 7 dialogue exit before fallback")
+
     redundant_shortcut_say_sites = [
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/BlackKnightsFortress.java", "completeBlackKnightsFortress"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/CooksAssistant.java", "completeCooksAssistant"),

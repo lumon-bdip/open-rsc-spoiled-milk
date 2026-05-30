@@ -679,6 +679,7 @@ public final class mudclient implements Runnable {
 	private int[] experienceArray = new int[S_PLAYER_LEVEL_LIMIT];
 	private int fatigueSleeping = 0;
 	private int fatigueSleepingAuthentic = 0;
+	private int currentDevotionLevel = 0;
 	private int gameHeight = 334;
 	private int gameObjectInstanceCount = 0;
 	private final int[] gameObjectInstanceZ = new int[5000];
@@ -13032,6 +13033,10 @@ public final class mudclient implements Runnable {
 						heightMargin += 12;
 						this.getSurface().drawString("Xp to next level: " + (nextLevelExp - this.playerExperience[currentlyHoveredSkill]), 5 + x, heightMargin, textColour, 1);
 					}
+					if (skillNameLong[currentlyHoveredSkill].equalsIgnoreCase("Prayer")) {
+						heightMargin += 12;
+						this.getSurface().drawString("Devotion: " + this.currentDevotionLevel, 5 + x, heightMargin, textColour, 1);
+					}
 				}
 			}
 
@@ -14883,6 +14888,7 @@ public final class mudclient implements Runnable {
 
 	private void handleMenuItemClicked(boolean var1, int item) {
 		try {
+			item = selectCtrlClickNpcAltAction(item);
 
 			MenuItemAction var3 = this.menuCommon.getItemAction(item);
 			int indexOrX = this.menuCommon.getItemIndexOrX(item);
@@ -15514,6 +15520,38 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var13) {
 			throw GenUtil.makeThrowable(var13, "client.KA(" + var1 + ',' + item + ')');
 		}
+	}
+
+	private int selectCtrlClickNpcAltAction(int item) {
+		if (!this.controlPressed || this.menuCommon.getItemAction(item) != MenuItemAction.NPC_TALK_TO) {
+			return item;
+		}
+
+		int npcServerIndex = this.menuCommon.getItemIndexOrX(item);
+		int shopAction = -1;
+		int menuItemCount = this.menuCommon.getItemCount(-27153);
+		for (int i = 0; i < menuItemCount; i++) {
+			MenuItemAction action = this.menuCommon.getItemAction(i);
+			if ((action != MenuItemAction.NPC_COMMAND1 && action != MenuItemAction.NPC_COMMAND2)
+				|| this.menuCommon.getItemIndexOrX(i) != npcServerIndex) {
+				continue;
+			}
+
+			String label = this.menuCommon.getItemLabel(i);
+			if (label == null) {
+				continue;
+			}
+
+			String normalizedLabel = label.trim().toLowerCase(Locale.ROOT);
+			if (normalizedLabel.equals("bank")) {
+				return i;
+			}
+			if (normalizedLabel.equals("shop") || normalizedLabel.equals("trade")) {
+				shopAction = i;
+			}
+		}
+
+		return shopAction >= 0 ? shopAction : item;
 	}
 
 	private String getObjectExamineText(int objectId, int localZ, int objectTileId) {
@@ -20846,6 +20884,10 @@ public final class mudclient implements Runnable {
 		this.clampPrayerIconScrollRow();
 	}
 
+	public void setCurrentDevotionLevel(int devotionLevel) {
+		this.currentDevotionLevel = devotionLevel;
+	}
+
 	public void setQuestName(int i, String s) {
 		this.questNames[i] = s;
 	}
@@ -22361,6 +22403,7 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Zamorak");
 			skillGuideChosenTabs.add("Guthix");
 			skillGuideChosenTabs.add("Gear");
+			skillGuideChosenTabs.add("Devotion");
 			skillGuideChosenTabs.add("Info");
 		} else if (skillGuideChosen.equalsIgnoreCase("Magic")) {
 			skillGuideChosenTabs.add("Spells");

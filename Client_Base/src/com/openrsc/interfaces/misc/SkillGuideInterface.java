@@ -1229,8 +1229,16 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(2236, "62", "Blessed Magic Staff - requires Prayer and Magic"));
 			skillMenuEntries.add(new SkillMenuItem(2237, "70", "Blessed Blood Staff - requires Prayer and Magic"));
 		} else if (curTab == 4) {
+			skillMenuEntries.add(new SkillMenuItem(388, "", "Every 10 offerings increases devotion by 1"));
+			skillMenuEntries.add(new SkillMenuItem(388, "", "Every devotion level increases Prayer XP per offering by 1"));
+			skillMenuEntries.add(new SkillMenuItem(698, "100", "Steel gauntlets can be blessed"));
+			skillMenuEntries.add(new SkillMenuItem(1988, "200", "Steel greaves can be blessed"));
+			skillMenuEntries.add(new SkillMenuItem(109, "300", "Steel helms can be blessed"));
+			skillMenuEntries.add(new SkillMenuItem(121, "400", "Steel leg armour can be blessed"));
+			skillMenuEntries.add(new SkillMenuItem(118, "500", "Steel body armour can be blessed"));
+			skillMenuEntries.add(new SkillMenuItem(388, "", "Blessed armour grants Prayer XP and +1 devotion"));
+		} else if (curTab == 5) {
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Worship at a god's altar to switch prayers"));
-			skillMenuEntries.add(new SkillMenuItem(388, "", "Devotion: every 10 offerings to a god adds +1 Prayer XP"));
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Prayer does not drain over time"));
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Prayer uses point reservation to activate"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {

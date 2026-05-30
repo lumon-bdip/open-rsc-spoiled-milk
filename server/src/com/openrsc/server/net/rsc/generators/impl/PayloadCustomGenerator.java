@@ -78,6 +78,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_BANK_PIN_INTERFACE, 135); // custom
 		put(OpcodeOut.SEND_ONLINE_LIST, 136); // custom
 		put(OpcodeOut.SEND_MOVEMENT_UPDATE, 141); // custom
+		put(OpcodeOut.SEND_DEVOTION, 145); // custom
 		put(OpcodeOut.SEND_PRODUCTION_INTERFACE, 138); // custom
 		put(OpcodeOut.SEND_PRAYER_BOOK, 139); // custom
 		put(OpcodeOut.SEND_SHOP_CLOSE, 137);
@@ -740,6 +741,11 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 				case SEND_PRAYER_BOOK:
 					PrayerBookStruct prayerBook = (PrayerBookStruct) payload;
 					builder.writeByte((byte) prayerBook.prayerBook);
+					break;
+
+				case SEND_DEVOTION:
+					DevotionStruct devotion = (DevotionStruct) payload;
+					builder.writeShort(devotion.devotionLevel);
 					break;
 
 				case SEND_PRODUCTION_INTERFACE:

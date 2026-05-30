@@ -931,7 +931,10 @@ public class BioHazard implements QuestInterface, TalkNpcTrigger,
 					npcsay(player, n, "Oh god no. But I am",
 						"if only i could get him to see a priest");
 				}
+				return;
 			}
+			npcsay(player, n, "Oh dear! Oh dear!",
+				"I don't have time to chat!");
 		}
 		else if (n.getID() == NpcId.GUIDOR.id()) {
 			if (player.getQuestStage(this) == 8 || player.getQuestStage(this) == 9 || player.getQuestStage(this) == -1) {

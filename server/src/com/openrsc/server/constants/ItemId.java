@@ -2354,12 +2354,18 @@ public enum ItemId {
 	GREY_PLATE_MAIL_TOP(3127),
 	GREY_PLATED_SKIRT(3128),
 	GREY_CHAIN_MAIL_LEGS(3129),
-	GREY_CHAIN_MAIL_TOP(3130);
+	GREY_CHAIN_MAIL_TOP(3130),
+	BLACK_GAUNTLETS(3131),
+	BLACK_GREAVES(3132),
+	WHITE_GAUNTLETS(3133),
+	WHITE_GREAVES(3134),
+	GREY_GAUNTLETS(3135),
+	GREY_GREAVES(3136);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3131;
+	public static final int maxCustom = 3137;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

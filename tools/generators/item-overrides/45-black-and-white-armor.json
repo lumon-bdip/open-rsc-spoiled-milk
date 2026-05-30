@@ -90,6 +90,38 @@
       "prayerBonus": 3
     },
     {
+      "id": 3131,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 1
+    },
+    {
+      "id": 3132,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 1
+    },
+    {
+      "id": 3133,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 1
+    },
+    {
+      "id": 3134,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 1
+    },
+    {
       "id": 3121,
       "meleeDefense": 4,
       "rangedDefense": 1,
@@ -176,6 +208,22 @@
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "prayerBonus": 3
+    },
+    {
+      "id": 3135,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 1
+    },
+    {
+      "id": 3136,
+      "meleeDefense": 8,
+      "rangedDefense": 2,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "prayerBonus": 1
     }
   ]
 }

@@ -68,6 +68,7 @@ public class PayloadValidator {
 		put(OpcodeOut.SEND_STATUS_PROGRESS_BAR, ProgressBarStruct.class); // custom
 		put(OpcodeOut.SEND_MOVEMENT_UPDATE, MovementUpdateStruct.class); // custom
 		put(OpcodeOut.SEND_PRAYER_BOOK, PrayerBookStruct.class); // custom
+		put(OpcodeOut.SEND_DEVOTION, DevotionStruct.class); // custom
 		put(OpcodeOut.SEND_PRODUCTION_INTERFACE, ProductionInterfaceStruct.class); // custom
 		put(OpcodeOut.SEND_BANK_PIN_INTERFACE, BankPinStruct.class); // custom
 		put(OpcodeOut.SEND_ONLINE_LIST, OnlineListStruct.class); // custom

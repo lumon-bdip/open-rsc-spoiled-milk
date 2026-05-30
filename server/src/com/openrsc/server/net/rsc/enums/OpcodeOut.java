@@ -57,6 +57,7 @@ public enum OpcodeOut {
 	SEND_STATUS_PROGRESS_BAR, // custom
 	SEND_MOVEMENT_UPDATE, // custom
 	SEND_PRAYER_BOOK, // custom
+	SEND_DEVOTION, // custom
 	SEND_PRODUCTION_INTERFACE, // custom
 	SEND_BANK_PIN_INTERFACE, // custom
 	SEND_ONLINE_LIST, // custom

@@ -6243,7 +6243,7 @@
         "id": 160,
         "name": "Thrander",
         "description": "A smith of some sort",
-        "command": "",
+        "command": "Trade",
         "command2": "",
         "attack": 15,
         "strength": 6,

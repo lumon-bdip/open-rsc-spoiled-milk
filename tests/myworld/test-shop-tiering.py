@@ -7,6 +7,7 @@ from typing import NoReturn
 ROOT = Path(__file__).resolve().parents[2]
 
 HORVIK_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "varrock" / "HorvikTheArmourer.java"
+THRANDER_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "varrock" / "Thrander.java"
 ZEKE_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "alkharid" / "ZekeScimitars.java"
 WAYNE_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "falador" / "WaynesChains.java"
 SCAVVO_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "varrock" / "Scavvo.java"
@@ -33,6 +34,7 @@ ZAFF_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugin
 MAGIC_STORE_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "yanille" / "MagicStoreOwner.java"
 BETTY_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "portsarim" / "BettysMagicEmporium.java"
 CRAFTING_EQUIPMENT_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "CraftingEquipmentShops.java"
+NPC_DEFS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefs.json"
 
 
 def fail(message: str) -> NoReturn:
@@ -68,6 +70,19 @@ def main() -> None:
         "ItemId.BLACK_PLATE_MAIL_BODY.id()",
         "ItemId.BLACK_KITE_SHIELD.id()",
         "ItemId.LARGE_BLACK_HELMET.id()",
+    ))
+
+    ensure_contains(THRANDER_PATH, (
+        "ItemId.TIN_PLATE_MAIL_BODY.id()",
+        "ItemId.COPPER_PLATE_MAIL_BODY.id()",
+        "ItemId.STEEL_PLATE_MAIL_BODY.id()",
+        "Do you want to trade?",
+        "ActionSender.showShop(player, shop);",
+    ))
+    ensure_contains(NPC_DEFS_PATH, (
+        '"id": 160',
+        '"name": "Thrander"',
+        '"command": "Trade"',
     ))
 
     ensure_contains(ZEKE_PATH, (

@@ -6,6 +6,7 @@ import com.openrsc.server.content.clan.Clan;
 import com.openrsc.server.content.clan.ClanManager;
 import com.openrsc.server.content.clan.ClanPlayer;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyManager;
 import com.openrsc.server.content.party.PartyPlayer;
@@ -1339,6 +1340,16 @@ public class ActionSender {
 		PrayerBookStruct struct = new PrayerBookStruct();
 		struct.prayerBook = PrayerCatalog.getBookId(prayerBook);
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_PRAYER_BOOK, struct, player);
+		sendDevotion(player);
+	}
+
+	public static void sendDevotion(Player player) {
+		if (player == null || !player.isUsingCustomClient()) {
+			return;
+		}
+		DevotionStruct struct = new DevotionStruct();
+		struct.devotionLevel = Devotion.getCurrentDevotionLevel(player);
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_DEVOTION, struct, player);
 	}
 
 	public static void sendPrivacySettings(Player player) {
