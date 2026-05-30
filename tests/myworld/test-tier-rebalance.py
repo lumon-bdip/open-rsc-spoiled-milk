@@ -102,8 +102,12 @@ def require_smelting_runtime_safety() -> None:
     text = SMELTING.read_text(encoding="utf-8")
     if "FURNACE_CATEGORY_BARS = ItemId.BRONZE_BAR.id()" not in text:
         fail("Furnace bars category should use the legacy bronze bar icon, not a new high-id tin bar")
+    if "shouldOpenSmeltingChoice(item.getCatalogId()) && !ActionSender.isRetroClient(player)" not in text:
+        fail("Using tin/copper ore on a furnace should open the smelting chooser on modern clients")
+    if "return itemId == ItemId.TIN_ORE.id() || itemId == ItemId.COPPER_ORE.id();" not in text:
+        fail("Tin/copper ore should be marked as ambiguous furnace inputs")
     if "if (itemId == ItemId.TIN_ORE.id()) {\n\t\t\treturn getRecipe(ItemId.TIN_BAR.id());" not in text:
-        fail("Using tin ore directly on a furnace should smelt tin as a production-interface fallback")
+        fail("Using tin ore directly on a retro client should still smelt tin as a fallback")
 
 
 def require_legacy_smelting_def_levels() -> None:

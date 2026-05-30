@@ -675,6 +675,23 @@ public final class EntityHandler {
 				items.get(itemId).setRequiredSkillIndex(4);
 			}
 
+			int[] mainhandBows = new int[] {
+				ItemId.LONGBOW.id(), ItemId.SHORTBOW.id(),
+				ItemId.PINE_LONGBOW.id(), ItemId.PINE_SHORTBOW.id(),
+				ItemId.OAK_LONGBOW.id(), ItemId.OAK_SHORTBOW.id(),
+				ItemId.WILLOW_LONGBOW.id(), ItemId.WILLOW_SHORTBOW.id(),
+				ItemId.PALM_LONGBOW.id(), ItemId.PALM_SHORTBOW.id(),
+				ItemId.MAPLE_LONGBOW.id(), ItemId.MAPLE_SHORTBOW.id(),
+				ItemId.YEW_LONGBOW.id(), ItemId.YEW_SHORTBOW.id(),
+				ItemId.EBONY_LONGBOW.id(), ItemId.EBONY_SHORTBOW.id(),
+				ItemId.MAGIC_LONGBOW.id(), ItemId.MAGIC_SHORTBOW.id(),
+				ItemId.BLOOD_LONGBOW.id(), ItemId.BLOOD_SHORTBOW.id(),
+				ItemId.DRAGON_LONGBOW.id()
+			};
+			for (int itemId : mainhandBows) {
+				items.get(itemId).setWieldPosition(Equipment.EquipmentSlot.SLOT_MAINHAND.getIndex());
+			}
+
 			// Make non-enchanted rings wearable
 			items.get(ItemId.GOLD_RING.id()).setWieldable(true);
 			items.get(ItemId.GOLD_RING.id()).setWearableId(1200);

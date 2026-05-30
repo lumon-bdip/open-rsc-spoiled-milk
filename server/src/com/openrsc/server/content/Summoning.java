@@ -81,6 +81,7 @@ public final class Summoning {
 	private static final int FOLLOW_RADIUS = 1;
 	private static final int CATCH_UP_DISTANCE = 6;
 	private static final int SUMMON_PROJECTILE_RANGE = 5;
+	private static final int SUMMON_ASSIST_TARGET_RANGE = 15;
 	private static final int SUMMON_ATTACK_DELAY_TICKS = 3;
 	private static final int UTILITY_RAT_NPC_ID = 241;
 	private static final int NO_DURATION_LIMIT = -1;
@@ -971,16 +972,12 @@ public final class Summoning {
 	}
 
 	private static void assistOwnerTarget(final Player owner, final Npc summon) {
-		final Mob target = owner.getOpponent();
+		final Mob target = resolveSummonAssistTarget(owner, summon);
 		if (target == null || target.isRemoved() || target == summon || target == owner) {
 			stopSummonAssist(summon);
 			return;
 		}
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			stopSummonAssist(summon);
-			return;
-		}
-		if (!ownerIsActivelyAttacking(owner, target)) {
 			stopSummonAssist(summon);
 			return;
 		}
@@ -995,6 +992,86 @@ public final class Summoning {
 			return;
 		}
 		summon.startCombat(target);
+	}
+
+	private static Mob resolveSummonAssistTarget(final Player owner, final Npc summon) {
+		final Mob attacker = findOwnerAttacker(owner, summon);
+		if (isValidSummonAssistTarget(owner, summon, attacker)) {
+			return attacker;
+		}
+		final Mob activeTarget = getOwnerActiveAttackTarget(owner);
+		if (isValidSummonAssistTarget(owner, summon, activeTarget) && ownerIsActivelyAttacking(owner, activeTarget)) {
+			return activeTarget;
+		}
+		return null;
+	}
+
+	private static Mob findOwnerAttacker(final Player owner, final Npc summon) {
+		final Mob currentOpponent = owner.getOpponent();
+		if (isValidSummonAssistTarget(owner, summon, currentOpponent)
+			&& mobIsAttackingOwner(currentOpponent, owner)) {
+			return currentOpponent;
+		}
+		for (Npc npc : owner.getViewArea().getNpcsInView()) {
+			if (isValidSummonAssistTarget(owner, summon, npc) && npcIsAttackingOwner(npc, owner)) {
+				return npc;
+			}
+		}
+		for (Player player : owner.getViewArea().getPlayersInView()) {
+			if (isValidSummonAssistTarget(owner, summon, player) && playerIsAttackingOwner(player, owner)) {
+				return player;
+			}
+		}
+		return null;
+	}
+
+	private static boolean isValidSummonAssistTarget(final Player owner, final Npc summon, final Mob target) {
+		return target != null
+			&& target != owner
+			&& target != summon
+			&& !target.isRemoved()
+			&& target.getSkills().getLevel(Skill.HITS.id()) > 0
+			&& target.withinRange(owner, SUMMON_ASSIST_TARGET_RANGE);
+	}
+
+	private static boolean mobIsAttackingOwner(final Mob mob, final Player owner) {
+		if (mob == null) {
+			return false;
+		}
+		if (mob.isNpc()) {
+			return npcIsAttackingOwner((Npc) mob, owner);
+		}
+		return mob.isPlayer() && playerIsAttackingOwner((Player) mob, owner);
+	}
+
+	private static boolean npcIsAttackingOwner(final Npc npc, final Player owner) {
+		return npc.getOpponent() == owner
+			|| npc.getBehavior().getChaseTarget() == owner;
+	}
+
+	private static boolean playerIsAttackingOwner(final Player player, final Player owner) {
+		return player.getOpponent() == owner
+			|| ownerIsActivelyAttacking(player, owner);
+	}
+
+	private static Mob getOwnerActiveAttackTarget(final Player owner) {
+		final PvmMeleeEvent meleeEvent = owner.getPvmMeleeEvent();
+		if (meleeEvent != null && meleeEvent.isRunning()) {
+			return meleeEvent.getTarget();
+		}
+		final RangeEvent rangeEvent = owner.getRangeEvent();
+		if (rangeEvent != null && rangeEvent.isRunning()) {
+			return rangeEvent.getTarget();
+		}
+		final ThrowingEvent throwingEvent = owner.getThrowingEvent();
+		if (throwingEvent != null && throwingEvent.isRunning()) {
+			return throwingEvent.getTarget();
+		}
+		final MagicCombatEvent magicEvent = owner.getMagicCombatEvent();
+		if (magicEvent != null && magicEvent.isRunning()) {
+			return magicEvent.getTarget();
+		}
+		return owner.getOpponent();
 	}
 
 	private static boolean trySummonProjectileAttack(final Player owner, final Npc summon, final Mob target) {

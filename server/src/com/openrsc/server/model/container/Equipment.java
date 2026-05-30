@@ -3,6 +3,7 @@ package com.openrsc.server.model.container;
 import com.openrsc.server.constants.*;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.player.Player;
@@ -893,7 +894,8 @@ public class Equipment {
 			}
 			boolean conflictsBySlot = requestedDef.getWieldPosition() == item.getDef(player.getWorld()).getWieldPosition();
 			boolean conflictsByWearableType = request.item.wieldingAffectsItem(player.getWorld(), item);
-			if (conflictsBySlot || conflictsByWearableType) {
+			boolean conflictsByBowOffhand = bowConflictsWithOffhand(request.item, item);
+			if (conflictsBySlot || conflictsByWearableType || conflictsByBowOffhand) {
 				if (request.item.getDef(player.getWorld()).isStackable()) {
 					if (request.item.getCatalogId() == item.getCatalogId())
 						continue;
@@ -916,7 +918,8 @@ public class Equipment {
 				boolean conflictsBySlot = requestedDef != null
 					&& requestedDef.getWieldPosition() == item.getDef(player.getWorld()).getWieldPosition();
 				boolean conflictsByWearableType = request.item.wieldingAffectsItem(player.getWorld(), item);
-				if (conflictsBySlot || conflictsByWearableType) {
+				boolean conflictsByBowOffhand = bowConflictsWithOffhand(request.item, item);
+				if (conflictsBySlot || conflictsByWearableType || conflictsByBowOffhand) {
 					debugJewelryEquip("legacy_remove_conflict", request.item,
 						describeItem(item)
 							+ " bySlot=" + conflictsBySlot
@@ -2769,6 +2772,21 @@ public class Equipment {
 			}
 		}
 		return false;
+	}
+
+	private boolean bowConflictsWithOffhand(Item requestedItem, Item equippedItem) {
+		if (requestedItem == null || equippedItem == null) {
+			return false;
+		}
+		ItemDefinition requestedDef = requestedItem.getDef(player.getWorld());
+		ItemDefinition equippedDef = equippedItem.getDef(player.getWorld());
+		if (requestedDef == null || equippedDef == null) {
+			return false;
+		}
+		return (RangeUtils.isBow(requestedItem.getCatalogId())
+				&& equippedDef.getWieldPosition() == EquipmentSlot.SLOT_OFFHAND.getIndex())
+			|| (requestedDef.getWieldPosition() == EquipmentSlot.SLOT_OFFHAND.getIndex()
+				&& RangeUtils.isBow(equippedItem.getCatalogId()));
 	}
 
 	private boolean isRangedArmor(Item item) {

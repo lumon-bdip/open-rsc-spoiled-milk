@@ -141,13 +141,12 @@ public class Functions {
 	 * @param item
 	 */
 	public static void thinkbubble(final Item item) {
-		final ScriptContext scriptContext = PluginTask.getContextPluginTask().getScriptContext();
-		if (scriptContext == null) return;
-		final Player player = scriptContext.getContextPlayer();
+		final ScriptContext scriptContext = getContextScript();
+		final Player player = getContextPlayerOrFallback(scriptContext);
 		if (player == null) return;
 		final Bubble bubble = new Bubble(player, item.getCatalogId());
 		Npc npc;
-		if ((npc = scriptContext.getInteractingNpc()) != null) {
+		if (scriptContext != null && (npc = scriptContext.getInteractingNpc()) != null) {
 			//npc.face(player);
 			player.face(npc);
 		}
@@ -172,9 +171,7 @@ public class Functions {
 	 * @param messages
 	 */
 	public static void mes(final Npc npc, final String... messages) {
-		final ScriptContext scriptContext = PluginTask.getContextPluginTask().getScriptContext();
-		if (scriptContext == null) return;
-		final Player player = scriptContext.getContextPlayer();
+		final Player player = getContextPlayerOrFallback(getContextScript());
 		if (player == null) return;
 		for (final String message : messages) {
 			if (!message.equalsIgnoreCase("null")) {
@@ -195,9 +192,7 @@ public class Functions {
 	 * @param messages
 	 */
 	public static void mes(final String... messages) {
-		final ScriptContext scriptContext = PluginTask.getContextPluginTask().getScriptContext();
-		if (scriptContext == null) return;
-		final Player player = scriptContext.getContextPlayer();
+		final Player player = getContextPlayerOrFallback(getContextScript());
 		if (player == null) return;
 		for (final String message : messages) {
 			if (!message.equalsIgnoreCase("null")) {
@@ -213,7 +208,7 @@ public class Functions {
 	 * @param messageKeys
 	 */
 	public static void mez(final String... messageKeys) {
-		final ScriptContext scriptContext = PluginTask.getContextPluginTask().getScriptContext();
+		final ScriptContext scriptContext = getContextScript();
 		if (scriptContext == null) return;
 		final Player player = scriptContext.getContextPlayer();
 		if (player == null) return;
@@ -1148,6 +1143,18 @@ public class Functions {
 			return null;
 		}
 		return scriptContext.getBatch();
+	}
+
+	private static ScriptContext getContextScript() {
+		PluginTask pluginTask = PluginTask.getContextPluginTask();
+		return pluginTask == null ? null : pluginTask.getScriptContext();
+	}
+
+	private static Player getContextPlayerOrFallback(ScriptContext scriptContext) {
+		if (scriptContext != null && scriptContext.getContextPlayer() != null) {
+			return scriptContext.getContextPlayer();
+		}
+		return fallbackBatchPlayer.get();
 	}
 
 	public static void stopbatch() {

@@ -4702,7 +4702,7 @@ public class EntityHandler {
 		setCustomItemDefinition(2050, new ItemDef("Wool Hat", "A plain pointed hat stitched from wool", "", 6, 86, "items:86", false, true, 32, 0xFFFFFF, false, false, true, 2050));
 		setCustomItemDefinition(2051, new ItemDef("Wool Robe Top", "A simple robe top stitched from wool", "", 16, 87, "items:87", false, true, 64, 0xFFFFFF, false, false, true, 2051));
 		setCustomItemDefinition(2052, new ItemDef("Wool Robe Bottom", "A simple robe bottom stitched from wool", "", 12, 88, "items:88", false, true, 128, 0xFFFFFF, false, false, true, 2052));
-		setCustomItemDefinition(2053, new ItemDef("White Cape", "A plain cape ready for dye", "", 8, 64, "items:64", false, true, 2048, 0, false, false, true, 2053));
+		setCustomItemDefinition(2053, new ItemDef("White Cape", "A plain cape ready for dye", "", 8, 59, "items:59", false, true, 2048, 0xFFFFFF, false, false, true, 2053));
 		setCustomItemDefinition(2054, new ItemDef("Red wool wizard hat", "A red pointed hat stitched from wool", "", 6, 86, "items:86", false, true, 32, 0xFF0000, false, false, true, 2054));
 		setCustomItemDefinition(2055, new ItemDef("Yellow wool wizard hat", "A yellow pointed hat stitched from wool", "", 6, 86, "items:86", false, true, 32, 0xFFFF00, false, false, true, 2055));
 		setCustomItemDefinition(2056, new ItemDef("Blue wool wizard hat", "A blue pointed hat stitched from wool", "", 6, 86, "items:86", false, true, 32, 0x0000FF, false, false, true, 2056));
@@ -5356,23 +5356,19 @@ public class EntityHandler {
 	private static void addCustomWoodBowDefinitions(String woodName, int unstrungLongId, int unstrungShortId, int longbowId,
 		int shortbowId, int unstrungLongPrice, int unstrungShortPrice, int longbowPrice, int shortbowPrice,
 		int pictureMask, int blueMask) {
-		items.add(new ItemDef("unstrung " + woodName + " Longbow", "I need to find a string for this", "", unstrungLongPrice,
+		setCustomItemDefinition(unstrungLongId, new ItemDef("unstrung " + woodName + " Longbow", "I need to find a string for this", "", unstrungLongPrice,
 			119, "items:119", false, false, 0, pictureMask, blueMask, true, false, true, unstrungLongId));
-		items.add(new ItemDef("unstrung " + woodName + " Shortbow", "I need to find a string for this", "", unstrungShortPrice,
+		setCustomItemDefinition(unstrungShortId, new ItemDef("unstrung " + woodName + " Shortbow", "I need to find a string for this", "", unstrungShortPrice,
 			120, "items:120", false, false, 0, pictureMask, blueMask, true, false, true, unstrungShortId));
-		items.add(new ItemDef(woodName + " Longbow", "A nice sturdy bow", "", longbowPrice,
+		setCustomItemDefinition(longbowId, new ItemDef(woodName + " Longbow", "A nice sturdy bow", "", longbowPrice,
 			54, "items:54", false, true, 24, pictureMask, blueMask, true, false, true, longbowId));
-		items.add(new ItemDef(woodName + " Shortbow", "Short but effective", "", shortbowPrice,
+		setCustomItemDefinition(shortbowId, new ItemDef(woodName + " Shortbow", "Short but effective", "", shortbowPrice,
 			55, "items:55", false, true, 24, pictureMask, blueMask, true, false, true, shortbowId));
 	}
 
 	private static void addWoodCrossbowDefinition(String name, int id, int price, int pictureMask, int blueMask) {
 		ItemDef item = new ItemDef(name, "This fires crossbow bolts", "", price, 49, "items:49", false, true, 16, pictureMask, blueMask, true, false, true, id);
-		if (id < items.size()) {
-			items.set(id, item);
-		} else {
-			items.add(item);
-		}
+		setCustomItemDefinition(id, item);
 	}
 
 	private static void addFishingRodDefinition(String name, String description, int id, int price, int pictureMask, int blueMask) {
@@ -5908,15 +5904,15 @@ public class EntityHandler {
 
 	private static void addCustomWoodStaffDefinitions(String woodName, String woodDescriptor, int baseStaffId, int airStaffId,
 		int waterStaffId, int earthStaffId, int fireStaffId, int basePrice, int elementalPrice, int woodMask) {
-		items.add(new ItemDef(woodName + " Staff", "A " + woodDescriptor + " staff prepared for Enchanting", "", basePrice,
+		setCustomItemDefinition(baseStaffId, new ItemDef(woodName + " Staff", "A " + woodDescriptor + " staff prepared for Enchanting", "", basePrice,
 			85, "items:85", false, true, 16, woodMask, true, false, true, baseStaffId));
-		items.add(new ItemDef("Air " + woodName + " Staff", "A " + woodDescriptor + " staff attuned to air magic", "", elementalPrice,
+		setCustomItemDefinition(airStaffId, new ItemDef("Air " + woodName + " Staff", "A " + woodDescriptor + " staff attuned to air magic", "", elementalPrice,
 			91, "items:91", false, true, 16, 0x00FFFF, woodMask, true, false, true, airStaffId));
-		items.add(new ItemDef("Water " + woodName + " Staff", "A " + woodDescriptor + " staff attuned to water magic", "", elementalPrice,
+		setCustomItemDefinition(waterStaffId, new ItemDef("Water " + woodName + " Staff", "A " + woodDescriptor + " staff attuned to water magic", "", elementalPrice,
 			91, "items:91", false, true, 16, 0x0000FF, woodMask, true, false, true, waterStaffId));
-		items.add(new ItemDef("Earth " + woodName + " Staff", "A " + woodDescriptor + " staff attuned to earth magic", "", elementalPrice,
+		setCustomItemDefinition(earthStaffId, new ItemDef("Earth " + woodName + " Staff", "A " + woodDescriptor + " staff attuned to earth magic", "", elementalPrice,
 			91, "items:91", false, true, 16, 0x703800, woodMask, true, false, true, earthStaffId));
-		items.add(new ItemDef("Fire " + woodName + " Staff", "A " + woodDescriptor + " staff attuned to fire magic", "", elementalPrice,
+		setCustomItemDefinition(fireStaffId, new ItemDef("Fire " + woodName + " Staff", "A " + woodDescriptor + " staff attuned to fire magic", "", elementalPrice,
 			91, "items:91", false, true, 16, 0xFF0000, woodMask, true, false, true, fireStaffId));
 	}
 

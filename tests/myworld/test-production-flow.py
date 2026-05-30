@@ -45,6 +45,7 @@ FLETCHING = (
     / "fletching"
     / "Fletching.java"
 )
+FUNCTIONS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "plugins" / "Functions.java"
 ITEM_ARROW_HEAD_DEF = ROOT / "server" / "conf" / "server" / "defs" / "extras" / "ItemArrowHeadDef.xml"
 ITEM_DART_TIP_DEF = ROOT / "server" / "conf" / "server" / "defs" / "extras" / "ItemDartTipDef.xml"
 
@@ -63,6 +64,7 @@ def main() -> None:
     smithing_text = SMITHING.read_text(encoding="utf-8")
     crafting_text = CRAFTING.read_text(encoding="utf-8")
     fletching_text = FLETCHING.read_text(encoding="utf-8")
+    functions_text = FUNCTIONS.read_text(encoding="utf-8")
 
     require(
         smithing_text,
@@ -182,6 +184,21 @@ def main() -> None:
         fletching_text,
         "fletching.batchLogCutting(player, log, recipe.resultId, recipe.requiredLevel, recipe.exp, recipe.message, recipe.craftingRecipe);",
         "Fletching production should route into the existing log-cutting batch path",
+    )
+    require(
+        functions_text,
+        "private static Player getContextPlayerOrFallback(ScriptContext scriptContext)",
+        "Shared production helpers should support UI packet execution without plugin script context",
+    )
+    require(
+        functions_text,
+        "final Player player = getContextPlayerOrFallback(getContextScript());",
+        "Production message helpers should use the fallback batch player outside plugin script context",
+    )
+    require(
+        functions_text,
+        "final Player player = getContextPlayerOrFallback(scriptContext);",
+        "Production item bubble helper should use the fallback batch player outside plugin script context",
     )
 
     print("PASS: Production flow contracts validated")

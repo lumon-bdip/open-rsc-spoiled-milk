@@ -108,6 +108,10 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 				}
 				return;
 			}
+			if (shouldOpenSmeltingChoice(item.getCatalogId()) && !ActionSender.isRetroClient(player)) {
+				openSmeltingInterface(player);
+				return;
+			}
 			SmeltRecipe directRecipe = getDirectOreRecipe(item.getCatalogId());
 			if (directRecipe != null) {
 				int repeat = 1;
@@ -142,6 +146,10 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		player.setAttribute("production_session", session);
 		player.setAttribute("production_starter", (ProductionStarter) Smelting::beginFurnaceCategoryFromInterface);
 		ActionSender.showProductionInterface(player, session);
+	}
+
+	private boolean shouldOpenSmeltingChoice(int itemId) {
+		return itemId == ItemId.TIN_ORE.id() || itemId == ItemId.COPPER_ORE.id();
 	}
 
 	private ProductionSession createFurnaceCategorySession(Player player) {
