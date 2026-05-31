@@ -68,6 +68,7 @@ public final class MyWorldQuestShortcuts {
 			"If Elvarg has already fallen,",
 			"then I'll recognise you as a dragon slayer.",
 			"Congratulations, you have completed the Dragon Slayer quest");
+		ensureUtilityItem(player, ItemId.ANTI_DRAGON_BREATH_SHIELD.id(), 1);
 	}
 
 	public static void completeErnestTheChicken(final Player player, final Npc npc) {

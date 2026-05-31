@@ -38,6 +38,15 @@ def main() -> None:
     require(guildmaster, "player.getSkills().getMaxStat(Skill.MAGIC.id()) >= DRAGON_SLAYER_MAGIC_LEVEL", "magic validation")
     forbid(guildmaster, "player.getConfig().BASED_MAP_DATA >= 23 && player.getClientVersion() >= 73", "client/map start gate")
 
+    shortcuts = (ROOT / "server/plugins/com/openrsc/server/plugins/custom/quests/MyWorldQuestShortcuts.java").read_text(encoding="utf-8")
+    dragon_shortcut = shortcuts.split("public static void completeDragonSlayer", 1)[1].split("\n\tpublic static void", 1)[0]
+    require(dragon_shortcut, "Quest.DRAGON_SLAYER", "Dragon Slayer shortcut reward hook")
+    require(
+        dragon_shortcut,
+        "ensureUtilityItem(player, ItemId.ANTI_DRAGON_BREATH_SHIELD.id(), 1);",
+        "Dragon Slayer shortcut anti-dragon shield reward",
+    )
+
     stage_zero = dragon_slayer.split("case 0:", 1)[1].split("break;", 1)[0]
     stage_one = dragon_slayer.split("case 1:", 1)[1].split("break;", 1)[0]
     stage_two = dragon_slayer.split("case 2:", 1)[1].split("break;", 1)[0]
