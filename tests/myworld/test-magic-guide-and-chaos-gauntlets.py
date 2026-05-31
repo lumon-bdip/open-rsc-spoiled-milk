@@ -61,7 +61,7 @@ def main() -> None:
     guide = GUIDE.read_text(encoding="utf-8")
     handler = SPELL_HANDLER.read_text(encoding="utf-8")
 
-    require(guide, "All spells that use mind runes will do damage as though they use chaos runes", "Magic guide chaos gauntlet line")
+    require(guide, "Spells using mind runes will do damage equal to chaos runes", "Magic guide chaos gauntlet line")
     require(guide, "Thunder spells can Startle and negate the next attack", "Magic guide Thunder dual-effect line")
     require(guide, "Acid spells can Corrode and apply poison", "Magic guide Acid dual-effect line")
     require(guide, "Ice spells can Frostbite and reflect damage", "Magic guide Ice dual-effect line")

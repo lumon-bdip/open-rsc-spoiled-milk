@@ -157,7 +157,7 @@ from the summon display name in lowercase with spaces converted to dashes:
 
 - level: `14`
 - role: combat, melee
-- cost: `1 Life rune`, `1 Body rune`, `1 Nature rune`, `1 bones`
+- cost: `1 Life rune`, `2 Body runes`, `1 bones`
 - health: `14`, plus `1` every `8` Summoning levels beyond requirement
 - max damage: `2`, plus `1` every `30` Summoning levels beyond requirement
 - damage absorption: `60%`

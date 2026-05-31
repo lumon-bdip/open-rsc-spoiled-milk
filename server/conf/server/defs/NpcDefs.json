@@ -6244,7 +6244,7 @@
         "name": "Thrander",
         "description": "A smith of some sort",
         "command": "Trade",
-        "command2": "",
+        "command2": "Shop",
         "attack": 15,
         "strength": 6,
         "hits": 22,

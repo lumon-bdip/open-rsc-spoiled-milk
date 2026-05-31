@@ -103,8 +103,7 @@ public final class Summoning {
 	private static final SummonProfile BEAR_PROFILE = combatProfile(
 		"Ironhide Bear", 14, 55, NpcId.BEAR_LVL24.id(), KIND_BEAR, 14, 8, 2, 30, 60, TRAIT_TANK,
 		cost(ItemId.LIFE_RUNE.id(), 1),
-		cost(ItemId.BODY_RUNE.id(), 1),
-		cost(ItemId.NATURE_RUNE.id(), 1),
+		cost(ItemId.BODY_RUNE.id(), 2),
 		cost(ItemId.BONES.id(), 1)
 	);
 	private static final SummonProfile UNICORN_PROFILE = supportProfile(

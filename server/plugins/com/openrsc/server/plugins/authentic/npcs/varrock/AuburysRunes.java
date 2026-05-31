@@ -17,9 +17,9 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public final class AuburysRunes extends AbstractShop {
 
-	private final Shop shop = new Shop(false, 3000, 100, 70, 2, new Item(ItemId.FIRE_RUNE.id(),
-		50), new Item(ItemId.WATER_RUNE.id(), 50), new Item(ItemId.AIR_RUNE.id(), 50), new Item(ItemId.EARTH_RUNE.id(),
-		50), new Item(ItemId.MIND_RUNE.id(), 50), new Item(ItemId.BODY_RUNE.id(), 50));
+	private final Shop shop = new Shop(false, 1500, 100, 70, 2, new Item(ItemId.FIRE_RUNE.id(),
+		1000), new Item(ItemId.WATER_RUNE.id(), 1000), new Item(ItemId.AIR_RUNE.id(), 1000), new Item(ItemId.EARTH_RUNE.id(),
+		1000), new Item(ItemId.MIND_RUNE.id(), 1000), new Item(ItemId.BODY_RUNE.id(), 1000));
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {

@@ -14,13 +14,13 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public class HicktonArcheryShop extends AbstractShop {
 
-	private final Shop shop = new Shop(false, 10000, 100, 80, 1,
-		new Item(ItemId.TIN_ARROWS.id(), 200), new Item(ItemId.COPPER_ARROWS.id(), 200), new Item(ItemId.BRONZE_ARROWS.id(), 200),
-		new Item(ItemId.IRON_ARROWS.id(), 180), new Item(ItemId.STEEL_ARROWS.id(), 160), new Item(ItemId.MITHRIL_ARROWS.id(), 140),
-		new Item(ItemId.COPPER_BOLTS.id(), 200), new Item(ItemId.BRONZE_BOLTS.id(), 180), new Item(ItemId.IRON_BOLTS.id(), 160),
-		new Item(ItemId.STEEL_BOLTS.id(), 140), new Item(ItemId.MITHRIL_BOLTS.id(), 120),
-		new Item(ItemId.TIN_ARROW_HEADS.id(), 200), new Item(ItemId.COPPER_ARROW_HEADS.id(), 180), new Item(ItemId.BRONZE_ARROW_HEADS.id(), 160),
-		new Item(ItemId.IRON_ARROW_HEADS.id(), 140), new Item(ItemId.STEEL_ARROW_HEADS.id(), 120), new Item(ItemId.MITHRIL_ARROW_HEADS.id(), 100),
+	private final Shop shop = new Shop(false, 5000, 100, 80, 1,
+		new Item(ItemId.TIN_ARROWS.id(), 1000), new Item(ItemId.COPPER_ARROWS.id(), 1000), new Item(ItemId.BRONZE_ARROWS.id(), 1000),
+		new Item(ItemId.IRON_ARROWS.id(), 1000), new Item(ItemId.STEEL_ARROWS.id(), 1000), new Item(ItemId.MITHRIL_ARROWS.id(), 1000),
+		new Item(ItemId.COPPER_BOLTS.id(), 1000), new Item(ItemId.BRONZE_BOLTS.id(), 1000), new Item(ItemId.IRON_BOLTS.id(), 1000),
+		new Item(ItemId.STEEL_BOLTS.id(), 1000), new Item(ItemId.MITHRIL_BOLTS.id(), 1000),
+		new Item(ItemId.TIN_ARROW_HEADS.id(), 1000), new Item(ItemId.COPPER_ARROW_HEADS.id(), 1000), new Item(ItemId.BRONZE_ARROW_HEADS.id(), 1000),
+		new Item(ItemId.IRON_ARROW_HEADS.id(), 1000), new Item(ItemId.STEEL_ARROW_HEADS.id(), 1000), new Item(ItemId.MITHRIL_ARROW_HEADS.id(), 1000),
 		new Item(ItemId.SHORTBOW.id(), 4), new Item(ItemId.LONGBOW.id(), 2), new Item(ItemId.OAK_SHORTBOW.id(), 4),
 		new Item(ItemId.OAK_LONGBOW.id(), 4), new Item(ItemId.WILLOW_SHORTBOW.id(), 3), new Item(ItemId.WILLOW_LONGBOW.id(), 3),
 		new Item(ItemId.MAPLE_SHORTBOW.id(), 2), new Item(ItemId.MAPLE_LONGBOW.id(), 2), new Item(ItemId.YEW_SHORTBOW.id(), 1),

@@ -33,8 +33,12 @@ TAILOR_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plug
 ZAFF_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "varrock" / "ZaffsStaffs.java"
 MAGIC_STORE_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "yanille" / "MagicStoreOwner.java"
 BETTY_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "portsarim" / "BettysMagicEmporium.java"
+AUBURY_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "varrock" / "AuburysRunes.java"
+LUNDAIL_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "minigames" / "mage_arena" / "Lundail.java"
 CRAFTING_EQUIPMENT_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "CraftingEquipmentShops.java"
 NPC_DEFS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefs.json"
+ENTITY_HANDLER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "external" / "EntityHandler.java"
+ABSTRACT_SHOP_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "plugins" / "AbstractShop.java"
 
 
 def fail(message: str) -> NoReturn:
@@ -83,6 +87,13 @@ def main() -> None:
         '"id": 160',
         '"name": "Thrander"',
         '"command": "Trade"',
+        '"command2": "Shop"',
+    ))
+    ensure_contains(ENTITY_HANDLER_PATH, (
+        "NpcId.THRANDER.id()",
+    ))
+    ensure_contains(ABSTRACT_SHOP_PATH, (
+        'command.equalsIgnoreCase("Shop")',
     ))
 
     ensure_contains(ZEKE_PATH, (
@@ -166,6 +177,9 @@ def main() -> None:
 
     for path in (LOWE_PATH, HICKTON_PATH, KING_LATHAS_PATH, GULLUCK_PATH):
         ensure_contains(path, (
+            "new Item(ItemId.TIN_ARROWS.id(), 1000)",
+            "new Item(ItemId.MITHRIL_BOLTS.id(), 1000)",
+            "new Item(ItemId.MITHRIL_ARROW_HEADS.id(), 1000)",
             "ItemId.TIN_ARROWS.id()",
             "ItemId.COPPER_ARROWS.id()",
             "ItemId.MAGIC_SHORTBOW.id()",
@@ -355,14 +369,19 @@ def main() -> None:
         "ItemId.BROWN_APRON.id()",
     ))
 
-    for path in (ZAFF_PATH, MAGIC_STORE_PATH, BETTY_PATH):
+    for path in (ZAFF_PATH, MAGIC_STORE_PATH, BETTY_PATH, AUBURY_PATH, LUNDAIL_PATH):
         ensure_contains(path, (
+            "1000",
             "ItemId.FIRE_RUNE.id()",
             "ItemId.WATER_RUNE.id()",
             "ItemId.AIR_RUNE.id()",
             "ItemId.EARTH_RUNE.id()",
             "ItemId.MIND_RUNE.id()",
             "ItemId.BODY_RUNE.id()",
+        ))
+
+    for path in (ZAFF_PATH, MAGIC_STORE_PATH, BETTY_PATH):
+        ensure_contains(path, (
             "ItemId.STAFF.id()",
             "ItemId.WOOL_WIZARD_HAT.id()",
             "ItemId.WOOL_ROBE_TOP.id()",

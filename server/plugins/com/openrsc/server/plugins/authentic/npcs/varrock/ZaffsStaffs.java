@@ -49,16 +49,16 @@ public final class ZaffsStaffs extends AbstractShop {
 	public Shop getShop(World world) {
 		if(shop == null) {
 			shop = (world.getServer().getConfig().MEMBER_WORLD) ?
-				new Shop(false, 30000, 100, 55, 2,
-					new Item(ItemId.FIRE_RUNE.id(), 50), new Item(ItemId.WATER_RUNE.id(), 50),
-					new Item(ItemId.AIR_RUNE.id(), 50), new Item(ItemId.EARTH_RUNE.id(), 50),
-					new Item(ItemId.MIND_RUNE.id(), 50), new Item(ItemId.BODY_RUNE.id(), 50),
+				new Shop(false, 15000, 100, 55, 2,
+					new Item(ItemId.FIRE_RUNE.id(), 1000), new Item(ItemId.WATER_RUNE.id(), 1000),
+					new Item(ItemId.AIR_RUNE.id(), 1000), new Item(ItemId.EARTH_RUNE.id(), 1000),
+					new Item(ItemId.MIND_RUNE.id(), 1000), new Item(ItemId.BODY_RUNE.id(), 1000),
 					new Item(ItemId.STAFF.id(), 5),
 					new Item(ItemId.WOOL_WIZARD_HAT.id(), 3), new Item(ItemId.WOOL_ROBE_TOP.id(), 3), new Item(ItemId.WOOL_ROBE_SKIRT.id(), 3)) :
-				new Shop(false, 30000, 100, 55, 2,
-					new Item(ItemId.FIRE_RUNE.id(), 50), new Item(ItemId.WATER_RUNE.id(), 50),
-					new Item(ItemId.AIR_RUNE.id(), 50), new Item(ItemId.EARTH_RUNE.id(), 50),
-					new Item(ItemId.MIND_RUNE.id(), 50), new Item(ItemId.BODY_RUNE.id(), 50),
+				new Shop(false, 15000, 100, 55, 2,
+					new Item(ItemId.FIRE_RUNE.id(), 1000), new Item(ItemId.WATER_RUNE.id(), 1000),
+					new Item(ItemId.AIR_RUNE.id(), 1000), new Item(ItemId.EARTH_RUNE.id(), 1000),
+					new Item(ItemId.MIND_RUNE.id(), 1000), new Item(ItemId.BODY_RUNE.id(), 1000),
 					new Item(ItemId.STAFF.id(), 5),
 					new Item(ItemId.WOOL_WIZARD_HAT.id(), 3), new Item(ItemId.WOOL_ROBE_TOP.id(), 3), new Item(ItemId.WOOL_ROBE_SKIRT.id(), 3));
 		}

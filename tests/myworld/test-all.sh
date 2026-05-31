@@ -86,6 +86,7 @@ python3 ./tests/myworld/test-brown-apron-crafting-guild.py
 python3 ./tests/myworld/test-skill-guide-info-pass.py
 python3 ./tests/myworld/test-skill-guides.py
 python3 ./tests/myworld/test-summoning-animation-effect.py
+python3 ./tests/myworld/test-summoning-costs.py
 python3 ./tests/myworld/test-summoning-display-names.py
 python3 ./tests/myworld/test-summoning-spawn-placement.py
 python3 ./tests/myworld/test-tier-rebalance.py

@@ -14,9 +14,9 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public final class Lundail extends AbstractShop {
 
-	private final Shop shop = new Shop(false, 6000, 190, 60, 10, new Item(ItemId.AIR_RUNE.id(),
-		100), new Item(ItemId.FIRE_RUNE.id(), 100), new Item(ItemId.WATER_RUNE.id(), 100), new Item(ItemId.EARTH_RUNE.id(),
-		100), new Item(ItemId.MIND_RUNE.id(), 100), new Item(ItemId.BODY_RUNE.id(), 100));
+	private final Shop shop = new Shop(false, 3000, 190, 60, 10, new Item(ItemId.AIR_RUNE.id(),
+		1000), new Item(ItemId.FIRE_RUNE.id(), 1000), new Item(ItemId.WATER_RUNE.id(), 1000), new Item(ItemId.EARTH_RUNE.id(),
+		1000), new Item(ItemId.MIND_RUNE.id(), 1000), new Item(ItemId.BODY_RUNE.id(), 1000));
 
 	@Override
 	public void onTalkNpc(Player player, final Npc n) {

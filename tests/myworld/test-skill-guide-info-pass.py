@@ -32,6 +32,9 @@ def main() -> None:
         '"Support summons consume life runes for upkeep"',
         '"Utility summons complete one task, then leave"',
         '"Summoning has a 5 second interruptible charge"',
+        "isSummoningInfoTab()",
+        "isExpositoryTab() && !isSummoningInfoTab() ? x + 10 : detailX + 10",
+        "int headerX = isSummoningInfoTab() ? x + 85 : x + 5",
     ):
         require(client + guide, snippet, "Summoning guide info")
 
@@ -51,6 +54,10 @@ def main() -> None:
         '"Hides and carapaces must be tanned at tanning racks"',
         '"Examine armor pieces to read their trait"',
         '"Set traits can grant stats, procs, or spirits"',
+        '"Arrowheads moved to Crafting and use molds"',
+        '"Bolts moved to Crafting and use molds"',
+        '"Dart tips moved to Crafting and use molds"',
+        '"Throwing knives moved to Crafting and use molds"',
         '"Can be opened at level 34"',
         '"Can enter Crafting Guild at level 40"',
     ):

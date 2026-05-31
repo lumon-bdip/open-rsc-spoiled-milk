@@ -148,6 +148,7 @@ public final class EntityHandler {
 		NpcId.OGRE_TRADER_ROCKCAKE.id(), NpcId.OGRE_TRADER_FOOD.id(), NpcId.SHANTAY_PASS_GUARD_MOVING.id(),
 		NpcId.SHANTAY_PASS_GUARD_STANDING.id(), NpcId.ASSISTANT.id(), NpcId.NURMOF.id(),
 		NpcId.SIEGFRIED_ERKLE.id(), NpcId.TEA_SELLER.id(), NpcId.FIONELLA.id(),
+		NpcId.THRANDER.id(),
 		NpcId.LUNDAIL.id(), NpcId.DWARVEN_SMITHY.id(), NpcId.GARDENER.id()
 	};
 

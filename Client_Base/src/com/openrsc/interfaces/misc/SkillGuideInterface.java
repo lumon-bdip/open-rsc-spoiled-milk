@@ -119,7 +119,8 @@ public final class SkillGuideInterface {
 			return;
 		}
 		if (isExpositoryTab()) {
-			mc.getSurface().drawString("Important information to know", x + 5, y + 94, 0xffffff, 2);
+			int headerX = isSummoningInfoTab() ? x + 85 : x + 5;
+			mc.getSurface().drawString("Important information to know", headerX, y + 94, 0xffffff, 2);
 			return;
 		}
 		mc.getSurface().drawString("Level", x + 5, y + 94, 0xffffff, 2);
@@ -170,7 +171,7 @@ public final class SkillGuideInterface {
 				drawString(curItem.getLevelReq(), levelX, allY + 25, 2, textColour);
 			}
 
-			int textX = isExpositoryTab() ? x + 10 : detailX + 10;
+			int textX = isExpositoryTab() && !isSummoningInfoTab() ? x + 10 : detailX + 10;
 			drawString(curItem.getSkillDetail(), textX, allY + 25, 2, textColour);
 
 			//mc.getSurface().drawLineHoriz(detailX - 75, allY, width, 0);
@@ -258,6 +259,10 @@ public final class SkillGuideInterface {
 		}
 		String tab = mc.skillGuideChosenTabs.get(curTab);
 		return isInfoTab() || (mc.getSkillGuideChosen().equals("Prayer") && tab.equals("Devotion"));
+	}
+
+	private boolean isSummoningInfoTab() {
+		return mc.getSkillGuideChosen().equals("Summoning") && isInfoTab();
 	}
 
 	public void changeTab(int tabNum) {
@@ -582,7 +587,7 @@ public final class SkillGuideInterface {
 					skillMenuEntries.add(new SkillMenuItem(34, "", "Slow lowers attack speed for 5 attacks"));
 					skillMenuEntries.add(new SkillMenuItem(31, "", "Scorch lowers defense for 5 attacks"));
 					skillMenuEntries.add(new SkillMenuItem(41, "", "Withering combines all elemental debuffs"));
-					skillMenuEntries.add(new SkillMenuItem(701, "", "All spells that use mind runes will do damage as though they use chaos runes"));
+					skillMenuEntries.add(new SkillMenuItem(701, "", "Spells using mind runes will do damage equal to chaos runes"));
 					skillMenuEntries.add(new SkillMenuItem(31, "", "Thunder spells can Startle and negate the next attack"));
 					skillMenuEntries.add(new SkillMenuItem(34, "", "Acid spells can Corrode and apply poison"));
 					skillMenuEntries.add(new SkillMenuItem(33, "", "Ice spells can Frostbite and reflect damage"));
@@ -1015,7 +1020,7 @@ public final class SkillGuideInterface {
 		if (curTab == 0) {
 			addSummonGuide(23, "1", "Broodling Spider - Combat; 1 life, 1 body");
 			addSummonGuide(114, "7", "Mischief Imp - Support; 1 life, 1 body, ashes");
-			addSummonGuide(8, "14", "Ironhide Bear - Combat; 1 life, body, nature, bones");
+			addSummonGuide(8, "14", "Ironhide Bear - Combat; 1 life, 2 body, bones");
 			addSummonGuide(0, "20", "Sacred Unicorn - Support; 1 life, body, cosmic, bones");
 			addSummonGuide(43, "26", "Duskwind Bat - Combat; 1 life, air, body, nature, bat bones");
 			addSummonGuide(241, "33", "Pack Rat - Utility; 1 life, 2 law, body, nature, bones");
@@ -1423,6 +1428,10 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Examine armor pieces to read their trait"));
 			skillMenuEntries.add(new SkillMenuItem(1869, "", "Set traits can grant stats, procs, or spirits"));
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor slots lower Magic Power"));
+			skillMenuEntries.add(new SkillMenuItem(1076, "", "Arrowheads moved to Crafting and use molds"));
+			skillMenuEntries.add(new SkillMenuItem(11, "", "Bolts moved to Crafting and use molds"));
+			skillMenuEntries.add(new SkillMenuItem(1013, "", "Dart tips moved to Crafting and use molds"));
+			skillMenuEntries.add(new SkillMenuItem(1996, "", "Throwing knives moved to Crafting and use molds"));
 			skillMenuEntries.add(new SkillMenuItem(779, "", "Can be opened at level 34"));
 			skillMenuEntries.add(new SkillMenuItem(191, "", "Can enter Crafting Guild at level 40"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
