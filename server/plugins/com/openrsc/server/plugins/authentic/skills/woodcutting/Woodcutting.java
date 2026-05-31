@@ -212,39 +212,39 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 		GameObject obj = player.getViewArea().getGameObject(object.getID(), object.getX(), object.getY());
 		if (!player.getConfig().SHARED_GATHERING_RESOURCES || obj != null) {
 			int quantity = Formulae.calcGatheringYield(def.getReqLevel(), player.getSkills().getLevel(Skill.WOODCUTTING.id()), getAxeTier(axeId));
-			int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(def.getLogId(), quantity));
-			int remainingQuantity = quantity - bankedQuantity;
-			int storedQuantity = Math.min(remainingQuantity, player.getCarriedItems().getInventory().getFreeSlots());
-			if (storedQuantity > 0) {
-				give(player, def.getLogId(), storedQuantity);
-			}
-			int overflowQuantity = remainingQuantity - storedQuantity;
-			if (overflowQuantity > 0) {
-				dropOverflow(player, object, def.getLogId(), overflowQuantity);
-			}
-			int successfulQuantity = bankedQuantity + storedQuantity;
-			player.playerServerMessage(MessageType.QUEST,
-				successfulQuantity > 1 ? "You get " + successfulQuantity + " logs"
-					: successfulQuantity == 1 ? "You get some wood"
-					: "You get some wood, but have no room to keep it");
-			if (overflowQuantity > 0) {
-				player.playerServerMessage(MessageType.QUEST, "Any excess falls to the ground because you have no room");
-			}
+			boolean rareRewardAwarded = player.getConfig().WANT_MYWORLD && maybeAwardMyWorldWoodcuttingSeed(player, object, getAxeTier(axeId));
 			if (isOldWoodcut) {
 				player.incExp(Skill.WOODCUTTING.id(), getExpRetro(player.getSkills().getMaxStat(Skill.WOODCUTTING.id()), 25) * quantity, true);
 			} else {
 				player.incExp(Skill.WOODCUTTING.id(), def.getExp() * quantity, true);
 			}
 
-			if (player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance() > 0.0D
-				&& DataConversions.getRandom().nextDouble() < player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance()
-				&& !player.getCarriedItems().getInventory().full()) {
-				player.getCarriedItems().getInventory().add(new Item(def.getLogId()));
-				player.playerServerMessage(MessageType.QUEST, "Your amulet hums and another log appears.");
-			}
+			if (!rareRewardAwarded) {
+				int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(def.getLogId(), quantity));
+				int remainingQuantity = quantity - bankedQuantity;
+				int storedQuantity = Math.min(remainingQuantity, player.getCarriedItems().getInventory().getFreeSlots());
+				if (storedQuantity > 0) {
+					give(player, def.getLogId(), storedQuantity);
+				}
+				int overflowQuantity = remainingQuantity - storedQuantity;
+				if (overflowQuantity > 0) {
+					dropOverflow(player, object, def.getLogId(), overflowQuantity);
+				}
+				int successfulQuantity = bankedQuantity + storedQuantity;
+				player.playerServerMessage(MessageType.QUEST,
+					successfulQuantity > 1 ? "You get " + successfulQuantity + " logs"
+						: successfulQuantity == 1 ? "You get some wood"
+						: "You get some wood, but have no room to keep it");
+				if (overflowQuantity > 0) {
+					player.playerServerMessage(MessageType.QUEST, "Any excess falls to the ground because you have no room");
+				}
 
-			if (player.getConfig().WANT_MYWORLD && bankedQuantity + storedQuantity > 0) {
-				maybeAwardMyWorldWoodcuttingSeed(player, object, getAxeTier(axeId));
+				if (player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance() > 0.0D
+					&& DataConversions.getRandom().nextDouble() < player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance()
+					&& !player.getCarriedItems().getInventory().full()) {
+					player.getCarriedItems().getInventory().add(new Item(def.getLogId()));
+					player.playerServerMessage(MessageType.QUEST, "Your amulet hums and another log appears.");
+				}
 			}
 
 		} else {
@@ -351,24 +351,25 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 		return false;
 	}
 
-	private void maybeAwardMyWorldWoodcuttingSeed(Player player, GameObject object, int axeTier) {
+	private boolean maybeAwardMyWorldWoodcuttingSeed(Player player, GameObject object, int axeTier) {
 		if (DataConversions.getRandom().nextDouble() >= getWoodcuttingSeedRewardChance(player)) {
-			return;
+			return false;
 		}
 		SeedReward reward = rollMyWorldWoodcuttingSeed(axeTier);
 		if (reward == null) {
-			return;
+			return false;
 		}
 		Item seed = new Item(reward.itemId, 1);
 		String seedName = seed.getDef(player.getWorld()).getName().toLowerCase();
 		if (player.getCarriedItems().getInventory().full()) {
 			player.getWorld().registerItem(new GroundItem(player.getWorld(), reward.itemId, object.getX(), object.getY(), 1, player));
 			player.playerServerMessage(MessageType.QUEST, "You find " + formatSeedName(seedName) + ", but it falls to the ground.");
-			return;
+			return true;
 		}
 		player.getCarriedItems().getInventory().add(seed);
 		player.playerServerMessage(MessageType.QUEST, "You find " + formatSeedName(seedName) + " among the branches.");
 		maybeDoubleRareGatheringReward(player, seed, "Your cosmic amulet glimmers and another seed appears.");
+		return true;
 	}
 
 	private void maybeDoubleRareGatheringReward(Player player, Item item, String message) {

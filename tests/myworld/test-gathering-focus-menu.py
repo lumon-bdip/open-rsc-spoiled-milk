@@ -33,6 +33,12 @@ def main() -> None:
             "Walking should hide the temporary focus menu instead of extending it")
     require("getGatheringFocusKindForItem(int itemId)" in client and "hasEquippedGatheringFocusTool(this.activeGatheringFocusKind)" in client,
             "Temporary focus menu should only show for the gathering action matching the equipped tool")
+    require("private int activeGatheringFocusItemId = -1;" in client,
+            "Temporary focus menu should remember the active action item")
+    require("isSameVisibleGatheringFocusAction(itemId, focusKind, now)" in client,
+            "Repeating the same visible gathering action should refresh the timer without rebuilding the menu")
+    require("this.gatheringFocusMenuHideAt = actionEnd + 2500L;\n\t\t\treturn;\n\t\t}\n\t\tthis.activeGatheringFocusKind = focusKind;" in client,
+            "Same-action refresh should return before replacing the active focus menu identity")
     require("shouldDrawGatheringFocusMenu()" in client,
             "Focus menu drawing should be gated by the new visibility mode")
     require("Tool Focus Menu - " in client and "C_GATHERING_FOCUS_MENU = (C_GATHERING_FOCUS_MENU + 1) % 3;" in client,

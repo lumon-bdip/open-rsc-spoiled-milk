@@ -189,6 +189,11 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		new FishingSpecialReward(ItemId.KING_BLACK_DRAGON_BOOTS.id(), 10, 1)
 	};
 
+	private static final FishingSpecialReward[] MYWORLD_FISHING_KEY_HALF_SPECIAL_REWARDS = {
+		new FishingSpecialReward(ItemId.TOOTH_KEY_HALF.id(), 10, 3),
+		new FishingSpecialReward(ItemId.LOOP_KEY_HALF.id(), 10, 3)
+	};
+
 	private static final class FishingLocation {
 		private final int minX;
 		private final int minY;
@@ -320,14 +325,17 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 
 		FishEntry caught = rollMyWorldFish(player, eligibleFish, rodTier);
 		Item fish = new Item(caught.itemId);
-		sendCatchMessage(player, fish);
-		if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(fish) <= 0) {
-			inventory.add(fish);
+		boolean rareRewardAwarded = maybeAwardMyWorldFishingSpecialReward(player, rodTier);
+		if (!rareRewardAwarded) {
+			sendCatchMessage(player, fish);
+			if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(fish) <= 0) {
+				inventory.add(fish);
+			}
 		}
 		player.incExp(Skill.FISHING.id(), caught.exp, true);
-		maybeAwardMyWorldFishingSpecialReward(player, rodTier);
 
-		if (player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance() > 0.0D
+		if (!rareRewardAwarded
+			&& player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance() > 0.0D
 			&& DataConversions.getRandom().nextDouble() < player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance()
 			&& !inventory.full()) {
 			inventory.add(new Item(fish.getCatalogId(), 1));
@@ -434,21 +442,22 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		}
 	}
 
-	private void maybeAwardMyWorldFishingSpecialReward(Player player, int rodTier) {
+	private boolean maybeAwardMyWorldFishingSpecialReward(Player player, int rodTier) {
 		double rewardChance = getFishingSpecialRewardChance(player);
 		if (rewardChance <= 0.0D || DataConversions.getRandom().nextDouble() >= rewardChance) {
-			return;
+			return false;
 		}
 		Inventory inventory = player.getCarriedItems().getInventory();
 		if (inventory.full()) {
 			player.playerServerMessage(MessageType.QUEST, "You spot something else in the water, but your inventory is too full to hold it.");
-			return;
+			return false;
 		}
 		FishingSpecialReward reward = rollMyWorldFishingSpecialReward(rodTier);
 		Item item = new Item(reward.itemId, 1);
 		inventory.add(item);
-		player.playerServerMessage(MessageType.QUEST, "You also find " + formatFishingSpecialRewardName(player, item) + ".");
+		player.playerServerMessage(MessageType.QUEST, "You find " + formatFishingSpecialRewardName(player, item) + ".");
 		maybeDoubleRareGatheringReward(player, item, "Your cosmic amulet glimmers and another find appears.");
+		return true;
 	}
 
 	private void maybeDoubleRareGatheringReward(Player player, Item item, String message) {
@@ -473,6 +482,9 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		for (FishingSpecialReward reward : MYWORLD_FISHING_LEATHER_SPECIAL_REWARDS) {
 			totalWeight += Formulae.adjustedSideRewardWeightForToolTier(reward.tier, rodTier, reward.weight);
 		}
+		for (FishingSpecialReward reward : MYWORLD_FISHING_KEY_HALF_SPECIAL_REWARDS) {
+			totalWeight += Formulae.adjustedSideRewardWeightForToolTier(reward.tier, rodTier, reward.weight);
+		}
 		int roll = DataConversions.random(1, totalWeight);
 		for (FishingSpecialReward reward : MYWORLD_FISHING_STATIC_SPECIAL_REWARDS) {
 			roll -= reward.weight;
@@ -481,6 +493,16 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 			}
 		}
 		for (FishingSpecialReward reward : MYWORLD_FISHING_LEATHER_SPECIAL_REWARDS) {
+			int adjustedWeight = Formulae.adjustedSideRewardWeightForToolTier(reward.tier, rodTier, reward.weight);
+			if (adjustedWeight <= 0) {
+				continue;
+			}
+			roll -= adjustedWeight;
+			if (roll <= 0) {
+				return reward;
+			}
+		}
+		for (FishingSpecialReward reward : MYWORLD_FISHING_KEY_HALF_SPECIAL_REWARDS) {
 			int adjustedWeight = Formulae.adjustedSideRewardWeightForToolTier(reward.tier, rodTier, reward.weight);
 			if (adjustedWeight <= 0) {
 				continue;

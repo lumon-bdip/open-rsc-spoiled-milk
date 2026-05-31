@@ -340,36 +340,21 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 			}
 		}
 		if (mineLvl >= def.getReqLevel()) {
-				double gemChance = getRandomGemChance(player);
-				double gemRoll = DataConversions.getRandom().nextDouble();
-				boolean gemProc = gemChance > 0.0D && gemRoll < gemChance;
-				if (gemProc) {
-				player.playSound("foundgem");
-				Item gem = new Item(getGem(), 1);
-				if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(gem) > 0) {
-					player.playerServerMessage(MessageType.QUEST, "You just found a" + gem.getDef(player.getWorld()).getName().toLowerCase().replaceAll("uncut", "") + "!");
-					maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
-				} else if (!player.getCarriedItems().getInventory().full()) {
-					player.getCarriedItems().getInventory().add(gem);
-					player.playerServerMessage(MessageType.QUEST, "You just found a" + gem.getDef(player.getWorld()).getName().toLowerCase().replaceAll("uncut", "") + "!");
-					maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
-				} else {
-					player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), rock.getX(), rock.getY(), 1, player));
-					player.playerServerMessage(MessageType.QUEST, "You find a gem, but have no room to keep it, so it falls to the ground");
-				}
-			}
-				GameObject obj = player.getViewArea().getGameObject(rock.getID(), rock.getX(), rock.getY());
-				if (!player.getConfig().SHARED_GATHERING_RESOURCES || obj != null) {
-					// Successful mining attempt
-					// It is authentic to allow multiple players to get the rock if they have already started mining it.
-					// In retro mechanic, if other player had depleted it you would not get it
-					// In both cases if there is no ore in the rock, there will be no retry
-					int quantity = Formulae.calcGatheringYield(def.getReqLevel(), mineLvl, getPickaxeTier(axeId));
+			GameObject obj = player.getViewArea().getGameObject(rock.getID(), rock.getX(), rock.getY());
+			if (!player.getConfig().SHARED_GATHERING_RESOURCES || obj != null) {
+				// Successful mining attempt
+				// It is authentic to allow multiple players to get the rock if they have already started mining it.
+				// In retro mechanic, if other player had depleted it you would not get it
+				// In both cases if there is no ore in the rock, there will be no retry
+				int quantity = Formulae.calcGatheringYield(def.getReqLevel(), mineLvl, getPickaxeTier(axeId));
 
-					if (SkillCapes.shouldActivate(player, ItemId.MINING_CAPE)) {
-						thinkbubble(new Item(ItemId.MINING_CAPE.id(), 1));
-						quantity *= 2;
-					}
+				if (SkillCapes.shouldActivate(player, ItemId.MINING_CAPE)) {
+					thinkbubble(new Item(ItemId.MINING_CAPE.id(), 1));
+					quantity *= 2;
+				}
+				if (maybeAwardMyWorldMiningGem(player, rock)) {
+					player.incExp(Skill.MINING.id(), def.getExp() * quantity, true);
+				} else {
 					int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(ore.getCatalogId(), quantity));
 					int remainingQuantity = quantity - bankedQuantity;
 					int storedQuantity = Math.min(remainingQuantity, player.getCarriedItems().getInventory().getFreeSlots());
@@ -397,16 +382,17 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 						give(player, ore.getCatalogId(), 1);
 						player.playerServerMessage(MessageType.QUEST, "Your amulet resonates and you pull out extra ore.");
 					}
-				} else {
-					player.playerServerMessage(MessageType.QUEST, "You only succeed in scratching the rock");
 				}
-				if (rock.getID() == 496 && player.getCache().hasKey("tutorial") && player.getCache().getInt("tutorial") == 51) {
-					player.getCache().set("tutorial", 52);
-				}
-				if (def.getRespawnTime() > 0) {
-					changeloc(rock, resourceRespawnMillis(def.getRespawnTime()), SceneryId.ROCK_GENERIC.id());
-				}
-				return;
+			} else {
+				player.playerServerMessage(MessageType.QUEST, "You only succeed in scratching the rock");
+			}
+			if (rock.getID() == 496 && player.getCache().hasKey("tutorial") && player.getCache().getInt("tutorial") == 51) {
+				player.getCache().set("tutorial", 52);
+			}
+			if (def.getRespawnTime() > 0) {
+				changeloc(rock, resourceRespawnMillis(def.getRespawnTime()), SceneryId.ROCK_GENERIC.id());
+			}
+			return;
 		} else {
 			if (rock.getID() == 496) {
 				player.playerServerMessage(MessageType.QUEST, "You fail to make any real impact on the rock");
@@ -640,6 +626,27 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		for (int i = 0; i < amount; i++) {
 			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, object.getX(), object.getY(), 1, player));
 		}
+	}
+
+	private boolean maybeAwardMyWorldMiningGem(Player player, GameObject rock) {
+		double gemChance = getRandomGemChance(player);
+		if (gemChance <= 0.0D || DataConversions.getRandom().nextDouble() >= gemChance) {
+			return false;
+		}
+		player.playSound("foundgem");
+		Item gem = new Item(getGem(), 1);
+		if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(gem) > 0) {
+			player.playerServerMessage(MessageType.QUEST, "You just found a" + gem.getDef(player.getWorld()).getName().toLowerCase().replaceAll("uncut", "") + "!");
+			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
+		} else if (!player.getCarriedItems().getInventory().full()) {
+			player.getCarriedItems().getInventory().add(gem);
+			player.playerServerMessage(MessageType.QUEST, "You just found a" + gem.getDef(player.getWorld()).getName().toLowerCase().replaceAll("uncut", "") + "!");
+			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
+		} else {
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), rock.getX(), rock.getY(), 1, player));
+			player.playerServerMessage(MessageType.QUEST, "You find a gem, but have no room to keep it, so it falls to the ground");
+		}
+		return true;
 	}
 
 	private void maybeDoubleRareGatheringReward(Player player, Item item, GameObject object, String message) {

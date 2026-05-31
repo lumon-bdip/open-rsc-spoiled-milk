@@ -310,6 +310,7 @@ public final class mudclient implements Runnable {
 	private static final int GATHERING_FOCUS_WOODCUTTING = 3;
 	private static final int GATHERING_FOCUS_HARVESTING = 4;
 	private int activeGatheringFocusKind = GATHERING_FOCUS_NONE;
+	private int activeGatheringFocusItemId = -1;
 	private long gatheringFocusMenuHideAt = 0L;
 	private final int[] characterDialogHalfWidth = new int[150];
 	private final int[] characterDialogHeight = new int[150];
@@ -19917,6 +19918,7 @@ public final class mudclient implements Runnable {
 		this.actionProgressActive = false;
 		this.actionProgressItemId = -1;
 		this.activeGatheringFocusKind = GATHERING_FOCUS_NONE;
+		this.activeGatheringFocusItemId = -1;
 		this.gatheringFocusMenuHideAt = 0L;
 	}
 
@@ -20815,16 +20817,29 @@ public final class mudclient implements Runnable {
 	}
 
 	public void showGatheringFocusMenuTemporarily(int itemId) {
-		this.activeGatheringFocusKind = getGatheringFocusKindForItem(itemId);
-		if (C_GATHERING_FOCUS_MENU != 1 || !hasEquippedGatheringFocusTool(this.activeGatheringFocusKind)) {
+		int focusKind = getGatheringFocusKindForItem(itemId);
+		if (C_GATHERING_FOCUS_MENU != 1 || !hasEquippedGatheringFocusTool(focusKind)) {
 			this.activeGatheringFocusKind = GATHERING_FOCUS_NONE;
+			this.activeGatheringFocusItemId = -1;
 			this.gatheringFocusMenuHideAt = 0L;
 			return;
 		}
 
 		long now = System.currentTimeMillis();
 		long actionEnd = now + Math.max(1L, this.actionProgressDurationMs);
+		if (isSameVisibleGatheringFocusAction(itemId, focusKind, now)) {
+			this.gatheringFocusMenuHideAt = actionEnd + 2500L;
+			return;
+		}
+		this.activeGatheringFocusKind = focusKind;
+		this.activeGatheringFocusItemId = itemId;
 		this.gatheringFocusMenuHideAt = actionEnd + 2500L;
+	}
+
+	private boolean isSameVisibleGatheringFocusAction(int itemId, int focusKind, long now) {
+		return this.activeGatheringFocusItemId == itemId
+			&& this.activeGatheringFocusKind == focusKind
+			&& now < this.gatheringFocusMenuHideAt;
 	}
 
 	private void extendGatheringFocusMenuLinger() {
@@ -20842,6 +20857,7 @@ public final class mudclient implements Runnable {
 		}
 		if (System.currentTimeMillis() >= this.gatheringFocusMenuHideAt) {
 			this.activeGatheringFocusKind = GATHERING_FOCUS_NONE;
+			this.activeGatheringFocusItemId = -1;
 			return false;
 		}
 		return hasEquippedGatheringFocusTool(this.activeGatheringFocusKind);

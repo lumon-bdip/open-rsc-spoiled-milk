@@ -582,7 +582,11 @@ public final class SkillGuideInterface {
 					skillMenuEntries.add(new SkillMenuItem(34, "", "Slow lowers attack speed for 5 attacks"));
 					skillMenuEntries.add(new SkillMenuItem(31, "", "Scorch lowers defense for 5 attacks"));
 					skillMenuEntries.add(new SkillMenuItem(41, "", "Withering combines all elemental debuffs"));
-					skillMenuEntries.add(new SkillMenuItem(701, "", "Chaos gauntlets make tier 1 spells hit like tier 2"));
+					skillMenuEntries.add(new SkillMenuItem(701, "", "All spells that use mind runes will do damage as though they use chaos runes"));
+					skillMenuEntries.add(new SkillMenuItem(31, "", "Thunder spells can Startle and negate the next attack"));
+					skillMenuEntries.add(new SkillMenuItem(34, "", "Acid spells can Corrode and apply poison"));
+					skillMenuEntries.add(new SkillMenuItem(33, "", "Ice spells can Frostbite and reflect damage"));
+					skillMenuEntries.add(new SkillMenuItem(32, "", "Wood spells can Splinter to hit another NPC"));
 			}
 		}
 		if (mc.getSkillGuideChosen().equals("Cooking")) {

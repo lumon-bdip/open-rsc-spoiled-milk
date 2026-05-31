@@ -2694,10 +2694,10 @@ public class EntityHandler {
 		items.add(new ItemDef("adamantite ore", "this needs refining", "", 400, 70, "items:70", false, false, 0, 11717785, false, false, true, 154));
 		items.add(new ItemDef("coal", "hmm a non-renewable energy source!", "", 45, 71, "items:71", false, false, 0, 0, false, false, true, 155));
 		items.add(new ItemDef("Bronze Pickaxe", "Used for mining", "", 1, 72, "items:72", false, false, 0, 16737817, false, false, true, 156));
-		items.add(new ItemDef("uncut diamond", "this would be worth more cut", "", 200, 73, "items:73", false, false, 0, 0, false, false, true, 157));
-		items.add(new ItemDef("uncut ruby", "this would be worth more cut", "", 100, 73, "items:73", false, false, 0, 16724736, false, false, true, 158));
-		items.add(new ItemDef("uncut emerald", "this would be worth more cut", "", 50, 73, "items:73", false, false, 0, 3394611, false, false, true, 159));
-		items.add(new ItemDef("uncut sapphire", "this would be worth more cut", "", 25, 73, "items:73", false, false, 0, 19711, false, false, true, 160));
+		items.add(new ItemDef("uncut diamond", "this would be worth more cut", "", 200, 73, "items:73", true, false, 0, 0, false, false, true, 157));
+		items.add(new ItemDef("uncut ruby", "this would be worth more cut", "", 100, 73, "items:73", true, false, 0, 16724736, false, false, true, 158));
+		items.add(new ItemDef("uncut emerald", "this would be worth more cut", "", 50, 73, "items:73", true, false, 0, 3394611, false, false, true, 159));
+		items.add(new ItemDef("uncut sapphire", "this would be worth more cut", "", 25, 73, "items:73", true, false, 0, 19711, false, false, true, 160));
 		items.add(new ItemDef("diamond", "this looks valuable", "", 2000, 74, "items:74", false, false, 0, 0, false, false, true, 161));
 		items.add(new ItemDef("ruby", "this looks valuable", "", 1000, 74, "items:74", false, false, 0, 16724736, false, false, true, 162));
 		items.add(new ItemDef("emerald", "this looks valuable", "", 500, 74, "items:74", false, false, 0, 3394611, false, false, true, 163));
@@ -3079,7 +3079,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Ball", "A child's ball", "", 1, 183, "items:183", false, false, 0, 0, true, true, false, 539));
 		items.add(new ItemDef("magnet", "A very attractive magnet", "", 3, 184, "items:184", false, false, 0, 0, true, true, false, 540));
 		items.add(new ItemDef("Grey wolf fur", "This would make warm clothing", "", 50, 68, "items:68", false, false, 0, 15658734, true, false, true, 541));
-		items.add(new ItemDef("uncut dragonstone", "this would be worth more cut", "", 1000, 73, "items:73", false, false, 0, 12255487, true, false, true, 542));
+		items.add(new ItemDef("uncut dragonstone", "this would be worth more cut", "", 1000, 73, "items:73", true, false, 0, 12255487, true, false, true, 542));
 		items.add(new ItemDef("Dragonstone ring", "A valuable ring", "", 17625, 123, "items:123", false, Config.S_WANT_CUSTOM_SPRITES, Config.S_WANT_CUSTOM_SPRITES ? 1200 : 0, 12255487, true, false, true, 543));
 		items.add(new ItemDef("Dragonstone necklace", "I wonder if this is valuable", "", 18375, 57, "items:57", false, true, 1024, 12255487, true, false, true, 544));
 		items.add(new ItemDef("Raw Shark", "I should try cooking this", "", 300, 185, "items:185", false, false, 0, 5263488, true, false, true, 545));
@@ -3430,9 +3430,9 @@ public class EntityHandler {
 		items.add(new ItemDef("gnomebatta", "It's burnt to a sinder", "", 2, 304, "items:304", false, false, 0, 0, true, false, true, 886));
 		items.add(new ItemDef("gnomecrunchie", "They're burnt to a sinder", "", 2, 306, "items:306", false, false, 0, 0, true, false, true, 887));
 		items.add(new ItemDef("gnomebowl", "It's burnt to a sinder", "", 2, 305, "items:305", false, false, 0, 0, true, false, true, 888));
-		items.add(new ItemDef("Uncut Red Topaz", "A semi precious stone", "", 40, 73, "items:73", false, false, 0, 16525133, true, false, true, 889));
-		items.add(new ItemDef("Uncut Jade", "A semi precious stone", "", 30, 73, "items:73", false, false, 0, 10025880, true, false, true, 890));
-		items.add(new ItemDef("Uncut Opal", "A semi precious stone", "", 20, 73, "items:73", false, false, 0, 16777124, true, false, true, 891));
+		items.add(new ItemDef("Uncut Red Topaz", "A semi precious stone", "", 40, 73, "items:73", true, false, 0, 16525133, true, false, true, 889));
+		items.add(new ItemDef("Uncut Jade", "A semi precious stone", "", 30, 73, "items:73", true, false, 0, 10025880, true, false, true, 890));
+		items.add(new ItemDef("Uncut Opal", "A semi precious stone", "", 20, 73, "items:73", true, false, 0, 16777124, true, false, true, 891));
 		items.add(new ItemDef("Red Topaz", "A semi precious stone", "", 200, 74, "items:74", false, false, 0, 16525133, true, false, true, 892));
 		items.add(new ItemDef("Jade", "A semi precious stone", "", 150, 74, "items:74", false, false, 0, 10025880, true, false, true, 893));
 		items.add(new ItemDef("Opal", "A semi precious stone", "", 100, 74, "items:74", false, false, 0, 16777124, true, false, true, 894));

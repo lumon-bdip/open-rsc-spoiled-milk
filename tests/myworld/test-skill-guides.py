@@ -110,6 +110,11 @@ def main() -> None:
     require(guide, 'return "Splinter";', "wood splinter guide label")
     require(client, 'spellName.equals("spore") || spellName.equals("wood drill")', "wood splinter tooltip mapping")
     require(client, 'return "Splinter";', "wood splinter tooltip label")
+    require(guide, 'All spells that use mind runes will do damage as though they use chaos runes', "chaos gauntlets magic guide wording")
+    require(guide, 'Thunder spells can Startle and negate the next attack', "thunder dual spell guide effect")
+    require(guide, 'Acid spells can Corrode and apply poison', "acid dual spell guide effect")
+    require(guide, 'Ice spells can Frostbite and reflect damage', "ice dual spell guide effect")
+    require(guide, 'Wood spells can Splinter to hit another NPC', "wood dual spell guide effect")
 
     require(guide, 'new SkillMenuItem(349, "1", "Shrimp - Fishing Rod (T1)")', "fishing shrimp rod guide")
     require(guide, 'new SkillMenuItem(366, "38", "Tuna - Maple Fishing Rod (T6)")', "fishing tuna rod guide")

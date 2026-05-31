@@ -109,6 +109,16 @@ def require_legacy_tool_guard() -> None:
     ), "MyWorld legacy fishing tool guard")
 
 
+def require_key_half_special_rewards() -> None:
+    require_snippets(FISHING, (
+        "private static final FishingSpecialReward[] MYWORLD_FISHING_KEY_HALF_SPECIAL_REWARDS",
+        "new FishingSpecialReward(ItemId.TOOTH_KEY_HALF.id(), 10, 3)",
+        "new FishingSpecialReward(ItemId.LOOP_KEY_HALF.id(), 10, 3)",
+        "for (FishingSpecialReward reward : MYWORLD_FISHING_KEY_HALF_SPECIAL_REWARDS) {\n\t\t\ttotalWeight += Formulae.adjustedSideRewardWeightForToolTier(reward.tier, rodTier, reward.weight);",
+        "for (FishingSpecialReward reward : MYWORLD_FISHING_KEY_HALF_SPECIAL_REWARDS) {\n\t\t\tint adjustedWeight = Formulae.adjustedSideRewardWeightForToolTier(reward.tier, rodTier, reward.weight);",
+    ), "Fishing key-half special rewards")
+
+
 def require_fishing_shops_updated() -> None:
 	gerrant_text = GERRANT.read_text(encoding="utf-8")
 	gerrant_shop_text = gerrant_text.split("@Override\n\tpublic boolean blockTalkNpc", 1)[0]
@@ -195,6 +205,7 @@ def main() -> None:
     require_rod_runtime()
     require_rod_crafting()
     require_legacy_tool_guard()
+    require_key_half_special_rewards()
     require_fishing_shops_updated()
     require_quest_exceptions_documented()
     print("PASS: fishing rod-tier implementation guardrails validated")

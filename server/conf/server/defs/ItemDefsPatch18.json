@@ -1260,7 +1260,7 @@
 			"name": "uncut diamond",
 			"description": "this would be worth more cut",
 			"command": "",
-			"isStackable": 0,
+			"isStackable": 1,
 			"basePrice": 200
 		},
 		{
@@ -1268,7 +1268,7 @@
 			"name": "uncut ruby",
 			"description": "this would be worth more cut",
 			"command": "",
-			"isStackable": 0,
+			"isStackable": 1,
 			"basePrice": 100
 		},
 		{
@@ -1276,7 +1276,7 @@
 			"name": "uncut emerald",
 			"description": "this would be worth more cut",
 			"command": "",
-			"isStackable": 0,
+			"isStackable": 1,
 			"basePrice": 50
 		},
 		{
@@ -1284,7 +1284,7 @@
 			"name": "uncut sapphire",
 			"description": "this would be worth more cut",
 			"command": "",
-			"isStackable": 0,
+			"isStackable": 1,
 			"basePrice": 25
 		},
 		{
