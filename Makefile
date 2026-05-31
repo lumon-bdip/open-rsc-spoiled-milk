@@ -99,6 +99,7 @@ combat-check:
 	$(PYTHON) ./tools/generators/run-generators.py --check --group combat
 	$(PYTHON) ./tests/myworld/test-combat-data.py
 	$(PYTHON) ./tests/myworld/test-combat-interaction.py
+	$(PYTHON) ./tests/myworld/test-combat-hits-xp-focus.py
 	$(PYTHON) ./tests/myworld/test-npc-attack-styles.py
 	$(PYTHON) ./tests/myworld/test-combat-runtime-invariants.py
 	$(PYTHON) ./tests/myworld/test-combat-exceptions.py

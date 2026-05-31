@@ -83,10 +83,10 @@ def validate_damage_share_math() -> None:
         fail(f"Expected magic share 352, found {magic_xp}")
 
     melee_skill_awards = {
-        "melee": melee_base * 3,
-        "hits": melee_base,
+        "melee": melee_base * 3 // 4,
+        "hits": melee_base // 4,
     }
-    if melee_skill_awards != {"melee": 165, "hits": 55}:
+    if melee_skill_awards != {"melee": 41, "hits": 13}:
         fail(f"Unexpected melee skill distribution: {melee_skill_awards}")
 
 
@@ -117,7 +117,7 @@ def main() -> None:
     require_contains(NPC, "awardDamageShareXp(")
     require_contains(NPC, "getDamageShareXp(totalCombatXP, damage)")
     require_contains(NPC, "getDamageShareXp(totalCombatXP * 4, damage)")
-    require_contains(NPC, "player.incExp(Skill.MAGIC.id(), magicXpShare, true)")
+    require_contains(NPC, "awardCombatXpWithHitsFocus(player, Skill.MAGIC, magicXpShare)")
     require_not_contains(NPC, "WANTS_KILL_STEALING && attacker.isPlayer()")
 
     require_regex(

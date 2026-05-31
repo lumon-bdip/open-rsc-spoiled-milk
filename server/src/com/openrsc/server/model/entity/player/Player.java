@@ -4296,6 +4296,29 @@ public final class Player extends Mob {
 		return 1;
 	}
 
+	public int getHitsXpFocusMenuToggle() {
+		if (getCache().hasKey("setting_hits_xp_focus_menu")) {
+			int value = getCache().getInt("setting_hits_xp_focus_menu");
+			return value >= 0 && value <= 2 ? value : 1;
+		}
+		return 1;
+	}
+
+	public int getHitsXpFocus() {
+		if (getCache().hasKey("setting_hits_xp_focus")) {
+			int value = getCache().getInt("setting_hits_xp_focus");
+			return value >= 0 && value <= 3 ? value : 1;
+		}
+		return 1;
+	}
+
+	public void setHitsXpFocus(int focus) {
+		if (focus < 0 || focus > 3) {
+			return;
+		}
+		getCache().set("setting_hits_xp_focus", focus);
+	}
+
 	public boolean shouldAvoidCombatEngagement() {
 		return !getAutoRetaliate();
 	}

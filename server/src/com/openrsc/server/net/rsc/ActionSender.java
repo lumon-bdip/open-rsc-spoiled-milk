@@ -740,6 +740,8 @@ public class ActionSender {
 			customOptions.add(player.getNatureRuneProtection() ? 1 : 0);
 			customOptions.add(player.getAutoRetaliate() ? 1 : 0);
 			customOptions.add(player.getGatheringFocusMenuToggle());
+			customOptions.add(player.getHitsXpFocusMenuToggle());
+			customOptions.add(player.getHitsXpFocus());
 		}
 		struct.customOptions = customOptions;
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_GAME_SETTINGS, struct, player);

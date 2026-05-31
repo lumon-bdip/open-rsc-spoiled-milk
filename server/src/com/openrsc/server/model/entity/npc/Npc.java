@@ -998,10 +998,7 @@ public class Npc extends Mob {
 			return;
 		}
 
-		int[] skillsDist = new int[Skill.maxId(Skill.MELEE.name(), Skill.HITS.name()) + 1];
-		skillsDist[Skill.MELEE.id()] = 3;
-		skillsDist[Skill.HITS.id()] = 1;
-		player.incExp(skillsDist, meleeXpShare, true);
+		awardCombatXpWithHitsFocus(player, Skill.MELEE, meleeXpShare);
 	}
 
 	private void awardRangedDamageShareXp(final Player player, final int damage, final int totalCombatXP) {
@@ -1013,7 +1010,7 @@ public class Npc extends Mob {
 		int alreadyGivenXp = getWorld().getServer().getConfig().RANGED_GIVES_XP_HIT ? 16 * damage / 3 : 0;
 		int remainderXP = rangedXpShare - alreadyGivenXp;
 		if (remainderXP > 0) {
-			player.incExp(Skill.RANGED.id(), remainderXP, true);
+			awardCombatXpWithHitsFocus(player, Skill.RANGED, remainderXP);
 			ActionSender.sendStat(player, Skill.RANGED.id());
 		}
 	}
@@ -1024,8 +1021,42 @@ public class Npc extends Mob {
 			return;
 		}
 
-		player.incExp(Skill.MAGIC.id(), magicXpShare, true);
+		awardCombatXpWithHitsFocus(player, Skill.MAGIC, magicXpShare);
 		ActionSender.sendStat(player, Skill.MAGIC.id());
+	}
+
+	private void awardCombatXpWithHitsFocus(final Player player, final Skill primarySkill, final int totalXp) {
+		int hitsXp = getHitsXpFromFocus(player, totalXp);
+		int primaryXp = Math.max(0, totalXp - hitsXp);
+		if (hitsXp <= 0) {
+			player.incExp(primarySkill.id(), totalXp, true);
+			return;
+		}
+		if (primaryXp <= 0) {
+			player.incExp(Skill.HITS.id(), hitsXp, true);
+			ActionSender.sendStat(player, Skill.HITS.id());
+			return;
+		}
+
+		int[] skillsDist = new int[Skill.maxId(primarySkill.name(), Skill.HITS.name()) + 1];
+		skillsDist[primarySkill.id()] = primaryXp;
+		skillsDist[Skill.HITS.id()] = hitsXp;
+		player.incExp(skillsDist, totalXp, true);
+		ActionSender.sendStat(player, Skill.HITS.id());
+	}
+
+	private int getHitsXpFromFocus(final Player player, final int totalXp) {
+		switch (player.getHitsXpFocus()) {
+			case Skills.CONTROLLED_MODE:
+				return 0;
+			case Skills.ACCURATE_MODE:
+				return totalXp / 2;
+			case Skills.DEFENSIVE_MODE:
+				return totalXp;
+			case Skills.AGGRESSIVE_MODE:
+			default:
+				return totalXp / 4;
+		}
 	}
 
 	public void initializeTalkScript(final Player player) {

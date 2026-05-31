@@ -598,7 +598,7 @@ public class PacketHandler {
 			return;
 		}
 		if (actionType == 5) {
-			mc.clearActionProgressBar();
+			mc.completeActionProgressBar();
 			return;
 		}
 		if (!Config.C_BATCH_PROGRESS_BAR) {
@@ -2331,6 +2331,8 @@ public class PacketHandler {
 		mc.setNatureRuneProtection(packetsIncoming.getUnsignedByte() == 1); // 46
 		mc.setAutoRetaliate(packetsIncoming.getUnsignedByte() == 1); // 47
 		mc.setGatheringFocusMenuToggle(packetsIncoming.packetEnd < length ? packetsIncoming.getUnsignedByte() : 1); // 48
+		mc.setHitsXpFocusMenuToggle(packetsIncoming.packetEnd < length ? packetsIncoming.getUnsignedByte() : 1); // 49
+		mc.setHitsXpFocus(packetsIncoming.packetEnd < length ? packetsIncoming.getUnsignedByte() : 1); // 50
 	}
 
 	private void togglePrayer(int length) {

@@ -412,7 +412,7 @@ public final class SkillGuideInterface {
 				addMeleeTierGuide("Rune spear", 70, 1092);
 			} else if (curTab == 7) {
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					skillMenuEntries.add(new SkillMenuItem(1374, "99", "Melee Cape"));
+					addSkillCapeGuide(1374, "Melee");
 				}
 			}
 		}
@@ -552,7 +552,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(923, "", "Ugthanki Kebab - Heals 19"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1463, "", "Seaweed Soup - Heals 26"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					skillMenuEntries.add(new SkillMenuItem(1522, "99", "Hits Cape"));
+					addSkillCapeGuide(1522, "Hits");
 				}
 			}
 		}
@@ -571,7 +571,7 @@ public final class SkillGuideInterface {
 					skillMenuEntries.add(new SkillMenuItem(1218, "70", "Staff of Saradomin"));
 					skillMenuEntries.add(new SkillMenuItem(1216, "70", "Staff of Zamorak"));
 					skillMenuEntries.add(new SkillMenuItem(1217, "70", "Staff of Guthix"));
-					skillMenuEntries.add(new SkillMenuItem(1382, "99", "Magic Cape"));
+					addSkillCapeGuide(1382, "Magic");
 				} else if (curTab == 2) {
 					skillMenuEntries.add(new SkillMenuItem(185, "", "Wizard's Guild can be entered at level 66"));
 					skillMenuEntries.add(new SkillMenuItem(35, "", "Combat spells can be toggled for auto-cast"));
@@ -652,7 +652,7 @@ public final class SkillGuideInterface {
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(501, "70", "Wine of Zamorak"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1467, "70", "Wine of Saradomin"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					skillMenuEntries.add(new SkillMenuItem(1373, "99", "Cooking Cape"));
+					addSkillCapeGuide(1373, "Cooking");
 				}
 			}
 		}
@@ -690,7 +690,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(2707, "", "Above-tier seeds roll at reduced weight"));
 				skillMenuEntries.add(new SkillMenuItem(2708, "", "Knowledge and Money seeds scale to your level"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					skillMenuEntries.add(new SkillMenuItem(1525, "99", "Woodcutting Cape"));
+					addSkillCapeGuide(1525, "Woodcutting");
 				}
 			}
 			}
@@ -738,7 +738,7 @@ public final class SkillGuideInterface {
 					skillMenuEntries.add(new SkillMenuItem(1837, "", "Above-tier side loot rolls at reduced weight"));
 					skillMenuEntries.add(new SkillMenuItem(589, "", "Fishing Contest and Dragon Slayer keep quest exceptions"));
 					if (Config.S_WANT_CUSTOM_SPRITES) {
-						skillMenuEntries.add(new SkillMenuItem(1380, "99", "Fishing Cape"));
+						addSkillCapeGuide(1380, "Fishing");
 					}
 			}
 		}
@@ -758,7 +758,7 @@ public final class SkillGuideInterface {
 				}
 			} else if (curTab == 1) {
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					skillMenuEntries.add(new SkillMenuItem(1520, "99", "Firemaking Cape"));
+					addSkillCapeGuide(1520, "Firemaking");
 				}
 			}
 		}
@@ -809,7 +809,7 @@ public final class SkillGuideInterface {
 					if (harvesting) skillMenuEntries.add(new SkillMenuItem(1474, "83", "S. Potion of Ranged Resist - Ranged potion & half coconut"));
 				} else if (curTab == 2) {
 					if (Config.S_WANT_CUSTOM_SPRITES) {
-						skillMenuEntries.add(new SkillMenuItem(1521, "99", "Herblaw Cape"));
+						addSkillCapeGuide(1521, "Herblaw");
 				}
 			}
 		}
@@ -853,7 +853,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(2328, "", "Pouches are earned for completing obstacle courses"));
 				skillMenuEntries.add(new SkillMenuItem(2329, "", "Pouches reward the player with various resources"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					skillMenuEntries.add(new SkillMenuItem(1518, "99", "Agility Cape"));
+					addSkillCapeGuide(1518, "Agility");
 				}
 			}
 		}
@@ -898,7 +898,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(714, "82", "Yanille Agility Dungeon"));
 			} else if (curTab == 4) {
 				if (Config.S_WANT_CUSTOM_SPRITES) {
-					skillMenuEntries.add(new SkillMenuItem(1375, "99", "Thieving Cape"));
+					addSkillCapeGuide(1375, "Thieving");
 				}
 			}
 		}
@@ -929,7 +929,7 @@ public final class SkillGuideInterface {
 					skillMenuEntries.add(new SkillMenuItem(544, "", "Rings and necklaces can stack matching effects"));
 					skillMenuEntries.add(new SkillMenuItem(42, "", "Law jewelry spends charges to bank items"));
 					skillMenuEntries.add(new SkillMenuItem(825, "", "Soul jewelry protects death losses"));
-					skillMenuEntries.add(new SkillMenuItem(1527, "99", "Enchanting Cape"));
+					addSkillCapeGuide(1527, "Enchanting");
 				}
 			}
 			if (mc.getSkillGuideChosen().equalsIgnoreCase("Harvesting")) {
@@ -990,7 +990,7 @@ public final class SkillGuideInterface {
 					skillMenuEntries.add(new SkillMenuItem(2223, "70", "Rune shears - T10, equipped tool"));
 				} else if (curTab == 5) {
 					if (Config.S_WANT_CUSTOM_SPRITES) {
-						skillMenuEntries.add(new SkillMenuItem(1526, "99", "Harvesting Cape"));
+						addSkillCapeGuide(1526, "Harvesting");
 					}
 					skillMenuEntries.add(new SkillMenuItem(144, "", "Harvestables unlock by equipped shears tier"));
 					skillMenuEntries.add(new SkillMenuItem(144, "", "Harvesting level gates which shears you can use"));
@@ -1103,7 +1103,7 @@ public final class SkillGuideInterface {
 			addThrownGuide("Rune", 70, 1070, 1080, 1092);
 		} else if (curTab == 3) {
 			if (Config.S_WANT_CUSTOM_SPRITES) {
-				skillMenuEntries.add(new SkillMenuItem(1524, "99", "Ranged Cape"));
+				addSkillCapeGuide(1524, "Ranged");
 			}
 		}
 	}
@@ -1119,6 +1119,10 @@ public final class SkillGuideInterface {
 
 	private void addMeleeTierGuide(String name, int level, int itemId) {
 		skillMenuEntries.add(new SkillMenuItem(itemId, String.valueOf(level), name));
+	}
+
+	private void addSkillCapeGuide(int itemId, String skillName) {
+		skillMenuEntries.add(new SkillMenuItem(itemId, "", skillName + " cape unlocked at level 99"));
 	}
 
 	private void addThrownGuide(String name, int level, int dartId, int knifeId, int spearId) {
@@ -1268,7 +1272,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Prayer does not drain over time"));
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Prayer uses point reservation to activate"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
-				skillMenuEntries.add(new SkillMenuItem(1523, "99", "Prayer Cape"));
+				addSkillCapeGuide(1523, "Prayer");
 			}
 		}
 	}
@@ -1310,7 +1314,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(164, "", "Higher gem focus increases rare gem rolls"));
 			skillMenuEntries.add(new SkillMenuItem(1299, "", "Stone comes only from regular rock nodes"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
-				skillMenuEntries.add(new SkillMenuItem(1377, "99", "Mining Cape"));
+				addSkillCapeGuide(1377, "Mining");
 			}
 		}
 	}
@@ -1418,7 +1422,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(779, "", "Can be opened at level 34"));
 			skillMenuEntries.add(new SkillMenuItem(191, "", "Can enter Crafting Guild at level 40"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
-				skillMenuEntries.add(new SkillMenuItem(1384, "", "Can buy Crafting Cape at level 99"));
+				addSkillCapeGuide(1384, "Crafting");
 			}
 		}
 	}
@@ -1461,7 +1465,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(408, "70", "Runite bar - 1 runite ore and 6 coal"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				skillMenuEntries.add(new SkillMenuItem(1365, "90", "Dragon bar - 1 piece of dragon equipment"));
-				skillMenuEntries.add(new SkillMenuItem(1383, "99", "Smithing Cape"));
+				addSkillCapeGuide(1383, "Smithing");
 			}
 		} else if (curTab == 1) {
 			addSmithingTier("Tin", 1, 1995, 1997, 1998, 1999, 2000, 2001, 1987, 2002, 2003, 2207, -1, 1959, 1960, 1961, 2224, 1963, 1964);

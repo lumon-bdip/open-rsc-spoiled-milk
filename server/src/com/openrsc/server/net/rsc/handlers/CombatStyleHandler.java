@@ -13,6 +13,12 @@ public class CombatStyleHandler implements PayloadProcessor<CombatStyleStruct, O
 	public void process(final CombatStyleStruct payload, final Player player) throws Exception {
 
 		int style = payload.style;
+		if (style >= 4 && style <= 7 && player.getConfig().WANT_MYWORLD) {
+			int hitsXpFocus = style - 4;
+			player.setHitsXpFocus(hitsXpFocus);
+			player.message("Hits XP focus set to " + hitsXpFocusLabel(hitsXpFocus));
+			return;
+		}
 		if (style < Skills.CONTROLLED_MODE || style > Skills.DEFENSIVE_MODE) {
 			player.setSuspiciousPlayer(true, "style handler style < 0 or style > 3");
 			return;
@@ -78,6 +84,21 @@ public class CombatStyleHandler implements PayloadProcessor<CombatStyleStruct, O
 				return "Even more seeds!";
 			default:
 				return "A few seeds";
+		}
+	}
+
+	private String hitsXpFocusLabel(int style) {
+		switch (style) {
+			case Skills.CONTROLLED_MODE:
+				return "No Hits XP";
+			case Skills.AGGRESSIVE_MODE:
+				return "Some Hits XP";
+			case Skills.ACCURATE_MODE:
+				return "More Hits XP";
+			case Skills.DEFENSIVE_MODE:
+				return "All Hits XP";
+			default:
+				return "Some Hits XP";
 		}
 	}
 

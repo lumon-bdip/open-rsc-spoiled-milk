@@ -92,6 +92,9 @@ def main() -> None:
     require(guide, 'addWoodcraftGuide("Blood", 55, 70, 2128, 67, 2127, 70, 2176, 72, 2146, 70);', "blood woodcraft recipe guide")
     require(guide, 'new SkillMenuItem(779, "", "Can be opened at level 34")', "oyster pearl info wording")
     require(guide, 'new SkillMenuItem(191, "", "Can enter Crafting Guild at level 40")', "crafting guild info wording")
+    require(guide, 'skillName + " cape unlocked at level 99"', "skillcape guide level-99 wording helper")
+    require(guide, 'addSkillCapeGuide(1527, "Enchanting");', "enchanting cape guide wording")
+    require(guide, 'addSkillCapeGuide(1384, "Crafting");', "crafting cape guide wording")
     require(guide, 'addAltarGuide(33, 1, "Air Rune", "306,593");', "air altar coordinate guide")
     require(guide, 'addAltarGuide(37, 1, "Life Rune", "283,694");', "life altar coordinate guide")
     require(guide, 'addAltarGuide(46, 30, "Cosmic Rune", "106,3565");', "cosmic altar coordinate guide")
@@ -163,6 +166,8 @@ def main() -> None:
     forbid(guide, 'new SkillMenuItem(546, "80", "Shark")', "old shark cooking level")
     forbid(guide, 'new SkillMenuItem(1191, "91", "Manta Ray")', "old manta ray cooking level")
     forbid(guide, 'new SkillMenuItem(325, "35", "Plain Pizza")', "old plain pizza cooking level")
+    forbid(guide, 'new SkillMenuItem(1527, "99", "Enchanting Cape")', "terse enchanting cape guide wording")
+    forbid(guide, 'Can buy Crafting Cape at level 99', "old crafting cape guide wording")
     forbid(client, 'skillGuideChosenTabs.add("Axes");', "old woodcutting axes tab")
 
     print("PASS: MyWorld skill guides reflect current tiers and recipes")

@@ -102,6 +102,12 @@ public final class GameSettingHandler implements PayloadProcessor<GameSettingStr
 					focusMenuValue = 1;
 				}
 				player.getCache().set("setting_gathering_focus_menu", focusMenuValue);
+			} else if (idx == 49) {
+				int focusMenuValue = value;
+				if (focusMenuValue < 0 || focusMenuValue > 2) {
+					focusMenuValue = 1;
+				}
+				player.getCache().set("setting_hits_xp_focus_menu", focusMenuValue);
 			}
 			return;
 		}

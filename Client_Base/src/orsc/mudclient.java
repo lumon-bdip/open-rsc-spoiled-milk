@@ -635,6 +635,7 @@ public final class mudclient implements Runnable {
 	private String chatMessageTarget;
 	private int frameCounter = 0;
 	private int combatStyle = 0;
+	private int hitsXpFocus = 1;
 	private int combatTimeout = 0;
 	private int controlButtonAppearanceHeadMinus;
 	private int controlButtonAppearanceHeadPlus;
@@ -3217,10 +3218,16 @@ public final class mudclient implements Runnable {
 					if (row > 0 && sx < this.mouseX && this.mouseX < width + sx && this.mouseY > row * 20 + sy
 						&& row * 20 + sy + 20 > this.mouseY) {
 						this.mouseButtonClick = 0;
-						this.combatStyle = row - 1;
-						this.proposedStyle = this.combatStyle;
+						boolean hitsXpFocusMenu = shouldDrawHitsXpFocusMenu();
+						int selectedStyle = row - 1;
+						if (hitsXpFocusMenu) {
+							this.hitsXpFocus = selectedStyle;
+						} else {
+							this.combatStyle = selectedStyle;
+							this.proposedStyle = this.combatStyle;
+						}
 						this.packetHandler.getClientStream().newPacket(29);
-						this.packetHandler.getClientStream().bufferBits.putByte(this.combatStyle);
+						this.packetHandler.getClientStream().bufferBits.putByte(hitsXpFocusMenu ? selectedStyle + 4 : selectedStyle);
 						this.packetHandler.getClientStream().finishPacket();
 						this.extendGatheringFocusMenuLinger();
 						break;
@@ -3228,8 +3235,10 @@ public final class mudclient implements Runnable {
 				}
 			}
 
+			boolean hitsXpFocusMenu = shouldDrawHitsXpFocusMenu();
+			int selectedFocus = hitsXpFocusMenu ? this.hitsXpFocus : this.combatStyle;
 			for (int row = 0; row < 5; ++row) {
-				if (1 + this.combatStyle == row) {
+				if (1 + selectedFocus == row) {
 					this.getSurface().drawBoxAlpha(sx, sy + row * 20, width, 20, GenUtil.buildColor(255, 0, 0), 128);
 				} else {
 					this.getSurface().drawBoxAlpha(sx, sy + row * 20, width, 20, GenUtil.buildColor(190, 190, 190),
@@ -3240,12 +3249,12 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawLineHoriz(sx, 20 + sy + row * 20, width, 0);
 			}
 
-				String[] gatheringLabels = getGatheringFocusLabels();
-				this.getSurface().drawColoredStringCentered(width / 2 + sx, gatheringLabels[0], 0xFFFFFF, 0, 3, 16 + sy);
-				this.getSurface().drawColoredStringCentered(width / 2 + sx, gatheringLabels[1], 0, 0, 3, sy + 36);
-				this.getSurface().drawColoredStringCentered(width / 2 + sx, gatheringLabels[2], 0, 0, 3, 56 + sy);
-				this.getSurface().drawColoredStringCentered(width / 2 + sx, gatheringLabels[3], 0, 0, 3, sy + 76);
-				this.getSurface().drawColoredStringCentered(width / 2 + sx, gatheringLabels[4], 0, 0, 3, sy + 96);
+				String[] focusLabels = hitsXpFocusMenu ? getHitsXpFocusLabels() : getGatheringFocusLabels();
+				this.getSurface().drawColoredStringCentered(width / 2 + sx, focusLabels[0], 0xFFFFFF, 0, 3, 16 + sy);
+				this.getSurface().drawColoredStringCentered(width / 2 + sx, focusLabels[1], 0, 0, 3, sy + 36);
+				this.getSurface().drawColoredStringCentered(width / 2 + sx, focusLabels[2], 0, 0, 3, 56 + sy);
+				this.getSurface().drawColoredStringCentered(width / 2 + sx, focusLabels[3], 0, 0, 3, sy + 76);
+				this.getSurface().drawColoredStringCentered(width / 2 + sx, focusLabels[4], 0, 0, 3, sy + 96);
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "client.TB(" + "dummy" + ')');
 		}
@@ -8412,7 +8421,7 @@ public final class mudclient implements Runnable {
 					this.drawDialogOptionsMenu(-312);
 				}
 
-				if (shouldDrawGatheringFocusMenu()) {
+				if (shouldDrawHitsXpFocusMenu() || shouldDrawGatheringFocusMenu()) {
 					this.drawDialogCombatStyle();
 				}
 
@@ -11574,6 +11583,9 @@ public final class mudclient implements Runnable {
 		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
 			"@whi@Tool Focus Menu - " + getGatheringFocusMenuLabel(), 52, null, null);
 
+		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
+			"@whi@Hits XP Focus Menu - " + getHitsXpFocusMenuLabel(), 53, null, null);
+
 		// experience drops
 		if (S_EXPERIENCE_DROPS_TOGGLE) {
 			if (!C_EXPERIENCE_DROPS) {
@@ -12155,6 +12167,14 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(48);
 			this.packetHandler.getClientStream().bufferBits.putByte(C_GATHERING_FOCUS_MENU);
+			this.packetHandler.getClientStream().finishPacket();
+		}
+
+		if (settingIndex == 53 && this.mouseButtonClick == 1) {
+			C_HITS_XP_FOCUS_MENU = (C_HITS_XP_FOCUS_MENU + 1) % 3;
+			this.packetHandler.getClientStream().newPacket(111);
+			this.packetHandler.getClientStream().bufferBits.putByte(49);
+			this.packetHandler.getClientStream().bufferBits.putByte(C_HITS_XP_FOCUS_MENU);
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
@@ -19895,7 +19915,7 @@ public final class mudclient implements Runnable {
 		this.gatheringFocusMenuHideAt = 0L;
 	}
 
-	private void completeActionProgressBar() {
+	public final void completeActionProgressBar() {
 		this.actionProgressActive = false;
 		this.actionProgressItemId = -1;
 		this.extendGatheringFocusMenuLinger();
@@ -20830,6 +20850,30 @@ public final class mudclient implements Runnable {
 			return "@gre@Always";
 		}
 		return "@yel@Temporary";
+	}
+
+	private boolean shouldDrawHitsXpFocusMenu() {
+		if (C_HITS_XP_FOCUS_MENU == 0) {
+			return false;
+		}
+		if (C_HITS_XP_FOCUS_MENU == 2) {
+			return true;
+		}
+		return this.combatTimeout > 0;
+	}
+
+	private String getHitsXpFocusMenuLabel() {
+		if (C_HITS_XP_FOCUS_MENU == 0) {
+			return "@red@Off";
+		}
+		if (C_HITS_XP_FOCUS_MENU == 2) {
+			return "@gre@Always";
+		}
+		return "@yel@Temporary";
+	}
+
+	private String[] getHitsXpFocusLabels() {
+		return new String[]{"Select Hits XP focus", "No Hits XP", "Some Hits XP", "More Hits XP", "All Hits XP"};
 	}
 
 	private String[] getGatheringFocusLabels() {
@@ -22787,6 +22831,20 @@ public final class mudclient implements Runnable {
 		if (i == 0) {
 			this.gatheringFocusMenuHideAt = 0L;
 		}
+	}
+
+	public void setHitsXpFocusMenuToggle(int i) {
+		if (i < 0 || i > 2) {
+			i = 1;
+		}
+		C_HITS_XP_FOCUS_MENU = i;
+	}
+
+	public void setHitsXpFocus(int i) {
+		if (i < 0 || i > 3) {
+			i = 1;
+		}
+		this.hitsXpFocus = i;
 	}
 
 	public void setExperienceCounterToggle(int i) {

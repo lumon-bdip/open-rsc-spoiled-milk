@@ -69,7 +69,7 @@ def main() -> None:
     require_contains(NPC, "private void awardDamageShareXp")
     require_contains(NPC, "getDamageShareXp(totalCombatXP, damage)")
     require_contains(NPC, "getDamageShareXp(totalCombatXP * 4, damage)")
-    require_contains(NPC, "player.incExp(Skill.MAGIC.id(), magicXpShare, true)")
+    require_contains(NPC, "awardCombatXpWithHitsFocus(player, Skill.MAGIC, magicXpShare)")
     require_not_contains(NPC, "if (this.getWorld().getServer().getConfig().WANTS_KILL_STEALING && attacker.isPlayer())")
     require_contains(NPC, "private void clearPlayerPvmMeleeEvents()")
     require_contains(NPC, "return topDamageDealer;")
