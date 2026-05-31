@@ -1,6 +1,7 @@
 package com.openrsc.server.event.rsc.impl;
 
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.entity.Mob;
@@ -37,6 +38,10 @@ public class StatRestorationEvent extends GameTickEvent {
 		boolean isPlayerAbsent = getOwner().isPlayer() && (getPlayerOwner() == null || getPlayerOwner().isRemoved());
 		boolean isNpcAbsent = getOwner().isNpc() && (getNpcOwner() == null || (getNpcOwner().isRemoved() && getNpcOwner().isUnregistering()));
 		if (getOwner() == null || isPlayerAbsent || isNpcAbsent) {
+			stop();
+			return;
+		}
+		if (Summoning.isSummon(getOwner())) {
 			stop();
 			return;
 		}

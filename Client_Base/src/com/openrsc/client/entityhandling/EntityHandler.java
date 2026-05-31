@@ -1741,10 +1741,10 @@ public class EntityHandler {
 		npcs.add(new NPCDef("Platform Fisherman", "an emotionless fisherman", "", 15, 60, 30, 15, true, sprites, 15658734, 13426124, 15641275, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{3, 4, 2, -1, -1, -1, -1, 86, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Elena", "She doesn't look too happy", "", 1, 1, 5, 1, false, sprites, 13542224, 13408767, 3, 15523536, 140, 220, 6, 6, 5, i++));
-		sprites = new int[]{0, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-		npcs.add(new NPCDef("jinno", "He doesn't seem to mind his lack of legs", "", 30, 30, 30, 30, false, sprites, 1, 255, 14508096, 15523536, 145, 220, 6, 6, 5, i++));
-		sprites = new int[]{0, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-		npcs.add(new NPCDef("Watto", "He doesn't seem to mind his lack of legs", "", 30, 30, 30, 30, false, sprites, 16772761, 255, 14508096, 15523536, 145, 220, 6, 6, 5, i++));
+		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+		npcs.add(new NPCDef("jinno", "A small fairy-market resident", "", 30, 30, 30, 30, false, sprites, 1, 255, 14508096, 15523536, 94, 143, 6, 6, 5, i++));
+		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+		npcs.add(new NPCDef("Watto", "A small fairy-market resident", "", 30, 30, 30, 30, false, sprites, 16772761, 255, 14508096, 15523536, 94, 143, 6, 6, 5, i++));
 		sprites = new int[]{0, 28, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Recruiter", "A member of the Ardougne royal army", "", 40, 70, 65, 30, false, sprites, 15643488, 2, 3, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{3, 1, 2, -1, -1, 177, 83, 176, 46, 11, 45, 63};

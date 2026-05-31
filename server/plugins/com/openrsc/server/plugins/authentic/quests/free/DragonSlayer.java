@@ -90,18 +90,22 @@ public class DragonSlayer implements QuestInterface, UseLocTrigger,
 					npcsay(player, n, "So how is thy quest going?");
 					int map = multi(player, n,
 						"So where can I find this dragon?",
-						"Where can I get an antidragon shield?");
+						"Where can I get an antidragon shield?",
+						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 					if (map == 0) {
 						oziachDialogue(player, n, Oziach.FIND_DRAGON);
 					} else if (map == 1) {
 						oziachDialogue(player, n, Oziach.ANTIDRAGON_SHIELD);
+					} else if (map == 2) {
+						MyWorldQuestShortcuts.completeDragonSlayer(player, n);
 					}
 					break;
 				case 1:
 					npcsay(player, n, "Aye tiz a fair day my friend");
 					int menu = multi(player, n,
 						"Can you sell me some rune plate mail?",
-						"I'm not your friend", "Yes it's a very nice day");
+						"I'm not your friend", "Yes it's a very nice day",
+						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 					if (menu == 0) {
 						npcsay(player, n, "Soo how does thee know I 'ave some?");
 						int sub_menu = multi(player, n,
@@ -125,6 +129,8 @@ public class DragonSlayer implements QuestInterface, UseLocTrigger,
 							"I'd be suprised if your anyone's friend with that sort of manners");
 					} else if (menu == 2) {
 						npcsay(player, n, "Aye may the Gods walk by your side");
+					} else if (menu == 3) {
+						MyWorldQuestShortcuts.completeDragonSlayer(player, n);
 					}
 					break;
 				case 0:

@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.authentic.npcs.varrock;
 
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
@@ -11,6 +12,8 @@ import java.util.ArrayList;
 import static com.openrsc.server.plugins.Functions.*;
 
 public class Guildmaster implements TalkNpcTrigger {
+	private static final int DRAGON_SLAYER_QUEST_POINTS = 32;
+	private static final int DRAGON_SLAYER_MAGIC_LEVEL = 33;
 
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {
@@ -22,7 +25,7 @@ public class Guildmaster implements TalkNpcTrigger {
 
 		ArrayList<String> masterOptions = new ArrayList<>();
 		masterOptions.add("What is this place?");
-		boolean canStartQuest = player.getConfig().BASED_MAP_DATA >= 23 && player.getClientVersion() >= 73;
+		boolean canStartQuest = player.getQuestStage(Quests.DRAGON_SLAYER) == 0;
 		if (canStartQuest) {
 			masterOptions.add("Do you know know where I could get a rune plate mail body?");
 		}
@@ -47,6 +50,12 @@ public class Guildmaster implements TalkNpcTrigger {
 
 		} else if (option == 1 && canStartQuest) {
 			say(player, n, "Do you know where I could get a rune plate mail body?");
+			if (!meetsDragonSlayerRequirements(player)) {
+				npcsay(player, n,
+					"You need more experience before I can send you after that armour",
+					"Come back with 32 quest points and 33 Magic");
+				return;
+			}
 			npcsay(player,
 				n,
 				"I have a friend called Oziach who lives by the cliffs",
@@ -58,4 +67,8 @@ public class Guildmaster implements TalkNpcTrigger {
 		}
 	}
 
+	private boolean meetsDragonSlayerRequirements(final Player player) {
+		return (player.getConfig().INFLUENCE_INSTEAD_QP || player.getQuestPoints() >= DRAGON_SLAYER_QUEST_POINTS)
+			&& player.getSkills().getMaxStat(Skill.MAGIC.id()) >= DRAGON_SLAYER_MAGIC_LEVEL;
+	}
 }

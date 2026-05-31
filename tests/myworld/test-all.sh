@@ -26,6 +26,7 @@ python3 ./tests/myworld/test-gathering-rework-plan.py
 python3 ./tests/myworld/test-resource-seed-placement.py
 python3 ./tests/myworld/test-quest-system.py
 python3 ./tests/myworld/test-quest-shortcuts.py
+python3 ./tests/myworld/test-dragon-slayer-start-shortcut.py
 python3 ./tests/myworld/test-quest-choice-audit.py
 python3 ./tests/myworld/test-quest-rollout-audit.py
 python3 ./tests/myworld/test-magecraft-data.py
@@ -73,6 +74,7 @@ python3 ./tests/myworld/test-magic-weapon-scaling.py
 python3 ./tests/myworld/test-metal-defense-budgets.py
 python3 ./tests/myworld/test-mining-focus-and-tier11.py
 python3 ./tests/myworld/test-npc-defense-profiles.py
+python3 ./tests/myworld/test-npc-visual-fixes.py
 python3 ./tests/myworld/test-npc-processing-cleanup.py
 python3 ./tests/myworld/test-poison-balance.py
 python3 ./tests/myworld/test-poison-model.py
@@ -88,5 +90,6 @@ python3 ./tests/myworld/test-skill-guides.py
 python3 ./tests/myworld/test-summoning-animation-effect.py
 python3 ./tests/myworld/test-summoning-costs.py
 python3 ./tests/myworld/test-summoning-display-names.py
+python3 ./tests/myworld/test-summon-health-restoration.py
 python3 ./tests/myworld/test-summoning-spawn-placement.py
 python3 ./tests/myworld/test-tier-rebalance.py
