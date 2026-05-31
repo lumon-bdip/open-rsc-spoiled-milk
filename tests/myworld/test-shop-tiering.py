@@ -396,10 +396,13 @@ def main() -> None:
         "ItemId.RING_MOULD.id()",
         "ItemId.NECKLACE_MOULD.id()",
         "ItemId.AMULET_MOULD.id()",
+        "ItemId.BOLT_MOULD.id()",
         "ItemId.DART_MOULD.id()",
         "ItemId.THROWING_KNIFE_MOULD.id()",
         "ItemId.ARROWHEAD_MOULD.id()",
     ))
+    if "WANT_CUSTOM_SPRITES" in text(CRAFTING_EQUIPMENT_PATH):
+        fail("Crafting shop mould stock should not depend on custom sprite config")
     ensure_not_contains(CRAFTING_EQUIPMENT_PATH, (
         "ItemId.CROWN_MOULD.id()",
     ))

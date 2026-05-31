@@ -107,7 +107,11 @@ public final class CraftingEquipmentShops extends AbstractShop {
 				new Item(ItemId.BROWN_APRON.id(), 3),
 				new Item(ItemId.RING_MOULD.id(), 4),
 				new Item(ItemId.NECKLACE_MOULD.id(), 2),
-				new Item(ItemId.AMULET_MOULD.id(), 2));
+				new Item(ItemId.AMULET_MOULD.id(), 2),
+				new Item(ItemId.BOLT_MOULD.id(), 2),
+				new Item(ItemId.DART_MOULD.id(), 2),
+				new Item(ItemId.THROWING_KNIFE_MOULD.id(), 2),
+				new Item(ItemId.ARROWHEAD_MOULD.id(), 2));
 			if (world.getServer().getConfig().BASED_CONFIG_DATA >= 28) {
 				Collections.addAll(shopItems,
 					new Item(ItemId.NEEDLE.id(), 3),
@@ -116,12 +120,6 @@ public final class CraftingEquipmentShops extends AbstractShop {
 			if (world.getServer().getConfig().BASED_CONFIG_DATA >= 29) {
 				Collections.addAll(shopItems,
 					new Item(ItemId.HOLY_SYMBOL_MOULD.id(), 3));
-			}
-			if (world.getServer().getConfig().WANT_CUSTOM_SPRITES) {
-				Collections.addAll(shopItems,
-					new Item(ItemId.DART_MOULD.id(), 2),
-					new Item(ItemId.THROWING_KNIFE_MOULD.id(), 2),
-					new Item(ItemId.ARROWHEAD_MOULD.id(), 2));
 			}
 			Item[] finalItems = new Item[shopItems.size()];
 			shop = new Shop(false, 5000, 100, 65, 2,

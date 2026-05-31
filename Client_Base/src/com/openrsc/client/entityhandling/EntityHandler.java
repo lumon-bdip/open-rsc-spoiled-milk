@@ -4702,6 +4702,36 @@ public class EntityHandler {
 		addMetalBoltDefinition("Poison Orichalcum bolts", 2193, 22, 0x5A3F7D);
 		addMetalBoltDefinition("Rune bolts", 2194, 24, 0x00FFFF);
 		addMetalBoltDefinition("Poison Rune bolts", 2195, 24, 0x00FFFF);
+		addMetalArrowHeadDefinition("Tin arrow heads", 2004, 1, 0xB7C9D9);
+		addMetalArrowHeadDefinition("Copper arrow heads", 2015, 2, 0xC86A2B);
+		addMetalArrowHeadDefinition("Bronze arrow heads", 669, 1, 0xFF6C29);
+		addMetalArrowHeadDefinition("Iron arrow heads", 670, 3, 0xEEEEED);
+		addMetalArrowHeadDefinition("Steel arrow heads", 671, 12, 0xEEEEEE);
+		addMetalArrowHeadDefinition("Mithril arrow heads", 672, 32, 0x92B5D8);
+		addMetalArrowHeadDefinition("Titan Steel arrow heads", 2026, 12, 0x8EA6BB);
+		addMetalArrowHeadDefinition("Adamantite arrow heads", 673, 80, 0xB2CD89);
+		addMetalArrowHeadDefinition("Orichalcum arrow heads", 2037, 36, 0x5A3F7D);
+		addMetalArrowHeadDefinition("Rune arrow heads", 674, 320, 0x00FFFF);
+		addMetalDartTipDefinition("Tin dart tips", 2005, 1, 0xB7C9D9);
+		addMetalDartTipDefinition("Copper dart tips", 2016, 2, 0xC86A2B);
+		addMetalDartTipDefinition("Bronze dart tips", 1062, 1, 0xFF6C29);
+		addMetalDartTipDefinition("Iron dart tips", 1063, 3, 0xEEEEED);
+		addMetalDartTipDefinition("Steel dart tips", 1064, 9, 0xEEEEEE);
+		addMetalDartTipDefinition("Mithril dart tips", 1065, 25, 0x92B5D8);
+		addMetalDartTipDefinition("Titan Steel dart tips", 2027, 12, 0x8EA6BB);
+		addMetalDartTipDefinition("Adamantite dart tips", 1066, 65, 0xB2CD89);
+		addMetalDartTipDefinition("Orichalcum dart tips", 2038, 36, 0x5A3F7D);
+		addMetalDartTipDefinition("Rune dart tips", 1067, 350, 0x00FFFF);
+		addMetalThrowingKnifeDefinition("Tin throwing knife", 1996, 2, 0xB7C9D9);
+		addMetalThrowingKnifeDefinition("Copper throwing knife", 2007, 4, 0xC86A2B);
+		addMetalThrowingKnifeDefinition("Bronze throwing knife", 1076, 2, 0xFF6C29);
+		addMetalThrowingKnifeDefinition("Iron throwing knife", 1075, 6, 0xEEEEED);
+		addMetalThrowingKnifeDefinition("Steel throwing knife", 1077, 21, 0xEEEEEE);
+		addMetalThrowingKnifeDefinition("Mithril throwing knife", 1078, 54, 0x92B5D8);
+		addMetalThrowingKnifeDefinition("Titan Steel throwing knife", 2018, 18, 0x8EA6BB);
+		addMetalThrowingKnifeDefinition("Adamantite throwing knife", 1079, 133, 0xB2CD89);
+		addMetalThrowingKnifeDefinition("Orichalcum throwing knife", 2029, 54, 0x5A3F7D);
+		addMetalThrowingKnifeDefinition("Rune throwing knife", 1080, 333, 0x00FFFF);
 		items.add(new ItemDef("Poisoned Tin Throwing Dart", "A venomous throwing dart.", "", 1, 384, "items:384", true, true, 16, 0xb7c9d9, false, false, false, 2196));
 		items.add(new ItemDef("Poisoned Copper Throwing Dart", "A venomous throwing dart.", "", 3, 384, "items:384", true, true, 16, 0xc86a2b, false, false, false, 2197));
 		items.add(new ItemDef("Poisoned Titan Steel Throwing Dart", "A venomous throwing dart.", "", 96, 384, "items:384", true, true, 16, 0x8ea6bb, false, false, false, 2198));
@@ -5400,6 +5430,21 @@ public class EntityHandler {
 		} else {
 			items.add(item);
 		}
+	}
+
+	private static void addMetalArrowHeadDefinition(String name, int id, int price, int pictureMask) {
+		setCustomItemDefinition(id, new ItemDef(name, "Dangerous looking arrow heads - need shafts for flight", "", price, 207, "items:207",
+			true, false, 0, pictureMask, false, false, false, id));
+	}
+
+	private static void addMetalDartTipDefinition(String name, int id, int price, int pictureMask) {
+		setCustomItemDefinition(id, new ItemDef(name, "Dangerous looking dart tips - need feathers for flight", "", price, 369, "items:369",
+			true, false, 0, pictureMask, false, false, false, id));
+	}
+
+	private static void addMetalThrowingKnifeDefinition(String name, int id, int price, int pictureMask) {
+		setCustomItemDefinition(id, new ItemDef(name, "A finely balanced knife", "", price, 80, "items:80",
+			true, true, 16, pictureMask, false, false, false, id));
 	}
 
 	private static void addMetalShearsDefinition(String name, int id, int price, int pictureMask) {

@@ -408,8 +408,16 @@ def require_shears_smithing_and_defs() -> None:
         'addMetalShearsDefinition("Rune shears", 2223, 32000, 0x00FFFF);',
         'new ItemDef(name, name + " for harvesting", "", price, 66, "items:66"',
         "while (items.size() <= id)",
-        'new ItemDef("Tin arrow heads", "Dangerous looking arrow heads - need shafts for flight", "", 1, 207, "items:207"',
-        'new ItemDef("Copper arrow heads", "Dangerous looking arrow heads - need shafts for flight", "", 2, 207, "items:207"',
+        'addMetalArrowHeadDefinition("Tin arrow heads", 2004, 1, 0xB7C9D9);',
+        'addMetalArrowHeadDefinition("Copper arrow heads", 2015, 2, 0xC86A2B);',
+        'new ItemDef(name, "Dangerous looking arrow heads - need shafts for flight", "", price, 207, "items:207"',
+        'addMetalDartTipDefinition("Tin dart tips", 2005, 1, 0xB7C9D9);',
+        'addMetalDartTipDefinition("Copper dart tips", 2016, 2, 0xC86A2B);',
+        'new ItemDef(name, "Dangerous looking dart tips - need feathers for flight", "", price, 369, "items:369"',
+        'addMetalThrowingKnifeDefinition("Tin throwing knife", 1996, 2, 0xB7C9D9);',
+        'addMetalThrowingKnifeDefinition("Copper throwing knife", 2007, 4, 0xC86A2B);',
+        'new ItemDef(name, "A finely balanced knife", "", price, 80, "items:80"',
+        'addMetalBoltDefinition("Copper bolts", 2178, 4, 0xC86A2B);',
         'new ItemDef("Arrowhead mould", "Use with bars to cast arrow heads", "", 5, 132, "items:132"',
     )
     for snippet in client_snippets:

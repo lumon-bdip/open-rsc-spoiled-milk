@@ -53,6 +53,9 @@ def parse_itemdef_ids(source: str) -> set[int]:
 
     helper_patterns = [
         r'addMetalBoltDefinition\(".*?",\s*(\d+),',
+        r'addMetalArrowHeadDefinition\(".*?",\s*(\d+),',
+        r'addMetalDartTipDefinition\(".*?",\s*(\d+),',
+        r'addMetalThrowingKnifeDefinition\(".*?",\s*(\d+),',
         r'addMetalShearsDefinition\(".*?",\s*(\d+),',
         r'addWoodCrossbowDefinition\(".*?",\s*(\d+),',
         r'addFishingRodDefinition\(".*?",\s*".*?",\s*(\d+),',
