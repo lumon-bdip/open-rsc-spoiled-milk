@@ -3190,6 +3190,8 @@ public class Equipment {
 			case SLOT_PLATE_BODY:
 			case SLOT_PLATE_LEGS:
 			case SLOT_SKIRT:
+			case SLOT_GLOVES:
+			case SLOT_BOOTS:
 				return true;
 			default:
 				return false;

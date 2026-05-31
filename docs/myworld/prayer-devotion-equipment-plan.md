@@ -166,13 +166,13 @@ Prayer XP equal to their staff production XP equivalent.
 
 Blessed weapons and armor scale with devotion.
 
-Combat stat growth begins at devotion `500`. The highest planned blessing
-requirement is `400`, so growth begins `100` devotion after the final blessing
-unlock.
+Combat stat growth begins at devotion `250`. The highest planned blessing
+requirement is `400`, so growth now starts before the final blessing unlock and
+keeps the early devotion climb from feeling flat.
 
 At devotion `1000`, blessed combat gear should land roughly around tier-9
 power or defense. All blessed weapons and armor should grow at the same
-devotion rate from `500` to `1000`, following roughly a tier-1 to tier-9
+devotion rate from `250` to `1000`, following roughly a tier-1 to tier-9
 combat path.
 
 Scaling applies to:

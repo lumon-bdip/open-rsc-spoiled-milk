@@ -19,6 +19,13 @@ public class EntityHandler {
 	public static ArrayList<SpriteDef> projectiles = new ArrayList<>();
 	public static ArrayList<SpriteDef> GUIparts = new ArrayList<>();
 	public static ArrayList<SpriteDef> crowns = new ArrayList<>();
+	private static final int FALLBACK_NPC_ID = 825;
+	private static final int GREY_KNIGHT_NPC_ID = 836;
+	private static final NPCDef GREY_KNIGHT_FALLBACK = new NPCDef(
+		"Grey Knight", "An armoured follower of Guthix", "", 55, 58, 52, 60, true,
+		new int[]{19, 34, 43, -1, 49, -1, -1, -1, -1, -1, -1, -1},
+		1, 8421504, 8421504, 15523536, 145, 220, 6, 6, 5, GREY_KNIGHT_NPC_ID
+	);
 	private static final ArrayList<SpellDef> spells = new ArrayList<>();
 	private static final ArrayList<PrayerDef> prayers = new ArrayList<>();
 	private static String activePrayerBook = "SARADOMIN";
@@ -89,8 +96,11 @@ public class EntityHandler {
 	}
 
 	public static NPCDef getNpcDef(int id) {
+		if (id == GREY_KNIGHT_NPC_ID && id >= npcs.size()) {
+			return GREY_KNIGHT_FALLBACK;
+		}
 		if (id < 0 || id >= npcs.size()) {
-			return npcs.get(825); //Default NPC is Ana (not in a barrel)
+			return npcs.get(FALLBACK_NPC_ID); // Default NPC is Ana (not in a barrel).
 		}
 		return npcs.get(id);
 	}

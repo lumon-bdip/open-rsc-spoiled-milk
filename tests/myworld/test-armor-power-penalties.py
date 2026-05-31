@@ -57,9 +57,11 @@ def main() -> None:
         "SLOT_PLATE_BODY",
         "SLOT_PLATE_LEGS",
         "SLOT_SKIRT",
+        "SLOT_GLOVES",
+        "SLOT_BOOTS",
     ):
         require(major_slot_block, slot, "Major armor penalty slots")
-    for ignored_slot in ("SLOT_GLOVES", "SLOT_BOOTS", "SLOT_CAPE"):
+    for ignored_slot in ("SLOT_CAPE", "SLOT_OFFHAND", "SLOT_NECK"):
         if ignored_slot in major_slot_block:
             fail(f"Major armor penalty slots should not include {ignored_slot}")
 
@@ -74,10 +76,10 @@ def main() -> None:
 
     for snippet in (
         "Armor weapon-power penalties are live:",
-        "`Metal` head/chest/legs apply `-8 Ranged Power` per piece",
-        "`Leather/carapace` head/chest/legs apply `-8 Magic Power` per piece",
-        "`Cloth/robe` head/chest/legs apply `-8 Melee Power` per piece",
-        "gloves, boots, and back-slot items do not apply these penalties",
+        "`Metal` head/chest/legs/gloves/boots apply `-8 Ranged Power` per piece",
+        "`Leather/carapace` head/chest/legs/gloves/boots apply `-8 Magic Power` per piece",
+        "`Cloth/robe` head/chest/legs/gloves/boots apply `-8 Melee Power` per piece",
+        "offhand, neck, cape, ammo, and ring slots do not apply these penalties",
     ):
         require(work_items, snippet, "Work items armor penalty state")
 

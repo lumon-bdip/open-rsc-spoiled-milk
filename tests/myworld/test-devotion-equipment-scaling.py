@@ -19,7 +19,7 @@ def main() -> None:
     devotion = DEVOTION.read_text()
     equipment = EQUIPMENT.read_text()
 
-    require(devotion, "COMBAT_GROWTH_START_LEVEL = 500", "combat growth start")
+    require(devotion, "COMBAT_GROWTH_START_LEVEL = 250", "combat growth start")
     require(devotion, "PRAYER_BONUS_GROWTH_MAX = 10", "prayer bonus growth cap")
     require(devotion, "getDevotionGrowthBonus", "shared devotion growth helper")
     require(devotion, "getPrayerBonusGrowth", "shared prayer growth helper")

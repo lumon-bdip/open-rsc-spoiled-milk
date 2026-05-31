@@ -415,17 +415,21 @@ The penalty model is:
 - `Leather/carapace` armor lowers `Magic Power`.
 - `Cloth/robe` armor lowers `Melee Power`.
 
-Only major armor slots count:
+The five worn armor slots count:
 
 - head
 - chest
 - legs
+- gloves
+- boots
 
 The ignored slots are:
 
-- gloves
-- boots
-- back
+- offhand
+- neck
+- back/cape
+- ammo
+- ring
 
 Each qualifying piece applies `-8` weapon power to the affected combat type.
 This penalty is flat per piece and does not scale by armor tier, so a low-tier

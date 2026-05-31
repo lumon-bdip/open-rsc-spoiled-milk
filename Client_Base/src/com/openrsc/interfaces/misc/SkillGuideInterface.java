@@ -420,7 +420,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(404, "", "MyWorld folds old Defense progression into Melee"));
 			skillMenuEntries.add(new SkillMenuItem(404, "", "Check the Melee guide for live weapon and armor progression"));
 			skillMenuEntries.add(new SkillMenuItem(404, "", "Metal armor lowers ranged power from major slots"));
-			skillMenuEntries.add(new SkillMenuItem(404, "", "Leather armor lowers magic power from major slots"));
+			skillMenuEntries.add(new SkillMenuItem(404, "", "Leather armor lowers magic power from five armor slots"));
 			skillMenuEntries.add(new SkillMenuItem(404, "", "Cloth armor lowers melee power from major slots"));
 		}
 		if (mc.getSkillGuideChosen().equals("Strength")) {
@@ -1414,7 +1414,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(148, "", "Hides and carapaces must be tanned at tanning racks"));
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Examine armor pieces to read their trait"));
 			skillMenuEntries.add(new SkillMenuItem(1869, "", "Set traits can grant stats, procs, or spirits"));
-			skillMenuEntries.add(new SkillMenuItem(1839, "", "Major leather slots lower Magic Power"));
+			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor slots lower Magic Power"));
 			skillMenuEntries.add(new SkillMenuItem(779, "", "Can be opened at level 34"));
 			skillMenuEntries.add(new SkillMenuItem(191, "", "Can enter Crafting Guild at level 40"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {

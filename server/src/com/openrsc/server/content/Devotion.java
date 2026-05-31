@@ -11,7 +11,7 @@ public final class Devotion {
 	private static final int OFFERINGS_PER_BONUS_XP = 10;
 	public static final int OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP;
 	public static final int MAX_DEVOTION_LEVEL = 1000;
-	public static final int COMBAT_GROWTH_START_LEVEL = 500;
+	public static final int COMBAT_GROWTH_START_LEVEL = 250;
 	private static final int MAX_OFFERINGS = MAX_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL;
 	private static final int DEVOTION_REQUIREMENT_PER_RESOURCE = 50;
 	private static final int PRAYER_BONUS_GROWTH_MAX = 10;

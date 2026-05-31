@@ -151,10 +151,10 @@ deferred until the limited release has testers and observed play data.
 - Mining, Woodcutting, Harvesting, and Fishing now require their tiered
   gathering tools to be equipped for normal gathering.
 - Armor weapon-power penalties are live:
-  - `Metal` head/chest/legs apply `-8 Ranged Power` per piece
-  - `Leather/carapace` head/chest/legs apply `-8 Magic Power` per piece
-  - `Cloth/robe` head/chest/legs apply `-8 Melee Power` per piece
-  - gloves, boots, and back-slot items do not apply these penalties
+  - `Metal` head/chest/legs/gloves/boots apply `-8 Ranged Power` per piece
+  - `Leather/carapace` head/chest/legs/gloves/boots apply `-8 Magic Power` per piece
+  - `Cloth/robe` head/chest/legs/gloves/boots apply `-8 Melee Power` per piece
+  - offhand, neck, cape, ammo, and ring slots do not apply these penalties
 - Smelting production is live:
   - furnaces open a production window directly
   - direct ore-on-furnace smelting shortcuts are retired for normal smelting

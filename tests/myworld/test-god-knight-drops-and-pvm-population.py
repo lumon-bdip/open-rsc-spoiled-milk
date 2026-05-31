@@ -70,6 +70,10 @@ def main() -> None:
     audit = (ROOT / "tools/myworld/audit-npc-clusters.py").read_text(encoding="utf-8")
 
     require("GREY_KNIGHT(836)" in npc_ids, "Grey Knight NPC constant is missing")
+    client_defs = CLIENT_NPC_DEFS.read_text(encoding="utf-8")
+    require("GREY_KNIGHT_NPC_ID = 836" in client_defs, "Client Grey Knight fallback id is missing")
+    require("GREY_KNIGHT_FALLBACK = new NPCDef(" in client_defs, "Client Grey Knight fallback definition is missing")
+    require("id == GREY_KNIGHT_NPC_ID && id >= npcs.size()" in client_defs, "Client Grey Knight fallback lookup is missing")
     for snippet in (
         'new DropTable("Black Knight (66, 189) Jailer (265) Lord Darquarius (266) Renegade Knight (277)")',
         "ItemId.BLACK_2_HANDED_SWORD.id()",
