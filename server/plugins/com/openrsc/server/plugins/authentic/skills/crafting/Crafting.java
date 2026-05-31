@@ -213,6 +213,10 @@ public class Crafting implements UseInvTrigger,
 		new GlassBlowingRecipe("Beer glass", ItemId.BEER_GLASS.id(), 1, 70, "beer glasses"),
 	};
 
+	private static final int BROWN_APRON_COW_HIDE_COST = 2;
+	private static final int BROWN_APRON_CRAFTING_LEVEL = 1;
+	private static final int BROWN_APRON_CRAFTING_EXP = 12;
+
 	public final static int[] silver_moulds = {
 		ItemId.HOLY_SYMBOL_MOULD.id(), // "You need a Holy symbol mould to make a holy symbol!"
 		ItemId.UNHOLY_SYMBOL_MOULD.id(),
@@ -1458,6 +1462,11 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private void makeLeather(Player player, final Item needle, final Item leather) {
+		if (leather.getCatalogId() == ItemId.COW_HIDE.id()) {
+			makeBrownApron(player, leather);
+			return;
+		}
+
 		HideArmorRecipe recipe = getHideArmorRecipe(leather.getCatalogId());
 		if (recipe == null) {
 			player.message("Nothing interesting happens");
@@ -1512,6 +1521,40 @@ public class Crafting implements UseInvTrigger,
 		batchLeather(player, leather, result, piece.materialCost, piece.reqLvl, piece.exp);
 	}
 
+	private void makeBrownApron(Player player, final Item cowHide) {
+		if (player.getCarriedItems().getInventory().countId(ItemId.THREAD.id(), Optional.of(false)) < 1) {
+			player.message("You need some thread to make anything out of leather");
+			return;
+		}
+
+		if (!ActionSender.isRetroClient(player)) {
+			ProductionSession session = createBrownApronProductionSession(player);
+			if (session != null) {
+				if (!session.hasAnyCraftableRecipe()) {
+					player.message("You are not skilled enough for that yet");
+					return;
+				}
+				player.setAttribute("production_session", session);
+				player.setAttribute("production_starter", (ProductionStarter) Crafting::beginProductionFromInterface);
+				ActionSender.showProductionInterface(player, session);
+				return;
+			}
+		}
+
+		if (!canStartBrownApronRecipe(player)) {
+			return;
+		}
+
+		int repeat = 1;
+		if (player.getConfig().BATCH_PROGRESSION) {
+			int availableMaterial = player.getCarriedItems().getInventory().countId(cowHide.getCatalogId(), Optional.of(false)) / BROWN_APRON_COW_HIDE_COST;
+			repeat = Math.min(availableMaterial, getAvailableThreadUses(player));
+		}
+
+		startbatch(repeat);
+		batchBrownApron(player);
+	}
+
 	private void batchLeather(Player player, Item leather, Item result, int materialCost, int reqLvl, int exp) {
 		if (!canReceive(player, result)) {
 			player.message("Your client does not support the desired object");
@@ -1539,6 +1582,41 @@ public class Crafting implements UseInvTrigger,
 			player.message("You make some " + result.getDef(player.getWorld()).getName());
 			player.getCarriedItems().getInventory().add(result);
 			player.incExp(Skill.CRAFTING.id(), exp, true);
+			updatebatch();
+			if (!consumeThreadUse(player)) {
+				break;
+			}
+		}
+	}
+
+	private void batchBrownApron(Player player) {
+		Item result = new Item(ItemId.BROWN_APRON.id(), 1);
+		if (!canReceive(player, result)) {
+			player.message("Your client does not support the desired object");
+			return;
+		}
+		if (player.getSkills().getLevel(Skill.CRAFTING.id()) < BROWN_APRON_CRAFTING_LEVEL) {
+			player.playerServerMessage(MessageType.QUEST, "You need to have a crafting of level " + BROWN_APRON_CRAFTING_LEVEL + " or higher to make " + result.getDef(player.getWorld()).getName());
+			return;
+		}
+		if (checkFatigue(player)) return;
+
+		while (!ifinterrupted() && !isbatchcomplete()) {
+			if (player.getCarriedItems().getInventory().countId(ItemId.COW_HIDE.id(), Optional.of(false)) < BROWN_APRON_COW_HIDE_COST) {
+				break;
+			}
+			for (int i = 0; i < BROWN_APRON_COW_HIDE_COST; i++) {
+				Item item = player.getCarriedItems().getInventory().get(
+					player.getCarriedItems().getInventory().getLastIndexById(ItemId.COW_HIDE.id(), Optional.of(false))
+				);
+				if (item == null) {
+					return;
+				}
+				player.getCarriedItems().remove(item);
+			}
+			player.message("You make a " + result.getDef(player.getWorld()).getName());
+			player.getCarriedItems().getInventory().add(result);
+			player.incExp(Skill.CRAFTING.id(), BROWN_APRON_CRAFTING_EXP, true);
 			updatebatch();
 			if (!consumeThreadUse(player)) {
 				break;
@@ -1872,6 +1950,22 @@ public class Crafting implements UseInvTrigger,
 			return true;
 		}
 
+		if (inputId == ItemId.COW_HIDE.id() && itemId == ItemId.BROWN_APRON.id()) {
+			if (!crafting.canStartBrownApronRecipe(player)) {
+				return false;
+			}
+			int availableMaterial = player.getCarriedItems().getInventory().countId(inputId, Optional.of(false)) / BROWN_APRON_COW_HIDE_COST;
+			int availableThreadUses = crafting.getAvailableThreadUses(player);
+			int makeCount = Math.min(quantity, Math.min(availableMaterial, availableThreadUses));
+			if (makeCount < 1) {
+				player.message("You need more materials to make that");
+				return false;
+			}
+			startbatch(player, makeCount);
+			crafting.batchBrownApron(player);
+			return true;
+		}
+
 		HideArmorRecipe hideRecipe = crafting.getHideArmorRecipe(inputId);
 		if (hideRecipe == null) {
 			return false;
@@ -1968,6 +2062,10 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private ProductionSession createLeatherProductionSession(Player player, Item leather) {
+		if (leather.getCatalogId() == ItemId.COW_HIDE.id()) {
+			return createBrownApronProductionSession(player);
+		}
+
 		HideArmorRecipe recipe = getHideArmorRecipe(leather.getCatalogId());
 		if (recipe == null) {
 			return null;
@@ -1982,6 +2080,16 @@ public class Crafting implements UseInvTrigger,
 				level >= piece.reqLvl, materialCount >= piece.materialCost && threadUses >= 1));
 		}
 		return new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose a leather item to craft", leather.getCatalogId(), recipes);
+	}
+
+	private ProductionSession createBrownApronProductionSession(Player player) {
+		List<ProductionRecipe> recipes = new ArrayList<>();
+		int level = player.getSkills().getLevel(Skill.CRAFTING.id());
+		int materialCount = player.getCarriedItems().getInventory().countId(ItemId.COW_HIDE.id(), Optional.of(false));
+		int threadUses = getAvailableThreadUses(player);
+		recipes.add(new ProductionRecipe(ItemId.BROWN_APRON.id(), BROWN_APRON_CRAFTING_LEVEL, BROWN_APRON_COW_HIDE_COST, 1,
+			level >= BROWN_APRON_CRAFTING_LEVEL, materialCount >= BROWN_APRON_COW_HIDE_COST && threadUses >= 1));
+		return new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose a leather item to craft", ItemId.COW_HIDE.id(), recipes);
 	}
 
 	private ProductionSession createWoolProductionSession(Player player) {
@@ -2691,6 +2799,30 @@ public class Crafting implements UseInvTrigger,
 		}
 		if (player.getCarriedItems().getInventory().countId(leatherId, Optional.of(false)) < piece.materialCost) {
 			player.message("You need " + piece.materialCost + " pieces of material to make that");
+			return false;
+		}
+		if (getAvailableThreadUses(player) < 1) {
+			player.message("You need some thread to make anything out of leather");
+			return false;
+		}
+		if (checkFatigue(player)) {
+			return false;
+		}
+		return true;
+	}
+
+	private boolean canStartBrownApronRecipe(Player player) {
+		Item result = new Item(ItemId.BROWN_APRON.id(), 1);
+		if (!canReceive(player, result)) {
+			player.message("Your client does not support the desired object");
+			return false;
+		}
+		if (player.getSkills().getLevel(Skill.CRAFTING.id()) < BROWN_APRON_CRAFTING_LEVEL) {
+			player.playerServerMessage(MessageType.QUEST, "You need to have a crafting of level " + BROWN_APRON_CRAFTING_LEVEL + " or higher to make " + result.getDef(player.getWorld()).getName());
+			return false;
+		}
+		if (player.getCarriedItems().getInventory().countId(ItemId.COW_HIDE.id(), Optional.of(false)) < BROWN_APRON_COW_HIDE_COST) {
+			player.message("You need " + BROWN_APRON_COW_HIDE_COST + " pieces of material to make that");
 			return false;
 		}
 		if (getAvailableThreadUses(player) < 1) {
