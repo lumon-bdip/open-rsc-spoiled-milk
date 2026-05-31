@@ -279,7 +279,7 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 	}
 
 	private int resourceRespawnMillis(int respawnSeconds) {
-		return Math.max(1, (respawnSeconds * 1000) / 2);
+		return Math.max(1, (respawnSeconds * 1000) / 4);
 	}
 
 	@Override

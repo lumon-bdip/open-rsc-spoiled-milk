@@ -20,11 +20,20 @@ of my own sprite work. The distributable art sources are:
 
 - Pimen: the included added runtime animations, distributed with the artist's
   confirmation that source-available distribution is permitted.
+- Atelier Pixerelia, InDark, Pixel Banner, KURAI, and COLEVID-19: included
+  magic and summoning icons, listed in detail in the Credits section.
+- Game-icons.net: Prayer icons.
 - Original work: custom sprites including the fishing rod equipment sprites.
 
 Artist/source links:
 
 - Pimen: https://pimen.itch.io/
+- Atelier Pixerelia: https://pixerelia.itch.io/
+- InDark: https://iridark.itch.io/
+- Pixel Banner: https://pixel-banner.itch.io/
+- KURAI: https://kurai7.itch.io/
+- COLEVID-19: https://rcxno.itch.io/
+- All Prayer Icons: https://game-icons.net/
 
 ## Navigation
 
@@ -794,6 +803,21 @@ New visual assets use the following source breakdown:
 
 - **Pimen**: the included added runtime animations, distributed with the
   artist's confirmation that source-available distribution is permitted.
+- **Pixel Banner**: Acid Gush, Earth Burst, Earth Impale, Ice Burst, Icicle
+  Shot, Rock Throw, Thunder Ball, and Battering Ram icons.
+- **KURAI**: Abyssal Demon, Astral Wraith, Duskwind Bat, Ironhide Bear,
+  Mischief Imp, Broodling Spider, Delivery Camel, Restless Shade, and Zamoraks
+  Void icons.
+- **InDark**: Bound Battleaxe icon.
+- **Atelier Pixerelia**: Acid Drop, Acid Frog, Astral Wraith, Alchemy, Spore,
+  Claws of Guthix, Earth Hammer, Explosion, Eye of Guthix, Fireball, Fire Claw,
+  Fire Pillar, Greater Heal, Iban Blast, Ice Crystal, Lesser Heal, Saradomin
+  Soul Slash, Saradomin Strike, Telekinetic Grab, Thunder Strike, Thunder Wave,
+  Tornado, Wind Arrow, Wind Beam, Wind Slash, Wood Drill, Water Ball, Water
+  Burst, Water Eruption, Water Vortex, and Zamoraks Apocolypse icons.
+- **COLEVID-19**: modified Mourning Unicorn and Sacred Unicorn icons.
+- **Game-icons.net**: all Prayer icons.
+- **Shutterstock royalty-free listing**: Pack Rat icon.
 - **Original work by the project author**: sprite additions including the
   fishing rod equipment sprites.
 
@@ -804,6 +828,12 @@ files extractable.
 Sources:
 
 - Pimen: https://pimen.itch.io/
+- Atelier Pixerelia: https://pixerelia.itch.io/
+- InDark: https://iridark.itch.io/
+- Pixel Banner: https://pixel-banner.itch.io/
+- KURAI: https://kurai7.itch.io/
+- COLEVID-19: https://rcxno.itch.io/
+- All Prayer Icons: https://game-icons.net/
 
 ## Current State
 

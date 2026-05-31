@@ -83,6 +83,7 @@ def main() -> None:
 
     require(guide, 'addAmmoMouldGuide("Tin", 1, 2004, 2039, 2043, 1996);', "tin ammo crafting guide")
     require(guide, 'addAmmoMouldGuide("Rune", 70, 674, 646, 1070, 1080);', "rune ammo crafting guide")
+    require(guide, 'addWoodcraftGuide("Basic", 10, 1, 277, 5, 276, 8, 60, 9, 100, 1);', "basic woodcraft recipe guide")
     require(guide, 'addWoodcraftGuide("Pine", 15, 8, 2116, 12, 2115, 15, 59, 16, 2131, 8);', "pine woodcraft recipe guide")
     require(guide, 'addWoodcraftGuide("Willow", 25, 22, 661, 26, 660, 29, 2170, 30, 1769, 22);', "willow base staff woodcraft guide")
     require(guide, 'addWoodcraftGuide("Maple", 35, 38, 663, 40, 662, 43, 2172, 44, 1774, 38);', "maple base staff woodcraft guide")
@@ -141,6 +142,7 @@ def main() -> None:
     forbid(guide, 'addWoodcraftGuide("Maple", 35, 38, 663, 40, 662, 43, 2172, 44, 1766, 38);', "maple elemental staff woodcraft guide id")
     forbid(guide, 'addWoodcraftGuide("Yew", 40, 46, 665, 47, 664, 50, 2173, 51, 1767, 46);', "yew elemental staff woodcraft guide id")
     forbid(guide, 'addWoodcraftGuide("Magic", 50, 62, 667, 61, 666, 64, 2175, 65, 1768, 62);', "magic elemental staff woodcraft guide id")
+    forbid(guide, 'addWoodcraftGuide("Logs", 10, 1, 277, 5, 276, 8, 60, 9, 100, 1);', "awkward logs woodcraft label")
     forbid(guide, 'new SkillMenuItem(779, "34", "Oyster Pearls")', "old oyster pearl info layout")
     forbid(guide, 'All throwing knives', "old ranged thrown summary")
     forbid(guide, 'Thick skin - Increases your defense by 5%', "old prayer guide")

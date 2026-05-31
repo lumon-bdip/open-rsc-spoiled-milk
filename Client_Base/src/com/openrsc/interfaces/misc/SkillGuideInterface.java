@@ -1398,7 +1398,7 @@ public final class SkillGuideInterface {
 			addAmmoMouldGuide("Orichalcum", 62, 2037, 2042, 2046, 2029);
 			addAmmoMouldGuide("Rune", 70, 674, 646, 1070, 1080);
 		} else if (curTab == 5) {
-			addWoodcraftGuide("Logs", 10, 1, 277, 5, 276, 8, 60, 9, 100, 1);
+			addWoodcraftGuide("Basic", 10, 1, 277, 5, 276, 8, 60, 9, 100, 1);
 			addWoodcraftGuide("Pine", 15, 8, 2116, 12, 2115, 15, 59, 16, 2131, 8);
 			addWoodcraftGuide("Oak", 20, 15, 659, 19, 658, 22, 2169, 23, 1764, 15);
 			addWoodcraftGuide("Willow", 25, 22, 661, 26, 660, 29, 2170, 30, 1769, 22);

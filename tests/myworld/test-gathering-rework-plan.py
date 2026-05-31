@@ -257,6 +257,7 @@ def require_woodcutting_uses_guaranteed_yield() -> None:
         "player.getWorld().replaceGameObject(object, newObject)",
         "if (def.getLogId() == ItemId.PALM_LOGS.id())",
         "player.getWorld().unregisterGameObject(object);",
+        "return Math.max(1, (respawnSeconds * 1000) / 4);",
         "Any excess falls to the ground because you have no room",
     )
     for snippet in snippets:

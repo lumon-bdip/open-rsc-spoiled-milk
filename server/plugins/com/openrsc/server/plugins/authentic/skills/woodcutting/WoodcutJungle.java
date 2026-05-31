@@ -101,14 +101,14 @@ public class WoodcutJungle implements OpLocTrigger,
 			if (jungleObject != null && jungleObject.getID() == obj.getID()) {
 				if (obj.getID() == JUNGLE_VINE) {
 					player.getWorld().unregisterGameObject(jungleObject);
-					player.getWorld().delayedSpawnObject(obj.getLoc(), 5500); // 5.5 seconds.
+					player.getWorld().delayedSpawnObject(obj.getLoc(), 2750); // 2.75 seconds.
 					if (!force)
 						// authentic does not send to quest tab
 						mes("You hack your way through the jungle.");
 						delay(2);
 				} else {
 					player.getWorld().replaceGameObject(obj, new GameObject(obj.getWorld(), obj.getLocation(), JUNGLE_TREE_STUMP, obj.getDirection(), obj.getType()));
-					player.getWorld().delayedSpawnObject(obj.getLoc(), 60 * 1000); // 1 minute.
+					player.getWorld().delayedSpawnObject(obj.getLoc(), 30 * 1000); // 30 seconds.
 				}
 
 				if (!force)
