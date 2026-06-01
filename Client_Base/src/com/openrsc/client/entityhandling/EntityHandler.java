@@ -2541,8 +2541,8 @@ public class EntityHandler {
 		items.add(new ItemDef("Chaos-Rune", "Used for mid level missile spells", "", 10, 40, "items:40", true, false, 0, 0, false, false, false, 41));
 		items.add(new ItemDef("Law-Rune", "Used for teleport spells", "", 12, 41, "items:41", true, false, 0, 0, false, false, false, 42));
 		items.add(new ItemDef("Thread", "Used with a needle to make clothes", "", 1, 42, "items:42", true, false, 0, 0, false, false, false, 43));
-		items.add(new ItemDef("Holy Symbol of saradomin", "This needs a string putting on it", "", 200, 43, "items:43", false, false, 0, 0, false, false, true, 44));
-		items.add(new ItemDef("Unblessed Holy Symbol", "This needs blessing", "", 200, 44, "items:44", false, true, 1024, 0, false, false, true, 45));
+		items.add(new ItemDef("Unstrung symbol of Saradomin", "This needs a string putting on it", "", 200, 43, "items:43", false, false, 0, 0, false, false, true, 44));
+		items.add(new ItemDef("Unblessed symbol of Saradomin", "This needs blessing", "", 200, 44, "items:44", false, true, 1024, 0, false, false, true, 45));
 		items.add(new ItemDef("Cosmic-Rune", "Used for enchant spells", "", 15, 45, "items:45", true, false, 0, 0, false, false, false, 46));
 		items.add(new ItemDef("key", "The key to get into the phoenix gang", "", 1, 25, "items:25", false, false, 0, 15636736, false, true, false, 47));
 		items.add(new ItemDef("key", "The key to the phoenix gang's weapons store", "", 1, 25, "items:25", false, false, 0, 15636736, false, false, true, 48));
@@ -2882,7 +2882,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Chest key", "A key to One eyed Hector's chest", "", 1, 25, "items:25", false, false, 0, 14540253, false, true, false, 382));
 		items.add(new ItemDef("Silver", "this needs refining", "", 75, 134, "items:134", false, false, 0, 0, false, false, true, 383));
 		items.add(new ItemDef("silver bar", "this looks valuable", "", 150, 79, "items:79", false, false, 0, 0, false, false, true, 384));
-		items.add(new ItemDef("Holy Symbol of saradomin", "This improves my prayer", "", 300, 44, "items:44", false, true, 1024, 0, false, false, true, 385));
+		items.add(new ItemDef("Symbol of Saradomin", "Increases devotion gained from offerings", "", 300, 44, "items:44", false, true, 1024, 0, false, false, true, 385));
 		items.add(new ItemDef("Holy symbol mould", "Used to make Holy Symbols", "", 5, 132, "items:132", false, false, 0, 0, false, false, true, 386));
 		items.add(new ItemDef("Disk of Returning", "Used to get out of Thordur's blackhole", "spin", 12, 133, "items:133", false, false, 0, 0, false, false, true, 387));
 		items.add(new ItemDef("Monks robe", "I feel closer to the God's when I am wearing this", "", 40, 87, "items:87", false, true, 64, 10510400, false, false, true, 388));
@@ -3528,9 +3528,9 @@ public class EntityHandler {
 		items.add(new ItemDef("Steel Throwing Dart", "A deadly throwing dart with a steel tip.", "", 20, 231, "items:231", true, true, 16, 15658734, true, false, false, 1024));
 		items.add(new ItemDef("Astrology Book", "A book on Astrology in runescape", "Read", 2, 28, "items:28", false, false, 0, 0, true, true, false, 1025));
 		items.add(new ItemDef("Unholy Symbol mould", "use this with silver in a furnace", "", 200, 349, "items:349", false, false, 0, 0, true, true, true, 1026));
-		items.add(new ItemDef("Unholy Symbol of Zamorak", "this needs stringing", "", 200, 350, "items:350", false, false, 0, 0, true, true, true, 1027));
-		items.add(new ItemDef("Unblessed Unholy Symbol of Zamorak", "this needs blessing", "", 200, 351, "items:351", false, true, 1024, 0, true, true, true, 1028));
-		items.add(new ItemDef("Unholy Symbol of Zamorak", "a symbol indicating allegiance to Zamorak", "", 200, 351, "items:351", false, true, 1024, 0, true, true, true, 1029));
+		items.add(new ItemDef("Unstrung symbol of Zamorak", "this needs stringing", "", 200, 350, "items:350", false, false, 0, 0, true, true, true, 1027));
+		items.add(new ItemDef("Unblessed symbol of Zamorak", "this needs blessing", "", 200, 351, "items:351", false, true, 1024, 0, true, true, true, 1028));
+		items.add(new ItemDef("Symbol of Zamorak", "Increases devotion gained from offerings", "", 200, 351, "items:351", false, true, 1024, 0, true, true, true, 1029));
 		items.add(new ItemDef("Shantay Desert Pass", "Allows you into the desert through the Shantay pass worth 5 gold.", "", 5, 218, "items:218", true, false, 0, 13083169, true, true, false, 1030));
 		items.add(new ItemDef("Staff of Iban", "The staff is damaged", "wield", 15, 337, "items:337", false, false, 0, 0, true, true, true, 1031));
 		items.add(new ItemDef("Dwarf cannon base", "bang", "set down", 200000, 352, "items:352", false, false, 0, 0, true, false, true, 1032));
@@ -5520,14 +5520,18 @@ public class EntityHandler {
 		setCustomItemDefinition(3128, new ItemDef("Grey Plated skirt", "Armour designed for females", "", 1920, 9, "items:9", false, true, 644, 0x9EA59F, false, false, true, 3128));
 		setCustomItemDefinition(3129, new ItemDef("Grey Chain Mail Legs", "A series of connected metal rings", "", 720, 590, "items:590", false, true, 128, 0x9EA59F, false, false, true, 3129));
 		setCustomItemDefinition(3130, new ItemDef("Grey Chain Mail Top", "A series of connected metal rings", "", 1440, 595, "items:595", false, true, 64, 0x9EA59F, false, false, true, 3130));
-		setCustomItemDefinition(3131, new ItemDef("Black gauntlets", "Heavy hand protection blessed by Zamorak", "", 384, 156, "items:156", false, true, 256, 0x222222, false, false, true, 3131));
-		setCustomItemDefinition(3132, new ItemDef("Black greaves", "Heavy foot protection blessed by Zamorak", "", 384, 16, "items:16", false, true, 512, 0x222222, false, false, true, 3132));
-		setCustomItemDefinition(3133, new ItemDef("White gauntlets", "Heavy hand protection blessed by Saradomin", "", 384, 156, "items:156", false, true, 256, 0xF0F0F0, false, false, true, 3133));
-		setCustomItemDefinition(3134, new ItemDef("White greaves", "Heavy foot protection blessed by Saradomin", "", 384, 16, "items:16", false, true, 512, 0xF0F0F0, false, false, true, 3134));
-		setCustomItemDefinition(3135, new ItemDef("Grey gauntlets", "Heavy hand protection blessed by Guthix", "", 384, 156, "items:156", false, true, 256, 0x9EA59F, false, false, true, 3135));
-		setCustomItemDefinition(3136, new ItemDef("Grey greaves", "Heavy foot protection blessed by Guthix", "", 384, 16, "items:16", false, true, 512, 0x9EA59F, false, false, true, 3136));
+		setCustomItemDefinition(3131, new ItemDef("Black gauntlets", "Heavy hand protection blessed by Zamorak", "", 384, 217, "items:217", false, true, 256, 0x222222, false, false, true, 3131));
+		setCustomItemDefinition(3132, new ItemDef("Black greaves", "Heavy foot protection blessed by Zamorak", "", 384, 223, "items:223", false, true, 512, 0x222222, false, false, true, 3132));
+		setCustomItemDefinition(3133, new ItemDef("White gauntlets", "Heavy hand protection blessed by Saradomin", "", 384, 217, "items:217", false, true, 256, 0xF0F0F0, false, false, true, 3133));
+		setCustomItemDefinition(3134, new ItemDef("White greaves", "Heavy foot protection blessed by Saradomin", "", 384, 223, "items:223", false, true, 512, 0xF0F0F0, false, false, true, 3134));
+		setCustomItemDefinition(3135, new ItemDef("Grey gauntlets", "Heavy hand protection blessed by Guthix", "", 384, 217, "items:217", false, true, 256, 0x9EA59F, false, false, true, 3135));
+		setCustomItemDefinition(3136, new ItemDef("Grey greaves", "Heavy foot protection blessed by Guthix", "", 384, 223, "items:223", false, true, 512, 0x9EA59F, false, false, true, 3136));
 		addBlessedWoolArmorDefinitions();
 		addAdditionalBlessedStaffDefinitions();
+		setCustomItemDefinition(3172, new ItemDef("Guthix symbol mould", "Used to make symbols of Guthix", "", 200, -1, "external-png:guthix-symbol-mould", false, false, 0, 0, false, false, true, 3172));
+		setCustomItemDefinition(3173, new ItemDef("Unstrung symbol of Guthix", "This needs stringing", "", 200, -1, "external-png:unstrung-symbol-of-guthix", false, false, 0, 0, false, false, true, 3173));
+		setCustomItemDefinition(3174, new ItemDef("Unblessed symbol of Guthix", "This needs blessing", "", 200, -1, "external-png:unblessed-symbol-of-guthix", false, true, 1024, 0, false, false, true, 3174));
+		setCustomItemDefinition(3175, new ItemDef("Symbol of Guthix", "Increases devotion gained from offerings", "", 300, -1, "external-png:symbol-of-guthix", false, true, 1024, 0, false, false, true, 3175));
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
 			new int[] {900, 1275, 2025, 17625}, new int[] {19711, 3394611, 16724736, 12255487});
 
@@ -7019,6 +7023,13 @@ public class EntityHandler {
 			for (int pickaxeColor : MYWORLD_PICKAXE_COLORS) {
 				animations.add(new AnimationDef("pickaxe", "equipment", pickaxeColor, 0, true, false, 0));
 			}
+			animations.add(new AnimationDef("leathergloves", "equipment", 0x222222, 0, true, false, 0));//988 - Black gauntlets
+			animations.add(new AnimationDef("boots", "equipment", 0x222222, 0, true, false, 0));//989 - Black greaves
+			animations.add(new AnimationDef("leathergloves", "equipment", 0xF0F0F0, 0, true, false, 0));//990 - White gauntlets
+			animations.add(new AnimationDef("boots", "equipment", 0xF0F0F0, 0, true, false, 0));//991 - White greaves
+			animations.add(new AnimationDef("leathergloves", "equipment", 0x9EA59F, 0, true, false, 0));//992 - Grey gauntlets
+			animations.add(new AnimationDef("boots", "equipment", 0x9EA59F, 0, true, false, 0));//993 - Grey greaves
+			animations.add(new AnimationDef("guthsymbol", "equipment", 0, 0, 0, true, false, 0));//994 - Guthix symbol
 		}
 	}
 

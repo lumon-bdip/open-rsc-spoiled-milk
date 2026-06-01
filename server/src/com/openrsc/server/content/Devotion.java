@@ -1,5 +1,6 @@
 package com.openrsc.server.content;
 
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -8,6 +9,7 @@ import com.openrsc.server.util.rsc.MessageType;
 public final class Devotion {
 	private static final String CACHE_PREFIX = "devotion_";
 	private static final String CACHE_SUFFIX = "_offerings";
+	private static final String SYMBOL_BONUS_SUFFIX = "_symbol_bonus_toggle";
 	private static final int OFFERINGS_PER_BONUS_XP = 10;
 	public static final int OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP;
 	public static final int MAX_DEVOTION_LEVEL = 1000;
@@ -28,11 +30,12 @@ public final class Devotion {
 		final String cacheKey = getOfferingCacheKey(godLine);
 		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
 		final int bonusXp = Math.min(previousOfferings / OFFERINGS_PER_BONUS_XP, MAX_DEVOTION_LEVEL);
-		final int newOfferings = Math.min(previousOfferings + 1, MAX_OFFERINGS);
+		final int offeringGain = getOfferingDevotionGain(player, godLine);
+		final int newOfferings = Math.min(previousOfferings + offeringGain, MAX_OFFERINGS);
 		player.getCache().set(cacheKey, newOfferings);
 		ActionSender.sendDevotion(player);
 
-		if (newOfferings % OFFERINGS_PER_BONUS_XP == 0) {
+		if (newOfferings / OFFERINGS_PER_BONUS_XP > previousOfferings / OFFERINGS_PER_BONUS_XP) {
 			final int nextBonusXp = newOfferings / OFFERINGS_PER_BONUS_XP;
 			player.playerServerMessage(
 				MessageType.QUEST,
@@ -113,6 +116,32 @@ public final class Devotion {
 
 	public static int getPrayerBonusGrowth(final Player player, final PrayerCatalog.GodLine godLine) {
 		return getDevotionGrowthBonus(player, godLine, PRAYER_BONUS_GROWTH_MAX);
+	}
+
+	private static int getOfferingDevotionGain(final Player player, final PrayerCatalog.GodLine godLine) {
+		if (!hasBlessedSymbolEquipped(player, godLine)) {
+			return 1;
+		}
+		final String cacheKey = CACHE_PREFIX + godLine.name().toLowerCase() + SYMBOL_BONUS_SUFFIX;
+		final boolean bonusThisOffering = !player.getCache().hasKey(cacheKey) || !player.getCache().getBoolean(cacheKey);
+		player.getCache().store(cacheKey, bonusThisOffering);
+		return bonusThisOffering ? 2 : 1;
+	}
+
+	private static boolean hasBlessedSymbolEquipped(final Player player, final PrayerCatalog.GodLine godLine) {
+		if (player == null || player.getCarriedItems() == null || player.getCarriedItems().getEquipment() == null || godLine == null) {
+			return false;
+		}
+		if (godLine == PrayerCatalog.GodLine.SARADOMIN) {
+			return player.getCarriedItems().getEquipment().hasEquipped(ItemId.HOLY_SYMBOL_OF_SARADOMIN.id());
+		}
+		if (godLine == PrayerCatalog.GodLine.ZAMORAK) {
+			return player.getCarriedItems().getEquipment().hasEquipped(ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id());
+		}
+		if (godLine == PrayerCatalog.GodLine.GUTHIX) {
+			return player.getCarriedItems().getEquipment().hasEquipped(ItemId.GUTHIX_SYMBOL.id());
+		}
+		return false;
 	}
 
 	private static String getOfferingCacheKey(final PrayerCatalog.GodLine godLine) {

@@ -17166,6 +17166,7 @@ public final class mudclient implements Runnable {
 
 	private void loadExternalEquipmentSprites() {
 		loadExternalMainHandEquipmentSprite("fishingpole", getExternalEquipmentNumberedFolder("fishing-pole"));
+		loadExternalNeckEquipmentSprite("guthsymbol", getExternalEquipmentNumberedFolder("guthix-symbol"));
 	}
 
 	private void loadExternalMainHandEquipmentSprite(String spriteName, File numberedFolder) {
@@ -17214,6 +17215,34 @@ public final class mudclient implements Runnable {
 			System.out.println("Failed to load external equipment frame " + sourceFile.getPath() + ": " + e.getMessage());
 			return null;
 		}
+	}
+
+	private void loadExternalNeckEquipmentSprite(String spriteName, File numberedFolder) {
+		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
+		if (equipmentSprites == null || !assetDirectoryExists(numberedFolder)) {
+			return;
+		}
+		final int frameCount = 18;
+		final int[] offsetX = new int[] {26, 26, 26, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 10, 15, 20};
+		final int[] offsetY = new int[] {25, 25, 25, 25, 25, 25, 24, 24, 24, 24, 24, 24, 25, 25, 25, 24, 24, 24};
+		final int[] boundWidth = new int[] {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 84, 84, 84};
+		orsc.graphics.two.SpriteArchive.Entry spriteEntry = new orsc.graphics.two.SpriteArchive.Entry(
+			spriteName,
+			orsc.graphics.two.SpriteArchive.Entry.TYPE.PLAYER_EQUIPPABLE_HASCOMBAT,
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.NECK,
+			frameCount
+		);
+		for (int i = 0; i < frameCount; i++) {
+			File frameFile = new File(numberedFolder, String.format(Locale.ENGLISH, "%02d.png", i));
+			orsc.graphics.two.SpriteArchive.Frame frame = loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
+			if (frame == null) {
+				return;
+			}
+			frame.changeBoundWidth(boundWidth[i]);
+			frame.getSprite().setSomething(boundWidth[i], 102);
+			spriteEntry.getFrames()[i] = frame;
+		}
+		equipmentSprites.put(spriteName, spriteEntry);
 	}
 
 	private File getExternalIconFile(String iconName) {

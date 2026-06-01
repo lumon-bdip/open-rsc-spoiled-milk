@@ -675,7 +675,9 @@ public final class AuctionHouse {
 			} else if (selectedFilter == 5) {  // Jewelry
 				nameFilter = new String[]{"uncut", "sapphire", "emerald", "ruby", "diamond", "dragonstone", "crown"};
 				exactNameFilter = new String[]{"opal", "jade", "amulet of accuracy", "gold amulet", "brass necklace",
-					"gold necklace", "holy symbol of saradomin", "unblessed holy symbol", "ring of wealth",
+					"gold necklace", "symbol of saradomin", "unblessed symbol of saradomin",
+					"symbol of zamorak", "unblessed symbol of zamorak", "symbol of guthix",
+					"unblessed symbol of guthix", "ring of wealth",
 					"ring of avarice", "ring of recoil", "ring of forging", "ring of splendor",
 					"dwarven ring", "ring of life"};
 			} else if (selectedFilter == 6) { // Ore and Bar

@@ -1014,7 +1014,7 @@
         },
         {
             "id": 44,
-            "name": "Holy Symbol of saradomin",
+            "name": "Unstrung symbol of Saradomin",
             "description": "This needs a string putting on it",
             "command": "",
             "isFemaleOnly": 0,
@@ -1037,7 +1037,7 @@
         },
         {
             "id": 45,
-            "name": "Unblessed Holy Symbol",
+            "name": "Unblessed symbol of Saradomin",
             "description": "This needs blessing",
             "command": "",
             "isFemaleOnly": 0,
@@ -8857,8 +8857,8 @@
         },
         {
             "id": 385,
-            "name": "Holy Symbol of saradomin",
-            "description": "This improves my prayer",
+            "name": "Symbol of Saradomin",
+            "description": "Increases devotion gained from offerings",
             "command": "",
             "isFemaleOnly": 0,
             "isMembersOnly": 0,
@@ -8874,7 +8874,7 @@
             "weaponAimBonus": 0,
             "weaponPowerBonus": 0,
             "magicBonus": 0,
-            "prayerBonus": 8,
+            "prayerBonus": 0,
             "basePrice": 300,
             "isNoteable": 1
         },
@@ -23623,7 +23623,7 @@
         },
         {
             "id": 1027,
-            "name": "Unholy Symbol of Zamorak",
+            "name": "Unstrung symbol of Zamorak",
             "description": "this needs stringing",
             "command": "",
             "isFemaleOnly": 0,
@@ -23646,7 +23646,7 @@
         },
         {
             "id": 1028,
-            "name": "Unblessed Unholy Symbol of Zamorak",
+            "name": "Unblessed symbol of Zamorak",
             "description": "this needs blessing",
             "command": "",
             "isFemaleOnly": 0,
@@ -23669,8 +23669,8 @@
         },
         {
             "id": 1029,
-            "name": "Unholy Symbol of Zamorak",
-            "description": "a symbol indicating allegiance to Zamorak",
+            "name": "Symbol of Zamorak",
+            "description": "Increases devotion gained from offerings",
             "command": "",
             "isFemaleOnly": 0,
             "isMembersOnly": 1,
@@ -23686,7 +23686,7 @@
             "weaponAimBonus": 1,
             "weaponPowerBonus": 1,
             "magicBonus": 0,
-            "prayerBonus": 8,
+            "prayerBonus": 0,
             "basePrice": 200,
             "isNoteable": 1
         },

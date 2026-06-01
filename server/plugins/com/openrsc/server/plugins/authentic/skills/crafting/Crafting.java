@@ -220,6 +220,7 @@ public class Crafting implements UseInvTrigger,
 	public final static int[] silver_moulds = {
 		ItemId.HOLY_SYMBOL_MOULD.id(), // "You need a Holy symbol mould to make a holy symbol!"
 		ItemId.UNHOLY_SYMBOL_MOULD.id(),
+		ItemId.GUTHIX_SYMBOL_MOULD.id(),
 	};
 
 	public final static int[] gems = {
@@ -965,12 +966,16 @@ public class Crafting implements UseInvTrigger,
 		// select type
 		ArrayList<String> options = new ArrayList<>();
 		options.addAll(Arrays.asList(
-			"Holy Symbol of Saradomin"
+			"Symbol of Saradomin"
 		));
 		int maxItemId = player.getConfig().RESTRICT_ITEM_ID;
 		int jewelryId = ItemId.UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK.id();
 		if (MathUtil.maxUnsigned(maxItemId, jewelryId) == maxItemId) {
-			options.add("Unholy symbol of Zamorak");
+			options.add("Symbol of Zamorak");
+		}
+		jewelryId = ItemId.UNSTRUNG_GUTHIX_SYMBOL.id();
+		if (MathUtil.maxUnsigned(maxItemId, jewelryId) == maxItemId) {
+			options.add("Symbol of Guthix");
 		}
 		String[] finalOptions = new String[options.size()];
 		int type = multi(player, options.toArray(finalOptions));
@@ -981,7 +986,8 @@ public class Crafting implements UseInvTrigger,
 
 		final int[] results = {
 			ItemId.UNSTRUNG_HOLY_SYMBOL_OF_SARADOMIN.id(),
-			ItemId.UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK.id()
+			ItemId.UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK.id(),
+			ItemId.UNSTRUNG_GUTHIX_SYMBOL.id()
 		};
 		if (player.getCarriedItems().getInventory().countId(silver_moulds[type], Optional.of(false)) <= 0) {
 			player.message("You need a " + player.getWorld().getServer().getEntityHandler().getItemDef(silver_moulds[type]).getName() + " to make a " + reply.get() + "!");
@@ -1860,7 +1866,8 @@ public class Crafting implements UseInvTrigger,
 			}
 			final int[] results = {
 				ItemId.UNSTRUNG_HOLY_SYMBOL_OF_SARADOMIN.id(),
-				ItemId.UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK.id()
+				ItemId.UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK.id(),
+				ItemId.UNSTRUNG_GUTHIX_SYMBOL.id()
 			};
 			AtomicReference<String> reply = new AtomicReference<>(player.getWorld().getServer().getEntityHandler().getItemDef(results[type]).getName());
 			Item silverBar = new Item(ItemId.SILVER_BAR.id());
@@ -2009,6 +2016,8 @@ public class Crafting implements UseInvTrigger,
 			session = createSilverJewelryProductionSession(player, 0);
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_UNHOLY_SYMBOLS) {
 			session = createSilverJewelryProductionSession(player, 1);
+		} else if (categoryId == Smelting.FURNACE_CATEGORY_GUTHIX_SYMBOLS) {
+			session = createSilverJewelryProductionSession(player, 2);
 		} else if (isFurnaceMetalCategory(categoryId)) {
 			session = createFurnaceMetalSelectionSession(player, categoryId);
 			if (session != null) {
@@ -2206,13 +2215,17 @@ public class Crafting implements UseInvTrigger,
 		int maxItemId = player.getConfig().RESTRICT_ITEM_ID;
 		int[] results = {
 			ItemId.UNSTRUNG_HOLY_SYMBOL_OF_SARADOMIN.id(),
-			ItemId.UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK.id()
+			ItemId.UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK.id(),
+			ItemId.UNSTRUNG_GUTHIX_SYMBOL.id()
 		};
 		for (int type = 0; type < results.length; type++) {
 			if (onlyType >= 0 && type != onlyType) {
 				continue;
 			}
 			if (type == 1 && MathUtil.maxUnsigned(maxItemId, ItemId.UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK.id()) != maxItemId) {
+				continue;
+			}
+			if (type == 2 && MathUtil.maxUnsigned(maxItemId, ItemId.UNSTRUNG_GUTHIX_SYMBOL.id()) != maxItemId) {
 				continue;
 			}
 			boolean hasMould = player.getCarriedItems().getInventory().countId(silver_moulds[type], Optional.of(false)) > 0;
@@ -2705,6 +2718,10 @@ public class Crafting implements UseInvTrigger,
 			&& MathUtil.maxUnsigned(player.getConfig().RESTRICT_ITEM_ID, ItemId.UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK.id()) == player.getConfig().RESTRICT_ITEM_ID) {
 			return 1;
 		}
+		if (itemId == ItemId.UNSTRUNG_GUTHIX_SYMBOL.id()
+			&& MathUtil.maxUnsigned(player.getConfig().RESTRICT_ITEM_ID, ItemId.UNSTRUNG_GUTHIX_SYMBOL.id()) == player.getConfig().RESTRICT_ITEM_ID) {
+			return 2;
+		}
 		return -1;
 	}
 
@@ -2963,6 +2980,9 @@ public class Crafting implements UseInvTrigger,
 				break;
 			case UNSTRUNG_UNHOLY_SYMBOL_OF_ZAMORAK:
 				newID = ItemId.UNBLESSED_UNHOLY_SYMBOL_OF_ZAMORAK.id();
+				break;
+			case UNSTRUNG_GUTHIX_SYMBOL:
+				newID = ItemId.UNBLESSED_GUTHIX_SYMBOL.id();
 				break;
 			case UNSTRUNG_GOLD_AMULET:
 				newID = ItemId.GOLD_AMULET.id();

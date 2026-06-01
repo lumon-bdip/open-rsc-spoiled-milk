@@ -119,7 +119,8 @@ public final class CraftingEquipmentShops extends AbstractShop {
 			}
 			if (world.getServer().getConfig().BASED_CONFIG_DATA >= 29) {
 				Collections.addAll(shopItems,
-					new Item(ItemId.HOLY_SYMBOL_MOULD.id(), 3));
+					new Item(ItemId.HOLY_SYMBOL_MOULD.id(), 3),
+					new Item(ItemId.GUTHIX_SYMBOL_MOULD.id(), 3));
 			}
 			Item[] finalItems = new Item[shopItems.size()];
 			shop = new Shop(false, 5000, 100, 65, 2,

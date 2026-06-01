@@ -428,6 +428,8 @@ public final class DoSkillInterface {
 				return "Holy symbols";
 			case 1027:
 				return "Unholy symbols";
+			case 3173:
+				return "Guthix symbols";
 			case 190:
 				return "Bolts";
 			case 2004:

@@ -48,6 +48,8 @@ def main() -> None:
     require("xpToGive += devotionBonusXp;" in bones, "devotion bonus should be added to Prayer XP")
     require("Every 10 offerings gives +1 devotion" in guide,
             "Prayer skill guide should explain devotion levels")
+    require("Blessed symbols give 1.5x devotion from offerings" in guide,
+            "Prayer skill guide should explain blessed symbol offering bonus")
     require("+1 Prayer XP per offering for each devotion" in guide,
             "Prayer skill guide should explain devotion XP scaling")
     require('drawString("Devotion: " + this.currentDevotionLevel' in client,

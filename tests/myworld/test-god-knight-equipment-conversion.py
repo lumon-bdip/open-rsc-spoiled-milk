@@ -21,23 +21,28 @@ def main() -> None:
     custom_defs = json.loads((SERVER / "conf/server/defs/ItemDefsCustom.json").read_text(encoding="utf-8"))["items"]
     myworld_defs = json.loads((SERVER / "conf/server/defs/ItemDefsMyWorld.json").read_text(encoding="utf-8"))["items"]
 
+    client = (ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java").read_text(encoding="utf-8")
+
     expected_items = {
-        3131: ("Black gauntlets", 8),
-        3132: ("Black greaves", 9),
-        3133: ("White gauntlets", 8),
-        3134: ("White greaves", 9),
-        3135: ("Grey gauntlets", 8),
-        3136: ("Grey greaves", 9),
+        3131: ("Black gauntlets", 8, 217, "items:217", 989),
+        3132: ("Black greaves", 9, 223, "items:223", 990),
+        3133: ("White gauntlets", 8, 217, "items:217", 991),
+        3134: ("White greaves", 9, 223, "items:223", 992),
+        3135: ("Grey gauntlets", 8, 217, "items:217", 993),
+        3136: ("Grey greaves", 9, 223, "items:223", 994),
     }
     custom_by_id = {item["id"]: item for item in custom_defs}
     myworld_by_id = {item["id"]: item for item in myworld_defs}
 
-    for item_id, (name, slot) in expected_items.items():
+    for item_id, (name, slot, sprite_id, sprite_ref, appearance_id) in expected_items.items():
         require(f"({item_id})" in constants, f"Missing ItemId constant for {name}")
         item = custom_by_id.get(item_id)
         require(item is not None, f"Missing custom item definition for {name}")
         require(item["name"] == name, f"Incorrect item name for {item_id}: {item['name']}")
         require(item["isWearable"] == 1 and item["wearSlot"] == slot, f"{name} should be wearable in slot {slot}")
+        require(item["appearanceID"] == appearance_id, f"{name} should use appearance {appearance_id}")
+        require(f'new ItemDef("{name}",' in client and f', {sprite_id}, "{sprite_ref}",' in client,
+                f"{name} should use client inventory sprite {sprite_ref}")
         override = myworld_by_id.get(item_id)
         require(override is not None, f"Missing MyWorld combat override for {name}")
         require(override["meleeDefense"] == 8 and override["rangedDefense"] == 2, f"{name} should mirror steel hand/foot defense")
@@ -109,7 +114,7 @@ def main() -> None:
     require("Devotion.addDevotionLevels(player, godLine, 1)" not in equipment,
             "steel armour conversion should not add devotion")
 
-    require("public static final int maxCustom = 3172;" in constants, "ItemId.maxCustom should include blessed staff god variants")
+    require("public static final int maxCustom = 3176;" in constants, "ItemId.maxCustom should include Guthix symbol variants")
     print("PASS: god knight armour conversion validated")
 
 

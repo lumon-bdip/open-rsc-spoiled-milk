@@ -2395,12 +2395,16 @@ public enum ItemId {
 	GUTHIX_BLESSED_YEW_STAFF(3168),
 	GUTHIX_BLESSED_EBONY_STAFF(3169),
 	GUTHIX_BLESSED_MAGIC_STAFF(3170),
-	GUTHIX_BLESSED_BLOOD_STAFF(3171);
+	GUTHIX_BLESSED_BLOOD_STAFF(3171),
+	GUTHIX_SYMBOL_MOULD(3172),
+	UNSTRUNG_GUTHIX_SYMBOL(3173),
+	UNBLESSED_GUTHIX_SYMBOL(3174),
+	GUTHIX_SYMBOL(3175);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3172;
+	public static final int maxCustom = 3176;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

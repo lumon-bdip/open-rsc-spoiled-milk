@@ -34,6 +34,11 @@ public class BrotherJered implements TalkNpcTrigger {
 						"Then if you are wearing it",
 						"It will help you when you are praying");
 			} else if (player.getCarriedItems().hasCatalogID(ItemId.UNBLESSED_HOLY_SYMBOL.id(), Optional.of(false))) {
+				if (config().WANT_MYWORLD) {
+					npcsay("Take that symbol to an altar of Saradomin",
+						"Your devotion there will bless it now");
+					return;
+				}
 				npcsay("Well I can bless that star of Saradomin you have");
 				int sub_option = multi(false, //do not send over
 						"Yes Please", "No thankyou");

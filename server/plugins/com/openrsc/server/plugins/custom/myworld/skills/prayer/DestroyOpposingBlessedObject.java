@@ -64,13 +64,13 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 	}
 
 	private PrayerCatalog.GodLine getBlessedObjectGodLine(final int itemId) {
-		if (isZamorakKnightEquipment(itemId) || isZamorakBlessedWool(itemId) || isZamorakBlessedStaff(itemId)) {
+		if (isZamorakKnightEquipment(itemId) || isZamorakBlessedWool(itemId) || isZamorakBlessedStaff(itemId) || isZamorakBlessedSymbol(itemId)) {
 			return PrayerCatalog.GodLine.ZAMORAK;
 		}
-		if (isSaradominKnightEquipment(itemId) || isSaradominBlessedWool(itemId) || isSaradominBlessedStaff(itemId)) {
+		if (isSaradominKnightEquipment(itemId) || isSaradominBlessedWool(itemId) || isSaradominBlessedStaff(itemId) || isSaradominBlessedSymbol(itemId)) {
 			return PrayerCatalog.GodLine.SARADOMIN;
 		}
-		if (isGuthixKnightEquipment(itemId) || isGuthixBlessedWool(itemId) || isGuthixBlessedStaff(itemId)) {
+		if (isGuthixKnightEquipment(itemId) || isGuthixBlessedWool(itemId) || isGuthixBlessedStaff(itemId) || isGuthixBlessedSymbol(itemId)) {
 			return PrayerCatalog.GodLine.GUTHIX;
 		}
 		return null;
@@ -80,6 +80,9 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 		final int staffTier = getBlessedStaffTier(itemId);
 		if (staffTier > 0) {
 			return staffTier;
+		}
+		if (isBlessedSymbol(itemId)) {
+			return 5;
 		}
 		switch (itemId) {
 			case 423: // BLACK_DAGGER
@@ -152,6 +155,9 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 		}
 		if (isBlessedWool(itemId)) {
 			return getBlessedObjectResourceCost(itemId) * 6;
+		}
+		if (isBlessedSymbol(itemId)) {
+			return 200;
 		}
 		return getBlessedObjectResourceCost(itemId) * 150;
 	}
@@ -273,6 +279,22 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 
 	private boolean isBlessedWool(final int itemId) {
 		return isZamorakBlessedWool(itemId) || isSaradominBlessedWool(itemId) || isGuthixBlessedWool(itemId);
+	}
+
+	private boolean isBlessedSymbol(final int itemId) {
+		return isZamorakBlessedSymbol(itemId) || isSaradominBlessedSymbol(itemId) || isGuthixBlessedSymbol(itemId);
+	}
+
+	private boolean isZamorakBlessedSymbol(final int itemId) {
+		return itemId == ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id();
+	}
+
+	private boolean isSaradominBlessedSymbol(final int itemId) {
+		return itemId == ItemId.HOLY_SYMBOL_OF_SARADOMIN.id();
+	}
+
+	private boolean isGuthixBlessedSymbol(final int itemId) {
+		return itemId == ItemId.GUTHIX_SYMBOL.id();
 	}
 
 	private boolean isZamorakBlessedWool(final int itemId) {

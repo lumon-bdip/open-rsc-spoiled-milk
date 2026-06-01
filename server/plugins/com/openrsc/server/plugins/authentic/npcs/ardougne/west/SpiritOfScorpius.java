@@ -51,6 +51,11 @@ public class SpiritOfScorpius implements TalkNpcTrigger, OpLocTrigger {
 								"It is blessed with the Lord Zamorak's power",
 								"Come to me when your faith weakens");
 						} else if (player.getCarriedItems().hasCatalogID(ItemId.UNBLESSED_UNHOLY_SYMBOL_OF_ZAMORAK.id(), Optional.of(false))) {
+							if (config().WANT_MYWORLD) {
+								npcsay(player, n, "Take the unholy symbol to an altar of Zamorak",
+									"Your devotion there will bless it now");
+								return;
+							}
 							npcsay(player, n, "I see you have the unholy symbol of our Lord",
 								"I will bless it for you");
 							player.message("The ghost mutters in a strange voice");

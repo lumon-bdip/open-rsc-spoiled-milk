@@ -43,8 +43,8 @@ public final class GodKnightEquipment implements UseLocTrigger {
 		}
 
 		final int devotionRequirement = getDevotionRequirement(item.getCatalogId());
-		final int currentDevotion = Devotion.getDevotionLevel(player, godLine);
-		if (devotionRequirement > 0 && currentDevotion < devotionRequirement) {
+		if (devotionRequirement > 0 && Devotion.getDevotionLevel(player, godLine) < devotionRequirement) {
+			final int currentDevotion = Devotion.getDevotionLevel(player, godLine);
 			player.message("You need " + devotionRequirement + " devotion to " + formatGodLine(godLine) + " to bless that equipment.");
 			player.message("Your current devotion to " + formatGodLine(godLine) + " is " + currentDevotion + ".");
 			return;

@@ -1261,10 +1261,12 @@ public final class SkillGuideInterface {
 		} else if (curTab == 4) {
 			skillMenuEntries.add(new SkillMenuEntry("", "Bury bones or scatter ashes to make offerings"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Every 10 offerings gives +1 devotion"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Blessed symbols give 1.5x devotion from offerings"));
 			skillMenuEntries.add(new SkillMenuEntry("", "+1 Prayer XP per offering for each devotion"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Devotion is tracked separately for each god"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Devotion is capped at 1000"));
 			skillMenuEntries.add(new SkillMenuEntry("", "You can bless items at your god's altar"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Symbols require 25 devotion to bless"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Blessed items grow stronger with devotion"));
 			skillMenuEntries.add(new SkillMenuEntry("", "You can bless an item once you are at 50 devotion per resource cost"));
 			skillMenuEntries.add(new SkillMenuEntry("", "1 resource: daggers, short swords, maces, wool hats"));
@@ -1384,8 +1386,9 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(284, "8", "Sapphire Ring"));
 			skillMenuEntries.add(new SkillMenuItem(289, "10", "Sapphire Necklace"));
 			skillMenuEntries.add(new SkillMenuItem(297, "13", "Sapphire Amulet"));
-			skillMenuEntries.add(new SkillMenuItem(44, "16", "Holy Symbol"));
-			skillMenuEntries.add(new SkillMenuItem(1027, "16", "Unholy Symbol"));
+			skillMenuEntries.add(new SkillMenuItem(44, "16", "Symbol of Saradomin"));
+			skillMenuEntries.add(new SkillMenuItem(1027, "16", "Symbol of Zamorak"));
+			skillMenuEntries.add(new SkillMenuItem(3173, "16", "Symbol of Guthix"));
 			skillMenuEntries.add(new SkillMenuItem(285, "18", "Emerald Ring"));
 			skillMenuEntries.add(new SkillMenuItem(290, "22", "Emerald Necklace"));
 			skillMenuEntries.add(new SkillMenuItem(298, "26", "Emerald Amulet"));
