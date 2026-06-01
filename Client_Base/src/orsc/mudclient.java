@@ -13068,10 +13068,15 @@ public final class mudclient implements Runnable {
 			if (this.uiTabPlayerInfoSubTab == 1 && !Config.S_WANT_OPENPK_POINTS) {
 				this.panelQuestInfo.clearList(this.controlQuestInfoPanel);
 				int index = 0, questNum = 0;
+				int[] questIdByListIndex = new int[questNames.length + 1];
+				for (int i = 0; i < questIdByListIndex.length; i++) {
+					questIdByListIndex[i] = -1;
+				}
 				this.panelQuestInfo.setListEntry(this.controlQuestInfoPanel, index++,
 					"@whi@Quest-list (green=completed)", 0, null, null);
 				for (questNum = 0; questNum < questNames.length; ++questNum) {
 					if (this.questNames[questNum] != null) {
+						questIdByListIndex[index] = questNum;
 						this.panelQuestInfo.setListEntry(this.controlQuestInfoPanel, index++,
 							(questStages[questNum] < 0 ? "@gre@" :
 								questStages[questNum] > 0 && Config.S_WANT_QUEST_STARTED_INDICATOR ? "@yel@" : "@red@")
@@ -13080,8 +13085,11 @@ public final class mudclient implements Runnable {
 					}
 				}
 
-				int position = this.panelQuestInfo.getControlSelectedListIndex(this.controlQuestInfoPanel) - 1;
+				int selectedQuestListIndex = this.panelQuestInfo.getControlSelectedListIndex(this.controlQuestInfoPanel);
+				int position = selectedQuestListIndex >= 0 && selectedQuestListIndex < questIdByListIndex.length
+					? questIdByListIndex[selectedQuestListIndex] : -1;
 				if (S_WANT_QUEST_MENUS && this.mouseButtonClick == 1 && position >= 0
+					&& position < questNames.length && this.questNames[position] != null
 					&& this.getMouseX() > x && this.getMouseY() > y + 36
 					&& this.getMouseX() < x + this.getSurface().stringWidth(1, this.questNames[position])
 					&& this.getMouseY() < height + y + 8) {
@@ -22622,6 +22630,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void setQuestGuideStartWho(int chosen) {
+		if (!hasQuestGuideData(chosen)) {
+			this.questGuideStartWho = "someone";
+			return;
+		}
 		this.questGuideStartWho = questGuideStartWhos[chosen];
 	}
 
@@ -22630,6 +22642,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void setQuestGuideStartWhere(int chosen) {
+		if (!hasQuestGuideData(chosen)) {
+			this.questGuideStartWhere = "somewhere";
+			return;
+		}
 		this.questGuideStartWhere = questGuideStartWheres[chosen];
 	}
 
@@ -22638,6 +22654,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void setQuestGuideRequirement(int chosen) {
+		if (!hasQuestGuideData(chosen)) {
+			this.questGuideRequirement = new String[] {"None"};
+			return;
+		}
 		this.questGuideRequirement = questGuideRequirements[chosen];
 	}
 
@@ -22646,7 +22666,20 @@ public final class mudclient implements Runnable {
 	}
 
 	private void setQuestGuideReward(int chosen) {
+		if (!hasQuestGuideData(chosen)) {
+			this.questGuideReward = new String[] {"None"};
+			return;
+		}
 		this.questGuideReward = questGuideRewards[chosen];
+	}
+
+	private boolean hasQuestGuideData(int chosen) {
+		return chosen >= 0
+			&& chosen < questGuideStartWhos.length
+			&& chosen < questGuideStartWheres.length
+			&& chosen < questGuideRequirements.length
+			&& questGuideRewards != null
+			&& chosen < questGuideRewards.length;
 	}
 
 	private void drawDoSkill() {

@@ -18,6 +18,7 @@ def reject(text: str, needle: str, label: str) -> None:
 
 def main() -> None:
     guide = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/QuestGuideInterface.java").read_text()
+    client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
 
     require(guide, "safeQuestGuideLines(mc.getQuestGuideRequirement())", "safe requirement iteration")
     require(guide, "safeQuestGuideLines(mc.getQuestGuideReward())", "safe reward iteration")
@@ -28,6 +29,12 @@ def main() -> None:
 
     reject(guide, "for (int i = -1; i < questItems.size(); i++)", "negative quest item loop")
     reject(guide, "width - x - 8", "screen-position based wrapping")
+
+    require(client, "int[] questIdByListIndex = new int[questNames.length + 1];", "quest guide visible-row id map")
+    require(client, "questIdByListIndex[index] = questNum;", "quest guide stores real quest id")
+    require(client, "position < questNames.length && this.questNames[position] != null", "quest guide selected id null guard")
+    require(client, "private boolean hasQuestGuideData(int chosen)", "quest guide data bounds guard")
+    reject(client, "getControlSelectedListIndex(this.controlQuestInfoPanel) - 1", "compact quest row used as quest id")
 
 
 if __name__ == "__main__":
