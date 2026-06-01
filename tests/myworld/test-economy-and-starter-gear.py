@@ -89,6 +89,20 @@ def main() -> None:
 
     client_entity_handler = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     require("applyMyWorldEconomyOverrides();" in client_entity_handler, "Client should apply MyWorld shop price overrides")
+    economy_method = re.search(
+        r"private static void applyMyWorldEconomyOverrides\(\) \{(?P<body>.*?)\n\t\}",
+        client_entity_handler,
+        re.S,
+    )
+    require(economy_method is not None, "Client economy override method should exist")
+    require(
+        "findItem(price[0], false)" in economy_method.group("body"),
+        "Client economy overrides should update items by item id, not list index",
+    )
+    require(
+        "items.get(price[0])" not in economy_method.group("body"),
+        "Client economy overrides should not assume item id equals list index",
+    )
     client_price_pairs = {
         (int(item_id), int(price))
         for item_id, price in re.findall(r"\{(\d+),\s*(\d+)\}", client_entity_handler)

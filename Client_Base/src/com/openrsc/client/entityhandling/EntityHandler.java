@@ -9398,7 +9398,7 @@ public class EntityHandler {
 			{3147, 22}, {3148, 90}, {3149, 68}, {3150, 45}, {3151, 45}
 		};
 		for (int[] price : prices) {
-			ItemDef item = items.get(price[0]);
+			ItemDef item = findItem(price[0], false);
 			if (item != null && !isUnobtaniumPlaceholder(item)) {
 				item.basePrice = price[1];
 			}
