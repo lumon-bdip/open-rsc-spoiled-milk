@@ -333,6 +333,7 @@ public final class DoSkillInterface {
 		int quantityX = x + width - 284;
 		boolean showQuantityControls = !isPickerInterface();
 		int materialDetailX = quantityX;
+		int selectedDetailRightX = x + width - 16;
 		mc.getSurface().drawLineHoriz(x + 1, footerY - 10, width - 2, 0);
 		if (selected != null) {
 			ItemDef def = EntityHandler.getItemDef(selected.getItemId());
@@ -343,24 +344,24 @@ public final class DoSkillInterface {
 				selectedHeader = (isMetalPicker() ? metalName(def) : def.getName())
 					+ " - Level " + selected.getRequiredLevel();
 			}
-			drawString(selectedHeader, x + 16, footerY + 2, 3, selected.isLevelMet() ? textColour : 0xFF5555);
+			drawStringRightAligned(selectedHeader, selectedDetailRightX, footerY + 2, 3, selected.isLevelMet() ? textColour : 0xFF5555);
 			if (selected.hasIngredientDetails()) {
 				String ingredientHoverText = drawProductionIngredientCosts(selected, materialDetailX, footerY + 4);
 				if (!ingredientHoverText.isEmpty()) {
 					hoverText = ingredientHoverText;
 				}
 			} else if (isSmithingMaterialPicker()) {
-				drawString("Requires hammer", x + 16, footerY + 20, 1, textColour);
+				drawStringRightAligned("Requires hammer", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isFurnaceCategoryPicker()) {
-				drawString("No required mould", x + 16, footerY + 20, 1, textColour);
+				drawStringRightAligned("No required mould", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isFurnaceMaterialPicker()) {
-				drawString("Choose this metal", x + 16, footerY + 20, 1, textColour);
+				drawStringRightAligned("Choose this metal", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else {
 				String inputName = inputItemId >= 0 ? EntityHandler.getItemDef(inputItemId).getName() : "materials";
 				String costText = inputItemId >= 0
 					? "Cost: " + selected.getInputAmount() + " x " + inputName
 					: "Cost: " + selected.getInputAmount() + " total " + inputName;
-				drawString(costText, materialDetailX, footerY + 20, 1, selected.isMaterialsMet() ? textColour : 0xFFAA55);
+				drawStringRightAligned(costText, selectedDetailRightX, footerY + 20, 1, selected.isMaterialsMet() ? textColour : 0xFFAA55);
 			}
 		}
 		if (!hoverText.isEmpty()) {
@@ -599,6 +600,10 @@ public final class DoSkillInterface {
 
 	public void drawString(String str, int x, int y, int font, int color) {
 		mc.getSurface().drawString(str, x, y, color, font);
+	}
+
+	public void drawStringRightAligned(String str, int rightX, int y, int font, int color) {
+		mc.getSurface().drawString(str, rightX - mc.getSurface().stringWidth(font, str), y, color, font);
 	}
 
 	public void drawStringCentered(String str, int x, int y, int font, int color) {

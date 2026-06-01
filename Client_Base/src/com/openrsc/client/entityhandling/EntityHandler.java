@@ -6789,18 +6789,18 @@ public class EntityHandler {
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x5a3b24, 0, true, false, 0));//574 bear
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x2e2a38, 0, true, false, 0));//575 black unicorn
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0xb08b45, 0, true, false, 0));//576 scorpion
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x7a5a38, 0, true, false, 0));//577 cow
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x7b8f2f, 0, true, false, 0));//578 goblin
-			animations.add(new AnimationDef("leathergloves", "equipment", 0xcfc7a4, 0, true, false, 0));//579 unicorn
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x5a3b24, 0, true, false, 0));//580 bear
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x2e2a38, 0, true, false, 0));//581 black unicorn
-			animations.add(new AnimationDef("leathergloves", "equipment", 0xb08b45, 0, true, false, 0));//582 scorpion
-			animations.add(new AnimationDef("boots", "equipment", 0x7a5a38, 0, true, false, 0));//583 cow
-			animations.add(new AnimationDef("boots", "equipment", 0x7b8f2f, 0, true, false, 0));//584 goblin
-			animations.add(new AnimationDef("boots", "equipment", 0xcfc7a4, 0, true, false, 0));//585 unicorn
-			animations.add(new AnimationDef("boots", "equipment", 0x5a3b24, 0, true, false, 0));//586 bear
-			animations.add(new AnimationDef("boots", "equipment", 0x2e2a38, 0, true, false, 0));//587 black unicorn
-			animations.add(new AnimationDef("boots", "equipment", 0xb08b45, 0, true, false, 0));//588 scorpion
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x7a5a38, 0, true, false, 0));//577 cow
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x7b8f2f, 0, true, false, 0));//578 goblin
+			animations.add(new AnimationDef("hidegloves", "equipment", 0xcfc7a4, 0, true, false, 0));//579 unicorn
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x5a3b24, 0, true, false, 0));//580 bear
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x2e2a38, 0, true, false, 0));//581 black unicorn
+			animations.add(new AnimationDef("hidegloves", "equipment", 0xb08b45, 0, true, false, 0));//582 scorpion
+			animations.add(new AnimationDef("hideboots", "equipment", 0x7a5a38, 0, true, false, 0));//583 cow
+			animations.add(new AnimationDef("hideboots", "equipment", 0x7b8f2f, 0, true, false, 0));//584 goblin
+			animations.add(new AnimationDef("hideboots", "equipment", 0xcfc7a4, 0, true, false, 0));//585 unicorn
+			animations.add(new AnimationDef("hideboots", "equipment", 0x5a3b24, 0, true, false, 0));//586 bear
+			animations.add(new AnimationDef("hideboots", "equipment", 0x2e2a38, 0, true, false, 0));//587 black unicorn
+			animations.add(new AnimationDef("hideboots", "equipment", 0xb08b45, 0, true, false, 0));//588 scorpion
 			animations.add(new AnimationDef("mediumhelm", "equipment", 0x5d6570, 0, true, false, 0));//589 wolf-hide
 			animations.add(new AnimationDef("mediumhelm", "equipment", 0x55271f, 0, true, false, 0));//590 spider-carapace
 			animations.add(new AnimationDef("mediumhelm", "equipment", 0x7e6e59, 0, true, false, 0));//591 giant-hide
@@ -6855,48 +6855,48 @@ public class EntityHandler {
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x1f2530, 0, true, false, 0));//640 black-dragon-hide
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x35241f, 0, true, false, 0));//641 balrog-hide
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x171b20, 0, true, false, 0));//642 king-black-dragon-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x5d6570, 0, true, false, 0));//643 wolf-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x55271f, 0, true, false, 0));//644 spider-carapace
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x7e6e59, 0, true, false, 0));//645 giant-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x4f5933, 0, true, false, 0));//646 ogre-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x4f7d70, 0, true, false, 0));//647 baby-dragon-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x3d377a, 0, true, false, 0));//648 magic-spider-carapace
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x50582d, 0, true, false, 0));//649 moss-giant-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0xa6bdcf, 0, true, false, 0));//650 ice-giant-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x63171c, 0, true, false, 0));//651 demon-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x4b403d, 0, true, false, 0));//652 hellhound-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x9a4916, 0, true, false, 0));//653 fire-giant-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x20478d, 0, true, false, 0));//654 blue-dragon-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x306c33, 0, true, false, 0));//655 dragon-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x8c2620, 0, true, false, 0));//656 red-dragon-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x24191b, 0, true, false, 0));//657 black-demon-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x1f2530, 0, true, false, 0));//658 black-dragon-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x35241f, 0, true, false, 0));//659 balrog-hide
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x171b20, 0, true, false, 0));//660 king-black-dragon-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x5d6570, 0, true, false, 0));//661 wolf-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x55271f, 0, true, false, 0));//662 spider-carapace
-			animations.add(new AnimationDef("boots", "equipment", 0x7e6e59, 0, true, false, 0));//663 giant-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x4f5933, 0, true, false, 0));//664 ogre-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x4f7d70, 0, true, false, 0));//665 baby-dragon-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x3d377a, 0, true, false, 0));//666 magic-spider-carapace
-			animations.add(new AnimationDef("boots", "equipment", 0x50582d, 0, true, false, 0));//667 moss-giant-hide
-			animations.add(new AnimationDef("boots", "equipment", 0xa6bdcf, 0, true, false, 0));//668 ice-giant-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x63171c, 0, true, false, 0));//669 demon-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x4b403d, 0, true, false, 0));//670 hellhound-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x9a4916, 0, true, false, 0));//671 fire-giant-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x20478d, 0, true, false, 0));//672 blue-dragon-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x306c33, 0, true, false, 0));//673 dragon-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x8c2620, 0, true, false, 0));//674 red-dragon-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x24191b, 0, true, false, 0));//675 black-demon-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x1f2530, 0, true, false, 0));//676 black-dragon-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x35241f, 0, true, false, 0));//677 balrog-hide
-			animations.add(new AnimationDef("boots", "equipment", 0x171b20, 0, true, false, 0));//678 king-black-dragon-hide
-			animations.add(new AnimationDef("boots", "equipment", 16737817, 0, true, false, 0));//679 bronze greaves
-			animations.add(new AnimationDef("boots", "equipment", 15654365, 0, true, false, 0));//680 iron greaves
-			animations.add(new AnimationDef("boots", "equipment", 15658734, 0, true, false, 0));//681 steel greaves
-			animations.add(new AnimationDef("boots", "equipment", 10072780, 0, true, false, 0));//682 mithril greaves
-			animations.add(new AnimationDef("boots", "equipment", 11717785, 0, true, false, 0));//683 adamantite greaves
-			animations.add(new AnimationDef("boots", "equipment", 65535, 0, true, false, 0));//684 rune greaves
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x5d6570, 0, true, false, 0));//643 wolf-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x55271f, 0, true, false, 0));//644 spider-carapace
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x7e6e59, 0, true, false, 0));//645 giant-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x4f5933, 0, true, false, 0));//646 ogre-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x4f7d70, 0, true, false, 0));//647 baby-dragon-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x3d377a, 0, true, false, 0));//648 magic-spider-carapace
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x50582d, 0, true, false, 0));//649 moss-giant-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0xa6bdcf, 0, true, false, 0));//650 ice-giant-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x63171c, 0, true, false, 0));//651 demon-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x4b403d, 0, true, false, 0));//652 hellhound-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x9a4916, 0, true, false, 0));//653 fire-giant-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x20478d, 0, true, false, 0));//654 blue-dragon-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x306c33, 0, true, false, 0));//655 dragon-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x8c2620, 0, true, false, 0));//656 red-dragon-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x24191b, 0, true, false, 0));//657 black-demon-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x1f2530, 0, true, false, 0));//658 black-dragon-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x35241f, 0, true, false, 0));//659 balrog-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x171b20, 0, true, false, 0));//660 king-black-dragon-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x5d6570, 0, true, false, 0));//661 wolf-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x55271f, 0, true, false, 0));//662 spider-carapace
+			animations.add(new AnimationDef("hideboots", "equipment", 0x7e6e59, 0, true, false, 0));//663 giant-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x4f5933, 0, true, false, 0));//664 ogre-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x4f7d70, 0, true, false, 0));//665 baby-dragon-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x3d377a, 0, true, false, 0));//666 magic-spider-carapace
+			animations.add(new AnimationDef("hideboots", "equipment", 0x50582d, 0, true, false, 0));//667 moss-giant-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0xa6bdcf, 0, true, false, 0));//668 ice-giant-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x63171c, 0, true, false, 0));//669 demon-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x4b403d, 0, true, false, 0));//670 hellhound-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x9a4916, 0, true, false, 0));//671 fire-giant-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x20478d, 0, true, false, 0));//672 blue-dragon-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x306c33, 0, true, false, 0));//673 dragon-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x8c2620, 0, true, false, 0));//674 red-dragon-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x24191b, 0, true, false, 0));//675 black-demon-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x1f2530, 0, true, false, 0));//676 black-dragon-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x35241f, 0, true, false, 0));//677 balrog-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x171b20, 0, true, false, 0));//678 king-black-dragon-hide
+			animations.add(new AnimationDef("greaves", "equipment", 16737817, 0, true, false, 0));//679 bronze greaves
+			animations.add(new AnimationDef("greaves", "equipment", 15654365, 0, true, false, 0));//680 iron greaves
+			animations.add(new AnimationDef("greaves", "equipment", 15658734, 0, true, false, 0));//681 steel greaves
+			animations.add(new AnimationDef("greaves", "equipment", 10072780, 0, true, false, 0));//682 mithril greaves
+			animations.add(new AnimationDef("greaves", "equipment", 11717785, 0, true, false, 0));//683 adamantite greaves
+			animations.add(new AnimationDef("greaves", "equipment", 65535, 0, true, false, 0));//684 rune greaves
 			animations.add(new AnimationDef("fullhelm", "equipment", 0xb7c9d9, 0, true, false, 0));//685 tin
 			animations.add(new AnimationDef("fullhelm", "equipment", 0xc86a2b, 0, true, false, 0));//686 copper
 			animations.add(new AnimationDef("fullhelm", "equipment", 0x8ea6bb, 0, true, false, 0));//687 titan steel
@@ -6913,10 +6913,10 @@ public class EntityHandler {
 			animations.add(new AnimationDef("kiteshield", "equipment", 0xc86a2b, 0, true, false, 0));//698 copper
 			animations.add(new AnimationDef("kiteshield", "equipment", 0x8ea6bb, 0, true, false, 0));//699 titan steel
 			animations.add(new AnimationDef("kiteshield", "equipment", 0x5a3f7d, 0, true, false, 0));//700 orichalcum
-			animations.add(new AnimationDef("boots", "equipment", 0xb7c9d9, 0, true, false, 0));//701 tin greaves
-			animations.add(new AnimationDef("boots", "equipment", 0xc86a2b, 0, true, false, 0));//702 copper greaves
-			animations.add(new AnimationDef("boots", "equipment", 0x8ea6bb, 0, true, false, 0));//703 titan steel greaves
-			animations.add(new AnimationDef("boots", "equipment", 0x5a3f7d, 0, true, false, 0));//704 orichalcum greaves
+			animations.add(new AnimationDef("greaves", "equipment", 0xb7c9d9, 0, true, false, 0));//701 tin greaves
+			animations.add(new AnimationDef("greaves", "equipment", 0xc86a2b, 0, true, false, 0));//702 copper greaves
+			animations.add(new AnimationDef("greaves", "equipment", 0x8ea6bb, 0, true, false, 0));//703 titan steel greaves
+			animations.add(new AnimationDef("greaves", "equipment", 0x5a3f7d, 0, true, false, 0));//704 orichalcum greaves
 			animations.add(new AnimationDef("sword", "equipment", 0xb7c9d9, 0, true, false, 0));//705 tin
 			animations.add(new AnimationDef("sword", "equipment", 0xc86a2b, 0, true, false, 0));//706 copper
 			animations.add(new AnimationDef("sword", "equipment", 0x8ea6bb, 0, true, false, 0));//707 titan steel
@@ -7013,23 +7013,42 @@ public class EntityHandler {
 				}
 			}
 			for (int runeColor : MYWORLD_RUNE_CLOTH_COLORS) {
-				animations.add(new AnimationDef("leathergloves", "equipment", runeColor, 0, true, false, 0));
+				animations.add(new AnimationDef("woolgloves", "equipment", runeColor, 0, true, false, 0));
 			}
 			for (int runeColor : MYWORLD_RUNE_CLOTH_COLORS) {
-				animations.add(new AnimationDef("boots", "equipment", runeColor, 0, true, false, 0));
+				animations.add(new AnimationDef("woolboots", "equipment", runeColor, 0, true, false, 0));
 			}
-			animations.add(new AnimationDef("leathergloves", "equipment", 0xFFFFFF, 0, true, false, 0));
-			animations.add(new AnimationDef("boots", "equipment", 0xFFFFFF, 0, true, false, 0));
+			animations.add(new AnimationDef("woolgloves", "equipment", 0xFFFFFF, 0, true, false, 0));
+			animations.add(new AnimationDef("woolboots", "equipment", 0xFFFFFF, 0, true, false, 0));
 			for (int pickaxeColor : MYWORLD_PICKAXE_COLORS) {
 				animations.add(new AnimationDef("pickaxe", "equipment", pickaxeColor, 0, true, false, 0));
 			}
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x222222, 0, true, false, 0));//988 - Black gauntlets
-			animations.add(new AnimationDef("boots", "equipment", 0x222222, 0, true, false, 0));//989 - Black greaves
-			animations.add(new AnimationDef("leathergloves", "equipment", 0xF0F0F0, 0, true, false, 0));//990 - White gauntlets
-			animations.add(new AnimationDef("boots", "equipment", 0xF0F0F0, 0, true, false, 0));//991 - White greaves
-			animations.add(new AnimationDef("leathergloves", "equipment", 0x9EA59F, 0, true, false, 0));//992 - Grey gauntlets
-			animations.add(new AnimationDef("boots", "equipment", 0x9EA59F, 0, true, false, 0));//993 - Grey greaves
-			animations.add(new AnimationDef("guthsymbol", "equipment", 0, 0, 0, true, false, 0));//994 - Guthix symbol
+			animations.add(new AnimationDef("gauntlets", "equipment", 0x222222, 0, true, false, 0));//989 - Black gauntlets
+			animations.add(new AnimationDef("greaves", "equipment", 0x222222, 0, true, false, 0));//990 - Black greaves
+			animations.add(new AnimationDef("gauntlets", "equipment", 0xF0F0F0, 0, true, false, 0));//991 - White gauntlets
+			animations.add(new AnimationDef("greaves", "equipment", 0xF0F0F0, 0, true, false, 0));//992 - White greaves
+			animations.add(new AnimationDef("gauntlets", "equipment", 0x9EA59F, 0, true, false, 0));//993 - Grey gauntlets
+			animations.add(new AnimationDef("greaves", "equipment", 0x9EA59F, 0, true, false, 0));//994 - Grey greaves
+			animations.add(new AnimationDef("guthsymbol", "equipment", 0, 0, 0, true, false, 0));//995 - Guthix symbol
+			final int[] metalGauntletColors = {
+				0xB7C9D9, 0xC86A2B, 16737817, 15654365, 15658734,
+				10072780, 0x8EA6BB, 11717785, 0x5A3F7D, 65535
+			};
+			for (int metalColor : metalGauntletColors) {
+				animations.add(new AnimationDef("gauntlets", "equipment", metalColor, 0, true, false, 0));
+			}
+			animations.add(new AnimationDef("gauntlets", "equipment", 16777130, 0, true, false, 0));
+			animations.add(new AnimationDef("gauntlets", "equipment", 14540253, 0, true, false, 0));
+			animations.add(new AnimationDef("gauntlets", "equipment", 16755370, 0, true, false, 0));
+			animations.add(new AnimationDef("gauntlets", "equipment", 12303291, 0, true, false, 0));
+			final int[] godWoolColors = {0x222222, 0xF0F0F0, 0x9EA59F};
+			for (int woolColor : godWoolColors) {
+				animations.add(new AnimationDef("wizardshat", "equipment", woolColor, 0, true, false, 0));
+				animations.add(new AnimationDef("wizardsrobe", "equipment", woolColor, 0, true, false, 0));
+				animations.add(new AnimationDef("skirt", "equipment", woolColor, 0, true, false, 0));
+				animations.add(new AnimationDef("woolgloves", "equipment", woolColor, 0, true, false, 0));
+				animations.add(new AnimationDef("woolboots", "equipment", woolColor, 0, true, false, 0));
+			}
 		}
 	}
 

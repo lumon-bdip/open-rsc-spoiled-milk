@@ -17167,6 +17167,18 @@ public final class mudclient implements Runnable {
 	private void loadExternalEquipmentSprites() {
 		loadExternalMainHandEquipmentSprite("fishingpole", getExternalEquipmentNumberedFolder("fishing-pole"));
 		loadExternalNeckEquipmentSprite("guthsymbol", getExternalEquipmentNumberedFolder("guthix-symbol"));
+		loadExternalLayeredEquipmentSprite("gauntlets", getExternalEquipmentNumberedFolder("gauntlets"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.GLOVES, GLOVE_EQUIPMENT_OFFSET_X, GLOVE_EQUIPMENT_OFFSET_Y, GLOVE_EQUIPMENT_BOUND_WIDTH);
+		loadExternalLayeredEquipmentSprite("hidegloves", getExternalEquipmentNumberedFolder("hidegloves"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.GLOVES, GLOVE_EQUIPMENT_OFFSET_X, GLOVE_EQUIPMENT_OFFSET_Y, GLOVE_EQUIPMENT_BOUND_WIDTH);
+		loadExternalLayeredEquipmentSprite("woolgloves", getExternalEquipmentNumberedFolder("woolgloves"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.GLOVES, GLOVE_EQUIPMENT_OFFSET_X, GLOVE_EQUIPMENT_OFFSET_Y, GLOVE_EQUIPMENT_BOUND_WIDTH);
+		loadExternalLayeredEquipmentSprite("greaves", getExternalEquipmentNumberedFolder("greaves"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.BOOTS, BOOT_EQUIPMENT_OFFSET_X, BOOT_EQUIPMENT_OFFSET_Y, BOOT_EQUIPMENT_BOUND_WIDTH);
+		loadExternalLayeredEquipmentSprite("hideboots", getExternalEquipmentNumberedFolder("hideboots"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.BOOTS, BOOT_EQUIPMENT_OFFSET_X, BOOT_EQUIPMENT_OFFSET_Y, BOOT_EQUIPMENT_BOUND_WIDTH);
+		loadExternalLayeredEquipmentSprite("woolboots", getExternalEquipmentNumberedFolder("woolboots"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.BOOTS, BOOT_EQUIPMENT_OFFSET_X, BOOT_EQUIPMENT_OFFSET_Y, BOOT_EQUIPMENT_BOUND_WIDTH);
 	}
 
 	private void loadExternalMainHandEquipmentSprite(String spriteName, File numberedFolder) {
@@ -17230,6 +17242,45 @@ public final class mudclient implements Runnable {
 			spriteName,
 			orsc.graphics.two.SpriteArchive.Entry.TYPE.PLAYER_EQUIPPABLE_HASCOMBAT,
 			orsc.graphics.two.SpriteArchive.Frame.LAYER.NECK,
+			frameCount
+		);
+		for (int i = 0; i < frameCount; i++) {
+			File frameFile = new File(numberedFolder, String.format(Locale.ENGLISH, "%02d.png", i));
+			orsc.graphics.two.SpriteArchive.Frame frame = loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
+			if (frame == null) {
+				return;
+			}
+			frame.changeBoundWidth(boundWidth[i]);
+			frame.getSprite().setSomething(boundWidth[i], 102);
+			spriteEntry.getFrames()[i] = frame;
+		}
+		equipmentSprites.put(spriteName, spriteEntry);
+	}
+
+	private static final int[] GLOVE_EQUIPMENT_OFFSET_X = new int[] {12, 11, 10, 15, 17, 18, 25, 29, 32, 20, 17, 15, 11, 11, 12, 15, 26, 39};
+	private static final int[] GLOVE_EQUIPMENT_OFFSET_Y = new int[] {50, 51, 50, 50, 51, 51, 45, 43, 52, 49, 48, 47, 50, 51, 50, 32, 34, 39};
+	private static final int[] GLOVE_EQUIPMENT_BOUND_WIDTH = new int[] {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 84, 84, 84};
+	private static final int[] BOOT_EQUIPMENT_OFFSET_X = new int[] {15, 18, 20, 25, 22, 19, 15, 24, 18, 18, 20, 23, 17, 18, 19, 0, 3, 6};
+	private static final int[] BOOT_EQUIPMENT_OFFSET_Y = new int[] {82, 85, 83, 82, 84, 84, 84, 85, 86, 84, 85, 85, 83, 85, 83, 84, 84, 83};
+	private static final int[] BOOT_EQUIPMENT_BOUND_WIDTH = new int[] {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 84, 84, 84};
+
+	private void loadExternalLayeredEquipmentSprite(
+		String spriteName,
+		File numberedFolder,
+		orsc.graphics.two.SpriteArchive.Frame.LAYER layer,
+		int[] offsetX,
+		int[] offsetY,
+		int[] boundWidth
+	) {
+		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
+		if (equipmentSprites == null || !assetDirectoryExists(numberedFolder)) {
+			return;
+		}
+		final int frameCount = 18;
+		orsc.graphics.two.SpriteArchive.Entry spriteEntry = new orsc.graphics.two.SpriteArchive.Entry(
+			spriteName,
+			orsc.graphics.two.SpriteArchive.Entry.TYPE.PLAYER_EQUIPPABLE_HASCOMBAT,
+			layer,
 			frameCount
 		);
 		for (int i = 0; i < frameCount; i++) {

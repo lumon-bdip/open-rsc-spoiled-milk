@@ -194,6 +194,21 @@ def main() -> None:
     )
     require(
         do_skill_interface_text,
+        "int selectedDetailRightX = x + width - 16;",
+        "Production selected item details should use a right-side text anchor",
+    )
+    require(
+        do_skill_interface_text,
+        "drawStringRightAligned(selectedHeader, selectedDetailRightX, footerY + 2",
+        "Production selected item header should be right-aligned away from ingredient icons",
+    )
+    require(
+        do_skill_interface_text,
+        "drawStringRightAligned(costText, selectedDetailRightX, footerY + 20",
+        "Production fallback cost text should be right-aligned with selected item details",
+    )
+    require(
+        do_skill_interface_text,
         "drawProductionIngredientCosts(selected, materialDetailX, footerY + 4)",
         "Production ingredient icons should use the right-side material detail anchor",
     )
