@@ -72,6 +72,16 @@ FLETCHING = (
     / "fletching"
     / "Fletching.java"
 )
+DO_SKILL_INTERFACE = (
+    ROOT
+    / "Client_Base"
+    / "src"
+    / "com"
+    / "openrsc"
+    / "interfaces"
+    / "misc"
+    / "DoSkillInterface.java"
+)
 
 
 def fail(message: str) -> NoReturn:
@@ -90,6 +100,7 @@ def main() -> None:
     smelting_text = SMELTING.read_text(encoding="utf-8")
     crafting_text = CRAFTING.read_text(encoding="utf-8")
     fletching_text = FLETCHING.read_text(encoding="utf-8")
+    do_skill_interface_text = DO_SKILL_INTERFACE.read_text(encoding="utf-8")
     interface_handler_text = INTERFACE_OPTION_HANDLER.read_text(encoding="utf-8")
 
     require(
@@ -116,6 +127,21 @@ def main() -> None:
         smithing_text,
         "level >= def.getRequiredLevel(), materialCount >= def.getRequiredBars()",
         "Smithing production recipes should reflect live level and bar requirements in disabled states",
+    )
+    require(
+        smithing_text,
+        "new int[]{barId}, new int[]{-1}, new int[]{def.getRequiredBars()}",
+        "Smithing production recipes should expose bar cost details for icon-based material display",
+    )
+    require(
+        smithing_text,
+        "stopbatch();\n\t\t\t\tbreak;",
+        "Smithing production should close the batch window when resources run out mid-batch",
+    )
+    require(
+        do_skill_interface_text,
+        "boolean showQuantityControls = !isSmithingMaterialPicker();",
+        "Smithing material picker should hide unused quantity controls",
     )
     require(
         crafting_text,

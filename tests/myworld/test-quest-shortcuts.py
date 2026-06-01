@@ -16,6 +16,17 @@ def require(text: str, needle: str, label: str) -> None:
         raise AssertionError(f"missing {label}: {needle}")
 
 
+def method_body(text: str, method: str) -> str:
+    signature = f"public static void {method}"
+    if signature not in text:
+        signature = f"private static void {method}"
+    start = text.index(signature)
+    next_method = text.find("\n\tpublic static void ", start + 1)
+    if next_method == -1:
+        next_method = text.find("\n\tprivate static", start + 1)
+    return text[start:next_method]
+
+
 def main() -> None:
     helper = read("server/plugins/com/openrsc/server/plugins/custom/quests/MyWorldQuestShortcuts.java")
     require(helper, 'ALREADY_DONE_OPTION = "I\'ve already done this quest"', "shortcut option text")
@@ -104,6 +115,62 @@ def main() -> None:
     for method, quest_constant in helper_methods.items():
         require(helper, f"public static void {method}", f"{method} helper")
         require(helper, quest_constant, f"{method} quest reward hook")
+
+    guide_reward_items = {
+        "completeBlackKnightsFortress": ["giveOrBank(player, ItemId.COINS.id(), 2500);"],
+        "completeDemonSlayer": ["ensureUtilityItem(player, ItemId.SILVERLIGHT.id(), 1);"],
+        "completeDoricsQuest": ["giveOrBank(player, ItemId.COINS.id(), 180);"],
+        "completeRestlessGhost": ["ensureUtilityItem(player, ItemId.AMULET_OF_GHOSTSPEAK.id(), 1);"],
+        "completeGoblinDiplomacy": ["giveOrBank(player, ItemId.GOLD_BAR.id(), 1);"],
+        "completeErnestTheChicken": ["giveOrBank(player, ItemId.COINS.id(), 300);"],
+        "completePiratesTreasure": [
+            "giveOrBank(player, ItemId.COINS.id(), 450);",
+            "giveOrBank(player, ItemId.GOLD_RING.id(), 1);",
+            "giveOrBank(player, ItemId.EMERALD.id(), 1);",
+        ],
+        "completePrinceAliRescue": ["giveOrBank(player, ItemId.COINS.id(), 700);"],
+        "completeSheepShearer": ["giveOrBank(player, ItemId.COINS.id(), 180);"],
+        "completeDragonSlayer": ["ensureUtilityItem(player, ItemId.ANTI_DRAGON_BREATH_SHIELD.id(), 1);"],
+        "completeMerlinsCrystal": ["ensureUtilityItem(player, ItemId.EXCALIBUR.id(), 1);"],
+        "completeTribalTotem": ["giveOrBank(player, ItemId.SWORDFISH.id(), 5);"],
+        "completeClockTower": ["giveOrBank(player, ItemId.COINS.id(), 500);"],
+        "completeFightArena": ["giveOrBank(player, ItemId.COINS.id(), 1000);"],
+        "completeFamilyCrest": ["ensureUtilityItem(player, ItemId.STEEL_GAUNTLETS.id(), 1);"],
+        "completeWaterfallQuest": [
+            "giveOrBank(player, ItemId.MITHRIL_SEED.id(), 40);",
+            "giveOrBank(player, ItemId.GOLD_BAR.id(), 2);",
+            "giveOrBank(player, ItemId.DIAMOND.id(), 2);",
+        ],
+        "completePlagueCity": ["ensureUtilityItem(player, ItemId.MAGIC_SCROLL.id(), 1);"],
+        "completeSeaSlug": ["ensureUtilityItem(player, ItemId.QUEST_OYSTER_PEARLS.id(), 1);"],
+        "completeWatchtower": [
+            "ensureUtilityItem(player, ItemId.SPELL_SCROLL.id(), 1);",
+            "giveOrBank(player, ItemId.COINS.id(), 5000);",
+        ],
+        "completeDwarfCannon": [
+            "ensureUtilityItem(player, ItemId.CANNON_AMMO_MOULD.id(), 1);",
+        ],
+        "completeImpCatcher": ["ensureUtilityItem(player, ItemId.AMULET_OF_ACCURACY.id(), 1);"],
+        "completeMonksFriend": ["giveOrBank(player, ItemId.LAW_RUNE.id(), 8);"],
+        "completeMurderMystery": ["giveOrBank(player, ItemId.COINS.id(), 2000);"],
+        "completeTreeGnomeVillage": ["ensureUtilityItem(player, ItemId.EMERALD_AMULET.id(), 1);"],
+        "completeUndergroundPassReward": [
+            "ensureUtilityItem(player, ItemId.STAFF_OF_IBAN.id(), 1);",
+            "giveOrBank(player, ItemId.DEATH_RUNE.id(), 15);",
+            "giveOrBank(player, ItemId.FIRE_RUNE.id(), 30);",
+        ],
+        "completeDigsite": ["giveOrBank(player, ItemId.GOLD_BAR.id(), 2);"],
+        "completeGertrudesCat": [
+            "ensureUtilityItem(player, ItemId.KITTEN.id(), 1);",
+            "giveOrBank(player, ItemId.CHOCOLATE_CAKE.id(), 1);",
+            "giveOrBank(player, ItemId.STEW.id(), 1);",
+        ],
+        "completeHazeelCult": ["giveOrBank(player, ItemId.COINS.id(), 2000);"],
+    }
+    for method, snippets in guide_reward_items.items():
+        body = method_body(helper, method)
+        for snippet in snippets:
+            require(body, snippet, f"{method} guide-listed shortcut reward")
 
     starters = [
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/BlackKnightsFortress.java", "completeBlackKnightsFortress"),

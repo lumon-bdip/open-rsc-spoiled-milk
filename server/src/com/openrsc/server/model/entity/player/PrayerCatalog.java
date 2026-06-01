@@ -9,9 +9,9 @@ import java.util.List;
 public final class PrayerCatalog {
 	public static final int PRAYERS_PER_BOOK = 15;
 	public static final int COMBAT_EFFECT_CAP_PERCENT = 60;
-	public static final int[] COMBAT_TIER_POINT_COSTS = {3, 6, 10, 15, 21};
+	public static final int[] COMBAT_TIER_POINT_COSTS = {3, 6, 15, 29, 49};
 	public static final int[] COMBAT_TIER_EFFECT_PERCENTS = {5, 10, 15, 20, 25};
-	public static final int[] SKILLING_TIER_POINT_COSTS = {2, 8, 20, 35, 55};
+	public static final int[] SKILLING_TIER_POINT_COSTS = {2, 7, 22, 46, 80};
 	public static final int[] SKILLING_TIER_EFFECT_PERCENTS = {10, 15, 20, 25, 30};
 
 	public enum GodLine {

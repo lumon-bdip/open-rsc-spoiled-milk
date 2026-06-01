@@ -40,6 +40,7 @@ public final class MyWorldQuestShortcuts {
 			"If you've already sabotaged the black knights,",
 			"then I'll record your service and pay the reward.",
 			"Well done. You have completed the Black knights fortress quest");
+		giveOrBank(player, ItemId.COINS.id(), 2500);
 	}
 
 	public static void completeCooksAssistant(final Player player, final Npc npc) {
@@ -54,6 +55,7 @@ public final class MyWorldQuestShortcuts {
 			"If Delrith has already been banished,",
 			"then Varrock will recognise the deed.",
 			"Well done you have completed the Demon Slayer quest");
+		ensureUtilityItem(player, ItemId.SILVERLIGHT.id(), 1);
 	}
 
 	public static void completeDoricsQuest(final Player player, final Npc npc) {
@@ -61,6 +63,7 @@ public final class MyWorldQuestShortcuts {
 			"If you've already brought me the ore,",
 			"then I'll count the work done.",
 			"Well done you have completed Doric's quest");
+		giveOrBank(player, ItemId.COINS.id(), 180);
 	}
 
 	public static void completeDragonSlayer(final Player player, final Npc npc) {
@@ -76,6 +79,7 @@ public final class MyWorldQuestShortcuts {
 			"If Ernest has already been restored,",
 			"then I'll record the experiment as repaired.",
 			"Well done you have completed the Ernest the Chicken quest");
+		giveOrBank(player, ItemId.COINS.id(), 300);
 	}
 
 	public static void completeGoblinDiplomacy(final Player player, final Npc npc) {
@@ -83,6 +87,7 @@ public final class MyWorldQuestShortcuts {
 			"If you've already settled the goblins' colour argument,",
 			"then I can close the matter.",
 			"Well done you have completed the Goblin Diplomacy quest");
+		giveOrBank(player, ItemId.GOLD_BAR.id(), 1);
 	}
 
 	public static void completeKnightsSword(final Player player, final Npc npc) {
@@ -97,6 +102,9 @@ public final class MyWorldQuestShortcuts {
 			"If you've already found the pirate treasure,",
 			"then I'll call that adventure complete.",
 			"Well done you have completed the Pirate's Treasure quest");
+		giveOrBank(player, ItemId.COINS.id(), 450);
+		giveOrBank(player, ItemId.GOLD_RING.id(), 1);
+		giveOrBank(player, ItemId.EMERALD.id(), 1);
 	}
 
 	public static void completePrinceAliRescue(final Player player, final Npc npc) {
@@ -104,6 +112,7 @@ public final class MyWorldQuestShortcuts {
 			"If Prince Ali is already free,",
 			"then Al Kharid will honour your work.",
 			"Well done you have completed the Prince Ali Rescue quest");
+		giveOrBank(player, ItemId.COINS.id(), 700);
 	}
 
 	public static void completeRomeoAndJuliet(final Player player, final Npc npc) {
@@ -118,6 +127,7 @@ public final class MyWorldQuestShortcuts {
 			"If you've already delivered the wool,",
 			"then the job is done.",
 			"Well done you have completed the Sheep Shearer quest");
+		giveOrBank(player, ItemId.COINS.id(), 180);
 	}
 
 	public static void completeRestlessGhost(final Player player, final Npc npc) {
@@ -125,6 +135,7 @@ public final class MyWorldQuestShortcuts {
 			"If the ghost is already at rest,",
 			"then I'll mark the churchyard quiet again.",
 			"Well done you have completed the Restless Ghost quest");
+		ensureUtilityItem(player, ItemId.AMULET_OF_GHOSTSPEAK.id(), 1);
 	}
 
 	public static void completeVampireSlayer(final Player player, final Npc npc) {
@@ -182,6 +193,7 @@ public final class MyWorldQuestShortcuts {
 			"If you've already repaired the clock tower,",
 			"then I'll mark the mechanism restored.",
 			"Well done you have completed the Clock Tower quest");
+		giveOrBank(player, ItemId.COINS.id(), 500);
 	}
 
 	public static void completeDruidicRitual(final Player player, final Npc npc) {
@@ -196,6 +208,7 @@ public final class MyWorldQuestShortcuts {
 			"If the arena slaves are already free,",
 			"then I'll honour that victory.",
 			"Well done you have completed the Fight Arena quest");
+		giveOrBank(player, ItemId.COINS.id(), 1000);
 	}
 
 	public static void completeFishingContest(final Player player, final Npc npc) {
@@ -230,6 +243,7 @@ public final class MyWorldQuestShortcuts {
 			"If Merlin has already been freed,",
 			"then Camelot will recognise the rescue.",
 			"Well done you have completed the Merlin's Crystal quest");
+		ensureUtilityItem(player, ItemId.EXCALIBUR.id(), 1);
 	}
 
 	public static void completeScorpionCatcher(final Player player, final Npc npc) {
@@ -260,6 +274,7 @@ public final class MyWorldQuestShortcuts {
 			"If you've already returned the totem,",
 			"then I'll consider the matter settled.",
 			"Well done you have completed the Tribal Totem quest");
+		giveOrBank(player, ItemId.SWORDFISH.id(), 5);
 	}
 
 	public static void completeWitchesHouse(final Player player, final Npc npc) {
@@ -276,6 +291,8 @@ public final class MyWorldQuestShortcuts {
 		completeQuestWithStandardReward(player, Quest.GERTRUDES_CAT,
 			"well done, you have completed gertrudes cat quest");
 		ensureUtilityItem(player, ItemId.KITTEN.id(), 1);
+		giveOrBank(player, ItemId.CHOCOLATE_CAKE.id(), 1);
+		giveOrBank(player, ItemId.STEW.id(), 1);
 	}
 
 	public static void completeSeaSlug(final Player player, final Npc npc) {

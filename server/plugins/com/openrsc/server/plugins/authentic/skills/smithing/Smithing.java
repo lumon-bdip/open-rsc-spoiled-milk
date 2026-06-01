@@ -374,6 +374,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		}
 		if (player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false)) < def.getRequiredBars()) {
 			player.message("You need " + def.getRequiredBars() + " bars of metal to make this item");
+			stopbatch();
 			return;
 		}
 		if (player.getConfig().WANT_FATIGUE) {
@@ -385,6 +386,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		}
 		while (!ifinterrupted() && !isbatchcomplete()) {
 			if (player.getCarriedItems().getInventory().countId(item.getCatalogId(), Optional.of(false)) < def.getRequiredBars()) {
+				stopbatch();
 				break;
 			}
 			player.playSound("anvil");
@@ -561,7 +563,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		int level = player.getSkills().getLevel(Skill.SMITHING.id());
 		int materialCount = player.getCarriedItems().getInventory().countId(barId, Optional.of(false));
 		return new ProductionRecipe(def.getItemID(), def.getRequiredLevel(), def.getRequiredBars(), def.getAmount(),
-			level >= def.getRequiredLevel(), materialCount >= def.getRequiredBars());
+			level >= def.getRequiredLevel(), materialCount >= def.getRequiredBars(),
+			new int[]{barId}, new int[]{-1}, new int[]{def.getRequiredBars()});
 	}
 
 	private ItemSmithingDef getProductionRecipeDef(Player player, int barId, int itemId) {

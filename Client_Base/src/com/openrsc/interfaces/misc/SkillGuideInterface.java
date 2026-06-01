@@ -1481,20 +1481,20 @@ public final class SkillGuideInterface {
 				addSkillCapeGuide(1383, "Smithing");
 			}
 		} else if (curTab == 1) {
-			addSmithingTier("Tin", 1, 1995, 1997, 1998, 1999, 2000, 2001, 1987, 2002, 2003, 2207, -1, 1959, 1960, 1961, 2224, 1963, 1964);
-			addSmithingTier("Copper", 8, 2006, 2008, 2009, 2010, 2011, 2012, 2047, 2013, 2014, 2208, 2178, 1965, 1966, 1967, 2225, 1969, 1970);
+			addSmithingTier("Tin", 1, 1995, 1997, 1998, 1999, 2000, 2001, 1987, 2002, 2003, 2207, -1, 1959, 1960, 1961, 2224, 1962, 1963, 1964);
+			addSmithingTier("Copper", 8, 2006, 2008, 2009, 2010, 2011, 2012, 2047, 2013, 2014, 2208, 2178, 1965, 1966, 1967, 2225, 1968, 1969, 1970);
 		} else if (curTab == 2) {
-			addSmithingTier("Bronze", 15, 62, 66, 70, 82, 76, 87, 156, 205, 94, 827, 2180, 108, 1983, 1984, 124, 206, 117);
-			addSmithingTier("Iron", 22, 28, 1, 71, 83, 77, 12, 1258, 89, 0, 1088, 2182, 6, 1985, 1986, 3, 9, 8);
+			addSmithingTier("Bronze", 15, 62, 66, 70, 82, 76, 87, 156, 205, 94, 827, 2180, 108, 1983, 1984, 124, 128, 206, 117);
+			addSmithingTier("Iron", 22, 28, 1, 71, 83, 77, 12, 1258, 89, 0, 1088, 2182, 6, 1985, 1986, 3, 2, 9, 8);
 		} else if (curTab == 3) {
-			addSmithingTier("Steel", 30, 63, 67, 72, 84, 78, 88, 1259, 90, 95, 1089, 2184, 109, 698, 1988, 125, 121, 118);
-			addSmithingTier("Mithril", 38, 64, 68, 73, 85, 79, 203, 1260, 91, 96, 1090, 2186, 110, 1989, 1990, 126, 122, 119);
+			addSmithingTier("Steel", 30, 63, 67, 72, 84, 78, 88, 1259, 90, 95, 1089, 2184, 109, 698, 1988, 125, 129, 121, 118);
+			addSmithingTier("Mithril", 38, 64, 68, 73, 85, 79, 203, 1260, 91, 96, 1090, 2186, 110, 1989, 1990, 126, 130, 122, 119);
 		} else if (curTab == 4) {
-			addSmithingTier("Titan steel", 46, 2017, 2019, 2020, 2021, 2022, 2023, 2048, 2024, 2025, 2209, 2188, 1971, 1972, 1973, 2226, 1975, 1976);
-			addSmithingTier("Adamantite", 54, 65, 69, 74, 86, 80, 204, 1261, 92, 97, 1091, 2190, 111, 1991, 1992, 127, 123, 120);
+			addSmithingTier("Titan steel", 46, 2017, 2019, 2020, 2021, 2022, 2023, 2048, 2024, 2025, 2209, 2188, 1971, 1972, 1973, 2226, 1974, 1975, 1976);
+			addSmithingTier("Adamantite", 54, 65, 69, 74, 86, 80, 204, 1261, 92, 97, 1091, 2190, 111, 1991, 1992, 127, 131, 123, 120);
 		} else if (curTab == 5) {
-			addSmithingTier("Orichalcum", 62, 2028, 2030, 2031, 2032, 2033, 2034, 2049, 2035, 2036, 2210, 2192, 1977, 1978, 1979, 2227, 1981, 1982);
-			addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 98, 1092, 2194, 112, 1993, 1994, 403, 402, 401);
+			addSmithingTier("Orichalcum", 62, 2028, 2030, 2031, 2032, 2033, 2034, 2049, 2035, 2036, 2210, 2192, 1977, 1978, 1979, 2227, 1980, 1981, 1982);
+			addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 98, 1092, 2194, 112, 1993, 1994, 403, 404, 402, 401);
 		} else if (curTab == 6) {
 			skillMenuEntries.add(new SkillMenuItem(979, "4", "Bronze wire - 1 bronze bar"));
 			skillMenuEntries.add(new SkillMenuItem(419, "34", "Nails - 1 steel bar makes 2"));
@@ -1508,7 +1508,7 @@ public final class SkillGuideInterface {
 	private void addSmithingTier(String name, int baseLevel, int daggerId, int shortSwordId, int longSwordId,
 								int scimitarId, int twoHandedId, int axeId, int pickaxeId, int battleAxeId,
 								int maceId, int spearId, int boltId, int helmId, int gauntletId, int greavesId,
-								int shieldId, int legsId, int bodyId) {
+								int shieldId, int paladinShieldId, int legsId, int bodyId) {
 		skillMenuEntries.add(new SkillMenuItem(daggerId, String.valueOf(baseLevel), name + " weapons - 1 to 3 bars"));
 		skillMenuEntries.add(new SkillMenuItem(axeId, String.valueOf(baseLevel), name + " tools - 1 bar"));
 		if (boltId > 0) {
@@ -1518,6 +1518,7 @@ public final class SkillGuideInterface {
 		skillMenuEntries.add(new SkillMenuItem(gauntletId, String.valueOf(baseLevel + 2), name + " gauntlets - 2 bars"));
 		skillMenuEntries.add(new SkillMenuItem(greavesId, String.valueOf(baseLevel + 2), name + " greaves - 2 bars"));
 		skillMenuEntries.add(new SkillMenuItem(shieldId, String.valueOf(baseLevel + 3), name + " square shield - 3 bars"));
+		skillMenuEntries.add(new SkillMenuItem(paladinShieldId, String.valueOf(baseLevel + 4), name + " paladin shield - 3 bars"));
 		skillMenuEntries.add(new SkillMenuItem(legsId, String.valueOf(baseLevel + 4), name + " platelegs - 3 bars"));
 		skillMenuEntries.add(new SkillMenuItem(bodyId, String.valueOf(baseLevel + 6), name + " platebody - 4 bars"));
 	}

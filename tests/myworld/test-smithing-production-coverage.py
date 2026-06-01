@@ -7,6 +7,7 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 SMITHING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/Smithing.java"
+CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 
 EXPECTED_MODERN_WEAPON_OPTIONS = [0, 2, 3, 4, 5, 6, 7, 21, 8, 9]
 EXPECTED_MODERN_ARMOR_OPTIONS = [0, 1, 2, 3, 4, 5, 6]
@@ -84,6 +85,46 @@ def ensure_paladin_shields_are_smithable(text: str) -> None:
         fail("Legacy smithing menu should call the kite replacement Paladin Shield")
 
 
+def ensure_client_paladin_shield_names(text: str) -> None:
+    expected_names = (
+        "Tin Paladin Shield",
+        "Copper Paladin Shield",
+        "Bronze Paladin Shield",
+        "Iron Paladin Shield",
+        "Steel Paladin Shield",
+        "Mithril Paladin Shield",
+        "Titan Steel Paladin Shield",
+        "Adamantite Paladin Shield",
+        "Orichalcum Paladin Shield",
+        "Rune Paladin Shield",
+        "Black Paladin Shield",
+        "Dragon Paladin Shield",
+        "White Paladin Shield",
+        "Grey Paladin Shield",
+    )
+    for name in expected_names:
+        if f'"{name}"' not in text:
+            fail(f"Client item definitions missing paladin shield display name: {name}")
+    forbidden_names = (
+        "Tin kite shield",
+        "Copper kite shield",
+        "Bronze Kite Shield",
+        "Iron Kite Shield",
+        "Steel Kite Shield",
+        "Mithril Kite Shield",
+        "Titan Steel kite shield",
+        "Adamantite Kite Shield",
+        "Orichalcum kite shield",
+        "Rune Kite Shield",
+        "Black Kite Shield",
+        "Dragon Kite Shield",
+        "White Kite Shield",
+    )
+    for name in forbidden_names:
+        if f'"{name}"' in text:
+            fail(f"Client item definitions still expose old kite shield display name: {name}")
+
+
 def ensure_intentional_ranged_outputs_are_crafting_only(text: str) -> None:
     forbidden = (
         "getModernArrowHeadsId",
@@ -98,10 +139,12 @@ def ensure_intentional_ranged_outputs_are_crafting_only(text: str) -> None:
 
 def main() -> None:
     text = SMITHING.read_text(encoding="utf-8")
+    client_text = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     ensure_modern_production_grid(text)
     ensure_production_start_accepts_grid_recipes(text)
     ensure_zero_id_outputs_are_valid(text)
     ensure_paladin_shields_are_smithable(text)
+    ensure_client_paladin_shield_names(client_text)
     ensure_intentional_ranged_outputs_are_crafting_only(text)
     print("PASS: smithing production coverage validated")
 

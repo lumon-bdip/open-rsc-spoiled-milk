@@ -753,8 +753,8 @@ public final class GameStateUpdater {
 				while ((summonedNpcHealth = npcSummonHealthNeedingDisplayed.poll()) != null) {
 					updates.add((short) safeNPCIndex(player, summonedNpcHealth.getIndex()));
 					updates.add((byte) 13);
-					updates.add((byte) summonedNpcHealth.getSkills().getLevel(com.openrsc.server.constants.Skill.HITS.id()));
-					updates.add((byte) summonedNpcHealth.getSkills().getMaxStat(com.openrsc.server.constants.Skill.HITS.id()));
+					updates.add((byte) Summoning.getSummonCurrentHits(summonedNpcHealth));
+					updates.add((byte) Summoning.getSummonMaxHits(summonedNpcHealth));
 				}
 				Npc summonedNpcSprite;
 				while ((summonedNpcSprite = npcSummonSpritesNeedingDisplayed.poll()) != null) {

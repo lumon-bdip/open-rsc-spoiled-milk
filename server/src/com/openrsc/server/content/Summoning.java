@@ -41,6 +41,8 @@ public final class Summoning {
 	private static final String SUMMON_ABSORB_PERCENT_KEY = "myworld_summon_absorb_percent";
 	private static final String SUMMON_DAMAGE_ABSORBING_KEY = "myworld_summon_damage_absorbing";
 	private static final String SUMMON_MAX_HIT_KEY = "myworld_summon_max_hit";
+	private static final String SUMMON_CURRENT_HITS_KEY = "myworld_summon_current_hits";
+	private static final String SUMMON_MAX_HITS_KEY = "myworld_summon_max_hits";
 	private static final String SUMMON_TRAIT_KEY = "myworld_summon_trait";
 	private static final String SUMMON_EXHAUSTED_KEY = "myworld_summon_exhausted";
 	private static final String SUMMON_INVULNERABLE_KEY = "myworld_summon_invulnerable";
@@ -510,6 +512,20 @@ public final class Summoning {
 		return isSummon(npc) && SOURCE_ARMOR.equals(npc.getAttribute(SUMMON_SOURCE_KEY, ""));
 	}
 
+	public static int getSummonCurrentHits(final Npc summon) {
+		if (!isSummon(summon)) {
+			return summon == null ? 0 : summon.getSkills().getLevel(Skill.HITS.id());
+		}
+		return Math.max(0, summon.getAttribute(SUMMON_CURRENT_HITS_KEY, summon.getSkills().getLevel(Skill.HITS.id())));
+	}
+
+	public static int getSummonMaxHits(final Npc summon) {
+		if (!isSummon(summon)) {
+			return summon == null ? 0 : summon.getSkills().getMaxStat(Skill.HITS.id());
+		}
+		return Math.max(1, summon.getAttribute(SUMMON_MAX_HITS_KEY, summon.getSkills().getMaxStat(Skill.HITS.id())));
+	}
+
 	public static boolean hasImpProtection(final Player player) {
 		final Npc summon = player.getAttribute(MANUAL_SUMMON_KEY, null);
 		return summon != null
@@ -591,7 +607,7 @@ public final class Summoning {
 			return damage;
 		}
 		final int absorbPercent = summon.getAttribute(SUMMON_ABSORB_PERCENT_KEY, 0);
-		final int summonHits = summon.getSkills().getLevel(Skill.HITS.id());
+		final int summonHits = getSummonCurrentHits(summon);
 		if (absorbPercent <= 0 || summonHits <= 0) {
 			return damage;
 		}
@@ -603,11 +619,13 @@ public final class Summoning {
 			return damage;
 		}
 
-		summon.getSkills().subtractLevel(Skill.HITS.id(), absorbed, false);
+		final int nextHits = Math.max(0, summonHits - absorbed);
+		summon.setAttribute(SUMMON_CURRENT_HITS_KEY, nextHits);
+		summon.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), nextHits, getSummonMaxHits(summon), false);
 		summon.getUpdateFlags().setDamage(new Damage(summon, absorbed));
 		summon.getUpdateFlags().addHitSplat(new HitSplat(summon, HitSplat.TYPE_STANDARD, absorbed));
 
-		if (summon.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+		if (nextHits <= 0) {
 			summon.setAttribute(SUMMON_EXHAUSTED_KEY, true);
 			summon.resetCombatEvent();
 			owner.message("@red@Your summoned " + getSummonDisplayName(summon) + " absorbs a final blow and disappears.");
@@ -834,7 +852,18 @@ public final class Summoning {
 		summon.getSkills().setTemporaryLevelAndMaxStat(Skill.RANGED.id(), profile.ranged, profile.ranged, false);
 		summon.getSkills().setTemporaryLevelAndMaxStat(Skill.STRENGTH.id(), profile.strength, profile.strength, false);
 		final int summonHits = profile.role == SummonRole.COMBAT ? getScaledHits(owner, profile) : profile.hits;
+		summon.setAttribute(SUMMON_CURRENT_HITS_KEY, summonHits);
+		summon.setAttribute(SUMMON_MAX_HITS_KEY, summonHits);
 		summon.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), summonHits, summonHits, false);
+	}
+
+	private static void syncSummonHitpoints(final Npc summon) {
+		final int currentHits = getSummonCurrentHits(summon);
+		final int maxHits = getSummonMaxHits(summon);
+		if (summon.getSkills().getLevel(Skill.HITS.id()) != currentHits
+			|| summon.getSkills().getMaxStat(Skill.HITS.id()) != maxHits) {
+			summon.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), currentHits, maxHits, false);
+		}
 	}
 
 	private static int getScaledHits(final Player owner, final SummonProfile profile) {
@@ -876,11 +905,12 @@ public final class Summoning {
 				if (!owner.loggedIn() || owner.isRemoved() || summon.isRemoved()
 					|| summon.getAttribute(SUMMON_EXHAUSTED_KEY, false)
 					|| (!summon.getAttribute(SUMMON_INVULNERABLE_KEY, false)
-						&& summon.getSkills().getLevel(Skill.HITS.id()) <= 0)) {
+						&& getSummonCurrentHits(summon) <= 0)) {
 					finishSummon(owner, summon, !summon.isRemoved());
 					stop();
 					return;
 				}
+				syncSummonHitpoints(summon);
 				if (owner.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 					finishSummon(owner, summon, true);
 					stop();

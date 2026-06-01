@@ -51,15 +51,15 @@ def main():
     skilling_costs = parse_int_array(catalog, "SKILLING_TIER_POINT_COSTS")
     skilling_effects = parse_int_array(catalog, "SKILLING_TIER_EFFECT_PERCENTS")
 
-    require(combat_costs == [3, 6, 10, 15, 21], "Combat prayer costs drifted")
+    require(combat_costs == [3, 6, 15, 29, 49], "Combat prayer costs drifted")
     require(combat_effects == [5, 10, 15, 20, 25], "Combat prayer effects drifted")
-    require(sum(combat_costs) == 55, "All combat tiers should reserve 55 prayer points")
+    require(sum(combat_costs) == 102, "All combat tiers should reserve 102 prayer points")
     require(sum(combat_effects) == 75, "Raw combat tiers should total 75 before the cap")
     require("COMBAT_EFFECT_CAP_PERCENT = 60" in catalog, "Combat prayer cap must stay at 60%")
 
-    require(skilling_costs == [2, 8, 20, 35, 55], "Skilling prayer costs drifted")
+    require(skilling_costs == [2, 7, 22, 46, 80], "Skilling prayer costs drifted")
     require(skilling_effects == [10, 15, 20, 25, 30], "Skilling prayer effects drifted")
-    require(sum(skilling_costs) == 120, "All skilling tiers should reserve 120 prayer points")
+    require(sum(skilling_costs) == 157, "All skilling tiers should reserve 157 prayer points")
     require(sum(skilling_effects) == 100, "All skilling tiers should total 100% XP bonus")
 
     required_lines = [

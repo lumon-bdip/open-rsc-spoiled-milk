@@ -365,14 +365,17 @@ public final class DoSkillInterface {
 		}
 
 		int quantityY = y + height - 40;
-		drawQuantityButton(x + 16, quantityY, 26, 20, "<<", -5);
-		drawQuantityButton(x + 46, quantityY, 26, 20, "<", -1);
-		mc.getSurface().drawBoxAlpha(x + 76, quantityY, 56, 20, 0x222222, 192);
-		mc.getSurface().drawBoxBorder(x + 76, 56, quantityY, 20, 0x777775);
-		String quantityText = Integer.toString(productionQuantity);
-		drawString(quantityText, x + 104 - (mc.getSurface().stringWidth(2, quantityText) / 2), quantityY + 15, 2, textColour);
-		drawQuantityButton(x + 136, quantityY, 26, 20, ">", 1);
-		drawQuantityButton(x + 166, quantityY, 26, 20, ">>", 5);
+		boolean showQuantityControls = !isSmithingMaterialPicker();
+		if (showQuantityControls) {
+			drawQuantityButton(x + 16, quantityY, 26, 20, "<<", -5);
+			drawQuantityButton(x + 46, quantityY, 26, 20, "<", -1);
+			mc.getSurface().drawBoxAlpha(x + 76, quantityY, 56, 20, 0x222222, 192);
+			mc.getSurface().drawBoxBorder(x + 76, 56, quantityY, 20, 0x777775);
+			String quantityText = Integer.toString(productionQuantity);
+			drawString(quantityText, x + 104 - (mc.getSurface().stringWidth(2, quantityText) / 2), quantityY + 15, 2, textColour);
+			drawQuantityButton(x + 136, quantityY, 26, 20, ">", 1);
+			drawQuantityButton(x + 166, quantityY, 26, 20, ">>", 5);
+		}
 
 		boolean startEnabled = selected != null && selected.isCraftable();
 		this.drawButton(x + width - 92, quantityY - 1, 76, 22, "Start", 3, false, new ButtonHandler() {

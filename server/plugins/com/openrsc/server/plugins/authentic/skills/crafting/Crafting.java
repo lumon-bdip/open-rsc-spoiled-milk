@@ -1426,8 +1426,17 @@ public class Crafting implements UseInvTrigger,
 				break;
 			}
 
-			player.getCarriedItems().remove(item);
+			Item gemToCut = new Item(item.getCatalogId(), 1, item.getNoted(), item.getItemId());
 			Item cutGem = new Item(gemDef.getGemID(), 1);
+			int freedSlots = item.getAmount() <= 1 ? 1 : 0;
+			if (!player.getCarriedItems().getInventory().canHold(cutGem, freedSlots)) {
+				player.message("You do not have enough inventory space to cut another gem");
+				stopbatch();
+				break;
+			}
+			if (player.getCarriedItems().remove(gemToCut) < 0) {
+				break;
+			}
 			if (DataConversions.inArray(gemsThatFail, gem.getCatalogId()) &&
 				Formulae.smashGem(gem.getCatalogId(), gemDef.getReqLevel(), player.getSkills().getLevel(Skill.CRAFTING.id()))) {
 				player.message("You miss hit the chisel and smash the " + cutGem.getDef(player.getWorld()).getName() + " to pieces!");

@@ -17,7 +17,7 @@
 		},
 		{
 			"id": 2,
-			"name": "Iron Kite Shield",
+			"name": "Iron Paladin Shield",
 			"description": "A large metal shield",
 			"command": "",
 			"isStackable": 0,
@@ -1025,7 +1025,7 @@
 		},
 		{
 			"id": 128,
-			"name": "Bronze Kite Shield",
+			"name": "Bronze Paladin Shield",
 			"description": "A large metal shield",
 			"command": "",
 			"isStackable": 0,
@@ -1033,7 +1033,7 @@
 		},
 		{
 			"id": 129,
-			"name": "Steel Kite Shield",
+			"name": "Steel Paladin Shield",
 			"description": "A large metal shield",
 			"command": "",
 			"isStackable": 0,
@@ -1041,7 +1041,7 @@
 		},
 		{
 			"id": 130,
-			"name": "Mithril Kite Shield",
+			"name": "Mithril Paladin Shield",
 			"description": "A large metal shield",
 			"command": "",
 			"isStackable": 0,
@@ -1049,7 +1049,7 @@
 		},
 		{
 			"id": 131,
-			"name": "Adamantite Kite Shield",
+			"name": "Adamantite Paladin Shield",
 			"description": "A large metal shield",
 			"command": "",
 			"isStackable": 0,

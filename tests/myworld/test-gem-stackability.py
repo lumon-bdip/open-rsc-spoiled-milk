@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ITEM_DEFS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefs.json"
 ITEM_DEFS_PATCH18_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsPatch18.json"
 ENTITY_HANDLER_PATH = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "client" / "entityhandling" / "EntityHandler.java"
+CRAFTING_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "skills" / "crafting" / "Crafting.java"
 
 UNCUT_GEMS = {
     157: "uncut diamond",
@@ -57,6 +58,11 @@ def require_client(snippet: str, label: str, client_defs: str) -> None:
         fail(f"EntityHandler.java missing {label}: {snippet}")
 
 
+def require_crafting(snippet: str, label: str, crafting: str) -> None:
+    if snippet not in crafting:
+        fail(f"Crafting.java missing {label}: {snippet}")
+
+
 def main() -> None:
     item_defs = load_item_defs(ITEM_DEFS_PATH, "item")
     assert_server_stackability(item_defs, UNCUT_GEMS, 1, "ItemDefs.json")
@@ -93,6 +99,18 @@ def main() -> None:
     require_client('new ItemDef("Red Topaz", "A semi precious stone", "", 200, 74, "items:74", false,', "unstackable red topaz", client_defs)
     require_client('new ItemDef("Jade", "A semi precious stone", "", 150, 74, "items:74", false,', "unstackable jade", client_defs)
     require_client('new ItemDef("Opal", "A semi precious stone", "", 100, 74, "items:74", false,', "unstackable opal", client_defs)
+
+    crafting = CRAFTING_PATH.read_text(encoding="utf-8")
+    require_crafting(
+        "Item gemToCut = new Item(item.getCatalogId(), 1, item.getNoted(), item.getItemId());",
+        "single gem removal from stacked uncut gems",
+        crafting,
+    )
+    require_crafting(
+        "if (!player.getCarriedItems().getInventory().canHold(cutGem, freedSlots)) {",
+        "inventory-full guard before cutting stacked gems",
+        crafting,
+    )
 
     print("PASS: uncut gems stack while cut gems stay unstackable")
 

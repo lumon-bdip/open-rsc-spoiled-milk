@@ -83,6 +83,9 @@ def main() -> None:
 
     require(guide, 'addAmmoMouldGuide("Tin", 1, 2004, 2039, 2043, 1996);', "tin ammo crafting guide")
     require(guide, 'addAmmoMouldGuide("Rune", 70, 674, 646, 1070, 1080);', "rune ammo crafting guide")
+    require(guide, 'addSmithingTier("Tin", 1, 1995, 1997, 1998, 1999, 2000, 2001, 1987, 2002, 2003, 2207, -1, 1959, 1960, 1961, 2224, 1962, 1963, 1964);', "tin paladin shield smithing guide")
+    require(guide, 'addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 98, 1092, 2194, 112, 1993, 1994, 403, 404, 402, 401);', "rune paladin shield smithing guide")
+    require(guide, 'name + " paladin shield - 3 bars"', "paladin shield smithing guide line")
     require(guide, 'addWoodcraftGuide("Basic", 10, 1, 277, 5, 276, 8, 60, 9, 100, 1);', "basic woodcraft recipe guide")
     require(guide, 'addWoodcraftGuide("Pine", 15, 8, 2116, 12, 2115, 15, 59, 16, 2131, 8);', "pine woodcraft recipe guide")
     require(guide, 'addWoodcraftGuide("Willow", 25, 22, 661, 26, 660, 29, 2170, 30, 1769, 22);', "willow base staff woodcraft guide")

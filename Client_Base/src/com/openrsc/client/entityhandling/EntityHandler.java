@@ -2538,7 +2538,7 @@ public class EntityHandler {
 
 		items.add(new ItemDef("Iron Mace", "A spiky mace", "", 63, 0, "items:0", false, true, 16, 15654365, false, false, true, 0));
 		items.add(new ItemDef("Iron Short Sword", "A razor sharp sword", "", 91, 1, "items:1", false, true, 16, 15654365, false, false, true, 1));
-		items.add(new ItemDef("Iron Kite Shield", "A large metal shield", "", 238, 2, "items:2", false, true, 8, 15654365, false, false, true, 2));
+		items.add(new ItemDef("Iron Paladin Shield", "A large metal shield", "", 238, 2, "items:2", false, true, 8, 15654365, false, false, true, 2));
 		items.add(new ItemDef("Iron Square Shield", "A medium metal shield", "", 168, 3, "items:3", false, true, 8, 15654365, false, false, true, 3));
 		items.add(new ItemDef("Wooden Shield", "A solid wooden shield", "", 20, 4, "items:4", false, true, 8, 0, false, false, true, 4));
 		items.add(new ItemDef("Medium Iron Helmet", "A medium sized helmet", "", 84, 5, "items:5", false, true, 32, 15654365, false, false, true, 5));
@@ -2665,10 +2665,10 @@ public class EntityHandler {
 		items.add(new ItemDef("Steel Square Shield", "A medium metal shield", "", 600, 3, "items:3", false, true, 8, 15658734, false, false, true, 125));
 		items.add(new ItemDef("Mithril Square Shield", "A medium metal shield", "", 1560, 3, "items:3", false, true, 8, 10072780, false, false, true, 126));
 		items.add(new ItemDef("Adamantite Square Shield", "A medium metal shield", "", 3840, 3, "items:3", false, true, 8, 11717785, false, false, true, 127));
-		items.add(new ItemDef("Bronze Kite Shield", "A large metal shield", "", 68, 2, "items:2", false, true, 8, 16737817, false, false, true, 128));
-		items.add(new ItemDef("Steel Kite Shield", "A large metal shield", "", 850, 2, "items:2", false, true, 8, 15658734, false, false, true, 129));
-		items.add(new ItemDef("Mithril Kite Shield", "A large metal shield", "", 2210, 2, "items:2", false, true, 8, 10072780, false, false, true, 130));
-		items.add(new ItemDef("Adamantite Kite Shield", "A large metal shield", "", 5440, 2, "items:2", false, true, 8, 11717785, false, false, true, 131));
+		items.add(new ItemDef("Bronze Paladin Shield", "A large metal shield", "", 68, 2, "items:2", false, true, 8, 16737817, false, false, true, 128));
+		items.add(new ItemDef("Steel Paladin Shield", "A large metal shield", "", 850, 2, "items:2", false, true, 8, 15658734, false, false, true, 129));
+		items.add(new ItemDef("Mithril Paladin Shield", "A large metal shield", "", 2210, 2, "items:2", false, true, 8, 10072780, false, false, true, 130));
+		items.add(new ItemDef("Adamantite Paladin Shield", "A large metal shield", "", 5440, 2, "items:2", false, true, 8, 11717785, false, false, true, 131));
 		items.add(new ItemDef("cookedmeat", "Mmm this looks tasty", "Eat", 4, 60, "items:60", false, false, 0, 13395507, false, false, true, 132));
 		items.add(new ItemDef("raw chicken", "I need to cook this first", "", 1, 60, "items:60", false, false, 0, 16747571, false, false, true, 133));
 		items.add(new ItemDef("burntmeat", "Oh dear", "", 1, 60, "items:60", false, false, 0, 5000268, false, false, true, 134));
@@ -2941,7 +2941,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Rune Plate Mail Body", "Provides excellent protection", "", 65000, 8, "items:8", false, true, 322, 65535, false, false, true, 401));
 		items.add(new ItemDef("Rune Plate Mail Legs", "These look pretty heavy", "", 64000, 9, "items:9", false, true, 644, 65535, false, false, true, 402));
 		items.add(new ItemDef("Rune Square Shield", "A medium metal shield", "", 38400, 3, "items:3", false, true, 8, 56797, false, false, true, 403));
-		items.add(new ItemDef("Rune Kite Shield", "A large metal shield", "", 54400, 2, "items:2", false, true, 8, 56797, false, false, true, 404));
+		items.add(new ItemDef("Rune Paladin Shield", "A large metal shield", "", 54400, 2, "items:2", false, true, 8, 56797, false, false, true, 404));
 		items.add(new ItemDef("rune Axe", "A powerful axe", "", 12800, 12, "items:12", false, false, 0, 65535, false, false, true, 405));
 		items.add(new ItemDef("Rune Plate Mail Legs", "These look pretty heavy", "", 64000, 9, "items:9", false, true, 640, 26214, false, false, true, 406));
 		items.add(new ItemDef("Rune Plate Mail Body", "Provides excellent protection", "", 65000, 8, "items:8", false, true, 322, 65535, false, false, true, 407));
@@ -2970,7 +2970,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Black Mace", "A spikey mace", "", 432, 0, "items:0", false, true, 16, 3158064, false, false, true, 430));
 		items.add(new ItemDef("Black Chain Mail Body", "A series of connected metal rings", "", 1440, 7, "items:7", false, true, 64, 3158064, false, false, true, 431));
 		items.add(new ItemDef("Black Square Shield", "A medium metal shield", "", 1152, 3, "items:3", false, true, 8, 3158064, false, false, true, 432));
-		items.add(new ItemDef("Black Kite Shield", "A large metal shield", "", 1632, 2, "items:2", false, true, 8, 3158064, false, false, true, 433));
+		items.add(new ItemDef("Black Paladin Shield", "A large metal shield", "", 1632, 2, "items:2", false, true, 8, 3158064, false, false, true, 433));
 		items.add(new ItemDef("Black Plate Mail Legs", "These look pretty heavy", "", 1920, 9, "items:9", false, true, 640, 1118481, false, false, true, 434));
 		items.add(new ItemDef("Herb", "I need a closer look to identify this", "Identify", 1, 75, "items:75", false, false, 0, 0, true, false, true, 435));
 		items.add(new ItemDef("Herb", "I need a closer look to identify this", "Identify", 1, 75, "items:75", false, false, 0, 0, true, false, true, 436));
@@ -4113,7 +4113,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Black Chain Mail Legs", "A series of connected metal rings", "", 720, -1, "items:590", false, true, 128, 3158064, false, false, true, 1424));
 
 		items.add(new ItemDef("Large Dragon Helmet", "A full face helmet", "", 5000000, -1, "items:501", false, true, 33, 0, false, false, true, 1425));
-		items.add(new ItemDef("Dragon Kite Shield", "An ancient and powerful looking Dragon Kite shield", "", 5000000, -1, "items:dragonkite", false, true, 8, 0, false, false, true, 1426));
+		items.add(new ItemDef("Dragon Paladin Shield", "An ancient and powerful looking Dragon Paladin shield", "", 5000000, -1, "items:dragonkite", false, true, 8, 0, false, false, true, 1426));
 		items.add(new ItemDef("Dragon Plate Mail Body", "Provides excellent protection", "", 5000000, -1, "items:498", false, true, 322, 0, false, false, true, 1427));
 		items.add(new ItemDef("Dragon Plate Mail Body", "Provides excellent protection", "", 5000000, 498, "items:498", false, true, 322, 0, false, false, true, 1428));
 		items.add(new ItemDef("Dragon Plate Mail Legs", "These look pretty heavy", "", 5000000, -1, "items:499", false, true, 644, 0, false, false, true, 1429));
@@ -4501,25 +4501,25 @@ public class EntityHandler {
 		items.add(new ItemDef("Tin helmet", "A full face helmet", "", 24, 6, "items:6", false, true, 33, 0xb7c9d9, false, false, true, 1959));
 		items.add(new ItemDef("Tin gauntlets", "Heavy hand protection", "", 48, 217, "items:217", false, true, 256, 0xb7c9d9, false, false, true, 1960));
 		items.add(new ItemDef("Tin greaves", "Heavy foot protection", "", 48, 223, "items:223", false, true, 512, 0xb7c9d9, false, false, true, 1961));
-		items.add(new ItemDef("Tin kite shield", "A large metal shield", "", 72, 2, "items:2", false, true, 8, 0xb7c9d9, false, false, true, 1962));
+		items.add(new ItemDef("Tin Paladin Shield", "A large metal shield", "", 72, 2, "items:2", false, true, 8, 0xb7c9d9, false, false, true, 1962));
 		items.add(new ItemDef("Tin plate mail legs", "These look pretty heavy", "", 72, 9, "items:9", false, true, 644, 0xb7c9d9, false, false, true, 1963));
 		items.add(new ItemDef("Tin plate mail body", "Provides excellent protection", "", 96, 8, "items:8", false, true, 322, 0xb7c9d9, false, false, true, 1964));
 		items.add(new ItemDef("Copper helmet", "A full face helmet", "", 36, 6, "items:6", false, true, 33, 0xc86a2b, false, false, true, 1965));
 		items.add(new ItemDef("Copper gauntlets", "Heavy hand protection", "", 72, 217, "items:217", false, true, 256, 0xc86a2b, false, false, true, 1966));
 		items.add(new ItemDef("Copper greaves", "Heavy foot protection", "", 72, 223, "items:223", false, true, 512, 0xc86a2b, false, false, true, 1967));
-		items.add(new ItemDef("Copper kite shield", "A large metal shield", "", 108, 2, "items:2", false, true, 8, 0xc86a2b, false, false, true, 1968));
+		items.add(new ItemDef("Copper Paladin Shield", "A large metal shield", "", 108, 2, "items:2", false, true, 8, 0xc86a2b, false, false, true, 1968));
 		items.add(new ItemDef("Copper plate mail legs", "These look pretty heavy", "", 108, 9, "items:9", false, true, 644, 0xc86a2b, false, false, true, 1969));
 		items.add(new ItemDef("Copper plate mail body", "Provides excellent protection", "", 144, 8, "items:8", false, true, 322, 0xc86a2b, false, false, true, 1970));
 		items.add(new ItemDef("Titan Steel helmet", "A full face helmet", "", 64, 6, "items:6", false, true, 33, 0x8ea6bb, false, false, true, 1971));
 		items.add(new ItemDef("Titan Steel gauntlets", "Heavy hand protection", "", 128, 217, "items:217", false, true, 256, 0x8ea6bb, false, false, true, 1972));
 		items.add(new ItemDef("Titan Steel greaves", "Heavy foot protection", "", 128, 223, "items:223", false, true, 512, 0x8ea6bb, false, false, true, 1973));
-		items.add(new ItemDef("Titan Steel kite shield", "A large metal shield", "", 192, 2, "items:2", false, true, 8, 0x8ea6bb, false, false, true, 1974));
+		items.add(new ItemDef("Titan Steel Paladin Shield", "A large metal shield", "", 192, 2, "items:2", false, true, 8, 0x8ea6bb, false, false, true, 1974));
 		items.add(new ItemDef("Titan Steel plate mail legs", "These look pretty heavy", "", 192, 9, "items:9", false, true, 644, 0x8ea6bb, false, false, true, 1975));
 		items.add(new ItemDef("Titan Steel plate mail body", "Provides excellent protection", "", 256, 8, "items:8", false, true, 322, 0x8ea6bb, false, false, true, 1976));
 		items.add(new ItemDef("Orichalcum helmet", "A full face helmet", "", 80, 6, "items:6", false, true, 33, 0x5a3f7d, false, false, true, 1977));
 		items.add(new ItemDef("Orichalcum gauntlets", "Heavy hand protection", "", 160, 217, "items:217", false, true, 256, 0x5a3f7d, false, false, true, 1978));
 		items.add(new ItemDef("Orichalcum greaves", "Heavy foot protection", "", 160, 223, "items:223", false, true, 512, 0x5a3f7d, false, false, true, 1979));
-		items.add(new ItemDef("Orichalcum kite shield", "A large metal shield", "", 240, 2, "items:2", false, true, 8, 0x5a3f7d, false, false, true, 1980));
+		items.add(new ItemDef("Orichalcum Paladin Shield", "A large metal shield", "", 240, 2, "items:2", false, true, 8, 0x5a3f7d, false, false, true, 1980));
 		items.add(new ItemDef("Orichalcum plate mail legs", "These look pretty heavy", "", 240, 9, "items:9", false, true, 644, 0x5a3f7d, false, false, true, 1981));
 		items.add(new ItemDef("Orichalcum plate mail body", "Provides excellent protection", "", 320, 8, "items:8", false, true, 322, 0x5a3f7d, false, false, true, 1982));
 		items.add(new ItemDef("Bronze gauntlets", "Heavy hand protection", "", 64, 217, "items:217", false, true, 256, 16737817, false, false, true, 1983));
@@ -4600,7 +4600,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Medium White Helmet", "A medium sized helmet", "", 576, 5, "items:5", false, true, 32, 0xE7E2D6, false, false, true, 2159));
 		items.add(new ItemDef("White Chain Mail Body", "A series of connected metal rings", "", 1440, 7, "items:7", false, true, 64, 0xE7E2D6, false, false, true, 2160));
 		items.add(new ItemDef("White Square Shield", "A medium metal shield", "", 1152, 3, "items:3", false, true, 8, 0xE7E2D6, false, false, true, 2161));
-		items.add(new ItemDef("White Kite Shield", "A large metal shield", "", 1632, 2, "items:2", false, true, 8, 0xE7E2D6, false, false, true, 2162));
+		items.add(new ItemDef("White Paladin Shield", "A large metal shield", "", 1632, 2, "items:2", false, true, 8, 0xE7E2D6, false, false, true, 2162));
 		items.add(new ItemDef("White Plate Mail Body", "Provides excellent protection", "", 3840, 8, "items:8", false, true, 322, 0xE7E2D6, false, false, true, 2163));
 		items.add(new ItemDef("White Plate Mail Legs", "These look pretty heavy", "", 1920, 9, "items:9", false, true, 644, 0xE7E2D6, false, false, true, 2164));
 		items.add(new ItemDef("White Plate Mail Body", "Provides excellent protection", "", 3840, 8, "items:8", false, true, 322, 0xE7E2D6, false, false, true, 2165));
