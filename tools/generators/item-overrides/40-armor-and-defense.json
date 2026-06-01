@@ -5,14 +5,16 @@
       "meleeDefense": 9,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 720
     },
     {
       "id": 3,
       "meleeDefense": 6,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 480
     },
     {
       "id": 4,
@@ -25,35 +27,40 @@
       "meleeDefense": 3,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 240
     },
     {
       "id": 6,
       "meleeDefense": 6,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 480
     },
     {
       "id": 7,
       "meleeDefense": 9,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 720
     },
     {
       "id": 8,
       "meleeDefense": 15,
       "rangedDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1200
     },
     {
       "id": 9,
       "meleeDefense": 9,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 720
     },
     {
       "id": 15,
@@ -95,196 +102,224 @@
       "id": 104,
       "meleeDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 100
     },
     {
       "id": 105,
       "meleeDefense": 4,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 600
     },
     {
       "id": 106,
       "meleeDefense": 5,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1600
     },
     {
       "id": 107,
       "meleeDefense": 6,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 7600
     },
     {
       "id": 108,
       "meleeDefense": 5,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 200
     },
     {
       "id": 109,
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1200
     },
     {
       "id": 110,
       "meleeDefense": 9,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3200
     },
     {
       "id": 111,
       "meleeDefense": 12,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 15200
     },
     {
       "id": 112,
       "meleeDefense": 15,
       "rangedDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 40000
     },
     {
       "id": 113,
       "meleeDefense": 7,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 300
     },
     {
       "id": 114,
       "meleeDefense": 12,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1800
     },
     {
       "id": 115,
       "meleeDefense": 14,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 4800
     },
     {
       "id": 116,
       "meleeDefense": 18,
       "rangedDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22800
     },
     {
       "id": 117,
       "meleeDefense": 12,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 500
     },
     {
       "id": 118,
       "meleeDefense": 19,
       "rangedDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3000
     },
     {
       "id": 119,
       "meleeDefense": 23,
       "rangedDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 8000
     },
     {
       "id": 120,
       "meleeDefense": 30,
       "rangedDefense": 10,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 38000
     },
     {
       "id": 121,
       "meleeDefense": 12,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1800
     },
     {
       "id": 122,
       "meleeDefense": 14,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 4800
     },
     {
       "id": 123,
       "meleeDefense": 18,
       "rangedDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22800
     },
     {
       "id": 124,
       "meleeDefense": 5,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 200
     },
     {
       "id": 125,
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1200
     },
     {
       "id": 126,
       "meleeDefense": 9,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3200
     },
     {
       "id": 127,
       "meleeDefense": 12,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 15200
     },
     {
       "id": 128,
       "meleeDefense": 7,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 300
     },
     {
       "id": 129,
       "meleeDefense": 12,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1800
     },
     {
       "id": 130,
       "meleeDefense": 14,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 4800
     },
     {
       "id": 131,
       "meleeDefense": 18,
       "magicDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22800
     },
     {
       "id": 196,
@@ -299,7 +334,8 @@
       "meleeDefense": 7,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 300
     },
     {
       "id": 230,
@@ -342,42 +378,48 @@
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 20000
     },
     {
       "id": 400,
       "meleeDefense": 23,
       "rangedDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 60000
     },
     {
       "id": 401,
       "meleeDefense": 38,
       "rangedDefense": 12,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 100000
     },
     {
       "id": 402,
       "meleeDefense": 23,
       "rangedDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 60000
     },
     {
       "id": 403,
       "meleeDefense": 15,
       "rangedDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 40000
     },
     {
       "id": 404,
       "meleeDefense": 23,
       "magicDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 60000
     },
     {
       "id": 420,
@@ -453,7 +495,8 @@
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 600
     },
     {
       "id": 699,
@@ -962,139 +1005,160 @@
       "id": 1835,
       "meleeDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 1836,
       "meleeDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 45
     },
     {
       "id": 1837,
       "meleeDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 45
     },
     {
       "id": 1838,
       "meleeDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 1839,
       "meleeDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 1840,
       "meleeDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 1841,
       "meleeDefense": 1,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 45
     },
     {
       "id": 1842,
       "meleeDefense": 1,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 45
     },
     {
       "id": 1843,
       "meleeDefense": 2,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 1844,
       "meleeDefense": 3,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 1845,
       "meleeDefense": 1,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 45
     },
     {
       "id": 1846,
       "meleeDefense": 1,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 1847,
       "meleeDefense": 1,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 1848,
       "meleeDefense": 2,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 135
     },
     {
       "id": 1849,
       "meleeDefense": 3,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 180
     },
     {
       "id": 1850,
       "meleeDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 45
     },
     {
       "id": 1851,
       "meleeDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 1852,
       "meleeDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 1853,
       "meleeDefense": 5,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 135
     },
     {
       "id": 1854,
       "meleeDefense": 7,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 180
     },
     {
       "id": 1855,
       "meleeDefense": 1,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 45
     },
     {
       "id": 1856,
@@ -1102,7 +1166,8 @@
       "rangedDefense": 1,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 1857,
@@ -1110,7 +1175,8 @@
       "rangedDefense": 1,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 1858,
@@ -1118,7 +1184,8 @@
       "rangedDefense": 1,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 135
     },
     {
       "id": 1859,
@@ -1126,69 +1193,79 @@
       "rangedDefense": 2,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 180
     },
     {
       "id": 1860,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 45
     },
     {
       "id": 1861,
       "meleeDefense": 1,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 1862,
       "meleeDefense": 1,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 1863,
       "meleeDefense": 1,
       "rangedDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 135
     },
     {
       "id": 1864,
       "meleeDefense": 2,
       "rangedDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 180
     },
     {
       "id": 1865,
       "meleeDefense": 2,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 100
     },
     {
       "id": 1866,
       "meleeDefense": 4,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 200
     },
     {
       "id": 1867,
       "meleeDefense": 4,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 200
     },
     {
       "id": 1868,
       "meleeDefense": 6,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 300
     },
     {
       "id": 1869,
@@ -1196,28 +1273,32 @@
       "rangedDefense": 3,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 400
     },
     {
       "id": 1870,
       "meleeDefense": 1,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 100
     },
     {
       "id": 1871,
       "meleeDefense": 1,
       "rangedDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 200
     },
     {
       "id": 1872,
       "meleeDefense": 1,
       "rangedDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 200
     },
     {
       "id": 1873,
@@ -1225,7 +1306,8 @@
       "rangedDefense": 7,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 300
     },
     {
       "id": 1874,
@@ -1233,14 +1315,16 @@
       "rangedDefense": 8,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 400
     },
     {
       "id": 1875,
       "meleeDefense": 2,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 100
     },
     {
       "id": 1876,
@@ -1248,7 +1332,8 @@
       "rangedDefense": 1,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 200
     },
     {
       "id": 1877,
@@ -1256,7 +1341,8 @@
       "rangedDefense": 1,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 200
     },
     {
       "id": 1878,
@@ -1264,7 +1350,8 @@
       "rangedDefense": 2,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 300
     },
     {
       "id": 1879,
@@ -1272,7 +1359,8 @@
       "rangedDefense": 2,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 400
     },
     {
       "id": 1880,
@@ -1280,7 +1368,8 @@
       "rangedDefense": 1,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 225
     },
     {
       "id": 1881,
@@ -1288,7 +1377,8 @@
       "rangedDefense": 3,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 450
     },
     {
       "id": 1882,
@@ -1296,7 +1386,8 @@
       "rangedDefense": 3,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 450
     },
     {
       "id": 1883,
@@ -1304,7 +1395,8 @@
       "rangedDefense": 4,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 675
     },
     {
       "id": 1884,
@@ -1312,7 +1404,8 @@
       "rangedDefense": 5,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 900
     },
     {
       "id": 1885,
@@ -1320,7 +1413,8 @@
       "rangedDefense": 1,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 225
     },
     {
       "id": 1886,
@@ -1328,7 +1422,8 @@
       "rangedDefense": 2,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 450
     },
     {
       "id": 1887,
@@ -1336,7 +1431,8 @@
       "rangedDefense": 2,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 450
     },
     {
       "id": 1888,
@@ -1344,7 +1440,8 @@
       "rangedDefense": 3,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 675
     },
     {
       "id": 1889,
@@ -1352,7 +1449,8 @@
       "rangedDefense": 4,
       "magicDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 900
     },
     {
       "id": 1890,
@@ -1360,7 +1458,8 @@
       "rangedDefense": 3,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 500
     },
     {
       "id": 1891,
@@ -1368,7 +1467,8 @@
       "rangedDefense": 5,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1000
     },
     {
       "id": 1892,
@@ -1376,7 +1476,8 @@
       "rangedDefense": 5,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1000
     },
     {
       "id": 1893,
@@ -1384,7 +1485,8 @@
       "rangedDefense": 8,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1500
     },
     {
       "id": 1894,
@@ -1392,7 +1494,8 @@
       "rangedDefense": 10,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 2000
     },
     {
       "id": 1895,
@@ -1400,7 +1503,8 @@
       "rangedDefense": 1,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 500
     },
     {
       "id": 1896,
@@ -1408,7 +1512,8 @@
       "rangedDefense": 2,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1000
     },
     {
       "id": 1897,
@@ -1416,7 +1521,8 @@
       "rangedDefense": 2,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1000
     },
     {
       "id": 1898,
@@ -1424,7 +1530,8 @@
       "rangedDefense": 2,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1500
     },
     {
       "id": 1899,
@@ -1432,7 +1539,8 @@
       "rangedDefense": 3,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 2000
     },
     {
       "id": 1900,
@@ -1440,7 +1548,8 @@
       "rangedDefense": 1,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 500
     },
     {
       "id": 1901,
@@ -1448,7 +1557,8 @@
       "rangedDefense": 2,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1000
     },
     {
       "id": 1902,
@@ -1456,7 +1566,8 @@
       "rangedDefense": 2,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1000
     },
     {
       "id": 1903,
@@ -1464,7 +1575,8 @@
       "rangedDefense": 2,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1500
     },
     {
       "id": 1904,
@@ -1472,7 +1584,8 @@
       "rangedDefense": 3,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 2000
     },
     {
       "id": 1905,
@@ -1480,7 +1593,8 @@
       "rangedDefense": 1,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1250
     },
     {
       "id": 1906,
@@ -1488,7 +1602,8 @@
       "rangedDefense": 2,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 2500
     },
     {
       "id": 1907,
@@ -1496,7 +1611,8 @@
       "rangedDefense": 2,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 2500
     },
     {
       "id": 1908,
@@ -1504,7 +1620,8 @@
       "rangedDefense": 4,
       "magicDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3750
     },
     {
       "id": 1909,
@@ -1512,7 +1629,8 @@
       "rangedDefense": 5,
       "magicDefense": 10,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 5000
     },
     {
       "id": 1910,
@@ -1520,7 +1638,8 @@
       "rangedDefense": 2,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3000
     },
     {
       "id": 1911,
@@ -1528,7 +1647,8 @@
       "rangedDefense": 3,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 6000
     },
     {
       "id": 1912,
@@ -1536,7 +1656,8 @@
       "rangedDefense": 3,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 6000
     },
     {
       "id": 1913,
@@ -1544,7 +1665,8 @@
       "rangedDefense": 5,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 9000
     },
     {
       "id": 1914,
@@ -1552,7 +1674,8 @@
       "rangedDefense": 7,
       "magicDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 12000
     },
     {
       "id": 1915,
@@ -1560,7 +1683,8 @@
       "rangedDefense": 1,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3000
     },
     {
       "id": 1916,
@@ -1568,7 +1692,8 @@
       "rangedDefense": 2,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 6000
     },
     {
       "id": 1917,
@@ -1576,7 +1701,8 @@
       "rangedDefense": 2,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 6000
     },
     {
       "id": 1918,
@@ -1584,7 +1710,8 @@
       "rangedDefense": 3,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 9000
     },
     {
       "id": 1919,
@@ -1592,7 +1719,8 @@
       "rangedDefense": 5,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 12000
     },
     {
       "id": 1920,
@@ -1600,7 +1728,8 @@
       "rangedDefense": 2,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3000
     },
     {
       "id": 1921,
@@ -1608,7 +1737,8 @@
       "rangedDefense": 3,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 6000
     },
     {
       "id": 1922,
@@ -1616,7 +1746,8 @@
       "rangedDefense": 3,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 6000
     },
     {
       "id": 1923,
@@ -1624,7 +1755,8 @@
       "rangedDefense": 5,
       "magicDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 9000
     },
     {
       "id": 1924,
@@ -1632,7 +1764,8 @@
       "rangedDefense": 7,
       "magicDefense": 9,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 12000
     },
     {
       "id": 1925,
@@ -1640,7 +1773,8 @@
       "rangedDefense": 2,
       "magicDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3000
     },
     {
       "id": 1926,
@@ -1648,7 +1782,8 @@
       "rangedDefense": 3,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 6000
     },
     {
       "id": 1927,
@@ -1656,7 +1791,8 @@
       "rangedDefense": 3,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 6000
     },
     {
       "id": 1928,
@@ -1664,7 +1800,8 @@
       "rangedDefense": 5,
       "magicDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 9000
     },
     {
       "id": 1929,
@@ -1672,7 +1809,8 @@
       "rangedDefense": 7,
       "magicDefense": 9,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 12000
     },
     {
       "id": 1930,
@@ -1680,7 +1818,8 @@
       "rangedDefense": 2,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 6250
     },
     {
       "id": 1931,
@@ -1688,7 +1827,8 @@
       "rangedDefense": 4,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 12500
     },
     {
       "id": 1932,
@@ -1696,7 +1836,8 @@
       "rangedDefense": 4,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 12500
     },
     {
       "id": 1933,
@@ -1704,7 +1845,8 @@
       "rangedDefense": 6,
       "magicDefense": 8,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 18750
     },
     {
       "id": 1934,
@@ -1712,7 +1854,8 @@
       "rangedDefense": 8,
       "magicDefense": 10,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 25000
     },
     {
       "id": 1935,
@@ -1720,7 +1863,8 @@
       "rangedDefense": 2,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 6250
     },
     {
       "id": 1936,
@@ -1728,7 +1872,8 @@
       "rangedDefense": 3,
       "magicDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 12500
     },
     {
       "id": 1937,
@@ -1736,7 +1881,8 @@
       "rangedDefense": 3,
       "magicDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 12500
     },
     {
       "id": 1938,
@@ -1744,7 +1890,8 @@
       "rangedDefense": 5,
       "magicDefense": 10,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 18750
     },
     {
       "id": 1939,
@@ -1752,7 +1899,8 @@
       "rangedDefense": 6,
       "magicDefense": 13,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 25000
     },
     {
       "id": 1940,
@@ -1760,7 +1908,8 @@
       "rangedDefense": 3,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 11250
     },
     {
       "id": 1941,
@@ -1768,7 +1917,8 @@
       "rangedDefense": 5,
       "magicDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22500
     },
     {
       "id": 1942,
@@ -1776,7 +1926,8 @@
       "rangedDefense": 5,
       "magicDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22500
     },
     {
       "id": 1943,
@@ -1784,7 +1935,8 @@
       "rangedDefense": 7,
       "magicDefense": 9,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 33750
     },
     {
       "id": 1944,
@@ -1792,7 +1944,8 @@
       "rangedDefense": 9,
       "magicDefense": 12,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 45000
     },
     {
       "id": 1945,
@@ -1800,7 +1953,8 @@
       "rangedDefense": 2,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 11250
     },
     {
       "id": 1946,
@@ -1808,7 +1962,8 @@
       "rangedDefense": 4,
       "magicDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22500
     },
     {
       "id": 1947,
@@ -1816,7 +1971,8 @@
       "rangedDefense": 4,
       "magicDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22500
     },
     {
       "id": 1948,
@@ -1824,7 +1980,8 @@
       "rangedDefense": 6,
       "magicDefense": 11,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 33750
     },
     {
       "id": 1949,
@@ -1832,7 +1989,8 @@
       "rangedDefense": 7,
       "magicDefense": 15,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 45000
     },
     {
       "id": 1950,
@@ -1840,7 +1998,8 @@
       "rangedDefense": 3,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 18750
     },
     {
       "id": 1951,
@@ -1848,7 +2007,8 @@
       "rangedDefense": 5,
       "magicDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 37500
     },
     {
       "id": 1952,
@@ -1856,7 +2016,8 @@
       "rangedDefense": 5,
       "magicDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 37500
     },
     {
       "id": 1953,
@@ -1864,7 +2025,8 @@
       "rangedDefense": 7,
       "magicDefense": 10,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 56250
     },
     {
       "id": 1954,
@@ -1872,634 +2034,734 @@
       "rangedDefense": 10,
       "magicDefense": 13,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 75000
     },
     {
       "id": 1959,
       "meleeDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 48
     },
     {
       "id": 1960,
       "meleeDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 24
     },
     {
       "id": 1961,
       "meleeDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 24
     },
     {
       "id": 1962,
       "meleeDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 72
     },
     {
       "id": 1963,
       "meleeDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 72
     },
     {
       "id": 1964,
       "meleeDefense": 4,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 120
     },
     {
       "id": 1965,
       "meleeDefense": 3,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 96
     },
     {
       "id": 1966,
       "meleeDefense": 3,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 48
     },
     {
       "id": 1967,
       "meleeDefense": 3,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 48
     },
     {
       "id": 1968,
       "meleeDefense": 5,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 144
     },
     {
       "id": 1969,
       "meleeDefense": 5,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 144
     },
     {
       "id": 1970,
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 240
     },
     {
       "id": 1971,
       "meleeDefense": 11,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 7200
     },
     {
       "id": 1972,
       "meleeDefense": 11,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3600
     },
     {
       "id": 1973,
       "meleeDefense": 11,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3600
     },
     {
       "id": 1974,
       "meleeDefense": 16,
       "magicDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 10800
     },
     {
       "id": 1975,
       "meleeDefense": 16,
       "rangedDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 10800
     },
     {
       "id": 1976,
       "meleeDefense": 27,
       "rangedDefense": 8,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 18000
     },
     {
       "id": 1977,
       "meleeDefense": 14,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 26000
     },
     {
       "id": 1978,
       "meleeDefense": 14,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 13000
     },
     {
       "id": 1979,
       "meleeDefense": 14,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 13000
     },
     {
       "id": 1980,
       "meleeDefense": 21,
       "magicDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 39000
     },
     {
       "id": 1981,
       "meleeDefense": 21,
       "rangedDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 39000
     },
     {
       "id": 1982,
       "meleeDefense": 34,
       "rangedDefense": 11,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 65000
     },
     {
       "id": 1983,
       "meleeDefense": 5,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 100
     },
     {
       "id": 1984,
       "meleeDefense": 5,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 100
     },
     {
       "id": 1985,
       "meleeDefense": 6,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 240
     },
     {
       "id": 1986,
       "meleeDefense": 6,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 240
     },
     {
       "id": 1988,
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 600
     },
     {
       "id": 1989,
       "meleeDefense": 9,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1600
     },
     {
       "id": 1990,
       "meleeDefense": 9,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1600
     },
     {
       "id": 1991,
       "meleeDefense": 12,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 7600
     },
     {
       "id": 1992,
       "meleeDefense": 12,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 7600
     },
     {
       "id": 1993,
       "meleeDefense": 15,
       "rangedDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 20000
     },
     {
       "id": 1994,
       "meleeDefense": 15,
       "rangedDefense": 5,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 20000
     },
     {
       "id": 2050,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2051,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2052,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2054,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2055,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2056,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2057,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2058,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2059,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2060,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2061,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2062,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2063,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2064,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2065,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2066,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2067,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2068,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2069,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2070,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2071,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2072,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2073,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2074,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2075,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2076,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2077,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2078,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2079,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2080,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2081,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2082,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2083,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2084,
       "magicDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22
     },
     {
       "id": 2085,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2086,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2087,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2088,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2089,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2090,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2091,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2092,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2093,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2094,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2095,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2096,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2097,
       "magicDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 90
     },
     {
       "id": 2098,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2099,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2100,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2101,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2102,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2103,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2104,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2105,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2106,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2107,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2108,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2109,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2110,
       "magicDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 68
     },
     {
       "id": 2224,
       "meleeDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 48
     },
     {
       "id": 2225,
       "meleeDefense": 3,
       "rangedDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 96
     },
     {
       "id": 2226,
       "meleeDefense": 11,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 7200
     },
     {
       "id": 2227,
       "meleeDefense": 14,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 26000
     },
     {
       "id": 1290,

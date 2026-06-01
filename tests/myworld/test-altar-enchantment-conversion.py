@@ -41,8 +41,8 @@ def main() -> None:
 
     require_regex(
         effects,
-        r"public static int getWoolRobeRuneCost\(final int tier\) \{\s*return tier > 0 \? tier \* 100 : -1;\s*\}",
-        "Cloth armor upgrades should cost 100 matching altar runes per target tier",
+        r"public static int getWoolRobeRuneCost\(final int tier\) \{\s*return tier > 0 \? tier \* tier \* 50 : -1;\s*\}",
+        "Cloth armor upgrades should use a quadratic matching-rune cost by target tier",
     )
     require_regex(
         effects,
@@ -103,7 +103,7 @@ def main() -> None:
         require(snippet in equipment, f"God knight equip/prayer gate missing: {snippet}")
 
     for snippet in (
-        "target tier * 100 matching altar runes",
+        "target tier squared * 50 matching altar runes",
         "staff tier * 200 matching altar runes",
         "gem tier * 50 matching altar runes",
         "Only ordinary steel equipment can be blessed.",

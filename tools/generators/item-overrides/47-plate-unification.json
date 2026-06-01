@@ -7,7 +7,8 @@
       "meleeDefense": 7,
       "rangedDefense": 2,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 300
     },
     {
       "id": 215,
@@ -15,7 +16,8 @@
       "meleeDefense": 9,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 720
     },
     {
       "id": 225,
@@ -23,7 +25,8 @@
       "meleeDefense": 12,
       "rangedDefense": 3,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 1800
     },
     {
       "id": 226,
@@ -31,7 +34,8 @@
       "meleeDefense": 14,
       "rangedDefense": 4,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 4800
     },
     {
       "id": 227,
@@ -39,7 +43,8 @@
       "meleeDefense": 18,
       "rangedDefense": 6,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 22800
     },
     {
       "id": 406,
@@ -47,7 +52,8 @@
       "meleeDefense": 23,
       "rangedDefense": 7,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 60000
     },
     {
       "id": 1557,
@@ -112,7 +118,8 @@
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "meleeDefense": 12,
-      "rangedDefense": 3
+      "rangedDefense": 3,
+      "basePrice": 500
     },
     {
       "id": 309,
@@ -120,7 +127,8 @@
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "meleeDefense": 19,
-      "rangedDefense": 6
+      "rangedDefense": 6,
+      "basePrice": 3000
     },
     {
       "id": 310,
@@ -128,7 +136,8 @@
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "meleeDefense": 23,
-      "rangedDefense": 7
+      "rangedDefense": 7,
+      "basePrice": 8000
     },
     {
       "id": 311,
@@ -136,7 +145,8 @@
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "meleeDefense": 30,
-      "rangedDefense": 10
+      "rangedDefense": 10,
+      "basePrice": 38000
     },
     {
       "id": 312,
@@ -144,7 +154,8 @@
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "meleeDefense": 15,
-      "rangedDefense": 5
+      "rangedDefense": 5,
+      "basePrice": 1200
     },
     {
       "id": 407,
@@ -152,7 +163,8 @@
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "meleeDefense": 38,
-      "rangedDefense": 12
+      "rangedDefense": 12,
+      "basePrice": 100000
     },
     {
       "id": 1554,

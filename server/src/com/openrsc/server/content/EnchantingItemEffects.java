@@ -977,7 +977,7 @@ public final class EnchantingItemEffects {
 	}
 
 	public static int getWoolRobeRuneCost(final int tier) {
-		return tier > 0 ? tier * 100 : -1;
+		return tier > 0 ? tier * tier * 50 : -1;
 	}
 
 	public static int getStaffRuneCost(final int tier) {

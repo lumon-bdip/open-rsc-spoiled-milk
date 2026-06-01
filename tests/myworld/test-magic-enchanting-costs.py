@@ -151,7 +151,7 @@ def ensure_enchanting_costs_and_gates() -> None:
 
     require_regex(effects, r"public static int getRuneCostForTier\(final int tier\) \{\s*return tier > 0 \? tier \* 50 : -1;\s*\}", "Jewelry rune cost should be 50 altar runes per gem tier")
     require_regex(effects, r"public static int getStaffRuneCost\(final int tier\) \{\s*return tier > 0 \? tier \* 200 : -1;\s*\}", "Staff attunement should cost 200 altar runes per staff tier")
-    require_regex(effects, r"public static int getWoolRobeRuneCost\(final int tier\) \{\s*return tier > 0 \? tier \* 100 : -1;\s*\}", "Cloth upgrade rune cost should be 100 altar runes per target tier")
+    require_regex(effects, r"public static int getWoolRobeRuneCost\(final int tier\) \{\s*return tier > 0 \? tier \* tier \* 50 : -1;\s*\}", "Cloth upgrade rune cost should scale quadratically by target tier")
     require("getStaffCosmicCost" not in effects, "Normal staff attunement should no longer require cosmic runes")
     require("WOOL_ROBE_TIER_BARS" not in plugin, "Cloth upgrades should no longer consume metal bars")
     require("getWoolRobeTierBar" not in plugin, "Cloth upgrades should no longer look up metal bars")

@@ -120,14 +120,14 @@ Rules:
 Cost:
 
 ```text
-target tier * 100 matching altar runes
+target tier squared * 50 matching altar runes
 ```
 
 Examples:
 
-- tier 1 Fire Wool Robe Top: 100 fire runes
+- tier 1 Fire Wool Robe Top: 50 fire runes
 - tier 2 Fire Wool Robe Top upgrade: 200 fire runes
-- tier 10 Fire Wool Robe Top upgrade: 1000 fire runes
+- tier 10 Fire Wool Robe Top upgrade: 5000 fire runes
 
 ### Staves
 
@@ -218,7 +218,7 @@ apply while the player is worshipping the matching god.
 Implemented in the current first pass:
 
 - Cloth upgrade costs were changed from metal bar plus old rune cost to
-  `target tier * 100` altar runes.
+  `target tier squared * 50` altar runes.
 - Staff attunement was changed from the old flat rune/cosmic cost to
   `staff tier * 200` altar runes.
 - Jewelry enchanting was changed from the old small tier cost to

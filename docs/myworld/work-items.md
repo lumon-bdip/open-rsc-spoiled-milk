@@ -70,7 +70,7 @@ deferred until the limited release has testers and observed play data.
     cloth routes
   - staves also require their wood-tier Enchanting level
   - jewelry also requires its five-tier gem Enchanting level
-  - cloth upgrades now cost `target tier * 100` matching altar runes and no
+  - cloth upgrades now cost `target tier squared * 50` matching altar runes and no
     metal bars
   - staff attunement now costs `staff tier * 200` matching altar runes and no
     cosmic runes

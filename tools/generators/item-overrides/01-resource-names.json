@@ -3,19 +3,23 @@
   "items": [
     {
       "id": 147,
-      "name": "Cow hide"
+      "name": "Cow hide",
+      "basePrice": 18
     },
     {
       "id": 148,
-      "name": "Leather"
+      "name": "Leather",
+      "basePrice": 25
     },
     {
       "id": 150,
-      "name": "Copper ore"
+      "name": "Copper ore",
+      "basePrice": 20
     },
     {
       "id": 151,
-      "name": "Iron ore"
+      "name": "Iron ore",
+      "basePrice": 120
     },
     {
       "id": 152,
@@ -23,27 +27,33 @@
     },
     {
       "id": 153,
-      "name": "Mithril ore"
+      "name": "Mithril ore",
+      "basePrice": 750
     },
     {
       "id": 154,
-      "name": "Adamantite ore"
+      "name": "Adamantite ore",
+      "basePrice": 3500
     },
     {
       "id": 155,
-      "name": "Coal"
+      "name": "Coal",
+      "basePrice": 150
     },
     {
       "id": 169,
-      "name": "Bronze bar"
+      "name": "Bronze bar",
+      "basePrice": 75
     },
     {
       "id": 170,
-      "name": "Iron bar"
+      "name": "Iron bar",
+      "basePrice": 180
     },
     {
       "id": 171,
-      "name": "Steel bar"
+      "name": "Steel bar",
+      "basePrice": 450
     },
     {
       "id": 172,
@@ -51,15 +61,18 @@
     },
     {
       "id": 173,
-      "name": "Mithril bar"
+      "name": "Mithril bar",
+      "basePrice": 1200
     },
     {
       "id": 174,
-      "name": "Adamantite bar"
+      "name": "Adamantite bar",
+      "basePrice": 5700
     },
     {
       "id": 202,
-      "name": "Tin ore"
+      "name": "Tin ore",
+      "basePrice": 10
     },
     {
       "id": 383,
@@ -71,11 +84,13 @@
     },
     {
       "id": 408,
-      "name": "Runite bar"
+      "name": "Runite bar",
+      "basePrice": 15000
     },
     {
       "id": 409,
-      "name": "Runite ore"
+      "name": "Runite ore",
+      "basePrice": 9000
     }
   ]
 }
