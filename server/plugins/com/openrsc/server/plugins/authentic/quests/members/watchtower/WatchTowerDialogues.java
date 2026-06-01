@@ -728,6 +728,15 @@ public class WatchTowerDialogues implements QuestInterface, TalkNpcTrigger, UseN
 	private void watchtowerWizardDialogue(Player player, Npc n, int cID) {
 		if (n.getID() == NpcId.WATCHTOWER_WIZARD.id()) {
 			if (cID == -1) {
+				if (player.getQuestStage(this) > 0) {
+					int progressMenu = multi(player, n,
+						"I'll keep working on it",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (progressMenu == 1) {
+						MyWorldQuestShortcuts.completeWatchtower(player, n);
+						return;
+					}
+				}
 				switch (player.getQuestStage(this)) {
 					case -1:
 						if (player.getCache().hasKey("watchtower_scroll")) {

@@ -347,10 +347,24 @@ public class KnightsSword implements QuestInterface, TalkNpcTrigger,
 				case 2:
 				case 3:
 					npcsay(player, n, "So how are you doing getting a sword?");
-					say(player, n, "I'm still looking for Imcando dwarves");
+					int dwarfShortcut = multi(player, n,
+						"I'm still looking for Imcando dwarves",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (dwarfShortcut == 0) {
+						say(player, n, "I'm still looking for Imcando dwarves");
+					} else if (dwarfShortcut == 1) {
+						MyWorldQuestShortcuts.completeKnightsSword(player, n);
+					}
 					break;
 				case 4:
 					npcsay(player, n, "So how are you doing getting a sword?");
+					int portraitShortcut = multi(player, n,
+						"I've found an Imcando dwarf",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (portraitShortcut == 1) {
+						MyWorldQuestShortcuts.completeKnightsSword(player, n);
+						break;
+					}
 					say(player, n, "I've found an Imcando dwarf",
 						"But he needs a picture of the sword before he can make it");
 					npcsay(player,
@@ -361,6 +375,13 @@ public class KnightsSword implements QuestInterface, TalkNpcTrigger,
 					break;
 				case 5:
 				case 6:
+					int swordShortcut = multi(player, n,
+						"I am still getting the sword",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (swordShortcut == 1) {
+						MyWorldQuestShortcuts.completeKnightsSword(player, n);
+						break;
+					}
 					if (player.getCarriedItems().hasCatalogID(ItemId.FALADIAN_KNIGHTS_SWORD.id(), Optional.of(false))) {
 						say(player, n, "I have retrieved your sword for you");
 						npcsay(player, n, "Thankyou, Thankyou",

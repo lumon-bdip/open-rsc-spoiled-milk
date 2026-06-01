@@ -151,11 +151,25 @@ public class BlackKnightsFortress implements QuestInterface, TalkNpcTrigger,
 
 			case 1:
 				npcsay(player, n, "How's the mission going?");
-				say(player, n,
-					"I haven't managed to find what the secret weapon is yet.");
+				int missionMenu = multi(player, n,
+					"I haven't managed to find what the secret weapon is yet",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (missionMenu == 0) {
+					say(player, n,
+						"I haven't managed to find what the secret weapon is yet.");
+				} else if (missionMenu == 1) {
+					MyWorldQuestShortcuts.completeBlackKnightsFortress(player, n);
+				}
 				break;
 			case 2:
 				npcsay(player, n, "How's the mission going?");
+				int weaponMenu = multi(player, n,
+					"I've found out what the black knight's secret weapon is",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (weaponMenu == 1) {
+					MyWorldQuestShortcuts.completeBlackKnightsFortress(player, n);
+					break;
+				}
 
 				say(player, n,
 					"I've found out what the black knight's secret weapon is.",
@@ -167,6 +181,13 @@ public class BlackKnightsFortress implements QuestInterface, TalkNpcTrigger,
 
 				break;
 			case 3:
+				int completeMenu = multi(player, n,
+					"I have ruined the black knight's invincibilty potion",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (completeMenu == 1) {
+					MyWorldQuestShortcuts.completeBlackKnightsFortress(player, n);
+					break;
+				}
 				say(player, n,
 					"I have ruined the black knight's invincibilty potion.",
 					"That should put a stop to your problem.");

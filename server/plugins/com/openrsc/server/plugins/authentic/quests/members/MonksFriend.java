@@ -101,6 +101,13 @@ public class MonksFriend implements QuestInterface, TalkNpcTrigger,
 					}
 					break;
 				case 1:
+					int progressMenu = multi(player, n,
+						"I'm still looking for the blanket",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (progressMenu == 1) {
+						MyWorldQuestShortcuts.completeMonksFriend(player, n);
+						return;
+					}
 					say(player, n, "Hello ");
 					npcsay(player, n, "...yawn...oh, hello again...yawn..",
 						"..please tell me you have the blanket");

@@ -86,6 +86,15 @@ public class HazeelCult implements QuestInterface, TalkNpcTrigger, KillNpcTrigge
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
 		if (n.getID() == NpcId.CERIL.id()) {
+			if (player.getQuestStage(this) > 0) {
+				int progressMenu = multi(player, n,
+					"I'll keep working on it",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (progressMenu == 1) {
+					MyWorldQuestShortcuts.completeHazeelCult(player, n);
+					return;
+				}
+			}
 			switch (player.getQuestStage(this)) {
 				case 0:
 					say(player, n, "hello there");

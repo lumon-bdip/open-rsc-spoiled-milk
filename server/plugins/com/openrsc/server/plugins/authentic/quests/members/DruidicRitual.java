@@ -113,11 +113,25 @@ public class DruidicRitual implements QuestInterface, TalkNpcTrigger,
 					break;
 				case 1:
 				case 2:
+					int shortcut = multi(
+						"I am still helping Sanfew",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (shortcut == 1) {
+						MyWorldQuestShortcuts.completeDruidicRitual(player, npc);
+						break;
+					}
 					say("Hello again");
 					npcsay("You need to speak to Sanfew in the village south of here",
 						"To continue with your quest");
 					break;
 				case 3:
+					int completeShortcut = multi(
+						"I helped Sanfew",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (completeShortcut == 1) {
+						MyWorldQuestShortcuts.completeDruidicRitual(player, npc);
+						break;
+					}
 					npcsay("I've heard you were very helpful to Sanfew");
 					npcsay("I will teach you the herblaw you need to know now");
 					player.sendQuestComplete(Quests.DRUIDIC_RITUAL);

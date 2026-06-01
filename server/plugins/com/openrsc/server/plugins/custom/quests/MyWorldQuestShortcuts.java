@@ -20,6 +20,7 @@ import static com.openrsc.server.plugins.Functions.npcsay;
 public final class MyWorldQuestShortcuts {
 
 	public static final String ALREADY_DONE_OPTION = "I've already done this quest";
+	public static final String IN_PROGRESS_ALREADY_DONE_OPTION = "Actually, come to think of it, I've already done this quest";
 	public static final String BLACK_ARM_GANG_OPTION = "I joined the Black Arm Gang";
 	public static final String PHOENIX_GANG_OPTION = "I joined the Phoenix Gang";
 

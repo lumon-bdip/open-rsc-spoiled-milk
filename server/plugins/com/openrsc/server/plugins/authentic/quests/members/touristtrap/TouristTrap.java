@@ -109,6 +109,15 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 	}
 
 	private void irenaDialogue(final Player player, final Npc npc, final int cID) {
+		if (player.getQuestStage(this) > 0 && cID == -1) {
+			int progressMenu = multi(player, npc,
+				"I'll keep looking for Ana",
+				MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+			if (progressMenu == 1) {
+				MyWorldQuestShortcuts.completeTouristTrap(player, npc);
+				return;
+			}
+		}
 		if (npc.getID() == NpcId.IRENA.id()) {
 			if (cID == -1) {
 				switch (player.getQuestStage(this)) {

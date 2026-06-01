@@ -207,6 +207,15 @@ public class Observatory implements QuestInterface, TalkNpcTrigger,
 			}
 		}
 		else if (n.getID() == NpcId.OBSERVATORY_PROFESSOR.id()) {
+			if (player.getQuestStage(this) > 0) {
+				int progressMenu = multi(player, n,
+					"I'll keep working on it",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (progressMenu == 1) {
+					MyWorldQuestShortcuts.completeObservatoryQuest(player, n);
+					return;
+				}
+			}
 			switch (player.getQuestStage(this)) {
 				case 0:
 					npcsay(player, n, "Hello adventurer",

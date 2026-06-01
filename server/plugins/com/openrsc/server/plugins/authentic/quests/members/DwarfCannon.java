@@ -257,6 +257,15 @@ public class DwarfCannon extends AbstractShop
 			}
 		}
 		else if (n.getID() == NpcId.DWARF_COMMANDER.id()) {
+			if (player.getQuestStage(this) > 1) {
+				int progressMenu = multi(player, n,
+					"I'll keep working on it",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (progressMenu == 1) {
+					MyWorldQuestShortcuts.completeDwarfCannon(player, n);
+					return;
+				}
+			}
 			switch (player.getQuestStage(this)) {
 				case 0:
 					say(player, n, "hello");
@@ -286,6 +295,13 @@ public class DwarfCannon extends AbstractShop
 					}
 					break;
 				case 1:
+					int railMenu = multi(player, n,
+						"I'm working on the railings",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (railMenu == 1) {
+						MyWorldQuestShortcuts.completeDwarfCannon(player, n);
+						return;
+					}
 					say(player, n, "hello");
 					npcsay(player, n, "hello again traveller", "how are you doing with those railings?");
 					say(player, n, "i'm getting there");

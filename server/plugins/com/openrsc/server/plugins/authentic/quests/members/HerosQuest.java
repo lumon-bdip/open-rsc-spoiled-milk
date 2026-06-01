@@ -352,6 +352,22 @@ public class HerosQuest implements QuestInterface, TalkNpcTrigger,
 					break;
 				case 1:
 				case 2:
+					choices.add("I'll keep working on it");
+					choices.add(MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					int progressOpt = multi(player, n, choices.toArray(new String[choices.size()]));
+					if (choices.get(progressOpt).equals(MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION)) {
+						Boolean joinedBlackArmGang = null;
+						if (player.getQuestStage(Quests.SHIELD_OF_ARRAV) >= 0) {
+							npcsay(player, n, "Before I file that claim,",
+								"which gang did you join to earn the armband?");
+							int gangChoice = multi(player, n,
+								MyWorldQuestShortcuts.BLACK_ARM_GANG_OPTION,
+								MyWorldQuestShortcuts.PHOENIX_GANG_OPTION);
+							joinedBlackArmGang = gangChoice == 0;
+						}
+						MyWorldQuestShortcuts.completeHerosQuest(player, n, joinedBlackArmGang);
+						return;
+					}
 					npcsay(player, n, "Greetings welcome to the hero's guild",
 						"How goes thy quest?");
 					if (player.getCarriedItems().hasCatalogID(ItemId.MASTER_THIEF_ARMBAND.id(), Optional.of(false))

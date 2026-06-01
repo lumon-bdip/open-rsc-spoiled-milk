@@ -74,6 +74,15 @@ public class Waterfall_Quest implements QuestInterface, TalkNpcTrigger,
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
 		if (n.getID() == NpcId.ALMERA.id()) {
+			if (player.getQuestStage(this) > 0) {
+				int shortcut = multi(player, n,
+					"I am still looking into your son",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completeWaterfallQuest(player, n);
+					return;
+				}
+			}
 			switch (player.getQuestStage(this)) {
 				case 0:
 					say(player, n, "hello madam");

@@ -493,10 +493,24 @@ public class ErnestTheChicken implements QuestInterface,
 					break;
 				case 1:
 					npcsay(player, n, "Have you found my sweetheart yet?");
-					say(player, n, "No, not yet");
+					int shortcut = multi(player, n,
+						"No, not yet",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (shortcut == 0) {
+						say(player, n, "No, not yet");
+					} else if (shortcut == 1) {
+						MyWorldQuestShortcuts.completeErnestTheChicken(player, n);
+					}
 					break;
 				case 2:
 					npcsay(player, n, "Have you found my sweetheart yet?");
+					int chickenShortcut = multi(player, n,
+						"Yes, he's a chicken",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (chickenShortcut == 1) {
+						MyWorldQuestShortcuts.completeErnestTheChicken(player, n);
+						break;
+					}
 					say(player, n, "Yes, he's a chicken");
 					npcsay(player, n, "I know he's not exactly brave",
 						"But I think you're being a little harsh");

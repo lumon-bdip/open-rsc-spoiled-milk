@@ -91,7 +91,7 @@ public class DragonSlayer implements QuestInterface, UseLocTrigger,
 					int map = multi(player, n,
 						"So where can I find this dragon?",
 						"Where can I get an antidragon shield?",
-						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 					if (map == 0) {
 						oziachDialogue(player, n, Oziach.FIND_DRAGON);
 					} else if (map == 1) {
@@ -105,7 +105,7 @@ public class DragonSlayer implements QuestInterface, UseLocTrigger,
 					int menu = multi(player, n,
 						"Can you sell me some rune plate mail?",
 						"I'm not your friend", "Yes it's a very nice day",
-						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 					if (menu == 0) {
 						npcsay(player, n, "Soo how does thee know I 'ave some?");
 						int sub_menu = multi(player, n,

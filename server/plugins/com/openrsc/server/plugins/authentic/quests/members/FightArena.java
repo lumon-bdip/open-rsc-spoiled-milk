@@ -473,6 +473,13 @@ public class FightArena implements QuestInterface, TalkNpcTrigger,
 					break;
 				case 1:
 				case 2:
+					int shortcut = multi(player, n,
+						"I am still trying to save your family",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (shortcut == 1) {
+						MyWorldQuestShortcuts.completeFightArena(player, n);
+						break;
+					}
 					if (!player.getCache().hasKey("freed_servil")) {
 						say(player, n, "hello Lady Servil");
 						npcsay(player, n, "Brave traveller, please..bring back my family");

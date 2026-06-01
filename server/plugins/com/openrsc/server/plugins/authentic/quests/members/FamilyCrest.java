@@ -116,6 +116,13 @@ public class FamilyCrest implements QuestInterface, TalkNpcTrigger,
 					}
 					break;
 				case 1:
+					int calebShortcut = multi(
+						"Where did you say I could find Caleb?",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (calebShortcut == 1) {
+						MyWorldQuestShortcuts.completeFamilyCrest(player, npc);
+						break;
+					}
 					say("Where did you say I could find Caleb?");
 					npcsay("I heard word that my son Caleb is alive trying to earn his fortune",
 						"As a great chef, far away in the lands beyond white wolf mountain");
@@ -127,6 +134,13 @@ public class FamilyCrest implements QuestInterface, TalkNpcTrigger,
 				case 6:
 				case 7:
 				case 8:
+					int crestShortcut = multi(
+						"I am still looking for the crest",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (crestShortcut == 1) {
+						MyWorldQuestShortcuts.completeFamilyCrest(player, npc);
+						break;
+					}
 					boolean gave_crest = false;
 					if (ifheld(ItemId.FAMILY_CREST.id(), 1)) {
 						say("I have retrieved your crest");

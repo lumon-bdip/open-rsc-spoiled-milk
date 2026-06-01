@@ -76,6 +76,20 @@ public class TempleOfIkov implements QuestInterface, TalkNpcTrigger,
 	private void lucienDialogue(Player player, Npc n, int cID) {
 		if (n.getID() == NpcId.LUCIEN.id()) {
 			if (cID == -1) {
+				if (player.getQuestStage(this) > 0) {
+					int progressMenu = multi(player, n,
+						"I'll keep working on it",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (progressMenu == 1) {
+						npcsay(player, n, "Then tell me this",
+							"Did you hand me the staff, or did you side with the guardians?");
+						int shortcutEnding = multi(player, n,
+							"I handed you the staff",
+							"I sided with the guardians");
+						MyWorldQuestShortcuts.completeTempleOfIkov(player, n, shortcutEnding == 0);
+						return;
+					}
+				}
 				switch (player.getQuestStage(this)) {
 					case 0:
 						npcsay(player, n, "I come here seeking a hero who can help me");

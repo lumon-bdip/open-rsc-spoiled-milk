@@ -336,7 +336,12 @@ public class MurderMystery implements QuestInterface, TalkNpcTrigger,
 					int opt = multi(player, n,
 						"What should I be doing to help again?",
 						"How did Lord Sinclair die?",
-						"I know who did it!");
+						"I know who did it!",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (opt == 3) {
+						MyWorldQuestShortcuts.completeMurderMystery(player, n);
+						return;
+					}
 
 					if (opt == 0) {
 						npcsay(player, n, "Look around and investigate who might be responsible",

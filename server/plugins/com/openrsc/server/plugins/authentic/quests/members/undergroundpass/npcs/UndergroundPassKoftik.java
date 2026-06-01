@@ -94,6 +94,15 @@ public class UndergroundPassKoftik implements QuestInterface, TalkNpcTrigger {
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
 		if (n.getID() == NpcId.KOFTIK_ARDOUGNE.id()) {
+			if (player.getQuestStage(this) > 0) {
+				int progressMenu = multi(player, n,
+					"I'll keep working on it",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (progressMenu == 1) {
+					MyWorldQuestShortcuts.completeUndergroundPass(player, n);
+					return;
+				}
+			}
 			switch (player.getQuestStage(this)) {
 				case 0:
 					int shortcut = multi(player, n,

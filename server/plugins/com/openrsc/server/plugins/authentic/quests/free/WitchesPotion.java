@@ -113,6 +113,13 @@ public class WitchesPotion implements QuestInterface, TalkNpcTrigger,
 					break;
 				case 1:
 					npcsay("So have you found the things for the potion");
+					int shortcut = multi(
+						"I am still looking for them",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (shortcut == 1) {
+						MyWorldQuestShortcuts.completeWitchsPotion(player, npc);
+						break;
+					}
 					if (player.getCarriedItems().hasCatalogID(ItemId.RATS_TAIL.id())
 						&& player.getCarriedItems().hasCatalogID(ItemId.EYE_OF_NEWT.id())
 						&& player.getCarriedItems().hasCatalogID(ItemId.BURNTMEAT.id())

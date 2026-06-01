@@ -99,6 +99,13 @@ public class Dorics implements QuestInterface, TalkNpcTrigger {
 				break;
 			case 1:
 				npcsay(player, n, "Have you got my materials yet traveller?");
+				int shortcut = multi(player, n,
+					"Let me check what I have",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completeDoricsQuest(player, n);
+					break;
+				}
 				if (player.getCarriedItems().getInventory().countId(ItemId.CLAY.id()) >= 6
 					&& player.getCarriedItems().getInventory().countId(ItemId.COPPER_ORE.id()) >= 4
 					&& player.getCarriedItems().getInventory().countId(ItemId.IRON_ORE.id()) >= 2) {

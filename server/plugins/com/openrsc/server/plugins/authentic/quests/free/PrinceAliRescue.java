@@ -94,6 +94,15 @@ public class PrinceAliRescue implements QuestInterface, OpBoundTrigger,
 	}
 
 	private void hassanDialogue(final Player player, final Npc n) {
+		if (player.getQuestStage(this) > 0) {
+			final int shortcutMenu = multi(player, n,
+				"I'll keep working on the rescue",
+				MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+			if (shortcutMenu == 1) {
+				MyWorldQuestShortcuts.completePrinceAliRescue(player, n);
+				return;
+			}
+		}
 		switch (player.getQuestStage(this)) {
 			case 0:
 				npcsay(player, n,
@@ -101,7 +110,8 @@ public class PrinceAliRescue implements QuestInterface, OpBoundTrigger,
 				final int choice = multi(player, n, false, //do not send over
 					"Can I help you? You must need some help here in the desert.",
 					"Its just too hot here. How can you stand it?",
-					"Do you mind if I just kill your Warriors?");
+					"Do you mind if I just kill your Warriors?",
+					MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 				if (choice == 0) {
 					say(player, n, "Can I help you? You must need some help here in the desert.");
 					npcsay(player, n, "I need the services of someone, yes.",
@@ -122,6 +132,8 @@ public class PrinceAliRescue implements QuestInterface, OpBoundTrigger,
 						"You are welcome. They are not expensive.",
 						"We have them here to stop the elite guard being bothered",
 						"They are a little harder to kill.");
+				} else if (choice == 3) {
+					MyWorldQuestShortcuts.completePrinceAliRescue(player, n);
 				}
 				break;
 			case 1:
@@ -1081,7 +1093,7 @@ public class PrinceAliRescue implements QuestInterface, OpBoundTrigger,
 						"What is first thing I must do?",
 						"What is needed second?",
 						"And the final thing you need?",
-						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 					if (menu == 0) {
 						say(player, n, "What is the first thing I must do?");
 						osmanDialogue(player, n, Osman.FIRST);
@@ -1109,7 +1121,7 @@ public class PrinceAliRescue implements QuestInterface, OpBoundTrigger,
 						final int wutwut = multi(player, n,
 							"Thankyou, I will try to find the other items",
 							"Can you tell me what I still need to get?",
-							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+							MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 						if (wutwut == 0) {
 						} else if (wutwut == 1) {
 							osmanDialogue(player, n, Osman.STILL_NEED);
@@ -1119,7 +1131,7 @@ public class PrinceAliRescue implements QuestInterface, OpBoundTrigger,
 					} else {
 						final int shortcut = multi(player, n,
 							"Can you tell me what I still need to get?",
-							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+							MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 						if (shortcut == 0) {
 							osmanDialogue(player, n, Osman.STILL_NEED);
 						} else if (shortcut == 1) {
@@ -1132,7 +1144,7 @@ public class PrinceAliRescue implements QuestInterface, OpBoundTrigger,
 						"The prince is safe, and on his way home with Leela");
 					final int finalShortcut = multi(player, n,
 						"I'll pick up my payment from the chancellor",
-						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 					if (finalShortcut == 1) {
 						MyWorldQuestShortcuts.completePrinceAliRescue(player, n);
 					}

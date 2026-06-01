@@ -246,6 +246,15 @@ public class PeelingTheOnion implements QuestInterface {
 			say(player, npc, "Yes, it's me");
 			player.getCache().store("talkedToSedridorAsOgre", true);
 		}
+		if (questState > STATE_NOT_BEGUN) {
+			int shortcut = multi(player, npc,
+				"Remind me what I should do next",
+				MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+			if (shortcut == 1) {
+				MyWorldQuestShortcuts.completePeelingTheOnion(player, npc);
+				return;
+			}
+		}
 		switch (questState) {
 			case STATE_COMPLETE:
 				player.getCache().remove("sedridor_post_kresh_quest_dialogue");

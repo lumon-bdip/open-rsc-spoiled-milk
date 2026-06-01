@@ -311,6 +311,13 @@ public class LostCity implements QuestInterface, TalkNpcTrigger,
 					MyWorldQuestShortcuts.completeLostCity(player, n);
 				}
 			} else if (atQuestStage(player, this, 1)) {
+				int shortcut = multi(player, n,
+					"I am still looking into Zanaris",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completeLostCity(player, n);
+					return;
+				}
 				say(
 					player,
 					n,

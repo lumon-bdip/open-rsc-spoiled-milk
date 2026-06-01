@@ -30,6 +30,15 @@ public class ShiloVillageMosolRei implements TalkNpcTrigger {
 	private void moselReiDialogue(Player player, Npc n, int cID) {
 		if (n.getID() == NpcId.MOSOL.id()) {
 			if (cID == -1) {
+				if (player.getQuestStage(Quests.SHILO_VILLAGE) > 0) {
+					int progressMenu = multi(player, n,
+						"I'll keep working on it",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (progressMenu == 1) {
+						MyWorldQuestShortcuts.completeShiloVillage(player, n);
+						return;
+					}
+				}
 				switch (player.getQuestStage(Quests.SHILO_VILLAGE)) {
 					case -1:
 						say(player, n, "Greetings!");

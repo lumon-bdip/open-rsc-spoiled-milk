@@ -530,6 +530,15 @@ public class PlagueCity implements QuestInterface, TalkNpcTrigger,
 					break;
 			}
 		} else if (n.getID() == NpcId.EDMOND.id()) {
+			if (player.getQuestStage(this) > 0) {
+				int shortcut = multi(player, n,
+					"I am still looking for Elena",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completePlagueCity(player, n);
+					return;
+				}
+			}
 			switch (player.getQuestStage(this)) {
 				case 0:
 					say(player, n, "hello old man");

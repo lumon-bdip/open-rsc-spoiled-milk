@@ -91,7 +91,8 @@ public class GoblinDiplomacy implements QuestInterface, TalkNpcTrigger {
 				int option = multi(player, n, false, //do not send over
 					"Why are you arguing about the colour of your armour?",
 					"Wouldn't you prefer peace?",
-					"Do you want me to pick an armour colour for you?");
+					"Do you want me to pick an armour colour for you?",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 				switch (option) {
 					case 0: // yes
 						say(player, n, "Why are you arguing about the colour of your armour?");
@@ -116,9 +117,20 @@ public class GoblinDiplomacy implements QuestInterface, TalkNpcTrigger {
 						npcsay(player, otherGoblin, "Yep bring us orange armour");
 						npcsay(player, n, "Yep orange might be good");
 						player.updateQuestStage(getQuestId(), 2);
+						break;
+					case 3:
+						MyWorldQuestShortcuts.completeGoblinDiplomacy(player, n);
+						break;
 				}
 			} else if (player.getQuestStage(this) == 2) {
 				npcsay(player, n, "Oh it you");
+				int shortcut = multi(player, n,
+					"I am still looking for the armour",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completeGoblinDiplomacy(player, n);
+					return;
+				}
 				if (player.getCarriedItems().hasCatalogID(ItemId.ORANGE_GOBLIN_ARMOUR.id())) {
 					say(player, n, "I have some orange armour");
 					mes("You give some goblin armour to the goblins");
@@ -135,6 +147,13 @@ public class GoblinDiplomacy implements QuestInterface, TalkNpcTrigger {
 				}
 			} else if (player.getQuestStage(this) == 3) {
 				npcsay(player, n, "Oh it you");
+				int shortcut = multi(player, n,
+					"I am still looking for the armour",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completeGoblinDiplomacy(player, n);
+					return;
+				}
 				if (player.getCarriedItems().hasCatalogID(ItemId.BLUE_GOBLIN_ARMOUR.id())) {
 					say(player, n, "I have some dark blue armour");
 					mes("You give some goblin armour to the goblins");
@@ -153,6 +172,13 @@ public class GoblinDiplomacy implements QuestInterface, TalkNpcTrigger {
 					npcsay(player, n, "Come back when you have some");
 				}
 			} else if (player.getQuestStage(this) == 4) {
+				int shortcut = multi(player, n,
+					"I am still looking for the armour",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completeGoblinDiplomacy(player, n);
+					return;
+				}
 				if (player.getCarriedItems().hasCatalogID(ItemId.GOBLIN_ARMOUR.id())) {
 					say(player, n, "Ok I've got light blue armour");
 					mes("You give some goblin armour to the goblins");

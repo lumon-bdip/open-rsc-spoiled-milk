@@ -30,6 +30,7 @@ def method_body(text: str, method: str) -> str:
 def main() -> None:
     helper = read("server/plugins/com/openrsc/server/plugins/custom/quests/MyWorldQuestShortcuts.java")
     require(helper, 'ALREADY_DONE_OPTION = "I\'ve already done this quest"', "shortcut option text")
+    require(helper, 'IN_PROGRESS_ALREADY_DONE_OPTION = "Actually, come to think of it, I\'ve already done this quest"', "in-progress shortcut option text")
     require(helper, "Quest.LOST_CITY", "lost city reward hook")
     require(helper, "ItemId.DRAMEN_STAFF.id()", "lost city utility item")
     require(helper, "Quest.WATERFALL_QUEST", "waterfall reward hook")
@@ -228,6 +229,7 @@ def main() -> None:
     for rel, method in starters:
         text = read(rel)
         require(text, "MyWorldQuestShortcuts.ALREADY_DONE_OPTION", f"{rel} shortcut option")
+        require(text, "MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION", f"{rel} in-progress shortcut option")
         require(text, method, f"{rel} shortcut call")
 
     biohazard = read("server/plugins/com/openrsc/server/plugins/authentic/quests/members/BioHazard.java")

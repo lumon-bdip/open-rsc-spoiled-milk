@@ -125,7 +125,7 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 						final int contestStartedMenu = multi(player, n, false,
 							"I have this big fish,is it enough to win?",
 							"I think I might still be able to find a bigger fish",
-							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+							MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 						if (contestStartedMenu == 0) {
 							say(player, n, "I have this big fish", "Is it enough to win?");
 							npcsay(player, n, "Well we'll just wait till time is up");
@@ -141,7 +141,7 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 					} else {
 						final int contestStartedMenu = multi(player, n,
 							"I think I might still be able to find a bigger fish",
-							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+							MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 						if (contestStartedMenu == 0) {
 							say(player, n, "I think I might still be able to find a bigger fish");
 							npcsay(player, n, "Ok, good luck");
@@ -158,7 +158,7 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 							"So any hints on how to fish so well");
 						final int trophyMenu = multi(player, n,
 							"I think I'll keep them to myself",
-							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+							MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 						if (trophyMenu == 0) {
 							say(player, n, "I think I'll keep them to myself");
 						} else if (trophyMenu == 1) {
@@ -178,7 +178,9 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 					final int first = multi(player, n,
 						"I'll give that a go then",
 						"No thanks, I'll just watch the fun",
-						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						player.getQuestStage(this) > 0
+							? MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION
+							: MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 					if (first == 0) {
 						npcsay(player, n, "Marvelous");
 						if (player.getCarriedItems().getInventory().countId(ItemId.COINS.id()) >= 5) {

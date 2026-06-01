@@ -309,6 +309,13 @@ public class SeaSlug implements QuestInterface, TalkNpcTrigger,
 				case 3:
 				case 4:
 				case 5:
+					int progressMenu = multi(player, n,
+						"I'm working on it now Caroline",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (progressMenu == 1) {
+						MyWorldQuestShortcuts.completeSeaSlug(player, n);
+						return;
+					}
 					say(player, n, "hello caroline");
 					npcsay(player, n,
 						"brave adventurer have you any news about my son and his father?");

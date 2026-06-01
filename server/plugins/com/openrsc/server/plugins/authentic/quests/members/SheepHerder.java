@@ -152,6 +152,13 @@ public class SheepHerder implements QuestInterface, TalkNpcTrigger,
 					}
 					break;
 				case 1:
+					int stageOneMenu = multi(player, n,
+						"I'll keep working on it",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (stageOneMenu == 1) {
+						MyWorldQuestShortcuts.completeSheepHerder(player, n);
+						return;
+					}
 					npcsay(player, n,
 						"please find those four sheep as soon as you can",
 						"every second counts");
@@ -163,6 +170,13 @@ public class SheepHerder implements QuestInterface, TalkNpcTrigger,
 					}
 					break;
 				case 2:
+					int stageTwoMenu = multi(player, n,
+						"I have an update about the sheep",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (stageTwoMenu == 1) {
+						MyWorldQuestShortcuts.completeSheepHerder(player, n);
+						return;
+					}
 					npcsay(player, n,
 						"have you managed to dispose of those four sheep?");
 					if (player.getCache().hasKey("plagueremain1st")

@@ -57,6 +57,13 @@ public class ImpCatcher implements QuestInterface, TalkNpcTrigger {
 		if (n.getID() == NpcId.WIZARD_MIZGOG.id()) {
 			if (player.getQuestStage(this) == 1) {
 				npcsay(player, n, "So how are you doing finding my beads?");
+				int shortcut = multi(player, n,
+					"I am still looking for them",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completeImpCatcher(player, n);
+					return;
+				}
 				if (!player.getCarriedItems().hasCatalogID(ItemId.RED_BEAD.id(), Optional.of(false))
 					&& !player.getCarriedItems().hasCatalogID(ItemId.YELLOW_BEAD.id(), Optional.of(false))
 					&& !player.getCarriedItems().hasCatalogID(ItemId.BLACK_BEAD.id(), Optional.of(false))

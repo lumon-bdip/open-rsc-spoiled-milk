@@ -128,6 +128,13 @@ public class GertrudesCat implements QuestInterface, TalkNpcTrigger,
 					}
 					break;
 				case 1:
+					int shortcut = multi(player, n,
+						"I am still looking for Fluffs",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (shortcut == 1) {
+						MyWorldQuestShortcuts.completeGertrudesCat(player, n);
+						break;
+					}
 					say(player, n, "hello gertrude");
 					npcsay(player, n, "have you seen my poor fluffs?");
 					say(player, n, "i'm afraid not");
@@ -136,6 +143,13 @@ public class GertrudesCat implements QuestInterface, TalkNpcTrigger,
 					npcsay(player, n, "hmmm...strange, he should be at the market");
 					break;
 				case 2:
+					int fluffsShortcut = multi(player, n,
+						"I am still helping Fluffs",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (fluffsShortcut == 1) {
+						MyWorldQuestShortcuts.completeGertrudesCat(player, n);
+						break;
+					}
 					if (!player.getCache().hasKey("cat_milk") && !player.getCache().hasKey("cat_sardine")) {
 						say(player, n, "hello gertrude");
 						npcsay(player, n, "hello again, did you manage to find shilop?",
@@ -164,6 +178,13 @@ public class GertrudesCat implements QuestInterface, TalkNpcTrigger,
 					}
 					break;
 				case 3:
+					int kittensShortcut = multi(player, n,
+						"I found the kittens",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (kittensShortcut == 1) {
+						MyWorldQuestShortcuts.completeGertrudesCat(player, n);
+						break;
+					}
 					say(player, n, "hello gertrude",
 						"fluffs ran off with her two kittens");
 					npcsay(player, n, "you're back , thank you, thank you",

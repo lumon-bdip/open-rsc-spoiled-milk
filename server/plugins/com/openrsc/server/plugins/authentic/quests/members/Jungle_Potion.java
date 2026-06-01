@@ -127,6 +127,15 @@ public class Jungle_Potion implements QuestInterface, OpLocTrigger,
 	private void trufitisChat(Player player, Npc n, int cID) {
 		if (n.getID() == NpcId.TRUFITUS.id()) {
 			if (cID == -1) {
+				if (player.getQuestStage(this) > 0) {
+					int shortcut = multi(player, n,
+						"I am still gathering herbs",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (shortcut == 1) {
+						MyWorldQuestShortcuts.completeJunglePotion(player, n);
+						return;
+					}
+				}
 				/** TRUFITUS **/
 				switch (player.getQuestStage(this)) {
 					case 0:

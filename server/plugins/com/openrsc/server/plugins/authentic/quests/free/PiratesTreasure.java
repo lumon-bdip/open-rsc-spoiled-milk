@@ -186,6 +186,13 @@ public class PiratesTreasure implements QuestInterface,
 			case 1:
 				npcsay(player, n, "Arrrh Matey",
 					"Have Ye brought some rum for yer old mate Frank");
+				int shortcut = multi(player, n,
+					"I am still looking for the rum",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completePiratesTreasure(player, n);
+					break;
+				}
 				if (!player.getCarriedItems().hasCatalogID(ItemId.KARAMJA_RUM.id())) {
 					say(player, n, "No not yet");
 					return;

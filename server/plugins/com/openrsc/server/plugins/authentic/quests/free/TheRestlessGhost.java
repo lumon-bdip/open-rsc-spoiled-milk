@@ -76,7 +76,7 @@ public class TheRestlessGhost implements QuestInterface, TakeObjTrigger,
 					if (!player.getCarriedItems().hasCatalogID(ItemId.QUEST_SKULL.id(), Optional.of(false))) {
 						int choice = multi(player, n,
 							"Sorry, I can't find it at the moment",
-							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+							MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 						if (choice == 0) {
 							say(player, n, "Sorry, I can't find it at the moment");
 							npcsay(player,
@@ -93,7 +93,7 @@ public class TheRestlessGhost implements QuestInterface, TakeObjTrigger,
 					} else {
 						int choice = multi(player, n,
 							"I have found it",
-							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+							MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 						if (choice == 0) {
 							say(player, n, "I have found it");
 							npcsay(player,
@@ -115,7 +115,9 @@ public class TheRestlessGhost implements QuestInterface, TakeObjTrigger,
 						"Sorry I don't speak ghost",
 						"Ooh that's interesting",
 						"Any hints where I can find some treasure?",
-						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						player.getQuestStage(this) > 0
+							? MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION
+							: MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 					if (choice == 0) {
 						ghostDialogue(player, n, Ghost.DONTSPEAK);
 					} else if (choice == 1) {
@@ -195,7 +197,7 @@ public class TheRestlessGhost implements QuestInterface, TakeObjTrigger,
 						"Yep, now tell me what the problem is",
 						"No, you sound like you're speaking nonsense to me",
 						"Wow, this amulet works",
-						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 					if (choice == 0) {
 						say(player, n, "Yep, now tell me what the problem is");
 						npcsay(player, n,

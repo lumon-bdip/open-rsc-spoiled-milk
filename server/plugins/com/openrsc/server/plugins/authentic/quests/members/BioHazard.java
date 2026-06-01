@@ -91,6 +91,15 @@ public class BioHazard implements QuestInterface, TalkNpcTrigger,
 			return;
 		}
 		if (n.getID() == NpcId.ELENA_HOUSE.id()) {
+			if (player.getQuestStage(this) > 0) {
+				int progressMenu = multi(player, n,
+					"I'll keep working on it",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (progressMenu == 1) {
+					MyWorldQuestShortcuts.completeBiohazardLine(player, n);
+					return;
+				}
+			}
 			switch (player.getQuestStage(this)) {
 				case 0:
 					say(player, n, "good to see you, elena");

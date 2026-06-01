@@ -126,6 +126,13 @@ public class SheepShearer implements QuestInterface, TalkNpcTrigger {
 					break;
 				case 1:
 					npcsay(player, n, "How are you doing getting those balls of wool?");
+					int shortcut = multi(player, n,
+						"I am still gathering the wool",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (shortcut == 1) {
+						MyWorldQuestShortcuts.completeSheepShearer(player, n);
+						break;
+					}
 					int totalWool = 0;
 					int woolCount = player.getCarriedItems().getInventory().countId(ItemId.BALL_OF_WOOL.id());
 					if (player.getCache().hasKey("sheep_shearer_wool_count")) {

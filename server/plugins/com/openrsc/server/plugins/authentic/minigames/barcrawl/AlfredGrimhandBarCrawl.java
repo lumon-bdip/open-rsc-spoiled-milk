@@ -76,7 +76,7 @@ public class AlfredGrimhandBarCrawl implements MiniGameInterface, TalkNpcTrigger
 					final int third = multi(player, n, false, //do not send over
 						"I've lost my  barcrawl card",
 						"Not to bad, my barcrawl card is in my bank now",
-						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 					if (third == 0) {
 						npcsay(player, n, "What are you like?",
 							"You're gonna have to start all over now",
@@ -124,7 +124,7 @@ public class AlfredGrimhandBarCrawl implements MiniGameInterface, TalkNpcTrigger
 				} else {
 					final int unfinished = multi(player, n,
 						"I haven't finished it yet",
-						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 					if (unfinished == 0) {
 						say(player, n, "I haven't finished it yet");
 						npcsay(player, n,

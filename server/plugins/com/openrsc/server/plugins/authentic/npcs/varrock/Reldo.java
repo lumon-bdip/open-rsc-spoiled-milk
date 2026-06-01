@@ -44,6 +44,17 @@ public final class Reldo implements TalkNpcTrigger {
 			}
 		}
 
+		if (player.getQuestStage(Quests.SHIELD_OF_ARRAV) > 0) {
+			int shortcutMenu = multi(player, npc, false,
+				"Tell me about the Shield of Arrav",
+				MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+			if (shortcutMenu == 1) {
+				say(player, npc, MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				completeShieldOfArravShortcut(player, npc);
+				return;
+			}
+		}
+
 		if (player.getCache().hasKey("read_arrav")
 			&& player.getQuestStage(Quests.SHIELD_OF_ARRAV) == 1 || player.getQuestStage(Quests.SHIELD_OF_ARRAV) == 2) {
 			if (player.getQuestStage(Quests.THE_KNIGHTS_SWORD) != 1) {
@@ -80,9 +91,17 @@ public final class Reldo implements TalkNpcTrigger {
 		if (player.getQuestStage(Quests.THE_KNIGHTS_SWORD) == 1) {
 			options.add("What do you know about the Imcando dwarves?");
 		}
+		if (player.getQuestStage(Quests.SHIELD_OF_ARRAV) == 0) {
+			options.add(MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+		}
 		String[] finalOptions = new String[options.size()];
 		int option = multi(player, npc, false, //do not send over
 			options.toArray(finalOptions));
+		if (options.get(option).equals(MyWorldQuestShortcuts.ALREADY_DONE_OPTION)) {
+			say(player, npc, MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+			completeShieldOfArravShortcut(player, npc);
+			return;
+		}
 
 		if (option == 3) {
 			if (player.getQuestStage(Quests.SHIELD_OF_ARRAV) == 0
@@ -342,6 +361,18 @@ public final class Reldo implements TalkNpcTrigger {
 	}
 
 	private void shieldOfArravStartDialogue(Player player, Npc npc) {
+		if (player.getQuestStage(Quests.SHIELD_OF_ARRAV) > 0) {
+			int progressMenu = multi(player, npc, false,
+				"Tell me where to continue",
+				MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+			if (progressMenu == 0) {
+				shieldArravDialogue(player, npc);
+				return;
+			}
+			say(player, npc, MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+			completeShieldOfArravShortcut(player, npc);
+			return;
+		}
 		int option = multi(player, npc, false,
 			"Tell me where to start",
 			MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
@@ -359,6 +390,10 @@ public final class Reldo implements TalkNpcTrigger {
 			return;
 		}
 		say(player, npc, MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+		completeShieldOfArravShortcut(player, npc);
+	}
+
+	private void completeShieldOfArravShortcut(Player player, Npc npc) {
 		npcsay(player, npc, "Then tell me which gang you joined",
 			"so I can set the record straight.");
 		int gangChoice = multi(player, npc,

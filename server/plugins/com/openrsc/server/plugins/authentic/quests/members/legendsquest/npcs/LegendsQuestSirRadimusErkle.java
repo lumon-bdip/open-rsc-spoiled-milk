@@ -270,6 +270,13 @@ public class LegendsQuestSirRadimusErkle implements QuestInterface, TalkNpcTrigg
 					case 8:
 					case 9:
 					case 10:
+						int progressMenu = multi(player, n,
+							"I'll keep working on it",
+							MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+						if (progressMenu == 1) {
+							MyWorldQuestShortcuts.completeLegendsQuest(player, n);
+							return;
+						}
 						npcsay(player, n, "Hello there, how is the quest going?");
 						if (player.getCarriedItems().hasCatalogID(ItemId.RADIMUS_SCROLLS.id(), Optional.of(false))
 							|| player.getCarriedItems().hasCatalogID(ItemId.RADIMUS_SCROLLS_COMPLETE.id(), Optional.of(false))) {

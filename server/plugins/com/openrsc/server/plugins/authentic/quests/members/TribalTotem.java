@@ -182,6 +182,13 @@ public class TribalTotem implements QuestInterface, TalkNpcTrigger,
 					break;
 				case 1:
 				case 2:
+					int progressMenu = multi(player, n,
+						"I am still looking for the totem",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (progressMenu == 1) {
+						MyWorldQuestShortcuts.completeTribalTotem(player, n);
+						return;
+					}
 					npcsay(player, n, "Have you got our totem back?");
 					if (player.getCarriedItems().getInventory().countId(ItemId.TRIBAL_TOTEM.id()) >= 1) {
 						say(player, n, "Yes I have");

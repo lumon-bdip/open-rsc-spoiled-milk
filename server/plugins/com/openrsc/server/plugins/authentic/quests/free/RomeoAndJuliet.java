@@ -105,8 +105,21 @@ public class RomeoAndJuliet implements QuestInterface, TalkNpcTrigger {
 				break;
 			case 1:
 				npcsay(player, n, "Please find my Juliet. I am so, so sad");
+				int shortcut = multi(player, n,
+					"I am still looking for her",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completeRomeoAndJuliet(player, n);
+				}
 				break;
 			case 2:
+				int shortcut2 = multi(player, n,
+					"I have news from Juliet",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut2 == 1) {
+					MyWorldQuestShortcuts.completeRomeoAndJuliet(player, n);
+					break;
+				}
 				int count = messageCount(player);
 				if (count < 2) {
 					say(player, n, "Romeo, I have a message from Juliet");

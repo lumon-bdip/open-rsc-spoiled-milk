@@ -110,6 +110,13 @@ public class VampireSlayer implements QuestInterface, TalkNpcTrigger,
 			case 1:
 			case 2:
 				npcsay(player, npc, "How are you doing with your quest?");
+				int shortcut = multi(player, npc,
+					"I'm working on it still",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completeVampireSlayer(player, npc);
+					break;
+				}
 				say(player, npc, "I'm working on it still");
 				npcsay(player, npc, "Please hurry", "Every day we live in fear of lives",
 					"That we will be the vampires next victim");

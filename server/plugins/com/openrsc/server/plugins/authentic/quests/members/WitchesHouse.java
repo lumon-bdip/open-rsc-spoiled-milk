@@ -83,6 +83,15 @@ public class WitchesHouse implements QuestInterface, TalkNpcTrigger,
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
 		if (n.getID() == NpcId.BOY.id()) {
+			if (player.getQuestStage(this) > 0) {
+				int shortcut = multi(player, n,
+					"I am still looking for your ball",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (shortcut == 1) {
+					MyWorldQuestShortcuts.completeWitchesHouse(player, n);
+					return;
+				}
+			}
 			switch (player.getQuestStage(this)) {
 				case 0:
 					say(player, n, "Hello young man");

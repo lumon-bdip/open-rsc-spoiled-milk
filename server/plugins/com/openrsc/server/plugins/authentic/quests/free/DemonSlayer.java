@@ -935,7 +935,9 @@ public class DemonSlayer implements QuestInterface,
 				int introduceMenu = multi(player, n, "Ok, here you go",
 					"Who are you calling young one?!",
 					"No, I don't believe in that stuff",
-					MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+					player.getQuestStage(this) > 0
+						? MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION
+						: MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 				if (introduceMenu == 0) {
 					gypsyDialogue(player, n, GypsyConversation.QUEST_START);
 				} else if (introduceMenu == 1) {

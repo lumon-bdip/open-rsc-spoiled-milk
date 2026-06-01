@@ -380,6 +380,15 @@ public class TreeGnomeVillage implements QuestInterface, TalkNpcTrigger,
 			}
 		}
 		else if (n.getID() == NpcId.BOLREN.id()) {
+			if (player.getQuestStage(this) > 1) {
+				int progressMenu = multi(player, n,
+					"I'll keep working on it",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (progressMenu == 1) {
+					MyWorldQuestShortcuts.completeTreeGnomeVillage(player, n);
+					return;
+				}
+			}
 			switch (player.getQuestStage(this)) {
 				case 0:
 					say(player, n, "hello");
@@ -445,6 +454,13 @@ public class TreeGnomeVillage implements QuestInterface, TalkNpcTrigger,
 					}
 					break;
 				case 1:
+					int stageOneMenu = multi(player, n,
+						"I'll keep looking for the orb",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (stageOneMenu == 1) {
+						MyWorldQuestShortcuts.completeTreeGnomeVillage(player, n);
+						return;
+					}
 					say(player, n, "hello bolren");
 					npcsay(player, n, "hello traveller, we must retrieve the orb",
 						"it's being held by khazard troops",

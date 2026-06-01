@@ -32,6 +32,15 @@ public class DigsiteExaminer implements TalkNpcTrigger {
 	private void digsiteExaminerDialogue(Player player, Npc n, int cID) {
 		if (n.getID() == NpcId.EXAMINER.id()) {
 			if (cID == -1) {
+				if (player.getQuestStage(Quests.DIGSITE) > 0) {
+					int progressMenu = multi(player, n,
+						"I'll keep working on it",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (progressMenu == 1) {
+						MyWorldQuestShortcuts.completeDigsite(player, n);
+						return;
+					}
+				}
 				switch (player.getQuestStage(Quests.DIGSITE)) {
 					case -1:
 						npcsay(player, n, "Hi there",

@@ -249,6 +249,13 @@ public class ScorpionCatcher implements QuestInterface, TalkNpcTrigger,
 				case 1:
 				case 2:
 					npcsay(player, n, "How goes your quest?");
+					int shortcut = multi(player, n,
+						"I've not caught all the scorpions yet",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (shortcut == 1) {
+						MyWorldQuestShortcuts.completeScorpionCatcher(player, n);
+						break;
+					}
 					if (!player.getCarriedItems().hasCatalogID(ItemId.SCORPION_CAGE_NONE.id(), Optional.of(false))
 						&& !player.getCarriedItems().hasCatalogID(ItemId.SCORPION_CAGE_ONE_TWO_THREE.id(), Optional.of(false))) { // No empty cage, no full cage
 						int menu = multi(player, n,

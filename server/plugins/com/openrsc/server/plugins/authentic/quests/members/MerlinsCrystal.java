@@ -409,6 +409,13 @@ public class MerlinsCrystal implements QuestInterface, TalkNpcTrigger,
 						player.getCarriedItems().remove(new Item(ItemId.HOLY_GRAIL.id()));
 						player.sendQuestComplete(Quests.THE_HOLY_GRAIL);
 					} else {
+						int grailShortcut = multi(player, n,
+							"I am making progress",
+							MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+						if (grailShortcut == 1) {
+							MyWorldQuestShortcuts.completeHolyGrail(player, n);
+							return;
+						}
 						say(player, n, "I am making progress",
 							"But I have not recovered the grail yet");
 						npcsay(player, n, "Well the grail is very elusive",
@@ -457,7 +464,9 @@ public class MerlinsCrystal implements QuestInterface, TalkNpcTrigger,
 						"I want to become a knight of the round table",
 						"So what are you doing in Runescape?",
 						"Thankyou very much",
-						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						player.getQuestStage(this) > 0
+							? MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION
+							: MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 					if (option == 0) {
 						say(player, n, "I want to become a knight of the round table");
 						npcsay(player,
@@ -484,7 +493,6 @@ public class MerlinsCrystal implements QuestInterface, TalkNpcTrigger,
 					} else if (option == 2) {
 						say(player, n, "thankyou very much");
 					} else if (option == 3) {
-						say(player, n, MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 						MyWorldQuestShortcuts.completeMerlinsCrystal(player, n);
 					}
 					break;

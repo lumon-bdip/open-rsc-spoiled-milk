@@ -80,6 +80,13 @@ public class CooksAssistant implements QuestInterface, TalkNpcTrigger {
 					break;
 				case 1:
 					npcsay(player, n, "How are you getting on with finding the ingredients?");
+					int shortcut = multi(player, n,
+						"I am still looking for the ingredients",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (shortcut == 1) {
+						MyWorldQuestShortcuts.completeCooksAssistant(player, n);
+						break;
+					}
 					if (player.getCarriedItems().hasCatalogID(ItemId.EGG.id())
 						&& player.getCarriedItems().hasCatalogID(ItemId.POT_OF_FLOUR.id())
 						&& player.getCarriedItems().hasCatalogID(ItemId.MILK.id())) {

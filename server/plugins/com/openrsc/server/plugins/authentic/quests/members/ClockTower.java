@@ -106,6 +106,13 @@ public class ClockTower implements QuestInterface, TalkNpcTrigger,
 					}
 					break;
 				case 1:
+					int shortcut = multi(player, n,
+						"I am still working on the clock",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (shortcut == 1) {
+						MyWorldQuestShortcuts.completeClockTower(player, n);
+						break;
+					}
 					if (player.getCache().hasKey("1st_cog")
 						&& player.getCache().hasKey("2nd_cog")
 						&& player.getCache().hasKey("3rd_cog")
