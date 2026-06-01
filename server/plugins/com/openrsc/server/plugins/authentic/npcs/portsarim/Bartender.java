@@ -6,6 +6,7 @@ import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.plugins.custom.quests.MyWorldQuestShortcuts;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
 import java.util.ArrayList;
@@ -26,8 +27,12 @@ public class Bartender implements TalkNpcTrigger {
 		options.add("Could i buy a beer please?");
 		if (player.getQuestStage(Quests.GOBLIN_DIPLOMACY) == 0) {
 			options.add("Not very busy in here today is it?");
+			options.add(MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+		} else if (player.getQuestStage(Quests.GOBLIN_DIPLOMACY) == -1) {
+			options.add("Have you heard any more rumours in here?");
 		} else {
 			options.add("Have you heard any more rumours in here?");
+			options.add(MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 		}
 		if (player.getCache().hasKey("barcrawl") && !player.getCache().hasKey("barsix")
 			&& player.getCarriedItems().hasCatalogID(ItemId.BARCRAWL_CARD.id(), Optional.of(false))) {
@@ -35,8 +40,10 @@ public class Bartender implements TalkNpcTrigger {
 		}
 		String[] finalOptions = new String[options.size()];
 		int option = multi(player, n, options.toArray(finalOptions));
+		if (option < 0 || option >= options.size()) return;
+		String selectedOption = options.get(option);
 
-		if (option == 0) {
+		if ("Could i buy a beer please?".equals(selectedOption)) {
 			npcsay(player, n, "Sure that will be 2 gold coins please");
 			if (ifheld(player, ItemId.COINS.id(), 2)) {
 				say(player, n, "Ok here you go thanks");
@@ -46,23 +53,27 @@ public class Bartender implements TalkNpcTrigger {
 			} else {
 				player.message("You dont have enough coins for the beer");
 			}
-		} else if (option == 1) {
+		} else if ("Not very busy in here today is it?".equals(selectedOption)) {
+			npcsay(player,
+				n,
+				"No it was earlier",
+				"There was a guy in here saying the goblins up by the mountain are arguing again",
+				"Of all things about the colour of their armour.",
+				"Knowing the goblins, it could easily turn into a full blown war",
+				"Which wouldn't be good",
+				"Goblin wars make such a mess of the countryside");
+			say(player, n,
+				"Well if I have time I'll see if I can go and knock some sense into them");
+			player.updateQuestStage(Quests.GOBLIN_DIPLOMACY, 1);
+		} else if ("Have you heard any more rumours in here?".equals(selectedOption)) {
+			npcsay(player, n, "No it hasn't been very busy lately");
+		} else if (MyWorldQuestShortcuts.ALREADY_DONE_OPTION.equals(selectedOption)
+			|| MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION.equals(selectedOption)) {
 			if (player.getQuestStage(Quests.GOBLIN_DIPLOMACY) == 0) {
-				npcsay(player,
-					n,
-					"No it was earlier",
-					"There was a guy in here saying the goblins up by the mountain are arguing again",
-					"Of all things about the colour of their armour.",
-					"Knowing the goblins, it could easily turn into a full blown war",
-					"Which wouldn't be good",
-					"Goblin wars make such a mess of the countryside");
-				say(player, n,
-					"Well if I have time I'll see if I can go and knock some sense into them");
 				player.updateQuestStage(Quests.GOBLIN_DIPLOMACY, 1);
-			} else {
-				npcsay(player, n, "No it hasn't been very busy lately");
 			}
-		} else if (option == 2) {
+			MyWorldQuestShortcuts.completeGoblinDiplomacy(player, n);
+		} else if ("I'm doing Alfred Grimhand's barcrawl".equals(selectedOption)) {
 			npcsay(player, n, "Are you sure you look a bit skinny for that");
 			say(player, n,
 				"Just give me whatever drink I need to drink here");

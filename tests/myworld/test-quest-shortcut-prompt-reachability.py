@@ -33,6 +33,14 @@ def main() -> None:
     require(fishing, '"I think I might still be able to find a bigger fish",\n\t\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Fishing Contest paid branch shortcut")
     require(fishing, '"I think I\'ll keep them to myself",\n\t\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Fishing Contest trophy branch shortcut")
 
+    bartender = (ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/portsarim/Bartender.java").read_text()
+    require(bartender, "import com.openrsc.server.plugins.custom.quests.MyWorldQuestShortcuts;", "Goblin Diplomacy bartender shortcut import")
+    require(bartender, "options.add(MyWorldQuestShortcuts.ALREADY_DONE_OPTION);", "Goblin Diplomacy bartender start shortcut")
+    require(bartender, "options.add(MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);", "Goblin Diplomacy bartender in-progress shortcut")
+    require(bartender, "String selectedOption = options.get(option);", "Goblin Diplomacy bartender text-based option dispatch")
+    require(bartender, "MyWorldQuestShortcuts.completeGoblinDiplomacy(player, n);", "Goblin Diplomacy bartender shortcut completion")
+    require(bartender, '"I\'m doing Alfred Grimhand\'s barcrawl".equals(selectedOption)', "Port Sarim bartender barcrawl option dispatch")
+
     barcrawl = (ROOT / "server/plugins/com/openrsc/server/plugins/authentic/minigames/barcrawl/AlfredGrimhandBarCrawl.java").read_text()
     require(barcrawl, "import com.openrsc.server.plugins.custom.quests.MyWorldQuestShortcuts;", "Barcrawl shortcut import")
     require(barcrawl, "MyWorldQuestShortcuts.ALREADY_DONE_OPTION", "Barcrawl shortcut option")

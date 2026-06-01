@@ -181,6 +181,7 @@ def main() -> None:
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/DragonSlayer.java", "completeDragonSlayer"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/ErnestTheChicken.java", "completeErnestTheChicken"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/GoblinDiplomacy.java", "completeGoblinDiplomacy"),
+        ("server/plugins/com/openrsc/server/plugins/authentic/npcs/portsarim/Bartender.java", "completeGoblinDiplomacy"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/KnightsSword.java", "completeKnightsSword"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/PiratesTreasure.java", "completePiratesTreasure"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/PrinceAliRescue.java", "completePrinceAliRescue"),
