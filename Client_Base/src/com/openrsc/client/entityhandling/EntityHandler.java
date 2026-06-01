@@ -272,103 +272,63 @@ public class EntityHandler {
 		setPrayerBook(activePrayerBook);
 	}
 
+	private static void addPrayerDefinition(int pointCost, String name, String effectText) {
+		prayers.add(new PrayerDef(0, pointCost, name,
+			"Reserve " + pointCost + " prayer points. " + effectText));
+	}
+
 	private static void loadSaradominPrayerDefinitions() {
-		prayers.add(new PrayerDef(0, 3, "Weak Magic Power",
-			"Reserve 3 prayer points. Magic damage +5%."));
-		prayers.add(new PrayerDef(0, 6, "Lesser Magic Power",
-			"Reserve 6 prayer points. Magic damage +10%."));
-		prayers.add(new PrayerDef(0, 10, "Magic Power",
-			"Reserve 10 prayer points. Magic damage +15%."));
-		prayers.add(new PrayerDef(0, 15, "Strong Magic Power",
-			"Reserve 15 prayer points. Magic damage +20%."));
-		prayers.add(new PrayerDef(0, 21, "Greater Magic Power",
-			"Reserve 21 prayer points. Magic damage +25%."));
-		prayers.add(new PrayerDef(0, 3, "Weak Melee Protection",
-			"Reserve 3 prayer points. Melee damage taken -5%."));
-		prayers.add(new PrayerDef(0, 6, "Lesser Melee Protection",
-			"Reserve 6 prayer points. Melee damage taken -10%."));
-		prayers.add(new PrayerDef(0, 10, "Melee Protection",
-			"Reserve 10 prayer points. Melee damage taken -15%."));
-		prayers.add(new PrayerDef(0, 15, "Strong Melee Protection",
-			"Reserve 15 prayer points. Melee damage taken -20%."));
-		prayers.add(new PrayerDef(0, 21, "Greater Melee Protection",
-			"Reserve 21 prayer points. Melee damage taken -25%."));
-		prayers.add(new PrayerDef(0, 2, "Weak Enchanting Favor",
-			"Reserve 2 prayer points. Enchanting XP +10%."));
-		prayers.add(new PrayerDef(0, 8, "Lesser Enchanting Favor",
-			"Reserve 8 prayer points. Enchanting XP +15%."));
-		prayers.add(new PrayerDef(0, 20, "Enchanting Favor",
-			"Reserve 20 prayer points. Enchanting XP +20%."));
-		prayers.add(new PrayerDef(0, 35, "Strong Enchanting Favor",
-			"Reserve 35 prayer points. Enchanting XP +25%."));
-		prayers.add(new PrayerDef(0, 55, "Greater Enchanting Favor",
-			"Reserve 55 prayer points. Enchanting XP +30%."));
+		addPrayerDefinition(3, "Weak Magic Power", "Magic damage +5%.");
+		addPrayerDefinition(6, "Lesser Magic Power", "Magic damage +10%.");
+		addPrayerDefinition(15, "Magic Power", "Magic damage +15%.");
+		addPrayerDefinition(29, "Strong Magic Power", "Magic damage +20%.");
+		addPrayerDefinition(49, "Greater Magic Power", "Magic damage +25%.");
+		addPrayerDefinition(3, "Weak Melee Protection", "Melee damage taken -5%.");
+		addPrayerDefinition(6, "Lesser Melee Protection", "Melee damage taken -10%.");
+		addPrayerDefinition(15, "Melee Protection", "Melee damage taken -15%.");
+		addPrayerDefinition(29, "Strong Melee Protection", "Melee damage taken -20%.");
+		addPrayerDefinition(49, "Greater Melee Protection", "Melee damage taken -25%.");
+		addPrayerDefinition(2, "Weak Enchanting Favor", "Enchanting XP +10%.");
+		addPrayerDefinition(7, "Lesser Enchanting Favor", "Enchanting XP +15%.");
+		addPrayerDefinition(22, "Enchanting Favor", "Enchanting XP +20%.");
+		addPrayerDefinition(46, "Strong Enchanting Favor", "Enchanting XP +25%.");
+		addPrayerDefinition(80, "Greater Enchanting Favor", "Enchanting XP +30%.");
 	}
 
 	private static void loadZamorakPrayerDefinitions() {
-		prayers.add(new PrayerDef(0, 3, "Weak Melee Power",
-			"Reserve 3 prayer points. Melee damage +5%."));
-		prayers.add(new PrayerDef(0, 6, "Lesser Melee Power",
-			"Reserve 6 prayer points. Melee damage +10%."));
-		prayers.add(new PrayerDef(0, 10, "Melee Power",
-			"Reserve 10 prayer points. Melee damage +15%."));
-		prayers.add(new PrayerDef(0, 15, "Strong Melee Power",
-			"Reserve 15 prayer points. Melee damage +20%."));
-		prayers.add(new PrayerDef(0, 21, "Greater Melee Power",
-			"Reserve 21 prayer points. Melee damage +25%."));
-		prayers.add(new PrayerDef(0, 3, "Weak Ranged Protection",
-			"Reserve 3 prayer points. Ranged damage taken -5%."));
-		prayers.add(new PrayerDef(0, 6, "Lesser Ranged Protection",
-			"Reserve 6 prayer points. Ranged damage taken -10%."));
-		prayers.add(new PrayerDef(0, 10, "Ranged Protection",
-			"Reserve 10 prayer points. Ranged damage taken -15%."));
-		prayers.add(new PrayerDef(0, 15, "Strong Ranged Protection",
-			"Reserve 15 prayer points. Ranged damage taken -20%."));
-		prayers.add(new PrayerDef(0, 21, "Greater Ranged Protection",
-			"Reserve 21 prayer points. Ranged damage taken -25%."));
-		prayers.add(new PrayerDef(0, 2, "Weak Smithing Favor",
-			"Reserve 2 prayer points. Smithing XP +10%."));
-		prayers.add(new PrayerDef(0, 8, "Lesser Smithing Favor",
-			"Reserve 8 prayer points. Smithing XP +15%."));
-		prayers.add(new PrayerDef(0, 20, "Smithing Favor",
-			"Reserve 20 prayer points. Smithing XP +20%."));
-		prayers.add(new PrayerDef(0, 35, "Strong Smithing Favor",
-			"Reserve 35 prayer points. Smithing XP +25%."));
-		prayers.add(new PrayerDef(0, 55, "Greater Smithing Favor",
-			"Reserve 55 prayer points. Smithing XP +30%."));
+		addPrayerDefinition(3, "Weak Melee Power", "Melee damage +5%.");
+		addPrayerDefinition(6, "Lesser Melee Power", "Melee damage +10%.");
+		addPrayerDefinition(15, "Melee Power", "Melee damage +15%.");
+		addPrayerDefinition(29, "Strong Melee Power", "Melee damage +20%.");
+		addPrayerDefinition(49, "Greater Melee Power", "Melee damage +25%.");
+		addPrayerDefinition(3, "Weak Ranged Protection", "Ranged damage taken -5%.");
+		addPrayerDefinition(6, "Lesser Ranged Protection", "Ranged damage taken -10%.");
+		addPrayerDefinition(15, "Ranged Protection", "Ranged damage taken -15%.");
+		addPrayerDefinition(29, "Strong Ranged Protection", "Ranged damage taken -20%.");
+		addPrayerDefinition(49, "Greater Ranged Protection", "Ranged damage taken -25%.");
+		addPrayerDefinition(2, "Weak Smithing Favor", "Smithing XP +10%.");
+		addPrayerDefinition(7, "Lesser Smithing Favor", "Smithing XP +15%.");
+		addPrayerDefinition(22, "Smithing Favor", "Smithing XP +20%.");
+		addPrayerDefinition(46, "Strong Smithing Favor", "Smithing XP +25%.");
+		addPrayerDefinition(80, "Greater Smithing Favor", "Smithing XP +30%.");
 	}
 
 	private static void loadGuthixPrayerDefinitions() {
-		prayers.add(new PrayerDef(0, 3, "Weak Ranged Power",
-			"Reserve 3 prayer points. Ranged damage +5%."));
-		prayers.add(new PrayerDef(0, 6, "Lesser Ranged Power",
-			"Reserve 6 prayer points. Ranged damage +10%."));
-		prayers.add(new PrayerDef(0, 10, "Ranged Power",
-			"Reserve 10 prayer points. Ranged damage +15%."));
-		prayers.add(new PrayerDef(0, 15, "Strong Ranged Power",
-			"Reserve 15 prayer points. Ranged damage +20%."));
-		prayers.add(new PrayerDef(0, 21, "Greater Ranged Power",
-			"Reserve 21 prayer points. Ranged damage +25%."));
-		prayers.add(new PrayerDef(0, 3, "Weak Magic Protection",
-			"Reserve 3 prayer points. Magic damage taken -5%."));
-		prayers.add(new PrayerDef(0, 6, "Lesser Magic Protection",
-			"Reserve 6 prayer points. Magic damage taken -10%."));
-		prayers.add(new PrayerDef(0, 10, "Magic Protection",
-			"Reserve 10 prayer points. Magic damage taken -15%."));
-		prayers.add(new PrayerDef(0, 15, "Strong Magic Protection",
-			"Reserve 15 prayer points. Magic damage taken -20%."));
-		prayers.add(new PrayerDef(0, 21, "Greater Magic Protection",
-			"Reserve 21 prayer points. Magic damage taken -25%."));
-		prayers.add(new PrayerDef(0, 2, "Weak Crafting Favor",
-			"Reserve 2 prayer points. Crafting XP +10%."));
-		prayers.add(new PrayerDef(0, 8, "Lesser Crafting Favor",
-			"Reserve 8 prayer points. Crafting XP +15%."));
-		prayers.add(new PrayerDef(0, 20, "Crafting Favor",
-			"Reserve 20 prayer points. Crafting XP +20%."));
-		prayers.add(new PrayerDef(0, 35, "Strong Crafting Favor",
-			"Reserve 35 prayer points. Crafting XP +25%."));
-		prayers.add(new PrayerDef(0, 55, "Greater Crafting Favor",
-			"Reserve 55 prayer points. Crafting XP +30%."));
+		addPrayerDefinition(3, "Weak Ranged Power", "Ranged damage +5%.");
+		addPrayerDefinition(6, "Lesser Ranged Power", "Ranged damage +10%.");
+		addPrayerDefinition(15, "Ranged Power", "Ranged damage +15%.");
+		addPrayerDefinition(29, "Strong Ranged Power", "Ranged damage +20%.");
+		addPrayerDefinition(49, "Greater Ranged Power", "Ranged damage +25%.");
+		addPrayerDefinition(3, "Weak Magic Protection", "Magic damage taken -5%.");
+		addPrayerDefinition(6, "Lesser Magic Protection", "Magic damage taken -10%.");
+		addPrayerDefinition(15, "Magic Protection", "Magic damage taken -15%.");
+		addPrayerDefinition(29, "Strong Magic Protection", "Magic damage taken -20%.");
+		addPrayerDefinition(49, "Greater Magic Protection", "Magic damage taken -25%.");
+		addPrayerDefinition(2, "Weak Crafting Favor", "Crafting XP +10%.");
+		addPrayerDefinition(7, "Lesser Crafting Favor", "Crafting XP +15%.");
+		addPrayerDefinition(22, "Crafting Favor", "Crafting XP +20%.");
+		addPrayerDefinition(46, "Strong Crafting Favor", "Crafting XP +25%.");
+		addPrayerDefinition(80, "Greater Crafting Favor", "Crafting XP +30%.");
 	}
 
 	private static void loadTileDefinitions() {

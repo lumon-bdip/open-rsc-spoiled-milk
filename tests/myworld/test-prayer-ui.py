@@ -78,8 +78,28 @@ def main():
     for prayer in required_prayers:
         require(prayer in entity_handler, f"Missing client prayer definition: {prayer}")
 
-    require(entity_handler.count("prayers.add(new PrayerDef") == 45,
+    require(entity_handler.count("\t\taddPrayerDefinition(") == 45,
             "Client prayer definitions should cover all three 15-slot god lines")
+    for snippet in (
+        'addPrayerDefinition(49, "Greater Magic Power", "Magic damage +25%.");',
+        'addPrayerDefinition(49, "Greater Melee Power", "Melee damage +25%.");',
+        'addPrayerDefinition(49, "Greater Ranged Power", "Ranged damage +25%.");',
+        'addPrayerDefinition(80, "Greater Enchanting Favor", "Enchanting XP +30%.");',
+        'addPrayerDefinition(80, "Greater Smithing Favor", "Smithing XP +30%.");',
+        'addPrayerDefinition(80, "Greater Crafting Favor", "Crafting XP +30%.");',
+        '"Reserve " + pointCost + " prayer points. " + effectText',
+    ):
+        require(snippet in entity_handler, f"Client prayer tooltip cost missing: {snippet}")
+    for old_cost in (
+        "Reserve 10 prayer points",
+        "Reserve 15 prayer points",
+        "Reserve 21 prayer points",
+        "Reserve 8 prayer points",
+        "Reserve 20 prayer points",
+        "Reserve 35 prayer points",
+        "Reserve 55 prayer points",
+    ):
+        require(old_cost not in entity_handler, f"Client prayer tooltip still has old cost: {old_cost}")
     require("public static void setPrayerBook(String prayerBook)" in entity_handler,
             "Client prayer definitions should support swapping visible prayer books")
     require('activePrayerBook = "SARADOMIN"' in entity_handler,
