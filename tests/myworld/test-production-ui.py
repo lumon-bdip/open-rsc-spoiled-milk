@@ -172,6 +172,31 @@ def main() -> None:
         "case 169:\n\t\t\tcase 1955:\n\t\t\t\treturn \"Bars\";",
         "Client furnace category picker should label both legacy and MyWorld bar category icons as Bars",
     )
+    require(
+        do_skill_interface_text,
+        "boolean showQuantityControls = !isPickerInterface();",
+        "Production picker pages should hide unused quantity controls",
+    )
+    require(
+        do_skill_interface_text,
+        "return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker();",
+        "Production picker detection should include smithing and furnace picker pages",
+    )
+    require(
+        do_skill_interface_text,
+        "int quantityX = x + width - 284;",
+        "Production quantity controls should be right-aligned beside the Start button",
+    )
+    require(
+        do_skill_interface_text,
+        "int materialDetailX = quantityX;",
+        "Production material cost details should align with right-side quantity controls",
+    )
+    require(
+        do_skill_interface_text,
+        "drawProductionIngredientCosts(selected, materialDetailX, footerY + 4)",
+        "Production ingredient icons should use the right-side material detail anchor",
+    )
 
     print("PASS: Production UI structure validated")
 

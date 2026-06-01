@@ -1080,7 +1080,8 @@ public class PrinceAliRescue implements QuestInterface, OpBoundTrigger,
 					final int menu = multi(player, n, false, //do not send over
 						"What is first thing I must do?",
 						"What is needed second?",
-						"And the final thing you need?");
+						"And the final thing you need?",
+						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 					if (menu == 0) {
 						say(player, n, "What is the first thing I must do?");
 						osmanDialogue(player, n, Osman.FIRST);
@@ -1090,6 +1091,8 @@ public class PrinceAliRescue implements QuestInterface, OpBoundTrigger,
 					} else if (menu == 2) {
 						say(player, n, "And the final thing you need?");
 						osmanDialogue(player, n, Osman.FINAL);
+					} else if (menu == 3) {
+						MyWorldQuestShortcuts.completePrinceAliRescue(player, n);
 					}
 					break;
 				case 2:
@@ -1105,20 +1108,34 @@ public class PrinceAliRescue implements QuestInterface, OpBoundTrigger,
 							"I will let you get 80 coins from the chancellor for getting this key");
 						final int wutwut = multi(player, n,
 							"Thankyou, I will try to find the other items",
-							"Can you tell me what I still need to get?");
+							"Can you tell me what I still need to get?",
+							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 						if (wutwut == 0) {
 						} else if (wutwut == 1) {
 							osmanDialogue(player, n, Osman.STILL_NEED);
+						} else if (wutwut == 2) {
+							MyWorldQuestShortcuts.completePrinceAliRescue(player, n);
 						}
 					} else {
-						osmanDialogue(player, n, Osman.STILL_NEED);
+						final int shortcut = multi(player, n,
+							"Can you tell me what I still need to get?",
+							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						if (shortcut == 0) {
+							osmanDialogue(player, n, Osman.STILL_NEED);
+						} else if (shortcut == 1) {
+							MyWorldQuestShortcuts.completePrinceAliRescue(player, n);
+						}
 					}
 					break;
 				case 3:
 					npcsay(player, n,
 						"The prince is safe, and on his way home with Leela");
-					npcsay(player, n,
-						"You can pick up your payment from the chancellor");
+					final int finalShortcut = multi(player, n,
+						"I'll pick up my payment from the chancellor",
+						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+					if (finalShortcut == 1) {
+						MyWorldQuestShortcuts.completePrinceAliRescue(player, n);
+					}
 					break;
 				case -1:
 					npcsay(player, n, "Well done. A great rescue",

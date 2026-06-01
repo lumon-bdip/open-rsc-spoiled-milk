@@ -329,6 +329,10 @@ public final class DoSkillInterface {
 
 		ProductionRecipeView selected = getSelectedRecipe();
 		int footerY = y + height - 84;
+		int quantityY = y + height - 40;
+		int quantityX = x + width - 284;
+		boolean showQuantityControls = !isPickerInterface();
+		int materialDetailX = quantityX;
 		mc.getSurface().drawLineHoriz(x + 1, footerY - 10, width - 2, 0);
 		if (selected != null) {
 			ItemDef def = EntityHandler.getItemDef(selected.getItemId());
@@ -341,7 +345,7 @@ public final class DoSkillInterface {
 			}
 			drawString(selectedHeader, x + 16, footerY + 2, 3, selected.isLevelMet() ? textColour : 0xFF5555);
 			if (selected.hasIngredientDetails()) {
-				String ingredientHoverText = drawProductionIngredientCosts(selected, x + 16, footerY + 4);
+				String ingredientHoverText = drawProductionIngredientCosts(selected, materialDetailX, footerY + 4);
 				if (!ingredientHoverText.isEmpty()) {
 					hoverText = ingredientHoverText;
 				}
@@ -356,7 +360,7 @@ public final class DoSkillInterface {
 				String costText = inputItemId >= 0
 					? "Cost: " + selected.getInputAmount() + " x " + inputName
 					: "Cost: " + selected.getInputAmount() + " total " + inputName;
-				drawString(costText, x + 16, footerY + 20, 1, selected.isMaterialsMet() ? textColour : 0xFFAA55);
+				drawString(costText, materialDetailX, footerY + 20, 1, selected.isMaterialsMet() ? textColour : 0xFFAA55);
 			}
 		}
 		if (!hoverText.isEmpty()) {
@@ -364,17 +368,15 @@ public final class DoSkillInterface {
 			drawString(hoverText, x + 16, y + 52, 1, 0xF0D8A8);
 		}
 
-		int quantityY = y + height - 40;
-		boolean showQuantityControls = !isSmithingMaterialPicker();
 		if (showQuantityControls) {
-			drawQuantityButton(x + 16, quantityY, 26, 20, "<<", -5);
-			drawQuantityButton(x + 46, quantityY, 26, 20, "<", -1);
-			mc.getSurface().drawBoxAlpha(x + 76, quantityY, 56, 20, 0x222222, 192);
-			mc.getSurface().drawBoxBorder(x + 76, 56, quantityY, 20, 0x777775);
+			drawQuantityButton(quantityX, quantityY, 26, 20, "<<", -5);
+			drawQuantityButton(quantityX + 30, quantityY, 26, 20, "<", -1);
+			mc.getSurface().drawBoxAlpha(quantityX + 60, quantityY, 56, 20, 0x222222, 192);
+			mc.getSurface().drawBoxBorder(quantityX + 60, 56, quantityY, 20, 0x777775);
 			String quantityText = Integer.toString(productionQuantity);
-			drawString(quantityText, x + 104 - (mc.getSurface().stringWidth(2, quantityText) / 2), quantityY + 15, 2, textColour);
-			drawQuantityButton(x + 136, quantityY, 26, 20, ">", 1);
-			drawQuantityButton(x + 166, quantityY, 26, 20, ">>", 5);
+			drawString(quantityText, quantityX + 88 - (mc.getSurface().stringWidth(2, quantityText) / 2), quantityY + 15, 2, textColour);
+			drawQuantityButton(quantityX + 120, quantityY, 26, 20, ">", 1);
+			drawQuantityButton(quantityX + 150, quantityY, 26, 20, ">>", 5);
 		}
 
 		boolean startEnabled = selected != null && selected.isCraftable();
@@ -401,6 +403,10 @@ public final class DoSkillInterface {
 
 	private boolean isFurnaceMaterialPicker() {
 		return productionInterfaceId == PRODUCTION_FURNACE_MATERIAL;
+	}
+
+	private boolean isPickerInterface() {
+		return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker();
 	}
 
 	private boolean isMetalPicker() {

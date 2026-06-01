@@ -4,7 +4,6 @@ import orsc.graphics.gui.Panel;
 import orsc.graphics.two.GraphicsController;
 import orsc.mudclient;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 
@@ -83,8 +82,8 @@ public final class QuestGuideInterface {
 			customAdd("", 2, textColour);
 			customAdd("Requirements: ", 2, textColour);
 
-			for (int i = 0; i < Array.getLength(mc.getQuestGuideRequirement()); i++) {
-				customAdd("  - " + mc.getQuestGuideRequirement()[i], 2, textColour);
+			for (String requirement : safeQuestGuideLines(mc.getQuestGuideRequirement())) {
+				customAdd("  - " + requirement, 2, textColour);
 			}
 		} else if (mc.getQuestGuideProgress() > 0) {
 			customAdd("Quest progress coming soon...", 2, textColour);
@@ -96,14 +95,14 @@ public final class QuestGuideInterface {
 		customAdd("", 2, textColour);
 		customAdd("Rewards: ", 2, textColour);
 
-		for (int i = 0; i < Array.getLength(mc.getQuestGuideReward()); i++) {
-			customAdd("  - " + mc.getQuestGuideReward()[i], 2, textColour);
+		for (String reward : safeQuestGuideLines(mc.getQuestGuideReward())) {
+			customAdd("  - " + reward, 2, textColour);
 		}
 
 		questGuide.clearList(questGuideScroll);
 
-		for (int i = -1; i <= questItems.size(); i++) {
-			questGuide.setListEntry(questGuideScroll, i + 1, "", 0, (String) null, (String) null);
+		for (int i = 0; i <= questItems.size(); i++) {
+			questGuide.setListEntry(questGuideScroll, i, "", 0, (String) null, (String) null);
 		}
 
 		int listStartPoint = questGuide.getScrollPosition(questGuideScroll);
@@ -111,7 +110,7 @@ public final class QuestGuideInterface {
 
 		trackY = y + 55;
 
-		for (int i = -1; i < questItems.size(); i++) {
+		for (int i = 0; i < questItems.size(); i++) {
 			if (i >= 100) {
 				break;
 			}
@@ -141,18 +140,37 @@ public final class QuestGuideInterface {
 	}
 
 	public void customAdd(String text, int font, int color) {
-		int textWidth = mc.getSurface().stringWidth(font, text);
-		if (textWidth > width - x - 8 && text.length() >= 76) {
-			String text1 = text.substring(0, 76);
-			text1 = text.substring(0, text1.lastIndexOf(" "));
-			questItems.add(new QuestItem(text1, font, color));
-
-			String text2 = text.substring(text1.lastIndexOf(" ") + 1);
-			text2 = text2.substring(text2.indexOf(" ") + 1);
-			customAdd(text2, font, color);
-		} else {
-			questItems.add(new QuestItem(text, font, color));
+		if (text == null) {
+			text = "";
 		}
+		int textWidth = mc.getSurface().stringWidth(font, text);
+		int maxTextWidth = width - 16;
+		if (textWidth <= maxTextWidth || text.length() < 2) {
+			questItems.add(new QuestItem(text, font, color));
+			return;
+		}
+
+		int split = text.length();
+		while (split > 0 && mc.getSurface().stringWidth(font, text.substring(0, split)) > maxTextWidth) {
+			int previousSpace = text.lastIndexOf(" ", split - 1);
+			if (previousSpace <= 0) {
+				break;
+			}
+			split = previousSpace;
+		}
+		if (split <= 0 || split >= text.length()) {
+			questItems.add(new QuestItem(text, font, color));
+			return;
+		}
+		questItems.add(new QuestItem(text.substring(0, split), font, color));
+		customAdd(text.substring(split).trim(), font, color);
+	}
+
+	private String[] safeQuestGuideLines(String[] lines) {
+		if (lines == null || lines.length == 0) {
+			return new String[] {"None"};
+		}
+		return lines;
 	}
 
 	public void drawString(String str, int x, int y, int font, int color) {

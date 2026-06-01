@@ -124,7 +124,8 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 						//do not send over
 						final int contestStartedMenu = multi(player, n, false,
 							"I have this big fish,is it enough to win?",
-							"I think I might still be able to find a bigger fish");
+							"I think I might still be able to find a bigger fish",
+							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 						if (contestStartedMenu == 0) {
 							say(player, n, "I have this big fish", "Is it enough to win?");
 							npcsay(player, n, "Well we'll just wait till time is up");
@@ -134,10 +135,19 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 						} else if (contestStartedMenu == 1) {
 							say(player, n, "I think I might still be able to find a bigger fish");
 							npcsay(player, n, "Ok, good luck");
+						} else if (contestStartedMenu == 2) {
+							MyWorldQuestShortcuts.completeFishingContest(player, n);
 						}
 					} else {
-						say(player, n, "I think I might still be able to find a bigger fish");
-						npcsay(player, n, "Ok, good luck");
+						final int contestStartedMenu = multi(player, n,
+							"I think I might still be able to find a bigger fish",
+							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						if (contestStartedMenu == 0) {
+							say(player, n, "I think I might still be able to find a bigger fish");
+							npcsay(player, n, "Ok, good luck");
+						} else if (contestStartedMenu == 1) {
+							MyWorldQuestShortcuts.completeFishingContest(player, n);
+						}
 					}
 
 					return;
@@ -146,7 +156,14 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 					if (player.getCarriedItems().hasCatalogID(ItemId.HEMENSTER_FISHING_TROPHY.id(), Optional.of(false))) {
 						npcsay(player, n, "Hello champ",
 							"So any hints on how to fish so well");
-						say(player, n, "I think I'll keep them to myself");
+						final int trophyMenu = multi(player, n,
+							"I think I'll keep them to myself",
+							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						if (trophyMenu == 0) {
+							say(player, n, "I think I'll keep them to myself");
+						} else if (trophyMenu == 1) {
+							MyWorldQuestShortcuts.completeFishingContest(player, n);
+						}
 						return;
 					}
 

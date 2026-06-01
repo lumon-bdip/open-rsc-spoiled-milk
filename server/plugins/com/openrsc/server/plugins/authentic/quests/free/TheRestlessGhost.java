@@ -74,22 +74,36 @@ public class TheRestlessGhost implements QuestInterface, TakeObjTrigger,
 					say(player, n, "Hello ghost, how are you?");
 					npcsay(player, n, "How are you doing finding my skull?");
 					if (!player.getCarriedItems().hasCatalogID(ItemId.QUEST_SKULL.id(), Optional.of(false))) {
-						say(player, n, "Sorry, I can't find it at the moment");
-						npcsay(player,
-							n,
-							"Ah well keep on looking",
-							"I'm pretty sure it's somewhere in the tower south west from here",
-							"There's a lot of levels to the tower, though",
-							"I suppose it might take a little while to find");
-						// kosher: this condition made player need to restart skull process incl. skeleton fight
-						player.getCache().remove("tried_grab_skull");
+						int choice = multi(player, n,
+							"Sorry, I can't find it at the moment",
+							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						if (choice == 0) {
+							say(player, n, "Sorry, I can't find it at the moment");
+							npcsay(player,
+								n,
+								"Ah well keep on looking",
+								"I'm pretty sure it's somewhere in the tower south west from here",
+								"There's a lot of levels to the tower, though",
+								"I suppose it might take a little while to find");
+							// kosher: this condition made player need to restart skull process incl. skeleton fight
+							player.getCache().remove("tried_grab_skull");
+						} else if (choice == 1) {
+							MyWorldQuestShortcuts.completeRestlessGhost(player, n);
+						}
 					} else {
-						say(player, n, "I have found it");
-						npcsay(player,
-							n,
-							"Hurrah now I can stop being a ghost",
-							"You just need to put it in my coffin over there",
-							"And I will be free");
+						int choice = multi(player, n,
+							"I have found it",
+							MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+						if (choice == 0) {
+							say(player, n, "I have found it");
+							npcsay(player,
+								n,
+								"Hurrah now I can stop being a ghost",
+								"You just need to put it in my coffin over there",
+								"And I will be free");
+						} else if (choice == 1) {
+							MyWorldQuestShortcuts.completeRestlessGhost(player, n);
+						}
 					}
 					return;
 				}
@@ -180,7 +194,8 @@ public class TheRestlessGhost implements QuestInterface, TakeObjTrigger,
 					int choice = multi(player, n, false, //do not send over
 						"Yep, now tell me what the problem is",
 						"No, you sound like you're speaking nonsense to me",
-						"Wow, this amulet works");
+						"Wow, this amulet works",
+						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 					if (choice == 0) {
 						say(player, n, "Yep, now tell me what the problem is");
 						npcsay(player, n,
@@ -251,6 +266,8 @@ public class TheRestlessGhost implements QuestInterface, TakeObjTrigger,
 							say(player, n, "No, you're scary");
 							ghostDialogue(player, n, Ghost.SCARY);
 						}
+					} else if (choice == 3) {
+						MyWorldQuestShortcuts.completeRestlessGhost(player, n);
 					}
 				}
 				return;

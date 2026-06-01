@@ -139,9 +139,19 @@ def main() -> None:
         "Smithing production should close the batch window when resources run out mid-batch",
     )
     require(
+        smelting_text,
+        "if (!recipe.hasMaterials(player)) {\n\t\t\t\tstopbatch();\n\t\t\t\tbreak;",
+        "Smelting production should close the batch window when resources run out mid-batch",
+    )
+    require(
+        smelting_text,
+        'player.message("You have no steel bars left");\n\t\t\tstopbatch();',
+        "Cannonball production should close the batch window when steel runs out",
+    )
+    require(
         do_skill_interface_text,
-        "boolean showQuantityControls = !isSmithingMaterialPicker();",
-        "Smithing material picker should hide unused quantity controls",
+        "boolean showQuantityControls = !isPickerInterface();",
+        "Production picker pages should hide unused quantity controls",
     )
     require(
         crafting_text,

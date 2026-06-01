@@ -8,6 +8,7 @@ import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.MiniGameInterface;
+import com.openrsc.server.plugins.custom.quests.MyWorldQuestShortcuts;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
@@ -74,7 +75,8 @@ public class AlfredGrimhandBarCrawl implements MiniGameInterface, TalkNpcTrigger
 				if (!player.getCarriedItems().hasCatalogID(ItemId.BARCRAWL_CARD.id(), Optional.of(false))) {
 					final int third = multi(player, n, false, //do not send over
 						"I've lost my  barcrawl card",
-						"Not to bad, my barcrawl card is in my bank now");
+						"Not to bad, my barcrawl card is in my bank now",
+						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 					if (third == 0) {
 						npcsay(player, n, "What are you like?",
 							"You're gonna have to start all over now",
@@ -90,6 +92,8 @@ public class AlfredGrimhandBarCrawl implements MiniGameInterface, TalkNpcTrigger
 						say(player, n, "Not to bad, my barcrawl card is in my bank now");
 						npcsay(player, n,
 							"You need it with you when you are going on a barcrawl");
+					} else if (third == 2) {
+						completeBarcrawlShortcut(player, n);
 					}
 					return;
 				} else if (player.getCache().hasKey("barone")
@@ -118,15 +122,23 @@ public class AlfredGrimhandBarCrawl implements MiniGameInterface, TalkNpcTrigger
 					player.getCache().remove("barsix");
 					player.sendMiniGameComplete(this.getMiniGameId(), Optional.empty());
 				} else {
-					say(player, n, "I haven't finished it yet");
-					npcsay(player, n,
-						"Well come back when you have, you lightweight");
+					final int unfinished = multi(player, n,
+						"I haven't finished it yet",
+						MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+					if (unfinished == 0) {
+						say(player, n, "I haven't finished it yet");
+						npcsay(player, n,
+							"Well come back when you have, you lightweight");
+					} else if (unfinished == 1) {
+						completeBarcrawlShortcut(player, n);
+					}
 				}
 				return;
 			}
 			npcsay(player, n, "Oi whaddya want?");
 			final int first = multi(player, n,
-				"I want to come through this gate", "I want some money");
+				"I want to come through this gate", "I want some money",
+				MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 			if (first == 0) {
 				npcsay(player, n, "Barbarians only", "Are you a barbarian?",
 					"You don't look like one");
@@ -157,7 +169,25 @@ public class AlfredGrimhandBarCrawl implements MiniGameInterface, TalkNpcTrigger
 				}
 			} else if (first == 1) {
 				npcsay(player, n, "Well do I look like a banker to you?");
+			} else if (first == 2) {
+				completeBarcrawlShortcut(player, n);
 			}
 		}
+	}
+
+	private void completeBarcrawlShortcut(final Player player, final Npc n) {
+		npcsay(player, n,
+			"If you've already finished Alfred Grimhand's barcrawl,",
+			"then you can come in.");
+		player.getCache().store("barcrawl_completed", true);
+		player.getCache().remove("barcrawl");
+		player.getCache().remove("barone");
+		player.getCache().remove("bartwo");
+		player.getCache().remove("barthree");
+		player.getCache().remove("barfour");
+		player.getCache().remove("barfive");
+		player.getCache().remove("barsix");
+		player.getCarriedItems().remove(new Item(ItemId.BARCRAWL_CARD.id()));
+		player.sendMiniGameComplete(this.getMiniGameId(), Optional.empty());
 	}
 }

@@ -282,11 +282,13 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		startbatch(player, requestedCount);
 		while (!ifinterrupted() && !isbatchcomplete()) {
 			if (!recipe.hasMaterials(player)) {
+				stopbatch();
 				break;
 			}
 			if (player.getConfig().WANT_FATIGUE && player.getConfig().STOP_SKILLING_FATIGUED >= 2
 				&& player.getFatigue() >= player.MAX_FATIGUE) {
 				player.message("You are too tired to smelt this ore");
+				stopbatch();
 				break;
 			}
 
@@ -398,6 +400,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		}
 		if (player.getCarriedItems().getInventory().countId(ItemId.STEEL_BAR.id(), Optional.of(false)) < 1) {
 			player.message("You have no steel bars left");
+			stopbatch();
 			return;
 		}
 
