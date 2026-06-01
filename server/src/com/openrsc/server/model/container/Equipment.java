@@ -1170,9 +1170,10 @@ public class Equipment {
 		// They only relied on its untradability as the check. Proof of this is in the
 		// behaviour seen in 2004, when transferring the cape from RS2 back to RS1.
 
-		// God capes and staves.
+		// God-aligned equipment.
 		else if (!matchesCurrentPrayerBook(item.getCatalogId())) {
-			player.message("you must worship " + formatGodLine(getRequiredGodLine(item.getCatalogId())) + " to equip this");
+			player.message("You attempt to put it on...");
+			player.message("It scalds the flesh! Metaphorically, of course.");
 			return false;
 		} else if (item.getCatalogId() == ItemId.STAFF_OF_GUTHIX.id() && (hasEquipped(ItemId.ZAMORAK_CAPE.id()) || hasEquipped(ItemId.SARADOMIN_CAPE.id()))) { // try to wear guthix staff
 			player.message("you may not wield this staff while wearing a cape of another god");
@@ -1321,6 +1322,15 @@ public class Equipment {
 			return PrayerCatalog.GodLine.ZAMORAK;
 		}
 		if (itemId == ItemId.GUTHIX_CAPE.id() || itemId == ItemId.STAFF_OF_GUTHIX.id()) {
+			return PrayerCatalog.GodLine.GUTHIX;
+		}
+		if (itemId == ItemId.HOLY_SYMBOL_OF_SARADOMIN.id()) {
+			return PrayerCatalog.GodLine.SARADOMIN;
+		}
+		if (itemId == ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id()) {
+			return PrayerCatalog.GodLine.ZAMORAK;
+		}
+		if (itemId == ItemId.GUTHIX_SYMBOL.id()) {
 			return PrayerCatalog.GodLine.GUTHIX;
 		}
 		if (isZamorakBlessedStaff(itemId)) {

@@ -32,6 +32,7 @@ def main() -> None:
     blessed = (SERVER / "plugins/com/openrsc/server/plugins/custom/myworld/skills/prayer/BlessedSymbols.java").read_text(encoding="utf-8")
     destroy = (SERVER / "plugins/com/openrsc/server/plugins/custom/myworld/skills/prayer/DestroyOpposingBlessedObject.java").read_text(encoding="utf-8")
     devotion = (SERVER / "src/com/openrsc/server/content/Devotion.java").read_text(encoding="utf-8")
+    equipment = (SERVER / "src/com/openrsc/server/model/container/Equipment.java").read_text(encoding="utf-8")
     brother_jered = (SERVER / "plugins/com/openrsc/server/plugins/authentic/npcs/edgeville/BrotherJered.java").read_text(encoding="utf-8")
     scorpius = (SERVER / "plugins/com/openrsc/server/plugins/authentic/npcs/ardougne/west/SpiritOfScorpius.java").read_text(encoding="utf-8")
     base_items = load_items(SERVER / "conf/server/defs/ItemDefs.json")
@@ -99,6 +100,15 @@ def main() -> None:
             "symbol destruction should recognize all god lines")
     require("return 5;" in destroy and "return 200;" in destroy,
             "symbol destruction should grant 5 devotion swing and symbol production XP")
+    require('player.message("You attempt to put it on...")' in equipment
+            and 'player.message("It scalds the flesh! Metaphorically, of course.")' in equipment,
+            "opposing god equipment should use the scalding equip rejection message")
+    require("itemId == ItemId.HOLY_SYMBOL_OF_SARADOMIN.id()" in equipment,
+            "Saradomin symbol should be gated by Saradomin worship")
+    require("itemId == ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id()" in equipment,
+            "Zamorak symbol should be gated by Zamorak worship")
+    require("itemId == ItemId.GUTHIX_SYMBOL.id()" in equipment,
+            "Guthix symbol should be gated by Guthix worship")
 
     require("SYMBOL_BONUS_SUFFIX" in devotion, "devotion should track every-other symbol bonus")
     require("hasBlessedSymbolEquipped(player, godLine)" in devotion, "offerings should check matching blessed symbol")
