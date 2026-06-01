@@ -9,6 +9,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.AbstractShop;
+import com.openrsc.server.util.rsc.MessageType;
 
 import static com.openrsc.server.plugins.Functions.*;
 
@@ -24,6 +25,18 @@ public class Tanner extends AbstractShop {
 		new Item(ItemId.GOBLIN_HIDE_BOOTS.id(), 1),
 		new Item(ItemId.GOBLIN_HIDE_CHAPS.id(), 1),
 		new Item(ItemId.GOBLIN_HIDE_CUIRASS.id(), 1));
+	private final Shop masterShop = new Shop(false, 35000, 120, 55, 2,
+		new Item(ItemId.WOLF_LEATHER.id(), 10),
+		new Item(ItemId.HELLHOUND_LEATHER.id(), 10),
+		new Item(ItemId.CURED_SPIDER_CARAPACE.id(), 10),
+		new Item(ItemId.CURED_MAGIC_SPIDER_CARAPACE.id(), 10),
+		new Item(ItemId.CURED_SCORPION_CARAPACE.id(), 10),
+		new Item(ItemId.GIANT_LEATHER.id(), 10),
+		new Item(ItemId.MOSS_GIANT_LEATHER.id(), 10),
+		new Item(ItemId.ICE_GIANT_LEATHER.id(), 10),
+		new Item(ItemId.FIRE_GIANT_LEATHER.id(), 10),
+		new Item(ItemId.THREAD.id(), 100),
+		new Item(ItemId.NEEDLE.id(), 10));
 
 	@Override
 	public void onTalkNpc(Player player, final Npc n) {
@@ -36,10 +49,13 @@ public class Tanner extends AbstractShop {
 		switch (option) {
 			case 0:
 				say(player, n, "What leather armour do you sell?");
-				npcsay(player, n, "Mostly cow and goblin hide pieces",
-					"Good enough to get a new hunter started");
-				player.setAccessingShop(shop);
-				ActionSender.showShop(player, shop);
+				if (isMasterTanner(n)) {
+					npcsay(player, n, "Only the best leather, of course");
+				} else {
+					npcsay(player, n, "Mostly cow and goblin hide pieces",
+						"Good enough to get a new hunter started");
+				}
+				openShop(player, n);
 				break;
 			case 1:
 				say(player, n, "How do I tan hides now?");
@@ -57,12 +73,28 @@ public class Tanner extends AbstractShop {
 
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {
-		return n.getID() == NpcId.TANNER.id();
+		return n.getID() == NpcId.TANNER.id() || isMasterTanner(n);
+	}
+
+	@Override
+	public void onOpNpc(Player player, Npc n, String command) {
+		Npc storeOwner = player.getWorld().getNpc(n.getID(),
+			player.getX() - 2, player.getX() + 2,
+			player.getY() - 2, player.getY() + 2);
+		if (storeOwner == null) return;
+		if (command.equalsIgnoreCase("Trade") && config().RIGHT_CLICK_TRADE) {
+			if (!player.getQolOptOut()) {
+				openShop(player, n);
+			} else {
+				player.playerServerMessage(MessageType.QUEST, "Right click trading is a QoL feature which you are opted out of.");
+				player.playerServerMessage(MessageType.QUEST, "Consider using an original RSC client so that you don't see the option.");
+			}
+		}
 	}
 
 	@Override
 	public Shop[] getShops(World world) {
-		return new Shop[]{shop};
+		return new Shop[]{shop, masterShop};
 	}
 
 	@Override
@@ -73,5 +105,19 @@ public class Tanner extends AbstractShop {
 	@Override
 	public Shop getShop() {
 		return shop;
+	}
+
+	private boolean isMasterTanner(Npc n) {
+		return n.getID() == NpcId.MASTER_TANNER.id();
+	}
+
+	private Shop getShop(Npc n) {
+		return isMasterTanner(n) ? masterShop : shop;
+	}
+
+	private void openShop(Player player, Npc n) {
+		Shop selectedShop = getShop(n);
+		player.setAccessingShop(selectedShop);
+		ActionSender.showShop(player, selectedShop);
 	}
 }

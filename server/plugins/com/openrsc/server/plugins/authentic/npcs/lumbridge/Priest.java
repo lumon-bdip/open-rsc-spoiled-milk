@@ -5,6 +5,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.plugins.custom.quests.MyWorldQuestShortcuts;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
 import java.util.ArrayList;
@@ -18,6 +19,13 @@ public class Priest implements TalkNpcTrigger {
 	public void onTalkNpc(final Player player, final Npc n) {// that could work
 		if (player.getQuestStage(Quests.THE_RESTLESS_GHOST) == 1) {
 			npcsay(player, n, "Have you got rid of the ghost yet?");
+			int choice = multi(player, n,
+				"I can't find father Urhney at the moment",
+				MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+			if (choice == 1) {
+				MyWorldQuestShortcuts.completeRestlessGhost(player, n);
+				return;
+			}
 			say(player, n, "I can't find father Urhney at the moment");
 			npcsay(player,
 				n,
@@ -31,12 +39,26 @@ public class Priest implements TalkNpcTrigger {
 		if (player.getQuestStage(Quests.THE_RESTLESS_GHOST) >= 2) {
 			npcsay(player, n, "Have you got rid of the ghost yet?");
 			if (player.getQuestStage(Quests.THE_RESTLESS_GHOST) == 2) {
+				int choice = multi(player, n,
+					"I had a talk with father Urhney",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (choice == 1) {
+					MyWorldQuestShortcuts.completeRestlessGhost(player, n);
+					return;
+				}
 				say(player, n, "I had a talk with father Urhney",
 					"He has given me this funny amulet to talk to the ghost with");
 				npcsay(player, n, "I always wondered what that amulet was",
 					"Well I hope it's useful. Tell me if you get rid of the ghost");
 			} else if (player.getQuestStage(Quests.THE_RESTLESS_GHOST) == 3
 				&& !player.getCarriedItems().hasCatalogID(ItemId.QUEST_SKULL.id(), Optional.of(false))) {
+				int choice = multi(player, n,
+					"I've found out that the ghost's corpse has lost its skull",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (choice == 1) {
+					MyWorldQuestShortcuts.completeRestlessGhost(player, n);
+					return;
+				}
 				say(
 					player,
 					n,
@@ -48,6 +70,13 @@ public class Priest implements TalkNpcTrigger {
 				npcsay(player, n, "I hate warlocks", "Ah well good luck");
 			} else if (player.getQuestStage(Quests.THE_RESTLESS_GHOST) == 3
 				&& player.getCarriedItems().hasCatalogID(ItemId.QUEST_SKULL.id(), Optional.of(false))) {
+				int choice = multi(player, n,
+					"I've finally found the ghost's skull",
+					MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+				if (choice == 1) {
+					MyWorldQuestShortcuts.completeRestlessGhost(player, n);
+					return;
+				}
 				say(player, n, "I've finally found the ghost's skull");
 				npcsay(player, n,
 					"Great. Put it in the ghost's coffin and see what happens!");
@@ -61,11 +90,16 @@ public class Priest implements TalkNpcTrigger {
 		options.add("Nice place you've got here");
 		if (player.getQuestStage(Quests.THE_RESTLESS_GHOST) <= 0) {
 			options.add("I'm looking for a quest");
+			if (player.getQuestStage(Quests.THE_RESTLESS_GHOST) == 0) {
+				options.add(MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
+			}
 		}
 		String[] finalOptions = new String[options.size()];
 		int option = multi(player, n, options.toArray(finalOptions));
+		if (option < 0 || option >= options.size()) return;
+		String selectedOption = options.get(option);
 
-		if (option == 0) {
+		if ("Who's Saradomin?".equals(selectedOption)) {
 			npcsay(player,
 				n,
 				"Surely you have heard of the God, Saradomin?",
@@ -103,11 +137,11 @@ public class Priest implements TalkNpcTrigger {
 			}
 		}
 
-		else if (option == 1) {
+		else if ("Nice place you've got here".equals(selectedOption)) {
 			npcsay(player, n, "It is, isn't it?", "It was built 230 years ago");
 		}
 
-		else if (option == 2 && player.getQuestStage(Quests.THE_RESTLESS_GHOST) <= 0) {
+		else if ("I'm looking for a quest".equals(selectedOption) && player.getQuestStage(Quests.THE_RESTLESS_GHOST) <= 0) {
 			if (player.getQuestStage(Quests.THE_RESTLESS_GHOST) == 0) {
 				npcsay(player, n,
 					"That's lucky, I need someone to do a quest for me");
@@ -128,6 +162,9 @@ public class Priest implements TalkNpcTrigger {
 			} else {
 				npcsay(player, n, "Sorry I only had the one quest");
 			}
+		} else if (MyWorldQuestShortcuts.ALREADY_DONE_OPTION.equals(selectedOption)) {
+			player.updateQuestStage(Quests.THE_RESTLESS_GHOST, 1);
+			MyWorldQuestShortcuts.completeRestlessGhost(player, n);
 		}
 	}
 

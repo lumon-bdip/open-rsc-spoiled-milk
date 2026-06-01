@@ -29,6 +29,15 @@ def main() -> None:
     require(ghost, '"I have found it",\n\t\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Restless Ghost skull-found shortcut")
     require(ghost, '"Wow, this amulet works",\n\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Restless Ghost amulet branch shortcut")
 
+    priest = (ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/lumbridge/Priest.java").read_text()
+    require(priest, "import com.openrsc.server.plugins.custom.quests.MyWorldQuestShortcuts;", "Restless Ghost priest shortcut import")
+    require(priest, "options.add(MyWorldQuestShortcuts.ALREADY_DONE_OPTION);", "Restless Ghost priest start shortcut")
+    require(priest, '"I can\'t find father Urhney at the moment",\n\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Restless Ghost priest stage 1 shortcut")
+    require(priest, '"I had a talk with father Urhney",\n\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Restless Ghost priest stage 2 shortcut")
+    require(priest, '"I\'ve found out that the ghost\'s corpse has lost its skull",\n\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Restless Ghost priest skull-search shortcut")
+    require(priest, '"I\'ve finally found the ghost\'s skull",\n\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Restless Ghost priest skull-found shortcut")
+    require(priest, "MyWorldQuestShortcuts.completeRestlessGhost(player, n);", "Restless Ghost priest shortcut completion")
+
     fishing = (ROOT / "server/plugins/com/openrsc/server/plugins/authentic/quests/members/FishingContest.java").read_text()
     require(fishing, '"I think I might still be able to find a bigger fish",\n\t\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Fishing Contest paid branch shortcut")
     require(fishing, '"I think I\'ll keep them to myself",\n\t\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Fishing Contest trophy branch shortcut")

@@ -188,6 +188,7 @@ def main() -> None:
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/RomeoAndJuliet.java", "completeRomeoAndJuliet"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/SheepShearer.java", "completeSheepShearer"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/TheRestlessGhost.java", "completeRestlessGhost"),
+        ("server/plugins/com/openrsc/server/plugins/authentic/npcs/lumbridge/Priest.java", "completeRestlessGhost"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/VampireSlayer.java", "completeVampireSlayer"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/free/WitchesPotion.java", "completeWitchsPotion"),
         ("server/plugins/com/openrsc/server/plugins/authentic/quests/members/LostCity.java", "completeLostCity"),
