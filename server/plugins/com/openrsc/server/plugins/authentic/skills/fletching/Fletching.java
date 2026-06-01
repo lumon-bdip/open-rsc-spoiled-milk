@@ -587,7 +587,8 @@ public class Fletching implements UseInvTrigger {
 			int materialCount = player.getCarriedItems().getInventory().countId(log.getCatalogId(), Optional.of(false));
 			int outputAmount = recipe.resultId == ItemId.ARROW_SHAFTS.id() ? getNumberOfShafts(player, log.getCatalogId()) : 1;
 			recipes.add(new ProductionRecipe(recipe.resultId, recipe.requiredLevel, 1, outputAmount,
-				level >= recipe.requiredLevel, materialCount >= 1));
+				level >= recipe.requiredLevel, materialCount >= 1,
+				new int[]{log.getCatalogId()}, new int[]{-1}, new int[]{1}));
 		}
 		return recipes.isEmpty() ? null
 			: new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose an item to shape", log.getCatalogId(), recipes);

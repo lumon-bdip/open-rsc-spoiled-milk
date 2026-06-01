@@ -8880,8 +8880,8 @@
         },
         {
             "id": 386,
-            "name": "Holy symbol mould",
-            "description": "Used to make Holy Symbols",
+            "name": "Saradomin symbol mould",
+            "description": "Used to make symbols of Saradomin",
             "command": "",
             "isFemaleOnly": 0,
             "isMembersOnly": 0,
@@ -23600,8 +23600,8 @@
         },
         {
             "id": 1026,
-            "name": "Unholy Symbol mould",
-            "description": "use this with silver in a furnace",
+            "name": "Zamorak symbol mould",
+            "description": "Used to make symbols of Zamorak",
             "command": "",
             "isFemaleOnly": 0,
             "isMembersOnly": 1,

@@ -2883,7 +2883,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Silver", "this needs refining", "", 75, 134, "items:134", false, false, 0, 0, false, false, true, 383));
 		items.add(new ItemDef("silver bar", "this looks valuable", "", 150, 79, "items:79", false, false, 0, 0, false, false, true, 384));
 		items.add(new ItemDef("Symbol of Saradomin", "Increases devotion gained from offerings", "", 300, 44, "items:44", false, true, 1024, 0, false, false, true, 385));
-		items.add(new ItemDef("Holy symbol mould", "Used to make Holy Symbols", "", 5, 132, "items:132", false, false, 0, 0, false, false, true, 386));
+		items.add(new ItemDef("Saradomin symbol mould", "Used to make symbols of Saradomin", "", 5, 132, "items:132", false, false, 0, 0, false, false, true, 386));
 		items.add(new ItemDef("Disk of Returning", "Used to get out of Thordur's blackhole", "spin", 12, 133, "items:133", false, false, 0, 0, false, false, true, 387));
 		items.add(new ItemDef("Monks robe", "I feel closer to the God's when I am wearing this", "", 40, 87, "items:87", false, true, 64, 10510400, false, false, true, 388));
 		items.add(new ItemDef("Monks robe", "Keeps a monk's legs nice and warm", "", 30, 88, "items:88", false, true, 128, 10510400, false, false, true, 389));
@@ -3527,7 +3527,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Slaves Robe Top", "A dirty desert shirt", "", 40, 87, "items:87", false, true, 64, 8421376, true, false, true, 1023));
 		items.add(new ItemDef("Steel Throwing Dart", "A deadly throwing dart with a steel tip.", "", 20, 231, "items:231", true, true, 16, 15658734, true, false, false, 1024));
 		items.add(new ItemDef("Astrology Book", "A book on Astrology in runescape", "Read", 2, 28, "items:28", false, false, 0, 0, true, true, false, 1025));
-		items.add(new ItemDef("Unholy Symbol mould", "use this with silver in a furnace", "", 200, 349, "items:349", false, false, 0, 0, true, true, true, 1026));
+		items.add(new ItemDef("Zamorak symbol mould", "Used to make symbols of Zamorak", "", 200, 349, "items:349", false, false, 0, 0, true, true, true, 1026));
 		items.add(new ItemDef("Unstrung symbol of Zamorak", "this needs stringing", "", 200, 350, "items:350", false, false, 0, 0, true, true, true, 1027));
 		items.add(new ItemDef("Unblessed symbol of Zamorak", "this needs blessing", "", 200, 351, "items:351", false, true, 1024, 0, true, true, true, 1028));
 		items.add(new ItemDef("Symbol of Zamorak", "Increases devotion gained from offerings", "", 200, 351, "items:351", false, true, 1024, 0, true, true, true, 1029));

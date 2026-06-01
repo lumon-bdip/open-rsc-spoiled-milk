@@ -533,7 +533,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 			int requiredLevel = minSmithingLevel(barId);
 			boolean levelMet = requiredLevel > -1 && level >= requiredLevel;
 			boolean materialsMet = player.getCarriedItems().getInventory().countId(barId, Optional.of(false)) > 0;
-			recipes.add(new ProductionRecipe(barId, requiredLevel, 1, 1, levelMet, materialsMet));
+			recipes.add(new ProductionRecipe(barId, requiredLevel, 1, 1, levelMet, materialsMet,
+				new int[]{barId, ItemId.HAMMER.id()}, new int[]{-1, -1}, new int[]{1, 1}));
 		}
 		return new ProductionSession(ProductionSession.TYPE_SMITHING_MATERIAL, "Choose a metal to work", ItemId.HAMMER.id(), recipes);
 	}

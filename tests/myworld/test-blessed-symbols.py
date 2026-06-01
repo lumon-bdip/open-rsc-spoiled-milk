@@ -54,6 +54,8 @@ def main() -> None:
     require(base_items[44]["name"] == "Unstrung symbol of Saradomin", "Saradomin unstrung symbol name mismatch")
     require(base_items[45]["name"] == "Unblessed symbol of Saradomin", "Saradomin unblessed symbol name mismatch")
     require(base_items[385]["name"] == "Symbol of Saradomin", "Saradomin blessed symbol name mismatch")
+    require(base_items[386]["name"] == "Saradomin symbol mould", "Saradomin symbol mould name mismatch")
+    require(base_items[1026]["name"] == "Zamorak symbol mould", "Zamorak symbol mould name mismatch")
     require(base_items[1027]["name"] == "Unstrung symbol of Zamorak", "Zamorak unstrung symbol name mismatch")
     require(base_items[1028]["name"] == "Unblessed symbol of Zamorak", "Zamorak unblessed symbol name mismatch")
     require(base_items[1029]["name"] == "Symbol of Zamorak", "Zamorak blessed symbol name mismatch")
@@ -62,6 +64,8 @@ def main() -> None:
     require(custom_items[3175]["name"] == "Symbol of Guthix", "Guthix blessed symbol name mismatch")
     require(custom_items[3174]["appearanceID"] == 995 and custom_items[3175]["appearanceID"] == 995,
             "Guthix worn symbols should use the external Guthix symbol appearance")
+    require('new ItemDef("Saradomin symbol mould"' in client, "Client Saradomin mould name mismatch")
+    require('new ItemDef("Zamorak symbol mould"' in client, "Client Zamorak mould name mismatch")
     require("external-png:guthix-symbol-mould" in client, "Guthix mould should use the new inventory sprite")
     require("external-png:unstrung-symbol-of-guthix" in client, "Guthix unstrung symbol should use the new inventory sprite")
     require("external-png:unblessed-symbol-of-guthix" in client, "Guthix unblessed symbol should use the new inventory sprite")
@@ -89,6 +93,8 @@ def main() -> None:
             "symbol blessing should use devotion-scaled Prayer XP")
 
     require("ItemId.GUTHIX_SYMBOL_MOULD.id()" in crafting, "Guthix symbol mould should be a silver mould")
+    require("ItemId.HOLY_SYMBOL_MOULD.id()" in crafting_shop, "Saradomin symbol mould should be sold by crafting equipment shops")
+    require("ItemId.UNHOLY_SYMBOL_MOULD.id()" in crafting_shop, "Zamorak symbol mould should be sold by crafting equipment shops")
     require("ItemId.GUTHIX_SYMBOL_MOULD.id()" in crafting_shop, "Guthix symbol mould should be sold by crafting equipment shops")
     require("ItemId.UNSTRUNG_GUTHIX_SYMBOL.id()" in crafting, "Guthix unstrung symbol should be craftable")
     require("ItemId.UNBLESSED_GUTHIX_SYMBOL.id()" in crafting, "Guthix symbol should be stringable")

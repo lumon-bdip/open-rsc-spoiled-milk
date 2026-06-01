@@ -135,6 +135,11 @@ def main() -> None:
     )
     require(
         smithing_text,
+        "new int[]{barId, ItemId.HAMMER.id()}, new int[]{-1, -1}, new int[]{1, 1}",
+        "Smithing metal picker recipes should expose bar and hammer icon cost details",
+    )
+    require(
+        smithing_text,
         "stopbatch();\n\t\t\t\tbreak;",
         "Smithing production should close the batch window when resources run out mid-batch",
     )
@@ -192,9 +197,48 @@ def main() -> None:
     )
     require(
         crafting_text,
+        "goldJewelryProductionRecipe(outputId, def, mouldId",
+        "Gold jewelry production recipes should route through ingredient-aware recipe construction",
+    )
+    require(
+        crafting_text,
+        "addProductionIngredient(ingredientIds, fallbackIds, amounts, ItemId.GOLD_BAR.id(), 1);",
+        "Gold jewelry production recipes should expose gold bar icon cost details",
+    )
+    require(
+        crafting_text,
+        "addProductionIngredient(ingredientIds, fallbackIds, amounts, mouldId, 1);",
+        "Gold jewelry production recipes should expose mould icon cost details",
+    )
+    require(
+        crafting_text,
+        "addProductionIngredient(ingredientIds, fallbackIds, amounts, def.getReqGem(), 1);",
+        "Gold jewelry production recipes should expose gem icon cost details",
+    )
+    require(
+        crafting_text,
         "barCount >= 1 && hasMould",
         "Silver jewelry production recipes should reflect bar and mould requirements",
     )
+    require(
+        crafting_text,
+        "new int[]{ItemId.SILVER_BAR.id(), silver_moulds[type]}",
+        "Silver jewelry production recipes should expose silver bar and mould icon costs",
+    )
+    for snippet, label in (
+        ("new int[]{leather.getCatalogId(), ItemId.THREAD.id()}", "leather crafting"),
+        ("new int[]{ItemId.COW_HIDE.id(), ItemId.THREAD.id()}", "brown apron crafting"),
+        ("new int[]{ItemId.BALL_OF_WOOL.id()}", "wool crafting"),
+        ("new int[]{ItemId.SOFT_CLAY.id()}", "pottery crafting"),
+        ("new int[]{ItemId.MOLTEN_GLASS.id()}", "glassblowing crafting"),
+        ("new int[]{barId, recipe.mouldId}", "ranged mould casting"),
+        ("new int[]{barId}, new int[]{-1}, new int[]{1}", "furnace metal selection"),
+    ):
+        require(
+            crafting_text,
+            snippet,
+            f"{label} production recipes should expose ingredient icon costs",
+        )
     require(
         fletching_text,
         "int outputAmount = recipe.resultId == ItemId.ARROW_SHAFTS.id() ? getNumberOfShafts(player, log.getCatalogId()) : 1;",
@@ -204,6 +248,11 @@ def main() -> None:
         fletching_text,
         "level >= recipe.requiredLevel, materialCount >= 1",
         "Fletching production recipes should reflect current level and log availability",
+    )
+    require(
+        fletching_text,
+        "new int[]{log.getCatalogId()}, new int[]{-1}, new int[]{1}",
+        "Fletching production recipes should expose log icon cost details",
     )
     for label, text in (
         ("smithing", smithing_text),

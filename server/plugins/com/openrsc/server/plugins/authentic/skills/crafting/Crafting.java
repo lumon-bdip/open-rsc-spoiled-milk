@@ -2095,7 +2095,9 @@ public class Crafting implements UseInvTrigger,
 		int threadUses = getAvailableThreadUses(player);
 		for (HideArmorPiece piece : pieces) {
 			recipes.add(new ProductionRecipe(piece.resultId, piece.reqLvl, piece.materialCost, 1,
-				level >= piece.reqLvl, materialCount >= piece.materialCost && threadUses >= 1));
+				level >= piece.reqLvl, materialCount >= piece.materialCost && threadUses >= 1,
+				new int[]{leather.getCatalogId(), ItemId.THREAD.id()},
+				new int[]{-1, -1}, new int[]{piece.materialCost, 1}));
 		}
 		return new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose a leather item to craft", leather.getCatalogId(), recipes);
 	}
@@ -2106,7 +2108,9 @@ public class Crafting implements UseInvTrigger,
 		int materialCount = player.getCarriedItems().getInventory().countId(ItemId.COW_HIDE.id(), Optional.of(false));
 		int threadUses = getAvailableThreadUses(player);
 		recipes.add(new ProductionRecipe(ItemId.BROWN_APRON.id(), BROWN_APRON_CRAFTING_LEVEL, BROWN_APRON_COW_HIDE_COST, 1,
-			level >= BROWN_APRON_CRAFTING_LEVEL, materialCount >= BROWN_APRON_COW_HIDE_COST && threadUses >= 1));
+			level >= BROWN_APRON_CRAFTING_LEVEL, materialCount >= BROWN_APRON_COW_HIDE_COST && threadUses >= 1,
+			new int[]{ItemId.COW_HIDE.id(), ItemId.THREAD.id()},
+			new int[]{-1, -1}, new int[]{BROWN_APRON_COW_HIDE_COST, 1}));
 		return new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose a leather item to craft", ItemId.COW_HIDE.id(), recipes);
 	}
 
@@ -2116,7 +2120,8 @@ public class Crafting implements UseInvTrigger,
 		int materialCount = player.getCarriedItems().getInventory().countId(ItemId.BALL_OF_WOOL.id(), Optional.of(false));
 		for (WoolGarmentRecipe recipe : WOOL_GARMENT_RECIPES) {
 			recipes.add(new ProductionRecipe(recipe.resultId, recipe.reqLvl, recipe.woolCost, 1,
-				level >= recipe.reqLvl, materialCount >= recipe.woolCost));
+				level >= recipe.reqLvl, materialCount >= recipe.woolCost,
+				new int[]{ItemId.BALL_OF_WOOL.id()}, new int[]{-1}, new int[]{recipe.woolCost}));
 		}
 		return new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose a wool item to craft", ItemId.BALL_OF_WOOL.id(), recipes);
 	}
@@ -2131,7 +2136,8 @@ public class Crafting implements UseInvTrigger,
 				continue;
 			}
 			recipes.add(new ProductionRecipe(recipe.resultId, recipe.reqLvl, 1, 1,
-				level >= recipe.reqLvl, materialCount >= 1));
+				level >= recipe.reqLvl, materialCount >= 1,
+				new int[]{ItemId.SOFT_CLAY.id()}, new int[]{-1}, new int[]{1}));
 		}
 		return recipes.isEmpty() ? null
 			: new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose a pottery item to shape", ItemId.SOFT_CLAY.id(), recipes);
@@ -2143,7 +2149,8 @@ public class Crafting implements UseInvTrigger,
 		int materialCount = player.getCarriedItems().getInventory().countId(ItemId.MOLTEN_GLASS.id(), Optional.of(false));
 		for (GlassBlowingRecipe recipe : GLASS_BLOWING_RECIPES) {
 			recipes.add(new ProductionRecipe(recipe.resultId, recipe.reqLvl, 1, 1,
-				level >= recipe.reqLvl, materialCount >= 1));
+				level >= recipe.reqLvl, materialCount >= 1,
+				new int[]{ItemId.MOLTEN_GLASS.id()}, new int[]{-1}, new int[]{1}));
 		}
 		return recipes.isEmpty() ? null
 			: new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose a glass item to blow", ItemId.MOLTEN_GLASS.id(), recipes);
@@ -2169,11 +2176,42 @@ public class Crafting implements UseInvTrigger,
 			boolean hasMould = mouldId <= 0 || player.getCarriedItems().getInventory().countId(mouldId, Optional.of(false)) > 0;
 			boolean hasGem = def.getReqGem() == ItemId.NOTHING.id()
 				|| player.getCarriedItems().getInventory().countId(def.getReqGem(), Optional.of(false)) > 0;
-			recipes.add(new ProductionRecipe(outputId, def.getReqLevel(), 1, 1,
+			recipes.add(goldJewelryProductionRecipe(outputId, def, mouldId,
 				level >= def.getReqLevel(), barCount >= 1 && hasMould && hasGem));
 		}
 		return recipes.isEmpty() ? null
 			: new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose jewelry to craft", ItemId.GOLD_BAR.id(), recipes);
+	}
+
+	private ProductionRecipe goldJewelryProductionRecipe(int outputId, ItemCraftingDef def, int mouldId,
+		boolean levelMet, boolean materialsMet) {
+		List<Integer> ingredientIds = new ArrayList<>();
+		List<Integer> fallbackIds = new ArrayList<>();
+		List<Integer> amounts = new ArrayList<>();
+		addProductionIngredient(ingredientIds, fallbackIds, amounts, ItemId.GOLD_BAR.id(), 1);
+		if (mouldId > 0) {
+			addProductionIngredient(ingredientIds, fallbackIds, amounts, mouldId, 1);
+		}
+		if (def.getReqGem() != ItemId.NOTHING.id()) {
+			addProductionIngredient(ingredientIds, fallbackIds, amounts, def.getReqGem(), 1);
+		}
+		return new ProductionRecipe(outputId, def.getReqLevel(), 1, 1, levelMet, materialsMet,
+			toIntArray(ingredientIds), toIntArray(fallbackIds), toIntArray(amounts));
+	}
+
+	private void addProductionIngredient(List<Integer> ingredientIds, List<Integer> fallbackIds, List<Integer> amounts,
+		int itemId, int amount) {
+		ingredientIds.add(itemId);
+		fallbackIds.add(-1);
+		amounts.add(amount);
+	}
+
+	private int[] toIntArray(List<Integer> values) {
+		int[] result = new int[values.size()];
+		for (int i = 0; i < values.size(); i++) {
+			result[i] = values.get(i);
+		}
+		return result;
 	}
 
 	private boolean isGoldJewelryInCategory(int outputId, JewelryCategory category) {
@@ -2230,7 +2268,9 @@ public class Crafting implements UseInvTrigger,
 			}
 			boolean hasMould = player.getCarriedItems().getInventory().countId(silver_moulds[type], Optional.of(false)) > 0;
 			recipes.add(new ProductionRecipe(results[type], 16, 1, 1, player.getSkills().getLevel(Skill.CRAFTING.id()) >= 16,
-				barCount >= 1 && hasMould));
+				barCount >= 1 && hasMould,
+				new int[]{ItemId.SILVER_BAR.id(), silver_moulds[type]},
+				new int[]{-1, -1}, new int[]{1, 1}));
 		}
 		return recipes.isEmpty() ? null
 			: new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose silver jewelry to craft", ItemId.SILVER_BAR.id(), recipes);
@@ -2295,7 +2335,8 @@ public class Crafting implements UseInvTrigger,
 		int barCount = player.getCarriedItems().getInventory().countId(barId, Optional.of(false));
 		for (RangedMouldRecipe recipe : availableRecipes) {
 			recipes.add(new ProductionRecipe(recipe.resultId, recipe.reqLvl, 1, recipe.amount,
-				level >= recipe.reqLvl, barCount >= 1 && hasRangedMould(player, recipe.mouldId)));
+				level >= recipe.reqLvl, barCount >= 1 && hasRangedMould(player, recipe.mouldId),
+				new int[]{barId, recipe.mouldId}, new int[]{-1, -1}, new int[]{1, 1}));
 		}
 		return new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose ranged weapon parts to cast", barId, recipes);
 	}
@@ -2336,7 +2377,8 @@ public class Crafting implements UseInvTrigger,
 			}
 			int barCount = player.getCarriedItems().getInventory().countId(barId, Optional.of(false));
 			recipes.add(new ProductionRecipe(barId, recipe.reqLvl, 1, 1,
-				level >= recipe.reqLvl, barCount >= 1));
+				level >= recipe.reqLvl, barCount >= 1,
+				new int[]{barId}, new int[]{-1}, new int[]{1}));
 		}
 		return recipes.isEmpty() ? null
 			: new ProductionSession(ProductionSession.TYPE_FURNACE_MATERIAL, "Choose a metal to cast", -1, recipes);
