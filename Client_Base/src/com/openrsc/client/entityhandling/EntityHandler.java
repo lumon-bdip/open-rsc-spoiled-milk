@@ -687,7 +687,7 @@ public class EntityHandler {
 		}
 		npcs.add(new NPCDef("Bob", "An axe seller", shopOption, 2, 2, 3, 2, false, sprites, 3158064, 16711680, 16711680, 9461792, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{129, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-		npcs.add(new NPCDef("Sheep", "A very wooly sheep", "", 0, 0, 3, 0, false, sprites, 0, 0, 0, 0, 170, 124, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Sheep", "A very wooly sheep", "Shear", 0, 0, 3, 0, false, sprites, 0, 0, 0, 0, 170, 124, 6, 6, 5, i++));
 		sprites = new int[]{132, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Chicken", "Yep definitely a chicken", "", 3, 4, 3, 4, true, sprites, 0, 0, 0, 0, 70, 62, 6, 6, 5, i++));
 		sprites = new int[]{142, 139, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};

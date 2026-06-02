@@ -308,6 +308,7 @@ def require_harvesting_uses_guaranteed_yield() -> None:
 
 def require_shearing_uses_harvesting() -> None:
     text = SHEEP_PLUGIN.read_text(encoding="utf-8")
+    client_text = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     npc_defs_text = (ROOT / "server/conf/server/defs/NpcDefs.json").read_text(encoding="utf-8")
     npc_patch18_text = (ROOT / "server/conf/server/defs/NpcDefsPatch18.json").read_text(encoding="utf-8")
     snippets = (
@@ -329,6 +330,8 @@ def require_shearing_uses_harvesting() -> None:
     for label, defs_text in (("NpcDefs.json", npc_defs_text), ("NpcDefsPatch18.json", npc_patch18_text)):
         if '"name": "Sheep"' not in defs_text or '"command": "Shear"' not in defs_text:
             fail(f"{label} does not expose the direct Sheep shearing command")
+    if 'new NPCDef("Sheep", "A very wooly sheep", "Shear"' not in client_text:
+        fail("Client NPC defs do not expose the direct Sheep shearing command")
 
 
 def require_shears_smithing_and_defs() -> None:
