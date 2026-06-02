@@ -23,7 +23,8 @@
     },
     {
       "id": 152,
-      "name": "Gold ore"
+      "name": "Gold ore",
+      "basePrice": 300
     },
     {
       "id": 153,
@@ -57,7 +58,8 @@
     },
     {
       "id": 172,
-      "name": "Gold bar"
+      "name": "Gold bar",
+      "basePrice": 600
     },
     {
       "id": 173,

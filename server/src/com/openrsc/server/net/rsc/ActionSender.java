@@ -2095,7 +2095,7 @@ public class ActionSender {
 		 * Below is a quickfix to allow banks to update the bank screen when the bank has more than 256 items.
 		 * This is very similar to how the bank updates when using the sort/insert features in Cabbage bank.
 		 */
-		boolean sendWholeBank = (player.getClientVersion() == 10009 || player.getClientVersion() == 10010 || player.getClientVersion() == 10011);
+		boolean sendWholeBank = (player.getClientVersion() == 10009 || player.getClientVersion() == 10010 || player.getClientVersion() == 10011 || player.getClientVersion() == 10012);
 		if (player.getConfig().WANT_CUSTOM_BANKS && sendWholeBank) {
 			showBank(player);
 		}

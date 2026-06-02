@@ -9,7 +9,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 1,
       "weaponAimBonus": 8,
-      "weaponPowerBonus": 8
+      "weaponPowerBonus": 8,
+      "basePrice": 600
     },
     {
       "id": 2152,
@@ -19,7 +20,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 13,
-      "weaponPowerBonus": 13
+      "weaponPowerBonus": 13,
+      "basePrice": 600
     },
     {
       "id": 2155,
@@ -29,7 +31,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 14,
-      "weaponPowerBonus": 14
+      "weaponPowerBonus": 14,
+      "basePrice": 600
     },
     {
       "id": 2153,
@@ -39,7 +42,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 3,
       "weaponAimBonus": 16,
-      "weaponPowerBonus": 16
+      "weaponPowerBonus": 16,
+      "basePrice": 1200
     },
     {
       "id": 2156,
@@ -49,7 +53,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 3,
       "weaponAimBonus": 15,
-      "weaponPowerBonus": 20
+      "weaponPowerBonus": 20,
+      "basePrice": 1800
     },
     {
       "id": 2157,
@@ -59,7 +64,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 12,
-      "weaponPowerBonus": 8
+      "weaponPowerBonus": 8,
+      "basePrice": 600
     },
     {
       "id": 2154,
@@ -69,7 +75,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 4,
       "weaponAimBonus": 22,
-      "weaponPowerBonus": 22
+      "weaponPowerBonus": 22,
+      "basePrice": 1800
     },
     {
       "id": 3113,
@@ -79,7 +86,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 1,
       "weaponAimBonus": 8,
-      "weaponPowerBonus": 8
+      "weaponPowerBonus": 8,
+      "basePrice": 600
     },
     {
       "id": 3114,
@@ -89,7 +97,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 13,
-      "weaponPowerBonus": 13
+      "weaponPowerBonus": 13,
+      "basePrice": 600
     },
     {
       "id": 3117,
@@ -99,7 +108,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 14,
-      "weaponPowerBonus": 14
+      "weaponPowerBonus": 14,
+      "basePrice": 600
     },
     {
       "id": 3115,
@@ -109,7 +119,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 3,
       "weaponAimBonus": 16,
-      "weaponPowerBonus": 16
+      "weaponPowerBonus": 16,
+      "basePrice": 1200
     },
     {
       "id": 3118,
@@ -119,7 +130,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 3,
       "weaponAimBonus": 15,
-      "weaponPowerBonus": 20
+      "weaponPowerBonus": 20,
+      "basePrice": 1800
     },
     {
       "id": 3119,
@@ -129,7 +141,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 12,
-      "weaponPowerBonus": 8
+      "weaponPowerBonus": 8,
+      "basePrice": 600
     },
     {
       "id": 3116,
@@ -139,7 +152,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 4,
       "weaponAimBonus": 22,
-      "weaponPowerBonus": 22
+      "weaponPowerBonus": 22,
+      "basePrice": 1800
     }
   ]
 }

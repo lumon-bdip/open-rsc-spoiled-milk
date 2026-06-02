@@ -988,7 +988,8 @@
     },
     {
       "id": 314,
-      "magicOffense": 2
+      "magicOffense": 2,
+      "basePrice": 1800
     },
     {
       "id": 317,
@@ -996,7 +997,8 @@
       "magicOffense": 2,
       "meleeDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 12000
     },
     {
       "id": 852,

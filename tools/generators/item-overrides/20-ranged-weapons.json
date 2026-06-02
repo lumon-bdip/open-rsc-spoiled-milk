@@ -230,7 +230,8 @@
     {
       "id": 190,
       "name": "Tin bolts",
-      "rangedOffense": 2
+      "rangedOffense": 2,
+      "basePrice": 4
     },
     {
       "id": 592,
@@ -255,7 +256,8 @@
     },
     {
       "id": 2178,
-      "rangedOffense": 4
+      "rangedOffense": 4,
+      "basePrice": 9
     },
     {
       "id": 2179,
@@ -263,7 +265,8 @@
     },
     {
       "id": 2180,
-      "rangedOffense": 6
+      "rangedOffense": 6,
+      "basePrice": 20
     },
     {
       "id": 2181,
@@ -275,7 +278,8 @@
     },
     {
       "id": 2182,
-      "rangedOffense": 8
+      "rangedOffense": 8,
+      "basePrice": 48
     },
     {
       "id": 2183,
@@ -287,7 +291,8 @@
     },
     {
       "id": 2184,
-      "rangedOffense": 10
+      "rangedOffense": 10,
+      "basePrice": 120
     },
     {
       "id": 2185,
@@ -299,7 +304,8 @@
     },
     {
       "id": 2186,
-      "rangedOffense": 12
+      "rangedOffense": 12,
+      "basePrice": 320
     },
     {
       "id": 2187,
@@ -311,7 +317,8 @@
     },
     {
       "id": 2188,
-      "rangedOffense": 14
+      "rangedOffense": 14,
+      "basePrice": 720
     },
     {
       "id": 2189,
@@ -319,7 +326,8 @@
     },
     {
       "id": 2190,
-      "rangedOffense": 16
+      "rangedOffense": 16,
+      "basePrice": 1520
     },
     {
       "id": 2191,
@@ -331,7 +339,8 @@
     },
     {
       "id": 2192,
-      "rangedOffense": 18
+      "rangedOffense": 18,
+      "basePrice": 2600
     },
     {
       "id": 2193,
@@ -339,7 +348,8 @@
     },
     {
       "id": 2194,
-      "rangedOffense": 20
+      "rangedOffense": 20,
+      "basePrice": 4000
     },
     {
       "id": 2195,
@@ -374,14 +384,16 @@
       "rangedOffense": 9,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 15
+      "requiredLevel": 15,
+      "basePrice": 20
     },
     {
       "id": 2043,
       "rangedOffense": 5,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 1
+      "requiredLevel": 1,
+      "basePrice": 4
     },
     {
       "id": 1014,
@@ -395,126 +407,144 @@
       "rangedOffense": 11,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 22
+      "requiredLevel": 22,
+      "basePrice": 48
     },
     {
       "id": 2044,
       "rangedOffense": 7,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 8
+      "requiredLevel": 8,
+      "basePrice": 9
     },
     {
       "id": 1024,
       "rangedOffense": 13,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 30
+      "requiredLevel": 30,
+      "basePrice": 120
     },
     {
       "id": 1068,
       "rangedOffense": 15,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 38
+      "requiredLevel": 38,
+      "basePrice": 320
     },
     {
       "id": 2045,
       "rangedOffense": 17,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 46
+      "requiredLevel": 46,
+      "basePrice": 720
     },
     {
       "id": 1069,
       "rangedOffense": 19,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 54
+      "requiredLevel": 54,
+      "basePrice": 1520
     },
     {
       "id": 2046,
       "rangedOffense": 21,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 62
+      "requiredLevel": 62,
+      "basePrice": 2600
     },
     {
       "id": 1070,
       "rangedOffense": 23,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 70
+      "requiredLevel": 70,
+      "basePrice": 4000
     },
     {
       "id": 1075,
       "rangedOffense": 14,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 22
+      "requiredLevel": 22,
+      "basePrice": 48
     },
     {
       "id": 1076,
       "rangedOffense": 12,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 15
+      "requiredLevel": 15,
+      "basePrice": 20
     },
     {
       "id": 1077,
       "rangedOffense": 16,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 30
+      "requiredLevel": 30,
+      "basePrice": 120
     },
     {
       "id": 1078,
       "rangedOffense": 21,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 38
+      "requiredLevel": 38,
+      "basePrice": 320
     },
     {
       "id": 1079,
       "rangedOffense": 26,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 54
+      "requiredLevel": 54,
+      "basePrice": 1520
     },
     {
       "id": 1080,
       "rangedOffense": 30,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 70
+      "requiredLevel": 70,
+      "basePrice": 4000
     },
     {
       "id": 1996,
       "rangedOffense": 8,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 1
+      "requiredLevel": 1,
+      "basePrice": 4
     },
     {
       "id": 2007,
       "rangedOffense": 10,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 8
+      "requiredLevel": 8,
+      "basePrice": 9
     },
     {
       "id": 2018,
       "rangedOffense": 24,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 46
+      "requiredLevel": 46,
+      "basePrice": 720
     },
     {
       "id": 2029,
       "rangedOffense": 28,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 62
+      "requiredLevel": 62,
+      "basePrice": 2600
     },
     {
       "id": 1081,

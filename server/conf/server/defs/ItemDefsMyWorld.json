@@ -22,7 +22,8 @@
     },
     {
       "id": 152,
-      "name": "Gold ore"
+      "name": "Gold ore",
+      "basePrice": 300
     },
     {
       "id": 153,
@@ -56,7 +57,8 @@
     },
     {
       "id": 172,
-      "name": "Gold bar"
+      "name": "Gold bar",
+      "basePrice": 600
     },
     {
       "id": 173,
@@ -107,7 +109,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 40
+      "basePrice": 24
     },
     {
       "id": 2047,
@@ -115,7 +117,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 80
+      "basePrice": 48
     },
     {
       "id": 156,
@@ -123,7 +125,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 180
+      "basePrice": 100
     },
     {
       "id": 1258,
@@ -131,7 +133,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 420
+      "basePrice": 240
     },
     {
       "id": 1259,
@@ -139,7 +141,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 900
+      "basePrice": 600
     },
     {
       "id": 1260,
@@ -147,7 +149,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 1800
+      "basePrice": 1600
     },
     {
       "id": 2048,
@@ -155,7 +157,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 3200
+      "basePrice": 3600
     },
     {
       "id": 1261,
@@ -163,7 +165,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 5500
+      "basePrice": 7600
     },
     {
       "id": 2049,
@@ -171,7 +173,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 9000
+      "basePrice": 13000
     },
     {
       "id": 1262,
@@ -179,7 +181,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 15000
+      "basePrice": 20000
     },
     {
       "id": 2215,
@@ -260,17 +262,20 @@
     {
       "id": 66,
       "meleeOffense": 6,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 100
     },
     {
       "id": 1,
       "meleeOffense": 13,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 240
     },
     {
       "id": 67,
       "meleeOffense": 20,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 600
     },
     {
       "id": 424,
@@ -280,57 +285,68 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 13,
-      "weaponPowerBonus": 13
+      "weaponPowerBonus": 13,
+      "basePrice": 600
     },
     {
       "id": 68,
       "meleeOffense": 26,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 1600
     },
     {
       "id": 69,
       "meleeOffense": 32,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 7600
     },
     {
       "id": 397,
       "meleeOffense": 39,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 20000
     },
     {
       "id": 1997,
       "meleeOffense": 1,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 24
     },
     {
       "id": 2008,
       "meleeOffense": 3,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 48
     },
     {
       "id": 2019,
       "meleeOffense": 29,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 3600
     },
     {
       "id": 2030,
       "meleeOffense": 36,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 13000
     },
     {
       "id": 76,
       "meleeOffense": 42,
-      "weaponSpeed": 2
+      "weaponSpeed": 2,
+      "basePrice": 300
     },
     {
       "id": 77,
       "meleeOffense": 64,
-      "weaponSpeed": 2
+      "weaponSpeed": 2,
+      "basePrice": 720
     },
     {
       "id": 78,
       "meleeOffense": 86,
-      "weaponSpeed": 2
+      "weaponSpeed": 2,
+      "basePrice": 1800
     },
     {
       "id": 426,
@@ -340,57 +356,68 @@
       "requiredSkillID": 0,
       "prayerBonus": 4,
       "weaponAimBonus": 22,
-      "weaponPowerBonus": 22
+      "weaponPowerBonus": 22,
+      "basePrice": 1800
     },
     {
       "id": 79,
       "meleeOffense": 108,
-      "weaponSpeed": 2
+      "weaponSpeed": 2,
+      "basePrice": 4800
     },
     {
       "id": 80,
       "meleeOffense": 130,
-      "weaponSpeed": 2
+      "weaponSpeed": 2,
+      "basePrice": 22800
     },
     {
       "id": 81,
       "meleeOffense": 152,
-      "weaponSpeed": 2
+      "weaponSpeed": 2,
+      "basePrice": 60000
     },
     {
       "id": 2000,
       "meleeOffense": 20,
-      "weaponSpeed": 2
+      "weaponSpeed": 2,
+      "basePrice": 72
     },
     {
       "id": 2011,
       "meleeOffense": 31,
-      "weaponSpeed": 2
+      "weaponSpeed": 2,
+      "basePrice": 144
     },
     {
       "id": 2022,
       "meleeOffense": 119,
-      "weaponSpeed": 2
+      "weaponSpeed": 2,
+      "basePrice": 10800
     },
     {
       "id": 2033,
       "meleeOffense": 141,
-      "weaponSpeed": 2
+      "weaponSpeed": 2,
+      "basePrice": 39000
     },
     {
       "id": 82,
       "meleeOffense": 6,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 200
     },
     {
       "id": 83,
       "meleeOffense": 12,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 480
     },
     {
       "id": 84,
       "meleeOffense": 19,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 1200
     },
     {
       "id": 427,
@@ -400,57 +427,68 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 14,
-      "weaponPowerBonus": 14
+      "weaponPowerBonus": 14,
+      "basePrice": 600
     },
     {
       "id": 85,
       "meleeOffense": 25,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 3200
     },
     {
       "id": 86,
       "meleeOffense": 31,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 15200
     },
     {
       "id": 398,
       "meleeOffense": 37,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 40000
     },
     {
       "id": 1999,
       "meleeOffense": 1,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 48
     },
     {
       "id": 2010,
       "meleeOffense": 3,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 96
     },
     {
       "id": 2021,
       "meleeOffense": 28,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 7200
     },
     {
       "id": 2032,
       "meleeOffense": 34,
-      "weaponSpeed": 4
+      "weaponSpeed": 4,
+      "basePrice": 26000
     },
     {
       "id": 70,
       "meleeOffense": 12,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 200
     },
     {
       "id": 71,
       "meleeOffense": 24,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 480
     },
     {
       "id": 72,
       "meleeOffense": 36,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 1200
     },
     {
       "id": 425,
@@ -460,62 +498,74 @@
       "requiredSkillID": 0,
       "prayerBonus": 3,
       "weaponAimBonus": 16,
-      "weaponPowerBonus": 16
+      "weaponPowerBonus": 16,
+      "basePrice": 1200
     },
     {
       "id": 73,
       "meleeOffense": 48,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 3200
     },
     {
       "id": 74,
       "meleeOffense": 60,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 15200
     },
     {
       "id": 75,
       "meleeOffense": 72,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 40000
     },
     {
       "id": 1998,
       "meleeOffense": 1,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 48
     },
     {
       "id": 2009,
       "meleeOffense": 6,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 96
     },
     {
       "id": 2020,
       "meleeOffense": 54,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 7200
     },
     {
       "id": 2031,
       "meleeOffense": 66,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 26000
     },
     {
       "id": 28,
       "meleeOffense": 6,
-      "weaponSpeed": 5
+      "weaponSpeed": 5,
+      "basePrice": 240
     },
     {
       "id": 62,
       "meleeOffense": 3,
-      "weaponSpeed": 5
+      "weaponSpeed": 5,
+      "basePrice": 100
     },
     {
       "id": 63,
       "meleeOffense": 9,
-      "weaponSpeed": 5
+      "weaponSpeed": 5,
+      "basePrice": 600
     },
     {
       "id": 64,
       "meleeOffense": 12,
-      "weaponSpeed": 5
+      "weaponSpeed": 5,
+      "basePrice": 1600
     },
     {
       "id": 423,
@@ -530,32 +580,38 @@
     {
       "id": 65,
       "meleeOffense": 15,
-      "weaponSpeed": 5
+      "weaponSpeed": 5,
+      "basePrice": 7600
     },
     {
       "id": 396,
       "meleeOffense": 18,
-      "weaponSpeed": 5
+      "weaponSpeed": 5,
+      "basePrice": 20000
     },
     {
       "id": 1995,
       "meleeOffense": 1,
-      "weaponSpeed": 5
+      "weaponSpeed": 5,
+      "basePrice": 24
     },
     {
       "id": 2006,
       "meleeOffense": 2,
-      "weaponSpeed": 5
+      "weaponSpeed": 5,
+      "basePrice": 48
     },
     {
       "id": 2017,
       "meleeOffense": 14,
-      "weaponSpeed": 5
+      "weaponSpeed": 5,
+      "basePrice": 3600
     },
     {
       "id": 2028,
       "meleeOffense": 16,
-      "weaponSpeed": 5
+      "weaponSpeed": 5,
+      "basePrice": 13000
     },
     {
       "id": 559,
@@ -606,22 +662,26 @@
     {
       "id": 0,
       "meleeOffense": 17,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 240
     },
     {
       "id": 94,
       "meleeOffense": 10,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 100
     },
     {
       "id": 95,
       "meleeOffense": 25,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 600
     },
     {
       "id": 96,
       "meleeOffense": 32,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 1600
     },
     {
       "id": 430,
@@ -636,32 +696,38 @@
     {
       "id": 97,
       "meleeOffense": 40,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 7600
     },
     {
       "id": 98,
       "meleeOffense": 47,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 20000
     },
     {
       "id": 2003,
       "meleeOffense": 3,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 24
     },
     {
       "id": 2014,
       "meleeOffense": 6,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 48
     },
     {
       "id": 2025,
       "meleeOffense": 36,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 3600
     },
     {
       "id": 2036,
       "meleeOffense": 44,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 13000
     },
     {
       "id": 12,
@@ -669,7 +735,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 420
+      "basePrice": 240
     },
     {
       "id": 87,
@@ -677,7 +743,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 180
+      "basePrice": 100
     },
     {
       "id": 88,
@@ -685,7 +751,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 900
+      "basePrice": 600
     },
     {
       "id": 203,
@@ -693,7 +759,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 1800
+      "basePrice": 1600
     },
     {
       "id": 204,
@@ -701,7 +767,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 5500
+      "basePrice": 7600
     },
     {
       "id": 405,
@@ -709,7 +775,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 15000
+      "basePrice": 20000
     },
     {
       "id": 428,
@@ -717,7 +783,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 900
+      "basePrice": 600
     },
     {
       "id": 594,
@@ -741,7 +807,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 40
+      "basePrice": 24
     },
     {
       "id": 2012,
@@ -749,7 +815,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 80
+      "basePrice": 48
     },
     {
       "id": 2023,
@@ -757,7 +823,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 3200
+      "basePrice": 3600
     },
     {
       "id": 2034,
@@ -765,17 +831,19 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 9000
+      "basePrice": 13000
     },
     {
       "id": 89,
       "meleeOffense": 25,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 720
     },
     {
       "id": 90,
       "meleeOffense": 38,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 1800
     },
     {
       "id": 429,
@@ -790,127 +858,148 @@
     {
       "id": 91,
       "meleeOffense": 50,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 4800
     },
     {
       "id": 92,
       "meleeOffense": 62,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 22800
     },
     {
       "id": 93,
       "meleeOffense": 75,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 60000
     },
     {
       "id": 2002,
       "meleeOffense": 1,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 72
     },
     {
       "id": 2013,
       "meleeOffense": 6,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 144
     },
     {
       "id": 2024,
       "meleeOffense": 56,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 10800
     },
     {
       "id": 2035,
       "meleeOffense": 69,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 39000
     },
     {
       "id": 2207,
       "meleeOffense": 8,
       "weaponSpeed": 3,
       "requiredLevel": 1,
-      "requiredSkillID": 0
+      "requiredSkillID": 0,
+      "basePrice": 24
     },
     {
       "id": 2208,
       "meleeOffense": 10,
       "weaponSpeed": 3,
       "requiredLevel": 8,
-      "requiredSkillID": 0
+      "requiredSkillID": 0,
+      "basePrice": 48
     },
     {
       "id": 827,
       "meleeOffense": 12,
       "weaponSpeed": 3,
       "requiredLevel": 15,
-      "requiredSkillID": 0
+      "requiredSkillID": 0,
+      "basePrice": 100
     },
     {
       "id": 1088,
       "meleeOffense": 18,
       "weaponSpeed": 3,
       "requiredLevel": 22,
-      "requiredSkillID": 0
+      "requiredSkillID": 0,
+      "basePrice": 240
     },
     {
       "id": 1089,
       "meleeOffense": 24,
       "weaponSpeed": 3,
       "requiredLevel": 30,
-      "requiredSkillID": 0
+      "requiredSkillID": 0,
+      "basePrice": 600
     },
     {
       "id": 1090,
       "meleeOffense": 30,
       "weaponSpeed": 3,
       "requiredLevel": 38,
-      "requiredSkillID": 0
+      "requiredSkillID": 0,
+      "basePrice": 1600
     },
     {
       "id": 2209,
       "meleeOffense": 34,
       "weaponSpeed": 3,
       "requiredLevel": 46,
-      "requiredSkillID": 0
+      "requiredSkillID": 0,
+      "basePrice": 3600
     },
     {
       "id": 1091,
       "meleeOffense": 38,
       "weaponSpeed": 3,
       "requiredLevel": 54,
-      "requiredSkillID": 0
+      "requiredSkillID": 0,
+      "basePrice": 7600
     },
     {
       "id": 2210,
       "meleeOffense": 42,
       "weaponSpeed": 3,
       "requiredLevel": 62,
-      "requiredSkillID": 0
+      "requiredSkillID": 0,
+      "basePrice": 13000
     },
     {
       "id": 1092,
       "meleeOffense": 45,
       "weaponSpeed": 3,
       "requiredLevel": 70,
-      "requiredSkillID": 0
+      "requiredSkillID": 0,
+      "basePrice": 20000
     },
     {
       "id": 52,
       "meleeOffense": 24,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 480
     },
     {
       "id": 205,
       "meleeOffense": 12,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 300
     },
     {
       "id": 265,
       "meleeOffense": 24,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 480
     },
     {
       "id": 307,
       "meleeOffense": 17,
-      "weaponSpeed": 3
+      "weaponSpeed": 3,
+      "basePrice": 600
     },
     {
       "id": 593,
@@ -1062,7 +1151,8 @@
     },
     {
       "id": 316,
-      "meleeOffense": 2
+      "meleeOffense": 2,
+      "basePrice": 6000
     },
     {
       "id": 1029,
@@ -1084,7 +1174,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 1,
       "weaponAimBonus": 8,
-      "weaponPowerBonus": 8
+      "weaponPowerBonus": 8,
+      "basePrice": 600
     },
     {
       "id": 2152,
@@ -1094,7 +1185,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 13,
-      "weaponPowerBonus": 13
+      "weaponPowerBonus": 13,
+      "basePrice": 600
     },
     {
       "id": 2155,
@@ -1104,7 +1196,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 14,
-      "weaponPowerBonus": 14
+      "weaponPowerBonus": 14,
+      "basePrice": 600
     },
     {
       "id": 2153,
@@ -1114,7 +1207,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 3,
       "weaponAimBonus": 16,
-      "weaponPowerBonus": 16
+      "weaponPowerBonus": 16,
+      "basePrice": 1200
     },
     {
       "id": 2156,
@@ -1124,7 +1218,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 3,
       "weaponAimBonus": 15,
-      "weaponPowerBonus": 20
+      "weaponPowerBonus": 20,
+      "basePrice": 1800
     },
     {
       "id": 2157,
@@ -1134,7 +1229,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 12,
-      "weaponPowerBonus": 8
+      "weaponPowerBonus": 8,
+      "basePrice": 600
     },
     {
       "id": 2154,
@@ -1144,7 +1240,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 4,
       "weaponAimBonus": 22,
-      "weaponPowerBonus": 22
+      "weaponPowerBonus": 22,
+      "basePrice": 1800
     },
     {
       "id": 3113,
@@ -1154,7 +1251,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 1,
       "weaponAimBonus": 8,
-      "weaponPowerBonus": 8
+      "weaponPowerBonus": 8,
+      "basePrice": 600
     },
     {
       "id": 3114,
@@ -1164,7 +1262,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 13,
-      "weaponPowerBonus": 13
+      "weaponPowerBonus": 13,
+      "basePrice": 600
     },
     {
       "id": 3117,
@@ -1174,7 +1273,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 14,
-      "weaponPowerBonus": 14
+      "weaponPowerBonus": 14,
+      "basePrice": 600
     },
     {
       "id": 3115,
@@ -1184,7 +1284,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 3,
       "weaponAimBonus": 16,
-      "weaponPowerBonus": 16
+      "weaponPowerBonus": 16,
+      "basePrice": 1200
     },
     {
       "id": 3118,
@@ -1194,7 +1295,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 3,
       "weaponAimBonus": 15,
-      "weaponPowerBonus": 20
+      "weaponPowerBonus": 20,
+      "basePrice": 1800
     },
     {
       "id": 3119,
@@ -1204,7 +1306,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 2,
       "weaponAimBonus": 12,
-      "weaponPowerBonus": 8
+      "weaponPowerBonus": 8,
+      "basePrice": 600
     },
     {
       "id": 3116,
@@ -1214,7 +1317,8 @@
       "requiredSkillID": 0,
       "prayerBonus": 4,
       "weaponAimBonus": 22,
-      "weaponPowerBonus": 22
+      "weaponPowerBonus": 22,
+      "basePrice": 1800
     },
     {
       "id": 188,
@@ -1446,7 +1550,8 @@
     {
       "id": 190,
       "name": "Tin bolts",
-      "rangedOffense": 2
+      "rangedOffense": 2,
+      "basePrice": 4
     },
     {
       "id": 592,
@@ -1471,7 +1576,8 @@
     },
     {
       "id": 2178,
-      "rangedOffense": 4
+      "rangedOffense": 4,
+      "basePrice": 9
     },
     {
       "id": 2179,
@@ -1479,7 +1585,8 @@
     },
     {
       "id": 2180,
-      "rangedOffense": 6
+      "rangedOffense": 6,
+      "basePrice": 20
     },
     {
       "id": 2181,
@@ -1491,7 +1598,8 @@
     },
     {
       "id": 2182,
-      "rangedOffense": 8
+      "rangedOffense": 8,
+      "basePrice": 48
     },
     {
       "id": 2183,
@@ -1503,7 +1611,8 @@
     },
     {
       "id": 2184,
-      "rangedOffense": 10
+      "rangedOffense": 10,
+      "basePrice": 120
     },
     {
       "id": 2185,
@@ -1515,7 +1624,8 @@
     },
     {
       "id": 2186,
-      "rangedOffense": 12
+      "rangedOffense": 12,
+      "basePrice": 320
     },
     {
       "id": 2187,
@@ -1527,7 +1637,8 @@
     },
     {
       "id": 2188,
-      "rangedOffense": 14
+      "rangedOffense": 14,
+      "basePrice": 720
     },
     {
       "id": 2189,
@@ -1535,7 +1646,8 @@
     },
     {
       "id": 2190,
-      "rangedOffense": 16
+      "rangedOffense": 16,
+      "basePrice": 1520
     },
     {
       "id": 2191,
@@ -1547,7 +1659,8 @@
     },
     {
       "id": 2192,
-      "rangedOffense": 18
+      "rangedOffense": 18,
+      "basePrice": 2600
     },
     {
       "id": 2193,
@@ -1555,7 +1668,8 @@
     },
     {
       "id": 2194,
-      "rangedOffense": 20
+      "rangedOffense": 20,
+      "basePrice": 4000
     },
     {
       "id": 2195,
@@ -1590,14 +1704,16 @@
       "rangedOffense": 9,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 15
+      "requiredLevel": 15,
+      "basePrice": 20
     },
     {
       "id": 2043,
       "rangedOffense": 5,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 1
+      "requiredLevel": 1,
+      "basePrice": 4
     },
     {
       "id": 1014,
@@ -1611,126 +1727,144 @@
       "rangedOffense": 11,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 22
+      "requiredLevel": 22,
+      "basePrice": 48
     },
     {
       "id": 2044,
       "rangedOffense": 7,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 8
+      "requiredLevel": 8,
+      "basePrice": 9
     },
     {
       "id": 1024,
       "rangedOffense": 13,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 30
+      "requiredLevel": 30,
+      "basePrice": 120
     },
     {
       "id": 1068,
       "rangedOffense": 15,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 38
+      "requiredLevel": 38,
+      "basePrice": 320
     },
     {
       "id": 2045,
       "rangedOffense": 17,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 46
+      "requiredLevel": 46,
+      "basePrice": 720
     },
     {
       "id": 1069,
       "rangedOffense": 19,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 54
+      "requiredLevel": 54,
+      "basePrice": 1520
     },
     {
       "id": 2046,
       "rangedOffense": 21,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 62
+      "requiredLevel": 62,
+      "basePrice": 2600
     },
     {
       "id": 1070,
       "rangedOffense": 23,
       "weaponSpeed": 5,
       "requiredSkillID": 4,
-      "requiredLevel": 70
+      "requiredLevel": 70,
+      "basePrice": 4000
     },
     {
       "id": 1075,
       "rangedOffense": 14,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 22
+      "requiredLevel": 22,
+      "basePrice": 48
     },
     {
       "id": 1076,
       "rangedOffense": 12,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 15
+      "requiredLevel": 15,
+      "basePrice": 20
     },
     {
       "id": 1077,
       "rangedOffense": 16,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 30
+      "requiredLevel": 30,
+      "basePrice": 120
     },
     {
       "id": 1078,
       "rangedOffense": 21,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 38
+      "requiredLevel": 38,
+      "basePrice": 320
     },
     {
       "id": 1079,
       "rangedOffense": 26,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 54
+      "requiredLevel": 54,
+      "basePrice": 1520
     },
     {
       "id": 1080,
       "rangedOffense": 30,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 70
+      "requiredLevel": 70,
+      "basePrice": 4000
     },
     {
       "id": 1996,
       "rangedOffense": 8,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 1
+      "requiredLevel": 1,
+      "basePrice": 4
     },
     {
       "id": 2007,
       "rangedOffense": 10,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 8
+      "requiredLevel": 8,
+      "basePrice": 9
     },
     {
       "id": 2018,
       "rangedOffense": 24,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 46
+      "requiredLevel": 46,
+      "basePrice": 720
     },
     {
       "id": 2029,
       "rangedOffense": 28,
       "weaponSpeed": 3,
       "requiredSkillID": 4,
-      "requiredLevel": 62
+      "requiredLevel": 62,
+      "basePrice": 2600
     },
     {
       "id": 1081,
@@ -2888,7 +3022,8 @@
     },
     {
       "id": 314,
-      "magicOffense": 2
+      "magicOffense": 2,
+      "basePrice": 1800
     },
     {
       "id": 317,
@@ -2896,7 +3031,8 @@
       "magicOffense": 2,
       "meleeDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 12000
     },
     {
       "id": 852,
@@ -5884,7 +6020,8 @@
       "id": 315,
       "meleeDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3000
     },
     {
       "id": 734,
@@ -10497,6 +10634,1094 @@
     {
       "id": 3151,
       "basePrice": 45
+    },
+    {
+      "id": 157,
+      "basePrice": 5500
+    },
+    {
+      "id": 158,
+      "basePrice": 2200
+    },
+    {
+      "id": 159,
+      "basePrice": 900
+    },
+    {
+      "id": 160,
+      "basePrice": 350
+    },
+    {
+      "id": 161,
+      "basePrice": 8000
+    },
+    {
+      "id": 162,
+      "basePrice": 3500
+    },
+    {
+      "id": 163,
+      "basePrice": 1400
+    },
+    {
+      "id": 164,
+      "basePrice": 600
+    },
+    {
+      "id": 283,
+      "basePrice": 900
+    },
+    {
+      "id": 284,
+      "basePrice": 1800
+    },
+    {
+      "id": 285,
+      "basePrice": 3000
+    },
+    {
+      "id": 286,
+      "basePrice": 6000
+    },
+    {
+      "id": 287,
+      "basePrice": 12000
+    },
+    {
+      "id": 288,
+      "basePrice": 1100
+    },
+    {
+      "id": 289,
+      "basePrice": 2000
+    },
+    {
+      "id": 290,
+      "basePrice": 3300
+    },
+    {
+      "id": 291,
+      "basePrice": 6400
+    },
+    {
+      "id": 292,
+      "basePrice": 13000
+    },
+    {
+      "id": 296,
+      "basePrice": 900
+    },
+    {
+      "id": 297,
+      "basePrice": 1800
+    },
+    {
+      "id": 298,
+      "basePrice": 3000
+    },
+    {
+      "id": 299,
+      "basePrice": 6000
+    },
+    {
+      "id": 300,
+      "basePrice": 12000
+    },
+    {
+      "id": 301,
+      "basePrice": 900
+    },
+    {
+      "id": 302,
+      "basePrice": 1800
+    },
+    {
+      "id": 303,
+      "basePrice": 3000
+    },
+    {
+      "id": 304,
+      "basePrice": 6000
+    },
+    {
+      "id": 305,
+      "basePrice": 12000
+    },
+    {
+      "id": 522,
+      "basePrice": 35000
+    },
+    {
+      "id": 523,
+      "basePrice": 24000
+    },
+    {
+      "id": 524,
+      "basePrice": 35000
+    },
+    {
+      "id": 532,
+      "basePrice": 3000
+    },
+    {
+      "id": 542,
+      "basePrice": 18000
+    },
+    {
+      "id": 543,
+      "basePrice": 35000
+    },
+    {
+      "id": 544,
+      "basePrice": 38000
+    },
+    {
+      "id": 597,
+      "basePrice": 35000
+    },
+    {
+      "id": 610,
+      "basePrice": 35000
+    },
+    {
+      "id": 669,
+      "basePrice": 20
+    },
+    {
+      "id": 670,
+      "basePrice": 48
+    },
+    {
+      "id": 671,
+      "basePrice": 120
+    },
+    {
+      "id": 672,
+      "basePrice": 320
+    },
+    {
+      "id": 673,
+      "basePrice": 1520
+    },
+    {
+      "id": 674,
+      "basePrice": 4000
+    },
+    {
+      "id": 691,
+      "basePrice": 600
+    },
+    {
+      "id": 889,
+      "basePrice": 225
+    },
+    {
+      "id": 890,
+      "basePrice": 125
+    },
+    {
+      "id": 891,
+      "basePrice": 75
+    },
+    {
+      "id": 892,
+      "basePrice": 350
+    },
+    {
+      "id": 893,
+      "basePrice": 200
+    },
+    {
+      "id": 894,
+      "basePrice": 120
+    },
+    {
+      "id": 915,
+      "basePrice": 25
+    },
+    {
+      "id": 1062,
+      "basePrice": 20
+    },
+    {
+      "id": 1063,
+      "basePrice": 48
+    },
+    {
+      "id": 1064,
+      "basePrice": 120
+    },
+    {
+      "id": 1065,
+      "basePrice": 320
+    },
+    {
+      "id": 1066,
+      "basePrice": 1520
+    },
+    {
+      "id": 1067,
+      "basePrice": 4000
+    },
+    {
+      "id": 1593,
+      "basePrice": 1800
+    },
+    {
+      "id": 1594,
+      "basePrice": 3000
+    },
+    {
+      "id": 1595,
+      "basePrice": 6000
+    },
+    {
+      "id": 1596,
+      "basePrice": 12000
+    },
+    {
+      "id": 1597,
+      "basePrice": 35000
+    },
+    {
+      "id": 1598,
+      "basePrice": 1800
+    },
+    {
+      "id": 1599,
+      "basePrice": 3000
+    },
+    {
+      "id": 1600,
+      "basePrice": 6000
+    },
+    {
+      "id": 1601,
+      "basePrice": 12000
+    },
+    {
+      "id": 1602,
+      "basePrice": 35000
+    },
+    {
+      "id": 1603,
+      "basePrice": 1800
+    },
+    {
+      "id": 1604,
+      "basePrice": 3000
+    },
+    {
+      "id": 1605,
+      "basePrice": 6000
+    },
+    {
+      "id": 1606,
+      "basePrice": 12000
+    },
+    {
+      "id": 1607,
+      "basePrice": 35000
+    },
+    {
+      "id": 1608,
+      "basePrice": 1800
+    },
+    {
+      "id": 1609,
+      "basePrice": 3000
+    },
+    {
+      "id": 1610,
+      "basePrice": 6000
+    },
+    {
+      "id": 1611,
+      "basePrice": 12000
+    },
+    {
+      "id": 1612,
+      "basePrice": 35000
+    },
+    {
+      "id": 1613,
+      "basePrice": 2000
+    },
+    {
+      "id": 1614,
+      "basePrice": 3300
+    },
+    {
+      "id": 1615,
+      "basePrice": 6400
+    },
+    {
+      "id": 1616,
+      "basePrice": 13000
+    },
+    {
+      "id": 1617,
+      "basePrice": 38000
+    },
+    {
+      "id": 1618,
+      "basePrice": 2000
+    },
+    {
+      "id": 1619,
+      "basePrice": 3300
+    },
+    {
+      "id": 1620,
+      "basePrice": 6400
+    },
+    {
+      "id": 1621,
+      "basePrice": 13000
+    },
+    {
+      "id": 1622,
+      "basePrice": 38000
+    },
+    {
+      "id": 1623,
+      "basePrice": 2000
+    },
+    {
+      "id": 1624,
+      "basePrice": 3300
+    },
+    {
+      "id": 1625,
+      "basePrice": 6400
+    },
+    {
+      "id": 1626,
+      "basePrice": 13000
+    },
+    {
+      "id": 1627,
+      "basePrice": 38000
+    },
+    {
+      "id": 1628,
+      "basePrice": 2000
+    },
+    {
+      "id": 1629,
+      "basePrice": 3300
+    },
+    {
+      "id": 1630,
+      "basePrice": 6400
+    },
+    {
+      "id": 1631,
+      "basePrice": 13000
+    },
+    {
+      "id": 1632,
+      "basePrice": 38000
+    },
+    {
+      "id": 1633,
+      "basePrice": 2000
+    },
+    {
+      "id": 1634,
+      "basePrice": 3300
+    },
+    {
+      "id": 1635,
+      "basePrice": 6400
+    },
+    {
+      "id": 1636,
+      "basePrice": 13000
+    },
+    {
+      "id": 1637,
+      "basePrice": 38000
+    },
+    {
+      "id": 1638,
+      "basePrice": 2000
+    },
+    {
+      "id": 1639,
+      "basePrice": 3300
+    },
+    {
+      "id": 1640,
+      "basePrice": 6400
+    },
+    {
+      "id": 1641,
+      "basePrice": 13000
+    },
+    {
+      "id": 1642,
+      "basePrice": 38000
+    },
+    {
+      "id": 1643,
+      "basePrice": 2000
+    },
+    {
+      "id": 1644,
+      "basePrice": 3300
+    },
+    {
+      "id": 1645,
+      "basePrice": 6400
+    },
+    {
+      "id": 1646,
+      "basePrice": 13000
+    },
+    {
+      "id": 1647,
+      "basePrice": 38000
+    },
+    {
+      "id": 1648,
+      "basePrice": 2000
+    },
+    {
+      "id": 1649,
+      "basePrice": 3300
+    },
+    {
+      "id": 1650,
+      "basePrice": 6400
+    },
+    {
+      "id": 1651,
+      "basePrice": 13000
+    },
+    {
+      "id": 1652,
+      "basePrice": 38000
+    },
+    {
+      "id": 1653,
+      "basePrice": 2000
+    },
+    {
+      "id": 1654,
+      "basePrice": 3300
+    },
+    {
+      "id": 1655,
+      "basePrice": 6400
+    },
+    {
+      "id": 1656,
+      "basePrice": 13000
+    },
+    {
+      "id": 1657,
+      "basePrice": 38000
+    },
+    {
+      "id": 1658,
+      "basePrice": 2000
+    },
+    {
+      "id": 1659,
+      "basePrice": 3300
+    },
+    {
+      "id": 1660,
+      "basePrice": 6400
+    },
+    {
+      "id": 1661,
+      "basePrice": 13000
+    },
+    {
+      "id": 1662,
+      "basePrice": 38000
+    },
+    {
+      "id": 1663,
+      "basePrice": 2000
+    },
+    {
+      "id": 1664,
+      "basePrice": 3300
+    },
+    {
+      "id": 1665,
+      "basePrice": 6400
+    },
+    {
+      "id": 1666,
+      "basePrice": 13000
+    },
+    {
+      "id": 1667,
+      "basePrice": 38000
+    },
+    {
+      "id": 1668,
+      "basePrice": 2000
+    },
+    {
+      "id": 1669,
+      "basePrice": 3300
+    },
+    {
+      "id": 1670,
+      "basePrice": 6400
+    },
+    {
+      "id": 1671,
+      "basePrice": 13000
+    },
+    {
+      "id": 1672,
+      "basePrice": 38000
+    },
+    {
+      "id": 1673,
+      "basePrice": 1800
+    },
+    {
+      "id": 1674,
+      "basePrice": 3000
+    },
+    {
+      "id": 1675,
+      "basePrice": 6000
+    },
+    {
+      "id": 1676,
+      "basePrice": 12000
+    },
+    {
+      "id": 1677,
+      "basePrice": 35000
+    },
+    {
+      "id": 1678,
+      "basePrice": 1800
+    },
+    {
+      "id": 1679,
+      "basePrice": 3000
+    },
+    {
+      "id": 1680,
+      "basePrice": 6000
+    },
+    {
+      "id": 1681,
+      "basePrice": 12000
+    },
+    {
+      "id": 1682,
+      "basePrice": 35000
+    },
+    {
+      "id": 1683,
+      "basePrice": 1800
+    },
+    {
+      "id": 1684,
+      "basePrice": 3000
+    },
+    {
+      "id": 1685,
+      "basePrice": 6000
+    },
+    {
+      "id": 1686,
+      "basePrice": 12000
+    },
+    {
+      "id": 1687,
+      "basePrice": 35000
+    },
+    {
+      "id": 1688,
+      "basePrice": 1800
+    },
+    {
+      "id": 1689,
+      "basePrice": 3000
+    },
+    {
+      "id": 1690,
+      "basePrice": 6000
+    },
+    {
+      "id": 1691,
+      "basePrice": 12000
+    },
+    {
+      "id": 1692,
+      "basePrice": 35000
+    },
+    {
+      "id": 1693,
+      "basePrice": 3000
+    },
+    {
+      "id": 1694,
+      "basePrice": 6000
+    },
+    {
+      "id": 1695,
+      "basePrice": 12000
+    },
+    {
+      "id": 1696,
+      "basePrice": 35000
+    },
+    {
+      "id": 1697,
+      "basePrice": 3000
+    },
+    {
+      "id": 1698,
+      "basePrice": 6000
+    },
+    {
+      "id": 1699,
+      "basePrice": 12000
+    },
+    {
+      "id": 1700,
+      "basePrice": 35000
+    },
+    {
+      "id": 1701,
+      "basePrice": 1800
+    },
+    {
+      "id": 1702,
+      "basePrice": 3000
+    },
+    {
+      "id": 1703,
+      "basePrice": 6000
+    },
+    {
+      "id": 1704,
+      "basePrice": 12000
+    },
+    {
+      "id": 1705,
+      "basePrice": 1800
+    },
+    {
+      "id": 1706,
+      "basePrice": 3000
+    },
+    {
+      "id": 1707,
+      "basePrice": 6000
+    },
+    {
+      "id": 1708,
+      "basePrice": 35000
+    },
+    {
+      "id": 1709,
+      "basePrice": 1800
+    },
+    {
+      "id": 1710,
+      "basePrice": 3000
+    },
+    {
+      "id": 1711,
+      "basePrice": 6000
+    },
+    {
+      "id": 1712,
+      "basePrice": 12000
+    },
+    {
+      "id": 1713,
+      "basePrice": 35000
+    },
+    {
+      "id": 1714,
+      "basePrice": 1800
+    },
+    {
+      "id": 1715,
+      "basePrice": 3000
+    },
+    {
+      "id": 1716,
+      "basePrice": 6000
+    },
+    {
+      "id": 1717,
+      "basePrice": 12000
+    },
+    {
+      "id": 1718,
+      "basePrice": 35000
+    },
+    {
+      "id": 1719,
+      "basePrice": 1800
+    },
+    {
+      "id": 1720,
+      "basePrice": 3000
+    },
+    {
+      "id": 1721,
+      "basePrice": 6000
+    },
+    {
+      "id": 1722,
+      "basePrice": 12000
+    },
+    {
+      "id": 1723,
+      "basePrice": 35000
+    },
+    {
+      "id": 1724,
+      "basePrice": 1800
+    },
+    {
+      "id": 1725,
+      "basePrice": 3000
+    },
+    {
+      "id": 1726,
+      "basePrice": 6000
+    },
+    {
+      "id": 1727,
+      "basePrice": 12000
+    },
+    {
+      "id": 1728,
+      "basePrice": 35000
+    },
+    {
+      "id": 1729,
+      "basePrice": 1800
+    },
+    {
+      "id": 1730,
+      "basePrice": 3000
+    },
+    {
+      "id": 1731,
+      "basePrice": 6000
+    },
+    {
+      "id": 1732,
+      "basePrice": 12000
+    },
+    {
+      "id": 1733,
+      "basePrice": 35000
+    },
+    {
+      "id": 1734,
+      "basePrice": 1800
+    },
+    {
+      "id": 1735,
+      "basePrice": 3000
+    },
+    {
+      "id": 1736,
+      "basePrice": 6000
+    },
+    {
+      "id": 1737,
+      "basePrice": 12000
+    },
+    {
+      "id": 1738,
+      "basePrice": 35000
+    },
+    {
+      "id": 1739,
+      "basePrice": 1800
+    },
+    {
+      "id": 1740,
+      "basePrice": 3000
+    },
+    {
+      "id": 1741,
+      "basePrice": 6000
+    },
+    {
+      "id": 1742,
+      "basePrice": 12000
+    },
+    {
+      "id": 1743,
+      "basePrice": 35000
+    },
+    {
+      "id": 1744,
+      "basePrice": 1800
+    },
+    {
+      "id": 1745,
+      "basePrice": 3000
+    },
+    {
+      "id": 1746,
+      "basePrice": 6000
+    },
+    {
+      "id": 1747,
+      "basePrice": 12000
+    },
+    {
+      "id": 1748,
+      "basePrice": 35000
+    },
+    {
+      "id": 1749,
+      "basePrice": 1800
+    },
+    {
+      "id": 1750,
+      "basePrice": 3000
+    },
+    {
+      "id": 1751,
+      "basePrice": 6000
+    },
+    {
+      "id": 1752,
+      "basePrice": 12000
+    },
+    {
+      "id": 1753,
+      "basePrice": 35000
+    },
+    {
+      "id": 1754,
+      "basePrice": 1800
+    },
+    {
+      "id": 1755,
+      "basePrice": 3000
+    },
+    {
+      "id": 1756,
+      "basePrice": 6000
+    },
+    {
+      "id": 1757,
+      "basePrice": 12000
+    },
+    {
+      "id": 1758,
+      "basePrice": 35000
+    },
+    {
+      "id": 1759,
+      "basePrice": 2000
+    },
+    {
+      "id": 1760,
+      "basePrice": 3300
+    },
+    {
+      "id": 1761,
+      "basePrice": 6400
+    },
+    {
+      "id": 1762,
+      "basePrice": 13000
+    },
+    {
+      "id": 1763,
+      "basePrice": 38000
+    },
+    {
+      "id": 2004,
+      "basePrice": 4
+    },
+    {
+      "id": 2005,
+      "basePrice": 4
+    },
+    {
+      "id": 2015,
+      "basePrice": 9
+    },
+    {
+      "id": 2016,
+      "basePrice": 9
+    },
+    {
+      "id": 2026,
+      "basePrice": 720
+    },
+    {
+      "id": 2027,
+      "basePrice": 720
+    },
+    {
+      "id": 2037,
+      "basePrice": 2600
+    },
+    {
+      "id": 2038,
+      "basePrice": 2600
+    },
+    {
+      "id": 3076,
+      "basePrice": 1800
+    },
+    {
+      "id": 3077,
+      "basePrice": 3000
+    },
+    {
+      "id": 3078,
+      "basePrice": 6000
+    },
+    {
+      "id": 3079,
+      "basePrice": 12000
+    },
+    {
+      "id": 3080,
+      "basePrice": 35000
+    },
+    {
+      "id": 3081,
+      "basePrice": 1800
+    },
+    {
+      "id": 3082,
+      "basePrice": 3000
+    },
+    {
+      "id": 3083,
+      "basePrice": 6000
+    },
+    {
+      "id": 3084,
+      "basePrice": 12000
+    },
+    {
+      "id": 3085,
+      "basePrice": 35000
+    },
+    {
+      "id": 3086,
+      "basePrice": 1800
+    },
+    {
+      "id": 3087,
+      "basePrice": 3000
+    },
+    {
+      "id": 3088,
+      "basePrice": 6000
+    },
+    {
+      "id": 3089,
+      "basePrice": 12000
+    },
+    {
+      "id": 3090,
+      "basePrice": 35000
+    },
+    {
+      "id": 3091,
+      "basePrice": 1800
+    },
+    {
+      "id": 3092,
+      "basePrice": 3000
+    },
+    {
+      "id": 3093,
+      "basePrice": 6000
+    },
+    {
+      "id": 3094,
+      "basePrice": 12000
+    },
+    {
+      "id": 3095,
+      "basePrice": 35000
+    },
+    {
+      "id": 3096,
+      "basePrice": 1800
+    },
+    {
+      "id": 3097,
+      "basePrice": 3000
+    },
+    {
+      "id": 3098,
+      "basePrice": 6000
+    },
+    {
+      "id": 3099,
+      "basePrice": 12000
+    },
+    {
+      "id": 3100,
+      "basePrice": 35000
+    },
+    {
+      "id": 3101,
+      "basePrice": 2000
+    },
+    {
+      "id": 3102,
+      "basePrice": 3300
+    },
+    {
+      "id": 3103,
+      "basePrice": 6400
+    },
+    {
+      "id": 3104,
+      "basePrice": 13000
+    },
+    {
+      "id": 3105,
+      "basePrice": 38000
+    },
+    {
+      "id": 3106,
+      "basePrice": 1800
+    },
+    {
+      "id": 3107,
+      "basePrice": 3000
+    },
+    {
+      "id": 3108,
+      "basePrice": 6000
+    },
+    {
+      "id": 3109,
+      "basePrice": 12000
+    },
+    {
+      "id": 3110,
+      "basePrice": 35000
+    },
+    {
+      "id": 3111,
+      "basePrice": 35000
     }
   ]
 }

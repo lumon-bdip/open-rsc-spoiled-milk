@@ -2978,7 +2978,8 @@
       "id": 315,
       "meleeDefense": 1,
       "requiredLevel": 0,
-      "requiredSkillID": -1
+      "requiredSkillID": -1,
+      "basePrice": 3000
     },
     {
       "id": 734,
