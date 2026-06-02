@@ -1082,7 +1082,7 @@ public class Equipment {
 
 		// Spears are melee weapons.
 		if (itemLower.endsWith("spear")) {
-			optionalLevel = Optional.of(requiredLevel <= 10 ? requiredLevel : requiredLevel + 5);
+			optionalLevel = Optional.of(requiredLevel);
 			optionalSkillIndex = Optional.of(Skill.MELEE.id());
 		}
 		// Throwing knives are ranged-only weapons in MyWorld.

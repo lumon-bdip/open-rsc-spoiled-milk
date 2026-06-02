@@ -33,14 +33,18 @@ GEM_COORDS = {
     (342, 607),
     (342, 606),
     (342, 605),
-    (342, 604),
-    (342, 601),
-    (342, 600),
+    (342, 603),
+    (342, 602),
     (341, 601),
 }
 
 REMOVED_SILVER_COORDS = {
     (341, 602),
+}
+
+REMOVED_GEM_COORDS = {
+    (342, 601),
+    (342, 600),
 }
 
 
@@ -86,6 +90,10 @@ def main() -> None:
         for rock_id in (SILVER_ROCK, DEPLETED_SILVER_ROCK):
             if all_by_id_and_pos.get((rock_id, x, y)) is not None:
                 fail(f"Unexpected silver rock id {rock_id} at {x},{y}")
+
+    for x, y in REMOVED_GEM_COORDS:
+        if all_by_id_and_pos.get((GEM_ROCK, x, y)) is not None:
+            fail(f"Unexpected gem rock at {x},{y}")
 
     print("PASS: crafting guild gold, silver, and gem rock placements look correct")
 

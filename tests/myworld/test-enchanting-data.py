@@ -279,6 +279,9 @@ def ensure_source_mappings_exist() -> None:
         'addNecklaceLine(1613, tiers, "Archery", "Adds +%d ranged power.", 3, necklacePrices, gemMasks);',
         'addRingLine(1673, tiers, "Archery", "Adds +%d ranged power.", 3, ringPrices, gemMasks);',
         'addLawBankingRingLine(1714, tiers, ringPrices, gemMasks, lawBankCharges);',
+        'setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil"',
+        'setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment"',
+        'setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Preservation"',
         'addSoulNecklaceLine(1759, tiers, soulNecklacePrices, gemMasks);',
         '"items:125"',
         '"items:57"',
@@ -286,6 +289,13 @@ def ensure_source_mappings_exist() -> None:
     ):
         if snippet not in client_text:
             fail(f"Client EntityHandler missing enchanted jewelry generator snippet: {snippet}")
+    for forbidden in (
+        'items.add(new ItemDef("Sapphire Ring of Recoil"',
+        'items.add(new ItemDef("Sapphire Ring of Nourishment"',
+        'items.add(new ItemDef("Diamond Ring of Preservation"',
+    ):
+        if forbidden in client_text:
+            fail(f"Preserved special ring should use fixed-id replacement, not append: {forbidden}")
 
     hidden_crown_options = """\t\t\toptions = new String[]{
 \t\t\t\tring,
@@ -359,6 +369,7 @@ def ensure_client_jewelry_coverage() -> None:
         client_ids.update(range(start, start + 5))
 
     missing = [item_id for item_id in range(1593, 1764) if item_id not in client_ids]
+    missing.extend(item_id for item_id in (1314, 1316, 1317) if item_id not in client_ids)
     if missing:
         fail(f"Client EntityHandler is missing enchanted jewelry ids: {missing}")
 
@@ -400,6 +411,51 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         expect_description(items, item_id, expected)
 
 
+def ensure_all_enchanted_jewelry_has_effect_examine(items: dict[int, dict[str, Any]]) -> None:
+    jewelry_ids = set()
+    for start, end in (
+        (1593, 1764),
+        (3076, 3112),
+    ):
+        jewelry_ids.update(range(start, end))
+    jewelry_ids.update((1314, 1316, 1317))
+
+    vague_descriptions = {
+        "",
+        "A valuable ring",
+        "A valuable necklace",
+        "A valuable amulet",
+        "I wonder if I can get this enchanted",
+        "An enchanted ring.",
+        "An enchanted necklace.",
+        "An enchanted amulet.",
+    }
+    effect_words = (
+        "Adds ",
+        "Has ",
+        "Boosts ",
+        "Banks ",
+        "Stores ",
+        "Lets ",
+        "Enemy ",
+        "Steals ",
+        "Raises ",
+        "Saves ",
+        "Doubles ",
+        "Extends ",
+    )
+    for item_id in sorted(jewelry_ids):
+        entry = items.get(item_id)
+        if entry is None:
+            continue
+        name = entry.get("name", "")
+        if not any(kind in name for kind in ("Ring", "Necklace", "Amulet")):
+            continue
+        description = entry.get("description", "")
+        if description in vague_descriptions or not description.startswith(effect_words):
+            fail(f"Enchanted jewelry {item_id} {name!r} needs effect examine text, found {description!r}")
+
+
 def main() -> None:
     items = load_items()
     ensure_amulet_lines(items)
@@ -418,6 +474,7 @@ def main() -> None:
     expect_item(items, 2555, "Mythic Blood Robe Top")
     expect_item(items, 2681, "Mythic Soul Robe Skirt")
     ensure_examine_copy(items)
+    ensure_all_enchanted_jewelry_has_effect_examine(items)
     ensure_source_mappings_exist()
     ensure_client_jewelry_coverage()
     ensure_client_jewelry_uses_base_visuals()

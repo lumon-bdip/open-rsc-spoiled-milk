@@ -3938,14 +3938,14 @@ public class EntityHandler {
 
 
 		// Rings
-		items.add(new ItemDef("Sapphire Ring of Recoil", "Has an 8% chance to recoil attacker damage.", "", 900, -1, "items:502", false, true, 1200, 19711, true, false, true, 1314));
-		items.add(new ItemDef("Ring of splendor", "An enchanted ring.", "", 1275, -1, "items:502", false, true, 1200, 3394611, true, false, true, 1315));
-		items.add(new ItemDef("Sapphire Ring of Nourishment", "Boosts food healing by 10%.", "", 2025, -1, "items:502", false, true, 1200, 16724736, true, false, true, 1316));
-		items.add(new ItemDef("Diamond Ring of Preservation", "Lets you keep 4 extra items on death.", "", 3525, -1, "items:502", false, true, 1200, 0xFFFFFF, true, false, true, 1317));
-		items.add(new ItemDef("Ring of Wealth", "A legacy ring without a current effect.", "", 17625, -1, "items:502", false, true, 1200, 12255487, true, false, true, 1318));
-		items.add(new ItemDef("Ring of avarice", "An enchanted ring.", "", 17625, -1, "items:503", false, true, 1200, 12255487, true, false, true, 1319));
-		items.add(new ItemDef("Dwarven ring", "An uncharged ring.", "", 400, -1, "items:503", false, true, 1200, 16777124, true, false, true, 1320));
-		items.add(new ItemDef("Opal ring", "A valuable ring", "", 1050, -1, "items:123", false, Config.S_WANT_CUSTOM_SPRITES, Config.S_WANT_CUSTOM_SPRITES ? 1200 : 0, 16777124, false, false, true, 1321));
+		setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil", "Has an 8% chance to recoil attacker damage.", "", 900, -1, "items:502", false, true, 1200, 19711, true, false, true, 1314));
+		setCustomItemDefinition(1315, new ItemDef("Ring of splendor", "An enchanted ring.", "", 1275, -1, "items:502", false, true, 1200, 3394611, true, false, true, 1315));
+		setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment", "Boosts food healing by 10%.", "", 2025, -1, "items:502", false, true, 1200, 16724736, true, false, true, 1316));
+		setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Preservation", "Lets you keep 4 extra items on death.", "", 3525, -1, "items:502", false, true, 1200, 0xFFFFFF, true, false, true, 1317));
+		setCustomItemDefinition(1318, new ItemDef("Ring of Wealth", "A legacy ring without a current effect.", "", 17625, -1, "items:502", false, true, 1200, 12255487, true, false, true, 1318));
+		setCustomItemDefinition(1319, new ItemDef("Ring of avarice", "An enchanted ring.", "", 17625, -1, "items:503", false, true, 1200, 12255487, true, false, true, 1319));
+		setCustomItemDefinition(1320, new ItemDef("Dwarven ring", "An uncharged ring.", "", 400, -1, "items:503", false, true, 1200, 16777124, true, false, true, 1320));
+		setCustomItemDefinition(1321, new ItemDef("Opal ring", "A valuable ring", "", 1050, -1, "items:123", false, Config.S_WANT_CUSTOM_SPRITES, Config.S_WANT_CUSTOM_SPRITES ? 1200 : 0, 16777124, false, false, true, 1321));
 		addEnchantedJewelryDefinitions();
 
 		// Wolf masks

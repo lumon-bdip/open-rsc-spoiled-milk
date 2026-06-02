@@ -45,17 +45,28 @@ def main() -> None:
             "return baseChance * 2.0D;",
             "return 0.0D;",
             "You find a gem, but have no room to keep it",
+            "private static final int GEM_ROCK = 588;",
+            "private static final int GEM_ROCK_RESPAWN_SECONDS = 70;",
+            "private static final int[] GEM_ROCK_GEM_WEIGHTS = {64, 32, 16, 8, 3, 3, 2};",
+            "handleGemRockMining(rock, player, click);",
+            "&& obj.getID() != 1227;",
+            "for (int i = 0; i < quantity; i++) {",
+            "awardGemRockGem(player, rock);",
+            "changeloc(rock, resourceRespawnMillis(GEM_ROCK_RESPAWN_SECONDS), SceneryId.ROCK_GENERIC.id());",
             "You manage to obtain some stone, but have no room to keep it",
             "Any excess falls to the ground because you have no room",
         ),
         "Mining.java",
     )
+    mining_text = MINING_PLUGIN.read_text(encoding="utf-8")
+    if "obj.getID() != 588" in mining_text or "object.getID() != 588" in mining_text:
+        fail("Mining.java should not exclude gem rocks from mining triggers")
 
     require_snippets(
         GEM_MINING_PLUGIN,
         (
-            "But you have no room to keep it, so it falls to the ground.",
-            "player.incExp(Skill.MINING.id(), 260, true)",
+            "public boolean blockOpLoc(Player player, GameObject obj, String command) {\n\t\treturn false;",
+            "public boolean blockUseLoc(Player player, GameObject obj, Item item) {\n\t\treturn false;",
         ),
         "GemMining.java",
     )

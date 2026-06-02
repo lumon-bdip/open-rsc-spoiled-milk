@@ -935,9 +935,7 @@ public final class SkillGuideInterface {
 					skillMenuEntries.add(new SkillMenuItem(101, "", "Matching enchanted staff preserves 50%"));
 					skillMenuEntries.add(new SkillMenuItem(101, "", "Matching cloth and staff can preserve 100%"));
 					skillMenuEntries.add(new SkillMenuItem(284, "", "Jewelry requires both gem and altar levels"));
-					skillMenuEntries.add(new SkillMenuItem(544, "", "Rings and necklaces can stack matching effects"));
-					skillMenuEntries.add(new SkillMenuItem(42, "", "Law jewelry spends charges to bank items"));
-					skillMenuEntries.add(new SkillMenuItem(825, "", "Soul jewelry protects death losses"));
+					skillMenuEntries.add(new SkillMenuItem(544, "", "Examine jewelry for details on their effects"));
 					addSkillCapeGuide(1527, "Enchanting");
 				}
 			}

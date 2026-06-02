@@ -43,11 +43,16 @@ def main() -> None:
         '"Matching enchanted staff preserves 50%"',
         '"Matching cloth and staff can preserve 100%"',
         '"Jewelry requires both gem and altar levels"',
+        '"Examine jewelry for details on their effects"',
+    ):
+        require(guide, snippet, "Enchanting guide info")
+    for retired_snippet in (
         '"Rings and necklaces can stack matching effects"',
         '"Law jewelry spends charges to bank items"',
         '"Soul jewelry protects death losses"',
     ):
-        require(guide, snippet, "Enchanting guide info")
+        if retired_snippet in guide:
+            fail(f"Enchanting guide info should not list partial jewelry effects: {retired_snippet}")
 
     for snippet in (
         '"Leather armor has set effects if all five pieces are worn"',

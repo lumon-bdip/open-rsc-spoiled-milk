@@ -1078,9 +1078,9 @@ public final class Player extends Mob {
 					((itemLower.endsWith("throwing dart") && !getWorld().getServer().getConfig().STRICT_PDART_CHECK) ||
 						(itemLower.endsWith("throwing knife") && !getWorld().getServer().getConfig().STRICT_PKNIFE_CHECK) ||
 						(itemLower.endsWith("spear") && !getWorld().getServer().getConfig().STRICT_PSPEAR_CHECK))
-				);
+			);
 			if (itemLower.endsWith("spear")) {
-				optionalLevel = Optional.of(requiredLevel <= 10 ? requiredLevel : requiredLevel + 5);
+				optionalLevel = Optional.of(requiredLevel);
 				optionalSkillIndex = Optional.of(Skill.MELEE.id());
 			}
 			if (itemLower.endsWith("throwing knife")) {
@@ -1179,9 +1179,9 @@ public final class Player extends Mob {
 						((itemLower.endsWith("throwing dart") && !getWorld().getServer().getConfig().STRICT_PDART_CHECK) ||
 							(itemLower.endsWith("throwing knife") && !getWorld().getServer().getConfig().STRICT_PKNIFE_CHECK) ||
 							(itemLower.endsWith("spear") && !getWorld().getServer().getConfig().STRICT_PSPEAR_CHECK))
-					);
+				);
 				if (itemLower.endsWith("spear")) {
-					optionalLevel = Optional.of(requiredLevel <= 10 ? requiredLevel : requiredLevel + 5);
+					optionalLevel = Optional.of(requiredLevel);
 					optionalSkillIndex = Optional.of(Skill.MELEE.id());
 				}
 				if (itemLower.endsWith("throwing knife")) {

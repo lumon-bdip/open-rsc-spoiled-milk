@@ -29,7 +29,21 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 	public static final int MINING_FOCUS_SOME_GEMS = Skills.AGGRESSIVE_MODE;
 	public static final int MINING_FOCUS_MORE_GEMS = Skills.ACCURATE_MODE;
 	public static final int MINING_FOCUS_MOST_GEMS = Skills.DEFENSIVE_MODE;
+	private static final int GEM_ROCK = 588;
+	private static final int GEM_ROCK_REQ_LEVEL = 40;
+	private static final int GEM_ROCK_EXP = 260;
+	private static final int GEM_ROCK_RESPAWN_SECONDS = 70;
 	private static final double MYWORLD_GEM_REWARD_BASE_CHANCE = 1.0D / 50.0D;
+	private static final int[] GEM_ROCK_GEM_IDS = {
+		ItemId.UNCUT_OPAL.id(),
+		ItemId.UNCUT_JADE.id(),
+		ItemId.UNCUT_RED_TOPAZ.id(),
+		ItemId.UNCUT_SAPPHIRE.id(),
+		ItemId.UNCUT_EMERALD.id(),
+		ItemId.UNCUT_RUBY.id(),
+		ItemId.UNCUT_DIAMOND.id()
+	};
+	private static final int[] GEM_ROCK_GEM_WEIGHTS = {64, 32, 16, 8, 3, 3, 2};
 
 	public static int getAxe(Player player) {
 		int lvl = player.getSkills().getLevel(Skill.MINING.id());
@@ -158,7 +172,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 	@Override
 	public void onOpLoc(Player player, final GameObject object, String command) {
 		if ((command.equals("mine") || command.equals("prospect"))
-			&& object.getID() != 588 && object.getID() != 1227) {
+			&& object.getID() != 1227) {
 			if (command.equals("mine") && player.getConfig().GATHER_TOOL_ON_SCENERY) {
 				player.playerServerMessage(MessageType.QUEST, "You need to use the pickaxe on the rock to mine it");
 				return;
@@ -243,6 +257,11 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 
 		if (rock.getID() == SceneryId.ROCK_GENERIC.id() || rock.getID() == SceneryId.ROCK_GENERIC2.id()) {
 			handleStoneMining(rock, player, click);
+			return;
+		}
+
+		if (rock.getID() == GEM_ROCK) {
+			handleGemRockMining(rock, player, click);
 			return;
 		}
 
@@ -556,10 +575,76 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		}
 	}
 
+	private void handleGemRockMining(final GameObject rock, Player player, int click) {
+		if (!player.withinRange(rock, 1)) {
+			return;
+		}
+
+		final int axeId = getAxe(player);
+		final int mineLvl = player.getSkills().getLevel(Skill.MINING.id());
+		int reqlvl = getPickaxeRequiredLevel(axeId);
+
+		if (click == 1) {
+			player.playSound("prospect");
+			player.playerServerMessage(MessageType.QUEST, "You examine the rock for ores...");
+			delay(3);
+			player.playerServerMessage(MessageType.QUEST, "This rock contains gems");
+			return;
+		}
+
+		if (axeId < 0 || reqlvl > mineLvl) {
+			mes("You need a pickaxe to mine this rock");
+			delay(3);
+			mes("You do not have a pickaxe which you have the mining level to use");
+			delay(3);
+			return;
+		}
+		if (mineLvl < GEM_ROCK_REQ_LEVEL) {
+			player.playerServerMessage(MessageType.QUEST, "You need a mining level of " + GEM_ROCK_REQ_LEVEL + " to mine this rock");
+			return;
+		}
+		if (config().STOP_SKILLING_FATIGUED >= 1
+			&& player.getFatigue() >= player.MAX_FATIGUE) {
+			thinkbubble(new Item(axeId));
+			player.playerServerMessage(MessageType.QUEST, "You are too tired to mine this rock");
+			return;
+		}
+		startbatch(1);
+		batchGemRockMining(player, rock, axeId);
+	}
+
+	private void batchGemRockMining(Player player, GameObject rock, int axeId) {
+		if (config().STOP_SKILLING_FATIGUED >= 1
+			&& player.getFatigue() >= player.MAX_FATIGUE) {
+			thinkbubble(new Item(axeId));
+			player.playerServerMessage(MessageType.QUEST, "You are too tired to mine this rock");
+			return;
+		}
+		player.playSound("mine");
+		int pickBubbleId = player.getClientLimitations().supportsTypedPickaxes ? ItemId.IRON_PICKAXE.id() : ItemId.BRONZE_PICKAXE.id();
+		ActionSender.sendActionProgressBar(player, pickBubbleId, 3);
+		player.playerServerMessage(MessageType.QUEST, "You swing your pick at the rock...");
+		delay(3);
+		if (ifinterrupted() || !player.withinRange(rock, 1)) {
+			return;
+		}
+
+		int quantity = Formulae.calcGatheringYield(GEM_ROCK_REQ_LEVEL, player.getSkills().getLevel(Skill.MINING.id()), getPickaxeTier(axeId));
+		if (SkillCapes.shouldActivate(player, ItemId.MINING_CAPE)) {
+			thinkbubble(new Item(ItemId.MINING_CAPE.id(), 1));
+			quantity *= 2;
+		}
+		for (int i = 0; i < quantity; i++) {
+			awardGemRockGem(player, rock);
+		}
+		player.incExp(Skill.MINING.id(), GEM_ROCK_EXP * quantity, true);
+		changeloc(rock, resourceRespawnMillis(GEM_ROCK_RESPAWN_SECONDS), SceneryId.ROCK_GENERIC.id());
+	}
+
 	@Override
 	public boolean blockOpLoc(Player player, GameObject obj, String command) {
-		return (command.equals("mine") || command.equals("prospect"))
-			&& obj.getID() != 588 && obj.getID() != 1227;
+		return (command.equalsIgnoreCase("mine") || command.equalsIgnoreCase("prospect"))
+			&& obj.getID() != 1227;
 	}
 
 	/**
@@ -576,6 +661,44 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		} else {
 			return ItemId.UNCUT_SAPPHIRE.id();
 		}
+	}
+
+	private int getGemRockGem() {
+		return Formulae.weightedRandomChoice(GEM_ROCK_GEM_IDS, GEM_ROCK_GEM_WEIGHTS);
+	}
+
+	private void awardGemRockGem(Player player, GameObject rock) {
+		Item gem = new Item(getGemRockGem(), 1);
+		if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(gem) > 0) {
+			player.playerServerMessage(MessageType.QUEST, minedGemString(gem.getCatalogId()));
+			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
+		} else if (!player.getCarriedItems().getInventory().full()) {
+			player.getCarriedItems().getInventory().add(gem);
+			player.playerServerMessage(MessageType.QUEST, minedGemString(gem.getCatalogId()));
+			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
+		} else {
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), rock.getX(), rock.getY(), 1, player));
+			player.playerServerMessage(MessageType.QUEST, "You mine a gem, but have no room to keep it, so it falls to the ground");
+		}
+	}
+
+	private String minedGemString(int gemID) {
+		if (gemID == ItemId.UNCUT_OPAL.id()) {
+			return "You just mined an Opal!";
+		} else if (gemID == ItemId.UNCUT_JADE.id()) {
+			return "You just mined a piece of Jade!";
+		} else if (gemID == ItemId.UNCUT_RED_TOPAZ.id()) {
+			return "You just mined a Red Topaz!";
+		} else if (gemID == ItemId.UNCUT_SAPPHIRE.id()) {
+			return "You just found a sapphire!";
+		} else if (gemID == ItemId.UNCUT_EMERALD.id()) {
+			return "You just found an emerald!";
+		} else if (gemID == ItemId.UNCUT_RUBY.id()) {
+			return "You just found a ruby!";
+		} else if (gemID == ItemId.UNCUT_DIAMOND.id()) {
+			return "You just found a diamond!";
+		}
+		return "You just mined a gem!";
 	}
 
 	private int calcAxeBonus(int axeId) {
@@ -669,7 +792,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 	public void onUseLoc(Player player, GameObject object, Item item) {
 		final GameObjectDef def = player.getWorld().getServer().getEntityHandler().getGameObjectDef(object.getID());
 		if (inArray(item.getCatalogId(), Formulae.miningAxeIDs) && (player.getConfig().GATHER_TOOL_ON_SCENERY || !player.getClientLimitations().supportsClickMine)
-			&& def != null && def.command1.equalsIgnoreCase("mine") && object.getID() != 588 && object.getID() != 1227) {
+			&& def != null && def.command1.equalsIgnoreCase("mine") && object.getID() != 1227) {
 			player.click = 0;
 			handleMiningEntry(player, object, "mine");
 		}
@@ -679,6 +802,6 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 	public boolean blockUseLoc(Player player, GameObject obj, Item item) {
 		final GameObjectDef def = player.getWorld().getServer().getEntityHandler().getGameObjectDef(obj.getID());
 		return (inArray(item.getCatalogId(), Formulae.miningAxeIDs) && (player.getConfig().GATHER_TOOL_ON_SCENERY || !player.getClientLimitations().supportsClickMine)
-			&& def != null && def.command1.equalsIgnoreCase("mine") && obj.getID() != 588 && obj.getID() != 1227);
+			&& def != null && def.command1.equalsIgnoreCase("mine") && obj.getID() != 1227);
 	}
 }

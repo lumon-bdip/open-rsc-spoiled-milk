@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -10,6 +11,9 @@ BASE_ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefs.json"
 CUSTOM_ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsCustom.json"
 ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsMyWorld.json"
 NPCS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefsMyWorld.json"
+SKILL_GUIDE_PATH = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "interfaces" / "misc" / "SkillGuideInterface.java"
+EQUIPMENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "container" / "Equipment.java"
+PLAYER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "player" / "Player.java"
 
 
 def fail(message: str) -> None:
@@ -33,6 +37,16 @@ def load_item_catalog() -> dict[int, dict]:
     items_by_id = {entry["id"]: entry for entry in base_items}
     items_by_id.update({entry["id"]: entry for entry in custom_items})
     return items_by_id
+
+
+def apply_item_overrides(catalog_items, item_entries) -> dict[int, dict]:
+    effective_items = {entry_id: dict(entry) for entry_id, entry in catalog_items.items()}
+    for entry in item_entries:
+        entry_id = entry["id"]
+        merged = dict(effective_items.get(entry_id, {}))
+        merged.update(entry)
+        effective_items[entry_id] = merged
+    return effective_items
 
 
 def ensure_unique_ids(entries, label: str) -> None:
@@ -135,6 +149,63 @@ def ensure_npc_multiplier_bounds(entries) -> None:
             fail(f"NpcDefsMyWorld.json entry {entry['id']} must keep at least one defense multiplier at 1.0")
 
 
+def ensure_guide_requirement_matches_item(entries_by_id, guide_name, guide_level, item_id) -> None:
+    entry = entries_by_id.get(int(item_id))
+    if entry is None:
+        fail(f"Guide entry {guide_name} references missing item id {item_id}")
+    actual_level = entry.get("requiredLevel")
+    if actual_level != int(guide_level):
+        fail(
+            f"Guide entry {guide_name} says level {guide_level}, "
+            f"but item id {item_id} requires level {actual_level}"
+        )
+
+
+def ensure_combat_guide_requirements_match_items(entries_by_id) -> None:
+    guide = SKILL_GUIDE_PATH.read_text(encoding="utf-8")
+    melee_entries = re.findall(r'addMeleeTierGuide\("([^"]+)",\s*(\d+),\s*(\d+)\);', guide)
+    if not melee_entries:
+        fail("SkillGuideInterface.java does not contain melee tier guide entries")
+    for item_name, guide_level, item_id in melee_entries:
+        ensure_guide_requirement_matches_item(entries_by_id, item_name, guide_level, item_id)
+
+    bow_entries = re.findall(r'addRangedBowGuide\("([^"]+)",\s*(\d+),\s*(\d+),\s*(\d+)\);', guide)
+    if not bow_entries:
+        fail("SkillGuideInterface.java does not contain ranged bow guide entries")
+    for tier_name, guide_level, shortbow_id, longbow_id in bow_entries:
+        ensure_guide_requirement_matches_item(entries_by_id, f"{tier_name} shortbow", guide_level, shortbow_id)
+        ensure_guide_requirement_matches_item(entries_by_id, f"{tier_name} longbow", guide_level, longbow_id)
+
+    crossbow_entries = re.findall(r'addRangedCrossbowGuide\("([^"]+)",\s*(\d+),\s*(\d+),\s*"[^"]+"\);', guide)
+    if not crossbow_entries:
+        fail("SkillGuideInterface.java does not contain ranged crossbow guide entries")
+    for tier_name, guide_level, crossbow_id in crossbow_entries:
+        ensure_guide_requirement_matches_item(entries_by_id, f"{tier_name} crossbow", guide_level, crossbow_id)
+
+    thrown_entries = re.findall(r'addThrownGuide\("([^"]+)",\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+)\);', guide)
+    if not thrown_entries:
+        fail("SkillGuideInterface.java does not contain ranged thrown guide entries")
+    for tier_name, guide_level, dart_id, knife_id, _spear_id in thrown_entries:
+        ensure_guide_requirement_matches_item(entries_by_id, f"{tier_name} throwing dart", guide_level, dart_id)
+        ensure_guide_requirement_matches_item(entries_by_id, f"{tier_name} throwing knife", guide_level, knife_id)
+
+
+def ensure_spear_runtime_uses_item_requirement() -> None:
+    equipment = EQUIPMENT_PATH.read_text(encoding="utf-8")
+    player = PLAYER_PATH.read_text(encoding="utf-8")
+    legacy_adjustment = "requiredLevel <= 10 ? requiredLevel : requiredLevel + 5"
+    if legacy_adjustment in equipment or legacy_adjustment in player:
+        fail("Spear equip validation still applies the hidden +5 level adjustment")
+    spear_requirement_block = re.compile(
+        r'if \(itemLower\.endsWith\("spear"\)\) \{\s+optionalLevel = Optional\.of\(requiredLevel\);',
+        re.MULTILINE,
+    )
+    if len(spear_requirement_block.findall(equipment)) != 1:
+        fail("Equipment.java must validate spear equip level directly from the item definition")
+    if len(spear_requirement_block.findall(player)) != 2:
+        fail("Player.java must validate spear equip level directly from the item definition in both equipment checks")
+
+
 def main() -> None:
     item_entries = load_json_array(ITEMS_PATH, "items")
     npc_entries = load_json_array(NPCS_PATH, "npcs")
@@ -190,7 +261,10 @@ def main() -> None:
     ensure_npc_multiplier_bounds(npc_entries)
 
     items_by_id = {entry["id"]: entry for entry in item_entries}
+    effective_items_by_id = apply_item_overrides(catalog_items, item_entries)
     npcs_by_id = {entry["id"]: entry for entry in npc_entries}
+    ensure_combat_guide_requirements_match_items(effective_items_by_id)
+    ensure_spear_runtime_uses_item_requirement()
 
     for entry in item_entries:
         if any(field in entry for field in ("meleeDefense", "rangedDefense", "magicDefense")):

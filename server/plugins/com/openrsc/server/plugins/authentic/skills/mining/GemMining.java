@@ -171,18 +171,11 @@ public class GemMining implements OpLocTrigger, UseLocTrigger {
 
 	@Override
 	public boolean blockOpLoc(Player player, GameObject obj, String command) {
-		return obj.getID() == GEM_ROCK && (command.equals("mine") || command.equals("prospect"));
+		return false;
 	}
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
-		if (obj.getID() == GEM_ROCK && (command.equals("mine") || command.equals("prospect"))) {
-			if (command.equals("mine") && player.getConfig().GATHER_TOOL_ON_SCENERY) {
-				player.playerServerMessage(MessageType.QUEST, "You need to use the pickaxe on the rock to mine it");
-				return;
-			}
-			handleGemRockMining(obj, player, player.click);
-		}
 	}
 
 	private int calcAxeBonus(int axeId) { // No evidence wielding different pickaxes gives a bonus, only more swings
@@ -243,16 +236,10 @@ public class GemMining implements OpLocTrigger, UseLocTrigger {
 
 	@Override
 	public void onUseLoc(Player player, GameObject object, Item item) {
-		if (inArray(item.getCatalogId(), Formulae.miningAxeIDs) && (player.getConfig().GATHER_TOOL_ON_SCENERY || !player.getClientLimitations().supportsClickMine)
-			&& object.getID() == GEM_ROCK) {
-			player.click = 0;
-			handleGemRockMining(object, player, 0);
-		}
 	}
 
 	@Override
 	public boolean blockUseLoc(Player player, GameObject obj, Item item) {
-		return (inArray(item.getCatalogId(), Formulae.miningAxeIDs) && (player.getConfig().GATHER_TOOL_ON_SCENERY || !player.getClientLimitations().supportsClickMine)
-			&& obj.getID() == GEM_ROCK);
+		return false;
 	}
 }
