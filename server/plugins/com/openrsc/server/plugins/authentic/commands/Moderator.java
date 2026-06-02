@@ -66,6 +66,8 @@ public final class Moderator implements CommandTrigger {
 			queryPlayerBank(player, command, args);
 		} else if (command.equalsIgnoreCase("announcement") || command.equalsIgnoreCase("announce") || command.equalsIgnoreCase("anouncement") || command.equalsIgnoreCase("anounce")) {
 			sendAnnouncement(player, command, args);
+		} else if (command.equalsIgnoreCase("s") || command.equalsIgnoreCase("system") || command.equalsIgnoreCase("systembroadcast")) {
+			sendSystemBroadcast(player, command, args);
 		} else if (command.equalsIgnoreCase("systemmessage") || command.equalsIgnoreCase("sysmes")) {
 			showSystemMessageBox(player, command, args);
 		} else if (command.equalsIgnoreCase("kick")) {
@@ -993,6 +995,26 @@ public final class Moderator implements CommandTrigger {
 				ActionSender.sendMessage(playerToUpdate, player, MessageType.GLOBAL_CHAT, "ANNOUNCEMENT: " + player.getStaffName() + ":@yel@ " + newStr.toString(), player.getIcon(), null);
 			}
 		}
+	}
+
+	private void sendSystemBroadcast(Player player, String command, String[] args) {
+		if (args.length == 0) {
+			player.playerServerMessage(MessageType.QUEST, "Just put all the words you want to say after the \"" + command + "\" command");
+			return;
+		}
+
+		StringBuilder message = new StringBuilder();
+		for (String arg : args) {
+			message.append(arg).append(" ");
+		}
+
+		player.getWorld().getServer().getGameLogger().addQuery(new StaffLog(player, 13, "System: " + message));
+
+		for (Player playerToUpdate : player.getWorld().getPlayers()) {
+			ActionSender.sendMessage(playerToUpdate, null, MessageType.QUEST, "@yel@System: @whi@" + message, 0, null);
+		}
+
+		player.message(messagePrefix + "System broadcast sent");
 	}
 
 	private void showSystemMessageBox(Player player, String command, String[] args) {

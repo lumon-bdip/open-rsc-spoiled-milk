@@ -103,6 +103,14 @@ def main() -> None:
         "items.get(price[0])" not in economy_method.group("body"),
         "Client economy overrides should not assume item id equals list index",
     )
+    require(
+        'new ItemDef("Dragon axe", "A vicious looking axe", "", 200000, -1, "external-png:dragon-hatchet"' in client_entity_handler,
+        "Dragon Hatchet should use the dedicated external PNG icon",
+    )
+    require(
+        'new ItemDef("Dragon battle Axe", "A vicious looking axe", "", 200000, 272, "items:272"' in client_entity_handler,
+        "Dragon battleaxe should keep the original dragon axe/battleaxe icon",
+    )
     client_price_pairs = {
         (int(item_id), int(price))
         for item_id, price in re.findall(r"\{(\d+),\s*(\d+)\}", client_entity_handler)

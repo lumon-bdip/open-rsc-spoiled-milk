@@ -3101,7 +3101,7 @@ public class EntityHandler {
 		items.add(new ItemDef("Raw lava eel", "A very strange eel", "", 150, 194, "items:194", false, false, 0, 16711680, true, true, true, 591));
 		items.add(new ItemDef("Poison Crossbow bolts", "Good if you have a crossbow!", "", 3, 56, "items:56", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1001 : 0, 0, true, false, false, 592));
 		items.add(new ItemDef("Dragon sword", "A Razor sharp sword", "", 100000, 273, "items:273", false, true, 16, 16711748, true, false, true, 593));
-		items.add(new ItemDef("Dragon axe", "A vicious looking axe", "", 200000, 272, "items:272", false, false, 0, 16711748, true, false, true, 594));
+		items.add(new ItemDef("Dragon axe", "A vicious looking axe", "", 200000, -1, "external-png:dragon-hatchet", false, false, 0, 0, true, false, true, 594));
 		items.add(new ItemDef("Jail keys", "Keys to the black knight jail", "", 2, 190, "items:190", false, false, 0, 0, true, true, false, 595));
 		items.add(new ItemDef("Dusty Key", "A key given to me by Velrak", "", 1, 25, "items:25", false, false, 0, 12303291, true, true, false, 596));
 		items.add(new ItemDef("Charged Dragonstone Amulet", "A very powerful amulet", "rub", 17625, 125, "items:125", false, true, 1024, 12255487, true, false, true, 597));
@@ -7847,7 +7847,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("bookcase", "It's a bookcase", "WalkTo", "Search", 1, 1, 2, 0, "bookcase", i++));
 		objects.add(new GameObjectDef("henge", "these look impressive", "WalkTo", "Examine", 1, 2, 2, 0, "henge", i++));
 		objects.add(new GameObjectDef("Dolmen", "A sort of ancient altar thingy", "WalkTo", "Examine", 1, 2, 2, 0, "dolmen", i++));
-		objects.add(new GameObjectDef("Tree", "This tree doesn't look too healthy", "WalkTo", "Chop", 1, 1, 1, 0, "deadtree1", i++));//70
+		objects.add(new GameObjectDef("Tree", "This tree doesn't look too healthy", "Chop", "Examine", 1, 1, 1, 0, "deadtree1", i++));//70
 		objects.add(new GameObjectDef("cupboard", "Perhaps I should search it", "Search", "close", 1, 1, 2, 0, "cupboardopen", i++));
 		objects.add(new GameObjectDef("Wheat", "nice ripe looking wheat", "WalkTo", "pick", 0, 1, 1, 0, "wheat", i++));
 		objects.add(new GameObjectDef("sign", "The blue moon inn", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
@@ -8188,7 +8188,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("plant", "An odd looking plant", "WalkTo", "Examine", 1, 1, 1, 0, "jungle strange plant 2", i++));
 		objects.add(new GameObjectDef("plant", "some nice jungle foliage", "WalkTo", "Examine", 1, 1, 1, 0, "jungle medium size plant", i++));
 		objects.add(new GameObjectDef("stone head", "It looks like it's been here some time", "WalkTo", "Examine", 1, 2, 2, 0, "jungle statue", i++));
-		objects.add(new GameObjectDef("dead Tree", "A rotting tree", "WalkTo", "Examine", 1, 1, 1, 0, "deadtree2", i++));
+		objects.add(new GameObjectDef("dead Tree", "A rotting tree", "Chop", "Examine", 1, 1, 1, 0, "deadtree2", i++));
 		objects.add(new GameObjectDef("sacks", "Yep they're sacks", "WalkTo", "prod", 1, 1, 1, 0, "sacks", i++));
 		objects.add(new GameObjectDef("khazard open Chest", "Perhaps I should search it", "Search", "Close", 1, 1, 1, 0, "ChestOpen", i++));
 		objects.add(new GameObjectDef("khazard shut Chest", "I wonder what is inside...", "Open", "Examine", 1, 1, 1, 0, "ChestClosed", i++));
@@ -9199,9 +9199,12 @@ public class EntityHandler {
 			{227, 22800}, {308, 500}, {309, 3000}, {310, 8000}, {311, 38000},
 			{312, 1200}, {377, 40}, {399, 20000}, {400, 60000}, {401, 100000},
 			{402, 60000}, {403, 40000}, {404, 60000}, {405, 15000}, {406, 60000},
-			{407, 100000}, {408, 15000}, {409, 9000}, {428, 900}, {594, 40000},
-			{698, 600}, {1258, 420}, {1259, 900}, {1260, 1800}, {1261, 5500},
-			{1262, 15000}, {1480, 40000}, {1789, 18}, {1790, 25}, {1791, 35},
+			{407, 100000}, {408, 15000}, {409, 9000}, {428, 900}, {593, 120000},
+			{594, 60000}, {698, 600}, {1258, 420}, {1259, 900}, {1260, 1800},
+			{1261, 5500}, {1262, 15000}, {1278, 96000}, {1346, 180000},
+			{1425, 70000}, {1426, 96000}, {1427, 160000}, {1428, 160000},
+			{1429, 96000}, {1430, 96000}, {1447, 70000}, {1448, 80000},
+			{1480, 60000}, {1789, 18}, {1790, 25}, {1791, 35},
 			{1792, 50}, {1793, 35}, {1794, 50}, {1795, 35}, {1796, 50},
 			{1797, 77}, {1798, 110}, {1799, 2100}, {1800, 3000}, {1801, 77},
 			{1802, 110}, {1803, 385}, {1804, 550}, {1805, 35}, {1806, 50},
@@ -9330,7 +9333,7 @@ public class EntityHandler {
 			{2673, 135}, {2674, 300}, {2675, 675}, {2676, 1500}, {2677, 3750},
 			{2678, 9000}, {2679, 18750}, {2680, 33750}, {2681, 56250}, {2682, 80},
 			{2683, 180}, {2684, 420}, {2685, 900}, {2686, 1800}, {2687, 3200},
-			{2688, 5500}, {2689, 9000}, {2690, 15000}, {2764, 22}, {2765, 45},
+			{2688, 5500}, {2689, 9000}, {2690, 15000}, {2752, 140000}, {2764, 22}, {2765, 45},
 			{2766, 100}, {2767, 225}, {2768, 500}, {2769, 1250}, {2770, 3000},
 			{2771, 6250}, {2772, 11250}, {2773, 18750}, {2774, 90}, {2775, 180},
 			{2776, 400}, {2777, 900}, {2778, 2000}, {2779, 5000}, {2780, 12000},

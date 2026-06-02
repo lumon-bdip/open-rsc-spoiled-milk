@@ -50,8 +50,12 @@ def main() -> None:
     stage_zero = dragon_slayer.split("case 0:", 1)[1].split("break;", 1)[0]
     stage_one = dragon_slayer.split("case 1:", 1)[1].split("break;", 1)[0]
     stage_two = dragon_slayer.split("case 2:", 1)[1].split("break;", 1)[0]
-    for label, block in (("stage 0", stage_zero), ("stage 1", stage_one), ("stage 2", stage_two)):
-        require(block, "MyWorldQuestShortcuts.ALREADY_DONE_OPTION", f"Oziach shortcut option at {label}")
+    for label, block, shortcut_option in (
+        ("stage 0", stage_zero, "MyWorldQuestShortcuts.ALREADY_DONE_OPTION"),
+        ("stage 1", stage_one, "MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION"),
+        ("stage 2", stage_two, "MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION"),
+    ):
+        require(block, shortcut_option, f"Oziach shortcut option at {label}")
         require(block, "MyWorldQuestShortcuts.completeDragonSlayer(player, n);", f"Oziach shortcut completion at {label}")
 
     print("PASS: Dragon Slayer start and shortcut flow validated")

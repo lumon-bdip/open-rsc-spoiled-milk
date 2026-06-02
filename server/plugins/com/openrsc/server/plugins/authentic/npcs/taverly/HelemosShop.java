@@ -14,7 +14,9 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public class HelemosShop extends AbstractShop {
 
-	private final Shop shop = new Shop(false, 60000, 100, 55, 3, new Item(ItemId.DRAGON_AXE.id(), 1));
+	private final Shop shop = new Shop(false, 60000, 100, 55, 3,
+		new Item(ItemId.DRAGON_AXE.id(), 1),
+		new Item(ItemId.DRAGON_BATTLE_AXE.id(), 1));
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {

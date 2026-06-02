@@ -21,6 +21,23 @@ METAL_BODY_VALUES = {
     8: 38000,
     9: 65000,
     10: 100000,
+    11: 160000,
+}
+TIER_11_VALUES = {
+    593: 120000,   # dragon sword
+    594: 60000,    # dragon hatchet
+    1278: 96000,   # dragon square shield
+    1346: 180000,  # dragon 2h sword
+    1425: 70000,   # large dragon helmet
+    1426: 96000,   # dragon paladin shield
+    1427: 160000,  # dragon plate body
+    1428: 160000,  # dragon plate top/body alias
+    1429: 96000,   # dragon plate legs
+    1430: 96000,   # dragon plate skirt/legs alias
+    1447: 70000,   # dragon dagger
+    1448: 80000,   # poisoned dragon dagger
+    1480: 60000,   # dragon woodcutting hatchet
+    2752: 140000,  # dragon battleaxe
 }
 LEATHER_TOP_VALUES = {
     1: 90,
@@ -98,6 +115,14 @@ def main() -> None:
     }
     for item_id, tier in plate_bodies.items():
         require_price(items, item_id, METAL_BODY_VALUES[tier], f"tier {tier} plate body")
+
+    for item_id, expected in TIER_11_VALUES.items():
+        require_price(items, item_id, expected, f"tier 11 item")
+
+    require(
+        items[1427]["basePrice"] > items[407]["basePrice"],
+        "dragon plate body should sit above rune plate body value",
+    )
 
     metal_bar_ids = {
         1955: 1,

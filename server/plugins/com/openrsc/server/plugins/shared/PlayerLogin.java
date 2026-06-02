@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.shared;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.entity.player.Group;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.PlayerLoginTrigger;
 
@@ -13,12 +14,25 @@ public class PlayerLogin implements PlayerLoginTrigger {
 
 	@Override
 	public void onPlayerLogin(Player player) {
+		applyMyWorldStaffGroups(player);
 		backfillAnactualduckQuestRewards(player);
 	}
 
 	@Override
 	public boolean blockPlayerLogin(Player player) {
 		return false;
+	}
+
+	private void applyMyWorldStaffGroups(final Player player) {
+		if ("devduck".equalsIgnoreCase(player.getUsername())) {
+			if (player.getGroupID() != Group.OWNER && player.getGroupID() != Group.ADMIN && player.getGroupID() != Group.DEV) {
+				player.setGroupID(Group.DEV);
+			}
+		} else if ("anactualduck".equalsIgnoreCase(player.getUsername())) {
+			if (player.getGroupID() != Group.MOD) {
+				player.setGroupID(Group.MOD);
+			}
+		}
 	}
 
 	private void backfillAnactualduckQuestRewards(final Player player) {

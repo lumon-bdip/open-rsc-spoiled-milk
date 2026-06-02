@@ -772,8 +772,8 @@
   <GameObjectDef>
     <name>Tree</name>
     <description>This tree doesn't look too healthy</description>
-    <command1>WalkTo</command1>
-    <command2>Chop</command2>
+    <command1>Chop</command1>
+    <command2>Examine</command2>
     <type>1</type>
     <width>1</width>
     <height>1</height>
@@ -4479,8 +4479,8 @@
   <GameObjectDef>
     <name>dead Tree</name>
     <description>A rotting tree</description>
-    <command1>WalkTo</command1>
-    <command2>Chop</command2>
+    <command1>Chop</command1>
+    <command2>Examine</command2>
     <type>1</type>
     <width>1</width>
     <height>1</height>

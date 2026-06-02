@@ -1153,7 +1153,7 @@ public class Equipment {
 		}
 
 		// Dragon battle axe
-		else if (!player.getConfig().EQUIP_QUEST_ITEMS_WITHOUT_QUESTS && item.getCatalogId() == ItemId.DRAGON_AXE.id() && player.getQuestStage(Quests.HEROS_QUEST) != -1) {
+		else if (!player.getConfig().EQUIP_QUEST_ITEMS_WITHOUT_QUESTS && item.getCatalogId() == ItemId.DRAGON_BATTLE_AXE.id() && player.getQuestStage(Quests.HEROS_QUEST) != -1) {
 			player.message("you have not earned the right to wear this yet");
 			player.message("you need to complete the Hero's guild entry quest");
 			return false;
