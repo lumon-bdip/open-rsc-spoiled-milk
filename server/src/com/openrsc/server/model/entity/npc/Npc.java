@@ -84,6 +84,7 @@ public class Npc extends Mob {
 	 * Holds players that did damage with range
 	 */
 	private Map<UUID, Pair<Integer, Long>> rangeDamagers = new HashMap<UUID, Pair<Integer,Long>>();
+	private Map<Long, PendingSummoningExperience> pendingSummoningExperience = new HashMap<Long, PendingSummoningExperience>();
 
 
 	/**
@@ -281,6 +282,36 @@ public class Npc extends Mob {
 		return getCombatDamageInfoBy(id).getLeft()
 			+ getRangeDamageInfoBy(id).getLeft()
 			+ getMageDamageInfoBy(id).getLeft();
+	}
+
+	public boolean hasDamageBy(final Player player) {
+		return player != null && getTotalDamageBy(player.getUUID()) > 0;
+	}
+
+	public void recordPendingSummoningExperience(final Player player, final int experience, final long expiresTick) {
+		if (player == null || experience <= 0 || expiresTick <= getWorld().getServer().getCurrentTick()) {
+			return;
+		}
+		pendingSummoningExperience.put(player.getUsernameHash(), new PendingSummoningExperience(experience, expiresTick));
+	}
+
+	private void awardPendingSummoningExperience() {
+		if (pendingSummoningExperience.isEmpty()) {
+			return;
+		}
+		final long currentTick = getWorld().getServer().getCurrentTick();
+		for (Map.Entry<Long, PendingSummoningExperience> entry : new HashMap<Long, PendingSummoningExperience>(pendingSummoningExperience).entrySet()) {
+			final PendingSummoningExperience pending = entry.getValue();
+			if (pending.expiresTick < currentTick) {
+				continue;
+			}
+			final Player player = getWorld().getPlayer(entry.getKey());
+			if (player == null || player.isRemoved() || !hasDamageBy(player)) {
+				continue;
+			}
+			player.incExp(Skill.SUMMONING.id(), pending.experience, true);
+		}
+		pendingSummoningExperience.clear();
 	}
 
 	private long getUsernameHashForDamageOwner(final UUID id) {
@@ -592,6 +623,7 @@ public class Npc extends Mob {
 		Player killCreditOwner = owner;
 		Map<Player, Double> personalLootRecipients = getPersonalLootRecipients();
 		Pair<UUID, Long> ownerInfo = handleXpDistribution(mob);
+		awardPendingSummoningExperience();
 		owner = getWorld().getPlayerByUUID(ownerInfo.getLeft());
 
 		if (owner == null) {
@@ -1054,6 +1086,16 @@ public class Npc extends Mob {
 			case Skills.AGGRESSIVE_MODE:
 			default:
 				return totalXp / 4;
+		}
+	}
+
+	private static final class PendingSummoningExperience {
+		private final int experience;
+		private final long expiresTick;
+
+		private PendingSummoningExperience(final int experience, final long expiresTick) {
+			this.experience = experience;
+			this.expiresTick = expiresTick;
 		}
 	}
 

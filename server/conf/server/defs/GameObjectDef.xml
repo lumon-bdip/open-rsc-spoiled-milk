@@ -14562,4 +14562,15 @@
     <groundItemVar>0</groundItemVar>
     <objectModel>obelisk</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Ore crusher</name>
+    <description>A machine for crushing ore</description>
+    <command1>WalkTo</command1>
+    <command2>Examine</command2>
+    <type>1</type>
+    <width>2</width>
+    <height>2</height>
+    <groundItemVar>0</groundItemVar>
+    <objectModel>madmachine</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>

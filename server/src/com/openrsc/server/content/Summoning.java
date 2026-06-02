@@ -91,6 +91,13 @@ public final class Summoning {
 	private static final int SUPPORT_UPKEEP_MS = 60000;
 	private static final int SUPPORT_DURATION_SECONDS = SUPPORT_UPKEEP_MS / 1000;
 	private static final int SUMMON_CHARGE_MS = 5000;
+	private static final int SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP = 10;
+	private static final int PACK_RAT_UTILITY_BASE_DISPLAYED_XP = 75;
+	private static final int PACK_RAT_UTILITY_PER_ITEM_DISPLAYED_XP = 5;
+	private static final int PACK_RAT_UTILITY_MAX_DISPLAYED_XP = 150;
+	private static final int DELIVERY_CAMEL_UTILITY_DISPLAYED_XP = 225;
+	private static final int MIN_COMBAT_SUMMON_DISPLAYED_XP = 5;
+	private static final int COMBAT_SUMMON_CREDIT_TIMEOUT_MS = 120000;
 	private static final SummonProfile GIANT_SPIDER_PROFILE = combatProfile(
 		"Broodling Spider", 1, 15, NpcId.GIANT_SPIDER_LVL8.id(), KIND_GIANT_SPIDER, 2, 10, 1, 24, 30, TRAIT_NONE,
 		cost(ItemId.LIFE_RUNE.id(), 1),
@@ -317,6 +324,13 @@ public final class Summoning {
 		final int summoning = Skill.SUMMONING.id();
 		if (summoning >= 0 && profile.experience > 0) {
 			owner.incExp(summoning, profile.experience, true);
+		}
+	}
+
+	private static void awardDisplayedSummoningExperience(final Player owner, final int displayedExperience) {
+		final int summoning = Skill.SUMMONING.id();
+		if (summoning >= 0 && displayedExperience > 0) {
+			owner.incExp(summoning, internalExperience(displayedExperience), true);
 		}
 	}
 
@@ -564,6 +578,42 @@ public final class Summoning {
 		}
 	}
 
+	public static void recordCombatSummonEngagement(final Player owner, final Npc target) {
+		if (owner == null || target == null || target.isRemoved() || target.isRespawning()) {
+			return;
+		}
+		final Npc summon = owner.getAttribute(MANUAL_SUMMON_KEY, null);
+		if (summon == null || summon.isRemoved() || !isOwnedSummon(owner, summon)
+			|| !SOURCE_MANUAL.equals(summon.getAttribute(SUMMON_SOURCE_KEY, ""))) {
+			return;
+		}
+		final SummonProfile profile = getManualProfileForSummon(summon);
+		if (profile == null || profile.role != SummonRole.COMBAT) {
+			return;
+		}
+		final int enemyLevel = Math.max(1, target.getNPCCombatLevel());
+		final int summonCastDisplayedExperience = profile.experience / 4;
+		final int displayedExperience = Math.max(MIN_COMBAT_SUMMON_DISPLAYED_XP,
+			Math.min(enemyLevel * 2, (int) Math.ceil(summonCastDisplayedExperience / 2.0D)));
+		final long expiresTick = owner.getWorld().getServer().getCurrentTick() + getCombatSummonCreditTimeoutTicks(owner);
+		target.recordPendingSummoningExperience(owner, internalExperience(displayedExperience), expiresTick);
+	}
+
+	private static int getCombatSummonCreditTimeoutTicks(final Player owner) {
+		final int gameTick = Math.max(1, owner.getConfig().GAME_TICK);
+		return Math.max(1, (COMBAT_SUMMON_CREDIT_TIMEOUT_MS + gameTick - 1) / gameTick);
+	}
+
+	private static SummonProfile getManualProfileForSummon(final Npc summon) {
+		final String kind = summon.getAttribute(SUMMON_KIND_KEY, "");
+		for (SummonProfile profile : SUMMON_PROFILES) {
+			if (profile.kind.equals(kind)) {
+				return profile;
+			}
+		}
+		return null;
+	}
+
 	public static int applySummonOutgoingDamage(final Mob hitter, final int damage) {
 		if (damage <= 0 || !isSummon(hitter)) {
 			return damage;
@@ -730,7 +780,8 @@ public final class Summoning {
 			return true;
 		}
 		final ItemChoice choice = choices.get(option);
-		convertInventoryItemToNotes(player, choice.catalogId);
+		final int convertedAmount = convertInventoryItemToNotes(player, choice.catalogId);
+		awardPackRatUtilityExperience(player, convertedAmount);
 		dismissManualSummon(player);
 		return true;
 	}
@@ -754,7 +805,8 @@ public final class Summoning {
 			player.message("The rat can't turn that into certs.");
 			return true;
 		}
-		convertInventoryItemToNotes(player, item.getCatalogId());
+		final int convertedAmount = convertInventoryItemToNotes(player, item.getCatalogId());
+		awardPackRatUtilityExperience(player, convertedAmount);
 		dismissManualSummon(player);
 		return true;
 	}
@@ -770,7 +822,9 @@ public final class Summoning {
 			player.message("The camel is no longer here.");
 			return true;
 		}
-		depositInventorySlotToBank(player, item);
+		if (depositInventorySlotToBank(player, item)) {
+			awardDisplayedSummoningExperience(player, DELIVERY_CAMEL_UTILITY_DISPLAYED_XP);
+		}
 		dismissManualSummon(player);
 		return true;
 	}
@@ -1206,65 +1260,76 @@ public final class Summoning {
 		return new ArrayList<ItemChoice>(byCatalogId.values());
 	}
 
-	private static void convertInventoryItemToNotes(final Player player, final int catalogId) {
+	private static int convertInventoryItemToNotes(final Player player, final int catalogId) {
 		final Inventory inventory = player.getCarriedItems().getInventory();
 		final int amount = inventory.countId(catalogId, Optional.of(false));
 		if (amount <= 0) {
 			player.message("You don't have that item anymore.");
-			return;
+			return 0;
 		}
 		final ItemDefinition def = player.getWorld().getServer().getEntityHandler().getItemDef(catalogId);
 		if (def == null || !def.isNoteable()) {
 			player.message("The rat can't turn that into certs.");
-			return;
+			return 0;
 		}
 		long removedItemId = player.getCarriedItems().remove(new Item(catalogId, amount, false), false);
 		if (removedItemId == -1) {
 			player.message("The rat couldn't gather those items.");
 			ActionSender.sendInventory(player);
-			return;
+			return 0;
 		}
 		inventory.add(new Item(catalogId, amount, true), false);
 		ActionSender.sendInventory(player);
 		player.message("The rat turns your " + def.getName() + " into certs and disappears.");
+		return amount;
 	}
 
-	private static void depositInventorySlotToBank(final Player player, final Item selectedItem) {
+	private static void awardPackRatUtilityExperience(final Player player, final int convertedAmount) {
+		if (convertedAmount <= 0) {
+			return;
+		}
+		final int displayedExperience = Math.min(PACK_RAT_UTILITY_MAX_DISPLAYED_XP,
+			PACK_RAT_UTILITY_BASE_DISPLAYED_XP + (PACK_RAT_UTILITY_PER_ITEM_DISPLAYED_XP * convertedAmount));
+		awardDisplayedSummoningExperience(player, displayedExperience);
+	}
+
+	private static boolean depositInventorySlotToBank(final Player player, final Item selectedItem) {
 		if (selectedItem == null) {
 			player.message("The camel can't find that item.");
-			return;
+			return false;
 		}
 		final Item inventoryItem = selectedItem;
 		if (inventoryItem == null) {
 			player.message("You don't have that item anymore.");
-			return;
+			return false;
 		}
 		final ItemDefinition def = inventoryItem.getDef(player.getWorld());
 		if (def == null) {
 			player.message("The camel can't carry that item.");
-			return;
+			return false;
 		}
 		final int amount = (def.isStackable() || inventoryItem.getNoted()) ? inventoryItem.getAmount() : 1;
 		final Item bankItem = new Item(inventoryItem.getCatalogId(), amount, inventoryItem.getNoted());
 		if (!player.getBank().canHold(bankItem)) {
 			player.message("Your bank is too full for the camel to deposit that.");
-			return;
+			return false;
 		}
 		final long removedItemId = player.getCarriedItems().remove(
 			new Item(inventoryItem.getCatalogId(), amount, inventoryItem.getNoted(), inventoryItem.getItemId()), false);
 		if (removedItemId == -1) {
 			player.message("The camel couldn't gather that item.");
 			ActionSender.sendInventory(player);
-			return;
+			return false;
 		}
 		if (!player.getBank().add(bankItem, false)) {
 			player.getCarriedItems().getInventory().add(bankItem, false);
 			player.message("Your bank is too full for the camel to deposit that.");
 			ActionSender.sendInventory(player);
-			return;
+			return false;
 		}
 		ActionSender.sendInventory(player);
 		player.message("The camel deposits your " + def.getName() + " and disappears.");
+		return true;
 	}
 
 	private static boolean inflictSummonBonusDamage(final Npc summon, final Mob target, int damage, final boolean magicDamage) {
@@ -1312,6 +1377,7 @@ public final class Summoning {
 		final boolean consumed = owner.getCarriedItems().remove(new Item(ItemId.LIFE_RUNE.id(), 1), false) != -1;
 		if (consumed) {
 			ActionSender.sendInventory(owner);
+			awardDisplayedSummoningExperience(owner, SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP);
 		}
 		return consumed;
 	}

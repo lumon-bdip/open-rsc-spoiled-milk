@@ -126,6 +126,8 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			}
 		}
 
+		recordSummoningCombatEngagement(player, affectedMob);
+
 		if (player.getAutoCastSpell() != null && MagicCombatEvent.start(player, affectedMob)) {
 			return;
 		}
@@ -174,6 +176,7 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 						return;
 					}
 					if (mob.isNpc()) {
+						Summoning.recordCombatSummonEngagement(getPlayer(), (Npc) mob);
 						NpcInteraction interaction = NpcInteraction.NPC_ATTACK;
 						NpcInteraction.setInteractions(((Npc)mob), getPlayer(), interaction);
 						getPlayer().getWorld().getServer().getPluginHandler().handlePlugin(AttackNpcTrigger.class, getPlayer(), new Object[]{getPlayer(), (Npc) mob}, this);
@@ -226,7 +229,8 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 						int throwingEquip = getPlayer().getThrowingEquip();
 						int rangeEquip = getPlayer().getRangeEquip();
 
-						if (throwingEquip < 0 && rangeEquip > 0) {
+					if (throwingEquip < 0 && rangeEquip > 0) {
+						recordSummoningCombatEngagement(getPlayer(), getMob());
 						// TODO: replace with gameEventHandler.addOrUpdate()
 						final GameEventHandler gameEventHandler = getPlayer().getWorld()
 							.getServer()
@@ -255,6 +259,7 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 						getPlayer().setRangeEvent(rangeEvent);
 						gameEventHandler.add(rangeEvent);
 					} else {
+						recordSummoningCombatEngagement(getPlayer(), getMob());
 						// TODO: replace with gameEventHandler.addOrUpdate()
 						final GameEventHandler gameEventHandler = getPlayer().getWorld()
 							.getServer()
@@ -297,5 +302,11 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			return false;
 		}
 		return true;
+	}
+
+	private void recordSummoningCombatEngagement(final Player player, final Mob target) {
+		if (target != null && target.isNpc()) {
+			Summoning.recordCombatSummonEngagement(player, (Npc) target);
+		}
 	}
 }

@@ -1340,7 +1340,8 @@ public enum SceneryId {
 	MONEY_PLANT(1320),
 	LIFE_ALTAR(1321),
 	OBELISK_OF_LIFE(1322),
-	INERT_OBELISK(1323);
+	INERT_OBELISK(1323),
+	ORE_CRUSHER(1324);
 
 	private int sceneryId;
 

@@ -85,11 +85,13 @@ python3 ./tests/myworld/test-quest-reward-guardrails.py
 python3 ./tests/myworld/test-robe-defense-budgets.py
 python3 ./tests/myworld/test-shop-tiering.py
 python3 ./tests/myworld/test-brown-apron-crafting-guild.py
+python3 ./tests/myworld/test-ore-crusher.py
 python3 ./tests/myworld/test-skill-guide-info-pass.py
 python3 ./tests/myworld/test-skill-guides.py
 python3 ./tests/myworld/test-summoning-animation-effect.py
 python3 ./tests/myworld/test-summoning-costs.py
 python3 ./tests/myworld/test-summoning-display-names.py
+python3 ./tests/myworld/test-summoning-experience.py
 python3 ./tests/myworld/test-summon-health-restoration.py
 python3 ./tests/myworld/test-summoning-spawn-placement.py
 python3 ./tests/myworld/test-tier-rebalance.py
