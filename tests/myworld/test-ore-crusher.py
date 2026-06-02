@@ -49,7 +49,7 @@ def main() -> None:
         fail("Ore crusher scenery definition should resolve to id 1324")
     if "ORE_CRUSHER(1324)" not in scenery_ids:
         fail("SceneryId should expose ORE_CRUSHER as id 1324")
-    expected_client = 'new GameObjectDef("Ore crusher", "A machine for crushing ore", "WalkTo", "Examine", 1, 2, 2, 0, "madmachine", ++i)); //1324'
+    expected_client = 'new GameObjectDef("Ore crusher", "A machine for crushing ore to find gems", "WalkTo", "Examine", 1, 2, 2, 0, "madmachine", ++i)); //1324'
     if expected_client not in client_defs:
         fail("Client should define Ore crusher as id 1324 with madmachine model")
 
@@ -60,21 +60,23 @@ def main() -> None:
     )
     if crusher_def is None:
         fail("Ore crusher should be a 2x2 madmachine scenery object")
+    if "<description>A machine for crushing ore to find gems</description>" not in scenery_defs:
+        fail("Ore crusher should describe that it crushes ore to find gems")
 
     locs_by_pos = {}
     for loc in scenery_locs:
         pos = loc.get("pos", {})
         locs_by_pos.setdefault((pos.get("X"), pos.get("Y")), []).append(loc)
 
-    if {"id": 48, "pos": {"X": 343, "Y": 601}, "direction": 2} not in scenery_locs:
-        fail("Crafting guild downstairs sink should replace the west table at 343,601 facing south")
+    if {"id": 48, "pos": {"X": 343, "Y": 601}, "direction": 6} not in scenery_locs:
+        fail("Crafting guild downstairs sink should replace the west table at 343,601 with the flipped orientation")
     for loc in locs_by_pos.get((344, 601), []):
         if loc.get("id") == 3:
             fail("Crafting guild downstairs east table at 344,601 should be removed")
     for loc in locs_by_pos.get((343, 601), []):
         if loc.get("id") == 3:
             fail("Crafting guild downstairs west table at 343,601 should be removed")
-    if {"id": 1324, "pos": {"X": 343, "Y": 1547}, "direction": 0} not in scenery_locs:
+    if {"id": 1324, "pos": {"X": 343, "Y": 1547}, "direction": 2} not in scenery_locs:
         fail("Ore crusher should replace the upstairs crafting guild sink at 343,1547 facing west")
     for loc in locs_by_pos.get((343, 1547), []):
         if loc.get("id") == 48:

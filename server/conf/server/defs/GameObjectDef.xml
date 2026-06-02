@@ -14564,7 +14564,7 @@
   </GameObjectDef>
   <GameObjectDef>
     <name>Ore crusher</name>
-    <description>A machine for crushing ore</description>
+    <description>A machine for crushing ore to find gems</description>
     <command1>WalkTo</command1>
     <command2>Examine</command2>
     <type>1</type>
