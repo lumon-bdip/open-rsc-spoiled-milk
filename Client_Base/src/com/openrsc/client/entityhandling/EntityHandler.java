@@ -2651,7 +2651,7 @@ public class EntityHandler {
 		items.add(new ItemDef("water", "It's full of water", "", 1, 65, "items:65", false, false, 0, 12632319, false, false, true, 141));
 		items.add(new ItemDef("wine", "It's full of wine", "Drink", 1, 65, "items:65", false, false, 0, 12851224, false, false, true, 142));
 		items.add(new ItemDef("grapes", "Good grapes for wine making", "", 1, 21, "items:21", false, false, 0, 9386967, false, false, true, 143));
-		items.add(new ItemDef("Tin shears", "Tin shears for harvesting", "", 1, 66, "items:66", false, false, 0, 0xB7C9D9, false, false, true, 144));
+		items.add(new ItemDef("Tin shears", "Tin shears for harvesting", "", 1, 66, "items:66", false, true, 16, 0xB7C9D9, false, false, true, 144));
 		items.add(new ItemDef("wool", "I think this came from a sheep", "", 1, 67, "items:67", false, false, 0, 0, false, false, true, 145));
 		items.add(new ItemDef("fur", "This would make warm clothing", "", 10, 68, "items:68", false, false, 0, 12288534, false, false, true, 146));
 		items.add(new ItemDef("cow hide", "I should take this to the tannery", "", 1, 69, "items:69", false, false, 0, 0, false, false, true, 147));
@@ -5419,7 +5419,7 @@ public class EntityHandler {
 
 	private static void addMetalShearsDefinition(String name, int id, int price, int pictureMask) {
 		ItemDef item = new ItemDef(name, name + " for harvesting", "", price, 66, "items:66", false,
-			false, 0, pictureMask, false, false, true, id);
+			true, 16, pictureMask, false, false, true, id);
 		setCustomItemDefinition(id, item);
 	}
 
@@ -9399,6 +9399,17 @@ public class EntityHandler {
 		configureEquippableToolClient(2047, "Copper Pickaxe");
 		configureEquippableToolClient(2048, "Titan Steel Pickaxe");
 		configureEquippableToolClient(2049, "Orichalcum Pickaxe");
+
+		configureEquippableToolClient(144, "Tin shears");
+		configureEquippableToolClient(2215, "Copper shears");
+		configureEquippableToolClient(2216, "Bronze shears");
+		configureEquippableToolClient(2217, "Iron shears");
+		configureEquippableToolClient(2218, "Steel shears");
+		configureEquippableToolClient(2219, "Mithril shears");
+		configureEquippableToolClient(2220, "Titan Steel shears");
+		configureEquippableToolClient(2221, "Adamantite shears");
+		configureEquippableToolClient(2222, "Orichalcum shears");
+		configureEquippableToolClient(2223, "Rune shears");
 	}
 
 	public static int storeModel(String name) {

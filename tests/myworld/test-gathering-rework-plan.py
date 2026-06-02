@@ -404,10 +404,14 @@ def require_shears_smithing_and_defs() -> None:
         fail("MyWorld item overrides do not rename legacy shears to Tin shears")
 
     client_snippets = (
-        'new ItemDef("Tin shears", "Tin shears for harvesting", "", 1, 66, "items:66"',
+        'new ItemDef("Tin shears", "Tin shears for harvesting", "", 1, 66, "items:66", false, true, 16',
         'addMetalShearsDefinition("Copper shears", 2215, 4, 0xC86A2B);',
         'addMetalShearsDefinition("Rune shears", 2223, 32000, 0x00FFFF);',
         'new ItemDef(name, name + " for harvesting", "", price, 66, "items:66"',
+        "true, 16, pictureMask, false, false, true, id);",
+        'configureEquippableToolClient(144, "Tin shears");',
+        'configureEquippableToolClient(2215, "Copper shears");',
+        'configureEquippableToolClient(2223, "Rune shears");',
         "while (items.size() <= id)",
         'addMetalArrowHeadDefinition("Tin arrow heads", 2004, 1, 0xB7C9D9);',
         'addMetalArrowHeadDefinition("Copper arrow heads", 2015, 2, 0xC86A2B);',
