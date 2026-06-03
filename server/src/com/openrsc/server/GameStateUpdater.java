@@ -1508,8 +1508,8 @@ public final class GameStateUpdater {
 			ClearLocationsStruct struct = new ClearLocationsStruct();
 			List<Point> pointList = new ArrayList<>(player.getLocationsToClear().size());
 			for (final Point point : player.getLocationsToClear()) {
-				final int offsetX = point.getX() - player.getX();
-				final int offsetY = point.getY() - player.getY();
+				final int offsetX = (point.getX() - player.getX()) << 3;
+				final int offsetY = (point.getY() - player.getY()) << 3;
 				pointList.add(new Point(offsetX, offsetY));
 			}
 			player.getLocationsToClear().clear();

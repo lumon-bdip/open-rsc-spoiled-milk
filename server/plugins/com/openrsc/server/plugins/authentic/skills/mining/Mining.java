@@ -255,11 +255,6 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 
-		if (rock.getID() == SceneryId.ROCK_GENERIC.id() || rock.getID() == SceneryId.ROCK_GENERIC2.id()) {
-			handleStoneMining(rock, player, click);
-			return;
-		}
-
 		if (rock.getID() == GEM_ROCK) {
 			handleGemRockMining(rock, player, click);
 			return;
@@ -495,84 +490,6 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 
 	private int resourceRespawnMillis(int respawnSeconds) {
 		return Math.max(1, (respawnSeconds * 1000) / 2);
-	}
-
-	private void handleStoneMining(final GameObject rock, Player player, int click) {
-		if (!player.withinRange(rock, 1)) {
-			return;
-		}
-
-		final int axeId = getAxe(player);
-		final int mineLvl = player.getSkills().getLevel(Skill.MINING.id());
-		int reqlvl = getPickaxeRequiredLevel(axeId);
-
-		if (click == 1) {
-			player.playSound("prospect");
-			player.playerServerMessage(MessageType.QUEST, "You examine the rock for ores...");
-			delay(3);
-			player.playerServerMessage(MessageType.QUEST, "This rock contains stone");
-			return;
-		}
-
-		if (axeId < 0 || reqlvl > mineLvl) {
-			mes("You need a pickaxe to mine this rock");
-			delay(3);
-			mes("You do not have a pickaxe which you have the mining level to use");
-			delay(3);
-			return;
-		}
-		if (config().STOP_SKILLING_FATIGUED >= 1
-			&& player.getFatigue() >= player.MAX_FATIGUE) {
-			thinkbubble(new Item(axeId));
-			player.playerServerMessage(MessageType.QUEST, "You are too tired to mine this rock");
-			return;
-		}
-		startbatch(30);
-		batchStoneMining(player, rock, axeId);
-	}
-
-	private void batchStoneMining(Player player, GameObject rock, int axeId) {
-		if (config().STOP_SKILLING_FATIGUED >= 1
-			&& player.getFatigue() >= player.MAX_FATIGUE) {
-			thinkbubble(new Item(axeId));
-			player.playerServerMessage(MessageType.QUEST, "You are too tired to mine this rock");
-			return;
-		}
-		player.playSound("mine");
-		int pickBubbleId = player.getClientLimitations().supportsTypedPickaxes ? ItemId.IRON_PICKAXE.id() : ItemId.BRONZE_PICKAXE.id();
-		ActionSender.sendActionProgressBar(player, pickBubbleId, 3);
-		player.playerServerMessage(MessageType.QUEST, "You swing your pick at the rock...");
-		delay(3);
-		if (ifinterrupted() || !player.withinRange(rock, 1)) {
-			return;
-		}
-		int quantity = Formulae.calcGatheringYield(1, player.getSkills().getLevel(Skill.MINING.id()), getPickaxeTier(axeId));
-		int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(ItemId.RUNE_STONE.id(), quantity));
-		int remainingQuantity = quantity - bankedQuantity;
-		int storedQuantity = Math.min(remainingQuantity, player.getCarriedItems().getInventory().getFreeSlots());
-		if (storedQuantity > 0) {
-			give(player, ItemId.RUNE_STONE.id(), storedQuantity);
-		}
-		int overflowQuantity = remainingQuantity - storedQuantity;
-		if (overflowQuantity > 0) {
-			dropOverflow(player, rock, ItemId.RUNE_STONE.id(), overflowQuantity);
-		}
-		int successfulQuantity = bankedQuantity + storedQuantity;
-		player.playerServerMessage(MessageType.QUEST,
-			successfulQuantity > 1 ? "You manage to obtain " + successfulQuantity + " stone"
-				: successfulQuantity == 1 ? "You manage to obtain some stone"
-				: "You manage to obtain some stone, but have no room to keep it");
-		if (overflowQuantity > 0) {
-			player.playerServerMessage(MessageType.QUEST, "Any excess falls to the ground because you have no room");
-		}
-		player.incExp(Skill.MINING.id(), 20 * quantity, true);
-
-		updatebatch();
-		if (!isbatchcomplete()) {
-			if (!config().BATCH_PROGRESSION || !ifinterrupted()) {
-				batchStoneMining(player, rock, axeId);
-			}
-		}
 	}
 
 	private void handleGemRockMining(final GameObject rock, Player player, int click) {

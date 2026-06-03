@@ -1,5 +1,25 @@
 <map>
 <entry>
+		<int>98</int><!-- Stone -->
+		<ObjectMiningDef>
+			<requiredLvl>1</requiredLvl>
+			<oreId>1299</oreId>
+			<exp>20</exp>
+			<depletion>9</depletion>
+			<respawnTime>4</respawnTime>
+		</ObjectMiningDef>
+	</entry>
+	<entry>
+		<int>99</int><!-- Stone -->
+		<ObjectMiningDef>
+			<requiredLvl>1</requiredLvl>
+			<oreId>1299</oreId>
+			<exp>20</exp>
+			<depletion>9</depletion>
+			<respawnTime>4</respawnTime>
+		</ObjectMiningDef>
+	</entry>
+<entry>
 		<int>176</int><!-- Bluerite -->
 		<ObjectMiningDef>
 			<requiredLvl>1</requiredLvl>

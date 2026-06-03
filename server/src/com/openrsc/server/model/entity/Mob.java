@@ -795,6 +795,62 @@ public abstract class Mob extends Entity {
 			getWalkingQueue().setPath(newPath);
 	}
 
+	public void walkAdjacentToEntity(final Mob target) {
+		Point destination = getClosestMeleeAdjacentTile(target);
+		if (destination == null) {
+			if (getConfig().WANT_IMPROVED_PATHFINDING) {
+				walkToEntityAStar(target.getX(), target.getY());
+			} else {
+				walkToEntity(target.getX(), target.getY());
+			}
+			return;
+		}
+
+		if (getLocation().equals(destination)) {
+			resetPath();
+			return;
+		}
+
+		if (getConfig().WANT_IMPROVED_PATHFINDING) {
+			walkToEntityAStar(destination.getX(), destination.getY());
+		} else {
+			walkToEntity(destination.getX(), destination.getY());
+		}
+	}
+
+	private Point getClosestMeleeAdjacentTile(final Mob target) {
+		Point best = null;
+		int bestDistance = Integer.MAX_VALUE;
+		int bestCardinalBias = Integer.MAX_VALUE;
+		final int[][] offsets = {
+			{0, -1}, {-1, 0}, {1, 0}, {0, 1},
+			{-1, -1}, {1, -1}, {-1, 1}, {1, 1}
+		};
+
+		for (int[] offset : offsets) {
+			Point candidate = Point.location(target.getX() + offset[0], target.getY() + offset[1]);
+			if (!PathValidation.checkPoint(getWorld(), candidate)) {
+				continue;
+			}
+			if (!PathValidation.checkAdjacentDistance(getWorld(), candidate.getX(), candidate.getY(),
+				target.getX(), target.getY(), true, false)) {
+				continue;
+			}
+
+			int xDistance = getX() - candidate.getX();
+			int yDistance = getY() - candidate.getY();
+			int distance = xDistance * xDistance + yDistance * yDistance;
+			int cardinalBias = Math.abs(offset[0]) + Math.abs(offset[1]);
+			if (distance < bestDistance || (distance == bestDistance && cardinalBias < bestCardinalBias)) {
+				best = candidate;
+				bestDistance = distance;
+				bestCardinalBias = cardinalBias;
+			}
+		}
+
+		return best;
+	}
+
 	public void walkToEntity(final int x, final int y) {
 		getWalkingQueue().reset();
 		final Path path = new Path(this, PathType.WALK_TO_ENTITY);

@@ -119,11 +119,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 				resetCombat(false);
 				return;
 			}
-			if (attackerMob.getConfig().WANT_IMPROVED_PATHFINDING) {
-				attackerMob.walkToEntityAStar(targetMob.getX(), targetMob.getY());
-			} else {
-				attackerMob.walkToEntity(targetMob.getX(), targetMob.getY());
-			}
+			attackerMob.walkAdjacentToEntity(targetMob);
 			setDelayTicks(1);
 			return;
 		}

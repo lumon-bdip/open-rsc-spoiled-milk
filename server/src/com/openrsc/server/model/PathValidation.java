@@ -315,7 +315,7 @@ public class PathValidation {
 	}
 
 	// returns true if the point is *not* blocked by anything
-	static boolean checkPoint(World world, Point point) {
+	public static boolean checkPoint(World world, Point point) {
 		return (world.getTile(point.getX(), point.getY()).traversalMask & CollisionFlag.FULL_BLOCK) == 0;
 	}
 

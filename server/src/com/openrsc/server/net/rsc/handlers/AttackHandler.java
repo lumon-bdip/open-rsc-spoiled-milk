@@ -153,8 +153,11 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			int attackRadius = radius + RangeUtils.PLAYER_COMBAT_RANGE_BONUS;
 			int approachRadius = RangeUtils.getApproachRadius(attackRadius);
 			int walkRadius = player.withinRange(affectedMob, attackRadius) ? attackRadius : approachRadius;
-			int followRadius = player.getConfig().WANT_MYWORLD ? walkRadius : 0;
-			player.setFollowing(affectedMob, followRadius, false, true);
+			if (player.getConfig().WANT_MYWORLD) {
+				player.walkAdjacentToEntity(affectedMob);
+			} else {
+				player.setFollowing(affectedMob, 0, false, true);
+			}
 
 			player.setWalkToAction(new WalkToMobAction(player, affectedMob, walkRadius, true, ActionType.ATTACK) {
 				public void executeInternal() {
