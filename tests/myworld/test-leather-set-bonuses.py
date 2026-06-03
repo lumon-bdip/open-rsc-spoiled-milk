@@ -26,11 +26,21 @@ def expect_contains(path: Path, needle: str, label: str) -> None:
         fail(f"{label} missing `{needle}` in {path}")
 
 
+def expect_not_contains(path: Path, needle: str, label: str) -> None:
+    text = path.read_text()
+    if needle in text:
+        fail(f"{label} should not contain `{needle}` in {path}")
+
+
 def main() -> None:
     expect_contains(EQUIPMENT_PATH, "getCowHideHitsBonus()", "equipment cow bonus")
     expect_contains(EQUIPMENT_PATH, "getGoblinEnragedProcChance()", "equipment goblin bonus")
     expect_contains(EQUIPMENT_PATH, "getUnicornHidePrayerBonus()", "equipment unicorn bonus")
     expect_contains(EQUIPMENT_PATH, "getBlackUnicornHidePrayerBonus()", "equipment black unicorn bonus")
+    expect_contains(EQUIPMENT_PATH, "return hasFullUnicornHideSet() ? 10 : 0;", "unicorn prayer bonus should be unconditional")
+    expect_contains(EQUIPMENT_PATH, "return hasFullBlackUnicornHideSet() ? 10 : 0;", "black unicorn prayer bonus should be unconditional")
+    expect_not_contains(EQUIPMENT_PATH, "hasFullUnicornHideSet() && player.getPrayerBook()", "unicorn prayer bonus god gate")
+    expect_not_contains(EQUIPMENT_PATH, "hasFullBlackUnicornHideSet() && player.getPrayerBook()", "black unicorn prayer bonus god gate")
     expect_contains(EQUIPMENT_PATH, "getBearHideIntimidatePercent()", "equipment bear bonus")
     expect_contains(EQUIPMENT_PATH, "getBearHideIntimidateProcChance()", "equipment bear proc")
     expect_contains(EQUIPMENT_PATH, "getGiantBruteForceProcChance()", "equipment giant bonus")
@@ -105,6 +115,10 @@ def main() -> None:
     expect_contains(PROJECTILE_EVENT_PATH, "new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH)", "projectile dragon breath visual")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "applyMyWorldLeatherArmorDescriptions();", "client leather examine descriptions hook")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full cow-hide set: +5 Hits.", "cow leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full unicorn-hide set: +10 Prayer.", "unicorn leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black unicorn-hide set: +10 Prayer.", "black unicorn leather examine description")
+    expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full unicorn-hide set: +10 Prayer while worshipping Saradomin.", "old unicorn leather examine description")
+    expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black unicorn-hide set: +10 Prayer while worshipping Zamorak.", "old black unicorn leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black-dragon-hide set: 20% chance for dragon breath, max hit 30.", "black dragon leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full king-black-dragon-hide set: 60% chance for dragon breath, max hit 40.", "king black dragon leather examine description")
 

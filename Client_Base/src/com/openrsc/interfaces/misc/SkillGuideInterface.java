@@ -578,7 +578,7 @@ public final class SkillGuideInterface {
 					skillMenuEntries.add(new SkillMenuItem(1217, "70", "Staff of Guthix"));
 					addSkillCapeGuide(1382, "Magic");
 				} else if (curTab == 2) {
-					skillMenuEntries.add(new SkillMenuItem(185, "", "Wizard's Guild can be entered at level 66"));
+					skillMenuEntries.add(new SkillMenuItem(185, "", "Magic Guild can be entered at level 66"));
 					skillMenuEntries.add(new SkillMenuItem(35, "", "Combat spells can be toggled for auto-cast"));
 					skillMenuEntries.add(new SkillMenuItem(36, "", "Heal spells have their own cooldown"));
 					skillMenuEntries.add(new SkillMenuItem(42, "", "Teleport spells charge before moving you"));
@@ -654,7 +654,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(909, "30", "Worm Hole"));
 				skillMenuEntries.add(new SkillMenuItem(910, "30", "Tangled Toads Legs"));
 			} else if (curTab == 7) {
-				skillMenuEntries.add(new SkillMenuItem(192, "32", "Cooks' Guild"));
+				skillMenuEntries.add(new SkillMenuItem(192, "", "Cooking Guild can be entered at level 32 with a chef's hat"));
 				skillMenuEntries.add(new SkillMenuItem(142, "35", "Wine"));
 				skillMenuEntries.add(new SkillMenuItem(1269, "48", "Oomlie Meat Parcel"));
 				skillMenuEntries.add(new SkillMenuItem(1102, "58", "Tasty Ugthanki Kebab"));
@@ -690,7 +690,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(405, "70", "Rune hatchet"));
 			} else if (curTab == 2) {
 				if (Config.S_WANT_WOODCUTTING_GUILD) {
-					skillMenuEntries.add(new SkillMenuItem(405, "55", "Woodcutting Guild"));
+					skillMenuEntries.add(new SkillMenuItem(405, "", "Woodcutting Guild can be entered at level 55 after paying 1000 coins"));
 				}
 				skillMenuEntries.add(new SkillMenuItem(405, "", "Hatchet must be equipped to chop trees"));
 				skillMenuEntries.add(new SkillMenuItem(2707, "", "Resource seeds can appear as side rewards"));
@@ -736,7 +736,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(2689, "62", "Magic Fishing Rod - T9, +40 effective Fishing"));
 				skillMenuEntries.add(new SkillMenuItem(2690, "70", "Blood Fishing Rod - T10, +45 effective Fishing"));
 				} else if (curTab == 2) {
-					skillMenuEntries.add(new SkillMenuItem(379, "68", "Fishing Guild"));
+					skillMenuEntries.add(new SkillMenuItem(379, "", "Fishing Guild can be entered at level 68"));
 					skillMenuEntries.add(new SkillMenuItem(377, "", "Fishing shops sell rods through T6"));
 					skillMenuEntries.add(new SkillMenuItem(2686, "", "Fishing Guild sells rods through T10"));
 					skillMenuEntries.add(new SkillMenuItem(377, "", "Rods catch their tier and 3 tiers below"));
@@ -1317,7 +1317,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(2049, "62", "Orichalcum Pickaxe"));
 			skillMenuEntries.add(new SkillMenuItem(1262, "70", "Rune Pickaxe"));
 		} else if (curTab == 2) {
-			skillMenuEntries.add(new SkillMenuItem(1259, "60", "Mining Guild"));
+			skillMenuEntries.add(new SkillMenuItem(1259, "", "Mining Guild can be entered at level 60"));
 			skillMenuEntries.add(new SkillMenuItem(1260, "", "Pickaxe must be equipped to mine rocks"));
 			skillMenuEntries.add(new SkillMenuItem(164, "", "Gem focus: Just the ore, A few, Plenty, Lots"));
 			skillMenuEntries.add(new SkillMenuItem(164, "", "Higher gem focus increases rare gem rolls"));
@@ -1434,7 +1434,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(1013, "", "Dart tips moved to Crafting and use molds"));
 			skillMenuEntries.add(new SkillMenuItem(1996, "", "Throwing knives moved to Crafting and use molds"));
 			skillMenuEntries.add(new SkillMenuItem(779, "", "Can be opened at level 34"));
-			skillMenuEntries.add(new SkillMenuItem(191, "", "Can enter Crafting Guild at level 40"));
+			skillMenuEntries.add(new SkillMenuItem(191, "", "Crafting Guild can be entered at level 40 with a brown apron"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1384, "Crafting");
 			}

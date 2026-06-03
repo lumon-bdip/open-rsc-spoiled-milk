@@ -16,12 +16,12 @@ import static com.openrsc.server.plugins.Functions.thinkbubble;
 public final class OreCrusher implements UseLocTrigger {
 
 	private static final OreCrushDef[] ORE_CRUSH_DEFS = {
-		new OreCrushDef(ItemId.TIN_ORE.id(), 40, 90, 9, 1, 0),
-		new OreCrushDef(ItemId.COPPER_ORE.id(), 45, 85, 13, 2, 0),
-		new OreCrushDef(ItemId.IRON_ORE.id(), 55, 70, 23, 6, 1),
-		new OreCrushDef(ItemId.MITHRIL_ORE.id(), 65, 50, 35, 13, 2),
-		new OreCrushDef(ItemId.ADAMANTITE_ORE.id(), 75, 30, 42, 23, 5),
-		new OreCrushDef(ItemId.RUNITE_ORE.id(), 90, 15, 35, 40, 10)
+		new OreCrushDef(ItemId.TIN_ORE.id(), 20, 90, 9, 1, 0),
+		new OreCrushDef(ItemId.COPPER_ORE.id(), 30, 85, 13, 2, 0),
+		new OreCrushDef(ItemId.IRON_ORE.id(), 40, 70, 23, 6, 1),
+		new OreCrushDef(ItemId.MITHRIL_ORE.id(), 50, 50, 35, 13, 2),
+		new OreCrushDef(ItemId.ADAMANTITE_ORE.id(), 60, 30, 42, 23, 5),
+		new OreCrushDef(ItemId.RUNITE_ORE.id(), 80, 15, 35, 40, 10)
 	};
 
 	@Override

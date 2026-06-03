@@ -64,7 +64,7 @@ def main() -> None:
         '"Dart tips moved to Crafting and use molds"',
         '"Throwing knives moved to Crafting and use molds"',
         '"Can be opened at level 34"',
-        '"Can enter Crafting Guild at level 40"',
+        '"Crafting Guild can be entered at level 40 with a brown apron"',
     ):
         require(guide, snippet, "Crafting guide info")
 
@@ -78,8 +78,17 @@ def main() -> None:
         '"Higher gem focus increases rare gem rolls"',
         '"Side loot can roll up to rod tier plus 2"',
         '"Above-tier side loot rolls at reduced weight"',
+        '"Fishing Guild can be entered at level 68"',
+        '"Mining Guild can be entered at level 60"',
+        '"Woodcutting Guild can be entered at level 55 after paying 1000 coins"',
     ):
         require(guide, snippet, "Gathering guide info")
+
+    for snippet in (
+        '"Magic Guild can be entered at level 66"',
+        '"Cooking Guild can be entered at level 32 with a chef\'s hat"',
+    ):
+        require(guide, snippet, "Skill guild guide info")
 
     require(
         work_items,

@@ -5482,7 +5482,7 @@ public class EntityHandler {
 		addNecklaceLine(1623, tiers, "Balance", "Adds +%d melee, ranged, and magic power.", 2, necklacePrices, gemMasks);
 		addNecklaceLine(1628, tiers, "Force", "Adds +%d melee power.", 3, necklacePrices, gemMasks);
 		addNecklaceLine(1633, tiers, "Sorcery", "Adds +%d magic power.", 3, necklacePrices, gemMasks);
-		addNecklaceLine(1638, tiers, "Discipline", "Boosts gathering-style skill XP by %d%%.", 5, necklacePrices, gemMasks);
+		addNecklaceLine(1638, tiers, "Industry", "Boosts gathering-style skill XP by %d%%.", 5, necklacePrices, gemMasks);
 		addNecklaceLine(1643, tiers, "Fortune", "Has a %d%% chance to roll extra standard monster loot.", 10, necklacePrices, gemMasks);
 		addNecklaceLine(1648, tiers, "Recoil", "Has %d%% chance to recoil attacker damage.", 8, necklacePrices, gemMasks);
 		addNecklaceLine(1653, tiers, "Nourishment", "Boosts food healing by %d%%.", 10, necklacePrices, gemMasks);
@@ -5558,7 +5558,7 @@ public class EntityHandler {
 		addSoulAmuletLine(1754, tiers, amuletPrices, gemMasks);
 		addSoulNecklaceLine(1759, tiers, soulNecklacePrices, gemMasks);
 		addAttunedRingLine(3076, tiers, "Craftsmanship", "Boosts crafting-style skill XP by %d%%.", 5, ringPrices, gemMasks);
-		addAttunedRingLine(3081, tiers, "Discipline", "Boosts gathering-style skill XP by %d%%.", 5, ringPrices, gemMasks);
+		addAttunedRingLine(3081, tiers, "Industry", "Boosts gathering-style skill XP by %d%%.", 5, ringPrices, gemMasks);
 		addAttunedRingLine(3086, tiers, "Desperation", "Raises weapon power as health falls. Tier %d.", 1, ringPrices, gemMasks);
 		addAttunedRingLine(3091, tiers, "Vitality", "Adds +%d max Hits.", 2, ringPrices, gemMasks);
 		addLifeRingLine(3096, tiers, ringPrices, gemMasks);
@@ -5947,9 +5947,9 @@ public class EntityHandler {
 	private static void applyMyWorldLeatherArmorDescriptions() {
 		setLeatherSetDescription(1835, 1839, "Full cow-hide set: +5 Hits.");
 		setLeatherSetDescription(1840, 1844, "Full goblin-hide set: 20% chance to enrage for +10% attack speed.");
-		setLeatherSetDescription(1845, 1849, "Full unicorn-hide set: +10 Prayer while worshipping Saradomin.");
+		setLeatherSetDescription(1845, 1849, "Full unicorn-hide set: +10 Prayer.");
 		setLeatherSetDescription(1850, 1854, "Full bear-hide set: 20% chance to intimidate, slowing enemy attacks by 10%.");
-		setLeatherSetDescription(1855, 1859, "Full black unicorn-hide set: +10 Prayer while worshipping Zamorak.");
+		setLeatherSetDescription(1855, 1859, "Full black unicorn-hide set: +10 Prayer.");
 		setLeatherSetDescription(1860, 1864, "Full scorpion-carapace set: 20% melee poison chance, up to 10 poison.");
 		setLeatherSetDescription(1865, 1869, "Full wolf-hide set: summons a spirit wolf companion.");
 		setLeatherSetDescription(1870, 1874, "Full spider-carapace set: 20% ranged poison chance, up to 10 poison.");

@@ -14,12 +14,12 @@ ORE_CRUSHER = ROOT / "server/plugins/com/openrsc/server/plugins/custom/skills/cr
 
 
 EXPECTED_ORES = {
-    "TIN_ORE": (40, 90, 9, 1, 0),
-    "COPPER_ORE": (45, 85, 13, 2, 0),
-    "IRON_ORE": (55, 70, 23, 6, 1),
-    "MITHRIL_ORE": (65, 50, 35, 13, 2),
-    "ADAMANTITE_ORE": (75, 30, 42, 23, 5),
-    "RUNITE_ORE": (90, 15, 35, 40, 10),
+    "TIN_ORE": (20, 90, 9, 1, 0),
+    "COPPER_ORE": (30, 85, 13, 2, 0),
+    "IRON_ORE": (40, 70, 23, 6, 1),
+    "MITHRIL_ORE": (50, 50, 35, 13, 2),
+    "ADAMANTITE_ORE": (60, 30, 42, 23, 5),
+    "RUNITE_ORE": (80, 15, 35, 40, 10),
 }
 
 

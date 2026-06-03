@@ -1604,11 +1604,11 @@ public class Equipment {
 	}
 
 	public int getUnicornHidePrayerBonus() {
-		return hasFullUnicornHideSet() && player.getPrayerBook() == PrayerCatalog.GodLine.SARADOMIN ? 10 : 0;
+		return hasFullUnicornHideSet() ? 10 : 0;
 	}
 
 	public int getBlackUnicornHidePrayerBonus() {
-		return hasFullBlackUnicornHideSet() && player.getPrayerBook() == PrayerCatalog.GodLine.ZAMORAK ? 10 : 0;
+		return hasFullBlackUnicornHideSet() ? 10 : 0;
 	}
 
 	private int getActivePrayerBonus(final Item item) {
