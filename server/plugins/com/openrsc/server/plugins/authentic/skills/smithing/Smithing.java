@@ -390,6 +390,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				break;
 			}
 			player.playSound("anvil");
+			delay(3);
 			for (int x = 0; x < def.getRequiredBars(); x++) {
 				player.getCarriedItems().remove(new Item(item.getCatalogId()));
 			}

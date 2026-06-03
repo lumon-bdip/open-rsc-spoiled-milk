@@ -44,7 +44,22 @@ public class CooksAssistant implements QuestInterface, TalkNpcTrigger {
 		for (XPReward xpReward : reward.getXpRewards()) {
 			incStat(player, xpReward.getSkill().id(), xpReward.getBaseXP(), xpReward.getVarXP());
 		}
+		giveOrBank(player, ItemId.WHITE_APRON.id(), 1);
+		giveOrBank(player, ItemId.CHEFS_HAT.id(), 1);
 		incQP(player, reward.getQuestPoints(), !player.isUsingClientBeforeQP());
+	}
+
+	private void giveOrBank(Player player, int itemId, int amount) {
+		final Item item = new Item(itemId, amount);
+		if (player.getCarriedItems().getInventory().canHold(item)) {
+			player.getCarriedItems().getInventory().add(item);
+			return;
+		}
+		if (player.getBank().canHold(item) && player.getBank().add(item, false)) {
+			mes("Your bank holds the " + item.getDef(player.getWorld()).getName() + " for you.");
+			return;
+		}
+		player.message("You have no room to receive " + item.getDef(player.getWorld()).getName() + ".");
 	}
 
 	private void cookDialogue(Player player, Npc n, int cID) {

@@ -25,7 +25,7 @@ public final class ThessaliasClothes extends AbstractShop implements TakeObjTrig
 	private final Shop shop = new Shop(false, 30000, 100, 55, 3,
 		new Item(ItemId.SHEARS.id(), 3), new Item(ItemId.NEEDLE.id(), 3),
 		new Item(ItemId.WOOL.id(), 30), new Item(ItemId.BALL_OF_WOOL.id(), 30), new Item(ItemId.THREAD.id(), 100),
-		new Item(ItemId.COW_HIDE.id(), 20), new Item(ItemId.BROWN_APRON.id(), 3), new Item(ItemId.GOBLIN_HIDE.id(), 15),
+		new Item(ItemId.COW_HIDE.id(), 20), new Item(ItemId.WHITE_APRON.id(), 3), new Item(ItemId.BROWN_APRON.id(), 3), new Item(ItemId.GOBLIN_HIDE.id(), 15),
 		new Item(ItemId.UNICORN_HIDE.id(), 10), new Item(ItemId.BEAR_HIDE.id(), 10),
 		new Item(ItemId.PRIEST_ROBE.id(), 3), new Item(ItemId.PRIEST_GOWN.id(), 3));
 

@@ -357,7 +357,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		}
 		if (player.getCarriedItems().remove(new Item(item.getCatalogId())) > -1) {
 			player.message("You smelt the " + item.getDef(player.getWorld()).getName() + "...");
-			delay(5);
+			delay(3);
 			player.message("And retrieve " + amount + " dragon bar" + (amount > 1 ? "s" : ""));
 			give(player, ItemId.DRAGON_BAR.id(), amount);
 		}

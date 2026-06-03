@@ -527,7 +527,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 			player.playerServerMessage(MessageType.QUEST, "You are too tired to mine this rock");
 			return;
 		}
-		startbatch(1);
+		startbatch(30);
 		batchStoneMining(player, rock, axeId);
 	}
 
@@ -609,7 +609,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 			player.playerServerMessage(MessageType.QUEST, "You are too tired to mine this rock");
 			return;
 		}
-		startbatch(1);
+		startbatch(30);
 		batchGemRockMining(player, rock, axeId);
 	}
 
@@ -677,7 +677,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 			player.playerServerMessage(MessageType.QUEST, minedGemString(gem.getCatalogId()));
 			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
 		} else {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), rock.getX(), rock.getY(), 1, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), player.getX(), player.getY(), 1, player));
 			player.playerServerMessage(MessageType.QUEST, "You mine a gem, but have no room to keep it, so it falls to the ground");
 		}
 	}
@@ -743,11 +743,11 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 		if (new Item(itemId).getDef(player.getWorld()).isStackable()) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, object.getX(), object.getY(), amount, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), amount, player));
 			return;
 		}
 		for (int i = 0; i < amount; i++) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, object.getX(), object.getY(), 1, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), 1, player));
 		}
 	}
 
@@ -766,7 +766,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 			player.playerServerMessage(MessageType.QUEST, "You just found a" + gem.getDef(player.getWorld()).getName().toLowerCase().replaceAll("uncut", "") + "!");
 			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
 		} else {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), rock.getX(), rock.getY(), 1, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), player.getX(), player.getY(), 1, player));
 			player.playerServerMessage(MessageType.QUEST, "You find a gem, but have no room to keep it, so it falls to the ground");
 		}
 		return true;
@@ -780,7 +780,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		Item extra = new Item(item.getCatalogId(), 1);
 		if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(extra) <= 0) {
 			if (player.getCarriedItems().getInventory().full()) {
-				player.getWorld().registerItem(new GroundItem(player.getWorld(), item.getCatalogId(), object.getX(), object.getY(), 1, player));
+				player.getWorld().registerItem(new GroundItem(player.getWorld(), item.getCatalogId(), player.getX(), player.getY(), 1, player));
 			} else {
 				player.getCarriedItems().getInventory().add(extra);
 			}

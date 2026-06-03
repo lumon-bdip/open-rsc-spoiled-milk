@@ -726,6 +726,13 @@ public final class Player extends Mob {
 		return localGroundItems;
 	}
 
+	public void resetLocalObjectState() {
+		localObjects.clear();
+		localWallObjects.clear();
+		localGroundItems.clear();
+		locationsToClear.clear();
+	}
+
 	public ArrayDeque<Point> getLocationsToClear() {
 		return locationsToClear;
 	}
@@ -3769,6 +3776,7 @@ public final class Player extends Mob {
 
 	@Override
 	public void setLocation(final Point point, final boolean teleported) {
+		boolean reloadLocalObjects = teleported || !getLocation().isWithin1Tile(point);
 		if (teleported || getSkullType() == 2 || getSkullType() == 0) {
 			// Inappropriate place for this to be getting set at for skulls, to me.
 			getUpdateFlags().setAppearanceChanged(true);
@@ -3781,6 +3789,9 @@ public final class Player extends Mob {
 		}
 
 		super.setLocation(point, teleported);
+		if (reloadLocalObjects) {
+			resetLocalObjectState();
+		}
 
 	}
 

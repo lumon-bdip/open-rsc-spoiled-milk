@@ -59,7 +59,7 @@ public class InvCooking implements UseInvTrigger {
 				(player.getConfig().RESTRICT_ITEM_ID >= 0 && player.getConfig().RESTRICT_ITEM_ID < ItemId.CHEESE.id())) {
 				player.getCarriedItems().remove(new Item(ItemId.JUG_OF_WATER.id()));
 				player.getCarriedItems().remove(new Item(ItemId.GRAPES.id()));
-				delay(5);
+				delay(3);
 				player.playerServerMessage(MessageType.QUEST, "You add some grapes to the jug"); //unknown message
 				player.getCarriedItems().getInventory().add(new Item(ItemId.BAD_OR_UNFERMENTED_WINE.id()));
 				return;
@@ -77,7 +77,7 @@ public class InvCooking implements UseInvTrigger {
 				player.playerServerMessage(MessageType.QUEST, "You squeeze the grapes into the jug");
 				player.getCarriedItems().remove(new Item(ItemId.JUG_OF_WATER.id()));
 				player.getCarriedItems().remove(new Item(ItemId.GRAPES.id()));
-				delay(5);
+				delay(3);
 				if (Formulae.goodWine(player.getSkills().getLevel(Skill.COOKING.id()))) {
 					player.playerServerMessage(MessageType.QUEST, "You make some nice wine");
 					player.getCarriedItems().getInventory().add(new Item(ItemId.WINE.id()));

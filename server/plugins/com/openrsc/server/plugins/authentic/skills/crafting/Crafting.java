@@ -810,6 +810,7 @@ public class Crafting implements UseInvTrigger,
 				break;
 			}
 
+			delay(3);
 			if (def.getReqGem() != ItemId.NOTHING.id()) {
 				Item gemItem = player.getCarriedItems().getInventory().get(
 					player.getCarriedItems().getInventory().getLastIndexById(def.getReqGem(), Optional.of(false))
@@ -1404,7 +1405,7 @@ public class Crafting implements UseInvTrigger,
 
 		int repeat = 1;
 		if (player.getConfig().BATCH_PROGRESSION) {
-			repeat = player.getCarriedItems().getInventory().countId(gem.getCatalogId(), Optional.of(false));
+			repeat = Math.min(30, player.getCarriedItems().getInventory().countId(gem.getCatalogId(), Optional.of(false)));
 		}
 
 		startbatch(repeat);
@@ -1440,6 +1441,7 @@ public class Crafting implements UseInvTrigger,
 				stopbatch();
 				break;
 			}
+			delay(2);
 			if (player.getCarriedItems().remove(gemToCut) < 0) {
 				break;
 			}
@@ -1529,7 +1531,7 @@ public class Crafting implements UseInvTrigger,
 
 		int repeat = 1;
 		if (player.getConfig().BATCH_PROGRESSION) {
-			repeat = Math.max(1, availableMaterial / piece.materialCost);
+			repeat = Math.min(30, Math.max(1, availableMaterial / piece.materialCost));
 		}
 
 		startbatch(repeat);
@@ -1585,6 +1587,7 @@ public class Crafting implements UseInvTrigger,
 			if (player.getCarriedItems().getInventory().countId(leather.getCatalogId(), Optional.of(false)) < materialCost) {
 				break;
 			}
+			delay(3);
 			for (int i = 0; i < materialCost; i++) {
 				Item item = player.getCarriedItems().getInventory().get(
 					player.getCarriedItems().getInventory().getLastIndexById(leather.getCatalogId(), Optional.of(false))
@@ -2489,6 +2492,7 @@ public class Crafting implements UseInvTrigger,
 				break;
 			}
 
+			delay(3);
 			player.message("You pour the metal into the mould");
 			player.getCarriedItems().remove(currentBar);
 			player.getCarriedItems().getInventory().add(new Item(recipe.resultId, recipe.amount));
@@ -3002,6 +3006,7 @@ public class Crafting implements UseInvTrigger,
 				player.message("You need " + recipe.woolCost + " balls of wool to make that");
 				break;
 			}
+			delay(3);
 			for (int used = 0; used < recipe.woolCost; used++) {
 				if (player.getCarriedItems().remove(new Item(ItemId.BALL_OF_WOOL.id())) == -1) {
 					return;

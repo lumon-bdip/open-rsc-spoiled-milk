@@ -887,7 +887,7 @@
       "magicDefense": 11,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 70000
+      "basePrice": 140000
     },
     {
       "id": 1426,
@@ -895,7 +895,7 @@
       "magicDefense": 23,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 96000
+      "basePrice": 192000
     },
     {
       "id": 1427,
@@ -906,7 +906,7 @@
       "magicDefense": 22,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 160000
+      "basePrice": 320000
     },
     {
       "id": 1428,
@@ -916,7 +916,7 @@
       "magicDefense": 22,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 160000
+      "basePrice": 320000
     },
     {
       "id": 1429,
@@ -925,7 +925,7 @@
       "magicDefense": 17,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 96000
+      "basePrice": 192000
     },
     {
       "id": 1430,
@@ -935,7 +935,7 @@
       "magicDefense": 17,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 96000
+      "basePrice": 192000
     },
     {
       "id": 1498,

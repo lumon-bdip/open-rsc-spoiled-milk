@@ -127,7 +127,7 @@ public class GemMining implements OpLocTrigger, UseLocTrigger {
 						player.message(minedString(gem.getCatalogId()));
 						player.getCarriedItems().getInventory().add(gem);
 					} else {
-						player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), obj.getX(), obj.getY(), 1, player));
+						player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), player.getX(), player.getY(), 1, player));
 						player.message(minedString(gem.getCatalogId()) + " But you have no room to keep it, so it falls to the ground.");
 					}
 				player.incExp(Skill.MINING.id(), 260, true); // always 65XP

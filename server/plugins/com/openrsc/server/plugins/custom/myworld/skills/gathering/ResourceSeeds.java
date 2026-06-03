@@ -799,11 +799,11 @@ public class ResourceSeeds implements OpInvTrigger, OpLocTrigger {
 		}
 		boolean stackable = new Item(itemId).getDef(player.getWorld()).isStackable();
 		if (stackable) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, obj.getX(), obj.getY(), amount, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), amount, player));
 			return;
 		}
 		for (int i = 0; i < amount; i++) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, obj.getX(), obj.getY(), 1, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), 1, player));
 		}
 	}
 }

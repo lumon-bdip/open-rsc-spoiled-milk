@@ -8,6 +8,7 @@ import com.openrsc.server.net.rsc.ActionSender;
 
 public class Batch {
 
+	private static final int MAX_BATCH_SIZE = 30;
 	private Player player;
 	private int current;
 	private int totalBatch;
@@ -32,7 +33,7 @@ public class Batch {
 	public void initialize(int totalBatch) {
 		this.current = 0;
 		this.delay = getPlayer().getConfig().GAME_TICK * 3;
-		this.totalBatch = totalBatch;
+		this.totalBatch = Math.min(totalBatch, MAX_BATCH_SIZE);
 		this.completed = false;
 	}
 

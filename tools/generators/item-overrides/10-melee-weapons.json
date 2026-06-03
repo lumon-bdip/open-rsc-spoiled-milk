@@ -398,7 +398,7 @@
       "id": 1448,
       "meleeOffense": 21,
       "weaponSpeed": 5,
-      "basePrice": 80000
+      "basePrice": 160000
     },
     {
       "id": 0,
@@ -532,7 +532,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 60000
+      "basePrice": 120000
     },
     {
       "id": 1480,
@@ -540,7 +540,7 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 60000
+      "basePrice": 120000
     },
     {
       "id": 2001,
@@ -797,19 +797,19 @@
       "id": 1346,
       "meleeOffense": 174,
       "weaponSpeed": 2,
-      "basePrice": 180000
+      "basePrice": 360000
     },
     {
       "id": 1447,
       "meleeOffense": 21,
       "weaponSpeed": 5,
-      "basePrice": 70000
+      "basePrice": 140000
     },
     {
       "id": 2752,
       "meleeOffense": 62,
       "weaponSpeed": 4,
-      "basePrice": 140000
+      "basePrice": 280000
     },
     {
       "id": 2211,

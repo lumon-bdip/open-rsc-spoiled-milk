@@ -32,6 +32,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 	private static final Logger LOGGER = LogManager.getLogger(Fishing.class);
 	public static final int TUTORIAL_FISH_ID = 493;
 	public static final int DEPLETED_FISH_ROCK_ID = 668;
+	private static final int FISHING_BATCH_SIZE = 30;
 	private static final int[] MYWORLD_FISHING_OBJECT_IDS = {192, 193, 194, 261, 271, 376, 493, 557};
 	private static final int[] MYWORLD_ROD_IDS = {
 		ItemId.FISHING_ROD.id(),
@@ -281,12 +282,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 
-		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
-			repeat = Formulae.getRepeatTimes(player, Skill.FISHING.id());
-		}
-
-		startbatch(repeat);
+		startbatch(FISHING_BATCH_SIZE);
 		batchMyWorldFishing(entityHandler, player, object, location, eligibleFish, rodId, rodTier);
 	}
 
@@ -302,6 +298,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		final Inventory inventory = player.getCarriedItems().getInventory();
 		if (inventory.full()) {
 			player.playerServerMessage(MessageType.QUEST, "Your inventory is too full to hold any more fish");
+			stopbatch();
 			return;
 		}
 
@@ -368,7 +365,14 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 
 	private int getMyWorldFishingDelay(Player player, int rodTier) {
 		int effectiveLevel = Formulae.calcGatheringEffectiveLevel(player.getSkills().getLevel(Skill.FISHING.id()), rodTier);
-		return Math.max(2, 5 - (Math.max(0, effectiveLevel - 1) / 35));
+		int baseDelay = Math.max(2, 5 - (Math.max(0, effectiveLevel - 1) / 35));
+		if (baseDelay >= 5) {
+			return 3;
+		}
+		if (baseDelay >= 3) {
+			return baseDelay - 1;
+		}
+		return baseDelay;
 	}
 
 	private FishEntry rollMyWorldFish(Player player, List<FishEntry> eligibleFish, int rodTier) {
@@ -659,12 +663,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 
-		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
-			repeat = Formulae.getRepeatTimes(player, Skill.FISHING.id());
-		}
-
-		startbatch(repeat);
+		startbatch(FISHING_BATCH_SIZE);
 		batchFishing(entityHandler, player, def, object);
 	}
 
@@ -757,10 +756,16 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		final int netId = def.getNetId();
 		final int baitId = def.getBaitId();
 
+		if (inventory.full()) {
+			player.playerServerMessage(MessageType.QUEST, "Your inventory is too full to hold any more fish");
+			stopbatch();
+			return;
+		}
+
 		player.playerServerMessage(MessageType.QUEST, "You attempt to catch " + tryToCatchFishString(def));
 		player.playSound("fish");
-		ActionSender.sendActionProgressBar(player, def.getNetId(), 4);
-		delay(4);
+		ActionSender.sendActionProgressBar(player, def.getNetId(), 3);
+		delay(3);
 		if (ifinterrupted() || !player.withinRange(object, 1)) {
 			return;
 		}

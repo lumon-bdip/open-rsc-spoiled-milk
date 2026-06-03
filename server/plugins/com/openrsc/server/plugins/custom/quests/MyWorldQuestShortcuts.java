@@ -49,6 +49,8 @@ public final class MyWorldQuestShortcuts {
 			"If you've already saved the banquet,",
 			"then I can mark the kitchen crisis settled.",
 			"Well done you have completed the cook's assistant quest");
+		giveOrBank(player, ItemId.WHITE_APRON.id(), 1);
+		giveOrBank(player, ItemId.CHEFS_HAT.id(), 1);
 	}
 
 	public static void completeDemonSlayer(final Player player, final Npc npc) {

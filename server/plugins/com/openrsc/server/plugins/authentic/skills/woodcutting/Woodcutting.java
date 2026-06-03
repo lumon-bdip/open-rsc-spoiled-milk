@@ -182,7 +182,7 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 
-		startbatch(1);
+		startbatch(30);
 		batchWoodcutting(player, object, def, axeId);
 	}
 
@@ -362,7 +362,7 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 		Item seed = new Item(reward.itemId, 1);
 		String seedName = seed.getDef(player.getWorld()).getName().toLowerCase();
 		if (player.getCarriedItems().getInventory().full()) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), reward.itemId, object.getX(), object.getY(), 1, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), reward.itemId, player.getX(), player.getY(), 1, player));
 			player.playerServerMessage(MessageType.QUEST, "You find " + formatSeedName(seedName) + ", but it falls to the ground.");
 			return true;
 		}
@@ -419,11 +419,11 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 		if (new Item(itemId).getDef(player.getWorld()).isStackable()) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, object.getX(), object.getY(), amount, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), amount, player));
 			return;
 		}
 		for (int i = 0; i < amount; i++) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, object.getX(), object.getY(), 1, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), 1, player));
 		}
 	}
 }

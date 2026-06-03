@@ -1302,7 +1302,9 @@ public final class GameStateUpdater {
 
 		for (final Iterator<GameObject> it$ = playerToUpdate.getLocalGameObjects().iterator(); it$.hasNext(); ) {
 			final GameObject o = it$.next();
-			if (!playerToUpdate.withinObjectGridRange(o) || o.isRemoved() || o.isInvisibleTo(playerToUpdate)) {
+			boolean shouldUnloadForRange = !playerToUpdate.isUsingCustomClient()
+				&& !playerToUpdate.withinObjectGridRange(o);
+			if (shouldUnloadForRange || o.isRemoved() || o.isInvisibleTo(playerToUpdate)) {
 				final int offsetX = o.getX() - playerToUpdate.getX();
 				final int offsetY = o.getY() - playerToUpdate.getY();
 				//If the object is close enough we can use regular way to remove:

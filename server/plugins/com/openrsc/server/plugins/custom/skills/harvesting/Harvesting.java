@@ -378,14 +378,14 @@ public final class Harvesting implements OpLocTrigger {
 			return;
 		}
 
-		startbatch(1);
+		startbatch(30);
 		batchClipping(player, object, objName, prodEnum, toolId);
 	}
 
 	private void batchClipping(Player player, GameObject object, String objName, HerbsProduce prodEnum, int toolId) {
-		ActionSender.sendActionProgressBar(player, toolId, 4);
+		ActionSender.sendActionProgressBar(player, toolId, 3);
 		player.playerServerMessage(MessageType.QUEST, "You attempt to clip from the spot...");
-		delay(4);
+		delay(3);
 		if (ifinterrupted() || !harvestingChecks(object, player)) {
 			return;
 		}
@@ -490,15 +490,15 @@ public final class Harvesting implements OpLocTrigger {
 			return;
 		}
 
-		startbatch(1);
+		startbatch(30);
 		batchHarvest(player, toolId, object, def);
 	}
 
 	private void batchHarvest(Player player, int toolId, GameObject object, ObjectHarvestingDef def) {
 		final AtomicInteger evt = new AtomicInteger(HarvestingEvents.NONE.getID());
-		if (toolId != ItemId.NOTHING.id()) ActionSender.sendActionProgressBar(player, toolId, 4);
+		if (toolId != ItemId.NOTHING.id()) ActionSender.sendActionProgressBar(player, toolId, 3);
 		player.playerServerMessage(MessageType.QUEST, "You attempt to get some produce...");
-		delay(4);
+		delay(3);
 		if (ifinterrupted() || !harvestingChecks(object, player)) {
 			return;
 		}
@@ -679,7 +679,7 @@ public final class Harvesting implements OpLocTrigger {
 		Item seed = new Item(reward.itemId, 1);
 		String seedName = seed.getDef(player.getWorld()).getName().toLowerCase();
 		if (player.getCarriedItems().getInventory().full()) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), reward.itemId, object.getX(), object.getY(), 1, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), reward.itemId, player.getX(), player.getY(), 1, player));
 			player.playerServerMessage(MessageType.QUEST, "You find " + formatSeedName(seedName) + ", but it falls to the ground.");
 			return;
 		}
@@ -732,11 +732,11 @@ public final class Harvesting implements OpLocTrigger {
 			return;
 		}
 		if (new Item(itemId).getDef(player.getWorld()).isStackable()) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, object.getX(), object.getY(), amount, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), amount, player));
 			return;
 		}
 		for (int i = 0; i < amount; i++) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, object.getX(), object.getY(), 1, player));
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), 1, player));
 		}
 	}
 
