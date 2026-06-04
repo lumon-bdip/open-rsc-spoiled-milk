@@ -84,6 +84,7 @@ public final class Summoning {
 	private static final int CATCH_UP_DISTANCE = 6;
 	private static final int SUMMON_PROJECTILE_RANGE = 5;
 	private static final int SUMMON_ASSIST_TARGET_RANGE = 15;
+	private static final long SUMMON_ASSIST_ENGAGEMENT_COOLDOWN_MS = 8000L;
 	private static final int SUMMON_ATTACK_DELAY_TICKS = 3;
 	private static final int UTILITY_RAT_NPC_ID = 241;
 	private static final int NO_DURATION_LIMIT = -1;
@@ -599,6 +600,13 @@ public final class Summoning {
 		target.recordPendingSummoningExperience(owner, internalExperience(displayedExperience), expiresTick);
 	}
 
+	public static void recordOwnerCombatSummonDamage(final Player owner, final Mob target, final int damage) {
+		if (owner == null || target == null || damage <= 0) {
+			return;
+		}
+		owner.recordSummonAssistEngagement(target);
+	}
+
 	private static int getCombatSummonCreditTimeoutTicks(final Player owner) {
 		final int gameTick = Math.max(1, owner.getConfig().GAME_TICK);
 		return Math.max(1, (COMBAT_SUMMON_CREDIT_TIMEOUT_MS + gameTick - 1) / gameTick);
@@ -668,6 +676,7 @@ public final class Summoning {
 		if (absorbed <= 0) {
 			return damage;
 		}
+		owner.recordSummonAssistEngagement(attacker);
 
 		final int nextHits = Math.max(0, summonHits - absorbed);
 		summon.setAttribute(SUMMON_CURRENT_HITS_KEY, nextHits);
@@ -1085,7 +1094,8 @@ public final class Summoning {
 		final Mob activeTarget = getOwnerActiveAttackTarget(owner);
 		if (isValidSummonAssistTarget(owner, summon, activeTarget)
 			&& ownerIsActivelyAttacking(owner, activeTarget)
-			&& ownerHasDamagedTarget(owner, activeTarget)) {
+			&& ownerHasDamagedTarget(owner, activeTarget)
+			&& ownerHasRecentSummonAssistEngagement(owner, activeTarget)) {
 			return activeTarget;
 		}
 		return null;
@@ -1132,7 +1142,8 @@ public final class Summoning {
 	private static boolean npcIsAttackingOwner(final Npc npc, final Player owner) {
 		return npc.getOpponent() == owner
 			&& npc.inCombat()
-			&& ownerHasTakenDamageFrom(owner, npc);
+			&& ownerHasTakenDamageFrom(owner, npc)
+			&& ownerHasRecentSummonAssistEngagement(owner, npc);
 	}
 
 	private static boolean playerIsAttackingOwner(final Player player, final Player owner) {
@@ -1152,6 +1163,11 @@ public final class Summoning {
 			return false;
 		}
 		return owner.getTrackedDamage(attacker) > 0 || owner.getTrackedBlockedDamage(attacker) > 0;
+	}
+
+	private static boolean ownerHasRecentSummonAssistEngagement(final Player owner, final Mob target) {
+		return owner != null
+			&& owner.hasRecentSummonAssistEngagement(target, SUMMON_ASSIST_ENGAGEMENT_COOLDOWN_MS);
 	}
 
 	private static Mob getOwnerActiveAttackTarget(final Player owner) {

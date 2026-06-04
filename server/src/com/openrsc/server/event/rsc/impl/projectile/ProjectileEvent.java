@@ -305,11 +305,13 @@ public class ProjectileEvent extends SingleTickEvent {
 				if (type == 1 || type == 4) {
 					damage = Math.min(damage, lastHits);
 					npc.addMageDamage(casterPlayer, damage);
+					Summoning.recordOwnerCombatSummonDamage(casterPlayer, npc, damage);
 					DivineGrace.apply(casterPlayer, damage);
 				}
 				else if (type == 2 || type == 5) {
 					damage = Math.min(damage, lastHits);
 					npc.addRangeDamage(casterPlayer, damage);
+					Summoning.recordOwnerCombatSummonDamage(casterPlayer, npc, damage);
 					DivineGrace.apply(casterPlayer, damage);
 				}
 			}

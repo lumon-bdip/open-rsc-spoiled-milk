@@ -388,6 +388,7 @@ public final class Player extends Mob {
 	 * Also holds the damage absorbed by the defense cape
 	 */
 	private Map<UUID, Pair<Integer, Integer>> trackedDamageFromMob = new HashMap<UUID, Pair<Integer, Integer>>();
+	private Map<UUID, Long> summonAssistEngagementAt = new HashMap<UUID, Long>();
 
 	private Npc interactingNpc = null;
 	private int lastNpcKilledId = -1;
@@ -5443,6 +5444,9 @@ public final class Player extends Mob {
 
 	public void updateDamageAndBlockedDamageTracking(Mob mob, int damage, int blockedDamage) {
 		UUID uuid = mob.getUUID();
+		if (damage > 0 || blockedDamage > 0) {
+			recordSummonAssistEngagement(mob);
+		}
 		if (trackedDamageFromMob.containsKey(uuid)) {
 			int oldDamage = trackedDamageFromMob.get(uuid).getLeft();
 			int oldBlockedDamage = trackedDamageFromMob.get(uuid).getRight();
@@ -5466,8 +5470,24 @@ public final class Player extends Mob {
 		return -1;
 	}
 
+	public void recordSummonAssistEngagement(final Mob mob) {
+		if (mob == null) {
+			return;
+		}
+		summonAssistEngagementAt.put(mob.getUUID(), System.currentTimeMillis());
+	}
+
+	public boolean hasRecentSummonAssistEngagement(final Mob mob, final long cooldownMs) {
+		if (mob == null || cooldownMs <= 0) {
+			return false;
+		}
+		final Long lastEngagement = summonAssistEngagementAt.get(mob.getUUID());
+		return lastEngagement != null && System.currentTimeMillis() - lastEngagement <= cooldownMs;
+	}
+
 	public void resetTrackedDamageAndBlockedDamage(Mob damageInflictingMob) {
 		trackedDamageFromMob.remove(damageInflictingMob.getUUID());
+		summonAssistEngagementAt.remove(damageInflictingMob.getUUID());
 	}
 
 	public boolean canBeReattacked() {

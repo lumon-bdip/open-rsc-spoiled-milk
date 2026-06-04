@@ -230,6 +230,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			Player player = ((Player) hitter);
 			damage = Math.min(damage, lastHits);
 			n.addCombatDamage(player, damage);
+			Summoning.recordOwnerCombatSummonDamage(player, n, damage);
 			DivineGrace.apply(player, damage);
 			player.applyBloodAmuletLifesteal(damage);
 		}

@@ -3027,7 +3027,6 @@ public class PacketHandler {
 
 				// Currently invisible ground items
 				} else {
-					removeGroundItemsAt(groundItemX, groundItemY, groundItemID);
 					mc.setGroundItemX(mc.getGroundItemCount(), groundItemX);
 					mc.setGroundItemZ(mc.getGroundItemCount(), groundItemY);
 					mc.setGroundItemID(mc.getGroundItemCount(), groundItemID);

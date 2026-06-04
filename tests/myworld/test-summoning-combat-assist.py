@@ -10,6 +10,9 @@ ROOT = Path(__file__).resolve().parents[2]
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
 PROJECTILE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
+PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+PVP_MELEE = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
+PVM_MELEE = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 
 
 def fail(message: str) -> NoReturn:
@@ -26,6 +29,9 @@ def main() -> None:
     summoning = SUMMONING.read_text(encoding="utf-8")
     npc = NPC.read_text(encoding="utf-8")
     projectile_event = PROJECTILE_EVENT.read_text(encoding="utf-8")
+    player = PLAYER.read_text(encoding="utf-8")
+    pvp_melee = PVP_MELEE.read_text(encoding="utf-8")
+    pvm_melee = PVM_MELEE.read_text(encoding="utf-8")
 
     require(
         summoning,
@@ -46,6 +52,11 @@ def main() -> None:
         summoning,
         "&& ownerHasTakenDamageFrom(owner, npc)",
         "Defensive summon assist should require the owner to have taken or blocked damage from the NPC",
+    )
+    require(
+        summoning,
+        "SUMMON_ASSIST_ENGAGEMENT_COOLDOWN_MS = 8000L",
+        "Summon assist should keep a short cooldown after owner damage participation",
     )
     require(
         summoning,
@@ -70,6 +81,10 @@ def main() -> None:
         "return ((Npc) target).hasDamageFrom(owner);",
         "private static boolean ownerHasTakenDamageFrom",
         "return owner.getTrackedDamage(attacker) > 0 || owner.getTrackedBlockedDamage(attacker) > 0;",
+        "private static boolean ownerHasRecentSummonAssistEngagement",
+        "owner.hasRecentSummonAssistEngagement(target, SUMMON_ASSIST_ENGAGEMENT_COOLDOWN_MS)",
+        "&& ownerHasRecentSummonAssistEngagement(owner, activeTarget)",
+        "&& ownerHasRecentSummonAssistEngagement(owner, npc)",
     ):
         require(
             summoning,
@@ -99,6 +114,30 @@ def main() -> None:
         "((Player) opponent).updateDamageAndBlockedDamageTracking(caster, damageDealt, 0);",
         "NPC projectile damage should count as owner taking damage for summon assist",
     )
+    require(
+        summoning,
+        "owner.recordSummonAssistEngagement(attacker);",
+        "Summon damage absorption should keep defensive assist engaged after blocked damage",
+    )
+    require(
+        summoning,
+        "public static void recordOwnerCombatSummonDamage",
+        "Owner damage should refresh summon assist engagement",
+    )
+    for source, label in ((pvp_melee, "PvP melee"), (pvm_melee, "PvM melee"), (projectile_event, "projectile")):
+        require(
+            source,
+            "Summoning.recordOwnerCombatSummonDamage",
+            f"{label} owner damage should refresh summon assist engagement",
+        )
+    for snippet in (
+        "summonAssistEngagementAt",
+        "recordSummonAssistEngagement(mob);",
+        "public boolean hasRecentSummonAssistEngagement",
+        "System.currentTimeMillis() - lastEngagement <= cooldownMs",
+        "summonAssistEngagementAt.remove(damageInflictingMob.getUUID());",
+    ):
+        require(player, snippet, f"Player summon assist cooldown tracking missing {snippet}")
 
     print("PASS: summon combat assist contracts validated")
 
