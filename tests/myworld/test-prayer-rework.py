@@ -17,6 +17,10 @@ MAGE_ARENA = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/minigam
 NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
 DIVINE_GRACE = ROOT / "server/src/com/openrsc/server/content/DivineGrace.java"
 DIVINE_RETRIBUTION = ROOT / "server/src/com/openrsc/server/content/DivineRetribution.java"
+CORROSIVE_AURA = ROOT / "server/src/com/openrsc/server/content/CorrosiveAura.java"
+PVP_MELEE = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
+PVM_MELEE = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
+PROJECTILE = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
 
 
 def require(condition, message):
@@ -49,6 +53,10 @@ def main():
     npc_drops = read(NPC_DROPS)
     divine_grace = read(DIVINE_GRACE)
     divine_retribution = read(DIVINE_RETRIBUTION)
+    corrosive_aura = read(CORROSIVE_AURA)
+    pvp_melee = read(PVP_MELEE)
+    pvm_melee = read(PVM_MELEE)
+    projectile = read(PROJECTILE)
 
     combat_costs = parse_int_array(catalog, "COMBAT_TIER_POINT_COSTS")
     combat_effects = parse_int_array(catalog, "COMBAT_TIER_EFFECT_PERCENTS")
@@ -87,10 +95,27 @@ def main():
             "Server prayer state should track the current 16-slot god line")
     require('"Divine Grace"' in catalog and '"Divine Retribution"' in catalog,
             "Prayer catalog should include the Saradomin and Zamorak special prayers")
+    require('"Corrosive Aura"' in catalog and "GodLine.GUTHIX" in catalog,
+            "Prayer catalog should include the Guthix special prayer")
     require("Prayers.DIVINE_GRACE" in divine_grace and "PrayerCatalog.GodLine.SARADOMIN" in divine_grace,
             "Divine Grace should be gated to Saradomin's special slot")
+    require("new CombatEffect(attacker, CombatEffect.DIVINE_GRACE)" in divine_grace,
+            "Divine Grace proc should display its on-player combat effect")
     require("Prayers.DIVINE_RETRIBUTION" in divine_retribution and "PrayerCatalog.GodLine.ZAMORAK" in divine_retribution,
             "Divine Retribution should be gated to Zamorak's special slot")
+    require("new CombatEffect(attacker, CombatEffect.DIVINE_RETRIBUTION)" in divine_retribution,
+            "Divine Retribution proc should display its on-enemy combat effect")
+    require("Prayers.CORROSIVE_AURA" in corrosive_aura and "PrayerCatalog.GodLine.GUTHIX" in corrosive_aura,
+            "Corrosive Aura should be gated to Guthix's special slot")
+    require("MIN_POISON_POWER = 10" in corrosive_aura and "MAX_POISON_POWER = 50" in corrosive_aura
+            and "MAX_POWER_HEALTH_FRACTION = 0.30D" in corrosive_aura,
+            "Corrosive Aura poison stacks should scale from 10 to 50 below 30% HP")
+    require("attacker.applyPoison(poisonPower, attacker.getCurrentPoisonPower() + poisonPower)" in corrosive_aura,
+            "Corrosive Aura should add poison stacks every time it procs")
+    require("new CombatEffect(attacker, CombatEffect.CORROSIVE_AURA)" in corrosive_aura,
+            "Corrosive Aura proc should display its on-enemy combat effect")
+    for source, label in ((pvp_melee, "PvP melee"), (pvm_melee, "PvM melee"), (projectile, "projectile")):
+        require("CorrosiveAura.apply(" in source, f"Corrosive Aura should run from {label} successful player damage")
     require("prayers.canActivate(prayerID)" in prayer_handler,
             "Prayer activation should use allocation capacity checks")
     require("getReqLevel" not in prayer_handler and "Return to a church to recharge" not in prayer_handler,
@@ -113,7 +138,7 @@ def main():
     require("return getSkills().getMaxStat(Skill.PRAYER.id())" in player
             and "Math.max(getCarriedItems().getEquipment().getPrayer() + Summoning.getPrayerBonus(this) - 1, 0)" in player,
             "Prayer gear should add directly to prayer allocation capacity while worn")
-    require("47 prayers" in doc, "Prayer rework doc must call out the 47-prayer catalog")
+    require("48 prayers" in doc, "Prayer rework doc must call out the 48-prayer catalog")
     require("16-slot current-book UI" in doc, "Prayer rework doc must call out current-book UI wiring")
     require("server XP multiplier" in doc, "Prayer rework doc must track server XP multiplier replacement")
     require(object_defs.count("<name>Altar of Saradomin</name>") >= 2, "Saradomin prayer altars should be clearly named")

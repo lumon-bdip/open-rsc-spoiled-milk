@@ -47,6 +47,11 @@ def main():
             "Prayer tooltip should show allocation cost instead of drain rate")
     require("getCompactPrayerTierIconFile" in mudclient,
             "Prayer icon loader should support compact tier names like xp.png, xp2.png")
+    require("isSinglePrayerIconAsset(assetName)" in mudclient
+            and '"divine-grace".equals(assetName)' in mudclient
+            and '"divine-retribution".equals(assetName)' in mudclient
+            and '"corrosive-aura".equals(assetName)' in mudclient,
+            "Prayer icon loader should support single-file special prayer icons")
     require('"dev/myworld/assets/sprites/UI/prayer"' in mudclient,
             "Prayer icon loader should search the current UI prayer asset folder")
     require("getExternalIconFile(assetName + tier)" in mudclient,
@@ -76,12 +81,13 @@ def main():
         "Weak Ranged Power",
         "Greater Magic Protection",
         "Greater Crafting Favor",
+        "Corrosive Aura",
     ]
     for prayer in required_prayers:
         require(prayer in entity_handler, f"Missing client prayer definition: {prayer}")
 
-    require(entity_handler.count("\t\taddPrayerDefinition(") == 47,
-            "Client prayer definitions should cover the three god lines plus Saradomin/Zamorak specials")
+    require(entity_handler.count("\t\taddPrayerDefinition(") == 48,
+            "Client prayer definitions should cover the three god lines plus all special prayers")
     for snippet in (
         'addPrayerDefinition(49, "Greater Magic Power", "Magic damage +25%.");',
         'addPrayerDefinition(49, "Greater Melee Power", "Melee damage +25%.");',
@@ -91,6 +97,7 @@ def main():
         'addPrayerDefinition(80, "Greater Crafting Favor", "Crafting XP +30%.");',
         'addPrayerDefinition(60, "Divine Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");',
         'addPrayerDefinition(60, "Divine Retribution", "Chance to recoil double damage taken. Higher hits are more likely to trigger.");',
+        'addPrayerDefinition(60, "Corrosive Aura", "Enemies that damage you receive 10-50 poison stacks. Lower HP applies more stacks.");',
         '"Reserve " + pointCost + " prayer points. " + effectText',
     ):
         require(snippet in entity_handler, f"Client prayer tooltip cost missing: {snippet}")
@@ -126,6 +133,16 @@ def main():
             require(icon_path.exists(), f"Missing prayer icon asset: {icon_path.name}")
             require(png_size(icon_path) == (512, 512),
                     f"Unexpected prayer icon geometry: {icon_path.name}")
+
+    for icon_name in ["divine-grace.png", "divine-retribution.png"]:
+        icon_path = PRAYER_ASSETS / icon_name
+        require(icon_path.exists(), f"Missing special prayer icon asset: {icon_name}")
+        require(png_size(icon_path) == (512, 512),
+                f"Unexpected special prayer icon geometry: {icon_name}")
+    corrosive_icon = PRAYER_ASSETS / "corrosive-aura.png"
+    require(corrosive_icon.exists(), "Missing special prayer icon asset: corrosive-aura.png")
+    width, height = png_size(corrosive_icon)
+    require(width > 0 and height > 0, "Unexpected special prayer icon geometry: corrosive-aura.png")
 
     print("prayer UI checks passed")
 

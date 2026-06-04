@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.impl.projectile;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
 import com.openrsc.server.content.EnchantingItemEffects;
@@ -324,6 +325,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			Player affectedPlayer = (Player) opponent;
 			ActionSender.sendStat(affectedPlayer, Skill.HITS.id());
 			applyChaosRobeReflect(affectedPlayer, caster, damage);
+			CorrosiveAura.apply(affectedPlayer, caster, damageDealt);
 			DivineRetribution.Result result = DivineRetribution.apply(affectedPlayer, caster, damageDealt);
 			if (result.killedAttacker()) {
 				if (type == 2 || type == 5) {

@@ -6,6 +6,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
+import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -31,6 +32,7 @@ public final class DivineRetribution {
 		final int reflectedDamage = incomingDamage * 2;
 		final int lastHits = attacker.getLevel(Skill.HITS.id());
 		attacker.getSkills().subtractLevel(Skill.HITS.id(), reflectedDamage, false);
+		attacker.getUpdateFlags().setCombatEffect(new CombatEffect(attacker, CombatEffect.DIVINE_RETRIBUTION));
 		attacker.getUpdateFlags().setDamage(new Damage(attacker, reflectedDamage));
 		attacker.getUpdateFlags().addHitSplat(new HitSplat(attacker, HitSplat.TYPE_ARMOR_PROC, reflectedDamage));
 		if (attacker.isNpc()) {

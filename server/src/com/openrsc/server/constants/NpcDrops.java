@@ -1114,6 +1114,11 @@ public class NpcDrops {
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.PRIEST.id(), currentNpcDrops);
 
+		currentNpcDrops = new DropTable("Monk (93)");
+		currentNpcDrops.addItemDrop(ItemId.HOLY_SYMBOL_OF_SARADOMIN.id(), 1, 2);
+		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
+		this.npcDrops.put(NpcId.MONK.id(), currentNpcDrops);
+
 		currentNpcDrops = new DropTable("Monk of Zamorak Level 29 (139)");
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 8, 16);
 		currentNpcDrops.addItemDrop(ItemId.CHAOS_RUNE.id(), 2, 8);
@@ -1122,6 +1127,7 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.ROBE_OF_ZAMORAK_TOP.id(), 1, 4);
 		currentNpcDrops.addItemDrop(ItemId.ROBE_OF_ZAMORAK_BOTTOM.id(), 1, 4);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 22, 3);
+		currentNpcDrops.addItemDrop(ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id(), 1, 2);
 		currentNpcDrops.addItemDrop(ItemId.STEEL_MACE.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.LAW_RUNE.id(), 1, 1);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
@@ -1258,6 +1264,7 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.CHAOS_RUNE.id(), 2, 2);
 		currentNpcDrops.addItemDrop(ItemId.WATER_RUNE.id(), 6, 2);
 		currentNpcDrops.addItemDrop(ItemId.LAW_RUNE.id(), 1, 1);
+		currentNpcDrops.addItemDrop(ItemId.GUTHIX_SYMBOL.id(), 1, 2);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.DRUID.id(), currentNpcDrops);
 
@@ -1433,6 +1440,7 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 35, 1);
 		currentNpcDrops.addItemDrop(ItemId.SNAPE_GRASS.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.UNHOLY_SYMBOL_MOULD.id(), 1, 1);
+		currentNpcDrops.addItemDrop(ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id(), 1, 2);
 		DropTable chaosDruidDouble = new DropTable("Chaos Druid Double Drop (270)");
 		chaosDruidDouble.addTableDrop(herbDropTable, 0);
 		chaosDruidDouble.addTableDrop(currentNpcDrops.clone("Chaos Druid (270)"), 0);
@@ -1717,6 +1725,7 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.LIMPWURT_ROOT.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.LIMPWURT_ROOT.id(), 3, 1);
 		currentNpcDrops.addItemDrop(ItemId.VIAL.id(), 1, 1);
+		currentNpcDrops.addItemDrop(ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id(), 1, 2);
 		chaosDruidDouble = new DropTable("Chaos Druid Warrior Double Drop (555)");
 		chaosDruidDouble.addTableDrop(herbDropTable, 0);
 		chaosDruidDouble.addTableDrop(currentNpcDrops.clone("Chaos Druid Warrior (555)"), 0);

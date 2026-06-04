@@ -3,6 +3,7 @@ package com.openrsc.server.event.rsc.impl.combat;
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
 import com.openrsc.server.content.EnchantingItemEffects;
@@ -241,6 +242,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
 			updateParty((Player) target);
 			applyChaosRobeReflect((Player) target, hitter, damage);
+			CorrosiveAura.apply((Player) target, hitter, damageDealt);
 			DivineRetribution.Result result = DivineRetribution.apply((Player) target, hitter, damageDealt);
 			if (result.killedAttacker()) {
 				onDeath(hitter, target);

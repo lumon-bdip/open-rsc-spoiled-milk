@@ -341,6 +341,7 @@ public class EntityHandler {
 		addPrayerDefinition(22, "Crafting Favor", "Crafting XP +20%.");
 		addPrayerDefinition(46, "Strong Crafting Favor", "Crafting XP +25%.");
 		addPrayerDefinition(80, "Greater Crafting Favor", "Crafting XP +30%.");
+		addPrayerDefinition(60, "Corrosive Aura", "Enemies that damage you receive 10-50 poison stacks. Lower HP applies more stacks.");
 	}
 
 	private static void loadTileDefinitions() {
@@ -7867,7 +7868,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("cupboard", "Perhaps I should search it", "Search", "close", 1, 1, 2, 0, "cupboardopen", i++));
 		objects.add(new GameObjectDef("fountain", "I think I see something in the fountain", "WalkTo", "Search", 1, 2, 2, 0, "fountain", i++));
 		objects.add(new GameObjectDef("signpost", "To Draynor Manor", "WalkTo", "Examine", 1, 1, 1, 0, "signpost", i++));
-		objects.add(new GameObjectDef("Tree", "This tree doesn't look too healthy", "Approach", "Search", 1, 1, 1, 0, "deadtree1", i++));
+		objects.add(new GameObjectDef("Tree", "A dark tree that pulses with a faint red glow", "Chop", "Examine", 1, 1, 1, 0, "deadtree1", i++));
 		objects.add(new GameObjectDef("sign", "General Store", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
 		objects.add(new GameObjectDef("sign", "Lowe's Archery store", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));//90
 		objects.add(new GameObjectDef("sign", "The Clothes Shop", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));

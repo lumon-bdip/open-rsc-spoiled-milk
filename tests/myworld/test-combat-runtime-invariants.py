@@ -23,6 +23,7 @@ RANGE_UTILS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" /
 RANGE_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "RangeEvent.java"
 THROWING_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ThrowingEvent.java"
 MAGIC_COMBAT_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "MagicCombatEvent.java"
+WALK_TO_MOB_ACTION = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "action" / "WalkToMobAction.java"
 CLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
 
 
@@ -125,6 +126,12 @@ def main() -> None:
     require_contains(SPELL_HANDLER, "player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS")
     require_contains(MAGIC_COMBAT_EVENT, "final int spellRange = player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS;")
     require_contains(MAGIC_COMBAT_EVENT, "final int approachRange = RangeUtils.getApproachRadius(spellRange);")
+    require_contains(MAGIC_COMBAT_EVENT, "new WalkToMobAction(player, target, approachRange, false, ActionType.ATTACKMAGIC)")
+    require_contains(MAGIC_COMBAT_EVENT, "MagicCombatEvent.this.setDelayTicks(0);")
+    require_contains(WALK_TO_MOB_ACTION, "boolean projectilePathAttack = actionType == ActionType.ATTACKMAGIC;")
+    require_contains(WALK_TO_MOB_ACTION, "((ignoreProjectileAllowed || projectilePathAttack) && !myworldCombatAttack)")
+    require_contains(WALK_TO_MOB_ACTION, "checkedPoint.getX(), checkedPoint.getY(), mob.getX(), mob.getY(),")
+    require_contains(WALK_TO_MOB_ACTION, "ignoreProjectileAllowed, !ignoreProjectileAllowed")
     require_regex(
         MAGIC_COMBAT_EVENT,
         r"public static boolean start\(final Player player, final Mob target\).*?player\.setWalkToAction\(null\);\s*player\.resetFollowing\(\);\s*player\.resetRange\(\);",
@@ -141,6 +148,8 @@ def main() -> None:
     require_contains(THROWING_EVENT, "RangeUtils.getApproachRadius(attackRadius)")
     require_contains(CLIENT, "private boolean isSpellProjectile(SpriteDef projectile)")
     require_contains(CLIENT, "return isSpellProjectile(projectile) ? size * 2 : size;")
+    require_contains(CLIENT, "projectile.id == COMBAT_EFFECT_WOOD_DRILL")
+    require_contains(CLIENT, "return 144;")
     require_contains(CLIENT, "return 192;")
 
     require_contains(NPC, "Player meleeRangeThreat = getLowestCombatLevelThreat(true);")

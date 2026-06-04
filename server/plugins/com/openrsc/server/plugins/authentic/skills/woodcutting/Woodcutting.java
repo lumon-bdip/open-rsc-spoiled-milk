@@ -326,6 +326,9 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 		if (def.getLogId() == ItemId.PALM_LOGS.id()) {
 			return -1;
 		}
+		if (def.getLogId() == ItemId.EBONY_LOGS.id()) {
+			return -1;
+		}
 		if (def.getLogId() == ItemId.LOGS.id() || def.getLogId() == ItemId.MAGIC_LOGS.id()) {
 			return 4;
 		}

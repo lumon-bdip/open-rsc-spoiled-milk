@@ -15,6 +15,12 @@ def require(condition: bool, message: str) -> None:
         fail(message)
 
 
+def block_between(text: str, start: str, end: str) -> str:
+    start_index = text.index(start)
+    end_index = text.index(end, start_index + len(start))
+    return text[start_index:end_index]
+
+
 def load_items(path: Path) -> dict[int, dict]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     entries = payload.get("items", payload.get("item", []))
@@ -33,6 +39,7 @@ def main() -> None:
     destroy = (SERVER / "plugins/com/openrsc/server/plugins/custom/myworld/skills/prayer/DestroyOpposingBlessedObject.java").read_text(encoding="utf-8")
     devotion = (SERVER / "src/com/openrsc/server/content/Devotion.java").read_text(encoding="utf-8")
     equipment = (SERVER / "src/com/openrsc/server/model/container/Equipment.java").read_text(encoding="utf-8")
+    npc_drops = (SERVER / "src/com/openrsc/server/constants/NpcDrops.java").read_text(encoding="utf-8")
     brother_jered = (SERVER / "plugins/com/openrsc/server/plugins/authentic/npcs/edgeville/BrotherJered.java").read_text(encoding="utf-8")
     scorpius = (SERVER / "plugins/com/openrsc/server/plugins/authentic/npcs/ardougne/west/SpiritOfScorpius.java").read_text(encoding="utf-8")
     base_items = load_items(SERVER / "conf/server/defs/ItemDefs.json")
@@ -115,6 +122,25 @@ def main() -> None:
             "Zamorak symbol should be gated by Zamorak worship")
     require("itemId == ItemId.GUTHIX_SYMBOL.id()" in equipment,
             "Guthix symbol should be gated by Guthix worship")
+
+    require('currentNpcDrops = new DropTable("Monk (93)");' in npc_drops
+            and "ItemId.HOLY_SYMBOL_OF_SARADOMIN.id(), 1, 2" in npc_drops
+            and "this.npcDrops.put(NpcId.MONK.id(), currentNpcDrops);" in npc_drops,
+            "Saradomin monks should have an uncommon blessed symbol drop")
+    require('currentNpcDrops = new DropTable("Monk of Zamorak Level 29 (139)");' in npc_drops
+            and "ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id(), 1, 2" in npc_drops
+            and "this.npcDrops.put(NpcId.MONK_OF_ZAMORAK.id(), currentNpcDrops);" in npc_drops,
+            "Zamorak monks should have an uncommon blessed symbol drop")
+    require('currentNpcDrops = new DropTable("Druid (200)");' in npc_drops
+            and "ItemId.GUTHIX_SYMBOL.id(), 1, 2" in npc_drops
+            and "this.npcDrops.put(NpcId.DRUID.id(), currentNpcDrops);" in npc_drops,
+            "Guthix druids should have an uncommon blessed symbol drop")
+    black_knight_drops = block_between(
+            npc_drops,
+            'currentNpcDrops = new DropTable("Black Knight (66, 189) Jailer (265) Lord Darquarius (266) Renegade Knight (277)");',
+            'currentNpcDrops = new DropTable("Hobgoblin Level 32 (67) Hobgoblin Level 48 (311)");')
+    require("SYMBOL" not in black_knight_drops,
+            "blessed symbols should not be added to knight drop tables")
 
     require("SYMBOL_BONUS_SUFFIX" in devotion, "devotion should track every-other symbol bonus")
     require("hasBlessedSymbolEquipped(player, godLine)" in devotion, "offerings should check matching blessed symbol")

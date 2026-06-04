@@ -122,13 +122,16 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_ACID_GUSH = 36;
 	public static final int COMBAT_EFFECT_BATTERING_RAM = 37;
 	public static final int COMBAT_EFFECT_DRAGON_BREATH = 38;
+	public static final int COMBAT_EFFECT_DIVINE_GRACE = 39;
+	public static final int COMBAT_EFFECT_DIVINE_RETRIBUTION = 40;
+	public static final int COMBAT_EFFECT_CORROSIVE_AURA = 41;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
 	public static final int COMBAT_EFFECT_WATER_ERUPTION = COMBAT_EFFECT_HURRICANE;
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 38;
+	public static final int COMBAT_EFFECT_COUNT = 41;
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_TICKS = 40;
@@ -883,7 +886,8 @@ public final class mudclient implements Runnable {
 		"hells-inferno", "lesser-heal", "greater-heal", "alchemy", "saradomin-strike", "zamoraks-void", "iban-blast",
 		"eye-of-guthix", "zamoraks-apocolypse", "saradomin-soul-slash", "claw-of-guthix", "summon",
 		"summon-combat", "summon-support", "summon-utility", "thunder-splash", "ice-burst", "acid-frog",
-		"wood-drill", "thunder-strike", "ice-crystal", "acid-gush", "battering-ram", "dragon-breath"
+		"wood-drill", "thunder-strike", "ice-crystal", "acid-gush", "battering-ram", "dragon-breath",
+		"divine-grace", "divine-retribution", "corrosive-aura"
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final int[] projectileEffectFrameCounts = new int[CUSTOM_PROJECTILE_COUNT];
@@ -16600,6 +16604,11 @@ public final class mudclient implements Runnable {
 					int baseDX = this.midRegionBaseX - oldBaseX;
 					int baseDZ = this.midRegionBaseZ - oldBaseZ;
 
+					if (hardAreaLoad || heightOffsetChanged) {
+						this.gameObjectInstanceCount = 0;
+						this.wallObjectInstanceCount = 0;
+					}
+
 					for (int i = 0; this.gameObjectInstanceCount > i; ++i) {
 						this.gameObjectInstanceX[i] -= baseDX;
 						this.gameObjectInstanceZ[i] -= baseDZ;
@@ -17063,6 +17072,11 @@ public final class mudclient implements Runnable {
 		if (effectType == COMBAT_EFFECT_DRAGON_BREATH) {
 			return 448;
 		}
+		if (effectType == COMBAT_EFFECT_DIVINE_GRACE
+			|| effectType == COMBAT_EFFECT_DIVINE_RETRIBUTION
+			|| effectType == COMBAT_EFFECT_CORROSIVE_AURA) {
+			return 280;
+		}
 		return 224;
 	}
 
@@ -17079,6 +17093,11 @@ public final class mudclient implements Runnable {
 		}
 		if (effectType == COMBAT_EFFECT_DRAGON_BREATH) {
 			return baseSize * 2;
+		}
+		if (effectType == COMBAT_EFFECT_DIVINE_GRACE
+			|| effectType == COMBAT_EFFECT_DIVINE_RETRIBUTION
+			|| effectType == COMBAT_EFFECT_CORROSIVE_AURA) {
+			return Math.max(1, (baseSize * 5) / 4);
 		}
 		return baseSize;
 	}
@@ -17672,6 +17691,17 @@ public final class mudclient implements Runnable {
 				if (assetName.length() == 0) {
 					continue;
 				}
+				if (isSinglePrayerIconAsset(assetName)) {
+					File iconFile = getPrayerIconFile(assetName);
+					if (assetFileExists(iconFile)) {
+						Sprite sprite = loadExternalPrayerIconFile(iconFile, assetName);
+						if (sprite != null) {
+							this.prayerIconSprites[prayerIndex] = sprite;
+							loadedIcons++;
+							continue;
+						}
+					}
+				}
 				int tierIndex = prayerIndex % 5;
 				File tierIconFile = getPrayerTierIconFile(assetName, tierIndex + 1);
 				if (assetFileExists(tierIconFile)) {
@@ -17696,6 +17726,12 @@ public final class mudclient implements Runnable {
 				}
 		}
 		}
+
+	private boolean isSinglePrayerIconAsset(String assetName) {
+		return "divine-grace".equals(assetName)
+			|| "divine-retribution".equals(assetName)
+			|| "corrosive-aura".equals(assetName);
+	}
 
 	private File getPrayerIconFile(String assetName) {
 		File iconFile = getExternalIconFile(assetName);
@@ -18148,6 +18184,18 @@ public final class mudclient implements Runnable {
 		if ("alchemy".equals(animationName)) {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "alchemy.png"),
 				targetFrames, maxTargetSize, 12, 1, 12, 0);
+		}
+		if ("divine-grace".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "divine-grace.png"),
+				targetFrames, maxTargetSize, 17, 1, 17, 0);
+		}
+		if ("divine-retribution".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "divine-retribution.png"),
+				targetFrames, maxTargetSize, 16, 1, 16, 0);
+		}
+		if ("corrosive-aura".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "corrosive-aura.png"),
+				targetFrames, maxTargetSize, 16, 1, 16, 0);
 		}
 		return -1;
 	}
@@ -21589,6 +21637,9 @@ public final class mudclient implements Runnable {
 	private int getProjectileSceneSize(SpriteDef projectile) {
 		if (projectile != null && projectile.id == PROJECTILE_TYPES.THROWING_KNIFE.id()) {
 			return 64;
+		}
+		if (projectile != null && projectile.id == COMBAT_EFFECT_WOOD_DRILL) {
+			return 144;
 		}
 		if (isDualElementProjectile(projectile)) {
 			return 192;

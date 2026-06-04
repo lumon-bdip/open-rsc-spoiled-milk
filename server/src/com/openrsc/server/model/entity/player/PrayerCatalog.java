@@ -191,6 +191,16 @@ public final class PrayerCatalog {
 			null
 		));
 		addGodLine(definitions, GodLine.GUTHIX, CombatStyle.RANGED, CombatStyle.MAGIC, Skills.CRAFTING);
+		definitions.add(new PrayerDefinition(
+			GodLine.GUTHIX,
+			PrayerKind.SPECIAL,
+			1,
+			"Corrosive Aura",
+			60,
+			0,
+			null,
+			null
+		));
 		return Collections.unmodifiableList(definitions);
 	}
 

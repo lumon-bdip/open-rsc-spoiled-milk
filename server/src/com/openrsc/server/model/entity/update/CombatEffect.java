@@ -42,6 +42,9 @@ public class CombatEffect {
 	public static final int ACID_GUSH = 36;
 	public static final int BATTERING_RAM = 37;
 	public static final int DRAGON_BREATH = 38;
+	public static final int DIVINE_GRACE = 39;
+	public static final int DIVINE_RETRIBUTION = 40;
+	public static final int CORROSIVE_AURA = 41;
 
 	public static final int HELLFIRE = HELLS_FIRE;
 	public static final int WIND_SLASH = AIR_SLASH;

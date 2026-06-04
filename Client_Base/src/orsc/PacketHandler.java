@@ -3023,34 +3023,11 @@ public class PacketHandler {
 				// Currently visible ground items
 				if ((groundItemID & 32768) != 0) {
 					groundItemID &= 32767;
-
-					// Loop through the ground items and check if they need to be reindexed.
-					int newIndex = 0;
-					for (int oldIndex = 0; oldIndex < mc.getGroundItemCount(); ++oldIndex) {
-
-						// No need to reindex if X, Y, and ID are the same.
-						if (mc.getGroundItemX(oldIndex) == groundItemX && mc.getGroundItemZ(oldIndex) == groundItemY
-							&& mc.getGroundItemID(oldIndex) == groundItemID) {
-							groundItemID = -123;
-						} else {
-							if (newIndex != oldIndex) {
-								mc.setGroundItemX(newIndex, mc.getGroundItemX(oldIndex));
-								mc.setGroundItemZ(newIndex, mc.getGroundItemZ(oldIndex));
-								mc.setGroundItemID(newIndex, mc.getGroundItemID(oldIndex));
-								mc.setGroundItemHeight(newIndex, mc.getGroundItemHeight(oldIndex));
-								if (Config.S_WANT_BANK_NOTES)
-									mc.setGroundItemNoted(newIndex, mc.getGroundItemNoted(oldIndex));
-							}
-
-							++newIndex;
-						}
-					}
-
-					// After the above loop, we now have our new count of ground items.
-					mc.setGroundItemCount(newIndex);
+					removeGroundItemsAt(groundItemX, groundItemY, groundItemID);
 
 				// Currently invisible ground items
 				} else {
+					removeGroundItemsAt(groundItemX, groundItemY, groundItemID);
 					mc.setGroundItemX(mc.getGroundItemCount(), groundItemX);
 					mc.setGroundItemZ(mc.getGroundItemCount(), groundItemY);
 					mc.setGroundItemID(mc.getGroundItemCount(), groundItemID);
@@ -3101,6 +3078,29 @@ public class PacketHandler {
 				mc.setGroundItemCount(newIndex);
 			}
 		}
+	}
+
+	private void removeGroundItemsAt(int groundItemX, int groundItemY, int groundItemID) {
+		int newIndex = 0;
+		for (int oldIndex = 0; oldIndex < mc.getGroundItemCount(); ++oldIndex) {
+			if (mc.getGroundItemX(oldIndex) == groundItemX && mc.getGroundItemZ(oldIndex) == groundItemY
+				&& mc.getGroundItemID(oldIndex) == groundItemID) {
+				continue;
+			}
+
+			if (newIndex != oldIndex) {
+				mc.setGroundItemX(newIndex, mc.getGroundItemX(oldIndex));
+				mc.setGroundItemZ(newIndex, mc.getGroundItemZ(oldIndex));
+				mc.setGroundItemID(newIndex, mc.getGroundItemID(oldIndex));
+				mc.setGroundItemHeight(newIndex, mc.getGroundItemHeight(oldIndex));
+				if (Config.S_WANT_BANK_NOTES)
+					mc.setGroundItemNoted(newIndex, mc.getGroundItemNoted(oldIndex));
+			}
+
+			++newIndex;
+		}
+
+		mc.setGroundItemCount(newIndex);
 	}
 
 	private void updatePreset() {

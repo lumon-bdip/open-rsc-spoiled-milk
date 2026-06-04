@@ -52,6 +52,9 @@ def main():
         "Projectiles/blow-smoke/blow-smoke8.png": (32, 16),
         "On Player/dragon-breath/dragon-breath.png": (384, 144),
         "On Player/alchemy/alchemy.png": (192, 16),
+        "On Player/divine-grace/divine-grace.png": (816, 48),
+        "On Enemy/divine-retribution/divine-retribution.png": (768, 48),
+        "On Enemy/corrosive-aura/corrosive-aura.png": (1024, 48),
     }
     for path, expected in dimensions.items():
         assert png_size(path) == expected, f"{path} changed from expected sheet geometry"
@@ -78,9 +81,18 @@ def main():
         "targetFrames, maxTargetSize, 8, 3, 16, 8, loaded);",
         'if ("alchemy".equals(animationName))',
         "targetFrames, maxTargetSize, 12, 1, 12, 0);",
+        'if ("divine-grace".equals(animationName))',
+        "targetFrames, maxTargetSize, 17, 1, 17, 0);",
+        'if ("divine-retribution".equals(animationName))',
+        "targetFrames, maxTargetSize, 16, 1, 16, 0);",
+        'if ("corrosive-aura".equals(animationName))',
         "final int throwingKnifeFrameCount = 8;",
         "public static final int COMBAT_EFFECT_DRAGON_BREATH = 38;",
-        '"battering-ram", "dragon-breath"',
+        "public static final int COMBAT_EFFECT_DIVINE_GRACE = 39;",
+        "public static final int COMBAT_EFFECT_DIVINE_RETRIBUTION = 40;",
+        "public static final int COMBAT_EFFECT_CORROSIVE_AURA = 41;",
+        '"battering-ram", "dragon-breath",',
+        '"divine-grace", "divine-retribution", "corrosive-aura"',
         "drawDragonBreathOverlay(character, effect, x, y, width, height, size);",
         "shouldMirrorDragonBreath(character.direction)",
     ], "mudclient.java")
@@ -112,6 +124,9 @@ def main():
         "public static final int WATER_VORTEX = KRAKEN;",
         "public static final int FIRE_PILLAR = PHOENIX;",
         "public static final int DRAGON_BREATH = 38;",
+        "public static final int DIVINE_GRACE = 39;",
+        "public static final int DIVINE_RETRIBUTION = 40;",
+        "public static final int CORROSIVE_AURA = 41;",
     ], "CombatEffect.java")
     handler = read("server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java")
     require(handler, [

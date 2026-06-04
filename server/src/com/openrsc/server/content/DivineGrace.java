@@ -4,6 +4,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
+import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -31,6 +32,7 @@ public final class DivineGrace {
 			return false;
 		}
 		attacker.getSkills().setLevel(Skill.HITS.id(), currentHits + healed);
+		attacker.getUpdateFlags().setCombatEffect(new CombatEffect(attacker, CombatEffect.DIVINE_GRACE));
 		attacker.getUpdateFlags().addHitSplat(new HitSplat(attacker, HitSplat.TYPE_HEAL, healed));
 		ActionSender.sendStat(attacker, Skill.HITS.id());
 		return true;

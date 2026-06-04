@@ -381,11 +381,11 @@ deferred until the limited release has testers and observed play data.
 
 ### Prayer Rework
 
-The active prayer model has 47 prayers in a 16-slot current-book UI: the three god lines keep their 15 core prayers, with Saradomin and Zamorak using the special slot. The old drain-first behavior is replaced by allocation capacity. The server XP multiplier path now uses active skilling prayer bonuses instead of legacy level gates.
+The active prayer model has 48 prayers in a 16-slot current-book UI: the three god lines keep their 15 core prayers, with Saradomin, Zamorak, and Guthix using the special slot. The old drain-first behavior is replaced by allocation capacity. The server XP multiplier path now uses active skilling prayer bonuses instead of legacy level gates.
 
 Required doc guardrails:
 
-- 47-prayer catalog
+- 48-prayer catalog
 - 16-slot current-book UI
 - server XP multiplier
 

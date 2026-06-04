@@ -109,10 +109,12 @@ public class MagicCombatEvent extends GameTickEvent {
 				return;
 			}
 			player.setFollowing(target, approachRange, false);
-			player.setWalkToAction(new WalkToMobAction(player, target, approachRange, false, ActionType.ATTACK) {
+			player.setWalkToAction(new WalkToMobAction(player, target, approachRange, false, ActionType.ATTACKMAGIC) {
 				@Override
 				public void executeInternal() {
 					getPlayer().resetFollowing();
+					getPlayer().setWalkToAction(null);
+					MagicCombatEvent.this.setDelayTicks(0);
 				}
 			});
 			return;
