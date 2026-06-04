@@ -150,7 +150,7 @@ public final class mudclient implements Runnable {
 	private static final int MAGIC_ICON_GAP = 5;
 	private static final int INTERFACE_OPTION_AUTO_CAST_SPELL = 21;
 	private static final int INTERFACE_OPTION_CAST_SUMMON = 22;
-	private static final int MAX_PRAYER_ICONS = 15;
+	private static final int MAX_PRAYER_ICONS = 16;
 	private static final int PRAYER_ICON_COLUMNS = MAGIC_ICON_COLUMNS;
 	private static final int PRAYER_ICON_VISIBLE_ROWS = MAGIC_ICON_VISIBLE_ROWS;
 	private static final int PRAYER_ICON_SIZE = MAGIC_ICON_SIZE;
@@ -15304,6 +15304,8 @@ public final class mudclient implements Runnable {
 						cTileZ = (character.currentZ - 64) / this.tileSize;
 						if (!this.isLocalPlayerWithinOneTile(cTileX, cTileZ)) {
 							this.walkToActionSource(this.playerLocalX, this.playerLocalZ, cTileX, cTileZ, true);
+						} else {
+							this.showCurrentMouseClickIndicator();
 						}
 						this.packetHandler.getClientStream().newPacket(190);
 						this.packetHandler.getClientStream().bufferBits.putShort(indexOrX);
@@ -15364,6 +15366,8 @@ public final class mudclient implements Runnable {
 						cTileZ = (character.currentZ - 64) / this.tileSize;
 						if (!this.isLocalPlayerWithinOneTile(cTileX, cTileZ)) {
 							this.walkToActionSource(this.playerLocalX, this.playerLocalZ, cTileX, cTileZ, true);
+						} else {
+							this.showCurrentMouseClickIndicator();
 						}
 						this.packetHandler.getClientStream().newPacket(171);
 						this.packetHandler.getClientStream().bufferBits.putShort(indexOrX);
@@ -16573,6 +16577,7 @@ public final class mudclient implements Runnable {
 				} else {
 					int oldBaseX = this.midRegionBaseX;
 					int oldBaseZ = this.midRegionBaseZ;
+					boolean heightOffsetChanged = this.lastHeightOffset != this.requestedPlane;
 					if (hardAreaLoad || !this.hasCompletedInitialRegionLoad) {
 						this.getSurface().drawColoredStringCentered(256, "Loading... Please wait", 0xFFFFFF, 0, 1, 192);
 						this.drawChatMessageTabs(5);
@@ -16653,9 +16658,26 @@ public final class mudclient implements Runnable {
 						}
 					}
 
-					for (int i = 0; this.groundItemCount > i; ++i) {
-						this.groundItemX[i] -= baseDX;
-						this.groundItemZ[i] -= baseDZ;
+					if (hardAreaLoad || heightOffsetChanged) {
+						this.groundItemCount = 0;
+					} else {
+						int newGroundItemCount = 0;
+						for (int i = 0; this.groundItemCount > i; ++i) {
+							int shiftedX = this.groundItemX[i] - baseDX;
+							int shiftedZ = this.groundItemZ[i] - baseDZ;
+							if (shiftedX < 0 || shiftedZ < 0 || shiftedX >= 96 || shiftedZ >= 96) {
+								continue;
+							}
+							this.groundItemX[newGroundItemCount] = shiftedX;
+							this.groundItemZ[newGroundItemCount] = shiftedZ;
+							this.groundItemID[newGroundItemCount] = this.groundItemID[i];
+							this.groundItemHeight[newGroundItemCount] = this.groundItemHeight[i];
+							if (Config.S_WANT_BANK_NOTES) {
+								this.groundItemNoted[newGroundItemCount] = this.groundItemNoted[i];
+							}
+							newGroundItemCount++;
+						}
+						this.groundItemCount = newGroundItemCount;
 					}
 
 					for (int i = 0; i < this.playerCount; ++i) {
@@ -22241,6 +22263,12 @@ public final class mudclient implements Runnable {
 
 	private boolean isLocalPlayerWithinOneTile(int tileX, int tileZ) {
 		return Math.abs(this.playerLocalX - tileX) <= 1 && Math.abs(this.playerLocalZ - tileZ) <= 1;
+	}
+
+	private void showCurrentMouseClickIndicator() {
+		this.mouseWalkY = this.mouseY;
+		this.mouseWalkX = this.mouseX;
+		this.mouseClickXStep = -24;
 	}
 
 	private void walkToArea(int startX, int startZ, int x1, int z1, int x2, int z2, boolean reachBorder,

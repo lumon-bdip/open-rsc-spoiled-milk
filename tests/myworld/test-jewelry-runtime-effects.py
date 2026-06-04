@@ -8,7 +8,9 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 EFFECTS = ROOT / "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
+ITEM_DEFS_CUSTOM = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
+CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
 DROP_TABLE = ROOT / "server/src/com/openrsc/server/content/DropTable.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
@@ -318,6 +320,8 @@ def ensure_formula_source_matches_design() -> None:
 
 def ensure_runtime_paths_are_wired() -> None:
     effects = EFFECTS.read_text(encoding="utf-8")
+    item_defs_custom = ITEM_DEFS_CUSTOM.read_text(encoding="utf-8")
+    client_entity_handler = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     equipment = EQUIPMENT.read_text(encoding="utf-8")
     drop_table = DROP_TABLE.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
@@ -342,6 +346,18 @@ def ensure_runtime_paths_are_wired() -> None:
                   "Elemental defense should come from the equipped amulet slot")
 
     require("getWealthChance(owner)" in drop_table, "Cosmic rings should feed drop-table wealth chance")
+    require("allowExtraRoll && !result.hitRareTable && wealthChance > 0.0D" in drop_table,
+            "Cosmic rings should only reroll when the primary roll missed rare tables")
+    require("result.hitRareTable = true;" in drop_table,
+            "DropTable should track when a roll reaches a rare table")
+    require("If a monster rare table misses, has a 5% chance to reroll the drop." in item_defs_custom,
+            "Sapphire cosmic ring examine should describe rare-table miss rerolls")
+    require("If a monster rare table misses, has a 25% chance to reroll the drop." in item_defs_custom,
+            "Dragonstone cosmic ring examine should describe rare-table miss rerolls")
+    require("If a monster rare table misses, has a %d%% chance to reroll the drop." in client_entity_handler,
+            "Client cosmic ring examine generator should describe rare-table miss rerolls")
+    require("If a monster rare table misses, has a 25% chance to reroll the drop." in client_entity_handler,
+            "Client dragonstone cosmic ring examine should describe rare-table miss rerolls")
     require("getCosmicNecklaceStandardDropChance(owner)" in drop_table,
             "Cosmic necklaces should feed extra standard drop rolls")
     require("suppressRareTables" in drop_table and "Your cosmic necklace gleams." in drop_table,

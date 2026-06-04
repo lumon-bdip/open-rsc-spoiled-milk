@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class PrayerCatalog {
-	public static final int PRAYERS_PER_BOOK = 15;
+	public static final int PRAYERS_PER_BOOK = 16;
 	public static final int COMBAT_EFFECT_CAP_PERCENT = 60;
 	public static final int[] COMBAT_TIER_POINT_COSTS = {3, 6, 15, 29, 49};
 	public static final int[] COMBAT_TIER_EFFECT_PERCENTS = {5, 10, 15, 20, 25};
@@ -23,7 +23,8 @@ public final class PrayerCatalog {
 	public enum PrayerKind {
 		OFFENSE,
 		DEFENSE,
-		SKILLING
+		SKILLING,
+		SPECIAL
 	}
 
 	public enum CombatStyle {
@@ -168,7 +169,27 @@ public final class PrayerCatalog {
 	private static List<PrayerDefinition> buildDefinitions() {
 		final List<PrayerDefinition> definitions = new ArrayList<PrayerDefinition>();
 		addGodLine(definitions, GodLine.ZAMORAK, CombatStyle.MELEE, CombatStyle.RANGED, Skills.SMITHING);
+		definitions.add(new PrayerDefinition(
+			GodLine.ZAMORAK,
+			PrayerKind.SPECIAL,
+			1,
+			"Divine Retribution",
+			60,
+			0,
+			null,
+			null
+		));
 		addGodLine(definitions, GodLine.SARADOMIN, CombatStyle.MAGIC, CombatStyle.MELEE, "ENCHANTING");
+		definitions.add(new PrayerDefinition(
+			GodLine.SARADOMIN,
+			PrayerKind.SPECIAL,
+			1,
+			"Divine Grace",
+			60,
+			0,
+			null,
+			null
+		));
 		addGodLine(definitions, GodLine.GUTHIX, CombatStyle.RANGED, CombatStyle.MAGIC, Skills.CRAFTING);
 		return Collections.unmodifiableList(definitions);
 	}

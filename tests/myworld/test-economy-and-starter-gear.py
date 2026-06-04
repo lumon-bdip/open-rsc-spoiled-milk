@@ -128,6 +128,32 @@ def main() -> None:
     require("Have you any armour for me, please?" in ironman, "Ironman NPC should keep the armour replacement option")
     require("missingArmour(player, ArmourPart.ANY)" in ironman, "Ironman NPC should only replace missing armour pieces")
     require("Ironman armour handouts are not used in Spoiled Milk." not in ironman, "Ironman NPC should not block cosmetic armour in MyWorld")
+    require("private boolean isIronmanTutor(Npc n)" in ironman, "Ironman NPC should use an explicit tutor identity helper")
+    require('isIronmanTutor(n) && command.equalsIgnoreCase("Armour")' in ironman,
+            "Ironman NPC op trigger should only block the Armour option")
+
+    expected_tutor_returns = {
+        "IRONMAN_HELM": "HELM",
+        "IRONMAN_PLATEBODY": "BODY",
+        "IRONMAN_PLATE_TOP": "TOP",
+        "IRONMAN_PLATELEGS": "LEGS",
+        "IRONMAN_PLATED_SKIRT": "SKIRT",
+        "ULTIMATE_IRONMAN_HELM": "HELM",
+        "ULTIMATE_IRONMAN_PLATEBODY": "BODY",
+        "ULTIMATE_IRONMAN_PLATE_TOP": "TOP",
+        "ULTIMATE_IRONMAN_PLATELEGS": "LEGS",
+        "ULTIMATE_IRONMAN_PLATED_SKIRT": "SKIRT",
+        "HARDCORE_IRONMAN_HELM": "HELM",
+        "HARDCORE_IRONMAN_PLATEBODY": "BODY",
+        "HARDCORE_IRONMAN_PLATE_TOP": "TOP",
+        "HARDCORE_IRONMAN_PLATELEGS": "LEGS",
+        "HARDCORE_IRONMAN_PLATED_SKIRT": "SKIRT",
+    }
+    for item_name, part_name in expected_tutor_returns.items():
+        require(
+            f"return ItemId.{item_name}.id();" in ironman,
+            f"Ironman tutor should return {item_name} for {part_name}",
+        )
 
     ironman_armour_caps = {
         1290: 1,  # Ironman helm
@@ -153,6 +179,28 @@ def main() -> None:
             f"Ironman armour item {item_id} should stay cosmetic-tier, found meleeDefense {items[item_id].get('meleeDefense')}",
         )
         require(items[item_id].get("requiredLevel") == 0, f"Ironman armour item {item_id} should remain wearable at level 1")
+
+    ironman_armour_names = {
+        1554: "Ironman plate top",
+        1555: "Ultimate ironman plate top",
+        1556: "Hardcore ironman plate top",
+        1557: "Ironman plated skirt",
+        1558: "Ultimate ironman plated skirt",
+        1559: "Hardcore ironman plated skirt",
+    }
+    for item_id, expected_name in ironman_armour_names.items():
+        require(items[item_id].get("name") == expected_name, f"Ironman armour item {item_id} should be named {expected_name}")
+
+    for item_id, expected_name in ironman_armour_names.items():
+        require(
+            f'setCustomItemDefinition({item_id}, new ItemDef("{expected_name}"' in client_entity_handler,
+            f"Client should define ironman armour item {item_id} explicitly as {expected_name}",
+        )
+    for item_id in (1290, 1291, 1292, 1293, 1294, 1295, 1296, 1297, 1298):
+        require(
+            f"setCustomItemDefinition({item_id}, new ItemDef(" in client_entity_handler,
+            f"Client should define ironman armour item {item_id} explicitly by id",
+        )
 
     print("PASS: MyWorld economy gear and ironman handout policy validated")
 

@@ -4,6 +4,8 @@ import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.content.DivineGrace;
+import com.openrsc.server.content.DivineRetribution;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
@@ -187,6 +189,9 @@ public class CombatEvent extends GameTickEvent {
 			}
 
 			inflictDamage(hitter, target, damage);
+			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				return;
+			}
 			applyWeaponPoison(hitter, target, damage);
 			applyChaosAmuletSecondHit(hitter, target, damage);
 			if (target.isPlayer()) {
@@ -433,6 +438,7 @@ public class CombatEvent extends GameTickEvent {
 		// Reduce targets hits by supplied damage amount.
 		int lastHits = target.getLevel(Skill.HITS.id());
 		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
+		final int damageDealt = Math.min(damage, lastHits);
 		target.getUpdateFlags().setDamage(new Damage(target, damage));
 		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_STANDARD, damage));
 		if (target.isNpc() && hitter.isPlayer()) {
@@ -440,7 +446,11 @@ public class CombatEvent extends GameTickEvent {
 			Player player = ((Player) hitter);
 			damage = Math.min(damage, lastHits);
 			n.addCombatDamage(player, damage);
+			DivineGrace.apply(player, damage);
 			player.applyBloodAmuletLifesteal(damage);
+		}
+		if (target.isPlayer() && hitter.isPlayer()) {
+			DivineGrace.apply((Player) hitter, damageDealt);
 		}
 
 		// Update players sound and party.
@@ -449,6 +459,10 @@ public class CombatEvent extends GameTickEvent {
 			ActionSender.sendStat((Player)target, Skill.HITS.id());
 			updateParty((Player)target);
 			applyChaosRobeReflect((Player) target, hitter, damage);
+			DivineRetribution.Result result = DivineRetribution.apply((Player) target, hitter, damageDealt);
+			if (result.killedAttacker()) {
+				onDeath(hitter, target);
+			}
 		}
 		if (hitter.isPlayer()) {
 			sendSound((Player)hitter, target, damage > 0);

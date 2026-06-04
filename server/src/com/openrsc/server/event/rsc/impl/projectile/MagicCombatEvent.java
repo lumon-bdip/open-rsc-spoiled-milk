@@ -37,6 +37,8 @@ public class MagicCombatEvent extends GameTickEvent {
 			return false;
 		}
 
+		player.setWalkToAction(null);
+		player.resetFollowing();
 		player.resetRange();
 		MagicCombatEvent event = player.getMagicCombatEvent();
 		if (event != null && event.isRunning()) {
@@ -57,6 +59,8 @@ public class MagicCombatEvent extends GameTickEvent {
 	public void reTarget(final Mob target, final Spells spell) {
 		this.target = target;
 		this.spell = spell;
+		player.setWalkToAction(null);
+		player.resetFollowing();
 		setDelayTicks(0);
 	}
 

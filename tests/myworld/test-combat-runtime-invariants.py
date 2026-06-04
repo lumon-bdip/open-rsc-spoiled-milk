@@ -108,6 +108,9 @@ def main() -> None:
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_MAGIC || this == MELEE_MAGIC;")
 
     require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(distance)")
+    require_contains(NPC_BEHAVIOR, "else if (npc.inCombat())")
+    require_contains(NPC_BEHAVIOR, "target = npc.getOpponent();")
+    require_contains(NPC_BEHAVIOR, "tryProjectileAttack(now);")
     require_contains(NPC_BEHAVIOR, "!npc.withinRange(target, profile.getProjectileRange())")
     require_contains(NPC_BEHAVIOR, "PathValidation.checkPath(npc.getWorld(), npc.getLocation(), target.getLocation())")
     require_contains(NPC_BEHAVIOR, "new ProjectileEvent(npc.getWorld(), npc, target, damage, 2)")
@@ -122,6 +125,16 @@ def main() -> None:
     require_contains(SPELL_HANDLER, "player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS")
     require_contains(MAGIC_COMBAT_EVENT, "final int spellRange = player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS;")
     require_contains(MAGIC_COMBAT_EVENT, "final int approachRange = RangeUtils.getApproachRadius(spellRange);")
+    require_regex(
+        MAGIC_COMBAT_EVENT,
+        r"public static boolean start\(final Player player, final Mob target\).*?player\.setWalkToAction\(null\);\s*player\.resetFollowing\(\);\s*player\.resetRange\(\);",
+        "autocast startup clears stale melee/ranged walk state before applying spell-range positioning",
+    )
+    require_regex(
+        MAGIC_COMBAT_EVENT,
+        r"public void reTarget\(final Mob target, final Spells spell\).*?player\.setWalkToAction\(null\);\s*player\.resetFollowing\(\);\s*setDelayTicks\(0\);",
+        "autocast retarget clears stale walk state before restarting spell-range positioning",
+    )
     require_contains(RANGE_EVENT, "final int radius = RangeUtils.getBowAttackRadius(weaponId);")
     require_contains(RANGE_EVENT, "final int approachRadius = RangeUtils.getApproachRadius(radius);")
     require_contains(THROWING_EVENT, "return RangeUtils.getThrowingAttackRadius(throwingEquip);")

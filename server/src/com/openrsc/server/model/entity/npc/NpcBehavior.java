@@ -371,6 +371,11 @@ public class NpcBehavior {
 
 		*/
 
+		else if (npc.inCombat()) {
+			target = npc.getOpponent();
+			tryProjectileAttack(now);
+		}
+
 		// This case happens when the npc had a target that has
 		// ran away. It will only change its state after 5 ticks.
 		else if (!npc.inCombat() && checkCombatTimer(now, npc.getCombatTimer(), 5 * tickFactor)) {

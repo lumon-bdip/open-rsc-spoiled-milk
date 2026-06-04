@@ -303,6 +303,7 @@ public class EntityHandler {
 		addPrayerDefinition(22, "Enchanting Favor", "Enchanting XP +20%.");
 		addPrayerDefinition(46, "Strong Enchanting Favor", "Enchanting XP +25%.");
 		addPrayerDefinition(80, "Greater Enchanting Favor", "Enchanting XP +30%.");
+		addPrayerDefinition(60, "Divine Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");
 	}
 
 	private static void loadZamorakPrayerDefinitions() {
@@ -321,6 +322,7 @@ public class EntityHandler {
 		addPrayerDefinition(22, "Smithing Favor", "Smithing XP +20%.");
 		addPrayerDefinition(46, "Strong Smithing Favor", "Smithing XP +25%.");
 		addPrayerDefinition(80, "Greater Smithing Favor", "Smithing XP +30%.");
+		addPrayerDefinition(60, "Divine Retribution", "Chance to recoil double damage taken. Higher hits are more likely to trigger.");
 	}
 
 	private static void loadGuthixPrayerDefinitions() {
@@ -3903,19 +3905,19 @@ public class EntityHandler {
 		addCustomWoodItemDefinitions();
 
 		// Ironman
-		items.add(new ItemDef("Ironman helm", "For just a rather very independent scaper.", "", 154, -1, "items:6", false, true, 33, 11189164, false, true, true, 1290));
-		items.add(new ItemDef("Ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 11189164, false, true, true, 1291));
-		items.add(new ItemDef("Ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 11189164, false, true, true, 1292));
+		setCustomItemDefinition(1290, new ItemDef("Ironman helm", "For just a rather very independent scaper.", "", 154, -1, "items:6", false, true, 33, 11189164, false, true, true, 1290));
+		setCustomItemDefinition(1291, new ItemDef("Ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 11189164, false, true, true, 1291));
+		setCustomItemDefinition(1292, new ItemDef("Ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 11189164, false, true, true, 1292));
 
 		// Ultimate ironman
-		items.add(new ItemDef("Ultimate ironman helm", "For Just A Rather Very Independent Scaper.", "", 154, -1, "items:6", false, true, 33, 16768685, false, true, true, 1293));
-		items.add(new ItemDef("Ultimate ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 16768685, false, true, true, 1294));
-		items.add(new ItemDef("Ultimate ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 16768685, false, true, true, 1295));
+		setCustomItemDefinition(1293, new ItemDef("Ultimate ironman helm", "For Just A Rather Very Independent Scaper.", "", 154, -1, "items:6", false, true, 33, 16768685, false, true, true, 1293));
+		setCustomItemDefinition(1294, new ItemDef("Ultimate ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 16768685, false, true, true, 1294));
+		setCustomItemDefinition(1295, new ItemDef("Ultimate ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 16768685, false, true, true, 1295));
 
 		// Hardcore ironman
-		items.add(new ItemDef("Hardcore ironman helm", "For those who stand alone.", "", 154, -1, "items:6", false, true, 33, 10027084, false, true, true, 1296));
-		items.add(new ItemDef("Hardcore ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 10027084, false, true, true, 1297));
-		items.add(new ItemDef("Hardcore ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 10027084, false, true, true, 1298));
+		setCustomItemDefinition(1296, new ItemDef("Hardcore ironman helm", "For those who stand alone.", "", 154, -1, "items:6", false, true, 33, 10027084, false, true, true, 1296));
+		setCustomItemDefinition(1297, new ItemDef("Hardcore ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 10027084, false, true, true, 1297));
+		setCustomItemDefinition(1298, new ItemDef("Hardcore ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 10027084, false, true, true, 1298));
 
 
 
@@ -4243,14 +4245,14 @@ public class EntityHandler {
 		items.add(new ItemDef("Biggum Flodrot", "Biggum Flodrot, goblin hero", "Talk", 0, -1, "items:597", false, false, 0, 0, true, true, false, 1553));
 
 		// Ironman plate tops
-		items.add(new ItemDef("Ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 11189164, false, true, true, 1554));
-		items.add(new ItemDef("Ultimate ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 16768685, false, true, true, 1555));
-		items.add(new ItemDef("Hardcore ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 10027084, false, true, true, 1556));
+		setCustomItemDefinition(1554, new ItemDef("Ironman plate top", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 11189164, false, true, true, 1554));
+		setCustomItemDefinition(1555, new ItemDef("Ultimate ironman plate top", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 16768685, false, true, true, 1555));
+		setCustomItemDefinition(1556, new ItemDef("Hardcore ironman plate top", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 10027084, false, true, true, 1556));
 
 		// Ironman plated skirts
-		items.add(new ItemDef("Ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0x6F7A70, false, true, true, 1557));
-		items.add(new ItemDef("Ultimate ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0xA69070, false, true, true, 1558));
-		items.add(new ItemDef("Hardcore ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0x640031, false, true, true, 1559));
+		setCustomItemDefinition(1557, new ItemDef("Ironman plated skirt", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0x6F7A70, false, true, true, 1557));
+		setCustomItemDefinition(1558, new ItemDef("Ultimate ironman plated skirt", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0xA69070, false, true, true, 1558));
+		setCustomItemDefinition(1559, new ItemDef("Hardcore ironman plated skirt", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0x640031, false, true, true, 1559));
 
 		// Halloween 2023
 		items.add(new ItemDef("Bonecrusher", "A contraption that crushes bones to dust", "", 0, -1, "items:598", false, false, 0, 0, false, true, false, 1560));
@@ -5504,10 +5506,10 @@ public class EntityHandler {
 			2,
 			new int[] {3000, 6000, 12000, 35000}, new int[] {3394611, 16724736, 0, 12255487});
 		addRingLine(1701, new String[] {"Sapphire", "Emerald", "Ruby", "Diamond"},
-			"Fortune", "Has a %d%% chance for an extra full monster drop.", 5,
+			"Fortune", "If a monster rare table misses, has a %d%% chance to reroll the drop.", 5,
 			new int[] {1800, 3000, 6000, 12000}, new int[] {19711, 3394611, 16724736, 0});
 		setCustomItemDefinition(3111, new ItemDef("Dragonstone Ring of Fortune",
-			"Has a 25% chance for an extra full monster drop.", "", 35000, 123, "items:123",
+			"If a monster rare table misses, has a 25% chance to reroll the drop.", "", 35000, 123, "items:123",
 			false, true, 1200, 12255487, true, false, true, 3111));
 		setCustomItemDefinition(3112, new ItemDef("Demon ash",
 			"Ashes from a demon", "scatter", 80, 23, "items:23",

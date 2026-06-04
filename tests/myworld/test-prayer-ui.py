@@ -68,9 +68,11 @@ def main():
         "Greater Melee Protection",
         "Weak Enchanting Favor",
         "Greater Enchanting Favor",
+        "Divine Grace",
         "Weak Melee Power",
         "Greater Ranged Protection",
         "Greater Smithing Favor",
+        "Divine Retribution",
         "Weak Ranged Power",
         "Greater Magic Protection",
         "Greater Crafting Favor",
@@ -78,8 +80,8 @@ def main():
     for prayer in required_prayers:
         require(prayer in entity_handler, f"Missing client prayer definition: {prayer}")
 
-    require(entity_handler.count("\t\taddPrayerDefinition(") == 45,
-            "Client prayer definitions should cover all three 15-slot god lines")
+    require(entity_handler.count("\t\taddPrayerDefinition(") == 47,
+            "Client prayer definitions should cover the three god lines plus Saradomin/Zamorak specials")
     for snippet in (
         'addPrayerDefinition(49, "Greater Magic Power", "Magic damage +25%.");',
         'addPrayerDefinition(49, "Greater Melee Power", "Melee damage +25%.");',
@@ -87,6 +89,8 @@ def main():
         'addPrayerDefinition(80, "Greater Enchanting Favor", "Enchanting XP +30%.");',
         'addPrayerDefinition(80, "Greater Smithing Favor", "Smithing XP +30%.");',
         'addPrayerDefinition(80, "Greater Crafting Favor", "Crafting XP +30%.");',
+        'addPrayerDefinition(60, "Divine Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");',
+        'addPrayerDefinition(60, "Divine Retribution", "Chance to recoil double damage taken. Higher hits are more likely to trigger.");',
         '"Reserve " + pointCost + " prayer points. " + effectText',
     ):
         require(snippet in entity_handler, f"Client prayer tooltip cost missing: {snippet}")

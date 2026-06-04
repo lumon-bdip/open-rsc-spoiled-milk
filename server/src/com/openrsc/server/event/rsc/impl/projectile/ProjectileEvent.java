@@ -2,6 +2,8 @@ package com.openrsc.server.event.rsc.impl.projectile;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.DivineGrace;
+import com.openrsc.server.content.DivineRetribution;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
@@ -138,6 +140,9 @@ public class ProjectileEvent extends SingleTickEvent {
 			// cancel the damage
 			// out on death
 			projectileDamage();
+			if (caster.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				return;
+			}
 			applyChaosAmuletSecondHit();
 			if (opponent.isPlayer()) {
 				final Player opponentPlayer = (Player) opponent;
@@ -281,12 +286,16 @@ public class ProjectileEvent extends SingleTickEvent {
 		damage = applyFrostbiteReflection(caster, opponent, damage);
 		int lastHits = opponent.getLevel(Skill.HITS.id());
 		opponent.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
+		final int damageDealt = Math.min(damage, lastHits);
 		opponent.getUpdateFlags().setDamage(new Damage(opponent, damage));
 		opponent.getUpdateFlags().addHitSplat(new HitSplat(opponent, HitSplat.TYPE_STANDARD, damage));
 		if (impactEffectType > 0) {
 			opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, impactEffectType));
 		}
 
+		if (caster.isNpc() && opponent.isPlayer()) {
+			((Player) opponent).updateDamageAndBlockedDamageTracking(caster, damageDealt, 0);
+		}
 
 		if (caster.isPlayer()) {
 			Player casterPlayer = (Player) caster;
@@ -295,11 +304,16 @@ public class ProjectileEvent extends SingleTickEvent {
 				if (type == 1 || type == 4) {
 					damage = Math.min(damage, lastHits);
 					npc.addMageDamage(casterPlayer, damage);
+					DivineGrace.apply(casterPlayer, damage);
 				}
 				else if (type == 2 || type == 5) {
 					damage = Math.min(damage, lastHits);
 					npc.addRangeDamage(casterPlayer, damage);
+					DivineGrace.apply(casterPlayer, damage);
 				}
+			}
+			if (opponent.isPlayer()) {
+				DivineGrace.apply(casterPlayer, damageDealt);
 			}
 		} else if (Summoning.isSummon(caster) && opponent.isNpc()) {
 			Summoning.creditSummonProjectileDamage(caster, opponent, Math.min(damage, lastHits), type);
@@ -310,6 +324,13 @@ public class ProjectileEvent extends SingleTickEvent {
 			Player affectedPlayer = (Player) opponent;
 			ActionSender.sendStat(affectedPlayer, Skill.HITS.id());
 			applyChaosRobeReflect(affectedPlayer, caster, damage);
+			DivineRetribution.Result result = DivineRetribution.apply(affectedPlayer, caster, damageDealt);
+			if (result.killedAttacker()) {
+				if (type == 2 || type == 5) {
+					affectedPlayer.resetRange();
+				}
+				caster.killedBy(affectedPlayer);
+			}
 			if (affectedPlayer.getConfig().WANT_PARTIES) {
 				if (affectedPlayer.getParty() != null) {
 					affectedPlayer.getParty().sendParty();

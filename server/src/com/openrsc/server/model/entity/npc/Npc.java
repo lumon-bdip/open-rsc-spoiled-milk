@@ -220,6 +220,16 @@ public class Npc extends Mob {
 		return new ArrayList<UUID>(combatDamagers.keySet());
 	}
 
+	public boolean hasDamageFrom(final Player player) {
+		if (player == null) {
+			return false;
+		}
+		final UUID id = player.getUUID();
+		return getCombatDamageInfoBy(id).getLeft() > 0
+			|| getRangeDamageInfoBy(id).getLeft() > 0
+			|| getMageDamageInfoBy(id).getLeft() > 0;
+	}
+
 	public int getCombatStyle() {
 		return 0;
 	}

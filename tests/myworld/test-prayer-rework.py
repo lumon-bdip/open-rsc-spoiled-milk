@@ -15,6 +15,8 @@ SCENERY = ROOT / "server/conf/server/defs/locs/SceneryLocs.json"
 BLESSING = ROOT / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/prayer/BlessedStaffs.java"
 MAGE_ARENA = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/minigames/mage_arena/MageArena.java"
 NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
+DIVINE_GRACE = ROOT / "server/src/com/openrsc/server/content/DivineGrace.java"
+DIVINE_RETRIBUTION = ROOT / "server/src/com/openrsc/server/content/DivineRetribution.java"
 
 
 def require(condition, message):
@@ -45,6 +47,8 @@ def main():
     blessing = read(BLESSING)
     mage_arena = read(MAGE_ARENA)
     npc_drops = read(NPC_DROPS)
+    divine_grace = read(DIVINE_GRACE)
+    divine_retribution = read(DIVINE_RETRIBUTION)
 
     combat_costs = parse_int_array(catalog, "COMBAT_TIER_POINT_COSTS")
     combat_effects = parse_int_array(catalog, "COMBAT_TIER_EFFECT_PERCENTS")
@@ -77,8 +81,16 @@ def main():
     for object_id in ["144", "296", "625", "939"]:
         require(f"case {object_id}:" in catalog, f"Zamorak altar id {object_id} is not mapped")
 
+    require("PRAYERS_PER_BOOK = 16" in catalog,
+            "Server prayer catalog should reserve the special-prayer slot")
     require('new boolean[PrayerCatalog.PRAYERS_PER_BOOK]' in prayers,
-            "Server prayer state should track the current 15-slot god line")
+            "Server prayer state should track the current 16-slot god line")
+    require('"Divine Grace"' in catalog and '"Divine Retribution"' in catalog,
+            "Prayer catalog should include the Saradomin and Zamorak special prayers")
+    require("Prayers.DIVINE_GRACE" in divine_grace and "PrayerCatalog.GodLine.SARADOMIN" in divine_grace,
+            "Divine Grace should be gated to Saradomin's special slot")
+    require("Prayers.DIVINE_RETRIBUTION" in divine_retribution and "PrayerCatalog.GodLine.ZAMORAK" in divine_retribution,
+            "Divine Retribution should be gated to Zamorak's special slot")
     require("prayers.canActivate(prayerID)" in prayer_handler,
             "Prayer activation should use allocation capacity checks")
     require("getReqLevel" not in prayer_handler and "Return to a church to recharge" not in prayer_handler,
@@ -101,8 +113,8 @@ def main():
     require("return getSkills().getMaxStat(Skill.PRAYER.id())" in player
             and "Math.max(getCarriedItems().getEquipment().getPrayer() + Summoning.getPrayerBonus(this) - 1, 0)" in player,
             "Prayer gear should add directly to prayer allocation capacity while worn")
-    require("45 prayers" in doc, "Prayer rework doc must call out the 45-prayer catalog")
-    require("15-slot current-book UI" in doc, "Prayer rework doc must call out current-book UI wiring")
+    require("47 prayers" in doc, "Prayer rework doc must call out the 47-prayer catalog")
+    require("16-slot current-book UI" in doc, "Prayer rework doc must call out current-book UI wiring")
     require("server XP multiplier" in doc, "Prayer rework doc must track server XP multiplier replacement")
     require(object_defs.count("<name>Altar of Saradomin</name>") >= 2, "Saradomin prayer altars should be clearly named")
     require(object_defs.count("<name>Altar of Zamorak</name>") >= 4, "Zamorak prayer altars should be clearly named")

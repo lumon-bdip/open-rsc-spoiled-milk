@@ -381,12 +381,12 @@ deferred until the limited release has testers and observed play data.
 
 ### Prayer Rework
 
-The active prayer model has 45 prayers in a 45-prayer catalog with a 15-slot current-book UI. The old drain-first behavior is replaced by allocation capacity. The server XP multiplier path now uses active skilling prayer bonuses instead of legacy level gates.
+The active prayer model has 47 prayers in a 16-slot current-book UI: the three god lines keep their 15 core prayers, with Saradomin and Zamorak using the special slot. The old drain-first behavior is replaced by allocation capacity. The server XP multiplier path now uses active skilling prayer bonuses instead of legacy level gates.
 
 Required doc guardrails:
 
-- 45-prayer catalog
-- 15-slot current-book UI
+- 47-prayer catalog
+- 16-slot current-book UI
 - server XP multiplier
 
 ### Gathering Rework

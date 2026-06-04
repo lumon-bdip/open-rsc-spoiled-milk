@@ -322,7 +322,7 @@
 	</entry>
 	<!-- Tier 8: Dead Trees / Ebony (level 54) -->
 	<entry>
-		<int>4480</int> <!-- dead Tree -->
+		<int>407</int> <!-- dead Tree -->
 		<ObjectWoodcuttingDef>
 			<requiredLevel>54</requiredLevel>
 			<logId>2113</logId>

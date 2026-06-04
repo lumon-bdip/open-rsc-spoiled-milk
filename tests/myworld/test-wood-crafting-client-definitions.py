@@ -10,6 +10,8 @@ from typing import NoReturn
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 FLETCHING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/fletching/Fletching.java"
+ITEM_LOG_CUT_DEF = ROOT / "server/conf/server/defs/extras/ItemLogCutDef.xml"
+ITEM_BOW_STRING_DEF = ROOT / "server/conf/server/defs/extras/ItemBowStringDef.xml"
 
 
 def fail(message: str) -> NoReturn:
@@ -40,6 +42,8 @@ def require_helper_uses_explicit_ids(client_text: str, helper_name: str, expecte
 def main() -> None:
     client_text = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     fletching_text = FLETCHING.read_text(encoding="utf-8")
+    log_cut_text = ITEM_LOG_CUT_DEF.read_text(encoding="utf-8")
+    bow_string_text = ITEM_BOW_STRING_DEF.read_text(encoding="utf-8")
 
     require_helper_uses_explicit_ids(
         client_text,
@@ -85,6 +89,34 @@ def main() -> None:
             f"ItemId.{item_name}.id()",
             f"Knife-on-log crafting should still reference {item_name}",
         )
+
+    for item_name in (
+        "UNSTRUNG_YEW_SHORTBOW",
+        "UNSTRUNG_YEW_LONGBOW",
+        "UNSTRUNG_MAGIC_SHORTBOW",
+        "UNSTRUNG_MAGIC_LONGBOW",
+    ):
+        require(
+            fletching_text,
+            f"ItemId.{item_name}.id()",
+            f"Fletching should keep {item_name} registered as a stringable bow",
+        )
+
+    for snippet, message in (
+        ("<shortbowID>665</shortbowID>", "Yew logs should cut into unstrung yew shortbows"),
+        ("<longbowID>664</longbowID>", "Yew logs should cut into unstrung yew longbows"),
+        ("<shortbowID>667</shortbowID>", "Magic logs should cut into unstrung magic shortbows"),
+        ("<longbowID>666</longbowID>", "Magic logs should cut into unstrung magic longbows"),
+    ):
+        require(log_cut_text, snippet, message)
+
+    for snippet, message in (
+        ("<int>665</int>", "Unstrung yew shortbows should have a bow-stringing recipe"),
+        ("<int>664</int>", "Unstrung yew longbows should have a bow-stringing recipe"),
+        ("<int>667</int>", "Unstrung magic shortbows should have a bow-stringing recipe"),
+        ("<int>666</int>", "Unstrung magic longbows should have a bow-stringing recipe"),
+    ):
+        require(bow_string_text, snippet, message)
 
     client_staff_ids = {
         int(value)

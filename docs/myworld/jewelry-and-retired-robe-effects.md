@@ -155,8 +155,8 @@ Amulet:
 Ring/necklace:
 
 - Theme: Fortune.
-- Ring: `5%` per tier chance to roll an extra full monster drop. Rare tables
-  are allowed on this extra roll.
+- Ring: if the primary monster drop roll misses the rare loot table, `5%` per
+  tier chance to reroll the monster drop.
 - Necklace: `10%` per tier chance to roll an extra standard monster drop. Rare
   tables are suppressed on this extra roll.
 

@@ -150,6 +150,9 @@ def main() -> None:
     require_contains(NPC, "return NpcAttackStyleProfile.forNpc(this).getMagicOffense(this);")
 
     require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(distance)")
+    require_contains(NPC_BEHAVIOR, "else if (npc.inCombat())")
+    require_contains(NPC_BEHAVIOR, "target = npc.getOpponent();")
+    require_contains(NPC_BEHAVIOR, "tryProjectileAttack(now);")
     require_contains(NPC_BEHAVIOR, "PathValidation.checkPath(npc.getWorld(), npc.getLocation(), target.getLocation())")
     require_contains(NPC_BEHAVIOR, "CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false)")
     require_contains(NPC_BEHAVIOR, "CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc))")

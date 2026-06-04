@@ -175,29 +175,29 @@ public class DropTable {
 	}
 
 	public ArrayList<Item> rollItem(Player owner) {
-		return rollItem(getWealthChance(owner), owner, true, 1.0D, false, false);
+		return rollItem(getWealthChance(owner), owner, true, 1.0D, false, false).items;
 	}
 
 	public ArrayList<Item> rollPersonalLoot(Player owner, double contributionScale) {
-		return rollItem(getWealthChance(owner), owner, true, contributionScale, true, false);
+		return rollItem(getWealthChance(owner), owner, true, contributionScale, true, false).items;
 	}
 
 	private ArrayList<Item> rollItem(double wealthChance, Player owner, boolean allowExtraRoll) {
-		return rollItem(wealthChance, owner, allowExtraRoll, 1.0D, false, false);
+		return rollItem(wealthChance, owner, allowExtraRoll, 1.0D, false, false).items;
 	}
 
-	private ArrayList<Item> rollItem(double wealthChance, Player owner, boolean allowExtraRoll, double contributionScale, boolean scaleRareNormalDrops, boolean suppressRareTables) {
+	private RollResult rollItem(double wealthChance, Player owner, boolean allowExtraRoll, double contributionScale, boolean scaleRareNormalDrops, boolean suppressRareTables) {
 		DropTable rollTable = this;
 		int rollWeightTotal = 0;
 		for (Drop drop : rollTable.drops) {
 			rollWeightTotal += getRollWeight(drop, owner);
 		}
 		if (rollWeightTotal <= 0) {
-			return new ArrayList<>();
+			return new RollResult();
 		}
 		int hit = DataConversions.random(0, rollWeightTotal - 1);
 		int sum = 0;
-		ArrayList<Item> items = new ArrayList<>();
+		RollResult result = new RollResult();
 		for (Drop drop : rollTable.drops) {
 			int rollWeight = getRollWeight(drop, owner);
 			sum += rollWeight;
@@ -228,16 +228,19 @@ public class DropTable {
 					if (owner.getWorld().getServer().getConfig().VALUABLE_DROP_MESSAGES) {
 						checkValuableDrop(drop.id, drop.amount, drop.weight, rollTable.totalWeight, owner);
 					}
-					items.add(new Item(drop.id, drop.amount, drop.noted));
+					result.items.add(new Item(drop.id, drop.amount, drop.noted));
 					break;
 				} else if (drop.type == dropType.TABLE) {
 					if (drop.table.isRare() && (suppressRareTables || !passesContributionGate(contributionScale))) {
 						break;
 					}
+					if (drop.table.isRare()) {
+						result.hitRareTable = true;
+					}
 					DropTable newTable = drop.table.clone();
 
 					ArrayList<Item> invariableItemsToAdd = newTable.invariableItems(owner);
-					items.addAll(invariableItemsToAdd);
+					result.items.addAll(invariableItemsToAdd);
 
 					// We need to check if no "always drop" items were added.
 					// If there weren't, and the totalWeight is 0, that means
@@ -246,8 +249,9 @@ public class DropTable {
 					boolean onlyTables = invariableItemsToAdd.isEmpty() && newTable.getTotalWeight() == 0;
 
 					if (newTable.getTotalWeight() > 0) {
-						ArrayList<Item> itemsToAdd = newTable.rollItem(0.0D, owner, false, contributionScale, false, suppressRareTables);
-						items.addAll(itemsToAdd);
+						RollResult nestedResult = newTable.rollItem(0.0D, owner, false, contributionScale, false, suppressRareTables);
+						result.items.addAll(nestedResult.items);
+						result.hitRareTable = result.hitRareTable || nestedResult.hitRareTable;
 					} else if (onlyTables) {
 						for (Drop table : newTable.drops) {
 							if (table.type == dropType.TABLE)
@@ -255,7 +259,12 @@ public class DropTable {
 								if (table.table.isRare() && (suppressRareTables || !passesContributionGate(contributionScale))) {
 									continue;
 								}
-								items.addAll(table.table.rollItem(0.0D, owner, false, contributionScale, false, suppressRareTables));
+								if (table.table.isRare()) {
+									result.hitRareTable = true;
+								}
+								RollResult nestedResult = table.table.rollItem(0.0D, owner, false, contributionScale, false, suppressRareTables);
+								result.items.addAll(nestedResult.items);
+								result.hitRareTable = result.hitRareTable || nestedResult.hitRareTable;
 							}
 						}
 					}
@@ -264,17 +273,19 @@ public class DropTable {
 				}
 			}
 		}
-		if (allowExtraRoll && wealthChance > 0.0D && DataConversions.getRandom().nextDouble() < wealthChance) {
+		if (allowExtraRoll && !result.hitRareTable && wealthChance > 0.0D && DataConversions.getRandom().nextDouble() < wealthChance) {
 			owner.playerServerMessage(MessageType.QUEST, "@ora@Your ring of wealth shines brightly!");
 			owner.playSound("foundgem");
-			items.addAll(rollItem(0.0D, owner, false, contributionScale, scaleRareNormalDrops, false));
+			RollResult extraResult = rollItem(0.0D, owner, false, contributionScale, scaleRareNormalDrops, false);
+			result.items.addAll(extraResult.items);
+			result.hitRareTable = extraResult.hitRareTable;
 		}
 		final double standardDropChance = getCosmicNecklaceStandardDropChance(owner);
 		if (allowExtraRoll && standardDropChance > 0.0D && DataConversions.getRandom().nextDouble() < standardDropChance) {
 			owner.playerServerMessage(MessageType.QUEST, "@ora@Your cosmic necklace gleams.");
-			items.addAll(rollItem(0.0D, owner, false, contributionScale, scaleRareNormalDrops, true));
+			result.items.addAll(rollItem(0.0D, owner, false, contributionScale, scaleRareNormalDrops, true).items);
 		}
-		return items;
+		return result;
 	}
 
 	private int getRollWeight(final Drop drop, final Player owner) {
@@ -496,5 +507,10 @@ public class DropTable {
 				", noted=" + noted +
 				'}';
 		}
+	}
+
+	private static class RollResult {
+		ArrayList<Item> items = new ArrayList<>();
+		boolean hitRareTable = false;
 	}
 }

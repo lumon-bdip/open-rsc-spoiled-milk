@@ -1083,7 +1083,9 @@ public final class Summoning {
 			return attacker;
 		}
 		final Mob activeTarget = getOwnerActiveAttackTarget(owner);
-		if (isValidSummonAssistTarget(owner, summon, activeTarget) && ownerIsActivelyAttacking(owner, activeTarget)) {
+		if (isValidSummonAssistTarget(owner, summon, activeTarget)
+			&& ownerIsActivelyAttacking(owner, activeTarget)
+			&& ownerHasDamagedTarget(owner, activeTarget)) {
 			return activeTarget;
 		}
 		return null;
@@ -1129,12 +1131,27 @@ public final class Summoning {
 
 	private static boolean npcIsAttackingOwner(final Npc npc, final Player owner) {
 		return npc.getOpponent() == owner
-			|| npc.getBehavior().getChaseTarget() == owner;
+			&& npc.inCombat()
+			&& ownerHasTakenDamageFrom(owner, npc);
 	}
 
 	private static boolean playerIsAttackingOwner(final Player player, final Player owner) {
 		return player.getOpponent() == owner
 			|| ownerIsActivelyAttacking(player, owner);
+	}
+
+	private static boolean ownerHasDamagedTarget(final Player owner, final Mob target) {
+		if (target == null || !target.isNpc()) {
+			return false;
+		}
+		return ((Npc) target).hasDamageFrom(owner);
+	}
+
+	private static boolean ownerHasTakenDamageFrom(final Player owner, final Mob attacker) {
+		if (owner == null || attacker == null) {
+			return false;
+		}
+		return owner.getTrackedDamage(attacker) > 0 || owner.getTrackedBlockedDamage(attacker) > 0;
 	}
 
 	private static Mob getOwnerActiveAttackTarget(final Player owner) {

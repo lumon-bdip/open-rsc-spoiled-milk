@@ -181,15 +181,19 @@ public class IronMan implements
 
 	@Override
 	public boolean blockOpNpc(Player player, Npc n, String command) {
-		return n.getID() == IRON_MAN || n.getID() == ULTIMATE_IRON_MAN || n.getID() == HARDCORE_IRON_MAN && command.equalsIgnoreCase("Armour");
+		return isIronmanTutor(n) && command.equalsIgnoreCase("Armour");
 	}
 
 	@Override
 	public void onOpNpc(Player player, Npc n, String command) {
 		if (!config().SPAWN_IRON_MAN_NPCS) return;
-		if (n.getID() == IRON_MAN || n.getID() == ULTIMATE_IRON_MAN || n.getID() == HARDCORE_IRON_MAN && command.equalsIgnoreCase("Armour")) {
+		if (isIronmanTutor(n) && command.equalsIgnoreCase("Armour")) {
 			armourOption(player, n);
 		}
+	}
+
+	private boolean isIronmanTutor(Npc n) {
+		return n.getID() == IRON_MAN || n.getID() == ULTIMATE_IRON_MAN || n.getID() == HARDCORE_IRON_MAN;
 	}
 
 	private void armourOption(Player player, Npc n) {
