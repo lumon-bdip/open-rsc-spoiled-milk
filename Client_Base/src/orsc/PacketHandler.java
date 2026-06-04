@@ -3081,9 +3081,11 @@ public class PacketHandler {
 
 	private void removeGroundItemsAt(int groundItemX, int groundItemY, int groundItemID) {
 		int newIndex = 0;
+		boolean removed = false;
 		for (int oldIndex = 0; oldIndex < mc.getGroundItemCount(); ++oldIndex) {
-			if (mc.getGroundItemX(oldIndex) == groundItemX && mc.getGroundItemZ(oldIndex) == groundItemY
+			if (!removed && mc.getGroundItemX(oldIndex) == groundItemX && mc.getGroundItemZ(oldIndex) == groundItemY
 				&& mc.getGroundItemID(oldIndex) == groundItemID) {
+				removed = true;
 				continue;
 			}
 
