@@ -9106,21 +9106,21 @@
     },
     {
       "id": 1557,
-      "name": "Ironman plated skirt",
+      "name": "Ironman platelegs",
       "meleeDefense": 1,
       "requiredLevel": 0,
       "requiredSkillID": -1
     },
     {
       "id": 1558,
-      "name": "Ultimate ironman plated skirt",
+      "name": "Ultimate ironman platelegs",
       "meleeDefense": 1,
       "requiredLevel": 0,
       "requiredSkillID": -1
     },
     {
       "id": 1559,
-      "name": "Hardcore ironman plated skirt",
+      "name": "Hardcore ironman platelegs",
       "meleeDefense": 1,
       "requiredLevel": 0,
       "requiredSkillID": -1
@@ -9217,21 +9217,21 @@
     },
     {
       "id": 1554,
-      "name": "Ironman plate top",
+      "name": "Ironman platebody",
       "meleeDefense": 2,
       "requiredLevel": 0,
       "requiredSkillID": -1
     },
     {
       "id": 1555,
-      "name": "Ultimate ironman plate top",
+      "name": "Ultimate ironman platebody",
       "meleeDefense": 2,
       "requiredLevel": 0,
       "requiredSkillID": -1
     },
     {
       "id": 1556,
-      "name": "Hardcore ironman plate top",
+      "name": "Hardcore ironman platebody",
       "meleeDefense": 2,
       "requiredLevel": 0,
       "requiredSkillID": -1

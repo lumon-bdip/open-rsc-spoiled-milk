@@ -4244,15 +4244,15 @@ public class EntityHandler {
 
 		items.add(new ItemDef("Biggum Flodrot", "Biggum Flodrot, goblin hero", "Talk", 0, -1, "items:597", false, false, 0, 0, true, true, false, 1553));
 
-		// Ironman plate tops
-		setCustomItemDefinition(1554, new ItemDef("Ironman plate top", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 11189164, false, true, true, 1554));
-		setCustomItemDefinition(1555, new ItemDef("Ultimate ironman plate top", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 16768685, false, true, true, 1555));
-		setCustomItemDefinition(1556, new ItemDef("Hardcore ironman plate top", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 10027084, false, true, true, 1556));
+		// Ironman alternate platebodies
+		setCustomItemDefinition(1554, new ItemDef("Ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 11189164, false, true, true, 1554));
+		setCustomItemDefinition(1555, new ItemDef("Ultimate ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 16768685, false, true, true, 1555));
+		setCustomItemDefinition(1556, new ItemDef("Hardcore ironman platebody", "Take it off and what are you?", "", 560, -1, "items:8", false, true, 322, 10027084, false, true, true, 1556));
 
-		// Ironman plated skirts
-		setCustomItemDefinition(1557, new ItemDef("Ironman plated skirt", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0x6F7A70, false, true, true, 1557));
-		setCustomItemDefinition(1558, new ItemDef("Ultimate ironman plated skirt", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0xA69070, false, true, true, 1558));
-		setCustomItemDefinition(1559, new ItemDef("Hardcore ironman plated skirt", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0x640031, false, true, true, 1559));
+		// Ironman alternate platelegs
+		setCustomItemDefinition(1557, new ItemDef("Ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0x6F7A70, false, true, true, 1557));
+		setCustomItemDefinition(1558, new ItemDef("Ultimate ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0xA69070, false, true, true, 1558));
+		setCustomItemDefinition(1559, new ItemDef("Hardcore ironman platelegs", "Take it off and what are you?", "", 280, -1, "items:9", false, true, 644, 0x640031, false, true, true, 1559));
 
 		// Halloween 2023
 		items.add(new ItemDef("Bonecrusher", "A contraption that crushes bones to dust", "", 0, -1, "items:598", false, false, 0, 0, false, true, false, 1560));
@@ -6749,15 +6749,15 @@ public class EntityHandler {
 			animations.add(new AnimationDef("randolphtorso", "equipment", 0, 0, true, false, 0));//532
 			animations.add(new AnimationDef("biggum", "npc", 0xFFFFFF, 0, true, false, 0));//533
 
-			// Ironman plate tops
-			animations.add(new AnimationDef("fplatemailtop", "equipment", 11189164, 0, true, false, 0)); //534 - ironman plate top
-			animations.add(new AnimationDef("fplatemailtop", "equipment", 16768685, 0, true, false, 0)); //535 - ultimate ironman plate top
-			animations.add(new AnimationDef("fplatemailtop", "equipment", 10027084, 0, true, false, 0)); //536 - hc ironman plate top
+			// Ironman alternate platebodies
+			animations.add(new AnimationDef("fplatemailtop", "equipment", 11189164, 0, true, false, 0)); //534 - ironman alternate platebody
+			animations.add(new AnimationDef("fplatemailtop", "equipment", 16768685, 0, true, false, 0)); //535 - ultimate ironman alternate platebody
+			animations.add(new AnimationDef("fplatemailtop", "equipment", 10027084, 0, true, false, 0)); //536 - hc ironman alternate platebody
 
-			// Ironman plated skirts
-			animations.add(new AnimationDef("armorskirt", "equipment", 11189164, 0, true, false, 0));//537 - ironman plated skirt
-			animations.add(new AnimationDef("armorskirt", "equipment", 16768685, 0, true, false, 0));//538 - ultimate ironman palted skirt
-			animations.add(new AnimationDef("armorskirt", "equipment", 10027084, 0, true, false, 0));//539 - hc ironman plated skirt
+			// Ironman alternate platelegs
+			animations.add(new AnimationDef("armorskirt", "equipment", 11189164, 0, true, false, 0));//537 - ironman alternate platelegs
+			animations.add(new AnimationDef("armorskirt", "equipment", 16768685, 0, true, false, 0));//538 - ultimate ironman alternate platelegs
+			animations.add(new AnimationDef("armorskirt", "equipment", 10027084, 0, true, false, 0));//539 - hc ironman alternate platelegs
 
 			// Halloween 2023
 			animations.add(new AnimationDef("halloweenmask_pink", "equipment", 0, 0, true, false, 0));//540 - pink halloween mask

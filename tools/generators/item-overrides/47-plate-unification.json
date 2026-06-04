@@ -1,5 +1,5 @@
 {
-  "description": "Collapse legacy plate tops and skirts into the standard plate body and legs presentation so inventory-facing armour no longer splits by body type.",
+  "description": "Collapse legacy plate variants into the standard plate body and legs presentation so inventory-facing armour no longer splits by body type.",
   "items": [
     {
       "id": 214,

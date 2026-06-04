@@ -165,12 +165,12 @@ def main() -> None:
         1296: 1,  # Hardcore ironman helm
         1297: 2,  # Hardcore ironman platebody
         1298: 1,  # Hardcore ironman platelegs
-        1554: 2, # Ironman plate top
-        1555: 2, # Ultimate ironman plate top
-        1556: 2, # Hardcore ironman plate top
-        1557: 1, # Ironman plated skirt
-        1558: 1, # Ultimate ironman plated skirt
-        1559: 1, # Hardcore ironman plated skirt
+        1554: 2, # Ironman platebody
+        1555: 2, # Ultimate ironman platebody
+        1556: 2, # Hardcore ironman platebody
+        1557: 1, # Ironman platelegs
+        1558: 1, # Ultimate ironman platelegs
+        1559: 1, # Hardcore ironman platelegs
     }
     for item_id, max_melee_defense in ironman_armour_caps.items():
         require(item_id in items, f"Missing Ironman armour override for item {item_id}")
@@ -181,12 +181,12 @@ def main() -> None:
         require(items[item_id].get("requiredLevel") == 0, f"Ironman armour item {item_id} should remain wearable at level 1")
 
     ironman_armour_names = {
-        1554: "Ironman plate top",
-        1555: "Ultimate ironman plate top",
-        1556: "Hardcore ironman plate top",
-        1557: "Ironman plated skirt",
-        1558: "Ultimate ironman plated skirt",
-        1559: "Hardcore ironman plated skirt",
+        1554: "Ironman platebody",
+        1555: "Ultimate ironman platebody",
+        1556: "Hardcore ironman platebody",
+        1557: "Ironman platelegs",
+        1558: "Ultimate ironman platelegs",
+        1559: "Hardcore ironman platelegs",
     }
     for item_id, expected_name in ironman_armour_names.items():
         require(items[item_id].get("name") == expected_name, f"Ironman armour item {item_id} should be named {expected_name}")
