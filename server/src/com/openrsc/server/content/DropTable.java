@@ -231,59 +231,81 @@ public class DropTable {
 					result.items.add(new Item(drop.id, drop.amount, drop.noted));
 					break;
 				} else if (drop.type == dropType.TABLE) {
-					if (drop.table.isRare() && (suppressRareTables || !passesContributionGate(contributionScale))) {
-						break;
-					}
-					if (drop.table.isRare()) {
-						result.hitRareTable = true;
-					}
-					DropTable newTable = drop.table.clone();
-
-					ArrayList<Item> invariableItemsToAdd = newTable.invariableItems(owner);
-					result.items.addAll(invariableItemsToAdd);
-
-					// We need to check if no "always drop" items were added.
-					// If there weren't, and the totalWeight is 0, that means
-					// that the new drop table ONLY contains additional drop tables.
-					// This is probably only a special case for Chaos Druids.
-					boolean onlyTables = invariableItemsToAdd.isEmpty() && newTable.getTotalWeight() == 0;
-
-					if (newTable.getTotalWeight() > 0) {
-						RollResult nestedResult = newTable.rollItem(0.0D, owner, false, contributionScale, false, suppressRareTables);
-						result.items.addAll(nestedResult.items);
-						result.hitRareTable = result.hitRareTable || nestedResult.hitRareTable;
-					} else if (onlyTables) {
-						for (Drop table : newTable.drops) {
-							if (table.type == dropType.TABLE)
-							{
-								if (table.table.isRare() && (suppressRareTables || !passesContributionGate(contributionScale))) {
-									continue;
-								}
-								if (table.table.isRare()) {
-									result.hitRareTable = true;
-								}
-								RollResult nestedResult = table.table.rollItem(0.0D, owner, false, contributionScale, false, suppressRareTables);
-								result.items.addAll(nestedResult.items);
-								result.hitRareTable = result.hitRareTable || nestedResult.hitRareTable;
-							}
-						}
-					}
-
+					result.merge(rollTableDrop(drop, owner, contributionScale, suppressRareTables));
 					break;
 				}
 			}
 		}
-		if (allowExtraRoll && !result.hitRareTable && wealthChance > 0.0D && DataConversions.getRandom().nextDouble() < wealthChance) {
+		if (allowExtraRoll && !result.receivedRareTableReward && wealthChance > 0.0D && DataConversions.getRandom().nextDouble() < wealthChance) {
 			owner.playerServerMessage(MessageType.QUEST, "@ora@Your ring of wealth shines brightly!");
 			owner.playSound("foundgem");
-			RollResult extraResult = rollItem(0.0D, owner, false, contributionScale, scaleRareNormalDrops, false);
-			result.items.addAll(extraResult.items);
-			result.hitRareTable = extraResult.hitRareTable;
+			result.merge(rollRareTableChance(owner, contributionScale));
 		}
 		final double standardDropChance = getCosmicNecklaceStandardDropChance(owner);
 		if (allowExtraRoll && standardDropChance > 0.0D && DataConversions.getRandom().nextDouble() < standardDropChance) {
 			owner.playerServerMessage(MessageType.QUEST, "@ora@Your cosmic necklace gleams.");
 			result.items.addAll(rollItem(0.0D, owner, false, contributionScale, scaleRareNormalDrops, true).items);
+		}
+		return result;
+	}
+
+	private RollResult rollRareTableChance(Player owner, double contributionScale) {
+		int rollWeightTotal = 0;
+		for (Drop drop : drops) {
+			rollWeightTotal += getRollWeight(drop, owner);
+		}
+		if (rollWeightTotal <= 0) {
+			return new RollResult();
+		}
+		int hit = DataConversions.random(0, rollWeightTotal - 1);
+		int sum = 0;
+		for (Drop drop : drops) {
+			sum += getRollWeight(drop, owner);
+			if (sum <= hit) {
+				continue;
+			}
+			if (drop.type == dropType.TABLE && drop.table.isRare()) {
+				return rollTableDrop(drop, owner, contributionScale, false);
+			}
+			return new RollResult();
+		}
+		return new RollResult();
+	}
+
+	private RollResult rollTableDrop(Drop drop, Player owner, double contributionScale, boolean suppressRareTables) {
+		RollResult result = new RollResult();
+		if (drop.table.isRare() && (suppressRareTables || !passesContributionGate(contributionScale))) {
+			return result;
+		}
+		boolean rareTable = drop.table.isRare();
+		if (rareTable) {
+			result.hitRareTable = true;
+		}
+		DropTable newTable = drop.table.clone();
+
+		int itemCountBefore = result.items.size();
+		ArrayList<Item> invariableItemsToAdd = newTable.invariableItems(owner);
+		result.items.addAll(invariableItemsToAdd);
+
+		// We need to check if no "always drop" items were added.
+		// If there weren't, and the totalWeight is 0, that means
+		// that the new drop table ONLY contains additional drop tables.
+		// This is probably only a special case for Chaos Druids.
+		boolean onlyTables = invariableItemsToAdd.isEmpty() && newTable.getTotalWeight() == 0;
+
+		if (newTable.getTotalWeight() > 0) {
+			RollResult nestedResult = newTable.rollItem(0.0D, owner, false, contributionScale, false, suppressRareTables);
+			result.merge(nestedResult);
+		} else if (onlyTables) {
+			for (Drop table : newTable.drops) {
+				if (table.type == dropType.TABLE)
+				{
+					result.merge(rollTableDrop(table, owner, contributionScale, suppressRareTables));
+				}
+			}
+		}
+		if (rareTable && result.items.size() > itemCountBefore) {
+			result.receivedRareTableReward = true;
 		}
 		return result;
 	}
@@ -512,5 +534,15 @@ public class DropTable {
 	private static class RollResult {
 		ArrayList<Item> items = new ArrayList<>();
 		boolean hitRareTable = false;
+		boolean receivedRareTableReward = false;
+
+		private void merge(RollResult other) {
+			if (other == null) {
+				return;
+			}
+			items.addAll(other.items);
+			hitRareTable = hitRareTable || other.hitRareTable;
+			receivedRareTableReward = receivedRareTableReward || other.receivedRareTableReward;
+		}
 	}
 }

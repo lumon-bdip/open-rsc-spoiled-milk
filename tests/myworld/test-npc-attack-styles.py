@@ -12,6 +12,7 @@ MYWORLD_NPC_DEFS = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefsMyWorl
 NPC = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "Npc.java"
 NPC_BEHAVIOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcBehavior.java"
 NPC_ATTACK_STYLE_PROFILE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcAttackStyleProfile.java"
+COMBAT_EFFECT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "update" / "CombatEffect.java"
 
 EXPECTED_PROFILES = {
     "PURE_MAGIC": {
@@ -157,7 +158,13 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false)")
     require_contains(NPC_BEHAVIOR, "CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc))")
     require_contains(NPC_BEHAVIOR, "new ProjectileEvent(npc.getWorld(), npc, target, damage, 2)")
-    require_contains(NPC_BEHAVIOR, "new ProjectileEvent(npc.getWorld(), npc, target, damage, 1)")
+    require_contains(NPC_BEHAVIOR, "CombatEffect.enemyMagicAttackEffect(npc.getDef().getName())")
+    require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, 0, 1, impactEffectType, true")
+    require_contains(COMBAT_EFFECT, 'case "lesser demon":')
+    require_contains(COMBAT_EFFECT, "return LESSER_DEMON_MAGIC;")
+    require_contains(COMBAT_EFFECT, 'case "greater demon":')
+    require_contains(COMBAT_EFFECT, "return GREATER_DEMON_MAGIC;")
+    require_contains(COMBAT_EFFECT, "return NONE;")
     require_contains(NPC_BEHAVIOR, "Prayers.PROTECT_FROM_MISSILES")
     require_contains(NPC_BEHAVIOR, "npc.setKillType(KillType.RANGED)")
     require_contains(NPC_BEHAVIOR, "npc.setKillType(KillType.MAGIC)")

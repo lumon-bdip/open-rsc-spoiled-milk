@@ -125,13 +125,15 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_DIVINE_GRACE = 39;
 	public static final int COMBAT_EFFECT_DIVINE_RETRIBUTION = 40;
 	public static final int COMBAT_EFFECT_CORROSIVE_AURA = 41;
+	public static final int COMBAT_EFFECT_LESSER_DEMON_MAGIC = 42;
+	public static final int COMBAT_EFFECT_GREATER_DEMON_MAGIC = 43;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
 	public static final int COMBAT_EFFECT_WATER_ERUPTION = COMBAT_EFFECT_HURRICANE;
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 41;
+	public static final int COMBAT_EFFECT_COUNT = 43;
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_TICKS = 40;
@@ -887,7 +889,7 @@ public final class mudclient implements Runnable {
 		"eye-of-guthix", "zamoraks-apocolypse", "saradomin-soul-slash", "claw-of-guthix", "summon",
 		"summon-combat", "summon-support", "summon-utility", "thunder-splash", "ice-burst", "acid-frog",
 		"wood-drill", "thunder-strike", "ice-crystal", "acid-gush", "battering-ram", "dragon-breath",
-		"divine-grace", "divine-retribution", "corrosive-aura"
+		"divine-grace", "divine-retribution", "corrosive-aura", "lesser-demon-magic", "greater-demon-magic"
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final int[] projectileEffectFrameCounts = new int[CUSTOM_PROJECTILE_COUNT];

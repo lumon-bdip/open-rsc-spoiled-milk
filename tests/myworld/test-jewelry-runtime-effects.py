@@ -346,8 +346,12 @@ def ensure_runtime_paths_are_wired() -> None:
                   "Elemental defense should come from the equipped amulet slot")
 
     require("getWealthChance(owner)" in drop_table, "Cosmic rings should feed drop-table wealth chance")
-    require("allowExtraRoll && !result.hitRareTable && wealthChance > 0.0D" in drop_table,
-            "Cosmic rings should only reroll when the primary roll missed rare tables")
+    require("allowExtraRoll && !result.receivedRareTableReward && wealthChance > 0.0D" in drop_table,
+            "Cosmic rings should only reroll when the primary roll produced no rare-table reward")
+    require("result.merge(rollRareTableChance(owner, contributionScale));" in drop_table,
+            "Cosmic rings should only retry the monster rare-table chance")
+    require("drop.type == dropType.TABLE && drop.table.isRare()" in drop_table,
+            "Ring of wealth retry should ignore standard monster-table drops")
     require("result.hitRareTable = true;" in drop_table,
             "DropTable should track when a roll reaches a rare table")
     require("If a monster rare table misses, has a 5% chance to reroll the drop." in item_defs_custom,

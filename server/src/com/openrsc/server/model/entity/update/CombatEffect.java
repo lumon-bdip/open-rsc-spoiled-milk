@@ -45,6 +45,8 @@ public class CombatEffect {
 	public static final int DIVINE_GRACE = 39;
 	public static final int DIVINE_RETRIBUTION = 40;
 	public static final int CORROSIVE_AURA = 41;
+	public static final int LESSER_DEMON_MAGIC = 42;
+	public static final int GREATER_DEMON_MAGIC = 43;
 
 	public static final int HELLFIRE = HELLS_FIRE;
 	public static final int WIND_SLASH = AIR_SLASH;
@@ -77,5 +79,19 @@ public class CombatEffect {
 			return HELLS_BLAZE;
 		}
 		return HELLS_FIRE;
+	}
+
+	public static int enemyMagicAttackEffect(final String npcName) {
+		if (npcName == null) {
+			return NONE;
+		}
+		switch (npcName.toLowerCase()) {
+			case "lesser demon":
+				return LESSER_DEMON_MAGIC;
+			case "greater demon":
+				return GREATER_DEMON_MAGIC;
+			default:
+				return NONE;
+		}
 	}
 }
