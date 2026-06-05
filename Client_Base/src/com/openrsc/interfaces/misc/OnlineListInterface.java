@@ -9,10 +9,14 @@ import orsc.mudclient;
 
 public class OnlineListInterface extends NComponent {
 
+	private static final int PANEL_WIDTH = 184;
+	private static final int PANEL_HEIGHT = 246;
+	private static final int PANEL_MARGIN = 6;
+	private static final int TITLE_HEIGHT = 20;
+
 	public int scroll;
 	public Panel panel;
 	private NRightClickMenu rightClickMenu;
-	private int currentX = 5, currentY = 25;
 	private NComponent userListContainer;
 	private NComponent titleText;
 
@@ -20,11 +24,11 @@ public class OnlineListInterface extends NComponent {
 		super(client);
 
 		panel = new Panel(client.getSurface(), 1);
-		scroll = panel.addScrollingList2(getX(), getY() + 20, getWidth(), getHeight() - 20, 500, 1, true);
+		scroll = panel.addScrollingList2(getX(), getY() + TITLE_HEIGHT, getWidth(), getHeight() - TITLE_HEIGHT, 500, 1, true);
 
 		setBackground(10000536, 10000536, 128);
-		setSize(408, 246);
-		setLocation((client.getGameWidth() - getWidth()) / 2, (client.getGameHeight() - getHeight()) / 2);
+		setSize(PANEL_WIDTH, PANEL_HEIGHT);
+		anchorToBottomRight();
 		setInputListener(new InputListener() {
 			@Override
 			public boolean onMouseDown(int clickX, int clickY, int mButtonDown, int mButtonClick) {
@@ -40,7 +44,7 @@ public class OnlineListInterface extends NComponent {
 		NComponent title = new NComponent(client);
 		title.setBackground(3093151, 0x7e8d09, 192);
 		title.setLocation(0, 0);
-		title.setSize(408, 20);
+		title.setSize(PANEL_WIDTH, TITLE_HEIGHT);
 
 		titleText = new NComponent(client);
 		titleText.setText("Online Players");
@@ -49,10 +53,10 @@ public class OnlineListInterface extends NComponent {
 		titleText.setLocation(2, 1);
 
 		NComponent close = new NComponent(client);
-		close.setText("Close window");
-		close.setLocation(326, 1);
+		close.setText("Close");
+		close.setLocation(PANEL_WIDTH - 40, 1);
 		close.setTextSize(1);
-		close.setSize(81, 20);
+		close.setSize(39, TITLE_HEIGHT);
 		close.setInputListener(new InputListener() {
 			@Override
 			public boolean onMouseDown(int clickX, int clickY, int mButtonDown, int mButtonClick) {
@@ -70,8 +74,8 @@ public class OnlineListInterface extends NComponent {
 
 		userListContainer = new NComponent(client);
 		userListContainer.setFontColor(0xFFFFFF, 0xFFFFFF);
-		userListContainer.setLocation(1, 21);
-		userListContainer.setSize(getWidth() - 3, getHeight());
+		userListContainer.setLocation(1, TITLE_HEIGHT + 1);
+		userListContainer.setSize(getWidth() - 3, getHeight() - TITLE_HEIGHT);
 		addComponent(userListContainer);
 
 		rightClickMenu = new NRightClickMenu(this);
@@ -84,35 +88,29 @@ public class OnlineListInterface extends NComponent {
 		if (!location.equals("")) {
 			text += " (" + location + ")";
 		}
-		int textWidth = graphics().stringWidth(1, text) + (crownID > 0 ? 15 : 0);
-		int textHeight = graphics().fontHeight(1) - 1;
-		if (currentX + textWidth > userListContainer.getWidth()) {
-			currentX = 5;
-			currentY += textHeight;
-		}
 		final NComponent userComponent = new NComponent(getClient());
-		userComponent.setText(isLast ? text : text + ", ");
+		userComponent.setText(text);
 		userComponent.setFontColor(0xFFFFFF, 0xFF0000);
 		userComponent.setTextSize(1);
-		userComponent.setLocation(currentX, currentY);
-		userComponent.setSize(textWidth, textHeight);
+		userComponent.setLocation(5, 0);
+		userComponent.setSize(userListContainer.getWidth() - 10, graphics().fontHeight(1));
 		userComponent.setCrownDisplay(true);
 		userComponent.setCrown(crownID);
 
 		userListContainer.addComponent(userComponent);
-		currentX += textWidth + 5;
 	}
 
 	@Override
 	public void update() {
+		anchorToBottomRight();
 		panel.handleMouse(getClient().getMouseX(), getClient().getMouseY(), getClient().getMouseButtonDown(),
 			getClient().getLastMouseDown());
-		panel.reposition(scroll, getX(), getY() + 20, getWidth(), getHeight() - 20);
+		panel.reposition(scroll, getX(), getY() + TITLE_HEIGHT, getWidth(), getHeight() - TITLE_HEIGHT);
 		panel.clearList(scroll);
-		int currentX = 5;
 		int currentY = 0;
 		int startComponentIndex = panel.getScrollPosition(scroll);
-		int listEndPoint = startComponentIndex + 49;
+		int visibleRows = Math.max(1, (getHeight() - TITLE_HEIGHT - 6) / graphics().fontHeight(1));
+		int listEndPoint = startComponentIndex + visibleRows;
 
 		for (int componentIndex = 0; componentIndex < userListContainer.subComponents().size(); componentIndex++) {
 			final NComponent userComp = userListContainer.subComponents().get(componentIndex);
@@ -122,13 +120,8 @@ public class OnlineListInterface extends NComponent {
 			if (componentIndex < startComponentIndex || componentIndex > listEndPoint)
 				continue;
 
-			int textWidth = graphics().stringWidth(1, userComp.getText()) + (userComp.crown > 0 ? 15 : 0) + 5;
 			int textHeight = graphics().fontHeight(1);
 
-			if (currentX + textWidth >= userListContainer.getWidth()) {
-				currentX = 5;
-				currentY += textHeight;
-			}
 			userComp.setInputListener(new InputListener() {
 				@Override
 				public boolean onMouseDown(int clickX, int clickY, int mButtonDown, int mButtonClick) {
@@ -283,10 +276,11 @@ public class OnlineListInterface extends NComponent {
 					return false;
 				}
 			});
-			userComp.setLocation(currentX, currentY + 3);
+			userComp.setLocation(5, currentY + 3);
+			userComp.setSize(userListContainer.getWidth() - 10, textHeight);
 			userComp.setVisible(true);
 
-			currentX += textWidth;
+			currentY += textHeight;
 		}
 		titleText.setText("Online Players: " + userListContainer.subComponents().size());
 
@@ -294,8 +288,12 @@ public class OnlineListInterface extends NComponent {
 	}
 
 	public void reset() {
-		currentX = 5;
-		currentY = 25;
 		userListContainer.subComponents().clear();
+	}
+
+	private void anchorToBottomRight() {
+		setLocation(
+			Math.max(PANEL_MARGIN, getClient().getGameWidth() - getWidth() - PANEL_MARGIN),
+			Math.max(PANEL_MARGIN, getClient().getGameHeight() - getHeight() - PANEL_MARGIN));
 	}
 }

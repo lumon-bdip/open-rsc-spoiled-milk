@@ -18,6 +18,8 @@ HARRY = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/catherb
 FERNAHEI = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/shilo/Fernahei.java"
 DRAGON_SLAYER = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/quests/free/DragonSlayer.java"
 FISHING_CONTEST = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/quests/members/FishingContest.java"
+NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
+GROUND_ITEMS_CUSTOM_QUEST = ROOT / "server/conf/server/defs/locs/GroundItemsCustomQuest.json"
 WORK_ITEMS = ROOT / "docs/myworld/work-items.md"
 FISHING_PLAN = ROOT / "docs/myworld/fishing-rework-plan.md"
 
@@ -145,10 +147,9 @@ def require_fishing_shops_updated() -> None:
 		if rod_id not in guild_text:
 			fail(f"Fishing Guild should sell full rod ladder item: {rod_id}")
 
-	# Quest exceptions stay available while their quest paths still require them.
 	for quest_exception in ("ItemId.LOBSTER_POT.id()", "ItemId.FISHING_BAIT.id()"):
-		if quest_exception not in gerrant_shop_text:
-			fail(f"Gerrant should keep explicit quest exception item: {quest_exception}")
+		if quest_exception in gerrant_shop_text:
+			fail(f"Gerrant should not sell quest-area legacy Fishing item: {quest_exception}")
 
 	for retired in (
 		"ItemId.NET.id()",
@@ -171,7 +172,24 @@ def require_fishing_shops_updated() -> None:
 		if guild_legacy in guild_text:
 			fail(f"Fishing Guild should not sell quest-only legacy Fishing item: {guild_legacy}")
 		if guild_legacy in harry_shop_text or guild_legacy in fernahei_shop_text:
-			fail(f"Only Gerrant should keep current quest-only legacy Fishing item: {guild_legacy}")
+			fail(f"Fishing shops should not sell quest-only legacy Fishing item: {guild_legacy}")
+
+	npc_drops_text = NPC_DROPS.read_text(encoding="utf-8")
+	if "ItemId.FISHING_BAIT.id()" in npc_drops_text:
+		fail("Fishing bait should not be broadly available from NPC drops")
+
+	ground_items_text = GROUND_ITEMS_CUSTOM_QUEST.read_text(encoding="utf-8")
+	for snippet in (
+		'"id": 375',
+		'"X": 260',
+		'"Y": 642',
+		'"id": 380',
+		'"X": 563',
+		'"Y": 490',
+		'"amount": 25',
+	):
+		if snippet not in ground_items_text:
+			fail(f"Quest-area legacy Fishing ground supply missing: {snippet}")
 
 
 def require_quest_exceptions_documented() -> None:

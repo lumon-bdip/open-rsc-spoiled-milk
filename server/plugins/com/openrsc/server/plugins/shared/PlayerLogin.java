@@ -24,19 +24,20 @@ public class PlayerLogin implements PlayerLoginTrigger {
 	}
 
 	private void applyMyWorldStaffGroups(final Player player) {
-		if ("devduck".equalsIgnoreCase(player.getUsername())) {
-			if (player.getGroupID() != Group.OWNER && player.getGroupID() != Group.ADMIN && player.getGroupID() != Group.DEV) {
-				player.setGroupID(Group.DEV);
+		final String staffName = normalizeMyWorldStaffName(player.getUsername());
+		if ("devduck".equals(staffName)) {
+			if (player.getGroupID() != Group.OWNER) {
+				player.setGroupID(Group.OWNER);
 			}
-		} else if ("anactualduck".equalsIgnoreCase(player.getUsername())) {
-			if (player.getGroupID() != Group.MOD) {
+		} else if ("anactualduck".equals(staffName)) {
+			if (!player.isMod()) {
 				player.setGroupID(Group.MOD);
 			}
 		}
 	}
 
 	private void backfillAnactualduckQuestRewards(final Player player) {
-		if (!"anactualduck".equalsIgnoreCase(player.getUsername())
+		if (!"anactualduck".equals(normalizeMyWorldStaffName(player.getUsername()))
 			|| player.getCache().hasKey(ANACTUALDUCK_REWARD_BACKFILL)) {
 			return;
 		}
@@ -89,5 +90,9 @@ public class PlayerLogin implements PlayerLoginTrigger {
 		} else {
 			player.getBank().add(item, false);
 		}
+	}
+
+	private String normalizeMyWorldStaffName(final String username) {
+		return username == null ? "" : username.replaceAll("[^A-Za-z0-9]", "").toLowerCase();
 	}
 }

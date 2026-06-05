@@ -25,9 +25,8 @@ public final class ThessaliasClothes extends AbstractShop implements TakeObjTrig
 	private final Shop shop = new Shop(false, 30000, 100, 55, 3,
 		new Item(ItemId.SHEARS.id(), 3), new Item(ItemId.NEEDLE.id(), 3),
 		new Item(ItemId.WOOL.id(), 30), new Item(ItemId.BALL_OF_WOOL.id(), 30), new Item(ItemId.THREAD.id(), 100),
-		new Item(ItemId.COW_HIDE.id(), 20), new Item(ItemId.WHITE_APRON.id(), 3), new Item(ItemId.BROWN_APRON.id(), 3), new Item(ItemId.GOBLIN_HIDE.id(), 15),
-		new Item(ItemId.UNICORN_HIDE.id(), 10), new Item(ItemId.BEAR_HIDE.id(), 10),
-		new Item(ItemId.PRIEST_ROBE.id(), 3), new Item(ItemId.PRIEST_GOWN.id(), 3));
+		new Item(ItemId.COW_HIDE.id(), 20), new Item(ItemId.BROWN_APRON.id(), 3), new Item(ItemId.GOBLIN_HIDE.id(), 15),
+		new Item(ItemId.UNICORN_HIDE.id(), 10), new Item(ItemId.BEAR_HIDE.id(), 10));
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {
@@ -57,7 +56,7 @@ public final class ThessaliasClothes extends AbstractShop implements TakeObjTrig
 		if (checkOneTimeUraniumHolidayItems(player, n))
 			return;
 
-		npcsay(player, n, "Do you need tailoring supplies or simple robes?");
+		npcsay(player, n, "Do you need tailoring supplies or an apron?");
 
 		boolean ears = player.getCarriedItems().hasCatalogID(ItemId.BUNNY_EARS.id()) || player.getBank().countId(ItemId.BUNNY_EARS.id()) > 0;
 		boolean scythe = player.getCarriedItems().hasCatalogID(ItemId.SCYTHE.id()) || player.getBank().countId(ItemId.SCYTHE.id()) > 0;
@@ -131,7 +130,7 @@ public final class ThessaliasClothes extends AbstractShop implements TakeObjTrig
 			give(player, ItemId.BUNNY_EARS.id(), 1);
 		} else if (options.get(option).equalsIgnoreCase(optionShop)) {
 			say(player, n, "What supplies do you have?");
-			npcsay(player, n, "Wool, thread, tools, hides, and a few simple robes");
+			npcsay(player, n, "Wool, thread, tools, hides, and brown aprons");
 			player.setAccessingShop(shop);
 			ActionSender.showShop(player, shop);
 		} else if (options.get(option).equals(optionBunnyRing)) {

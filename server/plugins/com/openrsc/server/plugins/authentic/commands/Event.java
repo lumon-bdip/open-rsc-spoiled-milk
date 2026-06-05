@@ -147,7 +147,10 @@ public final class Event implements CommandTrigger {
 		else if (command.equalsIgnoreCase("return")) {
 			returnPlayer(player, command, args);
 		}
-		else if (command.equalsIgnoreCase("blink")) {
+		else if (command.equalsIgnoreCase("blink")
+			|| command.equalsIgnoreCase("clickteleport")
+			|| command.equalsIgnoreCase("clicktele")
+			|| command.equalsIgnoreCase("ct")) {
 			enableLeftClickTeleport(player);
 		}
 		else if (command.equalsIgnoreCase("invisible") || command.equalsIgnoreCase("invis")) {

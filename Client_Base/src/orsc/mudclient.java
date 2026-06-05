@@ -14074,9 +14074,11 @@ public final class mudclient implements Runnable {
 							} else if ((var11.equalsIgnoreCase("::clickteleport")
 								|| var11.equalsIgnoreCase("::clicktele")
 								|| var11.equalsIgnoreCase("::teleclick")
+								|| var11.equalsIgnoreCase("::ct")
 								|| var11.startsWith("::clickteleport ")
 								|| var11.startsWith("::clicktele ")
-								|| var11.startsWith("::teleclick "))
+								|| var11.startsWith("::teleclick ")
+								|| var11.startsWith("::ct "))
 								&& canUseClickTeleport()) {
 								handleDevClickTeleportCommand(var11.substring(2));
 							} else if (var11.startsWith("::n ") && localPlayer.isDev()) {
@@ -22923,6 +22925,7 @@ public final class mudclient implements Runnable {
 			}
 			displayedSkills[outputIndex++] = skillIndex;
 		}
+		sortDisplayedSkillsByName(displayedSkills);
 		return displayedSkills;
 	}
 
@@ -22930,12 +22933,21 @@ public final class mudclient implements Runnable {
 		if (Config.S_WANT_OPENPK_POINTS) {
 			return Math.min(3, displayedSkills.length);
 		}
-		for (int displayIndex = 0; displayIndex < displayedSkills.length; displayIndex++) {
-			if ("Crafting".equalsIgnoreCase(skillNameLong[displayedSkills[displayIndex]])) {
-				return displayIndex;
-			}
-		}
 		return (int) Math.ceil(displayedSkills.length / 2.0D);
+	}
+
+	private void sortDisplayedSkillsByName(int[] displayedSkills) {
+		for (int i = 1; i < displayedSkills.length; i++) {
+			int skillIndex = displayedSkills[i];
+			String skillName = skillNameLong[skillIndex];
+			int insertAt = i - 1;
+			while (insertAt >= 0
+				&& skillNameLong[displayedSkills[insertAt]].compareToIgnoreCase(skillName) > 0) {
+				displayedSkills[insertAt + 1] = displayedSkills[insertAt];
+				insertAt--;
+			}
+			displayedSkills[insertAt + 1] = skillIndex;
+		}
 	}
 
 	private boolean isSkillHiddenFromStatsMenu(int skillIndex) {

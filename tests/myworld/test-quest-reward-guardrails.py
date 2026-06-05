@@ -53,7 +53,7 @@ def main() -> None:
     login_text = PLAYER_LOGIN.read_text(encoding="utf-8")
     for snippet in (
         'private static final String ANACTUALDUCK_REWARD_BACKFILL = "myworld_anactualduck_quest_reward_backfill_20260531";',
-        'if (!"anactualduck".equalsIgnoreCase(player.getUsername())',
+        'if (!"anactualduck".equals(normalizeMyWorldStaffName(player.getUsername()))',
         "ifCompletedEnsure(player, Quests.DEMON_SLAYER, ItemId.SILVERLIGHT.id(), 1);",
         "ifCompletedGive(player, Quests.PIRATES_TREASURE, ItemId.GOLD_RING.id(), 1);",
         "ifCompletedGive(player, Quests.PIRATES_TREASURE, ItemId.EMERALD.id(), 1);",

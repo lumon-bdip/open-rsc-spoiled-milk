@@ -15,21 +15,12 @@ import static com.openrsc.server.plugins.Functions.*;
 public class Thrander extends AbstractShop {
 
 	private final Shop shop = new Shop(false, 35000, 120, 55, 2,
-		new Item(ItemId.TIN_LARGE_HELMET.id(), 2),
-		new Item(ItemId.TIN_PLATE_MAIL_LEGS.id(), 2),
 		new Item(ItemId.TIN_PLATE_MAIL_BODY.id(), 2),
-		new Item(ItemId.COPPER_LARGE_HELMET.id(), 2),
-		new Item(ItemId.COPPER_PLATE_MAIL_LEGS.id(), 2),
 		new Item(ItemId.COPPER_PLATE_MAIL_BODY.id(), 2),
-		new Item(ItemId.LARGE_BRONZE_HELMET.id(), 2),
-		new Item(ItemId.BRONZE_PLATE_MAIL_LEGS.id(), 2),
 		new Item(ItemId.BRONZE_PLATE_MAIL_BODY.id(), 2),
-		new Item(ItemId.LARGE_IRON_HELMET.id(), 1),
-		new Item(ItemId.IRON_PLATE_MAIL_LEGS.id(), 1),
 		new Item(ItemId.IRON_PLATE_MAIL_BODY.id(), 1),
-		new Item(ItemId.LARGE_STEEL_HELMET.id(), 1),
-		new Item(ItemId.STEEL_PLATE_MAIL_LEGS.id(), 1),
-		new Item(ItemId.STEEL_PLATE_MAIL_BODY.id(), 1));
+		new Item(ItemId.STEEL_PLATE_MAIL_BODY.id(), 1),
+		new Item(ItemId.MITHRIL_PLATE_MAIL_BODY.id(), 1));
 
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {

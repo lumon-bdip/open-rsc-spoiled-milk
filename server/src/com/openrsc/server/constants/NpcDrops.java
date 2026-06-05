@@ -412,7 +412,6 @@ public class NpcDrops {
 		currentNpcDrops.addTableDrop(herbDropTable, 23);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 3, 38);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 5, 9);
-		currentNpcDrops.addItemDrop(ItemId.FISHING_BAIT.id(), 1, 5);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 15, 4);
 		currentNpcDrops.addItemDrop(ItemId.TIN_ARROWS.id(), 7, 3);
 		currentNpcDrops.addItemDrop(ItemId.EARTH_RUNE.id(), 3, 2);
@@ -457,7 +456,6 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 10, 3);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 25, 1);
 		currentNpcDrops.addItemDrop(ItemId.ROPE.id(), 1, 40);
-		currentNpcDrops.addItemDrop(ItemId.FISHING_BAIT.id(), 1, 6);
 		currentNpcDrops.addItemDrop(ItemId.COPPER_ORE.id(), 1, 2);
 		currentNpcDrops.addItemDrop(ItemId.CABBAGE.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.TIN_LARGE_HELMET.id(), 1, 2);
@@ -608,7 +606,6 @@ public class NpcDrops {
 
 		currentNpcDrops = new DropTable("Zombie Level 19 (52)");
 		currentNpcDrops.addTableDrop(herbDropTable, 25);
-		currentNpcDrops.addItemDrop(ItemId.FISHING_BAIT.id(), 5, 46);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 10, 11);
 		currentNpcDrops.addItemDrop(ItemId.BODY_RUNE.id(), 4, 5);
 		currentNpcDrops.addItemDrop(ItemId.MIND_RUNE.id(), 3, 5);
@@ -1332,7 +1329,6 @@ public class NpcDrops {
 		currentNpcDrops = new DropTable("Zombie (Entrana) (214)");
 		currentNpcDrops.addTableDrop(herbDropTable, 4);
 		currentNpcDrops.addItemDrop(ItemId.BRONZE_AXE.id(), 1, 50);
-		currentNpcDrops.addItemDrop(ItemId.FISHING_BAIT.id(), 5, 46);
 		currentNpcDrops.addItemDrop(ItemId.MEDIUM_BRONZE_HELMET.id(), 1, 4);
 		currentNpcDrops.addItemDrop(ItemId.AIR_RUNE.id(), 9, 4);
 		currentNpcDrops.addItemDrop(ItemId.BRONZE_ARROWS.id(), 8, 4);

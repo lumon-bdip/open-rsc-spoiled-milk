@@ -103,6 +103,12 @@ def main() -> None:
         )
 
     for snippet, message in (
+        ('addCustomWoodBowDefinitions("Yew", 664, 665, 654, 655,', "Yew bow client definitions should cover unstrung guide icons"),
+        ('addCustomWoodBowDefinitions("Magic", 666, 667, 656, 657,', "Magic bow client definitions should cover unstrung guide icons"),
+    ):
+        require(client_text, snippet, message)
+
+    for snippet, message in (
         ("<shortbowID>665</shortbowID>", "Yew logs should cut into unstrung yew shortbows"),
         ("<longbowID>664</longbowID>", "Yew logs should cut into unstrung yew longbows"),
         ("<shortbowID>667</shortbowID>", "Magic logs should cut into unstrung magic shortbows"),

@@ -9,7 +9,6 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.AbstractShop;
-import com.openrsc.server.util.rsc.MessageType;
 
 import java.util.ArrayList;
 
@@ -65,25 +64,8 @@ public final class AuburysRunes extends AbstractShop {
 	}
 
 	@Override
-	public void onOpNpc(Player player, Npc n, String command) {
-		Npc aubury = player.getWorld().getNpc(n.getID(),
-			player.getX() - 2, player.getX() + 2,
-			player.getY() - 2, player.getY() + 2);
-		if (aubury == null) return;
-		if (command.equalsIgnoreCase("Trade") && config().RIGHT_CLICK_TRADE) {
-			if (!player.getQolOptOut()) {
-				player.setAccessingShop(shop);
-				ActionSender.showShop(player, shop);
-			} else {
-				player.playerServerMessage(MessageType.QUEST, "Right click trading is a QoL feature which you are opted out of.");
-				player.playerServerMessage(MessageType.QUEST, "Consider using an original RSC client so that you don't see the option.");
-			}
-		}
-	}
-
-	@Override
 	public boolean blockOpNpc(Player player, Npc n, String command) {
-		boolean trade = command.equalsIgnoreCase("Trade");
+		boolean trade = command.equalsIgnoreCase("Trade") || command.equalsIgnoreCase("Shop");
 		return !player.getConfig().WANT_OPENPK_POINTS && n.getID() == NpcId.AUBURY.id() && trade;
 	}
 }

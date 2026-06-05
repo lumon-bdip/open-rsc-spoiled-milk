@@ -37,8 +37,11 @@ AUBURY_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plug
 LUNDAIL_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "minigames" / "mage_arena" / "Lundail.java"
 CRAFTING_EQUIPMENT_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "CraftingEquipmentShops.java"
 NPC_DEFS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefs.json"
+GAME_OBJECT_DEFS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "GameObjectDef.xml"
+CLIENT_ENTITY_HANDLER_PATH = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "client" / "entityhandling" / "EntityHandler.java"
 ENTITY_HANDLER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "external" / "EntityHandler.java"
 ABSTRACT_SHOP_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "plugins" / "AbstractShop.java"
+HEAD_CHEF_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "varrock" / "HeadChef.java"
 
 
 def fail(message: str) -> NoReturn:
@@ -66,11 +69,14 @@ def ensure_not_contains(path: Path, snippets: tuple[str, ...]) -> None:
 
 def main() -> None:
     ensure_contains(HORVIK_PATH, (
+        "ItemId.TIN_LARGE_HELMET.id()",
+        "ItemId.MITHRIL_SQUARE_SHIELD.id()",
+        "ItemId.MITHRIL_PLATE_MAIL_LEGS.id()",
+    ))
+    ensure_not_contains(HORVIK_PATH, (
         "ItemId.TIN_PLATE_MAIL_BODY.id()",
         "ItemId.COPPER_PLATE_MAIL_BODY.id()",
         "ItemId.MITHRIL_PLATE_MAIL_BODY.id()",
-    ))
-    ensure_not_contains(HORVIK_PATH, (
         "ItemId.BLACK_PLATE_MAIL_BODY.id()",
         "ItemId.BLACK_KITE_SHIELD.id()",
         "ItemId.LARGE_BLACK_HELMET.id()",
@@ -80,6 +86,7 @@ def main() -> None:
         "ItemId.TIN_PLATE_MAIL_BODY.id()",
         "ItemId.COPPER_PLATE_MAIL_BODY.id()",
         "ItemId.STEEL_PLATE_MAIL_BODY.id()",
+        "ItemId.MITHRIL_PLATE_MAIL_BODY.id()",
         "Do you want to trade?",
         "ActionSender.showShop(player, shop);",
     ))
@@ -174,8 +181,45 @@ def main() -> None:
         "ItemId.ADAMANTITE_LONG_SWORD.id()",
         "ItemId.ADAMANTITE_DAGGER.id()",
     ))
+    ensure_contains(NPC_DEFS_PATH, (
+        '"id": 56',
+        '"name": "Slade"',
+        '"id": 130',
+        '"name": "Hagger"',
+    ))
+    ensure_contains(GAME_OBJECT_DEFS_PATH, (
+        "Slade and Hagger's Blades and Daggers",
+    ))
+    ensure_contains(CLIENT_ENTITY_HANDLER_PATH, (
+        'new NPCDef("Slade", "I can buy swords off him", shopOption',
+        'new NPCDef("Hagger", "I can buy swords off him", shopOption',
+        'new GameObjectDef("sign", "Slade and Hagger\'s Blades and Daggers"',
+    ))
 
-    for path in (LOWE_PATH, HICKTON_PATH, KING_LATHAS_PATH, GULLUCK_PATH):
+    ensure_contains(HEAD_CHEF_PATH, (
+        "extends AbstractShop",
+        "ItemId.CHOCOLATE_BAR.id()",
+        "ItemId.REDBERRIES.id()",
+        "ItemId.GRAIN.id()",
+        "ItemId.COOKING_APPLE.id()",
+        "ItemId.EGG.id()",
+        "ItemId.MILK.id()",
+        "I'd like to buy cooking supplies",
+    ))
+    ensure_contains(NPC_DEFS_PATH, (
+        '"id": 133',
+        '"name": "Head chef"',
+        '"command": "Trade"',
+        '"command2": "Shop"',
+    ))
+    ensure_contains(CLIENT_ENTITY_HANDLER_PATH, (
+        'new NPCDef("Head chef", "He looks after the chef\'s guild", shopOption',
+    ))
+    ensure_contains(ENTITY_HANDLER_PATH, (
+        "NpcId.HEAD_CHEF.id()",
+    ))
+
+    for path in (HICKTON_PATH, KING_LATHAS_PATH, GULLUCK_PATH):
         ensure_contains(path, (
             "new Item(ItemId.TIN_ARROWS.id(), 1000)",
             "new Item(ItemId.MITHRIL_BOLTS.id(), 1000)",
@@ -190,6 +234,25 @@ def main() -> None:
             "ItemId.CROSSBOW_BOLTS.id()",
             "ItemId.TITAN_STEEL_BOLTS.id()",
         ))
+
+    ensure_contains(LOWE_PATH, (
+        "new Item(ItemId.TIN_ARROWS.id(), 1000)",
+        "new Item(ItemId.MITHRIL_BOLTS.id(), 1000)",
+        "new Item(ItemId.MITHRIL_ARROW_HEADS.id(), 1000)",
+        "ItemId.PINE_SHORTBOW.id()",
+        "ItemId.PALM_SHORTBOW.id()",
+        "ItemId.YEW_SHORTBOW.id()",
+        "ItemId.PHOENIX_CROSSBOW.id()",
+        "ItemId.PALM_CROSSBOW.id()",
+        "ItemId.YEW_CROSSBOW.id()",
+    ))
+    ensure_not_contains(LOWE_PATH, (
+        "ItemId.MAGIC_SHORTBOW.id()",
+        "ItemId.MAGIC_LONGBOW.id()",
+        "ItemId.MAGIC_CROSSBOW.id()",
+        "ItemId.EBONY_SHORTBOW.id()",
+        "ItemId.BLOOD_SHORTBOW.id()",
+    ))
 
     for path in (KING_LATHAS_PATH, GULLUCK_PATH):
         ensure_not_contains(path, (
@@ -330,12 +393,10 @@ def main() -> None:
         "ItemId.GOBLIN_HIDE.id()",
         "ItemId.UNICORN_HIDE.id()",
         "ItemId.BEAR_HIDE.id()",
-        "ItemId.PRIEST_ROBE.id()",
-        "ItemId.PRIEST_GOWN.id()",
     ))
     ensure_contains(THESSALIA_PATH, (
-        "Do you need tailoring supplies or simple robes?",
-        "Wool, thread, tools, hides, and a few simple robes",
+        "Do you need tailoring supplies or an apron?",
+        "Wool, thread, tools, hides, and brown aprons",
     ))
     ensure_not_contains(THESSALIA_PATH, (
         "ItemId.LEATHER_ARMOUR.id()",
@@ -343,6 +404,8 @@ def main() -> None:
         "ItemId.WHITE_APRON.id()",
         "ItemId.PINK_SKIRT.id()",
         "ItemId.SILK.id()",
+        "ItemId.PRIEST_ROBE.id()",
+        "ItemId.PRIEST_GOWN.id()",
         "Do you want to buy any fine clothes?",
     ))
 
@@ -369,7 +432,7 @@ def main() -> None:
         "ItemId.BROWN_APRON.id()",
     ))
 
-    for path in (ZAFF_PATH, MAGIC_STORE_PATH, BETTY_PATH, AUBURY_PATH, LUNDAIL_PATH):
+    for path in (MAGIC_STORE_PATH, BETTY_PATH, AUBURY_PATH, LUNDAIL_PATH):
         ensure_contains(path, (
             "1000",
             "ItemId.FIRE_RUNE.id()",
@@ -387,6 +450,15 @@ def main() -> None:
             "ItemId.WOOL_ROBE_TOP.id()",
             "ItemId.WOOL_ROBE_SKIRT.id()",
         ))
+
+    ensure_not_contains(ZAFF_PATH, (
+        "ItemId.FIRE_RUNE.id()",
+        "ItemId.WATER_RUNE.id()",
+        "ItemId.AIR_RUNE.id()",
+        "ItemId.EARTH_RUNE.id()",
+        "ItemId.MIND_RUNE.id()",
+        "ItemId.BODY_RUNE.id()",
+    ))
 
     for path in (ZAFF_PATH, MAGIC_STORE_PATH):
         ensure_not_contains(path, (

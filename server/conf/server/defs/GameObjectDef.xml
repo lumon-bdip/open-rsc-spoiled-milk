@@ -1013,7 +1013,7 @@
   </GameObjectDef>
   <GameObjectDef>
     <name>sign</name>
-    <description>Varrock Swords</description>
+    <description>Slade and Hagger's Blades and Daggers</description>
     <command1>WalkTo</command1>
     <command2>Examine</command2>
     <type>0</type>

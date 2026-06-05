@@ -124,7 +124,7 @@ public final class EntityHandler {
 		NpcId.LOUIE_LEGS.id(), NpcId.SHOPKEEPER_ALKHARID.id(), NpcId.SHOP_ASSISTANT_ALKHARID.id(),
 		NpcId.CASSIE.id(), NpcId.RANAEL.id(), NpcId.SHOPKEEPER_FALADOR.id(),
 		NpcId.SHOP_ASSISTANT_FALADOR.id(), NpcId.VALAINE.id(), NpcId.DROGO.id(),
-		NpcId.FLYNN.id(), NpcId.WYDIN.id(), NpcId.SHOP_ASSISTANT_VARROCK_SWORD.id(),
+		NpcId.FLYNN.id(), NpcId.WYDIN.id(), NpcId.HEAD_CHEF.id(), NpcId.SHOP_ASSISTANT_VARROCK_SWORD.id(),
 		NpcId.BRIAN.id(), NpcId.WAYNE.id(), NpcId.DWARVEN_SHOPKEEPER.id(),
 		NpcId.SHOPKEEPER_RIMMINGTON.id(), NpcId.SHOP_ASSISTANT_RIMMINGTON.id(), NpcId.BETTY.id(),
 		NpcId.HERQUIN.id(), NpcId.ROMMIK.id(), NpcId.GRUM.id(),

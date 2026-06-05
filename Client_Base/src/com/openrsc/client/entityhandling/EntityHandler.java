@@ -808,7 +808,7 @@ public class EntityHandler {
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, 9, -1};
 		npcs.add(new NPCDef("Shopkeeper", "I wonder what he's got for sale", shopOption, 0, 0, 3, 0, false, sprites, 16777215, 8409120, 8409120, 15523536, 120, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, 10, -1};
-		npcs.add(new NPCDef("shopkeeper", "I can buy swords off him", shopOption, 0, 0, 3, 0, false, sprites, 16761440, 2, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Slade", "I can buy swords off him", shopOption, 0, 0, 3, 0, false, sprites, 16761440, 2, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, 82, 88, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Darkwizard", "He works evil magic", "", 15, 15, 12, 12, true, sprites, 1, 2, 3, 15523536, 145, 220, 6, 6, 5, i++));
 		if (Config.S_WANT_CUSTOM_SPRITES) {
@@ -960,7 +960,7 @@ public class EntityHandler {
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, 9, -1};
 		npcs.add(new NPCDef("Wydin", "A grocer", shopOption, 0, 0, 3, 0, false, sprites, 16777215, 8409120, 8409120, 15523536, 160, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, 10, -1};
-		npcs.add(new NPCDef("shop assistant", "I can buy swords off him", shopOption, 0, 0, 3, 0, false, sprites, 16761440, 2, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Hagger", "I can buy swords off him", shopOption, 0, 0, 3, 0, false, sprites, 16761440, 2, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{7, 1, 2, -1, -1, -1, -1, -1, -1, -1, 10, -1};
 		npcs.add(new NPCDef("Brian", "An axe seller", shopOption, 0, 0, 3, 0, false, sprites, 16761440, 2, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, 45, -1, 46, -1, -1, -1};
@@ -970,7 +970,7 @@ public class EntityHandler {
 		} else {
 			sprites = new int[]{6, 1, 2, -1, -1, 8, -1, -1, -1, -1, 9, -1};
 		}
-		npcs.add(new NPCDef("Head chef", "He looks after the chef's guild", "", 20, 20, 3, 20, false, sprites, 1, 16777215, 16711680, 15523536, 150, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Head chef", "He looks after the chef's guild", shopOption, 20, 20, 3, 20, false, sprites, 1, 16777215, 16711680, 15523536, 150, 220, 6, 6, 5, i++));
 		if (Config.S_WANT_CUSTOM_SPRITES) {
 			sprites = new int[]{6, 1, 2, -1, -1, -1, 45, -1, -1, -1, -1, 383};
 		} else {
@@ -1032,7 +1032,7 @@ public class EntityHandler {
 		sprites = new int[]{3, 56, 38, -1, 109, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Warrior", "A skilled fighter", "pickpocket", 35, 25, 20, 30, true, sprites, 16753488, 2, 3, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, 10, -1};
-		npcs.add(new NPCDef("Thrander", "A smith of some sort", "", 15, 22, 22, 6, false, sprites, 16761440, 2, 8409120, 15523536, 155, 230, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Thrander", "A smith of some sort", shopOption, 15, 22, 22, 6, false, sprites, 16761440, 2, 8409120, 15523536, 155, 230, 6, 6, 5, i++));
 		sprites = new int[]{6, 1, 2, 48, -1, 70, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Border Guard", "a guard from Al Kharid", "", 20, 17, 19, 18, false, sprites, 1, 13385881, 3, 13415270, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{6, 1, 2, 48, -1, 70, -1, -1, -1, -1, -1, -1};
@@ -4634,7 +4634,9 @@ public class EntityHandler {
 
 		addCustomWoodBowDefinitions("Pine", 2115, 2116, 2117, 2118, 70, 45, 120, 75, 0xCCAA33, 0xAC6F51);
 		addCustomWoodBowDefinitions("Palm", 2119, 2120, 2121, 2122, 240, 150, 480, 300, 0xC78C4A, 0x8B5B31);
+		addCustomWoodBowDefinitions("Yew", 664, 665, 654, 655, 640, 400, 1280, 800, 0x6B4F2A, 0x9D5300);
 		addCustomWoodBowDefinitions("Ebony", 2123, 2124, 2125, 2126, 960, 600, 1920, 1200, 0x333333, 0x6B4A2D);
+		addCustomWoodBowDefinitions("Magic", 666, 667, 656, 657, 1280, 800, 2560, 1600, 0x4B2E83, 0x000000);
 		addCustomWoodBowDefinitions("Blood", 2127, 2128, 2129, 2130, 1920, 1200, 3840, 2400, 0xCC2222, 0x5A0F0F);
 
 		addCustomWoodStaffDefinitions("Oak", "oak", 1764, 1765, 1766, 1767, 1768, 250, 1750, 0xB97A57);
@@ -7878,7 +7880,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("sign", "General Store", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
 		objects.add(new GameObjectDef("sign", "Lowe's Archery store", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));//90
 		objects.add(new GameObjectDef("sign", "The Clothes Shop", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
-		objects.add(new GameObjectDef("sign", "Varrock Swords", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
+		objects.add(new GameObjectDef("sign", "Slade and Hagger's Blades and Daggers", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
 		objects.add(new GameObjectDef("gate", "You can pass through this on the members server", "open", "Examine", 2, 1, 2, 0, "metalgateclosed", i++));
 		objects.add(new GameObjectDef("gate", "You can pass through this on the members server", "open", "Examine", 2, 1, 2, 0, "metalgateclosed", i++));
 		objects.add(new GameObjectDef("sign", "Bob's axes", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));

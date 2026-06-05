@@ -21,7 +21,6 @@ public final class GerrantsFishingGear extends AbstractShop {
 		new Item(ItemId.FISHING_ROD.id(), 5), new Item(ItemId.PINE_FISHING_ROD.id(), 5),
 		new Item(ItemId.OAK_FISHING_ROD.id(), 5), new Item(ItemId.WILLOW_FISHING_ROD.id(), 5),
 		new Item(ItemId.PALM_FISHING_ROD.id(), 5), new Item(ItemId.MAPLE_FISHING_ROD.id(), 5),
-		new Item(ItemId.LOBSTER_POT.id(), 2), new Item(ItemId.FISHING_BAIT.id(), 200),
 		new Item(ItemId.RAW_SHRIMP.id(), 0), new Item(ItemId.RAW_SARDINE.id(), 0), new Item(ItemId.RAW_HERRING.id(), 0),
 		new Item(ItemId.RAW_ANCHOVIES.id(), 0), new Item(ItemId.RAW_TROUT.id(), 0), new Item(ItemId.RAW_PIKE.id(), 0),
 		new Item(ItemId.RAW_SALMON.id(), 0), new Item(ItemId.RAW_TUNA.id(), 0), new Item(ItemId.RAW_LOBSTER.id(), 0),

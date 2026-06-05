@@ -95,6 +95,7 @@ public final class WorldPopulator {
 			// LOAD NPC LOCS //
 			loadNpcLocs(getWorld().getServer().getConfig().CONFIG_DIR + authenticMobFile);
 			loadCustomLocs(LocType.NPC);
+			applyMyWorldNpcLocationCleanup();
 			// NpcLocation[] npcLocations = getWorld().getServer().getDatabase().getNpcLocs();
 			// for (NpcLocation npcLocation : npcLocations) {
 			for (NPCLoc loc : npclocs) {
@@ -426,6 +427,58 @@ public final class WorldPopulator {
 		if (Files.exists(Paths.get(filename))) {
 			loadGameObjLocs(filename, type);
 		}
+	}
+
+	private void applyMyWorldNpcLocationCleanup() {
+		if (!getWorld().getServer().getConfig().WANT_MYWORLD) {
+			return;
+		}
+
+		ArrayList<NPCLoc> filteredLocs = new ArrayList<>();
+		ArrayList<int[]> bankerClusters = new ArrayList<>();
+		for (NPCLoc loc : npclocs) {
+			if (isTutorialIslandNpcLoc(loc)) {
+				continue;
+			}
+			if (isBankerNpc(loc.getId()) && !keepBankerNpcLoc(loc, bankerClusters)) {
+				continue;
+			}
+			filteredLocs.add(loc);
+		}
+		npclocs.clear();
+		npclocs.addAll(filteredLocs);
+	}
+
+	private boolean keepBankerNpcLoc(NPCLoc loc, ArrayList<int[]> bankerClusters) {
+		for (int[] cluster : bankerClusters) {
+			int centerX = cluster[0] / cluster[2];
+			int centerY = cluster[1] / cluster[2];
+			if (Math.abs(loc.startX - centerX) <= 8 && Math.abs(loc.startY - centerY) <= 8) {
+				cluster[0] += loc.startX;
+				cluster[1] += loc.startY;
+				cluster[2]++;
+				if (cluster[3] >= 2) {
+					return false;
+				}
+				cluster[3]++;
+				return true;
+			}
+		}
+		bankerClusters.add(new int[]{loc.startX, loc.startY, 1, 1});
+		return true;
+	}
+
+	private boolean isBankerNpc(int npcId) {
+		return npcId == NpcId.BANKER.id()
+			|| npcId == NpcId.FAIRY_BANKER.id()
+			|| npcId == NpcId.BANKER_ALKHARID.id()
+			|| npcId == NpcId.GNOME_BANKER.id()
+			|| npcId == NpcId.JUNGLE_BANKER.id();
+	}
+
+	private boolean isTutorialIslandNpcLoc(NPCLoc loc) {
+		return loc.startX >= 190 && loc.startX <= 245
+			&& loc.startY >= 710 && loc.startY <= 760;
 	}
 
 	enum LocType {

@@ -2185,10 +2185,10 @@
         "roundMode": 0
       },{
         "id": 56,
-        "name": "shopkeeper",
+        "name": "Slade",
         "description": "I can buy swords off him",
-        "command": "",
-        "command2": "",
+        "command": "Trade",
+        "command2": "Shop",
         "attack": 0,
         "strength": 0,
         "hits": 3,
@@ -5071,10 +5071,10 @@
         "roundMode": 0
       },{
         "id": 130,
-        "name": "shop assistant",
+        "name": "Hagger",
         "description": "I can buy swords off him",
-        "command": "",
-        "command2": "",
+        "command": "Trade",
+        "command2": "Shop",
         "attack": 0,
         "strength": 0,
         "hits": 3,
@@ -5190,8 +5190,8 @@
         "id": 133,
         "name": "Head chef",
         "description": "He looks after the chef's guild",
-        "command": "",
-        "command2": "",
+        "command": "Trade",
+        "command2": "Shop",
         "attack": 20,
         "strength": 20,
         "hits": 3,
