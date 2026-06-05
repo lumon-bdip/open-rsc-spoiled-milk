@@ -1708,7 +1708,7 @@
     <name>ship</name>
     <description>A ship to Karamja</description>
     <command1>board</command1>
-    <command2>Examine</command2>
+    <command2>Travel</command2>
     <type>0</type>
     <width>5</width>
     <height>3</height>
@@ -1719,7 +1719,7 @@
     <name>ship</name>
     <description>A ship to Karamja</description>
     <command1>board</command1>
-    <command2>Examine</command2>
+    <command2>Travel</command2>
     <type>0</type>
     <width>2</width>
     <height>3</height>
@@ -1730,7 +1730,7 @@
     <name>ship</name>
     <description>A ship to Karamja</description>
     <command1>board</command1>
-    <command2>Examine</command2>
+    <command2>Travel</command2>
     <type>0</type>
     <width>5</width>
     <height>3</height>
@@ -1774,7 +1774,7 @@
     <name>ship</name>
     <description>A ship to Port Sarim</description>
     <command1>board</command1>
-    <command2>Examine</command2>
+    <command2>Travel</command2>
     <type>0</type>
     <width>5</width>
     <height>3</height>
@@ -1785,7 +1785,7 @@
     <name>ship</name>
     <description>A ship to Port Sarim</description>
     <command1>board</command1>
-    <command2>Examine</command2>
+    <command2>Travel</command2>
     <type>0</type>
     <width>2</width>
     <height>3</height>
@@ -1796,7 +1796,7 @@
     <name>ship</name>
     <description>A ship to Port Sarim</description>
     <command1>board</command1>
-    <command2>Examine</command2>
+    <command2>Travel</command2>
     <type>0</type>
     <width>5</width>
     <height>3</height>

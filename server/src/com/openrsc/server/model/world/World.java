@@ -570,6 +570,10 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	}
 
 	private boolean isProjectileClipAllowed(GameObject o) {
+		if (o.getType() == 0 && o.getGameObjectDef().getName().toLowerCase().contains("tree")) {
+			return true;
+		}
+
 		for (final String s : com.openrsc.server.constants.Constants.objectsProjectileClipAllowed) {
 			if (o.getType() == 0) {
 				// there are many of the objects that need to

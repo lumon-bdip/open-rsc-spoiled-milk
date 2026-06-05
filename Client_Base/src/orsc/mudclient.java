@@ -14926,6 +14926,7 @@ public final class mudclient implements Runnable {
 	private void handleMenuItemClicked(boolean var1, int item) {
 		try {
 			item = selectCtrlClickNpcAltAction(item);
+			item = selectCtrlClickObjectTravelAction(item);
 
 			MenuItemAction var3 = this.menuCommon.getItemAction(item);
 			int indexOrX = this.menuCommon.getItemIndexOrX(item);
@@ -15597,6 +15598,34 @@ public final class mudclient implements Runnable {
 		}
 
 		return shopAction >= 0 ? shopAction : item;
+	}
+
+	private int selectCtrlClickObjectTravelAction(int item) {
+		if (!this.controlPressed || this.menuCommon.getItemAction(item) != MenuItemAction.OBJECT_COMMAND1) {
+			return item;
+		}
+
+		int objectX = this.menuCommon.getItemIndexOrX(item);
+		int objectZ = this.menuCommon.getItemIdOrZ(item);
+		int objectDirection = this.menuCommon.getItemDirection(item);
+		int objectId = this.menuCommon.getItemTileID(item);
+		int menuItemCount = this.menuCommon.getItemCount(-27153);
+		for (int i = 0; i < menuItemCount; i++) {
+			if (this.menuCommon.getItemAction(i) != MenuItemAction.OBJECT_COMMAND2
+				|| this.menuCommon.getItemIndexOrX(i) != objectX
+				|| this.menuCommon.getItemIdOrZ(i) != objectZ
+				|| this.menuCommon.getItemDirection(i) != objectDirection
+				|| this.menuCommon.getItemTileID(i) != objectId) {
+				continue;
+			}
+
+			String label = this.menuCommon.getItemLabel(i);
+			if (label != null && label.trim().equalsIgnoreCase("Travel")) {
+				return i;
+			}
+		}
+
+		return item;
 	}
 
 	private String getObjectExamineText(int objectId, int localZ, int objectTileId) {

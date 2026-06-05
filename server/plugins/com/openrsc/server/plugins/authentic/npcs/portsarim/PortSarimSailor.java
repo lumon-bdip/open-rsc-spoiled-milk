@@ -15,6 +15,7 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public final class PortSarimSailor implements OpLocTrigger,
 	TalkNpcTrigger {
+	private static final String TRAVEL_REQUIREMENT_MESSAGE = "You do not meet the requirements to travel";
 
 	@Override
 	public void onTalkNpc(final Player player, final Npc n) {
@@ -66,6 +67,11 @@ public final class PortSarimSailor implements OpLocTrigger,
 
 	@Override
 	public void onOpLoc(Player player, GameObject arg0, String arg1) {
+		if (player.click == 1 || arg1.equalsIgnoreCase("travel")) {
+			shortcutTravelToKaramja(player);
+			return;
+		}
+
 		Npc sailor = ifnearvisnpc(player, NpcId.CAPTAIN_TOBIAS.id(), 5);
 		if (sailor != null) {
 			sailor.initializeTalkScript(player);
@@ -75,6 +81,18 @@ public final class PortSarimSailor implements OpLocTrigger,
 
 	}
 
+	private void shortcutTravelToKaramja(Player player) {
+		if (player.getCarriedItems().remove(new Item(ItemId.COINS.id(), 30)) <= -1) {
+			player.message(TRAVEL_REQUIREMENT_MESSAGE);
+			return;
+		}
+
+		player.message("You pay 30 gold");
+		player.message("You board the ship");
+		player.teleport(324, 713, false);
+		player.message("The ship arrives at Karamja");
+	}
+
 	@Override
 	public boolean blockOpLoc(Player arg2, GameObject arg0, String arg1) {
 		return (arg0.getID() == 155 && arg0.getLocation().equals(Point.location(265, 645)))
@@ -82,4 +100,3 @@ public final class PortSarimSailor implements OpLocTrigger,
 			|| (arg0.getID() == 157 && arg0.getLocation().equals(Point.location(265, 652)));
 	}
 }
-

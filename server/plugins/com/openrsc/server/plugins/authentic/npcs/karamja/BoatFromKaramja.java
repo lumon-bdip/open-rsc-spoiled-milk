@@ -15,6 +15,7 @@ import java.util.Optional;
 import static com.openrsc.server.plugins.Functions.*;
 
 public final class BoatFromKaramja implements TalkNpcTrigger, OpLocTrigger {
+	private static final String TRAVEL_REQUIREMENT_MESSAGE = "You do not meet the requirements to travel";
 
 	@Override
 	public void onTalkNpc(Player player, final Npc n) {
@@ -72,6 +73,11 @@ public final class BoatFromKaramja implements TalkNpcTrigger, OpLocTrigger {
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
 		if (obj.getID() == 161 || (obj.getID() == 162) || (obj.getID() == 163)) {
+			if (player.click == 1 || command.equalsIgnoreCase("travel")) {
+				shortcutTravelToPortSarim(player);
+				return;
+			}
+
 			if (command.equals("board")) {
 				if (player.getY() != 713) {
 					return;
@@ -84,6 +90,20 @@ public final class BoatFromKaramja implements TalkNpcTrigger, OpLocTrigger {
 				}
 			}
 		}
+	}
+
+	private void shortcutTravelToPortSarim(Player player) {
+		if (player.getY() != 713
+			|| player.getCarriedItems().hasCatalogID(ItemId.KARAMJA_RUM.id(), Optional.of(false))
+			|| player.getCarriedItems().remove(new Item(ItemId.COINS.id(), 30)) <= -1) {
+			player.message(TRAVEL_REQUIREMENT_MESSAGE);
+			return;
+		}
+
+		player.message("You pay 30 gold");
+		player.message("You board the ship");
+		teleport(player, 269, 648);
+		player.message("The ship arrives at Port Sarim");
 	}
 
 	@Override
