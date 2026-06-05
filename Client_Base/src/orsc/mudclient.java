@@ -137,6 +137,7 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_TICKS = 40;
+	private static final int COMBAT_EFFECT_STANDARD_SCREEN_SIZE = 64;
 	private static final int SUMMON_CHARGE_EFFECT_TICKS = 256;
 	private static final int SUMMON_CHARGE_LOOP_START_FRAME = 1;
 	private static final int SUMMON_CHARGE_LOOP_END_FRAME = 5;
@@ -5413,7 +5414,7 @@ public final class mudclient implements Runnable {
 								int var13 = ((this.projectileMaxRange - var3.projectileRange) * var9
 									+ var6 * var3.projectileRange) / this.projectileMaxRange;
 								int projectileSprite = getProjectileSceneSpriteIndex(var3.incomingProjectileSprite, var3.projectileRange);
-								int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite);
+								int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite, false);
 								this.scene.drawSprite(projectileSprite, var13,
 									0, var11, var12, projectileSize, projectileSize, (byte) 109);
 								++this.spriteCount;
@@ -5449,7 +5450,7 @@ public final class mudclient implements Runnable {
 								int var13 = ((this.projectileMaxRange - var3.projectileRange) * var9
 									+ var6 * var3.projectileRange) / this.projectileMaxRange;
 								int projectileSprite = getProjectileSceneSpriteIndex(var3.incomingProjectileSprite, var3.projectileRange);
-								int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite);
+								int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite, true);
 								this.scene.drawSprite(projectileSprite, var13,
 									0, var11, var12, projectileSize, projectileSize, (byte) 109);
 								++this.spriteCount;
@@ -7511,10 +7512,7 @@ public final class mudclient implements Runnable {
 		if (effect == null) {
 			return;
 		}
-		int size = Math.max(width, height);
-		if (size <= 0) {
-			return;
-		}
+		int size = COMBAT_EFFECT_STANDARD_SCREEN_SIZE;
 		size = getCombatEffectScreenSize(character.combatEffectType, size);
 		if (character.combatEffectType == COMBAT_EFFECT_DRAGON_BREATH) {
 			drawDragonBreathOverlay(character, effect, x, y, width, height, size);
@@ -18830,11 +18828,14 @@ public final class mudclient implements Runnable {
 		}
 		int effectType = getCombatEffectTypeForSceneIndex(sceneIndex);
 		int frame = getCombatEffectFrameForSceneIndex(sceneIndex);
+		int size = getCombatEffectScreenSize(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);
 		queuedCombatEffectSprite[queuedCombatEffectCount] = sceneIndex;
-		queuedCombatEffectX[queuedCombatEffectCount] = x + getCombatEffectScreenXOffset(effectType, frame, width);
-		queuedCombatEffectY[queuedCombatEffectCount] = y + getCombatEffectScreenYOffset(effectType, frame, height);
-		queuedCombatEffectWidth[queuedCombatEffectCount] = width;
-		queuedCombatEffectHeight[queuedCombatEffectCount] = height;
+		queuedCombatEffectX[queuedCombatEffectCount] = x + (width / 2) - (size / 2)
+			+ getCombatEffectScreenXOffset(effectType, frame, size);
+		queuedCombatEffectY[queuedCombatEffectCount] = y + (height / 2) - (size / 2)
+			+ getCombatEffectScreenYOffset(effectType, frame, size);
+		queuedCombatEffectWidth[queuedCombatEffectCount] = size;
+		queuedCombatEffectHeight[queuedCombatEffectCount] = size;
 		queuedCombatEffectCount++;
 		return true;
 	}
@@ -21671,9 +21672,9 @@ public final class mudclient implements Runnable {
 			return spriteProjectileEffectBase + (projectileIndex * PROJECTILE_EFFECT_FRAME_SLOTS) + frame;
 	}
 
-	private int getProjectileSceneSize(SpriteDef projectile) {
+	private int getProjectileSceneSize(SpriteDef projectile, boolean enemyProjectile) {
 		if (projectile != null && projectile.id == PROJECTILE_TYPES.THROWING_KNIFE.id()) {
-			return 64;
+			return getProjectileSceneSizeForAnimatedEnemy(projectile, enemyProjectile, 64);
 		}
 		if (projectile != null && projectile.id == COMBAT_EFFECT_WOOD_DRILL) {
 			return 144;
@@ -21682,7 +21683,24 @@ public final class mudclient implements Runnable {
 			return 192;
 		}
 		int size = isCustomProjectile(projectile) ? 48 : 32;
+		if (enemyProjectile && isAnimatedCustomProjectile(projectile)) {
+			return size * 2;
+		}
 		return isSpellProjectile(projectile) ? size * 2 : size;
+	}
+
+	private int getProjectileSceneSizeForAnimatedEnemy(SpriteDef projectile, boolean enemyProjectile, int size) {
+		return enemyProjectile && isAnimatedCustomProjectile(projectile) ? size * 2 : size;
+	}
+
+	private boolean isAnimatedCustomProjectile(SpriteDef projectile) {
+		if (!isCustomProjectile(projectile)) {
+			return false;
+		}
+		int projectileIndex = projectile.id - CUSTOM_PROJECTILE_FIRST;
+		return projectileIndex >= 0
+			&& projectileIndex < projectileEffectFrameCounts.length
+			&& projectileEffectFrameCounts[projectileIndex] > 0;
 	}
 
 	private boolean isSpellProjectile(SpriteDef projectile) {
@@ -21700,7 +21718,9 @@ public final class mudclient implements Runnable {
 			|| projectile.id == PROJECTILE_TYPES.THUNDER_BALL.id()
 			|| projectile.id == PROJECTILE_TYPES.ICICLE_SHOT.id()
 			|| projectile.id == PROJECTILE_TYPES.ACID_DROP.id()
-			|| projectile.id == PROJECTILE_TYPES.BRANCH_SPORE.id();
+			|| projectile.id == PROJECTILE_TYPES.BRANCH_SPORE.id()
+			|| projectile.id == PROJECTILE_TYPES.WIZARDS_MAGIC.id()
+			|| projectile.id == PROJECTILE_TYPES.HOLY_MAGIC.id();
 	}
 
 	private boolean isDualElementProjectile(SpriteDef projectile) {
@@ -22903,7 +22923,7 @@ public final class mudclient implements Runnable {
 		addSkill("Thieving");
 
 		if (S_WANT_RUNECRAFT)
-			addSkill("Enchanting");
+			addSkill("Enchanting", "Enchant");
 		if (S_WANT_HARVESTING)
 			addSkill("Harvesting");
 		addSkill("Summoning", "Summon");
@@ -22933,7 +22953,7 @@ public final class mudclient implements Runnable {
 		if (Config.S_WANT_OPENPK_POINTS) {
 			return Math.min(3, displayedSkills.length);
 		}
-		return (int) Math.ceil(displayedSkills.length / 2.0D);
+		return displayedSkills.length / 2;
 	}
 
 	private void sortDisplayedSkillsByName(int[] displayedSkills) {

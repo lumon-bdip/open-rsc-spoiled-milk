@@ -18,7 +18,8 @@ def main() -> None:
         "sortDisplayedSkillsByName(displayedSkills);",
         "private void sortDisplayedSkillsByName(int[] displayedSkills)",
         "compareToIgnoreCase(skillName) > 0",
-        "return (int) Math.ceil(displayedSkills.length / 2.0D);",
+        "return displayedSkills.length / 2;",
+        'addSkill("Enchanting", "Enchant");',
         'this.getSurface().drawString("Quest Points:@yel@" + this.questPoints',
     )
     for snippet in required:

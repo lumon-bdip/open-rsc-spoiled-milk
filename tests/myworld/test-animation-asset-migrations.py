@@ -103,6 +103,10 @@ def main():
         '"divine-grace", "divine-retribution", "corrosive-aura", "lesser-demon-magic", "greater-demon-magic"',
         "drawDragonBreathOverlay(character, effect, x, y, width, height, size);",
         "shouldMirrorDragonBreath(character.direction)",
+        "private static final int COMBAT_EFFECT_STANDARD_SCREEN_SIZE = 64;",
+        "int size = COMBAT_EFFECT_STANDARD_SCREEN_SIZE;",
+        "int size = getCombatEffectScreenSize(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);",
+        "queuedCombatEffectX[queuedCombatEffectCount] = x + (width / 2) - (size / 2)",
     ], "mudclient.java")
     require(client, [
         '"dev/myworld/assets/sprites/UI/magic"',
