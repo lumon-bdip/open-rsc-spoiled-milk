@@ -18,8 +18,7 @@ projects are a touchy topic, so I would rather be direct about it. New art has
 also been added, with purchased art from a real artist alongside a small amount
 of my own sprite work. The distributable art sources are:
 
-- Pimen: the included added runtime animations, distributed with the artist's
-  confirmation that source-available distribution is permitted.
+- Pimen: the included added runtime animations.
 - Atelier Pixerelia, InDark, Pixel Banner, KURAI, and COLEVID-19: included
   magic and summoning icons, listed in detail in the Credits section.
 - Game-icons.net: Prayer icons.
