@@ -434,7 +434,8 @@ public class NpcBehavior {
 
 			int damage = CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false);
 			npc.setKillType(KillType.RANGED);
-			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(npc.getWorld(), npc, target, damage, 2));
+			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(npc.getWorld(), npc, target, damage,
+				2, true, 0, 0, 0, 0, profile.getRangedProjectileVisual(npc), 0, true));
 			return true;
 		}
 
@@ -443,7 +444,7 @@ public class NpcBehavior {
 			int impactEffectType = CombatEffect.enemyMagicAttackEffect(npc.getDef().getName());
 			npc.setKillType(KillType.MAGIC);
 			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(npc.getWorld(), npc, target, damage,
-				1, true, 0, 0, 0, 0, 1, impactEffectType, true));
+				1, true, 0, 0, 0, 0, profile.getMagicProjectileVisual(npc), impactEffectType, true));
 			return true;
 		}
 

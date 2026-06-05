@@ -471,7 +471,10 @@ public class EntityHandler {
 		THUNDER_BALL(16),
 		ICICLE_SHOT(17),
 		ACID_DROP(18),
-		BRANCH_SPORE(19);
+		BRANCH_SPORE(19),
+		BOLT(20),
+		WIZARDS_MAGIC(21),
+		HOLY_MAGIC(22);
 
 		private final int value;
 
@@ -509,6 +512,9 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("icicle shot projectile", mudclient.spriteProjectile + 1, "projectiles:1", 17));
 		projectiles.add(new SpriteDef("acid drop projectile", mudclient.spriteProjectile + 1, "projectiles:1", 18));
 		projectiles.add(new SpriteDef("spore projectile", mudclient.spriteProjectile + 1, "projectiles:1", 19));
+		projectiles.add(new SpriteDef("bolt projectile", mudclient.spriteProjectile + 2, "projectiles:2", 20));
+		projectiles.add(new SpriteDef("wizards magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 21));
+		projectiles.add(new SpriteDef("holy magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 22));
 	}
 
 	public enum GUIPARTS {

@@ -46,10 +46,13 @@ def main():
         "On Enemy/wind-slash/wind-slash3.png": (32, 32),
         "On Enemy/wind-slash/wind-slash8.png": (32, 32),
         "Projectiles/rock-throw/rock-throw.png": (288, 64),
+        "Projectiles/wizards-magic/wizards-magic.png": (528, 48),
         "Projectiles/water-ball/water-ball-stgart.png": (320, 320),
         "Projectiles/water-ball/water-ball-end.png": (256, 256),
         "Projectiles/blow-smoke/blow-smoke1.png": (32, 16),
         "Projectiles/blow-smoke/blow-smoke8.png": (32, 16),
+        "Projectiles/holy-magic/holy-magic1.png": (32, 32),
+        "Projectiles/holy-magic/holy-magic11.png": (32, 32),
         "On Player/dragon-breath/dragon-breath.png": (384, 144),
         "On Player/alchemy/alchemy.png": (192, 16),
         "On Player/divine-grace/divine-grace.png": (816, 48),
@@ -62,6 +65,7 @@ def main():
     client = read("Client_Base/src/orsc/mudclient.java")
     require(client, [
         "public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;",
+        "public static final int CUSTOM_PROJECTILE_COUNT = 16;",
         'if ("water-eruption".equals(animationName))',
         "targetFrames, maxTargetSize, 5, 4, 20, 0);",
         'if ("water-vortex".equals(animationName))',
@@ -72,6 +76,8 @@ def main():
         "targetFrames, maxTargetSize, 11, 1, 11, 0);",
         "targetFrames, maxTargetSize, 13, 1, 13, 0);",
         "targetFrames, maxTargetSize, 6, 2, 12, 0);",
+        'if ("wizards-magic".equals(animationName))',
+        "targetFrames, maxTargetSize, 11, 1, 11, 0);",
         '"water-ball-stgart.png"',
         "targetFrames, maxTargetSize, 5, 5, 20, 0);",
         "targetFrames, maxTargetSize, 4, 4, 16, loaded);",
@@ -100,6 +106,7 @@ def main():
     ], "mudclient.java")
     require(client, [
         '"dev/myworld/assets/sprites/UI/magic"',
+        '"spore", "bolt", "wizards-magic", "holy-magic"',
         'return "zamoraks-void";',
         'return "claws-of-guthix";',
         'return "thunder-wave";',
@@ -114,8 +121,16 @@ def main():
             f"magic UI asset missing for {icon_name}"
 
     spell_names = ["Wind Slash", "Water Eruption", "Explosion", "Water Vortex", "Fire Pillar"]
-    require(read("Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"),
-            spell_names, "EntityHandler.java")
+    entity_handler = read("Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java")
+    require(entity_handler, spell_names, "EntityHandler.java")
+    require(entity_handler, [
+        "BOLT(20)",
+        "WIZARDS_MAGIC(21)",
+        "HOLY_MAGIC(22)",
+        'new SpriteDef("bolt projectile", mudclient.spriteProjectile + 2, "projectiles:2", 20)',
+        'new SpriteDef("wizards magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 21)',
+        'new SpriteDef("holy magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 22)',
+    ], "EntityHandler.java")
     require(read("server/conf/server/defs/SpellDef.xml"), spell_names, "SpellDef.xml")
 
     effects = read("server/src/com/openrsc/server/model/entity/update/CombatEffect.java")

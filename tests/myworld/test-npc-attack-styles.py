@@ -18,6 +18,7 @@ EXPECTED_PROFILES = {
     "PURE_MAGIC": {
         "darkwizard",
         "wizard",
+        "monk",
         "chaos druid",
         "druid",
         "witch",
@@ -25,6 +26,15 @@ EXPECTED_PROFILES = {
         "skeleton mage",
     },
     "PURE_RANGED": {
+        "guard",
+        "jailguard",
+        "carnillean guard",
+        "goblin guard",
+        "ogre guard",
+        "bedabin nomad guard",
+        "draft mercenary guard",
+        "rowdy guard",
+        "shantay pass guard",
         "gnome guard",
         "thief",
         "rogue",
@@ -53,17 +63,21 @@ EXPECTED_PROFILES = {
         "otherworldly being",
         "salarin the twisted",
     },
+    "MELEE_RARE_MAGIC": {
+        "black knight",
+        "white knight",
+        "grey knight",
+        "black knight titan",
+    },
     "MELEE_RANGED": {
         "mercenary",
         "mercenary captain",
-        "draft mercenary guard",
         "khazard troop",
+        "gnome troop",
         "pirate",
         "bandit",
         "tribesman",
         "yanille watchman",
-        "bedabin nomad guard",
-        "gnome baller",
     },
 }
 
@@ -110,6 +124,18 @@ def load_merged_npcs() -> dict[int, dict]:
 
 
 def require_profile_case(profile_text: str, npc_name: str, profile: str) -> None:
+    if npc_name == "wizard" and profile == "PURE_MAGIC":
+        if 'name.contains("wizard")' not in profile_text or "return PURE_MAGIC;" not in profile_text:
+            fail("NpcAttackStyleProfile.java does not map wizard-named NPCs to PURE_MAGIC")
+        return
+    if npc_name == "monk" and profile == "PURE_MAGIC":
+        if "prefersHolyMagicOnly(name)" not in profile_text or '"monk".equals(name)' not in profile_text:
+            fail("NpcAttackStyleProfile.java does not map Saradomin-style monks to PURE_MAGIC")
+        return
+    if profile == "MELEE_RARE_MAGIC":
+        if "isGodKnightNpcName(name)" not in profile_text or "return MELEE_RARE_MAGIC;" not in profile_text:
+            fail("NpcAttackStyleProfile.java does not map god knights to MELEE_RARE_MAGIC")
+        return
     pattern = rf'case "{re.escape(npc_name)}":(?:(?!return [A-Z_]+;).)*return {profile};'
     if not re.search(pattern, profile_text, re.DOTALL):
         fail(f"NpcAttackStyleProfile.java does not map '{npc_name}' to {profile}")
@@ -143,6 +169,8 @@ def main() -> None:
             require_profile_case(profile_text, npc_name, profile)
 
     require_contains(NPC_ATTACK_STYLE_PROFILE, "DataConversions.getRandom().nextInt(100) < 65")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "DataConversions.getRandom().nextInt(100) < 10")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "MELEE_RARE_MAGIC")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "Math.max(1, Math.max(npc.getDef().getAtt(), npc.getDef().getStr()))")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1.0D, getMagicOffense(npc) / 12.0D);")
 
@@ -156,10 +184,26 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "tryProjectileAttack(now);")
     require_contains(NPC_BEHAVIOR, "PathValidation.checkPath(npc.getWorld(), npc.getLocation(), target.getLocation())")
     require_contains(NPC_BEHAVIOR, "CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false)")
+    require_contains(NPC_BEHAVIOR, "profile.getRangedProjectileVisual(npc)")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.THROWING_KNIFE;")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.THROWING_DART;")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.BOLT;")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.WIZARDS_MAGIC;")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.HOLY_MAGIC;")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("wizard")')
+    require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("zamorak")')
+    require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("saradomin")')
+    require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("druid")')
+    require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("priest")')
+    require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("black knight")')
+    require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("white knight")')
+    require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("grey knight")')
+    require_contains(NPC_ATTACK_STYLE_PROFILE, '"monk".equals(name)')
+    require_not_contains(NPC_ATTACK_STYLE_PROFILE, 'case "gnome baller":')
     require_contains(NPC_BEHAVIOR, "CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc))")
-    require_contains(NPC_BEHAVIOR, "new ProjectileEvent(npc.getWorld(), npc, target, damage, 2)")
+    require_contains(NPC_BEHAVIOR, "new ProjectileEvent(npc.getWorld(), npc, target, damage,\n\t\t\t\t2, true, 0, 0, 0, 0, profile.getRangedProjectileVisual(npc), 0, true)")
     require_contains(NPC_BEHAVIOR, "CombatEffect.enemyMagicAttackEffect(npc.getDef().getName())")
-    require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, 0, 1, impactEffectType, true")
+    require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, 0, profile.getMagicProjectileVisual(npc), impactEffectType, true")
     require_contains(COMBAT_EFFECT, 'case "lesser demon":')
     require_contains(COMBAT_EFFECT, "return LESSER_DEMON_MAGIC;")
     require_contains(COMBAT_EFFECT, 'case "greater demon":')

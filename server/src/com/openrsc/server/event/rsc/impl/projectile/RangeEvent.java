@@ -174,7 +174,7 @@ public class RangeEvent extends GameTickEvent {
         ActionSender.sendSound(player, "shoot");
         getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getWorld(), player, target, damage, 2,
 			true, ammoId, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB,
-			isCrossbow ? Projectile.RANGED : Projectile.ARROW, 0, true));
+			isCrossbow ? Projectile.BOLT : Projectile.ARROW, 0, true));
 	}
 
 	private int takeAmmoFromInventory(final int weaponId, final boolean isCrossbow) {

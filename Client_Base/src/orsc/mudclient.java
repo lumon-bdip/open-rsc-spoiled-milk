@@ -145,7 +145,7 @@ public final class mudclient implements Runnable {
 	private static final int SUMMON_CHARGE_LOOP_X_OFFSET = -5;
 	private static final int SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT = 34;
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
-	public static final int CUSTOM_PROJECTILE_COUNT = 13;
+	public static final int CUSTOM_PROJECTILE_COUNT = 16;
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
 	private static final int IRON_THROWING_KNIFE_ITEM_ID = 1075;
 	private static final int MAX_SPELL_ICONS = 64;
@@ -895,7 +895,7 @@ public final class mudclient implements Runnable {
 	private final int[] projectileEffectFrameCounts = new int[CUSTOM_PROJECTILE_COUNT];
 	private final String[] projectileEffectNames = new String[] {
 		"blow-smoke", "fireball", "wind-arrow", "rock-throw", "water-ball", "throwing-knife", "arrow", "dart",
-		"claws-of-guthix", "thunder-ball", "icicle-shot", "acid-drop", "spore"
+		"claws-of-guthix", "thunder-ball", "icicle-shot", "acid-drop", "spore", "bolt", "wizards-magic", "holy-magic"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
@@ -18167,6 +18167,10 @@ public final class mudclient implements Runnable {
 		if ("rock-throw".equals(animationName)) {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "rock-throw.png"),
 				targetFrames, maxTargetSize, 6, 2, 12, 0);
+		}
+		if ("wizards-magic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "wizards-magic.png"),
+				targetFrames, maxTargetSize, 11, 1, 11, 0);
 		}
 		if ("water-ball".equals(animationName)) {
 			int loaded = appendExternalAnimationGridSheetFrames(new File(sourceFolder, "water-ball-stgart.png"),
