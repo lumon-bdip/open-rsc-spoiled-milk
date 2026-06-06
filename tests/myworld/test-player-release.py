@@ -156,11 +156,13 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                 fail("generic Java package must contain its shell updater")
             shell_launcher = package.read(f"spoiled-milk-{VERSION}-java/play-spoiled-milk.sh").decode()
             for snippet in [
+                'if ! sh "$GAME_DIR/update-spoiled-milk.sh"; then',
+                "Update check failed; launching installed Spoiled Milk client.",
                 '"$GAME_DIR/update-spoiled-milk.sh"',
                 'exec java -jar "$GAME_DIR/Spoiled_Milk_Client.jar"',
             ]:
                 if snippet not in shell_launcher:
-                    fail(f"generic Java shell launcher must update synchronously before launch: {snippet!r}")
+                    fail(f"generic Java shell launcher must tolerate update failure before launch: {snippet!r}")
             shell_updater = package.read(f"spoiled-milk-{VERSION}-java/update-spoiled-milk.sh").decode()
             for snippet in [
                 f'CURRENT_VERSION="{VERSION}"',
@@ -175,6 +177,29 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                 fail("Windows package must contain its bundled runtime")
             if f"spoiled-milk-{VERSION}-windows-x64/update-spoiled-milk.sh" in package.namelist():
                 fail("Windows package should use the PowerShell updater, not the POSIX shell updater")
+
+        with tempfile.TemporaryDirectory(prefix="spoiled-launch-test-") as launch_temp:
+            launch_root = Path(launch_temp)
+            with zipfile.ZipFile(generic) as package:
+                package.extractall(launch_root)
+            game_dir = launch_root / f"spoiled-milk-{VERSION}-java"
+            write(game_dir / "update-spoiled-milk.sh", "#!/usr/bin/env sh\nexit 42\n")
+            fake_bin = launch_root / "bin"
+            write(fake_bin / "java", "#!/usr/bin/env sh\nprintf 'java reached %s\\n' \"$*\"\n")
+            os.chmod(fake_bin / "java", 0o755)
+            launcher_result = subprocess.run(
+                ["sh", str(game_dir / "play-spoiled-milk.sh")],
+                cwd=launch_root,
+                env={**os.environ, "PATH": f"{fake_bin}{os.pathsep}{os.environ['PATH']}"},
+                capture_output=True,
+                text=True,
+            )
+            if launcher_result.returncode != 0:
+                fail(f"shell launcher should continue after updater failure:\n{launcher_result.stdout}{launcher_result.stderr}")
+            if "Update check failed; launching installed Spoiled Milk client." not in launcher_result.stderr:
+                fail("shell launcher should warn when the updater fails")
+            if "java reached -jar" not in launcher_result.stdout:
+                fail(f"shell launcher did not reach java after updater failure:\n{launcher_result.stdout}{launcher_result.stderr}")
 
         expected = {}
         for line in checksum_file.read_text(encoding="utf-8").splitlines():

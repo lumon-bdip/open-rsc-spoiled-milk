@@ -108,6 +108,15 @@ def test_root_scripts_are_repo_root_anchored() -> None:
     for script in scripts:
         require_contains(script, "SCRIPT_ROOT=", script.relative_to(ROOT).as_posix())
         require_contains(script, 'ROOT_DIR="${ROOT_DIR:-$SCRIPT_ROOT}"', script.relative_to(ROOT).as_posix())
+    for script in [
+        ROOT / "scripts" / "build-client.sh",
+        ROOT / "scripts" / "run-client.sh",
+    ]:
+        require_contains(script, "Ignoring invalid ROOT_DIR=", script.relative_to(ROOT).as_posix())
+        require_contains(script, 'ROOT_DIR="$SCRIPT_ROOT"', script.relative_to(ROOT).as_posix())
+    require_contains(ROOT / "scripts" / "lib" / "myworld-common.sh", "MYWORLD_INFERRED_ROOT=")
+    require_contains(ROOT / "scripts" / "lib" / "myworld-common.sh", "Ignoring invalid ROOT_DIR=")
+    require_contains(ROOT / "scripts" / "lib" / "myworld-common.sh", 'ROOT_DIR="$MYWORLD_INFERRED_ROOT"')
 
     require_contains(ROOT / "scripts" / "run-server.sh", "-DconfFile=myworld")
     require_contains(ROOT / "scripts" / "run-server-zgc.sh", "-DconfFile=myworld")
@@ -178,6 +187,7 @@ def test_myworld_docs_are_consolidated() -> None:
     expected_docs = [
         "README.md",
         "altar-enchantment-and-conversion-plan.md",
+        "bank-tag-filter-plan.md",
         "change-history.md",
         "combat-equipment-spec.md",
         "compatibility-only-content.md",
