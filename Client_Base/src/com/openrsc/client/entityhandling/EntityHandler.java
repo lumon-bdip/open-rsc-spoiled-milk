@@ -5790,7 +5790,7 @@ public class EntityHandler {
 			setCustomItemDefinition(startId + i,
 				new ItemDef(tiers[i] + " Amulet of Teleportation",
 					"Stores 3 guild teleports.",
-					"Use,Check",
+					"Teleport,Check",
 					prices[i],
 					125,
 					"items:125",

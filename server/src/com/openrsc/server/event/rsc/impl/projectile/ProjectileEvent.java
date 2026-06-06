@@ -321,6 +321,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		} else if (Summoning.isSummon(caster) && opponent.isNpc()) {
 			Summoning.creditSummonProjectileDamage(caster, opponent, Math.min(damage, lastHits), type);
 		}
+		Summoning.applySummonLifesteal(caster, damageDealt);
 
 		// Update party menu with new HITS stat.
 		if (opponent.isPlayer()) {

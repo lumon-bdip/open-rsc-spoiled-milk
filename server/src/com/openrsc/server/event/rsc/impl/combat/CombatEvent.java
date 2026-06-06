@@ -442,6 +442,7 @@ public class CombatEvent extends GameTickEvent {
 		final int damageDealt = Math.min(damage, lastHits);
 		target.getUpdateFlags().setDamage(new Damage(target, damage));
 		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_STANDARD, damage));
+		Summoning.applySummonLifesteal(hitter, damageDealt);
 		if (target.isNpc() && hitter.isPlayer()) {
 			Npc n = (Npc) target;
 			Player player = ((Player) hitter);

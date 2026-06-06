@@ -579,6 +579,32 @@ public final class Summoning {
 		}
 	}
 
+	public static void applySummonLifesteal(final Mob hitter, final int damageDealt) {
+		if (!isSummon(hitter) || damageDealt <= 0) {
+			return;
+		}
+		final Npc summon = (Npc) hitter;
+		if (!KIND_GIANT_BAT.equals(summon.getAttribute(SUMMON_KIND_KEY, ""))) {
+			return;
+		}
+		final Player owner = summon.getWorld().getPlayer(summon.getAttribute(SUMMON_OWNER_KEY, -1L));
+		if (owner == null || owner.isRemoved() || !owner.loggedIn()) {
+			return;
+		}
+		final int maxHits = owner.getSkills().getMaxStat(Skill.HITS.id());
+		final int currentHits = owner.getSkills().getLevel(Skill.HITS.id());
+		if (currentHits >= maxHits) {
+			return;
+		}
+		final int healed = Math.min(damageDealt, maxHits - currentHits);
+		if (healed <= 0) {
+			return;
+		}
+		owner.getSkills().setLevel(Skill.HITS.id(), currentHits + healed);
+		owner.getUpdateFlags().addHitSplat(new HitSplat(owner, HitSplat.TYPE_HEAL, healed));
+		ActionSender.sendStat(owner, Skill.HITS.id());
+	}
+
 	public static void recordCombatSummonEngagement(final Player owner, final Npc target) {
 		if (owner == null || target == null || target.isRemoved() || target.isRespawning()) {
 			return;

@@ -16,8 +16,10 @@ import static com.openrsc.server.plugins.Functions.*;
 public final class Gardener extends AbstractShop {
 
 	Shop shop = new Shop(false, 3000, 130, 40, 3,
-		new Item(ItemId.FRUIT_PICKER.id(), 10), new Item(ItemId.HAND_SHOVEL.id(), 5),
-		new Item(ItemId.HERB_CLIPPERS.id(), 3), new Item(ItemId.WATERING_CAN.id(), 2),
+		new Item(ItemId.SHEARS.id(), 10), new Item(ItemId.COPPER_SHEARS.id(), 8),
+		new Item(ItemId.BRONZE_SHEARS.id(), 6), new Item(ItemId.IRON_SHEARS.id(), 4),
+		new Item(ItemId.STEEL_SHEARS.id(), 3), new Item(ItemId.MITHRIL_SHEARS.id(), 2),
+		new Item(ItemId.WATERING_CAN.id(), 2),
 		new Item(ItemId.SOIL.id(), 1));
 
 	@Override
@@ -42,7 +44,7 @@ public final class Gardener extends AbstractShop {
 				if (sub_option == 0) {
 					npcsay(player, n, "You can get yield from fruit trees and allotments by hand",
 						"but you will get better results if you use a tool",
-						"such as fruit pickers or hand shovels");
+						"such as harvesting shears");
 				} else if (sub_option == 1) {
 					npcsay(player, n, "While collecting you may weaken the spot",
 						"in such case you will know whether to soil or water it",
@@ -79,17 +81,6 @@ public final class Gardener extends AbstractShop {
 	}
 
 	private Shop getShop(World world) {
-		if(shop == null) {
-			shop = (world.getServer().getConfig().MEMBER_WORLD) ?
-				new Shop(false, 3000, 130, 40, 3,
-					new Item(ItemId.FRUIT_PICKER.id(), 10), new Item(ItemId.HAND_SHOVEL.id(), 5),
-					new Item(ItemId.HERB_CLIPPERS.id(), 3), new Item(ItemId.WATERING_CAN.id(), 2),
-					new Item(ItemId.SOIL.id(), 1)) :
-				new Shop(false, 3000, 130, 40, 3,
-					new Item(ItemId.FRUIT_PICKER.id(), 10), new Item(ItemId.HAND_SHOVEL.id(), 5),
-					new Item(ItemId.WATERING_CAN.id(), 2));
-		}
-
 		return shop;
 	}
 

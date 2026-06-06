@@ -37,6 +37,7 @@ AUBURY_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plug
 AUBURY_OPENPK_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "custom" / "npcs" / "AuburysRunesOpenPk.java"
 LUNDAIL_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "minigames" / "mage_arena" / "Lundail.java"
 CRAFTING_EQUIPMENT_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "CraftingEquipmentShops.java"
+GARDENER_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "custom" / "npcs" / "Gardener.java"
 NPC_DEFS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefs.json"
 GAME_OBJECT_DEFS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "GameObjectDef.xml"
 CLIENT_ENTITY_HANDLER_PATH = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "client" / "entityhandling" / "EntityHandler.java"
@@ -533,6 +534,24 @@ def main() -> None:
         fail("Crafting shop mould stock should not depend on custom sprite config")
     ensure_not_contains(CRAFTING_EQUIPMENT_PATH, (
         "ItemId.CROWN_MOULD.id()",
+    ))
+
+    ensure_contains(GARDENER_PATH, (
+        "ItemId.SHEARS.id()",
+        "ItemId.COPPER_SHEARS.id()",
+        "ItemId.BRONZE_SHEARS.id()",
+        "ItemId.IRON_SHEARS.id()",
+        "ItemId.STEEL_SHEARS.id()",
+        "ItemId.MITHRIL_SHEARS.id()",
+        "ItemId.WATERING_CAN.id()",
+        "ItemId.SOIL.id()",
+        "such as harvesting shears",
+    ))
+    ensure_not_contains(GARDENER_PATH, (
+        "ItemId.FRUIT_PICKER.id()",
+        "ItemId.HAND_SHOVEL.id()",
+        "ItemId.HERB_CLIPPERS.id()",
+        "fruit pickers or hand shovels",
     ))
 
     print("PASS: shop tiering and clothier restructuring validated")

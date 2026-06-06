@@ -130,10 +130,14 @@ def ensure_amulet_lines(items: dict[int, dict[str, Any]]) -> None:
             entry = expect_item(items, item_id, f"{tier_name} Amulet of {effect_name}")
             if entry["wearSlot"] != 10:
                 fail(f"{entry['name']} should use neck slot")
-            if effect_name == "Teleportation" and "Use" not in entry["command"].split(","):
-                fail(f"{entry['name']} should expose Use for teleport interaction")
-            if effect_name == "Teleportation" and "Check" not in entry["command"].split(","):
-                fail(f"{entry['name']} should expose Check for charge display")
+            if effect_name == "Teleportation":
+                commands = entry["command"].split(",")
+                if "Teleport" not in commands:
+                    fail(f"{entry['name']} should expose Teleport for teleport interaction")
+                if "Check" not in commands:
+                    fail(f"{entry['name']} should expose Check for charge display")
+                if "Use" in commands:
+                    fail(f"{entry['name']} should leave generic Use available for altar recharging")
 
 
 def ensure_necklace_lines(items: dict[int, dict[str, Any]]) -> None:
@@ -210,6 +214,7 @@ def ensure_source_mappings_exist() -> None:
     enchanting_text = ENCHANTING_PATH.read_text(encoding="utf-8")
     crafting_text = CRAFTING_PATH.read_text(encoding="utf-8")
     client_text = CLIENT_ENTITY_HANDLER_PATH.read_text(encoding="utf-8")
+    mudclient_text = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text(encoding="utf-8")
 
     required_snippets = [
         "private static final int[] SOUL_AMULETS = {",
@@ -271,10 +276,20 @@ def ensure_source_mappings_exist() -> None:
     ):
         if destination not in law_text:
             fail(f"LawJewelry.java missing destination {destination}")
+    if '"teleport".equalsIgnoreCase(command)' not in law_text:
+        fail("LawJewelry.java should handle Teleport as the law amulet destination command")
+
+    for snippet in (
+        "hasInventoryUseCommand(def.getCommand())",
+        "hasInventoryUseCommand(equippedItems[j].getCommand())",
+    ):
+        if snippet not in mudclient_text:
+            fail(f"mudclient.java missing duplicate Use menu guard: {snippet}")
 
     for snippet in (
         'final int[] gemMasks = {19711, 3394611, 16724736, 0, 12255487};',
         'addLawAmuletLine(1709, tiers, lawAmuletPrices, gemMasks);',
+        '"Teleport,Check"',
         'addAmuletLine(1593, tiers, "Evasion", "Adds +%d ranged defense.", 3, amuletPrices, gemMasks, "");',
         'addNecklaceLine(1613, tiers, "Archery", "Adds +%d ranged power.", 3, necklacePrices, gemMasks);',
         'addRingLine(1673, tiers, "Archery", "Adds +%d ranged power.", 3, ringPrices, gemMasks);',
@@ -405,7 +420,7 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         1749: "Has a 10% chance to double rare gathering rewards.",
         1754: "Has a 10% chance not to break after saving you.",
         1759: "Lets you keep 1 extra item on death.",
-        3111: "Has a 25% chance for an extra full monster drop.",
+        3111: "If a monster rare table misses, has a 25% chance to reroll the drop.",
     }
     for item_id, expected in expected_descriptions.items():
         expect_description(items, item_id, expected)
@@ -443,6 +458,7 @@ def ensure_all_enchanted_jewelry_has_effect_examine(items: dict[int, dict[str, A
         "Saves ",
         "Doubles ",
         "Extends ",
+        "If ",
     )
     for item_id in sorted(jewelry_ids):
         entry = items.get(item_id)

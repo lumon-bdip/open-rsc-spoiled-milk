@@ -46,7 +46,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 	public boolean blockOpInv(final Player player, final Integer invIndex, final Item item, final String command) {
 		return item != null && isLawChargeItem(item.getCatalogId())
 			&& ("check".equalsIgnoreCase(command)
-				|| (EnchantingItemEffects.isLawAmulet(item.getCatalogId()) && "use".equalsIgnoreCase(command)));
+				|| (EnchantingItemEffects.isLawAmulet(item.getCatalogId()) && "teleport".equalsIgnoreCase(command)));
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			showRemainingCharges(player, item);
 			return;
 		}
-		if (!EnchantingItemEffects.isLawAmulet(item.getCatalogId()) || !"use".equalsIgnoreCase(command)) {
+		if (!EnchantingItemEffects.isLawAmulet(item.getCatalogId()) || !"teleport".equalsIgnoreCase(command)) {
 			return;
 		}
 

@@ -4267,7 +4267,7 @@ public final class mudclient implements Runnable {
 
 							this.getSurface().drawString("" + this.shopItemCount[slot], 1 + sx, 10 + sy, '\uff00', 1);
 							this.getSurface().b(47 + sx, "" + this.getInventoryCount(this.shopCategoryID[slot], this.shopItemNoted[slot]),
-								10 + sy, '\uffff', -80, 1);
+								31 + sy, '\uffff', -80, 1);
 						}
 
 						++slot;
@@ -4406,6 +4406,18 @@ public final class mudclient implements Runnable {
 			count = this.shopItemCount[index];
 		}
 		return count;
+	}
+
+	private boolean hasInventoryUseCommand(final String[] commands) {
+		if (commands == null) {
+			return false;
+		}
+		for (String command : commands) {
+			if (command != null && command.equalsIgnoreCase("Use")) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void drawDialogTrade() {
@@ -9081,8 +9093,10 @@ public final class mudclient implements Runnable {
 									this.menuCommon.addItem(0, "Bury All", 0, 0, "@lre@" + EntityHandler.getItemDef(id).getName(), var5, null, MenuItemAction.ITEM_COMMAND_ALL, 0, null, null);
 								}
 
-								this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_USE, "Use",
-									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
+								if (!hasInventoryUseCommand(def.getCommand())) {
+									this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_USE, "Use",
+										"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
+								}
 								this.menuCommon.addCharacterItem(var5, MenuItemAction.ITEM_DROP, "Drop",
 									"@lre@" + EntityHandler.getItemDef(id, item.getNoted()).getName());
 								if (S_WANT_DROP_X) {
@@ -9179,8 +9193,10 @@ public final class mudclient implements Runnable {
 											}
 										//this.menuCommon.addCharacterItem(j, MenuItemAction.ITEM_COMMAND_EQUIPTAB, equippedItems[j].getCommand(),
 										//	"@lre@" + equippedItems[j].getName());
-										this.menuCommon.addCharacterItem(j, MenuItemAction.ITEM_USE_EQUIPTAB, "Use",
-											"@lre@" + equippedItems[j].getName());
+										if (!hasInventoryUseCommand(equippedItems[j].getCommand())) {
+											this.menuCommon.addCharacterItem(j, MenuItemAction.ITEM_USE_EQUIPTAB, "Use",
+												"@lre@" + equippedItems[j].getName());
+										}
 										this.menuCommon.addCharacterItem(equippedItems[j].id, MenuItemAction.ITEM_DROP_EQUIPTAB, "Drop",
 											"@lre@" + equippedItems[j].getName());
 										this.menuCommon.addCharacterItem(equippedItems[j].id, MenuItemAction.ITEM_EXAMINE, "Examine",
