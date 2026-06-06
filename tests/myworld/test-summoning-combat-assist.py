@@ -83,6 +83,9 @@ def main() -> None:
         "return owner.getTrackedDamage(attacker) > 0 || owner.getTrackedBlockedDamage(attacker) > 0;",
         "private static boolean ownerHasRecentSummonAssistEngagement",
         "owner.hasRecentSummonAssistEngagement(target, SUMMON_ASSIST_ENGAGEMENT_COOLDOWN_MS)",
+        "private static Mob getSummonCurrentAssistTarget",
+        "final Mob currentTarget = getSummonCurrentAssistTarget(summon);",
+        "&& ownerHasRecentSummonAssistEngagement(owner, currentTarget)",
         "&& ownerHasRecentSummonAssistEngagement(owner, activeTarget)",
         "&& ownerHasRecentSummonAssistEngagement(owner, npc)",
     ):
@@ -123,6 +126,16 @@ def main() -> None:
         summoning,
         "public static void recordOwnerCombatSummonDamage",
         "Owner damage should refresh summon assist engagement",
+    )
+    require(
+        summoning,
+        "summon.setOpponent(target);",
+        "Projectile summons should keep visible combat state while firing",
+    )
+    require(
+        summoning,
+        "summon.setLastOpponent(target);",
+        "Projectile summons should retain last opponent while firing",
     )
     for source, label in ((pvp_melee, "PvP melee"), (pvm_melee, "PvM melee"), (projectile_event, "projectile")):
         require(

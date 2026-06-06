@@ -103,10 +103,35 @@ def main() -> None:
         )
 
     for snippet, message in (
+        ("addStandardWoodBowDefinitions();", "Standard bow client definitions should be explicitly slotted"),
+        ('addCustomWoodBowDefinitions("Oak", 658, 659, 648, 649,', "Oak bow client definitions should cover unstrung guide icons"),
+        ('addCustomWoodBowDefinitions("Willow", 660, 661, 650, 651,', "Willow bow client definitions should cover unstrung guide icons"),
+        ('addCustomWoodBowDefinitions("Maple", 662, 663, 652, 653,', "Maple bow client definitions should cover unstrung guide icons"),
         ('addCustomWoodBowDefinitions("Yew", 664, 665, 654, 655,', "Yew bow client definitions should cover unstrung guide icons"),
+        ('addCustomWoodBowDefinitions("Ebony", 2123, 2124, 2125, 2126,', "Ebony bow client definitions should cover unstrung guide icons"),
         ('addCustomWoodBowDefinitions("Magic", 666, 667, 656, 657,', "Magic bow client definitions should cover unstrung guide icons"),
+        ('addCustomWoodBowDefinitions("Blood", 2127, 2128, 2129, 2130,', "Blood bow client definitions should cover unstrung guide icons"),
     ):
         require(client_text, snippet, message)
+
+    log_cut_bow_ids = {
+        int(value)
+        for value in re.findall(r"<(?:shortbowID|longbowID)>(\d+)</(?:shortbowID|longbowID)>", log_cut_text)
+    }
+    stringed_bow_ids = {
+        int(value)
+        for value in re.findall(r"<bowID>(\d+)</bowID>", bow_string_text)
+    }
+    helper_bow_ids = set()
+    for call in re.findall(r"addCustomWoodBowDefinitions\((.*?)\);", client_text, re.DOTALL):
+        helper_bow_ids.update(int(value) for value in re.findall(r"\b\d{3,4}\b", call)[:4])
+    helper_bow_ids.update(
+        int(value)
+        for value in re.findall(r"setCustomItemDefinition\((\d+),\s*new ItemDef\(\"(?:unstrung|Longbow|Shortbow)", client_text)
+    )
+
+    for item_id in sorted((log_cut_bow_ids | stringed_bow_ids) - helper_bow_ids):
+        fail(f"Bow output {item_id} should have an explicit client definition to avoid unobtainium guide icons")
 
     for snippet, message in (
         ("<shortbowID>665</shortbowID>", "Yew logs should cut into unstrung yew shortbows"),

@@ -1091,6 +1091,11 @@ public final class Summoning {
 		if (isValidSummonAssistTarget(owner, summon, attacker)) {
 			return attacker;
 		}
+		final Mob currentTarget = getSummonCurrentAssistTarget(summon);
+		if (isValidSummonAssistTarget(owner, summon, currentTarget)
+			&& ownerHasRecentSummonAssistEngagement(owner, currentTarget)) {
+			return currentTarget;
+		}
 		final Mob activeTarget = getOwnerActiveAttackTarget(owner);
 		if (isValidSummonAssistTarget(owner, summon, activeTarget)
 			&& ownerIsActivelyAttacking(owner, activeTarget)
@@ -1099,6 +1104,17 @@ public final class Summoning {
 			return activeTarget;
 		}
 		return null;
+	}
+
+	private static Mob getSummonCurrentAssistTarget(final Npc summon) {
+		if (summon == null) {
+			return null;
+		}
+		final PvmMeleeEvent meleeEvent = summon.getPvmMeleeEvent();
+		if (meleeEvent != null && meleeEvent.isRunning()) {
+			return meleeEvent.getTarget();
+		}
+		return summon.getOpponent();
 	}
 
 	private static Mob findOwnerAttacker(final Player owner, final Npc summon) {
@@ -1216,6 +1232,8 @@ public final class Summoning {
 
 		summon.resetPath();
 		summon.face(target);
+		summon.setOpponent(target);
+		summon.setLastOpponent(target);
 		summon.setCombatTimer();
 		summon.setAttribute(SUMMON_NEXT_ATTACK_TICK_KEY, currentTick + SUMMON_ATTACK_DELAY_TICKS);
 

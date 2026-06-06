@@ -4632,8 +4632,12 @@ public class EntityHandler {
 		addWoodCrossbowDefinition("Magic Crossbow", 2175, 7680, 0x404040, 0x91A1);
 		addWoodCrossbowDefinition("Blood Crossbow", 2176, 11520, 0xCC2222, 0x5A0F0F);
 
+		addStandardWoodBowDefinitions();
+		addCustomWoodBowDefinitions("Oak", 658, 659, 648, 649, 80, 50, 160, 100, 0x0000FF, 0xAC6F51);
 		addCustomWoodBowDefinitions("Pine", 2115, 2116, 2117, 2118, 70, 45, 120, 75, 0xCCAA33, 0xAC6F51);
+		addCustomWoodBowDefinitions("Willow", 660, 661, 650, 651, 160, 100, 320, 200, 0xFFFF00, 0x887E49);
 		addCustomWoodBowDefinitions("Palm", 2119, 2120, 2121, 2122, 240, 150, 480, 300, 0xC78C4A, 0x8B5B31);
+		addCustomWoodBowDefinitions("Maple", 662, 663, 652, 653, 320, 200, 640, 400, 0xFF8800, 0x8B5B31);
 		addCustomWoodBowDefinitions("Yew", 664, 665, 654, 655, 640, 400, 1280, 800, 0x6B4F2A, 0x9D5300);
 		addCustomWoodBowDefinitions("Ebony", 2123, 2124, 2125, 2126, 960, 600, 1920, 1200, 0x333333, 0x6B4A2D);
 		addCustomWoodBowDefinitions("Magic", 666, 667, 656, 657, 1280, 800, 2560, 1600, 0x4B2E83, 0x000000);
@@ -5386,6 +5390,17 @@ public class EntityHandler {
 			54, "items:54", false, true, 24, pictureMask, blueMask, true, false, true, longbowId));
 		setCustomItemDefinition(shortbowId, new ItemDef(woodName + " Shortbow", "Short but effective", "", shortbowPrice,
 			55, "items:55", false, true, 24, pictureMask, blueMask, true, false, true, shortbowId));
+	}
+
+	private static void addStandardWoodBowDefinitions() {
+		setCustomItemDefinition(276, new ItemDef("unstrung Longbow", "I need to find a string for this", "", 60,
+			119, "items:119", false, false, 0, 0x00FF00, 0x824222, true, false, true, 276));
+		setCustomItemDefinition(277, new ItemDef("unstrung shortbow", "I need to find a string for this", "", 23,
+			120, "items:120", false, false, 0, 0x00FF00, 0x824222, true, false, true, 277));
+		setCustomItemDefinition(188, new ItemDef("Longbow", "A nice sturdy bow", "", 120,
+			54, "items:54", false, true, 24, 0x00FF00, 0x824222, true, false, true, 188));
+		setCustomItemDefinition(189, new ItemDef("Shortbow", "Short but effective", "", 46,
+			55, "items:55", false, true, 24, 0x00FF00, 0x824222, true, false, true, 189));
 	}
 
 	private static void addWoodCrossbowDefinition(String name, int id, int price, int pictureMask, int blueMask) {

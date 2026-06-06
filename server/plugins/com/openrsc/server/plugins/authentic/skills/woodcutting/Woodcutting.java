@@ -182,7 +182,7 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 
-		startbatch(30);
+		startbatch(1);
 		batchWoodcutting(player, object, def, axeId);
 	}
 

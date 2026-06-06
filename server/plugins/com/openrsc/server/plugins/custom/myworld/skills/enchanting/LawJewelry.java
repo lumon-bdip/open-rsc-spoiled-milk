@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.custom.myworld.skills.enchanting;
 
 import com.openrsc.server.constants.Constants;
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -8,6 +9,8 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.OpInvTrigger;
 import com.openrsc.server.plugins.triggers.UseInvTrigger;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
+
+import java.util.Optional;
 
 import static com.openrsc.server.plugins.Functions.delay;
 import static com.openrsc.server.plugins.Functions.mes;
@@ -171,12 +174,33 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			return;
 		}
 
+		if (EnchantingItemEffects.isLawAmulet(item.getCatalogId()) && !chargeLawRunesForAmuletRecharge(player, item, maxCharges)) {
+			return;
+		}
+
 		setRemainingCharges(player, item, maxCharges);
 		mes("You hold the jewelry against the altar.");
 		delay();
 		mes("Law energy flows back into it.");
 		delay();
 		player.message("It is fully recharged.");
+	}
+
+	private boolean chargeLawRunesForAmuletRecharge(final Player player, final Item item, final int maxCharges) {
+		final int tier = EnchantingItemEffects.getLawAmuletTier(item.getCatalogId());
+		if (tier <= 0) {
+			return false;
+		}
+		final int missingCharges = maxCharges - getRemainingCharges(player, item);
+		final int requiredRunes = missingCharges * 5 * tier;
+		if (requiredRunes <= 0) {
+			return true;
+		}
+		if (player.getCarriedItems().getInventory().countId(ItemId.LAW_RUNE.id(), Optional.of(false)) < requiredRunes) {
+			player.message("You need " + requiredRunes + " law runes to recharge this amulet.");
+			return false;
+		}
+		return player.getCarriedItems().remove(new Item(ItemId.LAW_RUNE.id(), requiredRunes)) != -1;
 	}
 
 	private boolean isTeleportBlocked(final Player player) {

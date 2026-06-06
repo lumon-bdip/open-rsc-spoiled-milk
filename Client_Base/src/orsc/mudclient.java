@@ -1801,6 +1801,15 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private int getLocalPlayerMenuCombatLevel() {
+		return this.localPlayer == null ? 0 : this.localPlayer.level;
+	}
+
+	private int getNpcMenuCombatLevel(int npcId) {
+		NPCDef npcDef = EntityHandler.getNpcDef(npcId);
+		return (npcDef.getStr() + npcDef.getAtt() + npcDef.getDef() + npcDef.getHits()) / 4;
+	}
+
 	private void autoRotateCamera(byte var1) {
 		try {
 
@@ -8766,12 +8775,8 @@ public final class mudclient implements Runnable {
 								int levelDifference = 0;
 								int var13 = this.npcs[var9].npcId;
 								if (EntityHandler.getNpcDef(var13).isAttackable() && !this.npcs[var9].suppressAttackOption) {
-									int npcLevel = (EntityHandler.getNpcDef(var13).getStr()
-										+ EntityHandler.getNpcDef(var13).getAtt()
-										+ EntityHandler.getNpcDef(var13).getDef()
-										+ EntityHandler.getNpcDef(var13).getHits()) / 4;
-									int playerLevel = (this.playerStatBase[3] + this.playerStatBase[2]
-										+ this.playerStatBase[1] + this.playerStatBase[0] + 27) / 4;
+									int npcLevel = getNpcMenuCombatLevel(var13);
+									int playerLevel = getLocalPlayerMenuCombatLevel();
 									var11 = "@yel@";
 									levelDifference = playerLevel - npcLevel;
 									if (levelDifference < 0) {

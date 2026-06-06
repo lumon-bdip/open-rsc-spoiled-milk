@@ -434,9 +434,7 @@ public final class Formulae {
 	 */
 	public static int getCombatlevel(Mob mob, int[] stats, boolean isSpecial) {
 		if (mob.isPlayer() && mob.getConfig().WANT_MYWORLD) {
-			int mainCombat = Math.max(stats[Skill.MELEE.id()], Math.max(stats[Skill.RANGED.id()], stats[Skill.MAGIC.id()]));
-			int supportAverage = (stats[Skill.SUMMONING.id()] + stats[Skill.PRAYER.id()] + stats[Skill.HITS.id()]) / 3;
-			return mainCombat + supportAverage;
+			return getMyWorldCombatLevel(stats);
 		}
 		int accountRanged = (mob.getConfig().COMBAT_LEVEL_NON_MELEE_MASK & 0x1);
 		int accountMagic = (mob.getConfig().COMBAT_LEVEL_NON_MELEE_MASK & 0x2) >> 1;
@@ -484,6 +482,15 @@ public final class Formulae {
 		}
 
 		return (int) Math.floor(level);
+	}
+
+	private static int getMyWorldCombatLevel(int[] stats) {
+		int mainCombat = Math.max(stats[Skill.MELEE.id()], Math.max(stats[Skill.RANGED.id()], stats[Skill.MAGIC.id()]));
+		int weightedLevel = 1 + ((mainCombat * 16)
+			+ (stats[Skill.HITS.id()] * 2)
+			+ stats[Skill.PRAYER.id()]
+			+ stats[Skill.SUMMONING.id()]) / 20;
+		return Math.max(3, Math.min(100, weightedLevel));
 	}
 
 	/**

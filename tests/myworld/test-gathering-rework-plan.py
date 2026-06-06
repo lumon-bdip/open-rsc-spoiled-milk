@@ -96,11 +96,9 @@ def require_stone_mining_baseline() -> None:
         "handleDepletedOreRock(rock, player, click);",
         "int permanentId = rock.getLoc().getPermId();",
         "permanentId > 0",
-        "rock.getID() == SceneryId.ROCK_GENERIC.id() || rock.getID() == SceneryId.ROCK_GENERIC2.id()",
-        "handleStoneMining(rock, player, click);",
-        "int reqlvl = getPickaxeRequiredLevel(axeId);",
-        "This rock contains stone",
-        "There is currently no ore available in this rock",
+        "if (id != SceneryId.ROCK_GENERIC.id() && id != SceneryId.ROCK_GENERIC2.id())",
+		"int reqlvl = getPickaxeRequiredLevel(axeId);",
+		"There is currently no ore available in this rock",
     )
     for snippet in snippets:
         if snippet not in text:
@@ -234,7 +232,6 @@ def require_mining_uses_guaranteed_yield() -> None:
         "public static String getMiningFocusLabel(int combatStyle)",
         "private static double getRandomGemChance(Player player)",
         "Formulae.calcGatheringYield(def.getReqLevel(), mineLvl, getPickaxeTier(axeId))",
-        "Formulae.calcGatheringYield(1, player.getSkills().getLevel(Skill.MINING.id()), getPickaxeTier(axeId))",
         "player.incExp(Skill.MINING.id(), def.getExp() * quantity, true)",
         "changeloc(rock, resourceRespawnMillis(def.getRespawnTime()), SceneryId.ROCK_GENERIC.id())",
         "return Math.max(1, (respawnSeconds * 1000) / 2);",

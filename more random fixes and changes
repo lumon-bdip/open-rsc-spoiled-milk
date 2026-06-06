@@ -1,0 +1,38 @@
+# More Random Fixes And Changes
+
+Status legend:
+- [ ] Open
+- [~] In progress
+- [x] Done
+
+## Combat And Summons
+
+- [x] Summons still visually stutter/de-aggro during combat. Review summon aggro so it is maintained without allowing summons to kill safely while the player avoids damage.
+- [x] Combat level needs adjustment. Use the player's highest main combat style, ignore the other two main styles, and count Prayer, Summoning, and Hits as secondary. Full considered stats should cap around combat level 100. NPC danger colors should use the new player combat level instead of old stat-slot math.
+
+## Bank Planning
+
+- [x] Bank structure needs review before implementation. Current tabs are effectively sections of one page; explore better manually maintained tabs, sorting, and categorization options. Jot notes here for later review.
+
+Notes:
+- Server bank storage is a single ordered `List<Item>`; add/remove and swap/insert operate on global slots.
+- Client bank pages are derived from that same ordered list in chunks of 48, not persisted tabs.
+- A real tab feature should add explicit tab metadata or boundaries server-side, persist it with the bank, and have the client render those boundaries instead of interpreting pages as categories.
+- Sorting should be separate from manual tabs. Recommended controls: manual order within tab, sort current tab, sort all, and move selected item to tab.
+- Avoid automatic categorization as the primary model because it would fight player-maintained organization; it can be an optional "suggest/sort" command later.
+
+## World Placement
+
+- [x] Relocate Nurmof into the Mining Guild.
+
+## Jewelry
+
+- [x] Law amulets should cost law runes to recharge: 5 law runes per missing charge per tier. Example: empty sapphire tier costs 15 runes; emerald tier with 1 charge costs 20 runes.
+
+## Gathering UI
+
+- [x] Woodcutting shows batching 30 even though it gathers like mining and still only produces one resource before stopping. Remove or correct the misleading batching display.
+
+## Crafting UI
+
+- [x] Urgent: crafting UI for willow shows unstrung shortbow and longbow as unobtainium. Fully audit unstrung bows so crafting, visuals, and guides work for every wood tier.
