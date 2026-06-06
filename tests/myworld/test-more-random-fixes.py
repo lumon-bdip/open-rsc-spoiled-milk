@@ -39,9 +39,9 @@ def main() -> None:
 	nurmof_locs = [loc for loc in npc_locs if loc.get("id") == 773]
 	require(len(nurmof_locs) == 1, "Nurmof should have one spawn location")
 	nurmof = nurmof_locs[0]
-	require(nurmof["start"] == {"X": 261, "Y": 3376}, "Nurmof should start inside the Mining Guild")
-	require(nurmof["min"] == {"X": 258, "Y": 3373}, "Nurmof Mining Guild patrol min should be stable")
-	require(nurmof["max"] == {"X": 264, "Y": 3380}, "Nurmof Mining Guild patrol max should be stable")
+	require(nurmof["start"] == {"X": 272, "Y": 3397}, "Nurmof should start inside the Mining Guild")
+	require(nurmof["min"] == {"X": 269, "Y": 3394}, "Nurmof Mining Guild patrol min should be stable")
+	require(nurmof["max"] == {"X": 275, "Y": 3400}, "Nurmof Mining Guild patrol max should be stable")
 
 	print("PASS: more random fixes validated")
 

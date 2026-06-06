@@ -37,6 +37,7 @@ Artist/source links:
 ## Navigation
 
 - [What This Version Is Trying To Do](#what-this-version-is-trying-to-do)
+- [Screenshots](#screenshots)
 - [Core Gameplay Changes](#core-gameplay-changes)
 - [Combat](#combat)
   - [Loot Drops](#loot-drops)
@@ -64,6 +65,20 @@ Artist/source links:
 - [Credits](#credits)
 - [Current State](#current-state)
 - [Development](#development)
+
+## Screenshots
+
+| Multi-attacker combat with Ice Strike | Rune altar and summon companion |
+| --- | --- |
+| <img src="docs/myworld/screenshots/multi-atker-w-ice-stk.png" alt="Multi-attacker combat with Ice Strike" width="420"> | <img src="docs/myworld/screenshots/rune-altar.png" alt="Rune altar and summon companion" width="420"> |
+
+| Magic combat and XP focus | Summoning interface with a unicorn |
+| --- | --- |
+| <img src="docs/myworld/screenshots/mage-fireball.png" alt="Magic combat and XP focus" width="420"> | <img src="docs/myworld/screenshots/unicorn-summon-w-window.png" alt="Summoning interface with a unicorn" width="420"> |
+
+| Crafting Guild resources | Thrown dagger and equipment view |
+| --- | --- |
+| <img src="docs/myworld/screenshots/craft-guild.png" alt="Crafting Guild resources" width="420"> | <img src="docs/myworld/screenshots/thrown-dagger.png" alt="Thrown dagger and equipment view" width="420"> |
 
 ## What This Version Is Trying To Do
 
