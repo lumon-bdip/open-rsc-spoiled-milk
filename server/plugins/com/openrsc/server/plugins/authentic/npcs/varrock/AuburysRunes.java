@@ -9,6 +9,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.AbstractShop;
+import com.openrsc.server.util.rsc.MessageType;
 
 import java.util.ArrayList;
 
@@ -65,7 +66,30 @@ public final class AuburysRunes extends AbstractShop {
 
 	@Override
 	public boolean blockOpNpc(Player player, Npc n, String command) {
-		boolean trade = command.equalsIgnoreCase("Trade") || command.equalsIgnoreCase("Shop");
-		return !player.getConfig().WANT_OPENPK_POINTS && n.getID() == NpcId.AUBURY.id() && trade;
+		return isDirectShopCommand(player, n, command);
+	}
+
+	@Override
+	public void onOpNpc(Player player, Npc n, String command) {
+		if (!isDirectShopCommand(player, n, command)) return;
+		Npc aubury = player.getWorld().getNpc(n.getID(),
+			player.getX() - 2, player.getX() + 2,
+			player.getY() - 2, player.getY() + 2);
+		if (aubury == null) return;
+		if (!player.getQolOptOut()) {
+			player.setAccessingShop(shop);
+			ActionSender.showShop(player, shop);
+		} else {
+			player.playerServerMessage(MessageType.QUEST, "Right click trading is a QoL feature which you are opted out of.");
+			player.playerServerMessage(MessageType.QUEST, "Consider using an original RSC client so that you don't see the option.");
+		}
+	}
+
+	private boolean isDirectShopCommand(Player player, Npc n, String command) {
+		boolean shopCommand = command.equalsIgnoreCase("Trade") || command.equalsIgnoreCase("Shop");
+		return !player.getConfig().WANT_OPENPK_POINTS
+			&& player.getConfig().RIGHT_CLICK_TRADE
+			&& n.getID() == NpcId.AUBURY.id()
+			&& shopCommand;
 	}
 }

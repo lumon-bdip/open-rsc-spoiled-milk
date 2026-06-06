@@ -34,6 +34,7 @@ ZAFF_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugin
 MAGIC_STORE_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "yanille" / "MagicStoreOwner.java"
 BETTY_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "portsarim" / "BettysMagicEmporium.java"
 AUBURY_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "varrock" / "AuburysRunes.java"
+AUBURY_OPENPK_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "custom" / "npcs" / "AuburysRunesOpenPk.java"
 LUNDAIL_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "minigames" / "mage_arena" / "Lundail.java"
 CRAFTING_EQUIPMENT_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "CraftingEquipmentShops.java"
 NPC_DEFS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefs.json"
@@ -87,6 +88,18 @@ def main() -> None:
         "ItemId.COPPER_PLATE_MAIL_BODY.id()",
         "ItemId.STEEL_PLATE_MAIL_BODY.id()",
         "ItemId.MITHRIL_PLATE_MAIL_BODY.id()",
+        "ItemId.TIN_GAUNTLETS.id()",
+        "ItemId.TIN_GREAVES.id()",
+        "ItemId.COPPER_GAUNTLETS.id()",
+        "ItemId.COPPER_GREAVES.id()",
+        "ItemId.BRONZE_GAUNTLETS.id()",
+        "ItemId.BRONZE_GREAVES.id()",
+        "ItemId.IRON_GAUNTLETS.id()",
+        "ItemId.IRON_GREAVES.id()",
+        "ItemId.STEEL_GAUNTLETS.id()",
+        "ItemId.STEEL_GREAVES.id()",
+        "ItemId.MITHRIL_GAUNTLETS.id()",
+        "ItemId.MITHRIL_GREAVES.id()",
         "Do you want to trade?",
         "ActionSender.showShop(player, shop);",
     ))
@@ -107,6 +120,10 @@ def main() -> None:
         "ItemId.TIN_SCIMITAR.id()",
         "ItemId.COPPER_SCIMITAR.id()",
         "ItemId.MITHRIL_SCIMITAR.id()",
+        "ItemId.STAFF.id()",
+        "ItemId.PINE_STAFF.id()",
+        "ItemId.OAK_STAFF.id()",
+        "ItemId.WILLOW_STAFF.id()",
     ))
     ensure_not_contains(ZEKE_PATH, (
         "ItemId.BLACK_SCIMITAR.id()",
@@ -442,6 +459,23 @@ def main() -> None:
             "ItemId.MIND_RUNE.id()",
             "ItemId.BODY_RUNE.id()",
         ))
+
+    ensure_contains(AUBURY_PATH, (
+        'command.equalsIgnoreCase("Trade") || command.equalsIgnoreCase("Shop")',
+        "player.getConfig().RIGHT_CLICK_TRADE",
+        "player.setAccessingShop(shop);",
+        "ActionSender.showShop(player, shop);",
+    ))
+    ensure_contains(AUBURY_OPENPK_PATH, (
+        'command.equalsIgnoreCase("Trade") || command.equalsIgnoreCase("Shop")',
+        "ActionSender.showShop(player, shop);",
+    ))
+    ensure_contains(NPC_DEFS_PATH, (
+        '"id": 54',
+        '"name": "Aubury"',
+        '"command": "Trade"',
+        '"command2": "Shop"',
+    ))
 
     for path in (ZAFF_PATH, MAGIC_STORE_PATH, BETTY_PATH):
         ensure_contains(path, (

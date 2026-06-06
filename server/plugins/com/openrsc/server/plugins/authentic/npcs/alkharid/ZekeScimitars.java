@@ -21,7 +21,11 @@ public final class ZekeScimitars extends AbstractShop {
 		new Item(ItemId.BRONZE_SCIMITAR.id(), 5),
 		new Item(ItemId.IRON_SCIMITAR.id(), 3),
 		new Item(ItemId.STEEL_SCIMITAR.id(), 2),
-		new Item(ItemId.MITHRIL_SCIMITAR.id(), 1)
+		new Item(ItemId.MITHRIL_SCIMITAR.id(), 1),
+		new Item(ItemId.STAFF.id(), 5),
+		new Item(ItemId.PINE_STAFF.id(), 4),
+		new Item(ItemId.OAK_STAFF.id(), 3),
+		new Item(ItemId.WILLOW_STAFF.id(), 2)
 	);
 
 	@Override
@@ -63,7 +67,7 @@ public final class ZekeScimitars extends AbstractShop {
 
 		int option = multi(player, n, options);
 		if (option == 0) {
-			npcsay(player, n, "Yes, certainly", "I deal in scimitars");
+			npcsay(player, n, "Yes, certainly", "I deal in scimitars and staffs");
 			player.setAccessingShop(shop);
 			ActionSender.showShop(player, shop);
 		} else if (option == 1) {

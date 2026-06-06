@@ -20,7 +20,19 @@ public class Thrander extends AbstractShop {
 		new Item(ItemId.BRONZE_PLATE_MAIL_BODY.id(), 2),
 		new Item(ItemId.IRON_PLATE_MAIL_BODY.id(), 1),
 		new Item(ItemId.STEEL_PLATE_MAIL_BODY.id(), 1),
-		new Item(ItemId.MITHRIL_PLATE_MAIL_BODY.id(), 1));
+		new Item(ItemId.MITHRIL_PLATE_MAIL_BODY.id(), 1),
+		new Item(ItemId.TIN_GAUNTLETS.id(), 3),
+		new Item(ItemId.TIN_GREAVES.id(), 3),
+		new Item(ItemId.COPPER_GAUNTLETS.id(), 3),
+		new Item(ItemId.COPPER_GREAVES.id(), 3),
+		new Item(ItemId.BRONZE_GAUNTLETS.id(), 3),
+		new Item(ItemId.BRONZE_GREAVES.id(), 3),
+		new Item(ItemId.IRON_GAUNTLETS.id(), 2),
+		new Item(ItemId.IRON_GREAVES.id(), 2),
+		new Item(ItemId.STEEL_GAUNTLETS.id(), 2),
+		new Item(ItemId.STEEL_GREAVES.id(), 2),
+		new Item(ItemId.MITHRIL_GAUNTLETS.id(), 1),
+		new Item(ItemId.MITHRIL_GREAVES.id(), 1));
 
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {

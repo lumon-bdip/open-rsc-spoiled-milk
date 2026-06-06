@@ -70,7 +70,7 @@ public final class AuburysRunesOpenPk extends AbstractShop {
 			player.getX() - 2, player.getX() + 2,
 			player.getY() - 2, player.getY() + 2);
 		if (aubury == null) return;
-		if (command.equalsIgnoreCase("Trade") && config().RIGHT_CLICK_TRADE) {
+		if ((command.equalsIgnoreCase("Trade") || command.equalsIgnoreCase("Shop")) && config().RIGHT_CLICK_TRADE) {
 			if (!player.getQolOptOut()) {
 				player.setAccessingShop(shop);
 				ActionSender.showShop(player, shop);
@@ -83,7 +83,7 @@ public final class AuburysRunesOpenPk extends AbstractShop {
 
 	@Override
 	public boolean blockOpNpc(Player player, Npc n, String command) {
-		boolean trade = command.equalsIgnoreCase("Trade");
+		boolean trade = command.equalsIgnoreCase("Trade") || command.equalsIgnoreCase("Shop");
 		return player.getConfig().WANT_OPENPK_POINTS && n.getID() == NpcId.AUBURY.id() && trade;
 	}
 }
