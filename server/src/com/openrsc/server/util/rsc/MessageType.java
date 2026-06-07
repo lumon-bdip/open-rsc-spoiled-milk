@@ -10,7 +10,8 @@ public enum MessageType {
 	TRADE(6, "@whi@"),
 	INVENTORY(7, "@whi@"),
 	GLOBAL_CHAT(8, "@yel@"),
-	CLAN_CHAT(9, "@yel@");
+	CLAN_CHAT(9, "@yel@"),
+	BROADCAST(10, "@red@");
 	private static final MessageType[] map;
 
 	static {

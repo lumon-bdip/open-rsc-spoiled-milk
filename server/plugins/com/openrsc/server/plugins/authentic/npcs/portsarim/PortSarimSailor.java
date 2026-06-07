@@ -67,7 +67,7 @@ public final class PortSarimSailor implements OpLocTrigger,
 
 	@Override
 	public void onOpLoc(Player player, GameObject arg0, String arg1) {
-		if (player.click == 1 || arg1.equalsIgnoreCase("travel")) {
+		if (player.click == 1 || arg1.equalsIgnoreCase("board") || arg1.equalsIgnoreCase("travel")) {
 			shortcutTravelToKaramja(player);
 			return;
 		}

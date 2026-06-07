@@ -256,7 +256,7 @@ public class Server implements Runnable {
 						ActionSender.sendBox(playerToUpdate, message, false);
 					} else {
 						for (String msg : messages) {
-							playerToUpdate.playerServerMessage(MessageType.QUEST, msg);
+							playerToUpdate.playerServerMessage(MessageType.BROADCAST, msg);
 						}
 					}
 				}
@@ -1345,7 +1345,7 @@ public class Server implements Runnable {
 				if (!p.isDev())
 					continue;
 
-				p.playerServerMessage(MessageType.QUEST, getWorld().getServer().getConfig().MESSAGE_PREFIX + message);
+				p.playerServerMessage(MessageType.BROADCAST, getWorld().getServer().getConfig().MESSAGE_PREFIX + message);
 			}
 		}
 

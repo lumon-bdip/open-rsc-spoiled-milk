@@ -58,7 +58,7 @@ def main() -> None:
     require(guide, 'Blessed symbols give 1.5x devotion from offerings', "blessed symbol devotion guide")
     require(guide, '+1 Prayer XP per offering for each devotion', "devotion XP prayer guide")
     require(guide, 'Devotion is tracked separately for each god', "per-god devotion guide")
-    require(guide, 'Devotion is capped at 1000', "devotion cap prayer guide")
+    require(guide, 'Devotion ranges from -1000 to 1000', "devotion range prayer guide")
     require(guide, "You can bless items at your god's altar", "blessing altar guide")
     require(guide, 'Symbols require 25 devotion to bless', "symbol blessing devotion guide")
     require(guide, 'Blessed items grow stronger with devotion', "blessed item scaling prayer guide")

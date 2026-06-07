@@ -84,6 +84,11 @@ public class Npc extends Mob {
 	 * Holds players that did damage with range
 	 */
 	private Map<UUID, Pair<Integer, Long>> rangeDamagers = new HashMap<UUID, Pair<Integer,Long>>();
+	/**
+	 * Holds owner credit for summon damage. This counts for loot and kill credit,
+	 * but is intentionally excluded from combat-style XP distribution.
+	 */
+	private Map<UUID, Pair<Integer, Long>> summonDamagers = new HashMap<UUID, Pair<Integer,Long>>();
 	private Map<Long, PendingSummoningExperience> pendingSummoningExperience = new HashMap<Long, PendingSummoningExperience>();
 
 
@@ -185,6 +190,14 @@ public class Npc extends Mob {
 		}
 	}
 
+	public void addSummonDamage(final Player mob, final int damage) {
+		if (summonDamagers.containsKey(mob.getUUID())) {
+			summonDamagers.put(mob.getUUID(), Pair.of(summonDamagers.get(mob.getUUID()).getLeft() + damage, mob.getUsernameHash()));
+		} else {
+			summonDamagers.put(mob.getUUID(), Pair.of(damage, mob.getUsernameHash()));
+		}
+	}
+
 	public void displayNpcTeleportBubble(final int x, final int y) {
 		for (Object o : getViewArea().getPlayersInView()) {
 			Player player = ((Player) o);
@@ -227,7 +240,8 @@ public class Npc extends Mob {
 		final UUID id = player.getUUID();
 		return getCombatDamageInfoBy(id).getLeft() > 0
 			|| getRangeDamageInfoBy(id).getLeft() > 0
-			|| getMageDamageInfoBy(id).getLeft() > 0;
+			|| getMageDamageInfoBy(id).getLeft() > 0
+			|| getSummonDamageInfoBy(id).getLeft() > 0;
 	}
 
 	public int getCombatStyle() {
@@ -288,10 +302,23 @@ public class Npc extends Mob {
 		return new ArrayList<UUID>(rangeDamagers.keySet());
 	}
 
+	private Pair<Integer, Long> getSummonDamageInfoBy(final UUID ID) {
+		if (!summonDamagers.containsKey(ID)) {
+			return Pair.of(0, 0L);
+		}
+		int dmgDone = summonDamagers.get(ID).getLeft();
+		return Pair.of(Math.min(dmgDone, this.getDef().getHits()), summonDamagers.get(ID).getRight());
+	}
+
+	private ArrayList<UUID> getSummonDamagers() {
+		return new ArrayList<UUID>(summonDamagers.keySet());
+	}
+
 	private int getTotalDamageBy(final UUID id) {
 		return getCombatDamageInfoBy(id).getLeft()
 			+ getRangeDamageInfoBy(id).getLeft()
-			+ getMageDamageInfoBy(id).getLeft();
+			+ getMageDamageInfoBy(id).getLeft()
+			+ getSummonDamageInfoBy(id).getLeft();
 	}
 
 	public boolean hasDamageBy(final Player player) {
@@ -333,6 +360,10 @@ public class Npc extends Mob {
 		if (rangeInfo.getLeft() > 0) {
 			return rangeInfo.getRight();
 		}
+		Pair<Integer, Long> summonInfo = getSummonDamageInfoBy(id);
+		if (summonInfo.getLeft() > 0) {
+			return summonInfo.getRight();
+		}
 		return getMageDamageInfoBy(id).getRight();
 	}
 
@@ -350,6 +381,12 @@ public class Npc extends Mob {
 			}
 		}
 		for (UUID id : getMageDamagers()) {
+			Player player = getWorld().getPlayerByUUID(id);
+			if (player != null) {
+				player.resetCombatEvent();
+			}
+		}
+		for (UUID id : getSummonDamagers()) {
 			Player player = getWorld().getPlayerByUUID(id);
 			if (player != null) {
 				player.resetCombatEvent();
@@ -379,6 +416,14 @@ public class Npc extends Mob {
 			}
 		}
 		for (UUID id : getMageDamagers()) {
+			int totalDamage = getTotalDamageBy(id);
+			if (totalDamage > highestDamage) {
+				topDamageUuid = id;
+				topDamageHash = getUsernameHashForDamageOwner(id);
+				highestDamage = totalDamage;
+			}
+		}
+		for (UUID id : getSummonDamagers()) {
 			int totalDamage = getTotalDamageBy(id);
 			if (totalDamage > highestDamage) {
 				topDamageUuid = id;
@@ -422,7 +467,8 @@ public class Npc extends Mob {
 		Player bestPlayer = null;
 		bestPlayer = selectPreferredThreat(bestPlayer, combatDamagers, requireMeleeRange);
 		bestPlayer = selectPreferredThreat(bestPlayer, rangeDamagers, requireMeleeRange);
-		return selectPreferredThreat(bestPlayer, mageDamagers, requireMeleeRange);
+		bestPlayer = selectPreferredThreat(bestPlayer, mageDamagers, requireMeleeRange);
+		return selectPreferredThreat(bestPlayer, summonDamagers, requireMeleeRange);
 	}
 
 	public Player getPreferredThreatTarget() {
@@ -439,6 +485,7 @@ public class Npc extends Mob {
 		addPersonalLootRecipients(recipients, getCombatDamagers());
 		addPersonalLootRecipients(recipients, getRangeDamagers());
 		addPersonalLootRecipients(recipients, getMageDamagers());
+		addPersonalLootRecipients(recipients, getSummonDamagers());
 		return recipients;
 	}
 
@@ -1179,6 +1226,7 @@ public class Npc extends Mob {
 					mageDamagers.clear();
 					rangeDamagers.clear();
 					combatDamagers.clear();
+					summonDamagers.clear();
 				}
 			});
 		} else if (!shouldRespawn) {
@@ -1466,8 +1514,15 @@ public class Npc extends Mob {
 		final int maxX = insetMax(minP.getX(), maxP.getX());
 		final int minY = insetMin(minP.getY(), maxP.getY());
 		final int maxY = insetMax(minP.getY(), maxP.getY());
-		final int newX = DataConversions.random(Math.max(minX, currX - radius), Math.min(maxX, currX + radius));
-		final int newY = DataConversions.random(Math.max(minY, currY - radius), Math.min(maxY, currY + radius));
+		final int lowX = Math.max(minX, currX - radius);
+		final int highX = Math.min(maxX, currX + radius);
+		final int lowY = Math.max(minY, currY - radius);
+		final int highY = Math.min(maxY, currY + radius);
+		if (lowX > highX || lowY > highY) {
+			return Point.location(currX, currY);
+		}
+		final int newX = DataConversions.random(lowX, highX);
+		final int newY = DataConversions.random(lowY, highY);
 		// gnome agility course
 		if (Point.location(newX, newY).inBounds(680, 491, 696, 511)) {
 			return Point.location(currX, currY);

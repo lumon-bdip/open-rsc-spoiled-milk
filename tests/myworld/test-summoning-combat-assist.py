@@ -13,6 +13,7 @@ PROJECTILE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projecti
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 PVP_MELEE = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
 PVM_MELEE = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
+MOB = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
 
 
 def fail(message: str) -> NoReturn:
@@ -32,6 +33,7 @@ def main() -> None:
     player = PLAYER.read_text(encoding="utf-8")
     pvp_melee = PVP_MELEE.read_text(encoding="utf-8")
     pvm_melee = PVM_MELEE.read_text(encoding="utf-8")
+    mob = MOB.read_text(encoding="utf-8")
 
     require(
         summoning,
@@ -109,6 +111,7 @@ def main() -> None:
         "getCombatDamageInfoBy(id).getLeft() > 0",
         "getRangeDamageInfoBy(id).getLeft() > 0",
         "getMageDamageInfoBy(id).getLeft() > 0",
+        "getSummonDamageInfoBy(id).getLeft() > 0",
     ):
         require(npc, snippet, f"NPC damage participation helper missing {snippet}")
 
@@ -136,6 +139,21 @@ def main() -> None:
         summoning,
         "summon.setLastOpponent(target);",
         "Projectile summons should retain last opponent while firing",
+    )
+    require(
+        (ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java").read_text(encoding="utf-8"),
+        "if (Summoning.isSummon(npc))",
+        "Summons should not use vanilla random roaming; summon runtime keeps them near the owner",
+    )
+    require(
+        mob,
+        "if (victim.isPlayer() && !victimShouldAvoidCombat && !attackerIsSummon)",
+        "Summon melee attempts should not send the player under-attack warning",
+    )
+    require(
+        mob,
+        "if (gotUnderAttack && !Summoning.isSummon(this))",
+        "Summon reciprocal combat should not send the player under-attack warning",
     )
     for source, label in ((pvp_melee, "PvP melee"), (pvm_melee, "PvM melee"), (projectile_event, "projectile")):
         require(

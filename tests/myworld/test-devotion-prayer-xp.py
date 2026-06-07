@@ -29,13 +29,16 @@ def main() -> None:
     require('CACHE_SUFFIX = "_offerings"' in devotion, "devotion cache suffix should be stable")
     require("OFFERINGS_PER_BONUS_XP = 10" in devotion, "devotion should award +1 XP per 10 offerings")
     require("MAX_DEVOTION_LEVEL = 1000" in devotion, "devotion should be capped at 1000")
+    require("MIN_DEVOTION_LEVEL = -1000" in devotion, "devotion should go down to -1000")
+    require("MIN_OFFERINGS = MIN_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL" in devotion,
+            "negative devotion should use the same offering scale")
     require("DEVOTION_REQUIREMENT_PER_RESOURCE = 50" in devotion,
             "blessing devotion requirements should be resource cost * 50")
     require("getDevotionRequirementForResourceCost" in devotion,
             "devotion resource-cost requirement helper should exist")
     require("getBlessingPrayerXp" in devotion and "100 + devotionLevel" in devotion,
             "blessing Prayer XP should scale by 1% per devotion")
-    require("previousOfferings / OFFERINGS_PER_BONUS_XP" in devotion,
+    require("getDevotionLevelFromOfferings(previousOfferings)" in devotion,
             "devotion bonus should be based on completed prior offering tiers")
     require("OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP" in devotion,
             "devotion levels should use the same 10-offering cadence as bonus XP")
@@ -48,6 +51,8 @@ def main() -> None:
     require("xpToGive += devotionBonusXp;" in bones, "devotion bonus should be added to Prayer XP")
     require("Every 10 offerings gives +1 devotion" in guide,
             "Prayer skill guide should explain devotion levels")
+    require("Devotion ranges from -1000 to 1000" in guide,
+            "Prayer skill guide should explain negative devotion range")
     require("Blessed symbols give 1.5x devotion from offerings" in guide,
             "Prayer skill guide should explain blessed symbol offering bonus")
     require("+1 Prayer XP per offering for each devotion" in guide,

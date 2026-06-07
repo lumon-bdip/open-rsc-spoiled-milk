@@ -571,13 +571,7 @@ public final class Summoning {
 			return;
 		}
 		final Npc targetNpc = (Npc) opponent;
-		if (type == 1 || type == 4) {
-			targetNpc.addMageDamage(owner, damage);
-		} else if (type == 2 || type == 5) {
-			targetNpc.addRangeDamage(owner, damage);
-		} else {
-			targetNpc.addCombatDamage(owner, damage);
-		}
+		targetNpc.addSummonDamage(owner, damage);
 	}
 
 	public static void applySummonLifesteal(final Mob hitter, final Mob target, final int damageDealt) {
@@ -604,9 +598,6 @@ public final class Summoning {
 		owner.getSkills().setLevel(Skill.HITS.id(), currentHits + healed);
 		owner.getUpdateFlags().addHitSplat(new HitSplat(owner, HitSplat.TYPE_HEAL, healed));
 		ActionSender.sendStat(owner, Skill.HITS.id());
-		if (target != null && !target.isRemoved() && target.getIndex() != -1 && summon.getIndex() != -1) {
-			target.getUpdateFlags().setProjectile(new Projectile(target, summon, Projectile.SUMMON_BAT_VAMPIRISM));
-		}
 	}
 
 	public static int getSummonDamageHitSplatType(final Mob hitter) {
@@ -1270,8 +1261,13 @@ public final class Summoning {
 		final int maxHit = Math.max(1, summon.getAttribute(SUMMON_MAX_HIT_KEY, 1));
 		final int damage = DataConversions.random(0, maxHit);
 		final int projectileType = ATTACK_STYLE_RANGED.equals(style) ? 2 : 1;
+		final boolean batLeechAttack = KIND_GIANT_BAT.equals(summon.getAttribute(SUMMON_KIND_KEY, ""));
+		if (batLeechAttack && target.getIndex() != -1 && summon.getIndex() != -1) {
+			target.getUpdateFlags().setProjectile(new Projectile(target, summon, Projectile.SUMMON_BAT_VAMPIRISM));
+		}
 		summon.getWorld().getServer().getGameEventHandler().add(
-			new ProjectileEvent(summon.getWorld(), summon, target, damage, projectileType, false)
+			new ProjectileEvent(summon.getWorld(), summon, target, damage, projectileType, false,
+				0, 0, 0, 0, projectileType, 0, !batLeechAttack)
 		);
 		return true;
 	}
@@ -1438,11 +1434,7 @@ public final class Summoning {
 			final long ownerHash = summon.getAttribute(SUMMON_OWNER_KEY, -1L);
 			final Player owner = summon.getWorld().getPlayer(ownerHash);
 			if (owner != null) {
-				if (magicDamage) {
-					((Npc) target).addMageDamage(owner, damageDealt);
-				} else {
-					((Npc) target).addCombatDamage(owner, damageDealt);
-				}
+				((Npc) target).addSummonDamage(owner, damageDealt);
 			}
 		}
 		if (target.isPlayer()) {

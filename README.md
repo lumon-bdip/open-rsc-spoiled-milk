@@ -80,6 +80,10 @@ Artist/source links:
 | --- | --- |
 | <img src="docs/myworld/screenshots/craft-guild.png" alt="Crafting Guild resources" width="420"> | <img src="docs/myworld/screenshots/thrown-dagger.png" alt="Thrown dagger and equipment view" width="420"> |
 
+| Crafting production interface |
+| --- |
+| <img src="docs/myworld/screenshots/crafting-ui.png" alt="Crafting production interface for shaping ranged equipment" width="860"> |
+
 ## What This Version Is Trying To Do
 
 The main goal is to make RuneScape Classic feel faster, broader, and less

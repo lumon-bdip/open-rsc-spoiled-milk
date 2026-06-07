@@ -67,9 +67,9 @@ def main() -> int:
         failures.append("summon charge should use a logical frame sequence for loop and finish timing")
     if "getSummonChargeLoopCycles(duration, frameCount)" not in client:
         failures.append("summon charge should explicitly control complete loop cycles")
-    if "getCombatEffectScreenXOffset(effectType, frame, width)" not in client:
+    if "getCombatEffectScreenXOffset(effectType, frame, size)" not in client:
         failures.append("summon charge loop frames should support screen x alignment")
-    if "getCombatEffectScreenYOffset(effectType, frame, height)" not in client:
+    if "getCombatEffectScreenYOffset(effectType, frame, size)" not in client:
         failures.append("summon arrival effects should support screen y alignment")
     if "getSummonChargeCurrentFrame(effectTime, duration, frameCount)" not in client:
         failures.append("summon charge must loop its hold frames instead of stretching all frames")

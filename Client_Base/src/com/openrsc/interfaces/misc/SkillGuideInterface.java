@@ -1262,7 +1262,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuEntry("", "Blessed symbols give 1.5x devotion from offerings"));
 			skillMenuEntries.add(new SkillMenuEntry("", "+1 Prayer XP per offering for each devotion"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Devotion is tracked separately for each god"));
-			skillMenuEntries.add(new SkillMenuEntry("", "Devotion is capped at 1000"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Devotion ranges from -1000 to 1000"));
 			skillMenuEntries.add(new SkillMenuEntry("", "You can bless items at your god's altar"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Symbols require 25 devotion to bless"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Blessed items grow stronger with devotion"));

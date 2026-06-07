@@ -53,7 +53,7 @@ def main() -> None:
             "for (int i = 0; i < quantity; i++) {",
             "awardGemRockGem(player, rock);",
             "changeloc(rock, resourceRespawnMillis(GEM_ROCK_RESPAWN_SECONDS), SceneryId.ROCK_GENERIC.id());",
-            "You manage to obtain some stone, but have no room to keep it",
+            '"You manage to obtain some " + ore.getDef(player.getWorld()).getName().toLowerCase() + ", but have no room to keep it"',
             "Any excess falls to the ground because you have no room",
         ),
         "Mining.java",

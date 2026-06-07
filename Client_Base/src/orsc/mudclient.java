@@ -3170,7 +3170,7 @@ public final class mudclient implements Runnable {
 				if (this.messageTabActivity_Game % 30 > 15) {
 					color = GenUtil.buildColor(255, 50, 50);
 				}
-				this.getSurface().drawColoredStringCentered(halfGameWidth() - 200, "All messages", color, 0, 0,
+				this.getSurface().drawColoredStringCentered(halfGameWidth() - 200, "All", color, 0, 0,
 					6 + this.getGameHeight());
 
 				color = GenUtil.buildColor(255, 255, 255);
@@ -3180,7 +3180,7 @@ public final class mudclient implements Runnable {
 				if (this.messageTabActivity_Chat % 30 > 15) {
 					color = GenUtil.buildColor(255, 50, 50);
 				}
-				this.getSurface().drawColoredStringCentered(halfGameWidth() - 100, "Chat history", color, 0, 0,
+				this.getSurface().drawColoredStringCentered(halfGameWidth() - 100, "Local", color, 0, 0,
 					this.getGameHeight() + 6);
 
 				color = GenUtil.buildColor(255, 255, 255);
@@ -3190,7 +3190,7 @@ public final class mudclient implements Runnable {
 				if (this.messageTabActivity_Quest % 30 > 15) {
 					color = GenUtil.buildColor(255, 50, 50);
 				}
-				this.getSurface().drawColoredStringCentered(halfGameWidth(), "Quest history", color, 0, 0,
+				this.getSurface().drawColoredStringCentered(halfGameWidth(), "Game", color, 0, 0,
 					6 + this.getGameHeight());
 
 				color = GenUtil.buildColor(255, 255, 255);
@@ -3200,7 +3200,7 @@ public final class mudclient implements Runnable {
 				if (this.messageTabActivity_Private % 30 > 15) {
 					color = GenUtil.buildColor(255, 50, 50);
 				}
-				this.getSurface().drawColoredStringCentered(halfGameWidth() + 100, "Private history", color, 0, 0,
+				this.getSurface().drawColoredStringCentered(halfGameWidth() + 100, "Private", color, 0, 0,
 					this.getGameHeight() + 6);
 				if (S_WANT_CLANS) {
 					color = GenUtil.buildColor(255, 255, 255);
@@ -3210,7 +3210,7 @@ public final class mudclient implements Runnable {
 					if (this.messageTabActivity_Clan % 30 > 15) {
 						color = GenUtil.buildColor(255, 50, 50);
 					}
-					this.getSurface().drawColoredStringCentered(halfGameWidth() + 200, "Clan history", color, 0, 0, 6 + this.getGameHeight());
+					this.getSurface().drawColoredStringCentered(halfGameWidth() + 200, "Clan", color, 0, 0, 6 + this.getGameHeight());
 				} else {
 					color = GenUtil.buildColor(255, 255, 255);
 					this.getSurface().drawColoredStringCentered(halfGameWidth() + 200, "Report Abuse", color, 0, 0, 6 + this.getGameHeight());
@@ -8583,13 +8583,7 @@ public final class mudclient implements Runnable {
 
 			if (this.messageTabSelected == MessageTab.ALL) {
 				for (int i = 0; i < messagesArray.length; ++i) {
-					if (MessageHistory.messageHistoryTimeout[i] > 0
-						&& (MessageHistory.messageHistoryType[i] == MessageType.CHAT
-						|| MessageHistory.messageHistoryType[i] == MessageType.PRIVATE_RECIEVE
-						|| MessageHistory.messageHistoryType[i] == MessageType.FRIEND_STATUS
-						|| MessageHistory.messageHistoryType[i] == MessageType.TRADE
-						|| MessageHistory.messageHistoryType[i] == MessageType.GLOBAL_CHAT
-						|| MessageHistory.messageHistoryType[i] == MessageType.CLAN_CHAT)) {
+					if (MessageHistory.messageHistoryTimeout[i] > 0) {
 						String msg = StringUtil.formatMessage(
 							MessageHistory.messageHistoryMessage[i], MessageHistory.messageHistorySender[i],
 							MessageHistory.messageHistoryType[i], MessageHistory.messageHistoryColor[i]);
@@ -19861,17 +19855,24 @@ public final class mudclient implements Runnable {
 			}
 
 			if (this.messageTabSelected != MessageTab.ALL) {
-				if (((type == MessageType.FRIEND_STATUS || type == MessageType.PRIVATE_RECIEVE
-					|| type == MessageType.PRIVATE_SEND) && this.messageTabSelected != MessageTab.PRIVATE)
-					|| type == MessageType.GLOBAL_CHAT && this.messageTabSelected != MessageTab.PRIVATE) {
+				if (type == MessageType.BROADCAST) {
+					this.messageTabActivity_Game = 200;
+					this.messageTabActivity_Chat = 200;
+					this.messageTabActivity_Quest = 200;
+					this.messageTabActivity_Private = 200;
+					this.messageTabActivity_Clan = 200;
+				}
+				if ((type == MessageType.FRIEND_STATUS || type == MessageType.PRIVATE_RECIEVE
+					|| type == MessageType.PRIVATE_SEND) && this.messageTabSelected != MessageTab.PRIVATE) {
 					this.messageTabActivity_Private = 200;
 				}
 
-				if (type == MessageType.CHAT && this.messageTabSelected != MessageTab.CHAT) {
+				if ((type == MessageType.CHAT || type == MessageType.GLOBAL_CHAT) && this.messageTabSelected != MessageTab.CHAT) {
 					this.messageTabActivity_Chat = 200;
 				}
 
-				if (type == MessageType.QUEST && this.messageTabSelected != MessageTab.QUEST) {
+				if ((type == MessageType.QUEST || type == MessageType.GAME || type == MessageType.INVENTORY)
+					&& this.messageTabSelected != MessageTab.QUEST) {
 					this.messageTabActivity_Quest = 200;
 				}
 				if (type == MessageType.CLAN_CHAT && this.messageTabSelected != MessageTab.CLAN) {
@@ -19913,23 +19914,29 @@ public final class mudclient implements Runnable {
 			MessageHistory.messageHistoryColor[0] = colour;
 			String msg = colour + StringUtil.formatMessage(message, sender, type, colour);
 
-			if (type == MessageType.CHAT) {
+			if (type == MessageType.CHAT || type == MessageType.GLOBAL_CHAT) {
 				this.panelMessageTabs.addToList(msg, this.panelMessageTabs.controlScrollAmount[this.panelMessageChat] == this.panelMessageTabs.controlListCurrentSize[this.panelMessageChat]
 					- 4, crownID, sender, formerName, this.panelMessageChat);
 			}
 
-			if (type == MessageType.QUEST) {
+			if (type == MessageType.QUEST || type == MessageType.GAME || type == MessageType.INVENTORY) {
 				this.panelMessageTabs.addToList(msg, this.panelMessageTabs.controlScrollAmount[this.panelMessageQuest] == this.panelMessageTabs.controlListCurrentSize[this.panelMessageQuest]
 						- 4, 0, null, null,
 					this.panelMessageQuest);
 			}
-			if (type == MessageType.GLOBAL_CHAT) {
-				this.panelMessageTabs.addToList(msg, this.panelMessageTabs.controlScrollAmount[this.panelMessagePrivate] == this.panelMessageTabs.controlListCurrentSize[this.panelMessagePrivate]
-					- 4, crownID, sender, formerName, this.panelMessagePrivate);
-			}
 			if (type == MessageType.CLAN_CHAT) {
 				this.panelMessageTabs.addToList(msg, this.panelMessageTabs.controlScrollAmount[this.panelMessageClan] == this.panelMessageTabs.controlListCurrentSize[this.panelMessageClan]
 					- 4, crownID, sender, formerName, this.panelMessageClan);
+			}
+			if (type == MessageType.BROADCAST) {
+				this.panelMessageTabs.addToList(msg, this.panelMessageTabs.controlScrollAmount[this.panelMessageChat] == this.panelMessageTabs.controlListCurrentSize[this.panelMessageChat]
+					- 4, 0, null, null, this.panelMessageChat);
+				this.panelMessageTabs.addToList(msg, this.panelMessageTabs.controlScrollAmount[this.panelMessageQuest] == this.panelMessageTabs.controlListCurrentSize[this.panelMessageQuest]
+					- 4, 0, null, null, this.panelMessageQuest);
+				this.panelMessageTabs.addToList(msg, this.panelMessageTabs.controlScrollAmount[this.panelMessagePrivate] == this.panelMessageTabs.controlListCurrentSize[this.panelMessagePrivate]
+					- 4, 0, null, null, this.panelMessagePrivate);
+				this.panelMessageTabs.addToList(msg, this.panelMessageTabs.controlScrollAmount[this.panelMessageClan] == this.panelMessageTabs.controlListCurrentSize[this.panelMessageClan]
+					- 4, 0, null, null, this.panelMessageClan);
 			}
 
 			if (type == MessageType.PRIVATE_RECIEVE || type == MessageType.PRIVATE_SEND) {

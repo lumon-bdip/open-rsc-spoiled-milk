@@ -13,8 +13,10 @@ public final class Devotion {
 	private static final int OFFERINGS_PER_BONUS_XP = 10;
 	public static final int OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP;
 	public static final int MAX_DEVOTION_LEVEL = 1000;
+	public static final int MIN_DEVOTION_LEVEL = -1000;
 	public static final int COMBAT_GROWTH_START_LEVEL = 250;
 	private static final int MAX_OFFERINGS = MAX_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL;
+	private static final int MIN_OFFERINGS = MIN_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL;
 	private static final int DEVOTION_REQUIREMENT_PER_RESOURCE = 50;
 	private static final int PRAYER_BONUS_GROWTH_MAX = 10;
 
@@ -29,17 +31,18 @@ public final class Devotion {
 		final PrayerCatalog.GodLine godLine = player.getPrayerBook();
 		final String cacheKey = getOfferingCacheKey(godLine);
 		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
-		final int bonusXp = Math.min(previousOfferings / OFFERINGS_PER_BONUS_XP, MAX_DEVOTION_LEVEL);
+		final int previousDevotion = getDevotionLevelFromOfferings(previousOfferings);
+		final int bonusXp = Math.max(0, Math.min(previousDevotion, MAX_DEVOTION_LEVEL));
 		final int offeringGain = getOfferingDevotionGain(player, godLine);
-		final int newOfferings = Math.min(previousOfferings + offeringGain, MAX_OFFERINGS);
+		final int newOfferings = clamp(previousOfferings + offeringGain, MIN_OFFERINGS, MAX_OFFERINGS);
 		player.getCache().set(cacheKey, newOfferings);
 		ActionSender.sendDevotion(player);
 
-		if (newOfferings / OFFERINGS_PER_BONUS_XP > previousOfferings / OFFERINGS_PER_BONUS_XP) {
-			final int nextBonusXp = newOfferings / OFFERINGS_PER_BONUS_XP;
+		final int newDevotion = getDevotionLevelFromOfferings(newOfferings);
+		if (newDevotion > previousDevotion && newDevotion > 0) {
 			player.playerServerMessage(
 				MessageType.QUEST,
-				"Your devotion to " + formatGodLine(godLine) + " grows. Future offerings grant +" + nextBonusXp + " Prayer XP."
+				"Your devotion to " + formatGodLine(godLine) + " grows. Future offerings grant +" + newDevotion + " Prayer XP."
 			);
 		}
 		return bonusXp;
@@ -51,11 +54,11 @@ public final class Devotion {
 		}
 		final String cacheKey = getOfferingCacheKey(godLine);
 		final int offerings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
-		return clamp(offerings, 0, MAX_OFFERINGS);
+		return clamp(offerings, MIN_OFFERINGS, MAX_OFFERINGS);
 	}
 
 	public static int getDevotionLevel(final Player player, final PrayerCatalog.GodLine godLine) {
-		return Math.min(getOfferings(player, godLine) / OFFERINGS_PER_DEVOTION_LEVEL, MAX_DEVOTION_LEVEL);
+		return getDevotionLevelFromOfferings(getOfferings(player, godLine));
 	}
 
 	public static int getCurrentDevotionLevel(final Player player) {
@@ -85,7 +88,7 @@ public final class Devotion {
 		}
 		final String cacheKey = getOfferingCacheKey(godLine);
 		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
-		player.getCache().set(cacheKey, clamp(previousOfferings + (devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL), 0, MAX_OFFERINGS));
+		player.getCache().set(cacheKey, clamp(previousOfferings + (devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL), MIN_OFFERINGS, MAX_OFFERINGS));
 		ActionSender.sendDevotion(player);
 	}
 
@@ -142,6 +145,10 @@ public final class Devotion {
 			return player.getCarriedItems().getEquipment().hasEquipped(ItemId.GUTHIX_SYMBOL.id());
 		}
 		return false;
+	}
+
+	private static int getDevotionLevelFromOfferings(final int offerings) {
+		return clamp(offerings / OFFERINGS_PER_DEVOTION_LEVEL, MIN_DEVOTION_LEVEL, MAX_DEVOTION_LEVEL);
 	}
 
 	private static String getOfferingCacheKey(final PrayerCatalog.GodLine godLine) {

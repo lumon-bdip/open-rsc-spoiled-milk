@@ -623,7 +623,9 @@ public final class GameStateUpdater {
 			}
 			if (updateFlags.hasChatMessage()) {
 				ChatMessage chatMessage = updateFlags.getChatMessage();
-				npcMessagesNeedingDisplayed.add(chatMessage);
+				if (chatMessage.getRecipient() == null || chatMessage.getRecipient() == player) {
+					npcMessagesNeedingDisplayed.add(chatMessage);
+				}
 			}
 			if (updateFlags.hasSkulled()) {
 				Skull skull = updateFlags.getSkull().get();
@@ -856,14 +858,18 @@ public final class GameStateUpdater {
 				projectilesNeedingDisplayed.add(projectileFired);
 			}
 
-			if (updateFlags.hasChatMessage()
-				&& (((player.getSocial().isFriendsWith(otherPlayer.getUsernameHash()) && !blockAll)
-				|| (!player.getSocial().isFriendsWith(otherPlayer.getUsernameHash()) && blockNone))
-				&& !player.getSocial().isIgnoring(otherPlayer.getUsernameHash())
-				|| player.isMod()|| otherPlayer.isMod() || updateFlags.getChatMessage().getRecipient() != null)) {
+			if (updateFlags.hasChatMessage()) {
 				ChatMessage chatMessage = updateFlags.getChatMessage();
-				if (!chatMessage.getMuted() || player.hasElevatedPriveledges())
+				boolean directedToViewer = chatMessage.getRecipient() == player;
+				boolean publicChatVisible = chatMessage.getRecipient() == null
+					&& ((((player.getSocial().isFriendsWith(otherPlayer.getUsernameHash()) && !blockAll)
+					|| (!player.getSocial().isFriendsWith(otherPlayer.getUsernameHash()) && blockNone))
+					&& !player.getSocial().isIgnoring(otherPlayer.getUsernameHash()))
+					|| player.isMod() || otherPlayer.isMod());
+				if ((directedToViewer || publicChatVisible)
+					&& (!chatMessage.getMuted() || player.hasElevatedPriveledges())) {
 					chatMessagesNeedingDisplayed.add(chatMessage);
+				}
 			}
 			if (updateFlags.hasTakenDamage()) {
 				Damage damage = updateFlags.getDamage().get();

@@ -5,8 +5,10 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
 OBJECT_DEFS = ROOT / "server" / "conf" / "server" / "defs" / "GameObjectDef.xml"
+LADY_OF_THE_WAVES = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "misc" / "LadyOfTheWaves.java"
 PORT_SARIM = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "portsarim" / "PortSarimSailor.java"
 KARAMJA = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "karamja" / "BoatFromKaramja.java"
+ENTRANA = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "portsarim" / "MonkOfEntrana.java"
 
 
 def fail(message: str) -> None:
@@ -51,6 +53,7 @@ def main() -> None:
     port_sarim = PORT_SARIM.read_text(encoding="utf-8")
     require(port_sarim, '"You do not meet the requirements to travel"', "Port Sarim shortcut failure message")
     require(port_sarim, "player.click == 1", "Port Sarim right-click shortcut")
+    require(port_sarim, 'arg1.equalsIgnoreCase("board")', "Port Sarim board shortcut")
     require(port_sarim, 'arg1.equalsIgnoreCase("travel")', "Port Sarim travel command shortcut")
     require(port_sarim, "shortcutTravelToKaramja(player)", "Port Sarim shortcut handler")
     require(port_sarim, "new Item(ItemId.COINS.id(), 30)", "Port Sarim travel cost")
@@ -59,13 +62,29 @@ def main() -> None:
     karamja = KARAMJA.read_text(encoding="utf-8")
     require(karamja, '"You do not meet the requirements to travel"', "Karamja shortcut failure message")
     require(karamja, "player.click == 1", "Karamja right-click shortcut")
+    require(karamja, 'command.equalsIgnoreCase("board")', "Karamja board shortcut")
     require(karamja, 'command.equalsIgnoreCase("travel")', "Karamja travel command shortcut")
     require(karamja, "shortcutTravelToPortSarim(player)", "Karamja shortcut handler")
     require(karamja, "ItemId.KARAMJA_RUM.id()", "Karamja rum travel blocker")
     require(karamja, "new Item(ItemId.COINS.id(), 30)", "Karamja travel cost")
     require(karamja, "teleport(player, 269, 648)", "Karamja destination")
 
-    print("PASS: Port Sarim and Karamja boat shortcuts skip dialogue but preserve travel requirements")
+    entrana = ENTRANA.read_text(encoding="utf-8")
+    require(entrana, '"You do not meet the requirements to travel"', "Entrana shortcut failure message")
+    require(entrana, 'command.equalsIgnoreCase("board")', "Entrana board shortcut")
+    require(entrana, "shortcutTravelToEntrana(player)", "Entrana shortcut handler")
+    require(entrana, "playerNotAllowedOnEntrana(player)", "Entrana shortcut weapon and armour restriction")
+    require(entrana, "player.teleport(418, 570, false)", "Entrana destination")
+
+    lady = LADY_OF_THE_WAVES.read_text(encoding="utf-8")
+    require(lady, "You need a ship ticket to travel on the Lady of the Waves.", "Lady of the Waves ticket failure message")
+    require(lady, "!player.getCarriedItems().hasCatalogID(ItemId.SHIP_TICKET.id(), Optional.of(false))", "Lady of the Waves front-loaded ticket check")
+    require(lady, "chooseDestination(player)", "Lady of the Waves direct destination menu")
+    require(lady, '"Khazard Port"', "Lady of the Waves Khazard destination option")
+    require(lady, '"Port Sarim"', "Lady of the Waves Port Sarim destination option")
+    require(lady, "player.getCarriedItems().remove(new Item(ItemId.SHIP_TICKET.id()))", "Lady of the Waves ticket removal")
+
+    print("PASS: boat shortcuts skip dialogue but preserve travel requirements")
 
 
 if __name__ == "__main__":

@@ -73,7 +73,7 @@ public final class BoatFromKaramja implements TalkNpcTrigger, OpLocTrigger {
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
 		if (obj.getID() == 161 || (obj.getID() == 162) || (obj.getID() == 163)) {
-			if (player.click == 1 || command.equalsIgnoreCase("travel")) {
+			if (player.click == 1 || command.equalsIgnoreCase("board") || command.equalsIgnoreCase("travel")) {
 				shortcutTravelToPortSarim(player);
 				return;
 			}

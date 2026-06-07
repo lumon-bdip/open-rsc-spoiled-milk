@@ -149,6 +149,8 @@ public class StringUtil {
 				return colour + msg;
 			case CLAN_CHAT:
 				return colour + msg;
+			case BROADCAST:
+				return colour + msg;
 			default:
 				return colour;
 		}

@@ -53,8 +53,8 @@ def main():
 
     require("removeDevotionLevels" in devotion and "adjustDevotionLevels" in devotion,
             "devotion should support clamped negative adjustments")
-    require("clamp(previousOfferings + (devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL), 0, MAX_OFFERINGS)" in devotion,
-            "devotion adjustments should clamp between 0 and max")
+    require("clamp(previousOfferings + (devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL), MIN_OFFERINGS, MAX_OFFERINGS)" in devotion,
+            "devotion adjustments should clamp between negative and positive caps")
     require("`5x`" in plan and "`1` devotion per equivalent resource cost" in plan,
             "destroy opposing blessed object formula should be documented")
 

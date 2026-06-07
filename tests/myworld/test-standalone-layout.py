@@ -189,6 +189,7 @@ def test_myworld_docs_are_consolidated() -> None:
         "altar-enchantment-and-conversion-plan.md",
         "bank-tag-filter-plan.md",
         "change-history.md",
+        "chat-and-dialogue-channel-plan.md",
         "combat-equipment-spec.md",
         "compatibility-only-content.md",
         "dev-admin-commands.md",

@@ -4,6 +4,7 @@ import com.openrsc.server.Server;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
@@ -17,6 +18,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.states.CombatState;
@@ -190,7 +192,11 @@ public class NpcBehavior {
 				return true;
 			}
 
-			if ((npc.getDef().isAggressive() && !draynorManorSkeleton) || npc.getLocation().inWilderness() || (blackKnightsFortress)) {
+			final boolean naturalAggro = (npc.getDef().isAggressive() && !draynorManorSkeleton)
+				|| npc.getLocation().inWilderness()
+				|| blackKnightsFortress;
+			final boolean devotionAggro = !naturalAggro && isGodFollower();
+			if (naturalAggro || devotionAggro) {
 
 				// We loop through all players in view.
 				for (Player player : npc.getViewArea().getPlayersInView()) {
@@ -199,6 +205,9 @@ public class NpcBehavior {
 
 					// Player is a new target AND can't aggro.
 					if (!canAggro(player, now)) {
+						continue;
+					}
+					if (devotionAggro && !shouldDevotionAggroPlayer(player)) {
 						continue;
 					}
 
@@ -225,6 +234,43 @@ public class NpcBehavior {
 		return false;
 	}
 
+	private boolean shouldDevotionAggroPlayer(final Player player) {
+		final PrayerCatalog.GodLine followerGod = getGodFollowerLine();
+		if (followerGod == null) {
+			return true;
+		}
+		final int devotionLevel = Devotion.getDevotionLevel(player, followerGod);
+		if (devotionLevel >= 0) {
+			return false;
+		}
+		final int hostilityChance = Math.min(1000, Math.abs(devotionLevel));
+		return DataConversions.getRandom().nextInt(1000) < hostilityChance;
+	}
+
+	private boolean isGodFollower() {
+		return getGodFollowerLine() != null;
+	}
+
+	private PrayerCatalog.GodLine getGodFollowerLine() {
+		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
+			return null;
+		}
+		final String name = npc.getDef().getName().toLowerCase();
+		if ("monk".equals(name)
+			|| name.contains("saradomin")
+			|| name.contains("white knight")
+			|| name.contains("priest")) {
+			return PrayerCatalog.GodLine.SARADOMIN;
+		}
+		if (name.contains("zamorak") || name.contains("black knight")) {
+			return PrayerCatalog.GodLine.ZAMORAK;
+		}
+		if (name.contains("druid") || name.contains("grey knight")) {
+			return PrayerCatalog.GodLine.GUTHIX;
+		}
+		return null;
+	}
+
 	private boolean handleRoamTackleScan(final long now, final boolean hasPlayers) {
 		// Check for tackle
 		if (now - lastTackleAttempt > gameTickMillis * 5 &&
@@ -248,6 +294,9 @@ public class NpcBehavior {
 	}
 
 	private void handleRoamRandomWalk(final long now, final boolean hasPlayers) {
+		if (Summoning.isSummon(npc)) {
+			return;
+		}
 		if (!hasPlayers) {
 			return;
 		}

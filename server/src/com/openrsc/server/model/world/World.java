@@ -750,7 +750,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	public void sendModAnnouncement(final String string) {
 		for (final Player player : getPlayers()) {
 			if (player.isMod()) {
-				player.message("[@cya@SERVER@whi@]: " + string);
+				player.playerServerMessage(MessageType.BROADCAST, "[@cya@SERVER@whi@]: " + string);
 			}
 		}
 	}
@@ -758,14 +758,14 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	public void sendWorldAnnouncement(final String msg) {
 		if (getServer().getConfig().WANT_GLOBAL_CHAT) {
 			for (final Player player : getPlayers()) {
-				player.playerServerMessage(MessageType.QUEST, "@gre@[Global] @whi@" + msg);
+				player.playerServerMessage(MessageType.GLOBAL_CHAT, "@gre@[Global] @whi@" + msg);
 			}
 		}
 	}
 
 	public void sendWorldMessage(final String msg) {
 		for (final Player player : getPlayers()) {
-			player.playerServerMessage(MessageType.QUEST, msg);
+			player.playerServerMessage(MessageType.BROADCAST, msg);
 		}
 	}
 
@@ -1093,7 +1093,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 						if (player.getCache().hasKey("private_message_global")) {
 							ActionSender.sendPrivateMessageSent(gm.getPlayer(), -1L, gm.getMessage(), true);
 						} else {
-							ActionSender.sendMessage(player, null, MessageType.QUEST, formatGlobalQuestMessage(gm, player), 0, "");
+							ActionSender.sendMessage(player, null, MessageType.GLOBAL_CHAT, formatGlobalQuestMessage(gm, player), 0, "");
 						}
 					} else {
 						if (!player.getBlockGlobalFriend()) {
@@ -1105,7 +1105,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 								if (player.getCache().hasKey("private_message_global")) {
 									ActionSender.sendPrivateMessageReceived(player, gm.getPlayer(), gm.getMessage(), true);
 								} else {
-									ActionSender.sendMessage(player, null, MessageType.QUEST, formatGlobalQuestMessage(gm, player), 0, "");
+									ActionSender.sendMessage(player, null, MessageType.GLOBAL_CHAT, formatGlobalQuestMessage(gm, player), 0, "");
 								}
 							}
 						}

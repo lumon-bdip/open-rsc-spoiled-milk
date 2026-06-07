@@ -961,7 +961,7 @@ public abstract class Mob extends Entity {
 			combatEvent = new CombatEvent(getWorld(), this, victim);
 			victim.setCombatEvent(combatEvent);
 			getWorld().getServer().getGameEventHandler().add(combatEvent);
-			if (gotUnderAttack) {
+			if (gotUnderAttack && !Summoning.isSummon(this)) {
 				if (victim.isPlayer()) {
 					// packet order is authentic here
 					((Player) victim).message("You are under attack!");
@@ -1079,7 +1079,7 @@ public abstract class Mob extends Entity {
 
 			pvmMeleeEvent = new PvmMeleeEvent(getWorld(), this, victim);
 			getWorld().getServer().getGameEventHandler().addOrUpdate(pvmMeleeEvent);
-		if (victim.isPlayer() && !victimShouldAvoidCombat) {
+		if (victim.isPlayer() && !victimShouldAvoidCombat && !attackerIsSummon) {
 			((Player) victim).message("You are under attack!");
 			ActionSender.sendSound((Player) victim, "underattack");
 		}

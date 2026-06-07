@@ -1288,10 +1288,7 @@ public class ActionSender {
 	public static void sendSystemMessage(Player player, String message) {
 		String messageSend = "SYSTEM MESSAGE: " + message;
 
-		sendMessage(player, "@red@" + messageSend);
-		sendMessage(player, "@yel@" + messageSend);
-		sendMessage(player, "@gre@" + messageSend);
-		sendMessage(player, "@cya@" + messageSend);
+		sendPlayerServerMessage(player, MessageType.BROADCAST, messageSend);
 	}
 
 	public static void sendMessage(Player player, String message) {
