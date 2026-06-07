@@ -72,7 +72,7 @@ Artist/source links:
 | --- | --- |
 | <img src="docs/myworld/screenshots/multi-atker-w-ice-stk.png" alt="Multi-attacker combat with Ice Strike" width="420"> | <img src="docs/myworld/screenshots/rune-altar.png" alt="Rune altar and summon companion" width="420"> |
 
-| Different enemies have their own attack styles, requiring different defenses. Here, a mage uses a magic attack. | Here you can see the Unicorn summon alongside the redesigned abilities tabs, which now use icons and include a dedicated Summoning section. |
+| Different enemies have their own attack styles, requiring different defenses. Here, a Wizard uses a magic attack. | Here you can see the Unicorn summon alongside the redesigned abilities tabs, which now use icons and include a dedicated Summoning section. |
 | --- | --- |
 | <img src="docs/myworld/screenshots/mage-fireball.png" alt="Magic combat and XP focus" width="420"> | <img src="docs/myworld/screenshots/unicorn-summon-w-window.png" alt="Summoning interface with a unicorn" width="420"> |
 
