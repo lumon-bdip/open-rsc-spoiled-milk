@@ -68,19 +68,19 @@ Artist/source links:
 
 ## Screenshots
 
-| Multi-attacker combat with Ice Strike | Rune altar and summon companion |
+| Multiple thugs attack while my bear summon and I fight back. Ice Strike is being autocast, making mage builds much easier to use. | Many skills have been upgraded and expanded. Runecrafting has been rolled into the broader Enchanting skill, while rune altars now appear in the overworld and have many more uses. |
 | --- | --- |
 | <img src="docs/myworld/screenshots/multi-atker-w-ice-stk.png" alt="Multi-attacker combat with Ice Strike" width="420"> | <img src="docs/myworld/screenshots/rune-altar.png" alt="Rune altar and summon companion" width="420"> |
 
-| Magic combat and XP focus | Summoning interface with a unicorn |
+| Different enemies have their own attack styles, requiring different defenses. Here, a mage uses a magic attack. | Here you can see the Unicorn summon alongside the redesigned abilities tabs, which now use icons and include a dedicated Summoning section. |
 | --- | --- |
 | <img src="docs/myworld/screenshots/mage-fireball.png" alt="Magic combat and XP focus" width="420"> | <img src="docs/myworld/screenshots/unicorn-summon-w-window.png" alt="Summoning interface with a unicorn" width="420"> |
 
-| Crafting Guild resources | Thrown dagger and equipment view |
+| Guilds are being upgraded, with the Crafting Guild shown here as one example. | Here, a thief throws a dagger. The combat focus system now lets every style decide how much XP goes to Hits, including melee. |
 | --- | --- |
 | <img src="docs/myworld/screenshots/craft-guild.png" alt="Crafting Guild resources" width="420"> | <img src="docs/myworld/screenshots/thrown-dagger.png" alt="Thrown dagger and equipment view" width="420"> |
 
-| Crafting production interface |
+| Crafting interfaces and other much-needed quality-of-life features have been added. |
 | --- |
 | <img src="docs/myworld/screenshots/crafting-ui.png" alt="Crafting production interface for shaping ranged equipment" width="860"> |
 
