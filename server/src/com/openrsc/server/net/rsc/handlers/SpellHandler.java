@@ -5,6 +5,8 @@ import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.database.impl.mysql.queries.logging.GenericLog;
 import com.openrsc.server.event.MiniEvent;
+import com.openrsc.server.event.rsc.DuplicationStrategy;
+import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.impl.ObjectRemover;
 import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
@@ -63,7 +65,9 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private static final String NECKLACE = "necklace";
 	private static final String CROWN = "crown";
 	private static final String DEFAULT = "";
-	private static final long HEAL_SPELL_COOLDOWN_MS = 10000L;
+	private static final String HEAL_SPELL_ACTIVE_KEY = "heal_spell_active";
+	private static final int HEAL_SPELL_PULSES = 3;
+	private static final int HEAL_SPELL_INTERVAL_MS = 3000;
 	private static final int TELEPORT_CHARGE_MS = 5000;
 
 	/**
@@ -2084,9 +2088,16 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							int casts = getPlayer().getCache().getInt(spell.getName() + "_casts");
 							getPlayer().getCache().set(spell.getName() + "_casts", casts - 1);
 						}
+						final int ibanPrimaryDamage = CombatFormula.calculateIbanSpellDamage(getPlayer(), affectedMob);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
-							CombatFormula.calculateIbanSpellDamage(getPlayer(), affectedMob), 4, setChasing,
+							ibanPrimaryDamage, 4, setChasing,
 							0, 0, 0, 0, Projectile.SKULL, CombatEffect.IBAN_BLAST, false));
+						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Iban blast area effect") {
+							@Override
+							public void action() {
+								applyIbanBlastAreaEffects(getPlayer(), affectedMob);
+							}
+						});
 						finalizeSpell(getPlayer(), spell, DEFAULT);
 						break;
 					case CLAWS_OF_GUTHIX:
@@ -2401,6 +2412,24 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		applyGodSpellLifesteal(caster, spellEnum, totalDamage);
 	}
 
+	private void applyIbanBlastAreaEffects(final Player caster, final Mob primaryTarget) {
+		final int secondaryMax = 8;
+		for (Npc npc : caster.getViewArea().getNpcsInView()) {
+			if (npc == primaryTarget || !isValidIbanBlastAreaTarget(primaryTarget, npc)) {
+				continue;
+			}
+			final int damage = CombatFormula.calculateMagicDamage(caster, npc, secondaryMax);
+			applyGodSpellSecondaryDamage(caster, npc, damage);
+		}
+	}
+
+	private boolean isValidIbanBlastAreaTarget(final Mob primaryTarget, final Mob possibleTarget) {
+		return possibleTarget != null && !possibleTarget.isRemoved()
+			&& possibleTarget.isNpc()
+			&& possibleTarget.getSkills().getLevel(Skill.HITS.id()) > 0
+			&& primaryTarget.getLocation().withinRange(possibleTarget.getLocation(), 2);
+	}
+
 	private boolean isValidGodSpellAreaTarget(final Player caster, final Mob primaryTarget, final Mob possibleTarget) {
 		if (possibleTarget == null || possibleTarget.isRemoved()
 			|| possibleTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
@@ -2654,11 +2683,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 	private void handleHeal(Player player, SpellDef spell, Spells spellEnum, Mob retaliationTarget) {
 		try {
-			final long now = System.currentTimeMillis();
-			final long cooldownUntil = player.getAttribute("heal_spell_cooldown_until", 0L);
-			if (cooldownUntil > now) {
-				int seconds = Math.max(1, (int) Math.ceil((cooldownUntil - now) / 1000.0D));
-				player.message("You need to wait " + seconds + " seconds before casting another heal spell");
+			if (player.getAttribute(HEAL_SPELL_ACTIVE_KEY, false)) {
+				player.message("A healing spell is already restoring your health");
 				return;
 			}
 			final int currentHits = player.getSkills().getLevel(Skill.HITS.id());
@@ -2672,32 +2698,72 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				return;
 			}
 
-			int healAmount = 0;
-			switch (spellEnum) {
-				case WEAK_HEAL:
-					healAmount = 3;
-					break;
-				case STRONG_HEAL:
-					healAmount = 12;
-					break;
-				default:
-					return;
-			}
-
-			final int nextHits = Math.min(maxHits, currentHits + healAmount);
-			player.getSkills().setLevel(Skill.HITS.id(), nextHits, true);
-			final int healed = nextHits - currentHits;
-			if (healed > 0) {
-				player.getUpdateFlags().addHitSplat(new HitSplat(player, HitSplat.TYPE_HEAL, healed));
-			}
+			final int healPerPulse = getHealSpellPulseAmount(player, spellEnum);
 			final int effectType = getHealCombatEffect(spellEnum);
 			if (effectType > 0) {
 				player.getUpdateFlags().setCombatEffect(new CombatEffect(player, effectType));
 			}
-			player.setAttribute("heal_spell_cooldown_until", now + HEAL_SPELL_COOLDOWN_MS);
+			player.setAttribute(HEAL_SPELL_ACTIVE_KEY, true);
+			final HealOverTimeEvent healEvent = new HealOverTimeEvent(player, healPerPulse, getHealSpellTickDelay(player));
+			if (!player.getWorld().getServer().getGameEventHandler().add(healEvent)) {
+				player.setAttribute(HEAL_SPELL_ACTIVE_KEY, false);
+				player.message("A healing spell is already restoring your health");
+				return;
+			}
 			finalizeSpell(player, spell, DEFAULT, true, false);
 		} finally {
 			resumeAutoRetaliateAfterSelfHeal(player, retaliationTarget);
+		}
+	}
+
+	private int getHealSpellPulseAmount(final Player player, final Spells spellEnum) {
+		final int magicOffense = Math.max(0, player.getMagicOffense());
+		if (spellEnum == Spells.STRONG_HEAL) {
+			return 2 + (magicOffense / 30);
+		}
+		return 1 + (magicOffense / 45);
+	}
+
+	private int getHealSpellTickDelay(final Player player) {
+		final int gameTick = Math.max(1, player.getConfig().GAME_TICK);
+		return Math.max(1, (HEAL_SPELL_INTERVAL_MS + gameTick - 1) / gameTick);
+	}
+
+	private static final class HealOverTimeEvent extends GameTickEvent {
+		private final Player player;
+		private final int healPerPulse;
+		private int pulsesRemaining = HEAL_SPELL_PULSES;
+
+		private HealOverTimeEvent(final Player player, final int healPerPulse, final int tickDelay) {
+			super(player.getWorld(), player, tickDelay, "Heal spell over time", DuplicationStrategy.ONE_PER_MOB);
+			this.player = player;
+			this.healPerPulse = Math.max(1, healPerPulse);
+		}
+
+		@Override
+		public void run() {
+			if (player.isRemoved() || !player.loggedIn() || pulsesRemaining <= 0) {
+				stop();
+				return;
+			}
+			pulsesRemaining--;
+			final int currentHits = player.getSkills().getLevel(Skill.HITS.id());
+			final int maxHits = player.getSkills().getMaxStat(Skill.HITS.id());
+			if (currentHits < maxHits) {
+				final int healed = Math.min(healPerPulse, maxHits - currentHits);
+				player.getSkills().setLevel(Skill.HITS.id(), currentHits + healed, true);
+				player.getUpdateFlags().addHitSplat(new HitSplat(player, HitSplat.TYPE_HEAL, healed));
+				ActionSender.sendStat(player, Skill.HITS.id());
+			}
+			if (pulsesRemaining <= 0) {
+				stop();
+			}
+		}
+
+		@Override
+		public void stop() {
+			player.setAttribute(HEAL_SPELL_ACTIVE_KEY, false);
+			super.stop();
 		}
 	}
 

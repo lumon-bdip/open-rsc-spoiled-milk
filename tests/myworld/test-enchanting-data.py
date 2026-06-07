@@ -278,6 +278,12 @@ def ensure_source_mappings_exist() -> None:
             fail(f"LawJewelry.java missing destination {destination}")
     if '"teleport".equalsIgnoreCase(command)' not in law_text:
         fail("LawJewelry.java should handle Teleport as the law amulet destination command")
+    for snippet in (
+        "return new Destination[] {Destination.COOKING_GUILD, Destination.PRAYER_GUILD};",
+        "return new Destination[] {Destination.FISHING_GUILD, Destination.WOODCUTTING_GUILD};",
+    ):
+        if snippet not in law_text:
+            fail(f"LawJewelry.java has incorrect law amulet tier destination pairing: {snippet}")
 
     for snippet in (
         "hasInventoryUseCommand(def.getCommand())",

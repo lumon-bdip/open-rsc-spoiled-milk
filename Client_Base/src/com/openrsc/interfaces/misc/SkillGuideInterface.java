@@ -1033,7 +1033,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(114, "7", "Mischief Imp - Does not engage in combat");
 			addSummonGuide(8, "14", "Ironhide Bear - Hits 14 +1/8; dmg 2 +1/30");
 			addSummonGuide(0, "20", "Sacred Unicorn - Does not engage in combat");
-			addSummonGuide(43, "26", "Duskwind Bat - Hits 7 +1/9; dmg 4 +1/18");
+			addSummonGuide(43, "26", "Duskwind Bat - Hits 7 +1/9; dmg 3 +1/18");
 			addSummonGuide(241, "33", "Pack Rat - Does not engage in combat");
 			addSummonGuide(295, "39", "Bound Battleaxe - Hits 8 +1/10; dmg 6 +1/16");
 			addSummonGuide(296, "45", "Mourning Unicorn - Does not engage in combat");
@@ -1046,7 +1046,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(114, "7", "Mischievous - prevents enemy aggro until you attack");
 			addSummonGuide(8, "14", "Tank - absorbs 60% of incoming damage");
 			addSummonGuide(0, "20", "Divine - grants +10 prayer points");
-			addSummonGuide(43, "26", "Evasive - 10% chance to ignore absorbed damage");
+			addSummonGuide(43, "26", "Vampirism - heals owner for damage dealt");
 			addSummonGuide(241, "33", "Hoarder - certs all matching selected items");
 			addSummonGuide(295, "39", "Relentless - 15% chance for bonus damage");
 			addSummonGuide(296, "45", "Reverent - auto-buries bones for double XP");
@@ -1616,8 +1616,8 @@ class MagicSpellMenuItem extends SkillMenuEntry {
 		if (description.equals("Converts an item into gold")) {
 			return "Turns items into coins";
 		}
-		if (description.equals("A strength 25 missile attack!")) {
-			return "Strength 25 missile attack";
+		if (description.equals("Dark magic that splashes nearby foes")) {
+			return "Area dark magic damage";
 		}
 		return description;
 	}

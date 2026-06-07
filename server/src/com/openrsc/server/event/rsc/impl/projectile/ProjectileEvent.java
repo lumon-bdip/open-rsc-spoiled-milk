@@ -289,7 +289,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		opponent.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
 		final int damageDealt = Math.min(damage, lastHits);
 		opponent.getUpdateFlags().setDamage(new Damage(opponent, damage));
-		opponent.getUpdateFlags().addHitSplat(new HitSplat(opponent, HitSplat.TYPE_STANDARD, damage));
+				opponent.getUpdateFlags().addHitSplat(new HitSplat(opponent, Summoning.getSummonDamageHitSplatType(caster), damage));
 		if (impactEffectType > 0) {
 			opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, impactEffectType));
 		}
@@ -321,7 +321,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		} else if (Summoning.isSummon(caster) && opponent.isNpc()) {
 			Summoning.creditSummonProjectileDamage(caster, opponent, Math.min(damage, lastHits), type);
 		}
-		Summoning.applySummonLifesteal(caster, damageDealt);
+		Summoning.applySummonLifesteal(caster, opponent, damageDealt);
 
 		// Update party menu with new HITS stat.
 		if (opponent.isPlayer()) {

@@ -140,7 +140,7 @@
       </requiredRunes>
       <exp>120</exp>
       <name>Lesser Heal</name>
-      <description>Restores a small amount of health</description>
+      <description>Restores health over 9 seconds</description>
       <members>false</members>
       <evil>false</evil>
     </SpellDef>
@@ -500,7 +500,7 @@
       </requiredRunes>
       <exp>480</exp>
       <name>Iban blast</name>
-      <description>A strength 25 missile attack!</description>
+      <description>Dark magic that splashes nearby foes</description>
       <members>true</members>
       <evil>true</evil>
     </SpellDef>
@@ -515,7 +515,7 @@
       </requiredRunes>
       <exp>520</exp>
       <name>Greater Heal</name>
-      <description>Restores a strong amount of health</description>
+      <description>Restores more health over 9 seconds</description>
       <members>true</members>
       <evil>false</evil>
     </SpellDef>

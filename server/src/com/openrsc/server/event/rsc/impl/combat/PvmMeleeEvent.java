@@ -224,8 +224,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
 		final int damageDealt = Math.min(damage, lastHits);
 		target.getUpdateFlags().setDamage(new Damage(target, damage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_STANDARD, damage));
-		Summoning.applySummonLifesteal(hitter, damageDealt);
+		target.getUpdateFlags().addHitSplat(new HitSplat(target, Summoning.getSummonDamageHitSplatType(hitter), damage));
+		Summoning.applySummonLifesteal(hitter, target, damageDealt);
 		if (target.isNpc() && hitter.isPlayer()) {
 			Npc n = (Npc) target;
 			Player player = ((Player) hitter);

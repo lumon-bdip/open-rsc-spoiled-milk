@@ -23,10 +23,7 @@ public class HicktonArcheryShop extends AbstractShop {
 		new Item(ItemId.IRON_ARROW_HEADS.id(), 1000), new Item(ItemId.STEEL_ARROW_HEADS.id(), 1000), new Item(ItemId.MITHRIL_ARROW_HEADS.id(), 1000),
 		new Item(ItemId.SHORTBOW.id(), 4), new Item(ItemId.LONGBOW.id(), 2), new Item(ItemId.OAK_SHORTBOW.id(), 4),
 		new Item(ItemId.OAK_LONGBOW.id(), 4), new Item(ItemId.WILLOW_SHORTBOW.id(), 3), new Item(ItemId.WILLOW_LONGBOW.id(), 3),
-		new Item(ItemId.MAPLE_SHORTBOW.id(), 2), new Item(ItemId.MAPLE_LONGBOW.id(), 2), new Item(ItemId.YEW_SHORTBOW.id(), 1),
-		new Item(ItemId.YEW_LONGBOW.id(), 1), new Item(ItemId.MAGIC_SHORTBOW.id(), 1), new Item(ItemId.MAGIC_LONGBOW.id(), 1),
-		new Item(ItemId.CROSSBOW.id(), 2), new Item(ItemId.OAK_CROSSBOW.id(), 2), new Item(ItemId.WILLOW_CROSSBOW.id(), 2),
-		new Item(ItemId.MAPLE_CROSSBOW.id(), 1), new Item(ItemId.YEW_CROSSBOW.id(), 1), new Item(ItemId.MAGIC_CROSSBOW.id(), 1));
+		new Item(ItemId.CROSSBOW.id(), 2), new Item(ItemId.OAK_CROSSBOW.id(), 2), new Item(ItemId.WILLOW_CROSSBOW.id(), 2));
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {

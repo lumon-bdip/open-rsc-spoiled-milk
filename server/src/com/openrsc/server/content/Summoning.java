@@ -22,6 +22,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
+import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.CollisionFlag;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -70,7 +71,7 @@ public final class Summoning {
 	private static final String KIND_SPIRIT_HELLHOUND = "spirit_hellhound";
 	private static final String TRAIT_NONE = "";
 	private static final String TRAIT_TANK = "tank";
-	private static final String TRAIT_EVASIVE = "evasive";
+	private static final String TRAIT_VAMPIRISM = "vampirism";
 	private static final String TRAIT_RELENTLESS = "relentless";
 	private static final String TRAIT_FEAR = "fear";
 	private static final String TRAIT_SPELL_ECHO = "spell_echo";
@@ -124,7 +125,7 @@ public final class Summoning {
 		cost(ItemId.BONES.id(), 1)
 	);
 	private static final SummonProfile GIANT_BAT_PROFILE = combatProfile(
-		"Duskwind Bat", 26, 110, NpcId.GIANT_BAT.id(), KIND_GIANT_BAT, 7, 9, 4, 18, 30, TRAIT_EVASIVE,
+		"Duskwind Bat", 26, 110, NpcId.GIANT_BAT.id(), KIND_GIANT_BAT, 7, 9, 3, 18, 30, TRAIT_VAMPIRISM,
 		cost(ItemId.LIFE_RUNE.id(), 1),
 		cost(ItemId.AIR_RUNE.id(), 1),
 		cost(ItemId.BODY_RUNE.id(), 1),
@@ -579,7 +580,7 @@ public final class Summoning {
 		}
 	}
 
-	public static void applySummonLifesteal(final Mob hitter, final int damageDealt) {
+	public static void applySummonLifesteal(final Mob hitter, final Mob target, final int damageDealt) {
 		if (!isSummon(hitter) || damageDealt <= 0) {
 			return;
 		}
@@ -603,6 +604,13 @@ public final class Summoning {
 		owner.getSkills().setLevel(Skill.HITS.id(), currentHits + healed);
 		owner.getUpdateFlags().addHitSplat(new HitSplat(owner, HitSplat.TYPE_HEAL, healed));
 		ActionSender.sendStat(owner, Skill.HITS.id());
+		if (target != null && !target.isRemoved() && target.getIndex() != -1 && summon.getIndex() != -1) {
+			target.getUpdateFlags().setProjectile(new Projectile(target, summon, Projectile.SUMMON_BAT_VAMPIRISM));
+		}
+	}
+
+	public static int getSummonDamageHitSplatType(final Mob hitter) {
+		return isSummon(hitter) ? HitSplat.TYPE_ARMOR_PROC : HitSplat.TYPE_STANDARD;
 	}
 
 	public static void recordCombatSummonEngagement(final Player owner, final Npc target) {
@@ -685,10 +693,6 @@ public final class Summoning {
 		if (TRAIT_FEAR.equals(trait) && DataConversions.getRandom().nextDouble() < 0.20D) {
 			owner.message("@gre@Your ghost frightens the attacker.");
 			return 0;
-		}
-		if (TRAIT_EVASIVE.equals(trait) && DataConversions.getRandom().nextDouble() < 0.10D) {
-			owner.message("@gre@Your giant bat evades the blow.");
-			return damage;
 		}
 		final int absorbPercent = summon.getAttribute(SUMMON_ABSORB_PERCENT_KEY, 0);
 		final int summonHits = getSummonCurrentHits(summon);

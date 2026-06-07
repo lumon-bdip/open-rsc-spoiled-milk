@@ -177,10 +177,9 @@ from the summon display name in lowercase with spaces converted to dashes:
 - cost: `1 Life rune`, `1 Air rune`, `1 Body rune`, `1 Nature rune`,
   `1 Bat bones`
 - health: `7`, plus `1` every `9` Summoning levels beyond requirement
-- max damage: `4`, plus `1` every `18` Summoning levels beyond requirement
+- max damage: `3`, plus `1` every `18` Summoning levels beyond requirement
 - damage absorption: `30%`
-- trait: `Evasive`; `10%` chance to avoid damage it would absorb, without
-  reducing damage dealt to the owner
+- trait: `Vampirism`; heals the owner for damage dealt
 
 ### Pack Rat
 

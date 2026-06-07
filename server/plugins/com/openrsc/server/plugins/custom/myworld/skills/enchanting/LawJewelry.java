@@ -256,9 +256,9 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			case 1:
 				return new Destination[] {Destination.CRAFTING_GUILD, Destination.MINING_GUILD};
 			case 2:
-				return new Destination[] {Destination.WOODCUTTING_GUILD, Destination.PRAYER_GUILD};
+				return new Destination[] {Destination.COOKING_GUILD, Destination.PRAYER_GUILD};
 			case 3:
-				return new Destination[] {Destination.FISHING_GUILD, Destination.COOKING_GUILD};
+				return new Destination[] {Destination.FISHING_GUILD, Destination.WOODCUTTING_GUILD};
 			case 4:
 				return new Destination[] {Destination.HEROES_GUILD, Destination.WIZARDS_GUILD};
 			case 5:

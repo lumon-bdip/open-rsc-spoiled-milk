@@ -237,7 +237,31 @@ def main() -> None:
         "NpcId.HEAD_CHEF.id()",
     ))
 
-    for path in (HICKTON_PATH, KING_LATHAS_PATH, GULLUCK_PATH):
+    ensure_contains(HICKTON_PATH, (
+        "new Item(ItemId.TIN_ARROWS.id(), 1000)",
+        "new Item(ItemId.MITHRIL_BOLTS.id(), 1000)",
+        "new Item(ItemId.MITHRIL_ARROW_HEADS.id(), 1000)",
+        "ItemId.TIN_ARROWS.id()",
+        "ItemId.COPPER_ARROWS.id()",
+        "ItemId.WILLOW_SHORTBOW.id()",
+        "ItemId.WILLOW_LONGBOW.id()",
+        "ItemId.WILLOW_CROSSBOW.id()",
+    ))
+    ensure_not_contains(HICKTON_PATH, (
+        "ItemId.MAPLE_SHORTBOW.id()",
+        "ItemId.MAPLE_LONGBOW.id()",
+        "ItemId.YEW_SHORTBOW.id()",
+        "ItemId.YEW_LONGBOW.id()",
+        "ItemId.MAGIC_SHORTBOW.id()",
+        "ItemId.MAGIC_LONGBOW.id()",
+        "ItemId.MAPLE_CROSSBOW.id()",
+        "ItemId.YEW_CROSSBOW.id()",
+        "ItemId.MAGIC_CROSSBOW.id()",
+        "ItemId.CROSSBOW_BOLTS.id()",
+        "ItemId.TITAN_STEEL_BOLTS.id()",
+    ))
+
+    for path in (KING_LATHAS_PATH, GULLUCK_PATH):
         ensure_contains(path, (
             "new Item(ItemId.TIN_ARROWS.id(), 1000)",
             "new Item(ItemId.MITHRIL_BOLTS.id(), 1000)",

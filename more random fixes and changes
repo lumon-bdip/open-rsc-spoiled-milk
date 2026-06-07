@@ -1,38 +1,36 @@
-# More Random Fixes And Changes
+[done] Hickton store needs rebalancing, tiers 1-6
+- Hickton now stops at willow bows/crossbows while retaining tier 1-6 ammo, bolts, and arrowheads.
 
-Status legend:
-- [ ] Open
-- [~] In progress
-- [x] Done
+[done] summon damage isn't displaying in yellow so it's tough to tell when it's properly hitting.
+- Combat summon direct damage now uses the yellow typed hit splat.
 
-## Combat And Summons
+[done] move cooking and prayer guild teleports to emerald amulet, fishing and woodcutting to ruby
+- Emerald law amulets now offer Cooking Guild and Prayer Guild.
+- Ruby law amulets now offer Fishing Guild and Woodcutting Guild.
 
-- [x] Summons still visually stutter/de-aggro during combat. Review summon aggro so it is maintained without allowing summons to kill safely while the player avoids damage.
-- [x] Combat level needs adjustment. Use the player's highest main combat style, ignore the other two main styles, and count Prayer, Summoning, and Hits as secondary. Full considered stats should cap around combat level 100. NPC danger colors should use the new player combat level instead of old stat-slot math.
+[done] i'd like to make sure enemies are dropping their proper god robes, i just encountered druids around the guthix altar dropping simple druid robes which are generic god robes rather than guthix robes. if they are intended to be guthix robes i'd like them named as such. since the zamorak robes are named as such. the goal is to have a less ambiguous line of prayer based equipment, removing generic robes and armors with the execptions being the paladin shields, maces, cossbows, and staff lines.
+- Server item defs already named the druid robe IDs as Robe of Guthix; the client embedded definitions still showed Druids robe and have been corrected.
 
-## Bank Planning
+[done] iban blast spell needs a description change and should be updated to be aoe, as well as possible other rebalancing to fit in better at it's level
+- Description now calls out nearby splash damage.
+- Primary hit keeps the existing Iban formula; nearby NPC splash uses a lower max of 8.
 
-- [x] Bank structure needs review before implementation. Current tabs are effectively sections of one page; explore better manually maintained tabs, sorting, and categorization options. Jot notes here for later review.
+[done] altar of guthix at 588,667 needs to move towards 666 1 tile
+- Guthix altar moved to 588,666.
 
-Notes:
-- Server bank storage is a single ordered `List<Item>`; add/remove and swap/insert operate on global slots.
-- Client bank pages are derived from that same ordered list in chunks of 48, not persisted tabs.
-- A real tab feature should add explicit tab metadata or boundaries server-side, persist it with the bank, and have the client render those boundaries instead of interpreting pages as categories.
-- Sorting should be separate from manual tabs. Recommended controls: manual order within tab, sort current tab, sort all, and move selected item to tab.
-- Avoid automatic categorization as the primary model because it would fight player-maintained organization; it can be an optional "suggest/sort" command later.
+[done] "examine" on wizard guild teleports should tell where they go to
+- Second portal option now reports the destination instead of activating the teleport.
 
-## World Placement
+[done] add saradomin altar to 321,571 to 309,571
+- Added Saradomin altars at 309,571 and 321,571.
 
-- [x] Relocate Nurmof into the Mining Guild.
+[done] changing healing spells to heal over time spells. 9 seconds, heals every 3 seconds, can't be re-applied while in progress can't have more than one heal spell in progress at a time, otherwise no cooldown needed anymore. minimum 1 hp healed per 3 second tick for lesser heal spell and 2 for greater heal spell, and they will build up from there with magic power
+- Lesser and Greater Heal now run as one active 3-pulse heal-over-time effect.
 
-## Jewelry
+[needs reproduction] objects load before terrain, looks awkward, i like things loading at a distance, but terrain needs to match objects
+- Inspected the main client region path: terrain sections are loaded before retained object models are re-added in loadNextRegion.
+- Avoiding another speculative scene-loading patch until we have a specific reproduction area or screenshot.
 
-- [x] Law amulets should cost law runes to recharge: 5 law runes per missing charge per tier. Example: empty sapphire tier costs 15 runes; emerald tier with 1 charge costs 20 runes.
-
-## Gathering UI
-
-- [x] Woodcutting shows batching 30 even though it gathers like mining and still only produces one resource before stopping. Remove or correct the misleading batching display.
-
-## Crafting UI
-
-- [x] Urgent: crafting UI for willow shows unstrung shortbow and longbow as unobtainium. Fully audit unstrung bows so crafting, visuals, and guides work for every wood tier.
+[done] bat combat stats need slightly lowered attack power now that it life steals, and trait of evasive can be removed, as well as it's effect, and replaced with vampirism, in guide as well
+- Duskwind Bat max hit lowered from 4 to 3.
+- Evasive trait removed and replaced with Vampirism in code, client guide, client summon tooltip, and summoning plan doc.

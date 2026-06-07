@@ -53,6 +53,7 @@ def main():
         "Projectiles/blow-smoke/blow-smoke8.png": (32, 16),
         "Projectiles/holy-magic/holy-magic1.png": (32, 32),
         "Projectiles/holy-magic/holy-magic11.png": (32, 32),
+        "Projectiles/summon-bat-vampirism-reverse/summon-bat-vampirism-reverse.png": (256, 32),
         "On Player/dragon-breath/dragon-breath.png": (384, 144),
         "On Player/alchemy/alchemy.png": (192, 16),
         "On Player/divine-grace/divine-grace.png": (816, 48),
@@ -65,7 +66,7 @@ def main():
     client = read("Client_Base/src/orsc/mudclient.java")
     require(client, [
         "public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;",
-        "public static final int CUSTOM_PROJECTILE_COUNT = 16;",
+        "public static final int CUSTOM_PROJECTILE_COUNT = 17;",
         'if ("water-eruption".equals(animationName))',
         "targetFrames, maxTargetSize, 5, 4, 20, 0);",
         'if ("water-vortex".equals(animationName))',
@@ -110,7 +111,8 @@ def main():
     ], "mudclient.java")
     require(client, [
         '"dev/myworld/assets/sprites/UI/magic"',
-        '"spore", "bolt", "wizards-magic", "holy-magic"',
+        '"spore", "bolt", "wizards-magic", "holy-magic",',
+        '"summon-bat-vampirism-reverse"',
         'return "zamoraks-void";',
         'return "claws-of-guthix";',
         'return "thunder-wave";',
@@ -131,9 +133,11 @@ def main():
         "BOLT(20)",
         "WIZARDS_MAGIC(21)",
         "HOLY_MAGIC(22)",
+        "SUMMON_BAT_VAMPIRISM(23)",
         'new SpriteDef("bolt projectile", mudclient.spriteProjectile + 2, "projectiles:2", 20)',
         'new SpriteDef("wizards magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 21)',
         'new SpriteDef("holy magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 22)',
+        'new SpriteDef("summon bat vampirism projectile", mudclient.spriteProjectile + 1, "projectiles:1", 23)',
     ], "EntityHandler.java")
     require(read("server/conf/server/defs/SpellDef.xml"), spell_names, "SpellDef.xml")
 

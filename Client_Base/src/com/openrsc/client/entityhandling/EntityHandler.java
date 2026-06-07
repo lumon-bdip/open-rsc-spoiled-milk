@@ -474,7 +474,8 @@ public class EntityHandler {
 		BRANCH_SPORE(19),
 		BOLT(20),
 		WIZARDS_MAGIC(21),
-		HOLY_MAGIC(22);
+		HOLY_MAGIC(22),
+		SUMMON_BAT_VAMPIRISM(23);
 
 		private final int value;
 
@@ -515,6 +516,7 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("bolt projectile", mudclient.spriteProjectile + 2, "projectiles:2", 20));
 		projectiles.add(new SpriteDef("wizards magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 21));
 		projectiles.add(new SpriteDef("holy magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 22));
+		projectiles.add(new SpriteDef("summon bat vampirism projectile", mudclient.spriteProjectile + 1, "projectiles:1", 23));
 	}
 
 	public enum GUIPARTS {
@@ -3123,8 +3125,8 @@ public class EntityHandler {
 		items.add(new ItemDef("Bat bones", "Ew it's a pile of bones", "Bury", 1, 20, Config.S_WANT_CUSTOM_SPRITES ? "items:bat_bones" : "items:20", false, false, 0, 0, true, false, true, 604));
 		items.add(new ItemDef("wax Bucket", "It's a wooden bucket", "", 2, 22, "items:22", false, false, 0, 16777181, true, true, true, 605));
 		items.add(new ItemDef("Excalibur", "This used to belong to king Arthur", "", 200, 115, "items:115", false, true, 16, 10072780, true, true, false, 606));
-		items.add(new ItemDef("Druids robe", "I feel closer to the Gods when I am wearing this", "", 40, 87, "items:87", false, true, 64, 16777215, true, false, true, 607));
-		items.add(new ItemDef("Druids robe", "Keeps a druids's knees nice and warm", "", 30, 88, "items:88", false, true, 128, 16777215, true, false, true, 608));
+		items.add(new ItemDef("Robe of Guthix", "A robe top blessed by Guthix", "", 40, 87, "items:87", false, true, 64, 16777215, true, false, true, 607));
+		items.add(new ItemDef("Robe of Guthix", "A robe bottom blessed by Guthix", "", 30, 88, "items:88", false, true, 128, 16777215, true, false, true, 608));
 		items.add(new ItemDef("Eye patch", "It makes me look very piratical", "", 2, 198, "items:198", false, true, 32, 0, true, false, true, 609));
 		items.add(new ItemDef("Unenchanted Dragonstone Amulet", "I wonder if I can get this enchanted", "", 17625, 125, "items:125", false, true, 1024, 12255487, true, false, true, 610));
 		items.add(new ItemDef("Retired item", "This item has been retired.", "", 0, 0, "items:0", false, false, 0, 0, true, false, true, 611));
@@ -7144,7 +7146,7 @@ public class EntityHandler {
 		runes.clear();
 		runes.put(35, 1);
 		runes.put(36, 1);
-		spells.add(new SpellDef("Lesser Heal", "Restores a small amount of health",
+		spells.add(new SpellDef("Lesser Heal", "Restores health over 9 seconds",
 			5, 0, 2, (LinkedHashMap<Integer, Integer>) runes.clone()));
 		runes.clear();
 		runes.put(31, 1);
@@ -7283,13 +7285,13 @@ public class EntityHandler {
 		runes.clear();
 		runes.put(31, 5);
 		runes.put(38, 1);
-		spells.add(new SpellDef("Iban blast", "A strength 25 missile attack!",
+		spells.add(new SpellDef("Iban blast", "Dark magic that splashes nearby foes",
 			50, 2, 2, (LinkedHashMap<Integer, Integer>) runes.clone()));
 		runes.clear();
 		runes.put(36, 2);
 		runes.put(40, 1);
 		runes.put(825, 1);
-		spells.add(new SpellDef("Greater Heal", "Restores a strong amount of health",
+		spells.add(new SpellDef("Greater Heal", "Restores more health over 9 seconds",
 			50, 0, 3, (LinkedHashMap<Integer, Integer>) runes.clone()));
 		runes.clear();
 		runes.put(33, 4);
