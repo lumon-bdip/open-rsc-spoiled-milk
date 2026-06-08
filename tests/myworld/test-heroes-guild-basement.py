@@ -36,6 +36,23 @@ CAVERN_ROWS = {
     3294: (347, 377),
     3295: (350, 375),
 }
+ORIGINAL_ORE_ROWS = {
+    3276: ((356, 356), (364, 376)),
+    3277: ((353, 357), (365, 376)),
+    3278: ((352, 360), (365, 376)),
+    3279: ((352, 376),),
+    3280: ((353, 375),),
+    3281: ((354, 374),),
+    3282: ((357, 367),),
+    3283: ((359, 366),),
+}
+ORIGINAL_ELEVATION_SAMPLES = {
+    (356, 3276): 54,
+    (358, 3278): 40,
+    (359, 3281): 10,
+    (360, 3282): 6,
+    (366, 3283): 48,
+}
 
 
 def require(condition, message):
@@ -119,9 +136,16 @@ chamber_tiles = {
     for y in range(3264, 3276)
 }
 occupied_tiles = cavern_tiles | chamber_tiles
+original_ore_tiles = {
+    (x, y)
+    for y, spans in ORIGINAL_ORE_ROWS.items()
+    for minimum_x, maximum_x in spans
+    for x in range(minimum_x, maximum_x + 1)
+}
+expanded_only_tiles = cavern_tiles - original_ore_tiles
 
 for x, y in cavern_tiles:
-    _, texture, overlay, roof, horizontal_wall, vertical_wall, diagonal = tile(
+    elevation, texture, overlay, roof, horizontal_wall, vertical_wall, diagonal = tile(
         server_sector, x, y
     )
     require(
@@ -139,6 +163,20 @@ for x, y in cavern_tiles:
         vertical_wall == expected_north_wall,
         f"Cavern north wall is incorrect at {x},{y}",
     )
+
+for point, expected_elevation in ORIGINAL_ELEVATION_SAMPLES.items():
+    require(
+        tile(server_sector, *point)[0] == expected_elevation,
+        f"Original ore elevation changed at {point[0]},{point[1]}",
+    )
+
+expanded_elevations = [tile(server_sector, x, y)[0] for x, y in expanded_only_tiles]
+require(min(expanded_elevations) < 40, "Expanded cavern never dips like the original mine")
+require(max(expanded_elevations) > 100, "Expanded cavern never rises toward its edges")
+require(
+    sum(1 for elevation in expanded_elevations if elevation == 128) < len(expanded_elevations) // 10,
+    "Expanded cavern still has a visible flat 128-elevation plateau",
+)
 
 for x, y in cavern_tiles:
     if (x + 1, y) not in occupied_tiles:

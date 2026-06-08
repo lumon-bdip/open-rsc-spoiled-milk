@@ -25,6 +25,7 @@ ALPHA_69_SECTOR_SHA256 = "93fe6421608137d5925bf267d37ab2e59e77770a3c71ffb59ec8fb
 ALPHA_70_SECTOR_SHA256 = "33353a42556f7bf3d3283102930e9612169103700ad58a00e46ffbcfb11bae6a"
 ALPHA_71_SECTOR_SHA256 = "37422057a1618507520e6b1032d5eb36f9d09bd9d82245d9861000ebb5ee1d2f"
 EXPANDED_CAVERN_SECTOR_SHA256 = "3091372d06193f64ddb27442be6ef9e5dd9a93044f67555930c8ebd0d0d24f84"
+ALPHA_72_SECTOR_SHA256 = "823355f02c279495ec370f2f10e99ec498c4650593b1d71dc720c3e5196e0620"
 SUPPORTED_SOURCE_HASHES = {
     BASE_SECTOR_SHA256,
     ALPHA_68_SECTOR_SHA256,
@@ -33,6 +34,7 @@ SUPPORTED_SOURCE_HASHES = {
     ALPHA_70_SECTOR_SHA256,
     ALPHA_71_SECTOR_SHA256,
     EXPANDED_CAVERN_SECTOR_SHA256,
+    ALPHA_72_SECTOR_SHA256,
 }
 
 TARGETS = (
@@ -63,6 +65,17 @@ CAVERN_ROWS = {
     3293: (345, 378),
     3294: (347, 377),
     3295: (350, 375),
+}
+
+ORIGINAL_ORE_ROWS = {
+    3276: ((356, 356), (364, 376)),
+    3277: ((353, 357), (365, 376)),
+    3278: ((352, 360), (365, 376)),
+    3279: ((352, 376),),
+    3280: ((353, 375),),
+    3281: ((354, 374),),
+    3282: ((357, 367),),
+    3283: ((359, 366),),
 }
 
 
@@ -102,6 +115,29 @@ def set_tile(
         if value is not None:
             values[index] = value
     struct.pack_into(">BBBBBBI", sector, offset, *values)
+
+
+def is_original_ore_tile(x: int, y: int) -> bool:
+    return any(
+        minimum_x <= x <= maximum_x
+        for minimum_x, maximum_x in ORIGINAL_ORE_ROWS.get(y, ())
+    )
+
+
+def expanded_cavern_elevation(x: int, y: int) -> int:
+    # A broad bowl centered south-west of the old ore stalk. It keeps the new
+    # cavern visually closer to the dipped mine floor while rising at the wall.
+    dx = abs(x - 363)
+    dy = abs(y - 3287)
+    elevation = 18 + (dx * 4) + (dy * 9)
+    if x < 352:
+        elevation += (352 - x) * 5
+    if x > 374:
+        elevation += (x - 374) * 5
+    if y > 3291:
+        elevation += (y - 3291) * 7
+    elevation += ((x * 3 + y * 5) % 9) - 4
+    return max(14, min(124, elevation))
 
 
 def build_patched_sector(source: bytes) -> bytes:
@@ -184,10 +220,12 @@ def build_patched_sector(source: bytes) -> bytes:
     # Use the existing brown underground floor and retain the terrain's
     # underlying elevation variation for a natural cavern surface.
     for x, y in cavern_tiles:
+        elevation = None if is_original_ore_tile(x, y) else expanded_cavern_elevation(x, y)
         set_tile(
             sector,
             x,
             y,
+            elevation=elevation,
             texture=176,
             overlay=0,
             roof=0,
