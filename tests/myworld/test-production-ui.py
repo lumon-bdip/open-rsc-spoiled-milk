@@ -179,8 +179,9 @@ def main() -> None:
     )
     require(
         do_skill_interface_text,
-        "return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker();",
-        "Production picker detection should include smithing and furnace picker pages",
+        "return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker()\n"
+        "\t\t\t|| isTeleportDestinationPicker();",
+        "Production picker detection should include smithing, furnace, and teleport picker pages",
     )
     require(
         do_skill_interface_text,

@@ -144,6 +144,7 @@ public final class mudclient implements Runnable {
 	private static final int SUMMON_CHARGE_FRAME_TICKS = 3;
 	private static final int SUMMON_CHARGE_LOOP_CYCLE_REDUCTION = 1;
 	private static final int SUMMON_CHARGE_LOOP_X_OFFSET = -5;
+	private static final int SUMMON_BAT_VAMPIRISM_PROJECTILE_SIZE = 144;
 	private static final int SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT = 34;
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
 	public static final int CUSTOM_PROJECTILE_COUNT = 17;
@@ -21704,6 +21705,9 @@ public final class mudclient implements Runnable {
 	private int getProjectileSceneSize(SpriteDef projectile, boolean enemyProjectile) {
 		if (projectile != null && projectile.id == PROJECTILE_TYPES.THROWING_KNIFE.id()) {
 			return getProjectileSceneSizeForAnimatedEnemy(projectile, enemyProjectile, 64);
+		}
+		if (projectile != null && projectile.id == PROJECTILE_TYPES.SUMMON_BAT_VAMPIRISM.id()) {
+			return SUMMON_BAT_VAMPIRISM_PROJECTILE_SIZE;
 		}
 		if (projectile != null && projectile.id == COMBAT_EFFECT_WOOD_DRILL) {
 			return 144;

@@ -22,10 +22,11 @@ def require(text: str, snippet: str, description: str) -> None:
 
 def main() -> None:
 	player_login = PLAYER_LOGIN.read_text(encoding="utf-8")
-	require(player_login, '"devduck".equalsIgnoreCase(player.getUsername())', "devduck staff group guard")
-	require(player_login, "player.setGroupID(Group.DEV)", "devduck developer group assignment")
-	require(player_login, '"anactualduck".equalsIgnoreCase(player.getUsername())', "anactualduck staff group guard")
+	require(player_login, '"devduck".equals(staffName)', "devduck staff group guard")
+	require(player_login, "player.setGroupID(Group.OWNER)", "devduck owner group assignment")
+	require(player_login, '"anactualduck".equals(staffName)', "anactualduck staff group guard")
 	require(player_login, "player.setGroupID(Group.MOD)", "anactualduck moderator group assignment")
+	require(player_login, "public boolean blockPlayerLogin(Player player) {\n\t\treturn true;", "staff login trigger activation")
 
 	moderator = MODERATOR_COMMANDS.read_text(encoding="utf-8")
 	require(moderator, 'command.equalsIgnoreCase("s")', "::s system broadcast alias")

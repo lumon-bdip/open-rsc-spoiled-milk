@@ -11,6 +11,7 @@ public class ProductionSession {
 	public static final int TYPE_SMITHING_MATERIAL = 4;
 	public static final int TYPE_FURNACE_CATEGORY = 5;
 	public static final int TYPE_FURNACE_MATERIAL = 6;
+	public static final int TYPE_TELEPORT_DESTINATION = 7;
 
 	private final int type;
 	private final String title;
@@ -20,7 +21,7 @@ public class ProductionSession {
 	public ProductionSession(int type, String title, int inputItemId, List<ProductionRecipe> recipes) {
 		if (type != TYPE_SMITHING && type != TYPE_CRAFTING && type != TYPE_SMELTING
 			&& type != TYPE_SMITHING_MATERIAL && type != TYPE_FURNACE_CATEGORY
-			&& type != TYPE_FURNACE_MATERIAL) {
+			&& type != TYPE_FURNACE_MATERIAL && type != TYPE_TELEPORT_DESTINATION) {
 			throw new IllegalArgumentException("Unknown production session type: " + type);
 		}
 		if (title == null || title.isEmpty()) {

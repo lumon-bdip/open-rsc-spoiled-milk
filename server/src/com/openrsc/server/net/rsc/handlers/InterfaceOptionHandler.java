@@ -210,6 +210,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 	private void clearProductionState(Player player, ProductionSession session) {
 		player.removeAttribute("production_session");
 		player.removeAttribute("production_starter");
+		player.removeAttribute("production_context_item_uid");
 		ActionSender.hideProductionInterface(player, session.getType());
 	}
 

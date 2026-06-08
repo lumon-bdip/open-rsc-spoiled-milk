@@ -414,6 +414,8 @@ public final class EntityHandler {
 				int npcId = npc.getInt("id");
 				if (npcId >= 0 && npcId < npcs.size()) {
 					NPCDef existing = npcs.get(npcId);
+					if (npc.has("name")) existing.name = npc.getString("name");
+					if (npc.has("description")) existing.description = npc.getString("description");
 					if (npc.has("attack")) existing.attack = (int) ifZeroReserve(npc.getInt("attack"));
 					if (npc.has("strength")) existing.strength = (int) ifZeroReserve(npc.getInt("strength"));
 					if (npc.has("hits")) existing.hits = (int) ifZeroReserve(npc.getInt("hits"));

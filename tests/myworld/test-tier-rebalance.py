@@ -108,6 +108,25 @@ def require_smelting_runtime_safety() -> None:
         fail("Tin/copper ore should be marked as ambiguous furnace inputs")
     if "if (itemId == ItemId.TIN_ORE.id()) {\n\t\t\treturn getRecipe(ItemId.TIN_BAR.id());" not in text:
         fail("Using tin ore directly on a retro client should still smelt tin as a fallback")
+    orichalcum_recipe = re.search(
+        r"new SmeltRecipe\(ItemId\.ORICHALCUM_BAR\.id\(\),(.*?)"
+        r"new SmeltRecipe\(ItemId\.RUNITE_BAR\.id\(\),",
+        text,
+        re.DOTALL,
+    )
+    if orichalcum_recipe is None:
+        fail("Orichalcum smelting recipe should exist")
+    recipe_text = orichalcum_recipe.group(1)
+    for retired_ingredient in ("SILVER", "GOLD"):
+        if f"ingredient(ItemId.{retired_ingredient}.id()" in recipe_text:
+            fail(f"Orichalcum smelting should not require {retired_ingredient.lower()}")
+    for ingredient in (
+        "ingredient(ItemId.MITHRIL_ORE.id(), 1)",
+        "ingredient(ItemId.ADAMANTITE_ORE.id(), 1)",
+        "ingredient(ItemId.COAL.id(), 5)",
+    ):
+        if ingredient not in recipe_text:
+            fail(f"Orichalcum smelting recipe is missing {ingredient}")
 
 
 def require_legacy_smelting_def_levels() -> None:

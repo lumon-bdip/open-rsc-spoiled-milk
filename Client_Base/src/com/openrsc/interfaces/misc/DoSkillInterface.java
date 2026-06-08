@@ -28,6 +28,7 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_SMITHING_MATERIAL = 4;
 	private static final int PRODUCTION_FURNACE_CATEGORY = 5;
 	private static final int PRODUCTION_FURNACE_MATERIAL = 6;
+	private static final int PRODUCTION_TELEPORT_DESTINATION = 7;
 
 	public DoSkillInterface(mudclient mc) {
 		this.mc = mc;
@@ -312,6 +313,8 @@ public final class DoSkillInterface {
 			if (hovered) {
 				if (isFurnaceCategoryPicker()) {
 					hoverText = furnaceCategoryName(recipe.getItemId());
+				} else if (isTeleportDestinationPicker()) {
+					hoverText = altarDestinationName(recipe.getItemId());
 				} else if (isMetalPicker()) {
 					hoverText = metalName(def);
 				} else {
@@ -340,6 +343,8 @@ public final class DoSkillInterface {
 			String selectedHeader;
 			if (isFurnaceCategoryPicker()) {
 				selectedHeader = furnaceCategoryName(selected.getItemId());
+			} else if (isTeleportDestinationPicker()) {
+				selectedHeader = altarDestinationName(selected.getItemId());
 			} else {
 				selectedHeader = (isMetalPicker() ? metalName(def) : def.getName())
 					+ " - Level " + selected.getRequiredLevel();
@@ -356,6 +361,8 @@ public final class DoSkillInterface {
 				drawStringRightAligned("No required mould", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isFurnaceMaterialPicker()) {
 				drawStringRightAligned("Choose this metal", selectedDetailRightX, footerY + 20, 1, textColour);
+			} else if (isTeleportDestinationPicker()) {
+				drawStringRightAligned("Consumes 1 amulet charge", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else {
 				String inputName = inputItemId >= 0 ? EntityHandler.getItemDef(inputItemId).getName() : "materials";
 				String costText = inputItemId >= 0
@@ -381,7 +388,8 @@ public final class DoSkillInterface {
 		}
 
 		boolean startEnabled = selected != null && selected.isCraftable();
-		this.drawButton(x + width - 92, quantityY - 1, 76, 22, "Start", 3, false, new ButtonHandler() {
+		String actionLabel = isTeleportDestinationPicker() ? "Teleport" : "Start";
+		this.drawButton(x + width - 92, quantityY - 1, 76, 22, actionLabel, 3, false, new ButtonHandler() {
 			@Override
 			void handle() {
 				if (startEnabled) {
@@ -406,12 +414,23 @@ public final class DoSkillInterface {
 		return productionInterfaceId == PRODUCTION_FURNACE_MATERIAL;
 	}
 
+	private boolean isTeleportDestinationPicker() {
+		return productionInterfaceId == PRODUCTION_TELEPORT_DESTINATION;
+	}
+
 	private boolean isPickerInterface() {
-		return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker();
+		return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker()
+			|| isTeleportDestinationPicker();
 	}
 
 	private boolean isMetalPicker() {
 		return isSmithingMaterialPicker() || isFurnaceMaterialPicker();
+	}
+
+	private String altarDestinationName(int itemId) {
+		ItemDef def = EntityHandler.getItemDef(itemId);
+		String runeName = def == null ? "Unknown" : def.getName();
+		return runeName.replace("-rune", "").replace(" rune", "") + " Altar";
 	}
 
 	private String furnaceCategoryName(int itemId) {

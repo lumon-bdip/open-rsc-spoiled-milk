@@ -68,6 +68,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private static final String HEAL_SPELL_ACTIVE_KEY = "heal_spell_active";
 	private static final int HEAL_SPELL_PULSES = 3;
 	private static final int HEAL_SPELL_INTERVAL_MS = 3000;
+	private static final int LESSER_HEAL_POWER_PER_PULSE = 60;
 	private static final int TELEPORT_CHARGE_MS = 5000;
 
 	/**
@@ -2717,11 +2718,17 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private int getHealSpellPulseAmount(final Player player, final Spells spellEnum) {
-		final int magicOffense = Math.max(0, player.getMagicOffense());
 		if (spellEnum == Spells.STRONG_HEAL) {
+			final int magicOffense = Math.max(0, player.getMagicOffense());
 			return 2 + (magicOffense / 30);
 		}
-		return 1 + (magicOffense / 45);
+		final int magicPower = Math.max(0,
+			player.getCarriedItems().getEquipment().getDisplayedMagicOffense());
+		return getLesserHealPulseAmount(magicPower);
+	}
+
+	private int getLesserHealPulseAmount(final int magicPower) {
+		return 1 + (Math.max(0, magicPower) / LESSER_HEAL_POWER_PER_PULSE);
 	}
 
 	private int getHealSpellTickDelay(final Player player) {

@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PLAYER_LOGIN = ROOT / "server/plugins/com/openrsc/server/plugins/shared/PlayerLogin.java"
+BLINK_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/BlinkHandler.java"
 MODERATOR = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Moderator.java"
 ADMINS = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Admins.java"
 EVENT = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Event.java"
@@ -23,6 +24,7 @@ def require(text: str, snippet: str, label: str, failures: list[str]) -> None:
 def main() -> None:
     failures: list[str] = []
     login = PLAYER_LOGIN.read_text(encoding="utf-8")
+    blink_handler = BLINK_HANDLER.read_text(encoding="utf-8")
     moderator = MODERATOR.read_text(encoding="utf-8")
     admins = ADMINS.read_text(encoding="utf-8")
     event = EVENT.read_text(encoding="utf-8")
@@ -35,8 +37,16 @@ def main() -> None:
         '"anactualduck".equals(staffName)',
         "if (!player.isMod())",
         'username.replaceAll("[^A-Za-z0-9]", "").toLowerCase()',
+        "public boolean blockPlayerLogin(Player player) {\n\t\treturn true;",
     ):
         require(login, snippet, "PlayerLogin.java", failures)
+
+    require(
+        blink_handler,
+        "if (player.isMod() || player.isDev())",
+        "BlinkHandler.java",
+        failures,
+    )
 
     require(moderator, 'command.equalsIgnoreCase("s")', "Moderator.java", failures)
     require(moderator, "return player.isMod();", "Moderator.java", failures)

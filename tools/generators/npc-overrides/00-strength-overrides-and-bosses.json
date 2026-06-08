@@ -87,6 +87,8 @@
     },
     {
       "id": 196,
+      "name": "Green Dragon",
+      "description": "A powerful and ancient green dragon",
       "strength": 98,
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.75,

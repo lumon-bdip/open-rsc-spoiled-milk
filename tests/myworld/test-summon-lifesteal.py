@@ -3,6 +3,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
 SUMMONING = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "Summoning.java"
 NPC = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "Npc.java"
 PROJECTILE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ProjectileEvent.java"
@@ -20,6 +21,7 @@ def require(text: str, needle: str, label: str) -> None:
 
 
 def main() -> None:
+    client = CLIENT.read_text(encoding="utf-8")
     summoning = SUMMONING.read_text(encoding="utf-8")
     npc = NPC.read_text(encoding="utf-8")
     projectile = PROJECTILE.read_text(encoding="utf-8")
@@ -40,6 +42,9 @@ def main() -> None:
     require(summoning, "return isSummon(hitter) ? HitSplat.TYPE_ARMOR_PROC : HitSplat.TYPE_STANDARD;", "yellow summon damage hitsplat")
     require(summoning, "targetNpc.addSummonDamage(owner, damage);", "projectile summon damage should avoid combat XP maps")
     require(summoning, "((Npc) target).addSummonDamage(owner, damageDealt);", "special summon damage should avoid combat XP maps")
+    require(client, "private static final int SUMMON_BAT_VAMPIRISM_PROJECTILE_SIZE = 144;", "larger bat vampirism projectile size")
+    require(client, "projectile.id == PROJECTILE_TYPES.SUMMON_BAT_VAMPIRISM.id()", "bat vampirism projectile size guard")
+    require(client, "return SUMMON_BAT_VAMPIRISM_PROJECTILE_SIZE;", "bat vampirism projectile size")
 
     require(npc, "private Map<UUID, Pair<Integer, Long>> summonDamagers", "summon damage bucket")
     require(npc, "public void addSummonDamage(final Player mob, final int damage)", "summon damage recorder")

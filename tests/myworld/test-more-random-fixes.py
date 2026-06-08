@@ -83,10 +83,21 @@ def main() -> None:
 		"private static final String HEAL_SPELL_ACTIVE_KEY = \"heal_spell_active\";",
 		"private static final int HEAL_SPELL_PULSES = 3;",
 		"private static final int HEAL_SPELL_INTERVAL_MS = 3000;",
+		"private static final int LESSER_HEAL_POWER_PER_PULSE = 60;",
 		"private static final class HealOverTimeEvent extends GameTickEvent",
+		"player.getCarriedItems().getEquipment().getDisplayedMagicOffense()",
+		"return 1 + (Math.max(0, magicPower) / LESSER_HEAL_POWER_PER_PULSE);",
 		"player.message(\"A healing spell is already restoring your health\");",
 	):
 		require(snippet in spell_handler, f"SpellHandler missing expected random-fix spell snippet: {snippet}")
+
+	def lesser_heal_per_pulse(magic_power: int) -> int:
+		return 1 + max(0, magic_power) // 60
+
+	require(lesser_heal_per_pulse(24) == 1, "Lesser Heal should remain at 1 healing per pulse at 24 magic power")
+	require(lesser_heal_per_pulse(59) == 1, "Lesser Heal should not reach 2 healing before 60 magic power")
+	require(lesser_heal_per_pulse(60) == 2, "Lesser Heal should reach 2 healing at 60 magic power")
+	require(lesser_heal_per_pulse(120) == 3, "Lesser Heal should reach 3 healing at 120 magic power")
 
 	magic_portals = MAGIC_GUILD_PORTALS.read_text(encoding="utf-8")
 	for snippet in (

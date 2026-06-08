@@ -280,10 +280,34 @@ def ensure_source_mappings_exist() -> None:
         fail("LawJewelry.java should handle Teleport as the law amulet destination command")
     for snippet in (
         "return new Destination[] {Destination.COOKING_GUILD, Destination.PRAYER_GUILD};",
-        "return new Destination[] {Destination.FISHING_GUILD, Destination.WOODCUTTING_GUILD};",
+        """return new Destination[] {
+					Destination.FISHING_GUILD,
+					Destination.WOODCUTTING_GUILD,
+					Destination.WIZARDS_GUILD
+				};""",
+        """return new Destination[] {
+					Destination.HEROES_GUILD,
+					Destination.CHAMPIONS_GUILD,
+					Destination.LEGENDS_GUILD
+				};""",
+        "final String[] options = new String[destinations.length + 1];",
+        "if (option < 0 || option >= destinations.length)",
     ):
         if snippet not in law_text:
             fail(f"LawJewelry.java has incorrect law amulet tier destination pairing: {snippet}")
+    if "case 5:" in law_text:
+        fail("Dragonstone law amulet destinations should remain free for a future premium teleport set")
+    for snippet in (
+        "ProductionSession.TYPE_TELEPORT_DESTINATION",
+        '"production_context_item_uid"',
+        '"Choose a rune altar"',
+        "LawJewelry::teleportToRuneAltar",
+        "RuneAltarDestination.values()",
+        "AIR(ItemId.AIR_RUNE.id(), 305, 593)",
+        "LIFE(ItemId.LIFE_RUNE.id(), 282, 694)",
+    ):
+        if snippet not in law_text:
+            fail(f"Dragonstone law amulet altar picker is missing: {snippet}")
 
     for snippet in (
         "hasInventoryUseCommand(def.getCommand())",

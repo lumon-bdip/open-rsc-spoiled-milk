@@ -140,7 +140,7 @@ def main() -> None:
     expected_counts = {
         836: 4,
         199: 4,
-        184: 4,
+        184: 6,
         57: 4,
         251: 4,
         188: 4,
@@ -151,7 +151,7 @@ def main() -> None:
         190: 5,
         201: 4,
         22: 4,
-        294: 3,
+        294: 4,
         243: 4,
         342: 4,
         293: 4,
@@ -159,12 +159,18 @@ def main() -> None:
         358: 1,
         311: 3,
         787: 3,
+        104: 3,
     }
     require(counts == expected_counts, f"Unexpected MyWorld spawn overlay counts: {dict(counts)}")
-    for loc in (loc for loc in overlay if loc["id"] in (199, 184)):
+    heroes_guild_spawns = [
+        loc for loc in overlay
+        if 365 <= loc["start"]["X"] <= 377 and 3264 <= loc["start"]["Y"] <= 3276
+    ]
+    require(len(heroes_guild_spawns) == 6, "Heroes' Guild overlay should add exactly 6 hostiles")
+    for loc in (loc for loc in overlay if loc["id"] in (199, 184) and loc not in heroes_guild_spawns):
         require(wilderness_level(loc["start"]["X"], loc["start"]["Y"]) > 0,
                 f"Intended Wilderness addition is outside the Wilderness: {loc}")
-    wilderness_additions = [loc for loc in overlay if loc["id"] != 836]
+    wilderness_additions = [loc for loc in overlay if loc["id"] != 836 and loc not in heroes_guild_spawns]
     require(len(wilderness_additions) == 74, "Wilderness overlay should add exactly 74 hostiles")
     for loc in wilderness_additions:
         require(wilderness_level(loc["start"]["X"], loc["start"]["Y"]) > 0,

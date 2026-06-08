@@ -70,7 +70,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			ingredient(ItemId.ADAMANTITE_ORE.id(), 1), ingredient(ItemId.COAL.id(), 4)),
 		new SmeltRecipe(ItemId.ORICHALCUM_BAR.id(), 62, 190, 2,
 			ingredient(ItemId.MITHRIL_ORE.id(), 1), ingredient(ItemId.ADAMANTITE_ORE.id(), 1),
-			ingredient(ItemId.SILVER.id(), 1), ingredient(ItemId.GOLD.id(), 1), ingredient(ItemId.COAL.id(), 5)),
+			ingredient(ItemId.COAL.id(), 5)),
 		new SmeltRecipe(ItemId.RUNITE_BAR.id(), 70, 200, 1,
 			ingredient(ItemId.RUNITE_ORE.id(), 1), ingredient(ItemId.COAL.id(), 6))
 	};

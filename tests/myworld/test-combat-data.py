@@ -253,11 +253,12 @@ def main() -> None:
         "bottomColour",
         "skinColour",
     }
+    npc_string_fields = {"name", "description"}
 
     ensure_unique_ids(item_entries, "ItemDefsMyWorld.json")
     ensure_unique_ids(npc_entries, "NpcDefsMyWorld.json")
     ensure_item_fields(item_entries, "ItemDefsMyWorld.json", item_fields, item_string_fields)
-    ensure_numeric_fields(npc_entries, "NpcDefsMyWorld.json", npc_fields)
+    ensure_item_fields(npc_entries, "NpcDefsMyWorld.json", npc_fields, npc_string_fields)
     ensure_npc_multiplier_bounds(npc_entries)
 
     items_by_id = {entry["id"]: entry for entry in item_entries}

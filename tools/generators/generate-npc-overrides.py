@@ -19,6 +19,8 @@ DEFAULT_TARGET_PATH = (
 ALLOWED_TOP_LEVEL_KEYS = {"npcs", "description"}
 ALLOWED_NPC_FIELDS = {
     "id",
+    "name",
+    "description",
     "strength",
     "hairColour",
     "topColour",
@@ -74,6 +76,13 @@ def validate_npc_entry(entry: object, source_path: Path) -> dict[str, Any]:
     for field, value in typed_entry.items():
         if field == "id":
             continue
+        if field in {"name", "description"}:
+            if not isinstance(value, str) or not value.strip():
+                fail(
+                    f"{source_path.name} entry {npc_id} field {field} "
+                    "must be a non-empty string"
+                )
+            continue
         if not isinstance(value, (int, float)):
             fail(f"{source_path.name} entry {npc_id} field {field} must be numeric")
 
@@ -81,6 +90,8 @@ def validate_npc_entry(entry: object, source_path: Path) -> dict[str, Any]:
 
 
 def describe_npc_entry(entry: dict[str, Any]) -> str:
+    if "name" in entry or "description" in entry:
+        return "identity"
     if any(
         field in entry for field in ("hairColour", "topColour", "bottomColour", "skinColour")
     ):

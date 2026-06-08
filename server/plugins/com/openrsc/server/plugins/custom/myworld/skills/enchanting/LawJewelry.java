@@ -3,13 +3,19 @@ package com.openrsc.server.plugins.custom.myworld.skills.enchanting;
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.content.EnchantingItemEffects;
+import com.openrsc.server.content.production.ProductionRecipe;
+import com.openrsc.server.content.production.ProductionSession;
+import com.openrsc.server.content.production.ProductionStarter;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.OpInvTrigger;
 import com.openrsc.server.plugins.triggers.UseInvTrigger;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static com.openrsc.server.plugins.Functions.delay;
@@ -18,6 +24,8 @@ import static com.openrsc.server.plugins.Functions.multi;
 import static com.openrsc.server.plugins.Functions.validatebankpin;
 
 public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrigger {
+
+	private static final String DRAGONSTONE_AMULET_ITEM_UID_KEY = "production_context_item_uid";
 
 	private enum Destination {
 		CRAFTING_GUILD("Crafting Guild", 347, 599),
@@ -39,6 +47,42 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			this.label = label;
 			this.x = x;
 			this.y = y;
+		}
+	}
+
+	private enum RuneAltarDestination {
+		AIR(ItemId.AIR_RUNE.id(), 305, 593),
+		MIND(ItemId.MIND_RUNE.id(), 296, 438),
+		WATER(ItemId.WATER_RUNE.id(), 146, 684),
+		EARTH(ItemId.EARTH_RUNE.id(), 61, 464),
+		FIRE(ItemId.FIRE_RUNE.id(), 49, 633),
+		BODY(ItemId.BODY_RUNE.id(), 258, 503),
+		COSMIC(ItemId.COSMIC_RUNE.id(), 105, 3565),
+		CHAOS(ItemId.CHAOS_RUNE.id(), 231, 375),
+		NATURE(ItemId.NATURE_RUNE.id(), 391, 804),
+		LAW(ItemId.LAW_RUNE.id(), 408, 534),
+		DEATH(ItemId.DEATH_RUNE.id(), 150, 212),
+		BLOOD(ItemId.BLOOD_RUNE.id(), 246, 102),
+		SOUL(ItemId.SOUL_RUNE.id(), 987, 176),
+		LIFE(ItemId.LIFE_RUNE.id(), 282, 694);
+
+		private final int runeItemId;
+		private final int x;
+		private final int y;
+
+		RuneAltarDestination(final int runeItemId, final int x, final int y) {
+			this.runeItemId = runeItemId;
+			this.x = x;
+			this.y = y;
+		}
+
+		private static RuneAltarDestination forRuneItem(final int itemId) {
+			for (RuneAltarDestination destination : values()) {
+				if (destination.runeItemId == itemId) {
+					return destination;
+				}
+			}
+			return null;
 		}
 	}
 
@@ -77,18 +121,25 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			return;
 		}
 
-		final Destination[] destinations = getDestinationsForTier(EnchantingItemEffects.getLawAmuletTier(item.getCatalogId()));
+		final int tier = EnchantingItemEffects.getLawAmuletTier(item.getCatalogId());
+		if (tier == 5) {
+			showRuneAltarTeleportInterface(player, item);
+			return;
+		}
+		final Destination[] destinations = getDestinationsForTier(tier);
 		if (destinations == null) {
 			player.message("Nothing interesting happens.");
 			return;
 		}
 
 		player.message("Where would you like to teleport to?");
-		final int option = multi(player,
-			destinations[0].label,
-			destinations[1].label,
-			"Nowhere");
-		if (option < 0 || option > 2 || option == 2) {
+		final String[] options = new String[destinations.length + 1];
+		for (int i = 0; i < destinations.length; i++) {
+			options[i] = destinations[i].label;
+		}
+		options[destinations.length] = "Nowhere";
+		final int option = multi(player, options);
+		if (option < 0 || option >= destinations.length) {
 			return;
 		}
 
@@ -96,6 +147,69 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 		player.teleport(destination.x, destination.y, true);
 		setRemainingCharges(player, item, charges - 1);
 		player.message("Your law amulet now has " + formatCharges(charges - 1) + " remaining.");
+	}
+
+	private void showRuneAltarTeleportInterface(final Player player, final Item amulet) {
+		final List<ProductionRecipe> destinations = new ArrayList<>();
+		for (RuneAltarDestination destination : RuneAltarDestination.values()) {
+			destinations.add(new ProductionRecipe(destination.runeItemId, 0, 1, 1, true, true));
+		}
+		final ProductionSession session = new ProductionSession(
+			ProductionSession.TYPE_TELEPORT_DESTINATION,
+			"Choose a rune altar",
+			amulet.getCatalogId(),
+			destinations);
+		player.setAttribute(DRAGONSTONE_AMULET_ITEM_UID_KEY, amulet.getItemId());
+		player.setAttribute("production_session", session);
+		player.setAttribute("production_starter", (ProductionStarter) LawJewelry::teleportToRuneAltar);
+		ActionSender.showProductionInterface(player, session);
+	}
+
+	private static boolean teleportToRuneAltar(final Player player, final ProductionSession session,
+		final int runeItemId, final int quantity) {
+		if (session == null || !session.isType(ProductionSession.TYPE_TELEPORT_DESTINATION)) {
+			return false;
+		}
+		final RuneAltarDestination destination = RuneAltarDestination.forRuneItem(runeItemId);
+		if (destination == null) {
+			player.message("That altar is not available.");
+			return false;
+		}
+
+		final long itemUid = player.getAttribute(DRAGONSTONE_AMULET_ITEM_UID_KEY, -1L);
+		player.removeAttribute(DRAGONSTONE_AMULET_ITEM_UID_KEY);
+		Item amulet = null;
+		for (Item inventoryItem : player.getCarriedItems().getInventory().getItems()) {
+			if (inventoryItem.getItemId() == itemUid
+				&& EnchantingItemEffects.getLawAmuletTier(inventoryItem.getCatalogId()) == 5) {
+				amulet = inventoryItem;
+				break;
+			}
+		}
+		if (amulet == null) {
+			player.message("You no longer have that amulet.");
+			return true;
+		}
+
+		final LawJewelry lawJewelry = new LawJewelry();
+		if (lawJewelry.isTeleportBlocked(player)) {
+			player.message("A mysterious force blocks your teleport!");
+			if (player.getLocation().wildernessLevel() >= Constants.GLORY_TELEPORT_LIMIT) {
+				player.message("You can't use this teleport after level 30 wilderness");
+			}
+			return true;
+		}
+		final int charges = lawJewelry.getRemainingCharges(player, amulet);
+		if (charges <= 0) {
+			player.message("Your law amulet is out of charges.");
+			player.message("Recharge it at the law altar.");
+			return true;
+		}
+
+		player.teleport(destination.x, destination.y, true);
+		lawJewelry.setRemainingCharges(player, amulet, charges - 1);
+		player.message("Your law amulet now has " + lawJewelry.formatCharges(charges - 1) + " remaining.");
+		return true;
 	}
 
 	@Override
@@ -258,11 +372,17 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			case 2:
 				return new Destination[] {Destination.COOKING_GUILD, Destination.PRAYER_GUILD};
 			case 3:
-				return new Destination[] {Destination.FISHING_GUILD, Destination.WOODCUTTING_GUILD};
+				return new Destination[] {
+					Destination.FISHING_GUILD,
+					Destination.WOODCUTTING_GUILD,
+					Destination.WIZARDS_GUILD
+				};
 			case 4:
-				return new Destination[] {Destination.HEROES_GUILD, Destination.WIZARDS_GUILD};
-			case 5:
-				return new Destination[] {Destination.CHAMPIONS_GUILD, Destination.LEGENDS_GUILD};
+				return new Destination[] {
+					Destination.HEROES_GUILD,
+					Destination.CHAMPIONS_GUILD,
+					Destination.LEGENDS_GUILD
+				};
 			default:
 				return null;
 		}

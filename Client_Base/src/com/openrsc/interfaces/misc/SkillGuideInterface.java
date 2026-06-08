@@ -1475,7 +1475,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(172, "40", "Gold bar - 1 gold ore"));
 			skillMenuEntries.add(new SkillMenuItem(1957, "46", "Titan steel bar - mithril, silver, and 3 coal"));
 			skillMenuEntries.add(new SkillMenuItem(174, "54", "Adamantite bar - 1 adamantite ore and 4 coal"));
-			skillMenuEntries.add(new SkillMenuItem(1958, "62", "Orichalcum bars - mithril, adamantite, silver, gold, and 5 coal"));
+			skillMenuEntries.add(new SkillMenuItem(1958, "62", "2 Orichalcum bars - 1 mithril, 1 adamantite, and 5 coal"));
 			skillMenuEntries.add(new SkillMenuItem(408, "70", "Runite bar - 1 runite ore and 6 coal"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				skillMenuEntries.add(new SkillMenuItem(1365, "90", "Dragon bar - 1 piece of dragon equipment"));
