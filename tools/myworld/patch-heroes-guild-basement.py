@@ -26,6 +26,8 @@ ALPHA_70_SECTOR_SHA256 = "33353a42556f7bf3d3283102930e9612169103700ad58a00e46ffb
 ALPHA_71_SECTOR_SHA256 = "37422057a1618507520e6b1032d5eb36f9d09bd9d82245d9861000ebb5ee1d2f"
 EXPANDED_CAVERN_SECTOR_SHA256 = "3091372d06193f64ddb27442be6ef9e5dd9a93044f67555930c8ebd0d0d24f84"
 ALPHA_72_SECTOR_SHA256 = "823355f02c279495ec370f2f10e99ec498c4650593b1d71dc720c3e5196e0620"
+ALPHA_73_SECTOR_SHA256 = "0e61ff1e45b8fe8835b2a9ad2e193a44a0e9bd47585ff2eeb389c730b0376efc"
+DIAGONAL_CAVERN_SECTOR_SHA256 = "ca88243e9ba202490ba43b9ecfd361eaf99c7e19ecfd7d4076943a87e7c3d6dc"
 SUPPORTED_SOURCE_HASHES = {
     BASE_SECTOR_SHA256,
     ALPHA_68_SECTOR_SHA256,
@@ -35,6 +37,8 @@ SUPPORTED_SOURCE_HASHES = {
     ALPHA_71_SECTOR_SHA256,
     EXPANDED_CAVERN_SECTOR_SHA256,
     ALPHA_72_SECTOR_SHA256,
+    ALPHA_73_SECTOR_SHA256,
+    DIAGONAL_CAVERN_SECTOR_SHA256,
 }
 
 TARGETS = (
@@ -76,6 +80,18 @@ ORIGINAL_ORE_ROWS = {
     3281: ((354, 374),),
     3282: ((357, 367),),
     3283: ((359, 366),),
+}
+
+DIAGONAL_BOUNDARY_WALLS = {
+    (351, 3277): 1,
+    (349, 3278): 1,
+    (347, 3280): 1,
+    (345, 3282): 1,
+    (343, 3284): 1,
+    (340, 3287): 1,
+    (341, 3290): 12001,
+    (343, 3292): 12001,
+    (346, 3294): 12001,
 }
 
 
@@ -259,6 +275,15 @@ def build_patched_sector(source: bytes) -> bytes:
             set_tile(sector, x, y, vertical_wall=1)
         if (x, y + 1) not in occupied_tiles:
             set_tile(sector, x, y + 1, vertical_wall=1, diagonal_wall=0)
+
+    for (x, y), diagonal_wall in DIAGONAL_BOUNDARY_WALLS.items():
+        set_tile(sector, x, y, diagonal_wall=diagonal_wall)
+        if diagonal_wall < 12000:
+            set_tile(sector, x + 1, y, horizontal_wall=0)
+            set_tile(sector, x, y + 1, vertical_wall=0)
+        else:
+            set_tile(sector, x + 1, y, horizontal_wall=0)
+            set_tile(sector, x, y, vertical_wall=0)
 
     # Close the southern sides of both lower cages while keeping the central
     # aisle open toward the ore room.

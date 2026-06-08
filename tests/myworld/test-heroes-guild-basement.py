@@ -53,6 +53,26 @@ ORIGINAL_ELEVATION_SAMPLES = {
     (360, 3282): 6,
     (366, 3283): 48,
 }
+DIAGONAL_BOUNDARY_WALLS = {
+    (351, 3277): 1,
+    (349, 3278): 1,
+    (347, 3280): 1,
+    (345, 3282): 1,
+    (343, 3284): 1,
+    (340, 3287): 1,
+    (341, 3290): 12001,
+    (343, 3292): 12001,
+    (346, 3294): 12001,
+}
+DIAGONAL_CLEAR_HORIZONTAL = {
+    (x + 1, y)
+    for (x, y), diagonal_wall in DIAGONAL_BOUNDARY_WALLS.items()
+}
+DIAGONAL_CLEAR_VERTICAL = {
+    (x, y + 1) if diagonal_wall < 12000 else (x, y)
+    for (x, y), diagonal_wall in DIAGONAL_BOUNDARY_WALLS.items()
+}
+REMOVED_CAVERN_RESOURCE_IDS = {106, 108, 110, 210}
 
 
 def require(condition, message):
@@ -153,12 +173,15 @@ for x, y in cavern_tiles:
         f"Cavern floor is missing at {x},{y}",
     )
     require(
-        horizontal_wall == (1 if (x - 1, y) not in occupied_tiles else 0),
+        horizontal_wall
+        == (1 if (x - 1, y) not in occupied_tiles and (x, y) not in DIAGONAL_CLEAR_HORIZONTAL else 0),
         f"Cavern west wall is incorrect at {x},{y}",
     )
     expected_north_wall = 1 if (x, y - 1) not in occupied_tiles else 0
     if y == 3276 and x in (*range(365, 369), *range(373, 377)):
         expected_north_wall = 6
+    if (x, y) in DIAGONAL_CLEAR_VERTICAL:
+        expected_north_wall = 0
     require(
         vertical_wall == expected_north_wall,
         f"Cavern north wall is incorrect at {x},{y}",
@@ -181,14 +204,22 @@ require(
 for x, y in cavern_tiles:
     if (x + 1, y) not in occupied_tiles:
         require(
-            tile(server_sector, x + 1, y)[4] == 1,
+            tile(server_sector, x + 1, y)[4]
+            == (0 if (x + 1, y) in DIAGONAL_CLEAR_HORIZONTAL else 1),
             f"Cavern east wall is missing beside {x},{y}",
         )
     if (x, y + 1) not in occupied_tiles:
         require(
-            tile(server_sector, x, y + 1)[5] == 1,
+            tile(server_sector, x, y + 1)[5]
+            == (0 if (x, y + 1) in DIAGONAL_CLEAR_VERTICAL else 1),
             f"Cavern south wall is missing below {x},{y}",
         )
+
+for (x, y), diagonal_wall in DIAGONAL_BOUNDARY_WALLS.items():
+    require(
+        tile(server_sector, x, y)[6] == diagonal_wall,
+        f"Diagonal cavern wall is missing at {x},{y}",
+    )
 
 require(tile(server_sector, 369, 3275)[4] == 6, "Greater Demon corner fence is missing")
 require(tile(server_sector, 369, 3276)[5] == 0, "Greater Demon south fence protrudes")
@@ -206,6 +237,14 @@ for x in (354, 355):
     )
 
 sceneries = json.loads(SCENERY_LOCS.read_text())["sceneries"]
+resource_sceneries = [
+    entry
+    for entry in sceneries
+    if entry["id"] in REMOVED_CAVERN_RESOURCE_IDS
+    and (entry["pos"]["X"], entry["pos"]["Y"]) in cavern_tiles
+]
+require(not resource_sceneries, "Cavern resource scenery should be removed before repopulation")
+
 room_sceneries = {
     (entry["id"], entry["pos"]["X"], entry["pos"]["Y"], entry["direction"])
     for entry in sceneries
