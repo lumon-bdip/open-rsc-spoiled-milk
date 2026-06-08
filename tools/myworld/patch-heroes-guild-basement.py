@@ -22,11 +22,13 @@ BASE_SECTOR_SHA256 = "1749036f6c1e59633e319c520996b4abad157dc10e581759d700d60ee6
 ALPHA_68_SECTOR_SHA256 = "493506c65c737bba1c3d77ba95a55fc88504c34712c54ebd40758c52013ed43e"
 TRIMMED_SECTOR_SHA256 = "0a42c3af6ee61225cce7d110172de7a119ea647a5bc0451a55416258b5594491"
 ALPHA_69_SECTOR_SHA256 = "93fe6421608137d5925bf267d37ab2e59e77770a3c71ffb59ec8fb810bb530eb"
+ALPHA_70_SECTOR_SHA256 = "33353a42556f7bf3d3283102930e9612169103700ad58a00e46ffbcfb11bae6a"
 SUPPORTED_SOURCE_HASHES = {
     BASE_SECTOR_SHA256,
     ALPHA_68_SECTOR_SHA256,
     TRIMMED_SECTOR_SHA256,
     ALPHA_69_SECTOR_SHA256,
+    ALPHA_70_SECTOR_SHA256,
 }
 
 TARGETS = (
@@ -109,7 +111,7 @@ def build_patched_sector(source: bytes) -> bytes:
             y,
             overlay=8,
             roof=0,
-            horizontal_wall=1 if y < 3276 else 0,
+            horizontal_wall=1,
             vertical_wall=0,
             diagonal_wall=0,
         )
@@ -122,7 +124,7 @@ def build_patched_sector(source: bytes) -> bytes:
     gate_tiles = {3266, 3267, 3272, 3273}
     for x in (369, 373):
         for y in range(3264, 3276):
-            if y not in gate_tiles and not (x == 369 and y in (3269, 3275)):
+            if y not in gate_tiles and not (x == 369 and y == 3269):
                 set_tile(sector, x, y, horizontal_wall=6)
 
     # Continue the surrounding ore-area floor beneath the chamber entrance.
@@ -133,6 +135,7 @@ def build_patched_sector(source: bytes) -> bytes:
             sector,
             x,
             3276,
+            texture=176,
             overlay=0,
             roof=0,
             horizontal_wall=0,
@@ -145,6 +148,7 @@ def build_patched_sector(source: bytes) -> bytes:
                 sector,
                 x,
                 y,
+                texture=176,
                 overlay=0,
                 roof=0,
                 horizontal_wall=0,
@@ -153,13 +157,25 @@ def build_patched_sector(source: bytes) -> bytes:
             )
 
     # Extend the chamber's west wall down to meet the ore-area wall.
-    for y in range(3275, 3280):
+    for y in range(3275, 3279):
         set_tile(sector, 365, y, horizontal_wall=1)
 
     # Close the southern sides of both lower cages while keeping the central
     # aisle open toward the ore room.
-    for x in (*range(365, 370), *range(373, 377)):
+    for x in (*range(365, 369), *range(373, 377)):
         set_tile(sector, x, 3276, vertical_wall=6)
+
+    # Remove the isolated floor tile outside the connected basement area.
+    set_tile(
+        sector,
+        354,
+        3276,
+        overlay=8,
+        roof=0,
+        horizontal_wall=0,
+        vertical_wall=0,
+        diagonal_wall=0,
+    )
 
     return bytes(sector)
 
