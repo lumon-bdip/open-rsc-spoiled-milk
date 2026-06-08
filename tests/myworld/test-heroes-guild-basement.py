@@ -14,6 +14,28 @@ MYWORLD_NPC_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldNpcLocs.json"
 MYWORLD_NPC_DEFS = ROOT / "server/conf/server/defs/NpcDefsMyWorld.json"
 LADDERS = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/defaults/Ladders.java"
 SECTOR = "h3x55y46"
+CAVERN_ROWS = {
+    3276: (356, 376),
+    3277: (352, 377),
+    3278: (350, 378),
+    3279: (349, 379),
+    3280: (348, 380),
+    3281: (347, 380),
+    3282: (346, 381),
+    3283: (345, 381),
+    3284: (344, 382),
+    3285: (343, 382),
+    3286: (342, 381),
+    3287: (341, 381),
+    3288: (341, 380),
+    3289: (342, 380),
+    3290: (342, 379),
+    3291: (343, 379),
+    3292: (344, 378),
+    3293: (345, 378),
+    3294: (347, 377),
+    3295: (350, 375),
+}
 
 
 def require(condition, message):
@@ -66,16 +88,16 @@ for y in (3266, 3267, 3272, 3273):
     require(tile(server_sector, 369, y)[4] == 0, f"West gate gap is blocked at y={y}")
     require(tile(server_sector, 373, y)[4] == 0, f"East gate gap is blocked at y={y}")
 
-for y in (3264, 3265, 3268, 3270, 3271, 3274, 3275):
+for y in (3264, 3265, 3268, 3269, 3271, 3274, 3275):
     require(tile(server_sector, 369, y)[4] == 6, f"West aisle railing is missing at y={y}")
 
 for y in (3264, 3265, 3268, 3269, 3270, 3271, 3274, 3275):
     require(tile(server_sector, 373, y)[4] == 6, f"East aisle railing is missing at y={y}")
 
-for y in (3269, 3276):
+for y in (3270, 3276):
     require(tile(server_sector, 369, y)[4] == 0, f"West railing remains at 369,{y}")
 
-for x in (*range(365, 370), *range(373, 377)):
+for x in (*range(365, 369), *range(373, 377)):
     require(
         tile(server_sector, x, 3270)[5] == 6,
         f"Cage divider railing is missing at {x},3270",
@@ -86,53 +108,64 @@ for x in range(370, 373):
         f"Central aisle is blocked at {x},3270",
     )
 
-for x in range(364, 377):
+cavern_tiles = {
+    (x, y)
+    for y, (minimum_x, maximum_x) in CAVERN_ROWS.items()
+    for x in range(minimum_x, maximum_x + 1)
+}
+chamber_tiles = {
+    (x, y)
+    for x in range(365, 377)
+    for y in range(3264, 3276)
+}
+occupied_tiles = cavern_tiles | chamber_tiles
+
+for x, y in cavern_tiles:
     _, texture, overlay, roof, horizontal_wall, vertical_wall, diagonal = tile(
-        server_sector, x, 3276
+        server_sector, x, y
     )
     require(
         texture == 176 and overlay == 0 and roof == 0 and diagonal == 0,
-        f"Ore floor is missing at {x},3276",
+        f"Cavern floor is missing at {x},{y}",
     )
     require(
-        horizontal_wall == (1 if x == 365 else 0),
-        f"West approach wall is incorrect at {x},3276",
+        horizontal_wall == (1 if (x - 1, y) not in occupied_tiles else 0),
+        f"Cavern west wall is incorrect at {x},{y}",
     )
+    expected_north_wall = 1 if (x, y - 1) not in occupied_tiles else 0
+    if y == 3276 and x in (*range(365, 369), *range(373, 377)):
+        expected_north_wall = 6
     require(
-        vertical_wall == (6 if x in (*range(365, 369), *range(373, 377)) else 0),
-        f"South cage railing is incorrect at {x},3276",
+        vertical_wall == expected_north_wall,
+        f"Cavern north wall is incorrect at {x},{y}",
     )
 
-for x in range(365, 369):
-    for y in range(3276, 3281):
-        _, texture, overlay, roof, horizontal_wall, vertical_wall, diagonal = tile(
-            server_sector, x, y
-        )
+for x, y in cavern_tiles:
+    if (x + 1, y) not in occupied_tiles:
         require(
-            texture == 176 and overlay == 0 and roof == 0 and diagonal == 0,
-            f"Ore floor is missing at {x},{y}",
+            tile(server_sector, x + 1, y)[4] == 1,
+            f"Cavern east wall is missing beside {x},{y}",
         )
-
-for y in range(3275, 3279):
-    require(
-        tile(server_sector, 365, y)[4] == 1,
-        f"West approach wall is missing at 365,{y}",
-    )
-require(tile(server_sector, 365, 3279)[4] == 0, "West approach wall extends too far")
-for y in range(3276, 3281):
-    require(tile(server_sector, 368, y)[4] == 0, f"Incorrect wall remains at 368,{y}")
+    if (x, y + 1) not in occupied_tiles:
+        require(
+            tile(server_sector, x, y + 1)[5] == 1,
+            f"Cavern south wall is missing below {x},{y}",
+        )
 
 require(tile(server_sector, 369, 3275)[4] == 6, "Greater Demon corner fence is missing")
 require(tile(server_sector, 369, 3276)[5] == 0, "Greater Demon south fence protrudes")
+require(tile(server_sector, 369, 3269)[4] == 6, "Moss Giant corner fence is missing")
+require(tile(server_sector, 369, 3270)[5] == 0, "Moss Giant divider fence protrudes")
 require(tile(server_sector, 377, 3276)[4] == 1, "Dragon-side wall has a south gap")
 
-_, _, overlay, roof, horizontal_wall, vertical_wall, diagonal = tile(
-    server_sector, 354, 3276
-)
-require(
-    (overlay, roof, horizontal_wall, vertical_wall, diagonal) == (8, 0, 0, 0, 0),
-    "Out-of-bounds floor remains at 354,3276",
-)
+for x in (354, 355):
+    _, _, overlay, roof, horizontal_wall, vertical_wall, diagonal = tile(
+        server_sector, x, 3276
+    )
+    require(
+        (overlay, roof, horizontal_wall, vertical_wall, diagonal) == (8, 0, 0, 0, 0),
+        f"Out-of-bounds floor remains at {x},3276",
+    )
 
 sceneries = json.loads(SCENERY_LOCS.read_text())["sceneries"]
 room_sceneries = {

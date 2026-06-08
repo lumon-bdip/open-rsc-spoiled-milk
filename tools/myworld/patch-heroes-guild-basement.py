@@ -23,18 +23,47 @@ ALPHA_68_SECTOR_SHA256 = "493506c65c737bba1c3d77ba95a55fc88504c34712c54ebd40758c
 TRIMMED_SECTOR_SHA256 = "0a42c3af6ee61225cce7d110172de7a119ea647a5bc0451a55416258b5594491"
 ALPHA_69_SECTOR_SHA256 = "93fe6421608137d5925bf267d37ab2e59e77770a3c71ffb59ec8fb810bb530eb"
 ALPHA_70_SECTOR_SHA256 = "33353a42556f7bf3d3283102930e9612169103700ad58a00e46ffbcfb11bae6a"
+ALPHA_71_SECTOR_SHA256 = "37422057a1618507520e6b1032d5eb36f9d09bd9d82245d9861000ebb5ee1d2f"
+EXPANDED_CAVERN_SECTOR_SHA256 = "3091372d06193f64ddb27442be6ef9e5dd9a93044f67555930c8ebd0d0d24f84"
 SUPPORTED_SOURCE_HASHES = {
     BASE_SECTOR_SHA256,
     ALPHA_68_SECTOR_SHA256,
     TRIMMED_SECTOR_SHA256,
     ALPHA_69_SECTOR_SHA256,
     ALPHA_70_SECTOR_SHA256,
+    ALPHA_71_SECTOR_SHA256,
+    EXPANDED_CAVERN_SECTOR_SHA256,
 }
 
 TARGETS = (
     Path("server/conf/server/data/Custom_Landscape.orsc"),
     Path("Client_Base/Cache/video/Custom_Landscape.orsc"),
 )
+
+# Irregular row spans form a narrow mine entrance that opens into a broad
+# cavern without approaching the separate dungeon rooms farther south/east.
+CAVERN_ROWS = {
+    3276: (356, 376),
+    3277: (352, 377),
+    3278: (350, 378),
+    3279: (349, 379),
+    3280: (348, 380),
+    3281: (347, 380),
+    3282: (346, 381),
+    3283: (345, 381),
+    3284: (344, 382),
+    3285: (343, 382),
+    3286: (342, 381),
+    3287: (341, 381),
+    3288: (341, 380),
+    3289: (342, 380),
+    3290: (342, 379),
+    3291: (343, 379),
+    3292: (344, 378),
+    3293: (345, 378),
+    3294: (347, 377),
+    3295: (350, 375),
+}
 
 
 def tile_offset(x: int, y: int) -> int:
@@ -117,24 +146,48 @@ def build_patched_sector(source: bytes) -> bytes:
         )
 
     # Railings split the four equal cages.
-    for x in (*range(365, 370), *range(373, 377)):
+    for x in (*range(365, 369), *range(373, 377)):
         set_tile(sector, x, 3270, vertical_wall=6)
 
     # Two-tile gaps in each aisle-facing railing are occupied by gate objects.
     gate_tiles = {3266, 3267, 3272, 3273}
     for x in (369, 373):
         for y in range(3264, 3276):
-            if y not in gate_tiles and not (x == 369 and y == 3269):
+            if y not in gate_tiles and not (x == 369 and y in (3270,)):
                 set_tile(sector, x, y, horizontal_wall=6)
 
-    # Continue the surrounding ore-area floor beneath the chamber entrance.
-    # Overlay 0 exposes the existing terrain texture and elevation; overlay 8
-    # is empty space in this sector.
-    for x in range(364, 377):
+    cavern_tiles = {
+        (x, y)
+        for y, (minimum_x, maximum_x) in CAVERN_ROWS.items()
+        for x in range(minimum_x, maximum_x + 1)
+    }
+    chamber_tiles = {
+        (x, y)
+        for x in range(365, 377)
+        for y in range(3264, 3276)
+    }
+    occupied_tiles = cavern_tiles | chamber_tiles
+
+    # Clear the old peninsula walls and cliff diagonals before laying out the
+    # new floor. This prevents previous boundaries from crossing the cavern.
+    for x in range(340, 384):
+        for y in range(3276, 3297):
+            set_tile(
+                sector,
+                x,
+                y,
+                horizontal_wall=0,
+                vertical_wall=0,
+                diagonal_wall=0,
+            )
+
+    # Use the existing brown underground floor and retain the terrain's
+    # underlying elevation variation for a natural cavern surface.
+    for x, y in cavern_tiles:
         set_tile(
             sector,
             x,
-            3276,
+            y,
             texture=176,
             overlay=0,
             roof=0,
@@ -142,40 +195,37 @@ def build_patched_sector(source: bytes) -> bytes:
             vertical_wall=0,
             diagonal_wall=0,
         )
-    for x in range(365, 369):
-        for y in range(3276, 3281):
-            set_tile(
-                sector,
-                x,
-                y,
-                texture=176,
-                overlay=0,
-                roof=0,
-                horizontal_wall=0,
-                vertical_wall=0,
-                diagonal_wall=0,
-            )
 
-    # Extend the chamber's west wall down to meet the ore-area wall.
-    for y in range(3275, 3279):
-        set_tile(sector, 365, y, horizontal_wall=1)
+    # These former entrance spurs are outside the new boundary.
+    for x in (354, 355):
+        set_tile(
+            sector,
+            x,
+            3276,
+            overlay=8,
+            roof=0,
+            horizontal_wall=0,
+            vertical_wall=0,
+            diagonal_wall=0,
+        )
+
+    # Generate a complete stone perimeter from the floor footprint. Horizontal
+    # walls occupy the west edge of their tile; vertical walls occupy its north
+    # edge, so east/south boundaries are stored on the adjacent void tile.
+    for x, y in cavern_tiles:
+        if (x - 1, y) not in occupied_tiles:
+            set_tile(sector, x, y, horizontal_wall=1)
+        if (x + 1, y) not in occupied_tiles:
+            set_tile(sector, x + 1, y, horizontal_wall=1, diagonal_wall=0)
+        if (x, y - 1) not in occupied_tiles:
+            set_tile(sector, x, y, vertical_wall=1)
+        if (x, y + 1) not in occupied_tiles:
+            set_tile(sector, x, y + 1, vertical_wall=1, diagonal_wall=0)
 
     # Close the southern sides of both lower cages while keeping the central
     # aisle open toward the ore room.
     for x in (*range(365, 369), *range(373, 377)):
         set_tile(sector, x, 3276, vertical_wall=6)
-
-    # Remove the isolated floor tile outside the connected basement area.
-    set_tile(
-        sector,
-        354,
-        3276,
-        overlay=8,
-        roof=0,
-        horizontal_wall=0,
-        vertical_wall=0,
-        diagonal_wall=0,
-    )
 
     return bytes(sector)
 
