@@ -86,14 +86,21 @@ for x in range(370, 373):
         f"Central aisle is blocked at {x},3270",
     )
 
-for x in range(365, 377):
+for x in range(364, 377):
     _, _, overlay, roof, horizontal_wall, vertical_wall, diagonal = tile(
         server_sector, x, 3276
     )
     require(
-        (overlay, roof, horizontal_wall, vertical_wall, diagonal)
-        == (8, 0, 1 if x == 368 else 0, 0, 0),
-        f"South approach was not cleared at {x},3276",
+        overlay == 0 and roof == 0 and diagonal == 0,
+        f"Ore floor is missing at {x},3276",
+    )
+    require(
+        horizontal_wall == (1 if x == 365 else 0),
+        f"West approach wall is incorrect at {x},3276",
+    )
+    require(
+        vertical_wall == (6 if x in (*range(365, 370), *range(373, 377)) else 0),
+        f"South cage railing is incorrect at {x},3276",
     )
 
 for x in range(365, 369):
@@ -102,16 +109,17 @@ for x in range(365, 369):
             server_sector, x, y
         )
         require(
-            (overlay, roof, horizontal_wall, vertical_wall, diagonal)
-            == (8, 0, 1 if x == 368 else 0, 0, 0),
-            f"Ore-room approach was not opened at {x},{y}",
+            overlay == 0 and roof == 0 and diagonal == 0,
+            f"Ore floor is missing at {x},{y}",
         )
 
-for y in range(3276, 3281):
+for y in range(3275, 3280):
     require(
-        tile(server_sector, 368, y)[4] == 1,
-        f"Void-side approach wall is missing at 368,{y}",
+        tile(server_sector, 365, y)[4] == 1,
+        f"West approach wall is missing at 365,{y}",
     )
+for y in range(3276, 3281):
+    require(tile(server_sector, 368, y)[4] == 0, f"Incorrect wall remains at 368,{y}")
 
 sceneries = json.loads(SCENERY_LOCS.read_text())["sceneries"]
 room_sceneries = {

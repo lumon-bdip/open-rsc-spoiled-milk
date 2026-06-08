@@ -21,10 +21,12 @@ TILE_SIZE = 10
 BASE_SECTOR_SHA256 = "1749036f6c1e59633e319c520996b4abad157dc10e581759d700d60ee6b5781f"
 ALPHA_68_SECTOR_SHA256 = "493506c65c737bba1c3d77ba95a55fc88504c34712c54ebd40758c52013ed43e"
 TRIMMED_SECTOR_SHA256 = "0a42c3af6ee61225cce7d110172de7a119ea647a5bc0451a55416258b5594491"
+ALPHA_69_SECTOR_SHA256 = "93fe6421608137d5925bf267d37ab2e59e77770a3c71ffb59ec8fb810bb530eb"
 SUPPORTED_SOURCE_HASHES = {
     BASE_SECTOR_SHA256,
     ALPHA_68_SECTOR_SHA256,
     TRIMMED_SECTOR_SHA256,
+    ALPHA_69_SECTOR_SHA256,
 }
 
 TARGETS = (
@@ -123,14 +125,15 @@ def build_patched_sector(source: bytes) -> bytes:
             if y not in gate_tiles and not (x == 369 and y in (3269, 3275)):
                 set_tile(sector, x, y, horizontal_wall=6)
 
-    # Remove the old south railing and extend the dirt approach westward into
-    # the ore room without flattening the existing slope.
-    for x in range(365, 377):
+    # Continue the surrounding ore-area floor beneath the chamber entrance.
+    # Overlay 0 exposes the existing terrain texture and elevation; overlay 8
+    # is empty space in this sector.
+    for x in range(364, 377):
         set_tile(
             sector,
             x,
             3276,
-            overlay=8,
+            overlay=0,
             roof=0,
             horizontal_wall=0,
             vertical_wall=0,
@@ -142,17 +145,21 @@ def build_patched_sector(source: bytes) -> bytes:
                 sector,
                 x,
                 y,
-                overlay=8,
+                overlay=0,
                 roof=0,
                 horizontal_wall=0,
                 vertical_wall=0,
                 diagonal_wall=0,
             )
 
-    # Bound the east side of the widened dirt approach so it connects the
-    # monster room to the ore room without opening onto the surrounding void.
-    for y in range(3276, 3281):
-        set_tile(sector, 368, y, horizontal_wall=1)
+    # Extend the chamber's west wall down to meet the ore-area wall.
+    for y in range(3275, 3280):
+        set_tile(sector, 365, y, horizontal_wall=1)
+
+    # Close the southern sides of both lower cages while keeping the central
+    # aisle open toward the ore room.
+    for x in (*range(365, 370), *range(373, 377)):
+        set_tile(sector, x, 3276, vertical_wall=6)
 
     return bytes(sector)
 
