@@ -34,6 +34,16 @@ public class PathValidation {
 	public static boolean DEBUG = false;
 
 	public static boolean checkPath(World world, Point src, Point dest) {
+		return checkPath(world, src, dest, false);
+	}
+
+	/**
+	 * Checks a projectile or interaction path.
+	 *
+	 * @param ignoreProjectileAllowed when true, transparent projectile
+	 * barriers such as fences still block the path
+	 */
+	public static boolean checkPath(World world, Point src, Point dest, boolean ignoreProjectileAllowed) {
 		final Deque<Point> path = new ArrayDeque<>();
 
 		final Point curPoint = new Point(src.getX(), src.getY());
@@ -63,7 +73,7 @@ public class PathValidation {
 
 		Point nextPoint = null;
 		while ((nextPoint = path.poll()) != null) {
-			if (!checkAdjacentDistance(world, curPoint, nextPoint, false)) return false;
+			if (!checkAdjacentDistance(world, curPoint, nextPoint, ignoreProjectileAllowed)) return false;
 			curPoint.x = nextPoint.x;
 			curPoint.y = nextPoint.y;
 		}

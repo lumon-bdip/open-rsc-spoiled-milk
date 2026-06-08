@@ -36,40 +36,82 @@ server_sector = read_sector(SERVER_LANDSCAPE)
 client_sector = read_sector(CLIENT_LANDSCAPE)
 require(client_sector == server_sector, "Client and server Heroes' Guild terrain must match")
 
-for x in range(365, 378):
-    for y in range(3264, 3277):
+for x in range(365, 377):
+    for y in range(3264, 3276):
         elevation, texture, overlay, roof, _, _, diagonal = tile(server_sector, x, y)
         require(
             (elevation, texture, overlay, roof, diagonal) == (128, 70, 3, 0, 0),
             f"Heroes' Guild chamber tile {x},{y} has unexpected terrain",
         )
 
-for y in range(3264, 3277):
+for y in range(3264, 3276):
     require(tile(server_sector, 365, y)[4] == 1, "West chamber wall is incomplete")
     require(tile(server_sector, 377, y)[4] == 1, "East chamber wall is incomplete")
 
-for x in range(365, 378):
+for x in range(365, 377):
     require(tile(server_sector, x, 3264)[5] == 1, "North chamber wall is incomplete")
+
+for y in range(3264, 3277):
+    _, _, overlay, roof, horizontal_wall, vertical_wall, diagonal = tile(
+        server_sector, 377, y
+    )
+    require((overlay, roof, vertical_wall, diagonal) == (8, 0, 0, 0),
+            f"East void column contains terrain at 377,{y}")
+    require(
+        horizontal_wall == (1 if y < 3276 else 0),
+        f"East cage wall is incorrect at 377,{y}",
+    )
 
 for y in (3266, 3267, 3272, 3273):
     require(tile(server_sector, 369, y)[4] == 0, f"West gate gap is blocked at y={y}")
     require(tile(server_sector, 373, y)[4] == 0, f"East gate gap is blocked at y={y}")
 
-for y in (3264, 3265, 3268, 3269, 3270, 3271, 3274, 3275, 3276):
+for y in (3264, 3265, 3268, 3270, 3271, 3274):
     require(tile(server_sector, 369, y)[4] == 6, f"West aisle railing is missing at y={y}")
+
+for y in (3264, 3265, 3268, 3269, 3270, 3271, 3274, 3275):
     require(tile(server_sector, 373, y)[4] == 6, f"East aisle railing is missing at y={y}")
 
-for boundary_y in (3270, 3276):
-    for x in (*range(365, 370), *range(373, 378)):
-        require(
-            tile(server_sector, x, boundary_y)[5] == 6,
-            f"Cage front railing is missing at {x},{boundary_y}",
+for y in (3269, 3275, 3276):
+    require(tile(server_sector, 369, y)[4] == 0, f"West railing remains at 369,{y}")
+
+for x in (*range(365, 370), *range(373, 377)):
+    require(
+        tile(server_sector, x, 3270)[5] == 6,
+        f"Cage divider railing is missing at {x},3270",
+    )
+for x in range(370, 373):
+    require(
+        tile(server_sector, x, 3270)[5] == 0,
+        f"Central aisle is blocked at {x},3270",
+    )
+
+for x in range(365, 377):
+    _, _, overlay, roof, horizontal_wall, vertical_wall, diagonal = tile(
+        server_sector, x, 3276
+    )
+    require(
+        (overlay, roof, horizontal_wall, vertical_wall, diagonal)
+        == (8, 0, 1 if x == 368 else 0, 0, 0),
+        f"South approach was not cleared at {x},3276",
+    )
+
+for x in range(365, 369):
+    for y in range(3276, 3281):
+        _, _, overlay, roof, horizontal_wall, vertical_wall, diagonal = tile(
+            server_sector, x, y
         )
-    for x in range(370, 373):
         require(
-            tile(server_sector, x, boundary_y)[5] == 0,
-            f"Central aisle is blocked at {x},{boundary_y}",
+            (overlay, roof, horizontal_wall, vertical_wall, diagonal)
+            == (8, 0, 1 if x == 368 else 0, 0, 0),
+            f"Ore-room approach was not opened at {x},{y}",
         )
+
+for y in range(3276, 3281):
+    require(
+        tile(server_sector, 368, y)[4] == 1,
+        f"Void-side approach wall is missing at 368,{y}",
+    )
 
 sceneries = json.loads(SCENERY_LOCS.read_text())["sceneries"]
 room_sceneries = {

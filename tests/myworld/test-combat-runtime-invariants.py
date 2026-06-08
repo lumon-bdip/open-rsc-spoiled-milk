@@ -114,7 +114,7 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "target = npc.getOpponent();")
     require_contains(NPC_BEHAVIOR, "tryProjectileAttack(now);")
     require_contains(NPC_BEHAVIOR, "!npc.withinRange(target, profile.getProjectileRange())")
-    require_contains(NPC_BEHAVIOR, "PathValidation.checkPath(npc.getWorld(), npc.getLocation(), target.getLocation())")
+    require_contains(NPC_BEHAVIOR, "PathValidation.checkPath(npc.getWorld(), npc.getLocation(), target.getLocation(), true)")
     require_contains(NPC_BEHAVIOR, "profile.getRangedProjectileVisual(npc)")
     require_contains(NPC_BEHAVIOR, "profile.getMagicProjectileVisual(npc)")
     require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, 0, profile.getMagicProjectileVisual(npc), impactEffectType, true")

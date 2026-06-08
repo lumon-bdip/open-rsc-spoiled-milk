@@ -68,12 +68,12 @@ public class RangeEventNpc extends GameTickEvent {
             owner.resetRange();
         } else {
             owner.resetPath();
-                if (!PathValidation.checkPath(getWorld(), owner.getLocation(), victim.getLocation())) {
-                    owner.resetRange();
-                    stop();
-                    return;
-                }
-                owner.face(victim);
+            if (!PathValidation.checkPath(getWorld(), owner.getLocation(), victim.getLocation(), true)) {
+                owner.resetRange();
+                stop();
+                return;
+            }
+            owner.face(victim);
             setDelayTicks(RangeUtils.getAdjustedRangeDelayTicks(owner, 3));
 
 

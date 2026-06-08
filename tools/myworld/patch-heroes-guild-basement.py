@@ -19,6 +19,13 @@ SECTOR_ORIGIN_Y = 3264
 REGION_SIZE = 48
 TILE_SIZE = 10
 BASE_SECTOR_SHA256 = "1749036f6c1e59633e319c520996b4abad157dc10e581759d700d60ee6b5781f"
+ALPHA_68_SECTOR_SHA256 = "493506c65c737bba1c3d77ba95a55fc88504c34712c54ebd40758c52013ed43e"
+TRIMMED_SECTOR_SHA256 = "0a42c3af6ee61225cce7d110172de7a119ea647a5bc0451a55416258b5594491"
+SUPPORTED_SOURCE_HASHES = {
+    BASE_SECTOR_SHA256,
+    ALPHA_68_SECTOR_SHA256,
+    TRIMMED_SECTOR_SHA256,
+}
 
 TARGETS = (
     Path("server/conf/server/data/Custom_Landscape.orsc"),
@@ -67,10 +74,10 @@ def set_tile(
 def build_patched_sector(source: bytes) -> bytes:
     sector = bytearray(source)
 
-    # The expanded chamber occupies flat unused terrain north of the existing
-    # pen. Its 3x5 lower-right cage retains the blue dragon's current tiles.
-    for x in range(365, 378):
-        for y in range(3264, 3277):
+    # The chamber ends at x=376 and y=3275. The east wall is stored on the
+    # adjacent void column, while y=3276 belongs to the dirt approach.
+    for x in range(365, 377):
+        for y in range(3264, 3276):
             set_tile(
                 sector,
                 x,
@@ -84,24 +91,68 @@ def build_patched_sector(source: bytes) -> bytes:
                 diagonal_wall=0,
             )
 
-    # Stone outer walls. The south side remains open down the central aisle.
-    for y in range(3264, 3277):
+    # Stone outer walls. The south side remains open into the ore approach.
+    for y in range(3264, 3276):
         set_tile(sector, 365, y, horizontal_wall=1)
         set_tile(sector, 377, y, horizontal_wall=1)
-    for x in range(365, 378):
+    for x in range(365, 377):
         set_tile(sector, x, 3264, vertical_wall=1)
 
-    # Railings split the four equal cages and front the two southern cages.
-    for x in (*range(365, 370), *range(373, 378)):
+    # Keep x=377 as void while retaining the horizontal wall required by the
+    # east cages. The north-edge wall at 377,3264 is deliberately absent.
+    for y in range(3264, 3277):
+        set_tile(
+            sector,
+            377,
+            y,
+            overlay=8,
+            roof=0,
+            horizontal_wall=1 if y < 3276 else 0,
+            vertical_wall=0,
+            diagonal_wall=0,
+        )
+
+    # Railings split the four equal cages.
+    for x in (*range(365, 370), *range(373, 377)):
         set_tile(sector, x, 3270, vertical_wall=6)
-        set_tile(sector, x, 3276, vertical_wall=6)
 
     # Two-tile gaps in each aisle-facing railing are occupied by gate objects.
     gate_tiles = {3266, 3267, 3272, 3273}
     for x in (369, 373):
-        for y in range(3264, 3277):
-            if y not in gate_tiles:
+        for y in range(3264, 3276):
+            if y not in gate_tiles and not (x == 369 and y in (3269, 3275)):
                 set_tile(sector, x, y, horizontal_wall=6)
+
+    # Remove the old south railing and extend the dirt approach westward into
+    # the ore room without flattening the existing slope.
+    for x in range(365, 377):
+        set_tile(
+            sector,
+            x,
+            3276,
+            overlay=8,
+            roof=0,
+            horizontal_wall=0,
+            vertical_wall=0,
+            diagonal_wall=0,
+        )
+    for x in range(365, 369):
+        for y in range(3276, 3281):
+            set_tile(
+                sector,
+                x,
+                y,
+                overlay=8,
+                roof=0,
+                horizontal_wall=0,
+                vertical_wall=0,
+                diagonal_wall=0,
+            )
+
+    # Bound the east side of the widened dirt approach so it connects the
+    # monster room to the ore room without opening onto the surrounding void.
+    for y in range(3276, 3281):
+        set_tile(sector, 368, y, horizontal_wall=1)
 
     return bytes(sector)
 
@@ -216,14 +267,14 @@ def main() -> int:
         source_hash = hashlib.sha256(source_sector).hexdigest()
         candidate = build_patched_sector(source_sector)
         if expected_patched is None:
-            if source_hash != BASE_SECTOR_SHA256 and candidate != source_sector:
+            if source_hash not in SUPPORTED_SOURCE_HASHES and candidate != source_sector:
                 raise SystemExit(
                     f"{path}: unexpected source sector {source_hash}; "
                     "refusing to layer this patch over unknown terrain"
                 )
             expected_patched = candidate
         elif source_sector not in (expected_patched,):
-            if source_hash != BASE_SECTOR_SHA256:
+            if source_hash not in SUPPORTED_SOURCE_HASHES:
                 raise SystemExit(f"{path}: client/server landscape sectors differ")
             candidate = build_patched_sector(source_sector)
 

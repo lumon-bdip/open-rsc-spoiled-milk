@@ -464,7 +464,7 @@ public class NpcBehavior {
 		}
 
 		if (!npc.withinRange(target, profile.getProjectileRange())
-			|| !PathValidation.checkPath(npc.getWorld(), npc.getLocation(), target.getLocation())
+			|| !PathValidation.checkPath(npc.getWorld(), npc.getLocation(), target.getLocation(), true)
 			|| !checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor)) {
 			return false;
 		}
