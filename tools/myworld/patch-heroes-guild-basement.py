@@ -28,6 +28,7 @@ EXPANDED_CAVERN_SECTOR_SHA256 = "3091372d06193f64ddb27442be6ef9e5dd9a93044f67555
 ALPHA_72_SECTOR_SHA256 = "823355f02c279495ec370f2f10e99ec498c4650593b1d71dc720c3e5196e0620"
 ALPHA_73_SECTOR_SHA256 = "0e61ff1e45b8fe8835b2a9ad2e193a44a0e9bd47585ff2eeb389c730b0376efc"
 DIAGONAL_CAVERN_SECTOR_SHA256 = "ca88243e9ba202490ba43b9ecfd361eaf99c7e19ecfd7d4076943a87e7c3d6dc"
+ALPHA_74_SECTOR_SHA256 = "3386dbd5fa39119785cb3d7468f1620d0ab6cd28ec113bb3c6af005726760986"
 SUPPORTED_SOURCE_HASHES = {
     BASE_SECTOR_SHA256,
     ALPHA_68_SECTOR_SHA256,
@@ -39,6 +40,7 @@ SUPPORTED_SOURCE_HASHES = {
     ALPHA_72_SECTOR_SHA256,
     ALPHA_73_SECTOR_SHA256,
     DIAGONAL_CAVERN_SECTOR_SHA256,
+    ALPHA_74_SECTOR_SHA256,
 }
 
 TARGETS = (
@@ -83,15 +85,15 @@ ORIGINAL_ORE_ROWS = {
 }
 
 DIAGONAL_BOUNDARY_WALLS = {
-    (351, 3277): 1,
-    (349, 3278): 1,
-    (347, 3280): 1,
-    (345, 3282): 1,
-    (343, 3284): 1,
-    (340, 3287): 1,
-    (341, 3290): 12001,
-    (343, 3292): 12001,
-    (346, 3294): 12001,
+    (351, 3277): 12001,
+    (349, 3278): 12001,
+    (347, 3280): 12001,
+    (345, 3282): 12001,
+    (343, 3284): 12001,
+    (340, 3287): 12001,
+    (341, 3290): 1,
+    (343, 3292): 1,
+    (346, 3294): 1,
 }
 
 
@@ -205,7 +207,7 @@ def build_patched_sector(source: bytes) -> bytes:
     gate_tiles = {3266, 3267, 3272, 3273}
     for x in (369, 373):
         for y in range(3264, 3276):
-            if y not in gate_tiles and not (x == 369 and y in (3270,)):
+            if y not in gate_tiles:
                 set_tile(sector, x, y, horizontal_wall=6)
 
     cavern_tiles = {

@@ -54,15 +54,15 @@ ORIGINAL_ELEVATION_SAMPLES = {
     (366, 3283): 48,
 }
 DIAGONAL_BOUNDARY_WALLS = {
-    (351, 3277): 1,
-    (349, 3278): 1,
-    (347, 3280): 1,
-    (345, 3282): 1,
-    (343, 3284): 1,
-    (340, 3287): 1,
-    (341, 3290): 12001,
-    (343, 3292): 12001,
-    (346, 3294): 12001,
+    (351, 3277): 12001,
+    (349, 3278): 12001,
+    (347, 3280): 12001,
+    (345, 3282): 12001,
+    (343, 3284): 12001,
+    (340, 3287): 12001,
+    (341, 3290): 1,
+    (343, 3292): 1,
+    (346, 3294): 1,
 }
 DIAGONAL_CLEAR_HORIZONTAL = {
     (x + 1, y)
@@ -125,13 +125,13 @@ for y in (3266, 3267, 3272, 3273):
     require(tile(server_sector, 369, y)[4] == 0, f"West gate gap is blocked at y={y}")
     require(tile(server_sector, 373, y)[4] == 0, f"East gate gap is blocked at y={y}")
 
-for y in (3264, 3265, 3268, 3269, 3271, 3274, 3275):
+for y in (3264, 3265, 3268, 3269, 3270, 3271, 3274, 3275):
     require(tile(server_sector, 369, y)[4] == 6, f"West aisle railing is missing at y={y}")
 
 for y in (3264, 3265, 3268, 3269, 3270, 3271, 3274, 3275):
     require(tile(server_sector, 373, y)[4] == 6, f"East aisle railing is missing at y={y}")
 
-for y in (3270, 3276):
+for y in (3276,):
     require(tile(server_sector, 369, y)[4] == 0, f"West railing remains at 369,{y}")
 
 for x in (*range(365, 369), *range(373, 377)):
