@@ -25,15 +25,21 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public final class Mining implements OpLocTrigger, UseLocTrigger {
 
-	public static final int MINING_FOCUS_NO_GEMS = Skills.CONTROLLED_MODE;
-	public static final int MINING_FOCUS_SOME_GEMS = Skills.AGGRESSIVE_MODE;
-	public static final int MINING_FOCUS_MORE_GEMS = Skills.ACCURATE_MODE;
-	public static final int MINING_FOCUS_MOST_GEMS = Skills.DEFENSIVE_MODE;
+	public static final int MINING_FOCUS_NO_GEODES = Skills.CONTROLLED_MODE;
+	public static final int MINING_FOCUS_SOME_GEODES = Skills.AGGRESSIVE_MODE;
+	public static final int MINING_FOCUS_MORE_GEODES = Skills.ACCURATE_MODE;
+	public static final int MINING_FOCUS_MOST_GEODES = Skills.DEFENSIVE_MODE;
 	private static final int GEM_ROCK = 588;
 	private static final int GEM_ROCK_REQ_LEVEL = 40;
 	private static final int GEM_ROCK_EXP = 260;
 	private static final int GEM_ROCK_RESPAWN_SECONDS = 70;
-	private static final double MYWORLD_GEM_REWARD_BASE_CHANCE = 1.0D / 50.0D;
+	private static final double MYWORLD_GEODE_REWARD_BASE_CHANCE = 1.0D / 50.0D;
+	private static final GeodeReward[] MYWORLD_MINING_GEODE_REWARDS = {
+		new GeodeReward(ItemId.SMALL_GEODE.id(), 1, 80),
+		new GeodeReward(ItemId.STANDARD_GEODE.id(), 4, 28),
+		new GeodeReward(ItemId.LARGE_GEODE.id(), 7, 10),
+		new GeodeReward(ItemId.HUGE_GEODE.id(), 10, 2)
+	};
 	private static final int[] GEM_ROCK_GEM_IDS = {
 		ItemId.UNCUT_OPAL.id(),
 		ItemId.UNCUT_JADE.id(),
@@ -44,6 +50,18 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		ItemId.UNCUT_DIAMOND.id()
 	};
 	private static final int[] GEM_ROCK_GEM_WEIGHTS = {64, 32, 16, 8, 3, 3, 2};
+
+	private static final class GeodeReward {
+		private final int itemId;
+		private final int tier;
+		private final int weight;
+
+		private GeodeReward(int itemId, int tier, int weight) {
+			this.itemId = itemId;
+			this.tier = tier;
+			this.weight = weight;
+		}
+	}
 
 	public static int getAxe(Player player) {
 		int lvl = player.getSkills().getLevel(Skill.MINING.id());
@@ -136,16 +154,16 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 
 	public static String getMiningFocusLabel(int combatStyle) {
 		switch (combatStyle) {
-			case MINING_FOCUS_NO_GEMS:
+			case MINING_FOCUS_NO_GEODES:
 				return "Just the ore";
-			case MINING_FOCUS_SOME_GEMS:
-				return "A few gems";
-			case MINING_FOCUS_MORE_GEMS:
-				return "Plenty of gems";
-			case MINING_FOCUS_MOST_GEMS:
-				return "Lots of gems";
+			case MINING_FOCUS_SOME_GEODES:
+				return "A few geodes";
+			case MINING_FOCUS_MORE_GEODES:
+				return "Plenty of geodes";
+			case MINING_FOCUS_MOST_GEODES:
+				return "Lots of geodes";
 			default:
-				return "A few gems";
+				return "A few geodes";
 		}
 	}
 
@@ -153,16 +171,16 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		return player.getCombatStyle();
 	}
 
-	private static double getRandomGemChance(Player player) {
-		double baseChance = MYWORLD_GEM_REWARD_BASE_CHANCE * player.getCarriedItems().getEquipment().getCosmicAmuletGemChanceMultiplier();
+	private static double getRandomGeodeChance(Player player) {
+		double baseChance = MYWORLD_GEODE_REWARD_BASE_CHANCE * player.getCarriedItems().getEquipment().getCosmicAmuletGemChanceMultiplier();
 		switch (getMiningFocus(player)) {
-			case MINING_FOCUS_NO_GEMS:
+			case MINING_FOCUS_NO_GEODES:
 				return 0.0D;
-			case MINING_FOCUS_SOME_GEMS:
+			case MINING_FOCUS_SOME_GEODES:
 				return baseChance;
-			case MINING_FOCUS_MORE_GEMS:
+			case MINING_FOCUS_MORE_GEODES:
 				return baseChance * 1.5D;
-			case MINING_FOCUS_MOST_GEMS:
+			case MINING_FOCUS_MOST_GEODES:
 				return baseChance * 2.0D;
 			default:
 				return baseChance;
@@ -366,7 +384,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 					thinkbubble(new Item(ItemId.MINING_CAPE.id(), 1));
 					quantity *= 2;
 				}
-				if (maybeAwardMyWorldMiningGem(player, rock)) {
+				if (maybeAwardMyWorldMiningGeode(player, rock, getPickaxeTier(axeId))) {
 					player.incExp(Skill.MINING.id(), def.getExp() * quantity, true);
 				} else {
 					int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(ore.getCatalogId(), quantity));
@@ -668,25 +686,52 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		}
 	}
 
-	private boolean maybeAwardMyWorldMiningGem(Player player, GameObject rock) {
-		double gemChance = getRandomGemChance(player);
-		if (gemChance <= 0.0D || DataConversions.getRandom().nextDouble() >= gemChance) {
+	private boolean maybeAwardMyWorldMiningGeode(Player player, GameObject rock, int pickaxeTier) {
+		double geodeChance = getRandomGeodeChance(player);
+		if (geodeChance <= 0.0D || DataConversions.getRandom().nextDouble() >= geodeChance) {
+			return false;
+		}
+		GeodeReward reward = rollMyWorldMiningGeode(pickaxeTier);
+		if (reward == null) {
 			return false;
 		}
 		player.playSound("foundgem");
-		Item gem = new Item(getGem(), 1);
-		if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(gem) > 0) {
-			player.playerServerMessage(MessageType.QUEST, "You just found a" + gem.getDef(player.getWorld()).getName().toLowerCase().replaceAll("uncut", "") + "!");
-			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
+		Item geode = new Item(reward.itemId, 1);
+		String geodeName = geode.getDef(player.getWorld()).getName().toLowerCase();
+		if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(geode) > 0) {
+			player.playerServerMessage(MessageType.QUEST, "You find a " + geodeName + ".");
+			maybeDoubleRareGatheringReward(player, geode, rock, "Your cosmic amulet glimmers and another geode appears.");
 		} else if (!player.getCarriedItems().getInventory().full()) {
-			player.getCarriedItems().getInventory().add(gem);
-			player.playerServerMessage(MessageType.QUEST, "You just found a" + gem.getDef(player.getWorld()).getName().toLowerCase().replaceAll("uncut", "") + "!");
-			maybeDoubleRareGatheringReward(player, gem, rock, "Your cosmic amulet glimmers and another gem appears.");
+			player.getCarriedItems().getInventory().add(geode);
+			player.playerServerMessage(MessageType.QUEST, "You find a " + geodeName + ".");
+			maybeDoubleRareGatheringReward(player, geode, rock, "Your cosmic amulet glimmers and another geode appears.");
 		} else {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), gem.getCatalogId(), player.getX(), player.getY(), 1, player));
-			player.playerServerMessage(MessageType.QUEST, "You find a gem, but have no room to keep it, so it falls to the ground");
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), geode.getCatalogId(), player.getX(), player.getY(), 1, player));
+			player.playerServerMessage(MessageType.QUEST, "You find a geode, but have no room to keep it, so it falls to the ground");
 		}
 		return true;
+	}
+
+	private GeodeReward rollMyWorldMiningGeode(int pickaxeTier) {
+		int totalWeight = 0;
+		for (GeodeReward reward : MYWORLD_MINING_GEODE_REWARDS) {
+			totalWeight += Formulae.adjustedSideRewardWeightForToolTier(reward.tier, pickaxeTier, reward.weight);
+		}
+		if (totalWeight <= 0) {
+			return null;
+		}
+		int roll = DataConversions.random(1, totalWeight);
+		for (GeodeReward reward : MYWORLD_MINING_GEODE_REWARDS) {
+			int adjustedWeight = Formulae.adjustedSideRewardWeightForToolTier(reward.tier, pickaxeTier, reward.weight);
+			if (adjustedWeight <= 0) {
+				continue;
+			}
+			roll -= adjustedWeight;
+			if (roll <= 0) {
+				return reward;
+			}
+		}
+		return null;
 	}
 
 	private void maybeDoubleRareGatheringReward(Player player, Item item, GameObject object, String message) {

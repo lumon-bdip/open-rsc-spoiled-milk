@@ -257,7 +257,7 @@ deferred until the limited release has testers and observed play data.
   - Fishing: off, `1/30`, `1/20`, or `1/15` for `Just the fish`,
     `A little loot`, `Plenty of loot`, and `Lots of loot`
   - Mining: off, `1/50`, `3%`, or `4%` for `Just the ore`,
-    `A few gems`, `Plenty of gems`, and `Lots of gems`
+    `A few geodes`, `Plenty of geodes`, and `Lots of geodes`
   - Woodcutting: off, `1/50`, `3%`, or `4%` for the four seed-focus options
   - Harvesting: off, `1/50`, `3%`, or `4%` for the four seed-focus options
 - Clean up remaining inherited item/resource naming inconsistencies only as
@@ -400,7 +400,7 @@ The yield ladder repeats every 10 effective levels from the resource's unlock.
   iron `15`, coal `22`, mithril `38`, adamantite `54`, and runite `70`
 - Stone rocks should unlock at level `1`.
 - Yield beyond free inventory space should drop on the ground, not be lost.
-- `Just the ore`, `A few gems`, `Plenty of gems`, and `Lots of gems` behavior.
+- `Just the ore`, `A few geodes`, `Plenty of geodes`, and `Lots of geodes` behavior.
 - Future gathering rare-side-reward work should reuse this option style for
   fishing and any woodcutting/harvesting equivalents rather than adding one-off
   mechanics per skill.

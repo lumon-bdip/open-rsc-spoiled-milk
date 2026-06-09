@@ -196,6 +196,7 @@ def test_myworld_docs_are_consolidated() -> None:
         "dual-element-spells.md",
         "fishing-rework-plan.md",
         "fishing-spot-map.md",
+        "geode-and-gathering-spirit-plan.md",
         "god-knight-equipment-audit.md",
         "jewelry-and-retired-robe-effects.md",
         "migration-regression-audit.md",

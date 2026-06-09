@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate MyWorld gathering rework planning guardrails."""
 
+import json
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -17,6 +18,7 @@ SMITHING_PLUGIN = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/sk
 FORMULAE = ROOT / "server/src/com/openrsc/server/util/rsc/Formulae.java"
 ENTITY_HANDLER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+CLIENT_ITEM_OVERRIDES = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/MyWorldItemOverrides.java"
 GAME_STATE_UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
 EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
 MOB = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
@@ -64,6 +66,11 @@ def load_mining_levels_by_ore() -> dict[int, set[int]]:
     return result
 
 
+def load_myworld_items() -> dict[int, dict]:
+    entries = json.loads(ITEM_DEFS_MYWORLD.read_text(encoding="utf-8"))["items"]
+    return {int(entry["id"]): entry for entry in entries}
+
+
 def require_ore_levels(expected: dict[int, int], actual: dict[int, set[int]]) -> None:
     for ore_id, expected_level in expected.items():
         levels = actual.get(ore_id)
@@ -82,7 +89,7 @@ def require_plan_text() -> None:
         "tin `1`, copper `8`,\n  iron `15`, coal `22`, mithril `38`, adamantite `54`, and runite `70`",
         "Stone rocks should unlock at level `1`.",
         "Yield beyond free inventory space should drop on the ground, not be lost.",
-        "`Just the ore`, `A few gems`, `Plenty of gems`, and `Lots of gems` behavior.",
+        "`Just the ore`, `A few geodes`, `Plenty of geodes`, and `Lots of geodes` behavior.",
     )
     for snippet in snippets:
         if snippet not in text:
@@ -128,48 +135,53 @@ def require_tool_equip_gates() -> None:
     formulae_text = FORMULAE.read_text(encoding="utf-8")
     mining_text = MINING_PLUGIN.read_text(encoding="utf-8")
 
+    if "configureEquippableTool(" in entity_text:
+        fail("Tool equip policy should come from ItemDefsMyWorld.json, not EntityHandler patches")
+    if "configureEquippableToolClient(" in client_entity_text or "applyMyWorldToolOverrides" in client_entity_text:
+        fail("Client tool equip policy should come from generated item overrides, not runtime patches")
+
+    tool_policy = {
+        1987: (14, 1), 2047: (14, 8), 156: (14, 15), 1258: (14, 22),
+        1259: (14, 30), 1260: (14, 38), 2048: (14, 46), 1261: (14, 54),
+        2049: (14, 62), 1262: (14, 70),
+        2001: (8, 1), 2012: (8, 8), 87: (8, 15), 12: (8, 22),
+        88: (8, 30), 428: (8, 30), 203: (8, 38), 2023: (8, 46),
+        204: (8, 54), 2034: (8, 62), 405: (8, 70), 594: (8, 80),
+        1480: (8, 80),
+        144: (19, 1), 2215: (19, 8), 2216: (19, 15), 2217: (19, 22),
+        2218: (19, 30), 2219: (19, 38), 2220: (19, 46), 2221: (19, 54),
+        2222: (19, 62), 2223: (19, 70),
+    }
+    tool_defaults = {
+        "isWearable": 1,
+        "wearableID": 16,
+        "wearSlot": 4,
+        "weaponAimBonus": 0,
+        "weaponPowerBonus": 0,
+        "meleeOffense": 0,
+        "rangedOffense": 0,
+        "magicOffense": 0,
+    }
+    myworld_items = load_myworld_items()
+    for item_id, (skill_id, required_level) in tool_policy.items():
+        entry = myworld_items.get(item_id)
+        if entry is None:
+            fail(f"Tool item {item_id} missing from generated MyWorld item overrides")
+        expected = {
+            **tool_defaults,
+            "requiredSkillID": skill_id,
+            "requiredLevel": required_level,
+        }
+        for field, value in expected.items():
+            if entry.get(field) != value:
+                fail(f"Tool item {item_id} field {field} expected {value}, found {entry.get(field)!r}")
+
     entity_snippets = (
-        "configureEquippableTool(ItemId.TIN_PICKAXE.id(), Skill.MINING.id(), 1);",
-        "configureEquippableTool(ItemId.COPPER_PICKAXE.id(), Skill.MINING.id(), 8);",
-        "configureEquippableTool(ItemId.BRONZE_PICKAXE.id(), Skill.MINING.id(), 15);",
-        "configureEquippableTool(ItemId.IRON_PICKAXE.id(), Skill.MINING.id(), 22);",
-        "configureEquippableTool(ItemId.STEEL_PICKAXE.id(), Skill.MINING.id(), 30);",
-        "configureEquippableTool(ItemId.MITHRIL_PICKAXE.id(), Skill.MINING.id(), 38);",
-        "configureEquippableTool(ItemId.TITAN_STEEL_PICKAXE.id(), Skill.MINING.id(), 46);",
-        "configureEquippableTool(ItemId.ADAMANTITE_PICKAXE.id(), Skill.MINING.id(), 54);",
-        "configureEquippableTool(ItemId.ORICHALCUM_PICKAXE.id(), Skill.MINING.id(), 62);",
-        "configureEquippableTool(ItemId.RUNE_PICKAXE.id(), Skill.MINING.id(), 70);",
-        "configureEquippableTool(ItemId.TIN_AXE.id(), Skill.WOODCUTTING.id(), 1);",
-        "configureEquippableTool(ItemId.COPPER_AXE.id(), Skill.WOODCUTTING.id(), 8);",
-        "configureEquippableTool(ItemId.BRONZE_AXE.id(), Skill.WOODCUTTING.id(), 15);",
-        "configureEquippableTool(ItemId.IRON_AXE.id(), Skill.WOODCUTTING.id(), 22);",
-        "configureEquippableTool(ItemId.STEEL_AXE.id(), Skill.WOODCUTTING.id(), 30);",
-        "configureEquippableTool(ItemId.MITHRIL_AXE.id(), Skill.WOODCUTTING.id(), 38);",
-        "configureEquippableTool(ItemId.TITAN_STEEL_AXE.id(), Skill.WOODCUTTING.id(), 46);",
-        "configureEquippableTool(ItemId.ADAMANTITE_AXE.id(), Skill.WOODCUTTING.id(), 54);",
-        "configureEquippableTool(ItemId.ORICHALCUM_AXE.id(), Skill.WOODCUTTING.id(), 62);",
-        "configureEquippableTool(ItemId.RUNE_AXE.id(), Skill.WOODCUTTING.id(), 70);",
-        "configureEquippableTool(ItemId.DRAGON_AXE.id(), Skill.WOODCUTTING.id(), 80);",
-        "configureEquippableTool(ItemId.DRAGON_WOODCUTTING_AXE.id(), Skill.WOODCUTTING.id(), 80);",
-        "configureEquippableTool(ItemId.SHEARS.id(), Skill.HARVESTING.id(), 1);",
-        "configureEquippableTool(ItemId.COPPER_SHEARS.id(), Skill.HARVESTING.id(), 8);",
-        "configureEquippableTool(ItemId.BRONZE_SHEARS.id(), Skill.HARVESTING.id(), 15);",
-        "configureEquippableTool(ItemId.IRON_SHEARS.id(), Skill.HARVESTING.id(), 22);",
-        "configureEquippableTool(ItemId.STEEL_SHEARS.id(), Skill.HARVESTING.id(), 30);",
-        "configureEquippableTool(ItemId.MITHRIL_SHEARS.id(), Skill.HARVESTING.id(), 38);",
-        "configureEquippableTool(ItemId.TITAN_STEEL_SHEARS.id(), Skill.HARVESTING.id(), 46);",
-        "configureEquippableTool(ItemId.ADAMANTITE_SHEARS.id(), Skill.HARVESTING.id(), 54);",
-        "configureEquippableTool(ItemId.ORICHALCUM_SHEARS.id(), Skill.HARVESTING.id(), 62);",
-        "configureEquippableTool(ItemId.RUNE_SHEARS.id(), Skill.HARVESTING.id(), 70);",
         "private static final int MYWORLD_PICKAXE_APPEARANCE_START = MYWORLD_RUNE_STAFF_APPEARANCE_START",
         "private static final int[] MYWORLD_PICKAXE_IDS = {",
         "ItemId.COPPER_PICKAXE.id(),",
         "applyMyWorldPickaxeAppearanceOverrides();",
         "setItemAppearance(MYWORLD_PICKAXE_IDS[i], MYWORLD_PICKAXE_APPEARANCE_START + i);",
-        "def.setWieldable(true);",
-        "def.setWieldPosition(Equipment.EquipmentSlot.SLOT_MAINHAND.getIndex());",
-        "def.setRequiredLevel(requiredLevel);",
-        "def.setRequiredSkillIndex(skillId);",
     )
     for snippet in entity_snippets:
         if snippet not in entity_text:
@@ -230,7 +242,7 @@ def require_mining_uses_guaranteed_yield() -> None:
         "player.getCarriedItems().getEquipment().hasCatalogID(Formulae.miningAxeIDs[i])\n\t\t\t\t&& lvl >= Formulae.miningAxeLvls[i]",
         "public static int getPickaxeTier(int axeId)",
         "public static String getMiningFocusLabel(int combatStyle)",
-        "private static double getRandomGemChance(Player player)",
+        "private static double getRandomGeodeChance(Player player)",
         "Formulae.calcGatheringYield(def.getReqLevel(), mineLvl, getPickaxeTier(axeId))",
         "player.incExp(Skill.MINING.id(), def.getExp() * quantity, true)",
         "changeloc(rock, resourceRespawnMillis(def.getRespawnTime()), SceneryId.ROCK_GENERIC.id())",
@@ -306,6 +318,7 @@ def require_harvesting_uses_guaranteed_yield() -> None:
 def require_shearing_uses_harvesting() -> None:
     text = SHEEP_PLUGIN.read_text(encoding="utf-8")
     client_text = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
+    client_override_text = CLIENT_ITEM_OVERRIDES.read_text(encoding="utf-8")
     npc_defs_text = (ROOT / "server/conf/server/defs/NpcDefs.json").read_text(encoding="utf-8")
     npc_patch18_text = (ROOT / "server/conf/server/defs/NpcDefsPatch18.json").read_text(encoding="utf-8")
     snippets = (
@@ -334,6 +347,7 @@ def require_shearing_uses_harvesting() -> None:
 def require_shears_smithing_and_defs() -> None:
     smithing_text = SMITHING_PLUGIN.read_text(encoding="utf-8")
     client_text = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
+    client_override_text = CLIENT_ITEM_OVERRIDES.read_text(encoding="utf-8")
     item_id_text = ITEM_IDS.read_text(encoding="utf-8")
     custom_defs_text = ITEM_DEFS_CUSTOM.read_text(encoding="utf-8")
     myworld_defs_text = ITEM_DEFS_MYWORLD.read_text(encoding="utf-8")
@@ -409,9 +423,6 @@ def require_shears_smithing_and_defs() -> None:
         'addMetalShearsDefinition("Rune shears", 2223, 32000, 0x00FFFF);',
         'new ItemDef(name, name + " for harvesting", "", price, 66, "items:66"',
         "true, 16, pictureMask, false, false, true, id);",
-        'configureEquippableToolClient(144, "Tin shears");',
-        'configureEquippableToolClient(2215, "Copper shears");',
-        'configureEquippableToolClient(2223, "Rune shears");',
         "while (items.size() <= id)",
         'addMetalArrowHeadDefinition("Tin arrow heads", 2004, 1, 0xB7C9D9);',
         'addMetalArrowHeadDefinition("Copper arrow heads", 2015, 2, 0xC86A2B);',
@@ -431,6 +442,14 @@ def require_shears_smithing_and_defs() -> None:
     for snippet in client_snippets:
         if snippet not in client_text:
             fail(f"Client item sprite mapping missing expected snippet: {snippet}")
+    for snippet in (
+        "MyWorldItemOverrides.apply(items);",
+        'new ItemOverride(144, "Tin shears", null, 40, 1, 16),',
+        "new ItemOverride(2215, null, null, 80, 1, 16),",
+        "new ItemOverride(2223, null, null, 15000, 1, 16),",
+    ):
+        if snippet not in client_text and snippet not in client_override_text:
+            fail(f"Generated client item overrides missing expected snippet: {snippet}")
 
 
 def main() -> None:

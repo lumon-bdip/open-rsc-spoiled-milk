@@ -85,13 +85,14 @@ def main() -> None:
 
     client_text = CLIENT_DEFS.read_text(encoding="utf-8")
     for snippet in (
-        "MASTER_TANNER_NPC_ID = 837",
-        "MASTER_TANNER_FALLBACK",
-        "\"Master tanner\"",
+        'setCustomNpcDefinition(836, new NPCDef(\n\t\t\t"Grey Knight", "An armoured follower of Guthix"',
+        'setCustomNpcDefinition(837, new NPCDef(\n\t\t\t"Master tanner", "He works with the finest leather"',
         "Config.S_RIGHT_CLICK_TRADE ? \"Trade\" : \"\"",
     ):
         if snippet not in client_text:
             fail(f"Client Master tanner definition is missing: {snippet}")
+    if "MASTER_TANNER_FALLBACK" in client_text:
+        fail("Client Master tanner should be a stable NPC override, not a fallback")
 
     print("PASS: crafting guild Master tanner placement, trade option, and stock look correct")
 

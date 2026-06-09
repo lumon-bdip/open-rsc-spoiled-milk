@@ -45,13 +45,13 @@ def main() -> None:
         "Fishing extra-resource amulet should not add fish after a rare replacement",
     )
 
-    require("private boolean maybeAwardMyWorldMiningGem(Player player, GameObject rock)", mining, "Mining rare replacement helper")
+    require("private boolean maybeAwardMyWorldMiningGeode(Player player, GameObject rock, int pickaxeTier)", mining, "Mining rare replacement helper")
     require_regex(
-        r"if \(maybeAwardMyWorldMiningGem\(player, rock\)\) \{.*?"
+        r"if \(maybeAwardMyWorldMiningGeode\(player, rock, getPickaxeTier\(axeId\)\)\) \{.*?"
         r"player\.incExp\(Skill\.MINING\.id\(\), def\.getExp\(\) \* quantity, true\);.*?"
         r"\} else \{.*?bankSkillingDropWithLawRing\(new Item\(ore\.getCatalogId\(\), quantity\)\)",
         mining,
-        "Mining should award either the gem or the ore, not both",
+        "Mining should award either the geode or the ore, not both",
     )
 
     require("private boolean maybeAwardMyWorldWoodcuttingSeed(Player player, GameObject object, int axeTier)", woodcutting, "Woodcutting rare replacement helper")

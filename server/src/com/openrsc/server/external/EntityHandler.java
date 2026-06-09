@@ -4,7 +4,6 @@ import com.openrsc.server.Server;
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
-import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Spells;
 import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
 import com.openrsc.server.model.Point;
@@ -20,8 +19,10 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import static com.openrsc.server.plugins.Functions.ZERO_RESERVED;
 import static com.openrsc.server.plugins.Functions.patchObject;
@@ -37,6 +38,19 @@ public final class EntityHandler {
 	 * The asynchronous logger.
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Set<String> MYWORLD_NPC_OVERRIDE_FIELDS = new HashSet<>(Arrays.asList(
+		"id", "name", "description", "attack", "strength", "hits", "defense", "ranged",
+		"meleeDefense", "rangedDefense", "magicDefense",
+		"meleeDefenseMultiplier", "rangedDefenseMultiplier", "magicDefenseMultiplier",
+		"meleeDefenseDivisor", "rangedDefenseDivisor", "magicDefenseDivisor",
+		"combatlvl", "hairColour", "topColour", "bottomColour", "skinColour"
+	));
+	private static final Set<String> MYWORLD_ITEM_OVERRIDE_FIELDS = new HashSet<>(Arrays.asList(
+		"id", "name", "description", "meleeOffense", "rangedOffense", "magicOffense",
+		"weaponSpeed", "meleeDefense", "rangedDefense", "magicDefense", "requiredLevel",
+		"requiredSkillID", "isWearable", "appearanceID", "wearableID", "wearSlot",
+		"weaponAimBonus", "weaponPowerBonus", "armourBonus", "magicBonus", "prayerBonus", "basePrice"
+	));
 
 	private final Server server;
 	private final PersistenceManager persistenceManager;
@@ -223,7 +237,6 @@ public final class EntityHandler {
 		customItemConditions();
 		if (getServer().getConfig().WANT_MYWORLD) {
 			applyOptionalItemOverrides(getServer().getConfig().CONFIG_DIR + "/defs/ItemDefsMyWorld.json");
-			clearArmorEquipRequirements();
 		}
 		LOGGER.info("Loaded " + items.size() + " item definitions");
 
@@ -408,37 +421,46 @@ public final class EntityHandler {
 		LOGGER.info("Applying npc overrides from " + file.getName() + "...");
 		try {
 			JSONObject object = new JSONObject(new String(Files.readAllBytes(Paths.get(filename))));
-			JSONArray npcOverrides = object.getJSONArray(JSONObject.getNames(object)[0]);
+			JSONArray npcOverrides = object.getJSONArray("npcs");
+			ArrayList<NPCDef> stagedNpcs = new ArrayList<>(npcs);
+			Set<Integer> overriddenIds = new HashSet<>();
 			for (int i = 0; i < npcOverrides.length(); i++) {
 				JSONObject npc = npcOverrides.getJSONObject(i);
+				validateOverrideFields(npc, MYWORLD_NPC_OVERRIDE_FIELDS, "npc", i);
 				int npcId = npc.getInt("id");
-				if (npcId >= 0 && npcId < npcs.size()) {
-					NPCDef existing = npcs.get(npcId);
-					if (npc.has("name")) existing.name = npc.getString("name");
-					if (npc.has("description")) existing.description = npc.getString("description");
-					if (npc.has("attack")) existing.attack = (int) ifZeroReserve(npc.getInt("attack"));
-					if (npc.has("strength")) existing.strength = (int) ifZeroReserve(npc.getInt("strength"));
-					if (npc.has("hits")) existing.hits = (int) ifZeroReserve(npc.getInt("hits"));
-					if (npc.has("defense")) existing.defense = (int) ifZeroReserve(npc.getInt("defense"));
-					if (npc.has("ranged")) existing.ranged = npc.getBoolean("ranged") ? 1 : 0;
-					if (npc.has("meleeDefense")) existing.meleeDefense = (int) ifZeroReserve(npc.getInt("meleeDefense"));
-					if (npc.has("rangedDefense")) existing.rangedDefense = (int) ifZeroReserve(npc.getInt("rangedDefense"));
-					if (npc.has("magicDefense")) existing.magicDefense = (int) ifZeroReserve(npc.getInt("magicDefense"));
-					if (npc.has("meleeDefenseMultiplier")) existing.meleeDefenseMultiplier = npc.getDouble("meleeDefenseMultiplier");
-					if (npc.has("rangedDefenseMultiplier")) existing.rangedDefenseMultiplier = npc.getDouble("rangedDefenseMultiplier");
-					if (npc.has("magicDefenseMultiplier")) existing.magicDefenseMultiplier = npc.getDouble("magicDefenseMultiplier");
-					if (npc.has("meleeDefenseDivisor")) existing.meleeDefenseDivisor = npc.getDouble("meleeDefenseDivisor");
-					if (npc.has("rangedDefenseDivisor")) existing.rangedDefenseDivisor = npc.getDouble("rangedDefenseDivisor");
-					if (npc.has("magicDefenseDivisor")) existing.magicDefenseDivisor = npc.getDouble("magicDefenseDivisor");
-					if (npc.has("combatlvl")) existing.combatLevel = (int) ifZeroReserve(npc.getInt("combatlvl"));
-					if (npc.has("hairColour")) existing.hairColour = (int) ifZeroReserve(npc.getInt("hairColour"));
-					if (npc.has("topColour")) existing.topColour = (int) ifZeroReserve(npc.getInt("topColour"));
-					if (npc.has("bottomColour")) existing.bottomColour = (int) ifZeroReserve(npc.getInt("bottomColour"));
-					if (npc.has("skinColour")) existing.skinColour = (int) ifZeroReserve(npc.getInt("skinColour"));
+				if (!overriddenIds.add(npcId)) {
+					throw new IllegalArgumentException("Duplicate npc override id " + npcId);
 				}
+				if (npcId < 0 || npcId >= npcs.size() || npcs.get(npcId) == null) {
+					throw new IllegalArgumentException("Npc override references unknown id " + npcId);
+				}
+				NPCDef staged = new NPCDef(npcs.get(npcId));
+				if (npc.has("name")) staged.name = npc.getString("name");
+				if (npc.has("description")) staged.description = npc.getString("description");
+				if (npc.has("attack")) staged.attack = (int) ifZeroReserve(npc.getInt("attack"));
+				if (npc.has("strength")) staged.strength = (int) ifZeroReserve(npc.getInt("strength"));
+				if (npc.has("hits")) staged.hits = (int) ifZeroReserve(npc.getInt("hits"));
+				if (npc.has("defense")) staged.defense = (int) ifZeroReserve(npc.getInt("defense"));
+				if (npc.has("ranged")) staged.ranged = npc.getBoolean("ranged") ? 1 : 0;
+				if (npc.has("meleeDefense")) staged.meleeDefense = (int) ifZeroReserve(npc.getInt("meleeDefense"));
+				if (npc.has("rangedDefense")) staged.rangedDefense = (int) ifZeroReserve(npc.getInt("rangedDefense"));
+				if (npc.has("magicDefense")) staged.magicDefense = (int) ifZeroReserve(npc.getInt("magicDefense"));
+				if (npc.has("meleeDefenseMultiplier")) staged.meleeDefenseMultiplier = npc.getDouble("meleeDefenseMultiplier");
+				if (npc.has("rangedDefenseMultiplier")) staged.rangedDefenseMultiplier = npc.getDouble("rangedDefenseMultiplier");
+				if (npc.has("magicDefenseMultiplier")) staged.magicDefenseMultiplier = npc.getDouble("magicDefenseMultiplier");
+				if (npc.has("meleeDefenseDivisor")) staged.meleeDefenseDivisor = npc.getDouble("meleeDefenseDivisor");
+				if (npc.has("rangedDefenseDivisor")) staged.rangedDefenseDivisor = npc.getDouble("rangedDefenseDivisor");
+				if (npc.has("magicDefenseDivisor")) staged.magicDefenseDivisor = npc.getDouble("magicDefenseDivisor");
+				if (npc.has("combatlvl")) staged.combatLevel = (int) ifZeroReserve(npc.getInt("combatlvl"));
+				if (npc.has("hairColour")) staged.hairColour = (int) ifZeroReserve(npc.getInt("hairColour"));
+				if (npc.has("topColour")) staged.topColour = (int) ifZeroReserve(npc.getInt("topColour"));
+				if (npc.has("bottomColour")) staged.bottomColour = (int) ifZeroReserve(npc.getInt("bottomColour"));
+				if (npc.has("skinColour")) staged.skinColour = (int) ifZeroReserve(npc.getInt("skinColour"));
+				stagedNpcs.set(npcId, staged);
 			}
+			npcs = stagedNpcs;
 		} catch (Exception e) {
-			LOGGER.error("Failed to apply npc overrides from " + file.getName(), e);
+			throw new IllegalStateException("Failed to apply npc overrides from " + file.getName(), e);
 		}
 	}
 
@@ -597,40 +619,56 @@ public final class EntityHandler {
 		LOGGER.info("Applying item overrides from " + file.getName() + "...");
 		try {
 			JSONObject object = new JSONObject(new String(Files.readAllBytes(Paths.get(filename))));
-			JSONArray itemOverrides = object.getJSONArray(JSONObject.getNames(object)[0]);
+			JSONArray itemOverrides = object.getJSONArray("items");
+			ArrayList<ItemDefinition> stagedItems = new ArrayList<>(items);
+			Set<Integer> overriddenIds = new HashSet<>();
 			for (int i = 0; i < itemOverrides.length(); i++) {
 				JSONObject item = itemOverrides.getJSONObject(i);
+				validateOverrideFields(item, MYWORLD_ITEM_OVERRIDE_FIELDS, "item", i);
 				int itemId = item.getInt("id");
-				if (itemId >= 0 && itemId < items.size()) {
-					ItemDefinition existing = items.get(itemId);
-					if (existing == null) {
-						continue;
-					}
-					if (item.has("name")) existing.setName(item.getString("name"));
-					if (item.has("description")) existing.setDescription(item.getString("description"));
-					if (item.has("meleeOffense")) existing.setMeleeOffense(item.getInt("meleeOffense"));
-					if (item.has("rangedOffense")) existing.setRangedOffense(item.getInt("rangedOffense"));
-					if (item.has("magicOffense")) existing.setMagicOffense(item.getInt("magicOffense"));
-					if (item.has("weaponSpeed")) existing.setWeaponSpeed(item.getInt("weaponSpeed"));
-					if (item.has("meleeDefense")) existing.setMeleeDefense(item.getInt("meleeDefense"));
-					if (item.has("rangedDefense")) existing.setRangedDefense(item.getInt("rangedDefense"));
-					if (item.has("magicDefense")) existing.setMagicDefense(item.getInt("magicDefense"));
-					if (item.has("requiredLevel")) existing.setRequiredLevel(item.getInt("requiredLevel"));
-					if (item.has("requiredSkillID")) existing.setRequiredSkillIndex(item.getInt("requiredSkillID"));
-					if (item.has("isWearable")) existing.setWieldable(item.getInt("isWearable") != 0);
-					if (item.has("appearanceID")) existing.setAppearanceId(item.getInt("appearanceID"));
-					if (item.has("wearableID")) existing.setWearableId(item.getInt("wearableID"));
-					if (item.has("wearSlot")) existing.setWieldPosition(item.getInt("wearSlot"));
-					if (item.has("weaponAimBonus")) existing.setWeaponAimBonus(item.getInt("weaponAimBonus"));
-					if (item.has("weaponPowerBonus")) existing.setWeaponPowerBonus(item.getInt("weaponPowerBonus"));
-					if (item.has("armourBonus")) existing.setArmourBonus(item.getLong("armourBonus"));
-					if (item.has("magicBonus")) existing.setMagicBonus(item.getInt("magicBonus"));
-					if (item.has("prayerBonus")) existing.setPrayerBonus(item.getInt("prayerBonus"));
-					if (item.has("basePrice")) existing.setDefaultPrice(item.getInt("basePrice"));
+				if (!overriddenIds.add(itemId)) {
+					throw new IllegalArgumentException("Duplicate item override id " + itemId);
 				}
+				if (itemId < 0 || itemId >= items.size() || items.get(itemId) == null) {
+					throw new IllegalArgumentException("Item override references unknown id " + itemId);
+				}
+				ItemDefinition staged = new ItemDefinition(items.get(itemId));
+				if (item.has("name")) staged.setName(item.getString("name"));
+				if (item.has("description")) staged.setDescription(item.getString("description"));
+				if (item.has("meleeOffense")) staged.setMeleeOffense(item.getInt("meleeOffense"));
+				if (item.has("rangedOffense")) staged.setRangedOffense(item.getInt("rangedOffense"));
+				if (item.has("magicOffense")) staged.setMagicOffense(item.getInt("magicOffense"));
+				if (item.has("weaponSpeed")) staged.setWeaponSpeed(item.getInt("weaponSpeed"));
+				if (item.has("meleeDefense")) staged.setMeleeDefense(item.getInt("meleeDefense"));
+				if (item.has("rangedDefense")) staged.setRangedDefense(item.getInt("rangedDefense"));
+				if (item.has("magicDefense")) staged.setMagicDefense(item.getInt("magicDefense"));
+				if (item.has("requiredLevel")) staged.setRequiredLevel(item.getInt("requiredLevel"));
+				if (item.has("requiredSkillID")) staged.setRequiredSkillIndex(item.getInt("requiredSkillID"));
+				if (item.has("isWearable")) staged.setWieldable(item.getInt("isWearable") != 0);
+				if (item.has("appearanceID")) staged.setAppearanceId(item.getInt("appearanceID"));
+				if (item.has("wearableID")) staged.setWearableId(item.getInt("wearableID"));
+				if (item.has("wearSlot")) staged.setWieldPosition(item.getInt("wearSlot"));
+				if (item.has("weaponAimBonus")) staged.setWeaponAimBonus(item.getInt("weaponAimBonus"));
+				if (item.has("weaponPowerBonus")) staged.setWeaponPowerBonus(item.getInt("weaponPowerBonus"));
+				if (item.has("armourBonus")) staged.setArmourBonus(item.getLong("armourBonus"));
+				if (item.has("magicBonus")) staged.setMagicBonus(item.getInt("magicBonus"));
+				if (item.has("prayerBonus")) staged.setPrayerBonus(item.getInt("prayerBonus"));
+				if (item.has("basePrice")) staged.setDefaultPrice(item.getInt("basePrice"));
+				stagedItems.set(itemId, staged);
 			}
+			items = stagedItems;
 		} catch (Exception e) {
-			LOGGER.error("Failed to apply item overrides from " + file.getName(), e);
+			throw new IllegalStateException("Failed to apply item overrides from " + file.getName(), e);
+		}
+	}
+
+	private void validateOverrideFields(JSONObject override, Set<String> allowedFields, String type, int index) {
+		for (String field : override.keySet()) {
+			if (!allowedFields.contains(field)) {
+				throw new IllegalArgumentException(
+					"Unexpected " + type + " override field '" + field + "' at index " + index
+				);
+			}
 		}
 	}
 
@@ -881,54 +919,6 @@ public final class EntityHandler {
 		}
 
 		if (getServer().getConfig().WANT_MYWORLD) {
-			configureEquippableTool(ItemId.TIN_PICKAXE.id(), Skill.MINING.id(), 1);
-			configureEquippableTool(ItemId.COPPER_PICKAXE.id(), Skill.MINING.id(), 8);
-			configureEquippableTool(ItemId.BRONZE_PICKAXE.id(), Skill.MINING.id(), 15);
-			configureEquippableTool(ItemId.IRON_PICKAXE.id(), Skill.MINING.id(), 22);
-			configureEquippableTool(ItemId.STEEL_PICKAXE.id(), Skill.MINING.id(), 30);
-			configureEquippableTool(ItemId.MITHRIL_PICKAXE.id(), Skill.MINING.id(), 38);
-			configureEquippableTool(ItemId.TITAN_STEEL_PICKAXE.id(), Skill.MINING.id(), 46);
-			configureEquippableTool(ItemId.ADAMANTITE_PICKAXE.id(), Skill.MINING.id(), 54);
-			configureEquippableTool(ItemId.ORICHALCUM_PICKAXE.id(), Skill.MINING.id(), 62);
-			configureEquippableTool(ItemId.RUNE_PICKAXE.id(), Skill.MINING.id(), 70);
-
-			configureEquippableTool(ItemId.TIN_AXE.id(), Skill.WOODCUTTING.id(), 1);
-			configureEquippableTool(ItemId.COPPER_AXE.id(), Skill.WOODCUTTING.id(), 8);
-			configureEquippableTool(ItemId.BRONZE_AXE.id(), Skill.WOODCUTTING.id(), 15);
-			configureEquippableTool(ItemId.IRON_AXE.id(), Skill.WOODCUTTING.id(), 22);
-			configureEquippableTool(ItemId.STEEL_AXE.id(), Skill.WOODCUTTING.id(), 30);
-			configureEquippableTool(ItemId.BLACK_AXE.id(), Skill.WOODCUTTING.id(), 30);
-			configureEquippableTool(ItemId.MITHRIL_AXE.id(), Skill.WOODCUTTING.id(), 38);
-			configureEquippableTool(ItemId.TITAN_STEEL_AXE.id(), Skill.WOODCUTTING.id(), 46);
-			configureEquippableTool(ItemId.ADAMANTITE_AXE.id(), Skill.WOODCUTTING.id(), 54);
-			configureEquippableTool(ItemId.ORICHALCUM_AXE.id(), Skill.WOODCUTTING.id(), 62);
-			configureEquippableTool(ItemId.RUNE_AXE.id(), Skill.WOODCUTTING.id(), 70);
-			configureEquippableTool(ItemId.DRAGON_AXE.id(), Skill.WOODCUTTING.id(), 80);
-			configureEquippableTool(ItemId.DRAGON_WOODCUTTING_AXE.id(), Skill.WOODCUTTING.id(), 80);
-
-			configureEquippableTool(ItemId.SHEARS.id(), Skill.HARVESTING.id(), 1);
-			configureEquippableTool(ItemId.COPPER_SHEARS.id(), Skill.HARVESTING.id(), 8);
-			configureEquippableTool(ItemId.BRONZE_SHEARS.id(), Skill.HARVESTING.id(), 15);
-			configureEquippableTool(ItemId.IRON_SHEARS.id(), Skill.HARVESTING.id(), 22);
-			configureEquippableTool(ItemId.STEEL_SHEARS.id(), Skill.HARVESTING.id(), 30);
-			configureEquippableTool(ItemId.MITHRIL_SHEARS.id(), Skill.HARVESTING.id(), 38);
-			configureEquippableTool(ItemId.TITAN_STEEL_SHEARS.id(), Skill.HARVESTING.id(), 46);
-			configureEquippableTool(ItemId.ADAMANTITE_SHEARS.id(), Skill.HARVESTING.id(), 54);
-			configureEquippableTool(ItemId.ORICHALCUM_SHEARS.id(), Skill.HARVESTING.id(), 62);
-			configureEquippableTool(ItemId.RUNE_SHEARS.id(), Skill.HARVESTING.id(), 70);
-
-			items.get(ItemId.FISHING_ROD.id()).setWearableId(16);
-			configureEquippableTool(ItemId.FISHING_ROD.id(), Skill.FISHING.id(), 1);
-			configureEquippableTool(ItemId.PINE_FISHING_ROD.id(), Skill.FISHING.id(), 8);
-			configureEquippableTool(ItemId.OAK_FISHING_ROD.id(), Skill.FISHING.id(), 15);
-			configureEquippableTool(ItemId.WILLOW_FISHING_ROD.id(), Skill.FISHING.id(), 22);
-			configureEquippableTool(ItemId.PALM_FISHING_ROD.id(), Skill.FISHING.id(), 30);
-			configureEquippableTool(ItemId.MAPLE_FISHING_ROD.id(), Skill.FISHING.id(), 38);
-			configureEquippableTool(ItemId.YEW_FISHING_ROD.id(), Skill.FISHING.id(), 46);
-			configureEquippableTool(ItemId.EBONY_FISHING_ROD.id(), Skill.FISHING.id(), 54);
-			configureEquippableTool(ItemId.MAGIC_FISHING_ROD.id(), Skill.FISHING.id(), 62);
-			configureEquippableTool(ItemId.BLOOD_FISHING_ROD.id(), Skill.FISHING.id(), 70);
-
 			if (getServer().getConfig().WANT_CUSTOM_SPRITES) {
 				items.get(ItemId.FISHING_ROD.id()).setAppearanceId(784);
 				items.get(ItemId.PINE_FISHING_ROD.id()).setAppearanceId(784);
@@ -989,44 +979,6 @@ public final class EntityHandler {
 		if (itemId >= 0 && itemId < items.size() && items.get(itemId) != null) {
 			items.get(itemId).setAppearanceId(appearanceId);
 		}
-	}
-
-	private void configureEquippableTool(int itemId, int skillId, int requiredLevel) {
-		ItemDefinition def = items.get(itemId);
-		def.setWieldable(true);
-		def.setWieldPosition(Equipment.EquipmentSlot.SLOT_MAINHAND.getIndex());
-		def.setRequiredLevel(requiredLevel);
-		def.setRequiredSkillIndex(skillId);
-		def.setWeaponAimBonus(0);
-		def.setWeaponPowerBonus(0);
-		def.setMeleeOffense(0);
-		def.setRangedOffense(0);
-		def.setMagicOffense(0);
-	}
-
-	private void clearArmorEquipRequirements() {
-		for (ItemDefinition def : items) {
-			if (def == null || !def.isWieldable()) {
-				continue;
-			}
-			if (!isArmorSlot(def.getWieldPosition())) {
-				continue;
-			}
-			def.setRequiredLevel(0);
-			def.setRequiredSkillIndex(-1);
-		}
-	}
-
-	private boolean isArmorSlot(int slot) {
-		return slot == Equipment.EquipmentSlot.SLOT_LARGE_HELMET.getIndex()
-			|| slot == Equipment.EquipmentSlot.SLOT_PLATE_BODY.getIndex()
-			|| slot == Equipment.EquipmentSlot.SLOT_PLATE_LEGS.getIndex()
-			|| slot == Equipment.EquipmentSlot.SLOT_OFFHAND.getIndex()
-			|| slot == Equipment.EquipmentSlot.SLOT_MEDIUM_HELMET.getIndex()
-			|| slot == Equipment.EquipmentSlot.SLOT_CHAIN_BODY.getIndex()
-			|| slot == Equipment.EquipmentSlot.SLOT_SKIRT.getIndex()
-			|| slot == Equipment.EquipmentSlot.SLOT_GLOVES.getIndex()
-			|| slot == Equipment.EquipmentSlot.SLOT_BOOTS.getIndex();
 	}
 
 	/**

@@ -85,7 +85,6 @@ public final class GameStateUpdater {
 		recordUpdateGameObjects(() -> updateGameObjects(player, visibleGameObjects));
 		recordUpdateWallObjects(() -> updateWallObjects(player, visibleGameObjects));
 		recordUpdateGroundItems(() -> updateGroundItems(player, visibleGroundItems));
-		recordUpdateClearLocations(() -> sendClearLocations(player));
 		recordUpdateTimeouts(() -> updateTimeouts(player));
 	}
 
@@ -115,10 +114,6 @@ public final class GameStateUpdater {
 
 	private void recordUpdateGroundItems(final Runnable update) {
 		getServer().incrementLastUpdateGroundItemsDuration(getServer().bench(update));
-	}
-
-	private void recordUpdateClearLocations(final Runnable update) {
-		getServer().incrementLastUpdateClearLocationsDuration(getServer().bench(update));
 	}
 
 	private void recordUpdateTimeouts(final Runnable update) {
@@ -1301,29 +1296,16 @@ public final class GameStateUpdater {
 		GameObjectsUpdateStruct struct = new GameObjectsUpdateStruct();
 		List<GameObjectLoc> objectLocs = new ArrayList<>(playerToUpdate.getLocalGameObjects().size() + visibleGameObjects.size());
 
-		// TODO: Unloading scenery is not handled correctly.
-		//       According to RSC+ replays, the server never tells the client to unload objects until
-		//       a region is unloaded. It then instructs the client to only unload the region.
-		//       Right now the server is very aggressive in unloading scenery, which is detrimental for clients with a larger view
-
 		for (final Iterator<GameObject> it$ = playerToUpdate.getLocalGameObjects().iterator(); it$.hasNext(); ) {
 			final GameObject o = it$.next();
-			boolean shouldUnloadForRange = !playerToUpdate.isUsingCustomClient()
-				&& !playerToUpdate.withinObjectGridRange(o);
-			if (shouldUnloadForRange || o.isRemoved() || o.isInvisibleTo(playerToUpdate)) {
+			if (!playerToUpdate.withinObjectGridRange(o) || o.isRemoved() || o.isInvisibleTo(playerToUpdate)) {
 				final int offsetX = o.getX() - playerToUpdate.getX();
 				final int offsetY = o.getY() - playerToUpdate.getY();
-				//If the object is close enough we can use regular way to remove:
-				if (offsetX > -128 && offsetY > -128 && offsetX < 128 && offsetY < 128) {
+				if (isSignedByteOffset(offsetX, offsetY)) {
 					objectLocs.add(new GameObjectLoc(60000, offsetX, offsetY, o.getDirection(), 0));
-					it$.remove();
-					changed = true;
-				} else {
-					//If it's not close enough we need to use the region clean packet
-					playerToUpdate.getLocationsToClear().add(o.getLocation());
-					it$.remove();
 					changed = true;
 				}
+				it$.remove();
 			}
 		}
 
@@ -1384,22 +1366,14 @@ public final class GameStateUpdater {
 			final int offsetX = (groundItem.getX() - playerToUpdate.getX());
 			final int offsetY = (groundItem.getY() - playerToUpdate.getY());
 
-			if (!playerToUpdate.withinObjectGridRange(groundItem)) {
-				if (offsetX > -128 && offsetY > -128 && offsetX < 128 && offsetY < 128) {
-					// respawnTime = -1 to indicate to clear not on range
-					itemLocs.add(new ItemLoc(groundItem.getID(), offsetX, offsetY, groundItem.getAmount(), -1,
+			if (!playerToUpdate.withinObjectGridRange(groundItem)
+				|| groundItem.isRemoved() || groundItem.isInvisibleTo(playerToUpdate)) {
+				if (isSignedByteOffset(offsetX, offsetY)) {
+					itemLocs.add(new ItemLoc(groundItem.getID() + 32768, offsetX, offsetY, groundItem.getAmount(), 0,
 						groundItem.getNoted() && getServer().getConfig().WANT_BANK_NOTES ? 1 : 0));
-				} else {
-					playerToUpdate.getLocationsToClear().add(groundItem.getLocation());
+					changed = true;
 				}
 				it$.remove();
-				changed = true;
-			} else if (groundItem.isRemoved() || groundItem.isInvisibleTo(playerToUpdate)) {
-				itemLocs.add(new ItemLoc(groundItem.getID() + 32768, offsetX, offsetY, groundItem.getAmount(), 0,
-					groundItem.getNoted() && getServer().getConfig().WANT_BANK_NOTES ? 1 : 0));
-				//System.out.println("Removing " + groundItem + " with isRemoved() remove: " + offsetX + ", " + offsetY);
-				it$.remove();
-				changed = true;
 			}
 		}
 
@@ -1434,7 +1408,7 @@ public final class GameStateUpdater {
 			if (!playerToUpdate.withinObjectGridRange(o) || (o.isRemoved() || o.isInvisibleTo(playerToUpdate))) {
 				final int offsetX = o.getX() - playerToUpdate.getX();
 				final int offsetY = o.getY() - playerToUpdate.getY();
-				if (offsetX > -128 && offsetY > -128 && offsetX < 128 && offsetY < 128) {
+				if (isSignedByteOffset(offsetX, offsetY)) {
 					if (!playerToUpdate.isUsingCustomClient()) {
 						// The authentic server does not really send removals for boundaries.
 						// The client is able to handle having boundaries overwritten by new boundaries, but
@@ -1477,9 +1451,7 @@ public final class GameStateUpdater {
 					}
 					it$.remove();
 				} else {
-					playerToUpdate.getLocationsToClear().add(o.getLocation());
 					it$.remove();
-					changed = true;
 				}
 			}
 		}
@@ -1509,19 +1481,9 @@ public final class GameStateUpdater {
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_APPEARANCE_KEEPALIVE, struct, player);
 	}
 
-	protected void sendClearLocations(final Player player) {
-		if (player.getLocationsToClear().size() > 0) {
-			ClearLocationsStruct struct = new ClearLocationsStruct();
-			List<Point> pointList = new ArrayList<>(player.getLocationsToClear().size());
-			for (final Point point : player.getLocationsToClear()) {
-				final int offsetX = (point.getX() - player.getX()) << 3;
-				final int offsetY = (point.getY() - player.getY()) << 3;
-				pointList.add(new Point(offsetX, offsetY));
-			}
-			player.getLocationsToClear().clear();
-			struct.points = pointList;
-			tryFinalizeAndSendPacket(OpcodeOut.SEND_REMOVE_WORLD_ENTITY, struct, player);
-		}
+	private boolean isSignedByteOffset(final int offsetX, final int offsetY) {
+		return offsetX >= Byte.MIN_VALUE && offsetX <= Byte.MAX_VALUE
+			&& offsetY >= Byte.MIN_VALUE && offsetY <= Byte.MAX_VALUE;
 	}
 
 	public final long updateWorld() {

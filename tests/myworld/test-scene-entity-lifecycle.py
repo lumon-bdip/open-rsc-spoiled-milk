@@ -4,6 +4,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
+SERVER_UPDATER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "GameStateUpdater.java"
+PLAYER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "player" / "Player.java"
 
 
 def fail(message: str) -> None:
@@ -15,8 +17,15 @@ def require(text: str, needle: str, description: str) -> None:
         fail(f"missing {description}: {needle}")
 
 
+def forbid(text: str, needle: str, description: str) -> None:
+    if needle in text:
+        fail(f"retired {description} still present: {needle}")
+
+
 def main() -> None:
     text = CLIENT.read_text(encoding="utf-8")
+    updater = SERVER_UPDATER.read_text(encoding="utf-8")
+    player = PLAYER.read_text(encoding="utf-8")
     require(
         text,
         "if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.gameObjectInstanceCount = 0;\n\t\t\t\t\t\tthis.wallObjectInstanceCount = 0;\n\t\t\t\t\t}",
@@ -27,7 +36,20 @@ def main() -> None:
         "if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.groundItemCount = 0;",
         "hard area/plane ground item cache reset",
     )
-    print("PASS: scene entity lifecycle clears retained caches on hard area and plane loads")
+    require(
+        updater,
+        "if (!playerToUpdate.withinObjectGridRange(o) || o.isRemoved() || o.isInvisibleTo(playerToUpdate))",
+        "bounded scenery cache for all clients",
+    )
+    require(
+        updater,
+        "new ItemLoc(groundItem.getID() + 32768, offsetX, offsetY",
+        "single ground item removal packet",
+    )
+    forbid(updater, "getLocationsToClear()", "shared region-clear queue use")
+    forbid(updater, "respawnTime = -1", "ground item region-wide range removal")
+    forbid(player, "locationsToClear", "player shared region-clear queue")
+    print("PASS: scene entity lifecycle uses bounded caches and entity-specific removals")
 
 
 if __name__ == "__main__":

@@ -145,7 +145,6 @@ public class Server implements Runnable {
 	private long lastUpdateGameObjectsDuration = 0;
 	private long lastUpdateWallObjectsDuration = 0;
 	private long lastUpdateGroundItemsDuration = 0;
-	private long lastUpdateClearLocationsDuration = 0;
 	private long lastUpdateTimeoutsDuration = 0;
 	private long lastUpdateAppearanceKeepaliveDuration = 0;
 	private long lastDoCleanupDuration = 0;
@@ -199,7 +198,6 @@ public class Server implements Runnable {
 	private long benchmarkUpdateGameObjectsTotal = 0;
 	private long benchmarkUpdateWallObjectsTotal = 0;
 	private long benchmarkUpdateGroundItemsTotal = 0;
-	private long benchmarkUpdateClearLocationsTotal = 0;
 	private long benchmarkUpdateTimeoutsTotal = 0;
 	private long benchmarkUpdateAppearanceKeepaliveTotal = 0;
 	private long benchmarkCleanupTotal = 0;
@@ -1282,11 +1280,10 @@ public class Server implements Runnable {
 		benchmarkUpdatePlayerAppearancesTotal += getLastUpdatePlayerAppearancesDuration();
 		benchmarkUpdateNpcsTotal += getLastUpdateNpcsDuration();
 		benchmarkUpdateNpcAppearancesTotal += getLastUpdateNpcAppearancesDuration();
-		benchmarkUpdateGameObjectsTotal += getLastUpdateGameObjectsDuration();
-		benchmarkUpdateWallObjectsTotal += getLastUpdateWallObjectsDuration();
-		benchmarkUpdateGroundItemsTotal += getLastUpdateGroundItemsDuration();
-		benchmarkUpdateClearLocationsTotal += getLastUpdateClearLocationsDuration();
-		benchmarkUpdateTimeoutsTotal += getLastUpdateTimeoutsDuration();
+			benchmarkUpdateGameObjectsTotal += getLastUpdateGameObjectsDuration();
+			benchmarkUpdateWallObjectsTotal += getLastUpdateWallObjectsDuration();
+			benchmarkUpdateGroundItemsTotal += getLastUpdateGroundItemsDuration();
+			benchmarkUpdateTimeoutsTotal += getLastUpdateTimeoutsDuration();
 		benchmarkUpdateAppearanceKeepaliveTotal += getLastUpdateAppearanceKeepaliveDuration();
 		benchmarkCleanupTotal += getLastDoCleanupDuration();
 		benchmarkWalkToActionsTotal += getLastExecuteWalkToActionsDuration();
@@ -1346,11 +1343,10 @@ public class Server implements Runnable {
 			+ " avgUpdatePlayerAppearancesMsPrecise=" + nanosToMillisPrecise(benchmarkUpdatePlayerAppearancesTotal / samples)
 			+ " avgUpdateNpcsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateNpcsTotal / samples)
 			+ " avgUpdateNpcAppearancesMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateNpcAppearancesTotal / samples)
-			+ " avgUpdateGameObjectsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateGameObjectsTotal / samples)
-			+ " avgUpdateWallObjectsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateWallObjectsTotal / samples)
-			+ " avgUpdateGroundItemsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateGroundItemsTotal / samples)
-			+ " avgUpdateClearLocationsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateClearLocationsTotal / samples)
-			+ " avgUpdateTimeoutsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateTimeoutsTotal / samples)
+				+ " avgUpdateGameObjectsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateGameObjectsTotal / samples)
+				+ " avgUpdateWallObjectsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateWallObjectsTotal / samples)
+				+ " avgUpdateGroundItemsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateGroundItemsTotal / samples)
+				+ " avgUpdateTimeoutsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateTimeoutsTotal / samples)
 			+ " avgUpdateAppearanceKeepaliveMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateAppearanceKeepaliveTotal / samples)
 			+ " avgCleanupMsPrecise=" + nanosToMillisPrecise(benchmarkCleanupTotal / samples)
 			+ " avgWalkToActionsMsPrecise=" + nanosToMillisPrecise(benchmarkWalkToActionsTotal / samples)
@@ -1668,10 +1664,6 @@ public class Server implements Runnable {
 		return lastUpdateGroundItemsDuration;
 	}
 
-	public long getLastUpdateClearLocationsDuration() {
-		return lastUpdateClearLocationsDuration;
-	}
-
 	public long getLastUpdateTimeoutsDuration() {
 		return lastUpdateTimeoutsDuration;
 	}
@@ -1930,10 +1922,6 @@ public class Server implements Runnable {
 		this.lastUpdateGroundItemsDuration += duration;
 	}
 
-	public synchronized void incrementLastUpdateClearLocationsDuration(final long duration) {
-		this.lastUpdateClearLocationsDuration += duration;
-	}
-
 	public synchronized void incrementLastUpdateTimeoutsDuration(final long duration) {
 		this.lastUpdateTimeoutsDuration += duration;
 	}
@@ -1975,11 +1963,10 @@ public class Server implements Runnable {
 		this.lastUpdatePlayerAppearancesDuration = 0;
 		this.lastUpdateNpcsDuration = 0;
 		this.lastUpdateNpcAppearancesDuration = 0;
-		this.lastUpdateGameObjectsDuration = 0;
-		this.lastUpdateWallObjectsDuration = 0;
-		this.lastUpdateGroundItemsDuration = 0;
-		this.lastUpdateClearLocationsDuration = 0;
-		this.lastUpdateTimeoutsDuration = 0;
+			this.lastUpdateGameObjectsDuration = 0;
+			this.lastUpdateWallObjectsDuration = 0;
+			this.lastUpdateGroundItemsDuration = 0;
+			this.lastUpdateTimeoutsDuration = 0;
 		this.lastUpdateAppearanceKeepaliveDuration = 0;
 		this.lastDoCleanupDuration = 0;
 		this.lastExecuteWalkToActionsDuration = 0;

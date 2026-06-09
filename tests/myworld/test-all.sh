@@ -10,7 +10,9 @@ cd "$ROOT_DIR"
 python3 ./tests/myworld/audit_client_item_coverage.py
 python3 ./tests/myworld/test-client-runtime-item-definitions.py
 python3 ./tests/myworld/audit-item-id-integrity.py
+python3 ./tests/myworld/test-definition-override-loading.py
 python3 ./tests/myworld/test-player-data-integrity.py
+python3 ./tests/myworld/test-player-login-policy.py
 python3 ./tests/myworld/audit-client-sprite-references.py
 python3 ./tests/myworld/test-content-item-resolution.py
 python3 ./tests/myworld/test-magic-no-random-fail.py
@@ -55,6 +57,7 @@ python3 ./tests/myworld/test-npc-attack-styles.py
 python3 ./tests/myworld/test-combat-runtime-invariants.py
 python3 ./tests/myworld/test-combat-exceptions.py
 python3 ./tests/myworld/test-combat-scenarios.py
+python3 ./tests/myworld/test-moderator-death-drops.py
 python3 ./tests/myworld/test-defense-distribution.py
 python3 ./tests/myworld/test-balance-fixtures.py
 python3 ./tests/myworld/test-agility-pouches.py
@@ -65,7 +68,9 @@ python3 ./tests/myworld/test-god-knight-drops-and-pvm-population.py
 python3 ./tests/myworld/test-firemaking-rework.py
 python3 ./tests/myworld/test-fishing-rework.py
 python3 ./tests/myworld/test-ground-item-cleanup.py
+python3 ./tests/myworld/test-ground-item-identity.py
 python3 ./tests/myworld/test-ground-item-rendering.py
+python3 ./tests/myworld/test-scene-entity-lifecycle.py
 python3 ./tests/myworld/test-herblaw-cleanup.py
 python3 ./tests/myworld/test-herblaw-remap.py
 python3 ./tests/myworld/test-hide-armor-coverage.py
@@ -75,6 +80,7 @@ python3 ./tests/myworld/test-leather-set-bonuses.py
 python3 ./tests/myworld/test-magic-weapon-scaling.py
 python3 ./tests/myworld/test-metal-defense-budgets.py
 python3 ./tests/myworld/test-mining-focus-and-tier11.py
+python3 ./tests/myworld/test-geode-mining-transition.py
 python3 ./tests/myworld/test-npc-defense-profiles.py
 python3 ./tests/myworld/test-npc-visual-fixes.py
 python3 ./tests/myworld/test-npc-processing-cleanup.py

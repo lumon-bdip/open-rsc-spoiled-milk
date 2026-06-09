@@ -646,6 +646,10 @@ public final class mudclient implements Runnable {
 	private int hitsXpFocus = 1;
 	private int combatTimeout = 0;
 	private long hitsXpFocusMenuHideAt = 0L;
+	private static final int COMBAT_XP_FOCUS_MELEE = 0;
+	private static final int COMBAT_XP_FOCUS_RANGED = 1;
+	private static final int COMBAT_XP_FOCUS_MAGIC = 2;
+	private int activeCombatXpFocus = COMBAT_XP_FOCUS_MELEE;
 	private int controlButtonAppearanceHeadMinus;
 	private int controlButtonAppearanceHeadPlus;
 	private int controlLoginPass;
@@ -15255,7 +15259,7 @@ public final class mudclient implements Runnable {
 
 					this.packetHandler.getClientStream().finishPacket();
 					this.selectedSpell = -1;
-					this.showHitsXpFocusMenuTemporarily();
+					this.showHitsXpFocusMenuTemporarily(COMBAT_XP_FOCUS_MAGIC);
 					break;
 				}
 				case NPC_USE_ITEM: {
@@ -15334,7 +15338,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().newPacket(190);
 						this.packetHandler.getClientStream().bufferBits.putShort(indexOrX);
 						this.packetHandler.getClientStream().finishPacket();
-						this.showHitsXpFocusMenuTemporarily();
+						this.showHitsXpFocusMenuTemporarily(getEquippedCombatXpFocus());
 						break;
 				}
 				case NPC_EXAMINE: {
@@ -15356,7 +15360,7 @@ public final class mudclient implements Runnable {
 
 					this.packetHandler.getClientStream().finishPacket();
 					this.selectedSpell = -1;
-					this.showHitsXpFocusMenuTemporarily();
+					this.showHitsXpFocusMenuTemporarily(COMBAT_XP_FOCUS_MAGIC);
 					break;
 				}
 				case PLAYER_USE_ITEM: {
@@ -15396,7 +15400,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().newPacket(171);
 						this.packetHandler.getClientStream().bufferBits.putShort(indexOrX);
 						this.packetHandler.getClientStream().finishPacket();
-						this.showHitsXpFocusMenuTemporarily();
+						this.showHitsXpFocusMenuTemporarily(getEquippedCombatXpFocus());
 						break;
 				}
 				case PLAYER_DUEL: {
@@ -17530,22 +17534,46 @@ public final class mudclient implements Runnable {
 		if (!spriteLocation.startsWith(prefix)) {
 			return null;
 		}
-		String assetName = spriteLocation.substring(prefix.length());
-		if (assetName.length() == 0 || assetName.contains("/") || assetName.contains("\\")) {
+		String assetSpec = spriteLocation.substring(prefix.length());
+		if (assetSpec.length() == 0 || assetSpec.contains("/") || assetSpec.contains("\\")) {
 			return null;
 		}
-		Sprite cachedSprite = externalItemSpriteCache.get(assetName);
+		String assetName = assetSpec;
+		int targetWidth = 46;
+		int targetHeight = 30;
+		int sizeIndex = assetSpec.indexOf('@');
+		if (sizeIndex > 0) {
+			assetName = assetSpec.substring(0, sizeIndex);
+			String[] dimensions = assetSpec.substring(sizeIndex + 1).split("x");
+			if (dimensions.length == 2) {
+				try {
+					targetWidth = Math.max(1, Math.min(46, Integer.parseInt(dimensions[0])));
+					targetHeight = Math.max(1, Math.min(30, Integer.parseInt(dimensions[1])));
+				} catch (NumberFormatException ignored) {
+					targetWidth = 46;
+					targetHeight = 30;
+				}
+			}
+		}
+		if (assetName.length() == 0) {
+			return null;
+		}
+		Sprite cachedSprite = externalItemSpriteCache.get(assetSpec);
 		if (cachedSprite != null) {
 			return cachedSprite;
 		}
-		Sprite loadedSprite = loadExternalItemSprite(getExternalPngFile(assetName));
+		Sprite loadedSprite = loadExternalItemSprite(getExternalPngFile(assetName), targetWidth, targetHeight);
 		if (loadedSprite != null) {
-			externalItemSpriteCache.put(assetName, loadedSprite);
+			externalItemSpriteCache.put(assetSpec, loadedSprite);
 		}
 		return loadedSprite;
 	}
 
 	private Sprite loadExternalItemSprite(File sourceFile) {
+		return loadExternalItemSprite(sourceFile, 46, 30);
+	}
+
+	private Sprite loadExternalItemSprite(File sourceFile, int maxTargetWidth, int maxTargetHeight) {
 		if (!assetFileExists(sourceFile)) {
 			return null;
 		}
@@ -17563,10 +17591,10 @@ public final class mudclient implements Runnable {
 			graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 			graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-			int targetWidth = 46;
+			int targetWidth = maxTargetWidth;
 			int targetHeight = Math.max(1, (cropped.getHeight() * targetWidth) / Math.max(1, cropped.getWidth()));
-			if (targetHeight > 30) {
-				targetHeight = 30;
+			if (targetHeight > maxTargetHeight) {
+				targetHeight = maxTargetHeight;
 				targetWidth = Math.max(1, (cropped.getWidth() * targetHeight) / Math.max(1, cropped.getHeight()));
 			}
 			int drawX = (48 - targetWidth) / 2;
@@ -21116,7 +21144,8 @@ public final class mudclient implements Runnable {
 		return false;
 	}
 
-	private void showHitsXpFocusMenuTemporarily() {
+	private void showHitsXpFocusMenuTemporarily(int combatXpFocus) {
+		this.activeCombatXpFocus = combatXpFocus;
 		if (C_HITS_XP_FOCUS_MENU == 1) {
 			this.hitsXpFocusMenuHideAt = System.currentTimeMillis() + 10000L;
 		}
@@ -21133,7 +21162,39 @@ public final class mudclient implements Runnable {
 	}
 
 	private String[] getHitsXpFocusLabels() {
-		return new String[]{"Select Hits XP focus", "No Hits XP", "Some Hits XP", "More Hits XP", "All Hits XP"};
+		String skillName = getActiveCombatXpFocusName();
+		return new String[]{
+			"Select " + skillName + " focus",
+			"Only " + skillName + " XP",
+			"Mostly " + skillName + ", Some Hits XP",
+			"Some " + skillName + ", Mostly Hits XP",
+			"Only Hits XP"
+		};
+	}
+
+	private String getActiveCombatXpFocusName() {
+		switch (this.activeCombatXpFocus) {
+			case COMBAT_XP_FOCUS_RANGED:
+				return "Ranged";
+			case COMBAT_XP_FOCUS_MAGIC:
+				return "Magic";
+			case COMBAT_XP_FOCUS_MELEE:
+			default:
+				return "Melee";
+		}
+	}
+
+	private int getEquippedCombatXpFocus() {
+		ItemDef weapon = equippedItems.length > 4 ? equippedItems[4] : null;
+		if (weapon == null || weapon.getName() == null) {
+			return COMBAT_XP_FOCUS_MELEE;
+		}
+		String name = weapon.getName().toLowerCase();
+		if (name.contains("bow") || name.contains("crossbow") || name.contains("arrow") || name.contains("bolt")
+			|| name.contains("dart") || name.contains("throwing knife")) {
+			return COMBAT_XP_FOCUS_RANGED;
+		}
+		return COMBAT_XP_FOCUS_MELEE;
 	}
 
 	private String[] getGatheringFocusLabels() {
@@ -21150,7 +21211,7 @@ public final class mudclient implements Runnable {
 				return new String[]{"Select harvesting focus", "No seeds for me", "A few seeds", "More seeds", "Even more seeds!"};
 			case GATHERING_FOCUS_MINING:
 			default:
-				return new String[]{"Select mining focus", "Just the ore", "A few gems", "Plenty of gems", "Lots of gems"};
+				return new String[]{"Select mining focus", "Just the ore", "A few geodes", "Plenty of geodes", "Lots of geodes"};
 		}
 	}
 

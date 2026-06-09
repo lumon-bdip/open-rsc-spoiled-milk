@@ -2399,12 +2399,17 @@ public enum ItemId {
 	GUTHIX_SYMBOL_MOULD(3172),
 	UNSTRUNG_GUTHIX_SYMBOL(3173),
 	UNBLESSED_GUTHIX_SYMBOL(3174),
-	GUTHIX_SYMBOL(3175);
+	GUTHIX_SYMBOL(3175),
+	KEY_HALF_SEED(3176),
+	SMALL_GEODE(3177),
+	STANDARD_GEODE(3178),
+	LARGE_GEODE(3179),
+	HUGE_GEODE(3180);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3176;
+	public static final int maxCustom = 3181;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

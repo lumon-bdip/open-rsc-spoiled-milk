@@ -45,11 +45,7 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 		new SeedReward(ItemId.MITHRIL_SEED.id(), 6, 8),
 		new SeedReward(ItemId.ADAMANTITE_SEED.id(), 8, 4),
 		new SeedReward(ItemId.RUNITE_SEED.id(), 10, 1),
-		new SeedReward(ItemId.SAPPHIRE_SEED.id(), 3, 5),
-		new SeedReward(ItemId.EMERALD_SEED.id(), 5, 4),
-		new SeedReward(ItemId.RUBY_SEED.id(), 7, 3),
-		new SeedReward(ItemId.DIAMOND_SEED.id(), 9, 2),
-		new SeedReward(ItemId.DRAGONSTONE_SEED.id(), 10, 1)
+		new SeedReward(ItemId.KEY_HALF_SEED.id(), 10, 1)
 	};
 
 	private static final class SeedReward {

@@ -14,6 +14,7 @@ NPCS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefsMyWorld.json"
 SKILL_GUIDE_PATH = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "interfaces" / "misc" / "SkillGuideInterface.java"
 EQUIPMENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "container" / "Equipment.java"
 PLAYER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "player" / "Player.java"
+ENTITY_HANDLER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "external" / "EntityHandler.java"
 
 
 def fail(message: str) -> None:
@@ -206,6 +207,17 @@ def ensure_spear_runtime_uses_item_requirement() -> None:
         fail("Player.java must validate spear equip level directly from the item definition in both equipment checks")
 
 
+def ensure_myworld_item_requirements_are_data_owned() -> None:
+    entity_handler = ENTITY_HANDLER_PATH.read_text(encoding="utf-8")
+    forbidden = (
+        "clearArmorEquipRequirements",
+        "def.setRequiredLevel(0);\n\t\t\tdef.setRequiredSkillIndex(-1);",
+    )
+    for snippet in forbidden:
+        if snippet in entity_handler:
+            fail("MyWorld armor equip requirement removal must be explicit item override data, not a broad EntityHandler pass")
+
+
 def main() -> None:
     item_entries = load_json_array(ITEMS_PATH, "items")
     npc_entries = load_json_array(NPCS_PATH, "npcs")
@@ -266,6 +278,7 @@ def main() -> None:
     npcs_by_id = {entry["id"]: entry for entry in npc_entries}
     ensure_combat_guide_requirements_match_items(effective_items_by_id)
     ensure_spear_runtime_uses_item_requirement()
+    ensure_myworld_item_requirements_are_data_owned()
 
     for entry in item_entries:
         if any(field in entry for field in ("meleeDefense", "rangedDefense", "magicDefense")):

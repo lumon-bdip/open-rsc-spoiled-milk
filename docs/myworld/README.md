@@ -23,6 +23,7 @@ repository root [`README.md`](../../README.md).
 - [fishing-spot-map.md](fishing-spot-map.md): current fishing spot cluster map and source coordinate list.
 - [fishing-rework-plan.md](fishing-rework-plan.md): current rod-tier and location-pool Fishing implementation record.
 - [resource-seed-plan.md](resource-seed-plan.md): implemented rare side-reward seed framework for Woodcutting and Harvesting.
+- [geode-and-gathering-spirit-plan.md](geode-and-gathering-spirit-plan.md): planned Mining geode rewards, gem seed retirement, key-half tree, and rare gathering-spirit NPC concepts.
 - [migration-regression-audit.md](migration-regression-audit.md): resolved migration recovery record and guardrail notes.
 - [dev-admin-commands.md](dev-admin-commands.md): MyWorld development account roles and practical command reference.
 - [testing-quick-reference.md](testing-quick-reference.md): compact field-testing reference for commands, IDs, and targeted test fixtures.

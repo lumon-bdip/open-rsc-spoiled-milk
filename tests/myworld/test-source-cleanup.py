@@ -799,6 +799,24 @@ def ensure_phase_one_content_cleanup() -> None:
         if snippet not in monk_of_entrana_text:
             fail(f"MonkOfEntrana.java should block active hide cuirasses on Entrana: {snippet}")
 
+    required_entrana_modern_stat_snippets = (
+        "private boolean hasCombatStats(ItemDefinition def)",
+        "def.getMeleeOffense() != 0",
+        "def.getRangedOffense() != 0",
+        "def.getMagicOffense() != 0",
+        "def.getMeleeDefense() != 0",
+        "def.getRangedDefense() != 0",
+        "def.getMagicDefense() != 0",
+        "private boolean isGatheringTool(ItemDefinition def)",
+        "def.getRequiredSkillIndex() == Skill.WOODCUTTING.id()",
+        "def.getRequiredSkillIndex() == Skill.MINING.id()",
+        "def.getRequiredSkillIndex() == Skill.FISHING.id()",
+        "def.getRequiredSkillIndex() == Skill.HARVESTING.id()",
+    )
+    for snippet in required_entrana_modern_stat_snippets:
+        if snippet not in monk_of_entrana_text:
+            fail(f"MonkOfEntrana.java should block modern combat stat items on Entrana: {snippet}")
+
     retired_thrander_snippets = (
         "implements TalkNpcTrigger, UseNpcTrigger",
         "blockUseNpc",

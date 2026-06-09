@@ -51,9 +51,10 @@ def main() -> None:
 	scenery_locs = json.loads(SCENERY_LOCS.read_text(encoding="utf-8"))["sceneries"]
 	require(any(loc.get("id") == 235 and loc.get("pos") == {"X": 588, "Y": 666} for loc in scenery_locs),
 		"Guthix altar should be moved to 588,666")
-	for pos in ({"X": 309, "Y": 571}, {"X": 321, "Y": 571}):
-		require(any(loc.get("id") == 200 and loc.get("pos") == pos for loc in scenery_locs),
-			f"Saradomin altar should exist at {pos}")
+	require(any(loc.get("id") == 200 and loc.get("pos") == {"X": 309, "Y": 571} for loc in scenery_locs),
+		"Saradomin altar should remain at 309,571")
+	require(not any(loc.get("id") == 200 and loc.get("pos") == {"X": 321, "Y": 571} for loc in scenery_locs),
+		"Duplicate Saradomin altar should be removed from 321,571")
 
 	client_defs = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
 	require('new ItemDef("Robe of Guthix", "A robe top blessed by Guthix"' in client_defs,

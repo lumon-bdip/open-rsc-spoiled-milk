@@ -357,26 +357,10 @@ public class ResourceSeeds implements OpInvTrigger, OpLocTrigger {
 			ItemId.BLOOD_LOGS.id(), Skill.WOODCUTTING.id(), ToolBubble.TREE, "resource tree", "blood logs",
 			"A magical tree ready to harvest.", 2, 5, 25, DEFAULT_NODE_YIELDS, DEFAULT_NODE_ACTION_DELAY,
 			DEFAULT_NODE_LIFETIME_MS));
-		register(new ResourceSeedDefinition(ItemId.SAPPHIRE_SEED.id(), SceneryId.RESOURCE_TREE.id(),
-			ItemId.UNCUT_SAPPHIRE.id(), Skill.WOODCUTTING.id(), ToolBubble.TREE, "resource tree", "uncut sapphires",
-			"A magical tree ready to harvest.", 1, 3, 25, DEFAULT_NODE_YIELDS, DEFAULT_NODE_ACTION_DELAY,
-			DEFAULT_NODE_LIFETIME_MS));
-		register(new ResourceSeedDefinition(ItemId.EMERALD_SEED.id(), SceneryId.RESOURCE_TREE.id(),
-			ItemId.UNCUT_EMERALD.id(), Skill.WOODCUTTING.id(), ToolBubble.TREE, "resource tree", "uncut emeralds",
-			"A magical tree ready to harvest.", 1, 3, 25, DEFAULT_NODE_YIELDS, DEFAULT_NODE_ACTION_DELAY,
-			DEFAULT_NODE_LIFETIME_MS));
-		register(new ResourceSeedDefinition(ItemId.RUBY_SEED.id(), SceneryId.RESOURCE_TREE.id(),
-			ItemId.UNCUT_RUBY.id(), Skill.WOODCUTTING.id(), ToolBubble.TREE, "resource tree", "uncut rubies",
-			"A magical tree ready to harvest.", 1, 3, 25, DEFAULT_NODE_YIELDS, DEFAULT_NODE_ACTION_DELAY,
-			DEFAULT_NODE_LIFETIME_MS));
-		register(new ResourceSeedDefinition(ItemId.DIAMOND_SEED.id(), SceneryId.RESOURCE_TREE.id(),
-			ItemId.UNCUT_DIAMOND.id(), Skill.WOODCUTTING.id(), ToolBubble.TREE, "resource tree", "uncut diamonds",
-			"A magical tree ready to harvest.", 1, 3, 25, DEFAULT_NODE_YIELDS, DEFAULT_NODE_ACTION_DELAY,
-			DEFAULT_NODE_LIFETIME_MS));
-		register(new ResourceSeedDefinition(ItemId.DRAGONSTONE_SEED.id(), SceneryId.RESOURCE_TREE.id(),
-			ItemId.UNCUT_DRAGONSTONE.id(), Skill.WOODCUTTING.id(), ToolBubble.TREE, "resource tree", "uncut dragonstones",
-			"A magical tree ready to harvest.", 1, 1, 25, DEFAULT_NODE_YIELDS, DEFAULT_NODE_ACTION_DELAY,
-			DEFAULT_NODE_LIFETIME_MS));
+		register(new ResourceSeedDefinition(ItemId.KEY_HALF_SEED.id(), SceneryId.RESOURCE_TREE.id(),
+			ItemId.NOTHING.id(), Skill.WOODCUTTING.id(), ToolBubble.TREE, "key half tree", "key halves",
+			"A magical tree covered in glinting key fragments.", 1, 1, 25, DEFAULT_NODE_YIELDS,
+			DEFAULT_NODE_ACTION_DELAY, DEFAULT_NODE_LIFETIME_MS, YieldType.KEY_HALF));
 		registerHarvestingSeed(ItemId.SALMON_FOOD_SEED.id(), ItemId.SALMON.id(), "salmon", 2, 4);
 		registerHarvestingSeed(ItemId.TUNA_FOOD_SEED.id(), ItemId.TUNA.id(), "tuna", 2, 4);
 		registerHarvestingSeed(ItemId.LOBSTER_FOOD_SEED.id(), ItemId.LOBSTER.id(), "lobsters", 2, 4);
@@ -422,7 +406,8 @@ public class ResourceSeeds implements OpInvTrigger, OpLocTrigger {
 	private enum YieldType {
 		ITEM,
 		XP,
-		GOLD
+		GOLD,
+		KEY_HALF
 	}
 
 	private static final class ResourceSeedDefinition {
@@ -669,6 +654,13 @@ public class ResourceSeeds implements OpInvTrigger, OpLocTrigger {
 			int coins = player.getSkills().getLevel(definition.skillId) * quantity;
 			give(player, ItemId.COINS.id(), coins);
 			player.playerServerMessage(MessageType.QUEST, "You harvest " + coins + " coins.");
+			return;
+		}
+		if (definition.yieldType == YieldType.KEY_HALF) {
+			int itemId = DataConversions.random(0, 1) == 0 ? ItemId.TOOTH_KEY_HALF.id() : ItemId.LOOP_KEY_HALF.id();
+			give(player, itemId, 1);
+			player.incExp(definition.skillId, definition.xpPerYield, true);
+			player.playerServerMessage(MessageType.QUEST, "You harvest a key half.");
 			return;
 		}
 

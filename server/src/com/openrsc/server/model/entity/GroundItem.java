@@ -82,17 +82,6 @@ public class GroundItem extends Entity {
 		trySetLocation(Point.location(loc.x, loc.y));
 	}
 
-	public boolean equals(final Entity o) {
-		if (o instanceof GroundItem) {
-			GroundItem item = (GroundItem) o;
-			return item.getID() == getID() && item.getAmount() == getAmount()
-				&& item.getSpawnedTime() == getSpawnedTime()
-				&& (item.getOwnerUsernameHash() == getOwnerUsernameHash())
-				&& item.getLocation().equals(getLocation());
-		}
-		return false;
-	}
-
 	public void trySetLocation(Point point) {
 		if (getWorld().getServer().getConfig().RESTRICT_ITEM_ID <= ItemId.NOTHING.id()
 			|| this.getID() <= getWorld().getServer().getConfig().RESTRICT_ITEM_ID) {

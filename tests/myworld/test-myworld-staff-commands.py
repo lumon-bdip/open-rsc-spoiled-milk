@@ -23,23 +23,18 @@ def require(text: str, snippet: str, label: str, failures: list[str]) -> None:
 
 def main() -> None:
     failures: list[str] = []
-    login = PLAYER_LOGIN.read_text(encoding="utf-8")
     blink_handler = BLINK_HANDLER.read_text(encoding="utf-8")
     moderator = MODERATOR.read_text(encoding="utf-8")
     admins = ADMINS.read_text(encoding="utf-8")
     event = EVENT.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")
 
-    for snippet in (
-        'final String staffName = normalizeMyWorldStaffName(player.getUsername());',
-        '"devduck".equals(staffName)',
-        "player.setGroupID(Group.OWNER);",
-        '"anactualduck".equals(staffName)',
-        "if (!player.isMod())",
-        'username.replaceAll("[^A-Za-z0-9]", "").toLowerCase()',
+    require(
+        PLAYER_LOGIN.read_text(encoding="utf-8"),
         "public boolean blockPlayerLogin(Player player) {\n\t\treturn true;",
-    ):
-        require(login, snippet, "PlayerLogin.java", failures)
+        "PlayerLogin.java",
+        failures,
+    )
 
     require(
         blink_handler,

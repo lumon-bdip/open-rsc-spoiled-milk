@@ -368,11 +368,33 @@ public final class MonkOfEntrana implements OpLocTrigger,
 					|| def.getWieldPosition() == Equipment.EquipmentSlot.SLOT_CAPE.getIndex()) return false;
 				// don't allow anything with a ranged level requirement
 				if (def.getRequiredSkillIndex() == Skill.RANGED.id()) return true;
+				// Custom gathering tools are still barred as equipment, even if they have no combat stats.
+				if (isGatheringTool(def)) return true;
 				// allow anything without melee combat stats and armor, otherwise block
-                return def.getWeaponPowerBonus() != 0 || def.getWeaponAimBonus() != 0 || def.getArmourBonus() != 0;
+				return hasCombatStats(def);
 			}
 			return DataConversions.inArray(blockedItemsCustom, item.getCatalogId());
 		}
+	}
+
+	private boolean hasCombatStats(ItemDefinition def) {
+		return def.getWeaponPowerBonus() != 0
+			|| def.getWeaponAimBonus() != 0
+			|| def.getMagicBonus() != 0
+			|| def.getArmourBonus() != 0
+			|| def.getMeleeOffense() != 0
+			|| def.getRangedOffense() != 0
+			|| def.getMagicOffense() != 0
+			|| def.getMeleeDefense() != 0
+			|| def.getRangedDefense() != 0
+			|| def.getMagicDefense() != 0;
+	}
+
+	private boolean isGatheringTool(ItemDefinition def) {
+		return def.getRequiredSkillIndex() == Skill.WOODCUTTING.id()
+			|| def.getRequiredSkillIndex() == Skill.MINING.id()
+			|| def.getRequiredSkillIndex() == Skill.FISHING.id()
+			|| def.getRequiredSkillIndex() == Skill.HARVESTING.id();
 	}
 
 	private boolean playerNotAllowedOnEntrana(Player player) {

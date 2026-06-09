@@ -398,7 +398,7 @@
       "id": 1448,
       "meleeOffense": 21,
       "weaponSpeed": 5,
-      "basePrice": 160000
+      "basePrice": 300000
     },
     {
       "id": 0,
@@ -476,7 +476,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 240
+      "basePrice": 240,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 22,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 87,
@@ -484,7 +491,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 100
+      "basePrice": 100,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 15,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 88,
@@ -492,7 +506,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 600
+      "basePrice": 600,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 30,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 203,
@@ -500,7 +521,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 1600
+      "basePrice": 1600,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 38,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 204,
@@ -508,7 +536,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 7600
+      "basePrice": 7600,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 54,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 405,
@@ -516,7 +551,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 20000
+      "basePrice": 20000,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 70,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 428,
@@ -524,7 +566,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 600
+      "basePrice": 600,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 30,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 594,
@@ -532,7 +581,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 120000
+      "basePrice": 120000,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 80,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 1480,
@@ -540,7 +596,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 120000
+      "basePrice": 120000,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 80,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 2001,
@@ -548,7 +611,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 24
+      "basePrice": 24,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 1,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 2012,
@@ -556,7 +626,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 48
+      "basePrice": 48,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 8,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 2023,
@@ -564,7 +641,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 3600
+      "basePrice": 3600,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 46,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 2034,
@@ -572,7 +656,14 @@
       "meleeOffense": 0,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "basePrice": 13000
+      "basePrice": 13000,
+      "isWearable": 1,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 62,
+      "requiredSkillID": 8,
+      "rangedOffense": 0,
+      "magicOffense": 0
     },
     {
       "id": 89,

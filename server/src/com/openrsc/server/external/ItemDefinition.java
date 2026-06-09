@@ -227,6 +227,37 @@ public final class ItemDefinition extends EntityDef {
 		this.magicDefense = builder.magicDefense;
 	}
 
+	public ItemDefinition(ItemDefinition source) {
+		this.id = source.id;
+		this.name = source.name;
+		this.description = source.description;
+		this.command = source.command == null ? null : source.command.clone();
+		this.isFemaleOnly = source.isFemaleOnly;
+		this.isMembersOnly = source.isMembersOnly;
+		this.isStackable = source.isStackable;
+		this.isUntradable = source.isUntradable;
+		this.isWearable = source.isWearable;
+		this.appearanceId = source.appearanceId;
+		this.armourBonus = source.armourBonus;
+		this.defaultPrice = source.defaultPrice;
+		this.magicBonus = source.magicBonus;
+		this.meleeOffense = source.meleeOffense;
+		this.rangedOffense = source.rangedOffense;
+		this.magicOffense = source.magicOffense;
+		this.weaponSpeed = source.weaponSpeed;
+		this.meleeDefense = source.meleeDefense;
+		this.rangedDefense = source.rangedDefense;
+		this.magicDefense = source.magicDefense;
+		this.prayerBonus = source.prayerBonus;
+		this.requiredLevel = source.requiredLevel;
+		this.requiredSkillIndex = source.requiredSkillIndex;
+		this.weaponAimBonus = source.weaponAimBonus;
+		this.weaponPowerBonus = source.weaponPowerBonus;
+		this.wearableId = source.wearableId;
+		this.wornItemIndex = source.wornItemIndex;
+		this.isNoteable = source.isNoteable;
+	}
+
 	public ItemDefinition() { }
 
 

@@ -195,18 +195,21 @@ Possible follow-up tuning:
   `Ebony log seed` (`2716`), `Magic log seed` (`2717`), and
   `Blood log seed` (`2718`). These currently yield `2-5` logs per harvest
   regardless of log tier.
-- Woodcutting gem seeds are implemented and are the rarest Woodcutting seed
-  category: `Sapphire seed` (`2719`), `Emerald seed` (`2720`),
-  `Ruby seed` (`2721`), `Diamond seed` (`2722`), and
-  `Dragonstone seed` (`2723`). Sapphire through diamond currently yield `1-3`
-  gems per harvest; dragonstone yields exactly `1` gem per harvest.
+- Woodcutting gem seeds have been retired from active acquisition and planting:
+  `Sapphire seed` (`2719`), `Emerald seed` (`2720`), `Ruby seed` (`2721`),
+  `Diamond seed` (`2722`), and `Dragonstone seed` (`2723`) remain reserved for
+  compatibility but are no longer awarded by Woodcutting and no longer register
+  active gem-tree behavior.
+- `Key half seed` (`3176`) replaces the gem-seed niche as a rare Woodcutting
+  seed. It grows into a `key half tree` with three yields, each granting one
+  random crystal-key half.
 - Ore seed definitions currently yield `2-5` ore per harvest regardless of ore
   tier. Tin and copper seed definitions remain spawnable/dev-compatible, but
   they are not awarded by the Woodcutting side-reward table.
 - Woodcutting side-reward weighting now follows:
-  Knowledge/Money most common, log seeds common, ore seeds less common, gem
-  seeds rare. Standard/pine log seeds and tin/copper ore seeds are not in the
-  acquisition table.
+  Knowledge/Money most common, log seeds common, ore seeds less common, and
+  `Key half seed` as the rarest active seed. Standard/pine log seeds,
+  tin/copper ore seeds, and gem seeds are not in the acquisition table.
 - Harvesting side-reward weighting now uses Knowledge/Money as the tier 1/2
   replacement rewards, with higher-tier plant seeds starting after that.
 - Harvesting seed coverage now includes finished-food seeds, all standard herb
@@ -220,8 +223,8 @@ Possible follow-up tuning:
   frequency: `No seeds for me`, `A few seeds`, `More seeds`, and
   `Even more seeds!`. Their current base seed-roll chances are off, `1/50`,
   `3%`, and `4%`.
-- Mining gem focus now uses the same off, `1/50`, `3%`, and `4%` roll chances
-  for `Just the ore`, `A few gems`, `Plenty of gems`, and `Lots of gems`.
+- Mining geode focus now uses the same off, `1/50`, `3%`, and `4%` roll chances
+  for `Just the ore`, `A few geodes`, `Plenty of geodes`, and `Lots of geodes`.
 - Planted resource nodes auto-repeat their three yields after one interaction,
   show the appropriate tool bubble, and drop overflow rewards on the ground
   when inventory space runs out.

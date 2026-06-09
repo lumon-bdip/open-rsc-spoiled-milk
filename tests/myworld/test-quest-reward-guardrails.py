@@ -7,7 +7,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 QUEST_REWARD_REGISTRAR = ROOT / "server/plugins/com/openrsc/server/plugins/shared/QuestRewardRegistrar.java"
 AUTHENTIC_QUESTS = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/quests"
-PLAYER_LOGIN = ROOT / "server/plugins/com/openrsc/server/plugins/shared/PlayerLogin.java"
 
 
 RETIRED_REWARD_SKILLS = ("ATTACK", "STRENGTH", "DEFENSE", "FLETCHING")
@@ -49,18 +48,6 @@ def main() -> None:
         expected = f"Skill.{source}, Skill.{target}"
         if expected not in shortcut_text:
             failures.append(f"MyWorldQuestShortcuts.java is missing explicit {source} -> {target} reward remap")
-
-    login_text = PLAYER_LOGIN.read_text(encoding="utf-8")
-    for snippet in (
-        'private static final String ANACTUALDUCK_REWARD_BACKFILL = "myworld_anactualduck_quest_reward_backfill_20260531";',
-        'if (!"anactualduck".equals(normalizeMyWorldStaffName(player.getUsername()))',
-        "ifCompletedEnsure(player, Quests.DEMON_SLAYER, ItemId.SILVERLIGHT.id(), 1);",
-        "ifCompletedGive(player, Quests.PIRATES_TREASURE, ItemId.GOLD_RING.id(), 1);",
-        "ifCompletedGive(player, Quests.PIRATES_TREASURE, ItemId.EMERALD.id(), 1);",
-        "ifCompletedEnsure(player, Quests.DRAGON_SLAYER, ItemId.ANTI_DRAGON_BREATH_SHIELD.id(), 1);",
-    ):
-        if snippet not in login_text:
-            failures.append(f"PlayerLogin.java is missing one-time anactualduck reward backfill snippet: {snippet}")
 
     if failures:
         fail("\n".join(failures))

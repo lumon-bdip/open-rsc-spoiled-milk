@@ -16,7 +16,7 @@ public class CombatStyleHandler implements PayloadProcessor<CombatStyleStruct, O
 		if (style >= 4 && style <= 7 && player.getConfig().WANT_MYWORLD) {
 			int hitsXpFocus = style - 4;
 			player.setHitsXpFocus(hitsXpFocus);
-			player.message("Hits XP focus set to " + hitsXpFocusLabel(hitsXpFocus));
+			player.message("Combat XP focus set to " + hitsXpFocusLabel(player, hitsXpFocus));
 			return;
 		}
 		if (style < Skills.CONTROLLED_MODE || style > Skills.DEFENSIVE_MODE) {
@@ -47,13 +47,13 @@ public class CombatStyleHandler implements PayloadProcessor<CombatStyleStruct, O
 			case Skills.CONTROLLED_MODE:
 				return "Just the ore";
 			case Skills.AGGRESSIVE_MODE:
-				return "A few gems";
+				return "A few geodes";
 			case Skills.ACCURATE_MODE:
-				return "Plenty of gems";
+				return "Plenty of geodes";
 			case Skills.DEFENSIVE_MODE:
-				return "Lots of gems";
+				return "Lots of geodes";
 			default:
-				return "A few gems";
+				return "A few geodes";
 		}
 	}
 
@@ -87,18 +87,31 @@ public class CombatStyleHandler implements PayloadProcessor<CombatStyleStruct, O
 		}
 	}
 
-	private String hitsXpFocusLabel(int style) {
+	private String hitsXpFocusLabel(Player player, int style) {
+		String primarySkill = getCurrentCombatXpFocusSkill(player);
 		switch (style) {
 			case Skills.CONTROLLED_MODE:
-				return "No Hits XP";
+				return "Only " + primarySkill + " XP";
 			case Skills.AGGRESSIVE_MODE:
-				return "Some Hits XP";
+				return "Mostly " + primarySkill + ", Some Hits XP";
 			case Skills.ACCURATE_MODE:
-				return "More Hits XP";
+				return "Some " + primarySkill + ", Mostly Hits XP";
 			case Skills.DEFENSIVE_MODE:
-				return "All Hits XP";
+				return "Only Hits XP";
 			default:
-				return "Some Hits XP";
+				return "Mostly " + primarySkill + ", Some Hits XP";
+		}
+	}
+
+	private String getCurrentCombatXpFocusSkill(Player player) {
+		switch (player.getKillType()) {
+			case RANGED:
+				return "Ranged";
+			case MAGIC:
+				return "Magic";
+			case COMBAT:
+			default:
+				return "Melee";
 		}
 	}
 

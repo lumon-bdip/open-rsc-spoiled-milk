@@ -132,7 +132,6 @@ public final class Player extends Mob {
 	private LinkedHashSet<GameObject> localObjects = new LinkedHashSet<GameObject>();
 	private LinkedHashSet<GameObject> localWallObjects = new LinkedHashSet<GameObject>();
 	private LinkedHashSet<GroundItem> localGroundItems = new LinkedHashSet<GroundItem>();
-	private ArrayDeque<Point> locationsToClear = new ArrayDeque<Point>();
 	private String currentIP = "0.0.0.0";
 	private int incorrectSleepTries = 0;
 	private volatile int questionOption;
@@ -731,11 +730,6 @@ public final class Player extends Mob {
 		localObjects.clear();
 		localWallObjects.clear();
 		localGroundItems.clear();
-		locationsToClear.clear();
-	}
-
-	public ArrayDeque<Point> getLocationsToClear() {
-		return locationsToClear;
 	}
 
 	public boolean accessingBank() {
@@ -2833,6 +2827,16 @@ public final class Player extends Mob {
 		return false;
 	}
 
+	private boolean keepsInventoryOnDeathFromStaffRole() {
+		switch (groupID) {
+			case Group.OWNER:
+			case Group.ADMIN:
+			case Group.SUPER_MOD:
+				return true;
+		}
+		return false;
+	}
+
 	public boolean isDefaultUser() {
 		return groupID == Group.DEFAULT_GROUP;
 	}
@@ -3085,7 +3089,7 @@ public final class Player extends Mob {
 			getDuel().dropOnDeath();
 			 // disables duel spam in activity feed
 			 // if (player != null) getWorld().getServer().getGameLogger().addQuery(new LiveFeedLog(player, String.format("has just won a stake against <strong>%s</strong>", username)));
-		} else if (!hasElevatedPriveledges() || getCache().hasKey("myworld_test_death_drops")) {
+		} else if (!keepsInventoryOnDeathFromStaffRole() || getCache().hasKey("myworld_test_death_drops")) {
 			getCarriedItems().getInventory().dropOnDeath(mob);
 		}
 

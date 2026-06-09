@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate MyWorld fishing rod-tier implementation guardrails."""
 
+import json
 from pathlib import Path
 import sys
 
@@ -11,6 +12,7 @@ FLETCHING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/f
 ENTITY_HANDLER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.java"
 FORMULAE = ROOT / "server/src/com/openrsc/server/util/rsc/Formulae.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+ITEM_DEFS_MYWORLD = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 INV_USE_ON_ITEM = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/InvUseOnItem.java"
 GERRANT = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/portsarim/GerrantsFishingGear.java"
 FISHING_GUILD = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/hemenster/FishingGuildShop.java"
@@ -36,6 +38,8 @@ ROD_IDS = (
     "ItemId.MAGIC_FISHING_ROD.id()",
     "ItemId.BLOOD_FISHING_ROD.id()",
 )
+ROD_ITEM_IDS = (377, 2682, 2683, 2684, 2685, 2686, 2687, 2688, 2689, 2690)
+ROD_LEVELS = (1, 8, 15, 22, 30, 38, 46, 54, 62, 70)
 
 LOW_SHOP_RODS = ROD_IDS[:6]
 HIGH_SHOP_RODS = ROD_IDS[6:]
@@ -58,6 +62,10 @@ def require_rod_runtime() -> None:
     entity_text = ENTITY_HANDLER.read_text(encoding="utf-8")
     formulae_text = FORMULAE.read_text(encoding="utf-8")
     client_entity_text = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
+    myworld_items = {
+        int(entry["id"]): entry
+        for entry in json.loads(ITEM_DEFS_MYWORLD.read_text(encoding="utf-8"))["items"]
+    }
 
     require_snippets(FISHING, ROD_IDS, "Fishing rod ladder")
     require_snippets(FISHING, (
@@ -76,11 +84,30 @@ def require_rod_runtime() -> None:
         "private boolean isLegacyFishingCommand(String command)",
     ), "Fishing rod/location runtime")
 
-    for rod_id in ROD_IDS:
-        if f"configureEquippableTool({rod_id}, Skill.FISHING.id()" not in entity_text:
-            fail(f"Fishing rod is not configured as an equipable Fishing tool: {rod_id}")
+    if "configureEquippableTool(" in entity_text:
+        fail("Fishing rod equip policy should come from ItemDefsMyWorld.json, not EntityHandler patches")
+
+    for rod_id, item_id, required_level in zip(ROD_IDS, ROD_ITEM_IDS, ROD_LEVELS):
         if rod_id not in formulae_text:
             fail(f"Fishing rod is missing from shared fishing tool IDs: {rod_id}")
+        entry = myworld_items.get(item_id)
+        if entry is None:
+            fail(f"Fishing rod item {item_id} is missing from generated MyWorld item overrides")
+        expected = {
+            "isWearable": 1,
+            "wearableID": 16,
+            "wearSlot": 4,
+            "requiredSkillID": 10,
+            "requiredLevel": required_level,
+            "weaponAimBonus": 0,
+            "weaponPowerBonus": 0,
+            "meleeOffense": 0,
+            "rangedOffense": 0,
+            "magicOffense": 0,
+        }
+        for field, value in expected.items():
+            if entry.get(field) != value:
+                fail(f"Fishing rod item {item_id} field {field} expected {value}, found {entry.get(field)!r}")
 
     if 'new ItemDef("Fishing Rod", "Useful for catching sardine or herring", "", 5, 172, "items:172", false, true, 16,' not in client_entity_text:
         fail("Client baseline Fishing Rod must be wearable in the main-hand slot")

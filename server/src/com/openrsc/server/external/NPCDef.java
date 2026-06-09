@@ -123,6 +123,45 @@ public class NPCDef extends EntityDef {
 		this.aggressive = builder.aggressive;
 	}
 
+	public NPCDef(NPCDef source) {
+		this.id = source.id;
+		this.name = source.name;
+		this.description = source.description;
+		this.aggressive = source.aggressive;
+		this.attack = source.attack;
+		this.attackable = source.attackable;
+		this.members = source.members;
+		this.bottomColour = source.bottomColour;
+		this.camera1 = source.camera1;
+		this.camera2 = source.camera2;
+		this.command1 = source.command1;
+		this.command2 = source.command2;
+		this.defense = source.defense;
+		this.ranged = source.ranged;
+		this.meleeDefense = source.meleeDefense;
+		this.rangedDefense = source.rangedDefense;
+		this.magicDefense = source.magicDefense;
+		this.meleeDefenseMultiplier = source.meleeDefenseMultiplier;
+		this.rangedDefenseMultiplier = source.rangedDefenseMultiplier;
+		this.magicDefenseMultiplier = source.magicDefenseMultiplier;
+		this.meleeDefenseDivisor = source.meleeDefenseDivisor;
+		this.rangedDefenseDivisor = source.rangedDefenseDivisor;
+		this.magicDefenseDivisor = source.magicDefenseDivisor;
+		this.drops = source.drops == null ? null : source.drops.clone();
+		this.hairColour = source.hairColour;
+		this.hits = source.hits;
+		this.respawnTime = source.respawnTime;
+		this.skinColour = source.skinColour;
+		this.sprites = source.sprites == null ? null : source.sprites.clone();
+		this.strength = source.strength;
+		this.combatLevel = source.combatLevel;
+		this.topColour = source.topColour;
+		this.walkModel = source.walkModel;
+		this.combatModel = source.combatModel;
+		this.combatSprite = source.combatSprite;
+		this.roundMode = source.roundMode;
+	}
+
 	public NPCDef() { }
 
 	public int getAtt() {

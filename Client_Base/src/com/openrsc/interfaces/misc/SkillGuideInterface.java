@@ -1319,8 +1319,8 @@ public final class SkillGuideInterface {
 		} else if (curTab == 2) {
 			skillMenuEntries.add(new SkillMenuItem(1259, "", "Mining Guild can be entered at level 60"));
 			skillMenuEntries.add(new SkillMenuItem(1260, "", "Pickaxe must be equipped to mine rocks"));
-			skillMenuEntries.add(new SkillMenuItem(164, "", "Gem focus: Just the ore, A few, Plenty, Lots"));
-			skillMenuEntries.add(new SkillMenuItem(164, "", "Higher gem focus increases rare gem rolls"));
+			skillMenuEntries.add(new SkillMenuItem(3178, "", "Geode focus: Just the ore, A few, Plenty, Lots"));
+			skillMenuEntries.add(new SkillMenuItem(3178, "", "Higher geode focus increases rare geode rolls"));
 			skillMenuEntries.add(new SkillMenuItem(1299, "", "Stone comes only from regular rock nodes"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1377, "Mining");
