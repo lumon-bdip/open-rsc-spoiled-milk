@@ -71,6 +71,38 @@ def run_packager(fixture: Path, runtime: Path, *extra: str) -> subprocess.Comple
     )
 
 
+def test_packager_rejects_localhost_player_endpoint() -> None:
+    with tempfile.TemporaryDirectory(prefix="spoiled-release-test-") as temp_dir:
+        fixture = Path(temp_dir)
+        runtime = make_fixture(fixture)
+        env = dict(os.environ)
+        env["ROOT_DIR"] = str(fixture)
+        result = subprocess.run(
+            [
+                "bash",
+                str(PACKAGER),
+                "--version",
+                VERSION,
+                "--host",
+                "localhost",
+                "--port",
+                "43605",
+                "--windows-jre",
+                str(runtime),
+                "--skip-build",
+                "--assets-cleared",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            fail("release packager allowed a localhost player endpoint")
+        if "Player release host must be a public host/IP" not in result.stderr:
+            fail(f"release packager rejected localhost with an unclear error:\n{result.stderr}")
+
+
 def test_packaged_archives_are_clean_and_configured() -> None:
     with tempfile.TemporaryDirectory(prefix="spoiled-release-test-") as temp_dir:
         fixture = Path(temp_dir)
@@ -380,6 +412,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
 
 
 def main() -> None:
+    test_packager_rejects_localhost_player_endpoint()
     test_packaged_archives_are_clean_and_configured()
     test_release_gates_are_enforced()
     test_windows_runtime_download_helper_is_documented()

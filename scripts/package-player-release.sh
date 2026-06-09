@@ -77,6 +77,11 @@ done
 [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-alpha\.[0-9]+$ ]] \
   || fail "Version must use limited-alpha form, for example v0.1.0-alpha.1"
 [[ "$HOST" =~ ^[A-Za-z0-9.-]+$ ]] || fail "Host must be a DNS name or IPv4 address"
+case "${HOST,,}" in
+  localhost|127.*|0.0.0.0)
+    fail "Player release host must be a public host/IP, not $HOST"
+    ;;
+esac
 [[ "$PORT" =~ ^[0-9]+$ ]] && ((PORT >= 1 && PORT <= 65535)) \
   || fail "Port must be between 1 and 65535"
 [[ "$ASSETS_CLEARED" == true ]] \
