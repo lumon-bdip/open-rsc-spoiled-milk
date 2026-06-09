@@ -7,13 +7,16 @@ import orsc.Config;
 import orsc.mudclient;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 public class EntityHandler {
 
 	public static ArrayList<NPCDef> npcs = new ArrayList<>();
 	private static final ArrayList<ItemDef> items = new ArrayList<>();
+	private static final Set<String> loggedItemFallbacks = new HashSet<>();
 	private static final ArrayList<TextureDef> textures = new ArrayList<>();
 	private static final ArrayList<AnimationDef> animations = new ArrayList<>();
 	public static ArrayList<SpriteDef> projectiles = new ArrayList<>();
@@ -127,24 +130,47 @@ public class EntityHandler {
 			noted = true;
 		}
 		if (newId < 0 || newId >= items.size()) {
+			logItemFallback(id, newId, noted, "out-of-range");
 			return items.get(1544); //Default Item is Unobtanium
 		}
 		ItemDef item = findItem(newId, noted);
 		if (item == null) {
+			logItemFallback(id, newId, noted, "missing-definition");
 			return items.get(1544); //Default Item is Unobtanium
+		}
+		if (isUnobtaniumPlaceholder(item)) {
+			logItemFallback(id, newId, noted, "placeholder-definition");
 		}
 		return item;
 	}
 
 	public static ItemDef getItemDef(int id, boolean isNote) {
 		if (id < 0 || id >= items.size()) {
+			logItemFallback(id, id, isNote, "out-of-range");
 			return items.get(1544); //Default Item is Unobtanium
 		}
 		ItemDef item = findItem(id, isNote);
 		if (item == null) {
+			logItemFallback(id, id, isNote, "missing-definition");
 			return items.get(1544); //Default Item is Unobtanium
 		}
+		if (isUnobtaniumPlaceholder(item)) {
+			logItemFallback(id, id, isNote, "placeholder-definition");
+		}
 		return item;
+	}
+
+	private static void logItemFallback(int requestedId, int resolvedId, boolean noted, String reason) {
+		String key = requestedId + ":" + resolvedId + ":" + noted + ":" + reason;
+		if (loggedItemFallbacks.add(key)) {
+			System.err.println(
+				"CLIENT_ITEM_DEF_FALLBACK requestedId=" + requestedId
+					+ " resolvedId=" + resolvedId
+					+ " noted=" + noted
+					+ " reason=" + reason
+					+ " itemCount=" + items.size()
+			);
+		}
 	}
 
 	public static ItemDef findItem(int id, boolean isNote) {
@@ -5378,6 +5404,7 @@ public class EntityHandler {
 		addResourceSeedDefinition("Jangerberries seed", "A magical seed that grows into an ingredient plant.", 2750, 1600, 0xC050B0);
 		addResourceSeedDefinition("Wine of zamorak seed", "A magical seed that grows into an ingredient plant.", 2751, 4500, 0x8B1A1A);
 		items.add(new ItemDef("Dragon battle Axe", "A vicious looking axe", "", 200000, 272, "items:272", false, true, 16, 16711748, true, false, true, 2752));
+		restoreVanillaArrowDefinitions();
 		normalizeItemDefinitions();
 	}
 
@@ -5433,6 +5460,24 @@ public class EntityHandler {
 	private static void addMetalArrowHeadDefinition(String name, int id, int price, int pictureMask) {
 		setCustomItemDefinition(id, new ItemDef(name, "Dangerous looking arrow heads - need shafts for flight", "", price, 207, "items:207",
 			true, false, 0, pictureMask, false, false, false, id));
+	}
+
+	private static void restoreVanillaArrowDefinitions() {
+		setCustomItemDefinition(638, new ItemDef("Iron Arrows", "Arrows with iron heads", "", 6,
+			11, "items:11", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1000 : 0,
+			15654365, true, false, false, 638));
+		setCustomItemDefinition(640, new ItemDef("Steel Arrows", "Arrows with steel heads", "", 24,
+			11, "items:11", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1000 : 0,
+			15658734, true, false, false, 640));
+		setCustomItemDefinition(642, new ItemDef("Mithril Arrows", "Arrows with mithril heads", "", 64,
+			11, "items:11", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1000 : 0,
+			9614028, true, false, false, 642));
+		setCustomItemDefinition(644, new ItemDef("Adamantite Arrows", "Arrows with adamantite heads", "", 160,
+			11, "items:11", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1000 : 0,
+			11717785, true, false, false, 644));
+		setCustomItemDefinition(646, new ItemDef("Rune Arrows", "Arrows with rune heads", "", 800,
+			11, "items:11", true, Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1000 : 0,
+			65535, true, false, false, 646));
 	}
 
 	private static void addMetalDartTipDefinition(String name, int id, int price, int pictureMask) {
@@ -6036,7 +6081,11 @@ public class EntityHandler {
 				continue;
 			}
 			ItemDef current = normalized.get(item.id);
-			if (isUnobtaniumPlaceholder(item) && !isUnobtaniumPlaceholder(current)) {
+			if (isUnobtaniumPlaceholder(current) && !isUnobtaniumPlaceholder(item)) {
+				normalized.set(item.id, item);
+				continue;
+			}
+			if (isUnobtaniumPlaceholder(item) || !isUnobtaniumPlaceholder(current)) {
 				continue;
 			}
 			normalized.set(item.id, item);

@@ -5,11 +5,14 @@ import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.external.*;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class Item implements Comparable<Item> {
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	//Class members------------------------------------------------------
 	/**
@@ -169,6 +172,17 @@ public class Item implements Comparable<Item> {
 			safeId = getCatalogId();
 			if (safeId > player.getClientLimitations().maxItemId) {
 				safeId = getUnobtaniumPlaceholderId(player.getWorld());
+				LOGGER.warn(
+					"ITEM_PLACEHOLDER_SUBSTITUTION player={} item={} amount={} noted={} safeItem={} clientVersion={} clientMaxItemId={} serverItemCount={}",
+					player.getUsername(),
+					getCatalogId(),
+					getAmount(),
+					getNoted(),
+					safeId,
+					player.getClientVersion(),
+					player.getClientLimitations().maxItemId,
+					player.getWorld().getServer().getEntityHandler().getItemCount()
+				);
 			}
 		} else {
 			safeId = getCatalogIdAuthenticNoting(player.getClientLimitations().maxItemId, player.getWorld());

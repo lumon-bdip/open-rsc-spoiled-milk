@@ -64,6 +64,8 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.cert.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -448,6 +450,78 @@ public class Server implements Runnable {
 			box(benchmarkSyntheticPlayers), box(baseX), box(baseY));
 	}
 
+	private void auditPlayerOwnedItemIds() {
+		if (!(getDatabase() instanceof JDBCDatabase)) {
+			LOGGER.warn("PLAYER_ITEM_ID_AUDIT skipped: configured database does not expose JDBC queries");
+			return;
+		}
+
+		final int maxDefinedItemId = getEntityHandler().getItemCount() - 1;
+		final String prefix = getConfig().DB_TABLE_PREFIX;
+		final String query =
+			"SELECT * FROM (" +
+				"SELECT 'bank' AS container, p.`username`, b.`slot`, b.`itemID` AS status_id, s.`catalogID`, s.`amount`, s.`noted` " +
+				"FROM `" + prefix + "bank` b " +
+				"JOIN `" + prefix + "itemstatuses` s ON b.`itemID` = s.`itemID` " +
+				"JOIN `" + prefix + "players` p ON b.`playerID` = p.`id` " +
+				"UNION ALL " +
+				"SELECT 'inventory' AS container, p.`username`, i.`slot`, i.`itemID` AS status_id, s.`catalogID`, s.`amount`, s.`noted` " +
+				"FROM `" + prefix + "invitems` i " +
+				"JOIN `" + prefix + "itemstatuses` s ON i.`itemID` = s.`itemID` " +
+				"JOIN `" + prefix + "players` p ON i.`playerID` = p.`id` " +
+				"UNION ALL " +
+				"SELECT 'equipped' AS container, p.`username`, -1 AS slot, e.`itemID` AS status_id, s.`catalogID`, s.`amount`, s.`noted` " +
+				"FROM `" + prefix + "equipped` e " +
+				"JOIN `" + prefix + "itemstatuses` s ON e.`itemID` = s.`itemID` " +
+				"JOIN `" + prefix + "players` p ON e.`playerID` = p.`id`" +
+			") owned_items " +
+			"WHERE owned_items.`catalogID` < 0 " +
+				"OR owned_items.`catalogID` > ? " +
+				"OR owned_items.`catalogID` IN (?, ?) " +
+			"ORDER BY owned_items.`username`, owned_items.`container`, owned_items.`slot`";
+
+		int issues = 0;
+		final int sampleLimit = 100;
+		try (PreparedStatement statement = ((JDBCDatabase)getDatabase()).getConnection().prepareStatement(query)) {
+			statement.setInt(1, maxDefinedItemId);
+			statement.setInt(2, com.openrsc.server.constants.ItemId.UNOBTANIUM.id());
+			statement.setInt(3, com.openrsc.server.constants.ItemId.UNOBTANIUM_STACKABLE.id());
+
+			try (ResultSet results = statement.executeQuery()) {
+				while (results.next()) {
+					issues++;
+					if (issues <= sampleLimit) {
+						LOGGER.warn(
+							"PLAYER_ITEM_ID_AUDIT issue={} player={} container={} slot={} statusId={} catalogId={} amount={} noted={} maxDefinedItemId={}",
+							issues,
+							results.getString("username"),
+							results.getString("container"),
+							results.getInt("slot"),
+							results.getLong("status_id"),
+							results.getInt("catalogID"),
+							results.getInt("amount"),
+							results.getInt("noted"),
+							maxDefinedItemId
+						);
+					}
+				}
+			}
+		} catch (Exception e) {
+			LOGGER.error("PLAYER_ITEM_ID_AUDIT failed", e);
+			return;
+		}
+
+		if (issues == 0) {
+			LOGGER.info("PLAYER_ITEM_ID_AUDIT passed: no placeholder or undefined item IDs in player-owned containers; maxDefinedItemId={}", maxDefinedItemId);
+		} else {
+			LOGGER.warn(
+				"PLAYER_ITEM_ID_AUDIT found {} problematic player-owned item rows; logged first {}",
+				issues,
+				Math.min(issues, sampleLimit)
+			);
+		}
+	}
+
 	public void checkShutdown() {
 		if (isShuttingDown()) {
 			stop();
@@ -569,6 +643,7 @@ public class Server implements Runnable {
 
 				maxItemId = getDatabase().getMaxItemID();
 				LOGGER.info("Set max item ID to : " + maxItemId);
+				auditPlayerOwnedItemIds();
 
 				bossGroup = new NioEventLoopGroup(
 						0,

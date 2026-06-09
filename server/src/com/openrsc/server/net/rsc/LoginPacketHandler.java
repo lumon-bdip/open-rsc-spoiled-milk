@@ -534,6 +534,17 @@ public class LoginPacketHandler {
 					if (packet.getReadableBytes() > 0) {
 						cl.isAndroidClient = (packet.readUnsignedByte() & 0xFF) != 0;
 					}
+					LOGGER.info(
+						"CUSTOM_CLIENT_LIMITS username={} clientVersion={} maxItemId={} maxNpcId={} maxSceneryId={} maxAnimationId={} maxBankItems={} mapHash={}",
+						username,
+						clientVersion,
+						cl.maxItemId,
+						cl.maxNpcId,
+						cl.maxSceneryId,
+						cl.maxAnimationId,
+						cl.maxBankItems,
+						cl.mapHash
+					);
 
 					final LoginRequest request = new LoginRequest(server, channel, username, password, false, clientVersion, opcode == OpcodeIn.RELOGIN, null) {
 						@Override

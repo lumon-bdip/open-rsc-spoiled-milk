@@ -30,7 +30,8 @@ def main() -> None:
     require(hosted, "max_players_per_ip: 3", "limited alpha per-IP player cap")
 
     runner = RUN_HOSTED.read_text(encoding="utf-8")
-    require(runner, "init-hosted-sqlite.sh", "hosted DB initialization")
+    require(runner, "spoiled_milk_alpha.db", "hosted DB presence check")
+    require(runner, "Refusing to create a fresh hosted database during server startup.", "hosted DB startup reset guard")
     require(runner, "-DconfFile=myworld-host", "hosted config launch")
 
     initializer = INIT_HOSTED.read_text(encoding="utf-8")

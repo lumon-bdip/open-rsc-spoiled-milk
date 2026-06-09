@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 ./scripts/check.sh
 python3 ./tests/myworld/audit_client_item_coverage.py
 python3 ./tests/myworld/audit-item-id-integrity.py
+python3 ./tests/myworld/test-player-data-integrity.py
 python3 ./tests/myworld/audit-client-sprite-references.py
 python3 ./tests/myworld/test-content-item-resolution.py
 python3 ./tests/myworld/test-magic-no-random-fail.py
