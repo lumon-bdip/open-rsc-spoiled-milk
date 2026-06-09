@@ -3799,7 +3799,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Adamantite Pickaxe", "Requires level 31 mining to use", "", 3200, 72, "items:72", false, false, 0, 11717785, false, false, true, 1261));
 		addItemDefinition(new ItemDef("Rune Pickaxe", "Requires level 41 mining to use", "", 32000, 72, "items:72", false, false, 0, 65535, false, false, true, 1262));
 		addItemDefinition(new ItemDef("Sleeping Bag", "Not as comfy as a bed but better than nothing", "sleep", 30, 422, "items:422", false, false, 0, 0, false, false, true, 1263));
-		addItemDefinition(new ItemDef("Stone", "A mined stone used to craft runes at altars.", "", 4, 443, "items:443", false, false, 0, 0, false, false, true, 1264));
+		addItemDefinition(new ItemDef("A blue wizards hat", "An ancient wizards hat.", "", 2, 78, "items:78", false, true, 32, 255, false, true, true, 1264));
 		addItemDefinition(new ItemDef("Gilded Totem Pole", "A well crafted totem pole - given to you as a gift from Gujuo", "Inspect", 20, 403, "items:403", false, false, 0, 65280, true, true, false, 1265));
 		addItemDefinition(new ItemDef("Blessed Golden Bowl", "A specially made bowl constructed out of pure gold - it looks magical somehow", "", 1000, 404, "items:404", false, false, 0, 0, true, true, true, 1266));
 		addItemDefinition(new ItemDef("Blessed Golden Bowl with Pure Water", "A golden bowl filled with pure water - it looks magical somehow", "", 1000, 405, "items:405", false, false, 0, 8454143, true, true, true, 1267));
@@ -3944,7 +3944,6 @@ public class EntityHandler {
 
 
 		// Runecraft
-		addItemDefinition(new ItemDef("Rune stone", "An uncharged runestone", "", 4, -1, "items:443", false, false, 0, 0, false, false, true, 1299));
 		addItemDefinition(new ItemDef("Air talisman", "A mysterious power emanates from the talisman...", "Locate", 40, -1, "items:445", false, false, 0, 0, false, false, true, 1300));
 		addItemDefinition(new ItemDef("Mind talisman", "A mysterious power emanates from the talisman...", "Locate", 30, -1, "items:464", false, false, 0, 0, false, false, true, 1301));
 		addItemDefinition(new ItemDef("Water talisman", "A mysterious power emanates from the talisman...", "Locate", 40, -1, "items:446", false, false, 0, 0, false, false, true, 1302));
@@ -4314,11 +4313,6 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Necronomicon Ex Mortis", "This looks very homemade", "read", 1, 28, "items:28", false, false, 0, 0x777777, false, true, false, 1590));
 		addItemDefinition(new ItemDef("Ancient amulet", "A sinister looking amulet", "", 1, 125, "items:125", false, true, 1024, 0x010101, false, true, false, 1591));
 		addItemDefinition(new ItemDef("Boomstick", "A 12-Gauge, Double-Barreled Remington", "", 1, 606, "items:606", false, true, 16, 16737817, false, true, false, 1592));
-
-		// Placeholder support so custom material ids are client-valid up to the MyWorld range.
-		for (int customId = 1593; customId < 1789; customId++) {
-			addItemDefinition(new ItemDef("Unknown item", "A custom item placeholder", "", 1, 69, "items:69", false, false, 0, 0x777777, false, false, true, customId));
-		}
 
 		// MyWorld hide / leather materials
 		addItemDefinition(new ItemDef("Goblin hide", "A muted green goblin hide", "", 4, 69, "items:69", false, false, 0, 0x7c9a29, false, false, true, 1789));
@@ -6030,6 +6024,9 @@ public class EntityHandler {
 	}
 
 	private static void addItemDefinition(ItemDef item) {
+		if (item.id < items.size() && !isUnobtaniumPlaceholder(items.get(item.id))) {
+			return;
+		}
 		setCustomItemDefinition(item.id, item);
 	}
 
@@ -9399,6 +9396,8 @@ public class EntityHandler {
 	}
 
 	private static void applyMyWorldToolOverrides() {
+		setCustomItemDefinition(1299, new ItemDef("Stone", "A mined stone used to craft runes at altars.", "", 4, 443, "items:443", false, false, 0, 0, false, false, true, 1299));
+
 		configureEquippableToolClient(12, "Iron Hatchet");
 		configureEquippableToolClient(87, "Bronze Hatchet");
 		configureEquippableToolClient(88, "Steel Hatchet");
