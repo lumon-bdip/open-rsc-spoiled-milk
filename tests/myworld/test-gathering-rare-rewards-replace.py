@@ -45,9 +45,9 @@ def main() -> None:
         "Fishing extra-resource amulet should not add fish after a rare replacement",
     )
 
-    require("private boolean maybeAwardMyWorldMiningGeode(Player player, GameObject rock, int pickaxeTier)", mining, "Mining rare replacement helper")
+    require("private boolean maybeAwardMyWorldMiningGeode(Player player, GameObject rock, int nodeRequiredLevel)", mining, "Mining rare replacement helper")
     require_regex(
-        r"if \(maybeAwardMyWorldMiningGeode\(player, rock, getPickaxeTier\(axeId\)\)\) \{.*?"
+        r"if \(maybeAwardMyWorldMiningGeode\(player, rock, def\.getReqLevel\(\)\)\) \{.*?"
         r"player\.incExp\(Skill\.MINING\.id\(\), def\.getExp\(\) \* quantity, true\);.*?"
         r"\} else \{.*?bankSkillingDropWithLawRing\(new Item\(ore\.getCatalogId\(\), quantity\)\)",
         mining,

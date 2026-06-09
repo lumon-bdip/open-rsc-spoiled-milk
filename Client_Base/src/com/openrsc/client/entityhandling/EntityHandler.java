@@ -5554,10 +5554,10 @@ public class EntityHandler {
 		setCustomItemDefinition(3174, new ItemDef("Unblessed symbol of Guthix", "This needs blessing", "", 200, -1, "external-png:unblessed-symbol-of-guthix", false, true, 1024, 0, false, false, true, 3174));
 		setCustomItemDefinition(3175, new ItemDef("Symbol of Guthix", "Increases devotion gained from offerings", "", 300, -1, "external-png:symbol-of-guthix", false, true, 1024, 0, false, false, true, 3175));
 		addResourceSeedDefinition("Key half seed", "A magical seed that grows into a key half tree.", 3176, 15000, 0xD9D9A8);
-		setCustomItemDefinition(3177, new ItemDef("Small geode", "A mineral geode that can be cracked open with a chisel.", "open", 250, -1, "external-png:geode@22x16", true, false, 0, 0, false, false, false, 3177));
-		setCustomItemDefinition(3178, new ItemDef("Standard geode", "A mineral geode that can be cracked open with a chisel.", "open", 750, -1, "external-png:geode@28x20", true, false, 0, 0, false, false, false, 3178));
-		setCustomItemDefinition(3179, new ItemDef("Large geode", "A mineral geode that can be cracked open with a chisel.", "open", 2000, -1, "external-png:geode@34x24", true, false, 0, 0, false, false, false, 3179));
-		setCustomItemDefinition(3180, new ItemDef("Huge geode", "A mineral geode that can be cracked open with a chisel.", "open", 6000, -1, "external-png:geode@42x30", true, false, 0, 0, false, false, false, 3180));
+		setCustomItemDefinition(3177, new ItemDef("Small geode", "A mineral geode that can be cracked open with a chisel.", "open", 250, -1, "external-png:geode@14x14", true, false, 0, 0, false, false, false, 3177));
+		setCustomItemDefinition(3178, new ItemDef("Standard geode", "A mineral geode that can be cracked open with a chisel.", "open", 750, -1, "external-png:geode@18x18", true, false, 0, 0, false, false, false, 3178));
+		setCustomItemDefinition(3179, new ItemDef("Large geode", "A mineral geode that can be cracked open with a chisel.", "open", 2000, -1, "external-png:geode@24x24", true, false, 0, 0, false, false, false, 3179));
+		setCustomItemDefinition(3180, new ItemDef("Huge geode", "A mineral geode that can be cracked open with a chisel.", "open", 6000, -1, "external-png:geode@30x30", true, false, 0, 0, false, false, false, 3180));
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
 			new int[] {900, 1275, 2025, 17625}, new int[] {19711, 3394611, 16724736, 12255487});
 

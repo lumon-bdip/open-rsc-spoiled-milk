@@ -117,18 +117,7 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 	}
 
 	private static double getWoodcuttingSeedRewardChance(Player player) {
-		switch (player.getCombatStyle()) {
-			case WOODCUTTING_FOCUS_NO_SEEDS:
-				return 0.0D;
-			case WOODCUTTING_FOCUS_SOME_SEEDS:
-				return MYWORLD_SEED_REWARD_BASE_CHANCE;
-			case WOODCUTTING_FOCUS_MORE_SEEDS:
-				return MYWORLD_SEED_REWARD_BASE_CHANCE * 1.5D;
-			case WOODCUTTING_FOCUS_MOST_SEEDS:
-				return MYWORLD_SEED_REWARD_BASE_CHANCE * 2.0D;
-			default:
-				return MYWORLD_SEED_REWARD_BASE_CHANCE;
-		}
+		return Formulae.gatheringSideRewardChanceForFocus(player.getCombatStyle(), MYWORLD_SEED_REWARD_BASE_CHANCE);
 	}
 
 	@Override

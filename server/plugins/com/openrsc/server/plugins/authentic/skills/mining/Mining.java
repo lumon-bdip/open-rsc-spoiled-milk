@@ -35,10 +35,10 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 	private static final int GEM_ROCK_RESPAWN_SECONDS = 70;
 	private static final double MYWORLD_GEODE_REWARD_BASE_CHANCE = 1.0D / 50.0D;
 	private static final GeodeReward[] MYWORLD_MINING_GEODE_REWARDS = {
-		new GeodeReward(ItemId.SMALL_GEODE.id(), 1, 80),
-		new GeodeReward(ItemId.STANDARD_GEODE.id(), 4, 28),
-		new GeodeReward(ItemId.LARGE_GEODE.id(), 7, 10),
-		new GeodeReward(ItemId.HUGE_GEODE.id(), 10, 2)
+		new GeodeReward(ItemId.SMALL_GEODE.id()),
+		new GeodeReward(ItemId.STANDARD_GEODE.id()),
+		new GeodeReward(ItemId.LARGE_GEODE.id()),
+		new GeodeReward(ItemId.HUGE_GEODE.id())
 	};
 	private static final int[] GEM_ROCK_GEM_IDS = {
 		ItemId.UNCUT_OPAL.id(),
@@ -53,13 +53,9 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 
 	private static final class GeodeReward {
 		private final int itemId;
-		private final int tier;
-		private final int weight;
 
-		private GeodeReward(int itemId, int tier, int weight) {
+		private GeodeReward(int itemId) {
 			this.itemId = itemId;
-			this.tier = tier;
-			this.weight = weight;
 		}
 	}
 
@@ -172,19 +168,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 	}
 
 	private static double getRandomGeodeChance(Player player) {
-		double baseChance = MYWORLD_GEODE_REWARD_BASE_CHANCE * player.getCarriedItems().getEquipment().getCosmicAmuletGemChanceMultiplier();
-		switch (getMiningFocus(player)) {
-			case MINING_FOCUS_NO_GEODES:
-				return 0.0D;
-			case MINING_FOCUS_SOME_GEODES:
-				return baseChance;
-			case MINING_FOCUS_MORE_GEODES:
-				return baseChance * 1.5D;
-			case MINING_FOCUS_MOST_GEODES:
-				return baseChance * 2.0D;
-			default:
-				return baseChance;
-		}
+		return Formulae.gatheringSideRewardChanceForFocus(getMiningFocus(player), MYWORLD_GEODE_REWARD_BASE_CHANCE);
 	}
 
 	@Override
@@ -384,7 +368,7 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 					thinkbubble(new Item(ItemId.MINING_CAPE.id(), 1));
 					quantity *= 2;
 				}
-				if (maybeAwardMyWorldMiningGeode(player, rock, getPickaxeTier(axeId))) {
+				if (maybeAwardMyWorldMiningGeode(player, rock, def.getReqLevel())) {
 					player.incExp(Skill.MINING.id(), def.getExp() * quantity, true);
 				} else {
 					int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(ore.getCatalogId(), quantity));
@@ -686,12 +670,12 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		}
 	}
 
-	private boolean maybeAwardMyWorldMiningGeode(Player player, GameObject rock, int pickaxeTier) {
+	private boolean maybeAwardMyWorldMiningGeode(Player player, GameObject rock, int nodeRequiredLevel) {
 		double geodeChance = getRandomGeodeChance(player);
 		if (geodeChance <= 0.0D || DataConversions.getRandom().nextDouble() >= geodeChance) {
 			return false;
 		}
-		GeodeReward reward = rollMyWorldMiningGeode(pickaxeTier);
+		GeodeReward reward = rollMyWorldMiningGeode(nodeRequiredLevel);
 		if (reward == null) {
 			return false;
 		}
@@ -712,26 +696,26 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		return true;
 	}
 
-	private GeodeReward rollMyWorldMiningGeode(int pickaxeTier) {
-		int totalWeight = 0;
-		for (GeodeReward reward : MYWORLD_MINING_GEODE_REWARDS) {
-			totalWeight += Formulae.adjustedSideRewardWeightForToolTier(reward.tier, pickaxeTier, reward.weight);
-		}
-		if (totalWeight <= 0) {
-			return null;
-		}
-		int roll = DataConversions.random(1, totalWeight);
-		for (GeodeReward reward : MYWORLD_MINING_GEODE_REWARDS) {
-			int adjustedWeight = Formulae.adjustedSideRewardWeightForToolTier(reward.tier, pickaxeTier, reward.weight);
-			if (adjustedWeight <= 0) {
-				continue;
-			}
-			roll -= adjustedWeight;
+	private GeodeReward rollMyWorldMiningGeode(int nodeRequiredLevel) {
+		int[] weights = getGeodeSizeWeights(nodeRequiredLevel);
+		int roll = DataConversions.random(1, 100);
+		for (int i = 0; i < MYWORLD_MINING_GEODE_REWARDS.length; i++) {
+			roll -= weights[i];
 			if (roll <= 0) {
-				return reward;
+				return MYWORLD_MINING_GEODE_REWARDS[i];
 			}
 		}
-		return null;
+		return MYWORLD_MINING_GEODE_REWARDS[0];
+	}
+
+	private static int[] getGeodeSizeWeights(int nodeRequiredLevel) {
+		int level = Math.max(1, Math.min(99, nodeRequiredLevel));
+		int progress = level - 1;
+		int hugeWeight = 1 + (progress * 19 / 98);
+		int largeWeight = 9 + (progress * 21 / 98);
+		int standardWeight = 20 + (progress * 5 / 98);
+		int smallWeight = 100 - standardWeight - largeWeight - hugeWeight;
+		return new int[] {smallWeight, standardWeight, largeWeight, hugeWeight};
 	}
 
 	private void maybeDoubleRareGatheringReward(Player player, Item item, GameObject object, String message) {

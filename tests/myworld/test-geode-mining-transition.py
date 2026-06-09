@@ -3,6 +3,7 @@
 
 from pathlib import Path
 import json
+import math
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -15,6 +16,9 @@ WOODCUTTING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills
 RESOURCE_SEEDS = ROOT / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/gathering/ResourceSeeds.java"
 GEODES = ROOT / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/gathering/Geodes.java"
 GEODE_SPRITE = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/geode.png"
+FORMULAE = ROOT / "server/src/com/openrsc/server/util/rsc/Formulae.java"
+HARVESTING = ROOT / "server/plugins/com/openrsc/server/plugins/custom/skills/harvesting/Harvesting.java"
+MINING_DEFS = ROOT / "server/conf/server/defs/extras/ObjectMining.xml"
 
 
 def fail(message: str) -> None:
@@ -51,8 +55,10 @@ def main() -> None:
         'setCustomItemDefinition(3178, new ItemDef("Standard geode"',
         'setCustomItemDefinition(3179, new ItemDef("Large geode"',
         'setCustomItemDefinition(3180, new ItemDef("Huge geode"',
-        '"external-png:geode@22x16"',
-        '"external-png:geode@42x30"',
+        '"external-png:geode@14x14"',
+        '"external-png:geode@18x18"',
+        '"external-png:geode@24x24"',
+        '"external-png:geode@30x30"',
     ):
         require(client_items, snippet, "client item definitions")
 
@@ -80,10 +86,16 @@ def main() -> None:
     mining = MINING.read_text(encoding="utf-8")
     for snippet in (
         "MYWORLD_MINING_GEODE_REWARDS",
-        "private boolean maybeAwardMyWorldMiningGeode(Player player, GameObject rock, int pickaxeTier)",
-        "rollMyWorldMiningGeode(pickaxeTier)",
-        "Formulae.adjustedSideRewardWeightForToolTier(reward.tier, pickaxeTier, reward.weight)",
+        "private boolean maybeAwardMyWorldMiningGeode(Player player, GameObject rock, int nodeRequiredLevel)",
+        "rollMyWorldMiningGeode(nodeRequiredLevel)",
+        "maybeAwardMyWorldMiningGeode(player, rock, def.getReqLevel())",
+        "private static int[] getGeodeSizeWeights(int nodeRequiredLevel)",
+        "int hugeWeight = 1 + (progress * 19 / 98);",
+        "int largeWeight = 9 + (progress * 21 / 98);",
+        "int standardWeight = 20 + (progress * 5 / 98);",
+        "int smallWeight = 100 - standardWeight - largeWeight - hugeWeight;",
         "Your cosmic amulet glimmers and another geode appears.",
+        "Formulae.gatheringSideRewardChanceForFocus(getMiningFocus(player), MYWORLD_GEODE_REWARD_BASE_CHANCE)",
     ):
         require(mining, snippet, "Mining geode reward")
     forbid(mining, "maybeAwardMyWorldMiningGem", "Mining geode reward")
@@ -91,6 +103,11 @@ def main() -> None:
 
     woodcutting = WOODCUTTING.read_text(encoding="utf-8")
     require(woodcutting, "new SeedReward(ItemId.KEY_HALF_SEED.id(), 10, 1)", "Woodcutting key-half seed reward")
+    require(
+        woodcutting,
+        "Formulae.gatheringSideRewardChanceForFocus(player.getCombatStyle(), MYWORLD_SEED_REWARD_BASE_CHANCE)",
+        "Woodcutting seed reward chance",
+    )
     for retired in (
         "new SeedReward(ItemId.SAPPHIRE_SEED.id()",
         "new SeedReward(ItemId.EMERALD_SEED.id()",
@@ -112,6 +129,56 @@ def main() -> None:
         "ItemId.DRAGONSTONE_SEED.id(), SceneryId.RESOURCE_TREE.id()",
     ):
         forbid(resource_seeds, retired, "ResourceSeeds retired gem trees")
+
+    harvesting = HARVESTING.read_text(encoding="utf-8")
+    require(
+        harvesting,
+        "Formulae.gatheringSideRewardChanceForFocus(player.getCombatStyle(), MYWORLD_SEED_REWARD_BASE_CHANCE)",
+        "Harvesting seed reward chance",
+    )
+
+    formulae = FORMULAE.read_text(encoding="utf-8")
+    for snippet in (
+        "public static double gatheringSideRewardChanceForFocus(int focus, double baseChance)",
+        "case Skills.CONTROLLED_MODE:",
+        "return 0.0D;",
+        "case Skills.ACCURATE_MODE:",
+        "return baseChance * 1.5D;",
+        "case Skills.DEFENSIVE_MODE:",
+        "return baseChance * 2.0D;",
+        "case Skills.AGGRESSIVE_MODE:",
+        "return baseChance;",
+    ):
+        require(formulae, snippet, "shared gathering side-reward chance")
+
+    base_chance = 1.0 / 50.0
+    highest_focus_chance = base_chance * 2.0
+    if not math.isclose(highest_focus_chance, 1.0 / 25.0):
+        fail("Highest geode/seed focus should be exactly 1 in 25")
+
+    def geode_weights(level: int) -> tuple[int, int, int, int]:
+        level = max(1, min(99, level))
+        progress = level - 1
+        huge = 1 + progress * 19 // 98
+        large = 9 + progress * 21 // 98
+        standard = 20 + progress * 5 // 98
+        small = 100 - standard - large - huge
+        return small, standard, large, huge
+
+    if geode_weights(1) != (70, 20, 9, 1):
+        fail(f"Level-1 geode weights drifted: {geode_weights(1)}")
+    previous = geode_weights(1)
+    for level in range(1, 100):
+        weights = geode_weights(level)
+        if sum(weights) != 100 or min(weights) < 1:
+            fail(f"Geode weights must total 100 with every size possible at level {level}: {weights}")
+        if level > 1 and (weights[2] + weights[3]) < (previous[2] + previous[3]):
+            fail(f"Higher-level nodes should not reduce large/huge geode odds at level {level}")
+        previous = weights
+
+    mining_defs = MINING_DEFS.read_text(encoding="utf-8")
+    for node_name in ("Stone", "Clay", "Silver", "Coal", "Gold"):
+        require(mining_defs, f"<!-- {node_name} -->", "geode-eligible mining definitions")
 
     geodes = GEODES.read_text(encoding="utf-8")
     for snippet in (

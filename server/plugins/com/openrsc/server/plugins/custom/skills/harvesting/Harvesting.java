@@ -275,18 +275,7 @@ public final class Harvesting implements OpLocTrigger {
 	}
 
 	private static double getHarvestingSeedRewardChance(Player player) {
-		switch (player.getCombatStyle()) {
-			case HARVESTING_FOCUS_NO_SEEDS:
-				return 0.0D;
-			case HARVESTING_FOCUS_SOME_SEEDS:
-				return MYWORLD_SEED_REWARD_BASE_CHANCE;
-			case HARVESTING_FOCUS_MORE_SEEDS:
-				return MYWORLD_SEED_REWARD_BASE_CHANCE * 1.5D;
-			case HARVESTING_FOCUS_MOST_SEEDS:
-				return MYWORLD_SEED_REWARD_BASE_CHANCE * 2.0D;
-			default:
-				return MYWORLD_SEED_REWARD_BASE_CHANCE;
-		}
+		return Formulae.gatheringSideRewardChanceForFocus(player.getCombatStyle(), MYWORLD_SEED_REWARD_BASE_CHANCE);
 	}
 
 	@Override

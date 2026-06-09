@@ -2,6 +2,7 @@ package com.openrsc.server.util.rsc;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.Skills;
 import com.openrsc.server.external.*;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
@@ -130,6 +131,20 @@ public final class Formulae {
 		}
 		int divisor = rewardTier == toolTier + 1 ? 2 : 4;
 		return Math.max(1, baseWeight / divisor);
+	}
+
+	public static double gatheringSideRewardChanceForFocus(int focus, double baseChance) {
+		switch (focus) {
+			case Skills.CONTROLLED_MODE:
+				return 0.0D;
+			case Skills.ACCURATE_MODE:
+				return baseChance * 1.5D;
+			case Skills.DEFENSIVE_MODE:
+				return baseChance * 2.0D;
+			case Skills.AGGRESSIVE_MODE:
+			default:
+				return baseChance;
+		}
 	}
 
 	/**
