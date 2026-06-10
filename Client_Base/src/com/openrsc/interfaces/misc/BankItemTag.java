@@ -20,7 +20,7 @@ enum BankItemTag {
 	POTION_INGREDIENTS("Potion ingredients", Group.ITEM_TYPES),
 	COOKING_INGREDIENTS("Cooking ingredients", Group.ITEM_TYPES),
 	ARMOUR("Armour", Group.ITEM_TYPES),
-	MAGIC("Magic", Group.ITEM_TYPES),
+	MAGIC("Magic & Summoning", Group.ITEM_TYPES),
 	MELEE("Melee", Group.ITEM_TYPES),
 	RANGED("Ranged", Group.ITEM_TYPES),
 	JEWELRY("Jewelry", Group.ITEM_TYPES),
@@ -57,19 +57,21 @@ enum BankItemTag {
 		boolean gem = containsAny(name, "sapphire", "emerald", "ruby", "diamond", "dragonstone",
 			"opal", "jade", "topaz");
 		boolean uncutGem = gem && containsAny(name, "uncut");
-		boolean jewelry = containsAny(name, "amulet", "necklace", "ring", "bracelet", "symbol",
-			"holy mould", "tiara");
+		boolean jewelry = isJewelry(name);
+		boolean craftingGem = gem && !jewelry;
 		boolean logs = containsAny(name, "logs", " log");
 		boolean bow = containsAny(name, "bow", "crossbow");
 		boolean rangedAmmo = containsAny(name, "arrow", "bolt", "dart", "throwing knife",
 			"javelin", "cannonball", "cannon ball");
-		boolean bonesOrAshes = containsAny(name, "bone", "ashes", "demon ash");
+		boolean bones = containsAny(name, "bone");
+		boolean demonAshes = containsAny(name, "demon ash");
 		boolean staff = containsAny(name, "staff", "stave", "wand");
 		boolean potion = containsAny(name, "potion", "brew", "antidote", "serum")
 			|| (containsAny(commands, "drink") && containsAny(description, "dose", "potion"));
 		boolean food = containsAny(commands, "eat") || isFoodDrink(name, commands);
 		boolean armour = def.isWieldable() && isArmour(name);
 		boolean melee = def.isWieldable() && isMeleeWeapon(name);
+		boolean prayerEquipment = def.isWieldable() && isPrayerEquipment(name, description, armour);
 
 		if (ore || uncutGem || containsAny(name, "geode", "pickaxe", "mining helmet", "clay")
 			|| isRawMiningMaterial(name)) {
@@ -78,16 +80,14 @@ enum BankItemTag {
 		if (ore || bar || containsAny(name, "hammer") && !containsAny(name, "warhammer")) {
 			tags.add(SMITHING);
 		}
-		if (uncutGem || gem || jewelry || containsAny(name, "gold ore", "gold bar", "mould",
-			"ball of wool", "wool", "thread", "needle", "hide", "leather", "clay", "chisel",
-			"glass", "spinning", "pottery")) {
+		if (uncutGem || craftingGem || isCraftingToolOrMaterial(name)) {
 			tags.add(CRAFTING);
 		}
 		if (rune || containsAny(name, "stone") || jewelry || staff
 			|| containsAny(name, "unenchant", "unenchanted")) {
 			tags.add(ENCHANTING);
 		}
-		if (bonesOrAshes || containsAny(name, "prayer", "holy", "unholy", "blessed symbol",
+		if (bones || demonAshes || prayerEquipment || containsAny(name, "prayer", "holy", "unholy", "blessed symbol",
 			"symbol of saradomin", "symbol of zamorak", "symbol of guthix")) {
 			tags.add(PRAYER);
 		}
@@ -118,7 +118,7 @@ enum BankItemTag {
 		if (armour) {
 			tags.add(ARMOUR);
 		}
-		if (rune || staff || containsAny(name, "enchanted", "magic ") || bonesOrAshes) {
+		if (rune || staff || containsAny(name, "enchanted", "magic ") || bones || demonAshes) {
 			tags.add(MAGIC);
 		}
 		if (melee) {
@@ -140,6 +140,29 @@ enum BankItemTag {
 	private static boolean isFoodDrink(String name, String commands) {
 		return containsAny(commands, "drink") && containsAny(name, "wine", "beer", "ale", "cider",
 			"milk", "tea", "stew", "soup");
+	}
+
+	private static boolean isJewelry(String name) {
+		return containsAny(name, "amulet", "necklace", "bracelet", "symbol", "holy mould", "tiara")
+			|| startsWithAny(name, "ring ", "ring-")
+			|| endsWithAny(name, " ring", "-ring")
+			|| equalsAny(name, "ring");
+	}
+
+	private static boolean isCraftingToolOrMaterial(String name) {
+		return containsAny(name, "gold ore", "gold bar", "mould", "ball of wool", "thread", "needle",
+			"clay", "chisel", "glass", "spinning", "pottery")
+			|| equalsAny(name, "wool", "leather", "hard leather")
+			|| endsWithAny(name, " hide", "-hide", " leather");
+	}
+
+	private static boolean isPrayerEquipment(String name, String description, boolean armour) {
+		boolean alignedArmour = armour && startsWithAny(name, "white ", "black ", "grey ");
+		boolean unicornArmour = armour && containsAny(name, "unicorn-hide", "unicorn hide");
+		return containsAny(name, "mace", "paladin shield")
+			|| alignedArmour
+			|| unicornArmour
+			|| containsAny(description, "blessed by saradomin", "blessed by zamorak", "blessed by guthix");
 	}
 
 	private static boolean isRawMiningMaterial(String name) {

@@ -75,103 +75,10 @@ and tested repeatedly without affecting unrelated map chunks.
 
 ### Short Term: Cosmic Altar Approach
 
-Rework the overworld path to the Cosmic Altar near `106,3565`. The intended
-space should feel isolated, empty, and ethereal. The current irregular grass
-path reads as visibly painted terrain rather than a deliberate route through
-empty space.
-
-Preferred direction:
-
-- Remove the random grass-road pattern.
-- Preserve a fully traversable route while making its ordinary ground surface
-  visually disappear into the surrounding emptiness.
-- Add a restrained shimmer, ripple, or flowing-light effect along the route so
-  players can perceive the safe path without it becoming a conventional road.
-- Keep the effect low to the ground and avoid scenery that blocks movement,
-  targeting, or the view of the altar.
-- Make the route readable enough that players can follow it without trial and
-  error, even if its edges remain indistinct.
-
-Current and proposed route:
-
-- The existing entrance begins at `150,3541`, between two torch scenery
-  objects. The entrance position and torch opening should remain unchanged.
-- Beyond the torches, remove the visible grass floor along the route.
-- Remove the grass beneath the Cosmic Altar and its surrounding obelisks as
-  well, so the destination appears to occupy the same ethereal space.
-- Replace the current elongated, winding route with a simple L-shaped path.
-- The existing route passes the altar and turns back, bringing the player to
-  the altar from the side near `104,3566`.
-- The replacement should approach the opposite side and end near `108,3566`.
-- Choose the L-shaped route's single corner after inspecting the affected
-  chunks. It should create two direct segments, shorten travel substantially,
-  and avoid moving the entrance, altar, obelisks, or torches.
-
-The traversable path may be visually invisible apart from its particle or
-moving-pixel markers. Keeping it to a simple L shape is therefore a navigation
-requirement, not only a visual preference: players should be able to recover
-the route by following one straight segment and making one clear turn.
-
-The existing `fountain` and `fishing` visuals are candidates for visual
-reference, but they are ordinary scenery models rather than reusable particle
-effects. Their object-definition width and height determine footprint and
-placement; increasing those values does not stretch the rendered model.
-Producing a long shimmer therefore requires one of:
-
-- a new low-profile model derived from the useful water surface
-- a client-generated strip or tile model
-- repeated one-tile shimmer scenery pieces designed to join cleanly
-
-Animation is a separate concern. Existing animated scenery such as fires and
-torches swaps between explicitly named model frames. The fountain and fishing
-models are not currently registered as an animated frame set. A moving path
-would need either a small model-frame sequence or a dedicated client-side
-animation rule.
-
-The preferred animated prototype should be deliberately minimal: a flat tile
-with a few bright pixels or short streaks that advance in one direction across
-two or three frames. This could suggest energy flowing toward the altar without
-requiring water simulation, transparency-heavy particles, or detailed models.
-Use one shared frame set for every path tile and vary each tile's starting frame
-or orientation so the complete path does not pulse in lockstep.
-
-Low-resource animation targets:
-
-- two or three frames total
-- a slow update rate rather than an update every rendered frame
-- one small, reusable texture or flat model per frame
-- no collision, interaction option, shadow, or complex geometry
-- no per-tile server updates; animation should be entirely client-side
-- sparse moving pixels with most of the tile left visually empty
-
-Prototype in this order:
-
-1. Replace the grass path with visually empty but traversable terrain and test
-   navigation, collision, camera readability, and route boundaries.
-2. Place static, non-interactive one-tile shimmer models along a short test
-   segment. Compare fountain-water, fishing-ripple, and a purpose-built
-   translucent or light-textured surface.
-3. If the static version reads well, test the minimal moving-pixel animation
-   before adapting any larger water effect. Avoid synchronized flashing across
-   the entire route.
-4. Extend the selected treatment across the complete path only after movement,
-   scene loading, and performance are stable.
-
-Important constraints:
-
-- An invisible path still needs clear server and client collision agreement.
-- The complete walkable route must connect `150,3541` to the altar approach at
-  `108,3566`, with only one deliberate turn.
-- Tiles outside the L-shaped route must remain blocked even after the visible
-  grass is removed.
-- Test walking both toward and away from the altar without relying on camera
-  rotation to locate the route.
-- Decorative objects should use a non-blocking type and should not create
-  right-click clutter.
-- The route must remain visible enough under different camera angles and
-  brightness settings.
-- Repeated tiles must not expose obvious seams, z-fighting, or a rigid grid.
-- The original path chunks should remain restorable throughout experimentation.
+The complete Cosmic Altar specification now lives in the
+[project roadmap](roadmap.md#1-minor-terrain-and-cosmic-altar). Keep that
+section as the authoritative source for its coordinates, route geometry,
+visual treatment, animation targets, prototype order, and completion gate.
 
 ### Long Term: Northern Wilderness Expansion
 
@@ -182,12 +89,21 @@ This is not only a visual extension. It requires world-boundary design,
 Wilderness-level behavior, travel routes, encounter planning, and strong
 protection around existing regions.
 
+Build and release this expansion in waves based on RuneScape's established map
+grid. Each wave should contain a manageable set of neighboring grid sections.
+The selected sections must match every existing landscape edge while also
+following a coherent plan for the eventual complete northern Wilderness.
+Published waves must have deliberate, safe boundaries and cannot depend on a
+future wave to prevent access into unfinished or restricted areas.
+
 Desired result:
 
 - Fill missing northern terrain with a natural continuation of Wilderness
   geography.
 - Create multiple recognizable regions rather than one large empty field.
 - Support future PvM clusters, gathering areas, ruins, caves, and landmarks.
+- Give each released wave immediate gameplay value through enemies, gathering,
+  exploration, or useful routes rather than publishing empty terrain.
 - Preserve intentional access routes into the Tree Gnome Stronghold and other
   established regions.
 - Prevent players from bypassing gates, quests, or travel requirements by
@@ -203,6 +119,14 @@ Candidate terrain language:
   tuned without relying on invisible walls.
 - Leave room for later landmarks and underground entrances rather than filling
   every tile during the first pass.
+
+Original enemy families are desired, but terrain work should not depend on
+unavailable sprites. Suitable existing enemies and variants may populate early
+waves when they fit the region. New art can be commissioned, adapted from
+compatible sources, or created manually and introduced in later waves or
+population revisions. Any original sprite must match RuneScape Classic's
+low-resolution, chunky early paint-program style; generic modern pixel art and
+smoothed AI-generated imagery are not adequate substitutes.
 
 The Tree Gnome Stronghold boundary needs its own audit. Every perimeter tile,
 gate, obstacle, teleport destination, and nearby elevation transition must be

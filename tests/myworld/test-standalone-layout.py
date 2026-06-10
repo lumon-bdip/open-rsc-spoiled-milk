@@ -205,6 +205,7 @@ def test_myworld_docs_are_consolidated() -> None:
         "pvm-npc-cluster-audit.md",
         "pvm-population-and-cluster-plan.md",
         "resource-seed-plan.md",
+        "roadmap.md",
         "summoning-plan.md",
         "terrain-expansion-plan.md",
         "testing-quick-reference.md",

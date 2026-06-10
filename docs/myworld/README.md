@@ -6,6 +6,7 @@ repository root [`README.md`](../../README.md).
 
 ## Active Docs
 
+- [roadmap.md](roadmap.md): alpha milestone and version progression from minor terrain work through the beta-readiness checkpoint.
 - [work-items.md](work-items.md): current work list, grouped by small, medium, and large scope.
 - [change-history.md](change-history.md): consolidated record of major changes made so far.
 - [combat-equipment-spec.md](combat-equipment-spec.md): source of truth for armor budgets, set traits, poison, and debuff stacking rules.

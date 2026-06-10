@@ -5,6 +5,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.OpInvTrigger;
 import com.openrsc.server.plugins.triggers.UseInvTrigger;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -73,11 +74,20 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 		if (size == null) {
 			return;
 		}
-		startbatch(30);
+		startbatchunlimited();
 		batchOpenGeode(player, size);
 	}
 
 	private void batchOpenGeode(Player player, GeodeSize size) {
+		if (!hasChisel(player)) {
+			stopbatch();
+			return;
+		}
+		ActionSender.sendActionProgressBar(player, ItemId.CHISEL.id(), 3);
+		delay(3);
+		if (ifinterrupted()) {
+			return;
+		}
 		if (player.getCarriedItems().remove(new Item(size.itemId, 1)) == -1) {
 			stopbatch();
 			return;
@@ -92,8 +102,9 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 			&& !isbatchcomplete()
 			&& player.getCarriedItems().getInventory().countId(size.itemId, Optional.of(false)) > 0
 			&& hasChisel(player)) {
-			delay();
 			batchOpenGeode(player, size);
+		} else {
+			stopbatch();
 		}
 	}
 

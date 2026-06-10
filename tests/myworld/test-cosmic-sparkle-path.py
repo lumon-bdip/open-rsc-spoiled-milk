@@ -37,11 +37,16 @@ def invisible_path_tiles():
 
 
 def expected_anchors():
-    return (
+    anchors = (
         {(149, y) for y in range(3542, 3556, 2)}
         | {(x, 3556) for x in range(102, 150, 2)}
         | {(x, y) for x in range(102, 108, 2) for y in (3554, 3558)}
     )
+    anchors.remove((102, 3554))
+    anchors.remove((104, 3556))
+    anchors.add((103, 3554))
+    anchors.add((105, 3556))
+    return anchors
 
 
 def ensure_definitions():
@@ -93,11 +98,29 @@ def ensure_placements():
     for x, y in anchors:
         footprint = {(x + dx, y + dy) for dx in range(2) for dy in range(2)}
         require(footprint <= path, f"Sparkle placement {(x, y)} extends beyond the invisible path")
-        require(not occupied & footprint, f"Sparkle placement {(x, y)} overlaps another sparkle footprint")
         occupied |= footprint
     require(
-        path - occupied == {(150, 3556), (150, 3557)},
-        "Only the two-tile outside edge of the odd-width bend may remain uncovered",
+        path - occupied == {
+            (102, 3554),
+            (102, 3555),
+            (104, 3556),
+            (104, 3557),
+            (150, 3556),
+            (150, 3557),
+        },
+        "Only tiles beneath functional scenery and the odd-width outside edge may remain uncovered",
+    )
+
+    functional_anchors = {
+        (102, 3554),
+        (107, 3554),
+        (102, 3559),
+        (107, 3559),
+        (104, 3556),
+    }
+    require(
+        anchors.isdisjoint(functional_anchors),
+        "Decorative sparkle anchors must not replace the altar or obelisks",
     )
 
 

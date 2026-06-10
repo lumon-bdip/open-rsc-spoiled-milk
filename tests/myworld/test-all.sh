@@ -84,6 +84,7 @@ python3 ./tests/myworld/test-magic-weapon-scaling.py
 python3 ./tests/myworld/test-metal-defense-budgets.py
 python3 ./tests/myworld/test-mining-focus-and-tier11.py
 python3 ./tests/myworld/test-geode-mining-transition.py
+python3 ./tests/myworld/test-repeating-action-progress.py
 python3 ./tests/myworld/test-npc-defense-profiles.py
 python3 ./tests/myworld/test-npc-visual-fixes.py
 python3 ./tests/myworld/test-npc-processing-cleanup.py

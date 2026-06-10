@@ -1,6 +1,5 @@
 package com.openrsc.server.plugins;
 
-import com.openrsc.server.event.SingleEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.npc.NpcInteraction;
 import com.openrsc.server.model.entity.player.Player;
@@ -9,11 +8,10 @@ import com.openrsc.server.net.rsc.ActionSender;
 public class Batch {
 
 	private static final int MAX_BATCH_SIZE = 30;
+	private static final int UNLIMITED_BATCH_SIZE = -1;
 	private Player player;
 	private int current;
 	private int totalBatch;
-	private int delay;
-	private boolean showingBar = false;
 	private boolean completed;
 	private Point location;
 
@@ -32,37 +30,22 @@ public class Batch {
 	 */
 	public void initialize(int totalBatch) {
 		this.current = 0;
-		this.delay = getPlayer().getConfig().GAME_TICK * 3;
 		this.totalBatch = Math.min(totalBatch, MAX_BATCH_SIZE);
 		this.completed = false;
 	}
 
-	/**
-	 * Displays the batch bar to the client
-	 */
-	public void start() {
-		if (wantBatching() && getTotalBatch() > 1) {
-			ActionSender.sendProgressBar(getPlayer(), getDelay(), getTotalBatch());
-			this.showingBar = true;
-		}
+	public void initializeUnlimited() {
+		this.current = 0;
+		this.totalBatch = UNLIMITED_BATCH_SIZE;
+		this.completed = false;
 	}
 
-	/**
-	 * Stops displaying the batch bar to the client.
-	 * Gives it 3 ticks to close
-	 */
+	public void start() {
+		// Repeating actions use the actor-attached tool progress display.
+	}
+
 	public void stop() {
-		if (wantBatching() && isShowingBar()) {
-			getPlayer().getWorld().getServer().getGameEventHandler().add(
-				new SingleEvent(getPlayer().getWorld(), null, getDelay(), "Close Batch Bar") {
-					@Override
-					public void action() {
-						ActionSender.sendRemoveProgressBar(getPlayer());
-					}
-				}
-			);
-			this.showingBar = false;
-		}
+		ActionSender.sendRemoveActionProgressBar(getPlayer());
 		this.completed = true;
 	}
 
@@ -85,20 +68,18 @@ public class Batch {
 			return;
 		}
 		incrementBatch();
-		if (wantBatching() && isShowingBar()) ActionSender.sendUpdateProgressBar(getPlayer(), getCurrentBatchProgress());
-		if (getCurrentBatchProgress() == getTotalBatch()) {
+		if (!isUnlimited() && getCurrentBatchProgress() == getTotalBatch()) {
 			stop();
 		}
 	}
 
 	public Player getPlayer() { return player; }
-	private int getDelay() { return delay; }
 	private int getTotalBatch() { return totalBatch; }
 	private void incrementBatch() { current++; }
 	private int getCurrentBatchProgress() { return current; }
-	private boolean wantBatching() { return getPlayer().getConfig().BATCH_PROGRESSION; }
+	private boolean isUnlimited() { return totalBatch == UNLIMITED_BATCH_SIZE; }
 	public boolean isFirstInBatch() { return current == 0; }
-	public boolean isShowingBar() { return showingBar; }
+	public boolean isShowingBar() { return false; }
 	public boolean isComplete() { return completed; }
 
 	public void setLocation(Point location) {

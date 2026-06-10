@@ -22948,7 +22948,7 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Altars");
 			skillGuideChosenTabs.add("Info");
 
-		} else if (skillGuideChosen.equalsIgnoreCase("Harvesting")) {
+		} else if (skillGuideChosen.equalsIgnoreCase("Harvest")) {
 			skillGuideChosenTabs.add("Allotments");
 			skillGuideChosenTabs.add("Fruits");
 			skillGuideChosenTabs.add("Bushes");
@@ -23069,7 +23069,7 @@ public final class mudclient implements Runnable {
 		if (S_WANT_RUNECRAFT)
 			addSkill("Enchanting", "Enchant");
 		if (S_WANT_HARVESTING)
-			addSkill("Harvesting");
+			addSkill("Harvest");
 		addSkill("Summoning", "Summon");
 	}
 

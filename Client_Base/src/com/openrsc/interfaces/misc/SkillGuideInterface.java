@@ -939,7 +939,7 @@ public final class SkillGuideInterface {
 					addSkillCapeGuide(1527, "Enchanting");
 				}
 			}
-			if (mc.getSkillGuideChosen().equalsIgnoreCase("Harvesting")) {
+			if (mc.getSkillGuideChosen().equalsIgnoreCase("Harvest")) {
 				if (curTab == 0) {
 					skillMenuEntries.add(new SkillMenuItem(348, "1", "Potato - T1 shears"));
 					skillMenuEntries.add(new SkillMenuItem(241, "1", "Onion - T1 shears"));

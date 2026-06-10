@@ -40,6 +40,7 @@ def rock_tiles(path: Path) -> dict[tuple[int, int], int]:
 
 def main() -> None:
     base_rocks = rock_tiles(BASE_SCENERY)
+    myworld_rocks = rock_tiles(MYWORLD_SCENERY)
     overlaps = []
     for entry in load_sceneries(MYWORLD_SCENERY):
         pos = entry["pos"]
@@ -52,6 +53,9 @@ def main() -> None:
             "MyWorld rock scenery overlaps base map rock scenery, which can cause client flicker:\n"
             + "\n".join(overlaps)
         )
+
+    if myworld_rocks.get((420, 3523)) != 98:
+        raise SystemExit("Expected a generic Stone rock at 420,3523")
 
     print("PASS: MyWorld rock scenery does not overlap base map rock scenery")
 

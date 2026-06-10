@@ -1128,6 +1128,23 @@ public class Functions {
 		}
 	}
 
+	public static void startbatchunlimited() {
+		PluginTask pluginTask = PluginTask.getContextPluginTask();
+		if (pluginTask == null || pluginTask.getScriptContext() == null) {
+			return;
+		}
+		ScriptContext scriptContext = pluginTask.getScriptContext();
+		Player player = scriptContext.getContextPlayer();
+		if (player == null) {
+			return;
+		}
+		Batch batch = new Batch(player);
+		batch.initializeUnlimited();
+		batch.start();
+		player.setBatch(batch);
+		scriptContext.setBatch(batch);
+	}
+
 	private static Batch sniffBatchFromCurrentThread() {
 		PluginTask pluginTask = PluginTask.getContextPluginTask();
 		if (pluginTask == null) {

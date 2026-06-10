@@ -866,6 +866,11 @@ public final class Player extends Mob {
 
 	public void interruptPlugins() {
 		try {
+			if (batch != null) {
+				batch.stop();
+				batch = null;
+				setBusy(false);
+			}
 			for (final PluginTask ownedPlugin : ownedPlugins) {
 				ownedPlugin.getScriptContext().setInterrupted(true);
 				final Npc npc = ownedPlugin.getScriptContext().getInteractingNpc();

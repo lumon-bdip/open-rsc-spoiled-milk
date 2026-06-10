@@ -32,7 +32,6 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 	private static final Logger LOGGER = LogManager.getLogger(Fishing.class);
 	public static final int TUTORIAL_FISH_ID = 493;
 	public static final int DEPLETED_FISH_ROCK_ID = 668;
-	private static final int FISHING_BATCH_SIZE = 30;
 	private static final int[] MYWORLD_FISHING_OBJECT_IDS = {192, 193, 194, 261, 271, 376, 493, 557};
 	private static final int[] MYWORLD_ROD_IDS = {
 		ItemId.FISHING_ROD.id(),
@@ -282,7 +281,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 
-		startbatch(FISHING_BATCH_SIZE);
+		startbatchunlimited();
 		batchMyWorldFishing(entityHandler, player, object, location, eligibleFish, rodId, rodTier);
 	}
 
@@ -663,7 +662,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 			return;
 		}
 
-		startbatch(FISHING_BATCH_SIZE);
+		startbatchunlimited();
 		batchFishing(entityHandler, player, def, object);
 	}
 

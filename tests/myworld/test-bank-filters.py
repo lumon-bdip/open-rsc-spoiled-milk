@@ -43,7 +43,7 @@ def main() -> None:
         'POTION_INGREDIENTS("Potion ingredients", Group.ITEM_TYPES)',
         'COOKING_INGREDIENTS("Cooking ingredients", Group.ITEM_TYPES)',
         'ARMOUR("Armour", Group.ITEM_TYPES)',
-        'MAGIC("Magic", Group.ITEM_TYPES)',
+        'MAGIC("Magic & Summoning", Group.ITEM_TYPES)',
         'MELEE("Melee", Group.ITEM_TYPES)',
         'RANGED("Ranged", Group.ITEM_TYPES)',
         'JEWELRY("Jewelry", Group.ITEM_TYPES)',
@@ -82,6 +82,13 @@ def main() -> None:
     forbid(bank, 'drawString("Search for item:"', "legacy bank search")
     require(tags, 'endsWithAny(name, "-rune", " rune", " runes")', "rune item classification")
     require(tags, "if (def.untradeable", "quest item classification")
+    require(tags, "boolean demonAshes = containsAny(name, \"demon ash\");", "demon ash prayer classification")
+    require(tags, "boolean prayerEquipment = def.isWieldable() && isPrayerEquipment", "prayer equipment classification")
+    require(tags, 'startsWithAny(name, "ring ", "ring-")', "whole-word jewelry ring classification")
+    require(tags, "boolean craftingGem = gem && !jewelry;", "finished gem jewelry exclusion")
+    require(tags, "isCraftingToolOrMaterial(name)", "crafting input classification")
+    forbid(tags, 'boolean bonesOrAshes = containsAny(name, "bone", "ashes", "demon ash");', "generic ashes classification")
+    forbid(tags, "uncutGem || gem || jewelry ||", "finished jewelry crafting classification")
 
     print("PASS: bank filters expose the agreed tags and preserve bank-slot-safe filtering")
 
