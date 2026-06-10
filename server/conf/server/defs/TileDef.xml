@@ -124,4 +124,9 @@
     <unknown>3</unknown>
     <objectType>0</objectType>
   </TileDef>
+  <TileDef>
+    <colour>12345678</colour>
+    <unknown>5</unknown>
+    <objectType>0</objectType>
+  </TileDef>
 </TileDef-array>

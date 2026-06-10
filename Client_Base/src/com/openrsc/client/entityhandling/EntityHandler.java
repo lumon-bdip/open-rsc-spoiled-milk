@@ -364,6 +364,7 @@ public class EntityHandler {
 		tiles.add(new TileDef(-17793, 2, 0));
 		tiles.add(new TileDef(-14594, 1, 1));
 		tiles.add(new TileDef(1, 3, 0));
+		tiles.add(new TileDef(12345678, 5, 0));
 	}
 
 	private static void loadElevationDefinitions() {

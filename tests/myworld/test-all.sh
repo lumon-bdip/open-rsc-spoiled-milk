@@ -20,6 +20,7 @@ python3 ./tests/myworld/test-magic-enchanting-costs.py
 python3 ./tests/myworld/test-animation-asset-migrations.py
 python3 ./tests/myworld/test-altar-enchantment-conversion.py
 python3 ./tests/myworld/test-runecraft-data.py
+python3 ./tests/myworld/test-cosmic-altar-path.py
 python3 ./tests/myworld/test-enchanting-data.py
 python3 ./tests/myworld/test-jewelry-runtime-effects.py
 python3 ./tests/myworld/test-bank-filters.py
