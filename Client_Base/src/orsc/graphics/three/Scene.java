@@ -2672,7 +2672,12 @@ public final class Scene {
 										var13 = var2.faceTextureBack[var3];
 									}
 
-									if (var13 != Scene.TRANSPARENT || var2.facePickIndex[var3] >= 200000 && var2.facePickIndex[var3] <= 300000) {
+									boolean pickableTransparentFace = var2.facePickIndex != null
+										&& var3 >= 0
+										&& var3 < var2.facePickIndex.length
+										&& var2.facePickIndex[var3] >= 200000
+										&& var2.facePickIndex[var3] <= 300000;
+									if (var13 != Scene.TRANSPARENT || pickableTransparentFace) {
 										var6 = 0;
 
 										for (var14 = 0; var10 > var14; ++var14) {

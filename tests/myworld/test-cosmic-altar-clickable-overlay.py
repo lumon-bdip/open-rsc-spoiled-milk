@@ -33,7 +33,17 @@ def main() -> None:
     )
     require(
         scene,
-        "var13 != Scene.TRANSPARENT || var2.facePickIndex[var3] >= 200000 && var2.facePickIndex[var3] <= 300000",
+        "boolean pickableTransparentFace = var2.facePickIndex != null",
+        "transparent face pick-index null guard",
+    )
+    require(
+        scene,
+        "var3 < var2.facePickIndex.length",
+        "transparent face pick-index bounds guard",
+    )
+    require(
+        scene,
+        "var13 != Scene.TRANSPARENT || pickableTransparentFace",
         "transparent terrain pick face inclusion",
     )
     require(
