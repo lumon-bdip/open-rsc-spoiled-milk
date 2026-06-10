@@ -15,6 +15,7 @@ SKILL_GUIDE_PATH = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "interface
 EQUIPMENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "container" / "Equipment.java"
 PLAYER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "player" / "Player.java"
 ENTITY_HANDLER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "external" / "EntityHandler.java"
+CLIENT_ENTITY_HANDLER_PATH = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "client" / "entityhandling" / "EntityHandler.java"
 
 
 def fail(message: str) -> None:
@@ -609,6 +610,29 @@ def main() -> None:
     require_exact(items_by_id, 2167, "prayerBonus", 2, "White chain legs prayer bonus")
     require_exact(items_by_id, 2161, "prayerBonus", 2, "White square shield prayer bonus")
     require_exact(items_by_id, 2162, "prayerBonus", 3, "White kite shield prayer bonus")
+    shield_appearances = {
+        1962: 698, 1968: 699, 128: 237, 2: 238, 129: 239, 130: 241,
+        1974: 700, 131: 242, 1980: 701, 404: 243, 433: 240,
+        1426: 449, 2162: 1025, 3124: 1026,
+        2224: 1027, 2225: 1028, 2226: 1029, 2227: 1030,
+        124: 98, 3: 99, 125: 100, 126: 101, 127: 102, 403: 103,
+        432: 104, 2161: 1031, 3123: 1032,
+    }
+    for item_id, appearance_id in shield_appearances.items():
+        require_exact(effective_items_by_id, item_id, "appearanceID", appearance_id, "shield shape appearance")
+    entity_handler = CLIENT_ENTITY_HANDLER_PATH.read_text(encoding="utf-8")
+    for animation in (
+        'new AnimationDef("kiteshield", "equipment", 0xE7E2D6',
+        'new AnimationDef("kiteshield", "equipment", 0x9EA59F',
+        'new AnimationDef("squareshield", "equipment", 0xB7C9D9',
+        'new AnimationDef("squareshield", "equipment", 0xC86A2B',
+        'new AnimationDef("squareshield", "equipment", 0x8EA6BB',
+        'new AnimationDef("squareshield", "equipment", 0x5A3F7D',
+        'new AnimationDef("squareshield", "equipment", 0xE7E2D6',
+        'new AnimationDef("squareshield", "equipment", 0x9EA59F',
+    ):
+        if animation not in entity_handler:
+            fail(f"Missing shield animation definition: {animation}")
     require_exact(items_by_id, 2162, "meleeDefense", items_by_id[433]["meleeDefense"], "White paladin shield mirrors black paladin shield")
     require_field_absent(items_by_id, 2162, "rangedDefense", "White paladin shield mirrors black paladin shield")
     require_exact(items_by_id, 2162, "magicDefense", items_by_id[433]["magicDefense"], "White paladin shield mirrors black paladin shield")

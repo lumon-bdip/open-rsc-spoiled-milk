@@ -12,6 +12,8 @@ import orsc.util.BankUtil;
 import orsc.util.GenUtil;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.Locale;
 
 import static orsc.Config.*;
 import static orsc.net.Opcodes.Out.ITEM_REMOVE_TO_BANK;
@@ -20,6 +22,9 @@ import static orsc.osConfig.C_MENU_SIZE;
 public final class CustomBankInterface extends BankInterface {
 	private static int fontSize = Config.isAndroid() ? C_MENU_SIZE : 1;
 	private static int fontSizeHeight;
+	private static final int FILTER_PANEL_WIDTH = 158;
+	private static final int FILTER_PANEL_GAP = 4;
+	private static final int FILTER_ROW_HEIGHT = 13;
 	private int[] equipmentViewOrder = new int[]{0, 1, 2, 7, 4, 3, 8, 9, 5, 6, 10};
 	private final int presetCount = 2;
 	public Preset[] presets = new Preset[presetCount];
@@ -46,6 +51,11 @@ public final class CustomBankInterface extends BankInterface {
 	private int[] bankItemSelector = {0, 0, 40, 80, 120, 160, 200};
 	private BankTabShow bankTabShow = BankTabShow.FIRST_ITEM_IN_TAB;
 	private long totalWealth;
+	private final EnumSet<BankItemTag> selectedTags = EnumSet.noneOf(BankItemTag.class);
+	private boolean filterAndMode;
+	private boolean filterDrawerOpen;
+	private int filterPanelX;
+	private boolean filterPanelDocked;
 
 	public CustomBankInterface(mudclient mc) {
 		super(mc);
@@ -55,7 +65,7 @@ public final class CustomBankInterface extends BankInterface {
 			x = (mc.getGameWidth() - width) / 2;
 			y = (mc.getGameHeight() - height) / 2;
 			bankScroll = bank.addScrollingList(x + 4, y + 21, width - 5, 172, 500, 7, true);
-			bankSearch = bank.addLeftTextEntry(x + 375 + 6, y + 44, 110, 18, 0, 15, false, true);
+			bankSearch = bank.addLeftTextEntry(x + 8, y + 45, FILTER_PANEL_WIDTH - 16, 18, 0, 30, false, true);
 		}
 	}
 
@@ -63,9 +73,17 @@ public final class CustomBankInterface extends BankInterface {
 	public boolean onRender() {
 		if (!Config.S_WANT_CUSTOM_BANKS) return super.onRender();
 
-		x = (mc.getGameWidth() - width) / 2;
+		filterPanelDocked = mc.getGameWidth() >= width + FILTER_PANEL_WIDTH + FILTER_PANEL_GAP + 4;
+		if (filterPanelDocked) {
+			filterPanelX = (mc.getGameWidth() - width - FILTER_PANEL_WIDTH - FILTER_PANEL_GAP) / 2;
+			x = filterPanelX + FILTER_PANEL_WIDTH + FILTER_PANEL_GAP;
+			filterDrawerOpen = true;
+		} else {
+			x = (mc.getGameWidth() - width) / 2;
+			filterPanelX = x + 4;
+		}
 		y = (mc.getGameHeight() - height) / 2 - 3;
-		bank.reposition(bankSearch, x + 375 + 6, y + 44, 110, 18);
+		bank.reposition(bankSearch, filterPanelX + 8, y + 45, FILTER_PANEL_WIDTH - 16, 18);
 		bank.reposition(bankScroll, x + 4, y + 57, width - 5, 137);
 		int tapPresetXOffset = x + 380 - presetCount * 17;
 		int tapPresetYOffset = y + 3;
@@ -142,6 +160,9 @@ public final class CustomBankInterface extends BankInterface {
 		}
 
 		drawString("Close Window", x + 401 + 19, y + 15, 1, j3);
+		if (!filterPanelDocked) {
+			drawFilterDrawerButton();
+		}
 
 		int tabWidth = 48;
 		int tabHeight = 32;
@@ -203,7 +224,7 @@ public final class CustomBankInterface extends BankInterface {
 			}
 			if (mc.inputX_Action == InputXAction.ACT_0 && mc.mouseButtonClick != 0) {
 				if (mc.getMouseX() > tabX && mc.getMouseY() >= tabY && mc.getMouseX() < tabX + tabWidth && mc.getMouseY() < tabY + tabHeight) {
-					bank.setText(this.bankSearch, "");
+					clearFilters();
 					mc.bankPage = tabs;
 					mc.setMouseClick(0);
 				}
@@ -211,9 +232,15 @@ public final class CustomBankInterface extends BankInterface {
 			tabX += 51;
 		}
 
-		mc.getSurface().drawString("Search for item:", x + 371 + 7, y + 33, 0xffffff, 1);
-		mc.getSurface().drawBoxAlpha(x + 371 + 6, y + 36, 120, 18, 0x222222, 255);
-		mc.getSurface().drawBoxBorder(x + 371 + 6, 120, y + 36, 18, 0x474843);
+		boolean filterPanelVisible = filterPanelDocked || filterDrawerOpen;
+		if (filterPanelVisible) {
+			handleFilterPanelClick();
+		}
+		if (!filterPanelDocked && filterDrawerOpen) {
+			drawFilterPanel();
+			bank.drawPanel();
+			return true;
+		}
 
 		//mc.getSurface().drawString("Number in bank in green", x + 7, 34 + y, '\uff00', 1);
 		int boxColour = 0xd0d0d0;
@@ -223,8 +250,12 @@ public final class CustomBankInterface extends BankInterface {
 		int textStart = modeOffset + modeWidth / 2 - 14;
 
 		if (mc.getMouseClick() != 0 || mc.getMouseButtonDownTime() >= 0) {
-			if (mc.getMouseX() > x + width || mc.getMouseX() < x
-				|| mc.getMouseY() > y + height || mc.getMouseY() < y) {
+			boolean insideBank = mc.getMouseX() >= x && mc.getMouseX() <= x + width
+				&& mc.getMouseY() >= y && mc.getMouseY() <= y + height;
+			boolean insideFilters = filterPanelVisible && mc.getMouseX() >= filterPanelX
+				&& mc.getMouseX() <= filterPanelX + FILTER_PANEL_WIDTH
+				&& mc.getMouseY() >= y && mc.getMouseY() <= y + height;
+			if (!insideBank && !insideFilters) {
 				if (!rightClickMenu && mc.mouseButtonClick != 0) {
 					resetVar();
 					bankClose();
@@ -276,21 +307,10 @@ public final class CustomBankInterface extends BankInterface {
 			}
 		}
 
-		String searchItem = bank.getControlText(bankSearch);
-		ArrayList<BankItem> searchList = new ArrayList<BankItem>();
-		for (BankItem item : bankItems) {
-			if (item == null || item.getItem() == null || item.getItem().getItemDef() == null
-				|| item.getItem().getItemDef().getName() == null) {
-				continue;
-			}
-			ItemDef def = item.getItem().getItemDef();
-			if (searchItem.length() > 0) {
-				if (def.getName().toLowerCase().contains(searchItem)) {
-					searchList.add(item);
-				}
-			} else {
-				searchList.add(item);
-			}
+		ArrayList<BankItem> searchList = filteredBankItems();
+		boolean filtersActive = filtersActive();
+		if (filtersActive && mc.bankPage != 0) {
+			mc.bankPage = 0;
 		}
 		int bankCount = 0;
 		int bankSlotStart = (mc.bankPage - 1) * 40;
@@ -337,7 +357,7 @@ public final class CustomBankInterface extends BankInterface {
 					/* Drawing Item Sprites */
 
 					// Dragging items
-					if (draggingBankSlot != -1 && bank.getControlText(bankSearch).isEmpty()) {
+					if (draggingBankSlot != -1 && !filtersActive) {
 						ItemDef def = bankItems.get(draggingBankSlot).getItem().getItemDef();
 						if (bankItems.get(draggingBankSlot).getItem().getNoted()) {
 							if (S_WANT_CERT_AS_NOTES) {
@@ -362,9 +382,9 @@ public final class CustomBankInterface extends BankInterface {
 					}
 
 					// Noted Items
-					if (bankSlotStart < bankItems.size() && bankItems.get(bankSlotStart).getItem().getCatalogID() != -1) {
+					if (bankItem.getItem().getCatalogID() != -1) {
 						ItemDef def = bankItem.getItem().getItemDef();
-						if (draggingBankSlot != bankSlotStart) {
+						if (draggingBankSlot != bankItem.bankID) {
 							mc.getSurface().drawSpriteClipping(mc.spriteSelect(def), drawX, drawY, 48, 32,
 								def.getPictureMask(), 0, def.getBlueMask(), false, 0, 1, (equipmentMode && !def.isWieldable()) ? 0x60FFFFFF : 0xFFFFFFFF);
 							if (bankItem.getItem().getNoted()) {
@@ -399,13 +419,13 @@ public final class CustomBankInterface extends BankInterface {
 						if (mc.getMouseClick() == 1 && mc.controlPressed && !equipmentMode) {
 							selectedBankSlot = bankItem.bankID;
 							sendWithdraw(Integer.MAX_VALUE);
-						} else if (organizeMode > 0 && !rightClickMenu && bank.getControlText(bankSearch).isEmpty()) {
+						} else if (organizeMode > 0 && !rightClickMenu && !filtersActive) {
 							if (mc.getMouseButtonDownTime() > 0 && mc.getMouseButtonDown() == 1) {
-								if (mc.getMouseButtonDownTime() < 2 && bankSlotStart < bankItems.size()
-									&& bankItems.get(bankSlotStart).getItem().getCatalogID() != -1) {
+								if (mc.getMouseButtonDownTime() < 2
+									&& bankItem.getItem().getCatalogID() != -1) {
 									draggingBankSlot = bankItem.bankID;
 								}
-							} else if (draggingBankSlot > -1 && bankItems.get(bankSlotStart).getItem().getCatalogID() != -1) {
+							} else if (draggingBankSlot > -1 && bankItem.getItem().getCatalogID() != -1) {
 								sendItemSwap(draggingBankSlot, bankItem.bankID);
 								draggingBankSlot = -1;
 							}
@@ -425,8 +445,8 @@ public final class CustomBankInterface extends BankInterface {
 
 					// Right click menu
 					if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + 49 && mc.getMouseY() > drawY
-						&& mc.getMouseY() < drawY + 34 && bankSlotStart < bankItems.size()
-						&& bankItems.get(bankSlotStart).getItem().getCatalogID() != -1 && mc.inputX_Action == InputXAction.ACT_0) {
+						&& mc.getMouseY() < drawY + 34
+						&& bankItem.getItem().getCatalogID() != -1 && mc.inputX_Action == InputXAction.ACT_0) {
 						if (mc.getMouseClick() == 2) {
 							selectedBankSlot = bankItem.bankID;
 							if (!equipmentMode || (equipmentMode && bankItem.getItem().getItemDef().isWieldable())) {
@@ -454,6 +474,9 @@ public final class CustomBankInterface extends BankInterface {
 					bankSlotStart++;
 				}
 			}
+		}
+		if (filterPanelDocked) {
+			drawFilterPanel();
 		}
 		bank.drawPanel();
 
@@ -1143,7 +1166,7 @@ public final class CustomBankInterface extends BankInterface {
 	}
 
 	private void sendItemSwap(int draggingBankSlot2, int currentSlot) {
-		if (!bank.getControlText(bankSearch).isEmpty()) {
+		if (filtersActive()) {
 			return;
 		}
 		mc.packetHandler.getClientStream().newPacket(199);
@@ -1242,10 +1265,196 @@ public final class CustomBankInterface extends BankInterface {
 	}
 
 	private void resetVar() {
-		bank.clearList(this.bankSearch);
-		bank.setText(this.bankSearch, "");
+		clearFilters();
 		bank.setFocus(-1);
 		swapNoteMode = false;
+		filterDrawerOpen = false;
+	}
+
+	private void drawFilterDrawerButton() {
+		int buttonX = x + 292;
+		int buttonY = y + 3;
+		boolean hovered = mc.getMouseX() >= buttonX && mc.getMouseX() < buttonX + 48
+			&& mc.getMouseY() >= buttonY && mc.getMouseY() < buttonY + 16;
+		mc.getSurface().drawBoxAlpha(buttonX, buttonY, 48, 16,
+			filterDrawerOpen ? 0x7E1F1C : (hovered ? 0x706452 : 0x5A5A55), 192);
+		mc.getSurface().drawBoxBorder(buttonX, 48, buttonY, 16, 0x2D2C24);
+		drawString("Filters", buttonX + 7, buttonY + 12, 1, 0xFFFFFF);
+		if (hovered && mc.getMouseClick() == 1 && mc.inputX_Action == InputXAction.ACT_0) {
+			filterDrawerOpen = !filterDrawerOpen;
+			if (!filterDrawerOpen) {
+				bank.setFocus(-1);
+			}
+			mc.setMouseClick(0);
+		}
+	}
+
+	private void drawFilterPanel() {
+		mc.getSurface().drawBox(filterPanelX, y, FILTER_PANEL_WIDTH, 21, 192);
+		mc.getSurface().drawBoxAlpha(filterPanelX, y + 21, FILTER_PANEL_WIDTH, height - 21, 0x989898, 220);
+		mc.getSurface().drawBoxBorder(filterPanelX, FILTER_PANEL_WIDTH, y, height, 0x000000);
+		drawString("Filters", filterPanelX + 7, y + 15, 1, 0xFFFFFF);
+
+		drawFilterModeButton("AND", filterPanelX + FILTER_PANEL_WIDTH - 58, filterAndMode);
+		drawFilterModeButton("OR", filterPanelX + FILTER_PANEL_WIDTH - 30, !filterAndMode);
+
+		drawString("Search", filterPanelX + 8, y + 36, 1, 0xFFFFFF);
+		mc.getSurface().drawBoxAlpha(filterPanelX + 7, y + 39, FILTER_PANEL_WIDTH - 14, 18, 0x222222, 255);
+		mc.getSurface().drawBoxBorder(filterPanelX + 7, FILTER_PANEL_WIDTH - 14, y + 39, 18, 0x474843);
+
+		int rowY = y + 76;
+		drawString("Skills", filterPanelX + 8, rowY, 1, 0xF89922);
+		rowY += FILTER_ROW_HEIGHT;
+		rowY = drawFilterRows(BankItemTag.Group.SKILLS, rowY);
+		rowY += 3;
+		drawString("Item Types", filterPanelX + 8, rowY, 1, 0xF89922);
+		rowY += FILTER_ROW_HEIGHT;
+		drawFilterRows(BankItemTag.Group.ITEM_TYPES, rowY);
+	}
+
+	private void drawFilterModeButton(String label, int buttonX, boolean selected) {
+		int buttonY = y + 3;
+		mc.getSurface().drawBoxAlpha(buttonX, buttonY, 26, 15, selected ? 0x7E1F1C : 0x5A5A55, 192);
+		mc.getSurface().drawBoxBorder(buttonX, 26, buttonY, 15, 0x2D2C24);
+		drawString(label, buttonX + (label.length() == 2 ? 7 : 4), buttonY + 11, 1, 0xFFFFFF);
+	}
+
+	private int drawFilterRows(BankItemTag.Group group, int rowY) {
+		for (BankItemTag tag : BankItemTag.values()) {
+			if (tag.group != group) {
+				continue;
+			}
+			boolean selected = selectedTags.contains(tag);
+			mc.getSurface().drawBoxAlpha(filterPanelX + 9, rowY - 9, 9, 9,
+				selected ? 0x7E1F1C : 0x222222, 255);
+			mc.getSurface().drawBoxBorder(filterPanelX + 9, 9, rowY - 9, 9, 0x474843);
+			if (selected) {
+				drawString("x", filterPanelX + 11, rowY - 1, 1, 0xFFFFFF);
+			}
+			drawString(tag.label, filterPanelX + 23, rowY, 1, 0xFFFFFF);
+			rowY += FILTER_ROW_HEIGHT;
+		}
+		return rowY;
+	}
+
+	private void handleFilterPanelClick() {
+		if (mc.getMouseClick() != 1 || mc.inputX_Action != InputXAction.ACT_0) {
+			return;
+		}
+
+		int modeY = y + 3;
+		int andX = filterPanelX + FILTER_PANEL_WIDTH - 58;
+		int orX = filterPanelX + FILTER_PANEL_WIDTH - 30;
+		if (inside(andX, modeY, 26, 15)) {
+			filterAndMode = true;
+			mc.setMouseClick(0);
+			return;
+		}
+		if (inside(orX, modeY, 26, 15)) {
+			filterAndMode = false;
+			mc.setMouseClick(0);
+			return;
+		}
+
+		int rowY = y + 76 + FILTER_ROW_HEIGHT;
+		if (toggleFilterAt(BankItemTag.Group.SKILLS, rowY)) {
+			return;
+		}
+		rowY += countTags(BankItemTag.Group.SKILLS) * FILTER_ROW_HEIGHT + 3 + FILTER_ROW_HEIGHT;
+		toggleFilterAt(BankItemTag.Group.ITEM_TYPES, rowY);
+	}
+
+	private boolean toggleFilterAt(BankItemTag.Group group, int rowY) {
+		for (BankItemTag tag : BankItemTag.values()) {
+			if (tag.group != group) {
+				continue;
+			}
+			if (inside(filterPanelX + 7, rowY - 11, FILTER_PANEL_WIDTH - 14, FILTER_ROW_HEIGHT)) {
+				if (!selectedTags.remove(tag)) {
+					selectedTags.add(tag);
+				}
+				mc.bankPage = 0;
+				selectedBankSlot = -1;
+				rightClickMenu = false;
+				mc.setMouseClick(0);
+				return true;
+			}
+			rowY += FILTER_ROW_HEIGHT;
+		}
+		return false;
+	}
+
+	private int countTags(BankItemTag.Group group) {
+		int count = 0;
+		for (BankItemTag tag : BankItemTag.values()) {
+			if (tag.group == group) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	private boolean inside(int areaX, int areaY, int areaWidth, int areaHeight) {
+		return mc.getMouseX() >= areaX && mc.getMouseX() < areaX + areaWidth
+			&& mc.getMouseY() >= areaY && mc.getMouseY() < areaY + areaHeight;
+	}
+
+	private ArrayList<BankItem> filteredBankItems() {
+		ArrayList<BankItem> filtered = new ArrayList<>();
+		String search = bank.getControlText(bankSearch).trim().toLowerCase(Locale.ENGLISH);
+		boolean hasSearch = !search.isEmpty();
+		boolean hasTags = !selectedTags.isEmpty();
+
+		for (BankItem item : bankItems) {
+			if (item == null || item.getItem() == null || item.getItem().getItemDef() == null
+				|| item.getItem().getItemDef().getName() == null) {
+				continue;
+			}
+			if (!hasSearch && !hasTags) {
+				filtered.add(item);
+				continue;
+			}
+
+			ItemDef def = item.getItem().getItemDef();
+			boolean searchMatch = hasSearch
+				&& def.getName().toLowerCase(Locale.ENGLISH).contains(search);
+			EnumSet<BankItemTag> itemTags = BankItemTag.classify(def);
+			boolean tagMatch = filterAndMode
+				? itemTags.containsAll(selectedTags)
+				: hasMatchingTag(itemTags);
+
+			boolean matches;
+			if (filterAndMode) {
+				matches = (!hasSearch || searchMatch) && (!hasTags || tagMatch);
+			} else {
+				matches = (hasSearch && searchMatch) || (hasTags && tagMatch);
+			}
+			if (matches) {
+				filtered.add(item);
+			}
+		}
+		return filtered;
+	}
+
+	private boolean hasMatchingTag(EnumSet<BankItemTag> itemTags) {
+		for (BankItemTag tag : selectedTags) {
+			if (itemTags.contains(tag)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean filtersActive() {
+		return !selectedTags.isEmpty() || !bank.getControlText(bankSearch).trim().isEmpty();
+	}
+
+	private void clearFilters() {
+		bank.clearList(this.bankSearch);
+		bank.setText(this.bankSearch, "");
+		selectedTags.clear();
+		selectedBankSlot = -1;
+		rightClickMenu = false;
 	}
 
 	public enum BankTabShow {

@@ -7105,6 +7105,14 @@ public class EntityHandler {
 				animations.add(new AnimationDef("woolgloves", "equipment", woolColor, 0, true, false, 0));
 				animations.add(new AnimationDef("woolboots", "equipment", woolColor, 0, true, false, 0));
 			}
+			animations.add(new AnimationDef("kiteshield", "equipment", 0xE7E2D6, 0, true, false, 0)); // 1025 - White Paladin Shield
+			animations.add(new AnimationDef("kiteshield", "equipment", 0x9EA59F, 0, true, false, 0)); // 1026 - Grey Paladin Shield
+			animations.add(new AnimationDef("squareshield", "equipment", 0xB7C9D9, 0, true, false, 0)); // 1027 - Tin Square Shield
+			animations.add(new AnimationDef("squareshield", "equipment", 0xC86A2B, 0, true, false, 0)); // 1028 - Copper Square Shield
+			animations.add(new AnimationDef("squareshield", "equipment", 0x8EA6BB, 0, true, false, 0)); // 1029 - Titan Steel Square Shield
+			animations.add(new AnimationDef("squareshield", "equipment", 0x5A3F7D, 0, true, false, 0)); // 1030 - Orichalcum Square Shield
+			animations.add(new AnimationDef("squareshield", "equipment", 0xE7E2D6, 0, true, false, 0)); // 1031 - White Square Shield
+			animations.add(new AnimationDef("squareshield", "equipment", 0x9EA59F, 0, true, false, 0)); // 1032 - Grey Square Shield
 		}
 	}
 

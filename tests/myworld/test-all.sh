@@ -22,6 +22,7 @@ python3 ./tests/myworld/test-altar-enchantment-conversion.py
 python3 ./tests/myworld/test-runecraft-data.py
 python3 ./tests/myworld/test-enchanting-data.py
 python3 ./tests/myworld/test-jewelry-runtime-effects.py
+python3 ./tests/myworld/test-bank-filters.py
 python3 ./tests/myworld/test-bank-shortcuts.py
 python3 ./tests/myworld/test-source-cleanup.py
 python3 ./tests/myworld/test-world-start.py

@@ -10,18 +10,19 @@ import com.openrsc.server.plugins.triggers.UseInvTrigger;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.MessageType;
 
+import java.util.Optional;
+
+import static com.openrsc.server.plugins.Functions.*;
+
 public class Geodes implements OpInvTrigger, UseInvTrigger {
 
 	private static final int[] STANDARD_GEMS = {
-		ItemId.UNCUT_OPAL.id(),
-		ItemId.UNCUT_JADE.id(),
-		ItemId.UNCUT_RED_TOPAZ.id(),
 		ItemId.UNCUT_SAPPHIRE.id(),
 		ItemId.UNCUT_EMERALD.id(),
 		ItemId.UNCUT_RUBY.id(),
 		ItemId.UNCUT_DIAMOND.id()
 	};
-	private static final int[] STANDARD_GEM_WEIGHTS = {80, 60, 45, 35, 18, 12, 6};
+	private static final int[] STANDARD_GEM_WEIGHTS = {35, 18, 12, 6};
 	private static final int[] RUNE_REWARDS = {
 		ItemId.AIR_RUNE.id(),
 		ItemId.WATER_RUNE.id(),
@@ -34,9 +35,11 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 		ItemId.NATURE_RUNE.id(),
 		ItemId.LAW_RUNE.id(),
 		ItemId.DEATH_RUNE.id(),
+		ItemId.SOUL_RUNE.id(),
+		ItemId.BLOOD_RUNE.id(),
 		ItemId.LIFE_RUNE.id()
 	};
-	private static final int[] RUNE_WEIGHTS = {80, 80, 80, 80, 60, 55, 35, 28, 22, 18, 10, 8};
+	private static final int[] RUNE_WEIGHTS = {80, 80, 80, 80, 60, 55, 35, 28, 22, 18, 10, 6, 4, 8};
 
 	@Override
 	public boolean blockOpInv(Player player, Integer invIndex, Item item, String command) {
@@ -70,13 +73,28 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 		if (size == null) {
 			return;
 		}
+		startbatch(30);
+		batchOpenGeode(player, size);
+	}
+
+	private void batchOpenGeode(Player player, GeodeSize size) {
 		if (player.getCarriedItems().remove(new Item(size.itemId, 1)) == -1) {
+			stopbatch();
 			return;
 		}
 		player.playerServerMessage(MessageType.QUEST, "You crack the geode open...");
 		GeodeReward reward = rollReward(size);
 		grantReward(player, reward);
 		player.playerServerMessage(MessageType.QUEST, "There was " + reward.description + " inside!");
+
+		updatebatch();
+		if (!ifinterrupted()
+			&& !isbatchcomplete()
+			&& player.getCarriedItems().getInventory().countId(size.itemId, Optional.of(false)) > 0
+			&& hasChisel(player)) {
+			delay();
+			batchOpenGeode(player, size);
+		}
 	}
 
 	private GeodeReward rollReward(GeodeSize size) {
@@ -107,10 +125,12 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 					"some coins");
 			case GEM:
 				int gemId = weightedRandom(STANDARD_GEMS, STANDARD_GEM_WEIGHTS);
-				return GeodeReward.item(gemId, size.gemQuantity, article(itemName(gemId)));
+				int gemQuantity = getGemQuantity(size, gemId);
+				return GeodeReward.item(gemId, gemQuantity,
+					gemQuantity == 1 ? article(itemName(gemId)) : gemQuantity + " " + itemName(gemId) + "s");
 			case RUNES:
 				int runeId = weightedRandom(RUNE_REWARDS, RUNE_WEIGHTS);
-				return GeodeReward.item(runeId, DataConversions.random(size.minRunes, size.maxRunes),
+				return GeodeReward.item(runeId, getRuneQuantity(size, runeId),
 					"some runes");
 			case KEY_HALVES:
 				return GeodeReward.keyHalves(DataConversions.random(size.minKeyHalves, size.maxKeyHalves));
@@ -164,6 +184,68 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 		return GeodeSize.forItem(itemId) != null;
 	}
 
+	private static boolean hasChisel(Player player) {
+		return player.getCarriedItems().getInventory().countId(ItemId.CHISEL.id(), Optional.of(false)) > 0
+			|| player.getCarriedItems().getInventory().countId(ItemId.SUPERCHISEL.id(), Optional.of(false)) > 0;
+	}
+
+	private static int getRuneQuantity(GeodeSize size, int runeId) {
+		int altarLevel = getRuneAltarLevel(runeId);
+		int hugeAverage = 400 - ((Math.max(1, altarLevel) - 1) * 360 / 69);
+		int average = Math.max(1, (int) Math.round(hugeAverage * size.runeQuantityMultiplier));
+		int minimum = Math.max(1, average * 3 / 4);
+		int maximum = Math.max(minimum, average * 5 / 4);
+		return DataConversions.random(minimum, maximum);
+	}
+
+	private static int getRuneAltarLevel(int runeId) {
+		switch (ItemId.getById(runeId)) {
+			case MIND_RUNE:
+				return 8;
+			case BODY_RUNE:
+				return 15;
+			case CHAOS_RUNE:
+				return 22;
+			case COSMIC_RUNE:
+				return 30;
+			case NATURE_RUNE:
+				return 38;
+			case LAW_RUNE:
+				return 46;
+			case DEATH_RUNE:
+				return 54;
+			case SOUL_RUNE:
+				return 62;
+			case BLOOD_RUNE:
+				return 70;
+			default:
+				return 1;
+		}
+	}
+
+	private static int getGemQuantity(GeodeSize size, int gemId) {
+		int baseQuantity;
+		switch (ItemId.getById(gemId)) {
+			case UNCUT_SAPPHIRE:
+				baseQuantity = 10;
+				break;
+			case UNCUT_EMERALD:
+				baseQuantity = 7;
+				break;
+			case UNCUT_RUBY:
+				baseQuantity = 5;
+				break;
+			case UNCUT_DIAMOND:
+			default:
+				baseQuantity = 3;
+				break;
+		}
+		int average = Math.max(1, (int) Math.round(baseQuantity * size.gemQuantityMultiplier));
+		int minimum = Math.max(1, average - Math.max(1, average / 4));
+		int maximum = average + Math.max(1, average / 4);
+		return DataConversions.random(minimum, maximum);
+	}
+
 	private static int weightedRandom(int[] ids, int[] weights) {
 		int total = 0;
 		for (int weight : weights) {
@@ -180,9 +262,6 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 	}
 
 	private static String itemName(int itemId) {
-		if (itemId == ItemId.UNCUT_OPAL.id()) return "uncut opal";
-		if (itemId == ItemId.UNCUT_JADE.id()) return "uncut jade";
-		if (itemId == ItemId.UNCUT_RED_TOPAZ.id()) return "uncut red topaz";
 		if (itemId == ItemId.UNCUT_SAPPHIRE.id()) return "uncut sapphire";
 		if (itemId == ItemId.UNCUT_EMERALD.id()) return "uncut emerald";
 		if (itemId == ItemId.UNCUT_RUBY.id()) return "uncut ruby";
@@ -201,7 +280,7 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 		GEM(new int[] {18, 18, 18, 18}),
 		RUNES(new int[] {14, 16, 18, 18}),
 		STONE(new int[] {14, 10, 8, 6}),
-		KEY_HALVES(new int[] {0, 2, 4, 4});
+		KEY_HALVES(new int[] {0, 1, 1, 1});
 
 		private final int[] weights;
 
@@ -211,10 +290,10 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 	}
 
 	private enum GeodeSize {
-		SMALL(ItemId.SMALL_GEODE.id(), 100, 350, 25, 80, 25, 50, 3, 10, 1, 0, 0),
-		STANDARD(ItemId.STANDARD_GEODE.id(), 250, 750, 75, 200, 50, 100, 8, 22, 1, 1, 1),
-		LARGE(ItemId.LARGE_GEODE.id(), 650, 1500, 175, 500, 100, 200, 18, 45, 2, 1, 2),
-		HUGE(ItemId.HUGE_GEODE.id(), 1500, 3500, 500, 1500, 200, 400, 40, 90, 3, 1, 3);
+		SMALL(ItemId.SMALL_GEODE.id(), 1500, 4000, 144, 360, 25, 50, 0.10D, 0.25D, 0, 0),
+		STANDARD(ItemId.STANDARD_GEODE.id(), 4000, 9000, 960, 2160, 50, 100, 0.25D, 0.50D, 1, 1),
+		LARGE(ItemId.LARGE_GEODE.id(), 9000, 18000, 4560, 7800, 100, 200, 0.50D, 0.75D, 1, 2),
+		HUGE(ItemId.HUGE_GEODE.id(), 18000, 35000, 9000, 15000, 200, 400, 1.00D, 1.00D, 1, 3);
 
 		private final int itemId;
 		private final int minXp;
@@ -223,15 +302,15 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 		private final int maxCoins;
 		private final int minStone;
 		private final int maxStone;
-		private final int minRunes;
-		private final int maxRunes;
-		private final int gemQuantity;
+		private final double runeQuantityMultiplier;
+		private final double gemQuantityMultiplier;
 		private final int minKeyHalves;
 		private final int maxKeyHalves;
 		private final int totalWeight;
 
 		GeodeSize(int itemId, int minXp, int maxXp, int minCoins, int maxCoins, int minStone, int maxStone,
-				  int minRunes, int maxRunes, int gemQuantity, int minKeyHalves, int maxKeyHalves) {
+				  double runeQuantityMultiplier, double gemQuantityMultiplier,
+				  int minKeyHalves, int maxKeyHalves) {
 			this.itemId = itemId;
 			this.minXp = minXp;
 			this.maxXp = maxXp;
@@ -239,9 +318,8 @@ public class Geodes implements OpInvTrigger, UseInvTrigger {
 			this.maxCoins = maxCoins;
 			this.minStone = minStone;
 			this.maxStone = maxStone;
-			this.minRunes = minRunes;
-			this.maxRunes = maxRunes;
-			this.gemQuantity = gemQuantity;
+			this.runeQuantityMultiplier = runeQuantityMultiplier;
+			this.gemQuantityMultiplier = gemQuantityMultiplier;
 			this.minKeyHalves = minKeyHalves;
 			this.maxKeyHalves = maxKeyHalves;
 			int weight = 0;

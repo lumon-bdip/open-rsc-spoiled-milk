@@ -185,12 +185,36 @@ def main() -> None:
         "Use a chisel to crack this open.",
         "You crack the geode open...",
         '"There was " + reward.description + " inside!"',
+        "private static final int[] STANDARD_GEM_WEIGHTS = {35, 18, 12, 6};",
+        "SMALL(ItemId.SMALL_GEODE.id(), 1500, 4000, 144, 360",
+        "STANDARD(ItemId.STANDARD_GEODE.id(), 4000, 9000, 960, 2160",
+        "LARGE(ItemId.LARGE_GEODE.id(), 9000, 18000, 4560, 7800",
+        "HUGE(ItemId.HUGE_GEODE.id(), 18000, 35000, 9000, 15000",
+        "startbatch(30);",
+        "batchOpenGeode(player, size);",
+        "private static int getRuneQuantity(GeodeSize size, int runeId)",
+        "int hugeAverage = 400 - ((Math.max(1, altarLevel) - 1) * 360 / 69);",
+        "case BLOOD_RUNE:",
+        "return 70;",
+        "private static int getGemQuantity(GeodeSize size, int gemId)",
+        "case UNCUT_SAPPHIRE:",
+        "baseQuantity = 10;",
+        "case UNCUT_DIAMOND:",
+        "baseQuantity = 3;",
         "ItemId.RUNE_STONE.id()",
         "ItemId.TOOTH_KEY_HALF.id()",
         "ItemId.LOOP_KEY_HALF.id()",
-        "KEY_HALVES(new int[] {0, 2, 4, 4})",
+        "KEY_HALVES(new int[] {0, 1, 1, 1})",
     ):
         require(geodes, snippet, "Geodes handler")
+    for excluded_gem in (
+        "ItemId.UNCUT_OPAL.id()",
+        "ItemId.UNCUT_JADE.id()",
+        "ItemId.UNCUT_RED_TOPAZ.id()",
+        "ItemId.UNCUT_DRAGONSTONE.id()",
+        "ItemId.DRAGONSTONE.id()",
+    ):
+        forbid(geodes, excluded_gem, "Geodes jewelry-gem rewards")
 
     if not GEODE_SPRITE.is_file():
         fail(f"Missing active geode sprite: {GEODE_SPRITE}")
