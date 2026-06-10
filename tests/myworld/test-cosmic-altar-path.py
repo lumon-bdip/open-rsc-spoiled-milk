@@ -15,6 +15,8 @@ RUNECRAFT_SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/SceneryLocsRunecra
 MYWORLD_SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryLocs.json"
 SECTORS = ("h3x50y51", "h3x50y52", "h3x51y51", "h3x51y52")
 INVISIBLE_OVERLAY = 26
+INVISIBLE_TILE_ELEVATION = 86
+INVISIBLE_TILE_TEXTURE = 8
 COSMIC_ALTAR_ID = 1203
 COSMIC_OBELISK_ID = 1300
 
@@ -103,6 +105,10 @@ def ensure_path_shape(sectors):
                 if overlay == INVISIBLE_OVERLAY:
                     point = (origin_x + local_x, origin_y + local_y)
                     actual_path.add(point)
+                    require(
+                        (elevation, texture) == (INVISIBLE_TILE_ELEVATION, INVISIBLE_TILE_TEXTURE),
+                        f"{point} should be level invisible path terrain",
+                    )
                     require(
                         (roof, east_wall, north_wall, diagonal_wall) == (0, 0, 0, 0),
                         f"{point} should not have roof or wall blockers on the invisible path",
