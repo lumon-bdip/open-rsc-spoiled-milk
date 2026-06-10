@@ -640,8 +640,9 @@ public final class World {
 							int slope = this.getTileElevation(x + 1, 1 + z) - this.getTileElevation(x, z)
 								+ this.getTileElevation(x, z + 1) - this.getTileElevation(x + 1, z);
 							int[] faceIndicies;
+							boolean pickableInvisibleOverlay = this.isPickableInvisibleOverlay(x, z, plane);
 							if (colorResource == res01 && slope == 0) {
-								if (colorResource != Scene.TRANSPARENT) {
+								if (colorResource != Scene.TRANSPARENT || pickableInvisibleOverlay) {
 									faceIndicies = new int[]{z - (-(x * 96) - 96), z + x * 96, 1 + x * 96 + z,
 										z - (-(x * 96) - 96) + 1};
 									int faceID = worldMod.insertFace(4, faceIndicies, Scene.TRANSPARENT, colorResource,
@@ -654,7 +655,7 @@ public final class World {
 								faceIndicies = new int[3];
 								int[] faceIndices2 = new int[3];
 								if (bridge00_11 == 0) {
-									if (colorResource != Scene.TRANSPARENT) {
+									if (colorResource != Scene.TRANSPARENT || pickableInvisibleOverlay) {
 										faceIndicies[1] = x * 96 + z;
 										faceIndicies[0] = 96 + z + x * 96;
 										faceIndicies[2] = 1 + z + x * 96;
@@ -665,7 +666,7 @@ public final class World {
 										worldMod.facePickIndex[faceID] = faceID + 200000;
 									}
 
-									if (res01 != Scene.TRANSPARENT) {
+									if (res01 != Scene.TRANSPARENT || pickableInvisibleOverlay) {
 										faceIndices2[2] = z + x * 96 + 96;
 										faceIndices2[1] = 97 + x * 96 + z;
 										faceIndices2[0] = 1 + x * 96 + z;
@@ -676,7 +677,7 @@ public final class World {
 										worldMod.facePickIndex[faceID] = faceID + 200000;
 									}
 								} else {
-									if (colorResource != Scene.TRANSPARENT) {
+									if (colorResource != Scene.TRANSPARENT || pickableInvisibleOverlay) {
 										faceIndicies[2] = z + x * 96;
 										faceIndicies[1] = 96 + x * 96 + z + 1;
 										faceIndicies[0] = 1 + x * 96 + z;
@@ -687,7 +688,7 @@ public final class World {
 										worldMod.facePickIndex[faceID] = 200000 + faceID;
 									}
 
-									if (res01 != Scene.TRANSPARENT) {
+									if (res01 != Scene.TRANSPARENT || pickableInvisibleOverlay) {
 										faceIndices2[1] = z + x * 96;
 										faceIndices2[2] = z - (-(x * 96) - 97);
 										faceIndices2[0] = x * 96 + z + 96;
@@ -1237,6 +1238,10 @@ public final class World {
 			throw GenUtil.makeThrowable(var7,
 				"k.M(" + "dummy" + ',' + xTile + ',' + defaultVal + ',' + plane + ',' + zTile + ')');
 		}
+	}
+
+	private boolean isPickableInvisibleOverlay(int xTile, int zTile, int plane) {
+		return this.getTileDecorationID(xTile, zTile, plane) == 26;
 	}
 
 	private int getTileDecorationID(int xTile, int zTile, int plane) {

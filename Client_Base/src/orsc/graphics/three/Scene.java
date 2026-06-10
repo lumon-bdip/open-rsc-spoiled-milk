@@ -2672,7 +2672,7 @@ public final class Scene {
 										var13 = var2.faceTextureBack[var3];
 									}
 
-									if (var13 != Scene.TRANSPARENT) {
+									if (var13 != Scene.TRANSPARENT || var2.facePickIndex[var3] >= 200000 && var2.facePickIndex[var3] <= 300000) {
 										var6 = 0;
 
 										for (var14 = 0; var10 > var14; ++var14) {
@@ -2841,7 +2841,7 @@ public final class Scene {
 								this.m_r[var19] = 0;
 							}
 
-							if (var25.m_b >= 0) {
+							if (var25.m_b >= 0 && var25.m_b != Scene.TRANSPARENT) {
 								if (this.m_Hb[var25.m_b] != 1) {
 									this.m_r[var19] <<= 6;
 								} else {
@@ -2851,7 +2851,7 @@ public final class Scene {
 						}
 
 						this.setFrustum(0, var3, this.m_B, 0, 0, var2, this.m_yb, this.m_r, 0, 5960, var14);
-						if (this.m_Xb < this.m_Cb) {
+						if (this.m_Xb < this.m_Cb && var25.m_b != Scene.TRANSPARENT) {
 							this.setFrustum(this.m_Vb, var2, 1, var17, var25.m_b, this.m_J, this.m_Qb, 0, 0);
 						}
 					}
