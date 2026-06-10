@@ -14573,4 +14573,15 @@
     <groundItemVar>0</groundItemVar>
     <objectModel>madmachine</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Cosmic sparkles</name>
+    <description>Tiny motes of light drift through the void</description>
+    <command1>WalkTo</command1>
+    <command2>Examine</command2>
+    <type>0</type>
+    <width>2</width>
+    <height>2</height>
+    <groundItemVar>0</groundItemVar>
+    <objectModel>myworld_cosmic_sparkles1</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>

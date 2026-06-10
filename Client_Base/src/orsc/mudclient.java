@@ -716,6 +716,7 @@ public final class mudclient implements Runnable {
 	private int lastHeightOffset = -1;
 	private int lastObjectAnimationNumberFireLightningSpell = -1;
 	private int lastObjectAnimationNumberTorch = -1;
+	private int lastObjectAnimationNumberCosmicSparkles = -1;
 	private int lastObjectAnimatonNumberClaw = -1;
 	private boolean loadingArea = false;
 	private boolean regionLoadNeedsHardPlayerReset = false;
@@ -799,6 +800,7 @@ public final class mudclient implements Runnable {
 	private int objectAnimationNumberClaw = 0;
 	private int objectAnimationNumberFireLightningSpell = 0;
 	private int objectAnimationNumberTorch = 0;
+	private int objectAnimationNumberCosmicSparkles = 0;
 	private boolean optionCameraModeAuto = true;
 	private boolean optionMouseButtonOne = false;
 	private boolean clanInviteBlockSetting = false;
@@ -5373,6 +5375,17 @@ public final class mudclient implements Runnable {
 							if (this.gameObjectInstanceID[centerX] == 143) {
 								this.updateObjectAnimation((byte) 100, centerX,
 									"skulltorcha" + (1 + this.objectAnimationNumberTorch));
+							}
+						}
+					}
+
+					if (this.lastObjectAnimationNumberCosmicSparkles != this.objectAnimationNumberCosmicSparkles) {
+						this.lastObjectAnimationNumberCosmicSparkles = this.objectAnimationNumberCosmicSparkles;
+
+						for (centerX = 0; centerX < this.gameObjectInstanceCount; ++centerX) {
+							if (this.gameObjectInstanceID[centerX] == 1325) {
+								this.updateObjectAnimation((byte) 48, centerX,
+									"myworld_cosmic_sparkles" + (this.objectAnimationNumberCosmicSparkles + 1));
 							}
 						}
 					}
@@ -14303,6 +14316,8 @@ public final class mudclient implements Runnable {
 					if (this.objectAnimationCount > 5) {
 						this.objectAnimationCount = 0;
 						this.objectAnimationNumberTorch = (1 + this.objectAnimationNumberTorch) % 4;
+						this.objectAnimationNumberCosmicSparkles =
+							(1 + this.objectAnimationNumberCosmicSparkles) % 4;
 						this.objectAnimationNumberFireLightningSpell = (1
 							+ this.objectAnimationNumberFireLightningSpell) % 3;
 						this.objectAnimationNumberClaw = (1 + this.objectAnimationNumberClaw) % 5;
@@ -16581,7 +16596,8 @@ public final class mudclient implements Runnable {
 
 		String[] modelNames = {"torcha2", "torcha3", "torcha4", "skulltorcha2", "skulltorcha3", "skulltorcha4",
 			"firea2", "firea3", "fireplacea2", "fireplacea3", "firespell2", "firespell3", "lightning2",
-			"lightning3", "clawspell2", "clawspell3", "clawspell4", "clawspell5", "spellcharge2", "spellcharge3"};
+			"lightning3", "clawspell2", "clawspell3", "clawspell4", "clawspell5", "spellcharge2", "spellcharge3",
+			"myworld_cosmic_sparkles2", "myworld_cosmic_sparkles3", "myworld_cosmic_sparkles4"};
 		for (String name : modelNames) {
 			EntityHandler.storeModel(name);
 		}
@@ -16606,11 +16622,44 @@ public final class mudclient implements Runnable {
 		if ("myworld_air_glyph".equals(modelName)) {
 			return createMyWorldAirGlyphModel();
 		}
+		if (modelName.startsWith("myworld_cosmic_sparkles")) {
+			int frame = modelName.charAt(modelName.length() - 1) - '1';
+			return createMyWorldCosmicSparklesModel(frame);
+		}
 		return new RSModel(1, 1);
 	}
 
 	private RSModel createMyWorldAirGlyphModel() {
 		return new RSModel(1, 1);
+	}
+
+	private RSModel createMyWorldCosmicSparklesModel(int frame) {
+		int[] xs = {-91, -63, -24, 18, 57, 91, -70, 53};
+		int[] zs = {-66, 31, 83, -43, 8, 70, 76, -86};
+		int[] heights = {18, 42, 27, 58, 35, 14, 52, 31};
+		int[] phases = {0, 2, 1, 3, 0, 2, 3, 1};
+		RSModel model = new RSModel(xs.length * 4, xs.length * 4);
+		int white = GenUtil.colorToResource(255, 255, 255);
+		int yellow = GenUtil.colorToResource(255, 226, 112);
+
+		for (int i = 0; i < xs.length; ++i) {
+			int animationStep = (frame + phases[i]) % 4;
+			int radius = animationStep == 1 ? 4 : 3;
+			int y = -(heights[i] + animationStep * 3);
+			int colour = i % 3 == 0 ? yellow : white;
+			int top = model.insertVertex(xs[i], y - radius, zs[i]);
+			int left = model.insertVertex(xs[i] - radius, y + radius, zs[i] - radius);
+			int right = model.insertVertex(xs[i] + radius, y + radius, zs[i] - radius);
+			int back = model.insertVertex(xs[i], y + radius, zs[i] + radius);
+
+			model.insertFace(3, new int[] {top, right, left}, colour, colour, false);
+			model.insertFace(3, new int[] {top, back, right}, colour, colour, false);
+			model.insertFace(3, new int[] {top, left, back}, colour, colour, false);
+			model.insertFace(3, new int[] {left, right, back}, colour, colour, false);
+		}
+
+		model.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, -74);
+		return model;
 	}
 
 	public final boolean loadNextRegion(int wantZ, int wantX, boolean var3) {
