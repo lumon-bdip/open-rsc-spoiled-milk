@@ -7,9 +7,21 @@ revised through field notes, targeted instructions, and manual editor work.
 
 Terrain work is higher risk than adding scenery, ground items, or NPC
 locations. The current repository contains compiled landscape and map archives,
-but does not yet expose a confirmed authored terrain source or supported editor
-workflow. Tool discovery and reversible map handling must therefore happen
-before production terrain is changed.
+which are edited with the 2D Landscape Editor.
+
+## Current Editor Workflow
+
+Keep landscape editing exchanges minimal:
+
+- Put editable archives directly in `/home/justin/2D-Landscape-Editor/maps`.
+- Include the intended world coordinates in the filename, using `X-Y`.
+- Do not create a separate project folder, duplicate view archive, scenery
+  export, or per-edit README unless a specific edit requires one.
+- Export with `./scripts/export-landscape-map.sh X-Y`.
+- Import with `./scripts/import-landscape-map.sh FILE.orsc`.
+- Import always updates both the server and client `Custom_Landscape.orsc`.
+- Scenery, NPC, boundary, and ground-item locations remain separate from the
+  landscape archive and should be changed in their definition files.
 
 ## Core Goals
 
