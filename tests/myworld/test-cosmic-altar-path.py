@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import re
 import struct
 import zipfile
@@ -10,10 +11,12 @@ SERVER_LANDSCAPE = ROOT / "server/conf/server/data/Custom_Landscape.orsc"
 CLIENT_LANDSCAPE = ROOT / "Client_Base/Cache/video/Custom_Landscape.orsc"
 SERVER_TILE_DEFS = ROOT / "server/conf/server/defs/TileDef.xml"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+RUNECRAFT_SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/SceneryLocsRunecraft.json"
+MYWORLD_SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryLocs.json"
 SECTORS = ("h3x50y51", "h3x50y52", "h3x51y51", "h3x51y52")
 INVISIBLE_OVERLAY = 26
-VOID_TILE = (0, 0, 8, 0, 0, 0, 0)
-INVISIBLE_PATH_TILE = (96, 100, INVISIBLE_OVERLAY, 0, 0, 0, 0)
+COSMIC_ALTAR_ID = 1203
+COSMIC_OBELISK_ID = 1300
 
 
 def require(condition, message):
@@ -27,12 +30,6 @@ def read_sectors(path):
         return {sector: archive.read(sector) for sector in SECTORS}
 
 
-def sector_name(x, y):
-    height = y // 944
-    y_in_height = y - height * 944
-    return f"h{height}x{x // 48 + 48}y{y_in_height // 48 + 37}"
-
-
 def sector_origin(sector):
     height = int(sector[1])
     section_x = int(sector[3:5])
@@ -40,44 +37,26 @@ def sector_origin(sector):
     return (section_x - 48) * 48, height * 944 + (section_y - 37) * 48
 
 
-def tile(sectors, x, y):
-    sector = sector_name(x, y)
-    origin_x, origin_y = sector_origin(sector)
-    offset = ((x - origin_x) * 48 + (y - origin_y)) * 10
-    return struct.unpack_from(">BBBBBBI", sectors[sector], offset)
-
-
-def old_grass_tiles():
+def invisible_path_tiles():
     rows = {
-        3541: ((150, 150),),
-        3542: ((148, 151),),
-        3543: ((148, 151),),
-        3544: ((148, 151),),
-        3545: ((148, 151),),
-        3546: ((148, 151),),
-        3547: ((148, 151),),
-        3548: ((148, 151),),
-        3549: ((148, 151),),
-        3550: ((148, 151),),
-        3551: ((148, 151),),
-        3552: ((147, 152),),
-        3553: ((147, 152),),
-        3554: ((97, 144), (147, 152)),
-        3555: ((97, 144), (147, 152)),
-        3556: ((97, 151),),
-        3557: ((97, 150),),
-        3558: ((97, 101), (138, 149)),
-        3559: ((97, 101), (139, 148)),
-        3560: ((97, 101),),
-        3561: ((97, 101),),
-        3562: ((97, 102),),
-        3563: ((97, 103),),
-        3564: ((97, 111),),
-        3565: ((97, 111),),
-        3566: ((98, 111),),
-        3567: ((99, 111),),
-        3568: ((100, 111),),
-        3569: ((101, 111),),
+        3542: ((149, 150),),
+        3543: ((149, 150),),
+        3544: ((149, 150),),
+        3545: ((149, 150),),
+        3546: ((149, 150),),
+        3547: ((149, 150),),
+        3548: ((149, 150),),
+        3549: ((149, 150),),
+        3550: ((149, 150),),
+        3551: ((149, 150),),
+        3552: ((149, 150),),
+        3553: ((149, 150),),
+        3554: ((102, 107), (149, 150)),
+        3555: ((102, 107), (149, 150)),
+        3556: ((102, 150),),
+        3557: ((102, 150),),
+        3558: ((102, 107),),
+        3559: ((102, 107),),
     }
     return {
         (x, y)
@@ -87,20 +66,8 @@ def old_grass_tiles():
     }
 
 
-def invisible_path_tiles():
-    path = {(x, y) for x in range(106, 149) for y in (3541, 3542)}
-    path.update((x, y) for y in range(3541, 3567) for x in (106, 107))
-    return path
-
-
-def object_support_tiles():
-    return {
-        (106, 3565),
-        (104, 3564),
-        (109, 3564),
-        (104, 3568),
-        (109, 3568),
-    }
+def platform_tiles():
+    return {(x, y) for x in range(102, 108) for y in range(3554, 3560)}
 
 
 def ensure_transparent_walkable_tile_def():
@@ -120,28 +87,64 @@ def ensure_transparent_walkable_tile_def():
 
 
 def ensure_path_shape(sectors):
-    preserved_torch_grass = {(150, 3541), (149, 3542), (150, 3542)}
-    path = invisible_path_tiles()
-    supports = object_support_tiles()
+    expected_path = invisible_path_tiles()
+    actual_path = set()
 
-    for point in path | supports:
-        require(tile(sectors, *point) == INVISIBLE_PATH_TILE, f"{point} is not transparent walkable path")
+    for sector, data in sectors.items():
+        origin_x, origin_y = sector_origin(sector)
+        for local_x in range(48):
+            for local_y in range(48):
+                offset = (local_x * 48 + local_y) * 10
+                elevation, texture, overlay, roof, east_wall, north_wall, diagonal_wall = struct.unpack_from(
+                    ">BBBBBBI",
+                    data,
+                    offset,
+                )
+                if overlay == INVISIBLE_OVERLAY:
+                    point = (origin_x + local_x, origin_y + local_y)
+                    actual_path.add(point)
+                    require(
+                        (roof, east_wall, north_wall, diagonal_wall) == (0, 0, 0, 0),
+                        f"{point} should not have roof or wall blockers on the invisible path",
+                    )
 
-    for point in preserved_torch_grass:
-        elevation, texture, overlay, roof, horizontal_wall, vertical_wall, diagonal_wall = tile(sectors, *point)
-        require(
-            (overlay, roof, horizontal_wall, vertical_wall, diagonal_wall) == (0, 0, 0, 0, 0),
-            f"{point} should keep ordinary torch-gap grass",
-        )
-        require(elevation > 0 and texture > 0, f"{point} should keep visible grass terrain")
+    require(actual_path == expected_path, f"Unexpected overlay 26 footprint: {sorted(actual_path ^ expected_path)}")
 
-    removed_grass = old_grass_tiles() - path - supports - preserved_torch_grass
-    for point in removed_grass:
-        require(tile(sectors, *point) == VOID_TILE, f"{point} should be empty non-walkable void")
+    for point in platform_tiles():
+        require(point in actual_path, f"{point} should be part of the open cosmic altar platform")
 
-    require((149, 3541) not in path, "Path should start immediately west of the torch gap")
-    require((148, 3541) in path and (148, 3542) in path, "Path entrance should be two tiles wide")
-    require((108, 3566) not in path, "Path should remain exactly two tiles wide at the altar approach")
+    require((149, 3542) in expected_path and (150, 3542) in expected_path, "Path should start between the torches")
+    require((102, 3556) in expected_path and (150, 3556) in expected_path, "Path should connect to the platform")
+    require((101, 3556) not in expected_path and (108, 3558) not in expected_path, "Platform should stay within bounds")
+
+
+def load_locs(path):
+    return json.loads(path.read_text(encoding="utf-8"))["sceneries"]
+
+
+def locs_by_id(path, object_id):
+    return [loc for loc in load_locs(path) if loc["id"] == object_id]
+
+
+def ensure_object_locations():
+    altar_locs = [
+        loc for loc in locs_by_id(RUNECRAFT_SCENERY_LOCS, COSMIC_ALTAR_ID)
+        if loc["pos"]["Y"] > 3000
+    ]
+    require(len(altar_locs) == 1, f"Expected one high-level cosmic altar loc, found {altar_locs}")
+    altar = altar_locs[0]
+    require(
+        (altar["pos"]["X"], altar["pos"]["Y"], altar["direction"]) == (104, 3556, 2),
+        f"Cosmic altar should be centered on the new platform, found {altar}",
+    )
+
+    expected_obelisks = {(102, 3559), (107, 3559), (102, 3554), (107, 3554)}
+    actual_obelisks = {
+        (loc["pos"]["X"], loc["pos"]["Y"])
+        for loc in locs_by_id(MYWORLD_SCENERY_LOCS, COSMIC_OBELISK_ID)
+        if 3500 <= loc["pos"]["Y"] <= 3600
+    }
+    require(actual_obelisks == expected_obelisks, f"Cosmic obelisks should be at platform corners: {actual_obelisks}")
 
 
 def main():
@@ -150,6 +153,7 @@ def main():
     client_sectors = read_sectors(CLIENT_LANDSCAPE)
     require(client_sectors == server_sectors, "Client and server Cosmic Altar terrain must match")
     ensure_path_shape(server_sectors)
+    ensure_object_locations()
     print("PASS: cosmic altar invisible path terrain validated")
 
 

@@ -20,7 +20,7 @@ usage() {
   cat <<'EOF'
 Usage:
   ./scripts/package-player-release.sh \
-    --version v0.1.0-alpha.1 \
+    --version v0.1.1 \
     --host game.example.org \
     --port 43605 \
     --windows-jre /path/to/temurin-17-windows-x64-jre \
@@ -74,8 +74,8 @@ while (($#)); do
   esac
 done
 
-[[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-alpha\.[0-9]+$ ]] \
-  || fail "Version must use limited-alpha form, for example v0.1.0-alpha.1"
+[[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+)?$ ]] \
+  || fail "Version must use semantic form, for example v0.1.1 or v0.1.0-alpha.84"
 [[ "$HOST" =~ ^[A-Za-z0-9.-]+$ ]] || fail "Host must be a DNS name or IPv4 address"
 case "${HOST,,}" in
   localhost|127.*|0.0.0.0)

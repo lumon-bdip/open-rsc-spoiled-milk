@@ -9,22 +9,36 @@ $ApiUrl = "https://api.github.com/repos/$Repo/releases"
 Write-Host "Checking for Spoiled Milk updates..."
 $releases = Invoke-RestMethod -Uri $ApiUrl -Headers @{ "User-Agent" = "Spoiled-Milk-Updater" }
 if (-not $releases -or $releases.Count -lt 1) {
-    throw "Unable to determine the latest release from GitHub."
+    throw "Unable to determine the latest version from GitHub."
+}
+
+function Get-VersionSortKey($tagName) {
+    $match = [regex]::Match($tagName, '^v(\d+)\.(\d+)\.(\d+)(?:-alpha\.(\d+))?$')
+    if (-not $match.Success) {
+        return $null
+    }
+
+    $alphaRank = 999999
+    if ($match.Groups[4].Success) {
+        $alphaRank = [int]$match.Groups[4].Value
+    }
+
+    return "{0:D6}.{1:D6}.{2:D6}.{3:D6}" -f `
+        [int]$match.Groups[1].Value, `
+        [int]$match.Groups[2].Value, `
+        [int]$match.Groups[3].Value, `
+        $alphaRank
 }
 
 $latest = $releases |
-    Where-Object { $_.tag_name -match '^v\d+\.\d+\.\d+-alpha\.(\d+)$' } |
-    Sort-Object { [int]([regex]::Match($_.tag_name, '-alpha\.(\d+)$').Groups[1].Value) } -Descending |
+    Where-Object { $_.tag_name -match '^v\d+\.\d+\.\d+(-alpha\.\d+)?$' } |
+    Sort-Object { Get-VersionSortKey $_.tag_name } -Descending |
     Select-Object -First 1
 if (-not $latest) {
-    throw "Unable to determine the latest alpha release from GitHub."
+    throw "Unable to determine the latest version from GitHub."
 }
 $latestVersion = $latest.tag_name
-$currentAlpha = 0
-$latestAlpha = 0
-$currentHasAlpha = [int]::TryParse(($CurrentVersion -replace '^.*-alpha\.', ''), [ref]$currentAlpha)
-$latestHasAlpha = [int]::TryParse(($latestVersion -replace '^.*-alpha\.', ''), [ref]$latestAlpha)
-if ($latestVersion -eq $CurrentVersion -or ($currentHasAlpha -and $latestHasAlpha -and $latestAlpha -le $currentAlpha)) {
+if ($latestVersion -eq $CurrentVersion) {
     Write-Host "Spoiled Milk is up to date ($CurrentVersion)."
     exit 0
 }
@@ -32,7 +46,7 @@ if ($latestVersion -eq $CurrentVersion -or ($currentHasAlpha -and $latestHasAlph
 $assetName = "spoiled-milk-$latestVersion-$PackageKind.zip"
 $asset = $latest.assets | Where-Object { $_.name -eq $assetName } | Select-Object -First 1
 if (-not $asset) {
-    throw "Latest release $latestVersion does not include $assetName."
+    throw "Latest version $latestVersion does not include $assetName."
 }
 
 $updateDir = Join-Path $GameDir "updates"

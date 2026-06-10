@@ -57,7 +57,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 		EARTH(ItemId.EARTH_RUNE.id(), 61, 464),
 		FIRE(ItemId.FIRE_RUNE.id(), 49, 633),
 		BODY(ItemId.BODY_RUNE.id(), 258, 503),
-		COSMIC(ItemId.COSMIC_RUNE.id(), 105, 3565),
+		COSMIC(ItemId.COSMIC_RUNE.id(), 104, 3556),
 		CHAOS(ItemId.CHAOS_RUNE.id(), 231, 375),
 		NATURE(ItemId.NATURE_RUNE.id(), 391, 804),
 		LAW(ItemId.LAW_RUNE.id(), 408, 534),

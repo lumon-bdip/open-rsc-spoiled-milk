@@ -1146,7 +1146,7 @@ public final class SkillGuideInterface {
 		addAltarGuide(35, 8, "Mind Rune", "297,438");
 		addAltarGuide(36, 15, "Body Rune", "259,503");
 		addAltarGuide(41, 22, "Chaos Rune", "232,375");
-		addAltarGuide(46, 30, "Cosmic Rune", "106,3565");
+		addAltarGuide(46, 30, "Cosmic Rune", "104,3556");
 		addAltarGuide(40, 38, "Nature Rune", "392,804");
 		addAltarGuide(42, 46, "Law Rune", "409,534");
 		addAltarGuide(38, 54, "Death Rune", "151,212");

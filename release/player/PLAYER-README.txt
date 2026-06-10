@@ -1,5 +1,5 @@
-SPOILED MILK - LIMITED ALPHA @VERSION@
-========================================
+SPOILED MILK - @VERSION@
+=======================
 
 This client is configured for the hosted Spoiled Milk limited-test world.
 
@@ -20,7 +20,7 @@ The launcher checks for updates before starting the client.
 Updating
 --------
 The normal launcher runs the updater first. You can also run the updater by
-itself from this folder to check GitHub for a newer limited-alpha client
+itself from this folder to check GitHub for a newer client
 package:
 
 - Windows: double-click "Update Spoiled Milk.cmd"
@@ -32,8 +32,7 @@ matching package type into this folder.
 
 Testing notes
 -------------
-This is an alpha playtest release. Progress is stored on the hosted server,
-not in this folder. Report issues at:
+Progress is stored on the hosted server, not in this folder. Report issues at:
 https://github.com/An-actual-duck/open-rsc-spoiled-milk/issues
 
 Source and license
