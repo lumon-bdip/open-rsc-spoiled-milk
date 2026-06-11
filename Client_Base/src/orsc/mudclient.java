@@ -201,7 +201,7 @@ public final class mudclient implements Runnable {
 		{37, 46, 825, 181},
 		{37, 36, 42, 40, 20},
 		{37, 46, 825, 20},
-		{37, 619, 825, 181}
+		{37, 619, 825, 3112}
 	};
 	private static final int[][] SUMMONING_COST_AMOUNTS = {
 		{1, 1},

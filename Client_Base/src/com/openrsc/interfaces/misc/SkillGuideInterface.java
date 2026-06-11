@@ -1027,7 +1027,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(53, "51", "Restless Shade - Combat; 2 life, 3 cosmic, soul, ashes");
 			addSummonGuide(13, "58", "Delivery Camel - Utility; 1 life, 2 body, 2 law, 2 nature, bones");
 			addSummonGuide(298, "64", "Astral Wraith - Combat; 2 life, 4 cosmic, soul, bones");
-			addSummonGuide(184, "70", "Abyssal Demon - Combat; 3 life, blood, soul, ashes");
+			addSummonGuide(184, "70", "Abyssal Demon - Combat; 3 life, blood, soul, demon ash");
 		} else if (curTab == 1) {
 			addSummonGuide(23, "1", "Broodling Spider - Hits 2 +1/10; dmg 1 +1/24");
 			addSummonGuide(114, "7", "Mischief Imp - Does not engage in combat");

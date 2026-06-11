@@ -534,6 +534,10 @@ public final class Summoning {
 		return mob != null && mob.isNpc() && isSummon((Npc) mob);
 	}
 
+	public static boolean canSummonAttack(final Mob attacker, final Mob target) {
+		return !isSummon(attacker) || target == null || !target.isPlayer();
+	}
+
 	public static boolean isArmorSummon(final Npc npc) {
 		return isSummon(npc) && SOURCE_ARMOR.equals(npc.getAttribute(SUMMON_SOURCE_KEY, ""));
 	}
@@ -1290,6 +1294,7 @@ public final class Summoning {
 		return target != null
 			&& target != owner
 			&& target != summon
+			&& !target.isPlayer()
 			&& !target.isRemoved()
 			&& target.getSkills().getLevel(Skill.HITS.id()) > 0
 			&& target.withinRange(owner, SUMMON_ASSIST_TARGET_RANGE);

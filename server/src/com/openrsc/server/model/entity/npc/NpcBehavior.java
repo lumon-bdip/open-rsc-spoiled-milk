@@ -182,6 +182,9 @@ public class NpcBehavior {
 	}
 
 	private boolean handleRoamAggroScan(final long now, final boolean hasPlayers) {
+		if (Summoning.isSummon(npc)) {
+			return false;
+		}
 		// Check if NPC will aggro
 		if (hasPlayers && checkCombatTimer(now, npc.getCombatTimer(), 5 * tickFactor)) {
 			Player preferredThreatTarget = npc.getPreferredThreatTarget();
@@ -332,6 +335,15 @@ public class NpcBehavior {
 	private void handleAggro(final long now) {
 		// There should not be hostility or aggro. Let's resume roaming.
 		if (target == null || target.isRemoved() || npc.isRespawning() || npc.isRemoved()) {
+			setRoaming();
+			return;
+		}
+
+		if (!Summoning.canSummonAttack(npc, target)) {
+			npc.resetCombatEvent();
+			npc.setOpponent(null);
+			npc.setLastOpponent(null);
+			npc.clearHostility();
 			setRoaming();
 			return;
 		}
@@ -609,6 +621,10 @@ public class NpcBehavior {
 
 	// We return false if the player cannot be aggro'd.
 	private boolean canAggro(final Mob target, final long now) {
+		if (!Summoning.canSummonAttack(npc, target)) {
+			return false;
+		}
+
 		boolean outOfBounds = !target.getLocation().inBounds(npc.getLoc().minX - 4, npc.getLoc().minY - 4,
 			npc.getLoc().maxX + 4, npc.getLoc().maxY + 4);
 

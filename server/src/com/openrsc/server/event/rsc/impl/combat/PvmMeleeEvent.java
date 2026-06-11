@@ -198,7 +198,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		boolean targetRespawning = targetMob.isNpc() && ((Npc) targetMob).isRespawning();
 		boolean removed = attackerMob.isRemoved() || targetMob.isRemoved();
 		boolean living = attackerMob.getSkills().getLevel(Skill.HITS.id()) > 0 && targetMob.getSkills().getLevel(Skill.HITS.id()) > 0;
-		return running && attackerLoggedIn && targetLoggedIn && !attackerRespawning && !targetRespawning && !removed && living;
+		return running && Summoning.canSummonAttack(attackerMob, targetMob)
+			&& attackerLoggedIn && targetLoggedIn && !attackerRespawning && !targetRespawning && !removed && living;
 	}
 
 	private boolean targetOutsideNpcLeash(final Npc attackerNpc, final Mob target) {
@@ -209,6 +210,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void inflictDamage(final Mob hitter, final Mob target, int damage) {
+		if (!Summoning.canSummonAttack(hitter, target)) {
+			return;
+		}
 		hitter.incHitsMade();
 		damage = Summoning.applySummonOutgoingDamage(hitter, damage);
 

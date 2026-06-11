@@ -407,6 +407,9 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void inflictDamage(final Mob hitter, final Mob target, int damage) {
+		if (!Summoning.canSummonAttack(hitter, target)) {
+			return;
+		}
 		hitter.incHitsMade();
 		damage = Summoning.applySummonOutgoingDamage(hitter, damage);
 

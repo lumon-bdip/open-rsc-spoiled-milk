@@ -9,6 +9,8 @@ ROOT = Path(__file__).resolve().parents[2]
 ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
 ITEM_DEFS_CUSTOM = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+CLIENT_MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+SKILL_GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
 NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
 BONES_PLUGIN = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/misc/Bones.java"
@@ -27,6 +29,8 @@ def main() -> int:
 
     item_id = ITEM_ID.read_text(encoding="utf-8")
     client = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
+    client_mudclient = CLIENT_MUDCLIENT.read_text(encoding="utf-8")
+    skill_guide = SKILL_GUIDE.read_text(encoding="utf-8")
     npc = NPC.read_text(encoding="utf-8")
     npc_drops = NPC_DROPS.read_text(encoding="utf-8")
     bones = BONES_PLUGIN.read_text(encoding="utf-8")
@@ -58,6 +62,8 @@ def main() -> int:
 
     greater_demon = re.search(r"GREATER_DEMON_PROFILE\s*=.*?;\n", summoning, re.S)
     require(greater_demon is not None and "ItemId.DEMON_ASH.id()" in greater_demon.group(0), "Greater Demon summon must consume Demon ash", failures)
+    require("{37, 619, 825, 3112}" in client_mudclient, "Abyssal Demon summon tooltip must count Demon ash", failures)
+    require("Abyssal Demon - Combat; 3 life, blood, soul, demon ash" in skill_guide, "Summoning guide must list Demon ash for Abyssal Demon", failures)
     require("case DEMON_ASH:" in summoning, "Black Unicorn prayer-drop handling must include Demon ash", failures)
     require("return 80;" in summoning, "Black Unicorn Demon ash XP must match the prayer plugin value", failures)
 

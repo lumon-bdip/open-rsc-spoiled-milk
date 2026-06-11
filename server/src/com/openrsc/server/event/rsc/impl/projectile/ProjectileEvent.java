@@ -259,6 +259,9 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void projectileDamage() {
+		if (!Summoning.canSummonAttack(caster, opponent)) {
+			return;
+		}
 		damage = Summoning.applySummonOutgoingDamage(caster, damage);
 		if (caster.isPlayer()
 				&& opponent.isRemoved()

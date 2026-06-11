@@ -976,7 +976,12 @@ public abstract class Mob extends Entity {
 		}
 		final boolean attackerIsSummon = Summoning.isSummon(this);
 		final boolean victimIsSummon = Summoning.isSummon(victim);
-		if (victimIsSummon) {
+		if (victimIsSummon || !Summoning.canSummonAttack(this, victim)) {
+			if (attackerIsSummon) {
+				resetCombatEvent();
+				setOpponent(null);
+				setLastOpponent(null);
+			}
 			return;
 		}
 
