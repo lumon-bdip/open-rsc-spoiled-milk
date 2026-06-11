@@ -91,6 +91,11 @@ def main() -> None:
 		"player.message(\"A healing spell is already restoring your health\");",
 	):
 		require(snippet in spell_handler, f"SpellHandler missing expected random-fix spell snippet: {snippet}")
+	for retired_snippet in (
+		"you need to recharge the staff of iban",
+		"Iban blast_casts",
+	):
+		require(retired_snippet not in spell_handler, f"Iban Blast should not use staff charges: {retired_snippet}")
 
 	def lesser_heal_per_pulse(magic_power: int) -> int:
 		return 1 + max(0, magic_power) // 60

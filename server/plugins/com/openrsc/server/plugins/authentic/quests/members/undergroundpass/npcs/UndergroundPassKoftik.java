@@ -49,7 +49,6 @@ public class UndergroundPassKoftik implements QuestInterface, TalkNpcTrigger {
 			incStat(player, xpReward.getSkill().id(), xpReward.getBaseXP(), xpReward.getVarXP());
 		}
 		player.message("you have completed the underground pass quest");
-		player.getCache().set("Iban blast_casts", 25);
 		player.getCache().remove("advised_koftik");
 	}
 

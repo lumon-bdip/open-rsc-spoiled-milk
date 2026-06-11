@@ -65,6 +65,7 @@ python3 ./tests/myworld/test-npc-attack-styles.py
 python3 ./tests/myworld/test-combat-runtime-invariants.py
 python3 ./tests/myworld/test-combat-exceptions.py
 python3 ./tests/myworld/test-combat-scenarios.py
+python3 ./tests/myworld/test-iban-staff-no-charges.py
 python3 ./tests/myworld/test-moderator-death-drops.py
 python3 ./tests/myworld/test-defense-distribution.py
 python3 ./tests/myworld/test-balance-fixtures.py
@@ -113,4 +114,5 @@ python3 ./tests/myworld/test-summoning-display-names.py
 python3 ./tests/myworld/test-summoning-experience.py
 python3 ./tests/myworld/test-summon-health-restoration.py
 python3 ./tests/myworld/test-summoning-spawn-placement.py
+python3 ./tests/myworld/test-summon-friendly-fire.py
 python3 ./tests/myworld/test-tier-rebalance.py

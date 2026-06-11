@@ -956,7 +956,6 @@ public final class Admins implements CommandTrigger {
 		}
 
 		targetPlayer.updateQuestStage(Quests.UNDERGROUND_PASS, Quests.QUEST_STAGE_COMPLETED);
-		targetPlayer.getCache().set("Iban blast_casts", 25);
 		targetPlayer.getCache().set("Saradomin strike_casts", 100);
 		targetPlayer.getCache().set("Flames of Zamorak_casts", 100);
 		targetPlayer.getCache().set("Void of Zamorak_casts", 100);

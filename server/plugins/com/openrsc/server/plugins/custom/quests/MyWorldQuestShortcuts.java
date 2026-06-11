@@ -519,7 +519,6 @@ public final class MyWorldQuestShortcuts {
 	private static void completeUndergroundPassReward(final Player player) {
 		completeQuestWithStandardReward(player, Quest.UNDERGROUND_PASS,
 			"you have completed the underground pass quest");
-		player.getCache().set("Iban blast_casts", 25);
 		ensureUtilityItem(player, ItemId.STAFF_OF_IBAN.id(), 1);
 		giveOrBank(player, ItemId.DEATH_RUNE.id(), 15);
 		giveOrBank(player, ItemId.FIRE_RUNE.id(), 30);

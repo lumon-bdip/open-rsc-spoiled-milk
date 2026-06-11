@@ -11063,8 +11063,9 @@ public final class mudclient implements Runnable {
 				5924, C_AUTO_RETALIATE ? 255 : 100);
 		}
 		if (hovered) {
-			this.getSurface().drawString("Auto attack: " + (C_AUTO_RETALIATE ? "@gre@On" : "@red@Off"),
-				x - 2, y + AUTO_ATTACK_HUD_SIZE + 12, 0xFFFFFF, 1);
+			String hoverText = "Auto attack: " + (C_AUTO_RETALIATE ? "@gre@On" : "@red@Off");
+			this.getSurface().drawString(hoverText,
+				x - 4 - this.getSurface().stringWidth(1, hoverText), y + 12, 0xFFFFFF, 1);
 			if (this.mouseButtonClick == 1) {
 				toggleAutoRetaliate();
 				this.mouseButtonClick = 0;

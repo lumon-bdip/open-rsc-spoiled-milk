@@ -290,11 +290,12 @@ public class CombatEvent extends GameTickEvent {
 
 	private Mob selectChaosAmuletSplashTarget(final Player player, final Mob primaryTarget) {
 		if (!primaryTarget.isNpc()) {
-			return primaryTarget;
+			return null;
 		}
 		final java.util.ArrayList<Npc> candidates = new java.util.ArrayList<Npc>();
 		for (Npc npc : player.getViewArea().getNpcsInView()) {
 			if (npc != null && !npc.isRemoved() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
+				&& !Summoning.isSummon(npc)
 				&& npc.withinRange(primaryTarget.getLocation(), 4)) {
 				candidates.add(npc);
 			}

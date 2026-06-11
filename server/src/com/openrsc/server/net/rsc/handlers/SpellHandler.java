@@ -3,6 +3,7 @@ package com.openrsc.server.net.rsc.handlers;
 import com.openrsc.server.constants.*;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.SkillCapes;
+import com.openrsc.server.content.Summoning;
 import com.openrsc.server.database.impl.mysql.queries.logging.GenericLog;
 import com.openrsc.server.event.MiniEvent;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
@@ -2076,18 +2077,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							getPlayer().message("you need the staff of iban to cast this spell");
 							return;
 						}
-						if (getPlayer().getCache().hasKey(spell.getName() + "_casts")
-							&& getPlayer().getCache().getInt(spell.getName() + "_casts") < 1) {
-							getPlayer().message("you need to recharge the staff of iban");
-							getPlayer().message("at iban's temple");
-							return;
-						}
 						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
 							return;
-						}
-						if (getPlayer().getCache().hasKey(spell.getName() + "_casts")) {
-							int casts = getPlayer().getCache().getInt(spell.getName() + "_casts");
-							getPlayer().getCache().set(spell.getName() + "_casts", casts - 1);
 						}
 						final int ibanPrimaryDamage = CombatFormula.calculateIbanSpellDamage(getPlayer(), affectedMob);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
@@ -2400,7 +2391,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		int totalDamage = Math.max(0, primaryDamage);
 
 		for (Npc npc : caster.getViewArea().getNpcsInView()) {
-			if (npc == primaryTarget || !isValidGodSpellAreaTarget(caster, primaryTarget, npc)) {
+			if (npc == primaryTarget || !isValidGodSpellAreaTarget(primaryTarget, npc)) {
 				continue;
 			}
 			final int damage = CombatFormula.calculateMagicDamage(caster, npc, secondaryMax);
@@ -2427,26 +2418,19 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private boolean isValidIbanBlastAreaTarget(final Mob primaryTarget, final Mob possibleTarget) {
 		return possibleTarget != null && !possibleTarget.isRemoved()
 			&& possibleTarget.isNpc()
+			&& !Summoning.isSummon(possibleTarget)
 			&& possibleTarget.getSkills().getLevel(Skill.HITS.id()) > 0
 			&& primaryTarget.getLocation().withinRange(possibleTarget.getLocation(), 2);
 	}
 
-	private boolean isValidGodSpellAreaTarget(final Player caster, final Mob primaryTarget, final Mob possibleTarget) {
+	private boolean isValidGodSpellAreaTarget(final Mob primaryTarget, final Mob possibleTarget) {
 		if (possibleTarget == null || possibleTarget.isRemoved()
+			|| !possibleTarget.isNpc()
+			|| Summoning.isSummon(possibleTarget)
 			|| possibleTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return false;
 		}
-		if (!primaryTarget.getLocation().withinRange(possibleTarget.getLocation(), 2)) {
-			return false;
-		}
-		if (possibleTarget.isNpc()) {
-			return true;
-		}
-		if (!possibleTarget.isPlayer()) {
-			return false;
-		}
-		Player targetPlayer = (Player) possibleTarget;
-		return caster.getLocation().inWilderness() && targetPlayer.getLocation().inWilderness();
+		return primaryTarget.getLocation().withinRange(possibleTarget.getLocation(), 2);
 	}
 
 	private int applyGodSpellSecondaryDamage(final Player caster, final Mob target, final int damage) {

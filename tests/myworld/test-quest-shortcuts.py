@@ -16,6 +16,11 @@ def require(text: str, needle: str, label: str) -> None:
         raise AssertionError(f"missing {label}: {needle}")
 
 
+def forbid(text: str, needle: str, label: str) -> None:
+    if needle in text:
+        raise AssertionError(f"unexpected {label}: {needle}")
+
+
 def method_body(text: str, method: str) -> str:
     signature = f"public static void {method}"
     if signature not in text:
@@ -61,7 +66,7 @@ def main() -> None:
     require(helper, "Quest.UNDERGROUND_PASS", "underground pass line reward hook")
     require(helper, "ItemId.KING_LATHAS_AMULET.id()", "biohazard utility item")
     require(helper, "ItemId.STAFF_OF_IBAN.id()", "underground pass utility item")
-    require(helper, 'player.getCache().set("Iban blast_casts"', "underground pass iban casts")
+    forbid(helper, 'player.getCache().set("Iban blast_casts"', "underground pass iban cast charges")
     require(helper, "Quest.OBSERVATORY_QUEST", "observatory reward hook")
     require(helper, "ItemId.UNCUT_SAPPHIRE.id(), 12", "observatory sapphire bundle")
     require(helper, "Quest.TOURIST_TRAP", "tourist trap reward hook")

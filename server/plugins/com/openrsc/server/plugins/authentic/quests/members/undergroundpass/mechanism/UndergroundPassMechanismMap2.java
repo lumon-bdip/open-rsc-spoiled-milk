@@ -27,8 +27,7 @@ public class UndergroundPassMechanismMap2 implements UseLocTrigger {
 		return (obj.getID() == UndergroundPassObstaclesMap2.WALL_GRILL_EAST && item.getCatalogId() == ItemId.ROPE.id())
 				|| (obj.getID() == UndergroundPassObstaclesMap2.PASSAGE && item.getCatalogId() == ItemId.PLANK.id())
 				|| (obj.getID() == BOULDER && item.getCatalogId() == ItemId.RAILING.id())
-				|| (obj.getID() == UndergroundPassObstaclesMap2.FLAMES_OF_ZAMORAK && inArray(item.getCatalogId(), ITEMS_TO_FLAMES))
-				|| (obj.getID() == UndergroundPassObstaclesMap2.FLAMES_OF_ZAMORAK && item.getCatalogId() == ItemId.STAFF_OF_IBAN.id());
+				|| (obj.getID() == UndergroundPassObstaclesMap2.FLAMES_OF_ZAMORAK && inArray(item.getCatalogId(), ITEMS_TO_FLAMES));
 	}
 
 	@Override
@@ -92,12 +91,6 @@ public class UndergroundPassMechanismMap2 implements UseLocTrigger {
 			}
 			player.getCarriedItems().remove(new Item(item.getCatalogId()));
 			player.message("you hear a howl in the distance");
-		}
-		else if (obj.getID() == UndergroundPassObstaclesMap2.FLAMES_OF_ZAMORAK && item.getCatalogId() == ItemId.STAFF_OF_IBAN.id()) {
-			mes("you hold the staff above the well");
-			displayTeleportBubble(player, player.getX(), player.getY(), true);
-			player.message("and feel the power of zamorak flow through you");
-			player.getCache().set("Iban blast_casts", 25);
 		}
 	}
 }

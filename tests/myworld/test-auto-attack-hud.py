@@ -21,6 +21,7 @@ def main() -> int:
         "drawAutoAttackHudButton(x - AUTO_ATTACK_HUD_SIZE - AUTO_ATTACK_HUD_GAP, y - 1)",
         "private void drawAutoAttackHudButton(int x, int y)",
         "Auto attack: ",
+        "x - 4 - this.getSurface().stringWidth(1, hoverText), y + 12",
         "private void toggleAutoRetaliate()",
         "bufferBits.putByte(47)",
         "C_AUTO_RETALIATE ? 1 : 0",
