@@ -557,29 +557,11 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 		final Player casterPlayer = (Player) caster;
-		final int intimidatePercent = casterPlayer.getBearHideIntimidatePercent();
-		if (intimidatePercent > 0 && DataConversions.getRandom().nextDouble() < casterPlayer.getBearHideIntimidateProcChance()) {
-			opponent.applyBearIntimidateDebuff(intimidatePercent);
+		if (damage > 0 && (type == 2 || type == 5)) {
+			casterPlayer.applyElementalGiantMightDebuff(opponent);
 		}
-		if (casterPlayer.getGoblinEnragedProcChance() > 0.0D && DataConversions.getRandom().nextDouble() < casterPlayer.getGoblinEnragedProcChance()) {
-			casterPlayer.activateGoblinEnraged();
-		}
-		if (casterPlayer.getGiantBruteForceProcChance() > 0.0D && DataConversions.getRandom().nextDouble() < casterPlayer.getGiantBruteForceProcChance()) {
-			casterPlayer.activateGiantBruteForce();
-		}
-		if (casterPlayer.getMossGiantBruteForceProcChance() > 0.0D && DataConversions.getRandom().nextDouble() < casterPlayer.getMossGiantBruteForceProcChance()) {
-			casterPlayer.activateMossGiantBruteForce();
-		}
-		if (casterPlayer.getIceGiantBruteForceProcChance() > 0.0D && DataConversions.getRandom().nextDouble() < casterPlayer.getIceGiantBruteForceProcChance()) {
-			casterPlayer.activateIceGiantBruteForce();
-		}
-		if (casterPlayer.getFireGiantBruteForceProcChance() > 0.0D && DataConversions.getRandom().nextDouble() < casterPlayer.getFireGiantBruteForceProcChance()) {
-			casterPlayer.activateFireGiantBruteForce();
-		}
-		if (casterPlayer.hasFullOgreSet() && casterPlayer.isOgreStaggeringBlowReady()
-			&& DataConversions.getRandom().nextDouble() < casterPlayer.getOgreStaggeringBlowProcChance()) {
+		if (casterPlayer.hasFullOgreSet() && DataConversions.getRandom().nextDouble() < casterPlayer.getOgreStaggeringBlowProcChance()) {
 			opponent.applyOgreStaggerDebuff();
-			casterPlayer.activateOgreStaggeringBlowCooldown();
 		}
 		final int smokePercent = casterPlayer.getBabyDragonSmokeAccuracyDebuffPercent();
 		if (smokePercent > 0 && DataConversions.getRandom().nextDouble() < casterPlayer.getBabyDragonSmokeProcChance()) {

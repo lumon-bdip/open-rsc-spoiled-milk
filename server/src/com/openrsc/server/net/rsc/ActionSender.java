@@ -468,6 +468,7 @@ public class ActionSender {
 
 	public static void sendEquipmentStats(Player player, int slot) {
 		player.syncHitsEquipmentBonuses();
+		player.syncGiantMightEquipmentBonuses();
 		player.syncSoulRobeShield();
 		EquipmentStatsStruct struct = new EquipmentStatsStruct();
 		struct.armourPoints = player.getRangedDefense();

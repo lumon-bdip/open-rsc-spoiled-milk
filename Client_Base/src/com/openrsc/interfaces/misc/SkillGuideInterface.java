@@ -1349,7 +1349,7 @@ public final class SkillGuideInterface {
 			addLeatherGuide(1914, "46", "Hellhound hide armor");
 			addLeatherGuide(1919, "46", "Fire giant hide armor");
 			addLeatherGuide(1924, "46", "Blue dragon hide armor");
-			addLeatherGuide(1929, "46", "Earth dragon hide armor");
+			addLeatherGuide(1929, "46", "Green dragon hide armor");
 			addLeatherGuide(1934, "54", "Red dragon hide armor");
 			addLeatherGuide(1939, "54", "Black demon hide armor");
 			addLeatherGuide(1944, "62", "Black dragon hide armor");

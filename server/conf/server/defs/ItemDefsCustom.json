@@ -13135,8 +13135,8 @@
     },
     {
       "id": 1823,
-      "name": "Earth dragon hide",
-      "description": "A sturdy green earth dragon hide",
+      "name": "Green dragon hide",
+      "description": "A sturdy green dragon hide",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13158,8 +13158,8 @@
     },
     {
       "id": 1824,
-      "name": "Earth dragon leather",
-      "description": "Processed earth dragon hide",
+      "name": "Green dragon leather",
+      "description": "Processed green dragon hide",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13527,7 +13527,7 @@
     {
       "id": 1840,
       "name": "Goblin-hide coif",
-      "description": "Coif made from goblin leather. When wearing 5 matching Goblin armor pieces you will get the Enraged trait. Enraged has a 20% chance to proc with each attack, increasing your attack speed by 10% for your next 5 attacks.",
+      "description": "Coif made from goblin leather. When wearing 5 matching Goblin armor pieces you will get the Goblin's Tenacity trait. Goblin's Tenacity has a 5% chance for lethal damage to leave you at 1 Hit.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13550,7 +13550,7 @@
     {
       "id": 1841,
       "name": "Goblin-hide gloves",
-      "description": "Gloves made from goblin leather. When wearing 5 matching Goblin armor pieces you will get the Enraged trait. Enraged has a 20% chance to proc with each attack, increasing your attack speed by 10% for your next 5 attacks.",
+      "description": "Gloves made from goblin leather. When wearing 5 matching Goblin armor pieces you will get the Goblin's Tenacity trait. Goblin's Tenacity has a 5% chance for lethal damage to leave you at 1 Hit.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13573,7 +13573,7 @@
     {
       "id": 1842,
       "name": "Goblin-hide boots",
-      "description": "Boots made from goblin leather. When wearing 5 matching Goblin armor pieces you will get the Enraged trait. Enraged has a 20% chance to proc with each attack, increasing your attack speed by 10% for your next 5 attacks.",
+      "description": "Boots made from goblin leather. When wearing 5 matching Goblin armor pieces you will get the Goblin's Tenacity trait. Goblin's Tenacity has a 5% chance for lethal damage to leave you at 1 Hit.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13596,7 +13596,7 @@
     {
       "id": 1843,
       "name": "Goblin-hide chaps",
-      "description": "Chaps made from goblin leather. When wearing 5 matching Goblin armor pieces you will get the Enraged trait. Enraged has a 20% chance to proc with each attack, increasing your attack speed by 10% for your next 5 attacks.",
+      "description": "Chaps made from goblin leather. When wearing 5 matching Goblin armor pieces you will get the Goblin's Tenacity trait. Goblin's Tenacity has a 5% chance for lethal damage to leave you at 1 Hit.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13619,7 +13619,7 @@
     {
       "id": 1844,
       "name": "Goblin-hide cuirass",
-      "description": "Cuirass made from goblin leather. When wearing 5 matching Goblin armor pieces you will get the Enraged trait. Enraged has a 20% chance to proc with each attack, increasing your attack speed by 10% for your next 5 attacks.",
+      "description": "Cuirass made from goblin leather. When wearing 5 matching Goblin armor pieces you will get the Goblin's Tenacity trait. Goblin's Tenacity has a 5% chance for lethal damage to leave you at 1 Hit.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13757,7 +13757,7 @@
     {
       "id": 1850,
       "name": "Bear-hide coif",
-      "description": "Coif made from bear leather. When wearing 5 matching Bear armor pieces you will get the Intimidate trait. Intimidate has a 20% chance to proc with each attack, lowering your opponent's attack speed by 10% for their next 5 attacks.",
+      "description": "Coif made from bear leather. When wearing 5 matching Bear armor pieces you will get the Bear's Maul trait. Bear's Maul makes melee attacks hit twice for 60% damage each.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13780,7 +13780,7 @@
     {
       "id": 1851,
       "name": "Bear-hide gloves",
-      "description": "Gloves made from bear leather. When wearing 5 matching Bear armor pieces you will get the Intimidate trait. Intimidate has a 20% chance to proc with each attack, lowering your opponent's attack speed by 10% for their next 5 attacks.",
+      "description": "Gloves made from bear leather. When wearing 5 matching Bear armor pieces you will get the Bear's Maul trait. Bear's Maul makes melee attacks hit twice for 60% damage each.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13803,7 +13803,7 @@
     {
       "id": 1852,
       "name": "Bear-hide boots",
-      "description": "Boots made from bear leather. When wearing 5 matching Bear armor pieces you will get the Intimidate trait. Intimidate has a 20% chance to proc with each attack, lowering your opponent's attack speed by 10% for their next 5 attacks.",
+      "description": "Boots made from bear leather. When wearing 5 matching Bear armor pieces you will get the Bear's Maul trait. Bear's Maul makes melee attacks hit twice for 60% damage each.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13826,7 +13826,7 @@
     {
       "id": 1853,
       "name": "Bear-hide chaps",
-      "description": "Chaps made from bear leather. When wearing 5 matching Bear armor pieces you will get the Intimidate trait. Intimidate has a 20% chance to proc with each attack, lowering your opponent's attack speed by 10% for their next 5 attacks.",
+      "description": "Chaps made from bear leather. When wearing 5 matching Bear armor pieces you will get the Bear's Maul trait. Bear's Maul makes melee attacks hit twice for 60% damage each.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13849,7 +13849,7 @@
     {
       "id": 1854,
       "name": "Bear-hide cuirass",
-      "description": "Cuirass made from bear leather. When wearing 5 matching Bear armor pieces you will get the Intimidate trait. Intimidate has a 20% chance to proc with each attack, lowering your opponent's attack speed by 10% for their next 5 attacks.",
+      "description": "Cuirass made from bear leather. When wearing 5 matching Bear armor pieces you will get the Bear's Maul trait. Bear's Maul makes melee attacks hit twice for 60% damage each.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14332,7 +14332,7 @@
     {
       "id": 1875,
       "name": "Giant-hide coif",
-      "description": "Coif made from giant leather. When wearing 5 matching Giant armor pieces you will get the Brute Force trait. Brute Force has a 20% chance to proc with each attack, increasing your melee damage by 10% for your next 5 attacks.",
+      "description": "Coif made from giant leather. When wearing 5 matching Giant armor pieces you will get the Giant's Might trait. Giant's Might raises your current melee and ranged levels by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14355,7 +14355,7 @@
     {
       "id": 1876,
       "name": "Giant-hide gloves",
-      "description": "Gloves made from giant leather. When wearing 5 matching Giant armor pieces you will get the Brute Force trait. Brute Force has a 20% chance to proc with each attack, increasing your melee damage by 10% for your next 5 attacks.",
+      "description": "Gloves made from giant leather. When wearing 5 matching Giant armor pieces you will get the Giant's Might trait. Giant's Might raises your current melee and ranged levels by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14378,7 +14378,7 @@
     {
       "id": 1877,
       "name": "Giant-hide boots",
-      "description": "Boots made from giant leather. When wearing 5 matching Giant armor pieces you will get the Brute Force trait. Brute Force has a 20% chance to proc with each attack, increasing your melee damage by 10% for your next 5 attacks.",
+      "description": "Boots made from giant leather. When wearing 5 matching Giant armor pieces you will get the Giant's Might trait. Giant's Might raises your current melee and ranged levels by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14401,7 +14401,7 @@
     {
       "id": 1878,
       "name": "Giant-hide chaps",
-      "description": "Chaps made from giant leather. When wearing 5 matching Giant armor pieces you will get the Brute Force trait. Brute Force has a 20% chance to proc with each attack, increasing your melee damage by 10% for your next 5 attacks.",
+      "description": "Chaps made from giant leather. When wearing 5 matching Giant armor pieces you will get the Giant's Might trait. Giant's Might raises your current melee and ranged levels by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14424,7 +14424,7 @@
     {
       "id": 1879,
       "name": "Giant-hide cuirass",
-      "description": "Cuirass made from giant leather. When wearing 5 matching Giant armor pieces you will get the Brute Force trait. Brute Force has a 20% chance to proc with each attack, increasing your melee damage by 10% for your next 5 attacks.",
+      "description": "Cuirass made from giant leather. When wearing 5 matching Giant armor pieces you will get the Giant's Might trait. Giant's Might raises your current melee and ranged levels by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14447,7 +14447,7 @@
     {
       "id": 1880,
       "name": "Ogre-hide coif",
-      "description": "Coif made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. Once it triggers it cannot happen again until your next 5 attacks pass or 10 seconds elapse.",
+      "description": "Coif made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. It has no cooldown.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14470,7 +14470,7 @@
     {
       "id": 1881,
       "name": "Ogre-hide gloves",
-      "description": "Gloves made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. Once it triggers it cannot happen again until your next 5 attacks pass or 10 seconds elapse.",
+      "description": "Gloves made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. It has no cooldown.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14493,7 +14493,7 @@
     {
       "id": 1882,
       "name": "Ogre-hide boots",
-      "description": "Boots made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. Once it triggers it cannot happen again until your next 5 attacks pass or 10 seconds elapse.",
+      "description": "Boots made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. It has no cooldown.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14516,7 +14516,7 @@
     {
       "id": 1883,
       "name": "Ogre-hide chaps",
-      "description": "Chaps made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. Once it triggers it cannot happen again until your next 5 attacks pass or 10 seconds elapse.",
+      "description": "Chaps made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. It has no cooldown.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14539,7 +14539,7 @@
     {
       "id": 1884,
       "name": "Ogre-hide cuirass",
-      "description": "Cuirass made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. Once it triggers it cannot happen again until your next 5 attacks pass or 10 seconds elapse.",
+      "description": "Cuirass made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. It has no cooldown.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14792,7 +14792,7 @@
     {
       "id": 1895,
       "name": "Moss-giant-hide coif",
-      "description": "Coif made from moss giant leather. When wearing 5 matching Moss Giant armor pieces you will get the Terra Brute Force trait. Terra Brute Force has a 20% chance to proc with each attack, increasing your melee damage and earth magic damage by 10% for your next 5 attacks.",
+      "description": "Coif made from moss giant leather. When wearing 5 matching Moss Giant armor pieces you will get the Earth Giant's Might trait. Earth Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the earth debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14815,7 +14815,7 @@
     {
       "id": 1896,
       "name": "Moss-giant-hide gloves",
-      "description": "Gloves made from moss giant leather. When wearing 5 matching Moss Giant armor pieces you will get the Terra Brute Force trait. Terra Brute Force has a 20% chance to proc with each attack, increasing your melee damage and earth magic damage by 10% for your next 5 attacks.",
+      "description": "Gloves made from moss giant leather. When wearing 5 matching Moss Giant armor pieces you will get the Earth Giant's Might trait. Earth Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the earth debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14838,7 +14838,7 @@
     {
       "id": 1897,
       "name": "Moss-giant-hide boots",
-      "description": "Boots made from moss giant leather. When wearing 5 matching Moss Giant armor pieces you will get the Terra Brute Force trait. Terra Brute Force has a 20% chance to proc with each attack, increasing your melee damage and earth magic damage by 10% for your next 5 attacks.",
+      "description": "Boots made from moss giant leather. When wearing 5 matching Moss Giant armor pieces you will get the Earth Giant's Might trait. Earth Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the earth debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14861,7 +14861,7 @@
     {
       "id": 1898,
       "name": "Moss-giant-hide chaps",
-      "description": "Chaps made from moss giant leather. When wearing 5 matching Moss Giant armor pieces you will get the Terra Brute Force trait. Terra Brute Force has a 20% chance to proc with each attack, increasing your melee damage and earth magic damage by 10% for your next 5 attacks.",
+      "description": "Chaps made from moss giant leather. When wearing 5 matching Moss Giant armor pieces you will get the Earth Giant's Might trait. Earth Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the earth debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14884,7 +14884,7 @@
     {
       "id": 1899,
       "name": "Moss-giant-hide cuirass",
-      "description": "Cuirass made from moss giant leather. When wearing 5 matching Moss Giant armor pieces you will get the Terra Brute Force trait. Terra Brute Force has a 20% chance to proc with each attack, increasing your melee damage and earth magic damage by 10% for your next 5 attacks.",
+      "description": "Cuirass made from moss giant leather. When wearing 5 matching Moss Giant armor pieces you will get the Earth Giant's Might trait. Earth Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the earth debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14907,7 +14907,7 @@
     {
       "id": 1900,
       "name": "Ice-giant-hide coif",
-      "description": "Coif made from ice giant leather. When wearing 5 matching Ice Giant armor pieces you will get the Icy Brute Force trait. Icy Brute Force has a 20% chance to proc with each attack, increasing your melee damage and water magic damage by 10% for your next 5 attacks.",
+      "description": "Coif made from ice giant leather. When wearing 5 matching Ice Giant armor pieces you will get the Water Giant's Might trait. Water Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the water debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14930,7 +14930,7 @@
     {
       "id": 1901,
       "name": "Ice-giant-hide gloves",
-      "description": "Gloves made from ice giant leather. When wearing 5 matching Ice Giant armor pieces you will get the Icy Brute Force trait. Icy Brute Force has a 20% chance to proc with each attack, increasing your melee damage and water magic damage by 10% for your next 5 attacks.",
+      "description": "Gloves made from ice giant leather. When wearing 5 matching Ice Giant armor pieces you will get the Water Giant's Might trait. Water Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the water debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14953,7 +14953,7 @@
     {
       "id": 1902,
       "name": "Ice-giant-hide boots",
-      "description": "Boots made from ice giant leather. When wearing 5 matching Ice Giant armor pieces you will get the Icy Brute Force trait. Icy Brute Force has a 20% chance to proc with each attack, increasing your melee damage and water magic damage by 10% for your next 5 attacks.",
+      "description": "Boots made from ice giant leather. When wearing 5 matching Ice Giant armor pieces you will get the Water Giant's Might trait. Water Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the water debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14976,7 +14976,7 @@
     {
       "id": 1903,
       "name": "Ice-giant-hide chaps",
-      "description": "Chaps made from ice giant leather. When wearing 5 matching Ice Giant armor pieces you will get the Icy Brute Force trait. Icy Brute Force has a 20% chance to proc with each attack, increasing your melee damage and water magic damage by 10% for your next 5 attacks.",
+      "description": "Chaps made from ice giant leather. When wearing 5 matching Ice Giant armor pieces you will get the Water Giant's Might trait. Water Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the water debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14999,7 +14999,7 @@
     {
       "id": 1904,
       "name": "Ice-giant-hide cuirass",
-      "description": "Cuirass made from ice giant leather. When wearing 5 matching Ice Giant armor pieces you will get the Icy Brute Force trait. Icy Brute Force has a 20% chance to proc with each attack, increasing your melee damage and water magic damage by 10% for your next 5 attacks.",
+      "description": "Cuirass made from ice giant leather. When wearing 5 matching Ice Giant armor pieces you will get the Water Giant's Might trait. Water Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the water debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15252,7 +15252,7 @@
     {
       "id": 1915,
       "name": "Fire-giant-hide coif",
-      "description": "Coif made from fire giant leather. When wearing 5 matching Fire Giant armor pieces you will get the Fiery Brute Force trait. Fiery Brute Force has a 20% chance to proc with each attack, increasing your melee damage and fire magic damage by 10% for your next 5 attacks.",
+      "description": "Coif made from fire giant leather. When wearing 5 matching Fire Giant armor pieces you will get the Fire Giant's Might trait. Fire Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the fire debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15275,7 +15275,7 @@
     {
       "id": 1916,
       "name": "Fire-giant-hide gloves",
-      "description": "Gloves made from fire giant leather. When wearing 5 matching Fire Giant armor pieces you will get the Fiery Brute Force trait. Fiery Brute Force has a 20% chance to proc with each attack, increasing your melee damage and fire magic damage by 10% for your next 5 attacks.",
+      "description": "Gloves made from fire giant leather. When wearing 5 matching Fire Giant armor pieces you will get the Fire Giant's Might trait. Fire Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the fire debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15298,7 +15298,7 @@
     {
       "id": 1917,
       "name": "Fire-giant-hide boots",
-      "description": "Boots made from fire giant leather. When wearing 5 matching Fire Giant armor pieces you will get the Fiery Brute Force trait. Fiery Brute Force has a 20% chance to proc with each attack, increasing your melee damage and fire magic damage by 10% for your next 5 attacks.",
+      "description": "Boots made from fire giant leather. When wearing 5 matching Fire Giant armor pieces you will get the Fire Giant's Might trait. Fire Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the fire debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15321,7 +15321,7 @@
     {
       "id": 1918,
       "name": "Fire-giant-hide chaps",
-      "description": "Chaps made from fire giant leather. When wearing 5 matching Fire Giant armor pieces you will get the Fiery Brute Force trait. Fiery Brute Force has a 20% chance to proc with each attack, increasing your melee damage and fire magic damage by 10% for your next 5 attacks.",
+      "description": "Chaps made from fire giant leather. When wearing 5 matching Fire Giant armor pieces you will get the Fire Giant's Might trait. Fire Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the fire debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15344,7 +15344,7 @@
     {
       "id": 1919,
       "name": "Fire-giant-hide cuirass",
-      "description": "Cuirass made from fire giant leather. When wearing 5 matching Fire Giant armor pieces you will get the Fiery Brute Force trait. Fiery Brute Force has a 20% chance to proc with each attack, increasing your melee damage and fire magic damage by 10% for your next 5 attacks.",
+      "description": "Cuirass made from fire giant leather. When wearing 5 matching Fire Giant armor pieces you will get the Fire Giant's Might trait. Fire Giant's Might raises your current melee and ranged levels by 10% and gives successful melee and ranged attacks a 20% chance to apply the fire debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15481,8 +15481,8 @@
     },
     {
       "id": 1925,
-      "name": "Earth dragon-hide coif",
-      "description": "Coif made from earth dragon leather. When wearing 5 matching Earth Dragon armor pieces you will get the Terra Dragon Breath trait. Terra Dragon Breath has a 20% chance to proc with each attack, dealing up to 10 earth dragon breath damage that ignores defense and applying a tier 2 earth debuff.",
+      "name": "Green dragon-hide coif",
+      "description": "Coif made from green dragon leather. When wearing 5 matching Green Dragon armor pieces you will get the Terra Dragon Breath trait. Terra Dragon Breath has a 20% chance to proc with each attack, dealing up to 10 earth dragon breath damage that ignores defense and applying a tier 2 earth debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15504,8 +15504,8 @@
     },
     {
       "id": 1926,
-      "name": "Earth dragon-hide gloves",
-      "description": "Gloves made from earth dragon leather. When wearing 5 matching Earth Dragon armor pieces you will get the Terra Dragon Breath trait. Terra Dragon Breath has a 20% chance to proc with each attack, dealing up to 10 earth dragon breath damage that ignores defense and applying a tier 2 earth debuff.",
+      "name": "Green dragon-hide gloves",
+      "description": "Gloves made from green dragon leather. When wearing 5 matching Green Dragon armor pieces you will get the Terra Dragon Breath trait. Terra Dragon Breath has a 20% chance to proc with each attack, dealing up to 10 earth dragon breath damage that ignores defense and applying a tier 2 earth debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15527,8 +15527,8 @@
     },
     {
       "id": 1927,
-      "name": "Earth dragon-hide boots",
-      "description": "Boots made from earth dragon leather. When wearing 5 matching Earth Dragon armor pieces you will get the Terra Dragon Breath trait. Terra Dragon Breath has a 20% chance to proc with each attack, dealing up to 10 earth dragon breath damage that ignores defense and applying a tier 2 earth debuff.",
+      "name": "Green dragon-hide boots",
+      "description": "Boots made from green dragon leather. When wearing 5 matching Green Dragon armor pieces you will get the Terra Dragon Breath trait. Terra Dragon Breath has a 20% chance to proc with each attack, dealing up to 10 earth dragon breath damage that ignores defense and applying a tier 2 earth debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15550,8 +15550,8 @@
     },
     {
       "id": 1928,
-      "name": "Earth dragon-hide chaps",
-      "description": "Chaps made from earth dragon leather. When wearing 5 matching Earth Dragon armor pieces you will get the Terra Dragon Breath trait. Terra Dragon Breath has a 20% chance to proc with each attack, dealing up to 10 earth dragon breath damage that ignores defense and applying a tier 2 earth debuff.",
+      "name": "Green dragon-hide chaps",
+      "description": "Chaps made from green dragon leather. When wearing 5 matching Green Dragon armor pieces you will get the Terra Dragon Breath trait. Terra Dragon Breath has a 20% chance to proc with each attack, dealing up to 10 earth dragon breath damage that ignores defense and applying a tier 2 earth debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15573,8 +15573,8 @@
     },
     {
       "id": 1929,
-      "name": "Earth dragon-hide cuirass",
-      "description": "Cuirass made from earth dragon leather. When wearing 5 matching Earth Dragon armor pieces you will get the Terra Dragon Breath trait. Terra Dragon Breath has a 20% chance to proc with each attack, dealing up to 10 earth dragon breath damage that ignores defense and applying a tier 2 earth debuff.",
+      "name": "Green dragon-hide cuirass",
+      "description": "Cuirass made from green dragon leather. When wearing 5 matching Green Dragon armor pieces you will get the Terra Dragon Breath trait. Terra Dragon Breath has a 20% chance to proc with each attack, dealing up to 10 earth dragon breath damage that ignores defense and applying a tier 2 earth debuff.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

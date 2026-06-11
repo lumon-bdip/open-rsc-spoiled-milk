@@ -3,11 +3,14 @@ package com.openrsc.server.plugins.authentic.npcs.varrock;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
+import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.World;
+import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.plugins.AbstractShop;
 import com.openrsc.server.plugins.custom.minigames.ABoneToPick;
-import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 import com.openrsc.server.util.rsc.DataConversions;
 
 import java.util.ArrayList;
@@ -15,55 +18,20 @@ import java.util.Optional;
 
 import static com.openrsc.server.plugins.Functions.*;
 
-public final class Apothecary implements
-	TalkNpcTrigger {
+public final class Apothecary extends AbstractShop {
 
-	final int[] potionIds = {
-		ItemId.FULL_ATTACK_POTION.id(),
-		ItemId.TWO_ATTACK_POTION.id(),
-		ItemId.ONE_ATTACK_POTION.id(),
-		ItemId.FULL_CURE_POISON_POTION.id(),
-		ItemId.TWO_CURE_POISON_POTION.id(),
-		ItemId.ONE_CURE_POISON_POTION.id(),
-		ItemId.FULL_STRENGTH_POTION.id(),
-		ItemId.THREE_STRENGTH_POTION.id(),
-		ItemId.TWO_STRENGTH_POTION.id(),
-		ItemId.ONE_STRENGTH_POTION.id(),
-		ItemId.FULL_STAT_RESTORATION_POTION.id(),
-		ItemId.TWO_STAT_RESTORATION_POTION.id(),
-		ItemId.ONE_STAT_RESTORATION_POTION.id(),
-		ItemId.FULL_DEFENSE_POTION.id(),
-		ItemId.TWO_DEFENSE_POTION.id(),
-		ItemId.ONE_DEFENSE_POTION.id(),
-		ItemId.FULL_RESTORE_PRAYER_POTION.id(),
-		ItemId.TWO_RESTORE_PRAYER_POTION.id(),
-		ItemId.ONE_RESTORE_PRAYER_POTION.id(),
-		ItemId.FULL_SUPER_ATTACK_POTION.id(),
-		ItemId.TWO_SUPER_ATTACK_POTION.id(),
-		ItemId.ONE_SUPER_ATTACK_POTION.id(),
-		ItemId.FULL_POISON_ANTIDOTE.id(),
-		ItemId.TWO_POISON_ANTIDOTE.id(),
-		ItemId.ONE_POISON_ANTIDOTE.id(),
-		ItemId.FULL_FISHING_POTION.id(),
-		ItemId.TWO_FISHING_POTION.id(),
-		ItemId.ONE_FISHING_POTION.id(),
-		ItemId.FULL_SUPER_STRENGTH_POTION.id(),
-		ItemId.TWO_SUPER_STRENGTH_POTION.id(),
-		ItemId.ONE_SUPER_STRENGTH_POTION.id(),
-		ItemId.WEAPON_POISON.id(),
-		ItemId.FULL_SUPER_DEFENSE_POTION.id(),
-		ItemId.TWO_SUPER_DEFENSE_POTION.id(),
-		ItemId.ONE_SUPER_DEFENSE_POTION.id(),
-		ItemId.FULL_POTION_OF_ZAMORAK.id(),
-		ItemId.TWO_POTION_OF_ZAMORAK.id(),
-		ItemId.ONE_POTION_OF_ZAMORAK.id(),
-		ItemId.FULL_MAGIC_POTION.id(),
-		ItemId.TWO_MAGIC_POTION.id(),
-		ItemId.ONE_MAGIC_POTION.id(),
-		ItemId.FULL_POTION_OF_SARADOMIN.id(),
-		ItemId.TWO_POTION_OF_SARADOMIN.id(),
-		ItemId.ONE_POTION_OF_SARADOMIN.id(),
-	};
+	private final Shop shop = new Shop(false, 10000, 100, 70, 2,
+		new Item(ItemId.VIAL.id(), 50),
+		new Item(ItemId.PESTLE_AND_MORTAR.id(), 3),
+		new Item(ItemId.GUAM_LEAF.id(), 10),
+		new Item(ItemId.MARRENTILL.id(), 10),
+		new Item(ItemId.TARROMIN.id(), 10),
+		new Item(ItemId.HARRALANDER.id(), 10),
+		new Item(ItemId.EYE_OF_NEWT.id(), 50),
+		new Item(ItemId.UNICORN_HORN.id(), 10),
+		new Item(ItemId.LIMPWURT_ROOT.id(), 10),
+		new Item(ItemId.RED_SPIDERS_EGGS.id(), 10),
+		new Item(ItemId.CHOCOLATE_BAR.id(), 20));
 
 	@Override
 	public void onTalkNpc(Player player, final Npc npc) {
@@ -109,6 +77,7 @@ public final class Apothecary implements
 		// Disabled experience elixir due to not being functional at this time
 
 		ArrayList<String> options = new ArrayList<String>();
+		options.add("What are you selling?");
 		options.add("Do you know a potion to make hair fall out?");
 		options.add("Have you got any good potions to give way?");
 
@@ -118,16 +87,14 @@ public final class Apothecary implements
 			options.add("Can I have a pestle and mortar?");
 		}
 
-		else if (config().WANT_APOTHECARY_QOL && !player.getQolOptOut()) {
-			options.add("Could you empty these vials?");
-			options.add("Could you fill these vials with water?");
-		}
-
 		int option = multi(player, npc, options.toArray(new String[options.size()]));
 
 		if (option == 0) {
-			npcsay(player, npc, "I do indeed. I gave it to my mother. That's why I now live alone");
+			player.setAccessingShop(shop);
+			ActionSender.showShop(player, shop);
 		} else if (option == 1) {
+			npcsay(player, npc, "I do indeed. I gave it to my mother. That's why I now live alone");
+		} else if (option == 2) {
 			if (player.getCarriedItems().hasCatalogID(ItemId.POTION.id(), Optional.of(false))) {
 				npcsay(player, npc, "Only that spot cream. Hope you enjoy it",
 					"Yes, ok. Try this potion");
@@ -141,13 +108,9 @@ public final class Apothecary implements
 					npcsay(player, npc, "Sorry, charity is not my strong point");
 				}
 			}
-		} else if (option == 2 && config().A_BONE_TO_PICK && ABoneToPick.getStage(player) == ABoneToPick.TALKED_TO_ODDENSTEIN
+		} else if (option == 3 && config().A_BONE_TO_PICK && ABoneToPick.getStage(player) == ABoneToPick.TALKED_TO_ODDENSTEIN
 			&& !ifheld(player, ItemId.CHIPPED_PESTLE_AND_MORTAR.id())) {
 			ABoneToPick.apothecaryDialogue(player, npc);
-		} else if (option == 2 && !player.getQolOptOut() && player.getConfig().WANT_CUSTOM_SPRITES) { // Empty vials
-			emptyVials(player, npc);
-		} else if (option == 3 && !player.getQolOptOut() && player.getConfig().WANT_CUSTOM_SPRITES) { // Fill with water
-			fillWithWater(player, npc);
 		}
 		/* } else if (option == 3 && config().WANT_EXPERIENCE_ELIXIRS) {
 			npcsay(player, n, "Yes, it's my most mysterious and special elixir",
@@ -186,134 +149,23 @@ public final class Apothecary implements
 		} */
 	}
 
-	private void emptyVials(Player player, Npc npc) {
-		int costPerVial = 50;
-
-		npcsay(player, npc,
-			"Yes, but I'll have to charge you " + costPerVial + " gold per potion for proper disposal",
-			"And I can only dispose of completed potions");
-
-		// Get all the potions the player is holding
-		int vials = 0;
-		for (int potion : potionIds) {
-			// Counts both noted and unnoted
-			vials += player.getCarriedItems().getInventory().countId(potion, Optional.empty());
-		}
-
-		if (vials <= 0) return;
-
-		int cost = vials * costPerVial;
-		int heldGp = player.getCarriedItems().getInventory().countId(ItemId.COINS.id());
-
-		npcsay(player, npc,
-			"Since you're holding " + vials + " potions, that will cost " + cost + " gold");
-
-		if (heldGp >= cost) {
-			npcsay(player, npc, "Would you like me to empty your vials for you?");
-			if (multi(player, npc, "Yes please", "No thankyou") == 0) {
-				for (int potion : potionIds) {
-
-					// Break out if the player has no more potions or gold.
-					if (vials <= 0) break;
-					if (player.getCarriedItems().getInventory().countId(ItemId.COINS.id()) <= 0) return;
-
-					// Remove both noted and unnoted versions of the potion
-					int notedCount = player.getCarriedItems().getInventory().countId(potion, Optional.of(true));
-					int unnotedCount = player.getCarriedItems().getInventory().countId(potion, Optional.of(false));
-					int totalRemoved = notedCount + unnotedCount;
-
-					// Break out if they don't have any of this potion
-					if (totalRemoved == 0)
-						continue;
-
-					if (notedCount > 0)
-						player.getCarriedItems().remove(new Item(potion, notedCount, true));
-
-					if (unnotedCount > 0) {
-						for (int i = 0; i < unnotedCount; ++i) {
-							player.getCarriedItems().remove(new Item(potion, 1, false));
-						}
-					}
-
-					// Subtract form the total
-					vials -= totalRemoved;
-
-					// Subtract gp
-					player.getCarriedItems().remove(new Item(ItemId.COINS.id(), totalRemoved * costPerVial));
-
-					// Give vials
-					player.getCarriedItems().getInventory().add(new Item(ItemId.EMPTY_VIAL.id(), totalRemoved, true));
-				}
-				mes("You hand the potions and gold to the apothecary");
-				delay(3);
-				mes("He takes the potions and empties the contents into a large container");
-				delay(3);
-				mes("He hands you the newly-emptied vials");
-				delay(3);
-				npcsay(player, npc, "There you are");
-			}
-		} else {
-			npcsay(player, npc,
-				"Unfortunately, it looks like you don't have enough gold to cover the costs",
-				"Feel free to come back when you have more gold or less potions");
-		}
-	}
-
-	private void fillWithWater(Player player, Npc npc) {
-		int costPerVial = 50;
-		npcsay(player, npc, "Yes, but I'll have to charge you "
-			+ costPerVial + " gold per vial to cover my water bill");
-
-		// Get all the vials the player is holding
-		int notedCount = player.getCarriedItems().getInventory().countId(ItemId.EMPTY_VIAL.id(), Optional.of(true));
-		int unnotedCount = player.getCarriedItems().getInventory().countId(ItemId.EMPTY_VIAL.id(), Optional.of(false));
-		int totalVials = notedCount + unnotedCount;
-
-		if (totalVials <= 0) return;
-
-		int cost = totalVials * costPerVial;
-		int heldGp = player.getCarriedItems().getInventory().countId(ItemId.COINS.id());
-
-		npcsay(player, npc,
-			"Since you're holding " + totalVials + " vials, that will cost " + cost + " gold");
-
-		if (heldGp >= cost) {
-			npcsay(player, npc, "Would you like me to fill your vials for you?");
-			if (multi(player, npc, "Yes please", "No thank you") == 0) {
-				// Remove both noted and unnoted versions of the vials
-				if (notedCount > 0)
-					player.getCarriedItems().remove(new Item(ItemId.EMPTY_VIAL.id(), notedCount, true));
-
-				if (unnotedCount > 0) {
-					for (int i = 0; i < unnotedCount; ++i) {
-						player.getCarriedItems().remove(new Item(ItemId.EMPTY_VIAL.id(), 1, false));
-					}
-				}
-
-				// Subtract gp
-				player.getCarriedItems().remove(new Item(ItemId.COINS.id(), totalVials * costPerVial));
-
-				// Give vials
-				player.getCarriedItems().getInventory().add(new Item(ItemId.VIAL.id(), totalVials, true));
-
-				// Let player know stuff happened
-				mes("You hand the vials and gold to the apothecary");
-				delay(3);
-				mes("He takes the vials and fills them with water");
-				delay(3);
-				mes("He hands you the newly-filled vials");
-				delay(3);
-				npcsay(player, npc, "There you are");
-			}
-		} else {
-			npcsay(player, npc,
-				"Unfortunately, it looks like you don't have enough gold to cover the costs",
-				"Feel free to come back when you have more gold or less vials");
-		}
-	}
-
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {
 		return n.getID() == NpcId.APOTHECARY.id();
+	}
+
+	@Override
+	public Shop[] getShops(World world) {
+		return new Shop[]{shop};
+	}
+
+	@Override
+	public boolean isMembers() {
+		return false;
+	}
+
+	@Override
+	public Shop getShop() {
+		return shop;
 	}
 }

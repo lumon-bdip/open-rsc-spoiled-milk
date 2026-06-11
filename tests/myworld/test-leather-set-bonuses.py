@@ -6,11 +6,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 EQUIPMENT_PATH = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
 PLAYER_PATH = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+SKILLS_PATH = ROOT / "server/src/com/openrsc/server/model/Skills.java"
 ACTION_SENDER_PATH = ROOT / "server/src/com/openrsc/server/net/rsc/ActionSender.java"
+GAME_DATABASE_PATH = ROOT / "server/src/com/openrsc/server/database/GameDatabase.java"
 MOB_PATH = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
+STAT_RESTORATION_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java"
 COMBAT_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
 PVM_MELEE_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
+COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
+OSRS_COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java"
 LEATHER_DEBUFF_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/LeatherSetDebuffEvent.java"
 CLIENT_ENTITY_HANDLER_PATH = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 
@@ -34,20 +39,18 @@ def expect_not_contains(path: Path, needle: str, label: str) -> None:
 
 def main() -> None:
     expect_contains(EQUIPMENT_PATH, "getCowHideHitsBonus()", "equipment cow bonus")
-    expect_contains(EQUIPMENT_PATH, "getGoblinEnragedProcChance()", "equipment goblin bonus")
+    expect_contains(EQUIPMENT_PATH, "getGoblinTenacityProcChance()", "equipment goblin tenacity")
+    expect_contains(EQUIPMENT_PATH, "return hasFullGoblinHideSet() ? 0.05D : 0.0D;", "goblin tenacity chance")
     expect_contains(EQUIPMENT_PATH, "getUnicornHidePrayerBonus()", "equipment unicorn bonus")
     expect_contains(EQUIPMENT_PATH, "getBlackUnicornHidePrayerBonus()", "equipment black unicorn bonus")
     expect_contains(EQUIPMENT_PATH, "return hasFullUnicornHideSet() ? 10 : 0;", "unicorn prayer bonus should be unconditional")
     expect_contains(EQUIPMENT_PATH, "return hasFullBlackUnicornHideSet() ? 10 : 0;", "black unicorn prayer bonus should be unconditional")
     expect_not_contains(EQUIPMENT_PATH, "hasFullUnicornHideSet() && player.getPrayerBook()", "unicorn prayer bonus god gate")
     expect_not_contains(EQUIPMENT_PATH, "hasFullBlackUnicornHideSet() && player.getPrayerBook()", "black unicorn prayer bonus god gate")
-    expect_contains(EQUIPMENT_PATH, "getBearHideIntimidatePercent()", "equipment bear bonus")
-    expect_contains(EQUIPMENT_PATH, "getBearHideIntimidateProcChance()", "equipment bear proc")
-    expect_contains(EQUIPMENT_PATH, "getGiantBruteForceProcChance()", "equipment giant bonus")
+    expect_contains(EQUIPMENT_PATH, "getGiantMightSkillBonus(final int baseLevel)", "equipment giant might bonus")
+    expect_contains(EQUIPMENT_PATH, "Math.floor(baseLevel * 0.10D)", "giant might literal skill bonus")
+    expect_contains(EQUIPMENT_PATH, "getElementalGiantMightProcChance()", "equipment elemental giant proc")
     expect_contains(EQUIPMENT_PATH, "getOgreStaggeringBlowProcChance()", "equipment ogre bonus")
-    expect_contains(EQUIPMENT_PATH, "getMossGiantBruteForceProcChance()", "equipment moss giant bonus")
-    expect_contains(EQUIPMENT_PATH, "getIceGiantBruteForceProcChance()", "equipment ice giant bonus")
-    expect_contains(EQUIPMENT_PATH, "getFireGiantBruteForceProcChance()", "equipment fire giant bonus")
     expect_contains(EQUIPMENT_PATH, "getBabyDragonSmokeAccuracyDebuffPercent()", "equipment baby dragon smoke bonus")
     expect_contains(EQUIPMENT_PATH, "getInfernalFireProcMaxHit()", "equipment infernal fire bonus")
     expect_contains(EQUIPMENT_PATH, "hasFullBlueDragonSet()", "equipment blue dragon set")
@@ -72,10 +75,17 @@ def main() -> None:
 
     expect_contains(PLAYER_PATH, "syncHitsEquipmentBonuses()", "player hits sync")
     expect_contains(PLAYER_PATH, 'setAttribute("cow_hide_hits_bonus"', "cow hits tracking")
-    expect_contains(PLAYER_PATH, "getBearHideIntimidatePercent()", "player bear access")
-    expect_contains(PLAYER_PATH, "activateGoblinEnraged()", "player goblin buff")
-    expect_contains(PLAYER_PATH, "activateGiantBruteForce()", "player giant buff")
-    expect_contains(PLAYER_PATH, "activateOgreStaggeringBlowCooldown()", "player ogre cooldown")
+    expect_contains(PLAYER_PATH, "applyBearMaulDamage", "player bear maul damage")
+    expect_contains(PLAYER_PATH, "applyGoblinTenacity", "player goblin tenacity")
+    expect_contains(SKILLS_PATH, "applyGoblinTenacity(amount)", "shared lethal damage tenacity hook")
+    expect_contains(PLAYER_PATH, "applyElementalGiantMightDebuff", "player elemental giant might")
+    expect_contains(PLAYER_PATH, "syncGiantMightEquipmentBonuses()", "player giant skill synchronization")
+    expect_contains(PLAYER_PATH, "getEquipmentAdjustedNormalLevel", "player equipment-adjusted normal level")
+    expect_contains(PLAYER_PATH, "getPersistedSkillLevel", "player equipment-free persisted level")
+    expect_contains(PLAYER_PATH, "target.applyEarthAttackSpeedDebuff(6)", "earth giant debuff")
+    expect_contains(PLAYER_PATH, "target.applyWaterMaxHitDebuff(10)", "water giant debuff")
+    expect_contains(PLAYER_PATH, "target.applyFireDefenseDebuff(6)", "fire giant debuff")
+    expect_not_contains(PLAYER_PATH, "activateOgreStaggeringBlowCooldown()", "ogre cooldown")
     expect_contains(PLAYER_PATH, "consumeLeatherSetAttackBuffs()", "player leather-set buff consumption")
     expect_contains(PLAYER_PATH, "getBabyDragonSmokeAccuracyDebuffPercent()", "player baby dragon access")
     expect_contains(PLAYER_PATH, "getInfernalFireProcMaxHit()", "player infernal fire access")
@@ -84,6 +94,9 @@ def main() -> None:
     expect_contains(PLAYER_PATH, "hasFullBlueDragonSet()", "player blue dragon access")
     expect_contains(PLAYER_PATH, "hasFullKingBlackDragonSet()", "player king black dragon access")
     expect_contains(ACTION_SENDER_PATH, "player.syncHitsEquipmentBonuses();", "equipment sync hook")
+    expect_contains(ACTION_SENDER_PATH, "player.syncGiantMightEquipmentBonuses();", "giant equipment sync hook")
+    expect_contains(STAT_RESTORATION_PATH, "getEquipmentAdjustedNormalLevel", "giant restoration target")
+    expect_contains(GAME_DATABASE_PATH, "player.getPersistedSkillLevel(i)", "giant logout persistence")
 
     expect_contains(MOB_PATH, "applyBearIntimidateDebuff", "mob bear debuff apply")
     expect_contains(MOB_PATH, "applyOgreStaggerDebuff", "mob ogre debuff apply")
@@ -107,11 +120,13 @@ def main() -> None:
     expect_contains(PVM_MELEE_PATH, "inflictAuxiliaryMagicDamage", "pvm infernal proc damage hook")
     expect_contains(PVM_MELEE_PATH, "inflictAuxiliaryTrueDamage", "pvm dragon breath true damage hook")
     expect_contains(PVM_MELEE_PATH, "applyPlayerMeleeDamageBuff", "pvm melee buff hook")
+    expect_contains(PVM_MELEE_PATH, "applyBearMaulSecondHit", "pvm bear maul second hit")
     expect_contains(PVM_MELEE_PATH, "new CombatEffect(player, CombatEffect.DRAGON_BREATH)", "pvm dragon breath visual")
     expect_contains(PROJECTILE_EVENT_PATH, "applyLeatherSetOnHitEffects", "projectile hook")
     expect_contains(PROJECTILE_EVENT_PATH, "inflictAuxiliaryMagicDamage", "projectile infernal proc damage hook")
     expect_contains(PROJECTILE_EVENT_PATH, "inflictAuxiliaryTrueDamage", "projectile dragon breath true damage hook")
     expect_contains(PROJECTILE_EVENT_PATH, "applyPlayerProjectileDamageBuff", "projectile magic buff hook")
+    expect_contains(PROJECTILE_EVENT_PATH, "casterPlayer.applyElementalGiantMightDebuff(opponent)", "ranged elemental giant hook")
     expect_contains(PROJECTILE_EVENT_PATH, "new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH)", "projectile dragon breath visual")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "applyMyWorldLeatherArmorDescriptions();", "client leather examine descriptions hook")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full cow-hide set: +5 Hits.", "cow leather examine description")
@@ -121,8 +136,14 @@ def main() -> None:
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black unicorn-hide set: +10 Prayer while worshipping Zamorak.", "old black unicorn leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black-dragon-hide set: 20% chance for dragon breath, max hit 30.", "black dragon leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full king-black-dragon-hide set: 60% chance for dragon breath, max hit 40.", "king black dragon leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Goblin's Tenacity", "goblin set name")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Bear's Maul", "bear set name")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Giant's Might", "giant set name")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Green dragon-hide", "green dragon armor name")
+    expect_not_contains(COMBAT_FORMULA_PATH, "getGiantMightSkillMultiplier()", "legacy formula-only giant multiplier")
+    expect_not_contains(OSRS_COMBAT_FORMULA_PATH, "getGiantMightSkillMultiplier()", "osrs formula-only giant multiplier")
 
-    print("PASS: leather set bonuses wired for passive, debuff, poison, brute-force, infernal, dragon-breath, and ogre families")
+    print("PASS: leather set bonuses wired for tenacity, maul, giant might, debuff, poison, infernal, dragon-breath, and ogre families")
 
 
 if __name__ == "__main__":

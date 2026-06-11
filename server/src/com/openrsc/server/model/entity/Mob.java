@@ -1540,10 +1540,13 @@ public abstract class Mob extends Entity {
 	}
 
 	public void damage(final int damage, final int hitSplatType) {
-		if (damage > 0 && this.isPlayer()) {
-			((Player) this).setAttribute("last_damage_taken_at", System.currentTimeMillis());
+		int appliedDamage = damage;
+		if (appliedDamage > 0 && this.isPlayer()) {
+			Player player = (Player) this;
+			player.setAttribute("last_damage_taken_at", System.currentTimeMillis());
+			appliedDamage = player.applyGoblinTenacity(appliedDamage);
 		}
-		final int newHp = skills.getLevel(Skill.HITS.id()) - damage;
+		final int newHp = skills.getLevel(Skill.HITS.id()) - appliedDamage;
 		if (newHp <= 0) {
 			if (this.isPlayer()) {
 				killedBy(combatWith);
@@ -1557,8 +1560,8 @@ public abstract class Mob extends Entity {
 			Player player = (Player) this;
 			ActionSender.sendStat(player, Skill.HITS.id());
 		}
-		getUpdateFlags().setDamage(new Damage(this, damage));
-		getUpdateFlags().addHitSplat(new HitSplat(this, hitSplatType, damage));
+		getUpdateFlags().setDamage(new Damage(this, appliedDamage));
+		getUpdateFlags().addHitSplat(new HitSplat(this, hitSplatType, appliedDamage));
 	}
 
 	public void startPoisonEvent() {

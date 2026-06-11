@@ -1970,16 +1970,72 @@ public final class Player extends Mob {
 		setAttribute("blood_amulet_hits_bonus", nextBonus);
 	}
 
-	public int getBearHideIntimidatePercent() {
-		return getCarriedItems().getEquipment().getBearHideIntimidatePercent();
+	public boolean hasFullBearHideSet() {
+		return getCarriedItems().getEquipment().hasFullBearHideSet();
 	}
 
-	public double getBearHideIntimidateProcChance() {
-		return getCarriedItems().getEquipment().getBearHideIntimidateProcChance();
+	public int applyBearMaulDamage(final int damage) {
+		return hasFullBearHideSet() ? Math.max(0, (int) Math.floor(damage * 0.60D)) : damage;
 	}
 
-	public double getGoblinEnragedProcChance() {
-		return getCarriedItems().getEquipment().getGoblinEnragedProcChance();
+	public int applyGoblinTenacity(final int damage) {
+		final int currentHits = getSkills().getLevel(Skill.HITS.id());
+		final double procChance = getCarriedItems().getEquipment().getGoblinTenacityProcChance();
+		if (damage < currentHits || currentHits <= 1 || procChance <= 0.0D
+			|| DataConversions.getRandom().nextDouble() >= procChance) {
+			return damage;
+		}
+		message("@yel@Goblin's Tenacity keeps you standing.");
+		return currentHits - 1;
+	}
+
+	public void syncGiantMightEquipmentBonuses() {
+		syncGiantMightSkillBonus(Skill.MELEE.id(), "giant_might_melee_bonus");
+		syncGiantMightSkillBonus(Skill.RANGED.id(), "giant_might_ranged_bonus");
+	}
+
+	private void syncGiantMightSkillBonus(final int skill, final String attribute) {
+		final int previousBonus = getAttribute(attribute, 0);
+		final int nextBonus = getCarriedItems().getEquipment().getGiantMightSkillBonus(getSkills().getMaxStat(skill));
+		if (previousBonus == nextBonus) {
+			return;
+		}
+		getSkills().setLevel(skill, Math.max(0, getSkills().getLevel(skill) - previousBonus + nextBonus), true, true);
+		setAttribute(attribute, nextBonus);
+	}
+
+	public int getEquipmentAdjustedNormalLevel(final int skill) {
+		if (skill == Skill.MELEE.id()) {
+			return getSkills().getMaxStat(skill) + getAttribute("giant_might_melee_bonus", 0);
+		}
+		if (skill == Skill.RANGED.id()) {
+			return getSkills().getMaxStat(skill) + getAttribute("giant_might_ranged_bonus", 0);
+		}
+		return getSkills().getMaxStat(skill);
+	}
+
+	public int getPersistedSkillLevel(final int skill) {
+		if (skill == Skill.MELEE.id()) {
+			return Math.max(0, getSkills().getLevel(skill) - getAttribute("giant_might_melee_bonus", 0));
+		}
+		if (skill == Skill.RANGED.id()) {
+			return Math.max(0, getSkills().getLevel(skill) - getAttribute("giant_might_ranged_bonus", 0));
+		}
+		return getSkills().getLevel(skill);
+	}
+
+	public void applyElementalGiantMightDebuff(final Mob target) {
+		final double chance = getCarriedItems().getEquipment().getElementalGiantMightProcChance();
+		if (target == null || chance <= 0.0D || DataConversions.getRandom().nextDouble() >= chance) {
+			return;
+		}
+		if (hasFullMossGiantSet()) {
+			target.applyEarthAttackSpeedDebuff(6);
+		} else if (hasFullIceGiantSet()) {
+			target.applyWaterMaxHitDebuff(10);
+		} else if (hasFullFireGiantSet()) {
+			target.applyFireDefenseDebuff(6);
+		}
 	}
 
 	public int getMeleePoisonArmorMaxPower() {
@@ -2046,10 +2102,6 @@ public final class Player extends Mob {
 		return getCarriedItems().getEquipment().hasFullGiantSet();
 	}
 
-	public double getGiantBruteForceProcChance() {
-		return getCarriedItems().getEquipment().getGiantBruteForceProcChance();
-	}
-
 	public boolean hasFullOgreSet() {
 		return getCarriedItems().getEquipment().hasFullOgreSet();
 	}
@@ -2066,16 +2118,8 @@ public final class Player extends Mob {
 		return getCarriedItems().getEquipment().hasFullMossGiantSet();
 	}
 
-	public double getMossGiantBruteForceProcChance() {
-		return getCarriedItems().getEquipment().getMossGiantBruteForceProcChance();
-	}
-
 	public boolean hasFullIceGiantSet() {
 		return getCarriedItems().getEquipment().hasFullIceGiantSet();
-	}
-
-	public double getIceGiantBruteForceProcChance() {
-		return getCarriedItems().getEquipment().getIceGiantBruteForceProcChance();
 	}
 
 	public boolean hasFullBlueDragonSet() {
@@ -2102,113 +2146,31 @@ public final class Player extends Mob {
 		return getCarriedItems().getEquipment().hasFullFireGiantSet();
 	}
 
-	public double getFireGiantBruteForceProcChance() {
-		return getCarriedItems().getEquipment().getFireGiantBruteForceProcChance();
-	}
-
 	public boolean hasFullHellhoundSet() {
 		return getCarriedItems().getEquipment().hasFullHellhoundSet();
 	}
 
-	public void activateGoblinEnraged() {
-		activateAttackCountEffect("goblin_enraged_attacks_remaining", Mob.ATTACK_BASED_DEBUFF_ATTACKS);
-	}
-
-	public boolean isGoblinEnragedActive() {
-		return isAttackCountEffectActive("goblin_enraged_attacks_remaining");
-	}
-
-	public void activateGiantBruteForce() {
-		activateAttackCountEffect("giant_brute_force_attacks_remaining", Mob.ATTACK_BASED_DEBUFF_ATTACKS);
-	}
-
-	public boolean isGiantBruteForceActive() {
-		return isAttackCountEffectActive("giant_brute_force_attacks_remaining");
-	}
-
-	public void activateMossGiantBruteForce() {
-		activateAttackCountEffect("moss_giant_brute_force_attacks_remaining", Mob.ATTACK_BASED_DEBUFF_ATTACKS);
-	}
-
-	public boolean isMossGiantBruteForceActive() {
-		return isAttackCountEffectActive("moss_giant_brute_force_attacks_remaining");
-	}
-
-	public void activateIceGiantBruteForce() {
-		activateAttackCountEffect("ice_giant_brute_force_attacks_remaining", Mob.ATTACK_BASED_DEBUFF_ATTACKS);
-	}
-
-	public boolean isIceGiantBruteForceActive() {
-		return isAttackCountEffectActive("ice_giant_brute_force_attacks_remaining");
-	}
-
-	public void activateFireGiantBruteForce() {
-		activateAttackCountEffect("fire_giant_brute_force_attacks_remaining", Mob.ATTACK_BASED_DEBUFF_ATTACKS);
-	}
-
-	public boolean isFireGiantBruteForceActive() {
-		return isAttackCountEffectActive("fire_giant_brute_force_attacks_remaining");
-	}
-
 	public double getLeatherSetAttackSpeedMultiplier() {
-		return isGoblinEnragedActive() ? 1.10D : 1.0D;
+		return 1.0D;
 	}
 
 	public double getLeatherSetMeleeDamageMultiplier() {
-		if (isGiantBruteForceActive() || isMossGiantBruteForceActive() || isIceGiantBruteForceActive() || isFireGiantBruteForceActive()) {
-			return 1.10D;
-		}
 		return 1.0D;
 	}
 
 	public double getEarthMagicDamageMultiplier() {
-		return isMossGiantBruteForceActive() ? 1.10D : 1.0D;
+		return 1.0D;
 	}
 
 	public double getWaterMagicDamageMultiplier() {
-		return isIceGiantBruteForceActive() ? 1.10D : 1.0D;
+		return 1.0D;
 	}
 
 	public double getFireMagicDamageMultiplier() {
-		return isFireGiantBruteForceActive() ? 1.10D : 1.0D;
+		return 1.0D;
 	}
 
 	public void consumeLeatherSetAttackBuffs() {
-		consumeAttackCountEffect("goblin_enraged_attacks_remaining");
-		consumeAttackCountEffect("giant_brute_force_attacks_remaining");
-		consumeAttackCountEffect("moss_giant_brute_force_attacks_remaining");
-		consumeAttackCountEffect("ice_giant_brute_force_attacks_remaining");
-		consumeAttackCountEffect("fire_giant_brute_force_attacks_remaining");
-		consumeOgreStaggeringBlowCooldownAttack();
-	}
-
-	public boolean isOgreStaggeringBlowReady() {
-		final boolean timedActive = isTimedEffectActive("ogre_staggering_blow_cooldown_expires_at");
-		final int attacksRemaining = getAttackCountEffectValue("ogre_staggering_blow_cooldown_attacks_remaining");
-		if (!timedActive || attacksRemaining <= 0) {
-			removeAttribute("ogre_staggering_blow_cooldown_attacks_remaining");
-			removeAttribute("ogre_staggering_blow_cooldown_expires_at");
-			return true;
-		}
-		return false;
-	}
-
-	public void activateOgreStaggeringBlowCooldown() {
-		setTimedEffectValue("ogre_staggering_blow_cooldown_attacks_remaining", "ogre_staggering_blow_cooldown_expires_at",
-			Mob.ATTACK_BASED_DEBUFF_ATTACKS, 10_000L);
-	}
-
-	private void consumeOgreStaggeringBlowCooldownAttack() {
-		if (isOgreStaggeringBlowReady()) {
-			return;
-		}
-		final int attacksRemaining = getAttackCountEffectValue("ogre_staggering_blow_cooldown_attacks_remaining");
-		if (attacksRemaining <= 1) {
-			removeAttribute("ogre_staggering_blow_cooldown_attacks_remaining");
-			removeAttribute("ogre_staggering_blow_cooldown_expires_at");
-			return;
-		}
-		setAttackCountEffectValue("ogre_staggering_blow_cooldown_attacks_remaining", attacksRemaining - 1);
 	}
 
 	public double getMindRobeDebuffMultiplier() {

@@ -150,6 +150,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			damage = 0;
 		}
 		inflictDamage(attackerMob, targetMob, damage);
+		applyBearMaulSecondHit(attackerMob, targetMob, damage);
 		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
@@ -380,29 +381,11 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 		final Player player = (Player) hitter;
-		final int intimidatePercent = player.getBearHideIntimidatePercent();
-		if (intimidatePercent > 0 && DataConversions.getRandom().nextDouble() < player.getBearHideIntimidateProcChance()) {
-			target.applyBearIntimidateDebuff(intimidatePercent);
+		if (damage > 0) {
+			player.applyElementalGiantMightDebuff(target);
 		}
-		if (player.getGoblinEnragedProcChance() > 0.0D && DataConversions.getRandom().nextDouble() < player.getGoblinEnragedProcChance()) {
-			player.activateGoblinEnraged();
-		}
-		if (player.getGiantBruteForceProcChance() > 0.0D && DataConversions.getRandom().nextDouble() < player.getGiantBruteForceProcChance()) {
-			player.activateGiantBruteForce();
-		}
-		if (player.getMossGiantBruteForceProcChance() > 0.0D && DataConversions.getRandom().nextDouble() < player.getMossGiantBruteForceProcChance()) {
-			player.activateMossGiantBruteForce();
-		}
-		if (player.getIceGiantBruteForceProcChance() > 0.0D && DataConversions.getRandom().nextDouble() < player.getIceGiantBruteForceProcChance()) {
-			player.activateIceGiantBruteForce();
-		}
-		if (player.getFireGiantBruteForceProcChance() > 0.0D && DataConversions.getRandom().nextDouble() < player.getFireGiantBruteForceProcChance()) {
-			player.activateFireGiantBruteForce();
-		}
-		if (player.hasFullOgreSet() && player.isOgreStaggeringBlowReady()
-			&& DataConversions.getRandom().nextDouble() < player.getOgreStaggeringBlowProcChance()) {
+		if (player.hasFullOgreSet() && DataConversions.getRandom().nextDouble() < player.getOgreStaggeringBlowProcChance()) {
 			target.applyOgreStaggerDebuff();
-			player.activateOgreStaggeringBlowCooldown();
 		}
 		final int smokePercent = player.getBabyDragonSmokeAccuracyDebuffPercent();
 		if (smokePercent > 0 && DataConversions.getRandom().nextDouble() < player.getBabyDragonSmokeProcChance()) {
@@ -483,7 +466,16 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (damage <= 0) {
 			return damage;
 		}
-		return Math.max(0, (int) Math.floor(damage * player.getLeatherSetMeleeDamageMultiplier()));
+		final int buffedDamage = Math.max(0, (int) Math.floor(damage * player.getLeatherSetMeleeDamageMultiplier()));
+		return player.applyBearMaulDamage(buffedDamage);
+	}
+
+	private void applyBearMaulSecondHit(final Mob hitter, final Mob target, final int damage) {
+		if (!hitter.isPlayer() || !((Player) hitter).hasFullBearHideSet() || damage <= 0
+			|| target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		inflictAuxiliaryTrueDamage(hitter, target, damage);
 	}
 
 	private int applyScytheNpcCleave(final Player player, final Npc primaryTarget) {
@@ -504,6 +496,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			}
 			damage = applyPlayerMeleeDamageBuff(player, damage);
 			inflictScytheCleaveDamage(player, npc, damage);
+			applyBearMaulSecondHit(player, npc, damage);
 			if (player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return extraTargetsHit;
 			}

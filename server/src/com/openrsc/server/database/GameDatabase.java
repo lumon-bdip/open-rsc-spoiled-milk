@@ -1022,7 +1022,7 @@ public abstract class GameDatabase {
 		for (int i = 0; i < skillsSize; i++) {
 			skills[i] = new PlayerSkills();
 			skills[i].skillId = i;
-			skills[i].skillLevel = player.getSkills().getLevel(i);
+			skills[i].skillLevel = player.getPersistedSkillLevel(i);
 		}
 
 		querySavePlayerSkills(player.getDatabaseID(), skills);

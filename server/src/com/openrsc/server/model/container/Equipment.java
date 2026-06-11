@@ -1859,32 +1859,19 @@ public class Equipment {
 		return 0;
 	}
 
-	public int getBearHideIntimidatePercent() {
-		return hasFullBearHideSet() ? 10 : 0;
+	public double getGoblinTenacityProcChance() {
+		return hasFullGoblinHideSet() ? 0.05D : 0.0D;
 	}
 
-	public double getBearHideIntimidateProcChance() {
-		return hasFullBearHideSet() ? 0.20D : 0.0D;
+	public int getGiantMightSkillBonus(final int baseLevel) {
+		if (!hasFullGiantSet() && !hasFullMossGiantSet() && !hasFullIceGiantSet() && !hasFullFireGiantSet()) {
+			return 0;
+		}
+		return Math.max(0, (int) Math.floor(baseLevel * 0.10D));
 	}
 
-	public double getGoblinEnragedProcChance() {
-		return hasFullGoblinHideSet() ? 0.20D : 0.0D;
-	}
-
-	public double getGiantBruteForceProcChance() {
-		return hasFullGiantSet() ? 0.20D : 0.0D;
-	}
-
-	public double getMossGiantBruteForceProcChance() {
-		return hasFullMossGiantSet() ? 0.20D : 0.0D;
-	}
-
-	public double getIceGiantBruteForceProcChance() {
-		return hasFullIceGiantSet() ? 0.20D : 0.0D;
-	}
-
-	public double getFireGiantBruteForceProcChance() {
-		return hasFullFireGiantSet() ? 0.20D : 0.0D;
+	public double getElementalGiantMightProcChance() {
+		return hasFullMossGiantSet() || hasFullIceGiantSet() || hasFullFireGiantSet() ? 0.20D : 0.0D;
 	}
 
 	public double getOgreStaggeringBlowProcChance() {

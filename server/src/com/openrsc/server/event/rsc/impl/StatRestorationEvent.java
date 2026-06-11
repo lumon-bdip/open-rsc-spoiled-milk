@@ -150,7 +150,9 @@ public class StatRestorationEvent extends GameTickEvent {
 	 */
 	private void normalizeLevel(int skill, boolean sendUpdate) {
 		int cur = getOwner().getSkills().getLevel(skill);
-		int norm = getOwner().getSkills().getMaxStat(skill);
+		int norm = getOwner().isPlayer()
+			? ((Player) getOwner()).getEquipmentAdjustedNormalLevel(skill)
+			: getOwner().getSkills().getMaxStat(skill);
 		int diff = 0;
 
 		if (cur > norm) {
@@ -173,7 +175,9 @@ public class StatRestorationEvent extends GameTickEvent {
 
 	private boolean needsRestore(int id) {
 		int curStat = getOwner().getSkills().getLevel(id);
-		int maxStat = getOwner().getSkills().getMaxStat(id);
+		int maxStat = getOwner().isPlayer()
+			? ((Player) getOwner()).getEquipmentAdjustedNormalLevel(id)
+			: getOwner().getSkills().getMaxStat(id);
 		return curStat > maxStat || curStat < maxStat;
 	}
 

@@ -44,6 +44,11 @@ def require(text: str, needle: str, message: str) -> None:
         fail(message)
 
 
+def forbid(text: str, needle: str, message: str) -> None:
+    if needle in text:
+        fail(message)
+
+
 def main() -> None:
     session_text = PRODUCTION_SESSION.read_text(encoding="utf-8")
     recipe_text = PRODUCTION_RECIPE.read_text(encoding="utf-8")
@@ -212,6 +217,11 @@ def main() -> None:
         do_skill_interface_text,
         "drawProductionIngredientCosts(selected, materialDetailX, footerY + 4)",
         "Production ingredient icons should use the right-side material detail anchor",
+    )
+    forbid(
+        do_skill_interface_text,
+        "drawLineHoriz(x + 1, footerY - 10, width - 2, 0)",
+        "Production footer divider should not run through expanded icon grids",
     )
 
     print("PASS: Production UI structure validated")

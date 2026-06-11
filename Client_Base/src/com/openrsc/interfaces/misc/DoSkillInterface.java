@@ -337,7 +337,6 @@ public final class DoSkillInterface {
 		boolean showQuantityControls = !isPickerInterface();
 		int materialDetailX = quantityX;
 		int selectedDetailRightX = x + width - 16;
-		mc.getSurface().drawLineHoriz(x + 1, footerY - 10, width - 2, 0);
 		if (selected != null) {
 			ItemDef def = EntityHandler.getItemDef(selected.getItemId());
 			String selectedHeader;

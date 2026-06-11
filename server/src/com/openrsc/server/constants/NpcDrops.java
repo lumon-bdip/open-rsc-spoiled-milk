@@ -2016,7 +2016,7 @@ public class NpcDrops {
 		addGuaranteedDrop(NpcId.LESSER_DEMON_WMAZEKEY.id(), ItemId.DEMON_HIDE.id(), "Demon hide");
 		addGuaranteedDrop(NpcId.GREATER_DEMON.id(), ItemId.DEMON_HIDE.id(), "Demon hide");
 		addGuaranteedDrop(NpcId.BLUE_DRAGON.id(), ItemId.BLUE_DRAGON_HIDE.id(), "Blue Dragon hide");
-		addGuaranteedDrop(NpcId.DRAGON.id(), ItemId.DRAGON_HIDE.id(), "Earth Dragon hide");
+		addGuaranteedDrop(NpcId.DRAGON.id(), ItemId.DRAGON_HIDE.id(), "Green Dragon hide");
 		addGuaranteedDrop(NpcId.RED_DRAGON.id(), ItemId.RED_DRAGON_HIDE.id(), "Red Dragon hide");
 		addGuaranteedDrop(NpcId.BLACK_DEMON.id(), ItemId.BLACK_DEMON_HIDE.id(), "Black Demon hide");
 		addGuaranteedDrop(NpcId.BLACK_DEMON_GRANDTREE.id(), ItemId.BLACK_DEMON_HIDE.id(), "Black Demon hide");

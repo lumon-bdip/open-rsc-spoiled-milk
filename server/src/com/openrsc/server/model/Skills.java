@@ -250,6 +250,9 @@ public class Skills {
 		if (isHiddenAutoMaxedSkill(skill)) {
 			return;
 		}
+		if (skill == Skill.HITS.id() && amount > 0 && mob instanceof Player) {
+			amount = ((Player) mob).applyGoblinTenacity(amount);
+		}
 		levels[skill] = levels[skill] - amount;
 		if (levels[skill] <= 0) {
 			levels[skill] = 0;
@@ -318,6 +321,7 @@ public class Skills {
 			// TODO: Maybe a level up listener?
 			if (getMob().isPlayer()) {
 				Player player = (Player) getMob();
+				player.syncGiantMightEquipmentBonuses();
 				try {
 					getWorld().getServer().getPlayerService().savePlayerMaxSkill(player.getDatabaseID(), skill, maxStats[skill]);
 				} catch (GameDatabaseException e) {
@@ -418,7 +422,9 @@ public class Skills {
 	}
 
 	private void normalize(int skill, boolean sendUpdate) {
-		levels[skill] = getMaxStat(skill);
+		levels[skill] = mob instanceof Player
+			? ((Player) mob).getEquipmentAdjustedNormalLevel(skill)
+			: getMaxStat(skill);
 		if (sendUpdate)
 			sendUpdate(skill);
 		if (skill == Skill.PRAYER.id() && mob.isPlayer()) {
