@@ -499,7 +499,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 				damage = CombatFormula.doMeleeDamage(player, npc);
 			}
 			damage = applyPlayerMeleeDamageBuff(player, damage);
-			inflictDamage(player, npc, damage);
+			inflictScytheCleaveDamage(player, npc, damage);
 			if (player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return extraTargetsHit;
 			}
@@ -532,6 +532,37 @@ public class PvmMeleeEvent extends GameTickEvent {
 		int xDiff = Math.abs(player.getX() - npc.getX());
 		int yDiff = Math.abs(player.getY() - npc.getY());
 		return xDiff <= 1 && yDiff <= 1 && (xDiff != 0 || yDiff != 0);
+	}
+
+	private void inflictScytheCleaveDamage(final Player player, final Npc npc, int damage) {
+		if (damage <= 0 || npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			if (damage == 0 && npc.getSkills().getLevel(Skill.HITS.id()) > 0) {
+				npc.getUpdateFlags().setDamage(new Damage(npc, 0));
+				npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_STANDARD, 0));
+			}
+			return;
+		}
+		damage = Summoning.applySummonOutgoingDamage(player, damage);
+		final int lastHits = npc.getLevel(Skill.HITS.id());
+		npc.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
+		final int damageDealt = Math.min(damage, lastHits);
+		npc.getUpdateFlags().setDamage(new Damage(npc, damage));
+		npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_STANDARD, damage));
+		npc.addCombatDamage(player, damageDealt);
+		Summoning.recordOwnerCombatSummonDamage(player, npc, damageDealt);
+		DivineGrace.apply(player, damageDealt);
+		player.applyBloodAmuletLifesteal(damageDealt);
+		Summoning.applySummonLifesteal(player, npc, damageDealt);
+		if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			npc.setLastCombatState(CombatState.LOST);
+			player.setKillType(KillType.COMBAT);
+			player.applyDeathAmuletBurst(npc);
+			npc.killedBy(player);
+			updateParty(player);
+		} else if (damage > 0) {
+			npc.setLastOpponent(player);
+			npc.setCombatTimer();
+		}
 	}
 
 	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int damage) {

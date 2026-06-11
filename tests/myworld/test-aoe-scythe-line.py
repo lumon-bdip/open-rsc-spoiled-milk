@@ -91,7 +91,7 @@ def main() -> None:
         require(custom["isWearable"] == 1, f"{name} should be wearable")
         require(custom["wearSlot"] == 4, f"{name} should use mainhand weapon slot")
         require(custom["wearableID"] & 8 == 8, f"{name} should conflict with shields as a two-handed weapon")
-        require(custom["appearanceID"] == 229, f"{name} should use scythe equipment appearance for first pass")
+        require(custom["appearanceID"] == 1033, f"{name} should use custom white combat scythe appearance")
         expected_offense = EXPECTED_SCYTHE_OFFENSE[item_id]
         require(custom["weaponAimBonus"] == expected_offense, f"{name} should use tuned two-handed aim")
         require(custom["weaponPowerBonus"] == expected_offense, f"{name} should use tuned two-handed power")
@@ -113,6 +113,8 @@ def main() -> None:
                 f"Smithing guide missing {name}")
         require(f'"{name}"' in client_defs, f"Client custom definitions missing {name}")
 
+    require('new AnimationDef("scythe", "equipment", 0xF0F0F0, 0, true, false, 0)' in client_defs,
+            "Client should define a white held combat scythe variant")
     require("private static final int[] SCYTHE_IDS" in pvm_melee, "PvM melee should identify scythe weapons")
     require("applyScytheNpcCleave((Player) attackerMob, (Npc) targetMob)" in pvm_melee,
             "PvM melee should run scythe cleave from player-vs-NPC combat")
@@ -122,6 +124,8 @@ def main() -> None:
             "Scythe cleave should add follow-up delay per extra target")
     require("xDiff <= 1 && yDiff <= 1 && (xDiff != 0 || yDiff != 0)" in pvm_melee,
             "Scythe cleave should use adjacent tiles around the player")
+    require("inflictScytheCleaveDamage(player, npc, damage)" in pvm_melee,
+            "Scythe secondary cleave hits should not reset the primary combat event")
 
     print("PASS: AoE scythe line validated")
 

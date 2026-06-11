@@ -5545,7 +5545,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3117, new ItemDef("Grey Scimitar", "A vicious curved sword", "", 600, 83, "items:83", false, true, 16, 0x9EA59F, false, false, true, 3117));
 		setCustomItemDefinition(3118, new ItemDef("Grey battle Axe", "A vicious looking axe", "", 1800, 84, "items:84", false, true, 16, 0x9EA59F, false, false, true, 3118));
 		setCustomItemDefinition(3119, new ItemDef("Grey Mace", "A spiky mace", "", 600, 0, "items:0", false, true, 16, 0x9EA59F, false, false, true, 3119));
-		setCustomItemDefinition(3120, new ItemDef("Large Grey Helmet", "A full face helmet", "", 1056, 6, "items:6", false, true, 33, 0x9EA59F, false, false, true, 3120));
+		setCustomItemDefinition(3120, new ItemDef("Grey Helmet", "A full face helmet", "", 1056, 6, "items:6", false, true, 33, 0x9EA59F, false, false, true, 3120));
 		setCustomItemDefinition(3121, new ItemDef("Medium Grey Helmet", "A medium sized helmet", "", 576, 5, "items:5", false, true, 32, 0x9EA59F, false, false, true, 3121));
 		setCustomItemDefinition(3122, new ItemDef("Grey Chain Mail Body", "A series of connected metal rings", "", 1440, 7, "items:7", false, true, 64, 0x9EA59F, false, false, true, 3122));
 		setCustomItemDefinition(3123, new ItemDef("Grey Square Shield", "A medium metal shield", "", 1152, 3, "items:3", false, true, 8, 0x9EA59F, false, false, true, 3123));
@@ -7129,6 +7129,7 @@ public class EntityHandler {
 			animations.add(new AnimationDef("squareshield", "equipment", 0x5A3F7D, 0, true, false, 0)); // 1030 - Orichalcum Square Shield
 			animations.add(new AnimationDef("squareshield", "equipment", 0xE7E2D6, 0, true, false, 0)); // 1031 - White Square Shield
 			animations.add(new AnimationDef("squareshield", "equipment", 0x9EA59F, 0, true, false, 0)); // 1032 - Grey Square Shield
+			animations.add(new AnimationDef("scythe", "equipment", 0xF0F0F0, 0, true, false, 0)); // 1033 - Combat Scythe
 		}
 	}
 
