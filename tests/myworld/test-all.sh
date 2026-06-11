@@ -20,6 +20,7 @@ python3 ./tests/myworld/test-magic-enchanting-costs.py
 python3 ./tests/myworld/test-animation-asset-migrations.py
 python3 ./tests/myworld/test-altar-enchantment-conversion.py
 python3 ./tests/myworld/test-runecraft-data.py
+python3 ./tests/myworld/test-altar-obelisk-symmetry.py
 python3 ./tests/myworld/test-death-altar-placement.py
 python3 ./tests/myworld/test-cosmic-altar-path.py
 python3 ./tests/myworld/test-cosmic-sparkle-path.py
@@ -55,6 +56,7 @@ python3 ./tests/myworld/test-path-queue-regressions.py
 python3 ./tests/myworld/test-packet-shape-guards.py
 python3 ./tests/myworld/test-ranged-runtime-tables.py
 python3 ./tests/myworld/test-combat-data.py
+python3 ./tests/myworld/test-weapon-equip-slots.py
 python3 ./tests/myworld/test-melee-weapon-requirements.py
 python3 ./tests/myworld/test-combat-interaction.py
 python3 ./tests/myworld/test-npc-attack-styles.py
@@ -68,10 +70,12 @@ python3 ./tests/myworld/test-agility-pouches.py
 python3 ./tests/myworld/test-armor-power-penalties.py
 python3 ./tests/myworld/test-demon-ash-prayer-source.py
 python3 ./tests/myworld/test-drop-redistribution.py
+python3 ./tests/myworld/test-paladin-dark-warrior-drop-balance.py
 python3 ./tests/myworld/test-god-knight-drops-and-pvm-population.py
 python3 ./tests/myworld/test-firemaking-rework.py
 python3 ./tests/myworld/test-fishing-rework.py
 python3 ./tests/myworld/test-ground-item-cleanup.py
+python3 ./tests/myworld/test-ground-item-stack-amounts.py
 python3 ./tests/myworld/test-ground-item-identity.py
 python3 ./tests/myworld/test-ground-item-rendering.py
 python3 ./tests/myworld/test-scene-entity-lifecycle.py

@@ -1680,6 +1680,7 @@
       "id": 188,
       "rangedOffense": 4,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 1
     },
@@ -1687,6 +1688,7 @@
       "id": 2117,
       "rangedOffense": 8,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 8
     },
@@ -1694,6 +1696,7 @@
       "id": 189,
       "rangedOffense": 3,
       "weaponSpeed": 4,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 1
     },
@@ -1701,6 +1704,7 @@
       "id": 2118,
       "rangedOffense": 5,
       "weaponSpeed": 4,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 8
     },
@@ -1795,6 +1799,7 @@
       "id": 648,
       "rangedOffense": 12,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 15
     },
@@ -1802,6 +1807,7 @@
       "id": 649,
       "rangedOffense": 11,
       "weaponSpeed": 4,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 15
     },
@@ -1809,6 +1815,7 @@
       "id": 650,
       "rangedOffense": 16,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 22
     },
@@ -1816,6 +1823,7 @@
       "id": 2121,
       "rangedOffense": 24,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 30
     },
@@ -1823,6 +1831,7 @@
       "id": 651,
       "rangedOffense": 15,
       "weaponSpeed": 4,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 22
     },
@@ -1830,6 +1839,7 @@
       "id": 2122,
       "rangedOffense": 22,
       "weaponSpeed": 4,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 30
     },
@@ -1837,6 +1847,7 @@
       "id": 652,
       "rangedOffense": 32,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 38
     },
@@ -1844,6 +1855,7 @@
       "id": 653,
       "rangedOffense": 29,
       "weaponSpeed": 4,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 38
     },
@@ -1851,6 +1863,7 @@
       "id": 654,
       "rangedOffense": 36,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 46
     },
@@ -1858,6 +1871,7 @@
       "id": 2125,
       "rangedOffense": 40,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 54
     },
@@ -1865,6 +1879,7 @@
       "id": 655,
       "rangedOffense": 33,
       "weaponSpeed": 4,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 46
     },
@@ -1872,6 +1887,7 @@
       "id": 2126,
       "rangedOffense": 37,
       "weaponSpeed": 4,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 54
     },
@@ -1879,6 +1895,7 @@
       "id": 656,
       "rangedOffense": 44,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 62
     },
@@ -1886,6 +1903,7 @@
       "id": 2129,
       "rangedOffense": 48,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 70
     },
@@ -1893,6 +1911,7 @@
       "id": 657,
       "rangedOffense": 41,
       "weaponSpeed": 4,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 62
     },
@@ -1900,6 +1919,7 @@
       "id": 2130,
       "rangedOffense": 45,
       "weaponSpeed": 4,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 70
     },
@@ -2395,6 +2415,7 @@
       "id": 1454,
       "rangedOffense": 56,
       "weaponSpeed": 3,
+      "wearSlot": 4,
       "requiredSkillID": 4,
       "requiredLevel": 80,
       "basePrice": 600000
@@ -2746,7 +2767,8 @@
     },
     {
       "id": 1000,
-      "magicOffense": 6
+      "magicOffense": 6,
+      "wearSlot": 4
     },
     {
       "id": 1216,
