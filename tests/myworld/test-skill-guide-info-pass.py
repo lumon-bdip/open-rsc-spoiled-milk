@@ -29,7 +29,8 @@ def main() -> None:
     for snippet in (
         'skillGuideChosenTabs.add("Info");',
         '"Combat summons stay until death or dismissal"',
-        '"Support summons consume life runes for upkeep"',
+        '"Support upkeep rises every 3 minutes active"',
+        '"Upkeep recovers 1 step per minute inactive"',
         '"Utility summons complete one task, then leave"',
         '"Summoning has a 5 second interruptible charge"',
         "isSummoningInfoTab()",

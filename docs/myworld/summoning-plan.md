@@ -298,8 +298,9 @@ The first proof implementation has already established the core summon runtime.
 - Combat summon health and max hit scale from Summoning level, using each
   summon profile's base values and growth intervals.
 - Support and utility summons do not absorb damage.
-- Support summons last `1 minute` and consume `1 Life rune` each minute to
-  stay active.
+- Support summons last `1 minute` and begin at `1 Life rune` per minute to
+  stay active. Their upkeep rises by `1 Life rune` every `3 minutes` active,
+  then recovers by `1 Life rune` for each `1 minute` without a support summon.
 - Utility summons time out after `1 minute`.
 - `Summoning` is a persisted MyWorld skill with database columns, stat packet
   fields, and client stat array support.

@@ -190,6 +190,8 @@ def ensure_special_staff_notes(items: dict[int, dict], overrides: dict[int, dict
         fail("Dramen Staff should currently mirror tier-3 utility magicOffense")
     if overrides.get(198, {}).get("magicOffense") != 28:
         fail("Legacy quest Magic Staff should currently mirror tier-5 utility magicOffense")
+    if overrides.get(1000, {}).get("magicOffense") != 40:
+        fail("Staff of Iban should mirror tier-7 magicOffense")
     if overrides.get(198, {}).get("name") != "Wizard staff":
         fail("Legacy utility Magic Staff should now be renamed to Wizard staff in MyWorld")
     if items[1784]["name"] != "Magic Staff":

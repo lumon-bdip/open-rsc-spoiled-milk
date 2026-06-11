@@ -29,6 +29,7 @@ python3 ./tests/myworld/test-enchanting-data.py
 python3 ./tests/myworld/test-jewelry-runtime-effects.py
 python3 ./tests/myworld/test-bank-filters.py
 python3 ./tests/myworld/test-bank-shortcuts.py
+python3 ./tests/myworld/test-auto-attack-hud.py
 python3 ./tests/myworld/test-source-cleanup.py
 python3 ./tests/myworld/test-world-start.py
 python3 ./tests/myworld/test-fatigue-sleep-removal.py

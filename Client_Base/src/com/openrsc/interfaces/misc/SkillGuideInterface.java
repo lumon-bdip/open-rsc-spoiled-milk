@@ -1058,7 +1058,8 @@ public final class SkillGuideInterface {
 			addSummonGuide(23, "", "Combat summons stay until death or dismissal");
 			addSummonGuide(8, "", "Combat summons absorb only their listed share");
 			addSummonGuide(0, "", "Support summons last 1 minute by default");
-			addSummonGuide(0, "", "Support summons consume life runes for upkeep");
+			addSummonGuide(0, "", "Support upkeep rises every 3 minutes active");
+			addSummonGuide(0, "", "Upkeep recovers 1 step per minute inactive");
 			addSummonGuide(241, "", "Utility summons complete one task, then leave");
 			addSummonGuide(13, "", "Utility summons time out after 1 minute");
 			addSummonGuide(114, "", "Only one manual summon can be active");

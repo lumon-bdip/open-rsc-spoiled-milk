@@ -92,7 +92,9 @@ def main() -> int:
         failures.append("successful summoning should let the client finish the charge animation naturally")
     if "getSummonArrivalEffect(profile)" not in summoning:
         failures.append("summoned NPCs must receive a role-specific arrival combat effect")
-    if "SUMMON_CHARGE_MS + gameTick - 1" not in summoning:
+    if "getTicksForMilliseconds(owner, SUMMON_CHARGE_MS)" not in summoning:
+        failures.append("server summon charge should use the shared millisecond-to-tick conversion")
+    if "milliseconds + gameTick - 1" not in summoning:
         failures.append("server summon charge should round up to the configured five-second window")
     if not SUMMON_CHARGE_ASSET_DIR.is_dir():
         failures.append("summon charge animation asset folder is missing")

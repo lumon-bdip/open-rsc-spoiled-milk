@@ -64,6 +64,7 @@ enum BankItemTag {
 		boolean rangedAmmo = containsAny(name, "arrow", "bolt", "dart", "throwing knife",
 			"javelin", "cannonball", "cannon ball");
 		boolean bones = containsAny(name, "bone");
+		boolean ashes = equalsAny(name, "ashes");
 		boolean demonAshes = containsAny(name, "demon ash");
 		boolean staff = containsAny(name, "staff", "stave", "wand");
 		boolean potion = containsAny(name, "potion", "brew", "antidote", "serum")
@@ -118,7 +119,7 @@ enum BankItemTag {
 		if (armour) {
 			tags.add(ARMOUR);
 		}
-		if (rune || staff || containsAny(name, "enchanted", "magic ") || bones || demonAshes) {
+		if (rune || staff || containsAny(name, "enchanted", "magic ") || bones || ashes || demonAshes) {
 			tags.add(MAGIC);
 		}
 		if (melee) {

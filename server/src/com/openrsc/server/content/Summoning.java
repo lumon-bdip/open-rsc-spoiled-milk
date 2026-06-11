@@ -53,6 +53,9 @@ public final class Summoning {
 	private static final String RAT_NPC_KEY = "myworld_rat_note_npc";
 	private static final String CAMEL_AWAITING_ITEM_KEY = "myworld_camel_awaiting_item";
 	private static final String CAMEL_NPC_KEY = "myworld_camel_bank_npc";
+	private static final String SUPPORT_UPKEEP_SURCHARGE_KEY = "myworld_support_upkeep_surcharge";
+	private static final String SUPPORT_UPKEEP_RECOVERY_STARTED_KEY = "myworld_support_upkeep_recovery_started";
+	private static final String SUPPORT_UPKEEP_NEXT_INCREASE_KEY = "myworld_support_upkeep_next_increase";
 	private static final String SOURCE_MANUAL = "manual";
 	private static final String SOURCE_ARMOR = "armor";
 	private static final String KIND_GIANT_SPIDER = "giant_spider";
@@ -92,6 +95,9 @@ public final class Summoning {
 	private static final int UNICORN_PRAYER_BONUS = 10;
 	private static final int SUPPORT_UPKEEP_MS = 60000;
 	private static final int SUPPORT_DURATION_SECONDS = SUPPORT_UPKEEP_MS / 1000;
+	private static final int SUPPORT_UPKEEP_BASE_COST = 1;
+	private static final int SUPPORT_UPKEEP_INCREASE_MS = 3 * SUPPORT_UPKEEP_MS;
+	private static final int SUPPORT_UPKEEP_RECOVERY_MS = SUPPORT_UPKEEP_MS;
 	private static final int SUMMON_CHARGE_MS = 5000;
 	private static final int SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP = 10;
 	private static final int PACK_RAT_UTILITY_BASE_DISPLAYED_XP = 75;
@@ -415,12 +421,16 @@ public final class Summoning {
 	}
 
 	private static void finishManualSummon(final Player owner, final Npc summon, final boolean removeSummon) {
+		final boolean wasSupportSummon = isSupportSummon(owner, summon);
 		if (removeSummon && summon != null && !summon.isRemoved()) {
 			summon.remove();
 		}
 		final Npc activeSummon = owner.getAttribute(MANUAL_SUMMON_KEY, null);
 		if (activeSummon == summon) {
 			clearManualSummonState(owner);
+			if (wasSupportSummon) {
+				startSupportUpkeepRecovery(owner);
+			}
 		}
 	}
 
@@ -647,6 +657,19 @@ public final class Summoning {
 		return null;
 	}
 
+	private static boolean isSupportSummon(final Player owner, final Npc summon) {
+		if (summon == null || summon.getAttribute(SUMMON_OWNER_KEY, -1L) != owner.getUsernameHash()) {
+			return false;
+		}
+		final SummonProfile profile = getManualProfileForSummon(summon);
+		return profile != null && profile.role == SummonRole.SUPPORT;
+	}
+
+	private static boolean hasActiveSupportSummon(final Player owner) {
+		final Npc summon = owner.getAttribute(MANUAL_SUMMON_KEY, null);
+		return summon != null && !summon.isRemoved() && isSupportSummon(owner, summon);
+	}
+
 	public static int applySummonOutgoingDamage(final Mob hitter, final int damage) {
 		if (damage <= 0 || !isSummon(hitter)) {
 			return damage;
@@ -860,7 +883,17 @@ public final class Summoning {
 	}
 
 	private static void spawnManualSummon(final Player owner, final SummonProfile profile) {
+		final boolean replacingActiveSupport = profile.role == SummonRole.SUPPORT
+			&& hasActiveSupportSummon(owner);
 		dismissManualSummon(owner);
+		if (profile.role == SummonRole.SUPPORT) {
+			applySupportUpkeepRecovery(owner);
+			owner.getCache().remove(SUPPORT_UPKEEP_RECOVERY_STARTED_KEY);
+			if (!replacingActiveSupport || !owner.getCache().hasKey(SUPPORT_UPKEEP_NEXT_INCREASE_KEY)) {
+				owner.getCache().store(SUPPORT_UPKEEP_NEXT_INCREASE_KEY,
+					System.currentTimeMillis() + SUPPORT_UPKEEP_INCREASE_MS);
+			}
+		}
 		final Point spawnLocation = adjacentTo(owner);
 		final Npc summon = new Npc(owner.getWorld(), profile.npcId, spawnLocation.getX(), spawnLocation.getY());
 		summon.setShouldRespawn(false);
@@ -1009,13 +1042,18 @@ public final class Summoning {
 				}
 
 				keepNearOwner(owner, summon);
+				if (profile.role == SummonRole.SUPPORT) {
+					updateSupportUpkeepEscalation(owner);
+				}
 				if (profile.durationTicks > 0 && --ticksRemaining <= 0) {
-					if (profile.role == SummonRole.SUPPORT && consumeLifeRune(owner)) {
+					final int upkeepCost = getSupportUpkeepCost(owner);
+					if (profile.role == SummonRole.SUPPORT && consumeLifeRunes(owner, upkeepCost)) {
 						ticksRemaining = getDurationTicks(owner, profile);
-						owner.message("@gre@A life rune sustains your summon.");
+						owner.message("@gre@" + formatLifeRunes(upkeepCost)
+							+ (upkeepCost == 1 ? " sustains" : " sustain") + " your summon.");
 					} else {
 						if (profile.role == SummonRole.SUPPORT) {
-							owner.message("@red@Your summon fades away without a life rune to sustain it.");
+							owner.message("@red@Your summon fades away without enough life runes to sustain it.");
 						}
 						finishSummon(owner, summon, true);
 						stop();
@@ -1027,6 +1065,97 @@ public final class Summoning {
 				}
 			}
 		});
+	}
+
+	private static void updateSupportUpkeepEscalation(final Player owner) {
+		final long now = System.currentTimeMillis();
+		final long nextIncrease = owner.getCache().hasKey(SUPPORT_UPKEEP_NEXT_INCREASE_KEY)
+			? owner.getCache().getLong(SUPPORT_UPKEEP_NEXT_INCREASE_KEY)
+			: now + SUPPORT_UPKEEP_INCREASE_MS;
+		if (now < nextIncrease) {
+			if (!owner.getCache().hasKey(SUPPORT_UPKEEP_NEXT_INCREASE_KEY)) {
+				owner.getCache().store(SUPPORT_UPKEEP_NEXT_INCREASE_KEY, nextIncrease);
+			}
+			return;
+		}
+		final int increases = 1 + (int) Math.min(Integer.MAX_VALUE,
+			(now - nextIncrease) / SUPPORT_UPKEEP_INCREASE_MS);
+		final int surcharge = getSupportUpkeepSurcharge(owner) + increases;
+		owner.getCache().set(SUPPORT_UPKEEP_SURCHARGE_KEY, surcharge);
+		owner.getCache().store(SUPPORT_UPKEEP_NEXT_INCREASE_KEY,
+			nextIncrease + ((long) increases * SUPPORT_UPKEEP_INCREASE_MS));
+		owner.message("@yel@Your support summon upkeep increases to "
+			+ formatLifeRunes(SUPPORT_UPKEEP_BASE_COST + surcharge) + " per minute.");
+	}
+
+	private static void startSupportUpkeepRecovery(final Player owner) {
+		if (getSupportUpkeepSurcharge(owner) <= 0) {
+			return;
+		}
+		if (!owner.getCache().hasKey(SUPPORT_UPKEEP_RECOVERY_STARTED_KEY)) {
+			owner.getCache().store(SUPPORT_UPKEEP_RECOVERY_STARTED_KEY, System.currentTimeMillis());
+		}
+		owner.getWorld().getServer().getGameEventHandler().addOrUpdate(new GameTickEvent(
+			owner.getWorld(), owner, getTicksForMilliseconds(owner, SUPPORT_UPKEEP_RECOVERY_MS),
+			"MyWorld Support Summon Upkeep Recovery", DuplicationStrategy.ONE_PER_MOB) {
+			@Override
+			public void run() {
+				setDelayTicks(getTicksForMilliseconds(owner, SUPPORT_UPKEEP_RECOVERY_MS));
+				if (!owner.loggedIn() || owner.isRemoved()) {
+					stop();
+					return;
+				}
+				if (hasActiveSupportSummon(owner)) {
+					owner.getCache().remove(SUPPORT_UPKEEP_RECOVERY_STARTED_KEY);
+					stop();
+					return;
+				}
+				applySupportUpkeepRecovery(owner);
+				if (getSupportUpkeepSurcharge(owner) == 0) {
+					stop();
+				}
+			}
+		});
+	}
+
+	private static int getSupportUpkeepCost(final Player owner) {
+		return SUPPORT_UPKEEP_BASE_COST + getSupportUpkeepSurcharge(owner);
+	}
+
+	private static int getSupportUpkeepSurcharge(final Player owner) {
+		return owner.getCache().hasKey(SUPPORT_UPKEEP_SURCHARGE_KEY)
+			? Math.max(0, owner.getCache().getInt(SUPPORT_UPKEEP_SURCHARGE_KEY))
+			: 0;
+	}
+
+	private static void applySupportUpkeepRecovery(final Player owner) {
+		if (!owner.getCache().hasKey(SUPPORT_UPKEEP_RECOVERY_STARTED_KEY)) {
+			return;
+		}
+		final long recoveryStarted = owner.getCache().getLong(SUPPORT_UPKEEP_RECOVERY_STARTED_KEY);
+		final long elapsed = Math.max(0L, System.currentTimeMillis() - recoveryStarted);
+		final int recoveredLevels = (int) Math.min(Integer.MAX_VALUE, elapsed / SUPPORT_UPKEEP_RECOVERY_MS);
+		if (recoveredLevels <= 0) {
+			return;
+		}
+		final int previousSurcharge = getSupportUpkeepSurcharge(owner);
+		final int surcharge = Math.max(0, previousSurcharge - recoveredLevels);
+		if (surcharge == 0) {
+			owner.getCache().remove(SUPPORT_UPKEEP_SURCHARGE_KEY, SUPPORT_UPKEEP_RECOVERY_STARTED_KEY,
+				SUPPORT_UPKEEP_NEXT_INCREASE_KEY);
+		} else {
+			owner.getCache().set(SUPPORT_UPKEEP_SURCHARGE_KEY, surcharge);
+			owner.getCache().store(SUPPORT_UPKEEP_RECOVERY_STARTED_KEY,
+				recoveryStarted + ((long) recoveredLevels * SUPPORT_UPKEEP_RECOVERY_MS));
+		}
+		if (surcharge < previousSurcharge) {
+			owner.message("@gre@Your support summon upkeep decreases to "
+				+ formatLifeRunes(SUPPORT_UPKEEP_BASE_COST + surcharge) + " per minute.");
+		}
+	}
+
+	private static String formatLifeRunes(final int amount) {
+		return amount + (amount == 1 ? " life rune" : " life runes");
 	}
 
 	private static void keepNearOwner(final Player owner, final Npc summon) {
@@ -1443,11 +1572,11 @@ public final class Summoning {
 		return target.getSkills().getLevel(Skill.HITS.id()) <= 0;
 	}
 
-	private static boolean consumeLifeRune(final Player owner) {
+	private static boolean consumeLifeRunes(final Player owner, final int amount) {
 		if (shouldPreserveRuneCost(owner, ItemId.LIFE_RUNE.id())) {
 			return true;
 		}
-		final boolean consumed = owner.getCarriedItems().remove(new Item(ItemId.LIFE_RUNE.id(), 1), false) != -1;
+		final boolean consumed = owner.getCarriedItems().remove(new Item(ItemId.LIFE_RUNE.id(), amount), false) != -1;
 		if (consumed) {
 			ActionSender.sendInventory(owner);
 			awardDisplayedSummoningExperience(owner, SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP);
@@ -1510,8 +1639,12 @@ public final class Summoning {
 	}
 
 	private static int getChargeTicks(final Player owner) {
+		return getTicksForMilliseconds(owner, SUMMON_CHARGE_MS);
+	}
+
+	private static int getTicksForMilliseconds(final Player owner, final int milliseconds) {
 		final int gameTick = Math.max(1, owner.getConfig().GAME_TICK);
-		return Math.max(1, (SUMMON_CHARGE_MS + gameTick - 1) / gameTick);
+		return Math.max(1, (milliseconds + gameTick - 1) / gameTick);
 	}
 
 	private static int getDurationTicks(final Player owner, final SummonProfile profile) {

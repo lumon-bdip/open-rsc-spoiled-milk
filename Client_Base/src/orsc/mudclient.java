@@ -229,6 +229,8 @@ public final class mudclient implements Runnable {
 	private static final int HEALTH_HUD_TOP_MARGIN = 3;
 	private static final int HEALTH_HUD_RIGHT_OF_MENU_GAP = 8;
 	private static final int HEALTH_HUD_COORDINATE_GAP = 16;
+	private static final int AUTO_ATTACK_HUD_SIZE = 16;
+	private static final int AUTO_ATTACK_HUD_GAP = 4;
 	private static final int TOP_MENU_BAR_WIDTH = 199;
 	private static final String[] MINIMAP_POSITION_LABELS = new String[] {
 		"Top right", "Bottom right", "Top left", "Bottom left"
@@ -910,6 +912,8 @@ public final class mudclient implements Runnable {
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
 	private final Sprite[] summoningIconSprites = new Sprite[SUMMONING_NAMES.length];
 	private final Map<String, Sprite> externalItemSpriteCache = new HashMap<String, Sprite>();
+	private Sprite autoAttackHudSprite;
+	private boolean autoAttackHudSpriteLoaded;
 	private Set<String> embeddedAssetResources;
 	private static final int MAX_QUEUED_PROJECTILE_EFFECTS = 64;
 	private final int[] queuedProjectileEffectSprite = new int[MAX_QUEUED_PROJECTILE_EFFECTS];
@@ -11035,13 +11039,62 @@ public final class mudclient implements Runnable {
 	private void drawPlayerStatusHud() {
 		int x = this.getSurface().width2 - TOP_MENU_BAR_WIDTH - HEALTH_HUD_WIDTH - HEALTH_HUD_RIGHT_OF_MENU_GAP;
 		int y = HEALTH_HUD_TOP_MARGIN;
-		x = Math.max(7, x);
+		x = Math.max(7 + AUTO_ATTACK_HUD_SIZE + AUTO_ATTACK_HUD_GAP, x);
+		this.drawAutoAttackHudButton(x - AUTO_ATTACK_HUD_SIZE - AUTO_ATTACK_HUD_GAP, y - 1);
 		this.drawPlayerHealthBar(x, y);
 		y += HEALTH_HUD_HEIGHT + HEALTH_HUD_COORDINATE_GAP;
 		if (this.showCoordinatesOverlay) {
 			this.getSurface().drawString("Tile: @gre@(@whi@" + (this.playerLocalX + this.midRegionBaseX)
 				+ "@gre@,@whi@" + (this.playerLocalZ + this.midRegionBaseZ) + "@gre@)", x, y, 0xFFFFFF, 1);
 		}
+	}
+
+	private void drawAutoAttackHudButton(int x, int y) {
+		boolean hovered = this.mouseX >= x && this.mouseX < x + AUTO_ATTACK_HUD_SIZE
+			&& this.mouseY >= y && this.mouseY < y + AUTO_ATTACK_HUD_SIZE;
+		int borderColor = hovered ? 0xFFFF00 : (C_AUTO_RETALIATE ? 0x55DD55 : 0xCC5555);
+		int backgroundColor = C_AUTO_RETALIATE ? 0x163A16 : 0x3A1616;
+		this.getSurface().drawBoxAlpha(x, y, AUTO_ATTACK_HUD_SIZE, AUTO_ATTACK_HUD_SIZE, backgroundColor, 210);
+		this.getSurface().drawBoxBorder(x, AUTO_ATTACK_HUD_SIZE, y, AUTO_ATTACK_HUD_SIZE, borderColor);
+
+		Sprite icon = getAutoAttackHudSprite();
+		if (icon != null) {
+			this.getSurface().drawSprite(icon, x + 2, y + 2, AUTO_ATTACK_HUD_SIZE - 4, AUTO_ATTACK_HUD_SIZE - 4,
+				5924, C_AUTO_RETALIATE ? 255 : 100);
+		}
+		if (hovered) {
+			this.getSurface().drawString("Auto attack: " + (C_AUTO_RETALIATE ? "@gre@On" : "@red@Off"),
+				x - 2, y + AUTO_ATTACK_HUD_SIZE + 12, 0xFFFFFF, 1);
+			if (this.mouseButtonClick == 1) {
+				toggleAutoRetaliate();
+				this.mouseButtonClick = 0;
+			}
+		}
+	}
+
+	private Sprite getAutoAttackHudSprite() {
+		if (autoAttackHudSpriteLoaded) {
+			return autoAttackHudSprite;
+		}
+		autoAttackHudSpriteLoaded = true;
+		File sourceFile = new File(DEVELOPMENT_ASSET_ROOT + "sprites/UI/auto-attack.png");
+		try {
+			BufferedImage source = readAssetImage(sourceFile);
+			if (source != null) {
+				autoAttackHudSprite = createExternalIconSprite(source, 56, getSheetBackgroundArgb(source));
+			}
+		} catch (IOException e) {
+			System.out.println("Failed to load auto attack HUD icon: " + e.getMessage());
+		}
+		return autoAttackHudSprite;
+	}
+
+	private void toggleAutoRetaliate() {
+		C_AUTO_RETALIATE = !C_AUTO_RETALIATE;
+		this.packetHandler.getClientStream().newPacket(111);
+		this.packetHandler.getClientStream().bufferBits.putByte(47);
+		this.packetHandler.getClientStream().bufferBits.putByte(C_AUTO_RETALIATE ? 1 : 0);
+		this.packetHandler.getClientStream().finishPacket();
 	}
 
 	private void drawPlayerHealthBar(int x, int y) {
@@ -12297,11 +12350,7 @@ public final class mudclient implements Runnable {
 		}
 
 		if (settingIndex == 48 && this.mouseButtonClick == 1) {
-			C_AUTO_RETALIATE = !C_AUTO_RETALIATE;
-			this.packetHandler.getClientStream().newPacket(111);
-			this.packetHandler.getClientStream().bufferBits.putByte(47);
-			this.packetHandler.getClientStream().bufferBits.putByte(C_AUTO_RETALIATE ? 1 : 0);
-			this.packetHandler.getClientStream().finishPacket();
+			toggleAutoRetaliate();
 		}
 
 		// adjust for previous settings
