@@ -38,9 +38,12 @@ def main() -> None:
         "COMBAT_XP_FOCUS_MELEE",
         "COMBAT_XP_FOCUS_RANGED",
         "COMBAT_XP_FOCUS_MAGIC",
+        "getCurrentCombatXpFocus()",
         "getEquippedCombatXpFocus()",
     ):
         require(snippet in client, f"Client should expose typed combat XP focus labels: {snippet}")
+    require('return "Range";' in client,
+            "Client should label ranged combat focus as Range to fit the focus menu")
     require("shouldDrawHitsXpFocusMenu() || shouldDrawGatheringFocusMenu()" in client,
             "Hits XP focus menu should draw independently of gathering focus")
     require("private long hitsXpFocusMenuHideAt = 0L;" in client,
@@ -81,6 +84,11 @@ def main() -> None:
         "getCurrentCombatXpFocusSkill(player)",
     ):
         require(snippet in combat_style_handler, f"Server should use clear combat XP focus wording: {snippet}")
+    require('player.getAutoCastSpell() != null' in combat_style_handler,
+            "Server should label combat XP focus as Magic while auto-cast is set")
+    require('player.getRangeEquip() >= 0 || player.getThrowingEquip() >= 0' in combat_style_handler
+            and 'return "Range";' in combat_style_handler,
+            "Server should label combat XP focus as Range when ranged gear is equipped")
 
     require("awardCombatXpWithHitsFocus(player, Skill.MELEE, meleeXpShare * 4);" in npc,
             "Melee NPC XP should use the full old 3:1 melee/Hits budget for Hits XP focus")
@@ -100,8 +108,10 @@ def main() -> None:
             "Combat XP focus split must not pass exact XP values to the weighted distribution overload")
     require("case NPC_CAST_SPELL:" in client and "case PLAYER_CAST_SPELL:" in client
             and client.count("this.showHitsXpFocusMenuTemporarily(COMBAT_XP_FOCUS_MAGIC);") >= 2
-            and client.count("this.showHitsXpFocusMenuTemporarily(getEquippedCombatXpFocus());") >= 2,
+            and client.count("this.showHitsXpFocusMenuTemporarily(getCurrentCombatXpFocus());") >= 2,
             "Magic, NPC attack, and player attack interactions should show the typed temporary Hits XP focus menu")
+    require("this.autoCastSpell >= 0 && this.isAutoCastEligibleSpell(this.autoCastSpell)" in client,
+            "Client attack interactions should show Magic focus when auto-cast is set")
 
     print("PASS: combat Hits XP focus menu, persistence, and NPC XP split validated")
 

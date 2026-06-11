@@ -2404,12 +2404,22 @@ public enum ItemId {
 	SMALL_GEODE(3177),
 	STANDARD_GEODE(3178),
 	LARGE_GEODE(3179),
-	HUGE_GEODE(3180);
+	HUGE_GEODE(3180),
+	TIN_SCYTHE(3181),
+	COPPER_SCYTHE(3182),
+	BRONZE_SCYTHE(3183),
+	IRON_SCYTHE(3184),
+	STEEL_SCYTHE(3185),
+	MITHRIL_SCYTHE(3186),
+	TITAN_STEEL_SCYTHE(3187),
+	ADAMANTITE_SCYTHE(3188),
+	ORICHALCUM_SCYTHE(3189),
+	RUNE_SCYTHE(3190);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3181;
+	public static final int maxCustom = 3191;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

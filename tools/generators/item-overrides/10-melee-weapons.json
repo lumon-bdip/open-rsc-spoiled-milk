@@ -997,6 +997,76 @@
       "id": 1592,
       "meleeOffense": 10,
       "weaponSpeed": 3
+    },
+    {
+      "id": 3181,
+      "meleeOffense": 18,
+      "weaponSpeed": 3,
+      "requiredLevel": 1,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3182,
+      "meleeOffense": 28,
+      "weaponSpeed": 3,
+      "requiredLevel": 1,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3183,
+      "meleeOffense": 38,
+      "weaponSpeed": 3,
+      "requiredLevel": 1,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3184,
+      "meleeOffense": 58,
+      "weaponSpeed": 3,
+      "requiredLevel": 1,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3185,
+      "meleeOffense": 77,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3186,
+      "meleeOffense": 97,
+      "weaponSpeed": 3,
+      "requiredLevel": 20,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3187,
+      "meleeOffense": 107,
+      "weaponSpeed": 3,
+      "requiredLevel": 30,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3188,
+      "meleeOffense": 117,
+      "weaponSpeed": 3,
+      "requiredLevel": 30,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3189,
+      "meleeOffense": 127,
+      "weaponSpeed": 3,
+      "requiredLevel": 40,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3190,
+      "meleeOffense": 137,
+      "weaponSpeed": 3,
+      "requiredLevel": 40,
+      "requiredSkillID": 0
     }
   ]
 }

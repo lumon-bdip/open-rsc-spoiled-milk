@@ -25,19 +25,19 @@ METAL_BODY_VALUES = {
 }
 TIER_11_VALUES = {
     593: 120000,   # dragon sword
-    594: 60000,    # dragon hatchet
+    594: 120000,   # dragon hatchet
     1278: 96000,   # dragon square shield
-    1346: 180000,  # dragon 2h sword
-    1425: 70000,   # large dragon helmet
-    1426: 96000,   # dragon paladin shield
-    1427: 160000,  # dragon plate body
-    1428: 160000,  # dragon plate top/body alias
-    1429: 96000,   # dragon plate legs
-    1430: 96000,   # dragon plate skirt/legs alias
-    1447: 70000,   # dragon dagger
-    1448: 80000,   # poisoned dragon dagger
-    1480: 60000,   # dragon woodcutting hatchet
-    2752: 140000,  # dragon battleaxe
+    1346: 360000,  # dragon 2h sword
+    1425: 140000,  # dragon helmet
+    1426: 192000,  # dragon paladin shield
+    1427: 320000,  # dragon plate body
+    1428: 320000,  # dragon plate top/body alias
+    1429: 192000,  # dragon plate legs
+    1430: 192000,  # dragon plate skirt/legs alias
+    1447: 140000,  # dragon dagger
+    1448: 300000,  # poisoned dragon dagger
+    1480: 120000,  # dragon woodcutting hatchet
+    2752: 280000,  # dragon battleaxe
 }
 LEATHER_TOP_VALUES = {
     1: 90,

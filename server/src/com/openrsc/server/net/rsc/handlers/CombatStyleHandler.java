@@ -104,15 +104,13 @@ public class CombatStyleHandler implements PayloadProcessor<CombatStyleStruct, O
 	}
 
 	private String getCurrentCombatXpFocusSkill(Player player) {
-		switch (player.getKillType()) {
-			case RANGED:
-				return "Ranged";
-			case MAGIC:
-				return "Magic";
-			case COMBAT:
-			default:
-				return "Melee";
+		if (player.getAutoCastSpell() != null) {
+			return "Magic";
 		}
+		if (player.getRangeEquip() >= 0 || player.getThrowingEquip() >= 0) {
+			return "Range";
+		}
+		return "Melee";
 	}
 
 	private boolean hasEquippedFishingRod(Player player) {

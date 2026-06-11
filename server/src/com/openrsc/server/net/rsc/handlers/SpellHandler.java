@@ -600,6 +600,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			case WATER_BLAST:
 			case EARTH_BLAST:
 			case FIRE_BLAST:
+			case IBAN_BLAST:
 			case THUNDER_STRIKE:
 			case ICE_CRYSTAL:
 			case ACID_GUSH:
@@ -2080,7 +2081,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
 							return;
 						}
-						final int ibanPrimaryDamage = CombatFormula.calculateIbanSpellDamage(getPlayer(), affectedMob);
+						final double ibanDamageCapPercent = getSpellDamageCapPercent(spellEnum);
+						final int ibanPrimaryDamage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, 15, ibanDamageCapPercent);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
 							ibanPrimaryDamage, 4, setChasing,
 							0, 0, 0, 0, Projectile.SKULL, CombatEffect.IBAN_BLAST, false));
@@ -2410,7 +2412,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			if (npc == primaryTarget || !isValidIbanBlastAreaTarget(primaryTarget, npc)) {
 				continue;
 			}
-			final int damage = CombatFormula.calculateMagicDamage(caster, npc, secondaryMax);
+			final int damage = CombatFormula.calculateMagicDamage(caster, npc, secondaryMax, getSpellDamageCapPercent(Spells.IBAN_BLAST));
 			applyGodSpellSecondaryDamage(caster, npc, damage);
 		}
 	}

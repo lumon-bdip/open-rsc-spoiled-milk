@@ -31,7 +31,6 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 
 	private final int DORICS_ANVIL = 177;
 	private final int ANVIL = 50;
-	private final int LAVA_ANVIL = 1285;
 	private static final int[] MODERN_ANVIL_BARS = {
 		ItemId.TIN_BAR.id(), ItemId.COPPER_BAR.id(), ItemId.BRONZE_BAR.id(),
 		ItemId.IRON_BAR.id(), ItemId.STEEL_BAR.id(), ItemId.MITHRIL_BAR.id(),
@@ -72,8 +71,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	@Override
 	public boolean blockUseLoc(Player player, GameObject obj, Item item) {
 		return obj.getID() == ANVIL
-			|| obj.getID() == DORICS_ANVIL
-			|| obj.getID() == LAVA_ANVIL;
+			|| obj.getID() == DORICS_ANVIL;
 	}
 
 	@Override
@@ -84,28 +82,6 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 			return;
 		}
 
-		if (obj.getID() == LAVA_ANVIL) {
-			if (player.getCache().hasKey("miniquest_dwarf_youth_rescue")
-			&& player.getCache().getInt("miniquest_dwarf_youth_rescue") == 2) {
-				if (item.getCatalogId() == ItemId.DRAGON_BAR.id()) {
-					if (!player.getCarriedItems().getInventory().hasInInventory(ItemId.HAMMER.id()))
-					{
-						player.message("You need a hammer to do that");
-						return;
-					}
-					if (getCurrentLevel(player, Skill.SMITHING.id()) < 90) {
-						player.message("You need 90 smithing to work dragon metal");
-						return;
-					}
-					if (player.getCarriedItems().remove(new Item(ItemId.DRAGON_BAR.id())) > -1) {
-						give(player, ItemId.DRAGON_METAL_CHAIN.id(), 50);
-						player.incExp(Skill.SMITHING.id(), 1000, true);
-					}
-				} else
-					player.message("Nothing interesting happens");
-			}
-			return;
-		}
 		// Doric's Anvil
 		if (obj.getID() == DORICS_ANVIL && !allowDorics(player)) return;
 
@@ -508,6 +484,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 7);
 		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 21);
 		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 8);
+		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 22);
 		addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 9);
 		if (player.getConfig().CAN_FEATURE_MEMBS) {
 			addModernWeaponOrMissileRecipe(recipes, player, item.getCatalogId(), 10);
@@ -573,7 +550,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		if (!isModernMetalBar(barId)) {
 			return null;
 		}
-		int[] weaponIds = {0, 2, 3, 4, 5, 6, 7, 21, 8, 9, 10};
+		int[] weaponIds = {0, 2, 3, 4, 5, 6, 7, 21, 8, 22, 9, 10};
 		for (int toMake : weaponIds) {
 			if (toMake == 10 && !player.getConfig().CAN_FEATURE_MEMBS) {
 				continue;
@@ -897,11 +874,12 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 
 	private int axeChoice(Player player) {
 		player.message("What sort of axe do you want to make?");
-		int option = multi(player, "Hatchet", "Pickaxe", "Shears", "Battle Axe (3 bars)");
+		int option = multi(player, "Hatchet", "Pickaxe", "Shears", "Battle Axe (3 bars)", "Scythe (3 bars)");
 		if (option == 0) return 6; // Hatchet
 		else if (option == 1) return 7; // Pickaxe
 		else if (option == 2) return 21; // Shears
 		else if (option == 3) return 8; // Battle Axe
+		else if (option == 4) return 22; // Scythe
 		return -1;
 	}
 
@@ -1311,6 +1289,11 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				def.level = baseLevel;
 				def.itemID = getModernBattleAxeId(barId);
 				break;
+			case 22:
+				def.bars = 3;
+				def.level = baseLevel;
+				def.itemID = getModernScytheId(barId);
+				break;
 			case 9:
 				def.bars = 1;
 				def.level = baseLevel;
@@ -1596,6 +1579,33 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_BATTLE_AXE.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_BATTLE_AXE.id();
+			default:
+				return -1;
+		}
+	}
+
+	private int getModernScytheId(int barId) {
+		switch (ItemId.getById(barId)) {
+			case TIN_BAR:
+				return ItemId.TIN_SCYTHE.id();
+			case COPPER_BAR:
+				return ItemId.COPPER_SCYTHE.id();
+			case BRONZE_BAR:
+				return ItemId.BRONZE_SCYTHE.id();
+			case IRON_BAR:
+				return ItemId.IRON_SCYTHE.id();
+			case STEEL_BAR:
+				return ItemId.STEEL_SCYTHE.id();
+			case MITHRIL_BAR:
+				return ItemId.MITHRIL_SCYTHE.id();
+			case TITAN_STEEL_BAR:
+				return ItemId.TITAN_STEEL_SCYTHE.id();
+			case ADAMANTITE_BAR:
+				return ItemId.ADAMANTITE_SCYTHE.id();
+			case ORICHALCUM_BAR:
+				return ItemId.ORICHALCUM_SCYTHE.id();
+			case RUNITE_BAR:
+				return ItemId.RUNE_SCYTHE.id();
 			default:
 				return -1;
 		}

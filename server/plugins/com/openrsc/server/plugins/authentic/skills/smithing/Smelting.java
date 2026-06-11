@@ -31,7 +31,6 @@ import static com.openrsc.server.plugins.Functions.*;
 public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 	public static final int FURNACE = SceneryId.FURNACE.id();
-	public static final int LAVA_FURNACE = SceneryId.LAVA_FORGE.id();
 	public static final int FURNACE_CATEGORY_BARS = ItemId.BRONZE_BAR.id();
 	public static final int FURNACE_CATEGORY_RINGS = ItemId.GOLD_RING.id();
 	public static final int FURNACE_CATEGORY_NECKLACES = ItemId.GOLD_NECKLACE.id();
@@ -127,10 +126,6 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 				return;
 			}
 			return;
-		}
-
-		if (obj.getID() == LAVA_FURNACE) {
-			handleLavaFurnace(player, item);
 		}
 	}
 
@@ -339,53 +334,6 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			&& player.getCache().getInt("famcrest_gauntlets") == Gauntlets.GOLDSMITHING.id();
 	}
 
-	private void handleLavaFurnace(Player player, Item item) {
-		int stage = player.getCache().hasKey("miniquest_dwarf_youth_rescue")
-			? player.getCache().getInt("miniquest_dwarf_youth_rescue") : -1;
-		if (stage != 2) {
-			player.message("You don't have permission to use this");
-			return;
-		}
-		int amount = getDragonMetalSmeltBars(item.getCatalogId());
-		if (amount <= 0) {
-			player.message("Nothing interesting happens");
-			return;
-		}
-		if (getCurrentLevel(player, Skill.SMITHING.id()) < 90) {
-			player.message("90 smithing is required to use this forge");
-			return;
-		}
-		if (player.getCarriedItems().remove(new Item(item.getCatalogId())) > -1) {
-			player.message("You smelt the " + item.getDef(player.getWorld()).getName() + "...");
-			delay(3);
-			player.message("And retrieve " + amount + " dragon bar" + (amount > 1 ? "s" : ""));
-			give(player, ItemId.DRAGON_BAR.id(), amount);
-		}
-	}
-
-	private int getDragonMetalSmeltBars(int itemId) {
-		if (itemId == ItemId.DRAGON_SWORD.id()
-			|| itemId == ItemId.DRAGON_AXE.id()
-			|| itemId == ItemId.DRAGON_MEDIUM_HELMET.id()
-			|| itemId == ItemId.RIGHT_HALF_DRAGON_SQUARE_SHIELD.id()
-			|| itemId == ItemId.LEFT_HALF_DRAGON_SQUARE_SHIELD.id()
-			|| itemId == ItemId.DRAGON_SQUARE_SHIELD.id()
-			|| itemId == ItemId.DRAGON_2_HANDED_SWORD.id()
-			|| itemId == ItemId.LARGE_DRAGON_HELMET.id()
-			|| itemId == ItemId.DRAGON_KITE_SHIELD.id()
-			|| itemId == ItemId.DRAGON_PLATE_MAIL_BODY.id()
-			|| itemId == ItemId.DRAGON_PLATE_MAIL_TOP.id()
-			|| itemId == ItemId.DRAGON_PLATE_MAIL_LEGS.id()
-			|| itemId == ItemId.DRAGON_PLATED_SKIRT.id()
-			|| itemId == ItemId.DRAGON_DAGGER.id()
-			|| itemId == ItemId.POISONED_DRAGON_DAGGER.id()
-			|| itemId == ItemId.DRAGON_WOODCUTTING_AXE.id()
-			|| itemId == ItemId.DRAGON_BATTLE_AXE.id()) {
-			return 1;
-		}
-		return 0;
-	}
-
 	private void handleCannonBallSmelting(Player player) {
 		if (getCurrentLevel(player, Skill.SMITHING.id()) < 30) {
 			player.message("You need at least level 30 smithing to make cannon balls");
@@ -510,7 +458,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			return item.getCatalogId() == ItemId.STEEL_BAR.id()
 				|| DataConversions.inArray(NORMAL_SMELTING_ITEMS, item.getCatalogId());
 		}
-		return obj.getID() == LAVA_FURNACE && item.getCatalogId() != ItemId.TREATED_HIDE.id();
+		return false;
 	}
 
 	private static final class SmeltRecipe {

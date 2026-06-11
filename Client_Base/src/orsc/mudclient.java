@@ -15403,7 +15403,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().newPacket(190);
 						this.packetHandler.getClientStream().bufferBits.putShort(indexOrX);
 						this.packetHandler.getClientStream().finishPacket();
-						this.showHitsXpFocusMenuTemporarily(getEquippedCombatXpFocus());
+						this.showHitsXpFocusMenuTemporarily(getCurrentCombatXpFocus());
 						break;
 				}
 				case NPC_EXAMINE: {
@@ -15465,7 +15465,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().newPacket(171);
 						this.packetHandler.getClientStream().bufferBits.putShort(indexOrX);
 						this.packetHandler.getClientStream().finishPacket();
-						this.showHitsXpFocusMenuTemporarily(getEquippedCombatXpFocus());
+						this.showHitsXpFocusMenuTemporarily(getCurrentCombatXpFocus());
 						break;
 				}
 				case PLAYER_DUEL: {
@@ -21274,13 +21274,20 @@ public final class mudclient implements Runnable {
 	private String getActiveCombatXpFocusName() {
 		switch (this.activeCombatXpFocus) {
 			case COMBAT_XP_FOCUS_RANGED:
-				return "Ranged";
+				return "Range";
 			case COMBAT_XP_FOCUS_MAGIC:
 				return "Magic";
 			case COMBAT_XP_FOCUS_MELEE:
 			default:
 				return "Melee";
 		}
+	}
+
+	private int getCurrentCombatXpFocus() {
+		if (this.autoCastSpell >= 0 && this.isAutoCastEligibleSpell(this.autoCastSpell)) {
+			return COMBAT_XP_FOCUS_MAGIC;
+		}
+		return getEquippedCombatXpFocus();
 	}
 
 	private int getEquippedCombatXpFocus() {

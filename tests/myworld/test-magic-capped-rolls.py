@@ -29,7 +29,11 @@ def main() -> None:
         "case WATER_STRIKE:",
         "case EARTH_STRIKE:",
         "case FIRE_STRIKE:",
+        "case IBAN_BLAST:",
         "return 0.40D;",
+        "final double ibanDamageCapPercent = getSpellDamageCapPercent(spellEnum);",
+        "CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, 15, ibanDamageCapPercent)",
+        "CombatFormula.calculateMagicDamage(caster, npc, secondaryMax, getSpellDamageCapPercent(Spells.IBAN_BLAST))",
     )
     for needle in required:
         if needle not in handler:

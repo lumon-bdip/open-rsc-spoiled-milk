@@ -56,6 +56,7 @@ WEAPON_NAME_TOKENS = (
     "maul",
     "claws",
     "whip",
+    "scythe",
 )
 
 

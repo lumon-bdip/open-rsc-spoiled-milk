@@ -5408,6 +5408,20 @@ public class EntityHandler {
 			true, false, 0, pictureMask, false, false, false, id));
 	}
 
+	private static void addScytheLineDefinitions() {
+		String[] names = {
+			"Tin Scythe", "Copper Scythe", "Bronze Scythe", "Iron Scythe", "Steel Scythe",
+			"Mithril Scythe", "Titan Steel Scythe", "Adamantite Scythe", "Orichalcum Scythe", "Rune Scythe"
+		};
+		int[] prices = {48, 96, 240, 640, 3040, 8000, 18000, 20000, 65000, 100000};
+		int[] masks = {0xD9E3EA, 0xC86A2B, 0xB08A4A, 0xE6E6E6, 0xC8CDD2, 0x6FC6C8, 0x7585A8, 0x5BC878, 0xE08C5A, 0x86D7FF};
+		for (int index = 0; index < names.length; index++) {
+			int id = 3181 + index;
+			setCustomItemDefinition(id, new ItemDef(names[index], "A two-handed scythe for sweeping attacks.", "",
+				prices[index], 434, "items:434", false, true, 8216, masks[index], false, false, true, id));
+		}
+	}
+
 	private static void addMetalBoltDefinition(String name, int id, int price, int pictureMask) {
 		ItemDef item = new ItemDef(name, "Good if you have a crossbow!", "", price, 56, "items:56", true,
 			Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1001 : 0, pictureMask, false, false, false, id);
@@ -5559,6 +5573,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3178, new ItemDef("Standard geode", "A mineral geode that can be cracked open with a chisel.", "open", 750, -1, "external-png:geode@18x18", true, false, 0, 0, false, false, false, 3178));
 		setCustomItemDefinition(3179, new ItemDef("Large geode", "A mineral geode that can be cracked open with a chisel.", "open", 2000, -1, "external-png:geode@24x24", true, false, 0, 0, false, false, false, 3179));
 		setCustomItemDefinition(3180, new ItemDef("Huge geode", "A mineral geode that can be cracked open with a chisel.", "open", 6000, -1, "external-png:geode@30x30", true, false, 0, 0, false, false, false, 3180));
+		addScytheLineDefinitions();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
 			new int[] {900, 1275, 2025, 17625}, new int[] {19711, 3394611, 16724736, 12255487});
 

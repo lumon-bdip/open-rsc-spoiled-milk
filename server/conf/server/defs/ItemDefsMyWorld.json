@@ -1523,6 +1523,76 @@
       "weaponSpeed": 3
     },
     {
+      "id": 3181,
+      "meleeOffense": 18,
+      "weaponSpeed": 3,
+      "requiredLevel": 1,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3182,
+      "meleeOffense": 28,
+      "weaponSpeed": 3,
+      "requiredLevel": 1,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3183,
+      "meleeOffense": 38,
+      "weaponSpeed": 3,
+      "requiredLevel": 1,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3184,
+      "meleeOffense": 58,
+      "weaponSpeed": 3,
+      "requiredLevel": 1,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3185,
+      "meleeOffense": 77,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3186,
+      "meleeOffense": 97,
+      "weaponSpeed": 3,
+      "requiredLevel": 20,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3187,
+      "meleeOffense": 107,
+      "weaponSpeed": 3,
+      "requiredLevel": 30,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3188,
+      "meleeOffense": 117,
+      "weaponSpeed": 3,
+      "requiredLevel": 30,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3189,
+      "meleeOffense": 127,
+      "weaponSpeed": 3,
+      "requiredLevel": 40,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3190,
+      "meleeOffense": 137,
+      "weaponSpeed": 3,
+      "requiredLevel": 40,
+      "requiredSkillID": 0
+    },
+    {
       "id": 2151,
       "meleeOffense": 9,
       "weaponSpeed": 5,
@@ -3463,6 +3533,7 @@
     },
     {
       "id": 6,
+      "name": "Iron Helmet",
       "meleeDefense": 6,
       "rangedDefense": 2,
       "requiredLevel": 0,
@@ -3562,6 +3633,7 @@
     },
     {
       "id": 108,
+      "name": "Bronze Helmet",
       "meleeDefense": 5,
       "rangedDefense": 1,
       "requiredLevel": 0,
@@ -3570,6 +3642,7 @@
     },
     {
       "id": 109,
+      "name": "Steel Helmet",
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
@@ -3578,6 +3651,7 @@
     },
     {
       "id": 110,
+      "name": "Mithril Helmet",
       "meleeDefense": 9,
       "rangedDefense": 3,
       "requiredLevel": 0,
@@ -3586,6 +3660,7 @@
     },
     {
       "id": 111,
+      "name": "Adamantite Helmet",
       "meleeDefense": 12,
       "rangedDefense": 4,
       "requiredLevel": 0,
@@ -3594,6 +3669,7 @@
     },
     {
       "id": 112,
+      "name": "Rune Helmet",
       "meleeDefense": 15,
       "rangedDefense": 5,
       "requiredLevel": 0,
@@ -3774,6 +3850,7 @@
     },
     {
       "id": 230,
+      "name": "Black Helmet",
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
@@ -4319,6 +4396,7 @@
     },
     {
       "id": 1425,
+      "name": "Dragon Helmet",
       "meleeDefense": 22,
       "rangedDefense": 17,
       "magicDefense": 11,
@@ -9226,6 +9304,7 @@
     },
     {
       "id": 2158,
+      "name": "White Helmet",
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
@@ -9348,6 +9427,7 @@
     },
     {
       "id": 3120,
+      "name": "Grey Helmet",
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,

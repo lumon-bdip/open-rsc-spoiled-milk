@@ -39,6 +39,12 @@ import java.util.concurrent.TimeUnit;
 
 public class PvmMeleeEvent extends GameTickEvent {
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final int[] SCYTHE_IDS = {
+		ItemId.TIN_SCYTHE.id(), ItemId.COPPER_SCYTHE.id(), ItemId.BRONZE_SCYTHE.id(),
+		ItemId.IRON_SCYTHE.id(), ItemId.STEEL_SCYTHE.id(), ItemId.MITHRIL_SCYTHE.id(),
+		ItemId.TITAN_STEEL_SCYTHE.id(), ItemId.ADAMANTITE_SCYTHE.id(),
+		ItemId.ORICHALCUM_SCYTHE.id(), ItemId.RUNE_SCYTHE.id()
+	};
 	private final Mob attackerMob;
 	private final Mob targetMob;
 
@@ -139,7 +145,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (attackerMob.isPlayer()) {
 			damage = applyPlayerMeleeDamageBuff((Player) attackerMob, damage);
 		}
-		if (attackerMob.consumeOgreStaggerDebuff() || attackerMob.consumeStartleDebuff()) {
+		boolean attackSuppressed = attackerMob.consumeOgreStaggerDebuff() || attackerMob.consumeStartleDebuff();
+		if (attackSuppressed) {
 			damage = 0;
 		}
 		inflictDamage(attackerMob, targetMob, damage);
@@ -148,6 +155,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		applyWeaponPoison(attackerMob, targetMob, damage);
 		applyChaosAmuletSecondHit(attackerMob, targetMob, damage);
+		int scytheTargetsHit = 1;
+		if (!attackSuppressed && attackerMob.isPlayer() && targetMob.isNpc()) {
+			scytheTargetsHit += applyScytheNpcCleave((Player) attackerMob, (Npc) targetMob);
+		}
 		if (targetMob.isPlayer()) {
 			final Player targetPlayer = (Player) targetMob;
 			final double recoilChance = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilChance();
@@ -166,7 +177,11 @@ public class PvmMeleeEvent extends GameTickEvent {
 			((Player) attackerMob).consumeLeatherSetAttackBuffs();
 		}
 
-		setDelayTicks(getAdjustedMeleeDelayTicks(attackerMob, attackerMob.isNpc() && targetMob.isPlayer() ? 2 : 3));
+		int delayTicks = getAdjustedMeleeDelayTicks(attackerMob, attackerMob.isNpc() && targetMob.isPlayer() ? 2 : 3);
+		if (scytheTargetsHit > 1) {
+			delayTicks += scytheTargetsHit - 1;
+		}
+		setDelayTicks(delayTicks);
 	}
 
 	private boolean isManualDisengage() {
@@ -465,6 +480,58 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return damage;
 		}
 		return Math.max(0, (int) Math.floor(damage * player.getLeatherSetMeleeDamageMultiplier()));
+	}
+
+	private int applyScytheNpcCleave(final Player player, final Npc primaryTarget) {
+		if (!isScytheEquipped(player)) {
+			return 0;
+		}
+
+		int extraTargetsHit = 0;
+		for (Npc npc : player.getViewArea().getNpcsInView()) {
+			if (!isValidScytheCleaveTarget(player, primaryTarget, npc)) {
+				continue;
+			}
+			int damage;
+			if (getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
+				damage = OSRSCombatFormula.Melee.doMeleeDamage(player, npc);
+			} else {
+				damage = CombatFormula.doMeleeDamage(player, npc);
+			}
+			damage = applyPlayerMeleeDamageBuff(player, damage);
+			inflictDamage(player, npc, damage);
+			if (player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				return extraTargetsHit;
+			}
+			applyWeaponPoison(player, npc, damage);
+			extraTargetsHit++;
+		}
+		return extraTargetsHit;
+	}
+
+	private boolean isScytheEquipped(final Player player) {
+		Item weapon = player.getCarriedItems().getEquipment().get(EquipmentSlot.SLOT_MAINHAND.getIndex());
+		if (weapon == null) {
+			return false;
+		}
+		for (int scytheId : SCYTHE_IDS) {
+			if (weapon.getCatalogId() == scytheId) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isValidScytheCleaveTarget(final Player player, final Npc primaryTarget, final Npc npc) {
+		if (npc == null || npc == primaryTarget || npc.isRemoved() || npc.isRespawning()) {
+			return false;
+		}
+		if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || Summoning.isSummon(npc)) {
+			return false;
+		}
+		int xDiff = Math.abs(player.getX() - npc.getX());
+		int yDiff = Math.abs(player.getY() - npc.getY());
+		return xDiff <= 1 && yDiff <= 1 && (xDiff != 0 || yDiff != 0);
 	}
 
 	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int damage) {

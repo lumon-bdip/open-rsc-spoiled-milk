@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SMITHING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/Smithing.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 
-EXPECTED_MODERN_WEAPON_OPTIONS = [0, 2, 3, 4, 5, 6, 7, 21, 8, 9]
+EXPECTED_MODERN_WEAPON_OPTIONS = [0, 2, 3, 4, 5, 6, 7, 21, 8, 22, 9]
 EXPECTED_MODERN_ARMOR_OPTIONS = [0, 1, 2, 3, 4, 5, 6]
 REMOVED_RANGED_MOULD_OPTIONS = [1, 18, 20]
 
@@ -54,7 +54,7 @@ def ensure_modern_production_grid(text: str) -> None:
 
 def ensure_production_start_accepts_grid_recipes(text: str) -> None:
     get_def = extract_method(text, "getProductionRecipeDef")
-    expected_array = "int[] weaponIds = {0, 2, 3, 4, 5, 6, 7, 21, 8, 9, 10};"
+    expected_array = "int[] weaponIds = {0, 2, 3, 4, 5, 6, 7, 21, 8, 22, 9, 10};"
     if expected_array not in get_def:
         fail("Modern smithing production start should accept all visible weapon/tool recipes, including shears and maces")
     for option in REMOVED_RANGED_MOULD_OPTIONS:

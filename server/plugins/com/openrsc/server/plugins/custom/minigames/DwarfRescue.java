@@ -27,8 +27,7 @@ public class DwarfRescue implements TalkNpcTrigger, OpInvTrigger {
 				+ "Required Items:% %"
 				+ "500 Dragon Metal Chains% "
 				+ "150 Chipped Dragon Scales% %"
-				+ "Dragon metal chains can be smithed(req 90) from dragon metal bars (one bar -> 50 chains)% "
-				+ "Speak to the dwarven smithy for details to obtain dragon bars% %"
+				+ "Dragon metal chains are required to assemble the mail% %"
 				+ "Chipped dragon scales are crafted(req 90, chisel) from King Black Dragon scales% %"
 				+ "One all items are prepared, seek out Wayne in Falador", true);
 		}

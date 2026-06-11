@@ -11,6 +11,7 @@
     },
     {
       "id": 2158,
+      "name": "White Helmet",
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
@@ -133,6 +134,7 @@
     },
     {
       "id": 3120,
+      "name": "Grey Helmet",
       "meleeDefense": 8,
       "rangedDefense": 2,
       "requiredLevel": 0,
