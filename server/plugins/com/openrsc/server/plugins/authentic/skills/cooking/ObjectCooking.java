@@ -208,6 +208,7 @@ public class ObjectCooking implements UseLocTrigger {
 					player.playerServerMessage(MessageType.QUEST, "You accidentally burn the " + food);
 				}
 			}
+			giveFishOilFromRawFish(player, item);
 
 			// Repeat
 			updatebatch();
@@ -306,6 +307,42 @@ public class ObjectCooking implements UseLocTrigger {
 		}
 		return message;
 
+	}
+
+	private void giveFishOilFromRawFish(Player player, Item item) {
+		if (!isRawFish(item)) {
+			return;
+		}
+
+		Item oil = new Item(ItemId.FISH_OIL.id());
+		if (player.getCarriedItems().getInventory().canHold(oil)) {
+			player.getCarriedItems().getInventory().add(oil);
+		} else {
+			player.message("You toss out the excess oil");
+		}
+	}
+
+	private boolean isRawFish(Item item) {
+		return DataConversions.inArray(new int[]{
+			ItemId.RAW_SHRIMP.id(),
+			ItemId.RAW_ANCHOVIES.id(),
+			ItemId.RAW_SARDINE.id(),
+			ItemId.RAW_HERRING.id(),
+			ItemId.RAW_MACKEREL.id(),
+			ItemId.RAW_GIANT_CARP.id(),
+			ItemId.RAW_TROUT.id(),
+			ItemId.RAW_COD.id(),
+			ItemId.RAW_PIKE.id(),
+			ItemId.RAW_SALMON.id(),
+			ItemId.RAW_TUNA.id(),
+			ItemId.RAW_LOBSTER.id(),
+			ItemId.RAW_BASS.id(),
+			ItemId.RAW_SWORDFISH.id(),
+			ItemId.RAW_LAVA_EEL.id(),
+			ItemId.RAW_SHARK.id(),
+			ItemId.RAW_SEA_TURTLE.id(),
+			ItemId.RAW_MANTA_RAY.id()
+		}, item.getCatalogId());
 	}
 
 	private boolean isOvenFood(Item item) {

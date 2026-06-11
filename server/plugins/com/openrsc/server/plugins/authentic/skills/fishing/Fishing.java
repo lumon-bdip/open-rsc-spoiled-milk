@@ -306,16 +306,22 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		int delay = getMyWorldFishingDelay(player, rodTier);
 		ActionSender.sendActionProgressBar(player, rodId, delay);
 		delay(delay);
-		if (ifinterrupted() || !player.withinRange(object, 1)) {
+		if (ifinterrupted()) {
+			return;
+		}
+		if (!player.withinRange(object, 1)) {
+			stopbatch();
 			return;
 		}
 
 		if (isFatigued(player)) {
+			stopbatch();
 			return;
 		}
 		GameObject obj = player.getViewArea().getGameObject(object.getID(), object.getX(), object.getY());
 		if (player.getConfig().SHARED_GATHERING_RESOURCES && obj == null) {
 			player.playerServerMessage(MessageType.QUEST, "You fail to catch anything");
+			stopbatch();
 			return;
 		}
 
@@ -765,15 +771,21 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		player.playSound("fish");
 		ActionSender.sendActionProgressBar(player, def.getNetId(), 3);
 		delay(3);
-		if (ifinterrupted() || !player.withinRange(object, 1)) {
+		if (ifinterrupted()) {
+			return;
+		}
+		if (!player.withinRange(object, 1)) {
+			stopbatch();
 			return;
 		}
 
 		if(!hasBait(def, player, inventory)) {
+			stopbatch();
 			return;
 		}
 
 		if (isFatigued(player)) {
+			stopbatch();
 			return;
 		}
 
@@ -814,6 +826,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 			//check if the spot is still active
 			if (player.getConfig().SHARED_GATHERING_RESOURCES && obj == null) {
 				player.playerServerMessage(MessageType.QUEST, "You fail to catch anything");
+				stopbatch();
 				return;
 			}
 			// award the fish
@@ -887,6 +900,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 				if (!isbatchcomplete()) {
 					GameObject checkObj = player.getViewArea().getGameObject(object.getID(), object.getX(), object.getY());
 					if (checkObj == null) {
+						stopbatch();
 						return;
 					}
 				}
@@ -894,6 +908,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 				//check if the spot is still active
 				if (player.getConfig().SHARED_GATHERING_RESOURCES && obj == null) {
 					player.playerServerMessage(MessageType.QUEST, "You fail to catch anything");
+					stopbatch();
 					return;
 				}
 
@@ -908,6 +923,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 						// should not be reachable unless threading bug; this was already checked
 						if (player.getCarriedItems().getInventory().countId(baitId, Optional.of(false)) <= 0) {
 							player.playerServerMessage(MessageType.QUEST, outOfBait(baitId));
+							stopbatch();
 							return;
 						}
 					}
