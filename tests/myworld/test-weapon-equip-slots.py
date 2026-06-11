@@ -10,6 +10,7 @@ CUSTOM_ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsCust
 MYWORLD_ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsMyWorld.json"
 
 WEAPON_SLOT = 4
+SHIELD_WEARABLE_MASK = 8
 STAFF_OF_IBAN_ID = 1000
 BOW_IDS = {
     188,
@@ -99,6 +100,17 @@ def require_weapon_slot(item: dict, label: str) -> None:
         )
 
 
+def require_does_not_conflict_with_shields(item: dict, label: str) -> None:
+    wearable_id = item.get("wearableID")
+    if not isinstance(wearable_id, int):
+        fail(f"{label} id {item.get('id')} missing numeric wearableID")
+    if wearable_id & SHIELD_WEARABLE_MASK:
+        fail(
+            f"{label} id {item.get('id')} ({item.get('name', '<unnamed>')}) "
+            f"must not conflict with shields, found wearableID {wearable_id}"
+        )
+
+
 def is_weapon_named_wearable(item: dict) -> bool:
     if item.get("isWearable") != 1:
         return False
@@ -119,6 +131,7 @@ def main() -> None:
     if iban_staff is None:
         fail(f"Missing Staff of Iban id {STAFF_OF_IBAN_ID}")
     require_weapon_slot(iban_staff, "Staff of Iban")
+    require_does_not_conflict_with_shields(iban_staff, "Staff of Iban")
 
     offenders = [
         item

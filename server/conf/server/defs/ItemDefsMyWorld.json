@@ -2768,6 +2768,7 @@
     {
       "id": 1000,
       "magicOffense": 6,
+      "wearableID": 16,
       "wearSlot": 4
     },
     {

@@ -219,6 +219,7 @@ final class MyWorldItemOverrides {
 		new ItemOverride(1453, null, null, 600000, -1, -1),
 		new ItemOverride(1454, null, null, 600000, -1, -1),
 		new ItemOverride(198, "Wizard staff", null, -1, -1, -1),
+		new ItemOverride(1000, null, null, -1, -1, 16),
 		new ItemOverride(314, null, null, 1800, -1, -1),
 		new ItemOverride(317, null, null, 12000, -1, -1),
 		new ItemOverride(2, null, null, 720, -1, -1),
