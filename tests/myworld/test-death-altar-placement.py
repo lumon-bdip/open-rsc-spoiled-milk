@@ -20,12 +20,12 @@ EXIT_PORTAL = (
 DEATH_ALTAR_ID = 1211
 DEATH_PORTAL_ID = 1224
 DEATH_OBELISK_ID = 1304
-EXPECTED_ALTAR = (421, 3546)
+EXPECTED_ALTAR = (392, 3540)
 EXPECTED_OBELISKS = {
-    (419, 3549),
-    (424, 3549),
-    (424, 3544),
-    (419, 3544),
+    (390, 3543),
+    (395, 3543),
+    (395, 3538),
+    (390, 3538),
 }
 
 
@@ -57,11 +57,14 @@ def main() -> None:
         fail(f"Death obelisks were {sorted(obelisk_locations)}")
 
     client = CLIENT.read_text(encoding="utf-8")
-    if "{421, 3546}" not in client:
-        fail("Client Death Altar visual anchor is not at 421,3546")
-    if "{{419, 3549}, {424, 3549}, {424, 3544}, {419, 3544}}" not in client:
+    if "{392, 3540}" not in client:
+        fail("Client Death Altar visual anchor is not at 392,3540")
+    if "{{390, 3543}, {395, 3543}, {395, 3538}, {390, 3538}}" not in client:
         fail("Client Death obelisk visual anchors do not match server locations")
-    for obsolete in ("{151, 212}", "{149, 215}", "{154, 215}", "{154, 210}", "{150, 210}"):
+    for obsolete in (
+        "{151, 212}", "{149, 215}", "{154, 215}", "{154, 210}", "{150, 210}",
+        "{421, 3546}", "{419, 3549}", "{424, 3549}", "{424, 3544}", "{419, 3544}",
+    ):
         if obsolete in client:
             fail(f"Client still contains obsolete Death Altar coordinate {obsolete}")
 
@@ -69,7 +72,7 @@ def main() -> None:
     if "case 1224" in exit_portal or "teleport(151, 212" in exit_portal:
         fail("Legacy Death Altar return portal behavior remains enabled")
 
-    print("PASS: Death Altar is overworld-only at 421,3546")
+    print("PASS: Death Altar is overworld-only at 392,3540")
 
 
 if __name__ == "__main__":
