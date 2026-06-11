@@ -17371,6 +17371,8 @@ public final class mudclient implements Runnable {
 			orsc.graphics.two.SpriteArchive.Frame.LAYER.BOOTS, BOOT_EQUIPMENT_OFFSET_X, BOOT_EQUIPMENT_OFFSET_Y, BOOT_EQUIPMENT_BOUND_WIDTH);
 		loadExternalLayeredEquipmentSprite("woolboots", getExternalEquipmentNumberedFolder("woolboots"),
 			orsc.graphics.two.SpriteArchive.Frame.LAYER.BOOTS, BOOT_EQUIPMENT_OFFSET_X, BOOT_EQUIPMENT_OFFSET_Y, BOOT_EQUIPMENT_BOUND_WIDTH);
+		loadExternalLayeredEquipmentSprite("hood", getExternalEquipmentNumberedFolder("hood"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.HEAD_NO_SKIN, HOOD_EQUIPMENT_OFFSET_X, HOOD_EQUIPMENT_OFFSET_Y, HOOD_EQUIPMENT_BOUND_WIDTH);
 	}
 
 	private void loadExternalMainHandEquipmentSprite(String spriteName, File numberedFolder) {
@@ -17455,6 +17457,9 @@ public final class mudclient implements Runnable {
 	private static final int[] BOOT_EQUIPMENT_OFFSET_X = new int[] {15, 18, 20, 25, 22, 19, 15, 24, 18, 18, 20, 23, 17, 18, 19, 0, 3, 6};
 	private static final int[] BOOT_EQUIPMENT_OFFSET_Y = new int[] {82, 85, 83, 82, 84, 84, 84, 85, 86, 84, 85, 85, 83, 85, 83, 84, 84, 83};
 	private static final int[] BOOT_EQUIPMENT_BOUND_WIDTH = new int[] {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 84, 84, 84};
+	private static final int[] HOOD_EQUIPMENT_OFFSET_X = new int[] {23, 23, 23, 21, 21, 21, 22, 22, 22, 23, 23, 23, 25, 25, 25, 7, 12, 18};
+	private static final int[] HOOD_EQUIPMENT_OFFSET_Y = new int[] {9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9};
+	private static final int[] HOOD_EQUIPMENT_BOUND_WIDTH = new int[] {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 84, 84, 84};
 
 	private void loadExternalLayeredEquipmentSprite(
 		String spriteName,

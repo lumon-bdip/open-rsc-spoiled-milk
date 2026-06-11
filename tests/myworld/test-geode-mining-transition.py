@@ -44,7 +44,7 @@ def main() -> None:
         "STANDARD_GEODE(3178)",
         "LARGE_GEODE(3179)",
         "HUGE_GEODE(3180)",
-        "public static final int maxCustom = 3191;",
+        "public static final int maxCustom = 3192;",
     ):
         require(item_id, snippet, "ItemId.java")
 

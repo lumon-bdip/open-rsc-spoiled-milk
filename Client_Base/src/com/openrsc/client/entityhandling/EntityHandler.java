@@ -5422,6 +5422,11 @@ public class EntityHandler {
 		}
 	}
 
+	private static void addHoodDefinition() {
+		setCustomItemDefinition(3191, new ItemDef("Hood", "A simple hood.", "",
+			2, -1, "external-png:hood@35x27", false, true, 32, 0, false, false, true, 3191));
+	}
+
 	private static void addMetalBoltDefinition(String name, int id, int price, int pictureMask) {
 		ItemDef item = new ItemDef(name, "Good if you have a crossbow!", "", price, 56, "items:56", true,
 			Config.S_WANT_EQUIPMENT_TAB, Config.S_WANT_EQUIPMENT_TAB ? 1001 : 0, pictureMask, false, false, false, id);
@@ -5574,6 +5579,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3179, new ItemDef("Large geode", "A mineral geode that can be cracked open with a chisel.", "open", 2000, -1, "external-png:geode@24x24", true, false, 0, 0, false, false, false, 3179));
 		setCustomItemDefinition(3180, new ItemDef("Huge geode", "A mineral geode that can be cracked open with a chisel.", "open", 6000, -1, "external-png:geode@30x30", true, false, 0, 0, false, false, false, 3180));
 		addScytheLineDefinitions();
+		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
 			new int[] {900, 1275, 2025, 17625}, new int[] {19711, 3394611, 16724736, 12255487});
 
@@ -7130,6 +7136,7 @@ public class EntityHandler {
 			animations.add(new AnimationDef("squareshield", "equipment", 0xE7E2D6, 0, true, false, 0)); // 1031 - White Square Shield
 			animations.add(new AnimationDef("squareshield", "equipment", 0x9EA59F, 0, true, false, 0)); // 1032 - Grey Square Shield
 			animations.add(new AnimationDef("scythe", "equipment", 0xF0F0F0, 0, true, false, 0)); // 1033 - Combat Scythe
+			animations.add(new AnimationDef("hood", "equipment", 0, 0, true, false, 0)); // 1034 - Hood
 		}
 	}
 

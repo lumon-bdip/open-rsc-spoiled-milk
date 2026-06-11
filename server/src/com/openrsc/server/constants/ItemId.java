@@ -2414,12 +2414,13 @@ public enum ItemId {
 	TITAN_STEEL_SCYTHE(3187),
 	ADAMANTITE_SCYTHE(3188),
 	ORICHALCUM_SCYTHE(3189),
-	RUNE_SCYTHE(3190);
+	RUNE_SCYTHE(3190),
+	HOOD(3191);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3191;
+	public static final int maxCustom = 3192;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();
