@@ -78,9 +78,6 @@ public class ExitPortal implements OpLocTrigger {
 				case 1223://law altar
 					player.teleport(410, 537, false);
 					break;
-				case 1224://death altar
-					player.teleport(151, 212, false);
-					break;
 				case 1225://blood altar
 					player.teleport(247, 102, false);
 					break;
