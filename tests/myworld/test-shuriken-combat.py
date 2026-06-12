@@ -191,6 +191,10 @@ def main() -> None:
     require(mob, "new ThrowingEvent(player.getWorld(), player, 1, attacker)", "PvM auto-retaliate can resume throwing ranged")
     require(mudclient, 'loadExternalItemSprite(getExternalPngFile("shuriken-thrown"), 46, 30)', "Client shuriken thrown sprite loader")
     require(mudclient, "generateShurikenProjectileFrames();", "Client shuriken spin frame generation")
+    require(mudclient, "boolean enemyProjectile = true;", "Client projectile renderer tracks shooter ownership")
+    require(mudclient, "int var5 = var16.currentX;", "Client projectile renderer starts at shooter")
+    require(mudclient, "int var8 = var3.currentX;", "Client projectile renderer ends at victim")
+    require(mudclient, "enemyProjectile = false;", "Client projectile renderer keeps player-fired shuriken normal size")
     assert_shuriken_palette_ready(SHURIKEN_BASIC, False)
     assert_shuriken_palette_ready(SHURIKEN_POISON, True)
     if not SHURIKEN_THROWN.is_file():

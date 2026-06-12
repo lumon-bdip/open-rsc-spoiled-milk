@@ -5434,22 +5434,23 @@ public final class mudclient implements Runnable {
 						ORSCharacter var3 = this.players[centerX];
 						if (var3.projectileRange > 0) {
 							ORSCharacter var16 = null;
+							boolean enemyProjectile = true;
 							if (var3.attackingNpcServerIndex == -1) {
 								if (var3.attackingPlayerServerIndex != -1) {
 									var16 = this.playerServer[var3.attackingPlayerServerIndex];
+									enemyProjectile = false;
 								}
 							} else {
 								var16 = this.npcsServer[var3.attackingNpcServerIndex];
 							}
 
 							if (null != var16) {
-								int var5 = var3.currentX;
-								int var6 = var3.currentZ;
+								int var5 = var16.currentX;
+								int var6 = var16.currentZ;
 								int var7 = -this.world.getElevation(var5, var6) - 110;
-								int var8 = var16.currentX;
-								int var9 = var16.currentZ;
-								int var10 = -this.world.getElevation(var8, var9)
-									- EntityHandler.getNpcDef(var3.npcId).getCamera2() / 2;
+								int var8 = var3.currentX;
+								int var9 = var3.currentZ;
+								int var10 = -this.world.getElevation(var8, var9) - 110;
 								int var11 = (var8 * (this.projectileMaxRange - var3.projectileRange)
 									+ var5 * var3.projectileRange) / this.projectileMaxRange;
 								int var12 = (var7 * var3.projectileRange
@@ -5458,7 +5459,7 @@ public final class mudclient implements Runnable {
 								int var13 = ((this.projectileMaxRange - var3.projectileRange) * var9
 									+ var6 * var3.projectileRange) / this.projectileMaxRange;
 								int projectileSprite = getProjectileSceneSpriteIndex(var3.incomingProjectileSprite, var3.projectileRange);
-								int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite, false);
+								int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite, enemyProjectile);
 								this.scene.drawSprite(projectileSprite, var13,
 									0, var11, var12, projectileSize, projectileSize, (byte) 109);
 								++this.spriteCount;
@@ -5470,20 +5471,22 @@ public final class mudclient implements Runnable {
 						ORSCharacter var3 = this.npcs[centerX];
 						if (var3.projectileRange > 0) {
 							ORSCharacter var16 = null;
+							boolean enemyProjectile = true;
 							if (var3.attackingNpcServerIndex == -1) {
 								if (var3.attackingPlayerServerIndex != -1) {
 									var16 = this.playerServer[var3.attackingPlayerServerIndex];
+									enemyProjectile = false;
 								}
 							} else {
 								var16 = this.npcsServer[var3.attackingNpcServerIndex];
 							}
 
 							if (null != var16) {
-								int var5 = var3.currentX;
-								int var6 = var3.currentZ;
+								int var5 = var16.currentX;
+								int var6 = var16.currentZ;
 								int var7 = -this.world.getElevation(var5, var6) - 110;
-								int var8 = var16.currentX;
-								int var9 = var16.currentZ;
+								int var8 = var3.currentX;
+								int var9 = var3.currentZ;
 								int var10 = -this.world.getElevation(var8, var9)
 									- EntityHandler.getNpcDef(var3.npcId).getCamera2() / 2;
 								int var11 = (var8 * (this.projectileMaxRange - var3.projectileRange)
@@ -5494,7 +5497,7 @@ public final class mudclient implements Runnable {
 								int var13 = ((this.projectileMaxRange - var3.projectileRange) * var9
 									+ var6 * var3.projectileRange) / this.projectileMaxRange;
 								int projectileSprite = getProjectileSceneSpriteIndex(var3.incomingProjectileSprite, var3.projectileRange);
-								int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite, true);
+								int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite, enemyProjectile);
 								this.scene.drawSprite(projectileSprite, var13,
 									0, var11, var12, projectileSize, projectileSize, (byte) 109);
 								++this.spriteCount;
