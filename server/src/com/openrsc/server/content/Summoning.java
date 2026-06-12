@@ -1397,7 +1397,7 @@ public final class Summoning {
 		final int projectileType = ATTACK_STYLE_RANGED.equals(style) ? 2 : 1;
 		final boolean batLeechAttack = KIND_GIANT_BAT.equals(summon.getAttribute(SUMMON_KIND_KEY, ""));
 		if (batLeechAttack && target.getIndex() != -1 && summon.getIndex() != -1) {
-			target.getUpdateFlags().setProjectile(new Projectile(target, summon, Projectile.SUMMON_BAT_VAMPIRISM));
+			target.getUpdateFlags().setProjectile(new Projectile(summon, target, Projectile.SUMMON_BAT_VAMPIRISM));
 		}
 		summon.getWorld().getServer().getGameEventHandler().add(
 			new ProjectileEvent(summon.getWorld(), summon, target, damage, projectileType, false,

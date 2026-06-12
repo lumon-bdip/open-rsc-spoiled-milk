@@ -17,6 +17,8 @@ CLIENT_MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 PROJECTILE = ROOT / "server/src/com/openrsc/server/model/entity/update/Projectile.java"
 UPDATE_FLAGS = ROOT / "server/src/com/openrsc/server/model/entity/update/UpdateFlags.java"
 GAME_STATE_UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
+MOB = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
+PROJECTILE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
 SHURIKEN_BASIC = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png"
 SHURIKEN_POISON = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png"
 SHURIKEN_THROWN = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-thrown.png"
@@ -122,6 +124,8 @@ def main() -> None:
     projectile = PROJECTILE.read_text(encoding="utf-8")
     update_flags = UPDATE_FLAGS.read_text(encoding="utf-8")
     game_state_updater = GAME_STATE_UPDATER.read_text(encoding="utf-8")
+    mob = MOB.read_text(encoding="utf-8")
+    projectile_event = PROJECTILE_EVENT.read_text(encoding="utf-8")
 
     for snippet in (
         "SHURIKEN_THROW_COUNT = 3",
@@ -179,6 +183,12 @@ def main() -> None:
     require(update_flags, "this.projectiles.add(projectile);", "UpdateFlags retains multiple projectiles")
     require(update_flags, "public List<Projectile> getProjectiles()", "UpdateFlags exposes multiple projectiles")
     require(game_state_updater, "updateFlags.getProjectiles()", "GameStateUpdater sends multiple projectiles")
+    require(game_state_updater, "updates.add((short) safeNPCIndex(player, victim.getIndex()))", "NPC projectile updates are victim keyed")
+    require(game_state_updater, "updates.add((byte) 4);", "NPC projectile updates support player shooters")
+    require(projectile_event, "opponent.getUpdateFlags().setProjectile(projectile);", "ProjectileEvent queues visuals on victim")
+    require(mob, "startPlayerRangedPvmCounterCombat(attacker)", "PvM auto-retaliate checks ranged before melee")
+    require(mob, "new RangeEvent(player.getWorld(), player, 1, attacker)", "PvM auto-retaliate can resume bow ranged")
+    require(mob, "new ThrowingEvent(player.getWorld(), player, 1, attacker)", "PvM auto-retaliate can resume throwing ranged")
     require(mudclient, 'loadExternalItemSprite(getExternalPngFile("shuriken-thrown"), 46, 30)', "Client shuriken thrown sprite loader")
     require(mudclient, "generateShurikenProjectileFrames();", "Client shuriken spin frame generation")
     assert_shuriken_palette_ready(SHURIKEN_BASIC, False)

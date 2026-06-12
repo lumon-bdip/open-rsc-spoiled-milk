@@ -132,7 +132,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private void sendProjectile(Mob caster, Mob opponent) {
 		Projectile projectile = new Projectile(caster, opponent, projectileType);
-		caster.getUpdateFlags().setProjectile(projectile);
+		opponent.getUpdateFlags().setProjectile(projectile);
 	}
 
 	@Override
@@ -565,7 +565,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		final int smokePercent = casterPlayer.getBabyDragonSmokeAccuracyDebuffPercent();
 		if (smokePercent > 0 && DataConversions.getRandom().nextDouble() < casterPlayer.getBabyDragonSmokeProcChance()) {
-			caster.getUpdateFlags().setProjectile(new Projectile(caster, opponent, Projectile.BLOW_SMOKE));
+			opponent.getUpdateFlags().setProjectile(new Projectile(caster, opponent, Projectile.BLOW_SMOKE));
 			opponent.applySmokeAccuracyDebuff(smokePercent);
 		}
 		final int infernalMaxHit = casterPlayer.getInfernalFireProcMaxHit();

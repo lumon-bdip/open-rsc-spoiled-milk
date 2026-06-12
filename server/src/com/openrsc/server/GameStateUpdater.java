@@ -694,17 +694,20 @@ public final class GameStateUpdater {
 			if (player.isUsingCustomClient()) {
 				Projectile projectile;
 				while ((projectile = npcProjectilesNeedingDisplayed.poll()) != null) {
+					Entity caster = projectile.getCaster();
 					Entity victim = projectile.getVictim();
-					if (victim.isNpc()) {
-						updates.add((short) projectile.getCaster().getIndex());
+					if (!victim.isNpc()) {
+						continue;
+					}
+					updates.add((short) safeNPCIndex(player, victim.getIndex()));
+					if (caster.isNpc()) {
 						updates.add((byte) 3);
 						updates.add((short) projectile.getType());
-						updates.add((short) victim.getIndex());
-					} else if (victim.isPlayer()) {
-						updates.add((short) projectile.getCaster().getIndex());
+						updates.add((short) safeNPCIndex(player, caster.getIndex()));
+					} else if (caster.isPlayer()) {
 						updates.add((byte) 4);
 						updates.add((short) projectile.getType());
-						updates.add((short) victim.getIndex());
+						updates.add((short) caster.getIndex());
 					}
 				}
 				Skull npcNeedingSkullUpdate;
@@ -1040,17 +1043,20 @@ public final class GameStateUpdater {
 				// Update Types 3 & 4: Projectile Update (draws the projectile)
 				Projectile projectile;
 				while ((projectile = projectilesNeedingDisplayed.poll()) != null) {
+					Entity caster = projectile.getCaster();
 					Entity victim = projectile.getVictim();
-					if (victim.isNpc()) {
-						updatesMain.add((short) projectile.getCaster().getIndex());
+					if (!victim.isPlayer()) {
+						continue;
+					}
+					updatesMain.add((short) victim.getIndex());
+					if (caster.isNpc()) {
 						updatesMain.add((byte) 3);
 						updatesMain.add((short) projectile.getType());
-						updatesMain.add((short) victim.getIndex());
-					} else if (victim.isPlayer()) {
-						updatesMain.add((short) projectile.getCaster().getIndex());
+						updatesMain.add((short) caster.getIndex());
+					} else if (caster.isPlayer()) {
 						updatesMain.add((byte) 4);
 						updatesMain.add((short) projectile.getType());
-						updatesMain.add((short) victim.getIndex());
+						updatesMain.add((short) caster.getIndex());
 					}
 				}
 

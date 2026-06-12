@@ -590,7 +590,7 @@ public class CombatEvent extends GameTickEvent {
 		}
 		final int smokePercent = player.getBabyDragonSmokeAccuracyDebuffPercent();
 		if (smokePercent > 0 && DataConversions.getRandom().nextDouble() < player.getBabyDragonSmokeProcChance()) {
-			hitter.getUpdateFlags().setProjectile(new Projectile(hitter, target, Projectile.BLOW_SMOKE));
+			target.getUpdateFlags().setProjectile(new Projectile(hitter, target, Projectile.BLOW_SMOKE));
 			target.applySmokeAccuracyDebuff(smokePercent);
 		}
 		final int infernalMaxHit = player.getInfernalFireProcMaxHit();

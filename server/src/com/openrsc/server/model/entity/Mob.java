@@ -12,7 +12,9 @@ import com.openrsc.server.event.rsc.impl.WaterSlowEvent;
 import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.MagicCombatEvent;
+import com.openrsc.server.event.rsc.impl.projectile.RangeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.RangeEventNpc;
+import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.model.*;
 import com.openrsc.server.model.Path.PathType;
 import com.openrsc.server.model.container.Item;
@@ -1097,7 +1099,7 @@ public abstract class Mob extends Entity {
 		if (Summoning.isSummon(this) || Summoning.isSummon(attacker)) {
 			return;
 		}
-		if (combatEvent != null || (pvmMeleeEvent != null && pvmMeleeEvent.isRunning() && pvmMeleeEvent.getTarget().equals(attacker))) {
+		if (combatEvent != null) {
 			return;
 		}
 
@@ -1114,6 +1116,14 @@ public abstract class Mob extends Entity {
 			if (MagicCombatEvent.start((Player) this, attacker)) {
 				return;
 			}
+		}
+
+		if (startPlayerRangedPvmCounterCombat(attacker)) {
+			return;
+		}
+
+		if (pvmMeleeEvent != null && pvmMeleeEvent.isRunning() && pvmMeleeEvent.getTarget().equals(attacker)) {
+			return;
 		}
 
 		if (pvmMeleeEvent != null) {
@@ -1135,6 +1145,73 @@ public abstract class Mob extends Entity {
 
 			pvmMeleeEvent = new PvmMeleeEvent(getWorld(), this, attacker);
 			getWorld().getServer().getGameEventHandler().addOrUpdate(pvmMeleeEvent);
+	}
+
+	private boolean startPlayerRangedPvmCounterCombat(final Mob attacker) {
+		if (!this.isPlayer() || !attacker.isNpc()) {
+			return false;
+		}
+
+		Player player = (Player) this;
+		int throwingEquip = player.getThrowingEquip();
+		int rangeEquip = player.getRangeEquip();
+		if (throwingEquip < 0 && rangeEquip < 0) {
+			return false;
+		}
+		if (!player.checkAttack(attacker, true)) {
+			return true;
+		}
+
+		if (pvmMeleeEvent != null) {
+			resetCombatEvent();
+		}
+		resetPath();
+		setOpponent(attacker);
+		setCombatTimer();
+		setHostile(attacker, HostileState.HostilityType.ATTACKED);
+
+		final GameEventHandler gameEventHandler = getWorld().getServer().getGameEventHandler();
+		if (throwingEquip < 0 && rangeEquip > 0) {
+			ThrowingEvent throwingEvent = player.getThrowingEvent();
+			if (throwingEvent != null) {
+				throwingEvent.stop();
+				player.setThrowingEvent(null);
+			}
+
+			RangeEvent rangeEvent = player.getRangeEvent();
+			if (rangeEvent != null) {
+				if (!rangeEvent.getTarget().equals(attacker)) {
+					rangeEvent.reTarget(attacker);
+				}
+				rangeEvent.restart();
+				return true;
+			}
+
+			rangeEvent = new RangeEvent(player.getWorld(), player, 1, attacker);
+			player.setRangeEvent(rangeEvent);
+			gameEventHandler.add(rangeEvent);
+			return true;
+		}
+
+		RangeEvent rangeEvent = player.getRangeEvent();
+		if (rangeEvent != null) {
+			rangeEvent.stop();
+			player.setRangeEvent(null);
+		}
+
+		ThrowingEvent throwingEvent = player.getThrowingEvent();
+		if (throwingEvent != null) {
+			if (!throwingEvent.getTarget().equals(attacker)) {
+				throwingEvent.reTarget(attacker);
+			}
+			throwingEvent.restart();
+			return true;
+		}
+
+		throwingEvent = new ThrowingEvent(player.getWorld(), player, 1, attacker);
+		player.setThrowingEvent(throwingEvent);
+		gameEventHandler.add(throwingEvent);
+		return true;
 	}
 
 	public void resetCombatEvent() {
