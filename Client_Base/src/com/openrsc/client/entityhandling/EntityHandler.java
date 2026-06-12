@@ -683,6 +683,7 @@ public class EntityHandler {
 		String bankerOption1 = Config.S_RIGHT_CLICK_BANK ? "Bank" : ""; // Banker right click bank
 		String bankerOption2 = Config.S_SPAWN_AUCTION_NPCS ? "Collect" : null; // Banker collect for auctions
 		String shopOption = Config.S_RIGHT_CLICK_TRADE ? "Trade" : ""; // Shop right click trade
+		String shopOption2 = Config.S_RIGHT_CLICK_TRADE ? "Shop" : null; // Alternate shop shortcut for Ctrl-click
 
 		sprites = new int[]{130, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Unicorn", "It's a unicorn", "", 21, 23, 19, 23, true, sprites, 0, 0, 0, 0, 201, 230, 6, 6, 7, i++));
@@ -759,7 +760,7 @@ public class EntityHandler {
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Father Lawrence", "A kindly looking priest", "", 0, 0, 3, 0, false, sprites, 11167296, 2105376, 3, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-		npcs.add(new NPCDef("Apothecary", "I wonder if he has any good potions", "", 10, 5, 7, 5, false, sprites, 11167296, 8409120, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Apothecary", "I wonder if he has any good potions", shopOption, shopOption2, 10, 5, 7, 5, false, sprites, 11167296, 8409120, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{125, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("spider", "Incey wincey", "", 5, 2, 2, 1, true, sprites, 0, 0, 0, 0, 40, 35, 6, 6, 5, i++));
 		sprites = new int[]{124, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -801,7 +802,7 @@ public class EntityHandler {
 		sprites = new int[]{137, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Ghost", "Ooh spooky", "", 23, 30, 25, 23, true, sprites, 0, 0, 0, 0, 201, 243, 9, 9, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, 9, -1};
-		npcs.add(new NPCDef("Aubury", "I think he might be a shop keeper", (Config.S_RIGHT_CLICK_TRADE ? "Trade" : ""), 0, 0, 3, 0, false, sprites, 1, 8409120, 8409120, 15523536, 120, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Aubury", "I think he might be a shop keeper", shopOption, shopOption2, 0, 0, 3, 0, false, sprites, 1, 8409120, 8409120, 15523536, 120, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, 9, -1};
 		npcs.add(new NPCDef("Shopkeeper", "I wonder what he's got for sale", shopOption, 0, 0, 3, 0, false, sprites, 16777215, 8409120, 8409120, 15523536, 120, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, 10, -1};
@@ -4152,6 +4153,15 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Strong Warrior's Brew", "3 doses of strong warrior's brew", "Drink", 720, 48, "items:48", false, false, 0, 15658544, true, false, true, 3195));
 		addItemDefinition(new ItemDef("Strong Warrior's Brew", "2 doses of strong warrior's brew", "Drink", 720, Config.S_WANT_CUSTOM_SPRITES ? 436 : 48, Config.S_WANT_CUSTOM_SPRITES ? "items:436" : "items:48", false, false, 0, 15658544, true, false, true, 3196));
 		addItemDefinition(new ItemDef("Strong Warrior's Brew", "1 dose of strong warrior's brew", "Drink", 720, Config.S_WANT_CUSTOM_SPRITES ? 437 : 48, Config.S_WANT_CUSTOM_SPRITES ? "items:437" : "items:48", false, false, 0, 15658544, true, false, true, 3197));
+		addItemDefinition(new ItemDef("Potion of Brawn v6", "3 doses of potion of brawn v6", "Drink", 600, 48, "items:48", false, false, 0, 3158254, true, false, true, 3198));
+		addItemDefinition(new ItemDef("Potion of Brawn v6", "2 doses of potion of brawn v6", "Drink", 600, Config.S_WANT_CUSTOM_SPRITES ? 436 : 48, Config.S_WANT_CUSTOM_SPRITES ? "items:436" : "items:48", false, false, 0, 3158254, true, false, true, 3199));
+		addItemDefinition(new ItemDef("Potion of Brawn v6", "1 dose of potion of brawn v6", "Drink", 600, Config.S_WANT_CUSTOM_SPRITES ? 437 : 48, Config.S_WANT_CUSTOM_SPRITES ? "items:437" : "items:48", false, false, 0, 3158254, true, false, true, 3200));
+		addItemDefinition(new ItemDef("Potion of Deftness v6", "3 doses of potion of deftness v6", "Drink", 600, 48, "items:48", false, false, 0, 6749969, true, false, true, 3201));
+		addItemDefinition(new ItemDef("Potion of Deftness v6", "2 doses of potion of deftness v6", "Drink", 600, Config.S_WANT_CUSTOM_SPRITES ? 436 : 48, Config.S_WANT_CUSTOM_SPRITES ? "items:436" : "items:48", false, false, 0, 6749969, true, false, true, 3202));
+		addItemDefinition(new ItemDef("Potion of Deftness v6", "1 dose of potion of deftness v6", "Drink", 600, Config.S_WANT_CUSTOM_SPRITES ? 437 : 48, Config.S_WANT_CUSTOM_SPRITES ? "items:437" : "items:48", false, false, 0, 6749969, true, false, true, 3203));
+		addItemDefinition(new ItemDef("Potion of Insight v6", "3 doses of potion of insight v6", "Drink", 600, 48, "items:48", false, false, 0, 11959655, true, false, true, 3204));
+		addItemDefinition(new ItemDef("Potion of Insight v6", "2 doses of potion of insight v6", "Drink", 600, Config.S_WANT_CUSTOM_SPRITES ? 436 : 48, Config.S_WANT_CUSTOM_SPRITES ? "items:436" : "items:48", false, false, 0, 11959655, true, false, true, 3205));
+		addItemDefinition(new ItemDef("Potion of Insight v6", "1 dose of potion of insight v6", "Drink", 600, Config.S_WANT_CUSTOM_SPRITES ? 437 : 48, Config.S_WANT_CUSTOM_SPRITES ? "items:437" : "items:48", false, false, 0, 11959655, true, false, true, 3206));
 
 
 		// Item 1480 is reserved for the Dragon Woodcutting axe.

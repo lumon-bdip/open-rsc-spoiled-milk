@@ -39,7 +39,7 @@ Open implementation detail:
 
 Most potions should be tiered by potency, not by changing what the potion does.
 For example, `Potion of Brawn` and `Potion of Deftness` are equal concepts, but
-each can exist from tier 1 through tier 5.
+each can exist from tier 1 through tier 6.
 
 General rule:
 
@@ -47,9 +47,8 @@ General rule:
 - The secondary ingredient determines potion family/effect.
 - Skipped herbs are reserved for special-purpose potions such as restores,
   immunities, poison, and antidotes.
-- `Torstol` is intentionally TBD for now.
 - Quest potions should not be changed by this rework.
-- Tiered potion names use explicit `v1` through `v5` suffixes, for example
+- Tiered potion names use explicit `v1` through `v6` suffixes, for example
   `Potion of Brawn v1`.
 - Brew names use normal and `Strong` variants instead of numeric suffixes, for
   example `Skiller's Brew` and `Strong Skiller's Brew`.
@@ -63,6 +62,7 @@ General rule:
 | 3 | Ranarr weed | 11% | 11 minutes |
 | 4 | Avantoe | 14% | 14 minutes |
 | 5 | Cadantine | 17% | 17 minutes |
+| 6 | Torstol | 20% | 20 minutes |
 
 Potency and duration currently follow `+3%` and `+3 minutes` per tier after
 tier 1.
@@ -80,17 +80,18 @@ Skill buff rule:
 
 | Secondary ingredient | Potion family | Affected skills |
 | --- | --- | --- |
-| Fish oil | Deftness | Ranged, Pickpocketing, Crafting, Agility, Fishing |
+| 10 Fish oil | Deftness | Ranged, Pickpocketing, Crafting, Agility, Fishing |
 | Eye of newt | Insight | Magic, Enchanting, Summoning, Cooking, Prayer |
 | Limpwurt root | Brawn | Melee, Mining, Smithing, Woodcutting, Hits |
 
 Example:
 
-- `Guam leaf` + `Fish oil` = tier 1 `Potion of Deftness`
-- `Tarromin` + `Fish oil` = tier 2 `Potion of Deftness`
-- `Ranarr weed` + `Fish oil` = tier 3 `Potion of Deftness`
-- `Avantoe` + `Fish oil` = tier 4 `Potion of Deftness`
-- `Cadantine` + `Fish oil` = tier 5 `Potion of Deftness`
+- `Guam leaf` + `10 Fish oil` = tier 1 `Potion of Deftness`
+- `Tarromin` + `10 Fish oil` = tier 2 `Potion of Deftness`
+- `Ranarr weed` + `10 Fish oil` = tier 3 `Potion of Deftness`
+- `Avantoe` + `10 Fish oil` = tier 4 `Potion of Deftness`
+- `Cadantine` + `10 Fish oil` = tier 5 `Potion of Deftness`
+- `Torstol` + `10 Fish oil` = tier 6 `Potion of Deftness`
 
 The same herb-tier pattern applies to `Eye of newt` for `Potion of Insight` and
 `Limpwurt root` for `Potion of Brawn`.
@@ -330,9 +331,9 @@ Recipes are partly defined now. Known direction:
 
 Defined standard potion families:
 
-- `Guam leaf`, `Tarromin`, `Ranarr weed`, `Avantoe`, and `Cadantine` determine
-  tiers 1 through 5.
-- `Fish oil` creates `Potion of Deftness`.
+- `Guam leaf`, `Tarromin`, `Ranarr weed`, `Avantoe`, `Cadantine`, and
+  `Torstol` determine tiers 1 through 6.
+- `10 Fish oil` creates `Potion of Deftness`.
 - `Eye of newt` creates `Potion of Insight`.
 - `Limpwurt root` creates `Potion of Brawn`.
 - `Harralander` + `Unicorn horn` creates `Stat restore`.
@@ -342,7 +343,6 @@ Defined standard potion families:
 - `Dwarf weed` + `5 Snape grass` creates `Strong Skiller's Brew`.
 - `Irit leaf` + `White berries` creates `Warrior's Brew`.
 - `Dwarf weed` + `5 White berries` creates `Strong Warrior's Brew`.
-- `Torstol` remains TBD.
 
 ## Compatibility Cleanup Needed
 

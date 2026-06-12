@@ -267,6 +267,9 @@ public class Drinkables implements OpInvTrigger {
 			case FULL_SUPER_ATTACK_POTION: return skillPotion("brawn", 17, 17, ItemId.TWO_SUPER_ATTACK_POTION.id(), 2);
 			case TWO_SUPER_ATTACK_POTION: return skillPotion("brawn", 17, 17, ItemId.ONE_SUPER_ATTACK_POTION.id(), 1);
 			case ONE_SUPER_ATTACK_POTION: return skillPotion("brawn", 17, 17, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_POTION_OF_BRAWN_V6: return skillPotion("brawn", 20, 20, ItemId.TWO_POTION_OF_BRAWN_V6.id(), 2);
+			case TWO_POTION_OF_BRAWN_V6: return skillPotion("brawn", 20, 20, ItemId.ONE_POTION_OF_BRAWN_V6.id(), 1);
+			case ONE_POTION_OF_BRAWN_V6: return skillPotion("brawn", 20, 20, ItemId.EMPTY_VIAL.id(), 0);
 
 			case FULL_FISHING_POTION: return skillPotion("deftness", 5, 5, ItemId.TWO_FISHING_POTION.id(), 2);
 			case TWO_FISHING_POTION: return skillPotion("deftness", 5, 5, ItemId.ONE_FISHING_POTION.id(), 1);
@@ -283,6 +286,9 @@ public class Drinkables implements OpInvTrigger {
 			case FULL_CURE_POISON_POTION: return skillPotion("deftness", 17, 17, ItemId.TWO_CURE_POISON_POTION.id(), 2);
 			case TWO_CURE_POISON_POTION: return skillPotion("deftness", 17, 17, ItemId.ONE_CURE_POISON_POTION.id(), 1);
 			case ONE_CURE_POISON_POTION: return skillPotion("deftness", 17, 17, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_POTION_OF_DEFTNESS_V6: return skillPotion("deftness", 20, 20, ItemId.TWO_POTION_OF_DEFTNESS_V6.id(), 2);
+			case TWO_POTION_OF_DEFTNESS_V6: return skillPotion("deftness", 20, 20, ItemId.ONE_POTION_OF_DEFTNESS_V6.id(), 1);
+			case ONE_POTION_OF_DEFTNESS_V6: return skillPotion("deftness", 20, 20, ItemId.EMPTY_VIAL.id(), 0);
 
 			case FULL_POISON_ANTIDOTE: return skillPotion("insight", 5, 5, ItemId.TWO_POISON_ANTIDOTE.id(), 2);
 			case TWO_POISON_ANTIDOTE: return skillPotion("insight", 5, 5, ItemId.ONE_POISON_ANTIDOTE.id(), 1);
@@ -299,6 +305,9 @@ public class Drinkables implements OpInvTrigger {
 			case FULL_MAGIC_POTION: return skillPotion("insight", 17, 17, ItemId.TWO_MAGIC_POTION.id(), 2);
 			case TWO_MAGIC_POTION: return skillPotion("insight", 17, 17, ItemId.ONE_MAGIC_POTION.id(), 1);
 			case ONE_MAGIC_POTION: return skillPotion("insight", 17, 17, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_POTION_OF_INSIGHT_V6: return skillPotion("insight", 20, 20, ItemId.TWO_POTION_OF_INSIGHT_V6.id(), 2);
+			case TWO_POTION_OF_INSIGHT_V6: return skillPotion("insight", 20, 20, ItemId.ONE_POTION_OF_INSIGHT_V6.id(), 1);
+			case ONE_POTION_OF_INSIGHT_V6: return skillPotion("insight", 20, 20, ItemId.EMPTY_VIAL.id(), 0);
 
 			case FULL_POTION_OF_SARADOMIN: return specialPotion("restore", ItemId.TWO_POTION_OF_SARADOMIN.id(), 2);
 			case TWO_POTION_OF_SARADOMIN: return specialPotion("restore", ItemId.ONE_POTION_OF_SARADOMIN.id(), 1);

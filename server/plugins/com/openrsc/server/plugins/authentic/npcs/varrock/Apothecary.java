@@ -12,6 +12,7 @@ import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.AbstractShop;
 import com.openrsc.server.plugins.custom.minigames.ABoneToPick;
 import com.openrsc.server.util.rsc.DataConversions;
+import com.openrsc.server.util.rsc.MessageType;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -155,6 +156,27 @@ public final class Apothecary extends AbstractShop {
 	}
 
 	@Override
+	public boolean blockOpNpc(Player player, Npc n, String command) {
+		return isDirectShopCommand(player, n, command);
+	}
+
+	@Override
+	public void onOpNpc(Player player, Npc n, String command) {
+		if (!isDirectShopCommand(player, n, command)) return;
+		Npc apothecary = player.getWorld().getNpc(n.getID(),
+			player.getX() - 2, player.getX() + 2,
+			player.getY() - 2, player.getY() + 2);
+		if (apothecary == null) return;
+		if (!player.getQolOptOut()) {
+			player.setAccessingShop(shop);
+			ActionSender.showShop(player, shop);
+		} else {
+			player.playerServerMessage(MessageType.QUEST, "Right click trading is a QoL feature which you are opted out of.");
+			player.playerServerMessage(MessageType.QUEST, "Consider using an original RSC client so that you don't see the option.");
+		}
+	}
+
+	@Override
 	public Shop[] getShops(World world) {
 		return new Shop[]{shop};
 	}
@@ -167,5 +189,12 @@ public final class Apothecary extends AbstractShop {
 	@Override
 	public Shop getShop() {
 		return shop;
+	}
+
+	private boolean isDirectShopCommand(Player player, Npc n, String command) {
+		boolean shopCommand = command.equalsIgnoreCase("Trade") || command.equalsIgnoreCase("Shop");
+		return player.getConfig().RIGHT_CLICK_TRADE
+			&& n.getID() == NpcId.APOTHECARY.id()
+			&& shopCommand;
 	}
 }

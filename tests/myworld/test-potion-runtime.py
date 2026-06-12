@@ -57,10 +57,13 @@ def main() -> None:
     for snippet in (
         "case FULL_ATTACK_POTION: return skillPotion(\"brawn\", 5, 5",
         "case FULL_SUPER_ATTACK_POTION: return skillPotion(\"brawn\", 17, 17",
+        "case FULL_POTION_OF_BRAWN_V6: return skillPotion(\"brawn\", 20, 20",
         "case FULL_FISHING_POTION: return skillPotion(\"deftness\", 5, 5",
         "case FULL_CURE_POISON_POTION: return skillPotion(\"deftness\", 17, 17",
+        "case FULL_POTION_OF_DEFTNESS_V6: return skillPotion(\"deftness\", 20, 20",
         "case FULL_POISON_ANTIDOTE: return skillPotion(\"insight\", 5, 5",
         "case FULL_MAGIC_POTION: return skillPotion(\"insight\", 17, 17",
+        "case FULL_POTION_OF_INSIGHT_V6: return skillPotion(\"insight\", 20, 20",
         "case FULL_POTION_OF_SARADOMIN: return specialPotion(\"restore\"",
         "case FULL_SUPER_RANGING_POTION: return specialPotion(\"antidote\"",
         "case FULL_SUPER_MAGIC_POTION: return xpBrew(\"skiller\", 20, 30",

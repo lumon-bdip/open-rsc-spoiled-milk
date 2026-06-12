@@ -794,9 +794,9 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(453, "64", EntityHandler.getItemDef(453).name));
 				skillMenuEntries.add(new SkillMenuItem(934, "70", EntityHandler.getItemDef(934).name));
 			} else if (curTab == 1) {
-				addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, "Potion of Brawn", "limpwurt root");
-				addHerblawPotionFamilyGuide(489, 492, 495, 498, 566, "Potion of Deftness", "fish oil");
-				addHerblawPotionFamilyGuide(569, 963, 1411, 1414, 1468, "Potion of Insight", "eye of newt");
+				addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, 3198, "Potion of Brawn", "limpwurt root");
+				addHerblawPotionFamilyGuide(489, 492, 495, 498, 566, 3201, "Potion of Deftness", "10 fish oil");
+				addHerblawPotionFamilyGuide(569, 963, 1411, 1414, 1468, 3204, "Potion of Insight", "eye of newt");
 				skillMenuEntries.add(new SkillMenuItem(1474, "8", "Antidote - Marrentill & red spiders' eggs"));
 				skillMenuEntries.add(new SkillMenuItem(1176, "10", "Explosive compound - Nitro & nitrate & charcoal & a. root"));
 				skillMenuEntries.add(new SkillMenuItem(1053, "18", "Ogre potion - Guam leaf, jangerberries, ground bat bones"));
@@ -812,8 +812,8 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(474, "", "Brawn boosts Melee, Hits, Mining, Smithing, Woodcutting"));
 				skillMenuEntries.add(new SkillMenuItem(489, "", "Deftness boosts Ranged, Agility, Fishing, Crafting, Pickpocketing"));
 				skillMenuEntries.add(new SkillMenuItem(569, "", "Insight boosts Magic, Enchanting, Summoning, Cooking, Prayer"));
-				skillMenuEntries.add(new SkillMenuItem(474, "", "Tiered potions go v1 to v5: 5%, 8%, 11%, 14%, 17%"));
-				skillMenuEntries.add(new SkillMenuItem(474, "", "Tiered potions last 5, 8, 11, 14, or 17 minutes"));
+				skillMenuEntries.add(new SkillMenuItem(474, "", "Tiered potions go v1 to v6: 5%, 8%, 11%, 14%, 17%, 20%"));
+				skillMenuEntries.add(new SkillMenuItem(474, "", "Tiered potions last 5, 8, 11, 14, 17, or 20 minutes"));
 				skillMenuEntries.add(new SkillMenuItem(1477, "", "Skiller's Brew gives non-combat XP: 20% for 30 minutes"));
 				skillMenuEntries.add(new SkillMenuItem(221, "", "Strong Skiller's Brew gives non-combat XP: 40% for 60 minutes"));
 				skillMenuEntries.add(new SkillMenuItem(3192, "", "Warrior's Brew gives combat XP: 20% for 30 minutes"));
@@ -1449,13 +1449,14 @@ public final class SkillGuideInterface {
 		skillMenuEntries.add(new SkillMenuItem(itemId, level, detail));
 	}
 
-	private void addHerblawPotionFamilyGuide(int tier1Id, int tier2Id, int tier3Id, int tier4Id, int tier5Id,
+	private void addHerblawPotionFamilyGuide(int tier1Id, int tier2Id, int tier3Id, int tier4Id, int tier5Id, int tier6Id,
 											 String potionName, String secondary) {
 		skillMenuEntries.add(new SkillMenuItem(tier1Id, "3", potionName + " v1 - Guam leaf & " + secondary));
 		skillMenuEntries.add(new SkillMenuItem(tier2Id, "12", potionName + " v2 - Tarromin & " + secondary));
 		skillMenuEntries.add(new SkillMenuItem(tier3Id, "30", potionName + " v3 - Ranarr weed & " + secondary));
 		skillMenuEntries.add(new SkillMenuItem(tier4Id, "50", potionName + " v4 - Avantoe & " + secondary));
 		skillMenuEntries.add(new SkillMenuItem(tier5Id, "66", potionName + " v5 - Cadantine & " + secondary));
+		skillMenuEntries.add(new SkillMenuItem(tier6Id, "78", potionName + " v6 - Torstol & " + secondary));
 	}
 
 	private void addAmmoMouldGuide(String name, int baseLevel, int arrowheadsId, int arrowId, int dartsId, int knivesId) {

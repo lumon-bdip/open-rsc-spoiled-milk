@@ -2421,12 +2421,21 @@ public enum ItemId {
 	ONE_WARRIORS_BREW(3194),
 	FULL_STRONG_WARRIORS_BREW(3195),
 	TWO_STRONG_WARRIORS_BREW(3196),
-	ONE_STRONG_WARRIORS_BREW(3197);
+	ONE_STRONG_WARRIORS_BREW(3197),
+	FULL_POTION_OF_BRAWN_V6(3198),
+	TWO_POTION_OF_BRAWN_V6(3199),
+	ONE_POTION_OF_BRAWN_V6(3200),
+	FULL_POTION_OF_DEFTNESS_V6(3201),
+	TWO_POTION_OF_DEFTNESS_V6(3202),
+	ONE_POTION_OF_DEFTNESS_V6(3203),
+	FULL_POTION_OF_INSIGHT_V6(3204),
+	TWO_POTION_OF_INSIGHT_V6(3205),
+	ONE_POTION_OF_INSIGHT_V6(3206);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3198;
+	public static final int maxCustom = 3207;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

@@ -35,6 +35,13 @@
 		<exp>450</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
+		<secondID>220</secondID>
+		<unfinishedID>935</unfinishedID>
+		<potionID>3198</potionID>
+		<requiredLvl>78</requiredLvl>
+		<exp>550</exp>
+	</ItemHerbSecond>
+	<ItemHerbSecond>
 		<secondID>1410</secondID>
 		<unfinishedID>454</unfinishedID>
 		<potionID>489</potionID>
@@ -70,6 +77,13 @@
 		<exp>450</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
+		<secondID>1410</secondID>
+		<unfinishedID>935</unfinishedID>
+		<potionID>3201</potionID>
+		<requiredLvl>78</requiredLvl>
+		<exp>550</exp>
+	</ItemHerbSecond>
+	<ItemHerbSecond>
 		<secondID>270</secondID>
 		<unfinishedID>454</unfinishedID>
 		<potionID>569</potionID>
@@ -103,6 +117,13 @@
 		<potionID>1468</potionID>
 		<requiredLvl>66</requiredLvl>
 		<exp>450</exp>
+	</ItemHerbSecond>
+	<ItemHerbSecond>
+		<secondID>270</secondID>
+		<unfinishedID>935</unfinishedID>
+		<potionID>3204</potionID>
+		<requiredLvl>78</requiredLvl>
+		<exp>550</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
 		<secondID>473</secondID>

@@ -465,16 +465,28 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 		}
 
 		int repeat = 1;
+		final int requiredSecondaries = getRequiredSecondaries(secondID);
+		if (player.getCarriedItems().getInventory().countId(secondID, Optional.of(false)) < requiredSecondaries) {
+			player.message("You don't have enough "
+				+ player.getWorld().getServer().getEntityHandler().getItemDef(secondID).getName()
+				+ " to make this potion");
+			return;
+		}
 		if (config().BATCH_PROGRESSION) {
-			repeat = Math.min(player.getCarriedItems().getInventory().countId(secondID, Optional.of(false)),
+			repeat = Math.min(player.getCarriedItems().getInventory().countId(secondID, Optional.of(false)) / requiredSecondaries,
 				player.getCarriedItems().getInventory().countId(unfinishedID, Optional.of(false)));
 		}
 
 		startbatch(repeat);
-		batchPotionSecondary(player, unfinished, second, def, bubbleItem);
+		batchPotionSecondary(player, unfinished, second, def, bubbleItem, requiredSecondaries);
 	}
 
-	private void batchPotionSecondary(Player player, Item unfinished, Item second, ItemHerbSecond def, AtomicReference<Item> bubbleItem) {
+	private int getRequiredSecondaries(final int secondaryId) {
+		return secondaryId == ItemId.FISH_OIL.id() ? 10 : 1;
+	}
+
+	private void batchPotionSecondary(Player player, Item unfinished, Item second, ItemHerbSecond def,
+									  AtomicReference<Item> bubbleItem, int requiredSecondaries) {
 		if (!canReceive(player, new Item(def.getPotionID()))) {
 			player.message("Your client does not support the desired object");
 			return;
@@ -503,6 +515,7 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 			carriedItems.getInventory().getLastIndexById(second.getCatalogId(), Optional.of(false))
 		);
 		if (unfinished == null || second == null) return;
+		if (second.getAmount() < requiredSecondaries) return;
 
 		if (bubbleItem.get() != null) {
 			thinkbubble(bubbleItem.get());
@@ -517,7 +530,7 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 		if (SkillCapes.shouldActivate(player, ItemId.HERBLAW_CAPE)) {
 			mes("@gr2@Your Herblaw cape activates, saving your " + secondName);
 		} else {
-			carriedItems.remove(second);
+			carriedItems.remove(new Item(second.getCatalogId(), requiredSecondaries));
 		}
 
 		carriedItems.getInventory().add(new Item(def.getPotionID(), 1));
@@ -527,7 +540,7 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 		updatebatch();
 		if (!ifinterrupted() && !isbatchcomplete()) {
 			delay(2);
-			batchPotionSecondary(player, unfinished, second, def, bubbleItem);
+			batchPotionSecondary(player, unfinished, second, def, bubbleItem, requiredSecondaries);
 		}
 	}
 
