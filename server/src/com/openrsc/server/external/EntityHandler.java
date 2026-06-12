@@ -479,7 +479,6 @@ public final class EntityHandler {
 				npcs.get(npcId).setCommand1("Trade");
 			}
 
-			npcs.get(NpcId.APOTHECARY.id()).setCommand2("Trade");
 			npcs.get(NpcId.GNOME_WAITER.id()).setCommand2("Trade");
 			npcs.get(NpcId.BLURBERRY_BARMAN.id()).setCommand2("Trade");
 			if (getServer().getConfig().WANT_RUNECRAFT && !getServer().getConfig().WANT_MYWORLD) {

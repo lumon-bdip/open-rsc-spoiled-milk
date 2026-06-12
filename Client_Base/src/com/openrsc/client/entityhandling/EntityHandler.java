@@ -760,7 +760,7 @@ public class EntityHandler {
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Father Lawrence", "A kindly looking priest", "", 0, 0, 3, 0, false, sprites, 11167296, 2105376, 3, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-		npcs.add(new NPCDef("Apothecary", "I wonder if he has any good potions", shopOption, shopOption, 10, 5, 7, 5, false, sprites, 11167296, 8409120, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Apothecary", "I wonder if he has any good potions", shopOption, 10, 5, 7, 5, false, sprites, 11167296, 8409120, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{125, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("spider", "Incey wincey", "", 5, 2, 2, 1, true, sprites, 0, 0, 0, 0, 40, 35, 6, 6, 5, i++));
 		sprites = new int[]{124, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
