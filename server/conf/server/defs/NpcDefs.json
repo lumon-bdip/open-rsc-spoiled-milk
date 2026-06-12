@@ -1291,7 +1291,7 @@
         "name": "Apothecary",
         "description": "I wonder if he has any good potions",
         "command": "Trade",
-        "command2": "Shop",
+        "command2": "Trade",
         "attack": 10,
         "strength": 5,
         "hits": 7,

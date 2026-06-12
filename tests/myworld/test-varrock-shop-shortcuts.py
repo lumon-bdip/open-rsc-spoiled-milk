@@ -37,14 +37,14 @@ def main() -> None:
     server_entity_handler = SERVER_ENTITY_HANDLER.read_text(encoding="utf-8")
 
     require(npc_defs, '"id": 33,\n        "name": "Apothecary"', "base Apothecary definition")
-    require(npc_defs, '"name": "Apothecary",\n        "description": "I wonder if he has any good potions",\n        "command": "Trade",\n        "command2": "Shop"', "base Apothecary shop commands")
+    require(npc_defs, '"name": "Apothecary",\n        "description": "I wonder if he has any good potions",\n        "command": "Trade",\n        "command2": "Trade"', "base Apothecary trade commands")
     require(npc_defs, '"name": "Aubury",\n        "description": "I think he might be a shop keeper",\n        "command": "Trade",\n        "command2": "Shop"', "base Aubury shop commands")
 
     require(npc_patch, '"name": "Apothecary",\n\t\t"description": "I wonder if he has any good potions",\n\t\t"command": "Trade"', "patch Apothecary trade command")
     require(npc_patch, '"name": "Aubury",\n\t\t"description": "I think he might be a shop keeper",\n\t\t"command": "Trade"', "patch Aubury trade command")
 
     require(client_npcs, 'String shopOption2 = Config.S_RIGHT_CLICK_TRADE ? "Shop" : null;', "client alternate shop shortcut")
-    require(client_npcs, 'new NPCDef("Apothecary", "I wonder if he has any good potions", shopOption, shopOption2', "client Apothecary shortcut commands")
+    require(client_npcs, 'new NPCDef("Apothecary", "I wonder if he has any good potions", shopOption, shopOption', "client Apothecary trade shortcut commands")
     require(client_npcs, 'new NPCDef("Aubury", "I think he might be a shop keeper", shopOption, shopOption2', "client Aubury shortcut commands")
 
     require(apothecary, 'command.equalsIgnoreCase("Trade") || command.equalsIgnoreCase("Shop")', "Apothecary accepts Trade and Shop")
@@ -62,6 +62,7 @@ def main() -> None:
     require(mudclient, 'if (normalizedLabel.equals("shop") || normalizedLabel.equals("trade"))', "Ctrl-click shop/trade shortcut selector")
     require(mudclient, 'if (Config.S_RIGHT_CLICK_TRADE) AuburyDef.updateCommand2("Trade");', "Aubury teleport mode keeps Trade shortcut")
     require(server_entity_handler, 'getServer().getConfig().WANT_RUNECRAFT && !getServer().getConfig().WANT_MYWORLD', "legacy Aubury teleport override excluded from MyWorld")
+    require(server_entity_handler, 'npcs.get(NpcId.APOTHECARY.id()).setCommand2("Trade");', "runtime Apothecary keeps alternate Trade command")
     require(server_entity_handler, 'npcs.get(NpcId.AUBURY.id()).setCommand2("Shop");', "MyWorld Aubury keeps alternate Shop command at runtime")
 
     print("PASS: Varrock Apothecary and Aubury shop shortcuts are wired")
