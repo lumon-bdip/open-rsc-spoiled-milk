@@ -14584,4 +14584,15 @@
     <groundItemVar>0</groundItemVar>
     <objectModel>myworld_cosmic_sparkles1</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Safety Deposit Box</name>
+    <description>A secure box for items barred from Entrana</description>
+    <command1>Deposit</command1>
+    <command2>Withdraw</command2>
+    <type>1</type>
+    <width>1</width>
+    <height>1</height>
+    <groundItemVar>0</groundItemVar>
+    <objectModel>ChestClosed</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>

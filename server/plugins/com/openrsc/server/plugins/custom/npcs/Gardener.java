@@ -19,6 +19,9 @@ public final class Gardener extends AbstractShop {
 		new Item(ItemId.SHEARS.id(), 10), new Item(ItemId.COPPER_SHEARS.id(), 8),
 		new Item(ItemId.BRONZE_SHEARS.id(), 6), new Item(ItemId.IRON_SHEARS.id(), 4),
 		new Item(ItemId.STEEL_SHEARS.id(), 3), new Item(ItemId.MITHRIL_SHEARS.id(), 2),
+		new Item(ItemId.TIN_SCYTHE.id(), 10), new Item(ItemId.COPPER_SCYTHE.id(), 8),
+		new Item(ItemId.BRONZE_SCYTHE.id(), 6), new Item(ItemId.IRON_SCYTHE.id(), 4),
+		new Item(ItemId.STEEL_SCYTHE.id(), 3), new Item(ItemId.MITHRIL_SCYTHE.id(), 2),
 		new Item(ItemId.WATERING_CAN.id(), 2),
 		new Item(ItemId.SOIL.id(), 1));
 

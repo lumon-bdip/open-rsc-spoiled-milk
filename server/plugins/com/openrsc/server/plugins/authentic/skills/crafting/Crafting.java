@@ -216,6 +216,7 @@ public class Crafting implements UseInvTrigger,
 	private static final int BROWN_APRON_COW_HIDE_COST = 2;
 	private static final int BROWN_APRON_CRAFTING_LEVEL = 1;
 	private static final int BROWN_APRON_CRAFTING_EXP = 12;
+	private static final int THREAD_USES_PER_LEATHER_MATERIAL = 2;
 
 	public final static int[] silver_moulds = {
 		ItemId.HOLY_SYMBOL_MOULD.id(), // "You need a Holy symbol mould to make a holy symbol!"
@@ -1524,18 +1525,25 @@ public class Crafting implements UseInvTrigger,
 		HideArmorPiece piece = pieces[type];
 		Item result = new Item(piece.resultId, 1);
 		int availableMaterial = player.getCarriedItems().getInventory().countId(leather.getCatalogId(), Optional.of(false));
+		int threadCost = getLeatherThreadCost(piece.materialCost);
 		if (availableMaterial < piece.materialCost) {
 			player.message("You need " + piece.materialCost + " pieces of material to make that");
+			return;
+		}
+		if (getAvailableThreadUses(player) < threadCost) {
+			player.message("You need more thread to make that");
 			return;
 		}
 
 		int repeat = 1;
 		if (player.getConfig().BATCH_PROGRESSION) {
-			repeat = Math.min(30, Math.max(1, availableMaterial / piece.materialCost));
+			repeat = Math.min(30, Math.max(1, Math.min(
+				availableMaterial / piece.materialCost,
+				getAvailableThreadUses(player) / threadCost)));
 		}
 
 		startbatch(repeat);
-		batchLeather(player, leather, result, piece.materialCost, piece.reqLvl, piece.exp);
+		batchLeather(player, leather, result, piece.materialCost, threadCost, piece.reqLvl, piece.exp);
 	}
 
 	private void makeBrownApron(Player player, final Item cowHide) {
@@ -1572,7 +1580,7 @@ public class Crafting implements UseInvTrigger,
 		batchBrownApron(player);
 	}
 
-	private void batchLeather(Player player, Item leather, Item result, int materialCost, int reqLvl, int exp) {
+	private void batchLeather(Player player, Item leather, Item result, int materialCost, int threadCost, int reqLvl, int exp) {
 		if (!canReceive(player, result)) {
 			player.message("Your client does not support the desired object");
 			return;
@@ -1585,6 +1593,10 @@ public class Crafting implements UseInvTrigger,
 
 		while (!ifinterrupted() && !isbatchcomplete()) {
 			if (player.getCarriedItems().getInventory().countId(leather.getCatalogId(), Optional.of(false)) < materialCost) {
+				break;
+			}
+			if (getAvailableThreadUses(player) < threadCost) {
+				player.message("You need more thread to make that");
 				break;
 			}
 			delay(3);
@@ -1601,9 +1613,7 @@ public class Crafting implements UseInvTrigger,
 			player.getCarriedItems().getInventory().add(result);
 			player.incExp(Skill.CRAFTING.id(), exp, true);
 			updatebatch();
-			if (!consumeThreadUse(player)) {
-				break;
-			}
+			consumeThreadUses(player, threadCost);
 		}
 	}
 
@@ -1995,7 +2005,9 @@ public class Crafting implements UseInvTrigger,
 		}
 		int availableMaterial = player.getCarriedItems().getInventory().countId(inputId, Optional.of(false)) / piece.materialCost;
 		int availableThreadUses = crafting.getAvailableThreadUses(player);
-		int makeCount = Math.min(quantity, Math.min(availableMaterial, availableThreadUses));
+		int threadCost = crafting.getLeatherThreadCost(piece.materialCost);
+		int availableByThread = availableThreadUses / threadCost;
+		int makeCount = Math.min(quantity, Math.min(availableMaterial, availableByThread));
 		if (makeCount < 1) {
 			player.message("You need more materials to make that");
 			return false;
@@ -2003,7 +2015,7 @@ public class Crafting implements UseInvTrigger,
 		Item leather = new Item(inputId);
 		Item result = new Item(piece.resultId, 1);
 		startbatch(player, makeCount);
-		crafting.batchLeather(player, leather, result, piece.materialCost, piece.reqLvl, piece.exp);
+		crafting.batchLeather(player, leather, result, piece.materialCost, threadCost, piece.reqLvl, piece.exp);
 		return true;
 	}
 
@@ -2097,10 +2109,11 @@ public class Crafting implements UseInvTrigger,
 		int materialCount = player.getCarriedItems().getInventory().countId(leather.getCatalogId(), Optional.of(false));
 		int threadUses = getAvailableThreadUses(player);
 		for (HideArmorPiece piece : pieces) {
+			int threadCost = getLeatherThreadCost(piece.materialCost);
 			recipes.add(new ProductionRecipe(piece.resultId, piece.reqLvl, piece.materialCost, 1,
-				level >= piece.reqLvl, materialCount >= piece.materialCost && threadUses >= 1,
+				level >= piece.reqLvl, materialCount >= piece.materialCost && threadUses >= threadCost,
 				new int[]{leather.getCatalogId(), ItemId.THREAD.id()},
-				new int[]{-1, -1}, new int[]{piece.materialCost, 1}));
+				new int[]{-1, -1}, new int[]{piece.materialCost, threadCost}));
 		}
 		return new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose a leather item to craft", leather.getCatalogId(), recipes);
 	}
@@ -2861,6 +2874,7 @@ public class Crafting implements UseInvTrigger,
 
 	private boolean canStartLeatherRecipe(Player player, int leatherId, HideArmorPiece piece) {
 		Item result = new Item(piece.resultId, 1);
+		int threadCost = getLeatherThreadCost(piece.materialCost);
 		if (!canReceive(player, result)) {
 			player.message("Your client does not support the desired object");
 			return false;
@@ -2873,8 +2887,8 @@ public class Crafting implements UseInvTrigger,
 			player.message("You need " + piece.materialCost + " pieces of material to make that");
 			return false;
 		}
-		if (getAvailableThreadUses(player) < 1) {
-			player.message("You need some thread to make anything out of leather");
+		if (getAvailableThreadUses(player) < threadCost) {
+			player.message("You need more thread to make that");
 			return false;
 		}
 		if (checkFatigue(player)) {
@@ -2974,6 +2988,10 @@ public class Crafting implements UseInvTrigger,
 		}
 		int usedParts = player.getCache().hasKey("part_reel_thread") ? player.getCache().getInt("part_reel_thread") : 0;
 		return Math.max(0, (threadCount * 5) - usedParts);
+	}
+
+	private int getLeatherThreadCost(int materialCost) {
+		return materialCost * THREAD_USES_PER_LEATHER_MATERIAL;
 	}
 
 	private String getPotteryBatchMessage(int resultId) {
@@ -3135,6 +3153,12 @@ public class Crafting implements UseInvTrigger,
 
 		player.getCache().put("part_reel_thread", parts + 1);
 		return true;
+	}
+
+	private void consumeThreadUses(Player player, int amount) {
+		for (int i = 0; i < amount; i++) {
+			consumeThreadUse(player);
+		}
 	}
 
 	private String potteryItemName(String rawName) {

@@ -9220,6 +9220,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Inert obelisk", "A dormant stone obelisk", "WalkTo", "Examine", 1, 1, 1, 0, "obelisk", ++i)); //1323
 		objects.add(new GameObjectDef("Ore crusher", "A machine for crushing ore to find gems", "WalkTo", "Examine", 1, 2, 2, 0, "madmachine", ++i)); //1324
 		objects.add(new GameObjectDef("Cosmic sparkles", "Tiny motes of light drift through the void", "WalkTo", "Examine", 0, 2, 2, 0, "myworld_cosmic_sparkles1", ++i)); //1325
+		objects.add(new GameObjectDef("Safety Deposit Box", "A secure box for items barred from Entrana", "Deposit", "Withdraw", 1, 1, 1, 0, "ChestClosed", ++i)); //1326
 	}
 
 	public static void load(boolean loadMembers) {

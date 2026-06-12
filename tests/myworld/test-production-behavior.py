@@ -160,8 +160,33 @@ def main() -> None:
     )
     require(
         crafting_text,
-        "materialCount >= piece.materialCost && threadUses >= 1",
-        "Leather crafting production recipes should reflect both material and thread requirements",
+        "private static final int THREAD_USES_PER_LEATHER_MATERIAL = 2;",
+        "Leather armor crafting should cost two thread uses per material",
+    )
+    require(
+        crafting_text,
+        "int threadCost = getLeatherThreadCost(piece.materialCost);",
+        "Leather armor production recipes should derive thread cost from material cost",
+    )
+    require(
+        crafting_text,
+        "materialCount >= piece.materialCost && threadUses >= threadCost",
+        "Leather armor production recipes should reflect scaled thread requirements",
+    )
+    require(
+        crafting_text,
+        "new int[]{-1, -1}, new int[]{piece.materialCost, threadCost}",
+        "Leather armor production recipes should expose scaled thread icon costs",
+    )
+    require(
+        crafting_text,
+        "int availableByThread = availableThreadUses / threadCost;",
+        "Leather armor production batches should be capped by scaled thread cost",
+    )
+    require(
+        crafting_text,
+        "consumeThreadUses(player, threadCost);",
+        "Leather armor crafting should consume the scaled thread cost",
     )
     require(
         crafting_text,
