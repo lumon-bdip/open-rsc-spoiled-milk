@@ -80,7 +80,8 @@ def main() -> None:
     expect_contains(PROJECTILE_EVENT_PATH, "casterPlayer.getRangedPoisonArmorMaxPower()", "ranged armor poison contribution")
 
     expect_contains(RANGE_EVENT_PATH, "true, ammoId, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB", "ranged poison deferred to projectile impact")
-    expect_contains(THROWING_EVENT_PATH, "true, throwingID, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB", "thrown poison deferred to projectile impact")
+    expect_contains(THROWING_EVENT_PATH, "true, throwingID, 0, 0, 0, 0, projectileDuplicationStrategy", "thrown poison deferred to projectile impact")
+    expect_contains(THROWING_EVENT_PATH, "? DuplicationStrategy.ALLOW_MULTIPLE", "shuriken projectiles avoid per-player event de-duplication")
     expect_not_contains(THROWING_EVENT_PATH, "RangeUtils.poisonTarget(getOwner(), target", "legacy thrown poison pre-impact application")
 
     expect_contains(PLAYER_POISON_SCRIPT_PATH, "if (attacker.getConfig().WANT_MYWORLD)", "legacy pvp poison disabled for myworld")

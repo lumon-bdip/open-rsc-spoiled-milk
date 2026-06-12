@@ -179,8 +179,9 @@ public class ThrowingEvent extends GameTickEvent {
 			delay = 1;
 		}
 
+		final boolean isShuriken = RangeUtils.SHURIKENS.contains(throwingID);
 		for (int i = 0; i < throwingTargets.size(); i++) {
-			applyThrowingHit(player, throwingID, throwingTargets.get(i), skillCape, i == 0);
+			applyThrowingHit(player, throwingID, throwingTargets.get(i), skillCape, i == 0 || isShuriken, i == 0);
 		}
 		ActionSender.sendSound(player, "shoot");
 
@@ -296,10 +297,10 @@ public class ThrowingEvent extends GameTickEvent {
 		return npc.getOpponent() == player || npc.getPreferredThreatTarget() == player;
 	}
 
-	private void applyThrowingHit(Player player, int throwingID, Mob hitTarget, boolean skillCape, boolean showProjectile) {
+	private void applyThrowingHit(Player player, int throwingID, Mob hitTarget, boolean skillCape, boolean showProjectile, boolean firstProjectileThisAttack) {
 		int damage = RangeUtils.doRangedDamage(player, throwingID, throwingID, hitTarget, skillCape);
 
-		RangeUtils.applyDragonFireBreath(player, hitTarget, deliveredFirstProjectile);
+		RangeUtils.applyDragonFireBreath(player, hitTarget, deliveredFirstProjectile || !firstProjectileThisAttack);
 		if((hitTarget.isPlayer() || getWorld().getServer().getConfig().RANGED_GIVES_XP_HIT) && damage > 0) {
 			player.incExp(Skill.RANGED.id(), Formulae.rangedHitExperience(hitTarget, damage), true);
 		}
@@ -323,7 +324,10 @@ public class ThrowingEvent extends GameTickEvent {
 				: RangeUtils.THROWING_DARTS.contains(throwingID)
 					? Projectile.THROWING_DART
 					: Projectile.RANGED;
+		final DuplicationStrategy projectileDuplicationStrategy = RangeUtils.SHURIKENS.contains(throwingID)
+			? DuplicationStrategy.ALLOW_MULTIPLE
+			: DuplicationStrategy.ONE_PER_MOB;
 		getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getWorld(), player, hitTarget, damage, 2,
-			true, throwingID, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB, projectileType, 0, showProjectile));
+			true, throwingID, 0, 0, 0, 0, projectileDuplicationStrategy, projectileType, 0, showProjectile));
 	}
 }

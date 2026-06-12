@@ -51,6 +51,7 @@ public class UpdateFlags {
 	 * Has this player fired a projectile?
 	 */
 	private AtomicReference<Projectile> projectile = new AtomicReference<Projectile>();
+	private ConcurrentLinkedQueue<Projectile> projectiles = new ConcurrentLinkedQueue<Projectile>();
 	private AtomicReference<CombatEffect> combatEffect = new AtomicReference<CombatEffect>();
 	private ConcurrentLinkedQueue<CombatEffect> combatEffects = new ConcurrentLinkedQueue<CombatEffect>();
 	private ConcurrentLinkedQueue<HitSplat> hitSplats = new ConcurrentLinkedQueue<HitSplat>();
@@ -131,6 +132,9 @@ public class UpdateFlags {
 
 	public void setProjectile(Projectile projectile) {
 		this.projectile.set(projectile);
+		if (projectile != null) {
+			this.projectiles.add(projectile);
+		}
 	}
 
 	public AtomicReference<CombatEffect> getCombatEffect() {
@@ -158,6 +162,10 @@ public class UpdateFlags {
 		return new ArrayList<CombatEffect>(combatEffects);
 	}
 
+	public List<Projectile> getProjectiles() {
+		return new ArrayList<Projectile>(projectiles);
+	}
+
 	public boolean hasAppearanceChanged() {
 		return getAppearanceChanged().get();
 	}
@@ -174,7 +182,7 @@ public class UpdateFlags {
 	}
 
 	public boolean hasFiredProjectile() {
-		return getProjectile().get() != null;
+		return !projectiles.isEmpty() || getProjectile().get() != null;
 	}
 
 	public boolean hasCombatEffect() {
@@ -207,12 +215,12 @@ public class UpdateFlags {
 	 */
 	public void reset() {
 		projectile.set(null);
+		projectiles.clear();
 		actionBubble.set(null);
 		damage.set(null);
 		skull.set(null);
 		wield.set(null);
 		hpUpdate.set(null);
-		projectile.set(null);
 		combatEffect.set(null);
 		combatEffects.clear();
 		hitSplats.clear();

@@ -15,6 +15,8 @@ FORMULAE = ROOT / "server/src/com/openrsc/server/util/rsc/Formulae.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 CLIENT_MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 PROJECTILE = ROOT / "server/src/com/openrsc/server/model/entity/update/Projectile.java"
+UPDATE_FLAGS = ROOT / "server/src/com/openrsc/server/model/entity/update/UpdateFlags.java"
+GAME_STATE_UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
 SHURIKEN_BASIC = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic.png"
 SHURIKEN_POISON = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-basic-poison.png"
 SHURIKEN_THROWN = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/shuriken-thrown.png"
@@ -118,6 +120,8 @@ def main() -> None:
     client = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     mudclient = CLIENT_MUDCLIENT.read_text(encoding="utf-8")
     projectile = PROJECTILE.read_text(encoding="utf-8")
+    update_flags = UPDATE_FLAGS.read_text(encoding="utf-8")
+    game_state_updater = GAME_STATE_UPDATER.read_text(encoding="utf-8")
 
     for snippet in (
         "SHURIKEN_THROW_COUNT = 3",
@@ -131,6 +135,8 @@ def main() -> None:
         "addRandomShurikenTargets(targets, preferred)",
         "addRandomShurikenTargets(targets, fallback)",
         "npc.getOpponent() == player || npc.getPreferredThreatTarget() == player",
+        "applyThrowingHit(player, throwingID, throwingTargets.get(i), skillCape, i == 0 || isShuriken, i == 0)",
+        "? DuplicationStrategy.ALLOW_MULTIPLE",
         "? Projectile.SHURIKEN",
     ):
         require(throwing, snippet, "ThrowingEvent shuriken combat contract")
@@ -169,6 +175,10 @@ def main() -> None:
     require(client, "SHURIKEN(24)", "Client shuriken projectile id")
     require(client, 'new SpriteDef("shuriken projectile"', "Client shuriken projectile definition")
     require(projectile, "public static final int SHURIKEN = 24;", "Server shuriken projectile id")
+    require(update_flags, "private ConcurrentLinkedQueue<Projectile> projectiles", "UpdateFlags projectile queue")
+    require(update_flags, "this.projectiles.add(projectile);", "UpdateFlags retains multiple projectiles")
+    require(update_flags, "public List<Projectile> getProjectiles()", "UpdateFlags exposes multiple projectiles")
+    require(game_state_updater, "updateFlags.getProjectiles()", "GameStateUpdater sends multiple projectiles")
     require(mudclient, 'loadExternalItemSprite(getExternalPngFile("shuriken-thrown"), 46, 30)', "Client shuriken thrown sprite loader")
     require(mudclient, "generateShurikenProjectileFrames();", "Client shuriken spin frame generation")
     assert_shuriken_palette_ready(SHURIKEN_BASIC, False)

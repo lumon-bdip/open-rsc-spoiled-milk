@@ -81,7 +81,7 @@ def main() -> None:
     client_defs = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     pvm_melee = PVM_MELEE.read_text(encoding="utf-8")
 
-    require("public static final int maxCustom = 3192;" in item_id_text, "ItemId.maxCustom should include post-scythe cosmetics")
+    require("public static final int maxCustom = 3228;" in item_id_text, "ItemId.maxCustom should include post-shuriken items")
     for item_id, name in SCYTHES.items():
         enum_name = name.upper().replace(" ", "_")
         require(f"{enum_name}({item_id})" in item_id_text, f"Missing ItemId enum for {name}")

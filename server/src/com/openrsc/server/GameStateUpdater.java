@@ -639,9 +639,10 @@ public final class GameStateUpdater {
 				npcsNeedingHitsUpdate.add(damage);
 			}
 			if (updateFlags.hasFiredProjectile()) {
-				Projectile projectileFired = updateFlags.getProjectile().get();
-				if (projectileFired.getCaster().getIndex() != -1 && projectileFired.getVictim().getIndex() != -1) {
-					npcProjectilesNeedingDisplayed.add(projectileFired);
+				for (Projectile projectileFired : updateFlags.getProjectiles()) {
+					if (projectileFired.getCaster().getIndex() != -1 && projectileFired.getVictim().getIndex() != -1) {
+						npcProjectilesNeedingDisplayed.add(projectileFired);
+					}
 				}
 			}
 			if (updateFlags.hasBubbleNpc()) {
@@ -799,9 +800,10 @@ public final class GameStateUpdater {
 			bubblesNeedingDisplayed.add(bubble);
 		}
 		if (player.getUpdateFlags().hasFiredProjectile()) {
-			Projectile projectileFired = player.getUpdateFlags().getProjectile().get();
-			if (projectileFired.getCaster().getIndex() != -1 && projectileFired.getVictim().getIndex() != -1) {
-				projectilesNeedingDisplayed.add(projectileFired);
+			for (Projectile projectileFired : player.getUpdateFlags().getProjectiles()) {
+				if (projectileFired.getCaster().getIndex() != -1 && projectileFired.getVictim().getIndex() != -1) {
+					projectilesNeedingDisplayed.add(projectileFired);
+				}
 			}
 		}
 
@@ -849,8 +851,7 @@ public final class GameStateUpdater {
 				bubblesNeedingDisplayed.add(bubble);
 			}
 			if (updateFlags.hasFiredProjectile()) {
-				Projectile projectileFired = updateFlags.getProjectile().get();
-				projectilesNeedingDisplayed.add(projectileFired);
+				projectilesNeedingDisplayed.addAll(updateFlags.getProjectiles());
 			}
 
 			if (updateFlags.hasChatMessage()) {
