@@ -2228,6 +2228,7 @@ public class ActionSender {
 			new Item(ItemId.DART_MOULD.id()),
 			new Item(ItemId.THROWING_KNIFE_MOULD.id()),
 			new Item(ItemId.ARROWHEAD_MOULD.id()),
+			new Item(ItemId.SHURIKEN_MOULD.id()),
 			new Item(ItemId.COINS.id(), 500),
 		};
 

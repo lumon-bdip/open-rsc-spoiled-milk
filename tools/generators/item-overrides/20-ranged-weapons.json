@@ -120,6 +120,10 @@
       "name": "Arrowhead mould"
     },
     {
+      "id": 3207,
+      "name": "Shuriken mould"
+    },
+    {
       "id": 648,
       "rangedOffense": 12,
       "weaponSpeed": 3,
@@ -494,6 +498,86 @@
       "basePrice": 4000
     },
     {
+      "id": 3208,
+      "rangedOffense": 5,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 1,
+      "basePrice": 4
+    },
+    {
+      "id": 3209,
+      "rangedOffense": 7,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 8,
+      "basePrice": 9
+    },
+    {
+      "id": 3210,
+      "rangedOffense": 9,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 15,
+      "basePrice": 20
+    },
+    {
+      "id": 3211,
+      "rangedOffense": 11,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 22,
+      "basePrice": 48
+    },
+    {
+      "id": 3212,
+      "rangedOffense": 13,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 30,
+      "basePrice": 120
+    },
+    {
+      "id": 3213,
+      "rangedOffense": 15,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 38,
+      "basePrice": 320
+    },
+    {
+      "id": 3214,
+      "rangedOffense": 17,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 46,
+      "basePrice": 720
+    },
+    {
+      "id": 3215,
+      "rangedOffense": 19,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 54,
+      "basePrice": 1520
+    },
+    {
+      "id": 3216,
+      "rangedOffense": 21,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 62,
+      "basePrice": 2600
+    },
+    {
+      "id": 3217,
+      "rangedOffense": 23,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 70,
+      "basePrice": 4000
+    },
+    {
       "id": 1075,
       "rangedOffense": 14,
       "weaponSpeed": 3,
@@ -649,6 +733,76 @@
       "weaponSpeed": 5,
       "requiredSkillID": 4,
       "requiredLevel": 62
+    },
+    {
+      "id": 3218,
+      "rangedOffense": 5,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 1
+    },
+    {
+      "id": 3219,
+      "rangedOffense": 7,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 8
+    },
+    {
+      "id": 3220,
+      "rangedOffense": 9,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 15
+    },
+    {
+      "id": 3221,
+      "rangedOffense": 11,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 22
+    },
+    {
+      "id": 3222,
+      "rangedOffense": 13,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 30
+    },
+    {
+      "id": 3223,
+      "rangedOffense": 15,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 38
+    },
+    {
+      "id": 3224,
+      "rangedOffense": 17,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 46
+    },
+    {
+      "id": 3225,
+      "rangedOffense": 19,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 54
+    },
+    {
+      "id": 3226,
+      "rangedOffense": 21,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 62
+    },
+    {
+      "id": 3227,
+      "rangedOffense": 23,
+      "weaponSpeed": 5,
+      "requiredSkillID": 4,
+      "requiredLevel": 70
     },
     {
       "id": 1128,

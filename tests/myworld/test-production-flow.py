@@ -95,12 +95,14 @@ def main() -> None:
         "crafting.batchWoolGarment(player, recipe);",
         "crafting.batchPotteryMoulding(player, softClay, recipe.reqLvl, result, msg, recipe.exp);",
         "crafting.batchGlassBlowing(player, glass, result, recipe.reqLvl, recipe.exp, recipe.resultGen);",
-        "crafting.batchLeather(player, leather, result, piece.materialCost, piece.reqLvl, piece.exp);",
+        "crafting.batchLeather(player, leather, result, piece.materialCost, threadCost, piece.reqLvl, piece.exp);",
         "crafting.batchRangedMouldCasting(player, bar, recipe);",
         "ItemId.ARROWHEAD_MOULD.id()",
         "ItemId.DART_MOULD.id()",
         "ItemId.THROWING_KNIFE_MOULD.id()",
+        "ItemId.SHURIKEN_MOULD.id()",
         "getDartTipsId(barId)",
+        "getShurikenId(barId)",
     ]
     for snippet in crafting_required_snippets:
         require(

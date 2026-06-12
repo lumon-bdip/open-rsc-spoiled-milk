@@ -2091,7 +2091,8 @@ public class Crafting implements UseInvTrigger,
 		return categoryId == Smelting.FURNACE_CATEGORY_BOLTS
 			|| categoryId == Smelting.FURNACE_CATEGORY_ARROWHEADS
 			|| categoryId == Smelting.FURNACE_CATEGORY_DARTS
-			|| categoryId == Smelting.FURNACE_CATEGORY_THROWING_KNIVES;
+			|| categoryId == Smelting.FURNACE_CATEGORY_THROWING_KNIVES
+			|| categoryId == Smelting.FURNACE_CATEGORY_SHURIKEN;
 	}
 
 	private ProductionSession createLeatherProductionSession(Player player, Item leather) {
@@ -2299,7 +2300,7 @@ public class Crafting implements UseInvTrigger,
 		}
 		ProductionSession session = createRangedMouldProductionSession(player, bar.getCatalogId());
 		if (session == null) {
-			player.message("You need an arrowhead, dart, or throwing knife mould to cast ranged weapons");
+			player.message("You need a ranged weapon mould to cast ranged weapons");
 			return;
 		}
 		if (!ActionSender.isRetroClient(player)) {
@@ -2315,7 +2316,7 @@ public class Crafting implements UseInvTrigger,
 
 		List<RangedMouldRecipe> recipes = getAvailableRangedMouldRecipes(player, bar.getCatalogId());
 		if (recipes.isEmpty()) {
-			player.message("You need an arrowhead, dart, or throwing knife mould to cast ranged weapons");
+			player.message("You need a ranged weapon mould to cast ranged weapons");
 			return;
 		}
 		String[] options = new String[recipes.size() + 1];
@@ -2375,6 +2376,9 @@ public class Crafting implements UseInvTrigger,
 		if (categoryId < 0 || categoryId == Smelting.FURNACE_CATEGORY_THROWING_KNIVES) {
 			addRangedMouldRecipe(recipes, player, barId, getThrowingKnifeId(barId), ItemId.THROWING_KNIFE_MOULD.id(), "Throwing knives", 5, 4);
 		}
+		if (categoryId < 0 || categoryId == Smelting.FURNACE_CATEGORY_SHURIKEN) {
+			addRangedMouldRecipe(recipes, player, barId, getShurikenId(barId), ItemId.SHURIKEN_MOULD.id(), "Shuriken", 9, 4);
+		}
 		return recipes;
 	}
 
@@ -2413,6 +2417,9 @@ public class Crafting implements UseInvTrigger,
 		if (categoryId == Smelting.FURNACE_CATEGORY_THROWING_KNIVES) {
 			return ItemId.THROWING_KNIFE_MOULD.id();
 		}
+		if (categoryId == Smelting.FURNACE_CATEGORY_SHURIKEN) {
+			return ItemId.SHURIKEN_MOULD.id();
+		}
 		return -1;
 	}
 
@@ -2428,6 +2435,9 @@ public class Crafting implements UseInvTrigger,
 		}
 		if (categoryId == Smelting.FURNACE_CATEGORY_THROWING_KNIVES) {
 			return getRangedMouldRecipeByItemId(barId, getThrowingKnifeId(barId));
+		}
+		if (categoryId == Smelting.FURNACE_CATEGORY_SHURIKEN) {
+			return getRangedMouldRecipeByItemId(barId, getShurikenId(barId));
 		}
 		return null;
 	}
@@ -2465,6 +2475,9 @@ public class Crafting implements UseInvTrigger,
 		}
 		if (getThrowingKnifeId(barId) == itemId) {
 			return new RangedMouldRecipe("Throwing knives", itemId, ItemId.THROWING_KNIFE_MOULD.id(), 5, getModernMetalBaseLevel(tier) + 4, getRangedMouldCraftingExp(tier, 5, 4));
+		}
+		if (getShurikenId(barId) == itemId) {
+			return new RangedMouldRecipe("Shuriken", itemId, ItemId.SHURIKEN_MOULD.id(), 9, getModernMetalBaseLevel(tier) + 4, getRangedMouldCraftingExp(tier, 9, 4));
 		}
 		return null;
 	}
@@ -2692,6 +2705,33 @@ public class Crafting implements UseInvTrigger,
 				return ItemId.ORICHALCUM_THROWING_KNIFE.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_THROWING_KNIFE.id();
+			default:
+				return -1;
+		}
+	}
+
+	private int getShurikenId(int barId) {
+		switch (ItemId.getById(barId)) {
+			case TIN_BAR:
+				return ItemId.TIN_SHURIKEN.id();
+			case COPPER_BAR:
+				return ItemId.COPPER_SHURIKEN.id();
+			case BRONZE_BAR:
+				return ItemId.BRONZE_SHURIKEN.id();
+			case IRON_BAR:
+				return ItemId.IRON_SHURIKEN.id();
+			case STEEL_BAR:
+				return ItemId.STEEL_SHURIKEN.id();
+			case MITHRIL_BAR:
+				return ItemId.MITHRIL_SHURIKEN.id();
+			case TITAN_STEEL_BAR:
+				return ItemId.TITAN_STEEL_SHURIKEN.id();
+			case ADAMANTITE_BAR:
+				return ItemId.ADAMANTITE_SHURIKEN.id();
+			case ORICHALCUM_BAR:
+				return ItemId.ORICHALCUM_SHURIKEN.id();
+			case RUNITE_BAR:
+				return ItemId.RUNE_SHURIKEN.id();
 			default:
 				return -1;
 		}

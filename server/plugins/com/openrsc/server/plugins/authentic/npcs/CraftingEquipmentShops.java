@@ -113,7 +113,8 @@ public final class CraftingEquipmentShops extends AbstractShop {
 				new Item(ItemId.BOLT_MOULD.id(), 2),
 				new Item(ItemId.DART_MOULD.id(), 2),
 				new Item(ItemId.THROWING_KNIFE_MOULD.id(), 2),
-				new Item(ItemId.ARROWHEAD_MOULD.id(), 2));
+				new Item(ItemId.ARROWHEAD_MOULD.id(), 2),
+				new Item(ItemId.SHURIKEN_MOULD.id(), 2));
 			if (world.getServer().getConfig().BASED_CONFIG_DATA >= 28) {
 				Collections.addAll(shopItems,
 					new Item(ItemId.NEEDLE.id(), 3),

@@ -203,6 +203,36 @@ def main() -> None:
         "player.getConfig().WANT_FATIGUE",
         "Smithing interface production should use player config outside plugin callback context",
     )
+    require(
+        smelting_text,
+        "private static final int SMELTING_ACTION_DELAY_TICKS = 3;",
+        "Smelting should expose its per-action delay instead of using an inline magic number",
+    )
+    require(
+        smelting_text,
+        "ActionSender.sendActionProgressBar(player, recipe.progressItemId(), SMELTING_ACTION_DELAY_TICKS);",
+        "Smelting should show the same per-action progress cadence as gathering skills",
+    )
+    require(
+        smelting_text,
+        "if (!ifinterrupted() && !isbatchcomplete()) {\n\t\t\t\tdelay();\n\t\t\t}",
+        "Smelting should pause between repeated production actions like fishing",
+    )
+    require(
+        smithing_text,
+        "private static final int SMITHING_ACTION_DELAY_TICKS = 3;",
+        "Smithing should expose its per-action delay instead of using an inline magic number",
+    )
+    require(
+        smithing_text,
+        "ActionSender.sendActionProgressBar(player, ItemId.HAMMER.id(), SMITHING_ACTION_DELAY_TICKS);",
+        "Smithing should show hammer progress for each production action",
+    )
+    require(
+        smithing_text,
+        "if (!ifinterrupted() && !isbatchcomplete()) {\n\t\t\t\tdelay();\n\t\t\t}",
+        "Smithing should pause between repeated production actions like fishing",
+    )
     for label, text in (
         ("crafting", crafting_text),
         ("smelting", smelting_text),

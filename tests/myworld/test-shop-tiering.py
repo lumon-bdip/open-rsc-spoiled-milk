@@ -553,6 +553,7 @@ def main() -> None:
         "ItemId.DART_MOULD.id()",
         "ItemId.THROWING_KNIFE_MOULD.id()",
         "ItemId.ARROWHEAD_MOULD.id()",
+        "ItemId.SHURIKEN_MOULD.id()",
     ))
     if "WANT_CUSTOM_SPRITES" in text(CRAFTING_EQUIPMENT_PATH):
         fail("Crafting shop mould stock should not depend on custom sprite config")

@@ -4674,6 +4674,7 @@ public class EntityHandler {
 		setCustomItemDefinition(2204, new ItemDef("Dart mould", "Use with bars to cast dart tips", "", 5, -1, "external-png:dart-mould", false, false, 0, 0, false, false, true, 2204));
 		setCustomItemDefinition(2205, new ItemDef("Throwing knife mould", "Use with bars to cast throwing knives", "", 5, -1, "external-png:throwing-knife-mould", false, false, 0, 0, false, false, true, 2205));
 		setCustomItemDefinition(2206, new ItemDef("Arrowhead mould", "Use with bars to cast arrow heads", "", 5, -1, "external-png:arrowhead-mould", false, false, 0, 0, false, false, true, 2206));
+		setCustomItemDefinition(3207, new ItemDef("Shuriken mould", "Use with bars to cast shuriken", "", 5, -1, "external-png:shuriken-mould", false, false, 0, 0, false, false, true, 3207));
 		addMetalBoltDefinition("Tin bolts", 190, 3, 0xB7C9D9);
 		addMetalBoltDefinition("Poison Tin bolts", 592, 3, 0xB7C9D9);
 		addMetalBoltDefinition("Copper bolts", 2178, 4, 0xC86A2B);
@@ -4724,6 +4725,16 @@ public class EntityHandler {
 		addMetalThrowingKnifeDefinition("Adamantite throwing knife", 1079, 133, 0xB2CD89);
 		addMetalThrowingKnifeDefinition("Orichalcum throwing knife", 2029, 54, 0x5A3F7D);
 		addMetalThrowingKnifeDefinition("Rune throwing knife", 1080, 333, 0x00FFFF);
+		addMetalShurikenDefinition("Tin shuriken", 3208, 4, 0xB7C9D9);
+		addMetalShurikenDefinition("Copper shuriken", 3209, 9, 0xC86A2B);
+		addMetalShurikenDefinition("Bronze shuriken", 3210, 20, 0xFF6C29);
+		addMetalShurikenDefinition("Iron shuriken", 3211, 48, 0xEEEEED);
+		addMetalShurikenDefinition("Steel shuriken", 3212, 120, 0xEEEEEE);
+		addMetalShurikenDefinition("Mithril shuriken", 3213, 320, 0x92B5D8);
+		addMetalShurikenDefinition("Titan Steel shuriken", 3214, 720, 0x8EA6BB);
+		addMetalShurikenDefinition("Adamantite shuriken", 3215, 1520, 0xB2CD89);
+		addMetalShurikenDefinition("Orichalcum shuriken", 3216, 2600, 0x5A3F7D);
+		addMetalShurikenDefinition("Rune shuriken", 3217, 4000, 0x00FFFF);
 		addItemDefinition(new ItemDef("Poisoned Tin Throwing Dart", "A venomous throwing dart.", "", 1, 384, "items:384", true, true, 16, 0xb7c9d9, false, false, false, 2196));
 		addItemDefinition(new ItemDef("Poisoned Copper Throwing Dart", "A venomous throwing dart.", "", 3, 384, "items:384", true, true, 16, 0xc86a2b, false, false, false, 2197));
 		addItemDefinition(new ItemDef("Poisoned Titan Steel Throwing Dart", "A venomous throwing dart.", "", 96, 384, "items:384", true, true, 16, 0x8ea6bb, false, false, false, 2198));
@@ -4732,6 +4743,16 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Poisoned Copper throwing knife", "A finely balanced knife with a coating of venom", "", 4, 385, "items:385", true, true, 16, 0xc86a2b, false, false, false, 2201));
 		addItemDefinition(new ItemDef("Poisoned Titan Steel throwing knife", "A finely balanced knife with a coating of venom", "", 18, 385, "items:385", true, true, 16, 0x8ea6bb, false, false, false, 2202));
 		addItemDefinition(new ItemDef("Poisoned Orichalcum throwing knife", "A finely balanced knife with a coating of venom", "", 54, 385, "items:385", true, true, 16, 0x5a3f7d, false, false, false, 2203));
+		addPoisonedMetalShurikenDefinition("Poisoned Tin shuriken", 3218, 4, 0xB7C9D9);
+		addPoisonedMetalShurikenDefinition("Poisoned Copper shuriken", 3219, 9, 0xC86A2B);
+		addPoisonedMetalShurikenDefinition("Poisoned Bronze shuriken", 3220, 20, 0xFF6C29);
+		addPoisonedMetalShurikenDefinition("Poisoned Iron shuriken", 3221, 48, 0xEEEEED);
+		addPoisonedMetalShurikenDefinition("Poisoned Steel shuriken", 3222, 120, 0xEEEEEE);
+		addPoisonedMetalShurikenDefinition("Poisoned Mithril shuriken", 3223, 320, 0x92B5D8);
+		addPoisonedMetalShurikenDefinition("Poisoned Titan Steel shuriken", 3224, 720, 0x8EA6BB);
+		addPoisonedMetalShurikenDefinition("Poisoned Adamantite shuriken", 3225, 1520, 0xB2CD89);
+		addPoisonedMetalShurikenDefinition("Poisoned Orichalcum shuriken", 3226, 2600, 0x5A3F7D);
+		addPoisonedMetalShurikenDefinition("Poisoned Rune shuriken", 3227, 4000, 0x00FFFF);
 		setCustomItemDefinition(2050, new ItemDef("Wool Hat", "A plain pointed hat stitched from wool", "", 6, 86, "items:86", false, true, 32, 0xFFFFFF, false, false, true, 2050));
 		setCustomItemDefinition(2051, new ItemDef("Wool Robe Top", "A simple robe top stitched from wool", "", 16, 87, "items:87", false, true, 64, 0xFFFFFF, false, false, true, 2051));
 		setCustomItemDefinition(2052, new ItemDef("Wool Robe Bottom", "A simple robe bottom stitched from wool", "", 12, 88, "items:88", false, true, 128, 0xFFFFFF, false, false, true, 2052));
@@ -5461,6 +5482,16 @@ public class EntityHandler {
 
 	private static void addMetalThrowingKnifeDefinition(String name, int id, int price, int pictureMask) {
 		setCustomItemDefinition(id, new ItemDef(name, "A finely balanced knife", "", price, 80, "items:80",
+			true, true, 16, pictureMask, false, false, false, id));
+	}
+
+	private static void addMetalShurikenDefinition(String name, int id, int price, int pictureMask) {
+		setCustomItemDefinition(id, new ItemDef(name, "A sharp multi-target thrown weapon", "", price, -1, "external-png:shuriken-basic",
+			true, true, 16, pictureMask, false, false, false, id));
+	}
+
+	private static void addPoisonedMetalShurikenDefinition(String name, int id, int price, int pictureMask) {
+		setCustomItemDefinition(id, new ItemDef(name, "A sharp multi-target thrown weapon with a coating of venom", "", price, -1, "external-png:shuriken-basic-poison",
 			true, true, 16, pictureMask, false, false, false, id));
 	}
 

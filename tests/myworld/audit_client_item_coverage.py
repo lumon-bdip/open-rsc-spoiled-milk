@@ -56,6 +56,8 @@ def parse_itemdef_ids(source: str) -> set[int]:
         r'addMetalArrowHeadDefinition\(".*?",\s*(\d+),',
         r'addMetalDartTipDefinition\(".*?",\s*(\d+),',
         r'addMetalThrowingKnifeDefinition\(".*?",\s*(\d+),',
+        r'addMetalShurikenDefinition\(".*?",\s*(\d+),',
+        r'addPoisonedMetalShurikenDefinition\(".*?",\s*(\d+),',
         r'addMetalShearsDefinition\(".*?",\s*(\d+),',
         r'addWoodCrossbowDefinition\(".*?",\s*(\d+),',
         r'addFishingRodDefinition\(".*?",\s*".*?",\s*(\d+),',
@@ -77,6 +79,9 @@ def parse_itemdef_ids(source: str) -> set[int]:
 
     if "addAdditionalBlessedStaffDefinitions();" in source:
         ids.update(range(3152, 3172))
+
+    if "addScytheLineDefinitions();" in source:
+        ids.update(range(3181, 3191))
 
     ranged_helpers = [
         "addAmuletLine",

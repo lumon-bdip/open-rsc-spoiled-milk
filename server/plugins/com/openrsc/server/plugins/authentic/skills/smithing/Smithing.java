@@ -31,6 +31,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 
 	private final int DORICS_ANVIL = 177;
 	private final int ANVIL = 50;
+	private static final int SMITHING_ACTION_DELAY_TICKS = 3;
 	private static final int[] MODERN_ANVIL_BARS = {
 		ItemId.TIN_BAR.id(), ItemId.COPPER_BAR.id(), ItemId.BRONZE_BAR.id(),
 		ItemId.IRON_BAR.id(), ItemId.STEEL_BAR.id(), ItemId.MITHRIL_BAR.id(),
@@ -366,7 +367,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				break;
 			}
 			player.playSound("anvil");
-			delay(3);
+			ActionSender.sendActionProgressBar(player, ItemId.HAMMER.id(), SMITHING_ACTION_DELAY_TICKS);
+			delay(SMITHING_ACTION_DELAY_TICKS);
 			for (int x = 0; x < def.getRequiredBars(); x++) {
 				player.getCarriedItems().remove(new Item(item.getCatalogId()));
 			}
@@ -386,6 +388,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 			}
 			player.incExp(Skill.SMITHING.id(), getSmithingExp(item.getCatalogId(), def.getRequiredBars()), true);
 			updatebatch();
+			if (!ifinterrupted() && !isbatchcomplete()) {
+				delay();
+			}
 		}
 	}
 

@@ -95,6 +95,7 @@ def main() -> None:
         "ItemId.DART_MOULD.id()",
         "ItemId.THROWING_KNIFE_MOULD.id()",
         "ItemId.ARROWHEAD_MOULD.id()",
+        "ItemId.SHURIKEN_MOULD.id()",
         "ItemId.COINS.id(), 500",
         "player.getBank().countId(itemId)",
         "player.getCache().store(MYWORLD_STARTER_BANK_CACHE_KEY, true)",

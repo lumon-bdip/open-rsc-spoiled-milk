@@ -185,6 +185,29 @@ public class RangeUtils {
             ItemId.POISONED_RUNE_THROWING_KNIFE.id()
     );
 
+	public static final ImmutableSet<Integer> SHURIKENS = ImmutableSet.of(
+		ItemId.TIN_SHURIKEN.id(),
+		ItemId.COPPER_SHURIKEN.id(),
+		ItemId.BRONZE_SHURIKEN.id(),
+		ItemId.IRON_SHURIKEN.id(),
+		ItemId.STEEL_SHURIKEN.id(),
+		ItemId.MITHRIL_SHURIKEN.id(),
+		ItemId.TITAN_STEEL_SHURIKEN.id(),
+		ItemId.ADAMANTITE_SHURIKEN.id(),
+		ItemId.ORICHALCUM_SHURIKEN.id(),
+		ItemId.RUNE_SHURIKEN.id(),
+		ItemId.POISONED_TIN_SHURIKEN.id(),
+		ItemId.POISONED_COPPER_SHURIKEN.id(),
+		ItemId.POISONED_BRONZE_SHURIKEN.id(),
+		ItemId.POISONED_IRON_SHURIKEN.id(),
+		ItemId.POISONED_STEEL_SHURIKEN.id(),
+		ItemId.POISONED_MITHRIL_SHURIKEN.id(),
+		ItemId.POISONED_TITAN_STEEL_SHURIKEN.id(),
+		ItemId.POISONED_ADAMANTITE_SHURIKEN.id(),
+		ItemId.POISONED_ORICHALCUM_SHURIKEN.id(),
+		ItemId.POISONED_RUNE_SHURIKEN.id()
+	);
+
 	public static int getBowAttackRadius(final int weaponId) {
 		final int baseRadius = isCrossbow(weaponId) || isShortBow(weaponId) ? SHORT_BOW_RANGE : DEFAULT_BOW_RANGE;
 		return baseRadius + PLAYER_COMBAT_RANGE_BONUS;
@@ -202,49 +225,59 @@ public class RangeUtils {
     protected static final ImmutableSet<Integer> POISONED_ITEMS = ImmutableSet.of(
             ItemId.POISONED_TIN_THROWING_DART.id(),
             ItemId.POISONED_TIN_THROWING_KNIFE.id(),
+            ItemId.POISONED_TIN_SHURIKEN.id(),
             ItemId.POISONED_TIN_SPEAR.id(),
 
             ItemId.POISONED_COPPER_THROWING_DART.id(),
             ItemId.POISONED_COPPER_THROWING_KNIFE.id(),
+            ItemId.POISONED_COPPER_SHURIKEN.id(),
             ItemId.POISONED_COPPER_SPEAR.id(),
 
             ItemId.POISONED_BRONZE_THROWING_DART.id(),
             ItemId.POISONED_BRONZE_SPEAR.id(),
             ItemId.POISONED_BRONZE_DAGGER.id(),
             ItemId.POISONED_BRONZE_THROWING_KNIFE.id(),
+            ItemId.POISONED_BRONZE_SHURIKEN.id(),
 
             ItemId.POISONED_IRON_THROWING_DART.id(),
             ItemId.POISONED_IRON_SPEAR.id(),
             ItemId.POISONED_IRON_DAGGER.id(),
             ItemId.POISONED_IRON_THROWING_KNIFE.id(),
+            ItemId.POISONED_IRON_SHURIKEN.id(),
 
             ItemId.POISONED_STEEL_THROWING_DART.id(),
             ItemId.POISONED_STEEL_SPEAR.id(),
             ItemId.POISONED_STEEL_DAGGER.id(),
             ItemId.POISONED_STEEL_THROWING_KNIFE.id(),
+            ItemId.POISONED_STEEL_SHURIKEN.id(),
 
             ItemId.POISONED_MITHRIL_THROWING_DART.id(),
             ItemId.POISONED_MITHRIL_SPEAR.id(),
             ItemId.POISONED_MITHRIL_DAGGER.id(),
             ItemId.POISONED_MITHRIL_THROWING_KNIFE.id(),
+            ItemId.POISONED_MITHRIL_SHURIKEN.id(),
 
             ItemId.POISONED_TITAN_STEEL_THROWING_DART.id(),
             ItemId.POISONED_TITAN_STEEL_THROWING_KNIFE.id(),
+            ItemId.POISONED_TITAN_STEEL_SHURIKEN.id(),
             ItemId.POISONED_TITAN_STEEL_SPEAR.id(),
 
             ItemId.POISONED_ADAMANTITE_THROWING_DART.id(),
             ItemId.POISONED_ADAMANTITE_SPEAR.id(),
             ItemId.POISONED_ADAMANTITE_DAGGER.id(),
             ItemId.POISONED_ADAMANTITE_THROWING_KNIFE.id(),
+            ItemId.POISONED_ADAMANTITE_SHURIKEN.id(),
 
             ItemId.POISONED_ORICHALCUM_THROWING_DART.id(),
             ItemId.POISONED_ORICHALCUM_THROWING_KNIFE.id(),
+            ItemId.POISONED_ORICHALCUM_SHURIKEN.id(),
             ItemId.POISONED_ORICHALCUM_SPEAR.id(),
 
             ItemId.POISONED_RUNE_THROWING_DART.id(),
             ItemId.POISONED_RUNE_SPEAR.id(),
             ItemId.POISONED_RUNE_DAGGER.id(),
             ItemId.POISONED_RUNE_THROWING_KNIFE.id(),
+            ItemId.POISONED_RUNE_SHURIKEN.id(),
 
             ItemId.POISON_CROSSBOW_BOLTS.id(),
             ItemId.POISON_COPPER_BOLTS.id(),

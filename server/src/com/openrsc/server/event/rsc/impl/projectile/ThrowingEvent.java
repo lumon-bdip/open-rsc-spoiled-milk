@@ -11,6 +11,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.Projectile;
@@ -18,11 +19,16 @@ import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.PlayerRangeNpcTrigger;
 import com.openrsc.server.plugins.triggers.PlayerRangePlayerTrigger;
+import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
 import com.openrsc.server.util.rsc.MessageType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ThrowingEvent extends GameTickEvent {
 
+	private static final int SHURIKEN_THROW_COUNT = 3;
 	private boolean deliveredFirstProjectile;
 	private Mob target;
 
@@ -56,8 +62,8 @@ public class ThrowingEvent extends GameTickEvent {
 		running = true;
 	}
 
-	private GroundItem getFloorItem(int id, Player player) {
-		return target.getViewArea().getVisibleGroundItem(id, target.getLocation(), player);
+	private GroundItem getFloorItem(int id, Player player, Mob floorTarget) {
+		return floorTarget.getViewArea().getVisibleGroundItem(id, floorTarget.getLocation(), player);
 	}
 
 	private int getAttackRadius(final int throwingEquip) {
@@ -136,46 +142,25 @@ public class ThrowingEvent extends GameTickEvent {
 			return;
 		}
 
-		Item rangeType;
-		int slot;
-		int stackBefore = 1;
-		int stackAfter = 0;
-		if (getWorld().getServer().getConfig().WANT_EQUIPMENT_TAB) {
-			slot = player.getCarriedItems().getEquipment().searchEquipmentForItem(throwingID);
-			if (slot < 0)
-				return;
-			rangeType = player.getCarriedItems().getEquipment().get(slot);
-			if (rangeType == null)
-				return;
+		List<Mob> throwingTargets = selectThrowingTargets(player, throwingID, attackRadius);
+		if (throwingTargets.isEmpty()) {
+			player.resetRange();
+			return;
+		}
 
-				stackBefore = rangeType.getAmount();
-				int removedSlot = player.getCarriedItems().getEquipment().remove(rangeType, 1);
-				if (removedSlot < 0) {
-					player.resetRange();
-					return;
-			}
-			Item remainingStack = player.getCarriedItems().getEquipment().get(removedSlot);
-			stackAfter = remainingStack == null ? 0 : remainingStack.getAmount();
-		} else {
-			slot = player.getCarriedItems().getInventory().getLastIndexById(throwingID);
-			if (slot < 0) {
-				return;
-			}
-			rangeType = player.getCarriedItems().getInventory().get(slot);
-			if (rangeType == null) { // This shouldn't happen
-				return;
-			}
-			stackBefore = rangeType.getAmount();
-				Item toRemove = new Item(rangeType.getCatalogId(), 1, false, rangeType.getItemId());
-				long removedItemId = player.getCarriedItems().remove(toRemove);
-				if (removedItemId < 0) {
-					player.resetRange();
-					return;
-			}
-			Item remainingStack = slot < player.getCarriedItems().getInventory().size()
-				? player.getCarriedItems().getInventory().get(slot)
-				: null;
-			stackAfter = remainingStack != null && remainingStack.getCatalogId() == throwingID ? remainingStack.getAmount() : 0;
+		int throwsToConsume = RangeUtils.SHURIKENS.contains(throwingID) ? throwingTargets.size() : 1;
+		int availableThrows = getAvailableThrowingCount(player, throwingID);
+		if (availableThrows < 1) {
+			player.resetRange();
+			return;
+		}
+		throwsToConsume = Math.min(throwsToConsume, availableThrows);
+		while (throwingTargets.size() > throwsToConsume) {
+			throwingTargets.remove(throwingTargets.size() - 1);
+		}
+		if (!removeThrowingItems(player, throwingID, throwsToConsume)) {
+			player.resetRange();
+			return;
 		}
 		/*if (!getPlayerOwner().getLocation().isMembersWild()) {
 			getPlayerOwner().message("Members content can only be used in wild levels: "
@@ -194,25 +179,8 @@ public class ThrowingEvent extends GameTickEvent {
 			delay = 1;
 		}
 
-		int damage = RangeUtils.doRangedDamage(player, throwingID, throwingID, target, skillCape);
-
-		RangeUtils.applyDragonFireBreath(player, target, deliveredFirstProjectile);
-		if((target.isPlayer() || getWorld().getServer().getConfig().RANGED_GIVES_XP_HIT) && damage > 0) {
-			player.incExp(Skill.RANGED.id(), Formulae.rangedHitExperience(target, damage), true);
-		}
-
-		if (Formulae.loseArrow(damage)) {
-			//The old logic would attempt to add knives/spears to the ground in a stack; that can't happen, so it made all future knives/spears "break".
-			//We have to seperate them. Spears and knives create new ground items every time, while darts add to their stack.
-			GroundItem thrownItemOnGround = getFloorItem(throwingID, player);
-
-			if (!DropTable.handleRingOfAvarice(player, new Item(throwingID, 1))) {
-				if (thrownItemOnGround == null || !thrownItemOnGround.getDef().isStackable()) {
-					getWorld().registerItem(new GroundItem(player.getWorld(), throwingID, target.getX(), target.getY(), 1, player));
-				} else {
-					thrownItemOnGround.setAmount(thrownItemOnGround.getAmount() + 1);
-				}
-			}
+		for (int i = 0; i < throwingTargets.size(); i++) {
+			applyThrowingHit(player, throwingID, throwingTargets.get(i), skillCape, i == 0);
 		}
 		ActionSender.sendSound(player, "shoot");
 
@@ -221,13 +189,139 @@ public class ThrowingEvent extends GameTickEvent {
 
 		player.setAttribute("can_range_again", getWorld().getServer().getCurrentTick() + adjustedDelay);
 		getOwner().setKillType(KillType.RANGED);
-			final int projectileType = RangeUtils.THROWING_KNIVES.contains(throwingID)
-				? Projectile.THROWING_KNIFE
-				: RangeUtils.THROWING_DARTS.contains(throwingID)
-					? Projectile.THROWING_DART
-					: Projectile.RANGED;
-			getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getWorld(), player, target, damage, 2,
-			true, throwingID, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB, projectileType, 0, true));
 		deliveredFirstProjectile = true;
+	}
+
+	private int getAvailableThrowingCount(Player player, int throwingID) {
+		if (getWorld().getServer().getConfig().WANT_EQUIPMENT_TAB) {
+			int slot = player.getCarriedItems().getEquipment().searchEquipmentForItem(throwingID);
+			if (slot < 0)
+				return 0;
+			Item rangeType = player.getCarriedItems().getEquipment().get(slot);
+			if (rangeType == null)
+				return 0;
+			return rangeType.getAmount();
+		}
+
+		int slot = player.getCarriedItems().getInventory().getLastIndexById(throwingID);
+		if (slot < 0) {
+			return 0;
+		}
+		Item rangeType = player.getCarriedItems().getInventory().get(slot);
+		return rangeType == null ? 0 : rangeType.getAmount();
+	}
+
+	private boolean removeThrowingItems(Player player, int throwingID, int amount) {
+		if (getWorld().getServer().getConfig().WANT_EQUIPMENT_TAB) {
+			int slot = player.getCarriedItems().getEquipment().searchEquipmentForItem(throwingID);
+			if (slot < 0)
+				return false;
+			Item rangeType = player.getCarriedItems().getEquipment().get(slot);
+			if (rangeType == null)
+				return false;
+			return player.getCarriedItems().getEquipment().remove(rangeType, amount) >= 0;
+		}
+
+		int slot = player.getCarriedItems().getInventory().getLastIndexById(throwingID);
+		if (slot < 0) {
+			return false;
+		}
+		Item rangeType = player.getCarriedItems().getInventory().get(slot);
+		if (rangeType == null) {
+			return false;
+		}
+		Item toRemove = new Item(rangeType.getCatalogId(), amount, false, rangeType.getItemId());
+		return player.getCarriedItems().remove(toRemove) >= 0;
+	}
+
+	private List<Mob> selectThrowingTargets(Player player, int throwingID, int attackRadius) {
+		List<Mob> targets = new ArrayList<>();
+		targets.add(target);
+		if (!RangeUtils.SHURIKENS.contains(throwingID) || !target.isNpc()) {
+			return targets;
+		}
+
+		List<Npc> candidates = getValidAdditionalShurikenTargets(player, attackRadius);
+		if (candidates.isEmpty()) {
+			return targets;
+		}
+
+		int aggroedCount = isAggroedToPlayer((Npc) target, player) ? 1 : 0;
+		for (Npc candidate : candidates) {
+			if (isAggroedToPlayer(candidate, player)) {
+				aggroedCount++;
+			}
+		}
+
+		List<Npc> preferred = new ArrayList<>();
+		List<Npc> fallback = new ArrayList<>();
+		boolean preferAggroed = aggroedCount >= SHURIKEN_THROW_COUNT;
+		for (Npc candidate : candidates) {
+			boolean aggroed = isAggroedToPlayer(candidate, player);
+			if (aggroed == preferAggroed) {
+				preferred.add(candidate);
+			} else {
+				fallback.add(candidate);
+			}
+		}
+
+		addRandomShurikenTargets(targets, preferred);
+		addRandomShurikenTargets(targets, fallback);
+		return targets;
+	}
+
+	private List<Npc> getValidAdditionalShurikenTargets(Player player, int attackRadius) {
+		List<Npc> candidates = new ArrayList<>();
+		for (Npc npc : player.getViewArea().getNpcsInView()) {
+			if (npc.equals(target)
+				|| npc.getSkills().getLevel(Skill.HITS.id()) <= 0
+				|| !npc.getDef().isAttackable()
+				|| !player.withinRange(npc, attackRadius)
+				|| !PathValidation.checkPath(getWorld(), player.getLocation(), npc.getLocation())
+				|| !player.checkAttack(npc, true)) {
+				continue;
+			}
+			candidates.add(npc);
+		}
+		return candidates;
+	}
+
+	private void addRandomShurikenTargets(List<Mob> targets, List<Npc> candidates) {
+		while (targets.size() < SHURIKEN_THROW_COUNT && !candidates.isEmpty()) {
+			targets.add(candidates.remove(DataConversions.random(0, candidates.size() - 1)));
+		}
+	}
+
+	private boolean isAggroedToPlayer(Npc npc, Player player) {
+		return npc.getOpponent() == player || npc.getPreferredThreatTarget() == player;
+	}
+
+	private void applyThrowingHit(Player player, int throwingID, Mob hitTarget, boolean skillCape, boolean showProjectile) {
+		int damage = RangeUtils.doRangedDamage(player, throwingID, throwingID, hitTarget, skillCape);
+
+		RangeUtils.applyDragonFireBreath(player, hitTarget, deliveredFirstProjectile);
+		if((hitTarget.isPlayer() || getWorld().getServer().getConfig().RANGED_GIVES_XP_HIT) && damage > 0) {
+			player.incExp(Skill.RANGED.id(), Formulae.rangedHitExperience(hitTarget, damage), true);
+		}
+
+		if (Formulae.loseArrow(damage)) {
+			GroundItem thrownItemOnGround = getFloorItem(throwingID, player, hitTarget);
+
+			if (!DropTable.handleRingOfAvarice(player, new Item(throwingID, 1))) {
+				if (thrownItemOnGround == null || !thrownItemOnGround.getDef().isStackable()) {
+					getWorld().registerItem(new GroundItem(player.getWorld(), throwingID, hitTarget.getX(), hitTarget.getY(), 1, player));
+				} else {
+					thrownItemOnGround.setAmount(thrownItemOnGround.getAmount() + 1);
+				}
+			}
+		}
+
+		final int projectileType = RangeUtils.THROWING_KNIVES.contains(throwingID) || RangeUtils.SHURIKENS.contains(throwingID)
+			? Projectile.THROWING_KNIFE
+			: RangeUtils.THROWING_DARTS.contains(throwingID)
+				? Projectile.THROWING_DART
+				: Projectile.RANGED;
+		getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getWorld(), player, hitTarget, damage, 2,
+			true, throwingID, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB, projectileType, 0, showProjectile));
 	}
 }

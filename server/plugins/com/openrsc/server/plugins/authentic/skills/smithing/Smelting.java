@@ -31,6 +31,7 @@ import static com.openrsc.server.plugins.Functions.*;
 public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 	public static final int FURNACE = SceneryId.FURNACE.id();
+	private static final int SMELTING_ACTION_DELAY_TICKS = 3;
 	public static final int FURNACE_CATEGORY_BARS = ItemId.BRONZE_BAR.id();
 	public static final int FURNACE_CATEGORY_RINGS = ItemId.GOLD_RING.id();
 	public static final int FURNACE_CATEGORY_NECKLACES = ItemId.GOLD_NECKLACE.id();
@@ -42,6 +43,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	public static final int FURNACE_CATEGORY_ARROWHEADS = ItemId.TIN_ARROW_HEADS.id();
 	public static final int FURNACE_CATEGORY_DARTS = ItemId.TIN_DART_TIPS.id();
 	public static final int FURNACE_CATEGORY_THROWING_KNIVES = ItemId.TIN_THROWING_KNIFE.id();
+	public static final int FURNACE_CATEGORY_SHURIKEN = ItemId.TIN_SHURIKEN.id();
 	public static final int FURNACE_CATEGORY_CANNONBALLS = ItemId.MULTI_CANNON_BALL.id();
 
 	private static final int[] NORMAL_SMELTING_ITEMS = {
@@ -161,6 +163,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_ARROWHEADS, has(player, ItemId.ARROWHEAD_MOULD.id()), ItemId.ARROWHEAD_MOULD.id()));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_DARTS, has(player, ItemId.DART_MOULD.id()), ItemId.DART_MOULD.id()));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_THROWING_KNIVES, has(player, ItemId.THROWING_KNIFE_MOULD.id()), ItemId.THROWING_KNIFE_MOULD.id()));
+		recipes.add(categoryRecipe(FURNACE_CATEGORY_SHURIKEN, has(player, ItemId.SHURIKEN_MOULD.id()), ItemId.SHURIKEN_MOULD.id()));
 		recipes.add(categoryRecipe(FURNACE_CATEGORY_CANNONBALLS, has(player, ItemId.CANNON_AMMO_MOULD.id()), ItemId.CANNON_AMMO_MOULD.id()));
 		return new ProductionSession(ProductionSession.TYPE_FURNACE_CATEGORY, "What would you like to do?", -1, recipes);
 	}
@@ -290,7 +293,8 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			}
 
 			player.playerServerMessage(MessageType.QUEST, recipe.startMessage(player));
-			delay(3);
+			ActionSender.sendActionProgressBar(player, recipe.progressItemId(), SMELTING_ACTION_DELAY_TICKS);
+			delay(SMELTING_ACTION_DELAY_TICKS);
 			recipe.consumeMaterials(player);
 			thinkbubble(new Item(recipe.barId));
 
@@ -320,6 +324,9 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 			made++;
 			updatebatch();
+			if (!ifinterrupted() && !isbatchcomplete()) {
+				delay();
+			}
 		}
 		return made > 0;
 	}
@@ -515,6 +522,10 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 				amounts[i] = ingredients[i].amount;
 			}
 			return amounts;
+		}
+
+		private int progressItemId() {
+			return ingredients.length > 0 ? ingredients[0].itemId : barId;
 		}
 
 		private void consumeMaterials(Player player) {
