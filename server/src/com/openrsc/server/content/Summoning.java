@@ -568,12 +568,21 @@ public final class Summoning {
 		if (owner == null || amount <= 0 || !hasBlackUnicorn(owner) || !isPrayerDrop(itemId)) {
 			return false;
 		}
-		final int xp = getPrayerDropExperience(itemId) * amount * 2;
+		final int devotionBonusXp = recordAutoBuryDevotionBonus(owner, amount);
+		final int xp = (getPrayerDropExperience(itemId) * amount * 2) + devotionBonusXp;
 		if (xp > 0) {
 			owner.incExp(Skill.PRAYER.id(), xp, true);
 			owner.message("@gre@Your black unicorn sanctifies the " + getPrayerDropName(owner, itemId, amount) + ".");
 		}
 		return true;
+	}
+
+	private static int recordAutoBuryDevotionBonus(final Player owner, final int amount) {
+		int bonusXp = 0;
+		for (int i = 0; i < amount; i++) {
+			bonusXp += Devotion.recordOfferingAndGetPrayerXpBonus(owner);
+		}
+		return bonusXp;
 	}
 
 	public static void creditSummonProjectileDamage(final Mob caster, final Mob opponent, final int damage, final int type) {

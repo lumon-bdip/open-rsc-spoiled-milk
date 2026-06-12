@@ -151,6 +151,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		inflictDamage(attackerMob, targetMob, damage);
 		applyBearMaulSecondHit(attackerMob, targetMob, damage);
+		if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
+			applyDragonWeaponBreathDamage(attackerMob, targetMob);
+		}
 		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
@@ -478,6 +481,18 @@ public class PvmMeleeEvent extends GameTickEvent {
 		inflictAuxiliaryTrueDamage(hitter, target, damage);
 	}
 
+	private void applyDragonWeaponBreathDamage(final Mob hitter, final Mob target) {
+		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		final int breathDamage = CombatFormula.rollDragonMeleeBreathDamage(hitter);
+		if (breathDamage <= 0) {
+			return;
+		}
+		hitter.getUpdateFlags().setCombatEffect(new CombatEffect(hitter, CombatEffect.DRAGON_BREATH));
+		inflictAuxiliaryTrueDamage(hitter, target, breathDamage);
+	}
+
 	private int applyScytheNpcCleave(final Player player, final Npc primaryTarget) {
 		if (!isScytheEquipped(player)) {
 			return 0;
@@ -497,6 +512,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 			damage = applyPlayerMeleeDamageBuff(player, damage);
 			inflictScytheCleaveDamage(player, npc, damage);
 			applyBearMaulSecondHit(player, npc, damage);
+			if (!getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
+				applyDragonWeaponBreathDamage(player, npc);
+			}
 			if (player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return extraTargetsHit;
 			}

@@ -1303,7 +1303,7 @@ public final class Admins implements CommandTrigger {
 				bisList = newArrayList(
 					new Item(ItemId.LARGE_DRAGON_HELMET.id()),
 					player.isMale() ? new Item(ItemId.DRAGON_PLATE_MAIL_BODY.id()) : new Item(ItemId.DRAGON_PLATE_MAIL_TOP.id()),
-					player.isMale() ? new Item(ItemId.DRAGON_PLATE_MAIL_LEGS.id()) : new Item(ItemId.DRAGON_PLATED_SKIRT.id()),
+					new Item(ItemId.DRAGON_PLATE_MAIL_LEGS.id()),
 					new Item(1713),
 					new Item(ItemId.ATTACK_CAPE.id()),
 					new Item(ItemId.RING_OF_WEALTH.id()),

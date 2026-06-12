@@ -103,7 +103,6 @@ public class Equipment {
 		ItemId.MITHRIL_PLATED_SKIRT.id(),
 		ItemId.ADAMANTITE_PLATED_SKIRT.id(),
 		ItemId.RUNE_SKIRT.id(),
-		ItemId.DRAGON_PLATED_SKIRT.id(),
 		ItemId.IRONMAN_PLATED_SKIRT.id(),
 		ItemId.ULTIMATE_IRONMAN_PLATED_SKIRT.id(),
 		ItemId.HARDCORE_IRONMAN_PLATED_SKIRT.id()
@@ -2122,15 +2121,10 @@ public class Equipment {
 
 	public double getArmorSpeedMultiplier() {
 		double multiplier = 1.0D;
-		int dragonSpeedPieces = 0;
 		if (player.getConfig().WANT_EQUIPMENT_TAB) {
 			synchronized (list) {
 				for (Item item : list) {
 					if (item == null) {
-						continue;
-					}
-					if (isDragonSpeedArmor(item)) {
-						dragonSpeedPieces++;
 						continue;
 					}
 					if (isChainArmor(item)) {
@@ -2144,18 +2138,11 @@ public class Equipment {
 					if (!item.isWielded()) {
 						continue;
 					}
-					if (isDragonSpeedArmor(item)) {
-						dragonSpeedPieces++;
-						continue;
-					}
 					if (isChainArmor(item)) {
 						return 1.05D * multiplier;
 					}
 				}
 			}
-		}
-		if (dragonSpeedPieces > 0) {
-			return multiplier * (1.0D + (dragonSpeedPieces * 0.05D));
 		}
 		return multiplier;
 	}
@@ -3037,14 +3024,6 @@ public class Equipment {
 		return false;
 	}
 
-	private boolean isDragonSpeedArmor(Item item) {
-		int catalogId = item.getCatalogId();
-		return catalogId == ItemId.DRAGON_MEDIUM_HELMET.id()
-			|| catalogId == ItemId.DRAGON_SCALE_MAIL.id()
-			|| catalogId == ItemId.DRAGON_SCALE_MAIL_TOP.id()
-			|| catalogId == ItemId.DRAGON_KITE_SHIELD.id();
-	}
-
 	private double getEquippedWeaponFamilyHighRollBias() {
 		Item weaponItem = getEquippedWeaponItem();
 		if (weaponItem == null) {
@@ -3212,6 +3191,13 @@ public class Equipment {
 	}
 
 	private boolean isMetalArmorPenaltyItem(Item item) {
+		int catalogId = item.getCatalogId();
+		if (catalogId == ItemId.DRAGON_MEDIUM_HELMET.id()
+			|| catalogId == ItemId.DRAGON_SCALE_MAIL.id()
+			|| catalogId == ItemId.DRAGON_SCALE_MAIL_TOP.id()
+			|| catalogId == ItemId.DRAGON_SCALE_MAIL_LEGS.id()) {
+			return false;
+		}
 		return !isLeatherArmorPenaltyItem(item) && !isClothArmorPenaltyItem(item);
 	}
 

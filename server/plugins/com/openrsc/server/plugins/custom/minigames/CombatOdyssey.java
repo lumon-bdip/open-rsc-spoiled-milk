@@ -173,17 +173,8 @@ public class CombatOdyssey implements DropObjTrigger, KillNpcTrigger, OpInvTrigg
 					case 13:
 						npcsay("Well done, legend!",
 							"You've completed the combat odyssey!",
-							"As promised, a reward truly fit for a legend",
-							"As a matter of fact, you will get to pick between two",
-							"Dragon Plate Mail Legs or a Dragon Plated Skirt");
-						int choice = multi("Dragon Plate Mail Legs", "Dragon Plated Skirt");
-						if (choice == -1) return;
-						int itemToGive = -1;
-						if (choice == 0) {
-							itemToGive = ItemId.DRAGON_PLATE_MAIL_LEGS.id();
-						} else {
-							itemToGive = ItemId.DRAGON_PLATED_SKIRT.id();
-						}
+							"As promised, a reward truly fit for a legend");
+						int itemToGive = ItemId.DRAGON_PLATE_MAIL_LEGS.id();
 						npcsay("Here you are",
 							"You truly deserve them");
 

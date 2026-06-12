@@ -4095,7 +4095,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Dragon Plate Mail Body", "Provides excellent protection", "", 5000000, -1, "items:498", false, true, 322, 0, false, false, true, 1427));
 		addItemDefinition(new ItemDef("Dragon Plate Mail Body", "Provides excellent protection", "", 5000000, 498, "items:498", false, true, 322, 0, false, false, true, 1428));
 		addItemDefinition(new ItemDef("Dragon Plate Mail Legs", "These look pretty heavy", "", 5000000, -1, "items:499", false, true, 644, 0, false, false, true, 1429));
-		addItemDefinition(new ItemDef("Dragon Plate Mail Legs", "These look pretty heavy", "", 5000000, 499, "items:499", false, true, 640, 0x960018, false, false, true, 1430));
+		addItemDefinition(new ItemDef("Dragon Scale Mail Legs", "Dragon scale leg protection", "", 192000, 590, "items:590", false, true, 128, 15654365, false, false, true, 1430));
 
 		addItemDefinition(new ItemDef("White CTF Flag", "White Capture the flag banner", "", 1, -1, "items:554", false, true, 16, 0, false, false, true, 1431));
 		addItemDefinition(new ItemDef("Guthix CTF Flag", "Guthix capture the flag banner", "", 1, -1, "items:554", false, true, 16, 4246592, false, false, true, 1432));

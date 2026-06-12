@@ -294,7 +294,7 @@ final class MyWorldItemOverrides {
 		new ItemOverride(1427, null, null, 320000, -1, -1),
 		new ItemOverride(1428, "Dragon plate mail body", null, 320000, -1, -1),
 		new ItemOverride(1429, null, null, 192000, -1, -1),
-		new ItemOverride(1430, "Dragon plate mail legs", null, 192000, -1, -1),
+		new ItemOverride(1430, "Dragon Scale Mail Legs", "Dragon scale leg protection", 192000, -1, 128),
 		new ItemOverride(1835, null, null, 22, -1, -1),
 		new ItemOverride(1836, null, null, 45, -1, -1),
 		new ItemOverride(1837, null, null, 45, -1, -1),

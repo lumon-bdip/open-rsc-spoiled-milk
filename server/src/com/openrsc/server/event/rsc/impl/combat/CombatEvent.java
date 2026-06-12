@@ -185,12 +185,16 @@ public class CombatEvent extends GameTickEvent {
 			if (hitter.isPlayer()) {
 				damage = applyPlayerMeleeDamageBuff((Player) hitter, damage);
 			}
-			if (hitter.consumeOgreStaggerDebuff() || hitter.consumeStartleDebuff()) {
+			final boolean attackSuppressed = hitter.consumeOgreStaggerDebuff() || hitter.consumeStartleDebuff();
+			if (attackSuppressed) {
 				damage = 0;
 			}
 
 			inflictDamage(hitter, target, damage);
 			applyBearMaulSecondHit(hitter, target, damage);
+			if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
+				applyDragonWeaponBreathDamage(hitter, target);
+			}
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
 			}
@@ -677,6 +681,18 @@ public class CombatEvent extends GameTickEvent {
 			return;
 		}
 		inflictAuxiliaryTrueDamage(hitter, target, damage);
+	}
+
+	private void applyDragonWeaponBreathDamage(final Mob hitter, final Mob target) {
+		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		final int breathDamage = CombatFormula.rollDragonMeleeBreathDamage(hitter);
+		if (breathDamage <= 0) {
+			return;
+		}
+		hitter.getUpdateFlags().setCombatEffect(new CombatEffect(hitter, CombatEffect.DRAGON_BREATH));
+		inflictAuxiliaryTrueDamage(hitter, target, breathDamage);
 	}
 
 	// Players in combat with an NPC will receive unique NPC

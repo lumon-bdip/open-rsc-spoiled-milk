@@ -17,6 +17,8 @@ import org.apache.logging.log4j.Logger;
 import static com.openrsc.server.constants.ItemId.*;
 
 public class CombatFormula {
+	private static final int DRAGON_BREATH_DAMAGE_PERCENT = 25;
+
 	/**
 	 * Logger instance
 	 */
@@ -192,7 +194,8 @@ public class CombatFormula {
 	 * @return The amount to hit.
 	 */
 	public static int doMeleeDamage(final Mob source, final Mob victim) {
-		int damage = applyMitigationRoll(source, victim, offenseToMaxHit(source, source.getMeleeOffense()), defenseToMitigation(victim.getMeleeDefense()));
+		final int attackMax = getDragonBreathMainAttackMax(source, offenseToMaxHit(source, source.getMeleeOffense()));
+		int damage = applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getMeleeDefense()));
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MELEE);
 		damage = applyDamageMultiplier(source, damage);
 		if (victim instanceof Player) {
@@ -215,9 +218,76 @@ public class CombatFormula {
 		if (skillCape) {
 			attackMax *= 2;
 		}
+		attackMax = getDragonBreathMainAttackMax(source, bowId, arrowId, attackMax);
 		int damage = applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getRangedDefense()));
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.RANGED);
 		return applyDamageMultiplier(source, damage);
+	}
+
+	public static int rollDragonMeleeBreathDamage(final Mob source) {
+		if (!usesDragonMeleeBreathWeapon(source)) {
+			return 0;
+		}
+		return rollDragonBreathDamage(source, offenseToMaxHit(source, source.getMeleeOffense()));
+	}
+
+	public static int rollDragonRangedBreathDamage(final Mob source, final int bowId, final int arrowId, final boolean skillCape) {
+		if (!usesDragonRangedBreathWeapon(source, bowId, arrowId)) {
+			return 0;
+		}
+		int attackMax = offenseToMaxHit(source, source.getRangedOffense());
+		if (skillCape) {
+			attackMax *= 2;
+		}
+		return rollDragonBreathDamage(source, attackMax);
+	}
+
+	public static boolean usesDragonMeleeBreathWeapon(final Mob source) {
+		if (!(source instanceof Player)) {
+			return false;
+		}
+		final Player player = (Player) source;
+		return player.getCarriedItems().getEquipment().hasEquipped(DRAGON_SWORD.id())
+			|| player.getCarriedItems().getEquipment().hasEquipped(DRAGON_2_HANDED_SWORD.id())
+			|| player.getCarriedItems().getEquipment().hasEquipped(DRAGON_DAGGER.id())
+			|| player.getCarriedItems().getEquipment().hasEquipped(POISONED_DRAGON_DAGGER.id())
+			|| player.getCarriedItems().getEquipment().hasEquipped(DRAGON_BATTLE_AXE.id());
+	}
+
+	public static boolean usesDragonRangedBreathWeapon(final Mob source, final int bowId, final int arrowId) {
+		return source instanceof Player
+			&& (bowId == DRAGON_CROSSBOW.id()
+				|| bowId == DRAGON_LONGBOW.id()
+				|| arrowId == DRAGON_ARROWS.id()
+				|| arrowId == POISON_DRAGON_ARROWS.id()
+				|| arrowId == DRAGON_BOLTS.id()
+				|| arrowId == POISON_DRAGON_BOLTS.id());
+	}
+
+	private static int getDragonBreathMainAttackMax(final Mob source, final int attackMax) {
+		if (!usesDragonMeleeBreathWeapon(source)) {
+			return attackMax;
+		}
+		return Math.max(1, attackMax - getDragonBreathMax(attackMax));
+	}
+
+	private static int getDragonBreathMainAttackMax(final Mob source, final int bowId, final int arrowId, final int attackMax) {
+		if (!usesDragonRangedBreathWeapon(source, bowId, arrowId)) {
+			return attackMax;
+		}
+		return Math.max(1, attackMax - getDragonBreathMax(attackMax));
+	}
+
+	private static int rollDragonBreathDamage(final Mob source, final int attackMax) {
+		final int breathMax = getDragonBreathMax(attackMax);
+		return breathMax <= 0 ? 0 : DataConversions.random(0, breathMax);
+	}
+
+	private static int getDragonBreathMax(final int attackMax) {
+		if (attackMax <= 1) {
+			return 0;
+		}
+		return Math.max(1, (int) Math.ceil(attackMax * DRAGON_BREATH_DAMAGE_PERCENT / 100.0D));
 	}
 
 	private static int applyMyWorldPrayerModifiers(final Mob source, final Mob victim, int damage, final PrayerCatalog.CombatStyle combatStyle) {

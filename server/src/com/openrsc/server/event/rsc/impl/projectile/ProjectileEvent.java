@@ -41,6 +41,7 @@ public class ProjectileEvent extends SingleTickEvent {
 	protected int type;
 	protected int projectileType;
 	protected int impactEffectType;
+	protected int dragonBreathDamage;
 	protected boolean showProjectile;
 	boolean canceled;
 	boolean shouldChase;
@@ -120,6 +121,17 @@ public class ProjectileEvent extends SingleTickEvent {
 
 			oppPlayer.message("Warning! " + casterName + " is shooting at you!");
 		}
+	}
+
+	public ProjectileEvent(final World world, final Mob caster, final Mob opponent, final int damage, final int type,
+						   final boolean setChasing, final int poisonWeaponId, final int windAccuracyDebuffPercent, final int waterMaxHitDebuffPercent,
+						   final int earthAttackSpeedDebuffPercent, final int fireDefenseDebuffPercent, final DuplicationStrategy duplicationStrategy,
+						   final int projectileType, final int impactEffectType, final boolean showProjectile, final int dragonBreathDamage)
+	{
+		this(world, caster, opponent, damage, type, setChasing, poisonWeaponId, windAccuracyDebuffPercent,
+			waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, duplicationStrategy,
+			projectileType, impactEffectType, showProjectile);
+		this.dragonBreathDamage = dragonBreathDamage;
 	}
 
 	public ProjectileEvent(final World world, final Mob caster, final Mob opponent, final int damage, final int type,
@@ -272,7 +284,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (caster.isPlayer()) {
 			damage = applyPlayerProjectileDamageBuff((Player) caster, damage);
 		}
-		if (caster.consumeOgreStaggerDebuff() || caster.consumeStartleDebuff()) {
+		final boolean attackSuppressed = caster.consumeOgreStaggerDebuff() || caster.consumeStartleDebuff();
+		if (attackSuppressed) {
 			damage = 0;
 		}
 
@@ -362,6 +375,13 @@ public class ProjectileEvent extends SingleTickEvent {
 			}
 			applyWeaponPoison();
 			applyLeatherSetOnHitEffects();
+			if (!attackSuppressed) {
+				applyDragonWeaponBreathDamage();
+			}
+			if (opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				handleDeath();
+				return;
+			}
 			if (damage > 0 && windAccuracyDebuffPercent > 0) {
 				opponent.applyWindDebuff(windAccuracyDebuffPercent);
 			}
@@ -636,6 +656,15 @@ public class ProjectileEvent extends SingleTickEvent {
 					break;
 			}
 		}
+	}
+
+	private void applyDragonWeaponBreathDamage() {
+		if (dragonBreathDamage <= 0 || !(type == 2 || type == 5)
+			|| opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		caster.getUpdateFlags().setCombatEffect(new CombatEffect(caster, CombatEffect.DRAGON_BREATH));
+		inflictAuxiliaryTrueDamage(caster, opponent, dragonBreathDamage);
 	}
 
 	private int applyPlayerProjectileDamageBuff(final Player player, final int damage) {

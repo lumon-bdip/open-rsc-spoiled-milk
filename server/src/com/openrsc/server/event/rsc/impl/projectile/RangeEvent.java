@@ -6,6 +6,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.container.Equipment;
@@ -156,6 +157,9 @@ public class RangeEvent extends GameTickEvent {
 		}
 
 		final int damage = RangeUtils.doRangedDamage(player, weaponId, ammoId, target, skillCape);
+		final int dragonBreathDamage = getWorld().getServer().getConfig().OSRS_COMBAT_RANGED
+			? 0
+			: CombatFormula.rollDragonRangedBreathDamage(player, weaponId, ammoId, skillCape);
 
 		if ((target.isPlayer() || getWorld().getServer().getConfig().RANGED_GIVES_XP_HIT) && damage > 0) {
 			player.incExp(Skill.RANGED.id(), Formulae.rangedHitExperience(target, damage), true);
@@ -174,7 +178,7 @@ public class RangeEvent extends GameTickEvent {
         ActionSender.sendSound(player, "shoot");
         getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getWorld(), player, target, damage, 2,
 			true, ammoId, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB,
-			isCrossbow ? Projectile.BOLT : Projectile.ARROW, 0, true));
+			isCrossbow ? Projectile.BOLT : Projectile.ARROW, 0, true, dragonBreathDamage));
 	}
 
 	private int takeAmmoFromInventory(final int weaponId, final boolean isCrossbow) {

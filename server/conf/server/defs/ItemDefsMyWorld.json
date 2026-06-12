@@ -920,7 +920,7 @@
     },
     {
       "id": 1448,
-      "meleeOffense": 21,
+      "meleeOffense": 18,
       "weaponSpeed": 5,
       "basePrice": 300000
     },
@@ -1359,7 +1359,7 @@
     },
     {
       "id": 593,
-      "meleeOffense": 84,
+      "meleeOffense": 72,
       "weaponSpeed": 3,
       "basePrice": 120000
     },
@@ -1410,20 +1410,20 @@
     },
     {
       "id": 1346,
-      "meleeOffense": 174,
+      "meleeOffense": 152,
       "weaponSpeed": 2,
       "basePrice": 360000
     },
     {
       "id": 1447,
-      "meleeOffense": 21,
+      "meleeOffense": 18,
       "weaponSpeed": 5,
       "basePrice": 140000
     },
     {
       "id": 2752,
-      "meleeOffense": 62,
-      "weaponSpeed": 4,
+      "meleeOffense": 75,
+      "weaponSpeed": 3,
       "basePrice": 280000
     },
     {
@@ -1524,70 +1524,70 @@
     },
     {
       "id": 3181,
-      "meleeOffense": 18,
+      "meleeOffense": 15,
       "weaponSpeed": 3,
       "requiredLevel": 1,
       "requiredSkillID": 0
     },
     {
       "id": 3182,
-      "meleeOffense": 28,
+      "meleeOffense": 24,
       "weaponSpeed": 3,
       "requiredLevel": 1,
       "requiredSkillID": 0
     },
     {
       "id": 3183,
-      "meleeOffense": 38,
+      "meleeOffense": 32,
       "weaponSpeed": 3,
       "requiredLevel": 1,
       "requiredSkillID": 0
     },
     {
       "id": 3184,
-      "meleeOffense": 58,
+      "meleeOffense": 49,
       "weaponSpeed": 3,
       "requiredLevel": 1,
       "requiredSkillID": 0
     },
     {
       "id": 3185,
-      "meleeOffense": 77,
+      "meleeOffense": 65,
       "weaponSpeed": 3,
       "requiredLevel": 5,
       "requiredSkillID": 0
     },
     {
       "id": 3186,
-      "meleeOffense": 97,
+      "meleeOffense": 82,
       "weaponSpeed": 3,
       "requiredLevel": 20,
       "requiredSkillID": 0
     },
     {
       "id": 3187,
-      "meleeOffense": 107,
+      "meleeOffense": 91,
       "weaponSpeed": 3,
       "requiredLevel": 30,
       "requiredSkillID": 0
     },
     {
       "id": 3188,
-      "meleeOffense": 117,
+      "meleeOffense": 99,
       "weaponSpeed": 3,
       "requiredLevel": 30,
       "requiredSkillID": 0
     },
     {
       "id": 3189,
-      "meleeOffense": 127,
+      "meleeOffense": 108,
       "weaponSpeed": 3,
       "requiredLevel": 40,
       "requiredSkillID": 0
     },
     {
       "id": 3190,
-      "meleeOffense": 137,
+      "meleeOffense": 116,
       "weaponSpeed": 3,
       "requiredLevel": 40,
       "requiredSkillID": 0
@@ -2139,21 +2139,22 @@
     },
     {
       "id": 1449,
-      "rangedOffense": 28,
+      "rangedOffense": 24,
       "basePrice": 6000
     },
     {
       "id": 1450,
+      "rangedOffense": 24,
       "basePrice": 6000
     },
     {
       "id": 1451,
-      "rangedOffense": 24,
+      "rangedOffense": 20,
       "basePrice": 6000
     },
     {
       "id": 1452,
-      "rangedOffense": 24,
+      "rangedOffense": 20,
       "basePrice": 6000
     },
     {
@@ -2649,7 +2650,7 @@
     },
     {
       "id": 1453,
-      "rangedOffense": 40,
+      "rangedOffense": 34,
       "weaponSpeed": 4,
       "requiredSkillID": 4,
       "requiredLevel": 80,
@@ -2657,7 +2658,7 @@
     },
     {
       "id": 1454,
-      "rangedOffense": 56,
+      "rangedOffense": 48,
       "weaponSpeed": 3,
       "wearSlot": 4,
       "requiredSkillID": 4,
@@ -4244,9 +4245,9 @@
     },
     {
       "id": 795,
-      "meleeDefense": 10,
-      "rangedDefense": 8,
-      "magicDefense": 5,
+      "meleeDefense": 14,
+      "rangedDefense": 14,
+      "magicDefense": 14,
       "requiredLevel": 0,
       "requiredSkillID": -1
     },
@@ -4482,7 +4483,6 @@
       "id": 1278,
       "meleeDefense": 22,
       "rangedDefense": 17,
-      "magicDefense": 11,
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "basePrice": 96000
@@ -4491,9 +4491,9 @@
       "id": 1368,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "meleeDefense": 30,
-      "rangedDefense": 23,
-      "magicDefense": 15,
+      "meleeDefense": 27,
+      "rangedDefense": 27,
+      "magicDefense": 27,
       "requiredLevel": 0,
       "requiredSkillID": -1
     },
@@ -4573,15 +4573,15 @@
       "name": "Dragon Helmet",
       "meleeDefense": 22,
       "rangedDefense": 17,
-      "magicDefense": 11,
+      "magicDefense": 9,
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "basePrice": 140000
     },
     {
       "id": 1426,
-      "meleeDefense": 30,
-      "magicDefense": 23,
+      "meleeDefense": 22,
+      "magicDefense": 17,
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "basePrice": 192000
@@ -4592,7 +4592,7 @@
       "weaponPowerBonus": 0,
       "meleeDefense": 44,
       "rangedDefense": 33,
-      "magicDefense": 22,
+      "magicDefense": 17,
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "basePrice": 320000
@@ -4602,7 +4602,7 @@
       "name": "Dragon plate mail body",
       "meleeDefense": 44,
       "rangedDefense": 33,
-      "magicDefense": 22,
+      "magicDefense": 17,
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "basePrice": 320000
@@ -4611,17 +4611,23 @@
       "id": 1429,
       "meleeDefense": 33,
       "rangedDefense": 25,
-      "magicDefense": 17,
+      "magicDefense": 13,
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "basePrice": 192000
     },
     {
       "id": 1430,
-      "name": "Dragon plate mail legs",
-      "meleeDefense": 33,
-      "rangedDefense": 25,
-      "magicDefense": 17,
+      "name": "Dragon Scale Mail Legs",
+      "description": "Dragon scale leg protection",
+      "appearanceID": 590,
+      "wearableID": 128,
+      "wearSlot": 7,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "meleeDefense": 21,
+      "rangedDefense": 21,
+      "magicDefense": 21,
       "requiredLevel": 0,
       "requiredSkillID": -1,
       "basePrice": 192000
@@ -4687,9 +4693,9 @@
       "id": 1537,
       "weaponAimBonus": 0,
       "weaponPowerBonus": 0,
-      "meleeDefense": 30,
-      "rangedDefense": 23,
-      "magicDefense": 15,
+      "meleeDefense": 27,
+      "rangedDefense": 27,
+      "magicDefense": 27,
       "requiredLevel": 0,
       "requiredSkillID": -1
     },

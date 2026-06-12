@@ -33,7 +33,7 @@ TIER_11_VALUES = {
     1427: 320000,  # dragon plate body
     1428: 320000,  # dragon plate top/body alias
     1429: 192000,  # dragon plate legs
-    1430: 192000,  # dragon plate skirt/legs alias
+    1430: 192000,  # dragon scale mail legs
     1447: 140000,  # dragon dagger
     1448: 300000,  # poisoned dragon dagger
     1480: 120000,  # dragon woodcutting hatchet

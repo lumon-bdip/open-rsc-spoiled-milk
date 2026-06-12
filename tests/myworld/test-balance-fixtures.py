@@ -12,7 +12,6 @@ DEFAULT_RANGED_DEFENSE_MULTIPLIER = 0.5
 DEFAULT_MAGIC_DEFENSE_MULTIPLIER = 0.5
 SCIMITAR_IDS = {82, 83, 84, 427, 85, 86, 398, 1999, 2010, 2021, 2032}
 BATTLEAXE_IDS = {205, 89, 90, 429, 91, 92, 93, 2002, 2013, 2024, 2035}
-DRAGON_SPEED_ARMOR_IDS = {795, 1368, 1537, 1426}
 
 
 def load_json_array(path: Path):
@@ -76,9 +75,6 @@ def is_chain_body(item_id: int) -> bool:
 
 
 def armor_speed_multiplier(item_ids) -> float:
-    dragon_speed_pieces = sum(1 for item_id in item_ids if item_id in DRAGON_SPEED_ARMOR_IDS)
-    if dragon_speed_pieces > 0:
-        return 1.0 + (dragon_speed_pieces * 0.05)
     return 1.05 if any(is_chain_body(item_id) for item_id in item_ids) else 1.0
 
 
@@ -406,7 +402,7 @@ def main():
         player_fixture(items, "rune_knife_compare", 35, "ranged", [1080]),
         player_fixture(items, "leather_armor_melee_view", 1, "melee", [15, 16, 1370, 1371, 1372]),
         player_fixture(items, "leather_armor_ranged_view", 1, "ranged", [15, 16, 1370, 1371, 1372]),
-        player_fixture(items, "dragon_speed_set", 80, "melee", [795, 1368, 1426]),
+        player_fixture(items, "dragon_balanced_set", 80, "melee", [795, 1368, 1426]),
         player_fixture(items, "dragon_heavy_set", 80, "melee", [1425, 1427, 1429, 1278]),
         player_fixture(items, "tier6_scimitar_lesser_demon", 40, "melee", [398]),
         player_fixture(items, "tier6_mace_lesser_demon", 40, "melee", [98]),
@@ -516,7 +512,7 @@ def main():
     rune_knife_compare = players[25]
     leather_armor_melee = players[26]
     leather_armor_ranged = players[27]
-    dragon_speed_set = players[28]
+    dragon_balanced_set = players[28]
     dragon_heavy_set = players[29]
     tier6_scimitar = players[30]
     tier6_mace = players[31]
@@ -559,13 +555,13 @@ def main():
     check(rune_dart_compare["offense"] < rune_knife_compare["offense"], "Darts should trade direct power for speed")
     check(leather_armor_melee["melee_defense"] > 0 and leather_armor_ranged["ranged_defense"] > 0, "Leather armor should contribute to both melee and ranged defense")
     check(leather_armor_melee["melee_defense"] <= leather_armor_ranged["ranged_defense"], "Leather armor should lean slightly toward ranged defense on odd splits")
-    check(dragon_speed_set["armor_speed_multiplier"] == 1.15, "Dragon medium/scale/kite set should grant 15% total armor speed")
-    check(dragon_speed_set["melee_defense"] == 70, "Dragon speed set should carry the tier-10 hybrid melee defense total")
-    check(dragon_speed_set["ranged_defense"] == 31, "Dragon speed set should not get ranged defense from paladin shields")
-    check(dragon_speed_set["magic_defense"] == 43, "Dragon speed set should get magic defense from the paladin shield line")
-    check(dragon_speed_set["throughput_multiplier"] > dragon_heavy_set["throughput_multiplier"], "Dragon speed set should attack faster than the heavy dragon plate line")
+    check(dragon_balanced_set["armor_speed_multiplier"] == 1.0, "Dragon balanced armor should not grant a speed multiplier")
+    check(dragon_balanced_set["melee_defense"] == 63, "Dragon balanced set should trade plate defense for no-penalty all-style coverage")
+    check(dragon_balanced_set["ranged_defense"] == 41, "Dragon balanced set should keep ranged coverage from medium helm and scale mail")
+    check(dragon_balanced_set["magic_defense"] == 58, "Dragon balanced set should combine all-style armor with paladin magic defense")
     check(dragon_heavy_set["melee_defense"] == 121, "Dragon heavy set should carry the tier-11 hybrid melee defense total")
     check(dragon_heavy_set["ranged_defense"] == 92, "Dragon heavy set should carry the tier-11 hybrid ranged defense total")
+    check(dragon_heavy_set["magic_defense"] == 39, "Dragon heavy set should gain half-ranged magic defense on the plate pieces and helm")
 
     npc_by_id = {fixture["id"]: fixture for fixture in npc_fixtures}
 

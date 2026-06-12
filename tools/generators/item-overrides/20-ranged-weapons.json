@@ -393,21 +393,22 @@
     },
     {
       "id": 1449,
-      "rangedOffense": 28,
+      "rangedOffense": 24,
       "basePrice": 6000
     },
     {
       "id": 1450,
+      "rangedOffense": 24,
       "basePrice": 6000
     },
     {
       "id": 1451,
-      "rangedOffense": 24,
+      "rangedOffense": 20,
       "basePrice": 6000
     },
     {
       "id": 1452,
-      "rangedOffense": 24,
+      "rangedOffense": 20,
       "basePrice": 6000
     },
     {
@@ -903,7 +904,7 @@
     },
     {
       "id": 1453,
-      "rangedOffense": 40,
+      "rangedOffense": 34,
       "weaponSpeed": 4,
       "requiredSkillID": 4,
       "requiredLevel": 80,
@@ -911,7 +912,7 @@
     },
     {
       "id": 1454,
-      "rangedOffense": 56,
+      "rangedOffense": 48,
       "weaponSpeed": 3,
       "wearSlot": 4,
       "requiredSkillID": 4,

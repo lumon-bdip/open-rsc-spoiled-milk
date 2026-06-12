@@ -16,6 +16,9 @@ EQUIPMENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model
 PLAYER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "player" / "Player.java"
 ENTITY_HANDLER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "external" / "EntityHandler.java"
 CLIENT_ENTITY_HANDLER_PATH = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "client" / "entityhandling" / "EntityHandler.java"
+COMBAT_FORMULA_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "CombatFormula.java"
+RANGE_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "RangeEvent.java"
+PROJECTILE_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ProjectileEvent.java"
 
 
 def fail(message: str) -> None:
@@ -124,6 +127,11 @@ def require_uniform(entries_by_id, entry_ids, field, expected, label) -> None:
         require_exact(entries_by_id, entry_id, field, expected, label)
 
 
+def require_text(text: str, snippet: str, label: str) -> None:
+    if snippet not in text:
+        fail(f"{label} missing expected snippet: {snippet}")
+
+
 def require_no_equip_requirement(entries_by_id, entry_ids, label) -> None:
     for entry_id in entry_ids:
         require_exact(entries_by_id, entry_id, "requiredLevel", 0, label)
@@ -219,6 +227,18 @@ def ensure_myworld_item_requirements_are_data_owned() -> None:
             fail("MyWorld armor equip requirement removal must be explicit item override data, not a broad EntityHandler pass")
 
 
+def ensure_dragon_weapon_breath_split() -> None:
+    combat_formula = COMBAT_FORMULA_PATH.read_text(encoding="utf-8")
+    range_event = RANGE_EVENT_PATH.read_text(encoding="utf-8")
+    projectile_event = PROJECTILE_EVENT_PATH.read_text(encoding="utf-8")
+    require_text(combat_formula, "DRAGON_BREATH_DAMAGE_PERCENT = 25", "Dragon weapon breath split percent")
+    require_text(combat_formula, "getDragonBreathMainAttackMax", "Dragon weapon primary max-hit reduction")
+    require_text(combat_formula, "rollDragonMeleeBreathDamage", "Dragon melee breath roll")
+    require_text(combat_formula, "rollDragonRangedBreathDamage", "Dragon ranged breath roll")
+    require_text(range_event, "rollDragonRangedBreathDamage(player, weaponId, ammoId, skillCape)", "Dragon ranged breath damage handoff")
+    require_text(projectile_event, "applyDragonWeaponBreathDamage", "Dragon projectile breath hit application")
+
+
 def main() -> None:
     item_entries = load_json_array(ITEMS_PATH, "items")
     npc_entries = load_json_array(NPCS_PATH, "npcs")
@@ -280,6 +300,7 @@ def main() -> None:
     ensure_combat_guide_requirements_match_items(effective_items_by_id)
     ensure_spear_runtime_uses_item_requirement()
     ensure_myworld_item_requirements_are_data_owned()
+    ensure_dragon_weapon_breath_split()
 
     for entry in item_entries:
         if any(field in entry for field in ("meleeDefense", "rangedDefense", "magicDefense")):
@@ -332,8 +353,8 @@ def main() -> None:
 
     require_exact(items_by_id, 656, "rangedOffense", 44, "Magic longbow")
     require_exact(items_by_id, 646, "rangedOffense", 24, "Rune arrows")
-    require_exact(items_by_id, 1454, "rangedOffense", 56, "Dragon longbow")
-    require_exact(items_by_id, 1449, "rangedOffense", 28, "Dragon arrows")
+    require_exact(items_by_id, 1454, "rangedOffense", 48, "Dragon longbow tier-10 fire-breath profile")
+    require_exact(items_by_id, 1449, "rangedOffense", 24, "Dragon arrows tier-10 fire-breath profile")
     require_uniform(items_by_id, [2228, 2229, 2230, 2231, 2232, 2233, 2234, 2235, 2236, 2237], "magicOffense", 2, "Blessed staff explicit magic offense")
     require_uniform(items_by_id, [62, 28, 63, 423, 64, 65, 396], "weaponSpeed", 5, "Dagger family speed")
     require_uniform(items_by_id, [560, 559, 561, 565, 562, 564, 563], "weaponSpeed", 5, "Poisoned dagger family speed")
@@ -393,16 +414,18 @@ def main() -> None:
     require_exact(items_by_id, 1255, "weaponSpeed", 5, "Dark dagger profile")
     require_exact(items_by_id, 1256, "meleeOffense", 12, "Glowing dark dagger profile")
     require_exact(items_by_id, 1256, "weaponSpeed", 5, "Glowing dark dagger profile")
-    require_exact(items_by_id, 1447, "meleeOffense", 21, "Dragon dagger tier-11 dagger profile")
-    require_exact(items_by_id, 1447, "weaponSpeed", 5, "Dragon dagger tier-11 dagger profile")
+    require_exact(items_by_id, 1447, "meleeOffense", 18, "Dragon dagger tier-10 fire-breath profile")
+    require_exact(items_by_id, 1447, "weaponSpeed", 5, "Dragon dagger tier-10 fire-breath profile")
     require_exact(items_by_id, 1448, "meleeOffense", items_by_id[1447]["meleeOffense"], "Poisoned dragon dagger parity")
     require_exact(items_by_id, 1448, "weaponSpeed", items_by_id[1447]["weaponSpeed"], "Poisoned dragon dagger speed parity")
-    require_exact(items_by_id, 593, "meleeOffense", 84, "Dragon sword tier-11 longsword profile")
-    require_exact(items_by_id, 593, "weaponSpeed", 3, "Dragon sword tier-11 longsword profile")
+    require_exact(items_by_id, 593, "meleeOffense", 72, "Dragon sword tier-10 fire-breath profile")
+    require_exact(items_by_id, 593, "weaponSpeed", 3, "Dragon sword tier-10 fire-breath profile")
     require_exact(items_by_id, 1289, "meleeOffense", 12, "Scythe baseline profile")
     require_exact(items_by_id, 1289, "weaponSpeed", 3, "Scythe baseline profile")
-    require_exact(items_by_id, 1346, "meleeOffense", 174, "Dragon 2h tier-11 two-handed profile")
-    require_exact(items_by_id, 1346, "weaponSpeed", 2, "Dragon 2h tier-11 two-handed profile")
+    require_exact(items_by_id, 1346, "meleeOffense", 152, "Dragon 2h tier-10 fire-breath profile")
+    require_exact(items_by_id, 1346, "weaponSpeed", 2, "Dragon 2h tier-10 fire-breath profile")
+    require_exact(items_by_id, 2752, "meleeOffense", 75, "Dragon battle axe tier-10 fire-breath profile")
+    require_exact(items_by_id, 2752, "weaponSpeed", 3, "Dragon battle axe tier-10 fire-breath profile")
     require_exact(items_by_id, 1496, "meleeOffense", 3, "Yoyo novelty weapon profile")
     require_exact(items_by_id, 1496, "weaponSpeed", 5, "Yoyo novelty weapon profile")
     require_exact(items_by_id, 1592, "meleeOffense", 10, "Boomstick novelty weapon profile")
@@ -649,36 +672,40 @@ def main() -> None:
     require_uniform(items_by_id, [3131, 3132, 3133, 3134, 3135, 3136], "rangedDefense", 2, "God gauntlets and greaves tier-5 hand/foot defense")
     require_uniform(items_by_id, [3131, 3132, 3133, 3134, 3135, 3136], "prayerBonus", 1, "God gauntlets and greaves prayer bonus")
     require_no_equip_requirement(items_by_id, [470, 230, 431, 1533, 1424, 432, 433, 196, 313, 248, 434, 2158, 2159, 2160, 2168, 2167, 2161, 2162, 2163, 2165, 2164, 2166, 3131, 3132, 3133, 3134, 3135, 3136], "Black/white/grey prayer armour requirement removal")
-    require_exact(items_by_id, 795, "meleeDefense", 10, "Dragon medium helmet tier-10 hybrid line")
-    require_exact(items_by_id, 795, "rangedDefense", 8, "Dragon medium helmet tier-10 hybrid line")
-    require_exact(items_by_id, 795, "magicDefense", 5, "Dragon medium helmet tier-10 hybrid line")
-    require_exact(items_by_id, 1425, "meleeDefense", 22, "Large dragon helmet tier-11 hybrid line")
-    require_exact(items_by_id, 1425, "rangedDefense", 17, "Large dragon helmet tier-11 hybrid line")
-    require_exact(items_by_id, 1425, "magicDefense", 11, "Large dragon helmet tier-11 hybrid line")
-    require_exact(items_by_id, 1278, "meleeDefense", 22, "Dragon square shield tier-11 hybrid line")
-    require_exact(items_by_id, 1278, "rangedDefense", 17, "Dragon square shield tier-11 hybrid line")
-    require_exact(items_by_id, 1278, "magicDefense", 11, "Dragon square shield tier-11 hybrid line")
-    require_exact(items_by_id, 1426, "meleeDefense", 30, "Dragon paladin shield prayer defense")
+    require_exact(items_by_id, 795, "meleeDefense", 14, "Dragon medium helmet all-style no-penalty line")
+    require_exact(items_by_id, 795, "rangedDefense", 14, "Dragon medium helmet all-style no-penalty line")
+    require_exact(items_by_id, 795, "magicDefense", 14, "Dragon medium helmet all-style no-penalty line")
+    require_exact(items_by_id, 1425, "meleeDefense", 22, "Large dragon helmet tier-11 plate line")
+    require_exact(items_by_id, 1425, "rangedDefense", 17, "Large dragon helmet tier-11 plate line")
+    require_exact(items_by_id, 1425, "magicDefense", 9, "Large dragon helmet tier-11 plate line")
+    require_exact(items_by_id, 1278, "meleeDefense", 22, "Dragon square shield tier-11 square line")
+    require_exact(items_by_id, 1278, "rangedDefense", 17, "Dragon square shield tier-11 square line")
+    require_field_absent(items_by_id, 1278, "magicDefense", "Dragon square shield tier-11 square line")
+    require_exact(items_by_id, 1426, "meleeDefense", 22, "Dragon paladin shield prayer defense")
     require_field_absent(items_by_id, 1426, "rangedDefense", "Dragon paladin shield prayer defense")
-    require_exact(items_by_id, 1426, "magicDefense", 23, "Dragon paladin shield prayer defense")
-    require_exact(items_by_id, 1368, "meleeDefense", 30, "Dragon scale mail body tier-10 hybrid line")
-    require_exact(items_by_id, 1368, "rangedDefense", 23, "Dragon scale mail body tier-10 hybrid line")
-    require_exact(items_by_id, 1368, "magicDefense", 15, "Dragon scale mail body tier-10 hybrid line")
-    require_exact(items_by_id, 1537, "meleeDefense", 30, "Dragon scale mail top tier-10 hybrid line")
-    require_exact(items_by_id, 1537, "rangedDefense", 23, "Dragon scale mail top tier-10 hybrid line")
-    require_exact(items_by_id, 1537, "magicDefense", 15, "Dragon scale mail top tier-10 hybrid line")
-    require_exact(items_by_id, 1427, "meleeDefense", 44, "Dragon plate body tier-11 hybrid line")
-    require_exact(items_by_id, 1427, "rangedDefense", 33, "Dragon plate body tier-11 hybrid line")
-    require_exact(items_by_id, 1427, "magicDefense", 22, "Dragon plate body tier-11 hybrid line")
-    require_exact(items_by_id, 1428, "meleeDefense", 44, "Dragon plate top normalized tier-11 hybrid line")
-    require_exact(items_by_id, 1428, "rangedDefense", 33, "Dragon plate top normalized tier-11 hybrid line")
-    require_exact(items_by_id, 1428, "magicDefense", 22, "Dragon plate top normalized tier-11 hybrid line")
-    require_exact(items_by_id, 1429, "meleeDefense", 33, "Dragon plate legs tier-11 hybrid line")
-    require_exact(items_by_id, 1429, "rangedDefense", 25, "Dragon plate legs tier-11 hybrid line")
-    require_exact(items_by_id, 1429, "magicDefense", 17, "Dragon plate legs tier-11 hybrid line")
-    require_exact(items_by_id, 1430, "meleeDefense", 33, "Dragon plate skirt normalized tier-11 hybrid line")
-    require_exact(items_by_id, 1430, "rangedDefense", 25, "Dragon plate skirt normalized tier-11 hybrid line")
-    require_exact(items_by_id, 1430, "magicDefense", 17, "Dragon plate skirt normalized tier-11 hybrid line")
+    require_exact(items_by_id, 1426, "magicDefense", 17, "Dragon paladin shield prayer defense")
+    require_exact(items_by_id, 1368, "meleeDefense", 27, "Dragon scale mail all-style no-penalty line")
+    require_exact(items_by_id, 1368, "rangedDefense", 27, "Dragon scale mail all-style no-penalty line")
+    require_exact(items_by_id, 1368, "magicDefense", 27, "Dragon scale mail all-style no-penalty line")
+    require_exact(items_by_id, 1537, "meleeDefense", 27, "Dragon scale mail top normalized all-style line")
+    require_exact(items_by_id, 1537, "rangedDefense", 27, "Dragon scale mail top normalized all-style line")
+    require_exact(items_by_id, 1537, "magicDefense", 27, "Dragon scale mail top normalized all-style line")
+    require_exact(items_by_id, 1427, "meleeDefense", 44, "Dragon plate body tier-11 plate line")
+    require_exact(items_by_id, 1427, "rangedDefense", 33, "Dragon plate body tier-11 plate line")
+    require_exact(items_by_id, 1427, "magicDefense", 17, "Dragon plate body tier-11 plate line")
+    require_exact(items_by_id, 1428, "meleeDefense", 44, "Dragon plate top normalized tier-11 plate line")
+    require_exact(items_by_id, 1428, "rangedDefense", 33, "Dragon plate top normalized tier-11 plate line")
+    require_exact(items_by_id, 1428, "magicDefense", 17, "Dragon plate top normalized tier-11 plate line")
+    require_exact(items_by_id, 1429, "meleeDefense", 33, "Dragon plate legs tier-11 plate line")
+    require_exact(items_by_id, 1429, "rangedDefense", 25, "Dragon plate legs tier-11 plate line")
+    require_exact(items_by_id, 1429, "magicDefense", 13, "Dragon plate legs tier-11 plate line")
+    require_exact(items_by_id, 1430, "name", "Dragon Scale Mail Legs", "Dragon scale mail legs identity")
+    require_exact(items_by_id, 1430, "appearanceID", 590, "Dragon scale mail legs should use chaps icon sprite")
+    require_exact(items_by_id, 1430, "wearableID", 128, "Dragon scale mail legs should use chaps worn sprite")
+    require_exact(items_by_id, 1430, "wearSlot", 7, "Dragon scale mail legs should use leg slot")
+    require_exact(items_by_id, 1430, "meleeDefense", 21, "Dragon scale mail legs all-style no-penalty line")
+    require_exact(items_by_id, 1430, "rangedDefense", 21, "Dragon scale mail legs all-style no-penalty line")
+    require_exact(items_by_id, 1430, "magicDefense", 21, "Dragon scale mail legs all-style no-penalty line")
     require_no_equip_requirement(items_by_id, [795, 1278, 1368, 1537, 1425, 1426, 1427, 1428, 1429, 1430], "Dragon armor requirement removal")
 
     important_npcs = [3, 6, 15, 40, 41, 22, 184, 196, 201, 202, 291, 477, 81, 789]
