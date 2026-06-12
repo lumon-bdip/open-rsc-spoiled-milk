@@ -94,6 +94,9 @@ public class Drinkables implements OpInvTrigger {
 		else if (id == ItemId.POISON_CHALICE.id())
 			handlePoisonChalice(player, item);
 
+		else if (getHerblawPotionEffect(id) != null)
+			useHerblawPotion(player, item, getHerblawPotionEffect(id));
+
 		else if (id == ItemId.FULL_STRENGTH_POTION.id())
 			useNormalPotion(player, item, Skill.STRENGTH.id(), 10, 3, ItemId.THREE_STRENGTH_POTION.id(), 3);
 
@@ -241,6 +244,159 @@ public class Drinkables implements OpInvTrigger {
 			|| player.getClientLimitations().maxItemId < ItemId.BEER_GLASS.id())
 			return;
 		give(player, ItemId.BEER_GLASS.id(), 1);
+	}
+
+	private HerblawPotionEffect getHerblawPotionEffect(final int id) {
+		final ItemId itemId = ItemId.getById(id);
+		if (itemId == null) {
+			return null;
+		}
+		switch (itemId) {
+			case FULL_ATTACK_POTION: return skillPotion("brawn", 5, 5, ItemId.TWO_ATTACK_POTION.id(), 2);
+			case TWO_ATTACK_POTION: return skillPotion("brawn", 5, 5, ItemId.ONE_ATTACK_POTION.id(), 1);
+			case ONE_ATTACK_POTION: return skillPotion("brawn", 5, 5, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_STAT_RESTORATION_POTION: return skillPotion("brawn", 8, 8, ItemId.TWO_STAT_RESTORATION_POTION.id(), 2);
+			case TWO_STAT_RESTORATION_POTION: return skillPotion("brawn", 8, 8, ItemId.ONE_STAT_RESTORATION_POTION.id(), 1);
+			case ONE_STAT_RESTORATION_POTION: return skillPotion("brawn", 8, 8, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_DEFENSE_POTION: return skillPotion("brawn", 11, 11, ItemId.TWO_DEFENSE_POTION.id(), 2);
+			case TWO_DEFENSE_POTION: return skillPotion("brawn", 11, 11, ItemId.ONE_DEFENSE_POTION.id(), 1);
+			case ONE_DEFENSE_POTION: return skillPotion("brawn", 11, 11, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_RESTORE_PRAYER_POTION: return skillPotion("brawn", 14, 14, ItemId.TWO_RESTORE_PRAYER_POTION.id(), 2);
+			case TWO_RESTORE_PRAYER_POTION: return skillPotion("brawn", 14, 14, ItemId.ONE_RESTORE_PRAYER_POTION.id(), 1);
+			case ONE_RESTORE_PRAYER_POTION: return skillPotion("brawn", 14, 14, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_SUPER_ATTACK_POTION: return skillPotion("brawn", 17, 17, ItemId.TWO_SUPER_ATTACK_POTION.id(), 2);
+			case TWO_SUPER_ATTACK_POTION: return skillPotion("brawn", 17, 17, ItemId.ONE_SUPER_ATTACK_POTION.id(), 1);
+			case ONE_SUPER_ATTACK_POTION: return skillPotion("brawn", 17, 17, ItemId.EMPTY_VIAL.id(), 0);
+
+			case FULL_FISHING_POTION: return skillPotion("deftness", 5, 5, ItemId.TWO_FISHING_POTION.id(), 2);
+			case TWO_FISHING_POTION: return skillPotion("deftness", 5, 5, ItemId.ONE_FISHING_POTION.id(), 1);
+			case ONE_FISHING_POTION: return skillPotion("deftness", 5, 5, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_SUPER_STRENGTH_POTION: return skillPotion("deftness", 8, 8, ItemId.TWO_SUPER_STRENGTH_POTION.id(), 2);
+			case TWO_SUPER_STRENGTH_POTION: return skillPotion("deftness", 8, 8, ItemId.ONE_SUPER_STRENGTH_POTION.id(), 1);
+			case ONE_SUPER_STRENGTH_POTION: return skillPotion("deftness", 8, 8, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_SUPER_DEFENSE_POTION: return skillPotion("deftness", 11, 11, ItemId.TWO_SUPER_DEFENSE_POTION.id(), 2);
+			case TWO_SUPER_DEFENSE_POTION: return skillPotion("deftness", 11, 11, ItemId.ONE_SUPER_DEFENSE_POTION.id(), 1);
+			case ONE_SUPER_DEFENSE_POTION: return skillPotion("deftness", 11, 11, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_RANGING_POTION: return skillPotion("deftness", 14, 14, ItemId.TWO_RANGING_POTION.id(), 2);
+			case TWO_RANGING_POTION: return skillPotion("deftness", 14, 14, ItemId.ONE_RANGING_POTION.id(), 1);
+			case ONE_RANGING_POTION: return skillPotion("deftness", 14, 14, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_CURE_POISON_POTION: return skillPotion("deftness", 17, 17, ItemId.TWO_CURE_POISON_POTION.id(), 2);
+			case TWO_CURE_POISON_POTION: return skillPotion("deftness", 17, 17, ItemId.ONE_CURE_POISON_POTION.id(), 1);
+			case ONE_CURE_POISON_POTION: return skillPotion("deftness", 17, 17, ItemId.EMPTY_VIAL.id(), 0);
+
+			case FULL_POISON_ANTIDOTE: return skillPotion("insight", 5, 5, ItemId.TWO_POISON_ANTIDOTE.id(), 2);
+			case TWO_POISON_ANTIDOTE: return skillPotion("insight", 5, 5, ItemId.ONE_POISON_ANTIDOTE.id(), 1);
+			case ONE_POISON_ANTIDOTE: return skillPotion("insight", 5, 5, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_POTION_OF_ZAMORAK: return skillPotion("insight", 8, 8, ItemId.TWO_POTION_OF_ZAMORAK.id(), 2);
+			case TWO_POTION_OF_ZAMORAK: return skillPotion("insight", 8, 8, ItemId.ONE_POTION_OF_ZAMORAK.id(), 1);
+			case ONE_POTION_OF_ZAMORAK: return skillPotion("insight", 8, 8, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_RUNECRAFT_POTION: return skillPotion("insight", 11, 11, ItemId.TWO_RUNECRAFT_POTION.id(), 2);
+			case TWO_RUNECRAFT_POTION: return skillPotion("insight", 11, 11, ItemId.ONE_RUNECRAFT_POTION.id(), 1);
+			case ONE_RUNECRAFT_POTION: return skillPotion("insight", 11, 11, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_SUPER_RUNECRAFT_POTION: return skillPotion("insight", 14, 14, ItemId.TWO_SUPER_RUNECRAFT_POTION.id(), 2);
+			case TWO_SUPER_RUNECRAFT_POTION: return skillPotion("insight", 14, 14, ItemId.ONE_SUPER_RUNECRAFT_POTION.id(), 1);
+			case ONE_SUPER_RUNECRAFT_POTION: return skillPotion("insight", 14, 14, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_MAGIC_POTION: return skillPotion("insight", 17, 17, ItemId.TWO_MAGIC_POTION.id(), 2);
+			case TWO_MAGIC_POTION: return skillPotion("insight", 17, 17, ItemId.ONE_MAGIC_POTION.id(), 1);
+			case ONE_MAGIC_POTION: return skillPotion("insight", 17, 17, ItemId.EMPTY_VIAL.id(), 0);
+
+			case FULL_POTION_OF_SARADOMIN: return specialPotion("restore", ItemId.TWO_POTION_OF_SARADOMIN.id(), 2);
+			case TWO_POTION_OF_SARADOMIN: return specialPotion("restore", ItemId.ONE_POTION_OF_SARADOMIN.id(), 1);
+			case ONE_POTION_OF_SARADOMIN: return specialPotion("restore", ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_SUPER_RANGING_POTION: return specialPotion("antidote", ItemId.TWO_SUPER_RANGING_POTION.id(), 2);
+			case TWO_SUPER_RANGING_POTION: return specialPotion("antidote", ItemId.ONE_SUPER_RANGING_POTION.id(), 1);
+			case ONE_SUPER_RANGING_POTION: return specialPotion("antidote", ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_SUPER_MAGIC_POTION: return xpBrew("skiller", 20, 30, ItemId.TWO_SUPER_MAGIC_POTION.id(), 2);
+			case TWO_SUPER_MAGIC_POTION: return xpBrew("skiller", 20, 30, ItemId.ONE_SUPER_MAGIC_POTION.id(), 1);
+			case ONE_SUPER_MAGIC_POTION: return xpBrew("skiller", 20, 30, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_STRENGTH_POTION: return xpBrew("skiller", 40, 60, ItemId.THREE_STRENGTH_POTION.id(), 3);
+			case THREE_STRENGTH_POTION: return xpBrew("skiller", 40, 60, ItemId.TWO_STRENGTH_POTION.id(), 2);
+			case TWO_STRENGTH_POTION: return xpBrew("skiller", 40, 60, ItemId.ONE_STRENGTH_POTION.id(), 1);
+			case ONE_STRENGTH_POTION: return xpBrew("skiller", 40, 60, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_WARRIORS_BREW: return xpBrew("warrior", 20, 30, ItemId.TWO_WARRIORS_BREW.id(), 2);
+			case TWO_WARRIORS_BREW: return xpBrew("warrior", 20, 30, ItemId.ONE_WARRIORS_BREW.id(), 1);
+			case ONE_WARRIORS_BREW: return xpBrew("warrior", 20, 30, ItemId.EMPTY_VIAL.id(), 0);
+			case FULL_STRONG_WARRIORS_BREW: return xpBrew("warrior", 40, 60, ItemId.TWO_STRONG_WARRIORS_BREW.id(), 2);
+			case TWO_STRONG_WARRIORS_BREW: return xpBrew("warrior", 40, 60, ItemId.ONE_STRONG_WARRIORS_BREW.id(), 1);
+			case ONE_STRONG_WARRIORS_BREW: return xpBrew("warrior", 40, 60, ItemId.EMPTY_VIAL.id(), 0);
+			default:
+				return null;
+		}
+	}
+
+	private HerblawPotionEffect skillPotion(final String family, final int percent, final int minutes, final int nextItem, final int dosesLeft) {
+		return new HerblawPotionEffect(family, percent, minutes, nextItem, dosesLeft);
+	}
+
+	private HerblawPotionEffect xpBrew(final String family, final int percent, final int minutes, final int nextItem, final int dosesLeft) {
+		return new HerblawPotionEffect(family + "_xp", percent, minutes, nextItem, dosesLeft);
+	}
+
+	private HerblawPotionEffect specialPotion(final String family, final int nextItem, final int dosesLeft) {
+		return new HerblawPotionEffect(family, 0, 0, nextItem, dosesLeft);
+	}
+
+	private void useHerblawPotion(Player player, final Item item, final HerblawPotionEffect effect) {
+		if (player.getCarriedItems().remove(item) == -1) return;
+		player.message("You drink some of your " + item.getDef(player.getWorld()).getName().toLowerCase());
+		applyHerblawPotionEffect(player, effect);
+		player.getCarriedItems().getInventory().add(new Item(effect.nextItem));
+		delay(2);
+		if (effect.dosesLeft <= 0) {
+			player.message("You have finished your potion");
+		} else {
+			player.message("You have " + effect.dosesLeft + " dose" + (effect.dosesLeft == 1 ? "" : "s") + " of potion left");
+		}
+	}
+
+	private void applyHerblawPotionEffect(final Player player, final HerblawPotionEffect effect) {
+		final long duration = TimeUnit.MINUTES.toMillis(effect.minutes);
+		if ("brawn".equals(effect.family)) {
+			player.activatePotionOfBrawn(effect.percent, duration);
+		} else if ("deftness".equals(effect.family)) {
+			player.activatePotionOfDeftness(effect.percent, duration);
+		} else if ("insight".equals(effect.family)) {
+			player.activatePotionOfInsightSkills(effect.percent, duration);
+		} else if ("skiller_xp".equals(effect.family)) {
+			player.activateSkillerBrew(effect.percent, duration);
+		} else if ("warrior_xp".equals(effect.family)) {
+			player.activateWarriorBrew(effect.percent, duration);
+		} else if ("restore".equals(effect.family)) {
+			restoreReducedStats(player);
+			player.setStatReductionProtection(TimeUnit.MINUTES.toMillis(10));
+		} else if ("antidote".equals(effect.family)) {
+			player.curePoison();
+			player.setPoisonProtection(TimeUnit.MINUTES.toMillis(5));
+		}
+	}
+
+	private void restoreReducedStats(final Player player) {
+		final int skillsCount = player.getWorld().getServer().getConstants().getSkills().getSkillsCount();
+		for (int skill = 0; skill < skillsCount; skill++) {
+			if (skill == Skill.HITS.id()) {
+				continue;
+			}
+			final int normal = player.getEquipmentAdjustedNormalLevel(skill);
+			if (player.getSkills().getLevel(skill) < normal) {
+				player.getSkills().setLevel(skill, normal, true, true);
+			}
+		}
+	}
+
+	private static final class HerblawPotionEffect {
+		private final String family;
+		private final int percent;
+		private final int minutes;
+		private final int nextItem;
+		private final int dosesLeft;
+
+		private HerblawPotionEffect(final String family, final int percent, final int minutes, final int nextItem, final int dosesLeft) {
+			this.family = family;
+			this.percent = percent;
+			this.minutes = minutes;
+			this.nextItem = nextItem;
+			this.dosesLeft = dosesLeft;
+		}
 	}
 
 	private void useTimedPotion(Player player, final Item item, final int newItem, final int dosesLeft, final Runnable effect) {

@@ -8,6 +8,23 @@ release target.
 
 ## Open
 
+### Aubury rune shop shortcut regression
+
+Status: next after Herblaw.
+
+Aubury, the rune seller in Varrock, still does not support the expected
+right-click trade and `Ctrl`-click trade shortcut behavior. This needs to be
+worked immediately after the Herblaw/potion planning pass, and the fix should
+be verified in game rather than assumed from adding the NPC to a quick-trade
+list.
+
+Current expectation:
+
+- Right-click should expose/use the rune shop trade action correctly.
+- `Ctrl`-click shortcut should open trade/shop correctly.
+- The final fix should account for why previous quick-trade-style fixes did not
+  resolve Aubury.
+
 ### Brown apron / Crafting Guild access
 
 Status: investigate.

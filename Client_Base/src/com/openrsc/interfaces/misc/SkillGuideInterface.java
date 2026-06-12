@@ -780,45 +780,48 @@ public final class SkillGuideInterface {
 		if (mc.getSkillGuideChosen().equals("Mining")) {
 			populateMiningGuide();
 		}
-			if (mc.getSkillGuideChosen().equals("Herblaw")) {
-				boolean harvesting = Config.S_WANT_HARVESTING && Config.S_WANT_CUSTOM_SPRITES;
-				boolean runecraft = Config.S_WANT_RUNECRAFT && Config.S_WANT_CUSTOM_SPRITES;
-				if (curTab == 0) {
-					skillMenuEntries.add(new SkillMenuItem(444, "3", EntityHandler.getItemDef(444).name));
-					skillMenuEntries.add(new SkillMenuItem(445, "8", EntityHandler.getItemDef(445).name));
-					skillMenuEntries.add(new SkillMenuItem(446, "15", EntityHandler.getItemDef(446).name));
-					skillMenuEntries.add(new SkillMenuItem(447, "22", EntityHandler.getItemDef(447).name));
-					skillMenuEntries.add(new SkillMenuItem(448, "29", EntityHandler.getItemDef(448).name));
-					skillMenuEntries.add(new SkillMenuItem(449, "36", EntityHandler.getItemDef(449).name));
-					skillMenuEntries.add(new SkillMenuItem(450, "43", EntityHandler.getItemDef(450).name));
-					skillMenuEntries.add(new SkillMenuItem(451, "50", EntityHandler.getItemDef(451).name));
-					skillMenuEntries.add(new SkillMenuItem(452, "57", EntityHandler.getItemDef(452).name));
-					skillMenuEntries.add(new SkillMenuItem(453, "64", EntityHandler.getItemDef(453).name));
-					skillMenuEntries.add(new SkillMenuItem(934, "70", EntityHandler.getItemDef(934).name));
-				} else if (curTab == 1) {
-					skillMenuEntries.add(new SkillMenuItem(566, "3", "Cure poison potion - Guam leaf & ground unicorn horn"));
-					skillMenuEntries.add(new SkillMenuItem(474, "8", "Potion of Insight - Marrentill & eye of newt"));
-					skillMenuEntries.add(new SkillMenuItem(1176, "10", "Explosive compound - Nitro & nitrate & charcoal & a. root"));
-					skillMenuEntries.add(new SkillMenuItem(477, "13", "Potion of Regeneration - Tarromin & snape grass"));
-					if (runecraft) skillMenuEntries.add(new SkillMenuItem(1411, "12", "Enchanting potion - Marrentill & 10 fish oil"));
-					skillMenuEntries.add(new SkillMenuItem(1053, "18", "Ogre potion - Guam leaf, jangerberries, ground bat bones"));
-					skillMenuEntries.add(new SkillMenuItem(572, "23", "Weapon poison - Harralander & ground blue dragon scale"));
-					skillMenuEntries.add(new SkillMenuItem(588, "25", "Blamish oil - Harralander & blamish snail slime"));
-					skillMenuEntries.add(new SkillMenuItem(480, "28", "Potion of Speed - Ranarr weed & white berries"));
-					skillMenuEntries.add(new SkillMenuItem(486, "38", "Potion of Magic Resistance - Irit leaf & red spiders' eggs"));
-					skillMenuEntries.add(new SkillMenuItem(1253, "45", "Gujuo potion - Snake weed & ardrigal"));
-					skillMenuEntries.add(new SkillMenuItem(489, "48", "Potion of Melee Resistance - Avantoe & limpwurt root"));
-					skillMenuEntries.add(new SkillMenuItem(492, "53", "Potion of Ranged Resistance - Kwuarm & jangerberries"));
-					if (runecraft) skillMenuEntries.add(new SkillMenuItem(1414, "57", "S. Enchanting potion - Avantoe & 10 fish oil"));
-					skillMenuEntries.add(new SkillMenuItem(483, "63", "Potion of Luck - Cadantine & wine of Zamorak"));
-					skillMenuEntries.add(new SkillMenuItem(495, "67", "Potion of Notation - Dwarf weed & eye of newt"));
-					if (harvesting) skillMenuEntries.add(new SkillMenuItem(1468, "76", "S. Potion of Magic Resist - Dwarf weed & Saradomin wine"));
-					skillMenuEntries.add(new SkillMenuItem(963, "78", "S. Potion of Regeneration - Torstol & jangerberries"));
-					if (harvesting) skillMenuEntries.add(new SkillMenuItem(1471, "81", "S. Potion of Melee Resist - Torstol & dragonfruit"));
-					if (harvesting) skillMenuEntries.add(new SkillMenuItem(1474, "83", "S. Potion of Ranged Resist - Ranged potion & half coconut"));
-				} else if (curTab == 2) {
-					if (Config.S_WANT_CUSTOM_SPRITES) {
-						addSkillCapeGuide(1521, "Herblaw");
+		if (mc.getSkillGuideChosen().equals("Herblaw")) {
+			if (curTab == 0) {
+				skillMenuEntries.add(new SkillMenuItem(444, "3", EntityHandler.getItemDef(444).name));
+				skillMenuEntries.add(new SkillMenuItem(445, "8", EntityHandler.getItemDef(445).name));
+				skillMenuEntries.add(new SkillMenuItem(446, "15", EntityHandler.getItemDef(446).name));
+				skillMenuEntries.add(new SkillMenuItem(447, "22", EntityHandler.getItemDef(447).name));
+				skillMenuEntries.add(new SkillMenuItem(448, "29", EntityHandler.getItemDef(448).name));
+				skillMenuEntries.add(new SkillMenuItem(449, "36", EntityHandler.getItemDef(449).name));
+				skillMenuEntries.add(new SkillMenuItem(450, "43", EntityHandler.getItemDef(450).name));
+				skillMenuEntries.add(new SkillMenuItem(451, "50", EntityHandler.getItemDef(451).name));
+				skillMenuEntries.add(new SkillMenuItem(452, "57", EntityHandler.getItemDef(452).name));
+				skillMenuEntries.add(new SkillMenuItem(453, "64", EntityHandler.getItemDef(453).name));
+				skillMenuEntries.add(new SkillMenuItem(934, "70", EntityHandler.getItemDef(934).name));
+			} else if (curTab == 1) {
+				addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, "Potion of Brawn", "limpwurt root");
+				addHerblawPotionFamilyGuide(489, 492, 495, 498, 566, "Potion of Deftness", "fish oil");
+				addHerblawPotionFamilyGuide(569, 963, 1411, 1414, 1468, "Potion of Insight", "eye of newt");
+				skillMenuEntries.add(new SkillMenuItem(1474, "8", "Antidote - Marrentill & red spiders' eggs"));
+				skillMenuEntries.add(new SkillMenuItem(1176, "10", "Explosive compound - Nitro & nitrate & charcoal & a. root"));
+				skillMenuEntries.add(new SkillMenuItem(1053, "18", "Ogre potion - Guam leaf, jangerberries, ground bat bones"));
+				skillMenuEntries.add(new SkillMenuItem(1471, "22", "Stat restore - Harralander & ground unicorn horn"));
+				skillMenuEntries.add(new SkillMenuItem(572, "23", "Weapon poison - Harralander & ground blue dragon scale"));
+				skillMenuEntries.add(new SkillMenuItem(588, "25", "Blamish oil - Harralander & blamish snail slime"));
+				skillMenuEntries.add(new SkillMenuItem(1253, "45", "Gujuo potion - Snake weed & ardrigal"));
+				skillMenuEntries.add(new SkillMenuItem(1477, "45", "Skiller's Brew - Irit leaf & snape grass"));
+				skillMenuEntries.add(new SkillMenuItem(3192, "45", "Warrior's Brew - Irit leaf & white berries"));
+				skillMenuEntries.add(new SkillMenuItem(221, "72", "Strong Skiller's Brew - Dwarf weed & 5 snape grass"));
+				skillMenuEntries.add(new SkillMenuItem(3195, "72", "Strong Warrior's Brew - Dwarf weed & 5 white berries"));
+			} else if (curTab == 2) {
+				skillMenuEntries.add(new SkillMenuItem(474, "", "Brawn boosts Melee, Hits, Mining, Smithing, Woodcutting"));
+				skillMenuEntries.add(new SkillMenuItem(489, "", "Deftness boosts Ranged, Agility, Fishing, Crafting, Pickpocketing"));
+				skillMenuEntries.add(new SkillMenuItem(569, "", "Insight boosts Magic, Enchanting, Summoning, Cooking, Prayer"));
+				skillMenuEntries.add(new SkillMenuItem(474, "", "Tiered potions go v1 to v5: 5%, 8%, 11%, 14%, 17%"));
+				skillMenuEntries.add(new SkillMenuItem(474, "", "Tiered potions last 5, 8, 11, 14, or 17 minutes"));
+				skillMenuEntries.add(new SkillMenuItem(1477, "", "Skiller's Brew gives non-combat XP: 20% for 30 minutes"));
+				skillMenuEntries.add(new SkillMenuItem(221, "", "Strong Skiller's Brew gives non-combat XP: 40% for 60 minutes"));
+				skillMenuEntries.add(new SkillMenuItem(3192, "", "Warrior's Brew gives combat XP: 20% for 30 minutes"));
+				skillMenuEntries.add(new SkillMenuItem(3195, "", "Strong Warrior's Brew gives combat XP: 40% for 60 minutes"));
+				skillMenuEntries.add(new SkillMenuItem(1474, "", "Antidote cures poison and grants poison immunity"));
+				skillMenuEntries.add(new SkillMenuItem(1471, "", "Stat restore restores reduced stats and blocks stat reduction"));
+				if (Config.S_WANT_CUSTOM_SPRITES) {
+					addSkillCapeGuide(1521, "Herblaw");
 				}
 			}
 		}
@@ -1444,6 +1447,15 @@ public final class SkillGuideInterface {
 
 	private void addLeatherGuide(int itemId, String level, String detail) {
 		skillMenuEntries.add(new SkillMenuItem(itemId, level, detail));
+	}
+
+	private void addHerblawPotionFamilyGuide(int tier1Id, int tier2Id, int tier3Id, int tier4Id, int tier5Id,
+											 String potionName, String secondary) {
+		skillMenuEntries.add(new SkillMenuItem(tier1Id, "3", potionName + " v1 - Guam leaf & " + secondary));
+		skillMenuEntries.add(new SkillMenuItem(tier2Id, "12", potionName + " v2 - Tarromin & " + secondary));
+		skillMenuEntries.add(new SkillMenuItem(tier3Id, "30", potionName + " v3 - Ranarr weed & " + secondary));
+		skillMenuEntries.add(new SkillMenuItem(tier4Id, "50", potionName + " v4 - Avantoe & " + secondary));
+		skillMenuEntries.add(new SkillMenuItem(tier5Id, "66", potionName + " v5 - Cadantine & " + secondary));
 	}
 
 	private void addAmmoMouldGuide(String name, int baseLevel, int arrowheadsId, int arrowId, int dartsId, int knivesId) {

@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 GUIDE = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "interfaces" / "misc" / "SkillGuideInterface.java"
 CLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
+CLIENT_ITEMS = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "client" / "entityhandling" / "EntityHandler.java"
 
 
 def fail(message: str) -> None:
@@ -23,6 +24,7 @@ def forbid(text: str, needle: str, description: str) -> None:
 def main() -> None:
     guide = GUIDE.read_text()
     client = CLIENT.read_text()
+    client_items = CLIENT_ITEMS.read_text()
 
     require(guide, 'populateRangedGuide();', "ranged guide helper")
     require(guide, 'addRangedBowGuide("Blood", 70, 2130, 2129);', "blood bow ranged requirement")
@@ -85,8 +87,8 @@ def main() -> None:
 
     require(guide, 'addAmmoMouldGuide("Tin", 1, 2004, 2039, 2043, 1996);', "tin ammo crafting guide")
     require(guide, 'addAmmoMouldGuide("Rune", 70, 674, 646, 1070, 1080);', "rune ammo crafting guide")
-    require(guide, 'addSmithingTier("Tin", 1, 1995, 1997, 1998, 1999, 2000, 2001, 1987, 2002, 2003, 2207, -1, 1959, 1960, 1961, 2224, 1962, 1963, 1964);', "tin paladin shield smithing guide")
-    require(guide, 'addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 98, 1092, 2194, 112, 1993, 1994, 403, 404, 402, 401);', "rune paladin shield smithing guide")
+    require(guide, 'addSmithingTier("Tin", 1, 1995, 1997, 1998, 1999, 2000, 2001, 1987, 2002, 2003, 3181, 2207, -1, 1959, 1960, 1961, 2224, 1962, 1963, 1964);', "tin paladin shield smithing guide")
+    require(guide, 'addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 3190, 98, 1092, 2194, 112, 1993, 1994, 403, 404, 402, 401);', "rune paladin shield smithing guide")
     require(guide, 'new SkillMenuItem(1958, "62", "2 Orichalcum bars - 1 mithril, 1 adamantite, and 5 coal")', "orichalcum smelting guide")
     forbid(guide, "Orichalcum bars - mithril, adamantite, silver", "orichalcum silver smelting requirement")
     forbid(guide, "Orichalcum bars - 1 mithril, 1 adamantite, 1 gold", "orichalcum gold smelting requirement")
@@ -113,6 +115,31 @@ def main() -> None:
     require(guide, 'addAltarGuide(46, 30, "Cosmic Rune", "104,3556");', "cosmic altar coordinate guide")
     require(guide, 'addAltarGuide(825, 62, "Soul Rune", "988,176");', "soul altar coordinate guide")
     require(guide, 'addAltarGuide(619, 70, "Blood Rune", "247,102");', "blood altar coordinate guide")
+
+    require(guide, 'addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, "Potion of Brawn", "limpwurt root");', "brawn potion family guide")
+    require(guide, 'addHerblawPotionFamilyGuide(489, 492, 495, 498, 566, "Potion of Deftness", "fish oil");', "deftness potion family guide")
+    require(guide, 'addHerblawPotionFamilyGuide(569, 963, 1411, 1414, 1468, "Potion of Insight", "eye of newt");', "insight potion family guide")
+    require(guide, 'new SkillMenuItem(1471, "22", "Stat restore - Harralander & ground unicorn horn")', "stat restore guide")
+    require(guide, 'new SkillMenuItem(1474, "8", "Antidote - Marrentill & red spiders\' eggs")', "antidote guide")
+    require(guide, 'new SkillMenuItem(572, "23", "Weapon poison - Harralander & ground blue dragon scale")', "weapon poison guide")
+    require(guide, 'new SkillMenuItem(1477, "45", "Skiller\'s Brew - Irit leaf & snape grass")', "skiller brew guide")
+    require(guide, 'new SkillMenuItem(3192, "45", "Warrior\'s Brew - Irit leaf & white berries")', "warrior brew guide")
+    require(guide, 'new SkillMenuItem(221, "72", "Strong Skiller\'s Brew - Dwarf weed & 5 snape grass")', "strong skiller brew guide")
+    require(guide, 'new SkillMenuItem(3195, "72", "Strong Warrior\'s Brew - Dwarf weed & 5 white berries")', "strong warrior brew guide")
+    require(guide, 'Brawn boosts Melee, Hits, Mining, Smithing, Woodcutting', "brawn effect guide")
+    require(guide, 'Deftness boosts Ranged, Agility, Fishing, Crafting, Pickpocketing', "deftness effect guide")
+    require(guide, 'Insight boosts Magic, Enchanting, Summoning, Cooking, Prayer', "insight effect guide")
+    require(guide, 'Tiered potions go v1 to v5: 5%, 8%, 11%, 14%, 17%', "tier potency guide")
+    require(guide, 'Skiller\'s Brew gives non-combat XP: 20% for 30 minutes', "skiller brew effect guide")
+    require(guide, 'Strong Warrior\'s Brew gives combat XP: 40% for 60 minutes', "strong warrior brew effect guide")
+    require(client_items, 'new ItemDef("Potion of Brawn v1"', "client brawn item name")
+    require(client_items, 'new ItemDef("Potion of Deftness v5"', "client deftness v5 item name")
+    require(client_items, 'new ItemDef("Potion of Insight v4"', "client insight v4 item name")
+    require(client_items, 'new ItemDef("Stat restore"', "client stat restore item name")
+    require(client_items, 'new ItemDef("Antidote"', "client antidote item name")
+    require(client_items, 'new ItemDef("Skiller\'s Brew"', "client skiller brew item name")
+    require(client_items, 'new ItemDef("Warrior\'s Brew"', "client warrior brew item name")
+    require(client_items, 'new ItemDef("Strong Warrior\'s Brew"', "client strong warrior brew item name")
 
     require(client, 'skillGuideChosenTabs.add("MyWorld");', "retired fletching guide tab replacement")
     require(client, 'skillGuideChosenTabs.add("Ammo");', "crafting ammo tab")
@@ -174,6 +201,18 @@ def main() -> None:
     forbid(guide, 'All throwing knives', "old ranged thrown summary")
     forbid(guide, 'Thick skin - Increases your defense by 5%', "old prayer guide")
     forbid(guide, 'Staff of Air', "legacy staff wording")
+    forbid(guide, 'Potion of Regeneration', "old regeneration potion guide")
+    forbid(guide, 'Potion of Speed', "old speed potion guide")
+    forbid(guide, 'Potion of Luck', "old luck potion guide")
+    forbid(guide, 'Potion of Notation', "old notation potion guide")
+    forbid(guide, 'Potion of Magic Resistance', "old magic resistance potion guide")
+    forbid(guide, 'Potion of Melee Resistance', "old melee resistance potion guide")
+    forbid(guide, 'Potion of Ranged Resistance', "old ranged resistance potion guide")
+    forbid(guide, 'Enchanting potion - Marrentill & 10 fish oil', "old enchanting potion guide")
+    forbid(client_items, 'new ItemDef("Potion of Zamorak"', "old client potion of zamorak item name")
+    forbid(client_items, 'new ItemDef("Potion of Saradomin"', "old client potion of saradomin item name")
+    forbid(client_items, 'new ItemDef("Runecraft Potion"', "old client runecraft potion item name")
+    forbid(client_items, 'new ItemDef("Super Runecraft Potion"', "old client super runecraft potion item name")
     forbid(guide, 'Gold Crown', "retired crown guide")
     forbid(guide, 'Battlestaves', "retired battlestaff guide")
     forbid(guide, 'Small Fishing Net', "old fishing net guide")

@@ -15,6 +15,8 @@ PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/pro
 RANGE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java"
 THROWING_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java"
 PLAYER_POISON_SCRIPT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/PlayerPoisonScript.java"
+INV_ITEM_POISONING_PATH = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/InvItemPoisoning.java"
+ITEM_HERB_SECOND_PATH = ROOT / "server/conf/server/defs/extras/ItemHerbSecond.xml"
 
 
 def fail(message: str) -> None:
@@ -44,6 +46,14 @@ def main() -> None:
     expect_contains(POISON_PROC_CHANCE_PATH, "ARMOR_FLOOR_PERCENT = 10", "armor poison proc floor")
     expect_contains(POISON_PROC_CHANCE_PATH, "FAILURE_RECHARGE_ATTEMPTS = 5", "poison proc failure recharge")
     expect_contains(POISON_EVENT_PATH, "TICK_DELAY = 8", "poison tick interval")
+
+    expect_contains(ITEM_HERB_SECOND_PATH, "<secondID>472</secondID>", "weapon poison ground blue dragon scale ingredient")
+    expect_contains(ITEM_HERB_SECOND_PATH, "<unfinishedID>457</unfinishedID>", "weapon poison unfinished Harralander potion")
+    expect_contains(ITEM_HERB_SECOND_PATH, "<potionID>572</potionID>", "weapon poison potion output")
+    expect_contains(INV_ITEM_POISONING_PATH, "ItemId.WEAPON_POISON.id()", "weapon poison item-use trigger")
+    expect_contains(INV_ITEM_POISONING_PATH, 'String poisonedVersion = "Poisoned " + name;', "poisoned weapon lookup")
+    expect_contains(INV_ITEM_POISONING_PATH, 'String poisonedVersion2 = "Poison " + name;', "poisoned ammunition lookup")
+    expect_contains(INV_ITEM_POISONING_PATH, 'player.getCarriedItems().remove(new Item(ItemId.WEAPON_POISON.id()))', "weapon poison consumption")
 
     expect_contains(MOB_PATH, "private int poisonMaxPower = 0;", "mob poison max state")
     expect_contains(MOB_PATH, "applyPoison(final int appliedPoisonPower, final int maxPoisonPower)", "shared poison application")

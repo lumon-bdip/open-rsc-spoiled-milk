@@ -2415,12 +2415,18 @@ public enum ItemId {
 	ADAMANTITE_SCYTHE(3188),
 	ORICHALCUM_SCYTHE(3189),
 	RUNE_SCYTHE(3190),
-	HOOD(3191);
+	HOOD(3191),
+	FULL_WARRIORS_BREW(3192),
+	TWO_WARRIORS_BREW(3193),
+	ONE_WARRIORS_BREW(3194),
+	FULL_STRONG_WARRIORS_BREW(3195),
+	TWO_STRONG_WARRIORS_BREW(3196),
+	ONE_STRONG_WARRIORS_BREW(3197);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3192;
+	public static final int maxCustom = 3198;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

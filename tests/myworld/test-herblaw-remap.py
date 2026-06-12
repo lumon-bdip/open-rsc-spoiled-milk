@@ -41,16 +41,26 @@ def main() -> None:
     }
 
     expected_recipes = {
-        (454, 473): 566,
-        (455, 270): 474,
-        (456, 469): 477,
+        (454, 220): 474,
+        (456, 220): 477,
+        (458, 220): 480,
+        (460, 220): 483,
+        (462, 220): 486,
+        (454, 1410): 489,
+        (456, 1410): 492,
+        (458, 1410): 495,
+        (460, 1410): 498,
+        (462, 1410): 566,
+        (454, 270): 569,
+        (456, 270): 963,
+        (458, 270): 1411,
+        (460, 270): 1414,
+        (462, 270): 1468,
+        (457, 473): 1471,
+        (455, 219): 1474,
         (457, 472): 572,
-        (458, 471): 480,
-        (459, 219): 486,
-        (460, 220): 489,
-        (461, 936): 492,
-        (462, 501): 483,
-        (463, 270): 495,
+        (459, 469): 1477,
+        (459, 471): 3192,
     }
     for pair, potion_id in expected_recipes.items():
         if recipes.get(pair) != potion_id:
@@ -60,20 +70,27 @@ def main() -> None:
     custom_defs = load_item_names(ITEM_DEFS_CUSTOM)
 
     expected_names = {
-        474: "Potion of Insight",
-        477: "Potion of Regeneration",
-        480: "Potion of Speed",
-        483: "Potion of Luck",
-        486: "Potion of Magic Resistance",
-        489: "Potion of Melee Resistance",
-        492: "Potion of Ranged Resistance",
-        495: "Potion of Notation",
-        566: "Cure poison Potion",
-        569: "Super Potion of Insight",
-        963: "Super Potion of Regeneration",
-        1468: "Super Potion of Magic Resistance",
-        1471: "Super Potion of Melee Resistance",
-        1474: "Super Potion of Ranged Resistance",
+        221: "Strong Skiller's Brew",
+        474: "Potion of Brawn v1",
+        477: "Potion of Brawn v2",
+        480: "Potion of Brawn v3",
+        483: "Potion of Brawn v4",
+        486: "Potion of Brawn v5",
+        489: "Potion of Deftness v1",
+        492: "Potion of Deftness v2",
+        495: "Potion of Deftness v3",
+        498: "Potion of Deftness v4",
+        566: "Potion of Deftness v5",
+        569: "Potion of Insight v1",
+        963: "Potion of Insight v2",
+        1411: "Potion of Insight v3",
+        1414: "Potion of Insight v4",
+        1468: "Potion of Insight v5",
+        1471: "Stat restore",
+        1474: "Antidote",
+        1477: "Skiller's Brew",
+        3192: "Warrior's Brew",
+        3195: "Strong Warrior's Brew",
     }
     for item_id, expected_name in expected_names.items():
         defs = custom_defs if item_id >= 1400 else item_defs
@@ -81,20 +98,16 @@ def main() -> None:
         if actual is None or actual[0] != expected_name:
             fail(f"Expected item {item_id} to be named '{expected_name}'")
 
-    retired = custom_defs.get(1477)
-    if retired is None or retired[0] != "Retired potion" or retired[2] != "":
-        fail("Super magic potion IDs should be retired and non-drinkable")
-
     herblaw_text = HERBLAW.read_text(encoding="utf-8")
     for snippet in (
-        "secondaryId == ItemId.FISH_OIL.id()",
-        "secondaryId == ItemId.HALF_COCONUT.id()",
-        "secondaryId == ItemId.WINE_OF_SARADOMIN.id()",
-        "secondaryId == ItemId.SLICED_DRAGONFRUIT.id()",
-        "secondaryId == ItemId.GROUND_UNICORN_HORN.id()",
+        "secondaryId == ItemId.SNAPE_GRASS.id()",
+        "secondaryId == ItemId.WHITE_BERRIES.id()",
+        "requiredCount = 5",
+        "resultId = ItemId.FULL_STRENGTH_POTION.id()",
+        "resultId = ItemId.FULL_STRONG_WARRIORS_BREW.id()",
     ):
         if snippet not in herblaw_text:
-            fail(f"Herblaw custom super recipe missing: {snippet}")
+            fail(f"Herblaw strong brew recipe missing: {snippet}")
 
     print("PASS: herblaw recipe and item remap validated")
 

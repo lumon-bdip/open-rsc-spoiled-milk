@@ -278,17 +278,12 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 			carriedItems.getInventory().add(new Item(ItemId.GUJUO_POTION.id()));
 		}
 
-		// MyWorld super potion line
-		boolean fishOil = itemID == ItemId.FISH_OIL.id() || usedWithID == ItemId.FISH_OIL.id();
-		boolean saraWine = itemID == ItemId.WINE_OF_SARADOMIN.id() || usedWithID == ItemId.WINE_OF_SARADOMIN.id();
-		boolean dragonfruit = itemID == ItemId.SLICED_DRAGONFRUIT.id() || usedWithID == ItemId.SLICED_DRAGONFRUIT.id();
-		boolean coconut = itemID == ItemId.HALF_COCONUT.id() || usedWithID == ItemId.HALF_COCONUT.id();
-		boolean unicornHorn = itemID == ItemId.GROUND_UNICORN_HORN.id() || usedWithID == ItemId.GROUND_UNICORN_HORN.id();
-		boolean torstol = itemID == ItemId.UNFINISHED_TORSTOL_POTION.id() || usedWithID == ItemId.UNFINISHED_TORSTOL_POTION.id();
-		if (torstol && (fishOil || saraWine || dragonfruit || coconut || unicornHorn)) {
-			if (itemID == ItemId.FISH_OIL.id() || itemID == ItemId.WINE_OF_SARADOMIN.id()
-				|| itemID == ItemId.SLICED_DRAGONFRUIT.id() || itemID == ItemId.HALF_COCONUT.id()
-				|| itemID == ItemId.GROUND_UNICORN_HORN.id()) {
+		// MyWorld strong brew line
+		boolean snapeGrass = itemID == ItemId.SNAPE_GRASS.id() || usedWithID == ItemId.SNAPE_GRASS.id();
+		boolean whiteBerries = itemID == ItemId.WHITE_BERRIES.id() || usedWithID == ItemId.WHITE_BERRIES.id();
+		boolean dwarfWeed = itemID == ItemId.UNFINISHED_DWARFWEED_POTION.id() || usedWithID == ItemId.UNFINISHED_DWARFWEED_POTION.id();
+		if (dwarfWeed && (snapeGrass || whiteBerries)) {
+			if (itemID == ItemId.SNAPE_GRASS.id() || itemID == ItemId.WHITE_BERRIES.id()) {
 				doCustomHerbSecond(player, usedWithID, itemID);
 			} else {
 				doCustomHerbSecond(player, itemID, usedWithID);
@@ -332,14 +327,11 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 			return true;
 		}
 
-		// MyWorld super potion line
-		boolean fishOil = itemID == ItemId.FISH_OIL.id() || usedWithID == ItemId.FISH_OIL.id();
-		boolean saraWine = itemID == ItemId.WINE_OF_SARADOMIN.id() || usedWithID == ItemId.WINE_OF_SARADOMIN.id();
-		boolean dragonfruit = itemID == ItemId.SLICED_DRAGONFRUIT.id() || usedWithID == ItemId.SLICED_DRAGONFRUIT.id();
-		boolean coconut = itemID == ItemId.HALF_COCONUT.id() || usedWithID == ItemId.HALF_COCONUT.id();
-		boolean unicornHorn = itemID == ItemId.GROUND_UNICORN_HORN.id() || usedWithID == ItemId.GROUND_UNICORN_HORN.id();
-		boolean torstol = itemID == ItemId.UNFINISHED_TORSTOL_POTION.id() || usedWithID == ItemId.UNFINISHED_TORSTOL_POTION.id();
-		if (torstol && (fishOil || saraWine || dragonfruit || coconut || unicornHorn)) return true;
+		// MyWorld strong brew line
+		boolean snapeGrass = itemID == ItemId.SNAPE_GRASS.id() || usedWithID == ItemId.SNAPE_GRASS.id();
+		boolean whiteBerries = itemID == ItemId.WHITE_BERRIES.id() || usedWithID == ItemId.WHITE_BERRIES.id();
+		boolean dwarfWeed = itemID == ItemId.UNFINISHED_DWARFWEED_POTION.id() || usedWithID == ItemId.UNFINISHED_DWARFWEED_POTION.id();
+		if (dwarfWeed && (snapeGrass || whiteBerries)) return true;
 
 		return false;
 	}
@@ -549,27 +541,17 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 		int xp = 0;
 		int resultId = -1;
 		int requiredCount = 1;
-		if (unfinishedPotId == ItemId.UNFINISHED_TORSTOL_POTION.id()) {
-			if (secondaryId == ItemId.FISH_OIL.id()) {
+		if (unfinishedPotId == ItemId.UNFINISHED_DWARFWEED_POTION.id()) {
+			if (secondaryId == ItemId.SNAPE_GRASS.id()) {
 				xp = 720;
-				reqLevel = 70;
-				resultId = ItemId.FULL_POISON_ANTIDOTE.id();
-			} else if (secondaryId == ItemId.HALF_COCONUT.id()) {
-				xp = 740;
 				reqLevel = 72;
-				resultId = ItemId.FULL_POTION_OF_ZAMORAK.id();
-			} else if (secondaryId == ItemId.WINE_OF_SARADOMIN.id()) {
-				xp = 760;
-				reqLevel = 74;
-				resultId = ItemId.FULL_MAGIC_POTION.id();
-			} else if (secondaryId == ItemId.SLICED_DRAGONFRUIT.id()) {
-				xp = 780;
-				reqLevel = 76;
-				resultId = ItemId.FULL_POTION_OF_SARADOMIN.id();
-			} else if (secondaryId == ItemId.GROUND_UNICORN_HORN.id()) {
-				xp = 800;
-				reqLevel = 78;
-				resultId = ItemId.FULL_SUPER_RANGING_POTION.id();
+				requiredCount = 5;
+				resultId = ItemId.FULL_STRENGTH_POTION.id();
+			} else if (secondaryId == ItemId.WHITE_BERRIES.id()) {
+				xp = 720;
+				reqLevel = 72;
+				requiredCount = 5;
+				resultId = ItemId.FULL_STRONG_WARRIORS_BREW.id();
 			}
 		}
 
@@ -584,8 +566,10 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 			return;
 		}
 
-		if (player.getCarriedItems().getInventory().countId(secondaryId, Optional.of(false)) < requiredCount && secondaryId == ItemId.FISH_OIL.id()) {
-			player.message("You don't have enough Fish oil to make this potion");
+		if (player.getCarriedItems().getInventory().countId(secondaryId, Optional.of(false)) < requiredCount) {
+			player.message("You don't have enough "
+				+ player.getWorld().getServer().getEntityHandler().getItemDef(secondaryId).getName()
+				+ " to make this potion");
 			return;
 		}
 

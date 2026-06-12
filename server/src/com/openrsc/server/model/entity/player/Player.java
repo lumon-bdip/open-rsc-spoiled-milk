@@ -77,6 +77,15 @@ public final class Player extends Mob {
 	 * The asynchronous logger.
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final int[] POTION_BRAWN_SKILLS = {
+		Skill.MELEE.id(), Skill.MINING.id(), Skill.SMITHING.id(), Skill.WOODCUTTING.id(), Skill.HITS.id()
+	};
+	private static final int[] POTION_DEFTNESS_SKILLS = {
+		Skill.RANGED.id(), Skill.THIEVING.id(), Skill.CRAFTING.id(), Skill.AGILITY.id(), Skill.FISHING.id()
+	};
+	private static final int[] POTION_INSIGHT_SKILLS = {
+		Skill.MAGIC.id(), Skill.RUNECRAFT.id(), Skill.SUMMONING.id(), Skill.COOKING.id(), Skill.PRAYER.id()
+	};
 
 	// activity indicator for kitten to cat growth
 	// 100 trigger up a Kitten to cat event
@@ -1754,6 +1763,115 @@ public final class Player extends Mob {
 		return getTimedEffectValue("potion_ranged_resist_percent", "potion_ranged_resist_expires_at", 0);
 	}
 
+	public void activatePotionOfBrawn(final int bonusPercent, final long durationMs) {
+		activateHerblawSkillPotion("brawn", POTION_BRAWN_SKILLS, bonusPercent, durationMs);
+	}
+
+	public void activatePotionOfDeftness(final int bonusPercent, final long durationMs) {
+		activateHerblawSkillPotion("deftness", POTION_DEFTNESS_SKILLS, bonusPercent, durationMs);
+	}
+
+	public void activatePotionOfInsightSkills(final int bonusPercent, final long durationMs) {
+		activateHerblawSkillPotion("insight_skills", POTION_INSIGHT_SKILLS, bonusPercent, durationMs);
+	}
+
+	public void activateSkillerBrew(final int bonusPercent, final long durationMs) {
+		activateXpBrew("skiller", bonusPercent, durationMs);
+	}
+
+	public void activateWarriorBrew(final int bonusPercent, final long durationMs) {
+		activateXpBrew("warrior", bonusPercent, durationMs);
+	}
+
+	public int getPotionXpBonusPercent(final int skill) {
+		final int skillerBonus = isCombatXpSkill(skill) ? 0 : getXpBrewBonusPercent("skiller");
+		final int warriorBonus = isCombatXpSkill(skill) ? getXpBrewBonusPercent("warrior") : 0;
+		return Math.max(skillerBonus, warriorBonus);
+	}
+
+	public void setStatReductionProtection(final long durationMs) {
+		setAttribute("stat_reduction_protection_expires_at", System.currentTimeMillis() + Math.max(0L, applyPotionDurationBonus(durationMs)));
+	}
+
+	public boolean hasStatReductionProtection() {
+		return isTimedEffectActive("stat_reduction_protection_expires_at");
+	}
+
+	public void syncHerblawSkillPotionBonuses() {
+		syncHerblawSkillPotionFamily("brawn", POTION_BRAWN_SKILLS);
+		syncHerblawSkillPotionFamily("deftness", POTION_DEFTNESS_SKILLS);
+		syncHerblawSkillPotionFamily("insight_skills", POTION_INSIGHT_SKILLS);
+	}
+
+	private void activateHerblawSkillPotion(final String key, final int[] skills, final int bonusPercent, final long durationMs) {
+		setTimedEffectValue("potion_" + key + "_percent", "potion_" + key + "_expires_at", bonusPercent, applyPotionDurationBonus(durationMs));
+		syncHerblawSkillPotionFamily(key, skills);
+	}
+
+	private void syncHerblawSkillPotionFamily(final String key, final int[] skills) {
+		final String percentKey = "potion_" + key + "_percent";
+		final String expiresKey = "potion_" + key + "_expires_at";
+		final boolean active = isTimedEffectActive(expiresKey);
+		final int percent = active ? Math.max(0, getAttribute(percentKey, 0)) : 0;
+		for (final int skill : skills) {
+			final String bonusKey = "potion_" + key + "_bonus_" + skill;
+			final int previousBonus = getAttribute(bonusKey, 0);
+			final int nextBonus = percent <= 0 ? 0 : Math.max(0, (int) Math.floor(getSkills().getMaxStat(skill) * (percent / 100.0D)));
+			if (previousBonus != nextBonus) {
+				getSkills().setLevel(skill, Math.max(0, getSkills().getLevel(skill) - previousBonus + nextBonus), true, true);
+				setAttribute(bonusKey, nextBonus);
+			}
+		}
+		if (!active) {
+			removeAttribute(percentKey);
+			removeAttribute(expiresKey);
+		}
+	}
+
+	private int getHerblawSkillPotionBonus(final int skill) {
+		int bonus = 0;
+		for (final String key : new String[]{"brawn", "deftness", "insight_skills"}) {
+			bonus += getAttribute("potion_" + key + "_bonus_" + skill, 0);
+		}
+		return bonus;
+	}
+
+	private void activateXpBrew(final String key, final int bonusPercent, final long durationMs) {
+		getCache().store("potion_" + key + "_xp_bonus", Math.max(0, bonusPercent));
+		getCache().store("potion_" + key + "_xp_remaining_ms", Math.max(0L, applyPotionDurationBonus(durationMs)));
+		setAttribute("potion_" + key + "_xp_last_tick", System.currentTimeMillis());
+	}
+
+	private int getXpBrewBonusPercent(final String key) {
+		final String bonusKey = "potion_" + key + "_xp_bonus";
+		final String remainingKey = "potion_" + key + "_xp_remaining_ms";
+		if (!getCache().hasKey(bonusKey) || !getCache().hasKey(remainingKey)) {
+			return 0;
+		}
+		final long now = System.currentTimeMillis();
+		final long lastTick = getAttribute("potion_" + key + "_xp_last_tick", now);
+		final long elapsed = Math.max(0L, now - lastTick);
+		final long remaining = Math.max(0L, getCache().getLong(remainingKey) - elapsed);
+		setAttribute("potion_" + key + "_xp_last_tick", now);
+		getCache().store(remainingKey, remaining);
+		if (remaining <= 0L) {
+			getCache().remove(bonusKey);
+			getCache().remove(remainingKey);
+			removeAttribute("potion_" + key + "_xp_last_tick");
+			return 0;
+		}
+		return Math.max(0, getCache().getInt(bonusKey));
+	}
+
+	private boolean isCombatXpSkill(final int skill) {
+		return skill == Skill.MELEE.id()
+			|| skill == Skill.MAGIC.id()
+			|| skill == Skill.RANGED.id()
+			|| skill == Skill.PRAYER.id()
+			|| skill == Skill.HITS.id()
+			|| skill == Skill.SUMMONING.id();
+	}
+
 	private int applyPercentDamageReduction(final int damage, final int reductionPercent) {
 		if (damage <= 0 || reductionPercent <= 0) {
 			return damage;
@@ -2005,23 +2123,27 @@ public final class Player extends Mob {
 	}
 
 	public int getEquipmentAdjustedNormalLevel(final int skill) {
+		syncHerblawSkillPotionBonuses();
+		final int potionBonus = getHerblawSkillPotionBonus(skill);
 		if (skill == Skill.MELEE.id()) {
-			return getSkills().getMaxStat(skill) + getAttribute("giant_might_melee_bonus", 0);
+			return getSkills().getMaxStat(skill) + getAttribute("giant_might_melee_bonus", 0) + potionBonus;
 		}
 		if (skill == Skill.RANGED.id()) {
-			return getSkills().getMaxStat(skill) + getAttribute("giant_might_ranged_bonus", 0);
+			return getSkills().getMaxStat(skill) + getAttribute("giant_might_ranged_bonus", 0) + potionBonus;
 		}
-		return getSkills().getMaxStat(skill);
+		return getSkills().getMaxStat(skill) + potionBonus;
 	}
 
 	public int getPersistedSkillLevel(final int skill) {
+		syncHerblawSkillPotionBonuses();
+		final int potionBonus = getHerblawSkillPotionBonus(skill);
 		if (skill == Skill.MELEE.id()) {
-			return Math.max(0, getSkills().getLevel(skill) - getAttribute("giant_might_melee_bonus", 0));
+			return Math.max(0, getSkills().getLevel(skill) - getAttribute("giant_might_melee_bonus", 0) - potionBonus);
 		}
 		if (skill == Skill.RANGED.id()) {
-			return Math.max(0, getSkills().getLevel(skill) - getAttribute("giant_might_ranged_bonus", 0));
+			return Math.max(0, getSkills().getLevel(skill) - getAttribute("giant_might_ranged_bonus", 0) - potionBonus);
 		}
-		return getSkills().getLevel(skill);
+		return Math.max(0, getSkills().getLevel(skill) - potionBonus);
 	}
 
 	public void applyElementalGiantMightDebuff(final Mob target) {
@@ -2542,9 +2664,9 @@ public final class Player extends Mob {
 			if (prayerSkillingBonusPercent > 0) {
 				skillXP = (int) Math.ceil(skillXP * (100.0D + prayerSkillingBonusPercent) / 100.0D);
 			}
-			final int insightBonusPercent = getPotionOfInsightBonusPercent();
-			if (insightBonusPercent > 0) {
-				skillXP = (int) Math.ceil(skillXP * (100.0D + insightBonusPercent) / 100.0D);
+			final int potionXpBonusPercent = getPotionXpBonusPercent(skill);
+			if (potionXpBonusPercent > 0) {
+				skillXP = (int) Math.ceil(skillXP * (100.0D + potionXpBonusPercent) / 100.0D);
 			}
 		}
 

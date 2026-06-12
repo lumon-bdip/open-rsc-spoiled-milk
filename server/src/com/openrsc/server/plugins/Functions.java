@@ -406,6 +406,10 @@ public class Functions {
 	 * @param percent Percentage of current skill level to add
 	 */
 	public static void substat(final Player player, final int statId, final int constant, final int percent) {
+		if (player.hasStatReductionProtection() && statId != Skill.HITS.id()) {
+			player.message("Your stat restore protects you from the reduction.");
+			return;
+		}
 		final int currentLevel = player.getSkills().getLevel(statId);
 		final int damage = constant + (int)((currentLevel * percent) / 100.0);
 		if (statId == Skill.HITS.id()) {
