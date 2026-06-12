@@ -49,6 +49,40 @@ def main():
     require("public static boolean playerNotAllowedOnEntrana(Player player)" in restrictions, "Restrictions should expose reusable player check")
     require("Equipment.EquipmentSlot.SLOT_NECK" in restrictions, "Restrictions should preserve cape and neck exception")
     require("Skill.HARVESTING.id()" in restrictions, "Restrictions should keep custom gathering tools barred")
+    for item in (
+        "SCYTHE",
+        "TIN_SCYTHE",
+        "COPPER_SCYTHE",
+        "BRONZE_SCYTHE",
+        "IRON_SCYTHE",
+        "STEEL_SCYTHE",
+        "MITHRIL_SCYTHE",
+        "TITAN_STEEL_SCYTHE",
+        "ADAMANTITE_SCYTHE",
+        "ORICHALCUM_SCYTHE",
+        "RUNE_SCYTHE",
+        "TIN_SHURIKEN",
+        "COPPER_SHURIKEN",
+        "BRONZE_SHURIKEN",
+        "IRON_SHURIKEN",
+        "STEEL_SHURIKEN",
+        "MITHRIL_SHURIKEN",
+        "TITAN_STEEL_SHURIKEN",
+        "ADAMANTITE_SHURIKEN",
+        "ORICHALCUM_SHURIKEN",
+        "RUNE_SHURIKEN",
+        "POISONED_TIN_SHURIKEN",
+        "POISONED_COPPER_SHURIKEN",
+        "POISONED_BRONZE_SHURIKEN",
+        "POISONED_IRON_SHURIKEN",
+        "POISONED_STEEL_SHURIKEN",
+        "POISONED_MITHRIL_SHURIKEN",
+        "POISONED_TITAN_STEEL_SHURIKEN",
+        "POISONED_ADAMANTITE_SHURIKEN",
+        "POISONED_ORICHALCUM_SHURIKEN",
+        "POISONED_RUNE_SHURIKEN",
+    ):
+        require(f"ItemId.{item}.id()" in restrictions, f"Entrana restrictions should block {item}")
 
     monk = MONK.read_text(encoding="utf-8")
     require("EntranaRestrictions.playerNotAllowedOnEntrana(player)" in monk, "Monk should use shared Entrana restrictions")

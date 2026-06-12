@@ -42,24 +42,24 @@ public final class WaynesChains extends AbstractShop {
 	public Shop getShop(World world) {
 		if(shop == null) {
 			shop = new Shop(false, 25000, 100, 65, 1,
-				new Item(ItemId.TIN_PLATE_MAIL_BODY.id(), 1),
-				new Item(ItemId.TIN_PLATE_MAIL_LEGS.id(), 1),
-				new Item(ItemId.TIN_LARGE_HELMET.id(), 1),
-				new Item(ItemId.COPPER_PLATE_MAIL_BODY.id(), 1),
-				new Item(ItemId.COPPER_PLATE_MAIL_LEGS.id(), 1),
-				new Item(ItemId.COPPER_LARGE_HELMET.id(), 1),
-				new Item(ItemId.BRONZE_PLATE_MAIL_BODY.id(), 1),
-				new Item(ItemId.BRONZE_PLATE_MAIL_LEGS.id(), 1),
-				new Item(ItemId.LARGE_BRONZE_HELMET.id(), 1),
-				new Item(ItemId.IRON_PLATE_MAIL_BODY.id(), 1),
-				new Item(ItemId.IRON_PLATE_MAIL_LEGS.id(), 1),
-				new Item(ItemId.LARGE_IRON_HELMET.id(), 1),
-				new Item(ItemId.STEEL_PLATE_MAIL_BODY.id(), 1),
-				new Item(ItemId.STEEL_PLATE_MAIL_LEGS.id(), 1),
-				new Item(ItemId.LARGE_STEEL_HELMET.id(), 1),
-				new Item(ItemId.MITHRIL_PLATE_MAIL_BODY.id(), 1),
-				new Item(ItemId.MITHRIL_PLATE_MAIL_LEGS.id(), 1),
-				new Item(ItemId.LARGE_MITHRIL_HELMET.id(), 1));
+				new Item(ItemId.TIN_THROWING_DART.id(), 1000),
+				new Item(ItemId.COPPER_THROWING_DART.id(), 1000),
+				new Item(ItemId.BRONZE_THROWING_DART.id(), 1000),
+				new Item(ItemId.IRON_THROWING_DART.id(), 1000),
+				new Item(ItemId.STEEL_THROWING_DART.id(), 1000),
+				new Item(ItemId.MITHRIL_THROWING_DART.id(), 1000),
+				new Item(ItemId.TIN_THROWING_KNIFE.id(), 1000),
+				new Item(ItemId.COPPER_THROWING_KNIFE.id(), 1000),
+				new Item(ItemId.BRONZE_THROWING_KNIFE.id(), 1000),
+				new Item(ItemId.IRON_THROWING_KNIFE.id(), 1000),
+				new Item(ItemId.STEEL_THROWING_KNIFE.id(), 1000),
+				new Item(ItemId.MITHRIL_THROWING_KNIFE.id(), 1000),
+				new Item(ItemId.TIN_SHURIKEN.id(), 1000),
+				new Item(ItemId.COPPER_SHURIKEN.id(), 1000),
+				new Item(ItemId.BRONZE_SHURIKEN.id(), 1000),
+				new Item(ItemId.IRON_SHURIKEN.id(), 1000),
+				new Item(ItemId.STEEL_SHURIKEN.id(), 1000),
+				new Item(ItemId.MITHRIL_SHURIKEN.id(), 1000));
 		}
 
 		return shop;
@@ -68,8 +68,8 @@ public final class WaynesChains extends AbstractShop {
 	@Override
 	public void onTalkNpc(final Player player, final Npc n) {
 		if (n.getID() == NpcId.WAYNE.id()) {
-			npcsay(player, n, "Welcome to Wayne's armour",
-				"Do you wanna buy or sell some armour?");
+			npcsay(player, n, "I've decided to pivot my business to Throwing weapons!",
+				"Care to try some darts or shuriken?");
 
 			List<String> options = new ArrayList<>();
 			options.add("Yes please");
@@ -83,8 +83,8 @@ public final class WaynesChains extends AbstractShop {
 				optionsArray);
 			if (option == 0) {
 				say(player, n, "Yes Please");
-				player.setAccessingShop(shop);
-				ActionSender.showShop(player, shop);
+				player.setAccessingShop(getShop(player.getWorld()));
+				ActionSender.showShop(player, getShop(player.getWorld()));
 			} else if (option == 1) {
 				say(player, n, "No thanks");
 			} else if (option == 2) {

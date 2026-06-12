@@ -15,9 +15,10 @@ import static com.openrsc.server.plugins.Functions.*;
 public final class FlynnMaces extends AbstractShop {
 
 	private final Shop shop = new Shop(false, 25000, 100, 60, 1,
-		new Item(ItemId.BRONZE_MACE.id(), 5), new Item(ItemId.IRON_MACE.id(), 4), new Item(ItemId.STEEL_MACE.id(), 4),
-		new Item(ItemId.MITHRIL_MACE.id(), 3), new Item(ItemId.ADAMANTITE_MACE.id(), 2),
-		new Item(ItemId.TITAN_STEEL_MACE.id(), 1), new Item(ItemId.ORICHALCUM_MACE.id(), 1));
+		new Item(ItemId.TIN_MACE.id(), 5), new Item(ItemId.COPPER_MACE.id(), 5), new Item(ItemId.BRONZE_MACE.id(), 5),
+		new Item(ItemId.IRON_MACE.id(), 4), new Item(ItemId.STEEL_MACE.id(), 4), new Item(ItemId.MITHRIL_MACE.id(), 3),
+		new Item(ItemId.TIN_KITE_SHIELD.id(), 3), new Item(ItemId.COPPER_KITE_SHIELD.id(), 3), new Item(ItemId.BRONZE_KITE_SHIELD.id(), 3),
+		new Item(ItemId.IRON_KITE_SHIELD.id(), 2), new Item(ItemId.STEEL_KITE_SHIELD.id(), 2), new Item(ItemId.MITHRIL_KITE_SHIELD.id(), 1));
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {

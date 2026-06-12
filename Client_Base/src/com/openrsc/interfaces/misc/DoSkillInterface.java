@@ -457,6 +457,8 @@ public final class DoSkillInterface {
 				return "Darts";
 			case 1996:
 				return "Throwing knives";
+			case 3208:
+				return "Shuriken";
 			case 1041:
 				return "Cannonballs";
 			default:

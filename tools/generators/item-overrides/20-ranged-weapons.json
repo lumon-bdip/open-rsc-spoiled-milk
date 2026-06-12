@@ -499,80 +499,90 @@
     },
     {
       "id": 3208,
-      "rangedOffense": 5,
-      "weaponSpeed": 5,
+      "rangedOffense": 2,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 1,
       "basePrice": 4
     },
     {
       "id": 3209,
-      "rangedOffense": 7,
-      "weaponSpeed": 5,
+      "rangedOffense": 3,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 8,
       "basePrice": 9
     },
     {
       "id": 3210,
-      "rangedOffense": 9,
-      "weaponSpeed": 5,
+      "rangedOffense": 4,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 15,
       "basePrice": 20
     },
     {
       "id": 3211,
-      "rangedOffense": 11,
-      "weaponSpeed": 5,
+      "rangedOffense": 5,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 22,
       "basePrice": 48
     },
     {
       "id": 3212,
-      "rangedOffense": 13,
-      "weaponSpeed": 5,
+      "rangedOffense": 6,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 30,
       "basePrice": 120
     },
     {
       "id": 3213,
-      "rangedOffense": 15,
-      "weaponSpeed": 5,
+      "rangedOffense": 7,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 38,
       "basePrice": 320
     },
     {
       "id": 3214,
-      "rangedOffense": 17,
-      "weaponSpeed": 5,
+      "rangedOffense": 8,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 46,
       "basePrice": 720
     },
     {
       "id": 3215,
-      "rangedOffense": 19,
-      "weaponSpeed": 5,
+      "rangedOffense": 9,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 54,
       "basePrice": 1520
     },
     {
       "id": 3216,
-      "rangedOffense": 21,
-      "weaponSpeed": 5,
+      "rangedOffense": 10,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 62,
       "basePrice": 2600
     },
     {
       "id": 3217,
-      "rangedOffense": 23,
-      "weaponSpeed": 5,
+      "rangedOffense": 11,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 70,
       "basePrice": 4000
@@ -736,71 +746,81 @@
     },
     {
       "id": 3218,
-      "rangedOffense": 5,
-      "weaponSpeed": 5,
+      "rangedOffense": 2,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 1
     },
     {
       "id": 3219,
-      "rangedOffense": 7,
-      "weaponSpeed": 5,
+      "rangedOffense": 3,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 8
     },
     {
       "id": 3220,
-      "rangedOffense": 9,
-      "weaponSpeed": 5,
+      "rangedOffense": 4,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 15
     },
     {
       "id": 3221,
-      "rangedOffense": 11,
-      "weaponSpeed": 5,
+      "rangedOffense": 5,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 22
     },
     {
       "id": 3222,
-      "rangedOffense": 13,
-      "weaponSpeed": 5,
+      "rangedOffense": 6,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 30
     },
     {
       "id": 3223,
-      "rangedOffense": 15,
-      "weaponSpeed": 5,
+      "rangedOffense": 7,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 38
     },
     {
       "id": 3224,
-      "rangedOffense": 17,
-      "weaponSpeed": 5,
+      "rangedOffense": 8,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 46
     },
     {
       "id": 3225,
-      "rangedOffense": 19,
-      "weaponSpeed": 5,
+      "rangedOffense": 9,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 54
     },
     {
       "id": 3226,
-      "rangedOffense": 21,
-      "weaponSpeed": 5,
+      "rangedOffense": 10,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 62
     },
     {
       "id": 3227,
-      "rangedOffense": 23,
-      "weaponSpeed": 5,
+      "rangedOffense": 11,
+      "weaponSpeed": 6,
+      "wearableID": 24,
       "requiredSkillID": 4,
       "requiredLevel": 70
     },

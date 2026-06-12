@@ -318,7 +318,8 @@ public final class EntranaRestrictions {
 		ItemId.GLOWING_DARK_DAGGER.id(),
 		 */
 
-		// Scythe was allowed.
+		// Scythe was allowed authentically, but MyWorld treats scythes as weapons.
+		ItemId.SCYTHE.id(),
 	};
 
 	private static final int[] blockedItemsOnlyOnCabbage = {
@@ -339,7 +340,46 @@ public final class EntranaRestrictions {
 		ItemId.POISON_DRAGON_BOLTS.id()
 	};
 
+	private static final int[] blockedCustomEquipment = {
+		// Scythes
+		ItemId.TIN_SCYTHE.id(),
+		ItemId.COPPER_SCYTHE.id(),
+		ItemId.BRONZE_SCYTHE.id(),
+		ItemId.IRON_SCYTHE.id(),
+		ItemId.STEEL_SCYTHE.id(),
+		ItemId.MITHRIL_SCYTHE.id(),
+		ItemId.TITAN_STEEL_SCYTHE.id(),
+		ItemId.ADAMANTITE_SCYTHE.id(),
+		ItemId.ORICHALCUM_SCYTHE.id(),
+		ItemId.RUNE_SCYTHE.id(),
+
+		// Shuriken
+		ItemId.TIN_SHURIKEN.id(),
+		ItemId.COPPER_SHURIKEN.id(),
+		ItemId.BRONZE_SHURIKEN.id(),
+		ItemId.IRON_SHURIKEN.id(),
+		ItemId.STEEL_SHURIKEN.id(),
+		ItemId.MITHRIL_SHURIKEN.id(),
+		ItemId.TITAN_STEEL_SHURIKEN.id(),
+		ItemId.ADAMANTITE_SHURIKEN.id(),
+		ItemId.ORICHALCUM_SHURIKEN.id(),
+		ItemId.RUNE_SHURIKEN.id(),
+		ItemId.POISONED_TIN_SHURIKEN.id(),
+		ItemId.POISONED_COPPER_SHURIKEN.id(),
+		ItemId.POISONED_BRONZE_SHURIKEN.id(),
+		ItemId.POISONED_IRON_SHURIKEN.id(),
+		ItemId.POISONED_STEEL_SHURIKEN.id(),
+		ItemId.POISONED_MITHRIL_SHURIKEN.id(),
+		ItemId.POISONED_TITAN_STEEL_SHURIKEN.id(),
+		ItemId.POISONED_ADAMANTITE_SHURIKEN.id(),
+		ItemId.POISONED_ORICHALCUM_SHURIKEN.id(),
+		ItemId.POISONED_RUNE_SHURIKEN.id()
+	};
+
 	public static boolean itemIsBlocked(Player player, Item item) {
+		if (DataConversions.inArray(blockedCustomEquipment, item.getCatalogId())) {
+			return true;
+		}
 		if (player.getConfig().WANT_CUSTOM_SPRITES && DataConversions.inArray(blockedItemsOnlyOnCabbage, item.getCatalogId())) {
 			// Disallow certain items with different behaviours than authentic only on Cabbage config
 			return true;

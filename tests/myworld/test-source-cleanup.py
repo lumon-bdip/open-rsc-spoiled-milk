@@ -150,6 +150,17 @@ MONK_OF_ENTRANA_PATH = (
     / "portsarim"
     / "MonkOfEntrana.java"
 )
+ENTRANA_RESTRICTIONS_PATH = (
+    ROOT
+    / "server"
+    / "plugins"
+    / "com"
+    / "openrsc"
+    / "server"
+    / "plugins"
+    / "shared"
+    / "EntranaRestrictions.java"
+)
 THRANDER_PATH = (
     ROOT
     / "server"
@@ -481,6 +492,7 @@ def ensure_phase_one_content_cleanup() -> None:
     apothecary_text = APOTHECARY_PATH.read_text(encoding="utf-8")
     battlestaff_text = BATTLESTAFF_CRAFTING_PATH.read_text(encoding="utf-8")
     monk_of_entrana_text = MONK_OF_ENTRANA_PATH.read_text(encoding="utf-8")
+    entrana_restrictions_text = ENTRANA_RESTRICTIONS_PATH.read_text(encoding="utf-8")
     thrander_text = THRANDER_PATH.read_text(encoding="utf-8")
     thieving_text = THIEVING_PATH.read_text(encoding="utf-8")
     tailor_text = TAILOR_PATH.read_text(encoding="utf-8")
@@ -784,8 +796,8 @@ def ensure_phase_one_content_cleanup() -> None:
         "ItemId.DRAGON_SQUARE_SHIELD.id()",
     )
     for snippet in required_entrana_exception_snippets:
-        if snippet not in monk_of_entrana_text:
-            fail(f"MonkOfEntrana.java should keep explicit dragon exceptions: {snippet}")
+        if snippet not in entrana_restrictions_text:
+            fail(f"EntranaRestrictions.java should keep explicit dragon exceptions: {snippet}")
 
     required_entrana_hide_armour_snippets = (
         "ItemId.COW_HIDE_CUIRASS.id()",
@@ -796,26 +808,26 @@ def ensure_phase_one_content_cleanup() -> None:
         "ItemId.KING_BLACK_DRAGON_CUIRASS.id()",
     )
     for snippet in required_entrana_hide_armour_snippets:
-        if snippet not in monk_of_entrana_text:
-            fail(f"MonkOfEntrana.java should block active hide cuirasses on Entrana: {snippet}")
+        if snippet not in entrana_restrictions_text:
+            fail(f"EntranaRestrictions.java should block active hide cuirasses on Entrana: {snippet}")
 
     required_entrana_modern_stat_snippets = (
-        "private boolean hasCombatStats(ItemDefinition def)",
+        "private static boolean hasCombatStats(ItemDefinition def)",
         "def.getMeleeOffense() != 0",
         "def.getRangedOffense() != 0",
         "def.getMagicOffense() != 0",
         "def.getMeleeDefense() != 0",
         "def.getRangedDefense() != 0",
         "def.getMagicDefense() != 0",
-        "private boolean isGatheringTool(ItemDefinition def)",
+        "private static boolean isGatheringTool(ItemDefinition def)",
         "def.getRequiredSkillIndex() == Skill.WOODCUTTING.id()",
         "def.getRequiredSkillIndex() == Skill.MINING.id()",
         "def.getRequiredSkillIndex() == Skill.FISHING.id()",
         "def.getRequiredSkillIndex() == Skill.HARVESTING.id()",
     )
     for snippet in required_entrana_modern_stat_snippets:
-        if snippet not in monk_of_entrana_text:
-            fail(f"MonkOfEntrana.java should block modern combat stat items on Entrana: {snippet}")
+        if snippet not in entrana_restrictions_text:
+            fail(f"EntranaRestrictions.java should block modern combat stat items on Entrana: {snippet}")
 
     retired_thrander_snippets = (
         "implements TalkNpcTrigger, UseNpcTrigger",

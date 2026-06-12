@@ -750,7 +750,7 @@ public class EntityHandler {
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Baraek", "A fur trader", "", 30, 30, 30, 30, false, sprites, 1, 255, 255, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{3, 4, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-		npcs.add(new NPCDef("Katrine", "She doesn't look to friendly", "", 35, 25, 10, 30, false, sprites, 1, 2, 3, 15523536, 145, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Katrine", "She doesn't look to friendly", shopOption, 35, 25, 10, 30, false, sprites, 1, 2, 3, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Tramp", "A scruffy looking chap", "", 9, 8, 5, 7, false, sprites, 16711680, 2, 3, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{123, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -5489,12 +5489,12 @@ public class EntityHandler {
 
 	private static void addMetalShurikenDefinition(String name, int id, int price, int pictureMask) {
 		setCustomItemDefinition(id, new ItemDef(name, "A sharp multi-target thrown weapon", "", price, -1, "external-png:shuriken-basic",
-			true, true, 16, pictureMask, false, false, false, id));
+			true, true, 24, pictureMask, false, false, false, id));
 	}
 
 	private static void addPoisonedMetalShurikenDefinition(String name, int id, int price, int pictureMask) {
 		setCustomItemDefinition(id, new ItemDef(name, "A sharp multi-target thrown weapon with a coating of venom", "", price, -1, "external-png:shuriken-basic-poison",
-			true, true, 16, pictureMask, false, false, false, id));
+			true, true, 24, pictureMask, false, false, false, id));
 	}
 
 	private static void addMetalShearsDefinition(String name, int id, int price, int pictureMask) {

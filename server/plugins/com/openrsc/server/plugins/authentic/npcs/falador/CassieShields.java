@@ -40,7 +40,7 @@ public final class CassieShields extends AbstractShop {
 	public void onTalkNpc(final Player player, final Npc n) {
 		if (n.getID() == NpcId.CASSIE.id()) {
 			say(player, n, "What wares are you selling?");
-			npcsay(player, n, "I buy and sell shields", "Do you want to trade?");
+			npcsay(player, n, "I buy and sell armor and shields", "Do you want to trade?");
 			int option = multi(player, n, "Yes please", "No thank you");
 			if (option == 0) {
 				player.setAccessingShop(getShop(player.getWorld()));
@@ -55,11 +55,23 @@ public final class CassieShields extends AbstractShop {
 				new Shop(false, 25000, 100, 60, 2,
 					new Item(ItemId.WOODEN_SHIELD.id(), 5), new Item(ItemId.TIN_SQUARE_SHIELD.id(), 3), new Item(ItemId.COPPER_SQUARE_SHIELD.id(), 3),
 					new Item(ItemId.BRONZE_SQUARE_SHIELD.id(), 3), new Item(ItemId.IRON_SQUARE_SHIELD.id(), 2), new Item(ItemId.STEEL_SQUARE_SHIELD.id(), 2),
-					new Item(ItemId.MITHRIL_SQUARE_SHIELD.id(), 1)) :
+					new Item(ItemId.MITHRIL_SQUARE_SHIELD.id(), 1),
+					new Item(ItemId.TIN_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.TIN_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.TIN_LARGE_HELMET.id(), 1),
+					new Item(ItemId.COPPER_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.COPPER_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.COPPER_LARGE_HELMET.id(), 1),
+					new Item(ItemId.BRONZE_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.BRONZE_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.LARGE_BRONZE_HELMET.id(), 1),
+					new Item(ItemId.IRON_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.IRON_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.LARGE_IRON_HELMET.id(), 1),
+					new Item(ItemId.STEEL_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.STEEL_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.LARGE_STEEL_HELMET.id(), 1),
+					new Item(ItemId.MITHRIL_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.MITHRIL_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.LARGE_MITHRIL_HELMET.id(), 1)) :
 				new Shop(false, 25000, 100, 60, 2,
 					new Item(ItemId.WOODEN_SHIELD.id(), 5), new Item(ItemId.TIN_SQUARE_SHIELD.id(), 3), new Item(ItemId.COPPER_SQUARE_SHIELD.id(), 3),
 					new Item(ItemId.BRONZE_SQUARE_SHIELD.id(), 3), new Item(ItemId.IRON_SQUARE_SHIELD.id(), 2), new Item(ItemId.STEEL_SQUARE_SHIELD.id(), 2),
-					new Item(ItemId.MITHRIL_SQUARE_SHIELD.id(), 1)));
+					new Item(ItemId.MITHRIL_SQUARE_SHIELD.id(), 1),
+					new Item(ItemId.TIN_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.TIN_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.TIN_LARGE_HELMET.id(), 1),
+					new Item(ItemId.COPPER_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.COPPER_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.COPPER_LARGE_HELMET.id(), 1),
+					new Item(ItemId.BRONZE_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.BRONZE_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.LARGE_BRONZE_HELMET.id(), 1),
+					new Item(ItemId.IRON_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.IRON_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.LARGE_IRON_HELMET.id(), 1),
+					new Item(ItemId.STEEL_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.STEEL_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.LARGE_STEEL_HELMET.id(), 1),
+					new Item(ItemId.MITHRIL_PLATE_MAIL_BODY.id(), 1), new Item(ItemId.MITHRIL_PLATE_MAIL_LEGS.id(), 1), new Item(ItemId.LARGE_MITHRIL_HELMET.id(), 1)));
 		}
 		return shop;
 	}

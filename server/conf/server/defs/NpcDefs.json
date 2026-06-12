@@ -1056,7 +1056,7 @@
         "id": 27,
         "name": "Katrine",
         "description": "She doesn't look to friendly",
-        "command": "",
+        "command": "Trade",
         "command2": "",
         "attack": 35,
         "strength": 30,

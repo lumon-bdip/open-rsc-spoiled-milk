@@ -130,7 +130,11 @@ def main() -> None:
         "ItemId.BLACK_SCIMITAR.id()",
     ))
 
-    ensure_contains(WAYNE_PATH, (
+    ensure_contains(CASSIE_PATH, (
+        "I buy and sell armor and shields",
+        "ItemId.TIN_SQUARE_SHIELD.id()",
+        "ItemId.COPPER_SQUARE_SHIELD.id()",
+        "ItemId.MITHRIL_SQUARE_SHIELD.id()",
         "ItemId.TIN_PLATE_MAIL_BODY.id()",
         "ItemId.COPPER_PLATE_MAIL_BODY.id()",
         "ItemId.BRONZE_PLATE_MAIL_BODY.id()",
@@ -150,7 +154,29 @@ def main() -> None:
         "ItemId.LARGE_STEEL_HELMET.id()",
         "ItemId.LARGE_MITHRIL_HELMET.id()",
     ))
+    ensure_not_contains(CASSIE_PATH, (
+        "I buy and sell shields",
+    ))
+    ensure_contains(WAYNE_PATH, (
+        "I've decided to pivot my business to Throwing weapons!",
+        "Care to try some darts or shuriken?",
+        "ItemId.TIN_THROWING_DART.id()",
+        "ItemId.COPPER_THROWING_DART.id()",
+        "ItemId.MITHRIL_THROWING_DART.id()",
+        "ItemId.TIN_THROWING_KNIFE.id()",
+        "ItemId.COPPER_THROWING_KNIFE.id()",
+        "ItemId.MITHRIL_THROWING_KNIFE.id()",
+        "ItemId.TIN_SHURIKEN.id()",
+        "ItemId.COPPER_SHURIKEN.id()",
+        "ItemId.MITHRIL_SHURIKEN.id()",
+    ))
     ensure_not_contains(WAYNE_PATH, (
+        "ItemId.TIN_PLATE_MAIL_BODY.id()",
+        "ItemId.COPPER_PLATE_MAIL_BODY.id()",
+        "ItemId.BRONZE_PLATE_MAIL_BODY.id()",
+        "ItemId.IRON_PLATE_MAIL_BODY.id()",
+        "ItemId.STEEL_PLATE_MAIL_BODY.id()",
+        "ItemId.MITHRIL_PLATE_MAIL_BODY.id()",
         "CHAIN_MAIL",
         "ADAMANTITE_",
         "TITAN_STEEL_",
@@ -334,16 +360,21 @@ def main() -> None:
         "ItemId.LARGE_ADAMANTITE_HELMET.id()",
     ))
 
-    ensure_contains(CASSIE_PATH, (
-        "ItemId.TIN_SQUARE_SHIELD.id()",
-        "ItemId.COPPER_SQUARE_SHIELD.id()",
-        "ItemId.MITHRIL_SQUARE_SHIELD.id()",
-    ))
-
     ensure_contains(FLYNN_PATH, (
+        "ItemId.TIN_MACE.id()",
+        "ItemId.COPPER_MACE.id()",
+        "ItemId.MITHRIL_MACE.id()",
+        "ItemId.TIN_KITE_SHIELD.id()",
+        "ItemId.COPPER_KITE_SHIELD.id()",
+        "ItemId.MITHRIL_KITE_SHIELD.id()",
+    ))
+    ensure_not_contains(FLYNN_PATH, (
         "ItemId.ADAMANTITE_MACE.id()",
         "ItemId.TITAN_STEEL_MACE.id()",
         "ItemId.ORICHALCUM_MACE.id()",
+        "ItemId.ADAMANTITE_KITE_SHIELD.id()",
+        "ItemId.TITAN_STEEL_KITE_SHIELD.id()",
+        "ItemId.ORICHALCUM_KITE_SHIELD.id()",
     ))
 
     ensure_contains(BOB_PATH, (

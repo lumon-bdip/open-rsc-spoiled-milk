@@ -1405,16 +1405,16 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(524, "70", "Dragonstone Amulet"));
 		} else if (curTab == 4) {
 			skillMenuEntries.add(new SkillMenuItem(637, "1", "Headless arrows - arrow shafts and feathers"));
-			addAmmoMouldGuide("Tin", 1, 190, 2004, 2039, 2043, 1996);
-			addAmmoMouldGuide("Copper", 8, 2178, 2015, 2040, 2044, 2007);
-			addAmmoMouldGuide("Bronze", 15, 2180, 669, 11, 1013, 1076);
-			addAmmoMouldGuide("Iron", 22, 2182, 670, 638, 1015, 1075);
-			addAmmoMouldGuide("Steel", 30, 2184, 671, 640, 1024, 1077);
-			addAmmoMouldGuide("Mithril", 38, 2186, 672, 642, 1068, 1078);
-			addAmmoMouldGuide("Titan steel", 46, 2188, 2026, 2041, 2045, 2018);
-			addAmmoMouldGuide("Adamantite", 54, 2190, 673, 644, 1069, 1079);
-			addAmmoMouldGuide("Orichalcum", 62, 2192, 2037, 2042, 2046, 2029);
-			addAmmoMouldGuide("Rune", 70, 2194, 674, 646, 1070, 1080);
+			addAmmoMouldGuide("Tin", 1, 190, 2004, 2039, 2043, 1996, 3208);
+			addAmmoMouldGuide("Copper", 8, 2178, 2015, 2040, 2044, 2007, 3209);
+			addAmmoMouldGuide("Bronze", 15, 2180, 669, 11, 1013, 1076, 3210);
+			addAmmoMouldGuide("Iron", 22, 2182, 670, 638, 1015, 1075, 3211);
+			addAmmoMouldGuide("Steel", 30, 2184, 671, 640, 1024, 1077, 3212);
+			addAmmoMouldGuide("Mithril", 38, 2186, 672, 642, 1068, 1078, 3213);
+			addAmmoMouldGuide("Titan steel", 46, 2188, 2026, 2041, 2045, 2018, 3214);
+			addAmmoMouldGuide("Adamantite", 54, 2190, 673, 644, 1069, 1079, 3215);
+			addAmmoMouldGuide("Orichalcum", 62, 2192, 2037, 2042, 2046, 2029, 3216);
+			addAmmoMouldGuide("Rune", 70, 2194, 674, 646, 1070, 1080, 3217);
 		} else if (curTab == 5) {
 			addWoodcraftGuide("Basic", 10, 1, 277, 5, 276, 8, 60, 9, 100, 1);
 			addWoodcraftGuide("Pine", 15, 8, 2116, 12, 2115, 15, 59, 16, 2131, 8);
@@ -1437,6 +1437,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(11, "", "Bolts moved to Crafting and use molds"));
 			skillMenuEntries.add(new SkillMenuItem(1013, "", "Dart tips moved to Crafting and use molds"));
 			skillMenuEntries.add(new SkillMenuItem(1996, "", "Throwing knives moved to Crafting and use molds"));
+			skillMenuEntries.add(new SkillMenuItem(3208, "", "Shuriken use Crafting and molds"));
 			skillMenuEntries.add(new SkillMenuItem(779, "", "Can be opened at level 34"));
 			skillMenuEntries.add(new SkillMenuItem(191, "", "Crafting Guild can be entered at level 40 with a brown apron"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
@@ -1459,12 +1460,13 @@ public final class SkillGuideInterface {
 		skillMenuEntries.add(new SkillMenuItem(tier6Id, "78", potionName + " v6 - Torstol & " + secondary));
 	}
 
-	private void addAmmoMouldGuide(String name, int baseLevel, int boltsId, int arrowheadsId, int arrowId, int dartsId, int knivesId) {
+	private void addAmmoMouldGuide(String name, int baseLevel, int boltsId, int arrowheadsId, int arrowId, int dartsId, int knivesId, int shurikenId) {
 		skillMenuEntries.add(new SkillMenuItem(boltsId, String.valueOf(baseLevel), name + " bolts - 1 bar makes 5"));
 		skillMenuEntries.add(new SkillMenuItem(arrowheadsId, String.valueOf(baseLevel), name + " arrowheads - 1 bar makes 10"));
 		skillMenuEntries.add(new SkillMenuItem(arrowId, String.valueOf(baseLevel), name + " arrows - headless arrows and arrowheads"));
 		skillMenuEntries.add(new SkillMenuItem(dartsId, String.valueOf(baseLevel + 2), name + " throwing darts - 1 bar makes 7"));
 		skillMenuEntries.add(new SkillMenuItem(knivesId, String.valueOf(baseLevel + 4), name + " throwing knives - 1 bar makes 2"));
+		skillMenuEntries.add(new SkillMenuItem(shurikenId, String.valueOf(baseLevel + 4), name + " shuriken - 1 bar makes 9"));
 	}
 
 	private void addWoodcraftGuide(String name, int shaftAmount, int shaftLevel, int shortbowId, int shortbowLevel,
