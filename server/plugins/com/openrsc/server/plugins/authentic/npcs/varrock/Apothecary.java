@@ -163,10 +163,6 @@ public final class Apothecary extends AbstractShop {
 	@Override
 	public void onOpNpc(Player player, Npc n, String command) {
 		if (!isDirectShopCommand(player, n, command)) return;
-		Npc apothecary = player.getWorld().getNpc(n.getID(),
-			player.getX() - 2, player.getX() + 2,
-			player.getY() - 2, player.getY() + 2);
-		if (apothecary == null) return;
 		if (!player.getQolOptOut()) {
 			player.setAccessingShop(shop);
 			ActionSender.showShop(player, shop);

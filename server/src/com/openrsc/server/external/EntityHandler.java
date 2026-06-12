@@ -481,14 +481,15 @@ public final class EntityHandler {
 
 			npcs.get(NpcId.GNOME_WAITER.id()).setCommand2("Trade");
 			npcs.get(NpcId.BLURBERRY_BARMAN.id()).setCommand2("Trade");
-			if (getServer().getConfig().WANT_RUNECRAFT) {
+			if (getServer().getConfig().WANT_RUNECRAFT && !getServer().getConfig().WANT_MYWORLD) {
 				npcs.get(NpcId.AUBURY.id()).setCommand2("Trade");
 			}
 			else {
 				npcs.get(NpcId.AUBURY.id()).setCommand1("Trade");
+				npcs.get(NpcId.AUBURY.id()).setCommand2("Shop");
 			}
 		}
-		if (getServer().getConfig().WANT_RUNECRAFT) {
+		if (getServer().getConfig().WANT_RUNECRAFT && !getServer().getConfig().WANT_MYWORLD) {
 			npcs.get(NpcId.AUBURY.id()).setCommand1("Teleport/Trade"); //moves position depending on rune mysteries completion
 		}
 		// these although couldn't be pickpocket by client the command was allowed server side

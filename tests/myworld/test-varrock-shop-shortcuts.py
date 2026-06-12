@@ -9,6 +9,7 @@ APOTHECARY = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugi
 AUBURY = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "varrock" / "AuburysRunes.java"
 OPENPK_AUBURY = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "custom" / "npcs" / "AuburysRunesOpenPk.java"
 MUDCLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
+SERVER_ENTITY_HANDLER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "external" / "EntityHandler.java"
 
 
 def fail(message: str) -> None:
@@ -20,6 +21,11 @@ def require(text: str, needle: str, description: str) -> None:
         fail(f"missing {description}: {needle}")
 
 
+def reject(text: str, needle: str, description: str) -> None:
+    if needle in text:
+        fail(f"unexpected {description}: {needle}")
+
+
 def main() -> None:
     npc_defs = NPC_DEFS.read_text(encoding="utf-8")
     npc_patch = NPC_PATCH_18.read_text(encoding="utf-8")
@@ -28,6 +34,7 @@ def main() -> None:
     aubury = AUBURY.read_text(encoding="utf-8")
     openpk_aubury = OPENPK_AUBURY.read_text(encoding="utf-8")
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
+    server_entity_handler = SERVER_ENTITY_HANDLER.read_text(encoding="utf-8")
 
     require(npc_defs, '"id": 33,\n        "name": "Apothecary"', "base Apothecary definition")
     require(npc_defs, '"name": "Apothecary",\n        "description": "I wonder if he has any good potions",\n        "command": "Trade",\n        "command2": "Shop"', "base Apothecary shop commands")
@@ -48,9 +55,14 @@ def main() -> None:
     for text, name in ((aubury, "Aubury"), (openpk_aubury, "OpenPK Aubury")):
         require(text, 'command.equalsIgnoreCase("Trade") || command.equalsIgnoreCase("Shop")', f"{name} accepts Trade and Shop")
         require(text, "ActionSender.showShop(player, shop);", f"{name} direct shop sends shop")
+        reject(text, "player.getWorld().getNpc(n.getID()", f"{name} direct shop re-resolves clicked NPC")
+
+    reject(apothecary, "player.getWorld().getNpc(n.getID()", "Apothecary direct shop re-resolves clicked NPC")
 
     require(mudclient, 'if (normalizedLabel.equals("shop") || normalizedLabel.equals("trade"))', "Ctrl-click shop/trade shortcut selector")
     require(mudclient, 'if (Config.S_RIGHT_CLICK_TRADE) AuburyDef.updateCommand2("Trade");', "Aubury teleport mode keeps Trade shortcut")
+    require(server_entity_handler, 'getServer().getConfig().WANT_RUNECRAFT && !getServer().getConfig().WANT_MYWORLD', "legacy Aubury teleport override excluded from MyWorld")
+    require(server_entity_handler, 'npcs.get(NpcId.AUBURY.id()).setCommand2("Shop");', "MyWorld Aubury keeps alternate Shop command at runtime")
 
     print("PASS: Varrock Apothecary and Aubury shop shortcuts are wired")
 

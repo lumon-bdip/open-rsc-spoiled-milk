@@ -10,7 +10,7 @@ release target.
 
 ### Aubury rune shop shortcut regression
 
-Status: next after Herblaw.
+Status: fixed in code; needs in-game spot check.
 
 Aubury, the rune seller in Varrock, still does not support the expected
 right-click trade and `Ctrl`-click trade shortcut behavior. This needs to be
@@ -24,6 +24,13 @@ Current expectation:
 - `Ctrl`-click shortcut should open trade/shop correctly.
 - The final fix should account for why previous quick-trade-style fixes did not
   resolve Aubury.
+
+Root cause found: MyWorld enabled `want_runecraft`, which let the legacy
+server-side Rune Mysteries override replace Aubury's live command with
+`Teleport/Trade` after the data files had already declared `Trade` / `Shop`.
+The direct shop plugins also re-resolved the clicked NPC by area after the NPC
+command handler had already resolved the exact server-indexed NPC, so valid
+clicks could be dropped before opening the shop.
 
 ### Brown apron / Crafting Guild access
 
