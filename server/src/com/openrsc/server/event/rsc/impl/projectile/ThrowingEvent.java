@@ -316,11 +316,13 @@ public class ThrowingEvent extends GameTickEvent {
 			}
 		}
 
-		final int projectileType = RangeUtils.THROWING_KNIVES.contains(throwingID) || RangeUtils.SHURIKENS.contains(throwingID)
-			? Projectile.THROWING_KNIFE
-			: RangeUtils.THROWING_DARTS.contains(throwingID)
-				? Projectile.THROWING_DART
-				: Projectile.RANGED;
+		final int projectileType = RangeUtils.SHURIKENS.contains(throwingID)
+			? Projectile.SHURIKEN
+			: RangeUtils.THROWING_KNIVES.contains(throwingID)
+				? Projectile.THROWING_KNIFE
+				: RangeUtils.THROWING_DARTS.contains(throwingID)
+					? Projectile.THROWING_DART
+					: Projectile.RANGED;
 		getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getWorld(), player, hitTarget, damage, 2,
 			true, throwingID, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB, projectileType, 0, showProjectile));
 	}

@@ -470,7 +470,8 @@ public class EntityHandler {
 		BOLT(20),
 		WIZARDS_MAGIC(21),
 		HOLY_MAGIC(22),
-		SUMMON_BAT_VAMPIRISM(23);
+		SUMMON_BAT_VAMPIRISM(23),
+		SHURIKEN(24);
 
 		private final int value;
 
@@ -512,6 +513,7 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("wizards magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 21));
 		projectiles.add(new SpriteDef("holy magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 22));
 		projectiles.add(new SpriteDef("summon bat vampirism projectile", mudclient.spriteProjectile + 1, "projectiles:1", 23));
+		projectiles.add(new SpriteDef("shuriken projectile", mudclient.spriteProjectile + 6, "projectiles:6", 24));
 	}
 
 	public enum GUIPARTS {

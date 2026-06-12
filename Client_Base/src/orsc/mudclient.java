@@ -147,7 +147,7 @@ public final class mudclient implements Runnable {
 	private static final int SUMMON_BAT_VAMPIRISM_PROJECTILE_SIZE = 144;
 	private static final int SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT = 34;
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
-	public static final int CUSTOM_PROJECTILE_COUNT = 17;
+	public static final int CUSTOM_PROJECTILE_COUNT = 18;
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
 	private static final int IRON_THROWING_KNIFE_ITEM_ID = 1075;
 	private static final int MAX_SPELL_ICONS = 64;
@@ -906,7 +906,7 @@ public final class mudclient implements Runnable {
 	private final String[] projectileEffectNames = new String[] {
 		"blow-smoke", "fireball", "wind-arrow", "rock-throw", "water-ball", "throwing-knife", "arrow", "dart",
 		"claws-of-guthix", "thunder-ball", "icicle-shot", "acid-drop", "spore", "bolt", "wizards-magic", "holy-magic",
-		"summon-bat-vampirism-reverse"
+		"summon-bat-vampirism-reverse", "shuriken"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
@@ -17821,6 +17821,7 @@ public final class mudclient implements Runnable {
 				effectFolder, this.projectileEffectSprites[i], 64, "PROJECTILE_EFFECT_ASSET", effectName);
 		}
 		this.generateThrowingKnifeProjectileFrames();
+		this.generateShurikenProjectileFrames();
 	}
 
 	private void loadExternalSpellIconSprites() {
@@ -18593,6 +18594,30 @@ public final class mudclient implements Runnable {
 			}
 			this.projectileEffectFrameCounts[projectileIndex] = throwingKnifeFrameCount;
 		}
+
+	private void generateShurikenProjectileFrames() {
+		int projectileIndex = PROJECTILE_TYPES.SHURIKEN.id() - CUSTOM_PROJECTILE_FIRST;
+		if (projectileIndex < 0 || projectileIndex >= this.projectileEffectSprites.length) {
+			return;
+		}
+
+		Sprite sourceSprite = loadExternalItemSprite(getExternalPngFile("shuriken-thrown"), 46, 30);
+		if (sourceSprite == null || sourceSprite.getWidth() <= 0 || sourceSprite.getHeight() <= 0) {
+			return;
+		}
+
+		BufferedImage source = createMaskedItemImage(sourceSprite, 0xFFFFFF, 0);
+		BufferedImage cropped = cropVisibleImage(source);
+		if (cropped == null) {
+			return;
+		}
+
+		final int shurikenFrameCount = 8;
+		for (int frame = 0; frame < shurikenFrameCount; frame++) {
+			this.projectileEffectSprites[projectileIndex][frame] = createRotatedProjectileSprite(cropped, frame * 45.0D, 52);
+		}
+		this.projectileEffectFrameCounts[projectileIndex] = shurikenFrameCount;
+	}
 
 	private BufferedImage createMaskedItemImage(Sprite sourceSprite, int mask, int blueMask) {
 		BufferedImage image = new BufferedImage(sourceSprite.getWidth(), sourceSprite.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -21863,6 +21888,10 @@ public final class mudclient implements Runnable {
 			generateThrowingKnifeProjectileFrames();
 			frameCount = projectileEffectFrameCounts[projectileIndex];
 		}
+		if (frameCount <= 0 && projectile.id == PROJECTILE_TYPES.SHURIKEN.id()) {
+			generateShurikenProjectileFrames();
+			frameCount = projectileEffectFrameCounts[projectileIndex];
+		}
 			if (frameCount <= 0) {
 				return projectile.getAuthenticSpriteID();
 			}
@@ -21875,7 +21904,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getProjectileSceneSize(SpriteDef projectile, boolean enemyProjectile) {
-		if (projectile != null && projectile.id == PROJECTILE_TYPES.THROWING_KNIFE.id()) {
+		if (projectile != null && (projectile.id == PROJECTILE_TYPES.THROWING_KNIFE.id()
+			|| projectile.id == PROJECTILE_TYPES.SHURIKEN.id())) {
 			return getProjectileSceneSizeForAnimatedEnemy(projectile, enemyProjectile, 64);
 		}
 		if (projectile != null && projectile.id == PROJECTILE_TYPES.SUMMON_BAT_VAMPIRISM.id()) {

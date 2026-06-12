@@ -66,7 +66,7 @@ def main():
     client = read("Client_Base/src/orsc/mudclient.java")
     require(client, [
         "public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;",
-        "public static final int CUSTOM_PROJECTILE_COUNT = 17;",
+        "public static final int CUSTOM_PROJECTILE_COUNT = 18;",
         'if ("water-eruption".equals(animationName))',
         "targetFrames, maxTargetSize, 5, 4, 20, 0);",
         'if ("water-vortex".equals(animationName))',
@@ -134,10 +134,12 @@ def main():
         "WIZARDS_MAGIC(21)",
         "HOLY_MAGIC(22)",
         "SUMMON_BAT_VAMPIRISM(23)",
+        "SHURIKEN(24)",
         'new SpriteDef("bolt projectile", mudclient.spriteProjectile + 2, "projectiles:2", 20)',
         'new SpriteDef("wizards magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 21)',
         'new SpriteDef("holy magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 22)',
         'new SpriteDef("summon bat vampirism projectile", mudclient.spriteProjectile + 1, "projectiles:1", 23)',
+        'new SpriteDef("shuriken projectile", mudclient.spriteProjectile + 6, "projectiles:6", 24)',
     ], "EntityHandler.java")
     require(read("server/conf/server/defs/SpellDef.xml"), spell_names, "SpellDef.xml")
 
