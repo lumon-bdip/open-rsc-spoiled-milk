@@ -46,6 +46,14 @@ public class Sector {
 		return sector;
 	}
 
+	public Sector copy() {
+		Sector sector = new Sector();
+		for (int i = 0; i < tiles.length; i++) {
+			sector.tiles[i] = tiles[i].copy();
+		}
+		return sector;
+	}
+
 	/**
 	 * Sets the the Tile at the given coords
 	 */

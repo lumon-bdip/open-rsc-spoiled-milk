@@ -85,6 +85,7 @@ python3 ./tests/myworld/test-ground-item-rendering.py
 python3 ./tests/myworld/test-scene-entity-lifecycle.py
 python3 ./tests/myworld/test-herblaw-cleanup.py
 python3 ./tests/myworld/test-herblaw-remap.py
+python3 ./tests/myworld/test-burnt-food-ashes.py
 python3 ./tests/myworld/test-hide-armor-coverage.py
 python3 ./tests/myworld/test-instant-processing.py
 python3 ./tests/myworld/test-leather-defense-budgets.py

@@ -731,6 +731,19 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 			case CHOCOLATE_BAR:
 				newID = ItemId.CHOCOLATE_DUST.id();
 				break;
+			case BURNTMEAT:
+			case BURNT_FISH:
+			case BURNT_TROUT:
+			case BURNT_PIKE:
+			case BURNT_TUNA:
+			case BURNT_SWORDFISH:
+			case BURNT_LOBSTER:
+			case BURNT_SHARK:
+			case BURNT_MANTA_RAY:
+			case BURNT_SEA_TURTLE:
+			case BURNT_OOMLIE_MEAT_PARCEL:
+				newID = ItemId.ASHES.id();
+				break;
 			/**
 			 * End of Herblaw Quest Items.
 			 */
@@ -765,7 +778,10 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 		if (item == null) return;
 		player.getCarriedItems().remove(item);
 
-		if (item.getCatalogId() != ItemId.A_LUMP_OF_CHARCOAL.id()) {
+		if (newID == ItemId.ASHES.id()) {
+			player.playerServerMessage(MessageType.QUEST, "You grind the " + item.getDef(player.getWorld()).getName()
+				+ " into ashes");
+		} else if (item.getCatalogId() != ItemId.A_LUMP_OF_CHARCOAL.id()) {
 			player.playerServerMessage(MessageType.QUEST, "You grind the " + item.getDef(player.getWorld()).getName()
 				+ " to dust");
 		}

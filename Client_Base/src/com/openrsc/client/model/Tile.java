@@ -62,6 +62,18 @@ public class Tile {
 		return tile;
 	}
 
+	Tile copy() {
+		Tile tile = new Tile();
+		tile.groundElevation = groundElevation;
+		tile.groundTexture = groundTexture;
+		tile.roofTexture = roofTexture;
+		tile.horizontalWall = horizontalWall;
+		tile.verticalWall = verticalWall;
+		tile.diagonalWalls = diagonalWalls;
+		tile.groundOverlay = groundOverlay;
+		return tile;
+	}
+
 	/**
 	 * Writes the Tile raw data into a ByteBuffer
 	 */

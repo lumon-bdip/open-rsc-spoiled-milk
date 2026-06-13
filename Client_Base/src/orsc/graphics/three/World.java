@@ -11,16 +11,46 @@ import orsc.util.GenUtil;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 
 public final class World {
+	private static final int SECTOR_CACHE_LIMIT = 256;
+	private static final int SECTOR_PRELOAD_LOW_OFFSET = -2;
+	private static final int SECTOR_PRELOAD_HIGH_OFFSET = 1;
 	private final int[] colorToResource = new int[256];
 	private final int[][] tileElevationCache = new int[96][96];
 	private final int[][] pathFindSource = new int[96][96];
 	private final int[][] tileDirection = new int[96][96];
+	private final Object sectorCacheLock = new Object();
+	private final Object tileArchiveLock = new Object();
+	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
+		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
+			@Override
+			protected boolean removeEldestEntry(Map.Entry<String, Sector> eldest) {
+				return size() > SECTOR_CACHE_LIMIT;
+			}
+		}
+	);
+	private final Set<String> sectorPreloadsInFlight = Collections.synchronizedSet(new HashSet<String>());
+	private final ExecutorService sectorPreloadExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable runnable) {
+			Thread thread = new Thread(runnable, "world-sector-preload");
+			thread.setDaemon(true);
+			return thread;
+		}
+	});
 	private final boolean showInvisibleWalls = false;
 	public int baseMediaSprite = 750;
 	public int[][] collisionFlags = new int[96][96];
@@ -1495,10 +1525,52 @@ public final class World {
 				this.loadSection(3, plane, x, z);
 				this.setTileDecorationOnBridge();
 			}
+			this.preloadSections(worldX, worldZ, plane);
 
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "k.L(" + worldX + ',' + "dummy" + ',' + worldZ + ',' + plane + ')');
 		}
+	}
+
+	public void preloadSections(int worldX, int worldZ, int plane) {
+		int sectionX = (24 + worldX) / 48;
+		int sectionY = (24 + worldZ) / 48;
+		preloadSectionWindow(plane, sectionX, sectionY);
+		if (plane == 0) {
+			preloadSectionWindow(1, sectionX, sectionY);
+			preloadSectionWindow(2, sectionX, sectionY);
+		}
+	}
+
+	private void preloadSectionWindow(int height, int sectionX, int sectionY) {
+		for (int x = sectionX + SECTOR_PRELOAD_LOW_OFFSET; x <= sectionX + SECTOR_PRELOAD_HIGH_OFFSET; x++) {
+			for (int y = sectionY + SECTOR_PRELOAD_LOW_OFFSET; y <= sectionY + SECTOR_PRELOAD_HIGH_OFFSET; y++) {
+				queueSectorPreload(height, x, y);
+			}
+		}
+	}
+
+	private void queueSectorPreload(final int height, final int sectionX, final int sectionY) {
+		final String filename = sectorFilename(height, sectionX, sectionY);
+		synchronized (sectorCacheLock) {
+			if (sectorTemplateCache.containsKey(filename) || sectorPreloadsInFlight.contains(filename)) {
+				return;
+			}
+			sectorPreloadsInFlight.add(filename);
+		}
+
+		sectorPreloadExecutor.submit(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					loadSectorTemplate(height, sectionX, sectionY);
+				} finally {
+					synchronized (sectorCacheLock) {
+						sectorPreloadsInFlight.remove(filename);
+					}
+				}
+			}
+		});
 	}
 
 	public final void removeGameObject_CollisonFlags(int id, int x, int z) {
@@ -1883,51 +1955,64 @@ public final class World {
 	}
 
 	private void loadWorldmapSection(int sector, int height, int sectionX, int sectionY) {
-		Sector s = null;
-		try {
-			String filename = "h" + height + "x" + sectionX + "y" + sectionY;
-			ZipEntry e = tileArchive.getEntry(filename);
-			if (e == null) {
-				s = new Sector();
-				if (height == 0 || height == 3) {
-					for (int i = 0; i < 2304; i++) {
-						s.getTile(i).groundOverlay = (byte) (height == 0 ? -6 : 8);
-					}
-				}
-			} else {
-				ByteBuffer data = DataConversions
-					.streamToBuffer(new BufferedInputStream(tileArchive.getInputStream(e)));
-				s = Sector.unpack(data);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-		worldMapSector[sector] = s;
+		worldMapSector[sector] = loadSectorTemplate(height, sectionX, sectionY).copy();
 	}
 
 	private void loadSection(int sector, int height, int sectionX, int sectionY) {
-		Sector s = null;
+		sectors[sector] = loadSectorTemplate(height, sectionX, sectionY).copy();
+	}
+
+	private Sector loadSectorTemplate(int height, int sectionX, int sectionY) {
+		String filename = sectorFilename(height, sectionX, sectionY);
+		Sector cached;
+		synchronized (sectorCacheLock) {
+			cached = sectorTemplateCache.get(filename);
+			if (cached != null) {
+				return cached;
+			}
+		}
+
+		Sector sector = readSectorTemplate(filename, height);
+		synchronized (sectorCacheLock) {
+			cached = sectorTemplateCache.get(filename);
+			if (cached != null) {
+				return cached;
+			}
+			sectorTemplateCache.put(filename, sector);
+			return sector;
+		}
+	}
+
+	private Sector readSectorTemplate(String filename, int height) {
 		try {
-			String filename = "h" + height + "x" + sectionX + "y" + sectionY;
-			ZipEntry e = tileArchive.getEntry(filename);
+			ZipEntry e;
+			ByteBuffer data = null;
+			synchronized (tileArchiveLock) {
+				e = tileArchive.getEntry(filename);
+				if (e != null) {
+					data = DataConversions
+						.streamToBuffer(new BufferedInputStream(tileArchive.getInputStream(e)));
+				}
+			}
 			if (e == null) {
-				s = new Sector();
+				Sector sector = new Sector();
 				if (height == 0 || height == 3) {
 					for (int i = 0; i < 2304; i++) {
-						s.getTile(i).groundOverlay = (byte) (height == 0 ? -6 : 8);
+						sector.getTile(i).groundOverlay = (byte) (height == 0 ? -6 : 8);
 					}
 				}
-			} else {
-				ByteBuffer data = DataConversions
-					.streamToBuffer(new BufferedInputStream(tileArchive.getInputStream(e)));
-				s = Sector.unpack(data);
+				return sector;
 			}
+			return Sector.unpack(data);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		sectors[sector] = s;
+		return new Sector();
+	}
+
+	private String sectorFilename(int height, int sectionX, int sectionY) {
+		return "h" + height + "x" + sectionX + "y" + sectionY;
 	}
 
 	public int getWorldMapX() {

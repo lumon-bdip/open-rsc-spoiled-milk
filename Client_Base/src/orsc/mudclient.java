@@ -16783,6 +16783,9 @@ public final class mudclient implements Runnable {
 				this.loadingArea = var3;
 				wantZ += this.worldOffsetZ;
 				wantX += this.worldOffsetX;
+				if (!hardAreaLoad && this.hasCompletedInitialRegionLoad) {
+					this.world.preloadSections(wantX, wantZ, this.requestedPlane);
+				}
 				if (this.lastHeightOffset == this.requestedPlane && this.currentRegionMinX < wantX
 					&& this.currentRegionMaxX > wantX && this.currentRegionMinZ < wantZ
 					&& wantZ < this.currentRegionMaxZ) {
