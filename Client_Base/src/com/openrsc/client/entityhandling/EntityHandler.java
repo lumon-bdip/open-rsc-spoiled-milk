@@ -1082,7 +1082,7 @@ public class EntityHandler {
 		sprites = new int[]{6, 1, 2, -1, -1, -1, 82, 88, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Melzar the mad", "He looks totally insane", "", 47, 44, 44, 47, true, sprites, 1, 2, 3, 16776944, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{6, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-		npcs.add(new NPCDef("Scavvo", "He has lopsided eyes", shopOption, 10, 10, 10, 10, false, sprites, 15921906, 7356480, 3, 15523536, 145, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Scavvo", "He has lopsided eyes", "", 10, 10, 10, 10, false, sprites, 15921906, 7356480, 3, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{124, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Greater Demon", "big red and incredibly evil", "", 86, 87, 87, 88, true, sprites, 0, 0, 0, 0, 358, 341, 11, 11, 30, i++));
 		sprites = new int[]{3, 4, 2, -1, -1, -1, -1, -1, -1, -1, 9, -1};
@@ -1098,7 +1098,7 @@ public class EntityHandler {
 			npcs.add(new NPCDef("Shop Assistant", "Maybe he'd like to buy some of my junk", shopOption, 0, 0, 3, 0, false, sprites, 6307872, 8409120, 8409120, 15523536, 145, 220, 6, 6, 5, i++));
 		}
 		sprites = new int[]{3, 1, 2, -1, -1, -1, 45, -1, -1, -1, -1, -1};
-		npcs.add(new NPCDef("Oziach", "A strange little man", shopOption, 0, 0, 3, 0, false, sprites, 6307872, 8440864, 8440864, 15523536, 145, 205, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Oziach", "A strange little man", "", 0, 0, 3, 0, false, sprites, 6307872, 8440864, 8440864, 15523536, 145, 205, 6, 6, 5, i++));
 		sprites = new int[]{131, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Bear", "Eek! A bear!", "", 27, 25, 27, 28, true, sprites, 0, 0, 0, 0, 262, 247, 6, 9, 30, i++));
 		sprites = new int[]{18, 32, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1};

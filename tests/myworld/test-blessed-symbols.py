@@ -144,7 +144,10 @@ def main() -> None:
 
     require("SYMBOL_BONUS_SUFFIX" in devotion, "devotion should track every-other symbol bonus")
     require("hasBlessedSymbolEquipped(player, godLine)" in devotion, "offerings should check matching blessed symbol")
-    require("return bonusThisOffering ? 2 : 1;" in devotion, "blessed symbols should average 1.5 devotion per offering")
+    require("return 1 + getEveryOtherOfferingBonus(player, godLine, SYMBOL_BONUS_SUFFIX);" in devotion,
+            "blessed symbols should average 1.5 devotion per offering")
+    require("return bonusThisOffering ? 1 : 0;" in devotion,
+            "every-other offering bonuses should preserve fractional devotion without rounding")
 
     require("Take that symbol to an altar of Saradomin" in brother_jered,
             "Brother Jered should redirect MyWorld holy symbol blessing to altars")

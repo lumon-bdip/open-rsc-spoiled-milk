@@ -580,7 +580,7 @@ public final class Summoning {
 	private static int recordAutoBuryDevotionBonus(final Player owner, final int amount) {
 		int bonusXp = 0;
 		for (int i = 0; i < amount; i++) {
-			bonusXp += Devotion.recordOfferingAndGetPrayerXpBonus(owner);
+			bonusXp += Devotion.recordBlackUnicornOfferingAndGetPrayerXpBonus(owner);
 		}
 		return bonusXp;
 	}

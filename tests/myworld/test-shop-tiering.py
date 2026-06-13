@@ -185,22 +185,86 @@ def main() -> None:
     ))
 
     ensure_contains(SCAVVO_PATH, (
+        "implements TalkNpcTrigger",
+        "RUNE_PLATE_PRICE = 800000",
         "ItemId.RUNE_PLATE_MAIL_BODY.id()",
+        "You EARNED the right to buy it. For 800k.",
+        "player.getQuestStage(Quests.DRAGON_SLAYER) != -1",
+        "player.getCarriedItems().remove(new Item(ItemId.COINS.id(), RUNE_PLATE_PRICE))",
+    ))
+    ensure_not_contains(SCAVVO_PATH, (
+        "extends AbstractShop",
+        "new Shop(",
+        "ActionSender.showShop",
+        "ItemId.RUNE_PLATE_MAIL_LEGS.id()",
+        "ItemId.RUNE_KITE_SHIELD.id()",
+        "ItemId.RUNE_MACE.id()",
+        "ItemId.RUNE_LONG_SWORD.id()",
+        "ItemId.RUNE_SHORT_SWORD.id()",
         "ItemId.RUNE_SCIMITAR.id()",
         "ItemId.RUNE_2_HANDED_SWORD.id()",
     ))
+    ensure_contains(CLIENT_ENTITY_HANDLER_PATH, (
+        'new NPCDef("Scavvo", "He has lopsided eyes", "",',
+    ))
+    ensure_not_contains(CLIENT_ENTITY_HANDLER_PATH, (
+        'new NPCDef("Scavvo", "He has lopsided eyes", shopOption',
+    ))
+    ensure_not_contains(ENTITY_HANDLER_PATH, (
+        "NpcId.SCAVVO.id(),",
+    ))
 
     ensure_contains(OZIACH_PATH, (
+        "implements TalkNpcTrigger",
+        "I have slain the dragon.",
+        "Well done.",
+        "Go speak with Scavvo at the Champion's Guild to get your Rune Platebody",
+    ))
+    ensure_not_contains(OZIACH_PATH, (
+        "extends AbstractShop",
+        "new Shop(",
+        "ActionSender.showShop",
         "ItemId.RUNE_PLATE_MAIL_BODY.id()",
+    ))
+    ensure_contains(CLIENT_ENTITY_HANDLER_PATH, (
+        'new NPCDef("Oziach", "A strange little man", "",',
+    ))
+    ensure_not_contains(CLIENT_ENTITY_HANDLER_PATH, (
+        'new NPCDef("Oziach", "A strange little man", shopOption',
+    ))
+    ensure_not_contains(ENTITY_HANDLER_PATH, (
+        "NpcId.OZIACH.id(),",
     ))
 
     ensure_contains(VALAINE_PATH, (
+        "ItemId.BLUE_CAPE.id()",
+        "ItemId.ORICHALCUM_LARGE_HELMET.id()",
+        "ItemId.ORICHALCUM_GAUNTLETS.id()",
+        "ItemId.ORICHALCUM_GREAVES.id()",
+        "ItemId.ORICHALCUM_SQUARE_SHIELD.id()",
+        "ItemId.ORICHALCUM_KITE_SHIELD.id()",
+        "ItemId.ORICHALCUM_PLATE_MAIL_LEGS.id()",
+        "ItemId.ORICHALCUM_PLATE_MAIL_BODY.id()",
+        "ItemId.ORICHALCUM_DAGGER.id()",
+        "ItemId.ORICHALCUM_SHORT_SWORD.id()",
+        "ItemId.ORICHALCUM_LONG_SWORD.id()",
+        "ItemId.ORICHALCUM_SCIMITAR.id()",
+        "ItemId.ORICHALCUM_2_HANDED_SWORD.id()",
+        "ItemId.ORICHALCUM_AXE.id()",
+        "ItemId.ORICHALCUM_BATTLE_AXE.id()",
+        "ItemId.ORICHALCUM_MACE.id()",
+        "ItemId.ORICHALCUM_SPEAR.id()",
+        "ItemId.ORICHALCUM_SCYTHE.id()",
+    ))
+    ensure_not_contains(VALAINE_PATH, (
         "ItemId.LARGE_WHITE_HELMET.id()",
         "ItemId.WHITE_PLATE_MAIL_BODY.id()",
+        "ItemId.LARGE_BLACK_HELMET.id()",
+        "ItemId.BLACK_PLATE_MAIL_LEGS.id()",
+        "ItemId.ADAMANTITE_PLATE_MAIL_BODY.id()",
         "ItemId.TITAN_STEEL_LARGE_HELMET.id()",
+        "ItemId.TITAN_STEEL_PLATE_MAIL_LEGS.id()",
         "ItemId.TITAN_STEEL_PLATE_MAIL_BODY.id()",
-        "ItemId.ORICHALCUM_LARGE_HELMET.id()",
-        "ItemId.ORICHALCUM_PLATE_MAIL_BODY.id()",
     ))
 
     ensure_contains(VARROCK_SWORDS_PATH, (

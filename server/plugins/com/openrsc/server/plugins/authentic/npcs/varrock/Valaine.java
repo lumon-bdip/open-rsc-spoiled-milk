@@ -16,17 +16,23 @@ public final class Valaine extends AbstractShop {
 
 	private final Shop valsShop = new Shop(true, 60000, 130, 40, 3,
 		new Item(ItemId.BLUE_CAPE.id(), 2),
-		new Item(ItemId.LARGE_WHITE_HELMET.id(), 1),
-		new Item(ItemId.WHITE_PLATE_MAIL_BODY.id(), 1),
-		new Item(ItemId.LARGE_BLACK_HELMET.id(), 1),
-		new Item(ItemId.BLACK_PLATE_MAIL_LEGS.id(), 1),
-		new Item(ItemId.ADAMANTITE_PLATE_MAIL_BODY.id(), 1),
-		new Item(ItemId.TITAN_STEEL_LARGE_HELMET.id(), 1),
-		new Item(ItemId.TITAN_STEEL_PLATE_MAIL_LEGS.id(), 1),
-		new Item(ItemId.TITAN_STEEL_PLATE_MAIL_BODY.id(), 1),
 		new Item(ItemId.ORICHALCUM_LARGE_HELMET.id(), 1),
+		new Item(ItemId.ORICHALCUM_GAUNTLETS.id(), 1),
+		new Item(ItemId.ORICHALCUM_GREAVES.id(), 1),
+		new Item(ItemId.ORICHALCUM_SQUARE_SHIELD.id(), 1),
+		new Item(ItemId.ORICHALCUM_KITE_SHIELD.id(), 1),
 		new Item(ItemId.ORICHALCUM_PLATE_MAIL_LEGS.id(), 1),
-		new Item(ItemId.ORICHALCUM_PLATE_MAIL_BODY.id(), 1));
+		new Item(ItemId.ORICHALCUM_PLATE_MAIL_BODY.id(), 1),
+		new Item(ItemId.ORICHALCUM_DAGGER.id(), 1),
+		new Item(ItemId.ORICHALCUM_SHORT_SWORD.id(), 1),
+		new Item(ItemId.ORICHALCUM_LONG_SWORD.id(), 1),
+		new Item(ItemId.ORICHALCUM_SCIMITAR.id(), 1),
+		new Item(ItemId.ORICHALCUM_2_HANDED_SWORD.id(), 1),
+		new Item(ItemId.ORICHALCUM_AXE.id(), 1),
+		new Item(ItemId.ORICHALCUM_BATTLE_AXE.id(), 1),
+		new Item(ItemId.ORICHALCUM_MACE.id(), 1),
+		new Item(ItemId.ORICHALCUM_SPEAR.id(), 1),
+		new Item(ItemId.ORICHALCUM_SCYTHE.id(), 1));
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {

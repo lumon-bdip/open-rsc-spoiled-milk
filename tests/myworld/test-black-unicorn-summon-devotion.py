@@ -33,16 +33,26 @@ def main() -> None:
     )
     require(
         summoning,
-        "bonusXp += Devotion.recordOfferingAndGetPrayerXpBonus(owner);",
-        "Black unicorn auto-offerings should advance devotion once per offering",
+        "bonusXp += Devotion.recordBlackUnicornOfferingAndGetPrayerXpBonus(owner);",
+        "Black unicorn auto-offerings should advance devotion with the unicorn bonus",
     )
     require(
         summoning,
         "final int xp = (getPrayerDropExperience(itemId) * amount * 2) + devotionBonusXp;",
         "Black unicorn auto-offerings should add devotion bonus XP without doubling it",
     )
+    require(
+        summoning,
+        "for (int i = 0; i < amount; i++)",
+        "Black unicorn auto-offerings should apply devotion credit per item",
+    )
+    require(
+        summoning,
+        "recordAutoBuryDevotionBonus(owner, amount)",
+        "Black unicorn auto-offerings should record devotion for the whole stack",
+    )
 
-    print("PASS: black unicorn summon records devotion offerings without granting Prayer")
+    print("PASS: black unicorn summon records boosted devotion offerings without granting Prayer")
 
 
 if __name__ == "__main__":

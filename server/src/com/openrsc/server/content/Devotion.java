@@ -10,6 +10,7 @@ public final class Devotion {
 	private static final String CACHE_PREFIX = "devotion_";
 	private static final String CACHE_SUFFIX = "_offerings";
 	private static final String SYMBOL_BONUS_SUFFIX = "_symbol_bonus_toggle";
+	private static final String BLACK_UNICORN_BONUS_SUFFIX = "_black_unicorn_bonus_toggle";
 	private static final int OFFERINGS_PER_BONUS_XP = 10;
 	public static final int OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP;
 	public static final int MAX_DEVOTION_LEVEL = 1000;
@@ -24,6 +25,14 @@ public final class Devotion {
 	}
 
 	public static int recordOfferingAndGetPrayerXpBonus(final Player player) {
+		return recordOfferingAndGetPrayerXpBonus(player, false);
+	}
+
+	public static int recordBlackUnicornOfferingAndGetPrayerXpBonus(final Player player) {
+		return recordOfferingAndGetPrayerXpBonus(player, true);
+	}
+
+	private static int recordOfferingAndGetPrayerXpBonus(final Player player, final boolean blackUnicornBonus) {
 		if (player == null || !player.getConfig().WANT_MYWORLD) {
 			return 0;
 		}
@@ -34,7 +43,8 @@ public final class Devotion {
 		final int previousDevotion = getDevotionLevelFromOfferings(previousOfferings);
 		final int bonusXp = Math.max(0, Math.min(previousDevotion, MAX_DEVOTION_LEVEL));
 		final int offeringGain = getOfferingDevotionGain(player, godLine);
-		final int newOfferings = clamp(previousOfferings + offeringGain, MIN_OFFERINGS, MAX_OFFERINGS);
+		final int blackUnicornOfferingGain = blackUnicornBonus ? getEveryOtherOfferingBonus(player, godLine, BLACK_UNICORN_BONUS_SUFFIX) : 0;
+		final int newOfferings = clamp(previousOfferings + offeringGain + blackUnicornOfferingGain, MIN_OFFERINGS, MAX_OFFERINGS);
 		player.getCache().set(cacheKey, newOfferings);
 		ActionSender.sendDevotion(player);
 
@@ -125,10 +135,15 @@ public final class Devotion {
 		if (!hasBlessedSymbolEquipped(player, godLine)) {
 			return 1;
 		}
-		final String cacheKey = CACHE_PREFIX + godLine.name().toLowerCase() + SYMBOL_BONUS_SUFFIX;
+		return 1 + getEveryOtherOfferingBonus(player, godLine, SYMBOL_BONUS_SUFFIX);
+	}
+
+	private static int getEveryOtherOfferingBonus(final Player player, final PrayerCatalog.GodLine godLine, final String suffix) {
+		final PrayerCatalog.GodLine safeGodLine = godLine == null ? PrayerCatalog.getDefaultGodLine() : godLine;
+		final String cacheKey = CACHE_PREFIX + safeGodLine.name().toLowerCase() + suffix;
 		final boolean bonusThisOffering = !player.getCache().hasKey(cacheKey) || !player.getCache().getBoolean(cacheKey);
 		player.getCache().store(cacheKey, bonusThisOffering);
-		return bonusThisOffering ? 2 : 1;
+		return bonusThisOffering ? 1 : 0;
 	}
 
 	private static boolean hasBlessedSymbolEquipped(final Player player, final PrayerCatalog.GodLine godLine) {
