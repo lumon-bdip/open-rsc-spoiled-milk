@@ -1595,14 +1595,16 @@ public class PacketHandler {
 					int zWorld = (zTile * 2 + zSize) * tileSize / 2;
 					int modelIndex = com.openrsc.client.entityhandling.EntityHandler.getObjectDef(id).modelID;// CacheValues.gameObjectModelIndex[id];
 					RSModel m = mc.getModelCacheItem(modelIndex).clone();
-					mc.getScene().addModel(m);
 					m.key = mc.getGameObjectInstanceCount();
 					m.addRotation(0, dir * 32, 0);
-					m.translate2(xWorld, -mc.getWorld().getElevation(xWorld, zWorld), zWorld);
 					m.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);
-					mc.getWorld().addGameObject_UpdateCollisionMap(xTile, zTile, id, false);
-					if (id == 74) {
-						m.translate2(0, -480, 0);
+					if (mc.hasLoadedTerrainForGameObject(xTile, zTile, id, dir)) {
+						mc.getScene().addModel(m);
+						m.translate2(xWorld, -mc.getWorld().getElevation(xWorld, zWorld), zWorld);
+						mc.getWorld().addGameObject_UpdateCollisionMap(xTile, zTile, id, false);
+						if (id == 74) {
+							m.translate2(0, -480, 0);
+						}
 					}
 
 					mc.setGameObjectInstanceX(mc.getGameObjectInstanceCount(), xTile);
@@ -2333,6 +2335,7 @@ public class PacketHandler {
 		mc.setGatheringFocusMenuToggle(packetsIncoming.packetEnd < length ? packetsIncoming.getUnsignedByte() : 1); // 48
 		mc.setHitsXpFocusMenuToggle(packetsIncoming.packetEnd < length ? packetsIncoming.getUnsignedByte() : 1); // 49
 		mc.setHitsXpFocus(packetsIncoming.packetEnd < length ? packetsIncoming.getUnsignedByte() : 1); // 50
+		mc.setSummonHealthBars(packetsIncoming.packetEnd < length ? packetsIncoming.getUnsignedByte() == 1 : true); // 51
 	}
 
 	private void togglePrayer(int length) {

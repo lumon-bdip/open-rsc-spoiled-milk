@@ -5453,7 +5453,7 @@ public class EntityHandler {
 			"Mithril Scythe", "Titan Steel Scythe", "Adamantite Scythe", "Orichalcum Scythe", "Rune Scythe"
 		};
 		int[] prices = {48, 96, 240, 640, 3040, 8000, 18000, 20000, 65000, 100000};
-		int[] masks = {0xD9E3EA, 0xC86A2B, 0xB08A4A, 0xE6E6E6, 0xC8CDD2, 0x6FC6C8, 0x7585A8, 0x5BC878, 0xE08C5A, 0x86D7FF};
+		int[] masks = {0xD9E3EA, 0xC86A2B, 0xB08A4A, 0xE6E6E6, 0xC8CDD2, 0x6FC6C8, 0x7585A8, 0x5BC878, 0x5A3F7D, 0x86D7FF};
 		for (int index = 0; index < names.length; index++) {
 			int id = 3181 + index;
 			setCustomItemDefinition(id, new ItemDef(names[index], "A two-handed scythe for sweeping attacks.", "",

@@ -108,6 +108,8 @@ public final class GameSettingHandler implements PayloadProcessor<GameSettingStr
 					focusMenuValue = 1;
 				}
 				player.getCache().set("setting_hits_xp_focus_menu", focusMenuValue);
+			} else if (idx == 50) {
+				player.getCache().store("setting_summon_health_bars", value == 1);
 			}
 			return;
 		}

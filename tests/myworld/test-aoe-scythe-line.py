@@ -115,6 +115,8 @@ def main() -> None:
 
     require('new AnimationDef("scythe", "equipment", 0xF0F0F0, 0, true, false, 0)' in client_defs,
             "Client should define a white held combat scythe variant")
+    require("0x7585A8, 0x5BC878, 0x5A3F7D, 0x86D7FF" in client_defs,
+            "Orichalcum scythe icon mask should use the established deep purple orichalcum palette")
     require("private static final int[] SCYTHE_IDS" in pvm_melee, "PvM melee should identify scythe weapons")
     require("applyScytheNpcCleave((Player) attackerMob, (Npc) targetMob)" in pvm_melee,
             "PvM melee should run scythe cleave from player-vs-NPC combat")

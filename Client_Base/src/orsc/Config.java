@@ -18,7 +18,7 @@ public class Config {
 	public static String WELCOME_TEXT = "You need a members account to use this server";
 	public static String SERVER_IP = null; // Modify this to override "Cache/ip.txt"
 	public static int SERVER_PORT; // Modify SERVER_IP above to override "Cache/port.txt" with this value
-	public static final int CLIENT_VERSION = 10026;
+	public static final int CLIENT_VERSION = 10027;
 	private static final int CACHE_VERSION = 4;
 	public static boolean MEMBER_WORLD = false;
 	public static boolean DISPLAY_LOGO_SPRITE = false;
@@ -45,6 +45,7 @@ public class Config {
 	public static boolean C_GROUND_ITEM_NAMES = false;
 	public static boolean C_WANT_NATURE_RUNE_PROTECTION = true; // Important that nature rune protection is true by default, otherwise we might have some very unhappy players!
 	public static boolean C_AUTO_RETALIATE = true;
+	public static boolean C_SUMMON_HEALTH_BARS = true;
 	public static boolean C_MESSAGE_TAB_SWITCH = false;
 	public static boolean C_NAME_CLAN_TAG_OVERLAY = false;
 	public static boolean C_SIDE_MENU_OVERLAY = false;

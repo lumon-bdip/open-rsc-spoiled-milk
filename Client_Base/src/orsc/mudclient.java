@@ -2959,12 +2959,56 @@ public final class mudclient implements Runnable {
 		int[] indices = new int[]{v1, v2, v3, v4};
 		model.insertFace(4, indices, texFront, texBack, false);
 		model.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, -95);
-		if (x >= 0 && y >= 0 && x < 96 && y < 96) {
+		if (hasLoadedTerrainForWallObject(x, y, dir)) {
 			this.scene.addModel(model);
 		}
 
 		model.key = index + 10000;
 		return model;
+	}
+
+	public boolean hasLoadedTerrainForGameObject(int xTile, int zTile, int objectID, int dir) {
+		int xSize;
+		int zSize;
+		if (dir == 0 || dir == 4) {
+			xSize = EntityHandler.getObjectDef(objectID).getWidth();
+			zSize = EntityHandler.getObjectDef(objectID).getHeight();
+		} else {
+			xSize = EntityHandler.getObjectDef(objectID).getHeight();
+			zSize = EntityHandler.getObjectDef(objectID).getWidth();
+		}
+
+		int xWorld = (xTile * 2 + xSize) * this.tileSize / 2;
+		int zWorld = (zTile * 2 + zSize) * this.tileSize / 2;
+		return hasLoadedTerrainForWorldPoint(xWorld, zWorld);
+	}
+
+	private boolean hasLoadedTerrainForWallObject(int x, int y, int dir) {
+		int x2 = x;
+		int y2 = y;
+		if (dir == 1) {
+			y2 = y + 1;
+		}
+		if (dir == 0) {
+			x2 = x + 1;
+		}
+		if (dir == 2) {
+			x2 = x + 1;
+			y2 = y + 1;
+		}
+		if (dir == 3) {
+			x2 = x + 1;
+			y2 = y + 1;
+		}
+
+		return hasLoadedTerrainForWorldPoint(x * this.tileSize, y * this.tileSize)
+			&& hasLoadedTerrainForWorldPoint(x2 * this.tileSize, y2 * this.tileSize);
+	}
+
+	private boolean hasLoadedTerrainForWorldPoint(int xWorld, int zWorld) {
+		int xTile = xWorld >> 7;
+		int zTile = zWorld >> 7;
+		return xTile >= 0 && zTile >= 0 && xTile < 95 && zTile < 95;
 	}
 
 	final void draw() {
@@ -7509,7 +7553,8 @@ public final class mudclient implements Runnable {
 			}
 
 			if (!hideSummonDuringArrival && (isCombatDirection(npc.direction) || npc.combatTimeout != 0 || npc.suppressAttackOption)) {
-				if ((npc.combatTimeout > 0 || npc.suppressAttackOption) && npc.healthMax > 0) {
+				boolean showSummonHealthBar = C_SUMMON_HEALTH_BARS || !npc.suppressAttackOption;
+				if (showSummonHealthBar && (npc.combatTimeout > 0 || npc.suppressAttackOption) && npc.healthMax > 0) {
 					var15 = x + getCombatScreenOffset(npc.direction, overlayMovement, 20);
 
 					var16 = npc.healthCurrent * 30 / npc.healthMax;
@@ -11683,6 +11728,9 @@ public final class mudclient implements Runnable {
 		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
 			"@whi@Hits XP Focus Menu - " + getHitsXpFocusMenuLabel(), 53, null, null);
 
+		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
+			"@whi@Summon Health Bars - " + (C_SUMMON_HEALTH_BARS ? "@gre@On" : "@red@Off"), 54, null, null);
+
 		// experience drops
 		if (S_EXPERIENCE_DROPS_TOGGLE) {
 			if (!C_EXPERIENCE_DROPS) {
@@ -12272,6 +12320,14 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(49);
 			this.packetHandler.getClientStream().bufferBits.putByte(C_HITS_XP_FOCUS_MENU);
+			this.packetHandler.getClientStream().finishPacket();
+		}
+
+		if (settingIndex == 54 && this.mouseButtonClick == 1) {
+			C_SUMMON_HEALTH_BARS = !C_SUMMON_HEALTH_BARS;
+			this.packetHandler.getClientStream().newPacket(111);
+			this.packetHandler.getClientStream().bufferBits.putByte(50);
+			this.packetHandler.getClientStream().bufferBits.putByte(C_SUMMON_HEALTH_BARS ? 1 : 0);
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
@@ -23368,6 +23424,10 @@ public final class mudclient implements Runnable {
 
 	public void setAutoRetaliate(boolean b) {
 		C_AUTO_RETALIATE = b;
+	}
+
+	public void setSummonHealthBars(boolean b) {
+		C_SUMMON_HEALTH_BARS = b;
 	}
 
 	public void setFightModeSelectorToggle(int i) {

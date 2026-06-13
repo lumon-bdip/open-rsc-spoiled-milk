@@ -1346,7 +1346,10 @@ public final class Scene {
 		if (left.m_t != right.m_t) {
 			return left.m_t > right.m_t ? -1 : 1;
 		}
-		if (left.model == this.m_T && right.model == this.m_T && left.faceID != right.faceID) {
+		if (left.modelIndex != right.modelIndex) {
+			return left.modelIndex < right.modelIndex ? -1 : 1;
+		}
+		if (left.faceID != right.faceID) {
 			return left.faceID < right.faceID ? -1 : 1;
 		}
 		return 0;
@@ -2665,6 +2668,7 @@ public final class Scene {
 									Polygon var27 = this.polygons[this.m_zb];
 									var27.model = var2;
 									var27.faceID = var3;
+									var27.modelIndex = var9;
 									this.computePolygon((int) this.m_zb);
 									if (var27.orientation < 0) {
 										var13 = var2.faceTextureFront[var3];
@@ -2717,6 +2721,7 @@ public final class Scene {
 							Polygon var16 = this.polygons[this.m_zb];
 							var16.faceID = var3;
 							var16.model = var2;
+							var16.modelIndex = this.modelCount;
 							this.b(-103, this.m_zb);
 							var16.m_t = (var2.vertZRot[var24[1]] + var13) / 2;
 							++this.m_zb;

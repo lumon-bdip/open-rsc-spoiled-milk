@@ -14,7 +14,7 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public final class Valaine extends AbstractShop {
 
-	private final Shop valsShop = new Shop(true, 60000, 130, 40, 3,
+	private final Shop valsShop = new Shop(false, 60000, 130, 40, 3,
 		new Item(ItemId.BLUE_CAPE.id(), 2),
 		new Item(ItemId.ORICHALCUM_LARGE_HELMET.id(), 1),
 		new Item(ItemId.ORICHALCUM_GAUNTLETS.id(), 1),

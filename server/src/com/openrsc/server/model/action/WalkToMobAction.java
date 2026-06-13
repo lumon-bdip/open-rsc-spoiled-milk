@@ -39,7 +39,11 @@ public abstract class WalkToMobAction extends WalkToAction {
 		Point checkedPoint = ((ignoreProjectileAllowed || projectilePathAttack) && !myworldCombatAttack)
 			? getPlayer().getWalkingQueue().getNextMovement()
 			: getPlayer().getLocation();
-		boolean pathingCheckPassed = PathValidation.checkAdjacentDistance(getPlayer().getWorld(),
+		boolean sameTileCombatAttack = myworldCombatAttack
+			&& checkedPoint.getX() == mob.getX()
+			&& checkedPoint.getY() == mob.getY();
+		boolean pathingCheckPassed = !sameTileCombatAttack
+			&& PathValidation.checkAdjacentDistance(getPlayer().getWorld(),
 			checkedPoint.getX(), checkedPoint.getY(), mob.getX(), mob.getY(),
 			ignoreProjectileAllowed, !ignoreProjectileAllowed);
 		boolean actionExecutedThisTick = checkedPoint.withinRange(mob.getLocation(), radius) && pathingCheckPassed;

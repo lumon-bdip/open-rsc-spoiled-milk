@@ -7,6 +7,7 @@ final class Polygon {
 	int m_f = 0;
 	int minP2;
 	int faceID;
+	int modelIndex;
 	int maxP2;
 	int normalZ;
 	int normalY;

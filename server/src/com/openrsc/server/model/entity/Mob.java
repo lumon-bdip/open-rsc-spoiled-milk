@@ -800,11 +800,7 @@ public abstract class Mob extends Entity {
 	public void walkAdjacentToEntity(final Mob target) {
 		Point destination = getClosestMeleeAdjacentTile(target);
 		if (destination == null) {
-			if (getConfig().WANT_IMPROVED_PATHFINDING) {
-				walkToEntityAStar(target.getX(), target.getY());
-			} else {
-				walkToEntity(target.getX(), target.getY());
-			}
+			resetPath();
 			return;
 		}
 

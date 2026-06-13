@@ -237,6 +237,7 @@ def main() -> None:
     ))
 
     ensure_contains(VALAINE_PATH, (
+        "new Shop(false, 60000, 130, 40, 3,",
         "ItemId.BLUE_CAPE.id()",
         "ItemId.ORICHALCUM_LARGE_HELMET.id()",
         "ItemId.ORICHALCUM_GAUNTLETS.id()",
@@ -257,6 +258,7 @@ def main() -> None:
         "ItemId.ORICHALCUM_SCYTHE.id()",
     ))
     ensure_not_contains(VALAINE_PATH, (
+        "new Shop(true, 60000, 130, 40, 3,",
         "ItemId.LARGE_WHITE_HELMET.id()",
         "ItemId.WHITE_PLATE_MAIL_BODY.id()",
         "ItemId.LARGE_BLACK_HELMET.id()",

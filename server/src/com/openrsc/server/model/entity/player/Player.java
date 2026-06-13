@@ -4424,6 +4424,13 @@ public final class Player extends Mob {
 		getCache().set("setting_hits_xp_focus", focus);
 	}
 
+	public boolean getShowSummonHealthBars() {
+		if (getCache().hasKey("setting_summon_health_bars")) {
+			return getCache().getBoolean("setting_summon_health_bars");
+		}
+		return true;
+	}
+
 	public boolean shouldAvoidCombatEngagement() {
 		return !getAutoRetaliate();
 	}

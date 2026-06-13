@@ -108,7 +108,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 
-		boolean adjacent = PathValidation.checkAdjacentDistance(attackerMob.getWorld(),
+		boolean sameTile = attackerMob.getX() == targetMob.getX()
+			&& attackerMob.getY() == targetMob.getY();
+		boolean adjacent = !sameTile && PathValidation.checkAdjacentDistance(attackerMob.getWorld(),
 			attackerMob.getX(), attackerMob.getY(), targetMob.getX(), targetMob.getY(), true, false);
 		if (!attackerMob.withinRange(targetMob, 1) || !adjacent) {
 			// Don't force player to walk back if they're hostile and trying to run away

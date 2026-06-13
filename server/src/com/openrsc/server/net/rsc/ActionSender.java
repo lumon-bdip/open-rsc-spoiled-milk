@@ -743,6 +743,7 @@ public class ActionSender {
 			customOptions.add(player.getGatheringFocusMenuToggle());
 			customOptions.add(player.getHitsXpFocusMenuToggle());
 			customOptions.add(player.getHitsXpFocus());
+			customOptions.add(player.getShowSummonHealthBars() ? 1 : 0);
 		}
 		struct.customOptions = customOptions;
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_GAME_SETTINGS, struct, player);
