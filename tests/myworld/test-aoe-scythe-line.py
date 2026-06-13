@@ -128,6 +128,12 @@ def main() -> None:
             "Scythe cleave should use adjacent tiles around the player")
     require("inflictScytheCleaveDamage(player, npc, damage)" in pvm_melee,
             "Scythe secondary cleave hits should not reset the primary combat event")
+    require("triggerScytheCleaveAggro(player, npc)" in pvm_melee,
+            "Scythe secondary cleave hits should wake idle targets")
+    require("PvmMeleeEvent existingEvent = npc.getPvmMeleeEvent();" in pvm_melee
+            and "existingEvent != null && existingEvent.isRunning()" in pvm_melee
+            and "npc.startPvmCounterCombat(player);" in pvm_melee,
+            "Scythe cleave aggro should avoid hijacking NPCs already fighting in PvM")
 
     print("PASS: AoE scythe line validated")
 

@@ -556,6 +556,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			if (damage == 0 && npc.getSkills().getLevel(Skill.HITS.id()) > 0) {
 				npc.getUpdateFlags().setDamage(new Damage(npc, 0));
 				npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_STANDARD, 0));
+				triggerScytheCleaveAggro(player, npc);
 			}
 			return;
 		}
@@ -579,7 +580,19 @@ public class PvmMeleeEvent extends GameTickEvent {
 		} else if (damage > 0) {
 			npc.setLastOpponent(player);
 			npc.setCombatTimer();
+			triggerScytheCleaveAggro(player, npc);
 		}
+	}
+
+	private void triggerScytheCleaveAggro(final Player player, final Npc npc) {
+		if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		PvmMeleeEvent existingEvent = npc.getPvmMeleeEvent();
+		if (existingEvent != null && existingEvent.isRunning()) {
+			return;
+		}
+		npc.startPvmCounterCombat(player);
 	}
 
 	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int damage) {
