@@ -1512,6 +1512,7 @@
     },
     {
       "id": 1029,
+      "basePrice": 300,
       "meleeOffense": 1,
       "meleeDefense": 1,
       "requiredLevel": 0,
@@ -4740,6 +4741,7 @@
     },
     {
       "id": 1840,
+      "description": "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.",
       "meleeDefense": 1,
       "requiredLevel": 0,
       "requiredSkillID": -1,
@@ -4747,6 +4749,7 @@
     },
     {
       "id": 1841,
+      "description": "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.",
       "meleeDefense": 1,
       "rangedDefense": 1,
       "requiredLevel": 0,
@@ -4755,6 +4758,7 @@
     },
     {
       "id": 1842,
+      "description": "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.",
       "meleeDefense": 1,
       "rangedDefense": 1,
       "requiredLevel": 0,
@@ -4763,6 +4767,7 @@
     },
     {
       "id": 1843,
+      "description": "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.",
       "meleeDefense": 2,
       "rangedDefense": 1,
       "requiredLevel": 0,
@@ -4771,6 +4776,7 @@
     },
     {
       "id": 1844,
+      "description": "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.",
       "meleeDefense": 3,
       "rangedDefense": 1,
       "requiredLevel": 0,
@@ -4819,6 +4825,7 @@
     },
     {
       "id": 1850,
+      "description": "Bear's Maul: melee hits become two hits for 60% damage each.",
       "meleeDefense": 2,
       "requiredLevel": 0,
       "requiredSkillID": -1,
@@ -4826,6 +4833,7 @@
     },
     {
       "id": 1851,
+      "description": "Bear's Maul: melee hits become two hits for 60% damage each.",
       "meleeDefense": 4,
       "requiredLevel": 0,
       "requiredSkillID": -1,
@@ -4833,6 +4841,7 @@
     },
     {
       "id": 1852,
+      "description": "Bear's Maul: melee hits become two hits for 60% damage each.",
       "meleeDefense": 4,
       "requiredLevel": 0,
       "requiredSkillID": -1,
@@ -4840,6 +4849,7 @@
     },
     {
       "id": 1853,
+      "description": "Bear's Maul: melee hits become two hits for 60% damage each.",
       "meleeDefense": 5,
       "rangedDefense": 1,
       "requiredLevel": 0,
@@ -4848,6 +4858,7 @@
     },
     {
       "id": 1854,
+      "description": "Bear's Maul: melee hits become two hits for 60% damage each.",
       "meleeDefense": 7,
       "rangedDefense": 1,
       "requiredLevel": 0,
@@ -5022,6 +5033,7 @@
     },
     {
       "id": 1875,
+      "description": "Giant's Might: +10% of base Melee and Ranged levels.",
       "meleeDefense": 2,
       "rangedDefense": 1,
       "requiredLevel": 0,
@@ -5030,6 +5042,7 @@
     },
     {
       "id": 1876,
+      "description": "Giant's Might: +10% of base Melee and Ranged levels.",
       "meleeDefense": 4,
       "rangedDefense": 1,
       "magicDefense": 1,
@@ -5039,6 +5052,7 @@
     },
     {
       "id": 1877,
+      "description": "Giant's Might: +10% of base Melee and Ranged levels.",
       "meleeDefense": 4,
       "rangedDefense": 1,
       "magicDefense": 1,
@@ -5048,6 +5062,7 @@
     },
     {
       "id": 1878,
+      "description": "Giant's Might: +10% of base Melee and Ranged levels.",
       "meleeDefense": 6,
       "rangedDefense": 2,
       "magicDefense": 1,
@@ -5057,6 +5072,7 @@
     },
     {
       "id": 1879,
+      "description": "Giant's Might: +10% of base Melee and Ranged levels.",
       "meleeDefense": 7,
       "rangedDefense": 2,
       "magicDefense": 2,
@@ -5201,6 +5217,7 @@
     },
     {
       "id": 1895,
+      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.",
       "meleeDefense": 3,
       "rangedDefense": 1,
       "magicDefense": 1,
@@ -5210,6 +5227,7 @@
     },
     {
       "id": 1896,
+      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.",
       "meleeDefense": 6,
       "rangedDefense": 2,
       "magicDefense": 1,
@@ -5219,6 +5237,7 @@
     },
     {
       "id": 1897,
+      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.",
       "meleeDefense": 6,
       "rangedDefense": 2,
       "magicDefense": 1,
@@ -5228,6 +5247,7 @@
     },
     {
       "id": 1898,
+      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.",
       "meleeDefense": 10,
       "rangedDefense": 2,
       "magicDefense": 2,
@@ -5237,6 +5257,7 @@
     },
     {
       "id": 1899,
+      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.",
       "meleeDefense": 12,
       "rangedDefense": 3,
       "magicDefense": 3,
@@ -5246,6 +5267,7 @@
     },
     {
       "id": 1900,
+      "description": "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.",
       "meleeDefense": 3,
       "rangedDefense": 1,
       "magicDefense": 1,
@@ -5255,6 +5277,7 @@
     },
     {
       "id": 1901,
+      "description": "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.",
       "meleeDefense": 6,
       "rangedDefense": 2,
       "magicDefense": 1,
@@ -5264,6 +5287,7 @@
     },
     {
       "id": 1902,
+      "description": "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.",
       "meleeDefense": 6,
       "rangedDefense": 2,
       "magicDefense": 1,
@@ -5273,6 +5297,7 @@
     },
     {
       "id": 1903,
+      "description": "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.",
       "meleeDefense": 10,
       "rangedDefense": 2,
       "magicDefense": 2,
@@ -5282,6 +5307,7 @@
     },
     {
       "id": 1904,
+      "description": "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.",
       "meleeDefense": 12,
       "rangedDefense": 3,
       "magicDefense": 3,
@@ -5381,6 +5407,7 @@
     },
     {
       "id": 1915,
+      "description": "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.",
       "meleeDefense": 5,
       "rangedDefense": 1,
       "magicDefense": 1,
@@ -5390,6 +5417,7 @@
     },
     {
       "id": 1916,
+      "description": "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.",
       "meleeDefense": 9,
       "rangedDefense": 2,
       "magicDefense": 2,
@@ -5399,6 +5427,7 @@
     },
     {
       "id": 1917,
+      "description": "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.",
       "meleeDefense": 9,
       "rangedDefense": 2,
       "magicDefense": 2,
@@ -5408,6 +5437,7 @@
     },
     {
       "id": 1918,
+      "description": "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.",
       "meleeDefense": 13,
       "rangedDefense": 3,
       "magicDefense": 3,
@@ -5417,6 +5447,7 @@
     },
     {
       "id": 1919,
+      "description": "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.",
       "meleeDefense": 17,
       "rangedDefense": 5,
       "magicDefense": 4,
@@ -9909,6 +9940,38 @@
     {
       "id": 207,
       "basePrice": 15
+    },
+    {
+      "id": 44,
+      "basePrice": 200
+    },
+    {
+      "id": 45,
+      "basePrice": 200
+    },
+    {
+      "id": 385,
+      "basePrice": 300
+    },
+    {
+      "id": 1027,
+      "basePrice": 200
+    },
+    {
+      "id": 1028,
+      "basePrice": 200
+    },
+    {
+      "id": 3173,
+      "basePrice": 200
+    },
+    {
+      "id": 3174,
+      "basePrice": 200
+    },
+    {
+      "id": 3175,
+      "basePrice": 300
     },
     {
       "id": 1789,

@@ -93,6 +93,17 @@ NECKLACE_VALUES = {
     5: 13000,
     6: 38000,
 }
+GOD_SYMBOL_VALUES = {
+    44: 200,    # unstrung Saradomin symbol
+    45: 200,    # unblessed Saradomin symbol
+    385: 300,   # blessed Saradomin symbol
+    1027: 200,  # unstrung Zamorak symbol
+    1028: 200,  # unblessed Zamorak symbol
+    1029: 300,  # blessed Zamorak symbol
+    3173: 200,  # unstrung Guthix symbol
+    3174: 200,  # unblessed Guthix symbol
+    3175: 300,  # blessed Guthix symbol
+}
 
 
 def fail(message: str) -> None:
@@ -326,6 +337,9 @@ def main() -> None:
         require_price(items, item_id, RING_AND_AMULET_VALUES[tier], f"tier {tier} ring/amulet jewelry")
     for item_id, tier in necklaces.items():
         require_price(items, item_id, NECKLACE_VALUES[tier], f"tier {tier} necklace jewelry")
+
+    for item_id, expected in GOD_SYMBOL_VALUES.items():
+        require_price(items, item_id, expected, f"god symbol {item_id}")
 
     cut_gem_ids = {2: 164, 3: 163, 4: 162, 5: 161, 6: 523}
     for tier in range(2, 7):

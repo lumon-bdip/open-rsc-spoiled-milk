@@ -432,7 +432,8 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 				//do not send over
 				final int first = multi(player, n, false,
 					"I was wondering what was down those stairs?",
-					"I was just stopping to say hello");
+					"I was just stopping to say hello",
+					MyWorldQuestShortcuts.ALREADY_DONE_OPTION);
 
 				if (first == 0) {
 					say(player, n, "I was just wondering what was down those stairs?");
@@ -455,6 +456,8 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 				} else if (first == 1) {
 					say(player, n, "I was just stopping to say hello");
 					npcsay(player, n, "Hello then");
+				} else if (first == 2) {
+					MyWorldQuestShortcuts.completeFishingContest(player, n);
 				}
 
 				break;
@@ -465,7 +468,8 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 					//do not send over
 					final int opts = multi(player, n, false,
 						"No I need another competition pass",
-						"No it takes preparation to win fishing competitions");
+						"No it takes preparation to win fishing competitions",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
 					if (opts == 0) {
 						say(player, n, "I need another competition pass");
 						npcsay(player, n, "Hmm its a good job they sent us spares",
@@ -474,9 +478,18 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 					} else if (opts == 1) {
 						say(player, n, "No it takes preparation to win fishing competitions");
 						npcsay(player, n, "Maybe that's where we are going wrong when we try fishing");
+					} else if (opts == 2) {
+						MyWorldQuestShortcuts.completeFishingContest(player, n);
 					}
 				} else {
-					say(player, n, "No not yet");
+					final int opts = multi(player, n, false,
+						"No not yet",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (opts == 0) {
+						say(player, n, "No not yet");
+					} else if (opts == 1) {
+						MyWorldQuestShortcuts.completeFishingContest(player, n);
+					}
 				}
 
 				break;
@@ -492,7 +505,14 @@ public class FishingContest implements QuestInterface, TalkNpcTrigger,
 					npcsay(player, n, "Okay we will let you in now");
 					player.sendQuestComplete(Quests.FISHING_CONTEST);
 				} else {
-					say(player, n, "I don't have it with me");
+					final int opts = multi(player, n, false,
+						"I don't have it with me",
+						MyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION);
+					if (opts == 0) {
+						say(player, n, "I don't have it with me");
+					} else if (opts == 1) {
+						MyWorldQuestShortcuts.completeFishingContest(player, n);
+					}
 				}
 				break;
 			case -1:

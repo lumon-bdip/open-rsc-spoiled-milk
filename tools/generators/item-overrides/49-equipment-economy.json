@@ -22,6 +22,38 @@
       "basePrice": 15
     },
     {
+      "id": 44,
+      "basePrice": 200
+    },
+    {
+      "id": 45,
+      "basePrice": 200
+    },
+    {
+      "id": 385,
+      "basePrice": 300
+    },
+    {
+      "id": 1027,
+      "basePrice": 200
+    },
+    {
+      "id": 1028,
+      "basePrice": 200
+    },
+    {
+      "id": 3173,
+      "basePrice": 200
+    },
+    {
+      "id": 3174,
+      "basePrice": 200
+    },
+    {
+      "id": 3175,
+      "basePrice": 300
+    },
+    {
       "id": 1789,
       "basePrice": 18
     },

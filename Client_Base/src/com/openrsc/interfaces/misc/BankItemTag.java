@@ -60,7 +60,7 @@ enum BankItemTag {
 		boolean jewelry = isJewelry(name);
 		boolean craftingGem = gem && !jewelry;
 		boolean logs = containsAny(name, "logs", " log");
-		boolean bow = containsAny(name, "bow", "crossbow");
+		boolean bow = isBowWeapon(name);
 		boolean rangedAmmo = containsAny(name, "arrow", "bolt", "dart", "throwing knife",
 			"javelin", "cannonball", "cannon ball");
 		boolean bones = containsAny(name, "bone");
@@ -173,6 +173,11 @@ enum BankItemTag {
 	private static boolean isWoodcuttingAxe(String name) {
 		return containsAny(name, " axe", "hatchet") && !containsAny(name, "battle axe", "battleaxe",
 			"pickaxe", "throwing axe");
+	}
+
+	private static boolean isBowWeapon(String name) {
+		return equalsAny(name, "bow", "longbow", "shortbow", "crossbow")
+			|| endsWithAny(name, " longbow", " shortbow", " crossbow", "-longbow", "-shortbow", "-crossbow");
 	}
 
 	private static boolean isFish(String name) {

@@ -249,7 +249,7 @@ def main() -> None:
         "createLeatherProductionSession(player, leather)",
         'new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose a leather item to craft"',
         "getHideArmorPieceByItemId",
-        "batchLeather(player, leather, result, piece.materialCost, piece.reqLvl, piece.exp);",
+        "batchLeather(player, leather, result, piece.materialCost, threadCost, piece.reqLvl, piece.exp);",
     )
     for snippet in required_crafting_snippets:
         if snippet not in crafting_text:

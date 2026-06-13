@@ -988,6 +988,7 @@
     },
     {
       "id": 1029,
+      "basePrice": 300,
       "meleeOffense": 1,
       "meleeDefense": 1,
       "requiredLevel": 0,

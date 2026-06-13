@@ -89,8 +89,11 @@ def main() -> None:
     require(tags, 'startsWithAny(name, "ring ", "ring-")', "whole-word jewelry ring classification")
     require(tags, "boolean craftingGem = gem && !jewelry;", "finished gem jewelry exclusion")
     require(tags, "isCraftingToolOrMaterial(name)", "crafting input classification")
+    require(tags, "boolean bow = isBowWeapon(name);", "whole-word bow classification")
+    require(tags, 'endsWithAny(name, " longbow", " shortbow", " crossbow"', "bow suffix classification")
     forbid(tags, 'boolean bonesOrAshes = containsAny(name, "bone", "ashes", "demon ash");', "generic ashes classification")
     forbid(tags, "uncutGem || gem || jewelry ||", "finished jewelry crafting classification")
+    forbid(tags, 'boolean bow = containsAny(name, "bow", "crossbow");', "bowl-safe ranged classification")
 
     print("PASS: bank filters expose the agreed tags and preserve bank-slot-safe filtering")
 

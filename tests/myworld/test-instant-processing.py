@@ -44,7 +44,7 @@ def main() -> None:
     for snippet in (
         "while (!ifinterrupted() && !isbatchcomplete()) {",
         "consumeThreadUse(player)",
-        "crafting.batchLeather(player, leather, result, piece.materialCost, piece.reqLvl, piece.exp);",
+        "crafting.batchLeather(player, leather, result, piece.materialCost, threadCost, piece.reqLvl, piece.exp);",
         "crafting.batchGoldJewelry(player, goldBar, def);",
         "crafting.batchSilverJewelry(player, silverBar, results, type, reply);",
         "crafting.batchPotteryMoulding(player, softClay, recipe.reqLvl, result, msg, recipe.exp);",

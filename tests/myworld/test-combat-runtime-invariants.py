@@ -152,7 +152,7 @@ def main() -> None:
     require_contains(THROWING_EVENT, "RangeUtils.getApproachRadius(attackRadius)")
     require_contains(CLIENT, "private boolean isSpellProjectile(SpriteDef projectile)")
     require_contains(CLIENT, "return isSpellProjectile(projectile) ? size * 2 : size;")
-    require_contains(CLIENT, "int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite, true);")
+    require_contains(CLIENT, "int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite, enemyProjectile);")
     require_contains(CLIENT, "private boolean isAnimatedCustomProjectile(SpriteDef projectile)")
     require_contains(CLIENT, "return enemyProjectile && isAnimatedCustomProjectile(projectile) ? size * 2 : size;")
     require_contains(CLIENT, "|| projectile.id == PROJECTILE_TYPES.WIZARDS_MAGIC.id()")

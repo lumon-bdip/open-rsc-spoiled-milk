@@ -1603,8 +1603,6 @@ public final class World {
 				for (i = 0; i < 4; ++i)
 					this.modelRoofGrid[i][j] = null;
 			}
-
-			System.gc();
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "k.G(" + -10185 + ')');
 		}

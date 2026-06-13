@@ -39,6 +39,10 @@ def main() -> None:
     require(priest, "MyWorldQuestShortcuts.completeRestlessGhost(player, n);", "Restless Ghost priest shortcut completion")
 
     fishing = (ROOT / "server/plugins/com/openrsc/server/plugins/authentic/quests/members/FishingContest.java").read_text()
+    require(fishing, '"I was just stopping to say hello",\n\t\t\t\t\tMyWorldQuestShortcuts.ALREADY_DONE_OPTION', "Fishing Contest dwarf start shortcut")
+    require(fishing, '"No I need another competition pass",\n\t\t\t\t\t\t"No it takes preparation to win fishing competitions",\n\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Fishing Contest dwarf missing-pass shortcut")
+    require(fishing, '"No not yet",\n\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Fishing Contest dwarf in-progress pass shortcut")
+    require(fishing, '"I don\'t have it with me",\n\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Fishing Contest dwarf trophy shortcut")
     require(fishing, '"I think I might still be able to find a bigger fish",\n\t\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Fishing Contest paid branch shortcut")
     require(fishing, '"I think I\'ll keep them to myself",\n\t\t\t\t\t\t\tMyWorldQuestShortcuts.IN_PROGRESS_ALREADY_DONE_OPTION', "Fishing Contest trophy branch shortcut")
 

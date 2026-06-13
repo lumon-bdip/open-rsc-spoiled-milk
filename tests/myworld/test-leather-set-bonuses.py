@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import sys
 from pathlib import Path
 
@@ -18,6 +19,7 @@ COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/comba
 OSRS_COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java"
 LEATHER_DEBUFF_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/LeatherSetDebuffEvent.java"
 CLIENT_ENTITY_HANDLER_PATH = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+ITEM_DEFS_MYWORLD_PATH = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 
 
 def fail(message: str) -> None:
@@ -35,6 +37,14 @@ def expect_not_contains(path: Path, needle: str, label: str) -> None:
     text = path.read_text()
     if needle in text:
         fail(f"{label} should not contain `{needle}` in {path}")
+
+
+def expect_item_descriptions(item_ids: range, description: str, label: str) -> None:
+    items = json.loads(ITEM_DEFS_MYWORLD_PATH.read_text(encoding="utf-8"))["items"]
+    descriptions = {item["id"]: item.get("description") for item in items}
+    for item_id in item_ids:
+        if descriptions.get(item_id) != description:
+            fail(f"{label} item {item_id} description is {descriptions.get(item_id)!r}, expected {description!r}")
 
 
 def main() -> None:
@@ -136,10 +146,24 @@ def main() -> None:
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black unicorn-hide set: +10 Prayer while worshipping Zamorak.", "old black unicorn leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black-dragon-hide set: 20% chance for dragon breath, max hit 30.", "black dragon leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full king-black-dragon-hide set: 60% chance for dragon breath, max hit 40.", "king black dragon leather examine description")
-    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Goblin's Tenacity", "goblin set name")
-    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Bear's Maul", "bear set name")
-    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Giant's Might", "giant set name")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.", "goblin leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Bear's Maul: melee hits become two hits for 60% damage each.", "bear leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Giant's Might: +10% of base Melee and Ranged levels.", "giant leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.", "earth giant leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.", "water giant leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.", "fire giant leather examine description")
+    expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Giant's Might: raises current melee and ranged levels by 10%.", "old giant current-level examine description")
+    expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "+10% current melee/ranged levels", "old elemental giant current-level examine description")
+    expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "20% chance to apply Earth", "old earth giant vague examine description")
+    expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "20% chance to apply Water", "old water giant vague examine description")
+    expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "20% chance to apply Fire", "old fire giant vague examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Green dragon-hide", "green dragon armor name")
+    expect_item_descriptions(range(1840, 1845), "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.", "goblin leather generated item examine")
+    expect_item_descriptions(range(1850, 1855), "Bear's Maul: melee hits become two hits for 60% damage each.", "bear leather generated item examine")
+    expect_item_descriptions(range(1875, 1880), "Giant's Might: +10% of base Melee and Ranged levels.", "giant leather generated item examine")
+    expect_item_descriptions(range(1895, 1900), "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.", "earth giant leather generated item examine")
+    expect_item_descriptions(range(1900, 1905), "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.", "water giant leather generated item examine")
+    expect_item_descriptions(range(1915, 1920), "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.", "fire giant leather generated item examine")
     expect_not_contains(COMBAT_FORMULA_PATH, "getGiantMightSkillMultiplier()", "legacy formula-only giant multiplier")
     expect_not_contains(OSRS_COMBAT_FORMULA_PATH, "getGiantMightSkillMultiplier()", "osrs formula-only giant multiplier")
 
