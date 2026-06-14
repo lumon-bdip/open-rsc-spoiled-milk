@@ -12,13 +12,21 @@ CLIENT_LANDSCAPE = ROOT / "Client_Base/Cache/video/Custom_Landscape.orsc"
 SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/SceneryLocs.json"
 MYWORLD_SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryLocs.json"
 OBJECT_TELEPOINTS = ROOT / "server/conf/server/defs/extras/ObjectTelePoints.xml"
-SECTOR = "h3x58y46"
-SECTOR_ORIGIN_X = 480
-SECTOR_ORIGIN_Y = 3264
+BASEMENT_SECTOR = "h3x58y46"
+BASEMENT_SECTOR_ORIGIN_X = 480
+BASEMENT_SECTOR_ORIGIN_Y = 3264
+GROUND_SECTOR = "h0x58y46"
+GROUND_SECTOR_ORIGIN_X = 480
+GROUND_SECTOR_ORIGIN_Y = 432
 FLOOR_TILES = {
     (x, y)
     for x in range(496, 504)
     for y in range(3294, 3302)
+}
+GROUND_DOWN_STAIR_TILES = {
+    (x, y)
+    for x in range(499, 501)
+    for y in range(469, 472)
 }
 
 
@@ -27,14 +35,14 @@ def require(condition, message):
         raise AssertionError(message)
 
 
-def read_sector(path):
+def read_sector(path, sector_name):
     with zipfile.ZipFile(path) as archive:
         require(archive.testzip() is None, f"{path} must be a valid landscape archive")
-        return archive.read(SECTOR)
+        return archive.read(sector_name)
 
 
-def tile(sector, x, y):
-    offset = ((x - SECTOR_ORIGIN_X) * 48 + (y - SECTOR_ORIGIN_Y)) * 10
+def tile(sector, x, y, *, origin_x, origin_y):
+    offset = ((x - origin_x) * 48 + (y - origin_y)) * 10
     return struct.unpack_from(">BBBBBBI", sector, offset)
 
 
@@ -51,13 +59,17 @@ def scenery_set(path):
 
 
 def ensure_terrain_seed():
-    server_sector = read_sector(SERVER_LANDSCAPE)
-    client_sector = read_sector(CLIENT_LANDSCAPE)
-    require(client_sector == server_sector, "Client and server Rangers Guild terrain must match")
+    server_sector = read_sector(SERVER_LANDSCAPE, BASEMENT_SECTOR)
+    client_sector = read_sector(CLIENT_LANDSCAPE, BASEMENT_SECTOR)
+    require(client_sector == server_sector, "Client and server Rangers Guild basement terrain must match")
 
     for x, y in FLOOR_TILES:
         elevation, texture, overlay, roof, east_wall, north_wall, diagonal_wall = tile(
-            server_sector, x, y
+            server_sector,
+            x,
+            y,
+            origin_x=BASEMENT_SECTOR_ORIGIN_X,
+            origin_y=BASEMENT_SECTOR_ORIGIN_Y,
         )
         require(
             (elevation, texture, overlay, roof, east_wall, north_wall, diagonal_wall)
@@ -69,7 +81,33 @@ def ensure_terrain_seed():
         for y in range(3293, 3303):
             if (x, y) in FLOOR_TILES:
                 continue
-            require(tile(server_sector, x, y)[2] == 8, f"Basement void ring changed at {x},{y}")
+            require(
+                tile(
+                    server_sector,
+                    x,
+                    y,
+                    origin_x=BASEMENT_SECTOR_ORIGIN_X,
+                    origin_y=BASEMENT_SECTOR_ORIGIN_Y,
+                )[2] == 8,
+                f"Basement void ring changed at {x},{y}",
+            )
+
+    server_sector = read_sector(SERVER_LANDSCAPE, GROUND_SECTOR)
+    client_sector = read_sector(CLIENT_LANDSCAPE, GROUND_SECTOR)
+    require(client_sector == server_sector, "Client and server Rangers Guild ground terrain must match")
+
+    for x, y in GROUND_DOWN_STAIR_TILES:
+        require(
+            tile(
+                server_sector,
+                x,
+                y,
+                origin_x=GROUND_SECTOR_ORIGIN_X,
+                origin_y=GROUND_SECTOR_ORIGIN_Y,
+            )
+            == (152, 70, 8, 0, 0, 0, 0),
+            f"Ground-floor down-stair opening is wrong at {x},{y}",
+        )
 
 
 def ensure_scenery_layout():
@@ -96,7 +134,7 @@ def ensure_scenery_layout():
         (145, 490, 464, 6),
         (47, 491, 471, 2),
         (279, 494, 471, 0),
-        (42, 499, 469, 0),
+        (42, 499, 469, 4),
         (41, 499, 3296, 0),
         (31, 496, 1408, 0),
         (31, 498, 1408, 0),
@@ -107,6 +145,7 @@ def ensure_scenery_layout():
         (145, 491, 464, 6),
         (47, 491, 470, 6),
         (279, 493, 471, 0),
+        (42, 499, 469, 0),
         (31, 496, 1408, 4),
         (31, 498, 1408, 4),
     }:
