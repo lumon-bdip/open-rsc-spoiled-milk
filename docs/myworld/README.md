@@ -19,6 +19,7 @@ repository root [`README.md`](../../README.md).
 - [pvm-npc-cluster-audit.md](pvm-npc-cluster-audit.md): hostile-NPC proximity audit, including the Wilderness-focused population view.
 - [dual-element-spells.md](dual-element-spells.md): current dual-element Magic spell implementation and live effect identities.
 - [jewelry-and-retired-robe-effects.md](jewelry-and-retired-robe-effects.md): source of truth for current jewelry effects and robe effects retired from cloth armor.
+- [enchanted-robe-effects-plan.md](enchanted-robe-effects-plan.md): running design notes for future enchanted robe effects and tier scaling.
 - [compatibility-only-content.md](compatibility-only-content.md): ledger for dormant item families, quest exceptions, and retired systems kept for compatibility.
 - [summoning-plan.md](summoning-plan.md): current Summoning implementation source of truth and tuning notes.
 - [fishing-spot-map.md](fishing-spot-map.md): current fishing spot cluster map and source coordinate list.

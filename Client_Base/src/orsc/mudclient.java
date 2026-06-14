@@ -127,13 +127,24 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_CORROSIVE_AURA = 41;
 	public static final int COMBAT_EFFECT_LESSER_DEMON_MAGIC = 42;
 	public static final int COMBAT_EFFECT_GREATER_DEMON_MAGIC = 43;
+	public static final int COMBAT_EFFECT_ENEMY_EARTH_BASIC = 44;
+	public static final int COMBAT_EFFECT_BLACK_DEMON_MAGIC = 45;
+	public static final int COMBAT_EFFECT_BALROG_MAGIC = 46;
+	public static final int COMBAT_EFFECT_BATTLE_MAGE_AIR = 47;
+	public static final int COMBAT_EFFECT_BATTLE_MAGE_EARTH = 48;
+	public static final int COMBAT_EFFECT_BATTLE_MAGE_WATER = 49;
+	public static final int COMBAT_EFFECT_BATTLE_MAGE_FIRE = 50;
+	public static final int COMBAT_EFFECT_GREEN_DRAGON_MAGIC = 51;
+	public static final int COMBAT_EFFECT_FIRE_DRAGON_MAGIC = 52;
+	public static final int COMBAT_EFFECT_OTHERWORLDLY_BEING_MAGIC = 53;
+	public static final int COMBAT_EFFECT_PALADIN_MAGIC = 54;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
 	public static final int COMBAT_EFFECT_WATER_ERUPTION = COMBAT_EFFECT_HURRICANE;
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 43;
+	public static final int COMBAT_EFFECT_COUNT = 54;
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_TICKS = 40;
@@ -147,7 +158,7 @@ public final class mudclient implements Runnable {
 	private static final int SUMMON_BAT_VAMPIRISM_PROJECTILE_SIZE = 144;
 	private static final int SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT = 34;
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
-	public static final int CUSTOM_PROJECTILE_COUNT = 18;
+	public static final int CUSTOM_PROJECTILE_COUNT = 21;
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
 	private static final int IRON_THROWING_KNIFE_ITEM_ID = 1075;
 	private static final int MAX_SPELL_ICONS = 64;
@@ -168,13 +179,14 @@ public final class mudclient implements Runnable {
 	private static final int SUMMONING_ICON_SIZE = MAGIC_ICON_SIZE;
 	private static final int SUMMONING_ICON_GAP = MAGIC_ICON_GAP;
 	private static final String[] SUMMONING_NAMES = {
-		"Broodling Spider", "Mischief Imp", "Ironhide Bear", "Sacred Unicorn",
+		"Broodling Spider", "Mischief Imp", "Loot Goblin", "Ironhide Bear", "Sacred Unicorn",
 		"Duskwind Bat", "Pack Rat", "Bound Battleaxe", "Mourning Unicorn",
 		"Restless Shade", "Delivery Camel", "Astral Wraith", "Abyssal Demon"
 	};
 	private static final String[] SUMMONING_DESCRIPTIONS = {
 		"A small melee companion",
 		"Keeps enemies away",
+		"Collects stackable drops",
 		"A sturdy bear companion",
 		"Raises your prayer points",
 		"A vampiric ranged companion",
@@ -187,33 +199,35 @@ public final class mudclient implements Runnable {
 		"A demon with Hell's Fire"
 	};
 	private static final int[] SUMMONING_LEVELS = {
-		1, 7, 14, 20, 26, 33, 39, 45, 51, 58, 64, 70
+		1, 7, 12, 14, 20, 26, 33, 39, 45, 51, 58, 64, 70
 	};
 	private static final int[][] SUMMONING_COST_ITEM_IDS = {
 		{37, 36},
 		{37, 36, 181},
+		{20, 37, 36, 35},
 		{37, 36, 20},
 		{37, 36, 46, 20},
 		{37, 33, 36, 40, 604},
-		{37, 42, 36, 40, 20},
+		{37, 42, 36, 40},
 		{37, 46, 89},
 		{37, 36, 46, 20},
 		{37, 46, 825, 181},
-		{37, 36, 42, 40, 20},
+		{37, 36, 42, 40},
 		{37, 46, 825, 20},
 		{37, 619, 825, 3112}
 	};
 	private static final int[][] SUMMONING_COST_AMOUNTS = {
 		{1, 1},
 		{1, 1, 1},
+		{1, 1, 1, 1},
 		{1, 2, 1},
 		{1, 1, 1, 1},
 		{1, 1, 1, 1, 1},
-		{1, 2, 1, 1, 1},
+		{1, 2, 1, 1},
 		{1, 2, 1},
 		{1, 1, 1, 1},
 		{2, 3, 1, 1},
-		{1, 2, 2, 2, 1},
+		{1, 2, 2, 2},
 		{2, 4, 1, 1},
 		{3, 1, 1, 1}
 	};
@@ -899,14 +913,17 @@ public final class mudclient implements Runnable {
 		"eye-of-guthix", "zamoraks-apocolypse", "saradomin-soul-slash", "claw-of-guthix", "summon",
 		"summon-combat", "summon-support", "summon-utility", "thunder-splash", "ice-burst", "acid-frog",
 		"wood-drill", "thunder-strike", "ice-crystal", "acid-gush", "battering-ram", "dragon-breath",
-		"divine-grace", "divine-retribution", "corrosive-aura", "lesser-demon-magic", "greater-demon-magic"
+		"divine-grace", "divine-retribution", "corrosive-aura", "lesser-demon-magic", "greater-demon-magic",
+		"enemy-earth-basic", "black-demon-magic", "balrog-magic",
+		"battle-mage-air", "battle-mage-earth", "battle-mage-water", "battle-mage-fire",
+		"green-dragon-magic", "fire-dragon-magic", "otherworldly-being-magic", "paladin-magic"
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final int[] projectileEffectFrameCounts = new int[CUSTOM_PROJECTILE_COUNT];
 	private final String[] projectileEffectNames = new String[] {
 		"blow-smoke", "fireball", "wind-arrow", "rock-throw", "water-ball", "throwing-knife", "arrow", "dart",
 		"claws-of-guthix", "thunder-ball", "icicle-shot", "acid-drop", "spore", "bolt", "wizards-magic", "holy-magic",
-		"summon-bat-vampirism-reverse", "shuriken"
+		"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
@@ -5495,6 +5512,7 @@ public final class mudclient implements Runnable {
 								int var8 = var3.currentX;
 								int var9 = var3.currentZ;
 								int var10 = -this.world.getElevation(var8, var9) - 110;
+								SpriteDef projectileDef = var3.incomingProjectileSprite;
 								int var11 = (var8 * (this.projectileMaxRange - var3.projectileRange)
 									+ var5 * var3.projectileRange) / this.projectileMaxRange;
 								int var12 = (var7 * var3.projectileRange
@@ -5502,8 +5520,17 @@ public final class mudclient implements Runnable {
 									/ this.projectileMaxRange;
 								int var13 = ((this.projectileMaxRange - var3.projectileRange) * var9
 									+ var6 * var3.projectileRange) / this.projectileMaxRange;
-								int projectileSprite = getProjectileSceneSpriteIndex(var3.incomingProjectileSprite, var3.projectileRange);
-								int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite, enemyProjectile);
+								if (isRootedProjectile(projectileDef)) {
+									var11 = var8;
+									var12 = var10;
+									var13 = var9;
+								} else if (isCasterRootedProjectile(projectileDef)) {
+									var11 = var5;
+									var12 = var7;
+									var13 = var6;
+								}
+								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange);
+								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
 								this.scene.drawSprite(projectileSprite, var13,
 									0, var11, var12, projectileSize, projectileSize, (byte) 109);
 								++this.spriteCount;
@@ -5533,6 +5560,7 @@ public final class mudclient implements Runnable {
 								int var9 = var3.currentZ;
 								int var10 = -this.world.getElevation(var8, var9)
 									- EntityHandler.getNpcDef(var3.npcId).getCamera2() / 2;
+								SpriteDef projectileDef = var3.incomingProjectileSprite;
 								int var11 = (var8 * (this.projectileMaxRange - var3.projectileRange)
 									+ var5 * var3.projectileRange) / this.projectileMaxRange;
 								int var12 = (var7 * var3.projectileRange
@@ -5540,8 +5568,17 @@ public final class mudclient implements Runnable {
 									/ this.projectileMaxRange;
 								int var13 = ((this.projectileMaxRange - var3.projectileRange) * var9
 									+ var6 * var3.projectileRange) / this.projectileMaxRange;
-								int projectileSprite = getProjectileSceneSpriteIndex(var3.incomingProjectileSprite, var3.projectileRange);
-								int projectileSize = getProjectileSceneSize(var3.incomingProjectileSprite, enemyProjectile);
+								if (isRootedProjectile(projectileDef)) {
+									var11 = var8;
+									var12 = var10;
+									var13 = var9;
+								} else if (isCasterRootedProjectile(projectileDef)) {
+									var11 = var5;
+									var12 = var7;
+									var13 = var6;
+								}
+								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange);
+								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
 								this.scene.drawSprite(projectileSprite, var13,
 									0, var11, var12, projectileSize, projectileSize, (byte) 109);
 								++this.spriteCount;
@@ -17860,19 +17897,39 @@ public final class mudclient implements Runnable {
 	private void loadExternalCombatEffectSprites() {
 		for (int effectType = 1; effectType <= COMBAT_EFFECT_COUNT; effectType++) {
 			String effectName = getCombatEffectName(effectType);
-			File effectFolder = getExternalAnimationFolder("On Enemy", effectName);
+			String assetName = getCombatEffectAssetName(effectName);
+			File effectFolder = getExternalAnimationFolder("On Player", effectName);
 			if (!assetDirectoryExists(effectFolder)) {
-				effectFolder = getExternalAnimationFolder("On Player", effectName);
+				effectFolder = getExternalAnimationFolder("On Enemy", assetName);
 			}
 			if (!assetDirectoryExists(effectFolder)) {
-				effectFolder = getExternalAnimationFolder("on summon", effectName);
+				effectFolder = getExternalAnimationFolder("On Player", assetName);
 			}
 			if (!assetDirectoryExists(effectFolder)) {
-				effectFolder = getExternalAnimationFolder("On Summon", effectName);
+				effectFolder = getExternalAnimationFolder("on summon", assetName);
+			}
+			if (!assetDirectoryExists(effectFolder)) {
+				effectFolder = getExternalAnimationFolder("On Summon", assetName);
 			}
 			this.combatEffectFrameCounts[effectType] = loadExternalAnimationFrames(
-				effectFolder, this.combatEffectSprites[effectType], 64, "COMBAT_EFFECT_ASSET", effectName);
+				effectFolder, this.combatEffectSprites[effectType], 64, "COMBAT_EFFECT_ASSET", assetName);
 		}
+	}
+
+	private String getCombatEffectAssetName(String effectName) {
+		if ("battle-mage-air".equals(effectName)) {
+			return "tornado";
+		}
+		if ("battle-mage-earth".equals(effectName)) {
+			return "earth-burst";
+		}
+		if ("battle-mage-water".equals(effectName)) {
+			return "water-eruption";
+		}
+		if ("battle-mage-fire".equals(effectName)) {
+			return "explosion";
+		}
+		return effectName;
 	}
 
 	private void loadExternalProjectileEffectSprites() {
@@ -18418,6 +18475,26 @@ public final class mudclient implements Runnable {
 				targetFrames, maxTargetSize, 5, 5, 20, 0);
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "water-ball-end.png"),
 				targetFrames, maxTargetSize, 4, 4, 16, loaded);
+		}
+		if ("blue-dragon-magic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "blue-dragon-magic.png"),
+				targetFrames, maxTargetSize, 5, 5, 25, 0);
+		}
+		if ("green-dragon-magic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "green-dragon-magic.png"),
+				targetFrames, maxTargetSize, 9, 3, 27, 0);
+		}
+		if ("fire-dragon-magic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "fire-dragon-magic.png"),
+				targetFrames, maxTargetSize, 32, 1, 32, 0);
+		}
+		if ("otherworldly-being-magic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "otherworldly-being-magic.png"),
+				targetFrames, maxTargetSize, 12, 1, 12, 0);
+		}
+		if ("paladin-magic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "paladin-magic.png"),
+				targetFrames, maxTargetSize, 20, 1, 20, 0);
 		}
 		if ("dragon-breath".equals(animationName)) {
 			File sheet = new File(sourceFolder, "dragon-breath.png");
@@ -21353,13 +21430,12 @@ public final class mudclient implements Runnable {
 	}
 
 	private String[] getHitsXpFocusLabels() {
-		String skillName = getActiveCombatXpFocusName();
 		return new String[]{
-			"Select " + skillName + " focus",
-			"Only " + skillName + " XP",
-			"Mostly " + skillName + ", Some Hits XP",
-			"Some " + skillName + ", Mostly Hits XP",
-			"Only Hits XP"
+			"Select hits (health) xp focus",
+			"No hits (health) xp",
+			"Some hits (health) xp",
+			"Mostly hits (health) xp",
+			"All hits (health) xp"
 		};
 	}
 
@@ -22018,7 +22094,18 @@ public final class mudclient implements Runnable {
 			|| projectile.id == PROJECTILE_TYPES.BRANCH_SPORE.id()
 			|| projectile.id == PROJECTILE_TYPES.WIZARDS_MAGIC.id()
 			|| projectile.id == PROJECTILE_TYPES.HOLY_MAGIC.id()
-			|| projectile.id == PROJECTILE_TYPES.SUMMON_BAT_VAMPIRISM.id();
+			|| projectile.id == PROJECTILE_TYPES.SUMMON_BAT_VAMPIRISM.id()
+			|| projectile.id == PROJECTILE_TYPES.ENEMY_AIR_BASIC.id()
+			|| projectile.id == PROJECTILE_TYPES.ENEMY_WATER_BASIC.id()
+			|| projectile.id == PROJECTILE_TYPES.BLUE_DRAGON_MAGIC.id();
+	}
+
+	private boolean isRootedProjectile(SpriteDef projectile) {
+		return projectile != null && projectile.id == PROJECTILE_TYPES.ENEMY_WATER_BASIC.id();
+	}
+
+	private boolean isCasterRootedProjectile(SpriteDef projectile) {
+		return projectile != null && projectile.id == PROJECTILE_TYPES.BLUE_DRAGON_MAGIC.id();
 	}
 
 	private boolean isDualElementProjectile(SpriteDef projectile) {

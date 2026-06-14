@@ -27,6 +27,12 @@ SCYTHES = {
     3190: "Rune Scythe",
 }
 
+BLESSED_SCYTHES = {
+    3232: "Black Scythe",
+    3233: "White Scythe",
+    3234: "Grey Scythe",
+}
+
 EXPECTED_SCYTHE_OFFENSE = {
     3181: 15,
     3182: 24,
@@ -38,6 +44,19 @@ EXPECTED_SCYTHE_OFFENSE = {
     3188: 99,
     3189: 108,
     3190: 116,
+}
+
+EXPECTED_SCYTHE_REQUIREMENTS = {
+    3181: 1,
+    3182: 8,
+    3183: 15,
+    3184: 22,
+    3185: 30,
+    3186: 38,
+    3187: 46,
+    3188: 54,
+    3189: 62,
+    3190: 70,
 }
 
 MATCHING_TWO_HANDER_OFFENSE = {
@@ -81,7 +100,7 @@ def main() -> None:
     client_defs = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     pvm_melee = PVM_MELEE.read_text(encoding="utf-8")
 
-    require("public static final int maxCustom = 3228;" in item_id_text, "ItemId.maxCustom should include post-shuriken items")
+    require("public static final int maxCustom = 3235;" in item_id_text, "ItemId.maxCustom should include blessed scythes")
     for item_id, name in SCYTHES.items():
         enum_name = name.upper().replace(" ", "_")
         require(f"{enum_name}({item_id})" in item_id_text, f"Missing ItemId enum for {name}")
@@ -99,6 +118,9 @@ def main() -> None:
         require(override is not None, f"ItemDefsMyWorld missing combat override for {name}")
         require(override["weaponSpeed"] == 3, f"{name} should use normal weapon speed")
         require(override["meleeOffense"] == expected_offense, f"{name} should use tuned MyWorld melee offense")
+        require(override["requiredSkillID"] == 0, f"{name} should require Melee like other metal melee weapons")
+        require(override["requiredLevel"] == EXPECTED_SCYTHE_REQUIREMENTS[item_id],
+                f"{name} should use the matching metal melee tier requirement")
         require(override["meleeOffense"] < MATCHING_TWO_HANDER_OFFENSE[item_id],
                 f"{name} should remain just below the matching two-handed sword")
 
@@ -113,11 +135,32 @@ def main() -> None:
                 f"Smithing guide missing {name}")
         require(f'"{name}"' in client_defs, f"Client custom definitions missing {name}")
 
+    for item_id, name in BLESSED_SCYTHES.items():
+        enum_name = name.upper().replace(" ", "_")
+        require(f"{enum_name}({item_id})" in item_id_text, f"Missing ItemId enum for {name}")
+        custom = custom_items.get(item_id)
+        require(custom is not None, f"ItemDefsCustom missing {name}")
+        require(custom["name"] == name, f"ItemDefsCustom wrong name for {item_id}")
+        require(custom["isWearable"] == 1, f"{name} should be wearable")
+        require(custom["wearSlot"] == 4, f"{name} should use mainhand weapon slot")
+        require(custom["wearableID"] & 8 == 8, f"{name} should conflict with shields as a two-handed weapon")
+        require(custom["appearanceID"] == 1033, f"{name} should use custom white combat scythe appearance")
+        override = myworld_items.get(item_id)
+        require(override is not None, f"ItemDefsMyWorld missing combat override for {name}")
+        require(override["weaponSpeed"] == 3, f"{name} should use normal weapon speed")
+        require(override["meleeOffense"] == EXPECTED_SCYTHE_OFFENSE[3185], f"{name} should mirror steel scythe offense")
+        require(override["requiredSkillID"] == 0, f"{name} should require Melee like other metal melee weapons")
+        require(override["requiredLevel"] == EXPECTED_SCYTHE_REQUIREMENTS[3185],
+                f"{name} should use the steel scythe melee requirement")
+        require(f'"{name}"' in client_defs, f"Client custom definitions missing {name}")
+
     require('new AnimationDef("scythe", "equipment", 0xF0F0F0, 0, true, false, 0)' in client_defs,
             "Client should define a white held combat scythe variant")
     require("0x7585A8, 0x5BC878, 0x5A3F7D, 0x86D7FF" in client_defs,
             "Orichalcum scythe icon mask should use the established deep purple orichalcum palette")
     require("private static final int[] SCYTHE_IDS" in pvm_melee, "PvM melee should identify scythe weapons")
+    for enum_name in ("BLACK_SCYTHE", "WHITE_SCYTHE", "GREY_SCYTHE"):
+        require(f"ItemId.{enum_name}.id()" in pvm_melee, f"PvM melee should recognize {enum_name} as a scythe")
     require("applyScytheNpcCleave((Player) attackerMob, (Npc) targetMob)" in pvm_melee,
             "PvM melee should run scythe cleave from player-vs-NPC combat")
     require("Summoning.isSummon(npc)" in pvm_melee, "Scythe cleave must exclude summons")

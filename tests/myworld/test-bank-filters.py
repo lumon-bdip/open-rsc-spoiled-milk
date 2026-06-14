@@ -87,6 +87,7 @@ def main() -> None:
     require(tags, "|| bones || ashes || demonAshes", "summoning reagent magic classification")
     require(tags, "boolean prayerEquipment = def.isWieldable() && isPrayerEquipment", "prayer equipment classification")
     require(tags, 'startsWithAny(name, "ring ", "ring-")', "whole-word jewelry ring classification")
+    require(tags, 'containsAny(name, " ring ")', "middle-word jewelry ring classification")
     require(tags, "boolean craftingGem = gem && !jewelry;", "finished gem jewelry exclusion")
     require(tags, "isCraftingToolOrMaterial(name)", "crafting input classification")
     require(tags, "boolean bow = isBowWeapon(name);", "whole-word bow classification")

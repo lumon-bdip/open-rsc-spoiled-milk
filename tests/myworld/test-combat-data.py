@@ -195,9 +195,10 @@ def ensure_combat_guide_requirements_match_items(entries_by_id) -> None:
     thrown_entries = re.findall(r'addThrownGuide\("([^"]+)",\s*(\d+),\s*(\d+),\s*(\d+),\s*(\d+)\);', guide)
     if not thrown_entries:
         fail("SkillGuideInterface.java does not contain ranged thrown guide entries")
-    for tier_name, guide_level, dart_id, knife_id, _spear_id in thrown_entries:
+    for tier_name, guide_level, dart_id, knife_id, shuriken_id in thrown_entries:
         ensure_guide_requirement_matches_item(entries_by_id, f"{tier_name} throwing dart", guide_level, dart_id)
         ensure_guide_requirement_matches_item(entries_by_id, f"{tier_name} throwing knife", guide_level, knife_id)
+        ensure_guide_requirement_matches_item(entries_by_id, f"{tier_name} shuriken", guide_level, shuriken_id)
 
 
 def ensure_spear_runtime_uses_item_requirement() -> None:
@@ -645,6 +646,13 @@ def main() -> None:
         require_exact(effective_items_by_id, item_id, "appearanceID", appearance_id, "shield shape appearance")
     entity_handler = CLIENT_ENTITY_HANDLER_PATH.read_text(encoding="utf-8")
     for animation in (
+        'new AnimationDef("kiteshield", "equipment", 16737817, 0, true, false, 0)); //237 - bronze paladin shield',
+        'new AnimationDef("kiteshield", "equipment", 15654365, 0, true, false, 0)); //238 - iron paladin shield',
+        'new AnimationDef("kiteshield", "equipment", 15658734, 0, true, false, 0)); //239 - steel paladin shield',
+        'new AnimationDef("kiteshield", "equipment", 3158064, 0, true, false, 0)); //240 - black paladin shield',
+        'new AnimationDef("kiteshield", "equipment", 10072780, 0, true, false, 0)); //241 - mithril paladin shield',
+        'new AnimationDef("kiteshield", "equipment", 11717785, 0, true, false, 0)); //242 - adamantite paladin shield',
+        'new AnimationDef("kiteshield", "equipment", 56797, 0, true, false, 0)); //243 - rune paladin shield',
         'new AnimationDef("kiteshield", "equipment", 0xE7E2D6',
         'new AnimationDef("kiteshield", "equipment", 0x9EA59F',
         'new AnimationDef("squareshield", "equipment", 0xB7C9D9',
@@ -700,8 +708,8 @@ def main() -> None:
     require_exact(items_by_id, 1429, "rangedDefense", 25, "Dragon plate legs tier-11 plate line")
     require_exact(items_by_id, 1429, "magicDefense", 13, "Dragon plate legs tier-11 plate line")
     require_exact(items_by_id, 1430, "name", "Dragon Scale Mail Legs", "Dragon scale mail legs identity")
-    require_exact(items_by_id, 1430, "appearanceID", 590, "Dragon scale mail legs should use chaps icon sprite")
-    require_exact(items_by_id, 1430, "wearableID", 128, "Dragon scale mail legs should use chaps worn sprite")
+    require_exact(items_by_id, 1430, "appearanceID", 448, "Dragon scale mail legs should use chain-leg icon sprite")
+    require_exact(items_by_id, 1430, "wearableID", 637, "Dragon scale mail legs should use dragon-hide chain-leg worn sprite")
     require_exact(items_by_id, 1430, "wearSlot", 7, "Dragon scale mail legs should use leg slot")
     require_exact(items_by_id, 1430, "meleeDefense", 21, "Dragon scale mail legs all-style no-penalty line")
     require_exact(items_by_id, 1430, "rangedDefense", 21, "Dragon scale mail legs all-style no-penalty line")

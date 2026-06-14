@@ -8,6 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 SPELL_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
 PROJECTILE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
+THROWING_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java"
 COMBAT_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
 PVM_MELEE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 
@@ -20,6 +21,7 @@ def fail(message: str) -> None:
 def main() -> int:
     spell_handler = SPELL_HANDLER.read_text(encoding="utf-8")
     projectile_event = PROJECTILE_EVENT.read_text(encoding="utf-8")
+    throwing_event = THROWING_EVENT.read_text(encoding="utf-8")
     combat_event = COMBAT_EVENT.read_text(encoding="utf-8")
     pvm_melee_event = PVM_MELEE_EVENT.read_text(encoding="utf-8")
 
@@ -31,6 +33,8 @@ def main() -> int:
         fail("God-spell area effects must not include incidental Wilderness player targets")
     if projectile_event.count("!Summoning.isSummon(npc)") < 2:
         fail("Projectile splash and Splinter effects must exclude summons")
+    if "|| Summoning.isSummon(npc)" not in throwing_event:
+        fail("Shuriken splash target selection must exclude summons")
     for source_name, source in (
         ("projectile", projectile_event),
         ("combat", combat_event),
@@ -42,6 +46,10 @@ def main() -> int:
         fail("Combat splash effects must exclude summons")
     if "!Summoning.isSummon(npc)" not in pvm_melee_event:
         fail("PvM melee splash effects must exclude summons")
+    if "npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || Summoning.isSummon(npc)" not in pvm_melee_event:
+        fail("Scythe cleave target validation and aggro must exclude summons")
+    if "private void inflictScytheCleaveDamage" not in pvm_melee_event or "if (Summoning.isSummon(npc)) {\n\t\t\treturn;\n\t\t}" not in pvm_melee_event:
+        fail("Scythe cleave damage helper must refuse summons defensively")
 
     print("PASS: player area and splash effects exclude summons and players")
     return 0

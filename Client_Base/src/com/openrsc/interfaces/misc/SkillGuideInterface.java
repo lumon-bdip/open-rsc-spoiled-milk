@@ -1021,19 +1021,21 @@ public final class SkillGuideInterface {
 		if (curTab == 0) {
 			addSummonGuide(23, "1", "Broodling Spider - Combat; 1 life, 1 body");
 			addSummonGuide(114, "7", "Mischief Imp - Support; 1 life, 1 body, ashes");
+			addSummonGuide(838, "12", "Loot Goblin - Support; bones, life, body, mind");
 			addSummonGuide(8, "14", "Ironhide Bear - Combat; 1 life, 2 body, bones");
 			addSummonGuide(0, "20", "Sacred Unicorn - Support; 1 life, body, cosmic, bones");
 			addSummonGuide(43, "26", "Duskwind Bat - Combat; 1 life, air, body, nature, bat bones");
-			addSummonGuide(241, "33", "Pack Rat - Utility; 1 life, 2 law, body, nature, bones");
+			addSummonGuide(241, "33", "Pack Rat - Utility; 1 life, 2 law, body, nature");
 			addSummonGuide(295, "39", "Bound Battleaxe - Combat; 1 life, 2 cosmic, iron battle axe");
 			addSummonGuide(296, "45", "Mourning Unicorn - Support; 1 life, body, cosmic, bones");
 			addSummonGuide(53, "51", "Restless Shade - Combat; 2 life, 3 cosmic, soul, ashes");
-			addSummonGuide(13, "58", "Delivery Camel - Utility; 1 life, 2 body, 2 law, 2 nature, bones");
+			addSummonGuide(13, "58", "Delivery Camel - Utility; 1 life, 2 body, 2 law, 2 nature");
 			addSummonGuide(298, "64", "Astral Wraith - Combat; 2 life, 4 cosmic, soul, bones");
 			addSummonGuide(184, "70", "Abyssal Demon - Combat; 3 life, blood, soul, demon ash");
 		} else if (curTab == 1) {
 			addSummonGuide(23, "1", "Broodling Spider - Hits 2 +1/10; dmg 1 +1/24");
 			addSummonGuide(114, "7", "Mischief Imp - Does not engage in combat");
+			addSummonGuide(838, "12", "Loot Goblin - Does not engage in combat");
 			addSummonGuide(8, "14", "Ironhide Bear - Hits 14 +1/8; dmg 2 +1/30");
 			addSummonGuide(0, "20", "Sacred Unicorn - Does not engage in combat");
 			addSummonGuide(43, "26", "Duskwind Bat - Hits 7 +1/9; dmg 3 +1/18");
@@ -1047,6 +1049,7 @@ public final class SkillGuideInterface {
 		} else if (curTab == 2) {
 			addSummonGuide(23, "1", "None - introductory combat summon");
 			addSummonGuide(114, "7", "Mischievous - prevents enemy aggro until you attack");
+			addSummonGuide(838, "12", "Scavenger - collects dropped stackable items");
 			addSummonGuide(8, "14", "Tank - absorbs 60% of incoming damage");
 			addSummonGuide(0, "20", "Divine - grants +10 prayer points");
 			addSummonGuide(43, "26", "Vampirism - heals owner for damage dealt");
@@ -1102,16 +1105,16 @@ public final class SkillGuideInterface {
 			addRangedCrossbowGuide("Magic", 62, 2175, "Orichalcum bolts");
 			addRangedCrossbowGuide("Blood", 70, 2176, "Rune bolts");
 		} else if (curTab == 2) {
-			addThrownGuide("Tin", 1, 2043, 1996, 2207);
-			addThrownGuide("Copper", 8, 2044, 2007, 2208);
-			addThrownGuide("Bronze", 15, 1013, 1076, 827);
-			addThrownGuide("Iron", 22, 1015, 1075, 1088);
-			addThrownGuide("Steel", 30, 1024, 1077, 1089);
-			addThrownGuide("Mithril", 38, 1068, 1078, 1090);
-			addThrownGuide("Titan steel", 46, 2045, 2018, 2209);
-			addThrownGuide("Adamantite", 54, 1069, 1079, 1091);
-			addThrownGuide("Orichalcum", 62, 2046, 2029, 2210);
-			addThrownGuide("Rune", 70, 1070, 1080, 1092);
+			addThrownGuide("Tin", 1, 2043, 1996, 3208);
+			addThrownGuide("Copper", 8, 2044, 2007, 3209);
+			addThrownGuide("Bronze", 15, 1013, 1076, 3210);
+			addThrownGuide("Iron", 22, 1015, 1075, 3211);
+			addThrownGuide("Steel", 30, 1024, 1077, 3212);
+			addThrownGuide("Mithril", 38, 1068, 1078, 3213);
+			addThrownGuide("Titan steel", 46, 2045, 2018, 3214);
+			addThrownGuide("Adamantite", 54, 1069, 1079, 3215);
+			addThrownGuide("Orichalcum", 62, 2046, 2029, 3216);
+			addThrownGuide("Rune", 70, 1070, 1080, 3217);
 		} else if (curTab == 3) {
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1524, "Ranged");
@@ -1136,9 +1139,10 @@ public final class SkillGuideInterface {
 		skillMenuEntries.add(new SkillMenuItem(itemId, "", skillName + " cape unlocked at level 99"));
 	}
 
-	private void addThrownGuide(String name, int level, int dartId, int knifeId, int spearId) {
+	private void addThrownGuide(String name, int level, int dartId, int knifeId, int shurikenId) {
 		skillMenuEntries.add(new SkillMenuItem(dartId, String.valueOf(level), name + " throwing darts"));
 		skillMenuEntries.add(new SkillMenuItem(knifeId, String.valueOf(level), name + " throwing knives"));
+		skillMenuEntries.add(new SkillMenuItem(shurikenId, String.valueOf(level), name + " shuriken"));
 	}
 
 	private void addRuneTierGuide() {
@@ -1494,6 +1498,8 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(174, "54", "Adamantite bar - 1 adamantite ore and 4 coal"));
 			skillMenuEntries.add(new SkillMenuItem(1958, "62", "2 Orichalcum bars - 1 mithril, 1 adamantite, and 5 coal"));
 			skillMenuEntries.add(new SkillMenuItem(408, "70", "Runite bar - 1 runite ore and 6 coal"));
+			skillMenuEntries.add(new SkillMenuItem(1365, "90", "Dragon bar - 1 raw dragon metal at the lava forge"));
+			skillMenuEntries.add(new SkillMenuItem(1367, "90", "Dragon metal chains - 1 raw dragon metal at the lava forge"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1383, "Smithing");
 			}
@@ -1521,7 +1527,7 @@ public final class SkillGuideInterface {
 
 	private void addSmithingTier(String name, int baseLevel, int daggerId, int shortSwordId, int longSwordId,
 								int scimitarId, int twoHandedId, int axeId, int pickaxeId, int battleAxeId,
-								int scytheId, int maceId, int spearId, int boltId, int helmId, int gauntletId, int greavesId,
+								int maceId, int scytheId, int spearId, int boltId, int helmId, int gauntletId, int greavesId,
 								int shieldId, int paladinShieldId, int legsId, int bodyId) {
 		skillMenuEntries.add(new SkillMenuItem(daggerId, String.valueOf(baseLevel), name + " weapons - 1 to 3 bars"));
 		skillMenuEntries.add(new SkillMenuItem(axeId, String.valueOf(baseLevel), name + " tools - 1 bar"));

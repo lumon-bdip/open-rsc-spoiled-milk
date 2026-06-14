@@ -12,8 +12,10 @@ import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.entity.npc.NpcMagicElement;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.Damage;
@@ -41,7 +43,9 @@ public class ProjectileEvent extends SingleTickEvent {
 	protected int type;
 	protected int projectileType;
 	protected int impactEffectType;
+	protected NpcMagicElement magicElement = NpcMagicElement.NONE;
 	protected int dragonBreathDamage;
+	protected boolean bloodSpell;
 	protected boolean showProjectile;
 	boolean canceled;
 	boolean shouldChase;
@@ -73,6 +77,15 @@ public class ProjectileEvent extends SingleTickEvent {
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing,
 						   int windAccuracyDebuffPercent, int waterMaxHitDebuffPercent, int earthAttackSpeedDebuffPercent,
 						   int fireDefenseDebuffPercent, int projectileType, int impactEffectType, boolean showProjectile,
+						   NpcMagicElement magicElement) {
+		this(world, caster, opponent, damage, type, setChasing, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
+			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, projectileType, impactEffectType, showProjectile);
+		this.magicElement = magicElement == null ? NpcMagicElement.NONE : magicElement;
+	}
+
+	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing,
+						   int windAccuracyDebuffPercent, int waterMaxHitDebuffPercent, int earthAttackSpeedDebuffPercent,
+						   int fireDefenseDebuffPercent, int projectileType, int impactEffectType, boolean showProjectile,
 						   int startleProcChancePercent, int acidPoisonPower, int frostbiteProcChancePercent,
 						   int splinterProcChancePercent) {
 		this(world, caster, opponent, damage, type, setChasing, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
@@ -81,6 +94,17 @@ public class ProjectileEvent extends SingleTickEvent {
 		this.acidPoisonPower = acidPoisonPower;
 		this.frostbiteProcChancePercent = frostbiteProcChancePercent;
 		this.splinterProcChancePercent = splinterProcChancePercent;
+	}
+
+	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing,
+						   int windAccuracyDebuffPercent, int waterMaxHitDebuffPercent, int earthAttackSpeedDebuffPercent,
+						   int fireDefenseDebuffPercent, int projectileType, int impactEffectType, boolean showProjectile,
+						   int startleProcChancePercent, int acidPoisonPower, int frostbiteProcChancePercent,
+						   int splinterProcChancePercent, boolean bloodSpell) {
+		this(world, caster, opponent, damage, type, setChasing, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
+			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, projectileType, impactEffectType, showProjectile,
+			startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent);
+		this.bloodSpell = bloodSpell;
 	}
 
 	public ProjectileEvent(final World world, final Mob caster, final Mob opponent, final int damage, final int type,
@@ -291,7 +315,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 		if (opponent.isPlayer()) {
 			Player opponentPlayer = (Player) opponent;
-			damage = opponentPlayer.applyRobeDamageMitigation(damage);
+			damage = opponentPlayer.applyRobeDamageMitigation(damage, magicElement);
 			if (type == 1 || type == 4) {
 				damage = opponentPlayer.applyPotionMagicDamageReduction(damage);
 			} else if (type == 2 || type == 5) {
@@ -313,6 +337,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 		if (caster.isNpc() && opponent.isPlayer()) {
 			((Player) opponent).updateDamageAndBlockedDamageTracking(caster, damageDealt, 0);
+			applyBalrogMagicSplash((Npc) caster, (Player) opponent, damageDealt);
 		}
 
 		if (caster.isPlayer()) {
@@ -344,7 +369,6 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (opponent.isPlayer()) {
 			Player affectedPlayer = (Player) opponent;
 			ActionSender.sendStat(affectedPlayer, Skill.HITS.id());
-			applyChaosRobeReflect(affectedPlayer, caster, damage);
 			CorrosiveAura.apply(affectedPlayer, caster, damageDealt);
 			DivineRetribution.Result result = DivineRetribution.apply(affectedPlayer, caster, damageDealt);
 			if (result.killedAttacker()) {
@@ -361,12 +385,15 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 
 		if (damage > 0 && caster.isPlayer() && (type == 1 || type == 4)) {
-			applyBloodRobeLifesteal((Player) caster, damage);
+			applyBloodRobeSplash((Player) caster, damage);
 			((Player) caster).applyBloodAmuletLifesteal(damage);
 		}
 
 		applySplinterOnHitEffect();
 		if (opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			if (caster.isPlayer() && opponent.isNpc()) {
+				applyDeathRobeOverkillSplash((Player) caster, (Npc) opponent, damage - lastHits);
+			}
 			handleDeath();
 		} else {
 			if (Summoning.applySummonOnHitEffects(caster, opponent, damage)) {
@@ -685,36 +712,104 @@ public class ProjectileEvent extends SingleTickEvent {
 		return damage;
 	}
 
-	private void applyChaosRobeReflect(final Player defender, final Mob attacker, final int damage) {
-		if (damage <= 0 || attacker.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+	private void applyBloodRobeSplash(final Player casterPlayer, final int damageDealt) {
+		if (!bloodSpell || opponent == null || !opponent.isNpc()) {
 			return;
 		}
-		final double reflectPercent = defender.getChaosRobeReflectPercent();
-		if (reflectPercent <= 0.0D) {
+		final double splashPercent = casterPlayer.getBloodRobeSpellSplashPercent();
+		if (splashPercent <= 0.0D || damageDealt <= 0) {
 			return;
 		}
-		final int reflectedDamage = Math.max(1, (int) Math.ceil(damage * reflectPercent));
-		attacker.getSkills().subtractLevel(Skill.HITS.id(), reflectedDamage, false);
-		attacker.getUpdateFlags().setDamage(new Damage(attacker, reflectedDamage));
-		attacker.getUpdateFlags().addHitSplat(new HitSplat(attacker, HitSplat.TYPE_ARMOR_PROC, reflectedDamage));
-		if (attacker.isPlayer()) {
-			ActionSender.sendStat((Player) attacker, Skill.HITS.id());
+		final int splashDamage = Math.max(1, (int) Math.floor(damageDealt * splashPercent));
+		for (Npc npc : casterPlayer.getViewArea().getNpcsInView()) {
+			if (npc == null || npc == opponent || npc.isRemoved() || npc.isRespawning() || Summoning.isSummon(npc)) {
+				continue;
+			}
+			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(opponent.getLocation(), 2)) {
+				continue;
+			}
+			inflictBloodRobeSplashDamage(casterPlayer, npc, splashDamage);
 		}
 	}
 
-	private void applyBloodRobeLifesteal(final Player casterPlayer, final int damageDealt) {
-		final int robePieces = casterPlayer.getBloodRobePieces();
-		if (robePieces <= 0 || damageDealt <= 0) {
+	private void inflictBloodRobeSplashDamage(final Player casterPlayer, final Npc npc, final int splashDamage) {
+		final int lastHits = npc.getLevel(Skill.HITS.id());
+		npc.getSkills().subtractLevel(Skill.HITS.id(), splashDamage, false);
+		final int damageDealt = Math.min(splashDamage, lastHits);
+		npc.getUpdateFlags().setDamage(new Damage(npc, splashDamage));
+		npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_ARMOR_PROC, splashDamage));
+		npc.addMageDamage(casterPlayer, damageDealt);
+		Summoning.recordOwnerCombatSummonDamage(casterPlayer, npc, damageDealt);
+		if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			npc.setLastCombatState(CombatState.LOST);
+			casterPlayer.setKillType(KillType.MAGIC);
+			npc.killedBy(casterPlayer);
+		}
+	}
+
+	private void applyDeathRobeOverkillSplash(final Player player, final Npc primaryTarget, final int overkillDamage) {
+		final double splashPercent = player.getDeathRobeOverkillSplashPercent();
+		if (overkillDamage <= 0 || splashPercent <= 0.0D) {
 			return;
 		}
-		final int maxHits = casterPlayer.getSkills().getMaxStat(Skill.HITS.id());
-		final int currentHits = casterPlayer.getSkills().getLevel(Skill.HITS.id());
-		if (currentHits >= maxHits) {
+		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));
+		for (Npc npc : player.getViewArea().getNpcsInView()) {
+			if (npc == null || npc == primaryTarget || npc.isRemoved() || npc.isRespawning() || Summoning.isSummon(npc)) {
+				continue;
+			}
+			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(primaryTarget.getLocation(), 2)) {
+				continue;
+			}
+			final int lastHits = npc.getLevel(Skill.HITS.id());
+			npc.getSkills().subtractLevel(Skill.HITS.id(), splashDamage, false);
+			final int damageDealt = Math.min(splashDamage, lastHits);
+			npc.getUpdateFlags().setDamage(new Damage(npc, splashDamage));
+			npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_ARMOR_PROC, splashDamage));
+			if (type == 1 || type == 4) {
+				npc.addMageDamage(player, damageDealt);
+			} else {
+				npc.addRangeDamage(player, damageDealt);
+			}
+			Summoning.recordOwnerCombatSummonDamage(player, npc, damageDealt);
+			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				npc.setLastCombatState(CombatState.LOST);
+				player.setKillType(type == 1 || type == 4 ? KillType.MAGIC : KillType.RANGED);
+				npc.killedBy(player);
+			}
+		}
+	}
+
+	private void applyBalrogMagicSplash(final Npc balrog, final Player primaryTarget, final int primaryDamageDealt) {
+		if (primaryDamageDealt <= 0 || type != 1 || balrog == null || primaryTarget == null
+			|| balrog.getDef() == null || !"balrog".equalsIgnoreCase(balrog.getDef().getName())) {
 			return;
 		}
-		final int healing = Math.max(1, (int) Math.floor(damageDealt * (robePieces * 0.05D)));
-		casterPlayer.getSkills().setLevel(Skill.HITS.id(), Math.min(maxHits, currentHits + healing));
-		ActionSender.sendStat(casterPlayer, Skill.HITS.id());
+		final int baseSplashDamage = Math.max(1, (int) Math.ceil(primaryDamageDealt * 0.5D));
+		for (Player splashTarget : balrog.getViewArea().getPlayersInView()) {
+			if (splashTarget == null || splashTarget == primaryTarget || splashTarget.isRemoved()
+				|| splashTarget.getSkills().getLevel(Skill.HITS.id()) <= 0
+				|| !splashTarget.withinRange(primaryTarget.getLocation(), 2)) {
+				continue;
+			}
+			int splashDamage = splashTarget.applyRobeDamageMitigation(baseSplashDamage, magicElement);
+			splashDamage = splashTarget.applyPotionMagicDamageReduction(splashDamage);
+			if (splashDamage <= 0) {
+				continue;
+			}
+			final int lastHits = splashTarget.getLevel(Skill.HITS.id());
+			splashTarget.getSkills().subtractLevel(Skill.HITS.id(), splashDamage, false);
+			final int damageDealt = Math.min(splashDamage, lastHits);
+			splashTarget.getUpdateFlags().setDamage(new Damage(splashTarget, splashDamage));
+			splashTarget.getUpdateFlags().addHitSplat(new HitSplat(splashTarget, HitSplat.TYPE_ARMOR_PROC, splashDamage));
+			if (impactEffectType > 0) {
+				splashTarget.getUpdateFlags().setCombatEffect(new CombatEffect(splashTarget, impactEffectType));
+			}
+			splashTarget.updateDamageAndBlockedDamageTracking(balrog, damageDealt, 0);
+			ActionSender.sendStat(splashTarget, Skill.HITS.id());
+			if (splashTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				splashTarget.killedBy(balrog);
+			}
+		}
 	}
 
 	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int bonusDamage) {
@@ -740,7 +835,6 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
-			applyChaosRobeReflect((Player) target, hitter, bonusDamage);
 		}
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			handleDeath();
@@ -768,7 +862,6 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
-			applyChaosRobeReflect((Player) target, hitter, bonusDamage);
 		}
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			handleDeath();

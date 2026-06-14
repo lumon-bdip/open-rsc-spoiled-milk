@@ -43,7 +43,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		ItemId.TIN_SCYTHE.id(), ItemId.COPPER_SCYTHE.id(), ItemId.BRONZE_SCYTHE.id(),
 		ItemId.IRON_SCYTHE.id(), ItemId.STEEL_SCYTHE.id(), ItemId.MITHRIL_SCYTHE.id(),
 		ItemId.TITAN_STEEL_SCYTHE.id(), ItemId.ADAMANTITE_SCYTHE.id(),
-		ItemId.ORICHALCUM_SCYTHE.id(), ItemId.RUNE_SCYTHE.id()
+		ItemId.ORICHALCUM_SCYTHE.id(), ItemId.RUNE_SCYTHE.id(),
+		ItemId.BLACK_SCYTHE.id(), ItemId.WHITE_SCYTHE.id(), ItemId.GREY_SCYTHE.id()
 	};
 	private final Mob attackerMob;
 	private final Mob targetMob;
@@ -237,6 +238,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 
 		int lastHits = target.getLevel(Skill.HITS.id());
+		final int rawDamage = damage;
 		if (target.isPlayer()) {
 			Player targetPlayer = (Player) target;
 			damage = targetPlayer.applyRobeDamageMitigation(damage);
@@ -268,7 +270,6 @@ public class PvmMeleeEvent extends GameTickEvent {
 			sendSound((Player) target, hitter, damage > 0);
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
 			updateParty((Player) target);
-			applyChaosRobeReflect((Player) target, hitter, damage);
 			CorrosiveAura.apply((Player) target, hitter, damageDealt);
 			DivineRetribution.Result result = DivineRetribution.apply((Player) target, hitter, damageDealt);
 			if (result.killedAttacker()) {
@@ -301,7 +302,38 @@ public class PvmMeleeEvent extends GameTickEvent {
 			applyLeatherSetOnHitEffects(hitter, target, damage);
 			tryAutoRetaliateAfterIncomingAttack(hitter, target);
 		} else {
+			if (target.isNpc() && hitter.isPlayer()) {
+				applyDeathRobeOverkillSplash((Player) hitter, (Npc) target, rawDamage - lastHits);
+			}
 			onDeath(target, hitter);
+		}
+	}
+
+	private void applyDeathRobeOverkillSplash(final Player player, final Npc primaryTarget, final int overkillDamage) {
+		final double splashPercent = player.getDeathRobeOverkillSplashPercent();
+		if (overkillDamage <= 0 || splashPercent <= 0.0D) {
+			return;
+		}
+		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));
+		for (Npc npc : player.getViewArea().getNpcsInView()) {
+			if (npc == null || npc == primaryTarget || npc.isRemoved() || npc.isRespawning() || Summoning.isSummon(npc)) {
+				continue;
+			}
+			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(primaryTarget.getLocation(), 2)) {
+				continue;
+			}
+			final int lastHits = npc.getLevel(Skill.HITS.id());
+			npc.getSkills().subtractLevel(Skill.HITS.id(), splashDamage, false);
+			final int damageDealt = Math.min(splashDamage, lastHits);
+			npc.getUpdateFlags().setDamage(new Damage(npc, splashDamage));
+			npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_ARMOR_PROC, splashDamage));
+			npc.addCombatDamage(player, damageDealt);
+			Summoning.recordOwnerCombatSummonDamage(player, npc, damageDealt);
+			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				npc.setLastCombatState(CombatState.LOST);
+				player.setKillType(KillType.COMBAT);
+				npc.killedBy(player);
+			}
 		}
 	}
 
@@ -358,26 +390,6 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			onDeath(target, creditedSource);
-		}
-	}
-
-	private void applyChaosRobeReflect(final Player defender, final Mob attacker, final int damage) {
-		if (damage <= 0 || attacker.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			return;
-		}
-		final double reflectPercent = defender.getChaosRobeReflectPercent();
-		if (reflectPercent <= 0.0D) {
-			return;
-		}
-		final int reflectedDamage = Math.max(1, (int) Math.ceil(damage * reflectPercent));
-		attacker.getSkills().subtractLevel(Skill.HITS.id(), reflectedDamage, false);
-		attacker.getUpdateFlags().setDamage(new Damage(attacker, reflectedDamage));
-		attacker.getUpdateFlags().addHitSplat(new HitSplat(attacker, HitSplat.TYPE_ARMOR_PROC, reflectedDamage));
-		if (attacker.isPlayer()) {
-			ActionSender.sendStat((Player) attacker, Skill.HITS.id());
-		}
-		if (attacker.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			onDeath(attacker, defender);
 		}
 	}
 
@@ -552,6 +564,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void inflictScytheCleaveDamage(final Player player, final Npc npc, int damage) {
+		if (Summoning.isSummon(npc)) {
+			return;
+		}
 		if (damage <= 0 || npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			if (damage == 0 && npc.getSkills().getLevel(Skill.HITS.id()) > 0) {
 				npc.getUpdateFlags().setDamage(new Damage(npc, 0));
@@ -574,6 +589,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			npc.setLastCombatState(CombatState.LOST);
 			player.setKillType(KillType.COMBAT);
+			applyDeathRobeOverkillSplash(player, npc, damage - lastHits);
 			player.applyDeathAmuletBurst(npc);
 			npc.killedBy(player);
 			updateParty(player);
@@ -585,7 +601,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void triggerScytheCleaveAggro(final Player player, final Npc npc) {
-		if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+		if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || Summoning.isSummon(npc)) {
 			return;
 		}
 		PvmMeleeEvent existingEvent = npc.getPvmMeleeEvent();
@@ -618,7 +634,6 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
-			applyChaosRobeReflect((Player) target, hitter, damage);
 		}
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			onDeath(target, hitter);
@@ -646,7 +661,6 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
-			applyChaosRobeReflect((Player) target, hitter, damage);
 		}
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			onDeath(target, hitter);

@@ -23,10 +23,20 @@ def main() -> None:
     require(devotion, "PRAYER_BONUS_GROWTH_MAX = 10", "prayer bonus growth cap")
     require(devotion, "getDevotionGrowthBonus", "shared devotion growth helper")
     require(devotion, "getPrayerBonusGrowth", "shared prayer growth helper")
+    require(devotion, "ActionSender.sendEquipmentStats(player);",
+            "devotion changes should refresh dynamic equipment stats")
 
     require(equipment, "getScaledWeaponAimBonus(item)", "scaled weapon aim in equipment total")
     require(equipment, "getScaledWeaponPowerBonus(item)", "scaled weapon power in equipment total")
     require(equipment, "getScaledArmourBonus(item)", "scaled armour in equipment total")
+    require(equipment, "getGodEquipmentTargetMeleeOffense(item.getCatalogId())",
+            "explicit melee offense should scale with devotion")
+    require(equipment, "getGodEquipmentTargetMeleeDefense(item.getCatalogId())",
+            "explicit melee defense should scale with devotion")
+    require(equipment, "getGodEquipmentTargetRangedDefense(item.getCatalogId())",
+            "explicit ranged defense should scale with devotion")
+    require(equipment, "getGodEquipmentTargetMagicDefense(item.getCatalogId())",
+            "explicit magic defense should scale with devotion")
     require(equipment, "getGodEquipmentPrayerBonus(item.getCatalogId())", "god equipment prayer override")
     if not ("isZamorakBlessedStaff(itemId)" in equipment
             and "isSaradominBlessedStaff(itemId)" in equipment
@@ -49,6 +59,12 @@ def main() -> None:
         "case 3134: // WHITE_GREAVES",
         "case 3135: // GREY_GAUNTLETS",
         "case 3136: // GREY_GREAVES",
+        "case 3229: // BLACK_SPEAR",
+        "case 3230: // WHITE_SPEAR",
+        "case 3231: // GREY_SPEAR",
+        "case 3232: // BLACK_SCYTHE",
+        "case 3233: // WHITE_SCYTHE",
+        "case 3234: // GREY_SCYTHE",
         "case 3138: // ZAMORAK_WOOL_ROBE_TOP",
         "case 3143: // SARADOMIN_WOOL_ROBE_TOP",
         "case 3148: // GUTHIX_WOOL_ROBE_TOP",
@@ -59,9 +75,11 @@ def main() -> None:
     require(equipment, "case 2163: // WHITE_PLATE_MAIL_BODY", "white plate body resource cost")
     require(equipment, "case 3125: // GREY_PLATE_MAIL_BODY", "grey plate body resource cost")
     require(equipment, "return 4;", "plate body resource cost should produce baseline +4 prayer")
-    require(equipment, "return 80;", "plate body should scale to rune plate body armour")
-    require(equipment, "return 38;", "mace aim and paladin shield armour targets should reach rune equivalents")
-    require(equipment, "return 28;", "mace power target should reach rune mace power")
+    require(equipment, "return 63;", "plate body should scale to adamantite plate body armour")
+    require(equipment, "return 30;", "plate body melee defense and battle axe aim should reach tier 8 equivalents")
+    require(equipment, "return 24;", "mace aim, spear aim, and paladin shield armour targets should reach tier 8 equivalents")
+    require(equipment, "return 18;", "mace power and paladin shield melee defense should reach tier 8 equivalents")
+    require(equipment, "return 99;", "blessed scythes should scale to adamantite scythe power")
     require(equipment, "+ resourceCost", "baseline prayer should include resource equivalency")
 
     print("PASS: devotion equipment scaling hooks are wired")

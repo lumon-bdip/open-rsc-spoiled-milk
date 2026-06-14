@@ -84,11 +84,14 @@ public final class GodKnightEquipment implements UseLocTrigger {
 			case 698: // STEEL_GAUNTLETS
 			case 1988: // STEEL_GREAVES
 			case 109: // LARGE_STEEL_HELMET
+			case 1089: // STEEL_SPEAR
 				return 2;
 			case 78: // STEEL_2_HANDED_SWORD
 			case 90: // STEEL_BATTLE_AXE
+			case 125: // STEEL_SQUARE_SHIELD
 			case 129: // STEEL_KITE_SHIELD
 			case 121: // STEEL_PLATE_MAIL_LEGS
+			case 3185: // STEEL_SCYTHE
 				return 3;
 			case 118: // STEEL_PLATE_MAIL_BODY
 				return 4;
@@ -137,8 +140,14 @@ public final class GodKnightEquipment implements UseLocTrigger {
 				return ItemId.BLACK_BATTLE_AXE.id();
 			case 95: // STEEL_MACE
 				return ItemId.BLACK_MACE.id();
+			case 1089: // STEEL_SPEAR
+				return ItemId.BLACK_SPEAR.id();
+			case 3185: // STEEL_SCYTHE
+				return ItemId.BLACK_SCYTHE.id();
 			case 109: // LARGE_STEEL_HELMET
 				return ItemId.LARGE_BLACK_HELMET.id();
+			case 125: // STEEL_SQUARE_SHIELD
+				return ItemId.BLACK_SQUARE_SHIELD.id();
 			case 129: // STEEL_KITE_SHIELD
 				return ItemId.BLACK_KITE_SHIELD.id();
 			case 118: // STEEL_PLATE_MAIL_BODY
@@ -170,8 +179,14 @@ public final class GodKnightEquipment implements UseLocTrigger {
 				return ItemId.WHITE_BATTLE_AXE.id();
 			case 95: // STEEL_MACE
 				return ItemId.WHITE_MACE.id();
+			case 1089: // STEEL_SPEAR
+				return ItemId.WHITE_SPEAR.id();
+			case 3185: // STEEL_SCYTHE
+				return ItemId.WHITE_SCYTHE.id();
 			case 109: // LARGE_STEEL_HELMET
 				return ItemId.LARGE_WHITE_HELMET.id();
+			case 125: // STEEL_SQUARE_SHIELD
+				return ItemId.WHITE_SQUARE_SHIELD.id();
 			case 129: // STEEL_KITE_SHIELD
 				return ItemId.WHITE_KITE_SHIELD.id();
 			case 118: // STEEL_PLATE_MAIL_BODY
@@ -203,8 +218,14 @@ public final class GodKnightEquipment implements UseLocTrigger {
 				return ItemId.GREY_BATTLE_AXE.id();
 			case 95: // STEEL_MACE
 				return ItemId.GREY_MACE.id();
+			case 1089: // STEEL_SPEAR
+				return ItemId.GREY_SPEAR.id();
+			case 3185: // STEEL_SCYTHE
+				return ItemId.GREY_SCYTHE.id();
 			case 109: // LARGE_STEEL_HELMET
 				return ItemId.LARGE_GREY_HELMET.id();
+			case 125: // STEEL_SQUARE_SHIELD
+				return ItemId.GREY_SQUARE_SHIELD.id();
 			case 129: // STEEL_KITE_SHIELD
 				return ItemId.GREY_KITE_SHIELD.id();
 			case 118: // STEEL_PLATE_MAIL_BODY

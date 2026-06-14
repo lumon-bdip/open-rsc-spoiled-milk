@@ -24,6 +24,7 @@ EXPECTED_PROFILES = {
         "witch",
         "necromancer",
         "skeleton mage",
+        "battle mage",
     },
     "PURE_RANGED": {
         "guard",
@@ -41,7 +42,6 @@ EXPECTED_PROFILES = {
         "head thief",
     },
     "MELEE_MAGIC": {
-        "battle mage",
         "monk of zamorak",
         "chaos druid warrior",
         "paladin",
@@ -202,8 +202,9 @@ def main() -> None:
     require_not_contains(NPC_ATTACK_STYLE_PROFILE, 'case "gnome baller":')
     require_contains(NPC_BEHAVIOR, "CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc))")
     require_contains(NPC_BEHAVIOR, "new ProjectileEvent(npc.getWorld(), npc, target, damage,\n\t\t\t\t2, true, 0, 0, 0, 0, profile.getRangedProjectileVisual(npc), 0, true)")
-    require_contains(NPC_BEHAVIOR, "CombatEffect.enemyMagicAttackEffect(npc.getDef().getName())")
-    require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, 0, profile.getMagicProjectileVisual(npc), impactEffectType, true")
+    require_contains(NPC_BEHAVIOR, "NpcMagicElement magicElement = profile.getMagicElement(npc);")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "CombatEffect.enemyMagicAttackEffect(name)")
+    require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, 0, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement")
     require_contains(COMBAT_EFFECT, 'case "lesser demon":')
     require_contains(COMBAT_EFFECT, "return LESSER_DEMON_MAGIC;")
     require_contains(COMBAT_EFFECT, 'case "greater demon":')

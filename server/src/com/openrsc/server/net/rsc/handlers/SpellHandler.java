@@ -573,6 +573,18 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		return isWoodSpell(spellEnum) ? getDualElementProcChancePercent(spellEnum) : 0;
 	}
 
+	private static boolean isBloodSpell(final SpellDef spell) {
+		if (spell == null) {
+			return false;
+		}
+		for (Entry<Integer, Integer> rune : spell.getRunesRequired()) {
+			if (rune.getKey() == ItemId.BLOOD_RUNE.id()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private static double getSpellDamageCapPercent(final Spells spellEnum) {
 		if (spellEnum == null) {
 			return 1.0D;
@@ -2263,9 +2275,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						// Chaos gauntlets let mind-rune spells hit at the chaos-rune spell cap.
 						final boolean chaosGauntletBonus = getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.GAUNTLETS_OF_CHAOS.id())
 							&& getPlayer().getCache().getInt("famcrest_gauntlets") == Gauntlets.CHAOS.id();
-						final double damageCapPercent = chaosGauntletBonus && isMindSpell(spellEnum)
+						double damageCapPercent = chaosGauntletBonus && isMindSpell(spellEnum)
 							? 0.60D
 							: getSpellDamageCapPercent(spellEnum);
+						if (isMindSpell(spellEnum)) {
+							damageCapPercent += getPlayer().getMindRobeSpellCapBonus();
+						}
 
 						int damage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, max, damageCapPercent);
 						final int windAccuracyDebuffPercent = isAirSpell(spellEnum) ? getWindAccuracyDebuffPercent(spellEnum) : 0;
@@ -2285,7 +2300,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, damage, 1, setChasing,
 							windAccuracyDebuffPercent, waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent,
 							projectileVisual, impactEffect, impactEffect <= 0,
-							startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent));
+							startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent, isBloodSpell(spell)));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);
 						break;

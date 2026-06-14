@@ -32,6 +32,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	private final int DORICS_ANVIL = 177;
 	private final int ANVIL = 50;
 	private static final int SMITHING_ACTION_DELAY_TICKS = 3;
+	private static final int DRAGON_SHIELD_SMITHING_LEVEL = 60;
+	private static final int DRAGON_SHIELD_SMITHING_XP = 300;
 	private static final int[] MODERN_ANVIL_BARS = {
 		ItemId.TIN_BAR.id(), ItemId.COPPER_BAR.id(), ItemId.BRONZE_BAR.id(),
 		ItemId.IRON_BAR.id(), ItemId.STEEL_BAR.id(), ItemId.MITHRIL_BAR.id(),
@@ -204,28 +206,98 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private void attemptDragonSquareCombine(Item item, Player player) {
-		if (player.getSkills().getLevel(Skill.SMITHING.id()) < 60) {
-			player.message("You need a smithing ability of at least 60 to complete this task.");
+		if (player.getSkills().getLevel(Skill.SMITHING.id()) < DRAGON_SHIELD_SMITHING_LEVEL) {
+			player.message("You need a smithing ability of at least " + DRAGON_SHIELD_SMITHING_LEVEL + " to complete this task.");
 		}
 		// non-kosher this message
 		else if (player.getCarriedItems().getInventory().countId(ItemId.RIGHT_HALF_DRAGON_SQUARE_SHIELD.id(), Optional.of(false)) < 1
 				|| player.getCarriedItems().getInventory().countId(ItemId.LEFT_HALF_DRAGON_SQUARE_SHIELD.id(), Optional.of(false)) < 1) {
 			player.message("You need the two shield halves to repair the shield.");
+		} else if (!ActionSender.isRetroClient(player)) {
+			ProductionSession session = createDragonShieldProductionSession(player);
+			player.setAttribute("production_session", session);
+			player.setAttribute("production_starter", (ProductionStarter) Smithing::beginDragonShieldProductionFromInterface);
+			ActionSender.showProductionInterface(player, session);
 		} else {
-			mes("You set to work trying to fix the ancient shield.");
-			delay(2);
-			mes("You hammer long and hard and use all of your skill.");
-			delay(2);
-			mes("Eventually, it is ready...");
-			delay(2);
-			mes("You have repaired the Dragon Square Shield.");
-			delay(2);
-			if (player.getCarriedItems().remove(new Item(ItemId.RIGHT_HALF_DRAGON_SQUARE_SHIELD.id()),
-				new Item(ItemId.LEFT_HALF_DRAGON_SQUARE_SHIELD.id()))) {
-				player.getCarriedItems().getInventory().add(new Item(ItemId.DRAGON_SQUARE_SHIELD.id()));
-				player.incExp(Skill.SMITHING.id(), 300, true);
+			int option = multi(player, "Dragon Square Shield", "Dragon Paladin Shield", "Cancel");
+			if (option == 0) {
+				makeDragonShield(player, ItemId.DRAGON_SQUARE_SHIELD.id(), "Dragon Square Shield");
+			} else if (option == 1) {
+				makeDragonShield(player, ItemId.DRAGON_KITE_SHIELD.id(), "Dragon Paladin Shield");
 			}
 		}
+	}
+
+	private ProductionSession createDragonShieldProductionSession(Player player) {
+		boolean levelMet = player.getSkills().getLevel(Skill.SMITHING.id()) >= DRAGON_SHIELD_SMITHING_LEVEL;
+		boolean materialsMet = hasDragonShieldMaterials(player);
+		List<ProductionRecipe> recipes = new ArrayList<>();
+		recipes.add(dragonShieldRecipe(ItemId.DRAGON_SQUARE_SHIELD.id(), levelMet, materialsMet));
+		recipes.add(dragonShieldRecipe(ItemId.DRAGON_KITE_SHIELD.id(), levelMet, materialsMet));
+		return new ProductionSession(ProductionSession.TYPE_SMITHING, "Choose a dragon shield to repair",
+			ItemId.RIGHT_HALF_DRAGON_SQUARE_SHIELD.id(), recipes);
+	}
+
+	private ProductionRecipe dragonShieldRecipe(int itemId, boolean levelMet, boolean materialsMet) {
+		return new ProductionRecipe(itemId, DRAGON_SHIELD_SMITHING_LEVEL, 2, 1, levelMet, materialsMet,
+			new int[]{ItemId.RIGHT_HALF_DRAGON_SQUARE_SHIELD.id(), ItemId.LEFT_HALF_DRAGON_SQUARE_SHIELD.id(), ItemId.HAMMER.id()},
+			new int[]{-1, -1, -1},
+			new int[]{1, 1, 1});
+	}
+
+	public static boolean beginDragonShieldProductionFromInterface(Player player, ProductionSession session, int itemId, int quantity) {
+		if (session == null || !session.isType(ProductionSession.TYPE_SMITHING)
+			|| session.getInputItemId() != ItemId.RIGHT_HALF_DRAGON_SQUARE_SHIELD.id()) {
+			return false;
+		}
+		if (quantity < 1) {
+			player.message("Choose at least one item to make");
+			return false;
+		}
+		if (session.getRecipeByItemId(itemId) == null
+			|| (itemId != ItemId.DRAGON_SQUARE_SHIELD.id() && itemId != ItemId.DRAGON_KITE_SHIELD.id())) {
+			player.message("Nothing interesting happens");
+			return false;
+		}
+		String itemName = itemId == ItemId.DRAGON_KITE_SHIELD.id() ? "Dragon Paladin Shield" : "Dragon Square Shield";
+		return new Smithing().makeDragonShield(player, itemId, itemName);
+	}
+
+	private boolean makeDragonShield(Player player, int itemId, String itemName) {
+		if (player.getSkills().getLevel(Skill.SMITHING.id()) < DRAGON_SHIELD_SMITHING_LEVEL) {
+			player.message("You need a smithing ability of at least " + DRAGON_SHIELD_SMITHING_LEVEL + " to complete this task.");
+			return false;
+		}
+		if (!hasDragonShieldMaterials(player)) {
+			player.message("You need the two shield halves to repair the shield.");
+			return false;
+		}
+		if (!canReceive(player, new Item(itemId))) {
+			player.message("Your client does not support the desired object");
+			return false;
+		}
+
+		mes("You set to work trying to fix the ancient shield.");
+		delay(2);
+		mes("You hammer long and hard and use all of your skill.");
+		delay(2);
+		mes("Eventually, it is ready...");
+		delay(2);
+		mes("You have repaired the " + itemName + ".");
+		delay(2);
+		if (player.getCarriedItems().remove(new Item(ItemId.RIGHT_HALF_DRAGON_SQUARE_SHIELD.id()),
+			new Item(ItemId.LEFT_HALF_DRAGON_SQUARE_SHIELD.id()))) {
+			player.getCarriedItems().getInventory().add(new Item(itemId));
+			player.incExp(Skill.SMITHING.id(), DRAGON_SHIELD_SMITHING_XP, true);
+			return true;
+		}
+		return false;
+	}
+
+	private boolean hasDragonShieldMaterials(Player player) {
+		return player.getCarriedItems().getInventory().countId(ItemId.RIGHT_HALF_DRAGON_SQUARE_SHIELD.id(), Optional.of(false)) >= 1
+			&& player.getCarriedItems().getInventory().countId(ItemId.LEFT_HALF_DRAGON_SQUARE_SHIELD.id(), Optional.of(false)) >= 1
+			&& player.getCarriedItems().getInventory().countId(ItemId.HAMMER.id(), Optional.of(false)) >= 1;
 	}
 
 	private void handleGoldSmithing(Player player) {
@@ -697,7 +769,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				break;
 			case 3:
 				def.bars = 3;
-				def.level = baseLevel + 4;
+				def.level = baseLevel + 3;
 				def.itemID = getModernShieldId(barId);
 				break;
 			case 4:

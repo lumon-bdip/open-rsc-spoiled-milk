@@ -49,7 +49,7 @@ def main() -> int:
         failures.append("projectile effect base must stay clear of the expanded combat effect sprite range")
     if not re.search(r'combatEffectNames\s*=\s*new String\[\]\s*\{.*"summon".*"summon-combat".*"summon-support".*"summon-utility"', client, re.S):
         failures.append("client combatEffectNames must include summon charge and arrival effects")
-    if 'getExternalAnimationFolder("on summon", effectName)' not in client:
+    if 'getExternalAnimationFolder("on summon", assetName)' not in client:
         failures.append("client must load summon arrival animations from the on summon asset category")
     if "SUMMON_CHARGE_EFFECT_TICKS = 256" not in client:
         failures.append("summon charge effect should last the five-second charge window")

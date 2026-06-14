@@ -51,7 +51,8 @@ public class StatRestorationEvent extends GameTickEvent {
 		long deltaCycles;
 
 		if (getOwner().isPlayer()) {
-			((Player) getOwner()).tickSoulRobeShieldRecharge();
+			Player player = (Player) getOwner();
+			player.tickBodyRobeWeaponPowerDecay();
 		}
 
 		// Add new skills to the restoration cycle
@@ -72,10 +73,10 @@ public class StatRestorationEvent extends GameTickEvent {
 				if (!player.getConfig().WANT_MYWORLD && player.getPrayers().isPrayerActivated(Prayers.RAPID_HEAL)) {
 					delay = 50 * getWorld().getServer().getConfig().GAME_TICK;
 				}
-				int bodyPieces = player.getBodyRobePieces();
-				if (bodyPieces > 0) {
+				double soulRobeBonus = player.getSoulRobeHealthRegenerationBonus();
+				if (soulRobeBonus > 0.0D) {
 					delay = Math.max(getWorld().getServer().getConfig().GAME_TICK,
-						(int) Math.ceil(delay / (1.0D + (bodyPieces * 0.33D))));
+						(int) Math.ceil(delay / (1.0D + soulRobeBonus)));
 				}
 				delay = Math.max(getWorld().getServer().getConfig().GAME_TICK,
 					(int) Math.ceil(delay / (double) player.getPotionOfRegenerationMultiplier()));

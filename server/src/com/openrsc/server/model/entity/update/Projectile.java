@@ -28,6 +28,9 @@ public class Projectile {
 	public static final int HOLY_MAGIC = 22;
 	public static final int SUMMON_BAT_VAMPIRISM = 23;
 	public static final int SHURIKEN = 24;
+	public static final int ENEMY_AIR_BASIC = 25;
+	public static final int ENEMY_WATER_BASIC = 26;
+	public static final int BLUE_DRAGON_MAGIC = 27;
 
 	/**
 	 * Who fired the projectile

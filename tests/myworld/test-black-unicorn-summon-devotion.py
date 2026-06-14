@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
 
 
 def require(text: str, snippet: str, label: str) -> None:
@@ -15,6 +16,7 @@ def require(text: str, snippet: str, label: str) -> None:
 def main() -> None:
     summoning = SUMMONING.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
+    npc = NPC.read_text(encoding="utf-8")
 
     require(
         summoning,
@@ -38,8 +40,13 @@ def main() -> None:
     )
     require(
         summoning,
-        "final int xp = (getPrayerDropExperience(itemId) * amount * 2) + devotionBonusXp;",
-        "Black unicorn auto-offerings should add devotion bonus XP without doubling it",
+        "final int xp = getPrayerDropExperience(itemId) * amount * 2;",
+        "Black unicorn auto-offerings should keep normal Prayer XP separate",
+    )
+    require(
+        summoning,
+        "Devotion.awardOfferingPrayerXpBonus(owner, Skill.PRAYER.id(), devotionBonusXp);",
+        "Black unicorn auto-offerings should award devotion bonus as flat Prayer XP",
     )
     require(
         summoning,
@@ -51,6 +58,20 @@ def main() -> None:
         "recordAutoBuryDevotionBonus(owner, amount)",
         "Black unicorn auto-offerings should record devotion for the whole stack",
     )
+    bone_priority = "if (bones != ItemId.NOTHING.id() && !Summoning.tryAutoBuryDrop(owner, bones, 1))"
+    law_banking = "owner.getCarriedItems().getEquipment().tryBankMonsterLootWithLawNecklace(new Item(bones, 1))"
+    require(
+        npc,
+        bone_priority,
+        "Black unicorn should get first chance at NPC bone drops",
+    )
+    require(
+        npc,
+        law_banking,
+        "Law necklace fallback should still handle non-offered bone drops",
+    )
+    if npc.index(bone_priority) > npc.index(law_banking):
+        raise SystemExit("FAIL: Black unicorn auto-offering should run before law necklace monster-loot banking")
 
     print("PASS: black unicorn summon records boosted devotion offerings without granting Prayer")
 

@@ -118,8 +118,8 @@ public class Bones implements OpInvTrigger, UseInvTrigger {
 			for (int praySkillId : prayerSkillIds) {
 				int xpToGive = skillXP / factor;
 				if (bonecrusher) xpToGive /= 2;
-				xpToGive += devotionBonusXp;
 				player.incExp(praySkillId, xpToGive, true);
+				Devotion.awardOfferingPrayerXpBonus(player, praySkillId, devotionBonusXp);
 			}
 		}
 	}

@@ -16,11 +16,36 @@ def fail(message: str) -> None:
     sys.exit(1)
 
 
+def parse_int_matrix(source: str, declaration: str) -> list[list[int]]:
+    start = source.index(declaration)
+    block_start = source.index("{", start)
+    depth = 0
+    block_end = -1
+    for index in range(block_start, len(source)):
+        char = source[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                block_end = index
+                break
+    if block_end == -1:
+        fail(f"Could not parse {declaration}")
+    block = source[block_start + 1:block_end]
+    rows = []
+    for row in re.findall(r"\{([^{}]*)\}", block):
+        rows.append([int(value.strip()) for value in row.split(",") if value.strip()])
+    return rows
+
+
 def main() -> int:
     summoning = SUMMONING.read_text(encoding="utf-8")
     guide = GUIDE.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")
     plan = PLAN.read_text(encoding="utf-8")
+    client_cost_item_ids = parse_int_matrix(client, "private static final int[][] SUMMONING_COST_ITEM_IDS")
+    client_cost_amounts = parse_int_matrix(client, "private static final int[][] SUMMONING_COST_AMOUNTS")
 
     match = re.search(
         r"private static final SummonProfile BEAR_PROFILE = combatProfile\((?P<body>.*?)\n\t\);",
@@ -39,6 +64,67 @@ def main() -> int:
         fail("Summoning skill guide should show the updated Ironhide Bear cost")
     if "{37, 36, 20}" not in client or "{1, 2, 1}" not in client:
         fail("Summoning tooltip should show Ironhide Bear as 1 life rune, 2 body runes, and bones")
+
+    loot_match = re.search(
+        r"private static final SummonProfile LOOT_GOBLIN_PROFILE = supportProfile\((?P<body>.*?)\n\t\);",
+        summoning,
+        re.S,
+    )
+    if not loot_match:
+        fail("Loot Goblin summon profile not found")
+    loot_profile = loot_match.group("body")
+    for expected in (
+        '"Loot Goblin", 12',
+        "NpcId.LOOT_GOBLIN.id()",
+        "cost(ItemId.BONES.id(), 1)",
+        "cost(ItemId.LIFE_RUNE.id(), 1)",
+        "cost(ItemId.BODY_RUNE.id(), 1)",
+        "cost(ItemId.MIND_RUNE.id(), 1)",
+    ):
+        if expected not in loot_profile:
+            fail(f"Loot Goblin profile is missing {expected}")
+    if "Loot Goblin - Support; bones, life, body, mind" not in guide:
+        fail("Summoning skill guide should show Loot Goblin cost")
+    if client_cost_item_ids[2] != [20, 37, 36, 35] or client_cost_amounts[2] != [1, 1, 1, 1]:
+        fail("Loot Goblin dropdown cost icons should be bones, life, body, mind")
+
+    rat_match = re.search(
+        r"private static final SummonProfile RAT_PROFILE = utilityProfile\((?P<body>.*?)\n\t\);",
+        summoning,
+        re.S,
+    )
+    if not rat_match:
+        fail("Pack Rat summon profile not found")
+    rat_profile = rat_match.group("body")
+    if "cost(ItemId.BONES.id()" in rat_profile:
+        fail("Pack Rat should not cost bones")
+    if "Pack Rat - Utility; 1 life, 2 law, body, nature" not in guide:
+        fail("Summoning skill guide should show Pack Rat without bones")
+    if "Pack Rat - Utility; 1 life, 2 law, body, nature, bones" in guide:
+        fail("Summoning skill guide should not show Pack Rat bones")
+    if "{37, 42, 36, 40}" not in client or "{1, 2, 1, 1}" not in client:
+        fail("Summoning tooltip should show Pack Rat without bones")
+    if client_cost_item_ids[6] != [37, 42, 36, 40] or client_cost_amounts[6] != [1, 2, 1, 1]:
+        fail("Pack Rat dropdown cost icons should be life, law, body, nature only")
+
+    camel_match = re.search(
+        r"private static final SummonProfile CAMEL_PROFILE = utilityProfile\((?P<body>.*?)\n\t\);",
+        summoning,
+        re.S,
+    )
+    if not camel_match:
+        fail("Delivery Camel summon profile not found")
+    camel_profile = camel_match.group("body")
+    if "cost(ItemId.BONES.id()" in camel_profile:
+        fail("Delivery Camel should not cost bones")
+    if "Delivery Camel - Utility; 1 life, 2 body, 2 law, 2 nature" not in guide:
+        fail("Summoning skill guide should show Delivery Camel without bones")
+    if "Delivery Camel - Utility; 1 life, 2 body, 2 law, 2 nature, bones" in guide:
+        fail("Summoning skill guide should not show Delivery Camel bones")
+    if "{37, 36, 42, 40}" not in client or "{1, 2, 2, 2}" not in client:
+        fail("Summoning tooltip should show Delivery Camel without bones")
+    if client_cost_item_ids[10] != [37, 36, 42, 40] or client_cost_amounts[10] != [1, 2, 2, 2]:
+        fail("Delivery Camel dropdown cost icons should be life, body, law, nature only")
 
     upkeep_checks = (
         "SUPPORT_UPKEEP_BASE_COST = 1",
@@ -72,6 +158,14 @@ def main() -> int:
         fail("Summoning plan should document 2 body runes for Ironhide Bear")
     if "`1 Nature rune`" in bear_plan:
         fail("Summoning plan should not document a nature rune for Ironhide Bear")
+
+    rat_plan = plan[plan.index("### Pack Rat"):plan.index("### Bound Battleaxe")]
+    if "`1 bones`" in rat_plan:
+        fail("Summoning plan should not document bones for Pack Rat")
+
+    camel_plan = plan[plan.index("### Delivery Camel"):plan.index("### Astral Wraith")]
+    if "`1 bones`" in camel_plan:
+        fail("Summoning plan should not document bones for Delivery Camel")
 
     print("PASS: summoning costs validated")
     return 0

@@ -195,6 +195,7 @@ def test_myworld_docs_are_consolidated() -> None:
         "compatibility-only-content.md",
         "dev-admin-commands.md",
         "dual-element-spells.md",
+        "enchanted-robe-effects-plan.md",
         "entrana-safety-deposit-box-plan.md",
         "fishing-rework-plan.md",
         "fishing-spot-map.md",

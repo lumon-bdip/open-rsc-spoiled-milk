@@ -838,7 +838,8 @@ public enum NpcId {
 	MCGRUBOR(834),
 	ASH(835),
 	GREY_KNIGHT(836),
-	MASTER_TANNER(837);
+	MASTER_TANNER(837),
+	LOOT_GOBLIN(838);
 
 	private int npcId;
 

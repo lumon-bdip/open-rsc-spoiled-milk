@@ -352,6 +352,9 @@ public final class EntranaRestrictions {
 		ItemId.ADAMANTITE_SCYTHE.id(),
 		ItemId.ORICHALCUM_SCYTHE.id(),
 		ItemId.RUNE_SCYTHE.id(),
+		ItemId.BLACK_SCYTHE.id(),
+		ItemId.WHITE_SCYTHE.id(),
+		ItemId.GREY_SCYTHE.id(),
 
 		// Shuriken
 		ItemId.TIN_SHURIKEN.id(),

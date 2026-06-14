@@ -31,6 +31,7 @@ import com.openrsc.server.model.entity.*;
 import com.openrsc.server.model.entity.UnregisterForcefulness;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.npc.NpcInteraction;
+import com.openrsc.server.model.entity.npc.NpcMagicElement;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.struct.UnequipRequest;
@@ -73,6 +74,10 @@ import static com.openrsc.server.plugins.Functions.inArray;
  * A single player.
  */
 public final class Player extends Mob {
+	private static final String BODY_ROBE_POWER_KEY = "body_robe_weapon_power";
+	private static final String BODY_ROBE_POWER_LAST_DECAY_KEY = "body_robe_weapon_power_last_decay";
+	private static final int BODY_ROBE_POWER_DECAY_TICKS = 10;
+
 	/**
 	 * The asynchronous logger.
 	 */
@@ -1682,16 +1687,25 @@ public final class Player extends Mob {
 	}
 
 	private void setTimedEffectValue(final String valueKey, final String expiresKey, final int value, final long durationMs) {
-		setAttribute(valueKey, Math.max(0, value));
+		setAttribute(valueKey, applyPotionPowerBonus(value));
 		setAttribute(expiresKey, System.currentTimeMillis() + Math.max(0L, durationMs));
 	}
 
 	private long applyPotionDurationBonus(final long durationMs) {
-		final double bonus = getCarriedItems().getEquipment().getMindAmuletPotionDurationBonus();
+		final double bonus = getCarriedItems().getEquipment().getMindAmuletPotionDurationBonus()
+			+ (getNatureRobePotionBonusPercent() / 100.0D);
 		if (bonus <= 0.0D || durationMs <= 0L) {
 			return durationMs;
 		}
 		return (long) Math.ceil(durationMs * (1.0D + bonus));
+	}
+
+	private int applyPotionPowerBonus(final int value) {
+		final int bonusPercent = getNatureRobePotionBonusPercent();
+		if (bonusPercent <= 0 || value <= 0) {
+			return Math.max(0, value);
+		}
+		return Math.max(0, (int) Math.ceil(value * (1.0D + (bonusPercent / 100.0D))));
 	}
 
 	private long getSpellCastHoldTimerMillis() {
@@ -1837,7 +1851,7 @@ public final class Player extends Mob {
 	}
 
 	private void activateXpBrew(final String key, final int bonusPercent, final long durationMs) {
-		getCache().store("potion_" + key + "_xp_bonus", Math.max(0, bonusPercent));
+		getCache().store("potion_" + key + "_xp_bonus", applyPotionPowerBonus(bonusPercent));
 		getCache().store("potion_" + key + "_xp_remaining_ms", Math.max(0L, applyPotionDurationBonus(durationMs)));
 		setAttribute("potion_" + key + "_xp_last_tick", System.currentTimeMillis());
 	}
@@ -1969,7 +1983,7 @@ public final class Player extends Mob {
 
 	@Override
 	public int getMeleeOffense() {
-		int total = getSkills().getLevel(Skill.MELEE.id()) + getCarriedItems().getEquipment().getMeleeOffense();
+		int total = getSkills().getLevel(Skill.MELEE.id()) + getCarriedItems().getEquipment().getMeleeOffense() + getBodyRobeWeaponPowerBonus();
 		if (!getCarriedItems().getEquipment().hasEquippedMeleeWeapon()) {
 			return Math.max(1, (int) Math.floor(total * 0.70D));
 		}
@@ -1978,12 +1992,12 @@ public final class Player extends Mob {
 
 	@Override
 	public int getRangedOffense() {
-		return getSkills().getLevel(Skill.RANGED.id()) + getCarriedItems().getEquipment().getRangedOffense();
+		return getSkills().getLevel(Skill.RANGED.id()) + getCarriedItems().getEquipment().getRangedOffense() + getBodyRobeWeaponPowerBonus();
 	}
 
 	@Override
 	public int getMagicOffense() {
-		return getSkills().getLevel(Skill.MAGIC.id()) + getCarriedItems().getEquipment().getMagicOffense();
+		return getSkills().getLevel(Skill.MAGIC.id()) + getCarriedItems().getEquipment().getMagicOffense() + getBodyRobeWeaponPowerBonus();
 	}
 
 	public double getDeathAmuletDamageBonusMultiplier() {
@@ -2295,109 +2309,147 @@ public final class Player extends Mob {
 	public void consumeLeatherSetAttackBuffs() {
 	}
 
-	public double getMindRobeDebuffMultiplier() {
-		return 1.0D;
+	public double getMindRobeSpellCapBonus() {
+		return Math.min(0.50D, getCarriedItems().getEquipment().getMindRobeTierTotal() * 0.01D);
 	}
 
-	public int getNatureRobePoisonMitigation() {
-		return 0;
+	public int getNatureRobePotionBonusPercent() {
+		return Math.min(100, getCarriedItems().getEquipment().getNatureRobeTierTotal() * 2);
 	}
 
-	public double getCosmicRobeDefenseRerollChance() {
-		return 0.0D;
+	public double getSoulRobeHealthRegenerationBonus() {
+		return Math.min(1.0D, getCarriedItems().getEquipment().getSoulRobeTierTotal() * 0.02D);
 	}
 
-	public double getChaosRobeReflectPercent() {
-		return 0.0D;
+	public double getCosmicRobeCritChance() {
+		return Math.min(0.50D, getCarriedItems().getEquipment().getCosmicRobeTierTotal() * 0.01D);
 	}
 
-	public int getLawRobeExtraDamageRolls() {
-		return 0;
+	public boolean rollCosmicRobeCrit() {
+		final double chance = getCosmicRobeCritChance();
+		return chance > 0.0D && DataConversions.getRandom().nextDouble() < chance;
 	}
 
-	public int getBloodRobePieces() {
-		return 0;
+	public double getChaosRobeSurroundedDamageMultiplier() {
+		final int tierTotal = getCarriedItems().getEquipment().getChaosRobeTierTotal();
+		if (tierTotal <= 0) {
+			return 1.0D;
+		}
+		int adjacentEnemies = 0;
+		for (Npc npc : getViewArea().getNpcsInView()) {
+			if (npc == null || npc.isRemoved() || npc.isRespawning() || Summoning.isSummon(npc)) {
+				continue;
+			}
+			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				continue;
+			}
+			final int xDiff = Math.abs(getX() - npc.getX());
+			final int yDiff = Math.abs(getY() - npc.getY());
+			if (xDiff <= 1 && yDiff <= 1 && (xDiff != 0 || yDiff != 0)) {
+				adjacentEnemies++;
+			}
+		}
+		return 1.0D + (tierTotal * adjacentEnemies * 0.02D);
 	}
 
-	public int getBodyRobePieces() {
-		return 0;
+	public double getBloodRobeSpellSplashPercent() {
+		return Math.min(1.0D, getCarriedItems().getEquipment().getBloodRobeTierTotal() * 0.02D);
 	}
 
-	public int getSoulRobeShieldMax() {
-		return 0;
+	public int getBodyRobeWeaponPowerBonus() {
+		final int cap = getCarriedItems().getEquipment().getBodyRobeTierTotal();
+		if (cap <= 0) {
+			removeAttribute(BODY_ROBE_POWER_KEY);
+			removeAttribute(BODY_ROBE_POWER_LAST_DECAY_KEY);
+			return 0;
+		}
+		return Math.max(0, Math.min(cap, getAttribute(BODY_ROBE_POWER_KEY, 0)));
 	}
 
-	public int getSoulRobeShieldCurrent() {
-		return Math.max(0, getAttribute("soul_robe_shield_current", 0));
-	}
-
-	public void syncSoulRobeShield() {
-		final int maxShield = getSoulRobeShieldMax();
-		final int previousMax = getAttribute("soul_robe_shield_max", 0);
-		if (maxShield <= 0) {
-			setAttribute("soul_robe_shield_current", 0);
-			setAttribute("soul_robe_shield_max", 0);
-			removeAttribute("soul_robe_shield_last_restore");
+	public void chargeBodyRobeWeaponPower(final int damageTaken) {
+		final int cap = getCarriedItems().getEquipment().getBodyRobeTierTotal();
+		if (cap <= 0 || damageTaken <= 0) {
 			return;
 		}
-
-		int currentShield = getAttribute("soul_robe_shield_current", maxShield);
-		if (previousMax <= 0) {
-			currentShield = maxShield;
-		} else {
-			currentShield = Math.min(currentShield, maxShield);
-		}
-		setAttribute("soul_robe_shield_current", currentShield);
-		setAttribute("soul_robe_shield_max", maxShield);
-		if (getAttribute("soul_robe_shield_last_restore", 0L) != 0L) {
-			return;
-		}
-		setAttribute("soul_robe_shield_last_restore", System.currentTimeMillis());
+		final int current = getBodyRobeWeaponPowerBonus();
+		setAttribute(BODY_ROBE_POWER_KEY, Math.min(cap, current + damageTaken));
+		setAttribute(BODY_ROBE_POWER_LAST_DECAY_KEY, System.currentTimeMillis());
 	}
 
-	public int absorbSoulRobeShield(final int incomingDamage) {
-		if (incomingDamage <= 0) {
-			return incomingDamage;
-		}
-		final int currentShield = getSoulRobeShieldCurrent();
-		if (currentShield <= 0) {
-			return incomingDamage;
-		}
-		final int absorbed = Math.min(currentShield, incomingDamage);
-		setAttribute("soul_robe_shield_current", currentShield - absorbed);
-		setAttribute("soul_robe_shield_last_restore", System.currentTimeMillis());
-		return incomingDamage - absorbed;
-	}
-
-	public void tickSoulRobeShieldRecharge() {
-		final int maxShield = getSoulRobeShieldMax();
-		if (maxShield <= 0) {
-			return;
-		}
-		int currentShield = getSoulRobeShieldCurrent();
-		if (currentShield >= maxShield) {
+	public void tickBodyRobeWeaponPowerDecay() {
+		final int current = getBodyRobeWeaponPowerBonus();
+		if (current <= 0) {
 			return;
 		}
 		final long now = System.currentTimeMillis();
-		final long lastRestore = getAttribute("soul_robe_shield_last_restore", 0L);
-		final long lastDamage = getAttribute("last_damage_taken_at", 0L);
-		if (inCombat() || now - Math.max(getCombatTimer(), lastDamage) < 10_000L) {
+		final long interval = BODY_ROBE_POWER_DECAY_TICKS * (long) getWorld().getServer().getConfig().GAME_TICK;
+		final long lastDecay = getAttribute(BODY_ROBE_POWER_LAST_DECAY_KEY, now);
+		if (now - lastDecay < interval) {
 			return;
 		}
-		if (lastRestore > 0L && now - lastRestore < (10L * getWorld().getServer().getConfig().GAME_TICK)) {
-			return;
+		final int decay = Math.max(1, (int) ((now - lastDecay) / interval));
+		final int next = Math.max(0, current - decay);
+		if (next <= 0) {
+			removeAttribute(BODY_ROBE_POWER_KEY);
+			removeAttribute(BODY_ROBE_POWER_LAST_DECAY_KEY);
+		} else {
+			setAttribute(BODY_ROBE_POWER_KEY, next);
+			setAttribute(BODY_ROBE_POWER_LAST_DECAY_KEY, lastDecay + (decay * interval));
 		}
-		currentShield = Math.min(maxShield, currentShield + 1);
-		setAttribute("soul_robe_shield_current", currentShield);
-		setAttribute("soul_robe_shield_last_restore", now);
+	}
+
+	public double getDeathRobeOverkillSplashPercent() {
+		return Math.min(1.0D, getCarriedItems().getEquipment().getDeathRobeTierTotal() * 0.02D);
+	}
+
+	public int getLifeRobeSummonBonusPercent() {
+		return Math.min(100, getCarriedItems().getEquipment().getLifeRobeTierTotal() * 2);
 	}
 
 	public int applyRobeDamageMitigation(final int incomingDamage) {
+		return applyRobeDamageMitigation(incomingDamage, NpcMagicElement.NONE);
+	}
+
+	public int applyRobeDamageMitigation(final int incomingDamage, final NpcMagicElement magicElement) {
 		if (incomingDamage > 0) {
 			setAttribute("last_damage_taken_at", System.currentTimeMillis());
 		}
-		final int remainingDamage = absorbSoulRobeShield(incomingDamage);
+		final int remainingDamage = applyElementalRobeResistance(incomingDamage, magicElement);
+		if (remainingDamage > 0) {
+			chargeBodyRobeWeaponPower(remainingDamage);
+		}
 		return remainingDamage;
+	}
+
+	private int applyElementalRobeResistance(final int incomingDamage, final NpcMagicElement magicElement) {
+		if (incomingDamage <= 0 || magicElement == null || magicElement == NpcMagicElement.NONE) {
+			return incomingDamage;
+		}
+		final int tierTotal;
+		switch (magicElement) {
+			case AIR:
+				tierTotal = getCarriedItems().getEquipment().getAirRobeTierTotal();
+				break;
+			case WATER:
+				tierTotal = getCarriedItems().getEquipment().getWaterRobeTierTotal();
+				break;
+			case EARTH:
+				tierTotal = getCarriedItems().getEquipment().getEarthRobeTierTotal();
+				break;
+			case FIRE:
+				tierTotal = getCarriedItems().getEquipment().getFireRobeTierTotal();
+				break;
+			default:
+				return incomingDamage;
+		}
+		if (tierTotal <= 0) {
+			return incomingDamage;
+		}
+		final double resistance = Math.min(1.0D, tierTotal * 0.02D);
+		if (resistance >= 1.0D) {
+			return 0;
+		}
+		return Math.max(1, (int) Math.ceil(incomingDamage * (1.0D - resistance)));
 	}
 
 	@Override

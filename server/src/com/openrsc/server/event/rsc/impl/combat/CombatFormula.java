@@ -65,7 +65,7 @@ public class CombatFormula {
 		int offenseBonus = offenseBonus(source, source.getMagicOffense());
 		int defenseMax = defenseToMitigation(victim.getMagicDefense());
 		int attackMax = applyOutgoingMaxHitDebuff(source, spellMax + offenseBonus);
-		int damage = applyMitigationRoll(source, victim, attackMax, defenseMax);
+		int damage = rollPlayerCrit(source, attackMax) ? attackMax : applyMitigationRoll(source, victim, attackMax, defenseMax);
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MAGIC);
 		return applyDamageMultiplier(source, damage);
 	}
@@ -76,7 +76,7 @@ public class CombatFormula {
 		int attackMax = applyOutgoingMaxHitDebuff(source, spellMax + offenseBonus);
 		int defenseMax = defenseToMitigation(victim.getMagicDefense());
 		int cappedAttackMax = Math.max(1, (int) Math.ceil(attackMax * maxHitPercent));
-		int damage = applyMitigationRoll(source, victim, cappedAttackMax, defenseMax);
+		int damage = rollPlayerCrit(source, cappedAttackMax) ? cappedAttackMax : applyMitigationRoll(source, victim, cappedAttackMax, defenseMax);
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MAGIC);
 		return applyDamageMultiplier(source, damage);
 	}
@@ -195,7 +195,7 @@ public class CombatFormula {
 	 */
 	public static int doMeleeDamage(final Mob source, final Mob victim) {
 		final int attackMax = getDragonBreathMainAttackMax(source, offenseToMaxHit(source, source.getMeleeOffense()));
-		int damage = applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getMeleeDefense()));
+		int damage = rollPlayerCrit(source, attackMax) ? attackMax : applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getMeleeDefense()));
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MELEE);
 		damage = applyDamageMultiplier(source, damage);
 		if (victim instanceof Player) {
@@ -219,9 +219,13 @@ public class CombatFormula {
 			attackMax *= 2;
 		}
 		attackMax = getDragonBreathMainAttackMax(source, bowId, arrowId, attackMax);
-		int damage = applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getRangedDefense()));
+		int damage = rollPlayerCrit(source, attackMax) ? attackMax : applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getRangedDefense()));
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.RANGED);
 		return applyDamageMultiplier(source, damage);
+	}
+
+	private static boolean rollPlayerCrit(final Mob source, final int attackMax) {
+		return attackMax > 0 && source instanceof Player && ((Player) source).rollCosmicRobeCrit();
 	}
 
 	public static int rollDragonMeleeBreathDamage(final Mob source) {
@@ -377,40 +381,21 @@ public class CombatFormula {
 	private static int applyMitigationRoll(final Mob source, final Mob victim, final int attackMax, final int defenseMax) {
 		int offenseRoll = rollIncomingDamage(source, victim, attackMax);
 		int defenseRoll = defenseMax <= 0 ? 0 : DataConversions.random(1, defenseMax);
-		defenseRoll = maybeRerollDefenseRoll(victim, defenseRoll, defenseMax);
 		return Math.max(offenseRoll - defenseRoll, 0);
 	}
 
 	private static int rollIncomingDamage(final Mob source, final Mob victim, final int attackMax) {
-		int rollCount = 1;
-		if (victim instanceof Player) {
-			rollCount += ((Player) victim).getLawRobeExtraDamageRolls();
-		}
-		int totalRoll = 0;
-		for (int i = 0; i < rollCount; i++) {
-			totalRoll += source != null && source.isNpc()
-				? rollNpcDamage(source, attackMax)
-				: rollDamage(source, attackMax);
-		}
-		return Math.max(0, totalRoll / Math.max(1, rollCount));
-	}
-
-	private static int maybeRerollDefenseRoll(final Mob victim, final int defenseRoll, final int defenseMax) {
-		if (!(victim instanceof Player) || defenseMax <= 0) {
-			return defenseRoll;
-		}
-		final double rerollChance = ((Player) victim).getCosmicRobeDefenseRerollChance();
-		if (rerollChance <= 0.0D || DataConversions.getRandom().nextDouble() >= rerollChance) {
-			return defenseRoll;
-		}
-		return Math.max(defenseRoll, DataConversions.random(1, defenseMax));
+		return source != null && source.isNpc()
+			? rollNpcDamage(source, attackMax)
+			: rollDamage(source, attackMax);
 	}
 
 	private static int applyDamageMultiplier(final Mob source, final int damage) {
 		if (damage <= 0 || !(source instanceof Player)) {
 			return damage;
 		}
-		final double multiplier = ((Player) source).getDeathAmuletDamageBonusMultiplier();
+		final Player player = (Player) source;
+		final double multiplier = player.getDeathAmuletDamageBonusMultiplier() * player.getChaosRobeSurroundedDamageMultiplier();
 		if (multiplier <= 1.0D) {
 			return damage;
 		}

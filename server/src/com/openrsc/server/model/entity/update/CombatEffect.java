@@ -47,6 +47,17 @@ public class CombatEffect {
 	public static final int CORROSIVE_AURA = 41;
 	public static final int LESSER_DEMON_MAGIC = 42;
 	public static final int GREATER_DEMON_MAGIC = 43;
+	public static final int ENEMY_EARTH_BASIC = 44;
+	public static final int BLACK_DEMON_MAGIC = 45;
+	public static final int BALROG_MAGIC = 46;
+	public static final int BATTLE_MAGE_AIR = 47;
+	public static final int BATTLE_MAGE_EARTH = 48;
+	public static final int BATTLE_MAGE_WATER = 49;
+	public static final int BATTLE_MAGE_FIRE = 50;
+	public static final int GREEN_DRAGON_MAGIC = 51;
+	public static final int FIRE_DRAGON_MAGIC = 52;
+	public static final int OTHERWORLDLY_BEING_MAGIC = 53;
+	public static final int PALADIN_MAGIC = 54;
 
 	public static final int HELLFIRE = HELLS_FIRE;
 	public static final int WIND_SLASH = AIR_SLASH;
@@ -89,7 +100,16 @@ public class CombatEffect {
 			case "lesser demon":
 				return LESSER_DEMON_MAGIC;
 			case "greater demon":
+			case "chronozon":
 				return GREATER_DEMON_MAGIC;
+			case "black demon":
+				return BLACK_DEMON_MAGIC;
+			case "balrog":
+				return BALROG_MAGIC;
+			case "otherworldly being":
+				return OTHERWORLDLY_BEING_MAGIC;
+			case "paladin":
+				return PALADIN_MAGIC;
 			default:
 				return NONE;
 		}

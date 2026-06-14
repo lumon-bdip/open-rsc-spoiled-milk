@@ -1,7 +1,9 @@
 package com.openrsc.server.model.entity.npc;
 
-import com.openrsc.server.util.rsc.DataConversions;
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.Projectile;
+import com.openrsc.server.util.rsc.DataConversions;
 
 public enum NpcAttackStyleProfile {
 	MELEE,
@@ -84,10 +86,38 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public int getMagicProjectileVisual(final Npc npc) {
+		return getMagicProjectileVisual(npc, getMagicElement(npc));
+	}
+
+	public int getMagicProjectileVisual(final Npc npc, final NpcMagicElement element) {
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return Projectile.MAGIC;
 		}
 		final String name = npc.getDef().getName().toLowerCase();
+		if (npc.getID() == NpcId.BLUE_DRAGON.id()) {
+			return Projectile.BLUE_DRAGON_MAGIC;
+		}
+		switch (element) {
+			case AIR:
+				if (usesBasicCasterAirProjectile(name)) {
+					return Projectile.ENEMY_AIR_BASIC;
+				}
+				return Projectile.WIND_ARROW;
+			case WATER:
+				if (usesBasicCasterWaterProjectile(name)) {
+					return Projectile.ENEMY_WATER_BASIC;
+				}
+				return Projectile.WATER_BALL;
+			case EARTH:
+				return Projectile.ROCK_THROW;
+			case FIRE:
+				if (usesBasicCasterFireball(name)) {
+					return Projectile.FIREBALL;
+				}
+				break;
+			default:
+				break;
+		}
 		if (name.contains("wizard")) {
 			return Projectile.WIZARDS_MAGIC;
 		}
@@ -95,6 +125,89 @@ public enum NpcAttackStyleProfile {
 			return Projectile.HOLY_MAGIC;
 		}
 		return Projectile.MAGIC;
+	}
+
+	public int getMagicImpactEffect(final Npc npc, final NpcMagicElement element) {
+		final String name = npc == null || npc.getDef() == null || npc.getDef().getName() == null
+			? ""
+			: npc.getDef().getName().toLowerCase();
+		final int enemySpecificEffect = CombatEffect.enemyMagicAttackEffect(name);
+		if (enemySpecificEffect != CombatEffect.NONE) {
+			return enemySpecificEffect;
+		}
+		if ("battle mage".equals(name)) {
+			return getBattleMageImpactEffect(element);
+		}
+		if (isDragon(npc)) {
+			return getDragonMagicImpactEffect(element);
+		}
+		switch (element) {
+			case AIR:
+				return CombatEffect.WIND_SLASH;
+			case WATER:
+				return CombatEffect.WATER_BURST;
+			case EARTH:
+				if (usesBasicCasterEarthImpact(name)) {
+					return CombatEffect.ENEMY_EARTH_BASIC;
+				}
+				return CombatEffect.EARTH_HAMMER;
+			case FIRE:
+				return CombatEffect.FIRE_CLAW;
+			default:
+				return CombatEffect.NONE;
+		}
+	}
+
+	private static int getBattleMageImpactEffect(final NpcMagicElement element) {
+		switch (element) {
+			case AIR:
+				return CombatEffect.BATTLE_MAGE_AIR;
+			case EARTH:
+				return CombatEffect.BATTLE_MAGE_EARTH;
+			case WATER:
+				return CombatEffect.BATTLE_MAGE_WATER;
+			case FIRE:
+				return CombatEffect.BATTLE_MAGE_FIRE;
+			default:
+				return CombatEffect.NONE;
+		}
+	}
+
+	private static int getDragonMagicImpactEffect(final NpcMagicElement element) {
+		switch (element) {
+			case EARTH:
+				return CombatEffect.GREEN_DRAGON_MAGIC;
+			case FIRE:
+				return CombatEffect.FIRE_DRAGON_MAGIC;
+			default:
+				return CombatEffect.NONE;
+		}
+	}
+
+	private static boolean usesBasicCasterFireball(final String name) {
+		return "darkwizard".equals(name)
+			|| "necromancer".equals(name)
+			|| "skeleton mage".equals(name);
+	}
+
+	private static boolean usesBasicCasterAirProjectile(final String name) {
+		return "darkwizard".equals(name)
+			|| "witch".equals(name)
+			|| "wizard".equals(name);
+	}
+
+	private static boolean usesBasicCasterWaterProjectile(final String name) {
+		return "wizard".equals(name)
+			|| "necromancer".equals(name)
+			|| "ghost".equals(name)
+			|| "nazastarool ghost".equals(name);
+	}
+
+	private static boolean usesBasicCasterEarthImpact(final String name) {
+		return "witch".equals(name)
+			|| "skeleton mage".equals(name)
+			|| "ghost".equals(name)
+			|| "nazastarool ghost".equals(name);
 	}
 
 	private static boolean isHolyMagicNpcName(final String name) {
@@ -124,12 +237,100 @@ public enum NpcAttackStyleProfile {
 		return Math.max(1, Math.max(npc.getDef().getAtt(), npc.getDef().getStr()));
 	}
 
+	public NpcMagicElement getMagicElement(final Npc npc) {
+		if (!usesMagicProjectiles() || npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
+			return NpcMagicElement.NONE;
+		}
+		final String name = npc.getDef().getName().toLowerCase();
+		if (isHolyMagicNpcName(name)
+			|| "lucien".equals(name)
+			|| "salarin the twisted".equals(name)
+			|| "otherworldly being".equals(name)) {
+			return NpcMagicElement.NONE;
+		}
+		if (isDragon(npc)) {
+			return getDragonMagicElement(npc);
+		}
+		switch (name) {
+			case "darkwizard":
+				return randomElement(NpcMagicElement.FIRE, NpcMagicElement.AIR);
+			case "witch":
+				return randomElement(NpcMagicElement.EARTH, NpcMagicElement.AIR);
+			case "wizard":
+				return randomElement(NpcMagicElement.WATER, NpcMagicElement.AIR);
+			case "necromancer":
+				return randomElement(NpcMagicElement.FIRE, NpcMagicElement.WATER);
+			case "skeleton mage":
+				return randomElement(NpcMagicElement.FIRE, NpcMagicElement.EARTH);
+			case "ghost":
+			case "nazastarool ghost":
+				return randomElement(NpcMagicElement.WATER, NpcMagicElement.EARTH);
+			case "battle mage":
+				return randomElement(NpcMagicElement.AIR, NpcMagicElement.WATER, NpcMagicElement.EARTH, NpcMagicElement.FIRE);
+			case "lesser demon":
+			case "greater demon":
+			case "black demon":
+			case "balrog":
+			case "fire giant":
+			case "delrith":
+			case "the fire warrior of lesarkus":
+				return NpcMagicElement.FIRE;
+			case "ice giant":
+			case "ice warrior":
+			case "ice queen":
+				return NpcMagicElement.WATER;
+			case "moss giant":
+			case "tree spirit":
+				return NpcMagicElement.EARTH;
+			default:
+				if (name.contains("wizard")) {
+					return randomElement(NpcMagicElement.WATER, NpcMagicElement.AIR);
+				}
+				return NpcMagicElement.NONE;
+		}
+	}
+
+	private static NpcMagicElement getDragonMagicElement(final Npc npc) {
+		switch (npc.getID()) {
+			case 196: // GREEN_DRAGON
+				return NpcMagicElement.EARTH;
+			case 202: // BLUE_DRAGON
+			case 203: // BABY_BLUE_DRAGON
+				return NpcMagicElement.WATER;
+			case 201: // RED_DRAGON
+			case 291: // BLACK_DRAGON
+			case 477: // KING_BLACK_DRAGON
+			default:
+				return NpcMagicElement.FIRE;
+		}
+	}
+
+	private static NpcMagicElement randomElement(final NpcMagicElement... elements) {
+		if (elements == null || elements.length == 0) {
+			return NpcMagicElement.NONE;
+		}
+		return elements[DataConversions.getRandom().nextInt(elements.length)];
+	}
+
+	private static boolean isDragon(final Npc npc) {
+		return npc.getID() == NpcId.DRAGON.id()
+			|| npc.getID() == NpcId.RED_DRAGON.id()
+			|| npc.getID() == NpcId.BLUE_DRAGON.id()
+			|| npc.getID() == NpcId.BABY_BLUE_DRAGON.id()
+			|| npc.getID() == NpcId.BLACK_DRAGON.id()
+			|| npc.getID() == NpcId.KING_BLACK_DRAGON.id()
+			|| npc.getDef().getName().toLowerCase().contains("dragon");
+	}
+
 	public static NpcAttackStyleProfile forNpc(final Npc npc) {
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return MELEE;
 		}
 
 		final String name = npc.getDef().getName().toLowerCase();
+		if (isDragon(npc)) {
+			return MELEE_MAGIC;
+		}
 		if (name.contains("wizard")) {
 			return PURE_MAGIC;
 		}
@@ -161,13 +362,13 @@ public enum NpcAttackStyleProfile {
 			case "rogue":
 			case "head thief":
 				return PURE_RANGED;
-			case "battle mage":
 			case "monk of zamorak":
 			case "chaos druid warrior":
 			case "paladin":
 			case "lesser demon":
 			case "greater demon":
 			case "black demon":
+			case "balrog":
 			case "moss giant":
 			case "ice giant":
 			case "fire giant":
@@ -183,6 +384,8 @@ public enum NpcAttackStyleProfile {
 			case "otherworldly being":
 			case "salarin the twisted":
 				return MELEE_MAGIC;
+			case "battle mage":
+				return PURE_MAGIC;
 			case "mercenary":
 			case "mercenary captain":
 			case "khazard troop":

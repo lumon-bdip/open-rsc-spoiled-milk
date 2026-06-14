@@ -144,10 +144,8 @@ public class NpcDrops {
 
 	private void createDragonDropTable() {
 		dragonDropTable = new DropTable("Dragon Drop Table");
-		dragonDropTable.addItemDrop(ItemId.DRAGON_SWORD.id(), 1, 8);
-		dragonDropTable.addItemDrop(ItemId.DRAGON_AXE.id(), 1, 17);
 		dragonDropTable.addItemDrop(ItemId.DRAGON_SQUARE_SHIELD.id(), 1, 8);
-		dragonDropTable.addEmptyDrop(128 - dragonDropTable.getTotalWeight()); // empty = 95
+		dragonDropTable.addEmptyDrop(128 - dragonDropTable.getTotalWeight()); // empty = 120
 	}
 
 	private void createArrowsRunesDropTable() {
@@ -217,7 +215,6 @@ public class NpcDrops {
 		ultraRareDropTable.addItemDrop(ItemId.RUNE_KITE_SHIELD.id(), 1, 1);
 		ultraRareDropTable.addItemDrop(ItemId.RUNE_SCIMITAR.id(), 1, 2);
 		ultraRareDropTable.addItemDrop(ItemId.DRAGONSTONE.id(), 1, 2);
-		ultraRareDropTable.addItemDrop(ItemId.DRAGON_MEDIUM_HELMET.id(), 1, 1);
 		ultraRareDropTable.addItemDrop(ItemId.TOOTH_KEY_HALF.id(), 1, 19);
 		ultraRareDropTable.addItemDrop(ItemId.LOOP_KEY_HALF.id(), 1, 20);
 		ultraRareDropTable.addTableDrop(megaRareDropTable, 15);
@@ -234,6 +231,32 @@ public class NpcDrops {
 		ultraRareDropTable.addItemDrop(ItemId.NATURE_RUNE.id(), 45, 2);
 		ultraRareDropTable.addItemDrop(ItemId.COINS.id(), 3000, 25);
 		ultraRareDropTable.addEmptyDrop(128 - ultraRareDropTable.getTotalWeight());
+	}
+
+	private DropTable createBlackDemonUltraRareDropTable() {
+		DropTable blackDemonUltraRareDropTable = new DropTable("Black Demon Ultra Rare Drop Table", true);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.RUNE_KITE_SHIELD.id(), 1, 1);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.RUNE_SCIMITAR.id(), 1, 2);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.DRAGONSTONE.id(), 1, 2);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.DRAGON_MEDIUM_HELMET.id(), 1, 1);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.LARGE_DRAGON_HELMET.id(), 1, 1);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.TOOTH_KEY_HALF.id(), 1, 19);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.LOOP_KEY_HALF.id(), 1, 20);
+		blackDemonUltraRareDropTable.addTableDrop(megaRareDropTable, 15);
+		blackDemonUltraRareDropTable.addTableDrop(rareDropTable, 20);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.RUNE_AXE.id(), 1, 3);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.RUNITE_BAR.id(), 1, 2);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.RUNE_2_HANDED_SWORD.id(), 1, 3);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.RUNE_BATTLE_AXE.id(), 1, 2);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.LAW_RUNE.id(), 30, 3);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.DEATH_RUNE.id(), 30, 2);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.RUNE_ARROWS.id(), 150, 2);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.SILVER_CERTIFICATE.id(), 20, 2);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.COAL_CERTIFICATE.id(), 20, 2);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.NATURE_RUNE.id(), 45, 2);
+		blackDemonUltraRareDropTable.addItemDrop(ItemId.COINS.id(), 3000, 24);
+		blackDemonUltraRareDropTable.addEmptyDrop(128 - blackDemonUltraRareDropTable.getTotalWeight());
+		return blackDemonUltraRareDropTable;
 	}
 
 	private void createBoneDrops() {
@@ -1453,7 +1476,7 @@ public class NpcDrops {
 			currentNpcDrops.addTableDrop(herbDropTable, 23);
 			currentNpcDrops.addTableDrop(rareDropTable, 5);
 		}
-		currentNpcDrops.addTableDrop(ultraRareDropTable, 1);
+		currentNpcDrops.addTableDrop(createBlackDemonUltraRareDropTable(), 1);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 132, 40);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 30, 7);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 44, 6);
@@ -1671,7 +1694,6 @@ public class NpcDrops {
 			currentNpcDrops.addItemDrop(ItemId.LAW_RUNE.id(), 10, 5);
 		}
 
-		currentNpcDrops.addItemDrop(ItemId.DRAGON_MEDIUM_HELMET.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.ORICHALCUM_BATTLE_AXE.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.IRON_ARROWS.id(), 690, 10);
 		currentNpcDrops.addItemDrop(ItemId.FIRE_RUNE.id(), 70, 11);
@@ -1832,9 +1854,9 @@ public class NpcDrops {
 		//KBD Specific table
 		kbdTableCustom = new DropTable("KBD Rare Drop Table", "kbdrdt", true);
 		kbdTableCustom.addAccessor(NpcId.KING_BLACK_DRAGON.id(), 1673, 51200);
-		kbdTableCustom.addItemDrop(ItemId.DRAGON_2_HANDED_SWORD.id(), 1, 25, false);
 		kbdTableCustom.addItemDrop(ItemId.KING_BLACK_DRAGON_SCALE.id(), 1, 2048, false);
-		kbdTableCustom.addEmptyDrop(1273);
+		kbdTableCustom.addItemDrop(ItemId.RAW_DRAGON_METAL.id(), 1, 682, false);
+		kbdTableCustom.addEmptyDrop(616);
 	}
 
 	private void createCustomQuestDrops() {
@@ -1846,17 +1868,6 @@ public class NpcDrops {
 
 	private void initializeBadLuckMitigation() {
 		badLuckMitigation = new BadLuckMitigation();
-		badLuckMitigation.addItem(kbdTableCustom.getDropTableId(), ItemId.DRAGON_2_HANDED_SWORD.id(),
-			new HashMap<Integer, Integer>(){{
-				put(2000, 0);
-				put(2500, 2);
-				put(3000, 9);
-				put(3500, 31);
-				put(4000, 101);
-				put(4500, 326);
-				put(5000, 1041);
-				put(Integer.MAX_VALUE, 3320);
-		}});
 	}
 
 	/** Helpers **/

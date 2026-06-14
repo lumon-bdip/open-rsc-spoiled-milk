@@ -9,6 +9,7 @@ import orsc.mudclient;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Set;
 
 public class EntityHandler {
@@ -66,6 +67,22 @@ public class EntityHandler {
 		0x87CEEB, 0x8B4A3B, 0x1F4E8C, 0x7A5230, 0xC62828,
 		0xC2A57A, 0xE0C341, 0xF57C00, 0x2E7D32, 0x1B8A8F,
 		0x222222, 0x7F1D1D, 0x8FA8C9, 0xF2D75A
+	};
+	private static final String[][] MYWORLD_WOOL_ROBE_EXAMINE_EFFECTS = {
+		{"Air", "air", "Reduces air magic damage by 2% per robe tier."},
+		{"Mind", "mind", "Raises mind spell damage caps by 1% per robe tier."},
+		{"Water", "water", "Reduces water magic damage by 2% per robe tier."},
+		{"Earth", "earth", "Reduces earth magic damage by 2% per robe tier."},
+		{"Fire", "fire", "Reduces fire magic damage by 2% per robe tier."},
+		{"Body", "body", "Damage taken grants up to +1 weapon power per robe tier."},
+		{"Cosmic", "cosmic", "Grants 1% crit chance per robe tier."},
+		{"Chaos", "chaos", "Adjacent enemies increase damage by 2% per robe tier."},
+		{"Nature", "nature", "Potions are 2% stronger and last 2% longer per robe tier."},
+		{"Law", "law", "Runecrafting yields 2% more runes per robe tier."},
+		{"Death", "death", "Overkill splashes for 2% per robe tier."},
+		{"Blood", "blood", "Blood spells splash for 2% per robe tier."},
+		{"Soul", "soul", "Increases health regeneration by 2% per robe tier."},
+		{"Life", "life", "Summons gain 2% duration or health per robe tier."}
 	};
 	private static final int[] MYWORLD_PICKAXE_COLORS = {
 		0xB7C9D9, 0xC86A2B, 16737817, 15654365, 15658734,
@@ -471,7 +488,10 @@ public class EntityHandler {
 		WIZARDS_MAGIC(21),
 		HOLY_MAGIC(22),
 		SUMMON_BAT_VAMPIRISM(23),
-		SHURIKEN(24);
+		SHURIKEN(24),
+		ENEMY_AIR_BASIC(25),
+		ENEMY_WATER_BASIC(26),
+		BLUE_DRAGON_MAGIC(27);
 
 		private final int value;
 
@@ -514,6 +534,9 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("holy magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 22));
 		projectiles.add(new SpriteDef("summon bat vampirism projectile", mudclient.spriteProjectile + 1, "projectiles:1", 23));
 		projectiles.add(new SpriteDef("shuriken projectile", mudclient.spriteProjectile + 6, "projectiles:6", 24));
+		projectiles.add(new SpriteDef("enemy air basic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 25));
+		projectiles.add(new SpriteDef("enemy water basic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 26));
+		projectiles.add(new SpriteDef("blue dragon magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 27));
 	}
 
 	public enum GUIPARTS {
@@ -4016,6 +4039,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Teddy head", "A fluffy teddy head", "", 1, -1, "items:544", false, false, 0, 16777124, false, true, false, 1363));
 		addItemDefinition(new ItemDef("Teddy", "A fluffy teddy", "", 1, -1, "items:542", false, false, 0, 16777124, false, true, false, 1364));
 		addItemDefinition(new ItemDef("Dragon bar", "it's a bar of dragon metal", "", 100000, -1, "items:79", false, false, 0, 16711748, true, false, true, 1365));
+		addItemDefinition(new ItemDef("Raw Dragon Metal", "Unrefined dragon metal", "", 100000, 70, "items:70", false, false, 0, 0xC62828, true, false, true, 3228));
 		addItemDefinition(new ItemDef("Chipped Dragon Scale", "A piece of dragon scale", "", 50, -1, "items:546", true, false, 0, 0, true, false, false, 1366));
 		addItemDefinition(new ItemDef("Dragon Metal Chain", "Linked dragon loops", "", 2000, -1, "items:547", true, false, 0, 0, true, false, false, 1367));
 		addItemDefinition(new ItemDef("Dragon Scale Mail Body", "A dragon chain mail reinforced with dragon scales", "", 1500000, -1, "items:537", false, true, 64, 15654365, false, false, true, 1368));
@@ -4095,7 +4119,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Dragon Plate Mail Body", "Provides excellent protection", "", 5000000, -1, "items:498", false, true, 322, 0, false, false, true, 1427));
 		addItemDefinition(new ItemDef("Dragon Plate Mail Body", "Provides excellent protection", "", 5000000, 498, "items:498", false, true, 322, 0, false, false, true, 1428));
 		addItemDefinition(new ItemDef("Dragon Plate Mail Legs", "These look pretty heavy", "", 5000000, -1, "items:499", false, true, 644, 0, false, false, true, 1429));
-		addItemDefinition(new ItemDef("Dragon Scale Mail Legs", "Dragon scale leg protection", "", 192000, 590, "items:590", false, true, 128, 15654365, false, false, true, 1430));
+		addItemDefinition(new ItemDef("Dragon Scale Mail Legs", "Dragon scale leg protection", "", 192000, 590, "items:590", false, true, 637, 0x306c33, false, false, true, 1430));
 
 		addItemDefinition(new ItemDef("White CTF Flag", "White Capture the flag banner", "", 1, -1, "items:554", false, true, 16, 0, false, false, true, 1431));
 		addItemDefinition(new ItemDef("Guthix CTF Flag", "Guthix capture the flag banner", "", 1, -1, "items:554", false, true, 16, 4246592, false, false, true, 1432));
@@ -5344,6 +5368,7 @@ public class EntityHandler {
 		setCustomItemDefinition(2330, new ItemDef("Tier 3 Agility Pouch", "A reward pouch earned from high-tier agility courses.", "open", 1800, 187, "items:187", true, false, 0, 0, false, false, false, 2330));
 		setCustomItemDefinition(2753, new ItemDef("Pig Iron bar", "An impure pink iron bar", "", 12, 79, "items:79", false, false, 0, 0xFF8FB8, false, false, true, 2753));
 		addWoolAccessoryDefinitions();
+		applyMyWorldWoolRobeDescriptions();
 		addResourceSeedDefinition("Tin seed", "A magical seed that grows into a tin tree.", 2691, 250, 0xB7C9D9);
 		addResourceSeedDefinition("Copper seed", "A magical seed that grows into a copper tree.", 2692, 250, 0xC86A2B);
 		addResourceSeedDefinition("Iron seed", "A magical seed that grows into an iron tree.", 2693, 500, 0xEEEEED);
@@ -5542,6 +5567,33 @@ public class EntityHandler {
 		}
 	}
 
+	private static void applyMyWorldWoolRobeDescriptions() {
+		for (ItemDef item : items) {
+			if (item == null || item.getName() == null || item.getDescription() == null) {
+				continue;
+			}
+			if (!isMyWorldWoolRobePiece(item.getName())) {
+				continue;
+			}
+			final String description = item.getDescription().toLowerCase(Locale.ENGLISH);
+			for (String[] effect : MYWORLD_WOOL_ROBE_EXAMINE_EFFECTS) {
+				if (item.getName().contains(effect[0])
+					&& description.contains("attuned to the " + effect[1] + " altar")) {
+					item.description = "10% chance to not use " + effect[1] + " runes with casting\n" + effect[2];
+					break;
+				}
+			}
+		}
+	}
+
+	private static boolean isMyWorldWoolRobePiece(String name) {
+		return name.contains("Wizard Hat")
+			|| name.contains("Robe Top")
+			|| name.contains("Robe Skirt")
+			|| name.contains("Wizard Gloves")
+			|| name.contains("Wizard Boots");
+	}
+
 	private static void addEnchantedJewelryDefinitions() {
 		final String[] tiers = {"Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone"};
 		final int[] amuletPrices = {1800, 3000, 6000, 12000, 35000};
@@ -5627,6 +5679,12 @@ public class EntityHandler {
 		setCustomItemDefinition(3178, new ItemDef("Standard geode", "A mineral geode that can be cracked open with a chisel.", "open", 750, -1, "external-png:geode@18x18", true, false, 0, 0, false, false, false, 3178));
 		setCustomItemDefinition(3179, new ItemDef("Large geode", "A mineral geode that can be cracked open with a chisel.", "open", 2000, -1, "external-png:geode@24x24", true, false, 0, 0, false, false, false, 3179));
 		setCustomItemDefinition(3180, new ItemDef("Huge geode", "A mineral geode that can be cracked open with a chisel.", "open", 6000, -1, "external-png:geode@30x30", true, false, 0, 0, false, false, false, 3180));
+		setCustomItemDefinition(3229, new ItemDef("Black Spear", "A spear blessed by Zamorak", "", 600, 283, "items:283", false, true, 16, 3158064, false, false, true, 3229));
+		setCustomItemDefinition(3230, new ItemDef("White Spear", "A spear blessed by Saradomin", "", 600, 283, "items:283", false, true, 16, 0xE7E2D6, false, false, true, 3230));
+		setCustomItemDefinition(3231, new ItemDef("Grey Spear", "A spear blessed by Guthix", "", 600, 283, "items:283", false, true, 16, 0x9EA59F, false, false, true, 3231));
+		setCustomItemDefinition(3232, new ItemDef("Black Scythe", "A scythe blessed by Zamorak", "", 3040, 434, "items:434", false, true, 8216, 3158064, false, false, true, 3232));
+		setCustomItemDefinition(3233, new ItemDef("White Scythe", "A scythe blessed by Saradomin", "", 3040, 434, "items:434", false, true, 8216, 0xE7E2D6, false, false, true, 3233));
+		setCustomItemDefinition(3234, new ItemDef("Grey Scythe", "A scythe blessed by Guthix", "", 3040, 434, "items:434", false, true, 8216, 0x9EA59F, false, false, true, 3234));
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -6127,6 +6185,12 @@ public class EntityHandler {
 			new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, 10, -1},
 			16761440, 8409120, 8409120, 13415270, 125, 220, 6, 6, 5, 837
 		));
+		setCustomNpcDefinition(838, new NPCDef(
+			"Loot Goblin", "A tiny goblin with greedy hands", "",
+			1, 1, 1, 1, false,
+			new int[]{139, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 0, 0, 0, 110, 103, 9, 8, 5, 838
+		));
 	}
 
 	private static ItemDef createUnobtaniumPlaceholder(int id) {
@@ -6442,15 +6506,15 @@ public class EntityHandler {
 
 			// Kite shields
 			animations.add(new AnimationDef("kiteshield", "equipment", 0xBB4B12, 0, true, false, 0)); //236 - bronze kite
-			animations.add(new AnimationDef("kiteshield", "equipment", 0xAFA2A2, 0, true, false, 0)); //237 - iron kite
-			animations.add(new AnimationDef("kiteshield", "equipment", 0xAFAFAF, 0, true, false, 0)); //238 - steel kite
-			animations.add(new AnimationDef("kiteshield", "equipment", 0x708396, 0, true, false, 0)); //239 - black kite
-			animations.add(new AnimationDef("kiteshield", "equipment", 0x839670, 0, true, false, 0)); //240 - mith kite
-			animations.add(new AnimationDef("kiteshield", "equipment", 48059, 0, true, false, 0)); //241 - addy kite
-			animations.add(new AnimationDef("kiteshield", "equipment", 0x232323, 0, true, false, 0)); //242 - rune kite
+			animations.add(new AnimationDef("kiteshield", "equipment", 16737817, 0, true, false, 0)); //237 - bronze paladin shield
+			animations.add(new AnimationDef("kiteshield", "equipment", 15654365, 0, true, false, 0)); //238 - iron paladin shield
+			animations.add(new AnimationDef("kiteshield", "equipment", 15658734, 0, true, false, 0)); //239 - steel paladin shield
+			animations.add(new AnimationDef("kiteshield", "equipment", 3158064, 0, true, false, 0)); //240 - black paladin shield
+			animations.add(new AnimationDef("kiteshield", "equipment", 10072780, 0, true, false, 0)); //241 - mithril paladin shield
+			animations.add(new AnimationDef("kiteshield", "equipment", 11717785, 0, true, false, 0)); //242 - adamantite paladin shield
+			animations.add(new AnimationDef("kiteshield", "equipment", 56797, 0, true, false, 0)); //243 - rune paladin shield
 
 			// Dragon items
-			animations.add(new AnimationDef("dragonshield", "equipment", 0, 0, true, false, 0)); //243 - dragon square
 			animations.add(new AnimationDef("dragonmedhelm", "equipment", 0, 0, true, false, 0)); //244 - dragon med
 
 			// Plate skirts

@@ -139,6 +139,23 @@ def ensure_multiplier_requirements_follow_progression() -> None:
         fail("Rune multiplier logic still appears to cap outputs before level 99")
 
 
+def ensure_law_robe_bonus_uses_fractional_carryover() -> None:
+    text = RUNES_PATH.read_text(encoding="utf-8")
+    for snippet in (
+        "LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE = 10000",
+        'LAW_ROBE_RUNEPRODUCTION_CACHE_PREFIX = "law_robe_runecraft_bonus_"',
+        "final int earnedPoints = runeCount * bonusPercent * LAW_ROBE_RUNEPRODUCTION_POINTS_PER_PERCENT;",
+        "final int bonusRunes = totalPoints / LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE;",
+        "final int remainingPoints = totalPoints % LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE;",
+        "player.getCache().set(cacheKey, remainingPoints);",
+        "player.getCache().remove(cacheKey);",
+        "getLawRobeRunecraftBonusPercent(player)",
+        "getLawRobeTierTotal() * 2",
+    ):
+        if snippet not in text:
+            fail(f"Law robe runecraft bonus missing fixed-point carryover snippet: {snippet}")
+
+
 def ensure_stone_and_talismans_are_retired() -> None:
     text = ITEMS_PATH.read_text(encoding="utf-8")
     if '"id": 1299' not in text or '"name": "Stone"' not in text:
@@ -156,6 +173,7 @@ def main() -> None:
     ensure_expected_altars(load_altars())
     ensure_runecraft_supports_all_runes()
     ensure_multiplier_requirements_follow_progression()
+    ensure_law_robe_bonus_uses_fractional_carryover()
     ensure_stone_and_talismans_are_retired()
     print("PASS: runecraft/enchanting migration data validated")
     print(f"Altars validated: {len(EXPECTED_ALTARS)}")

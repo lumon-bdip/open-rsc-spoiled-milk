@@ -48,7 +48,14 @@ def main() -> None:
     require("player.getPrayerBook()" in devotion, "devotion should track against the active worshipped god")
     require("safeGodLine.name().toLowerCase()" in devotion, "devotion cache keys should be per god")
     require("recordOfferingAndGetPrayerXpBonus" in bones, "bones and ashes should record devotion offerings")
-    require("xpToGive += devotionBonusXp;" in bones, "devotion bonus should be added to Prayer XP")
+    require("return bonusXp * 4;" in devotion,
+            "devotion bonus should convert displayed XP to internal quarter-XP units")
+    require("awardOfferingPrayerXpBonus" in devotion,
+            "devotion bonus should have a flat unmodified XP award helper")
+    require("player.getFatigue() >= player.MAX_FATIGUE" in devotion,
+            "flat devotion XP should respect max fatigue")
+    require("Devotion.awardOfferingPrayerXpBonus(player, praySkillId, devotionBonusXp);" in bones,
+            "devotion bonus should be awarded separately from normal Prayer XP modifiers")
     require("Every 10 offerings gives +1 devotion" in guide,
             "Prayer skill guide should explain devotion levels")
     require("Devotion ranges from -1000 to 1000" in guide,

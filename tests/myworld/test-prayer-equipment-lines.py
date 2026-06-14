@@ -20,6 +20,7 @@ def by_id(items, item_id: int):
 def main():
     base_items = load_items("server/conf/server/defs/ItemDefs.json", "item")
     custom_items = load_items("server/conf/server/defs/ItemDefsCustom.json", "items")
+    myworld_items = load_items("server/conf/server/defs/ItemDefsMyWorld.json", "items")
 
     expected_prayer = {
         1213: 5,  # Zamorak Cape
@@ -144,6 +145,36 @@ def main():
         item = by_id(custom_items, item_id)
         assert item["name"] == name
         assert item["prayerBonus"] == 0
+
+    expected_blessed_spears = {
+        3229: "Black Spear",
+        3230: "White Spear",
+        3231: "Grey Spear",
+    }
+    for item_id, name in expected_blessed_spears.items():
+        item = by_id(custom_items, item_id)
+        assert item["name"] == name
+        assert item["appearanceID"] == 181
+        override = by_id(myworld_items, item_id)
+        assert override["meleeOffense"] == 24
+        assert override["weaponSpeed"] == 3
+        assert override["prayerBonus"] == 2
+
+    expected_blessed_scythes = {
+        3232: "Black Scythe",
+        3233: "White Scythe",
+        3234: "Grey Scythe",
+    }
+    for item_id, name in expected_blessed_scythes.items():
+        item = by_id(custom_items, item_id)
+        assert item["name"] == name
+        assert item["appearanceID"] == 1033
+        assert item["wearableID"] & 8 == 8
+        override = by_id(myworld_items, item_id)
+        assert override["meleeOffense"] == 65
+        assert override["weaponSpeed"] == 3
+        assert override["requiredLevel"] == 30
+        assert override["prayerBonus"] == 3
 
     expected_blessed_staffs = {
         2228: ("Staff blessed by Zamorak", 6, 2, 6, 1),

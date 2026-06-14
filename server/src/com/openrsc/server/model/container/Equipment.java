@@ -1384,6 +1384,8 @@ public class Equipment {
 			case 2168: // WHITE_CHAIN_MAIL_TOP
 			case 3133: // WHITE_GAUNTLETS
 			case 3134: // WHITE_GREAVES
+			case 3230: // WHITE_SPEAR
+			case 3233: // WHITE_SCYTHE
 				return true;
 			default:
 				return false;
@@ -1412,6 +1414,8 @@ public class Equipment {
 			case 1533: // BLACK_CHAIN_MAIL_TOP
 			case 3131: // BLACK_GAUNTLETS
 			case 3132: // BLACK_GREAVES
+			case 3229: // BLACK_SPEAR
+			case 3232: // BLACK_SCYTHE
 				return true;
 			default:
 				return false;
@@ -1440,6 +1444,8 @@ public class Equipment {
 			case 3130: // GREY_CHAIN_MAIL_TOP
 			case 3135: // GREY_GAUNTLETS
 			case 3136: // GREY_GREAVES
+			case 3231: // GREY_SPEAR
+			case 3234: // GREY_SCYTHE
 				return true;
 			default:
 				return false;
@@ -1719,6 +1725,9 @@ public class Equipment {
 			case 3120: // LARGE_GREY_HELMET
 			case 3135: // GREY_GAUNTLETS
 			case 3136: // GREY_GREAVES
+			case 3229: // BLACK_SPEAR
+			case 3230: // WHITE_SPEAR
+			case 3231: // GREY_SPEAR
 			case 3140: // ZAMORAK_WOOL_GLOVES
 			case 3141: // ZAMORAK_WOOL_BOOTS
 			case 3145: // SARADOMIN_WOOL_GLOVES
@@ -1728,16 +1737,22 @@ public class Equipment {
 				return 2;
 			case 426: // BLACK_2_HANDED_SWORD
 			case 429: // BLACK_BATTLE_AXE
+			case 432: // BLACK_SQUARE_SHIELD
 			case 433: // BLACK_KITE_SHIELD
 			case 248: // BLACK_PLATE_MAIL_LEGS
 			case 2154: // WHITE_2_HANDED_SWORD
 			case 2156: // WHITE_BATTLE_AXE
+			case 2161: // WHITE_SQUARE_SHIELD
 			case 2162: // WHITE_KITE_SHIELD
 			case 2164: // WHITE_PLATE_MAIL_LEGS
 			case 3116: // GREY_2_HANDED_SWORD
 			case 3118: // GREY_BATTLE_AXE
+			case 3123: // GREY_SQUARE_SHIELD
 			case 3124: // GREY_KITE_SHIELD
 			case 3126: // GREY_PLATE_MAIL_LEGS
+			case 3232: // BLACK_SCYTHE
+			case 3233: // WHITE_SCYTHE
+			case 3234: // GREY_SCYTHE
 			case 3139: // ZAMORAK_WOOL_ROBE_BOTTOM
 			case 3144: // SARADOMIN_WOOL_ROBE_BOTTOM
 			case 3149: // GUTHIX_WOOL_ROBE_BOTTOM
@@ -1759,31 +1774,39 @@ public class Equipment {
 			case 423: // BLACK_DAGGER
 			case 2151: // WHITE_DAGGER
 			case 3113: // GREY_DAGGER
-				return 25;
+				return 15;
 			case 424: // BLACK_SHORT_SWORD
 			case 2152: // WHITE_SHORT_SWORD
 			case 3114: // GREY_SHORT_SWORD
-				return 40;
+				return 25;
 			case 425: // BLACK_LONG_SWORD
 			case 2153: // WHITE_LONG_SWORD
 			case 3115: // GREY_LONG_SWORD
-				return 49;
+				return 31;
 			case 426: // BLACK_2_HANDED_SWORD
 			case 2154: // WHITE_2_HANDED_SWORD
 			case 3116: // GREY_2_HANDED_SWORD
-				return 70;
+				return 44;
 			case 427: // BLACK_SCIMITAR
 			case 2155: // WHITE_SCIMITAR
 			case 3117: // GREY_SCIMITAR
-				return 44;
+				return 28;
 			case 429: // BLACK_BATTLE_AXE
 			case 2156: // WHITE_BATTLE_AXE
 			case 3118: // GREY_BATTLE_AXE
-				return 47;
+				return 30;
 			case 430: // BLACK_MACE
 			case 2157: // WHITE_MACE
 			case 3119: // GREY_MACE
-				return 38;
+				return 24;
+			case 3229: // BLACK_SPEAR
+			case 3230: // WHITE_SPEAR
+			case 3231: // GREY_SPEAR
+				return 24;
+			case 3232: // BLACK_SCYTHE
+			case 3233: // WHITE_SCYTHE
+			case 3234: // GREY_SCYTHE
+				return 99;
 			default:
 				return 0;
 		}
@@ -1794,31 +1817,39 @@ public class Equipment {
 			case 423: // BLACK_DAGGER
 			case 2151: // WHITE_DAGGER
 			case 3113: // GREY_DAGGER
-				return 25;
+				return 15;
 			case 424: // BLACK_SHORT_SWORD
 			case 2152: // WHITE_SHORT_SWORD
 			case 3114: // GREY_SHORT_SWORD
-				return 40;
+				return 25;
 			case 425: // BLACK_LONG_SWORD
 			case 2153: // WHITE_LONG_SWORD
 			case 3115: // GREY_LONG_SWORD
-				return 49;
+				return 31;
 			case 426: // BLACK_2_HANDED_SWORD
 			case 2154: // WHITE_2_HANDED_SWORD
 			case 3116: // GREY_2_HANDED_SWORD
-				return 70;
+				return 44;
 			case 427: // BLACK_SCIMITAR
 			case 2155: // WHITE_SCIMITAR
 			case 3117: // GREY_SCIMITAR
-				return 44;
+				return 28;
 			case 429: // BLACK_BATTLE_AXE
 			case 2156: // WHITE_BATTLE_AXE
 			case 3118: // GREY_BATTLE_AXE
-				return 64;
+				return 41;
 			case 430: // BLACK_MACE
 			case 2157: // WHITE_MACE
 			case 3119: // GREY_MACE
-				return 28;
+				return 18;
+			case 3229: // BLACK_SPEAR
+			case 3230: // WHITE_SPEAR
+			case 3231: // GREY_SPEAR
+				return 14;
+			case 3232: // BLACK_SCYTHE
+			case 3233: // WHITE_SCYTHE
+			case 3234: // GREY_SCYTHE
+				return 99;
 			default:
 				return 0;
 		}
@@ -1829,26 +1860,143 @@ public class Equipment {
 			case 230: // LARGE_BLACK_HELMET
 			case 2158: // LARGE_WHITE_HELMET
 			case 3120: // LARGE_GREY_HELMET
-				return 30;
+				return 19;
 			case 196: // BLACK_PLATE_MAIL_BODY
 			case 2163: // WHITE_PLATE_MAIL_BODY
 			case 3125: // GREY_PLATE_MAIL_BODY
-				return 80;
+				return 63;
 			case 248: // BLACK_PLATE_MAIL_LEGS
 			case 2164: // WHITE_PLATE_MAIL_LEGS
 			case 3126: // GREY_PLATE_MAIL_LEGS
-				return 49;
+				return 31;
+			case 432: // BLACK_SQUARE_SHIELD
+			case 2161: // WHITE_SQUARE_SHIELD
+			case 3123: // GREY_SQUARE_SHIELD
+				return 29;
 			case 433: // BLACK_KITE_SHIELD
 			case 2162: // WHITE_KITE_SHIELD
 			case 3124: // GREY_KITE_SHIELD
-				return 38;
+				return 24;
 			case 3131: // BLACK_GAUNTLETS
 			case 3133: // WHITE_GAUNTLETS
 			case 3135: // GREY_GAUNTLETS
 			case 3132: // BLACK_GREAVES
 			case 3134: // WHITE_GREAVES
 			case 3136: // GREY_GREAVES
-				return 22;
+				return 12;
+			default:
+				return 0;
+		}
+	}
+
+	private int getGodEquipmentTargetMeleeOffense(final int itemId) {
+		switch (itemId) {
+			case 423: // BLACK_DAGGER
+			case 2151: // WHITE_DAGGER
+			case 3113: // GREY_DAGGER
+				return 15;
+			case 424: // BLACK_SHORT_SWORD
+			case 2152: // WHITE_SHORT_SWORD
+			case 3114: // GREY_SHORT_SWORD
+				return 32;
+			case 425: // BLACK_LONG_SWORD
+			case 2153: // WHITE_LONG_SWORD
+			case 3115: // GREY_LONG_SWORD
+				return 60;
+			case 426: // BLACK_2_HANDED_SWORD
+			case 2154: // WHITE_2_HANDED_SWORD
+			case 3116: // GREY_2_HANDED_SWORD
+				return 130;
+			case 427: // BLACK_SCIMITAR
+			case 2155: // WHITE_SCIMITAR
+			case 3117: // GREY_SCIMITAR
+				return 31;
+			case 429: // BLACK_BATTLE_AXE
+			case 2156: // WHITE_BATTLE_AXE
+			case 3118: // GREY_BATTLE_AXE
+				return 62;
+			case 430: // BLACK_MACE
+			case 2157: // WHITE_MACE
+			case 3119: // GREY_MACE
+				return 40;
+			case 3229: // BLACK_SPEAR
+			case 3230: // WHITE_SPEAR
+			case 3231: // GREY_SPEAR
+				return 38;
+			case 3232: // BLACK_SCYTHE
+			case 3233: // WHITE_SCYTHE
+			case 3234: // GREY_SCYTHE
+				return 99;
+			default:
+				return 0;
+		}
+	}
+
+	private int getGodEquipmentTargetMeleeDefense(final int itemId) {
+		switch (itemId) {
+			case 230: // LARGE_BLACK_HELMET
+			case 2158: // LARGE_WHITE_HELMET
+			case 3120: // LARGE_GREY_HELMET
+			case 432: // BLACK_SQUARE_SHIELD
+			case 2161: // WHITE_SQUARE_SHIELD
+			case 3123: // GREY_SQUARE_SHIELD
+			case 3131: // BLACK_GAUNTLETS
+			case 3133: // WHITE_GAUNTLETS
+			case 3135: // GREY_GAUNTLETS
+			case 3132: // BLACK_GREAVES
+			case 3134: // WHITE_GREAVES
+			case 3136: // GREY_GREAVES
+				return 12;
+			case 196: // BLACK_PLATE_MAIL_BODY
+			case 2163: // WHITE_PLATE_MAIL_BODY
+			case 3125: // GREY_PLATE_MAIL_BODY
+				return 30;
+			case 248: // BLACK_PLATE_MAIL_LEGS
+			case 2164: // WHITE_PLATE_MAIL_LEGS
+			case 3126: // GREY_PLATE_MAIL_LEGS
+			case 433: // BLACK_KITE_SHIELD
+			case 2162: // WHITE_KITE_SHIELD
+			case 3124: // GREY_KITE_SHIELD
+				return 18;
+			default:
+				return 0;
+		}
+	}
+
+	private int getGodEquipmentTargetRangedDefense(final int itemId) {
+		switch (itemId) {
+			case 230: // LARGE_BLACK_HELMET
+			case 2158: // LARGE_WHITE_HELMET
+			case 3120: // LARGE_GREY_HELMET
+			case 432: // BLACK_SQUARE_SHIELD
+			case 2161: // WHITE_SQUARE_SHIELD
+			case 3123: // GREY_SQUARE_SHIELD
+			case 3131: // BLACK_GAUNTLETS
+			case 3133: // WHITE_GAUNTLETS
+			case 3135: // GREY_GAUNTLETS
+			case 3132: // BLACK_GREAVES
+			case 3134: // WHITE_GREAVES
+			case 3136: // GREY_GREAVES
+				return 4;
+			case 196: // BLACK_PLATE_MAIL_BODY
+			case 2163: // WHITE_PLATE_MAIL_BODY
+			case 3125: // GREY_PLATE_MAIL_BODY
+				return 10;
+			case 248: // BLACK_PLATE_MAIL_LEGS
+			case 2164: // WHITE_PLATE_MAIL_LEGS
+			case 3126: // GREY_PLATE_MAIL_LEGS
+				return 6;
+			default:
+				return 0;
+		}
+	}
+
+	private int getGodEquipmentTargetMagicDefense(final int itemId) {
+		switch (itemId) {
+			case 433: // BLACK_KITE_SHIELD
+			case 2162: // WHITE_KITE_SHIELD
+			case 3124: // GREY_KITE_SHIELD
+				return 6;
 			default:
 				return 0;
 		}
@@ -2695,32 +2843,88 @@ public class Equipment {
 		return getEquippedRobeEffects().mindPieces;
 	}
 
+	public int getAirRobeTierTotal() {
+		return getEquippedRobeEffects().airTierTotal;
+	}
+
+	public int getWaterRobeTierTotal() {
+		return getEquippedRobeEffects().waterTierTotal;
+	}
+
+	public int getEarthRobeTierTotal() {
+		return getEquippedRobeEffects().earthTierTotal;
+	}
+
+	public int getFireRobeTierTotal() {
+		return getEquippedRobeEffects().fireTierTotal;
+	}
+
+	public int getMindRobeTierTotal() {
+		return getEquippedRobeEffects().mindTierTotal;
+	}
+
 	public int getBodyRobePieces() {
 		return getEquippedRobeEffects().bodyPieces;
+	}
+
+	public int getBodyRobeTierTotal() {
+		return getEquippedRobeEffects().bodyTierTotal;
 	}
 
 	public int getNatureRobePieces() {
 		return getEquippedRobeEffects().naturePieces;
 	}
 
+	public int getNatureRobeTierTotal() {
+		return getEquippedRobeEffects().natureTierTotal;
+	}
+
 	public int getCosmicRobePieces() {
 		return getEquippedRobeEffects().cosmicPieces;
+	}
+
+	public int getCosmicRobeTierTotal() {
+		return getEquippedRobeEffects().cosmicTierTotal;
 	}
 
 	public int getChaosRobePieces() {
 		return getEquippedRobeEffects().chaosPieces;
 	}
 
+	public int getChaosRobeTierTotal() {
+		return getEquippedRobeEffects().chaosTierTotal;
+	}
+
 	public int getSoulRobePieces() {
 		return getEquippedRobeEffects().soulPieces;
+	}
+
+	public int getSoulRobeTierTotal() {
+		return getEquippedRobeEffects().soulTierTotal;
 	}
 
 	public int getBloodRobePieces() {
 		return getEquippedRobeEffects().bloodPieces;
 	}
 
+	public int getBloodRobeTierTotal() {
+		return getEquippedRobeEffects().bloodTierTotal;
+	}
+
 	public int getLawRobePieces() {
 		return getEquippedRobeEffects().lawPieces;
+	}
+
+	public int getLawRobeTierTotal() {
+		return getEquippedRobeEffects().lawTierTotal;
+	}
+
+	public int getDeathRobeTierTotal() {
+		return getEquippedRobeEffects().deathTierTotal;
+	}
+
+	public int getLifeRobeTierTotal() {
+		return getEquippedRobeEffects().lifeTierTotal;
 	}
 
 	private Item getEquippedNeckItem() {
@@ -2758,7 +2962,7 @@ public class Equipment {
 	private int getDerivedMeleeOffense(Item item) {
 		int explicit = item.getDef(player.getWorld()).getMeleeOffense();
 		if (explicit != 0) {
-			return explicit;
+			return explicit + getDevotionScaledCombatBonus(item, explicit, getGodEquipmentTargetMeleeOffense(item.getCatalogId()));
 		}
 		String lowerName = item.getDef(player.getWorld()).getName().toLowerCase();
 		if (lowerName.contains("bow") || lowerName.contains("crossbow") || lowerName.contains("dart")) {
@@ -2819,7 +3023,7 @@ public class Equipment {
 		}
 		int explicit = item.getDef(player.getWorld()).getMeleeDefense();
 		if (explicit != 0) {
-			return explicit;
+			return explicit + getDevotionScaledCombatBonus(item, explicit, getGodEquipmentTargetMeleeDefense(item.getCatalogId()));
 		}
 		if (isMagicArmor(item) || isRangedArmor(item)) {
 			return 0;
@@ -2834,7 +3038,7 @@ public class Equipment {
 		}
 		int explicit = item.getDef(player.getWorld()).getRangedDefense();
 		if (explicit != 0) {
-			return explicit;
+			return explicit + getDevotionScaledCombatBonus(item, explicit, getGodEquipmentTargetRangedDefense(item.getCatalogId()));
 		}
 		if (!isRangedArmor(item)) {
 			return 0;
@@ -2852,7 +3056,7 @@ public class Equipment {
 		}
 		int explicit = item.getDef(player.getWorld()).getMagicDefense();
 		if (explicit != 0) {
-			return explicit;
+			return explicit + getDevotionScaledCombatBonus(item, explicit, getGodEquipmentTargetMagicDefense(item.getCatalogId()));
 		}
 		if (!isMagicArmor(item)) {
 			return 0;
@@ -2932,50 +3136,81 @@ public class Equipment {
 		private int deathPieces;
 		private int soulPieces;
 		private int bloodPieces;
+		private int airTierTotal;
+		private int waterTierTotal;
+		private int earthTierTotal;
+		private int fireTierTotal;
+		private int mindTierTotal;
+		private int bodyTierTotal;
+		private int natureTierTotal;
+		private int cosmicTierTotal;
+		private int chaosTierTotal;
+		private int lawTierTotal;
+		private int deathTierTotal;
+		private int soulTierTotal;
+		private int bloodTierTotal;
+		private int lifeTierTotal;
 
 		private void add(final Item item) {
 			if (item == null) {
 				return;
 			}
+			final int tier = EnchantingItemEffects.getWoolRobeTier(item);
 			switch (EnchantingItemEffects.getAltarIdForWoolRobeItem(item.getCatalogId())) {
 				case EnchantingItemEffects.EARTH_ALTAR:
 					earthPieces++;
+					earthTierTotal += tier;
 					break;
 				case EnchantingItemEffects.AIR_ALTAR:
 					airPieces++;
+					airTierTotal += tier;
 					break;
 				case EnchantingItemEffects.WATER_ALTAR:
 					waterPieces++;
+					waterTierTotal += tier;
 					break;
 				case EnchantingItemEffects.FIRE_ALTAR:
 					firePieces++;
+					fireTierTotal += tier;
 					break;
 				case EnchantingItemEffects.BODY_ALTAR:
 					bodyPieces++;
+					bodyTierTotal += tier;
 					break;
 				case EnchantingItemEffects.MIND_ALTAR:
 					mindPieces++;
+					mindTierTotal += tier;
 					break;
 				case EnchantingItemEffects.NATURE_ALTAR:
 					naturePieces++;
+					natureTierTotal += tier;
 					break;
 				case EnchantingItemEffects.COSMIC_ALTAR:
 					cosmicPieces++;
+					cosmicTierTotal += tier;
 					break;
 				case EnchantingItemEffects.CHAOS_ALTAR:
 					chaosPieces++;
+					chaosTierTotal += tier;
 					break;
 				case EnchantingItemEffects.LAW_ALTAR:
 					lawPieces++;
+					lawTierTotal += tier;
 					break;
 				case EnchantingItemEffects.DEATH_ALTAR:
 					deathPieces++;
+					deathTierTotal += tier;
 					break;
 				case EnchantingItemEffects.SOUL_ALTAR:
 					soulPieces++;
+					soulTierTotal += tier;
 					break;
 				case EnchantingItemEffects.BLOOD_ALTAR:
 					bloodPieces++;
+					bloodTierTotal += tier;
+					break;
+				case EnchantingItemEffects.LIFE_ALTAR:
+					lifeTierTotal += tier;
 					break;
 				default:
 					break;

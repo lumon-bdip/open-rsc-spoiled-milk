@@ -29,7 +29,8 @@ def main() -> None:
     require(guide, 'populateRangedGuide();', "ranged guide helper")
     require(guide, 'addRangedBowGuide("Blood", 70, 2130, 2129);', "blood bow ranged requirement")
     require(guide, 'addRangedCrossbowGuide("Blood", 70, 2176, "Rune bolts");', "blood crossbow bolt tier")
-    require(guide, 'addThrownGuide("Orichalcum", 62, 2046, 2029, 2210);', "orichalcum thrown tier")
+    require(guide, 'addThrownGuide("Orichalcum", 62, 2046, 2029, 3216);', "orichalcum thrown tier")
+    require(guide, 'name + " shuriken"', "ranged thrown shuriken guide line")
 
     require(client, 'skillGuideChosenTabs.add("Daggers");', "melee daggers tab")
     require(client, 'skillGuideChosenTabs.add("Swords");', "melee swords tab")
@@ -93,6 +94,7 @@ def main() -> None:
     forbid(guide, 'name + " bolts - 1 bar makes 10"', "smithing bolt guide line")
     require(guide, 'addSmithingTier("Tin", 1, 1995, 1997, 1998, 1999, 2000, 2001, 1987, 2002, 2003, 3181, 2207, -1, 1959, 1960, 1961, 2224, 1962, 1963, 1964);', "tin paladin shield smithing guide")
     require(guide, 'addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 3190, 98, 1092, 2194, 112, 1993, 1994, 403, 404, 402, 401);', "rune paladin shield smithing guide")
+    require(guide, 'int maceId, int scytheId, int spearId', "smithing guide helper should keep mace and scythe item IDs in call order")
     require(guide, 'new SkillMenuItem(1958, "62", "2 Orichalcum bars - 1 mithril, 1 adamantite, and 5 coal")', "orichalcum smelting guide")
     forbid(guide, "Orichalcum bars - mithril, adamantite, silver", "orichalcum silver smelting requirement")
     forbid(guide, "Orichalcum bars - 1 mithril, 1 adamantite, 1 gold", "orichalcum gold smelting requirement")

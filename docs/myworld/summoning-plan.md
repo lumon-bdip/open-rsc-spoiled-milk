@@ -18,7 +18,8 @@ runtime.
 
 - A summon consumes runes and raw materials.
 - Every summon requires the hidden `Life rune`.
-- Every creature-based summon requires bones equivalent to the creature.
+- Most creature-based combat and support summons require bones equivalent to the
+  creature. Utility summons do not require bones.
 - Additional rune costs follow these intended rules:
   - `Body runes` are used for weaker/basic summons.
   - Elemental runes are used when the creature has a matching element.
@@ -37,13 +38,14 @@ runtime.
 
 ## Skill Progression
 
-The first 12 summons are ordered below and should be evenly spaced across
+The first 13 summons are ordered below and should be evenly spaced across
 levels `1-70`.
 
 | Level | Summon | Role | Cast XP |
 | ---: | --- | --- | ---: |
 | 1 | Broodling Spider | Combat, melee | 15 |
 | 7 | Mischief Imp | Support | 30 |
+| 12 | Loot Goblin | Support | 45 |
 | 14 | Ironhide Bear | Combat, melee | 55 |
 | 20 | Sacred Unicorn | Support | 80 |
 | 26 | Duskwind Bat | Combat, ranged | 110 |
@@ -69,8 +71,8 @@ and mechanically, but the summon reads as its own ability.
 
 Summon icon files live in `dev/myworld/assets/sprites/UI/summon` and are named
 from the summon display name in lowercase with spaces converted to dashes:
-`broodling-spider.png`, `mischief-imp.png`, `ironhide-bear.png`,
-`sacred-unicorn.png`, `duskwind-bat.png`, `pack-rat.png`,
+`broodling-spider.png`, `mischief-imp.png`, `loot-goblin.png`,
+`ironhide-bear.png`, `sacred-unicorn.png`, `duskwind-bat.png`, `pack-rat.png`,
 `bound-battleaxe.png`, `mourning-unicorn.png`, `restless-shade.png`,
 `delivery-camel.png`, `astral-wraith.png`, and `abyssal-demon.png`.
 
@@ -153,6 +155,14 @@ from the summon display name in lowercase with spaces converted to dashes:
 - effect: enemies will not initiate attacks against the player
 - restriction: if the player attacks an enemy, the imp despawns
 
+### Loot Goblin
+
+- level: `12`
+- role: support
+- cost: `1 bones`, `1 Life rune`, `1 Body rune`, `1 Mind rune`
+- effect: collects owner-bound dropped stackable items into the player's inventory
+- restriction: if no slot or matching stack is available, the item remains on the ground
+
 ### Ironhide Bear
 
 - level: `14`
@@ -185,8 +195,7 @@ from the summon display name in lowercase with spaces converted to dashes:
 
 - level: `33`
 - role: utility
-- cost: `1 Life rune`, `2 Law runes`, `1 Body rune`, `1 Nature rune`,
-  `1 bones`
+- cost: `1 Life rune`, `2 Law runes`, `1 Body rune`, `1 Nature rune`
 - effect: converts all matching selected inventory items into certs
 
 ### Bound Battleaxe
@@ -223,8 +232,7 @@ from the summon display name in lowercase with spaces converted to dashes:
 
 - level: `58`
 - role: utility
-- cost: `1 Life rune`, `2 Body runes`, `2 Law runes`, `2 Nature runes`,
-  `1 bones`
+- cost: `1 Life rune`, `2 Body runes`, `2 Law runes`, `2 Nature runes`
 - effect: deposits one selected inventory item or stack into the owner's bank
 
 ### Astral Wraith

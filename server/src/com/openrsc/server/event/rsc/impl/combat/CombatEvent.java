@@ -447,6 +447,7 @@ public class CombatEvent extends GameTickEvent {
 
 		// Reduce targets hits by supplied damage amount.
 		int lastHits = target.getLevel(Skill.HITS.id());
+		final int rawDamage = damage;
 		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
 		final int damageDealt = Math.min(damage, lastHits);
 		target.getUpdateFlags().setDamage(new Damage(target, damage));
@@ -470,7 +471,6 @@ public class CombatEvent extends GameTickEvent {
 			sendSound((Player)target, hitter, damage > 0);
 			ActionSender.sendStat((Player)target, Skill.HITS.id());
 			updateParty((Player)target);
-			applyChaosRobeReflect((Player) target, hitter, damage);
 			CorrosiveAura.apply((Player) target, hitter, damageDealt);
 			DivineRetribution.Result result = DivineRetribution.apply((Player) target, hitter, damageDealt);
 			if (result.killedAttacker()) {
@@ -499,27 +499,38 @@ public class CombatEvent extends GameTickEvent {
 
 		// Mob has <= 0 hits.
 		else {
+			if (target.isNpc() && hitter.isPlayer()) {
+				applyDeathRobeOverkillSplash((Player) hitter, (Npc) target, rawDamage - lastHits);
+			}
 			onDeath(target, hitter);
 		}
 	}
 
-	private void applyChaosRobeReflect(final Player defender, final Mob attacker, final int damage) {
-		if (damage <= 0 || attacker.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+	private void applyDeathRobeOverkillSplash(final Player player, final Npc primaryTarget, final int overkillDamage) {
+		final double splashPercent = player.getDeathRobeOverkillSplashPercent();
+		if (overkillDamage <= 0 || splashPercent <= 0.0D) {
 			return;
 		}
-		final double reflectPercent = defender.getChaosRobeReflectPercent();
-		if (reflectPercent <= 0.0D) {
-			return;
-		}
-		final int reflectedDamage = Math.max(1, (int) Math.ceil(damage * reflectPercent));
-		attacker.getSkills().subtractLevel(Skill.HITS.id(), reflectedDamage, false);
-		attacker.getUpdateFlags().setDamage(new Damage(attacker, reflectedDamage));
-		attacker.getUpdateFlags().addHitSplat(new HitSplat(attacker, HitSplat.TYPE_ARMOR_PROC, reflectedDamage));
-		if (attacker.isPlayer()) {
-			ActionSender.sendStat((Player) attacker, Skill.HITS.id());
-		}
-		if (attacker.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			onDeath(attacker, defender);
+		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));
+		for (Npc npc : player.getViewArea().getNpcsInView()) {
+			if (npc == null || npc == primaryTarget || npc.isRemoved() || npc.isRespawning() || Summoning.isSummon(npc)) {
+				continue;
+			}
+			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(primaryTarget.getLocation(), 2)) {
+				continue;
+			}
+			final int lastHits = npc.getLevel(Skill.HITS.id());
+			npc.getSkills().subtractLevel(Skill.HITS.id(), splashDamage, false);
+			final int damageDealt = Math.min(splashDamage, lastHits);
+			npc.getUpdateFlags().setDamage(new Damage(npc, splashDamage));
+			npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_ARMOR_PROC, splashDamage));
+			npc.addCombatDamage(player, damageDealt);
+			Summoning.recordOwnerCombatSummonDamage(player, npc, damageDealt);
+			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				npc.setLastCombatState(CombatState.LOST);
+				player.setKillType(KillType.COMBAT);
+				npc.killedBy(player);
+			}
 		}
 	}
 
@@ -546,7 +557,6 @@ public class CombatEvent extends GameTickEvent {
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
-			applyChaosRobeReflect((Player) target, hitter, damage);
 		}
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			onDeath(target, hitter);
@@ -574,7 +584,6 @@ public class CombatEvent extends GameTickEvent {
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
-			applyChaosRobeReflect((Player) target, hitter, damage);
 		}
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			onDeath(target, hitter);

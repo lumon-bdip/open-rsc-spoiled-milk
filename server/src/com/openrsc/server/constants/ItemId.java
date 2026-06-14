@@ -2451,12 +2451,19 @@ public enum ItemId {
 	POISONED_TITAN_STEEL_SHURIKEN(3224),
 	POISONED_ADAMANTITE_SHURIKEN(3225),
 	POISONED_ORICHALCUM_SHURIKEN(3226),
-	POISONED_RUNE_SHURIKEN(3227);
+	POISONED_RUNE_SHURIKEN(3227),
+	RAW_DRAGON_METAL(3228),
+	BLACK_SPEAR(3229),
+	WHITE_SPEAR(3230),
+	GREY_SPEAR(3231),
+	BLACK_SCYTHE(3232),
+	WHITE_SCYTHE(3233),
+	GREY_SCYTHE(3234);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3228;
+	public static final int maxCustom = 3235;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

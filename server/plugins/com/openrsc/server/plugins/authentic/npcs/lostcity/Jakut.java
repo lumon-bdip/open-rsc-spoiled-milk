@@ -15,7 +15,8 @@ import static com.openrsc.server.plugins.Functions.*;
 public final class Jakut extends AbstractShop {
 
 	private final Shop shop = new Shop(false, 3000, 100, 60, 2,
-		new Item(ItemId.DRAGON_SWORD.id(), 2));
+		new Item(ItemId.DRAGON_SWORD.id(), 2),
+		new Item(ItemId.DRAGON_DAGGER.id(), 2));
 
 	@Override
 	public void onTalkNpc(Player player, final Npc n) {

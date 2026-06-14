@@ -12,6 +12,7 @@ import com.openrsc.server.content.minigame.combatodyssey.CombatOdysseyData;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler.TrawlerBoat;
 import com.openrsc.server.content.party.PartyManager;
+import com.openrsc.server.content.Summoning;
 import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.database.impl.mysql.queries.player.login.PlayerOnlineFlagQuery;
 import com.openrsc.server.event.DelayedEvent;
@@ -648,6 +649,10 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 
 	public void registerItem(final GroundItem i, final int delayTime) {
 		try {
+			if (Summoning.tryLootGoblinCollectGroundItem(i)) {
+				i.remove();
+				return;
+			}
 			if (i.getLoc() == null) {
 				getServer().getGameEventHandler().add(new SingleEvent(this, null, delayTime, "Register Item") {
 					public void action() {

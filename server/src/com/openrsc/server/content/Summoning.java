@@ -16,6 +16,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Inventory;
+import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -60,6 +61,7 @@ public final class Summoning {
 	private static final String SOURCE_ARMOR = "armor";
 	private static final String KIND_GIANT_SPIDER = "giant_spider";
 	private static final String KIND_IMP = "imp";
+	private static final String KIND_LOOT_GOBLIN = "loot_goblin";
 	private static final String KIND_BEAR = "bear";
 	private static final String KIND_UNICORN = "unicorn";
 	private static final String KIND_GIANT_BAT = "giant_bat";
@@ -117,6 +119,13 @@ public final class Summoning {
 		cost(ItemId.BODY_RUNE.id(), 1),
 		cost(ItemId.ASHES.id(), 1)
 	);
+	private static final SummonProfile LOOT_GOBLIN_PROFILE = supportProfile(
+		"Loot Goblin", 12, 45, NpcId.LOOT_GOBLIN.id(), KIND_LOOT_GOBLIN, 0,
+		cost(ItemId.BONES.id(), 1),
+		cost(ItemId.LIFE_RUNE.id(), 1),
+		cost(ItemId.BODY_RUNE.id(), 1),
+		cost(ItemId.MIND_RUNE.id(), 1)
+	);
 	private static final SummonProfile BEAR_PROFILE = combatProfile(
 		"Ironhide Bear", 14, 55, NpcId.BEAR_LVL24.id(), KIND_BEAR, 14, 8, 2, 30, 60, TRAIT_TANK,
 		cost(ItemId.LIFE_RUNE.id(), 1),
@@ -143,8 +152,7 @@ public final class Summoning {
 		cost(ItemId.LIFE_RUNE.id(), 1),
 		cost(ItemId.LAW_RUNE.id(), 2),
 		cost(ItemId.BODY_RUNE.id(), 1),
-		cost(ItemId.NATURE_RUNE.id(), 1),
-		cost(ItemId.BONES.id(), 1)
+		cost(ItemId.NATURE_RUNE.id(), 1)
 	);
 	private static final SummonProfile ANIMATED_AXE_PROFILE = combatProfile(
 		"Bound Battleaxe", 39, 185, NpcId.ANIMATED_AXE.id(), KIND_ANIMATED_AXE, 8, 10, 6, 16, 25, TRAIT_RELENTLESS,
@@ -171,8 +179,7 @@ public final class Summoning {
 		cost(ItemId.LIFE_RUNE.id(), 1),
 		cost(ItemId.BODY_RUNE.id(), 2),
 		cost(ItemId.LAW_RUNE.id(), 2),
-		cost(ItemId.NATURE_RUNE.id(), 2),
-		cost(ItemId.BONES.id(), 1)
+		cost(ItemId.NATURE_RUNE.id(), 2)
 	);
 	private static final SummonProfile OTHERWORLDLY_BEING_PROFILE = combatProfile(
 		"Astral Wraith", 64, 395, NpcId.OTHERWORLDLY_BEING.id(), KIND_OTHERWORLDLY_BEING, 10, 8, 7, 14, 25, TRAIT_SPELL_ECHO,
@@ -195,7 +202,7 @@ public final class Summoning {
 		"Spirit Hellhound", NpcId.HELLHOUND.id(), KIND_SPIRIT_HELLHOUND, 6, TRAIT_SPIRIT_HELLFIRE
 	);
 	private static final SummonProfile[] SUMMON_PROFILES = {
-		GIANT_SPIDER_PROFILE, IMP_PROFILE, BEAR_PROFILE, UNICORN_PROFILE,
+		GIANT_SPIDER_PROFILE, IMP_PROFILE, LOOT_GOBLIN_PROFILE, BEAR_PROFILE, UNICORN_PROFILE,
 		GIANT_BAT_PROFILE, RAT_PROFILE, ANIMATED_AXE_PROFILE, BLACK_UNICORN_PROFILE,
 		GHOST_PROFILE, CAMEL_PROFILE, OTHERWORLDLY_BEING_PROFILE, GREATER_DEMON_PROFILE
 	};
@@ -564,17 +571,61 @@ public final class Summoning {
 			&& KIND_IMP.equals(summon.getAttribute(SUMMON_KIND_KEY, ""));
 	}
 
+	private static boolean hasLootGoblin(final Player player) {
+		final Npc summon = player.getAttribute(MANUAL_SUMMON_KEY, null);
+		return summon != null
+			&& !summon.isRemoved()
+			&& isOwnedSummon(player, summon)
+			&& KIND_LOOT_GOBLIN.equals(summon.getAttribute(SUMMON_KIND_KEY, ""));
+	}
+
 	public static boolean tryAutoBuryDrop(final Player owner, final int itemId, final int amount) {
 		if (owner == null || amount <= 0 || !hasBlackUnicorn(owner) || !isPrayerDrop(itemId)) {
 			return false;
 		}
 		final int devotionBonusXp = recordAutoBuryDevotionBonus(owner, amount);
-		final int xp = (getPrayerDropExperience(itemId) * amount * 2) + devotionBonusXp;
+		final int xp = getPrayerDropExperience(itemId) * amount * 2;
 		if (xp > 0) {
 			owner.incExp(Skill.PRAYER.id(), xp, true);
+			Devotion.awardOfferingPrayerXpBonus(owner, Skill.PRAYER.id(), devotionBonusXp);
 			owner.message("@gre@Your black unicorn sanctifies the " + getPrayerDropName(owner, itemId, amount) + ".");
 		}
 		return true;
+	}
+
+	public static boolean tryLootGoblinCollectGroundItem(final GroundItem groundItem) {
+		if (groundItem == null || groundItem.getOwnerUsernameHash() <= 0) {
+			return false;
+		}
+		final Player owner = groundItem.getWorld().getPlayer(groundItem.getOwnerUsernameHash());
+		if (owner == null || owner.isRemoved() || !owner.loggedIn()
+			|| owner.getUsernameHash() != groundItem.getOwnerUsernameHash()
+			|| !groundItem.belongsTo(owner)) {
+			return false;
+		}
+		return tryLootGoblinCollectStackableItem(owner, groundItem.getID(), groundItem.getAmount(), groundItem.getNoted());
+	}
+
+	public static boolean tryLootGoblinCollectStackableItem(final Player owner, final int itemId, final int amount) {
+		return tryLootGoblinCollectStackableItem(owner, itemId, amount, false);
+	}
+
+	private static boolean tryLootGoblinCollectStackableItem(final Player owner, final int itemId, final int amount, final boolean noted) {
+		if (owner == null || amount <= 0 || !hasLootGoblin(owner)) {
+			return false;
+		}
+		final Item item = new Item(itemId, amount, noted);
+		final ItemDefinition definition = item.getDef(owner.getWorld());
+		if (definition == null || (!definition.isStackable() && !noted)) {
+			return false;
+		}
+		final Inventory inventory = owner.getCarriedItems().getInventory();
+		if (!inventory.canHold(item)) {
+			owner.message("The goblin tried to grab an item on the ground...");
+			owner.message("... But there was no place to put it!");
+			return false;
+		}
+		return inventory.add(item, true);
 	}
 
 	private static int recordAutoBuryDevotionBonus(final Player owner, final int amount) {
@@ -999,7 +1050,8 @@ public final class Summoning {
 	private static int getScaledHits(final Player owner, final SummonProfile profile) {
 		int hits = scaleFromSummoningLevel(owner, profile, profile.baseHits, profile.hitsGrowthInterval);
 		if (profile.role == SummonRole.COMBAT) {
-			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeNecklaceSummonHealthPercent();
+			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeNecklaceSummonHealthPercent()
+				+ owner.getLifeRobeSummonBonusPercent();
 			if (bonusPercent > 0) {
 				hits += Math.max(1, (int) Math.ceil(hits * (bonusPercent / 100.0D)));
 			}
@@ -1664,7 +1716,8 @@ public final class Summoning {
 	private static int getDurationTicks(final Player owner, final SummonProfile profile) {
 		int durationSeconds = profile.durationTicks;
 		if (profile.role == SummonRole.SUPPORT) {
-			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeRingSupportDurationPercent();
+			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeRingSupportDurationPercent()
+				+ owner.getLifeRobeSummonBonusPercent();
 			if (bonusPercent > 0) {
 				durationSeconds += Math.max(1, (int) Math.ceil(durationSeconds * (bonusPercent / 100.0D)));
 			}

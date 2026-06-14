@@ -85,6 +85,26 @@ def ensure_paladin_shields_are_smithable(text: str) -> None:
         fail("Legacy smithing menu should call the kite replacement Paladin Shield")
 
 
+def ensure_modern_shield_levels_match_guide(text: str) -> None:
+    armor_recipe = extract_method(text, "getModernArmorRecipe")
+    square_shield = (
+        "case 3:\n"
+        "\t\t\t\tdef.bars = 3;\n"
+        "\t\t\t\tdef.level = baseLevel + 3;\n"
+        "\t\t\t\tdef.itemID = getModernShieldId(barId);"
+    )
+    paladin_shield = (
+        "case 6:\n"
+        "\t\t\t\tdef.bars = 3;\n"
+        "\t\t\t\tdef.level = baseLevel + 4;\n"
+        "\t\t\t\tdef.itemID = getModernPaladinShieldId(barId);"
+    )
+    if square_shield not in armor_recipe:
+        fail("Modern square shields should require base + 3 smithing, matching the guide")
+    if paladin_shield not in armor_recipe:
+        fail("Modern paladin shields should remain base + 4 smithing")
+
+
 def ensure_client_paladin_shield_names(text: str) -> None:
     expected_names = (
         "Tin Paladin Shield",
@@ -144,6 +164,7 @@ def main() -> None:
     ensure_production_start_accepts_grid_recipes(text)
     ensure_zero_id_outputs_are_valid(text)
     ensure_paladin_shields_are_smithable(text)
+    ensure_modern_shield_levels_match_guide(text)
     ensure_client_paladin_shield_names(client_text)
     ensure_intentional_ranged_outputs_are_crafting_only(text)
     print("PASS: smithing production coverage validated")

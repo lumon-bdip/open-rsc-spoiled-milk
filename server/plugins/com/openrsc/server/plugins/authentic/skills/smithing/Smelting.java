@@ -31,7 +31,11 @@ import static com.openrsc.server.plugins.Functions.*;
 public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 	public static final int FURNACE = SceneryId.FURNACE.id();
+	public static final int LAVA_FORGE = SceneryId.LAVA_FORGE.id();
 	private static final int SMELTING_ACTION_DELAY_TICKS = 3;
+	private static final int DRAGON_SMELTING_LEVEL = 90;
+	private static final int DRAGON_METAL_CHAIN_OUTPUT = 50;
+	private static final int RAW_DRAGON_METAL_XP = 1000;
 	public static final int FURNACE_CATEGORY_BARS = ItemId.BRONZE_BAR.id();
 	public static final int FURNACE_CATEGORY_RINGS = ItemId.GOLD_RING.id();
 	public static final int FURNACE_CATEGORY_NECKLACES = ItemId.GOLD_NECKLACE.id();
@@ -78,11 +82,18 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 	@Override
 	public boolean blockOpLoc(Player player, GameObject obj, String command) {
-		return obj.getID() == FURNACE;
+		return obj.getID() == FURNACE || obj.getID() == LAVA_FORGE;
 	}
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
+		if (obj.getID() == LAVA_FORGE) {
+			if (!isInFurnaceRange(player, obj)) {
+				return;
+			}
+			player.message("Use raw dragon metal on the lava forge");
+			return;
+		}
 		if (obj.getID() != FURNACE) {
 			return;
 		}
@@ -94,6 +105,13 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 	@Override
 	public void onUseLoc(Player player, GameObject obj, Item item) {
+		if (obj.getID() == LAVA_FORGE) {
+			if (!isInFurnaceRange(player, obj)) {
+				return;
+			}
+			handleRawDragonMetalForge(player, item);
+			return;
+		}
 		if (obj.getID() == FURNACE) {
 			if (item.getCatalogId() == ItemId.STEEL_BAR.id()
 				&& player.getWorld().canYield(new Item(ItemId.MULTI_CANNON_BALL.id()))
@@ -129,6 +147,86 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			}
 			return;
 		}
+	}
+
+	private void handleRawDragonMetalForge(Player player, Item item) {
+		if (item.getCatalogId() != ItemId.RAW_DRAGON_METAL.id()) {
+			player.message("Nothing interesting happens");
+			return;
+		}
+		if (!player.getCache().hasKey("miniquest_dwarf_youth_rescue")
+			|| player.getCache().getInt("miniquest_dwarf_youth_rescue") != 2) {
+			player.message("You do not understand how to use this forge yet");
+			return;
+		}
+		if (getCurrentLevel(player, Skill.SMITHING.id()) < DRAGON_SMELTING_LEVEL) {
+			player.playerServerMessage(MessageType.QUEST,
+				"You need to be at least level-" + DRAGON_SMELTING_LEVEL + " smithing to smelt raw dragon metal");
+			return;
+		}
+
+		int option = multi(player, "Dragon bar", "Dragon metal chains", "Cancel");
+		if (option == 0) {
+			makeRawDragonMetalProduction(player, ItemId.DRAGON_BAR.id(), 1, "a dragon bar");
+		} else if (option == 1) {
+			makeRawDragonMetalProduction(player, ItemId.DRAGON_METAL_CHAIN.id(),
+				DRAGON_METAL_CHAIN_OUTPUT, DRAGON_METAL_CHAIN_OUTPUT + " dragon metal chains");
+		}
+	}
+
+	private boolean makeRawDragonMetalProduction(Player player, int outputItemId, int outputAmount, String outputName) {
+		if (rawDragonMetalCount(player) < 1) {
+			player.message("You have no raw dragon metal left");
+			return false;
+		}
+		if (player.getConfig().WANT_FATIGUE && player.getConfig().STOP_SKILLING_FATIGUED >= 2
+			&& player.getFatigue() >= player.MAX_FATIGUE) {
+			player.message("You are too tired to smelt raw dragon metal");
+			return false;
+		}
+
+		int repeat = 1;
+		if (player.getConfig().BATCH_PROGRESSION) {
+			repeat = rawDragonMetalCount(player);
+		}
+
+		int made = 0;
+		startbatch(player, repeat);
+		while (!ifinterrupted() && !isbatchcomplete()) {
+			if (rawDragonMetalCount(player) < 1) {
+				stopbatch();
+				break;
+			}
+			if (player.getConfig().WANT_FATIGUE && player.getConfig().STOP_SKILLING_FATIGUED >= 2
+				&& player.getFatigue() >= player.MAX_FATIGUE) {
+				player.message("You are too tired to smelt raw dragon metal");
+				stopbatch();
+				break;
+			}
+
+			player.playerServerMessage(MessageType.QUEST, "You place the raw dragon metal into the lava forge");
+			ActionSender.sendActionProgressBar(player, ItemId.RAW_DRAGON_METAL.id(), SMELTING_ACTION_DELAY_TICKS);
+			delay(SMELTING_ACTION_DELAY_TICKS);
+			if (player.getCarriedItems().remove(new Item(ItemId.RAW_DRAGON_METAL.id())) < 0) {
+				stopbatch();
+				break;
+			}
+			thinkbubble(new Item(outputItemId, outputAmount));
+			give(player, outputItemId, outputAmount);
+			player.playerServerMessage(MessageType.QUEST, "You retrieve " + outputName);
+			player.incExp(Skill.SMITHING.id(), RAW_DRAGON_METAL_XP, true);
+
+			made++;
+			updatebatch();
+			if (!ifinterrupted() && !isbatchcomplete()) {
+				delay();
+			}
+		}
+		return made > 0;
+	}
+
+	private int rawDragonMetalCount(Player player) {
+		return player.getCarriedItems().getInventory().countId(ItemId.RAW_DRAGON_METAL.id(), Optional.of(false));
 	}
 
 	private void openSmeltingInterface(Player player) {
@@ -461,6 +559,9 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 	@Override
 	public boolean blockUseLoc(Player player, GameObject obj, Item item) {
+		if (obj.getID() == LAVA_FORGE) {
+			return item.getCatalogId() == ItemId.RAW_DRAGON_METAL.id();
+		}
 		if (obj.getID() == FURNACE) {
 			return item.getCatalogId() == ItemId.STEEL_BAR.id()
 				|| DataConversions.inArray(NORMAL_SMELTING_ITEMS, item.getCatalogId());

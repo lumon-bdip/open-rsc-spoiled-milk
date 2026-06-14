@@ -79,6 +79,50 @@
       "basePrice": 1800
     },
     {
+      "id": 3229,
+      "meleeOffense": 24,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 2,
+      "weaponAimBonus": 12,
+      "weaponPowerBonus": 6,
+      "basePrice": 600
+    },
+    {
+      "id": 3230,
+      "meleeOffense": 24,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 2,
+      "weaponAimBonus": 12,
+      "weaponPowerBonus": 6,
+      "basePrice": 600
+    },
+    {
+      "id": 3232,
+      "meleeOffense": 65,
+      "weaponSpeed": 3,
+      "requiredLevel": 30,
+      "requiredSkillID": 0,
+      "prayerBonus": 3,
+      "weaponAimBonus": 65,
+      "weaponPowerBonus": 65,
+      "basePrice": 3040
+    },
+    {
+      "id": 3233,
+      "meleeOffense": 65,
+      "weaponSpeed": 3,
+      "requiredLevel": 30,
+      "requiredSkillID": 0,
+      "prayerBonus": 3,
+      "weaponAimBonus": 65,
+      "weaponPowerBonus": 65,
+      "basePrice": 3040
+    },
+    {
       "id": 3113,
       "meleeOffense": 9,
       "weaponSpeed": 5,
@@ -154,6 +198,28 @@
       "weaponAimBonus": 22,
       "weaponPowerBonus": 22,
       "basePrice": 1800
+    },
+    {
+      "id": 3231,
+      "meleeOffense": 24,
+      "weaponSpeed": 3,
+      "requiredLevel": 5,
+      "requiredSkillID": 0,
+      "prayerBonus": 2,
+      "weaponAimBonus": 12,
+      "weaponPowerBonus": 6,
+      "basePrice": 600
+    },
+    {
+      "id": 3234,
+      "meleeOffense": 65,
+      "weaponSpeed": 3,
+      "requiredLevel": 30,
+      "requiredSkillID": 0,
+      "prayerBonus": 3,
+      "weaponAimBonus": 65,
+      "weaponPowerBonus": 65,
+      "basePrice": 3040
     }
   ]
 }

@@ -30,20 +30,18 @@ def main() -> None:
     require("public static int C_HITS_XP_FOCUS_MENU = 1;" in config,
             "Hits XP focus menu should default to temporary mode")
     for snippet in (
-        '"Select " + skillName + " focus"',
-        '"Only " + skillName + " XP"',
-        '"Mostly " + skillName + ", Some Hits XP"',
-        '"Some " + skillName + ", Mostly Hits XP"',
-        '"Only Hits XP"',
+        '"Select hits (health) xp focus"',
+        '"No hits (health) xp"',
+        '"Some hits (health) xp"',
+        '"Mostly hits (health) xp"',
+        '"All hits (health) xp"',
         "COMBAT_XP_FOCUS_MELEE",
         "COMBAT_XP_FOCUS_RANGED",
         "COMBAT_XP_FOCUS_MAGIC",
         "getCurrentCombatXpFocus()",
         "getEquippedCombatXpFocus()",
     ):
-        require(snippet in client, f"Client should expose typed combat XP focus labels: {snippet}")
-    require('return "Range";' in client,
-            "Client should label ranged combat focus as Range to fit the focus menu")
+        require(snippet in client, f"Client should expose clear Hits XP focus labels: {snippet}")
     require("shouldDrawHitsXpFocusMenu() || shouldDrawGatheringFocusMenu()" in client,
             "Hits XP focus menu should draw independently of gathering focus")
     require("private long hitsXpFocusMenuHideAt = 0L;" in client,
@@ -77,18 +75,14 @@ def main() -> None:
     require("Combat XP focus set to " in combat_style_handler,
             "Server should acknowledge Hits XP focus changes")
     for snippet in (
-        '"Only " + primarySkill + " XP"',
-        '"Mostly " + primarySkill + ", Some Hits XP"',
-        '"Some " + primarySkill + ", Mostly Hits XP"',
-        '"Only Hits XP"',
-        "getCurrentCombatXpFocusSkill(player)",
+        '"No hits (health) xp"',
+        '"Some hits (health) xp"',
+        '"Mostly hits (health) xp"',
+        '"All hits (health) xp"',
     ):
         require(snippet in combat_style_handler, f"Server should use clear combat XP focus wording: {snippet}")
-    require('player.getAutoCastSpell() != null' in combat_style_handler,
-            "Server should label combat XP focus as Magic while auto-cast is set")
-    require('player.getRangeEquip() >= 0 || player.getThrowingEquip() >= 0' in combat_style_handler
-            and 'return "Range";' in combat_style_handler,
-            "Server should label combat XP focus as Range when ranged gear is equipped")
+    require("getCurrentCombatXpFocusSkill(player)" not in combat_style_handler,
+            "Server combat XP focus wording should not depend on melee/range/magic labels")
 
     require("awardCombatXpWithHitsFocus(player, Skill.MELEE, meleeXpShare * 4);" in npc,
             "Melee NPC XP should use the full old 3:1 melee/Hits budget for Hits XP focus")

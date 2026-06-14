@@ -766,13 +766,24 @@ public class InvAction implements OpInvTrigger {
 	}
 	private void handleDwarfSmithyNote(Player player) {
 		player.message("the note reads....");
-		ActionSender.sendBox(player, "How to obtain the Dragon Scale Mail% %"
-			+ "Required Items:% %"
+		ActionSender.sendBox(player, "How to obtain dragon armour% %"
+			+ "Dragon scale mail:% %"
 			+ "500 Dragon Metal Chains% "
-			+ "150 Chipped Dragon Scales% %"
-			+ "Dragon metal chains are required to assemble the mail% %"
+			+ "150 Chipped Dragon Scales% "
+			+ "500,000 coins% %"
+			+ "Dragon scale mail legs:% %"
+			+ "500 Dragon Metal Chains% "
+			+ "100 Chipped Dragon Scales% "
+			+ "500,000 coins% %"
+			+ "Dragon plate mail body:% %"
+			+ "4 Dragon bars% "
+			+ "500,000 coins% %"
+			+ "Dragon plate mail legs:% %"
+			+ "3 Dragon bars% "
+			+ "500,000 coins% %"
+			+ "Raw dragon metal can be smelted at the lava forge into bars or chains% "
 			+ "Chipped dragon scales are crafted(req 90, chisel) from King Black Dragon scales% %"
-			+ "One all items are prepared, seek out Wayne in Falador", true);
+			+ "Once all items are prepared, seek out Wayne in Falador", true);
 	}
 	private void handleOldJournal(Player player) {
 		mes("the journal is old and covered in dust");

@@ -146,6 +146,7 @@ enum BankItemTag {
 	private static boolean isJewelry(String name) {
 		return containsAny(name, "amulet", "necklace", "bracelet", "symbol", "holy mould", "tiara")
 			|| startsWithAny(name, "ring ", "ring-")
+			|| containsAny(name, " ring ")
 			|| endsWithAny(name, " ring", "-ring")
 			|| equalsAny(name, "ring");
 	}

@@ -36,7 +36,6 @@ public class PoisonEvent extends GameTickEvent {
 		if (mob.isPlayer()) {
 			Player player = (Player) mob;
 			poisonDrain += player.getCarriedItems().getEquipment().getNatureAmuletPoisonDecayBonus();
-			damage = Math.max(0, damage - player.getNatureRobePoisonMitigation());
 		}
 		poisonPower -= poisonDrain;
 		mob.setPoisonDamage(poisonPower);

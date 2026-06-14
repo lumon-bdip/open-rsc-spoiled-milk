@@ -231,7 +231,7 @@ def ensure_source_support(items: dict[int, dict]) -> None:
         "getEarthAttackSpeedDebuffPercent",
         "getFireDefenseDebuffPercent",
         "getSplinterProcChancePercent",
-        "new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, damage, 1, setChasing,\n\t\t\t\t\t\t\twindAccuracyDebuffPercent, waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent,\n\t\t\t\t\t\t\tprojectileVisual, impactEffect, impactEffect <= 0,\n\t\t\t\t\t\t\tstartleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent)",
+        "new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, damage, 1, setChasing,\n\t\t\t\t\t\t\twindAccuracyDebuffPercent, waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent,\n\t\t\t\t\t\t\tprojectileVisual, impactEffect, impactEffect <= 0,\n\t\t\t\t\t\t\tstartleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent, isBloodSpell(spell))",
     ):
         if snippet not in spell_text:
             fail(f"SpellHandler.java missing expected snippet: {snippet}")

@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.SkillCapes;
+import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.PathValidation;
@@ -162,6 +163,9 @@ public class ThrowingEvent extends GameTickEvent {
 			player.resetRange();
 			return;
 		}
+		if (RangeUtils.SHURIKENS.contains(throwingID)) {
+			primeShurikenAggro(player, throwingTargets);
+		}
 		/*if (!getPlayerOwner().getLocation().isMembersWild()) {
 			getPlayerOwner().message("Members content can only be used in wild levels: "
 					+ World.membersWildStart + " - " + World.membersWildMax);
@@ -276,6 +280,7 @@ public class ThrowingEvent extends GameTickEvent {
 		for (Npc npc : player.getViewArea().getNpcsInView()) {
 			if (npc.equals(target)
 				|| npc.getSkills().getLevel(Skill.HITS.id()) <= 0
+				|| Summoning.isSummon(npc)
 				|| !npc.getDef().isAttackable()
 				|| !player.withinRange(npc, attackRadius)
 				|| !PathValidation.checkPath(getWorld(), player.getLocation(), npc.getLocation())
@@ -297,6 +302,24 @@ public class ThrowingEvent extends GameTickEvent {
 		return npc.getOpponent() == player || npc.getPreferredThreatTarget() == player;
 	}
 
+	private void primeShurikenAggro(Player player, List<Mob> throwingTargets) {
+		for (Mob hitTarget : throwingTargets) {
+			if (!hitTarget.isNpc()) {
+				continue;
+			}
+			Npc npc = (Npc) hitTarget;
+			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || Summoning.isSummon(npc)) {
+				continue;
+			}
+			npc.addRangeDamage(player, 0);
+			npc.setLastOpponent(player);
+			npc.setCombatTimer();
+			if (npc.getPvmMeleeEvent() == null || !npc.getPvmMeleeEvent().isRunning()) {
+				npc.startPvmCounterCombat(player);
+			}
+		}
+	}
+
 	private void applyThrowingHit(Player player, int throwingID, Mob hitTarget, boolean skillCape, boolean showProjectile, boolean firstProjectileThisAttack) {
 		int damage = RangeUtils.doRangedDamage(player, throwingID, throwingID, hitTarget, skillCape);
 
@@ -306,13 +329,14 @@ public class ThrowingEvent extends GameTickEvent {
 		}
 
 		if (Formulae.loseArrow(damage)) {
-			GroundItem thrownItemOnGround = getFloorItem(throwingID, player, hitTarget);
-
 			if (!DropTable.handleRingOfAvarice(player, new Item(throwingID, 1))) {
-				if (thrownItemOnGround == null || !thrownItemOnGround.getDef().isStackable()) {
-					getWorld().registerItem(new GroundItem(player.getWorld(), throwingID, hitTarget.getX(), hitTarget.getY(), 1, player));
-				} else {
-					thrownItemOnGround.setAmount(thrownItemOnGround.getAmount() + 1);
+				if (!Summoning.tryLootGoblinCollectStackableItem(player, throwingID, 1)) {
+					GroundItem thrownItemOnGround = getFloorItem(throwingID, player, hitTarget);
+					if (thrownItemOnGround == null || !thrownItemOnGround.getDef().isStackable()) {
+						getWorld().registerItem(new GroundItem(player.getWorld(), throwingID, hitTarget.getX(), hitTarget.getY(), 1, player));
+					} else {
+						thrownItemOnGround.setAmount(thrownItemOnGround.getAmount() + 1);
+					}
 				}
 			}
 		}

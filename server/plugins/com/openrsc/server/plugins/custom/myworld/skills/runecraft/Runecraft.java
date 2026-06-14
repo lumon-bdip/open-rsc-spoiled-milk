@@ -16,6 +16,10 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public class Runecraft implements OpLocTrigger, UseLocTrigger {
 
+	private static final int LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE = 10000;
+	private static final int LAW_ROBE_RUNEPRODUCTION_POINTS_PER_PERCENT = 100;
+	private static final String LAW_ROBE_RUNEPRODUCTION_CACHE_PREFIX = "law_robe_runecraft_bonus_";
+
 	int[] RUNES = new int[] {
 		ItemId.FIRE_RUNE.id(),
 		ItemId.WATER_RUNE.id(),
@@ -91,6 +95,7 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 
 		player.message("You channel the altar's power through the stone.");
 		int successCount = 0;
+		int runeCount = 0;
 		for (int loop = 0; loop < repeatTimes; ++loop) {
 			Item stone = player.getCarriedItems().getInventory().get(
 				player.getCarriedItems().getInventory().getLastIndexById(ItemId.RUNE_STONE.id(), Optional.of(false)));
@@ -99,13 +104,45 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 			}
 
 			player.getCarriedItems().remove(stone);
-			player.getCarriedItems().getInventory().add(new Item(def.getRuneId(), getRuneMultiplier(player, def.getRuneId())));
+			final int craftedRunes = getRuneMultiplier(player, def.getRuneId());
+			player.getCarriedItems().getInventory().add(new Item(def.getRuneId(), craftedRunes));
+			runeCount += craftedRunes;
 			++successCount;
 		}
 
 		if (successCount > 0) {
+			addLawRobeBonusRunes(player, def.getRuneId(), runeCount);
 			player.incExp(Skill.RUNECRAFT.id(), def.getExp() * successCount, true);
 		}
+	}
+
+	private void addLawRobeBonusRunes(final Player player, final int runeId, final int runeCount) {
+		final int bonusPercent = getLawRobeRunecraftBonusPercent(player);
+		if (bonusPercent <= 0 || runeCount <= 0) {
+			return;
+		}
+
+		final String cacheKey = LAW_ROBE_RUNEPRODUCTION_CACHE_PREFIX + runeId;
+		final int storedPoints = player.getCache().hasKey(cacheKey) ? Math.max(0, player.getCache().getInt(cacheKey)) : 0;
+		final int earnedPoints = runeCount * bonusPercent * LAW_ROBE_RUNEPRODUCTION_POINTS_PER_PERCENT;
+		final int totalPoints = storedPoints + earnedPoints;
+		final int bonusRunes = totalPoints / LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE;
+		final int remainingPoints = totalPoints % LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE;
+
+		if (remainingPoints > 0) {
+			player.getCache().set(cacheKey, remainingPoints);
+		} else if (player.getCache().hasKey(cacheKey)) {
+			player.getCache().remove(cacheKey);
+		}
+		if (bonusRunes <= 0) {
+			return;
+		}
+		player.getCarriedItems().getInventory().add(new Item(runeId, bonusRunes));
+		player.message("@gre@Your law robes produce " + bonusRunes + " extra rune" + (bonusRunes == 1 ? "." : "s."));
+	}
+
+	private int getLawRobeRunecraftBonusPercent(final Player player) {
+		return Math.max(0, player.getCarriedItems().getEquipment().getLawRobeTierTotal() * 2);
 	}
 
 	private boolean hasRuneStone(Player player) {

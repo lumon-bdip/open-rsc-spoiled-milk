@@ -2108,11 +2108,7 @@ public abstract class Mob extends Entity {
 	}
 
 	public int getWindLowRollBiasPercent() {
-		int total = windLowRollBiasPercent + smokeAccuracyDebuffPercent;
-		if (isPlayer()) {
-			return (int) Math.floor(total * ((Player) this).getMindRobeDebuffMultiplier());
-		}
-		return total;
+		return windLowRollBiasPercent + smokeAccuracyDebuffPercent;
 	}
 
 	public double getWindLowRollBiasChance() {
@@ -2120,11 +2116,7 @@ public abstract class Mob extends Entity {
 	}
 
 	public int getWaterMaxHitDebuffPercent() {
-		final int total = waterMaxHitDebuffPercent + dragonWaterMaxHitDebuffPercent;
-		if (isPlayer()) {
-			return (int) Math.floor(total * ((Player) this).getMindRobeDebuffMultiplier());
-		}
-		return total;
+		return waterMaxHitDebuffPercent + dragonWaterMaxHitDebuffPercent;
 	}
 
 	public double getWaterMaxHitMultiplier() {
@@ -2132,19 +2124,11 @@ public abstract class Mob extends Entity {
 	}
 
 	public int getEarthAttackSpeedDebuffPercent() {
-		final int total = earthAttackSpeedDebuffPercent + dragonEarthAttackSpeedDebuffPercent + bearIntimidatePercent;
-		if (isPlayer()) {
-			return (int) Math.floor(total * ((Player) this).getMindRobeDebuffMultiplier());
-		}
-		return total;
+		return earthAttackSpeedDebuffPercent + dragonEarthAttackSpeedDebuffPercent + bearIntimidatePercent;
 	}
 
 	public int getFireDefenseDebuffPercent() {
-		final int total = fireDefenseDebuffPercent + dragonFireDefenseDebuffPercent + infernalFireDefenseDebuffPercent;
-		if (isPlayer()) {
-			return (int) Math.floor(total * ((Player) this).getMindRobeDebuffMultiplier());
-		}
-		return total;
+		return fireDefenseDebuffPercent + dragonFireDefenseDebuffPercent + infernalFireDefenseDebuffPercent;
 	}
 
 	protected int applyFireDefenseDebuffToValue(int baseDefense) {

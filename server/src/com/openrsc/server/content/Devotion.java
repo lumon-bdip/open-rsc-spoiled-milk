@@ -32,6 +32,20 @@ public final class Devotion {
 		return recordOfferingAndGetPrayerXpBonus(player, true);
 	}
 
+	public static void awardOfferingPrayerXpBonus(final Player player, final int skillId, final int devotionBonusXp) {
+		if (player == null || devotionBonusXp <= 0 || skillId < 0 || player.isExperienceFrozen()) {
+			return;
+		}
+		if (player.getWorld().getServer().getConfig().WANT_FATIGUE && player.getFatigue() >= player.MAX_FATIGUE) {
+			return;
+		}
+		if (player.getConfig().WANT_OPENPK_POINTS) {
+			player.addOpenPkPoints(devotionBonusXp);
+			return;
+		}
+		player.getSkills().addExperience(skillId, devotionBonusXp);
+	}
+
 	private static int recordOfferingAndGetPrayerXpBonus(final Player player, final boolean blackUnicornBonus) {
 		if (player == null || !player.getConfig().WANT_MYWORLD) {
 			return 0;
@@ -47,6 +61,7 @@ public final class Devotion {
 		final int newOfferings = clamp(previousOfferings + offeringGain + blackUnicornOfferingGain, MIN_OFFERINGS, MAX_OFFERINGS);
 		player.getCache().set(cacheKey, newOfferings);
 		ActionSender.sendDevotion(player);
+		ActionSender.sendEquipmentStats(player);
 
 		final int newDevotion = getDevotionLevelFromOfferings(newOfferings);
 		if (newDevotion > previousDevotion && newDevotion > 0) {
@@ -55,7 +70,7 @@ public final class Devotion {
 				"Your devotion to " + formatGodLine(godLine) + " grows. Future offerings grant +" + newDevotion + " Prayer XP."
 			);
 		}
-		return bonusXp;
+		return bonusXp * 4;
 	}
 
 	public static int getOfferings(final Player player, final PrayerCatalog.GodLine godLine) {
@@ -100,6 +115,7 @@ public final class Devotion {
 		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
 		player.getCache().set(cacheKey, clamp(previousOfferings + (devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL), MIN_OFFERINGS, MAX_OFFERINGS));
 		ActionSender.sendDevotion(player);
+		ActionSender.sendEquipmentStats(player);
 	}
 
 	public static int getDevotionRequirementForResourceCost(final int resourceCost) {

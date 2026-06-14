@@ -502,6 +502,49 @@ def ensure_all_enchanted_jewelry_has_effect_examine(items: dict[int, dict[str, A
             fail(f"Enchanted jewelry {item_id} {name!r} needs effect examine text, found {description!r}")
 
 
+def ensure_enchanted_wool_robes_have_effect_examine(items: dict[int, dict[str, Any]]) -> None:
+    expected = {
+        2072: "10% chance to not use air runes with casting\nReduces air magic damage by 2% per robe tier.",
+        2076: "10% chance to not use mind runes with casting\nRaises mind spell damage caps by 1% per robe tier.",
+        2073: "10% chance to not use water runes with casting\nReduces water magic damage by 2% per robe tier.",
+        2074: "10% chance to not use earth runes with casting\nReduces earth magic damage by 2% per robe tier.",
+        2075: "10% chance to not use fire runes with casting\nReduces fire magic damage by 2% per robe tier.",
+        2077: "10% chance to not use body runes with casting\nDamage taken grants up to +1 weapon power per robe tier.",
+        2079: "10% chance to not use cosmic runes with casting\nGrants 1% crit chance per robe tier.",
+        2078: "10% chance to not use chaos runes with casting\nAdjacent enemies increase damage by 2% per robe tier.",
+        2080: "10% chance to not use nature runes with casting\nPotions are 2% stronger and last 2% longer per robe tier.",
+        2081: "10% chance to not use law runes with casting\nRunecrafting yields 2% more runes per robe tier.",
+        2082: "10% chance to not use death runes with casting\nOverkill splashes for 2% per robe tier.",
+        2084: "10% chance to not use blood runes with casting\nBlood spells splash for 2% per robe tier.",
+        2083: "10% chance to not use soul runes with casting\nIncreases health regeneration by 2% per robe tier.",
+        2764: "10% chance to not use life runes with casting\nSummons gain 2% duration or health per robe tier.",
+        2796: "10% chance to not use air runes with casting\nReduces air magic damage by 2% per robe tier.",
+        2936: "10% chance to not use air runes with casting\nReduces air magic damage by 2% per robe tier.",
+    }
+    for item_id, description in expected.items():
+        expect_description(items, item_id, description)
+
+    stale_attuned_robes = []
+    robe_terms = ("Wizard Hat", "Robe Top", "Robe Skirt", "Wizard Gloves", "Wizard Boots")
+    for item_id, entry in items.items():
+        name = entry.get("name", "")
+        description = entry.get("description", "")
+        if any(term in name for term in robe_terms) and "attuned to the" in description:
+            stale_attuned_robes.append(f"{item_id} {name}")
+    if stale_attuned_robes:
+        fail(f"Enchanted wool robes still have vague altar examine text: {stale_attuned_robes[:8]}")
+
+    client_text = CLIENT_ENTITY_HANDLER_PATH.read_text(encoding="utf-8")
+    for snippet in (
+        "MYWORLD_WOOL_ROBE_EXAMINE_EFFECTS",
+        "applyMyWorldWoolRobeDescriptions();",
+        "10% chance to not use ",
+        "Increases health regeneration by 2% per robe tier.",
+    ):
+        if snippet not in client_text:
+            fail(f"Client EntityHandler missing wool robe examine helper snippet: {snippet}")
+
+
 def main() -> None:
     items = load_items()
     ensure_amulet_lines(items)
@@ -521,6 +564,7 @@ def main() -> None:
     expect_item(items, 2681, "Mythic Soul Robe Skirt")
     ensure_examine_copy(items)
     ensure_all_enchanted_jewelry_has_effect_examine(items)
+    ensure_enchanted_wool_robes_have_effect_examine(items)
     ensure_source_mappings_exist()
     ensure_client_jewelry_coverage()
     ensure_client_jewelry_uses_base_visuals()

@@ -16,7 +16,7 @@ public class CombatStyleHandler implements PayloadProcessor<CombatStyleStruct, O
 		if (style >= 4 && style <= 7 && player.getConfig().WANT_MYWORLD) {
 			int hitsXpFocus = style - 4;
 			player.setHitsXpFocus(hitsXpFocus);
-			player.message("Combat XP focus set to " + hitsXpFocusLabel(player, hitsXpFocus));
+			player.message("Combat XP focus set to " + hitsXpFocusLabel(hitsXpFocus));
 			return;
 		}
 		if (style < Skills.CONTROLLED_MODE || style > Skills.DEFENSIVE_MODE) {
@@ -87,30 +87,19 @@ public class CombatStyleHandler implements PayloadProcessor<CombatStyleStruct, O
 		}
 	}
 
-	private String hitsXpFocusLabel(Player player, int style) {
-		String primarySkill = getCurrentCombatXpFocusSkill(player);
+	private String hitsXpFocusLabel(int style) {
 		switch (style) {
 			case Skills.CONTROLLED_MODE:
-				return "Only " + primarySkill + " XP";
+				return "No hits (health) xp";
 			case Skills.AGGRESSIVE_MODE:
-				return "Mostly " + primarySkill + ", Some Hits XP";
+				return "Some hits (health) xp";
 			case Skills.ACCURATE_MODE:
-				return "Some " + primarySkill + ", Mostly Hits XP";
+				return "Mostly hits (health) xp";
 			case Skills.DEFENSIVE_MODE:
-				return "Only Hits XP";
+				return "All hits (health) xp";
 			default:
-				return "Mostly " + primarySkill + ", Some Hits XP";
+				return "Some hits (health) xp";
 		}
-	}
-
-	private String getCurrentCombatXpFocusSkill(Player player) {
-		if (player.getAutoCastSpell() != null) {
-			return "Magic";
-		}
-		if (player.getRangeEquip() >= 0 || player.getThrowingEquip() >= 0) {
-			return "Range";
-		}
-		return "Melee";
 	}
 
 	private boolean hasEquippedFishingRod(Player player) {

@@ -20,7 +20,6 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
-import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -501,11 +500,12 @@ public class NpcBehavior {
 		}
 
 		if (profile.usesMagicProjectiles()) {
+			NpcMagicElement magicElement = profile.getMagicElement(npc);
 			int damage = CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc));
-			int impactEffectType = CombatEffect.enemyMagicAttackEffect(npc.getDef().getName());
+			int impactEffectType = profile.getMagicImpactEffect(npc, magicElement);
 			npc.setKillType(KillType.MAGIC);
 			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(npc.getWorld(), npc, target, damage,
-				1, true, 0, 0, 0, 0, profile.getMagicProjectileVisual(npc), impactEffectType, true));
+				1, true, 0, 0, 0, 0, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement));
 			return true;
 		}
 

@@ -6,6 +6,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.DropTable;
+import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.event.rsc.impl.combat.OSRSCombatFormula;
 import com.openrsc.server.model.container.Item;
@@ -337,8 +338,11 @@ public class RangeUtils {
 
     public static void handleArrowLossAndDrop(World world, Player player, Mob target, int damage, int arrowId) {
         if (Formulae.loseArrow(damage)) {
-            GroundItem arrows = getArrows(arrowId, target, player);
             if (!DropTable.handleRingOfAvarice(player, new Item(arrowId, 1))) {
+                if (Summoning.tryLootGoblinCollectStackableItem(player, arrowId, 1)) {
+                    return;
+                }
+                GroundItem arrows = getArrows(arrowId, target, player);
                 if (arrows == null) {
                     world.registerItem(
                             new GroundItem(

@@ -16,7 +16,8 @@ public class Fionella extends AbstractShop {
 
 	private final Shop shop = new Shop(true, 20000, 155, 55, 13,
 		new Item(ItemId.SWORDFISH.id(), 2), new Item(ItemId.APPLE_PIE.id(), 5),
-		new Item(ItemId.FULL_ATTACK_POTION.id(), 3), new Item(ItemId.STEEL_ARROWS.id(), 50));
+		new Item(ItemId.FULL_ATTACK_POTION.id(), 3), new Item(ItemId.STEEL_ARROWS.id(), 50),
+		new Item(ItemId.DRAGON_2_HANDED_SWORD.id(), 1));
 
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
