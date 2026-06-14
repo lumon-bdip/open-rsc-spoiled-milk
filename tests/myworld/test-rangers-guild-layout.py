@@ -11,6 +11,7 @@ SERVER_LANDSCAPE = ROOT / "server/conf/server/data/Custom_Landscape.orsc"
 CLIENT_LANDSCAPE = ROOT / "Client_Base/Cache/video/Custom_Landscape.orsc"
 SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/SceneryLocs.json"
 MYWORLD_SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryLocs.json"
+MYWORLD_NPC_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldNpcLocs.json"
 OBJECT_TELEPOINTS = ROOT / "server/conf/server/defs/extras/ObjectTelePoints.xml"
 BASEMENT_SECTOR = "h3x58y46"
 BASEMENT_SECTOR_ORIGIN_X = 480
@@ -24,8 +25,31 @@ BASEMENT_REQUIRED_WALKABLE_TILES = {
 }
 GROUND_DOWN_STAIR_TILES = {
     (x, y)
-    for x in range(499, 501)
+    for x in range(498, 500)
     for y in range(469, 472)
+}
+GROUND_RESTORED_FLOOR_TILES = {
+    (500, y)
+    for y in range(469, 472)
+}
+BASEMENT_STAIR_SQUARE_TILES = {
+    (x, y)
+    for x in range(494, 505)
+    for y in range(3292, 3302)
+}
+RANGERS_GUILD_BASEMENT_NPCS = {
+    68: 12,   # level-32 zombie
+    45: 12,   # level-31 skeleton
+    135: 4,   # ice giant
+    22: 4,    # lesser demon
+    190: 8,   # chaos dwarf
+}
+RANGERS_GUILD_BASEMENT_NPC_BOUNDS = {
+    68: (488, 3282, 509, 3290),
+    45: (488, 3303, 510, 3309),
+    135: (506, 3286, 514, 3295),
+    22: (506, 3297, 514, 3306),
+    190: (485, 3287, 492, 3306),
 }
 
 
@@ -55,6 +79,11 @@ def scenery_tuple(loc):
 
 def scenery_set(path):
     return {scenery_tuple(loc) for loc in load_scenery(path)}
+
+
+def load_npcs(path):
+    with path.open() as handle:
+        return json.load(handle)["npclocs"]
 
 
 def ensure_basement_terrain():
@@ -97,6 +126,18 @@ def ensure_basement_terrain():
             )[2] != 8,
             f"Rangers Guild basement stair/landing tile should be walkable at {x},{y}",
         )
+    for x, y in BASEMENT_STAIR_SQUARE_TILES:
+        elevation, texture, overlay, roof, east_wall, north_wall, diagonal_wall = tile(
+            server_sector,
+            x,
+            y,
+            origin_x=BASEMENT_SECTOR_ORIGIN_X,
+            origin_y=BASEMENT_SECTOR_ORIGIN_Y,
+        )
+        require(
+            texture == 0 and overlay == 5,
+            f"Rangers Guild basement stair square should be solid grey at {x},{y}",
+        )
 
     server_sector = read_sector(SERVER_LANDSCAPE, GROUND_SECTOR)
     client_sector = read_sector(CLIENT_LANDSCAPE, GROUND_SECTOR)
@@ -113,6 +154,18 @@ def ensure_basement_terrain():
             )
             == (152, 70, 8, 0, 0, 0, 0),
             f"Ground-floor down-stair opening is wrong at {x},{y}",
+        )
+    for x, y in GROUND_RESTORED_FLOOR_TILES:
+        require(
+            tile(
+                server_sector,
+                x,
+                y,
+                origin_x=GROUND_SECTOR_ORIGIN_X,
+                origin_y=GROUND_SECTOR_ORIGIN_Y,
+            )
+            == (152, 70, 5, 0, 0, 0, 0),
+            f"Old ground-floor down-stair opening should be restored to floor at {x},{y}",
         )
 
 
@@ -141,7 +194,7 @@ def ensure_scenery_layout():
         (145, 490, 464, 6),
         (47, 491, 471, 2),
         (279, 494, 471, 0),
-        (42, 499, 469, 4),
+        (42, 498, 469, 4),
         (41, 499, 3296, 0),
         (31, 496, 1408, 0),
         (31, 498, 1408, 0),
@@ -152,6 +205,7 @@ def ensure_scenery_layout():
         (145, 491, 464, 6),
         (47, 491, 470, 6),
         (279, 493, 471, 0),
+        (42, 499, 469, 4),
         (42, 499, 469, 0),
         (31, 496, 1408, 4),
         (31, 498, 1408, 4),
@@ -174,8 +228,12 @@ def ensure_stair_telepoints():
         ] = (int(telepoint.findtext("x")), int(telepoint.findtext("y")))
 
     require(
-        telepoints.get((499, 469, "Go down")) == (499, 3295),
+        telepoints.get((498, 469, "Go down")) == (499, 3295),
         "Ground-floor Rangers Guild stairs should lead to the basement seed",
+    )
+    require(
+        (499, 469, "Go down") not in telepoints,
+        "Old ground-floor Rangers Guild stair telepoint should be removed",
     )
     require(
         telepoints.get((499, 3296, "Go up")) == (499, 468),
@@ -183,10 +241,53 @@ def ensure_stair_telepoints():
     )
 
 
+def ensure_basement_npcs():
+    server_sector = read_sector(SERVER_LANDSCAPE, BASEMENT_SECTOR)
+    counts = {}
+    for loc in load_npcs(MYWORLD_NPC_LOCS):
+        start = loc["start"]
+        x = int(start["X"])
+        y = int(start["Y"])
+        if 484 <= x <= 515 and 3281 <= y <= 3310:
+            npc_id = int(loc["id"])
+            counts[npc_id] = counts.get(npc_id, 0) + 1
+            require(
+                npc_id in RANGERS_GUILD_BASEMENT_NPCS,
+                f"Unexpected Rangers Guild basement NPC id {npc_id}",
+            )
+            min_x, min_y, max_x, max_y = RANGERS_GUILD_BASEMENT_NPC_BOUNDS[npc_id]
+            require(
+                min_x <= x <= max_x and min_y <= y <= max_y,
+                f"Rangers Guild basement NPC {npc_id} is in the wrong cage at {x},{y}",
+            )
+            require(
+                int(loc["min"]["X"]) <= x <= int(loc["max"]["X"])
+                and int(loc["min"]["Y"]) <= y <= int(loc["max"]["Y"]),
+                f"Rangers Guild basement NPC {npc_id} has start outside movement bounds",
+            )
+            _, _, overlay, _, east_wall, north_wall, diagonal_wall = tile(
+                server_sector,
+                x,
+                y,
+                origin_x=BASEMENT_SECTOR_ORIGIN_X,
+                origin_y=BASEMENT_SECTOR_ORIGIN_Y,
+            )
+            require(
+                overlay != 8 and not east_wall and not north_wall and not diagonal_wall,
+                f"Rangers Guild basement NPC {npc_id} starts on a blocked tile at {x},{y}",
+            )
+
+    require(
+        counts == RANGERS_GUILD_BASEMENT_NPCS,
+        f"Unexpected Rangers Guild basement NPC counts: {counts}",
+    )
+
+
 def main():
     ensure_basement_terrain()
     ensure_scenery_layout()
     ensure_stair_telepoints()
+    ensure_basement_npcs()
     print("PASS: Rangers Guild first-pass layout validated")
 
 

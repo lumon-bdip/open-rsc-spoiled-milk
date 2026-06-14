@@ -66,7 +66,7 @@ First-pass scenery layout:
 - `494,468`: stool.
 - `495,468`: small round table.
 - `496,468`: stool.
-- `499,469`: basement stairs down, rotated 180 degrees from the first pass.
+- `498,469`: basement stairs down, rotated 180 degrees from the first pass; footprint occupies `498-499`.
 
 Existing objects preserved:
 
@@ -185,9 +185,23 @@ First-pass basement seed:
 
 - Temporary underground plane starts around `496,3294` to `503,3301`.
 - `499,3296`: return stairs up.
-- Ground-floor stairs at `499,469` route to `499,3295`; the 2x3 stair footprint uses overlay `8` to read visually as a down-stair opening.
+- Ground-floor stairs at `498,469` route to `499,3295`; the 2x3 stair footprint uses overlay `8` to read visually as a down-stair opening.
 - Basement stairs at `499,3296` route back to `499,468`.
-- The current terrain seed is a small walkable black cave-floor rectangle surrounded by the existing blocking void, intended only as a starting point for later map editing.
+- The central stair square is a solid grey overlay (`5`) with no ground texture, keeping it visually distinct from the cage floors.
+- The current basement layout has two large cage areas and three smaller side areas, with no gates by design.
+
+Basement training population:
+
+- North large cage: 12 level-32 zombies (`id 68`).
+- South large cage: 12 level-31 skeletons (`id 45`).
+- Left merged side cage: 8 chaos dwarfs (`id 190`).
+- Upper-right small cage: 4 ice giants (`id 135`).
+- Lower-right small cage: 4 lesser demons (`id 22`).
+
+Drop implementation note:
+
+- Prefer an area-based Rangers Guild basement bonus-drop hook over cloned NPC IDs. The NPCs can remain stock monsters, while the guild basement grants the extra ammo table only for kills inside this coordinate range.
+- Cloned NPCs are still viable, but they add new IDs and duplicate definitions for visually identical creatures. That is more maintenance unless the NPCs need different names, stats, examine text, or behavior outside drops.
 
 Technical requirement:
 
