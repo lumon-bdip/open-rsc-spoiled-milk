@@ -15,6 +15,7 @@ SUMMON_ICON_DIR = ROOT / "dev/myworld/assets/sprites/UI/summon"
 SUMMON_NAMES = [
     "Broodling Spider",
     "Mischief Imp",
+    "Loot Goblin",
     "Ironhide Bear",
     "Sacred Unicorn",
     "Duskwind Bat",
