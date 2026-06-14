@@ -15783,6 +15783,9 @@ public final class mudclient implements Runnable {
 			if (normalizedLabel.equals("bank")) {
 				return i;
 			}
+			if (normalizedLabel.equals("redeem")) {
+				return i;
+			}
 			if (normalizedLabel.equals("shop") || normalizedLabel.equals("trade")) {
 				shopAction = i;
 			}

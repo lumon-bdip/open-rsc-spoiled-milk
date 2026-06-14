@@ -11,8 +11,27 @@ SERVER_LANDSCAPE = ROOT / "server/conf/server/data/Custom_Landscape.orsc"
 CLIENT_LANDSCAPE = ROOT / "Client_Base/Cache/video/Custom_Landscape.orsc"
 SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/SceneryLocs.json"
 MYWORLD_SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryLocs.json"
+BOUNDARY_LOCS = ROOT / "server/conf/server/defs/locs/BoundaryLocs.json"
+NPC_LOCS = ROOT / "server/conf/server/defs/locs/NpcLocs.json"
+NPC_LOCS_14 = ROOT / "server/conf/server/defs/locs/NpcLocs14.json"
+NPC_LOCS_27 = ROOT / "server/conf/server/defs/locs/NpcLocs27.json"
 MYWORLD_NPC_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldNpcLocs.json"
+NPC_DEFS = ROOT / "server/conf/server/defs/NpcDefs.json"
+NPC_DEFS_PATCH18 = ROOT / "server/conf/server/defs/NpcDefsPatch18.json"
+NPC_DEFS_CUSTOM = ROOT / "server/conf/server/defs/NpcDefsCustom.json"
 OBJECT_TELEPOINTS = ROOT / "server/conf/server/defs/extras/ObjectTelePoints.xml"
+NPC_ID = ROOT / "server/src/com/openrsc/server/constants/NpcId.java"
+SERVER_ENTITY_HANDLER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.java"
+DOOR_ACTION = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/defaults/DoorAction.java"
+LOWES_ARCHERY = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/varrock/LowesArchery.java"
+LOWES_ARCHERY_OPENPK = ROOT / "server/plugins/com/openrsc/server/plugins/custom/npcs/LowesArcheryOpenPk.java"
+RANGERS_GUILD_RANGER = ROOT / "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildRanger.java"
+RANGERS_GUILD_DRAGON_SHOP = ROOT / "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildDragonShop.java"
+RANGERS_GUILD_POINTS_VENDOR = ROOT / "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildPointsVendor.java"
+RANGERS_GUILD_POINTS = ROOT / "server/src/com/openrsc/server/content/RangersGuildPoints.java"
+SKILLS = ROOT / "server/src/com/openrsc/server/model/Skills.java"
+CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+CLIENT_MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 BASEMENT_SECTOR = "h3x58y46"
 BASEMENT_SECTOR_ORIGIN_X = 480
 BASEMENT_SECTOR_ORIGIN_Y = 3264
@@ -20,16 +39,17 @@ GROUND_SECTOR = "h0x58y46"
 GROUND_SECTOR_ORIGIN_X = 480
 GROUND_SECTOR_ORIGIN_Y = 432
 BASEMENT_REQUIRED_WALKABLE_TILES = {
+    (498, 3296),
     (499, 3295),
     (499, 3296),
 }
 GROUND_DOWN_STAIR_TILES = {
     (x, y)
-    for x in range(498, 500)
+    for x in range(499, 501)
     for y in range(469, 472)
 }
 GROUND_RESTORED_FLOOR_TILES = {
-    (500, y)
+    (498, y)
     for y in range(469, 472)
 }
 BASEMENT_STAIR_SQUARE_TILES = {
@@ -73,6 +93,10 @@ def load_scenery(path):
     return json.loads(path.read_text(encoding="utf-8"))["sceneries"]
 
 
+def load_boundaries(path):
+    return json.loads(path.read_text(encoding="utf-8"))["boundaries"]
+
+
 def scenery_tuple(loc):
     return (loc["id"], loc["pos"]["X"], loc["pos"]["Y"], loc["direction"])
 
@@ -81,9 +105,30 @@ def scenery_set(path):
     return {scenery_tuple(loc) for loc in load_scenery(path)}
 
 
+def boundary_set(path):
+    return {scenery_tuple(loc) for loc in load_boundaries(path)}
+
+
 def load_npcs(path):
     with path.open() as handle:
         return json.load(handle)["npclocs"]
+
+
+def npc_location_tuple(loc):
+    return (
+        int(loc["id"]),
+        int(loc["start"]["X"]),
+        int(loc["start"]["Y"]),
+        int(loc["min"]["X"]),
+        int(loc["min"]["Y"]),
+        int(loc["max"]["X"]),
+        int(loc["max"]["Y"]),
+    )
+
+
+def npc_def_by_id(path, npc_id):
+    npcs = json.loads(path.read_text(encoding="utf-8"))["npcs"]
+    return next((npc for npc in npcs if int(npc["id"]) == npc_id), None)
 
 
 def ensure_basement_terrain():
@@ -194,8 +239,8 @@ def ensure_scenery_layout():
         (145, 490, 464, 6),
         (47, 491, 471, 2),
         (279, 494, 471, 0),
-        (42, 498, 469, 4),
-        (41, 499, 3296, 0),
+        (42, 499, 469, 4),
+        (41, 498, 3296, 0),
         (31, 496, 1408, 0),
         (31, 498, 1408, 0),
     }:
@@ -205,8 +250,9 @@ def ensure_scenery_layout():
         (145, 491, 464, 6),
         (47, 491, 470, 6),
         (279, 493, 471, 0),
-        (42, 499, 469, 4),
+        (42, 498, 469, 4),
         (42, 499, 469, 0),
+        (41, 499, 3296, 0),
         (31, 496, 1408, 4),
         (31, 498, 1408, 4),
     }:
@@ -228,16 +274,20 @@ def ensure_stair_telepoints():
         ] = (int(telepoint.findtext("x")), int(telepoint.findtext("y")))
 
     require(
-        telepoints.get((498, 469, "Go down")) == (499, 3295),
+        telepoints.get((499, 469, "Go down")) == (499, 3295),
         "Ground-floor Rangers Guild stairs should lead to the basement seed",
     )
     require(
-        (499, 469, "Go down") not in telepoints,
+        (498, 469, "Go down") not in telepoints,
         "Old ground-floor Rangers Guild stair telepoint should be removed",
     )
     require(
-        telepoints.get((499, 3296, "Go up")) == (499, 468),
+        telepoints.get((498, 3296, "Go up")) == (499, 468),
         "Basement Rangers Guild stairs should return to the ground floor",
+    )
+    require(
+        (499, 3296, "Go up") not in telepoints,
+        "Old basement Rangers Guild stair telepoint should be removed",
     )
 
 
@@ -283,11 +333,262 @@ def ensure_basement_npcs():
     )
 
 
+def ensure_rangers_guild_entrance():
+    expected_ranger_loc = (840, 497, 463, 497, 462, 498, 464)
+    myworld_locs = {npc_location_tuple(loc) for loc in load_npcs(MYWORLD_NPC_LOCS)}
+    require(expected_ranger_loc in myworld_locs, "Ranger should stand outside the Rangers Guild entrance")
+
+    boundaries = boundary_set(BOUNDARY_LOCS)
+    for expected in {
+        (146, 495, 464, 0),
+        (146, 496, 464, 0),
+    }:
+        require(expected in boundaries, f"Missing Rangers Guild entrance door boundary {expected}")
+
+    door_action = DOOR_ACTION.read_text(encoding="utf-8")
+    for fragment in (
+        "private static boolean isRangersGuildDoor",
+        "obj.getY() == 464",
+        "obj.getX() == 495 || obj.getX() == 496",
+        "getCurrentLevel(player, Skill.RANGED.id()) < 66",
+        "NpcId.RANGERS_GUILD_RANGER.id()",
+        "You need a ranged level of 66 to enter the guild",
+        "doDoor(obj, player);",
+    ):
+        require(fragment in door_action, f"Rangers Guild door gate is missing: {fragment}")
+
+    npc_id = NPC_ID.read_text(encoding="utf-8")
+    require("RANGERS_GUILD_RANGER(840)" in npc_id, "NpcId should reserve id 840 for the entrance Ranger")
+
+    ranger = npc_def_by_id(NPC_DEFS_CUSTOM, 840)
+    require(ranger is not None, "Custom NPC defs should define the Rangers Guild Ranger id 840")
+    require(ranger["name"] == "Ranger", "Rangers Guild Ranger should have the expected display name")
+    require(ranger["command"] == "" and ranger["command2"] == "", "Rangers Guild Ranger should not have shop commands")
+    expected_sprites = {
+        "sprites5": 108,
+        "sprites6": 559,
+        "sprites7": 565,
+        "sprites8": 571,
+        "sprites9": 577,
+        "sprites10": 583,
+        "sprites12": 66,
+    }
+    for key, value in expected_sprites.items():
+        require(ranger[key] == value, f"Rangers Guild Ranger {key} should be {value}")
+
+    ranger_plugin = RANGERS_GUILD_RANGER.read_text(encoding="utf-8")
+    for fragment in (
+        "n.getID() == NpcId.RANGERS_GUILD_RANGER.id()",
+        "getCurrentLevel(player, Skill.RANGED.id()) < 66",
+        "Hello, only skilled rangers are allowed in here",
+        "Hello, welcome to the Rangers Guild",
+        "The basement is set up for ranged practice",
+    ):
+        require(fragment in ranger_plugin, f"Rangers Guild Ranger dialogue is missing: {fragment}")
+
+
+def ensure_ranged_master_and_archery_shopkeeper():
+    expected_lowe_loc = (58, 493, 466, 492, 465, 494, 467)
+    myworld_locs = {npc_location_tuple(loc) for loc in load_npcs(MYWORLD_NPC_LOCS)}
+    require(expected_lowe_loc in myworld_locs, "Lowe should spawn on the Rangers Guild ground floor")
+
+    expected_varrock_loc = (839, 115, 515, 113, 512, 116, 516)
+    for path in (NPC_LOCS, NPC_LOCS_14, NPC_LOCS_27):
+        locs = {npc_location_tuple(loc) for loc in load_npcs(path)}
+        require(expected_varrock_loc in locs, f"Arlen should replace Lowe in {path.name}")
+        require(
+            (58, 115, 515, 113, 512, 116, 516) not in locs,
+            f"Lowe should no longer spawn in the Varrock archery shop in {path.name}",
+        )
+
+    for path in (NPC_DEFS, NPC_DEFS_PATCH18):
+        lowe = npc_def_by_id(path, 58)
+        require(lowe is not None, f"{path.name} should define Lowe")
+        require(lowe["name"] == "Lowe, Ranged Master", f"{path.name} should rename Lowe")
+        require(lowe["description"] == "The Ranged master of the Rangers Guild", f"{path.name} should update Lowe's description")
+        require(lowe["command"] == "", f"{path.name} should remove Lowe's shop command")
+
+    arlen = npc_def_by_id(NPC_DEFS_CUSTOM, 839)
+    require(arlen is not None, "Custom NPC defs should define Arlen id 839")
+    require(arlen["name"] == "Arlen", "Arlen should have the expected display name")
+    require(arlen["command"] == "Trade" and arlen["command2"] == "Shop", "Arlen should have direct shop commands")
+
+    npc_id = NPC_ID.read_text(encoding="utf-8")
+    require("LOWES_ARCHERY_SHOPKEEPER(839)" in npc_id, "NpcId should reserve id 839 for Arlen")
+
+    entity_handler = SERVER_ENTITY_HANDLER.read_text(encoding="utf-8")
+    quick_trade_start = entity_handler.find("private int[] quickTradeNpcs = new int[] {")
+    quick_trade_end = entity_handler.find("\n\t};", quick_trade_start)
+    require(quick_trade_start >= 0 and quick_trade_end > quick_trade_start, "Server quick trade NPC list should be present")
+    quick_trade_body = entity_handler[quick_trade_start:quick_trade_end]
+    require("NpcId.LOWES_ARCHERY_SHOPKEEPER.id()" in quick_trade_body, "Arlen should be in the quick trade NPC list")
+    require("NpcId.LOWE.id()" not in quick_trade_body, "Lowe should not remain in the quick trade NPC list")
+
+    lowes_archery = LOWES_ARCHERY.read_text(encoding="utf-8")
+    for fragment in (
+        "npc.getID() == NpcId.LOWE.id()",
+        "talkRangedMaster(player);",
+        "npc.getID() == NpcId.LOWES_ARCHERY_SHOPKEEPER.id()",
+        "isDirectShopCommand(player, npc, command)",
+        "You earn Rangers Guild points from ranged experience down there",
+    ):
+        require(fragment in lowes_archery, f"LowesArchery split is missing: {fragment}")
+
+    openpk = LOWES_ARCHERY_OPENPK.read_text(encoding="utf-8")
+    require("NpcId.LOWES_ARCHERY_SHOPKEEPER.id()" in openpk, "OpenPK archery shop should target Arlen")
+    require("NpcId.LOWE.id()" not in openpk, "OpenPK archery shop should not target Lowe")
+
+    client = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
+    for fragment in (
+        '"Lowe, Ranged Master", "The Ranged master of the Rangers Guild", ""',
+        "setCustomNpcDefinition(839, new NPCDef(",
+        '"Arlen", "He runs the Varrock archery shop", Config.S_RIGHT_CLICK_TRADE ? "Trade" : ""',
+        'Config.S_RIGHT_CLICK_TRADE ? "Shop" : null',
+        "setCustomNpcDefinition(840, new NPCDef(",
+        '"Ranger", "He watches the Rangers Guild entrance", ""',
+        "new int[]{0, 1, 2, -1, 108, 559, 565, 571, 577, 583, -1, 66}",
+    ):
+        require(fragment in client, f"Client NPC definitions are missing: {fragment}")
+
+
+def ensure_rangers_guild_dragon_vendor():
+    expected_vendor_loc = (841, 493, 1414, 493, 1414, 493, 1414)
+    myworld_locs = {npc_location_tuple(loc) for loc in load_npcs(MYWORLD_NPC_LOCS)}
+    require(expected_vendor_loc in myworld_locs, "Aeron should stand by the upstairs Rangers Guild vendor counter")
+
+    npc_id = NPC_ID.read_text(encoding="utf-8")
+    require("RANGERS_GUILD_DRAGON_VENDOR(841)" in npc_id, "NpcId should reserve id 841 for Aeron")
+
+    vendor = npc_def_by_id(NPC_DEFS_CUSTOM, 841)
+    require(vendor is not None, "Custom NPC defs should define Aeron id 841")
+    require(vendor["name"] == "Aeron", "Aeron should have the expected display name")
+    require(vendor["command"] == "Trade" and vendor["command2"] == "Shop", "Aeron should have direct shop commands")
+    require(vendor["sprites12"] == 66, "Aeron should wear a green cape")
+    for key in ("sprites5", "sprites6", "sprites7", "sprites8", "sprites9", "sprites10", "sprites11"):
+        require(vendor[key] == -1, f"Aeron should not have special equipment in {key}")
+
+    entity_handler = SERVER_ENTITY_HANDLER.read_text(encoding="utf-8")
+    quick_trade_start = entity_handler.find("private int[] quickTradeNpcs = new int[] {")
+    quick_trade_end = entity_handler.find("\n\t};", quick_trade_start)
+    require(quick_trade_start >= 0 and quick_trade_end > quick_trade_start, "Server quick trade NPC list should be present")
+    quick_trade_body = entity_handler[quick_trade_start:quick_trade_end]
+    require("NpcId.RANGERS_GUILD_DRAGON_VENDOR.id()" in quick_trade_body, "Aeron should be in the quick trade NPC list")
+
+    dragon_shop = RANGERS_GUILD_DRAGON_SHOP.read_text(encoding="utf-8")
+    for fragment in (
+        "n.getID() == NpcId.RANGERS_GUILD_DRAGON_VENDOR.id()",
+        "new Shop(false, 60000, 100, 55, 3,",
+        "new Item(ItemId.DRAGON_LONGBOW.id(), 1)",
+        "new Item(ItemId.DRAGON_CROSSBOW.id(), 1)",
+        "new Item(ItemId.DRAGON_ARROWS.id(), 1000)",
+        "new Item(ItemId.POISON_DRAGON_ARROWS.id(), 1000)",
+        "new Item(ItemId.DRAGON_BOLTS.id(), 1000)",
+        "new Item(ItemId.POISON_DRAGON_BOLTS.id(), 1000)",
+        "Welcome to the Rangers Guild specialist shop",
+    ):
+        require(fragment in dragon_shop, f"Rangers Guild dragon shop is missing: {fragment}")
+
+    client = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
+    for fragment in (
+        "setCustomNpcDefinition(841, new NPCDef(",
+        '"Aeron", "He sells specialist ranged gear", Config.S_RIGHT_CLICK_TRADE ? "Trade" : ""',
+        'Config.S_RIGHT_CLICK_TRADE ? "Shop" : null',
+        "new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66}",
+    ):
+        require(fragment in client, f"Client Aeron definition is missing: {fragment}")
+
+
+def ensure_rangers_guild_points_vendor():
+    expected_vendor_loc = (842, 496, 1414, 496, 1414, 496, 1414)
+    myworld_locs = {npc_location_tuple(loc) for loc in load_npcs(MYWORLD_NPC_LOCS)}
+    require(expected_vendor_loc in myworld_locs, "Talia should stand by the upstairs Rangers Guild rewards counter")
+
+    npc_id = NPC_ID.read_text(encoding="utf-8")
+    require("RANGERS_GUILD_POINTS_VENDOR(842)" in npc_id, "NpcId should reserve id 842 for Talia")
+
+    vendor = npc_def_by_id(NPC_DEFS_CUSTOM, 842)
+    require(vendor is not None, "Custom NPC defs should define Talia id 842")
+    require(vendor["name"] == "Talia", "Talia should have the expected display name")
+    require(vendor["command"] == "Redeem" and vendor["command2"] == "", "Talia should expose Redeem, not a normal shop command")
+    require(vendor["sprites12"] == 66, "Talia should wear a green cape")
+
+    entity_handler = SERVER_ENTITY_HANDLER.read_text(encoding="utf-8")
+    quick_trade_start = entity_handler.find("private int[] quickTradeNpcs = new int[] {")
+    quick_trade_end = entity_handler.find("\n\t};", quick_trade_start)
+    require(quick_trade_start >= 0 and quick_trade_end > quick_trade_start, "Server quick trade NPC list should be present")
+    quick_trade_body = entity_handler[quick_trade_start:quick_trade_end]
+    require(
+        "NpcId.RANGERS_GUILD_POINTS_VENDOR.id()" not in quick_trade_body,
+        "Talia should not be in the quick trade list because it would relabel Redeem as Trade",
+    )
+
+    points_vendor = RANGERS_GUILD_POINTS_VENDOR.read_text(encoding="utf-8")
+    for fragment in (
+        "npc.getID() == NpcId.RANGERS_GUILD_POINTS_VENDOR.id()",
+        'command.equalsIgnoreCase("Redeem")',
+        "RangersGuildPoints.getPoints(player)",
+        "RangersGuildPoints.spendPoints(player, reward.cost)",
+        "player.getCarriedItems().getInventory().canHold(item)",
+        "RangersGuildPoints.addPoints(player, reward.cost)",
+        "ItemId.MAGIC_SHORTBOW",
+        "ItemId.RUNE_ARROWS",
+        "ItemId.POISON_RUNE_BOLTS",
+        "ItemId.ORICHALCUM_SHURIKEN",
+        "ItemId.POISONED_ORICHALCUM_SHURIKEN",
+        "Rangers Guild points come from ranged experience in the basement",
+        "Bows and crossbows",
+        "Thrown weapons",
+    ):
+        require(fragment in points_vendor, f"Rangers Guild points vendor is missing: {fragment}")
+
+    client = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
+    for fragment in (
+        "setCustomNpcDefinition(842, new NPCDef(",
+        '"Talia", "She handles Rangers Guild rewards", Config.S_RIGHT_CLICK_TRADE ? "Redeem" : ""',
+        "new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66}",
+    ):
+        require(fragment in client, f"Client Talia definition is missing: {fragment}")
+
+    mudclient = CLIENT_MUDCLIENT.read_text(encoding="utf-8")
+    require('normalizedLabel.equals("redeem")' in mudclient, "Ctrl-click NPC shortcut should recognize Redeem")
+
+
+def ensure_rangers_guild_points_system():
+    points = RANGERS_GUILD_POINTS.read_text(encoding="utf-8")
+    for fragment in (
+        'POINTS_CACHE_KEY = "rangers_guild_points"',
+        'REMAINDER_CACHE_KEY = "rangers_guild_point_remainder"',
+        "XP_PER_POINT = 10",
+        "BASEMENT_MIN_X = 484",
+        "BASEMENT_MAX_X = 515",
+        "BASEMENT_MIN_Y = 3281",
+        "BASEMENT_MAX_Y = 3310",
+        "skill != Skill.RANGED.id()",
+        "total / XP_PER_POINT",
+        "total % XP_PER_POINT",
+        "player.getCache().set(REMAINDER_CACHE_KEY, newRemainder)",
+    ):
+        require(fragment in points, f"Rangers Guild points system is missing: {fragment}")
+
+    skills = SKILLS.read_text(encoding="utf-8")
+    for fragment in (
+        "import com.openrsc.server.content.RangersGuildPoints;",
+        "int creditedExperience = Math.max(0, exps[skill] - oldExp);",
+        "RangersGuildPoints.awardFromExperience((Player) getMob(), skill, creditedExperience);",
+    ):
+        require(fragment in skills, f"Skills XP hook is missing: {fragment}")
+
+
 def main():
     ensure_basement_terrain()
     ensure_scenery_layout()
     ensure_stair_telepoints()
     ensure_basement_npcs()
+    ensure_rangers_guild_entrance()
+    ensure_ranged_master_and_archery_shopkeeper()
+    ensure_rangers_guild_dragon_vendor()
+    ensure_rangers_guild_points_vendor()
+    ensure_rangers_guild_points_system()
     print("PASS: Rangers Guild first-pass layout validated")
 
 

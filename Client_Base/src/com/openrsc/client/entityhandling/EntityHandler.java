@@ -839,7 +839,7 @@ public class EntityHandler {
 		} else {
 			sprites = new int[]{0, 1, 2, -1, -1, -1, 45, -1, -1, -1, -1, -1};
 		}
-		npcs.add(new NPCDef("lowe", "The owner of the archery store", shopOption, 0, 0, 3, 0, false, sprites, 16761440, 2, 3, 15523536, 145, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Lowe, Ranged Master", "The Ranged master of the Rangers Guild", "", 0, 0, 3, 0, false, sprites, 16761440, 2, 3, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{3, 4, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("Thessalia", "A young shop assistant", shopOption, 0, 0, 3, 0, false, sprites, 1, 16036851, 3, 15523536, 130, 220, 6, 6, 5, i++));
 		sprites = new int[]{6, 1, 2, -1, -1, -1, 82, 88, -1, -1, -1, -1};
@@ -6190,6 +6190,30 @@ public class EntityHandler {
 			1, 1, 1, 1, false,
 			new int[]{139, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 0, 0, 0, 110, 103, 9, 8, 5, 838
+		));
+		setCustomNpcDefinition(839, new NPCDef(
+			"Arlen", "He runs the Varrock archery shop", Config.S_RIGHT_CLICK_TRADE ? "Trade" : "",
+			Config.S_RIGHT_CLICK_TRADE ? "Shop" : null, 0, 0, 3, 0, false,
+			new int[]{0, 1, 2, -1, -1, -1, 45, -1, -1, -1, -1, -1},
+			16761440, 2, 3, 15523536, 145, 220, 6, 6, 5, 839
+		));
+		setCustomNpcDefinition(840, new NPCDef(
+			"Ranger", "He watches the Rangers Guild entrance", "",
+			0, 0, 3, 0, false,
+			new int[]{0, 1, 2, -1, 108, 559, 565, 571, 577, 583, -1, 66},
+			16761440, 2, 3, 15523536, 145, 220, 6, 6, 5, 840
+		));
+		setCustomNpcDefinition(841, new NPCDef(
+			"Aeron", "He sells specialist ranged gear", Config.S_RIGHT_CLICK_TRADE ? "Trade" : "",
+			Config.S_RIGHT_CLICK_TRADE ? "Shop" : null, 0, 0, 3, 0, false,
+			new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66},
+			16761440, 2, 3, 15523536, 145, 220, 6, 6, 5, 841
+		));
+		setCustomNpcDefinition(842, new NPCDef(
+			"Talia", "She handles Rangers Guild rewards", Config.S_RIGHT_CLICK_TRADE ? "Redeem" : "",
+			null, 0, 0, 3, 0, false,
+			new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66},
+			16761440, 2, 3, 15523536, 145, 220, 6, 6, 5, 842
 		));
 	}
 

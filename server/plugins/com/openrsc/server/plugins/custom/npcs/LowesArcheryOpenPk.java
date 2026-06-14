@@ -20,7 +20,7 @@ public final class LowesArcheryOpenPk extends AbstractShop {
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {
-		return player.getConfig().WANT_OPENPK_POINTS && n.getID() == NpcId.LOWE.id();
+		return player.getConfig().WANT_OPENPK_POINTS && n.getID() == NpcId.LOWES_ARCHERY_SHOPKEEPER.id();
 	}
 
 	@Override

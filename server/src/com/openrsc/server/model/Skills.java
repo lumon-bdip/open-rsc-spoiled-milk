@@ -1,6 +1,7 @@
 package com.openrsc.server.model;
 
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.RangersGuildPoints;
 import com.openrsc.server.database.GameDatabaseException;
 import com.openrsc.server.database.impl.mysql.queries.logging.LiveFeedLog;
 import com.openrsc.server.database.struct.PlayerExperience;
@@ -299,6 +300,10 @@ public class Skills {
 					LOGGER.catching(e);
 				}
 			}
+		}
+		int creditedExperience = Math.max(0, exps[skill] - oldExp);
+		if (creditedExperience > 0 && getMob().isPlayer()) {
+			RangersGuildPoints.awardFromExperience((Player) getMob(), skill, creditedExperience);
 		}
 		int newLevel = oldLevel;
 		if (oldLevel < getWorld().getServer().getConfig().PLAYER_LEVEL_LIMIT) {

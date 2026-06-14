@@ -813,8 +813,8 @@
 		"aggressive": 1
 	  },{
 		"id": 58,
-		"name": "lowe",
-		"description": "The owner of the archery store",
+		"name": "Lowe, Ranged Master",
+		"description": "The Ranged master of the Rangers Guild",
 		"command": "",
 		"attack": 0,
 		"strength": 0,
