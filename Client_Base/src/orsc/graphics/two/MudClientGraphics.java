@@ -37,8 +37,7 @@ public final class MudClientGraphics extends GraphicsController {
 						super.drawSprite(effect, x, y, width, height, 5924, 224);
 					}
 				}
-			} else if (index >= mudclient.spriteProjectileEffectBase
-				&& index < mudclient.spriteProjectileEffectBase + (mudclient.CUSTOM_PROJECTILE_COUNT * mudclient.PROJECTILE_EFFECT_FRAME_SLOTS)) {
+			} else if (this.mudClientRef.isProjectileEffectSceneIndex(index)) {
 				Sprite projectile = this.mudClientRef.getProjectileEffectSpriteForSceneIndex(index);
 				if (projectile != null) {
 					if (!this.mudClientRef.queueProjectileEffectOverlay(index, x, y, width, height)) {

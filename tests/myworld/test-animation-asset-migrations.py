@@ -77,6 +77,8 @@ def main():
     require(client, [
         "public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;",
         "public static final int CUSTOM_PROJECTILE_COUNT = 21;",
+        "public static final int PROJECTILE_EFFECT_SCENE_RANGE = CUSTOM_PROJECTILE_COUNT * PROJECTILE_EFFECT_FRAME_SLOTS;",
+        "public static final int spriteProjectileEffectMirrorBase = spriteProjectileEffectBase + PROJECTILE_EFFECT_SCENE_RANGE;",
         'if ("water-eruption".equals(animationName))',
         "targetFrames, maxTargetSize, 5, 4, 20, 0);",
         'if ("water-vortex".equals(animationName))',
@@ -150,6 +152,8 @@ def main():
         '"fire-kin-magic", "ice-kin-magic", "earth-kin-magic"',
         "drawDragonBreathOverlay(character, effect, x, y, width, height, size);",
         "shouldMirrorDragonBreath(character.direction)",
+        "shouldMirrorEnemySpellProjectile(projectileDef, var3, var16, true)",
+        "isProjectileCasterScreenRightOfVictim(caster, victim)",
         "private static final int COMBAT_EFFECT_STANDARD_SCREEN_SIZE = 64;",
         "int size = COMBAT_EFFECT_STANDARD_SCREEN_SIZE;",
         "int size = getCombatEffectScreenSize(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);",
@@ -171,6 +175,12 @@ def main():
     ]:
         assert raw_png_size(MAGIC_UI_ASSETS / f"{icon_name}.png")[0] > 0, \
             f"magic UI asset missing for {icon_name}"
+
+    graphics = read("Client_Base/src/orsc/graphics/two/MudClientGraphics.java")
+    require(graphics, [
+        "this.mudClientRef.isProjectileEffectSceneIndex(index)",
+        "this.mudClientRef.getProjectileEffectSpriteForSceneIndex(index)",
+    ], "MudClientGraphics.java")
 
     spell_names = ["Wind Slash", "Water Eruption", "Explosion", "Water Vortex", "Fire Pillar"]
     entity_handler = read("Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java")
