@@ -26,8 +26,9 @@ Current static contents:
 
 - Ground floor:
   - `stairs` at `490,466`
-  - barrels at `500,465` and `500,467`
-  - fireplace at `497,471`
+  - barrels at `500,466` and `500,468`
+  - fireplace at `496,471`
+  - basement stairs at `499,469`
 - Upper floor:
   - `stairs` at `490,1410`
 
@@ -59,18 +60,19 @@ Purpose: normal guild floor, Ranged master, standard identity, and transition to
 
 First-pass scenery layout:
 
-- `491,464`: display shield, oriented west-wall style.
-- `491,470`: bookcase.
-- `493,471`: wall bench near the fireplace side of the room.
+- `490,464`: display shield, oriented west-wall style.
+- `491,471`: bookcase, rotated 180 degrees from the first pass.
+- `494,471`: wall bench near the fireplace side of the room.
 - `494,468`: stool.
 - `495,468`: small round table.
 - `496,468`: stool.
+- `499,469`: basement stairs down.
 
 Existing objects preserved:
 
 - `490,466`: stairs up.
-- `497,471`: fireplace.
-- `500,465` and `500,467`: ale barrels.
+- `496,471`: fireplace.
+- `500,466` and `500,468`: ale barrels.
 
 Notes:
 
@@ -111,8 +113,8 @@ Purpose: high-end vendors and bank access.
 
 First-pass scenery layout:
 
-- `496,1408`: archery target.
-- `498,1408`: archery target.
+- `496,1408`: archery target, rotated 180 degrees from the first pass.
+- `498,1408`: archery target, rotated 180 degrees from the first pass.
 - `493,1415`: future vendor counter.
 - `496,1415`: future vendor counter.
 - `499,1415`: bank chest.
@@ -178,6 +180,14 @@ Open balance decision:
 Purpose: caged ranged-training space with ammo-oriented drops.
 
 This should be a new lower level, separate from the existing ground and upper floors. It needs a new stair/ladder connection from the ground floor.
+
+First-pass basement seed:
+
+- Temporary underground plane starts around `496,3294` to `503,3301`.
+- `499,3296`: return stairs up.
+- Ground-floor stairs at `499,469` route to `499,3299`.
+- Basement stairs at `499,3296` route back to `499,468`.
+- The current terrain seed is a small walkable black cave-floor rectangle surrounded by the existing blocking void, intended only as a starting point for later map editing.
 
 Technical requirement:
 
@@ -261,4 +271,3 @@ Recommended checks:
 - Should the high-end vendor sell poisoned ammo directly?
 - Should dragon darts, dragon throwing knives, or dragon shuriken be created later?
 - Should the old Seers Party Hall event feature be removed completely or moved to another empty building?
-- What exact basement coordinate plane should be used?

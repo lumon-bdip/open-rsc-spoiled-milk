@@ -197,4 +197,26 @@
 			<y>162</y>
 		</TelePoint>
 	</entry>
+	<entry>
+		<Point>
+			<x>499</x>
+			<y>469</y>
+		</Point>
+		<TelePoint>
+			<command>Go down</command>
+			<x>499</x>
+			<y>3299</y>
+		</TelePoint>
+	</entry>
+	<entry>
+		<Point>
+			<x>499</x>
+			<y>3296</y>
+		</Point>
+		<TelePoint>
+			<command>Go up</command>
+			<x>499</x>
+			<y>468</y>
+		</TelePoint>
+	</entry>
 </map>
