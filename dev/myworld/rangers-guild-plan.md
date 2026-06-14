@@ -26,7 +26,7 @@ Current static contents:
 
 - Ground floor:
   - `stairs` at `490,466`
-  - barrels at `500,466` and `500,468`
+  - barrels at `500,467` and `500,464`
   - fireplace at `496,471`
   - basement stairs at `499,469`
 - Upper floor:
@@ -72,7 +72,7 @@ Existing objects preserved:
 
 - `490,466`: stairs up.
 - `496,471`: fireplace.
-- `500,466` and `500,468`: ale barrels.
+- `500,467` and `500,464`: ale barrels.
 
 Notes:
 
@@ -185,7 +185,7 @@ First-pass basement seed:
 
 - Temporary underground plane starts around `496,3294` to `503,3301`.
 - `499,3296`: return stairs up.
-- Ground-floor stairs at `499,469` route to `499,3299`; the 2x3 stair footprint uses overlay `8` to read visually as a down-stair opening.
+- Ground-floor stairs at `499,469` route to `499,3295`; the 2x3 stair footprint uses overlay `8` to read visually as a down-stair opening.
 - Basement stairs at `499,3296` route back to `499,468`.
 - The current terrain seed is a small walkable black cave-floor rectangle surrounded by the existing blocking void, intended only as a starting point for later map editing.
 

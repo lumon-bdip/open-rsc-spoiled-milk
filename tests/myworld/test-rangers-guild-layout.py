@@ -18,10 +18,9 @@ BASEMENT_SECTOR_ORIGIN_Y = 3264
 GROUND_SECTOR = "h0x58y46"
 GROUND_SECTOR_ORIGIN_X = 480
 GROUND_SECTOR_ORIGIN_Y = 432
-FLOOR_TILES = {
-    (x, y)
-    for x in range(496, 504)
-    for y in range(3294, 3302)
+BASEMENT_REQUIRED_WALKABLE_TILES = {
+    (499, 3295),
+    (499, 3296),
 }
 GROUND_DOWN_STAIR_TILES = {
     (x, y)
@@ -58,39 +57,46 @@ def scenery_set(path):
     return {scenery_tuple(loc) for loc in load_scenery(path)}
 
 
-def ensure_terrain_seed():
+def ensure_basement_terrain():
     server_sector = read_sector(SERVER_LANDSCAPE, BASEMENT_SECTOR)
     client_sector = read_sector(CLIENT_LANDSCAPE, BASEMENT_SECTOR)
     require(client_sector == server_sector, "Client and server Rangers Guild basement terrain must match")
 
-    for x, y in FLOOR_TILES:
-        elevation, texture, overlay, roof, east_wall, north_wall, diagonal_wall = tile(
-            server_sector,
-            x,
-            y,
-            origin_x=BASEMENT_SECTOR_ORIGIN_X,
-            origin_y=BASEMENT_SECTOR_ORIGIN_Y,
-        )
-        require(
-            (elevation, texture, overlay, roof, east_wall, north_wall, diagonal_wall)
-            == (128, 70, 16, 0, 0, 0, 0),
-            f"Rangers Guild basement floor seed is wrong at {x},{y}",
-        )
-
-    for x in range(495, 505):
-        for y in range(3293, 3303):
-            if (x, y) in FLOOR_TILES:
-                continue
-            require(
-                tile(
-                    server_sector,
-                    x,
-                    y,
-                    origin_x=BASEMENT_SECTOR_ORIGIN_X,
-                    origin_y=BASEMENT_SECTOR_ORIGIN_Y,
-                )[2] == 8,
-                f"Basement void ring changed at {x},{y}",
+    edited_tiles = []
+    for x in range(BASEMENT_SECTOR_ORIGIN_X, BASEMENT_SECTOR_ORIGIN_X + 48):
+        for y in range(BASEMENT_SECTOR_ORIGIN_Y, BASEMENT_SECTOR_ORIGIN_Y + 48):
+            elevation, texture, overlay, roof, east_wall, north_wall, diagonal_wall = tile(
+                server_sector,
+                x,
+                y,
+                origin_x=BASEMENT_SECTOR_ORIGIN_X,
+                origin_y=BASEMENT_SECTOR_ORIGIN_Y,
             )
+            if overlay != 8 or east_wall or north_wall or diagonal_wall:
+                edited_tiles.append((x, y, overlay, texture, elevation))
+
+    require(
+        len(edited_tiles) >= 500,
+        "Rangers Guild basement terrain should contain the imported first-draft edit, not only the small seed",
+    )
+    xs = [entry[0] for entry in edited_tiles]
+    ys = [entry[1] for entry in edited_tiles]
+    require(
+        min(xs) <= 484 and max(xs) >= 515 and min(ys) <= 3281 and max(ys) >= 3310,
+        "Rangers Guild basement terrain edit no longer covers the expected first-draft footprint",
+    )
+
+    for x, y in BASEMENT_REQUIRED_WALKABLE_TILES:
+        require(
+            tile(
+                server_sector,
+                x,
+                y,
+                origin_x=BASEMENT_SECTOR_ORIGIN_X,
+                origin_y=BASEMENT_SECTOR_ORIGIN_Y,
+            )[2] != 8,
+            f"Rangers Guild basement stair/landing tile should be walkable at {x},{y}",
+        )
 
     server_sector = read_sector(SERVER_LANDSCAPE, GROUND_SECTOR)
     client_sector = read_sector(CLIENT_LANDSCAPE, GROUND_SECTOR)
@@ -115,8 +121,8 @@ def ensure_scenery_layout():
     myworld = scenery_set(MYWORLD_SCENERY_LOCS)
 
     for expected in {
-        (272, 500, 466, 2),
-        (272, 500, 468, 2),
+        (272, 500, 467, 2),
+        (272, 500, 464, 2),
         (274, 496, 471, 0),
         (41, 490, 466, 0),
         (42, 490, 1410, 0),
@@ -124,8 +130,9 @@ def ensure_scenery_layout():
         require(expected in base, f"Missing base Rangers Guild scenery {expected}")
 
     for removed in {
+        (272, 500, 466, 2),
         (272, 500, 465, 2),
-        (272, 500, 467, 2),
+        (272, 500, 468, 2),
         (274, 497, 471, 0),
     }:
         require(removed not in base, f"Old base scenery still present {removed}")
@@ -167,7 +174,7 @@ def ensure_stair_telepoints():
         ] = (int(telepoint.findtext("x")), int(telepoint.findtext("y")))
 
     require(
-        telepoints.get((499, 469, "Go down")) == (499, 3299),
+        telepoints.get((499, 469, "Go down")) == (499, 3295),
         "Ground-floor Rangers Guild stairs should lead to the basement seed",
     )
     require(
@@ -177,7 +184,7 @@ def ensure_stair_telepoints():
 
 
 def main():
-    ensure_terrain_seed()
+    ensure_basement_terrain()
     ensure_scenery_layout()
     ensure_stair_telepoints()
     print("PASS: Rangers Guild first-pass layout validated")
