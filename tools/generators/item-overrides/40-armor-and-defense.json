@@ -2,7 +2,7 @@
   "items": [
     {
       "id": 2,
-      "appearanceID": 238,
+      "appearanceID": 239,
       "meleeDefense": 9,
       "magicDefense": 3,
       "requiredLevel": 0,
@@ -298,7 +298,7 @@
     },
     {
       "id": 128,
-      "appearanceID": 237,
+      "appearanceID": 238,
       "meleeDefense": 7,
       "magicDefense": 2,
       "requiredLevel": 0,
@@ -307,7 +307,7 @@
     },
     {
       "id": 129,
-      "appearanceID": 239,
+      "appearanceID": 240,
       "meleeDefense": 12,
       "magicDefense": 3,
       "requiredLevel": 0,
@@ -316,7 +316,7 @@
     },
     {
       "id": 130,
-      "appearanceID": 241,
+      "appearanceID": 242,
       "meleeDefense": 14,
       "magicDefense": 4,
       "requiredLevel": 0,
@@ -325,7 +325,7 @@
     },
     {
       "id": 131,
-      "appearanceID": 242,
+      "appearanceID": 243,
       "meleeDefense": 18,
       "magicDefense": 6,
       "requiredLevel": 0,
@@ -427,7 +427,7 @@
     },
     {
       "id": 404,
-      "appearanceID": 243,
+      "appearanceID": 244,
       "meleeDefense": 23,
       "magicDefense": 7,
       "requiredLevel": 0,
@@ -459,7 +459,7 @@
     },
     {
       "id": 433,
-      "appearanceID": 240,
+      "appearanceID": 241,
       "meleeDefense": 12,
       "magicDefense": 3,
       "requiredLevel": 0,
