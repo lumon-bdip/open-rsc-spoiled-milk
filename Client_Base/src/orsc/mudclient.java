@@ -138,13 +138,16 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_FIRE_DRAGON_MAGIC = 52;
 	public static final int COMBAT_EFFECT_OTHERWORLDLY_BEING_MAGIC = 53;
 	public static final int COMBAT_EFFECT_PALADIN_MAGIC = 54;
+	public static final int COMBAT_EFFECT_FIRE_KIN_MAGIC = 55;
+	public static final int COMBAT_EFFECT_ICE_KIN_MAGIC = 56;
+	public static final int COMBAT_EFFECT_EARTH_KIN_MAGIC = 57;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
 	public static final int COMBAT_EFFECT_WATER_ERUPTION = COMBAT_EFFECT_HURRICANE;
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 54;
+	public static final int COMBAT_EFFECT_COUNT = 57;
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_TICKS = 40;
@@ -916,13 +919,14 @@ public final class mudclient implements Runnable {
 		"divine-grace", "divine-retribution", "corrosive-aura", "lesser-demon-magic", "greater-demon-magic",
 		"enemy-earth-basic", "black-demon-magic", "balrog-magic",
 		"battle-mage-air", "battle-mage-earth", "battle-mage-water", "battle-mage-fire",
-		"green-dragon-magic", "fire-dragon-magic", "otherworldly-being-magic", "paladin-magic"
+		"green-dragon-magic", "fire-dragon-magic", "otherworldly-being-magic", "paladin-magic",
+		"fire-kin-magic", "ice-kin-magic", "earth-kin-magic"
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final int[] projectileEffectFrameCounts = new int[CUSTOM_PROJECTILE_COUNT];
 	private final String[] projectileEffectNames = new String[] {
 		"blow-smoke", "fireball", "wind-arrow", "rock-throw", "water-ball", "throwing-knife", "arrow", "dart",
-		"claws-of-guthix", "thunder-ball", "icicle-shot", "acid-drop", "spore", "bolt", "wizards-magic", "holy-magic",
+		"claws-of-guthix", "thunder-ball", "icicle-shot", "acid-drop", "spore", "bolt", "enemy-fire-basic", "holy-magic",
 		"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
@@ -18452,7 +18456,7 @@ public final class mudclient implements Runnable {
 		}
 		if ("explosion".equals(animationName)) {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "explosion.png"),
-				targetFrames, maxTargetSize, 18, 1, 18, 0);
+				targetFrames, maxTargetSize, 12, 1, 12, 0);
 		}
 		if ("hells-blaze".equals(animationName)) {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "hells-blaze.png"),
@@ -18466,8 +18470,8 @@ public final class mudclient implements Runnable {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "rock-throw.png"),
 				targetFrames, maxTargetSize, 6, 2, 12, 0);
 		}
-		if ("wizards-magic".equals(animationName)) {
-			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "wizards-magic.png"),
+		if ("enemy-fire-basic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "enemy-fire-basic.png"),
 				targetFrames, maxTargetSize, 11, 1, 11, 0);
 		}
 		if ("water-ball".equals(animationName)) {
@@ -18495,6 +18499,18 @@ public final class mudclient implements Runnable {
 		if ("paladin-magic".equals(animationName)) {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "paladin-magic.png"),
 				targetFrames, maxTargetSize, 20, 1, 20, 0);
+		}
+		if ("fire-kin-magic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "fire-kin-magic.png"),
+				targetFrames, maxTargetSize, 13, 1, 13, 0);
+		}
+		if ("ice-kin-magic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "ice-kin-magic.png"),
+				targetFrames, maxTargetSize, 30, 1, 30, 0);
+		}
+		if ("earth-kin-magic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "earth-kin-magic.png"),
+				targetFrames, maxTargetSize, 6, 2, 12, 0);
 		}
 		if ("dragon-breath".equals(animationName)) {
 			File sheet = new File(sourceFolder, "dragon-breath.png");
@@ -22092,7 +22108,7 @@ public final class mudclient implements Runnable {
 			|| projectile.id == PROJECTILE_TYPES.ICICLE_SHOT.id()
 			|| projectile.id == PROJECTILE_TYPES.ACID_DROP.id()
 			|| projectile.id == PROJECTILE_TYPES.BRANCH_SPORE.id()
-			|| projectile.id == PROJECTILE_TYPES.WIZARDS_MAGIC.id()
+			|| projectile.id == PROJECTILE_TYPES.ENEMY_FIRE_BASIC.id()
 			|| projectile.id == PROJECTILE_TYPES.HOLY_MAGIC.id()
 			|| projectile.id == PROJECTILE_TYPES.SUMMON_BAT_VAMPIRISM.id()
 			|| projectile.id == PROJECTILE_TYPES.ENEMY_AIR_BASIC.id()

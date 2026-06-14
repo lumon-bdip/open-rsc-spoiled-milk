@@ -485,7 +485,7 @@ public class EntityHandler {
 		ACID_DROP(18),
 		BRANCH_SPORE(19),
 		BOLT(20),
-		WIZARDS_MAGIC(21),
+		ENEMY_FIRE_BASIC(21),
 		HOLY_MAGIC(22),
 		SUMMON_BAT_VAMPIRISM(23),
 		SHURIKEN(24),
@@ -530,7 +530,7 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("acid drop projectile", mudclient.spriteProjectile + 1, "projectiles:1", 18));
 		projectiles.add(new SpriteDef("spore projectile", mudclient.spriteProjectile + 1, "projectiles:1", 19));
 		projectiles.add(new SpriteDef("bolt projectile", mudclient.spriteProjectile + 2, "projectiles:2", 20));
-		projectiles.add(new SpriteDef("wizards magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 21));
+		projectiles.add(new SpriteDef("enemy fire basic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 21));
 		projectiles.add(new SpriteDef("holy magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 22));
 		projectiles.add(new SpriteDef("summon bat vampirism projectile", mudclient.spriteProjectile + 1, "projectiles:1", 23));
 		projectiles.add(new SpriteDef("shuriken projectile", mudclient.spriteProjectile + 6, "projectiles:6", 24));

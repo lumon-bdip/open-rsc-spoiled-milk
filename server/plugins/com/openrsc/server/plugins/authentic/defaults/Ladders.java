@@ -72,12 +72,12 @@ public class Ladders {
 			return;
 		} else if (obj.getID() == 42 && obj.getX() == 368 && obj.getY() == 438) {
 			player.message("You go down the stairs");
-			player.teleport(371, 3267, false);
+			player.teleport(371, 3266, false);
 			return;
 		} else if (obj.getID() == 41) {
 			if (obj.getX() == 370 && obj.getY() == 3264) {
 				player.message("You go up the stairs");
-				player.teleport(369, 440, false);
+				player.teleport(369, 437, false);
 				return;
 			} else if (obj.getX() == 516 && obj.getY() == 1479) {
 				// Legend's Guild second floor stairs up

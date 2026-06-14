@@ -77,10 +77,8 @@ public class Bank {
 				if (list.size() >= player.getWorld().getMaxBankSize())
 					return false;
 
-				itemToAdd = new Item(itemToAdd.getCatalogId(), itemToAdd.getAmount());
 				long itemID = player.getWorld().getServer().getDatabase().incrementMaxItemId(player);
-
-				itemToAdd = new Item(itemToAdd.getCatalogId(), itemToAdd.getAmount(), false, itemID);
+				itemToAdd = copyItemForBank(itemToAdd, itemToAdd.getAmount(), itemID);
 
 				// Update the server bank
 				list.add(itemToAdd);
@@ -101,6 +99,7 @@ public class Bank {
 
 					// Update the database and server bank
 					existingStack.changeAmount(itemToAdd.getAmount());
+					rememberLastItemDurability(existingStack, itemToAdd);
 
 					// Update the client bank
 					if (updateClient) {
@@ -112,12 +111,11 @@ public class Bank {
 
 					// Update the database - first (existing) stack amount to max value
 					existingStack.setAmount(Integer.MAX_VALUE);
+					rememberLastItemDurability(existingStack, itemToAdd);
 
 					// Adjust quantity of second stack to reflect that which was added to the first stack.
-					itemToAdd = new Item(itemToAdd.getCatalogId(), itemToAdd.getAmount() - remainingSize);
 					long itemID = player.getWorld().getServer().getDatabase().incrementMaxItemId(player);
-
-					itemToAdd = new Item(itemToAdd.getCatalogId(), itemToAdd.getAmount(), false, itemID);
+					itemToAdd = copyItemForBank(itemToAdd, itemToAdd.getAmount() - remainingSize, itemID);
 
 					// Update the server bank - second stack
 					list.add(itemToAdd);
@@ -495,6 +493,7 @@ public class Bank {
 
 				final Item item = new Item(bankItem.getCatalogId(), amountToWithdraw, withdrawNoted,
 					bankItem.getItemId());
+				item.getItemStatus().setDurability(bankItem.getItemStatus().getDurability());
 
 				if (this.player.isUsingCustomClient()) {
 					if (!this.remove(item, updateClient)) return;
@@ -563,7 +562,11 @@ public class Bank {
 					}
 				}
 
-				Item itemToAdd = new Item(itemToAddCatalogId, itemToAddAmount);
+				Item itemToAdd = depositItem.copy();
+				itemToAdd.setCatalogId(itemToAddCatalogId);
+				itemToAdd.setAmount(itemToAddAmount);
+				itemToAdd.setNoted(false);
+				itemToAdd.setWielded(false);
 
 				// Make sure they have enough space in their bank to deposit it
 				if (!canHold(itemToAdd)) {
@@ -590,7 +593,7 @@ public class Bank {
 	private void addToInventory(Item item, ItemDefinition def, int requestedAmount, boolean updateClient) {
 		final boolean sendSlotUpdates = updateClient && !player.isUsingCustomClient();
 		if (def.isStackable() || item.getNoted()) {
-			item = new Item(item.getCatalogId(), requestedAmount, item.getNoted());
+			item = copyItemForTransfer(item, requestedAmount, item.getNoted());
 
 			if (!player.getCarriedItems().getInventory().canHold(item)) {
 				player.message("You don't have room to hold everything!");
@@ -607,7 +610,7 @@ public class Bank {
 			}
 		} else {
 			for (int i = 1; i <= requestedAmount; i++) {
-				item = new Item(item.getCatalogId(), 1, item.getNoted());
+				item = copyItemForTransfer(item, 1, item.getNoted());
 
 				if (!player.getCarriedItems().getInventory().canHold(item)) {
 					player.message("You don't have room to hold everything!");
@@ -638,7 +641,7 @@ public class Bank {
 		}
 
 		// Always remove the last slot first.
-		item = new Item(item.getCatalogId(), slotAmount, item.getNoted(), item.getItemId());
+		item = copyItemForTransfer(item, slotAmount, item.getNoted());
 		if (player.getCarriedItems().getInventory().remove(item, updateClient) == -1) return;
 
 		if (slotAmount < requestedAmount) {
@@ -700,6 +703,26 @@ public class Bank {
 		} else {
 			return itemID;
 		}
+	}
+
+	private static Item copyItemForBank(final Item source, final int amount, final long itemId) {
+		final Item copy = source.copyWithItemId(itemId);
+		copy.setAmount(amount);
+		copy.setNoted(false);
+		copy.setWielded(false);
+		return copy;
+	}
+
+	private static Item copyItemForTransfer(final Item source, final int amount, final boolean noted) {
+		final Item copy = source.copy();
+		copy.setAmount(amount);
+		copy.setNoted(noted);
+		copy.setWielded(false);
+		return copy;
+	}
+
+	private static void rememberLastItemDurability(final Item bankItem, final Item depositedItem) {
+		bankItem.getItemStatus().setDurability(depositedItem.getItemStatus().getDurability());
 	}
 
 	public Player getPlayer() {

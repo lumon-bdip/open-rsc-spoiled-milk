@@ -61,7 +61,11 @@ def main() -> None:
 	require(profile, "name.contains(\"druid\")", "Druids should be treated as holy magic users")
 	require(profile, "return Projectile.HOLY_MAGIC;", "Holy magic NPCs should use the holy magic projectile")
 	require(profile, "return NpcMagicElement.NONE;", "Untyped NPC magic should be supported")
-	require(profile, "usesBasicCasterFireball(name)", "Fireball projectile should be limited to basic fire casters")
+	require(profile, "usesBasicCasterFireProjectile(name)", "Basic fire projectile should be limited to basic fire casters")
+	require(profile, "return Projectile.ENEMY_FIRE_BASIC;", "Basic fire casters should use the enemy-fire-basic projectile")
+	require(profile, "if (usesBasicCasterFireProjectile(name)) {\n\t\t\t\t\treturn CombatEffect.NONE;", "Basic fire casters should not layer fire claw impact over the projectile")
+	require(profile, "if (usesBasicCasterAirProjectile(name)) {\n\t\t\t\t\treturn CombatEffect.NONE;", "Basic air casters should not layer wind slash impact over the projectile")
+	require(profile, "if (usesBasicCasterWaterProjectile(name)) {\n\t\t\t\t\treturn CombatEffect.NONE;", "Basic water casters should not layer water burst impact over the projectile")
 	require(profile, "\"darkwizard\".equals(name)", "Darkwizard fire spells should use basic caster fireball")
 	require(profile, "\"necromancer\".equals(name)", "Necromancer fire spells should use basic caster fireball")
 	require(profile, "\"skeleton mage\".equals(name)", "Skeleton mage fire spells should use basic caster fireball")
@@ -78,9 +82,16 @@ def main() -> None:
 	require(profile, "\"necromancer\".equals(name)", "Necromancer water spells should use basic enemy water projectile")
 	require(profile, "\"ghost\".equals(name)", "Ghost water spells should use basic enemy water projectile")
 	require(profile, "usesBasicCasterEarthImpact(name)", "Basic earth impact should be limited to basic casters")
+	require(profile, "return Projectile.BLANK;", "Basic caster earth spells should use no travelling projectile")
 	require(profile, "return CombatEffect.ENEMY_EARTH_BASIC;", "Basic caster earth spells should use enemy earth impact")
 	require(profile, "\"skeleton mage\".equals(name)", "Skeleton mage earth spells should use basic enemy earth impact")
 	require(profile, "enemySpecificEffect != CombatEffect.NONE", "Enemy-specific magic effects should not be replaced by elemental effects")
+	require(profile, "usesFireKinMagic(name)", "Fire kin should be assigned their own on-player magic effect")
+	require(profile, "usesIceKinMagic(name)", "Ice kin should be assigned their own on-player magic effect")
+	require(profile, "usesEarthKinMagic(name)", "Earth kin should be assigned their own on-player magic effect")
+	require(profile, "return CombatEffect.FIRE_KIN_MAGIC;", "Fire kin should use fire kin magic impact")
+	require(profile, "return CombatEffect.ICE_KIN_MAGIC;", "Ice kin should use ice kin magic impact")
+	require(profile, "return CombatEffect.EARTH_KIN_MAGIC;", "Earth kin should use earth kin magic impact")
 
 	expected_splits = {
 		"darkwizard": ("FIRE", "AIR"),
@@ -98,6 +109,7 @@ def main() -> None:
 	for snippet in (
 		"case \"lesser demon\":",
 		"case \"greater demon\":",
+		"case \"chronozon\":",
 		"case \"black demon\":",
 		"case \"fire giant\":",
 		"case \"delrith\":",
@@ -144,6 +156,9 @@ def main() -> None:
 	require(server_combat_effect, "public static final int FIRE_DRAGON_MAGIC = 52;", "Server should define fire dragon magic combat effect id")
 	require(server_combat_effect, "public static final int OTHERWORLDLY_BEING_MAGIC = 53;", "Server should define otherworldly being magic combat effect id")
 	require(server_combat_effect, "public static final int PALADIN_MAGIC = 54;", "Server should define paladin magic combat effect id")
+	require(server_combat_effect, "public static final int FIRE_KIN_MAGIC = 55;", "Server should define fire kin magic combat effect id")
+	require(server_combat_effect, "public static final int ICE_KIN_MAGIC = 56;", "Server should define ice kin magic combat effect id")
+	require(server_combat_effect, "public static final int EARTH_KIN_MAGIC = 57;", "Server should define earth kin magic combat effect id")
 	require(server_combat_effect, "case \"chronozon\":", "Chronozon should use greater demon magic")
 	require(server_combat_effect, "case \"black demon\":", "Black demon should use its own magic effect")
 	require(server_combat_effect, "case \"balrog\":", "Balrog should use its own magic effect")
@@ -177,9 +192,14 @@ def main() -> None:
 	require(client_mudclient, "COMBAT_EFFECT_FIRE_DRAGON_MAGIC = 52", "Client should define fire dragon magic combat effect id")
 	require(client_mudclient, "COMBAT_EFFECT_OTHERWORLDLY_BEING_MAGIC = 53", "Client should define otherworldly being magic combat effect id")
 	require(client_mudclient, "COMBAT_EFFECT_PALADIN_MAGIC = 54", "Client should define paladin magic combat effect id")
+	require(client_mudclient, "COMBAT_EFFECT_FIRE_KIN_MAGIC = 55", "Client should define fire kin magic combat effect id")
+	require(client_mudclient, "COMBAT_EFFECT_ICE_KIN_MAGIC = 56", "Client should define ice kin magic combat effect id")
+	require(client_mudclient, "COMBAT_EFFECT_EARTH_KIN_MAGIC = 57", "Client should define earth kin magic combat effect id")
+	require(client_mudclient, "COMBAT_EFFECT_COUNT = 57", "Client should include kin magic combat effects in the effect table")
 	require(client_mudclient, '"battle-mage-air", "battle-mage-earth", "battle-mage-water", "battle-mage-fire"', "Client should name battle mage visual aliases")
 	require(client_mudclient, '"green-dragon-magic", "fire-dragon-magic"', "Client should name dragon magic On Player effects")
 	require(client_mudclient, '"otherworldly-being-magic", "paladin-magic"', "Client should name untyped On Player magic effects")
+	require(client_mudclient, '"fire-kin-magic", "ice-kin-magic", "earth-kin-magic"', "Client should name elemental kin On Player magic effects")
 	require(client_mudclient, 'return "tornado";', "Battle mage air should borrow tornado frames")
 	require(client_mudclient, 'return "earth-burst";', "Battle mage earth should borrow earth burst frames")
 	require(client_mudclient, 'return "water-eruption";', "Battle mage water should borrow water eruption frames")
@@ -190,6 +210,9 @@ def main() -> None:
 	require(client_mudclient, '"fire-dragon-magic"', "Client should load fire-dragon-magic On Player asset")
 	require(client_mudclient, '"otherworldly-being-magic"', "Client should load otherworldly-being-magic On Player asset")
 	require(client_mudclient, '"paladin-magic"', "Client should load paladin-magic On Player asset")
+	require(client_mudclient, '"fire-kin-magic"', "Client should load fire-kin-magic On Player asset")
+	require(client_mudclient, '"ice-kin-magic"', "Client should load ice-kin-magic On Player asset")
+	require(client_mudclient, '"earth-kin-magic"', "Client should load earth-kin-magic On Player asset")
 
 	for robe in ("Air", "Water", "Earth", "Fire"):
 		require(equipment, f"get{robe}RobeTierTotal()", f"{robe} robe tier total accessor")

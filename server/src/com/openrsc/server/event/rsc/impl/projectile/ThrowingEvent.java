@@ -77,6 +77,10 @@ public class ThrowingEvent extends GameTickEvent {
 
 		long currentTick = player.getWorld().getServer().getCurrentTick();
 		if (player.getAttribute("can_range_again", 0L) > currentTick) return;
+		if (!resolvePrimaryTarget(player)) {
+			player.resetRange();
+			return;
+		}
 
 		int throwingID = player.getThrowingEquip();
 		if (!player.loggedIn() || (player.inCombat() && !(target.isNpc()
@@ -214,6 +218,54 @@ public class ThrowingEvent extends GameTickEvent {
 		}
 		Item rangeType = player.getCarriedItems().getInventory().get(slot);
 		return rangeType == null ? 0 : rangeType.getAmount();
+	}
+
+	private boolean resolvePrimaryTarget(Player player) {
+		if (isValidPrimaryTarget(player, target)) {
+			return true;
+		}
+
+		Mob opponent = player.getOpponent();
+		if (isValidPrimaryTarget(player, opponent)) {
+			target = opponent;
+			return true;
+		}
+
+		Npc fallback = findAutoRetaliatePrimaryTarget(player);
+		if (fallback == null) {
+			return false;
+		}
+		target = fallback;
+		player.setOpponent(fallback);
+		player.setCombatTimer();
+		return true;
+	}
+
+	private boolean isValidPrimaryTarget(Player player, Mob candidate) {
+		if (candidate == null
+			|| candidate.isRemoved()
+			|| candidate.getSkills().getLevel(Skill.HITS.id()) <= 0
+			|| candidate.isPlayer() && !((Player) candidate).loggedIn()
+			|| candidate.isNpc() && Summoning.isSummon((Npc) candidate)) {
+			return false;
+		}
+		return player.withinRange(candidate) && player.checkAttack(candidate, true);
+	}
+
+	private Npc findAutoRetaliatePrimaryTarget(Player player) {
+		Npc firstThreat = null;
+		for (Npc npc : player.getViewArea().getNpcsInView()) {
+			if (!isValidPrimaryTarget(player, npc) || !isAggroedToPlayer(npc, player)) {
+				continue;
+			}
+			if (npc.getOpponent() == player) {
+				return npc;
+			}
+			if (firstThreat == null) {
+				firstThreat = npc;
+			}
+		}
+		return firstThreat;
 	}
 
 	private boolean removeThrowingItems(Player player, int throwingID, int amount) {

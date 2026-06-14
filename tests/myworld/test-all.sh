@@ -29,6 +29,7 @@ python3 ./tests/myworld/test-enchanting-data.py
 python3 ./tests/myworld/test-jewelry-runtime-effects.py
 python3 ./tests/myworld/test-bank-filters.py
 python3 ./tests/myworld/test-bank-shortcuts.py
+python3 ./tests/myworld/test-charged-item-bank-preservation.py
 python3 ./tests/myworld/test-auto-attack-hud.py
 python3 ./tests/myworld/test-source-cleanup.py
 python3 ./tests/myworld/test-world-start.py
@@ -40,6 +41,7 @@ python3 ./tests/myworld/test-quest-shortcuts.py
 python3 ./tests/myworld/test-dragon-slayer-start-shortcut.py
 python3 ./tests/myworld/test-quest-choice-audit.py
 python3 ./tests/myworld/test-quest-rollout-audit.py
+python3 ./tests/myworld/test-heroes-guild-stairs.py
 python3 ./tests/myworld/test-magecraft-data.py
 python3 ./tests/myworld/test-production-ui.py
 python3 ./tests/myworld/test-production-behavior.py

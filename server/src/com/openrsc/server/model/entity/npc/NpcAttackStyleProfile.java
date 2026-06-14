@@ -104,22 +104,21 @@ public enum NpcAttackStyleProfile {
 				}
 				return Projectile.WIND_ARROW;
 			case WATER:
-				if (usesBasicCasterWaterProjectile(name)) {
+				if (usesBasicCasterWaterProjectile(name)
+					|| usesIceKinMagic(name)
+					|| npc.getID() == NpcId.BABY_BLUE_DRAGON.id()) {
 					return Projectile.ENEMY_WATER_BASIC;
 				}
 				return Projectile.WATER_BALL;
 			case EARTH:
+				if (usesBasicCasterEarthImpact(name)) {
+					return Projectile.BLANK;
+				}
 				return Projectile.ROCK_THROW;
 			case FIRE:
-				if (usesBasicCasterFireball(name)) {
-					return Projectile.FIREBALL;
-				}
-				break;
+				return Projectile.ENEMY_FIRE_BASIC;
 			default:
 				break;
-		}
-		if (name.contains("wizard")) {
-			return Projectile.WIZARDS_MAGIC;
 		}
 		if (isHolyMagicNpcName(name)) {
 			return Projectile.HOLY_MAGIC;
@@ -143,15 +142,33 @@ public enum NpcAttackStyleProfile {
 		}
 		switch (element) {
 			case AIR:
+				if (usesBasicCasterAirProjectile(name)) {
+					return CombatEffect.NONE;
+				}
 				return CombatEffect.WIND_SLASH;
 			case WATER:
+				if (usesBasicCasterWaterProjectile(name)) {
+					return CombatEffect.NONE;
+				}
+				if (usesIceKinMagic(name)) {
+					return CombatEffect.ICE_KIN_MAGIC;
+				}
 				return CombatEffect.WATER_BURST;
 			case EARTH:
 				if (usesBasicCasterEarthImpact(name)) {
 					return CombatEffect.ENEMY_EARTH_BASIC;
 				}
+				if (usesEarthKinMagic(name)) {
+					return CombatEffect.EARTH_KIN_MAGIC;
+				}
 				return CombatEffect.EARTH_HAMMER;
 			case FIRE:
+				if (usesBasicCasterFireProjectile(name)) {
+					return CombatEffect.NONE;
+				}
+				if (usesFireKinMagic(name)) {
+					return CombatEffect.FIRE_KIN_MAGIC;
+				}
 				return CombatEffect.FIRE_CLAW;
 			default:
 				return CombatEffect.NONE;
@@ -184,7 +201,7 @@ public enum NpcAttackStyleProfile {
 		}
 	}
 
-	private static boolean usesBasicCasterFireball(final String name) {
+	private static boolean usesBasicCasterFireProjectile(final String name) {
 		return "darkwizard".equals(name)
 			|| "necromancer".equals(name)
 			|| "skeleton mage".equals(name);
@@ -208,6 +225,23 @@ public enum NpcAttackStyleProfile {
 			|| "skeleton mage".equals(name)
 			|| "ghost".equals(name)
 			|| "nazastarool ghost".equals(name);
+	}
+
+	private static boolean usesFireKinMagic(final String name) {
+		return "fire giant".equals(name)
+			|| "delrith".equals(name)
+			|| "the fire warrior of lesarkus".equals(name);
+	}
+
+	private static boolean usesIceKinMagic(final String name) {
+		return "ice giant".equals(name)
+			|| "ice warrior".equals(name)
+			|| "ice queen".equals(name);
+	}
+
+	private static boolean usesEarthKinMagic(final String name) {
+		return "moss giant".equals(name)
+			|| "tree spirit".equals(name);
 	}
 
 	private static boolean isHolyMagicNpcName(final String name) {
@@ -269,6 +303,7 @@ public enum NpcAttackStyleProfile {
 				return randomElement(NpcMagicElement.AIR, NpcMagicElement.WATER, NpcMagicElement.EARTH, NpcMagicElement.FIRE);
 			case "lesser demon":
 			case "greater demon":
+			case "chronozon":
 			case "black demon":
 			case "balrog":
 			case "fire giant":

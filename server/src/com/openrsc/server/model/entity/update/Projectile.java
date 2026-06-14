@@ -24,7 +24,7 @@ public class Projectile {
 	public static final int ACID_DROP = 18;
 	public static final int BRANCH_SPORE = 19;
 	public static final int BOLT = 20;
-	public static final int WIZARDS_MAGIC = 21;
+	public static final int ENEMY_FIRE_BASIC = 21;
 	public static final int HOLY_MAGIC = 22;
 	public static final int SUMMON_BAT_VAMPIRISM = 23;
 	public static final int SHURIKEN = 24;

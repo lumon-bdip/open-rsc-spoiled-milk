@@ -311,13 +311,13 @@ require(
 ladders = LADDERS.read_text()
 require(
     "obj.getID() == 42 && obj.getX() == 368 && obj.getY() == 438" in ladders
-    and "player.teleport(371, 3267, false);" in ladders,
-    "Surface Heroes' Guild stairs must land in the expanded chamber's central aisle",
+    and "player.teleport(371, 3266, false);" in ladders,
+    "Surface Heroes' Guild stairs must land by the expanded basement stairs",
 )
 require(
     "obj.getX() == 370 && obj.getY() == 3264" in ladders
-    and "player.teleport(369, 440, false);" in ladders,
-    "Expanded basement stairs must return beside the surface stairs",
+    and "player.teleport(369, 437, false);" in ladders,
+    "Expanded basement stairs must return beside the surface stairs without trapping the player",
 )
 
 print("Heroes' Guild basement layout checks passed")

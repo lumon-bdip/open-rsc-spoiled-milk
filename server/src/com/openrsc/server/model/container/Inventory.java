@@ -194,6 +194,7 @@ public class Inventory {
 
 					// Update the Database and Server Inventory
 					existingStack.changeAmount(itemToAdd.getAmount());
+					existingStack.getItemStatus().setDurability(itemToAdd.getItemStatus().getDurability());
 
 					//Update the Client
 					if (sendInventory)
@@ -220,6 +221,7 @@ public class Inventory {
 
 					// Update the existing stack amount to max value
 					existingStack.setAmount(MAXSTACK);
+					existingStack.getItemStatus().setDurability(itemToAdd.getItemStatus().getDurability());
 					long itemID = player.getWorld().getServer().getDatabase().incrementMaxItemId(player);
 					itemToAdd = itemToAdd.copyWithItemId(itemID);
 

@@ -129,6 +129,10 @@ def main() -> None:
 
     for snippet in (
         "SHURIKEN_THROW_COUNT = 3",
+        "resolvePrimaryTarget(player)",
+        "findAutoRetaliatePrimaryTarget(player)",
+        "player.setOpponent(fallback);",
+        "npc.getOpponent() == player",
         "selectThrowingTargets(player, throwingID, attackRadius)",
         "throwsToConsume = RangeUtils.SHURIKENS.contains(throwingID) ? throwingTargets.size() : 1",
         "while (throwingTargets.size() > throwsToConsume)",
@@ -193,6 +197,7 @@ def main() -> None:
     require(mob, "startPlayerRangedPvmCounterCombat(attacker)", "PvM auto-retaliate checks ranged before melee")
     require(mob, "new RangeEvent(player.getWorld(), player, 1, attacker)", "PvM auto-retaliate can resume bow ranged")
     require(mob, "new ThrowingEvent(player.getWorld(), player, 1, attacker)", "PvM auto-retaliate can resume throwing ranged")
+    require(mob, "throwingEvent.getTarget() == null || !throwingEvent.getTarget().equals(attacker)", "PvM auto-retaliate retargets stale throwing events safely")
     require(mudclient, 'loadExternalItemSprite(getExternalPngFile("shuriken-thrown"), 46, 30)', "Client shuriken thrown sprite loader")
     require(mudclient, "generateShurikenProjectileFrames();", "Client shuriken spin frame generation")
     require(mudclient, "boolean enemyProjectile = true;", "Client projectile renderer tracks shooter ownership")

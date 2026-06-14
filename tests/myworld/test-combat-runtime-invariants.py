@@ -155,7 +155,7 @@ def main() -> None:
     require_contains(CLIENT, "int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);")
     require_contains(CLIENT, "private boolean isAnimatedCustomProjectile(SpriteDef projectile)")
     require_contains(CLIENT, "return enemyProjectile && isAnimatedCustomProjectile(projectile) ? size * 2 : size;")
-    require_contains(CLIENT, "|| projectile.id == PROJECTILE_TYPES.WIZARDS_MAGIC.id()")
+    require_contains(CLIENT, "|| projectile.id == PROJECTILE_TYPES.ENEMY_FIRE_BASIC.id()")
     require_contains(CLIENT, "|| projectile.id == PROJECTILE_TYPES.HOLY_MAGIC.id()")
     require_contains(CLIENT, "projectile.id == COMBAT_EFFECT_WOOD_DRILL")
     require_contains(CLIENT, "return 144;")
