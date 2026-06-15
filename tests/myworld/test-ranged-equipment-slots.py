@@ -11,6 +11,7 @@ from typing import NoReturn
 ROOT = Path(__file__).resolve().parents[2]
 ENTITY_HANDLER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
 ITEM_DEFS = ROOT / "server/conf/server/defs/ItemDefs.json"
 CUSTOM_ITEM_DEFS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
@@ -29,6 +30,7 @@ def require(text: str, snippet: str, message: str) -> None:
 def main() -> None:
     entity_handler = ENTITY_HANDLER.read_text(encoding="utf-8")
     client_entity_handler = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
+    mudclient = MUDCLIENT.read_text(encoding="utf-8")
     equipment = EQUIPMENT.read_text(encoding="utf-8")
     item_defs = ITEM_DEFS.read_text(encoding="utf-8")
     custom_items = {
@@ -97,12 +99,12 @@ def main() -> None:
 
     require(
         entity_handler,
-        "items.get(ItemId.DRAGON_CROSSBOW.id()).setAppearanceId(470);",
+        "items.get(ItemId.DRAGON_CROSSBOW.id()).setAppearanceId(471);",
         "Dragon crossbow should use the dragon crossbow equipment animation",
     )
     require(
         entity_handler,
-        "items.get(ItemId.DRAGON_LONGBOW.id()).setAppearanceId(471);",
+        "items.get(ItemId.DRAGON_LONGBOW.id()).setAppearanceId(472);",
         "Dragon longbow should use the dragon longbow equipment animation",
     )
     require(
@@ -115,10 +117,15 @@ def main() -> None:
         'animations.add(new AnimationDef("longbow", "equipment", 16711748, 0, false, false, 0)); //471 - dragon longbow',
         "Client animation 471 should remain the dragon longbow equipment visual",
     )
-    if custom_items[1453].get("appearanceID") != 470:
-        fail("Dragon crossbow ItemDefsCustom appearanceID should be 470")
-    if custom_items[1454].get("appearanceID") != 471:
-        fail("Dragon longbow ItemDefsCustom appearanceID should be 471")
+    require(
+        mudclient,
+        "int animID = player.layerAnimation[layer] - 1;",
+        "Client equipment rendering should still treat server appearance IDs as one-based animation IDs",
+    )
+    if custom_items[1453].get("appearanceID") != 471:
+        fail("Dragon crossbow ItemDefsCustom appearanceID should be 471")
+    if custom_items[1454].get("appearanceID") != 472:
+        fail("Dragon longbow ItemDefsCustom appearanceID should be 472")
 
     print("PASS: ranged equipment slot contracts validated")
 

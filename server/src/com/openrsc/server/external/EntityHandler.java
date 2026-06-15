@@ -906,8 +906,8 @@ public final class EntityHandler {
 			items.get(ItemId.SARADOMIN_CAPE.id()).setAppearanceId(464);
 			items.get(ItemId.GUTHIX_CAPE.id()).setAppearanceId(463);
 
-			items.get(ItemId.DRAGON_CROSSBOW.id()).setAppearanceId(470);
-			items.get(ItemId.DRAGON_LONGBOW.id()).setAppearanceId(471);
+			items.get(ItemId.DRAGON_CROSSBOW.id()).setAppearanceId(471);
+			items.get(ItemId.DRAGON_LONGBOW.id()).setAppearanceId(472);
 
 			items.get(ItemId.BRONZE_SCIMITAR.id()).setAppearanceId(477);
 			items.get(ItemId.IRON_SCIMITAR.id()).setAppearanceId(478);
