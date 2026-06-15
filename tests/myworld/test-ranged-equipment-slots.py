@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Validate ranged weapon equipment slot contracts."""
+"""Validate ranged weapon equipment slot and visual contracts."""
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -9,8 +10,10 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 ENTITY_HANDLER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.java"
+CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
 ITEM_DEFS = ROOT / "server/conf/server/defs/ItemDefs.json"
+CUSTOM_ITEM_DEFS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 
 
 def fail(message: str) -> NoReturn:
@@ -25,8 +28,13 @@ def require(text: str, snippet: str, message: str) -> None:
 
 def main() -> None:
     entity_handler = ENTITY_HANDLER.read_text(encoding="utf-8")
+    client_entity_handler = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     equipment = EQUIPMENT.read_text(encoding="utf-8")
     item_defs = ITEM_DEFS.read_text(encoding="utf-8")
+    custom_items = {
+        int(item["id"]): item
+        for item in json.loads(CUSTOM_ITEM_DEFS.read_text(encoding="utf-8"))["items"]
+    }
 
     require(
         entity_handler,
@@ -86,6 +94,31 @@ def main() -> None:
     )
     if throwing_match is None:
         fail("Throwing weapons should remain mainhand items")
+
+    require(
+        entity_handler,
+        "items.get(ItemId.DRAGON_CROSSBOW.id()).setAppearanceId(470);",
+        "Dragon crossbow should use the dragon crossbow equipment animation",
+    )
+    require(
+        entity_handler,
+        "items.get(ItemId.DRAGON_LONGBOW.id()).setAppearanceId(471);",
+        "Dragon longbow should use the dragon longbow equipment animation",
+    )
+    require(
+        client_entity_handler,
+        'animations.add(new AnimationDef("crossbow", "equipment", 16711748, 0, false, false, 0)); //470 - dragon crossbow',
+        "Client animation 470 should remain the dragon crossbow equipment visual",
+    )
+    require(
+        client_entity_handler,
+        'animations.add(new AnimationDef("longbow", "equipment", 16711748, 0, false, false, 0)); //471 - dragon longbow',
+        "Client animation 471 should remain the dragon longbow equipment visual",
+    )
+    if custom_items[1453].get("appearanceID") != 470:
+        fail("Dragon crossbow ItemDefsCustom appearanceID should be 470")
+    if custom_items[1454].get("appearanceID") != 471:
+        fail("Dragon longbow ItemDefsCustom appearanceID should be 471")
 
     print("PASS: ranged equipment slot contracts validated")
 

@@ -690,7 +690,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			|| opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
-		caster.getUpdateFlags().setCombatEffect(new CombatEffect(caster, CombatEffect.DRAGON_BREATH));
+		caster.getUpdateFlags().setCombatEffect(new CombatEffect(caster, CombatEffect.DRAGON_WEAPON_BREATH));
 		inflictAuxiliaryTrueDamage(caster, opponent, dragonBreathDamage);
 	}
 

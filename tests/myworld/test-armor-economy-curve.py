@@ -234,6 +234,14 @@ def main() -> None:
             f"tier {tier} bought bar should cost more than ranged output high alch",
         )
 
+    arrow_ammo_prices = {
+        2039: 4, 2040: 9, 11: 20, 638: 48, 640: 120,
+        642: 320, 2041: 720, 644: 1520, 2042: 2600, 646: 4000,
+        574: 20, 639: 48, 641: 120, 643: 320, 645: 1520, 647: 4000,
+    }
+    for item_id, expected in arrow_ammo_prices.items():
+        require_price(items, item_id, expected, f"arrow ammo {item_id}")
+
     leather_cuirasses = {
         1839: 1,
         1844: 1,

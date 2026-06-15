@@ -141,13 +141,14 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_FIRE_KIN_MAGIC = 55;
 	public static final int COMBAT_EFFECT_ICE_KIN_MAGIC = 56;
 	public static final int COMBAT_EFFECT_EARTH_KIN_MAGIC = 57;
+	public static final int COMBAT_EFFECT_DRAGON_WEAPON_BREATH = 58;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
 	public static final int COMBAT_EFFECT_WATER_ERUPTION = COMBAT_EFFECT_HURRICANE;
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 57;
+	public static final int COMBAT_EFFECT_COUNT = 58;
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_TICKS = 40;
@@ -922,7 +923,7 @@ public final class mudclient implements Runnable {
 		"enemy-earth-basic", "black-demon-magic", "balrog-magic",
 		"battle-mage-air", "battle-mage-earth", "battle-mage-water", "battle-mage-fire",
 		"green-dragon-magic", "fire-dragon-magic", "otherworldly-being-magic", "paladin-magic",
-		"fire-kin-magic", "ice-kin-magic", "earth-kin-magic"
+		"fire-kin-magic", "ice-kin-magic", "earth-kin-magic", "dragon-weapon-breath"
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final Sprite[][] projectileEffectMirrorSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
@@ -7652,7 +7653,7 @@ public final class mudclient implements Runnable {
 		}
 		int size = COMBAT_EFFECT_STANDARD_SCREEN_SIZE;
 		size = getCombatEffectScreenSize(character.combatEffectType, size);
-		if (character.combatEffectType == COMBAT_EFFECT_DRAGON_BREATH) {
+		if (isDragonBreathCombatEffect(character.combatEffectType)) {
 			drawDragonBreathOverlay(character, effect, x, y, width, height, size);
 			return;
 		}
@@ -7672,7 +7673,8 @@ public final class mudclient implements Runnable {
 			int width, int height, int size) {
 		boolean mirrorX = shouldMirrorDragonBreath(character.direction);
 		int drawX = mirrorX ? x + width / 2 - size : x + width / 2;
-		int drawY = y + height / 2 - size / 2;
+		int drawY = y + height / 2 - size / 2
+			+ getCombatEffectScreenYOffset(character.combatEffectType, 0, size);
 		character.hasCombatEffectScreenAnchor = true;
 		character.combatEffectScreenX = drawX;
 		character.combatEffectScreenY = drawY;
@@ -17168,7 +17170,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void detachPlayerCombatEffect(ORSCharacter player) {
-		detachCombatEffect(player, 110);
+		detachCombatEffect(player, player == null ? 110 : getPlayerCombatEffectHeightOffset(player.combatEffectType));
 	}
 
 	private void detachCombatEffect(ORSCharacter character, int heightOffset) {
@@ -17307,7 +17309,8 @@ public final class mudclient implements Runnable {
 		}
 		int worldX = character.currentX;
 		int worldZ = character.currentZ;
-		int heightOffset = npc ? getNpcCombatEffectHeightOffset(character) : 110;
+		int heightOffset = npc ? getNpcCombatEffectHeightOffset(character)
+			: getPlayerCombatEffectHeightOffset(character.combatEffectType);
 		int worldY = -this.world.getElevation(worldX, worldZ) - heightOffset;
 		int sceneSprite = spriteCombatEffectBase + ((character.combatEffectType - 1) * COMBAT_EFFECT_FRAME_SLOTS) + frame;
 		int effectSize = getCombatEffectSceneSize(character.combatEffectType);
@@ -17334,6 +17337,9 @@ public final class mudclient implements Runnable {
 		if (effectType == COMBAT_EFFECT_DRAGON_BREATH) {
 			return 448;
 		}
+		if (effectType == COMBAT_EFFECT_DRAGON_WEAPON_BREATH) {
+			return 224;
+		}
 		if (effectType == COMBAT_EFFECT_DIVINE_GRACE
 			|| effectType == COMBAT_EFFECT_DIVINE_RETRIBUTION
 			|| effectType == COMBAT_EFFECT_CORROSIVE_AURA) {
@@ -17356,6 +17362,9 @@ public final class mudclient implements Runnable {
 		if (effectType == COMBAT_EFFECT_DRAGON_BREATH) {
 			return baseSize * 2;
 		}
+		if (effectType == COMBAT_EFFECT_DRAGON_WEAPON_BREATH) {
+			return baseSize;
+		}
 		if (effectType == COMBAT_EFFECT_DIVINE_GRACE
 			|| effectType == COMBAT_EFFECT_DIVINE_RETRIBUTION
 			|| effectType == COMBAT_EFFECT_CORROSIVE_AURA) {
@@ -17371,6 +17380,18 @@ public final class mudclient implements Runnable {
 			|| effectType == COMBAT_EFFECT_ZAMORAKS_APOCOLYPSE
 			|| effectType == COMBAT_EFFECT_SARADOMIN_SOUL_SLASH
 			|| effectType == COMBAT_EFFECT_CLAW_OF_GUTHIX;
+	}
+
+	private boolean isDragonBreathCombatEffect(int effectType) {
+		return effectType == COMBAT_EFFECT_DRAGON_BREATH
+			|| effectType == COMBAT_EFFECT_DRAGON_WEAPON_BREATH;
+	}
+
+	private int getPlayerCombatEffectHeightOffset(int effectType) {
+		if (effectType == COMBAT_EFFECT_DRAGON_WEAPON_BREATH) {
+			return 145;
+		}
+		return 110;
 	}
 
 	private void applyCombatEffectVisualOffset(ORSCharacter character, int spriteIndex) {
@@ -17940,6 +17961,9 @@ public final class mudclient implements Runnable {
 		}
 		if ("battle-mage-fire".equals(effectName)) {
 			return "explosion";
+		}
+		if ("dragon-weapon-breath".equals(effectName)) {
+			return "dragon-breath";
 		}
 		return effectName;
 	}
@@ -19272,6 +19296,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getCombatEffectScreenYOffset(int effectType, int frame, int size) {
+		if (effectType == COMBAT_EFFECT_DRAGON_WEAPON_BREATH) {
+			return -(size / 2);
+		}
 		if (effectType == COMBAT_EFFECT_SUMMON_COMBAT || effectType == COMBAT_EFFECT_SUMMON_SUPPORT) {
 			return (size * SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT) / 100;
 		}

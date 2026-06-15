@@ -360,7 +360,8 @@ public final class DoSkillInterface {
 				selectedHeader = (isMetalPicker() ? metalName(def) : def.getName())
 					+ " - Level " + selected.getRequiredLevel();
 			}
-			drawStringRightAligned(selectedHeader, selectedDetailRightX, footerY + 2, 3, selected.isLevelMet() ? textColour : 0xFF5555);
+			int selectedHeaderY = isRangersRedemptionInterface() ? footerY - 10 : footerY + 2;
+			drawStringRightAligned(selectedHeader, selectedDetailRightX, selectedHeaderY, 3, selected.isLevelMet() ? textColour : 0xFF5555);
 			if (isRangersRedemptionCategoryPicker()) {
 				drawStringRightAligned("Choose this category", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isRangersRedemptionInterface()) {
@@ -393,16 +394,17 @@ public final class DoSkillInterface {
 
 		if (showQuantityControls) {
 			if (isRangersRedemptionInterface()) {
-				drawQuantityButton(quantityX - 44, quantityY, 30, 20, "-100", -100);
-				drawQuantityButton(quantityX - 10, quantityY, 26, 20, "-50", -50);
-				drawQuantityButton(quantityX + 20, quantityY, 24, 20, "-1", -1);
-				mc.getSurface().drawBoxAlpha(quantityX + 48, quantityY, 50, 20, 0x222222, 192);
-				mc.getSurface().drawBoxBorder(quantityX + 48, 50, quantityY, 20, 0x777775);
+				int redemptionQuantityX = x + ((width - 234) / 2);
+				drawQuantityButton(redemptionQuantityX, quantityY, 30, 20, "-100", -100);
+				drawQuantityButton(redemptionQuantityX + 34, quantityY, 26, 20, "-50", -50);
+				drawQuantityButton(redemptionQuantityX + 64, quantityY, 24, 20, "-1", -1);
+				mc.getSurface().drawBoxAlpha(redemptionQuantityX + 92, quantityY, 50, 20, 0x222222, 192);
+				mc.getSurface().drawBoxBorder(redemptionQuantityX + 92, 50, quantityY, 20, 0x777775);
 				String quantityText = Integer.toString(productionQuantity);
-				drawString(quantityText, quantityX + 73 - (mc.getSurface().stringWidth(2, quantityText) / 2), quantityY + 15, 2, textColour);
-				drawQuantityButton(quantityX + 102, quantityY, 24, 20, "+1", 1);
-				drawQuantityButton(quantityX + 130, quantityY, 26, 20, "+50", 50);
-				drawQuantityButton(quantityX + 160, quantityY, 30, 20, "+100", 100);
+				drawString(quantityText, redemptionQuantityX + 117 - (mc.getSurface().stringWidth(2, quantityText) / 2), quantityY + 15, 2, textColour);
+				drawQuantityButton(redemptionQuantityX + 146, quantityY, 24, 20, "+1", 1);
+				drawQuantityButton(redemptionQuantityX + 174, quantityY, 26, 20, "+50", 50);
+				drawQuantityButton(redemptionQuantityX + 204, quantityY, 30, 20, "+100", 100);
 			} else {
 				drawQuantityButton(quantityX, quantityY, 26, 20, "<<", -5);
 				drawQuantityButton(quantityX + 30, quantityY, 26, 20, "<", -1);
@@ -536,10 +538,10 @@ public final class DoSkillInterface {
 	private void drawRangersRedemptionDetails(ProductionRecipeView selected, int selectedDetailRightX, int footerY) {
 		long totalCost = getRangersRedemptionTotalCost(selected);
 		long totalOutput = (long) selected.getOutputAmount() * (long) productionQuantity;
-		drawStringRightAligned("Owned: " + formatPointCount(productionResourceAmount) + " pts", selectedDetailRightX, footerY + 17, 1, textColour);
-		drawStringRightAligned("Cost: " + formatPointCount(totalCost) + " pts", selectedDetailRightX, footerY + 32, 1,
+		drawStringRightAligned("Owned: " + formatPointCount(productionResourceAmount) + " pts", selectedDetailRightX, footerY + 5, 1, textColour);
+		drawStringRightAligned("Cost: " + formatPointCount(totalCost) + " pts", selectedDetailRightX, footerY + 20, 1,
 			totalCost <= productionResourceAmount ? textColour : 0xFFAA55);
-		drawStringRightAligned("Receive: " + formatPointCount(totalOutput) + " total", selectedDetailRightX, footerY + 47, 1, textColour);
+		drawStringRightAligned("Receive: " + formatPointCount(totalOutput) + " total", selectedDetailRightX, footerY + 35, 1, textColour);
 	}
 
 	private long getRangersRedemptionTotalCost(ProductionRecipeView selected) {

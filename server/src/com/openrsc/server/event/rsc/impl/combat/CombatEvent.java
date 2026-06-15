@@ -700,7 +700,7 @@ public class CombatEvent extends GameTickEvent {
 		if (breathDamage <= 0) {
 			return;
 		}
-		hitter.getUpdateFlags().setCombatEffect(new CombatEffect(hitter, CombatEffect.DRAGON_BREATH));
+		hitter.getUpdateFlags().setCombatEffect(new CombatEffect(hitter, CombatEffect.DRAGON_WEAPON_BREATH));
 		inflictAuxiliaryTrueDamage(hitter, target, breathDamage);
 	}
 

@@ -210,13 +210,23 @@ def main() -> None:
     )
     require(
         do_skill_interface_text,
-        'drawQuantityButton(quantityX - 44, quantityY, 30, 20, "-100", -100)',
+        'int redemptionQuantityX = x + ((width - 234) / 2);',
+        "Rangers redemption quantity controls should be centered in the interface",
+    )
+    require(
+        do_skill_interface_text,
+        'drawQuantityButton(redemptionQuantityX, quantityY, 30, 20, "-100", -100)',
         "Rangers redemption UI should expose the -100 quantity control",
     )
     require(
         do_skill_interface_text,
-        'drawQuantityButton(quantityX + 160, quantityY, 30, 20, "+100", 100)',
+        'drawQuantityButton(redemptionQuantityX + 204, quantityY, 30, 20, "+100", 100)',
         "Rangers redemption UI should expose the +100 quantity control",
+    )
+    require(
+        do_skill_interface_text,
+        "int selectedHeaderY = isRangersRedemptionInterface() ? footerY - 10 : footerY + 2;",
+        "Rangers redemption selected-item details should move up one text line",
     )
     require(
         do_skill_interface_text,
@@ -235,7 +245,7 @@ def main() -> None:
     )
     require(
         do_skill_interface_text,
-        "drawStringRightAligned(selectedHeader, selectedDetailRightX, footerY + 2",
+        "drawStringRightAligned(selectedHeader, selectedDetailRightX, selectedHeaderY",
         "Production selected item header should be right-aligned away from ingredient icons",
     )
     require(

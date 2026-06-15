@@ -2077,15 +2077,22 @@
     },
     {
       "id": 11,
-      "rangedOffense": 6
+      "rangedOffense": 6,
+      "basePrice": 20
+    },
+    {
+      "id": 574,
+      "basePrice": 20
     },
     {
       "id": 2039,
-      "rangedOffense": 2
+      "rangedOffense": 2,
+      "basePrice": 4
     },
     {
       "id": 2040,
-      "rangedOffense": 4
+      "rangedOffense": 4,
+      "basePrice": 9
     },
     {
       "id": 723,
@@ -2111,7 +2118,12 @@
     },
     {
       "id": 638,
-      "rangedOffense": 8
+      "rangedOffense": 8,
+      "basePrice": 48
+    },
+    {
+      "id": 639,
+      "basePrice": 48
     },
     {
       "id": 2182,
@@ -2124,7 +2136,12 @@
     },
     {
       "id": 640,
-      "rangedOffense": 12
+      "rangedOffense": 12,
+      "basePrice": 120
+    },
+    {
+      "id": 641,
+      "basePrice": 120
     },
     {
       "id": 2184,
@@ -2137,7 +2154,12 @@
     },
     {
       "id": 642,
-      "rangedOffense": 16
+      "rangedOffense": 16,
+      "basePrice": 320
+    },
+    {
+      "id": 643,
+      "basePrice": 320
     },
     {
       "id": 2186,
@@ -2150,7 +2172,12 @@
     },
     {
       "id": 644,
-      "rangedOffense": 20
+      "rangedOffense": 20,
+      "basePrice": 1520
+    },
+    {
+      "id": 645,
+      "basePrice": 1520
     },
     {
       "id": 2188,
@@ -2172,7 +2199,12 @@
     },
     {
       "id": 646,
-      "rangedOffense": 24
+      "rangedOffense": 24,
+      "basePrice": 4000
+    },
+    {
+      "id": 647,
+      "basePrice": 4000
     },
     {
       "id": 2192,
@@ -2194,11 +2226,13 @@
     },
     {
       "id": 2041,
-      "rangedOffense": 18
+      "rangedOffense": 18,
+      "basePrice": 720
     },
     {
       "id": 2042,
-      "rangedOffense": 22
+      "rangedOffense": 22,
+      "basePrice": 2600
     },
     {
       "id": 786,

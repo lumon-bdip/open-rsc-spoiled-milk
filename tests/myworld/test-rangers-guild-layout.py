@@ -556,6 +556,15 @@ def ensure_rangers_guild_points_vendor():
         "ItemId.RUNE_ARROWS",
         "ItemId.RUNE_BOLTS",
         "ItemId.ORICHALCUM_SHURIKEN",
+        "new Reward(ItemId.BLOOD_LONGBOW, 4000)",
+        "new Reward(ItemId.BLOOD_SHORTBOW, 3500)",
+        "new Reward(ItemId.BLOOD_CROSSBOW, 4250)",
+        "new Reward(ItemId.COPPER_THROWING_KNIFE, 2)",
+        "new Reward(ItemId.MITHRIL_THROWING_DART, 6)",
+        "new Reward(ItemId.TITAN_STEEL_ARROWS, 8)",
+        "new Reward(ItemId.ADAMANTITE_BOLTS, 10)",
+        "new Reward(ItemId.ORICHALCUM_SHURIKEN, 14)",
+        "new Reward(ItemId.RUNE_SHURIKEN, 20)",
         "Rangers Guild points come from ranged experience in the basement",
     ):
         require(fragment in points_vendor, f"Rangers Guild points vendor is missing: {fragment}")
