@@ -13,6 +13,7 @@ ENTITY_HANDLER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.ja
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
+PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 ITEM_DEFS = ROOT / "server/conf/server/defs/ItemDefs.json"
 CUSTOM_ITEM_DEFS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 
@@ -32,6 +33,7 @@ def main() -> None:
     client_entity_handler = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
     equipment = EQUIPMENT.read_text(encoding="utf-8")
+    player = PLAYER.read_text(encoding="utf-8")
     item_defs = ITEM_DEFS.read_text(encoding="utf-8")
     custom_items = {
         int(item["id"]): item
@@ -80,6 +82,22 @@ def main() -> None:
     )
     if "RangeUtils.isCrossbow" in equipment:
         fail("Crossbows should not be included in bow/offhand conflict logic")
+
+    require(
+        player,
+        "RangeUtils.isBow(mainhand.getCatalogId())",
+        "Bow visuals should be detected separately from their mainhand combat slot",
+    )
+    require(
+        player,
+        "visibleWornItems[AppearanceId.SLOT_SHIELD] = visibleWornItems[AppearanceId.SLOT_WEAPON];",
+        "Bow visuals should be routed through the legacy offhand render layer",
+    )
+    require(
+        player,
+        "visibleWornItems[AppearanceId.SLOT_WEAPON] = AppearanceId.NOTHING.id();",
+        "Bow visuals should clear the mainhand render layer after visual routing",
+    )
 
     crossbow_match = re.search(
         r'"id": 60,\s*"name": "Crossbow".*?"wearSlot": 4',

@@ -2547,11 +2547,21 @@ public final class Player extends Mob {
 	}
 
 	public int[] getWornItemsForAppearanceUpdate() {
-		if (!shouldSuppressMainhandToolAppearance()) {
-			return wornItems;
+		int[] visibleWornItems = wornItems;
+		if (shouldSuppressMainhandToolAppearance()) {
+			visibleWornItems = wornItems.clone();
+			visibleWornItems[AppearanceId.SLOT_WEAPON] = AppearanceId.NOTHING.id();
 		}
-		int[] visibleWornItems = wornItems.clone();
-		visibleWornItems[AppearanceId.SLOT_WEAPON] = AppearanceId.NOTHING.id();
+
+		Item mainhand = getCarriedItems().getEquipment().get(Equipment.EquipmentSlot.SLOT_MAINHAND.getIndex());
+		if (mainhand != null && RangeUtils.isBow(mainhand.getCatalogId())) {
+			if (visibleWornItems == wornItems) {
+				visibleWornItems = wornItems.clone();
+			}
+			visibleWornItems[AppearanceId.SLOT_SHIELD] = visibleWornItems[AppearanceId.SLOT_WEAPON];
+			visibleWornItems[AppearanceId.SLOT_WEAPON] = AppearanceId.NOTHING.id();
+		}
+
 		return visibleWornItems;
 	}
 
