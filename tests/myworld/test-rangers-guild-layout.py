@@ -487,13 +487,16 @@ def ensure_rangers_guild_dragon_vendor():
         "new Shop(false, 60000, 100, 55, 3,",
         "new Item(ItemId.DRAGON_LONGBOW.id(), 1)",
         "new Item(ItemId.DRAGON_CROSSBOW.id(), 1)",
-        "new Item(ItemId.DRAGON_ARROWS.id(), 1000)",
-        "new Item(ItemId.POISON_DRAGON_ARROWS.id(), 1000)",
-        "new Item(ItemId.DRAGON_BOLTS.id(), 1000)",
-        "new Item(ItemId.POISON_DRAGON_BOLTS.id(), 1000)",
         "Welcome to the Rangers Guild specialist shop",
     ):
         require(fragment in dragon_shop, f"Rangers Guild dragon shop is missing: {fragment}")
+    for fragment in (
+        "ItemId.DRAGON_ARROWS",
+        "ItemId.POISON_DRAGON_ARROWS",
+        "ItemId.DRAGON_BOLTS",
+        "ItemId.POISON_DRAGON_BOLTS",
+    ):
+        require(fragment not in dragon_shop, f"Rangers Guild dragon shop should not sell points-only ammo: {fragment}")
 
     client = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     for fragment in (
@@ -563,12 +566,17 @@ def ensure_rangers_guild_points_vendor():
         "new Reward(ItemId.MITHRIL_THROWING_DART, 6)",
         "new Reward(ItemId.TITAN_STEEL_ARROWS, 8)",
         "new Reward(ItemId.ADAMANTITE_BOLTS, 10)",
+        "new Reward(ItemId.DRAGON_ARROWS, 30)",
+        "new Reward(ItemId.POISON_DRAGON_ARROWS, 30)",
+        "new Reward(ItemId.DRAGON_BOLTS, 30)",
+        "new Reward(ItemId.POISON_DRAGON_BOLTS, 30)",
         "new Reward(ItemId.ORICHALCUM_SHURIKEN, 14)",
         "new Reward(ItemId.RUNE_SHURIKEN, 20)",
         "Rangers Guild points come from ranged experience in the basement",
     ):
         require(fragment in points_vendor, f"Rangers Guild points vendor is missing: {fragment}")
-    require("ItemId.DRAGON_" not in points_vendor, "Rangers Guild points vendor should not sell dragon ranged items")
+    require("ItemId.DRAGON_LONGBOW" not in points_vendor, "Rangers Guild points vendor should not sell dragon longbows")
+    require("ItemId.DRAGON_CROSSBOW" not in points_vendor, "Rangers Guild points vendor should not sell dragon crossbows")
 
     client = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     for fragment in (

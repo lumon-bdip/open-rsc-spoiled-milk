@@ -23,16 +23,16 @@ public final class Valaine extends AbstractShop {
 		new Item(ItemId.ORICHALCUM_KITE_SHIELD.id(), 1),
 		new Item(ItemId.ORICHALCUM_PLATE_MAIL_LEGS.id(), 1),
 		new Item(ItemId.ORICHALCUM_PLATE_MAIL_BODY.id(), 1),
-		new Item(ItemId.ORICHALCUM_DAGGER.id(), 1),
-		new Item(ItemId.ORICHALCUM_SHORT_SWORD.id(), 1),
-		new Item(ItemId.ORICHALCUM_LONG_SWORD.id(), 1),
-		new Item(ItemId.ORICHALCUM_SCIMITAR.id(), 1),
-		new Item(ItemId.ORICHALCUM_2_HANDED_SWORD.id(), 1),
-		new Item(ItemId.ORICHALCUM_AXE.id(), 1),
-		new Item(ItemId.ORICHALCUM_BATTLE_AXE.id(), 1),
-		new Item(ItemId.ORICHALCUM_MACE.id(), 1),
-		new Item(ItemId.ORICHALCUM_SPEAR.id(), 1),
-		new Item(ItemId.ORICHALCUM_SCYTHE.id(), 1));
+		new Item(ItemId.RUNE_DAGGER.id(), 1),
+		new Item(ItemId.RUNE_SHORT_SWORD.id(), 1),
+		new Item(ItemId.RUNE_LONG_SWORD.id(), 1),
+		new Item(ItemId.RUNE_SCIMITAR.id(), 1),
+		new Item(ItemId.RUNE_2_HANDED_SWORD.id(), 1),
+		new Item(ItemId.RUNE_AXE.id(), 1),
+		new Item(ItemId.RUNE_BATTLE_AXE.id(), 1),
+		new Item(ItemId.RUNE_MACE.id(), 1),
+		new Item(ItemId.RUNE_SPEAR.id(), 1),
+		new Item(ItemId.RUNE_SCYTHE.id(), 1));
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {

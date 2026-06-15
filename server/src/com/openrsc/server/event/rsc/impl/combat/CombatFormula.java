@@ -261,11 +261,7 @@ public class CombatFormula {
 	public static boolean usesDragonRangedBreathWeapon(final Mob source, final int bowId, final int arrowId) {
 		return source instanceof Player
 			&& (bowId == DRAGON_CROSSBOW.id()
-				|| bowId == DRAGON_LONGBOW.id()
-				|| arrowId == DRAGON_ARROWS.id()
-				|| arrowId == POISON_DRAGON_ARROWS.id()
-				|| arrowId == DRAGON_BOLTS.id()
-				|| arrowId == POISON_DRAGON_BOLTS.id());
+				|| bowId == DRAGON_LONGBOW.id());
 	}
 
 	private static int getDragonBreathMainAttackMax(final Mob source, final int attackMax) {

@@ -90,6 +90,8 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 			new Reward(ItemId.ADAMANTITE_ARROWS, 10),
 			new Reward(ItemId.ORICHALCUM_ARROWS, 14),
 			new Reward(ItemId.RUNE_ARROWS, 20),
+			new Reward(ItemId.DRAGON_ARROWS, 30),
+			new Reward(ItemId.POISON_DRAGON_ARROWS, 30),
 		}),
 		new Category("Bolts", ItemId.BRONZE_BOLTS, new Reward[] {
 			new Reward(ItemId.CROSSBOW_BOLTS, 1),
@@ -102,6 +104,8 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 			new Reward(ItemId.ADAMANTITE_BOLTS, 10),
 			new Reward(ItemId.ORICHALCUM_BOLTS, 14),
 			new Reward(ItemId.RUNE_BOLTS, 20),
+			new Reward(ItemId.DRAGON_BOLTS, 30),
+			new Reward(ItemId.POISON_DRAGON_BOLTS, 30),
 		}),
 		new Category("Shuriken", ItemId.BRONZE_SHURIKEN, new Reward[] {
 			new Reward(ItemId.TIN_SHURIKEN, 1),

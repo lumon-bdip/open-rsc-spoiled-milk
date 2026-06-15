@@ -239,6 +239,25 @@ def ensure_dragon_weapon_breath_split() -> None:
     require_text(range_event, "rollDragonRangedBreathDamage(player, weaponId, ammoId, skillCape)", "Dragon ranged breath damage handoff")
     require_text(projectile_event, "applyDragonWeaponBreathDamage", "Dragon projectile breath hit application")
 
+    dragon_ranged_match = re.search(
+        r"public static boolean usesDragonRangedBreathWeapon\(.*?\n\t}",
+        combat_formula,
+        re.DOTALL,
+    )
+    if dragon_ranged_match is None:
+        fail("Dragon ranged breath eligibility method is missing")
+    dragon_ranged_breath = dragon_ranged_match.group(0)
+    require_text(dragon_ranged_breath, "bowId == DRAGON_CROSSBOW.id()", "Dragon crossbow breath eligibility")
+    require_text(dragon_ranged_breath, "bowId == DRAGON_LONGBOW.id()", "Dragon longbow breath eligibility")
+    for ammo in (
+        "DRAGON_ARROWS",
+        "POISON_DRAGON_ARROWS",
+        "DRAGON_BOLTS",
+        "POISON_DRAGON_BOLTS",
+    ):
+        if ammo in dragon_ranged_breath:
+            fail(f"{ammo} should scale as normal ranged ammo, not trigger dragon breath true damage")
+
 
 def main() -> None:
     item_entries = load_json_array(ITEMS_PATH, "items")
@@ -355,7 +374,10 @@ def main() -> None:
     require_exact(items_by_id, 656, "rangedOffense", 44, "Magic longbow")
     require_exact(items_by_id, 646, "rangedOffense", 24, "Rune arrows")
     require_exact(items_by_id, 1454, "rangedOffense", 48, "Dragon longbow tier-10 fire-breath profile")
-    require_exact(items_by_id, 1449, "rangedOffense", 24, "Dragon arrows tier-10 fire-breath profile")
+    require_exact(items_by_id, 1449, "rangedOffense", 26, "Dragon arrows normal ammo scaling")
+    require_exact(items_by_id, 1450, "rangedOffense", 26, "Poison dragon arrows normal ammo scaling")
+    require_exact(items_by_id, 1451, "rangedOffense", 22, "Dragon bolts normal ammo scaling")
+    require_exact(items_by_id, 1452, "rangedOffense", 22, "Poison dragon bolts normal ammo scaling")
     require_uniform(items_by_id, [2228, 2229, 2230, 2231, 2232, 2233, 2234, 2235, 2236, 2237], "magicOffense", 2, "Blessed staff explicit magic offense")
     require_uniform(items_by_id, [62, 28, 63, 423, 64, 65, 396], "weaponSpeed", 5, "Dagger family speed")
     require_uniform(items_by_id, [560, 559, 561, 565, 562, 564, 563], "weaponSpeed", 5, "Poisoned dagger family speed")
