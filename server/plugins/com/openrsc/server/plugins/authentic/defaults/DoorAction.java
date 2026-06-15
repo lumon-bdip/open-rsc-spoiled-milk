@@ -729,18 +729,6 @@ public class DoorAction {
 				break;
 
 			case DOOR_WIZARDS_GUILD: // Magic Guild Door
-				if (isRangersGuildDoor(obj)) {
-					if (getCurrentLevel(player, Skill.RANGED.id()) < 66) {
-						Npc ranger = player.getWorld().getNpc(NpcId.RANGERS_GUILD_RANGER.id(), 493, 499, 461, 464);
-						if (ranger != null) {
-							npcsay(player, ranger, "Sorry, only skilled rangers are allowed in here");
-						}
-						player.message("You need a ranged level of 66 to enter the guild");
-					} else {
-						doDoor(obj, player);
-					}
-					break;
-				}
 				if (obj.getX() != 599 || obj.getY() != 757) {
 					break;
 				}
@@ -1471,12 +1459,6 @@ public class DoorAction {
 			// Unwield so they cannot be stationary with it
 			player.unwieldMembersItems();
 		}*/
-	}
-
-	private static boolean isRangersGuildDoor(final GameObject obj) {
-		return obj.getDirection() == 0
-			&& obj.getY() == 464
-			&& (obj.getX() == 495 || obj.getX() == 496);
 	}
 
 	// replaces but does not notify the player of the action

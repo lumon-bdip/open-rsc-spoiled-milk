@@ -24,11 +24,14 @@ public final class DoSkillInterface {
 	private int selectedRecipeIndex = -1;
 	private int productionQuantity = 1;
 	private int inputItemId = -1;
+	private int productionResourceAmount = 0;
 	private int productionInterfaceId = -1;
 	private static final int PRODUCTION_SMITHING_MATERIAL = 4;
 	private static final int PRODUCTION_FURNACE_CATEGORY = 5;
 	private static final int PRODUCTION_FURNACE_MATERIAL = 6;
 	private static final int PRODUCTION_TELEPORT_DESTINATION = 7;
+	private static final int PRODUCTION_RANGERS_REDEMPTION_CATEGORY = 8;
+	private static final int PRODUCTION_RANGERS_REDEMPTION = 9;
 
 	public DoSkillInterface(mudclient mc) {
 		this.mc = mc;
@@ -313,10 +316,15 @@ public final class DoSkillInterface {
 			if (hovered) {
 				if (isFurnaceCategoryPicker()) {
 					hoverText = furnaceCategoryName(recipe.getItemId());
+				} else if (isRangersRedemptionCategoryPicker()) {
+					hoverText = rangersRedemptionCategoryName(recipe.getItemId());
 				} else if (isTeleportDestinationPicker()) {
 					hoverText = altarDestinationName(recipe.getItemId());
 				} else if (isMetalPicker()) {
 					hoverText = metalName(def);
+				} else if (isRangersRedemptionInterface()) {
+					hoverText = def.getName() + " - " + recipe.getInputAmount()
+						+ " pts each - receive " + recipe.getOutputAmount();
 				} else {
 					hoverText = def.getName() + " - lvl " + recipe.getRequiredLevel()
 						+ " - produces " + recipe.getOutputAmount() + " "
@@ -342,14 +350,22 @@ public final class DoSkillInterface {
 			String selectedHeader;
 			if (isFurnaceCategoryPicker()) {
 				selectedHeader = furnaceCategoryName(selected.getItemId());
+			} else if (isRangersRedemptionCategoryPicker()) {
+				selectedHeader = rangersRedemptionCategoryName(selected.getItemId());
 			} else if (isTeleportDestinationPicker()) {
 				selectedHeader = altarDestinationName(selected.getItemId());
+			} else if (isRangersRedemptionInterface()) {
+				selectedHeader = def.getName();
 			} else {
 				selectedHeader = (isMetalPicker() ? metalName(def) : def.getName())
 					+ " - Level " + selected.getRequiredLevel();
 			}
 			drawStringRightAligned(selectedHeader, selectedDetailRightX, footerY + 2, 3, selected.isLevelMet() ? textColour : 0xFF5555);
-			if (selected.hasIngredientDetails()) {
+			if (isRangersRedemptionCategoryPicker()) {
+				drawStringRightAligned("Choose this category", selectedDetailRightX, footerY + 20, 1, textColour);
+			} else if (isRangersRedemptionInterface()) {
+				drawRangersRedemptionDetails(selected, selectedDetailRightX, footerY);
+			} else if (selected.hasIngredientDetails()) {
 				String ingredientHoverText = drawProductionIngredientCosts(selected, materialDetailX, footerY + 4);
 				if (!ingredientHoverText.isEmpty()) {
 					hoverText = ingredientHoverText;
@@ -376,22 +392,42 @@ public final class DoSkillInterface {
 		}
 
 		if (showQuantityControls) {
-			drawQuantityButton(quantityX, quantityY, 26, 20, "<<", -5);
-			drawQuantityButton(quantityX + 30, quantityY, 26, 20, "<", -1);
-			mc.getSurface().drawBoxAlpha(quantityX + 60, quantityY, 56, 20, 0x222222, 192);
-			mc.getSurface().drawBoxBorder(quantityX + 60, 56, quantityY, 20, 0x777775);
-			String quantityText = Integer.toString(productionQuantity);
-			drawString(quantityText, quantityX + 88 - (mc.getSurface().stringWidth(2, quantityText) / 2), quantityY + 15, 2, textColour);
-			drawQuantityButton(quantityX + 120, quantityY, 26, 20, ">", 1);
-			drawQuantityButton(quantityX + 150, quantityY, 26, 20, ">>", 5);
+			if (isRangersRedemptionInterface()) {
+				drawQuantityButton(quantityX - 44, quantityY, 30, 20, "-100", -100);
+				drawQuantityButton(quantityX - 10, quantityY, 26, 20, "-50", -50);
+				drawQuantityButton(quantityX + 20, quantityY, 24, 20, "-1", -1);
+				mc.getSurface().drawBoxAlpha(quantityX + 48, quantityY, 50, 20, 0x222222, 192);
+				mc.getSurface().drawBoxBorder(quantityX + 48, 50, quantityY, 20, 0x777775);
+				String quantityText = Integer.toString(productionQuantity);
+				drawString(quantityText, quantityX + 73 - (mc.getSurface().stringWidth(2, quantityText) / 2), quantityY + 15, 2, textColour);
+				drawQuantityButton(quantityX + 102, quantityY, 24, 20, "+1", 1);
+				drawQuantityButton(quantityX + 130, quantityY, 26, 20, "+50", 50);
+				drawQuantityButton(quantityX + 160, quantityY, 30, 20, "+100", 100);
+			} else {
+				drawQuantityButton(quantityX, quantityY, 26, 20, "<<", -5);
+				drawQuantityButton(quantityX + 30, quantityY, 26, 20, "<", -1);
+				mc.getSurface().drawBoxAlpha(quantityX + 60, quantityY, 56, 20, 0x222222, 192);
+				mc.getSurface().drawBoxBorder(quantityX + 60, 56, quantityY, 20, 0x777775);
+				String quantityText = Integer.toString(productionQuantity);
+				drawString(quantityText, quantityX + 88 - (mc.getSurface().stringWidth(2, quantityText) / 2), quantityY + 15, 2, textColour);
+				drawQuantityButton(quantityX + 120, quantityY, 26, 20, ">", 1);
+				drawQuantityButton(quantityX + 150, quantityY, 26, 20, ">>", 5);
+			}
 		}
 
 		boolean startEnabled = selected != null && selected.isCraftable();
-		String actionLabel = isTeleportDestinationPicker() ? "Teleport" : "Start";
+		if (isRangersRedemptionInterface()) {
+			startEnabled = selected != null && selected.isLevelMet()
+				&& getRangersRedemptionTotalCost(selected) <= productionResourceAmount;
+		}
+		String actionLabel = isTeleportDestinationPicker() ? "Teleport"
+			: isRangersRedemptionCategoryPicker() ? "Next"
+			: isRangersRedemptionInterface() ? "Redeem" : "Start";
+		final boolean canStart = startEnabled;
 		this.drawButton(x + width - 92, quantityY - 1, 76, 22, actionLabel, 3, false, new ButtonHandler() {
 			@Override
 			void handle() {
-				if (startEnabled) {
+				if (canStart) {
 					sendProductionStart();
 				}
 			}
@@ -417,9 +453,17 @@ public final class DoSkillInterface {
 		return productionInterfaceId == PRODUCTION_TELEPORT_DESTINATION;
 	}
 
+	private boolean isRangersRedemptionCategoryPicker() {
+		return productionInterfaceId == PRODUCTION_RANGERS_REDEMPTION_CATEGORY;
+	}
+
+	private boolean isRangersRedemptionInterface() {
+		return productionInterfaceId == PRODUCTION_RANGERS_REDEMPTION;
+	}
+
 	private boolean isPickerInterface() {
 		return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker()
-			|| isTeleportDestinationPicker();
+			|| isTeleportDestinationPicker() || isRangersRedemptionCategoryPicker();
 	}
 
 	private boolean isMetalPicker() {
@@ -464,6 +508,49 @@ public final class DoSkillInterface {
 			default:
 				return EntityHandler.getItemDef(itemId).getName();
 		}
+	}
+
+	private String rangersRedemptionCategoryName(int itemId) {
+		switch (itemId) {
+			case 188:
+				return "Longbows";
+			case 189:
+				return "Shortbows";
+			case 60:
+				return "Crossbows";
+			case 1076:
+				return "Throwing Knives";
+			case 1013:
+				return "Darts";
+			case 11:
+				return "Arrows";
+			case 2180:
+				return "Bolts";
+			case 3210:
+				return "Shuriken";
+			default:
+				return EntityHandler.getItemDef(itemId).getName();
+		}
+	}
+
+	private void drawRangersRedemptionDetails(ProductionRecipeView selected, int selectedDetailRightX, int footerY) {
+		long totalCost = getRangersRedemptionTotalCost(selected);
+		long totalOutput = (long) selected.getOutputAmount() * (long) productionQuantity;
+		drawStringRightAligned("Owned: " + formatPointCount(productionResourceAmount) + " pts", selectedDetailRightX, footerY + 17, 1, textColour);
+		drawStringRightAligned("Cost: " + formatPointCount(totalCost) + " pts", selectedDetailRightX, footerY + 32, 1,
+			totalCost <= productionResourceAmount ? textColour : 0xFFAA55);
+		drawStringRightAligned("Receive: " + formatPointCount(totalOutput) + " total", selectedDetailRightX, footerY + 47, 1, textColour);
+	}
+
+	private long getRangersRedemptionTotalCost(ProductionRecipeView selected) {
+		if (selected == null) {
+			return 0;
+		}
+		return (long) selected.getInputAmount() * (long) productionQuantity;
+	}
+
+	private String formatPointCount(long value) {
+		return Long.toString(Math.max(0, value));
 	}
 
 	private String metalName(ItemDef def) {
@@ -552,6 +639,8 @@ public final class DoSkillInterface {
 				productionQuantity += delta;
 				if (productionQuantity < 1) {
 					productionQuantity = 1;
+				} else if (productionQuantity > 1000000) {
+					productionQuantity = 1000000;
 				}
 			}
 		});
@@ -582,12 +671,13 @@ public final class DoSkillInterface {
 		return productionRecipes.get(selectedRecipeIndex);
 	}
 
-	public void openProductionInterface(int interfaceId, String title, int inputItemId, int selectedRecipeId, int quantity,
+	public void openProductionInterface(int interfaceId, String title, int inputItemId, int resourceAmount, int selectedRecipeId, int quantity,
 		int[] itemIds, int[] requiredLevels, int[] inputAmounts, int[] outputAmounts, int[] flags,
 		int[][] ingredientItemIds, int[][] ingredientFallbackItemIds, int[][] ingredientAmounts) {
 		this.title = title;
 		this.productionInterfaceId = interfaceId;
 		this.inputItemId = inputItemId;
+		this.productionResourceAmount = Math.max(0, resourceAmount);
 		this.productionQuantity = Math.max(1, quantity);
 		this.productionRecipes.clear();
 		this.productionMode = true;
@@ -614,6 +704,7 @@ public final class DoSkillInterface {
 		this.selectedRecipeIndex = -1;
 		this.productionQuantity = 1;
 		this.inputItemId = -1;
+		this.productionResourceAmount = 0;
 		this.productionInterfaceId = -1;
 		setVisible(false);
 	}

@@ -12,16 +12,24 @@ public class ProductionSession {
 	public static final int TYPE_FURNACE_CATEGORY = 5;
 	public static final int TYPE_FURNACE_MATERIAL = 6;
 	public static final int TYPE_TELEPORT_DESTINATION = 7;
+	public static final int TYPE_RANGERS_REDEMPTION_CATEGORY = 8;
+	public static final int TYPE_RANGERS_REDEMPTION = 9;
 
 	private final int type;
 	private final String title;
 	private final int inputItemId;
+	private final int resourceAmount;
 	private final List<ProductionRecipe> recipes;
 
 	public ProductionSession(int type, String title, int inputItemId, List<ProductionRecipe> recipes) {
+		this(type, title, inputItemId, 0, recipes);
+	}
+
+	public ProductionSession(int type, String title, int inputItemId, int resourceAmount, List<ProductionRecipe> recipes) {
 		if (type != TYPE_SMITHING && type != TYPE_CRAFTING && type != TYPE_SMELTING
 			&& type != TYPE_SMITHING_MATERIAL && type != TYPE_FURNACE_CATEGORY
-			&& type != TYPE_FURNACE_MATERIAL && type != TYPE_TELEPORT_DESTINATION) {
+			&& type != TYPE_FURNACE_MATERIAL && type != TYPE_TELEPORT_DESTINATION
+			&& type != TYPE_RANGERS_REDEMPTION_CATEGORY && type != TYPE_RANGERS_REDEMPTION) {
 			throw new IllegalArgumentException("Unknown production session type: " + type);
 		}
 		if (title == null || title.isEmpty()) {
@@ -33,6 +41,7 @@ public class ProductionSession {
 		this.type = type;
 		this.title = title;
 		this.inputItemId = inputItemId;
+		this.resourceAmount = Math.max(0, resourceAmount);
 		this.recipes = Collections.unmodifiableList(new ArrayList<>(recipes));
 	}
 
@@ -46,6 +55,10 @@ public class ProductionSession {
 
 	public int getInputItemId() {
 		return inputItemId;
+	}
+
+	public int getResourceAmount() {
+		return resourceAmount;
 	}
 
 	public List<ProductionRecipe> getRecipes() {

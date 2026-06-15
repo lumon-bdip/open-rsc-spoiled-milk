@@ -3,74 +3,118 @@ package com.openrsc.server.plugins.custom.npcs;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.content.RangersGuildPoints;
+import com.openrsc.server.content.production.ProductionRecipe;
+import com.openrsc.server.content.production.ProductionSession;
+import com.openrsc.server.content.production.ProductionStarter;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.OpNpcTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.openrsc.server.plugins.Functions.*;
+import static com.openrsc.server.plugins.Functions.npcsay;
 
 public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
-	private static final int REWARDS_PER_PAGE = 4;
-
-	private static final Reward[] BOW_REWARDS = new Reward[] {
-		new Reward("Magic shortbow", ItemId.MAGIC_SHORTBOW, 1, 350),
-		new Reward("Magic longbow", ItemId.MAGIC_LONGBOW, 1, 400),
-		new Reward("Ebony shortbow", ItemId.EBONY_SHORTBOW, 1, 500),
-		new Reward("Ebony longbow", ItemId.EBONY_LONGBOW, 1, 575),
-		new Reward("Blood shortbow", ItemId.BLOOD_SHORTBOW, 1, 700),
-		new Reward("Blood longbow", ItemId.BLOOD_LONGBOW, 1, 800),
-		new Reward("Magic crossbow", ItemId.MAGIC_CROSSBOW, 1, 500),
-		new Reward("Ebony crossbow", ItemId.EBONY_CROSSBOW, 1, 650),
-		new Reward("Blood crossbow", ItemId.BLOOD_CROSSBOW, 1, 850),
-	};
-
-	private static final Reward[] AMMO_REWARDS = new Reward[] {
-		new Reward("100 rune arrows", ItemId.RUNE_ARROWS, 100, 100),
-		new Reward("100 poison rune arrows", ItemId.POISON_RUNE_ARROWS, 100, 130),
-		new Reward("100 titan arrows", ItemId.TITAN_STEEL_ARROWS, 100, 120),
-		new Reward("100 adamantite arrows", ItemId.ADAMANTITE_ARROWS, 100, 140),
-		new Reward("100 poison adam arrows", ItemId.POISON_ADAMANTITE_ARROWS, 100, 175),
-		new Reward("100 orichalcum arrows", ItemId.ORICHALCUM_ARROWS, 100, 180),
-		new Reward("100 rune bolts", ItemId.RUNE_BOLTS, 100, 100),
-		new Reward("100 poison rune bolts", ItemId.POISON_RUNE_BOLTS, 100, 130),
-		new Reward("100 titan bolts", ItemId.TITAN_STEEL_BOLTS, 100, 120),
-		new Reward("100 poison titan bolts", ItemId.POISON_TITAN_STEEL_BOLTS, 100, 150),
-		new Reward("100 adamantite bolts", ItemId.ADAMANTITE_BOLTS, 100, 140),
-		new Reward("100 poison adam bolts", ItemId.POISON_ADAMANTITE_BOLTS, 100, 175),
-		new Reward("100 orichalcum bolts", ItemId.ORICHALCUM_BOLTS, 100, 180),
-		new Reward("100 poison orich bolts", ItemId.POISON_ORICHALCUM_BOLTS, 100, 225),
-	};
-
-	private static final Reward[] THROWN_REWARDS = new Reward[] {
-		new Reward("100 rune darts", ItemId.RUNE_THROWING_DART, 100, 100),
-		new Reward("100 poison rune darts", ItemId.POISONED_RUNE_THROWING_DART, 100, 130),
-		new Reward("100 titan darts", ItemId.TITAN_STEEL_THROWING_DART, 100, 120),
-		new Reward("100 poison titan darts", ItemId.POISONED_TITAN_STEEL_THROWING_DART, 100, 150),
-		new Reward("100 adamantite darts", ItemId.ADAMANTITE_THROWING_DART, 100, 140),
-		new Reward("100 poison adam darts", ItemId.POISONED_ADAMANTITE_THROWING_DART, 100, 175),
-		new Reward("100 orichalcum darts", ItemId.ORICHALCUM_THROWING_DART, 100, 180),
-		new Reward("100 poison orich darts", ItemId.POISONED_ORICHALCUM_THROWING_DART, 100, 225),
-		new Reward("100 rune knives", ItemId.RUNE_THROWING_KNIFE, 100, 100),
-		new Reward("100 poison rune knives", ItemId.POISONED_RUNE_THROWING_KNIFE, 100, 130),
-		new Reward("100 titan knives", ItemId.TITAN_STEEL_THROWING_KNIFE, 100, 120),
-		new Reward("100 poison titan knives", ItemId.POISONED_TITAN_STEEL_THROWING_KNIFE, 100, 150),
-		new Reward("100 adamantite knives", ItemId.ADAMANTITE_THROWING_KNIFE, 100, 140),
-		new Reward("100 poison adam knives", ItemId.POISONED_ADAMANTITE_THROWING_KNIFE, 100, 175),
-		new Reward("100 orichalcum knives", ItemId.ORICHALCUM_THROWING_KNIFE, 100, 180),
-		new Reward("100 poison orich knives", ItemId.POISONED_ORICHALCUM_THROWING_KNIFE, 100, 225),
-		new Reward("100 rune shuriken", ItemId.RUNE_SHURIKEN, 100, 100),
-		new Reward("100 poison rune shuriken", ItemId.POISONED_RUNE_SHURIKEN, 100, 130),
-		new Reward("100 titan shuriken", ItemId.TITAN_STEEL_SHURIKEN, 100, 120),
-		new Reward("100 poison titan shuriken", ItemId.POISONED_TITAN_STEEL_SHURIKEN, 100, 150),
-		new Reward("100 adamantite shuriken", ItemId.ADAMANTITE_SHURIKEN, 100, 140),
-		new Reward("100 poison adam shuriken", ItemId.POISONED_ADAMANTITE_SHURIKEN, 100, 175),
-		new Reward("100 orichalcum shuriken", ItemId.ORICHALCUM_SHURIKEN, 100, 180),
-		new Reward("100 poison orich shuriken", ItemId.POISONED_ORICHALCUM_SHURIKEN, 100, 225),
+	private static final Category[] CATEGORIES = new Category[] {
+		new Category("Longbows", ItemId.LONGBOW, new Reward[] {
+			new Reward(ItemId.LONGBOW, 25),
+			new Reward(ItemId.OAK_LONGBOW, 40),
+			new Reward(ItemId.PINE_LONGBOW, 60),
+			new Reward(ItemId.WILLOW_LONGBOW, 90),
+			new Reward(ItemId.PALM_LONGBOW, 125),
+			new Reward(ItemId.MAPLE_LONGBOW, 175),
+			new Reward(ItemId.YEW_LONGBOW, 250),
+			new Reward(ItemId.MAGIC_LONGBOW, 400),
+			new Reward(ItemId.EBONY_LONGBOW, 575),
+			new Reward(ItemId.BLOOD_LONGBOW, 800),
+		}),
+		new Category("Shortbows", ItemId.SHORTBOW, new Reward[] {
+			new Reward(ItemId.SHORTBOW, 20),
+			new Reward(ItemId.OAK_SHORTBOW, 35),
+			new Reward(ItemId.PINE_SHORTBOW, 50),
+			new Reward(ItemId.WILLOW_SHORTBOW, 75),
+			new Reward(ItemId.PALM_SHORTBOW, 110),
+			new Reward(ItemId.MAPLE_SHORTBOW, 155),
+			new Reward(ItemId.YEW_SHORTBOW, 225),
+			new Reward(ItemId.MAGIC_SHORTBOW, 350),
+			new Reward(ItemId.EBONY_SHORTBOW, 500),
+			new Reward(ItemId.BLOOD_SHORTBOW, 700),
+		}),
+		new Category("Crossbows", ItemId.CROSSBOW, new Reward[] {
+			new Reward(ItemId.CROSSBOW, 25),
+			new Reward(ItemId.OAK_CROSSBOW, 50),
+			new Reward(ItemId.WILLOW_CROSSBOW, 80),
+			new Reward(ItemId.PALM_CROSSBOW, 125),
+			new Reward(ItemId.MAPLE_CROSSBOW, 175),
+			new Reward(ItemId.YEW_CROSSBOW, 250),
+			new Reward(ItemId.MAGIC_CROSSBOW, 500),
+			new Reward(ItemId.EBONY_CROSSBOW, 650),
+			new Reward(ItemId.BLOOD_CROSSBOW, 850),
+		}),
+		new Category("Throwing Knives", ItemId.BRONZE_THROWING_KNIFE, new Reward[] {
+			new Reward(ItemId.TIN_THROWING_KNIFE, 1),
+			new Reward(ItemId.COPPER_THROWING_KNIFE, 1),
+			new Reward(ItemId.BRONZE_THROWING_KNIFE, 1),
+			new Reward(ItemId.IRON_THROWING_KNIFE, 1),
+			new Reward(ItemId.STEEL_THROWING_KNIFE, 1),
+			new Reward(ItemId.MITHRIL_THROWING_KNIFE, 1),
+			new Reward(ItemId.TITAN_STEEL_THROWING_KNIFE, 2),
+			new Reward(ItemId.ADAMANTITE_THROWING_KNIFE, 2),
+			new Reward(ItemId.ORICHALCUM_THROWING_KNIFE, 2),
+			new Reward(ItemId.RUNE_THROWING_KNIFE, 2),
+		}),
+		new Category("Darts", ItemId.BRONZE_THROWING_DART, new Reward[] {
+			new Reward(ItemId.TIN_THROWING_DART, 1),
+			new Reward(ItemId.COPPER_THROWING_DART, 1),
+			new Reward(ItemId.BRONZE_THROWING_DART, 1),
+			new Reward(ItemId.IRON_THROWING_DART, 1),
+			new Reward(ItemId.STEEL_THROWING_DART, 1),
+			new Reward(ItemId.MITHRIL_THROWING_DART, 1),
+			new Reward(ItemId.TITAN_STEEL_THROWING_DART, 2),
+			new Reward(ItemId.ADAMANTITE_THROWING_DART, 2),
+			new Reward(ItemId.ORICHALCUM_THROWING_DART, 2),
+			new Reward(ItemId.RUNE_THROWING_DART, 2),
+		}),
+		new Category("Arrows", ItemId.BRONZE_ARROWS, new Reward[] {
+			new Reward(ItemId.TIN_ARROWS, 1),
+			new Reward(ItemId.COPPER_ARROWS, 1),
+			new Reward(ItemId.BRONZE_ARROWS, 1),
+			new Reward(ItemId.IRON_ARROWS, 1),
+			new Reward(ItemId.STEEL_ARROWS, 1),
+			new Reward(ItemId.MITHRIL_ARROWS, 1),
+			new Reward(ItemId.TITAN_STEEL_ARROWS, 2),
+			new Reward(ItemId.ADAMANTITE_ARROWS, 2),
+			new Reward(ItemId.ORICHALCUM_ARROWS, 2),
+			new Reward(ItemId.RUNE_ARROWS, 2),
+		}),
+		new Category("Bolts", ItemId.BRONZE_BOLTS, new Reward[] {
+			new Reward(ItemId.CROSSBOW_BOLTS, 1),
+			new Reward(ItemId.COPPER_BOLTS, 1),
+			new Reward(ItemId.BRONZE_BOLTS, 1),
+			new Reward(ItemId.IRON_BOLTS, 1),
+			new Reward(ItemId.STEEL_BOLTS, 1),
+			new Reward(ItemId.MITHRIL_BOLTS, 1),
+			new Reward(ItemId.TITAN_STEEL_BOLTS, 2),
+			new Reward(ItemId.ADAMANTITE_BOLTS, 2),
+			new Reward(ItemId.ORICHALCUM_BOLTS, 2),
+			new Reward(ItemId.RUNE_BOLTS, 2),
+		}),
+		new Category("Shuriken", ItemId.BRONZE_SHURIKEN, new Reward[] {
+			new Reward(ItemId.TIN_SHURIKEN, 1),
+			new Reward(ItemId.COPPER_SHURIKEN, 1),
+			new Reward(ItemId.BRONZE_SHURIKEN, 1),
+			new Reward(ItemId.IRON_SHURIKEN, 1),
+			new Reward(ItemId.STEEL_SHURIKEN, 1),
+			new Reward(ItemId.MITHRIL_SHURIKEN, 1),
+			new Reward(ItemId.TITAN_STEEL_SHURIKEN, 2),
+			new Reward(ItemId.ADAMANTITE_SHURIKEN, 2),
+			new Reward(ItemId.ORICHALCUM_SHURIKEN, 2),
+			new Reward(ItemId.RUNE_SHURIKEN, 2),
+		}),
 	};
 
 	@Override
@@ -83,8 +127,8 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 		npcsay(player, npc,
 			"Rangers Guild points come from ranged experience in the basement",
 			"The better your training, the more points you earn",
-			"I can redeem them for high-end ranged supplies");
-		openRedeemMenu(player, npc);
+			"I can redeem them for ranged supplies");
+		openCategoryInterface(player);
 	}
 
 	@Override
@@ -94,113 +138,158 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 
 	@Override
 	public void onOpNpc(Player player, Npc npc, String command) {
-		openRedeemMenu(player, npc);
+		openCategoryInterface(player);
+	}
+
+	public static boolean beginRedemptionFromInterface(Player player, ProductionSession session, int itemId, int quantity) {
+		if (session == null) {
+			return false;
+		}
+		if (session.isType(ProductionSession.TYPE_RANGERS_REDEMPTION_CATEGORY)) {
+			Category category = getCategoryByIcon(itemId);
+			if (category == null) {
+				return false;
+			}
+			openRewardInterface(player, category);
+			return true;
+		}
+		if (!session.isType(ProductionSession.TYPE_RANGERS_REDEMPTION)) {
+			return false;
+		}
+
+		Reward reward = getReward(itemId);
+		if (reward == null) {
+			return false;
+		}
+		return redeem(player, reward, quantity);
+	}
+
+	private static void openCategoryInterface(Player player) {
+		List<ProductionRecipe> recipes = new ArrayList<ProductionRecipe>();
+		for (Category category : CATEGORIES) {
+			recipes.add(new ProductionRecipe(category.icon.id(), 1, 1, 1, true, true));
+		}
+		ProductionSession session = new ProductionSession(
+			ProductionSession.TYPE_RANGERS_REDEMPTION_CATEGORY,
+			"Redeem Rangers Guild points",
+			-1,
+			RangersGuildPoints.getPoints(player),
+			recipes);
+		player.setAttribute("production_session", session);
+		player.setAttribute("production_starter", (ProductionStarter) RangersGuildPointsVendor::beginRedemptionFromInterface);
+		ActionSender.showProductionInterface(player, session);
+	}
+
+	private static void openRewardInterface(Player player, Category category) {
+		int points = RangersGuildPoints.getPoints(player);
+		List<ProductionRecipe> recipes = new ArrayList<ProductionRecipe>();
+		for (Reward reward : category.rewards) {
+			recipes.add(new ProductionRecipe(
+				reward.itemId.id(),
+				1,
+				reward.cost,
+				reward.amount,
+				true,
+				points >= reward.cost));
+		}
+		ProductionSession session = new ProductionSession(
+			ProductionSession.TYPE_RANGERS_REDEMPTION,
+			"Redeem points - " + category.label,
+			-1,
+			points,
+			recipes);
+		player.setAttribute("production_session", session);
+		player.setAttribute("production_starter", (ProductionStarter) RangersGuildPointsVendor::beginRedemptionFromInterface);
+		ActionSender.showProductionInterface(player, session);
+	}
+
+	private static boolean redeem(Player player, Reward reward, int quantity) {
+		if (quantity < 1) {
+			return false;
+		}
+
+		long totalCost = (long) reward.cost * (long) quantity;
+		long totalAmount = (long) reward.amount * (long) quantity;
+		if (totalCost > Integer.MAX_VALUE || totalAmount > Integer.MAX_VALUE) {
+			player.message("Choose a smaller quantity");
+			return false;
+		}
+
+		if (RangersGuildPoints.getPoints(player) < totalCost) {
+			player.message("You need " + pointsLabel((int) totalCost) + " for that");
+			return false;
+		}
+
+		Item item = new Item(reward.itemId.id(), (int) totalAmount);
+		if (!player.getCarriedItems().getInventory().canHold(item)) {
+			player.message("You don't have enough inventory space for that");
+			return false;
+		}
+
+		if (!RangersGuildPoints.spendPoints(player, (int) totalCost)) {
+			player.message("You don't have enough points for that");
+			return false;
+		}
+		if (!player.getCarriedItems().getInventory().add(item)) {
+			RangersGuildPoints.addPoints(player, (int) totalCost);
+			player.message("Something went wrong adding that item");
+			return false;
+		}
+
+		player.message("You redeem " + pointsLabel((int) totalCost) + " for " + item.getAmount()
+			+ " x " + item.getDef(player.getWorld()).getName() + ".");
+		return true;
 	}
 
 	private boolean isPointsVendor(Npc npc) {
 		return npc.getID() == NpcId.RANGERS_GUILD_POINTS_VENDOR.id();
 	}
 
-	private void openRedeemMenu(Player player, Npc npc) {
-		while (true) {
-			int option = multi(player, npc, false,
-				"View points",
-				"Bows and crossbows",
-				"Arrows and bolts",
-				"Thrown weapons",
-				"Never mind");
-
-			if (option == 0) {
-				npcsay(player, npc,
-					"You have " + pointsLabel(RangersGuildPoints.getPoints(player)),
-					"Earn more by gaining ranged experience in the basement");
-			} else if (option == 1) {
-				showRewards(player, npc, BOW_REWARDS);
-			} else if (option == 2) {
-				showRewards(player, npc, AMMO_REWARDS);
-			} else if (option == 3) {
-				showRewards(player, npc, THROWN_REWARDS);
-			} else {
-				return;
+	private static Category getCategoryByIcon(int itemId) {
+		for (Category category : CATEGORIES) {
+			if (category.icon.id() == itemId) {
+				return category;
 			}
 		}
+		return null;
 	}
 
-	private void showRewards(Player player, Npc npc, Reward[] rewards) {
-		int page = 0;
-		while (true) {
-			int start = page * REWARDS_PER_PAGE;
-			int end = Math.min(start + REWARDS_PER_PAGE, rewards.length);
-			List<String> options = new ArrayList<String>();
-			for (int i = start; i < end; i++) {
-				options.add(rewards[i].menuLabel());
-			}
-			boolean hasMore = end < rewards.length;
-			if (hasMore) {
-				options.add("More rewards");
-			}
-			options.add("Back");
-
-			int option = multi(player, npc, false, options.toArray(new String[0]));
-			if (option < 0) {
-				return;
-			}
-
-			int rewardCount = end - start;
-			if (option < rewardCount) {
-				redeem(player, npc, rewards[start + option]);
-			} else if (hasMore && option == rewardCount) {
-				page++;
-			} else {
-				return;
+	private static Reward getReward(int itemId) {
+		for (Category category : CATEGORIES) {
+			for (Reward reward : category.rewards) {
+				if (reward.itemId.id() == itemId) {
+					return reward;
+				}
 			}
 		}
+		return null;
 	}
 
-	private void redeem(Player player, Npc npc, Reward reward) {
-		if (RangersGuildPoints.getPoints(player) < reward.cost) {
-			npcsay(player, npc, "You need " + pointsLabel(reward.cost) + " for that");
-			return;
-		}
-
-		Item item = new Item(reward.itemId.id(), reward.amount);
-		if (!player.getCarriedItems().getInventory().canHold(item)) {
-			npcsay(player, npc, "You don't have enough inventory space for that");
-			return;
-		}
-
-		if (!RangersGuildPoints.spendPoints(player, reward.cost)) {
-			npcsay(player, npc, "You don't have enough points for that");
-			return;
-		}
-		if (!player.getCarriedItems().getInventory().add(item)) {
-			RangersGuildPoints.addPoints(player, reward.cost);
-			npcsay(player, npc, "Something went wrong adding that item");
-			return;
-		}
-
-		player.message("You redeem " + pointsLabel(reward.cost) + " for " + reward.label + ".");
-	}
-
-	private String pointsLabel(int points) {
+	private static String pointsLabel(int points) {
 		return points + " Rangers Guild point" + (points == 1 ? "" : "s");
 	}
 
-	private static final class Reward {
+	private static final class Category {
 		private final String label;
+		private final ItemId icon;
+		private final Reward[] rewards;
+
+		private Category(String label, ItemId icon, Reward[] rewards) {
+			this.label = label;
+			this.icon = icon;
+			this.rewards = rewards;
+		}
+	}
+
+	private static final class Reward {
 		private final ItemId itemId;
 		private final int amount;
 		private final int cost;
 
-		private Reward(String label, ItemId itemId, int amount, int cost) {
-			this.label = label;
+		private Reward(ItemId itemId, int cost) {
 			this.itemId = itemId;
-			this.amount = amount;
+			this.amount = 1;
 			this.cost = cost;
-		}
-
-		private String menuLabel() {
-			return label + " - " + cost + " pts";
 		}
 	}
 }

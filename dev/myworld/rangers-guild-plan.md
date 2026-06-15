@@ -46,7 +46,8 @@ Entry requirement: `66 Ranged`, matching the Wizard Guild style of access.
 
 Current implementation:
 
-- The south entrance has closed guild doors at `495,464` and `496,464`.
+- The south entrance uses closed double-door scenery at `495,463`.
+- The doors briefly open, move the player through, and close behind them.
 - The doors require level 66 Ranged to pass through.
 - A basic `Ranger` (`NpcId.RANGERS_GUILD_RANGER`, id `840`) stands outside the front entrance at `497,463`.
 - The Ranger has no shop commands, explains the guild, and tells under-level players they need 66 Ranged.
@@ -97,7 +98,7 @@ Varrock replacement:
 
 Entrance:
 
-- The south entrance now has closed guild doors at `495,464` and `496,464`.
+- The south entrance now has closed double-door scenery at `495,463`.
 - The doors require level 66 Ranged to pass through.
 
 Current Lowe stock to preserve for the Varrock replacement:
@@ -199,7 +200,19 @@ Vendor 2: High-end ranged ammo and equipment vendor
 
 This vendor should accept Rangers Guild points instead of coins. The intent is for the shop to be one of the only practical sources of high-end ranged equipment and ammo, with the basement training floor feeding the point loop.
 
-Current vendor: `Talia`, using a custom `Redeem` dialogue/menu flow rather than a normal coin shop.
+Current vendor: `Talia`, using a custom `Redeem` interface rather than a normal coin shop.
+
+Current UI direction:
+
+- `Redeem` opens a custom production-style redemption interface rather than a normal shop.
+- First page is a category picker: `Longbows`, `Shortbows`, `Crossbows`, `Throwing Knives`, `Darts`, `Arrows`, `Bolts`, and `Shuriken`.
+- Selecting a category and pressing `Next` opens that category's item picker.
+- Item pages show up to 10 icons and include the full normal non-dragon range for that category.
+- Dragon ranged gear stays on the dragon ranged vendor and is not part of the points redemption UI.
+- The redemption page shows hover text at the top, selected item details at the bottom, points owned, total point cost, and total items received.
+- Quantity controls are `-100`, `-50`, `-1`, `+1`, `+50`, and `+100`.
+- Purchases spend tracked Rangers Guild points directly. Talia does not have a physical inventory and players cannot sell items to her.
+- Poison variants are intentionally left out of the first production-style UI pass so each category remains a single page. They can be added later as poison-specific categories or paged variants.
 
 Current stock bands:
 
@@ -258,8 +271,8 @@ Suggested first-pass conversion:
 
 Shop implementation note:
 
-- The existing normal shop flow removes `ItemId.COINS` directly when buying, so a points vendor should not use the standard shop buy handler for the first implementation.
-- Lower-risk first pass: implement a custom vendor menu/list that shows the player's Rangers Guild point total, checks point prices, subtracts points, and adds the purchased item.
+- The existing normal shop flow removes `ItemId.COINS` directly when buying, so the points vendor does not use the standard shop buy handler.
+- The current implementation uses the shared production interface and a custom server-side starter hook. The server validates point balance, inventory space, selected item, and quantity before spending points and adding the item.
 - Higher-effort future option: generalize the normal shop system to support alternate per-player currencies. That would be cleaner for UI consistency, but it has broader risk because it touches shared shop purchase behavior.
 
 Open balance decisions:

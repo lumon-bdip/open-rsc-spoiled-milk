@@ -755,6 +755,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					if (production.actionId == 0) {
 						builder.writeString(production.title != null ? production.title : "");
 						builder.writeShort(production.inputItemId);
+						builder.writeInt(production.resourceAmount);
 						builder.writeShort(production.selectedRecipeId);
 						builder.writeInt(production.selectedQuantity);
 						int recipeCount = production.itemIds != null ? production.itemIds.length : 0;

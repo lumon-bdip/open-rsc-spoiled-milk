@@ -6200,20 +6200,20 @@ public class EntityHandler {
 		setCustomNpcDefinition(840, new NPCDef(
 			"Ranger", "He watches the Rangers Guild entrance", "",
 			0, 0, 3, 0, false,
-			new int[]{0, 1, 2, -1, 108, 559, 565, 571, 577, 583, -1, 66},
+			new int[]{0, 1, 2, -1, 107, 559, 565, 571, 577, 583, -1, 66},
 			16761440, 2, 3, 15523536, 145, 220, 6, 6, 5, 840
 		));
 		setCustomNpcDefinition(841, new NPCDef(
 			"Aeron", "He sells specialist ranged gear", Config.S_RIGHT_CLICK_TRADE ? "Trade" : "",
-			Config.S_RIGHT_CLICK_TRADE ? "Shop" : null, 0, 0, 3, 0, false,
+			null, 0, 0, 3, 0, false,
 			new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66},
-			16761440, 2, 3, 15523536, 145, 220, 6, 6, 5, 841
+			16761440, 8409120, 2, 15523536, 145, 220, 6, 6, 5, 841
 		));
 		setCustomNpcDefinition(842, new NPCDef(
 			"Talia", "She handles Rangers Guild rewards", Config.S_RIGHT_CLICK_TRADE ? "Redeem" : "",
 			null, 0, 0, 3, 0, false,
-			new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66},
-			16761440, 2, 3, 15523536, 145, 220, 6, 6, 5, 842
+			new int[]{3, 4, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66},
+			16753488, 3211263, 8409120, 15523536, 145, 220, 6, 6, 5, 842
 		));
 	}
 

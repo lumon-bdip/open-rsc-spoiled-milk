@@ -639,6 +639,7 @@ public class PacketHandler {
 
 		String title = packetsIncoming.readString();
 		int inputItemId = packetsIncoming.getShort();
+		int resourceAmount = packetsIncoming.get32();
 		int selectedRecipeId = packetsIncoming.getShort();
 		int quantity = packetsIncoming.get32();
 		int count = packetsIncoming.getByte() & 0xff;
@@ -666,7 +667,7 @@ public class PacketHandler {
 				ingredientAmounts[i][j] = packetsIncoming.getShort();
 			}
 		}
-		mc.doSkillInterface.openProductionInterface(interfaceId, title, inputItemId, selectedRecipeId, quantity,
+		mc.doSkillInterface.openProductionInterface(interfaceId, title, inputItemId, resourceAmount, selectedRecipeId, quantity,
 			itemIds, requiredLevels, inputAmounts, outputAmounts, flags,
 			ingredientItemIds, ingredientFallbackItemIds, ingredientAmounts);
 	}

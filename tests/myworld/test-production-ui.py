@@ -102,6 +102,11 @@ def main() -> None:
     )
     require(
         struct_text,
+        "struct.resourceAmount = session.getResourceAmount();",
+        "ProductionInterfaceStruct should send optional per-session resource amounts",
+    )
+    require(
+        struct_text,
         "public static ProductionInterfaceStruct hide(int interfaceId)",
         "ProductionInterfaceStruct should expose a hide(interfaceId) factory",
     )
@@ -185,8 +190,33 @@ def main() -> None:
     require(
         do_skill_interface_text,
         "return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker()\n"
-        "\t\t\t|| isTeleportDestinationPicker();",
-        "Production picker detection should include smithing, furnace, and teleport picker pages",
+        "\t\t\t|| isTeleportDestinationPicker() || isRangersRedemptionCategoryPicker();",
+        "Production picker detection should include smithing, furnace, teleport, and Rangers redemption category pages",
+    )
+    require(
+        do_skill_interface_text,
+        "PRODUCTION_RANGERS_REDEMPTION_CATEGORY = 8",
+        "Client should reserve a production interface id for Rangers redemption categories",
+    )
+    require(
+        do_skill_interface_text,
+        "PRODUCTION_RANGERS_REDEMPTION = 9",
+        "Client should reserve a production interface id for Rangers redemption purchases",
+    )
+    require(
+        do_skill_interface_text,
+        "drawRangersRedemptionDetails(selected, selectedDetailRightX, footerY)",
+        "Rangers redemption UI should draw point-owned, total-cost, and receive details",
+    )
+    require(
+        do_skill_interface_text,
+        'drawQuantityButton(quantityX - 44, quantityY, 30, 20, "-100", -100)',
+        "Rangers redemption UI should expose the -100 quantity control",
+    )
+    require(
+        do_skill_interface_text,
+        'drawQuantityButton(quantityX + 160, quantityY, 30, 20, "+100", 100)',
+        "Rangers redemption UI should expose the +100 quantity control",
     )
     require(
         do_skill_interface_text,

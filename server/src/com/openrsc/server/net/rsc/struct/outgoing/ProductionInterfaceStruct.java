@@ -15,6 +15,7 @@ public class ProductionInterfaceStruct extends AbstractStruct<OpcodeOut> {
 	public int actionId;
 	public String title;
 	public int inputItemId;
+	public int resourceAmount;
 	public int selectedRecipeId;
 	public int selectedQuantity;
 	public int[] itemIds;
@@ -32,6 +33,7 @@ public class ProductionInterfaceStruct extends AbstractStruct<OpcodeOut> {
 		struct.actionId = ACTION_SHOW;
 		struct.title = session.getTitle();
 		struct.inputItemId = session.getInputItemId();
+		struct.resourceAmount = session.getResourceAmount();
 		struct.selectedRecipeId = session.getDefaultRecipeId();
 		struct.selectedQuantity = 1;
 		int count = session.getRecipes().size();

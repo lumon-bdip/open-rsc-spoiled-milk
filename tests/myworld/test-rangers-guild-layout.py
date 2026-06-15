@@ -23,6 +23,7 @@ OBJECT_TELEPOINTS = ROOT / "server/conf/server/defs/extras/ObjectTelePoints.xml"
 NPC_ID = ROOT / "server/src/com/openrsc/server/constants/NpcId.java"
 SERVER_ENTITY_HANDLER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.java"
 DOOR_ACTION = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/defaults/DoorAction.java"
+RANGERS_GUILD_DOOR = ROOT / "server/plugins/com/openrsc/server/plugins/custom/misc/RangersGuildDoor.java"
 LOWES_ARCHERY = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/varrock/LowesArchery.java"
 LOWES_ARCHERY_OPENPK = ROOT / "server/plugins/com/openrsc/server/plugins/custom/npcs/LowesArcheryOpenPk.java"
 RANGERS_GUILD_RANGER = ROOT / "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildRanger.java"
@@ -219,6 +220,7 @@ def ensure_scenery_layout():
     myworld = scenery_set(MYWORLD_SCENERY_LOCS)
 
     for expected in {
+        (64, 495, 463, 2),
         (272, 500, 467, 2),
         (272, 500, 464, 2),
         (274, 496, 471, 0),
@@ -228,6 +230,7 @@ def ensure_scenery_layout():
         require(expected in base, f"Missing base Rangers Guild scenery {expected}")
 
     for removed in {
+        (63, 495, 463, 2),
         (272, 500, 466, 2),
         (272, 500, 465, 2),
         (272, 500, 468, 2),
@@ -339,21 +342,24 @@ def ensure_rangers_guild_entrance():
     require(expected_ranger_loc in myworld_locs, "Ranger should stand outside the Rangers Guild entrance")
 
     boundaries = boundary_set(BOUNDARY_LOCS)
-    for expected in {
+    for removed in {
         (146, 495, 464, 0),
         (146, 496, 464, 0),
     }:
-        require(expected in boundaries, f"Missing Rangers Guild entrance door boundary {expected}")
+        require(removed not in boundaries, f"Rangers Guild should not retain overlapping boundary door {removed}")
 
-    door_action = DOOR_ACTION.read_text(encoding="utf-8")
+    door_action = RANGERS_GUILD_DOOR.read_text(encoding="utf-8")
     for fragment in (
-        "private static boolean isRangersGuildDoor",
-        "obj.getY() == 464",
-        "obj.getX() == 495 || obj.getX() == 496",
+        "class RangersGuildDoor implements OpLocTrigger",
+        "CLOSED_DOUBLE_DOORS = 64",
+        "OPEN_DOUBLE_DOORS = 63",
+        "DOOR_X = 495",
+        "DOOR_Y = 463",
         "getCurrentLevel(player, Skill.RANGED.id()) < 66",
         "NpcId.RANGERS_GUILD_RANGER.id()",
         "You need a ranged level of 66 to enter the guild",
-        "doDoor(obj, player);",
+        "doDoor(obj, player, OPEN_DOUBLE_DOORS);",
+        "player.teleport(targetX, entering ? DOOR_Y + 1 : DOOR_Y - 1);",
     ):
         require(fragment in door_action, f"Rangers Guild door gate is missing: {fragment}")
 
@@ -365,7 +371,7 @@ def ensure_rangers_guild_entrance():
     require(ranger["name"] == "Ranger", "Rangers Guild Ranger should have the expected display name")
     require(ranger["command"] == "" and ranger["command2"] == "", "Rangers Guild Ranger should not have shop commands")
     expected_sprites = {
-        "sprites5": 108,
+        "sprites5": 107,
         "sprites6": 559,
         "sprites7": 565,
         "sprites8": 571,
@@ -388,7 +394,7 @@ def ensure_rangers_guild_entrance():
 
 
 def ensure_ranged_master_and_archery_shopkeeper():
-    expected_lowe_loc = (58, 493, 466, 492, 465, 494, 467)
+    expected_lowe_loc = (58, 493, 466, 492, 465, 495, 468)
     myworld_locs = {npc_location_tuple(loc) for loc in load_npcs(MYWORLD_NPC_LOCS)}
     require(expected_lowe_loc in myworld_locs, "Lowe should spawn on the Rangers Guild ground floor")
 
@@ -446,13 +452,13 @@ def ensure_ranged_master_and_archery_shopkeeper():
         'Config.S_RIGHT_CLICK_TRADE ? "Shop" : null',
         "setCustomNpcDefinition(840, new NPCDef(",
         '"Ranger", "He watches the Rangers Guild entrance", ""',
-        "new int[]{0, 1, 2, -1, 108, 559, 565, 571, 577, 583, -1, 66}",
+        "new int[]{0, 1, 2, -1, 107, 559, 565, 571, 577, 583, -1, 66}",
     ):
         require(fragment in client, f"Client NPC definitions are missing: {fragment}")
 
 
 def ensure_rangers_guild_dragon_vendor():
-    expected_vendor_loc = (841, 493, 1414, 493, 1414, 493, 1414)
+    expected_vendor_loc = (841, 493, 1414, 492, 1413, 494, 1414)
     myworld_locs = {npc_location_tuple(loc) for loc in load_npcs(MYWORLD_NPC_LOCS)}
     require(expected_vendor_loc in myworld_locs, "Aeron should stand by the upstairs Rangers Guild vendor counter")
 
@@ -462,8 +468,9 @@ def ensure_rangers_guild_dragon_vendor():
     vendor = npc_def_by_id(NPC_DEFS_CUSTOM, 841)
     require(vendor is not None, "Custom NPC defs should define Aeron id 841")
     require(vendor["name"] == "Aeron", "Aeron should have the expected display name")
-    require(vendor["command"] == "Trade" and vendor["command2"] == "Shop", "Aeron should have direct shop commands")
+    require(vendor["command"] == "Trade" and vendor["command2"] == "", "Aeron should have a Trade shortcut without a duplicate Shop command")
     require(vendor["sprites12"] == 66, "Aeron should wear a green cape")
+    require(vendor["topColour"] == 8409120 and vendor["bottomColour"] == 2, "Aeron should not visually match Talia")
     for key in ("sprites5", "sprites6", "sprites7", "sprites8", "sprites9", "sprites10", "sprites11"):
         require(vendor[key] == -1, f"Aeron should not have special equipment in {key}")
 
@@ -492,14 +499,15 @@ def ensure_rangers_guild_dragon_vendor():
     for fragment in (
         "setCustomNpcDefinition(841, new NPCDef(",
         '"Aeron", "He sells specialist ranged gear", Config.S_RIGHT_CLICK_TRADE ? "Trade" : ""',
-        'Config.S_RIGHT_CLICK_TRADE ? "Shop" : null',
+        "null, 0, 0, 3, 0, false,",
         "new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66}",
+        "16761440, 8409120, 2, 15523536",
     ):
         require(fragment in client, f"Client Aeron definition is missing: {fragment}")
 
 
 def ensure_rangers_guild_points_vendor():
-    expected_vendor_loc = (842, 496, 1414, 496, 1414, 496, 1414)
+    expected_vendor_loc = (842, 496, 1414, 495, 1413, 497, 1414)
     myworld_locs = {npc_location_tuple(loc) for loc in load_npcs(MYWORLD_NPC_LOCS)}
     require(expected_vendor_loc in myworld_locs, "Talia should stand by the upstairs Rangers Guild rewards counter")
 
@@ -511,6 +519,8 @@ def ensure_rangers_guild_points_vendor():
     require(vendor["name"] == "Talia", "Talia should have the expected display name")
     require(vendor["command"] == "Redeem" and vendor["command2"] == "", "Talia should expose Redeem, not a normal shop command")
     require(vendor["sprites12"] == 66, "Talia should wear a green cape")
+    require(vendor["sprites1"] == 3 and vendor["sprites2"] == 4, "Talia should use the female body sprites")
+    require(vendor["topColour"] == 3211263 and vendor["bottomColour"] == 8409120, "Talia should have distinct clothing colors")
 
     entity_handler = SERVER_ENTITY_HANDLER.read_text(encoding="utf-8")
     quick_trade_start = entity_handler.find("private int[] quickTradeNpcs = new int[] {")
@@ -526,26 +536,37 @@ def ensure_rangers_guild_points_vendor():
     for fragment in (
         "npc.getID() == NpcId.RANGERS_GUILD_POINTS_VENDOR.id()",
         'command.equalsIgnoreCase("Redeem")',
+        "ProductionSession.TYPE_RANGERS_REDEMPTION_CATEGORY",
+        "ProductionSession.TYPE_RANGERS_REDEMPTION",
+        "ActionSender.showProductionInterface(player, session)",
+        "RangersGuildPointsVendor::beginRedemptionFromInterface",
         "RangersGuildPoints.getPoints(player)",
-        "RangersGuildPoints.spendPoints(player, reward.cost)",
+        "RangersGuildPoints.spendPoints(player, (int) totalCost)",
         "player.getCarriedItems().getInventory().canHold(item)",
-        "RangersGuildPoints.addPoints(player, reward.cost)",
+        "RangersGuildPoints.addPoints(player, (int) totalCost)",
+        'new Category("Longbows", ItemId.LONGBOW',
+        'new Category("Shortbows", ItemId.SHORTBOW',
+        'new Category("Crossbows", ItemId.CROSSBOW',
+        'new Category("Throwing Knives", ItemId.BRONZE_THROWING_KNIFE',
+        'new Category("Darts", ItemId.BRONZE_THROWING_DART',
+        'new Category("Arrows", ItemId.BRONZE_ARROWS',
+        'new Category("Bolts", ItemId.BRONZE_BOLTS',
+        'new Category("Shuriken", ItemId.BRONZE_SHURIKEN',
         "ItemId.MAGIC_SHORTBOW",
         "ItemId.RUNE_ARROWS",
-        "ItemId.POISON_RUNE_BOLTS",
+        "ItemId.RUNE_BOLTS",
         "ItemId.ORICHALCUM_SHURIKEN",
-        "ItemId.POISONED_ORICHALCUM_SHURIKEN",
         "Rangers Guild points come from ranged experience in the basement",
-        "Bows and crossbows",
-        "Thrown weapons",
     ):
         require(fragment in points_vendor, f"Rangers Guild points vendor is missing: {fragment}")
+    require("ItemId.DRAGON_" not in points_vendor, "Rangers Guild points vendor should not sell dragon ranged items")
 
     client = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     for fragment in (
         "setCustomNpcDefinition(842, new NPCDef(",
         '"Talia", "She handles Rangers Guild rewards", Config.S_RIGHT_CLICK_TRADE ? "Redeem" : ""',
-        "new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66}",
+        "new int[]{3, 4, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66}",
+        "16753488, 3211263, 8409120, 15523536",
     ):
         require(fragment in client, f"Client Talia definition is missing: {fragment}")
 
