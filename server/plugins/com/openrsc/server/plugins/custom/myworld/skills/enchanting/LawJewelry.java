@@ -30,7 +30,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 	private enum Destination {
 		CRAFTING_GUILD("Crafting Guild", 347, 599),
 		MINING_GUILD("Mining Guild", 250, 537),
-		WOODCUTTING_GUILD("Woodcutting Guild", 560, 473),
+		RANGERS_GUILD("Rangers Guild", 496, 462),
 		PRAYER_GUILD("Prayer Guild", 256, 471),
 		FISHING_GUILD("Fishing Guild", 586, 525),
 		COOKING_GUILD("Cooking Guild", 179, 489),
@@ -404,7 +404,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			case 3:
 				return new Destination[] {
 					Destination.FISHING_GUILD,
-					Destination.WOODCUTTING_GUILD,
+					Destination.RANGERS_GUILD,
 					Destination.WIZARDS_GUILD
 				};
 			case 4:

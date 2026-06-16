@@ -5685,6 +5685,9 @@ public class EntityHandler {
 		setCustomItemDefinition(3232, new ItemDef("Black Scythe", "A scythe blessed by Zamorak", "", 3040, 434, "items:434", false, true, 8216, 3158064, false, false, true, 3232));
 		setCustomItemDefinition(3233, new ItemDef("White Scythe", "A scythe blessed by Saradomin", "", 3040, 434, "items:434", false, true, 8216, 0xE7E2D6, false, false, true, 3233));
 		setCustomItemDefinition(3234, new ItemDef("Grey Scythe", "A scythe blessed by Guthix", "", 3040, 434, "items:434", false, true, 8216, 0x9EA59F, false, false, true, 3234));
+		setCustomItemDefinition(3235, new ItemDef("Fire sword", "A sword imbued with fire", "", 40000, -1, "external-png:fire-sword-icon", false, true, 16, 0, true, false, true, 3235));
+		setCustomItemDefinition(3236, new ItemDef("Ice sword", "A sword imbued with ice", "", 40000, -1, "external-png:ice-sword-icon", false, true, 16, 0, true, false, true, 3236));
+		setCustomItemDefinition(3237, new ItemDef("Earth sword", "A sword imbued with earth", "", 40000, -1, "external-png:earth-sword-icon", false, true, 16, 0, true, false, true, 3237));
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -6214,6 +6217,12 @@ public class EntityHandler {
 			null, 0, 0, 3, 0, false,
 			new int[]{3, 4, 2, -1, -1, -1, -1, -1, -1, -1, -1, 66},
 			16753488, 3211263, 8409120, 15523536, 145, 220, 6, 6, 5, 842
+		));
+		setCustomNpcDefinition(843, new NPCDef(
+			"Fire warrior", "A strange inhuman warrior wreathed in heat", "",
+			62, 64, 62, 58, true,
+			new int[]{7, 1, 36, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			16750950, 15634560, 15634560, 16752469, 150, 250, 6, 6, 5, 843
 		));
 	}
 
@@ -7274,6 +7283,8 @@ public class EntityHandler {
 			animations.add(new AnimationDef("squareshield", "equipment", 0x9EA59F, 0, true, false, 0)); // 1032 - Grey Square Shield
 			animations.add(new AnimationDef("scythe", "equipment", 0xF0F0F0, 0, true, false, 0)); // 1033 - Combat Scythe
 			animations.add(new AnimationDef("hood", "equipment", 0, 0, true, false, 0)); // 1034 - Hood
+			animations.add(new AnimationDef("firesword", "equipment", 0, 0, true, false, 0)); // 1035 - Fire sword
+			animations.add(new AnimationDef("icesword", "equipment", 0, 0, true, false, 0)); // 1036 - Ice sword
 		}
 	}
 

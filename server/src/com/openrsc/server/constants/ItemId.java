@@ -2458,12 +2458,15 @@ public enum ItemId {
 	GREY_SPEAR(3231),
 	BLACK_SCYTHE(3232),
 	WHITE_SCYTHE(3233),
-	GREY_SCYTHE(3234);
+	GREY_SCYTHE(3234),
+	FIRE_SWORD(3235),
+	ICE_SWORD(3236),
+	EARTH_SWORD(3237);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3235;
+	public static final int maxCustom = 3238;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

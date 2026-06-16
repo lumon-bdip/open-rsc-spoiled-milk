@@ -1364,6 +1364,27 @@
       "basePrice": 120000
     },
     {
+      "id": 3235,
+      "name": "Fire sword",
+      "meleeOffense": 72,
+      "weaponSpeed": 4,
+      "basePrice": 40000
+    },
+    {
+      "id": 3236,
+      "name": "Ice sword",
+      "meleeOffense": 72,
+      "weaponSpeed": 4,
+      "basePrice": 40000
+    },
+    {
+      "id": 3237,
+      "name": "Earth sword",
+      "meleeOffense": 72,
+      "weaponSpeed": 4,
+      "basePrice": 40000
+    },
+    {
       "id": 606,
       "meleeOffense": 48,
       "weaponSpeed": 3

@@ -112,6 +112,7 @@ def main() -> None:
 		"case \"chronozon\":",
 		"case \"black demon\":",
 		"case \"fire giant\":",
+		"case \"fire warrior\":",
 		"case \"delrith\":",
 		"case \"the fire warrior of lesarkus\":",
 		"return NpcMagicElement.FIRE;",

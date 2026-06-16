@@ -30,6 +30,7 @@ repository root [`README.md`](../../README.md).
 - [migration-regression-audit.md](migration-regression-audit.md): resolved migration recovery record and guardrail notes.
 - [dev-admin-commands.md](dev-admin-commands.md): MyWorld development account roles and practical command reference.
 - [testing-quick-reference.md](testing-quick-reference.md): compact field-testing reference for commands, IDs, and targeted test fixtures.
+- [client-sprite-reference.md](client-sprite-reference.md): lookup notes for custom sprite references, authentic item icon offsets, and equipment palette exports.
 - This README: current repository shape, active paths, and archived reference locations.
 
 ## Current Repository Shape

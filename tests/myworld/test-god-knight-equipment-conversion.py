@@ -141,7 +141,7 @@ def main() -> None:
     require("Devotion.addDevotionLevels(player, godLine, 1)" not in equipment,
             "steel armour conversion should not add devotion")
 
-    require("public static final int maxCustom = 3235;" in constants, "ItemId.maxCustom should include blessed scythes")
+    require("public static final int maxCustom = 3238;" in constants, "ItemId.maxCustom should include elemental swords")
     print("PASS: god knight armour conversion validated")
 
 

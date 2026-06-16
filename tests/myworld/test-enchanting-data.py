@@ -265,7 +265,7 @@ def ensure_source_mappings_exist() -> None:
     for destination in (
         "CRAFTING_GUILD",
         "MINING_GUILD",
-        "WOODCUTTING_GUILD",
+        "RANGERS_GUILD",
         "PRAYER_GUILD",
         "FISHING_GUILD",
         "COOKING_GUILD",
@@ -282,7 +282,7 @@ def ensure_source_mappings_exist() -> None:
         "return new Destination[] {Destination.COOKING_GUILD, Destination.PRAYER_GUILD};",
         """return new Destination[] {
 					Destination.FISHING_GUILD,
-					Destination.WOODCUTTING_GUILD,
+					Destination.RANGERS_GUILD,
 					Destination.WIZARDS_GUILD
 				};""",
         """return new Destination[] {

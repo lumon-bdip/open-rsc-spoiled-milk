@@ -51,6 +51,7 @@ EXPECTED_PROFILES = {
         "moss giant",
         "ice giant",
         "fire giant",
+        "fire warrior",
         "delrith",
         "lucien",
         "ghost",

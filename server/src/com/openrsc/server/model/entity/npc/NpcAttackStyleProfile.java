@@ -230,6 +230,7 @@ public enum NpcAttackStyleProfile {
 	private static boolean usesFireKinMagic(final String name) {
 		return "fire giant".equals(name)
 			|| "delrith".equals(name)
+			|| "fire warrior".equals(name)
 			|| "the fire warrior of lesarkus".equals(name);
 	}
 
@@ -308,6 +309,7 @@ public enum NpcAttackStyleProfile {
 			case "balrog":
 			case "fire giant":
 			case "delrith":
+			case "fire warrior":
 			case "the fire warrior of lesarkus":
 				return NpcMagicElement.FIRE;
 			case "ice giant":
@@ -408,6 +410,7 @@ public enum NpcAttackStyleProfile {
 			case "ice giant":
 			case "fire giant":
 			case "delrith":
+			case "fire warrior":
 			case "lucien":
 			case "ghost":
 			case "tree spirit":

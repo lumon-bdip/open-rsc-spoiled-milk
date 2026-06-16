@@ -39,6 +39,12 @@ def is_rangers_guild_overlay(loc: dict) -> bool:
     )
 
 
+def is_karamja_death_altar_overlay(loc: dict) -> bool:
+    x = int(loc["start"]["X"])
+    y = int(loc["start"]["Y"])
+    return int(loc["id"]) == 843 and 397 <= x <= 404 and 3535 <= y <= 3544
+
+
 def require_valid_drop_budget(drops: str, table_name: str) -> None:
     start = drops.find(f'new DropTable("{table_name}")')
     require(start >= 0, f"Missing drop table: {table_name}")
@@ -140,7 +146,12 @@ def main() -> None:
 
     overlay_path = SERVER / "conf/server/defs/locs/MyWorldNpcLocs.json"
     overlay = json.loads(overlay_path.read_text(encoding="utf-8"))["npclocs"]
-    population_overlay = [loc for loc in overlay if not is_rangers_guild_overlay(loc)]
+    karamja_fire_warriors = [loc for loc in overlay if is_karamja_death_altar_overlay(loc)]
+    require(len(karamja_fire_warriors) == 4, "Karamja death altar route should have exactly 4 Fire warrior spawns")
+    population_overlay = [
+        loc for loc in overlay
+        if not is_rangers_guild_overlay(loc) and not is_karamja_death_altar_overlay(loc)
+    ]
     counts = Counter(loc["id"] for loc in population_overlay)
     expected_counts = {
         836: 4,

@@ -17490,6 +17490,8 @@ public final class mudclient implements Runnable {
 
 	private void loadExternalEquipmentSprites() {
 		loadExternalMainHandEquipmentSprite("fishingpole", getExternalEquipmentNumberedFolder("fishing-pole"));
+		loadExternalCombatMainHandEquipmentSprite("firesword", getExternalEquipmentNumberedFolder("fire-sword"));
+		loadExternalCombatMainHandEquipmentSprite("icesword", getExternalEquipmentNumberedFolder("ice-sword"));
 		loadExternalNeckEquipmentSprite("guthsymbol", getExternalEquipmentNumberedFolder("guthix-symbol"));
 		loadExternalLayeredEquipmentSprite("gauntlets", getExternalEquipmentNumberedFolder("gauntlets"),
 			orsc.graphics.two.SpriteArchive.Frame.LAYER.GLOVES, GLOVE_EQUIPMENT_OFFSET_X, GLOVE_EQUIPMENT_OFFSET_Y, GLOVE_EQUIPMENT_BOUND_WIDTH);
@@ -17527,6 +17529,34 @@ public final class mudclient implements Runnable {
 			if (frame == null) {
 				return;
 			}
+			spriteEntry.getFrames()[i] = frame;
+		}
+		equipmentSprites.put(spriteName, spriteEntry);
+	}
+
+	private void loadExternalCombatMainHandEquipmentSprite(String spriteName, File numberedFolder) {
+		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
+		if (equipmentSprites == null || !assetDirectoryExists(numberedFolder)) {
+			return;
+		}
+		final int frameCount = 18;
+		final int[] offsetX = new int[] {17, 15, 13, 18, 21, 25, 27, 32, 36, 44, 49, 44, 40, 41, 42, 5, 32, 40};
+		final int[] offsetY = new int[] {27, 29, 27, 32, 31, 28, 30, 29, 27, 28, 24, 25, 41, 36, 23, 6, 9, 29};
+		final int[] boundWidth = new int[] {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 84, 84, 84};
+		orsc.graphics.two.SpriteArchive.Entry spriteEntry = new orsc.graphics.two.SpriteArchive.Entry(
+			spriteName,
+			orsc.graphics.two.SpriteArchive.Entry.TYPE.PLAYER_EQUIPPABLE_HASCOMBAT,
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.MAIN_HAND,
+			frameCount
+		);
+		for (int i = 0; i < frameCount; i++) {
+			File frameFile = new File(numberedFolder, String.format(Locale.ENGLISH, "%02d.png", i));
+			orsc.graphics.two.SpriteArchive.Frame frame = loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
+			if (frame == null) {
+				return;
+			}
+			frame.changeBoundWidth(boundWidth[i]);
+			frame.getSprite().setSomething(boundWidth[i], 102);
 			spriteEntry.getFrames()[i] = frame;
 		}
 		equipmentSprites.put(spriteName, spriteEntry);

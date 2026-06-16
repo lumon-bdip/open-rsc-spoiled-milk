@@ -1,11 +1,13 @@
 package com.openrsc.server.event.rsc.impl.combat;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.constants.Spells;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
@@ -13,6 +15,8 @@ import com.openrsc.server.util.rsc.CombatEffectUtil;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.Locale;
 
 import static com.openrsc.server.constants.ItemId.*;
 
@@ -198,6 +202,9 @@ public class CombatFormula {
 		int damage = rollPlayerCrit(source, attackMax) ? attackMax : applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getMeleeDefense()));
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MELEE);
 		damage = applyDamageMultiplier(source, damage);
+		damage = applyFireSwordElementalBonus(source, victim, damage);
+		damage = applyIceSwordElementalBonus(source, victim, damage);
+		damage = applyEarthSwordElementalBonus(source, victim, damage);
 		if (victim instanceof Player) {
 			((Player) victim).updateDamageAndBlockedDamageTracking(source, damage, 0);
 		}
@@ -396,6 +403,83 @@ public class CombatFormula {
 			return damage;
 		}
 		return (int) Math.ceil(damage * multiplier);
+	}
+
+	private static int applyFireSwordElementalBonus(final Mob source, final Mob victim, final int damage) {
+		if (damage <= 0 || !(source instanceof Player) || !(victim instanceof Npc)) {
+			return damage;
+		}
+		final Player player = (Player) source;
+		if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.FIRE_SWORD.id())) {
+			return damage;
+		}
+		if (!isFireSwordVulnerable((Npc) victim)) {
+			return damage;
+		}
+		return (int) Math.ceil(damage * 1.5D);
+	}
+
+	private static boolean isFireSwordVulnerable(final Npc victim) {
+		final int npcId = victim.getID();
+		if (npcId == NpcId.BLUE_DRAGON.id()
+			|| npcId == NpcId.BABY_BLUE_DRAGON.id()
+			|| npcId == NpcId.ICE_GIANT.id()
+			|| npcId == NpcId.ICE_WARRIOR.id()
+			|| npcId == NpcId.ICE_QUEEN.id()
+			|| npcId == NpcId.ICE_SPIDER.id()) {
+			return true;
+		}
+		final String npcName = victim.getDef().getName().toLowerCase(Locale.ENGLISH);
+		return npcName.contains("ice") || npcName.contains("blue");
+	}
+
+	private static int applyIceSwordElementalBonus(final Mob source, final Mob victim, final int damage) {
+		if (damage <= 0 || !(source instanceof Player) || !(victim instanceof Npc)) {
+			return damage;
+		}
+		final Player player = (Player) source;
+		if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.ICE_SWORD.id())) {
+			return damage;
+		}
+		if (!isIceSwordVulnerable((Npc) victim)) {
+			return damage;
+		}
+		return (int) Math.ceil(damage * 1.5D);
+	}
+
+	private static boolean isIceSwordVulnerable(final Npc victim) {
+		final int npcId = victim.getID();
+		if (npcId == NpcId.EARTH_WARRIOR.id() || npcId == NpcId.DRAGON.id()) {
+			return true;
+		}
+		final String npcName = victim.getDef().getName().toLowerCase(Locale.ENGLISH);
+		return npcName.contains("earth");
+	}
+
+	private static int applyEarthSwordElementalBonus(final Mob source, final Mob victim, final int damage) {
+		if (damage <= 0 || !(source instanceof Player) || !(victim instanceof Npc)) {
+			return damage;
+		}
+		final Player player = (Player) source;
+		if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.EARTH_SWORD.id())) {
+			return damage;
+		}
+		if (!isEarthSwordVulnerable((Npc) victim)) {
+			return damage;
+		}
+		return (int) Math.ceil(damage * 1.5D);
+	}
+
+	private static boolean isEarthSwordVulnerable(final Npc victim) {
+		final int npcId = victim.getID();
+		if (npcId == NpcId.RED_DRAGON.id()
+			|| npcId == NpcId.FIRE_GIANT.id()
+			|| npcId == NpcId.FIRE_WARRIOR.id()
+			|| npcId == NpcId.THE_FIRE_WARRIOR_OF_LESARKUS.id()) {
+			return true;
+		}
+		final String npcName = victim.getDef().getName().toLowerCase(Locale.ENGLISH);
+		return npcName.contains("fire") || npcName.contains("red");
 	}
 
 	/**
