@@ -1366,22 +1366,34 @@
     {
       "id": 3235,
       "name": "Fire sword",
-      "meleeOffense": 72,
-      "weaponSpeed": 4,
+      "meleeOffense": 60,
+      "weaponSpeed": 3,
+      "requiredLevel": 54,
+      "requiredSkillID": 0,
+      "weaponAimBonus": 31,
+      "weaponPowerBonus": 31,
       "basePrice": 40000
     },
     {
       "id": 3236,
       "name": "Ice sword",
-      "meleeOffense": 72,
-      "weaponSpeed": 4,
+      "meleeOffense": 60,
+      "weaponSpeed": 3,
+      "requiredLevel": 54,
+      "requiredSkillID": 0,
+      "weaponAimBonus": 31,
+      "weaponPowerBonus": 31,
       "basePrice": 40000
     },
     {
       "id": 3237,
       "name": "Earth sword",
-      "meleeOffense": 72,
-      "weaponSpeed": 4,
+      "meleeOffense": 60,
+      "weaponSpeed": 3,
+      "requiredLevel": 54,
+      "requiredSkillID": 0,
+      "weaponAimBonus": 31,
+      "weaponPowerBonus": 31,
       "basePrice": 40000
     },
     {

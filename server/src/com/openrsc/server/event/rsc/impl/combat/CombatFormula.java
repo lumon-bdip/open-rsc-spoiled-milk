@@ -11,6 +11,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
+import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.util.rsc.CombatEffectUtil;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
@@ -22,6 +23,11 @@ import static com.openrsc.server.constants.ItemId.*;
 
 public class CombatFormula {
 	private static final int DRAGON_BREATH_DAMAGE_PERCENT = 25;
+	public static final int ELEMENTAL_SWORD_PROC_CHANCE_PERCENT = 5;
+	public static final int ELEMENTAL_SWORD_PROC_DAMAGE_PERCENT = 25;
+	public static final int ELEMENTAL_SWORD_FIRE_DEBUFF_PERCENT = 6;
+	public static final int ELEMENTAL_SWORD_WATER_DEBUFF_PERCENT = 10;
+	public static final int ELEMENTAL_SWORD_EARTH_DEBUFF_PERCENT = 6;
 
 	/**
 	 * Logger instance
@@ -253,6 +259,52 @@ public class CombatFormula {
 		return rollDragonBreathDamage(source, attackMax);
 	}
 
+	public static int getElementalSwordProcEffect(final Mob source) {
+		if (!(source instanceof Player)) {
+			return CombatEffect.NONE;
+		}
+		final Player player = (Player) source;
+		if (player.getCarriedItems().getEquipment().hasEquipped(FIRE_SWORD.id())) {
+			return CombatEffect.FIRE_SWORD;
+		}
+		if (player.getCarriedItems().getEquipment().hasEquipped(ICE_SWORD.id())) {
+			return CombatEffect.ICE_SWORD;
+		}
+		if (player.getCarriedItems().getEquipment().hasEquipped(EARTH_SWORD.id())) {
+			return CombatEffect.EARTH_SWORD;
+		}
+		return CombatEffect.NONE;
+	}
+
+	public static boolean rollElementalSwordProcChance() {
+		return DataConversions.getRandom().nextDouble() < (ELEMENTAL_SWORD_PROC_CHANCE_PERCENT / 100.0D);
+	}
+
+	public static int rollElementalSwordProcDamage(final Mob source) {
+		if (getElementalSwordProcEffect(source) == CombatEffect.NONE) {
+			return 0;
+		}
+		final int attackMax = offenseToMaxHit(source, source.getMeleeOffense());
+		final int procMax = getElementalSwordProcMax(attackMax);
+		return procMax <= 0 ? 0 : DataConversions.random(0, procMax);
+	}
+
+	public static void applyElementalSwordProcDebuff(final Mob target, final int effectType) {
+		switch (effectType) {
+			case CombatEffect.FIRE_SWORD:
+				target.applyFireDefenseDebuff(ELEMENTAL_SWORD_FIRE_DEBUFF_PERCENT);
+				break;
+			case CombatEffect.ICE_SWORD:
+				target.applyWaterMaxHitDebuff(ELEMENTAL_SWORD_WATER_DEBUFF_PERCENT);
+				break;
+			case CombatEffect.EARTH_SWORD:
+				target.applyEarthAttackSpeedDebuff(ELEMENTAL_SWORD_EARTH_DEBUFF_PERCENT);
+				break;
+			default:
+				break;
+		}
+	}
+
 	public static boolean usesDragonMeleeBreathWeapon(final Mob source) {
 		if (!(source instanceof Player)) {
 			return false;
@@ -295,6 +347,13 @@ public class CombatFormula {
 			return 0;
 		}
 		return Math.max(1, (int) Math.ceil(attackMax * DRAGON_BREATH_DAMAGE_PERCENT / 100.0D));
+	}
+
+	private static int getElementalSwordProcMax(final int attackMax) {
+		if (attackMax <= 1) {
+			return 0;
+		}
+		return Math.max(1, (int) Math.ceil(attackMax * ELEMENTAL_SWORD_PROC_DAMAGE_PERCENT / 100.0D));
 	}
 
 	private static int applyMyWorldPrayerModifiers(final Mob source, final Mob victim, int damage, final PrayerCatalog.CombatStyle combatStyle) {

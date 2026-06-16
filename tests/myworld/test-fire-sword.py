@@ -80,6 +80,10 @@ def require_sword_item(
         "appearanceID": appearance_id,
         "wearableID": 16,
         "wearSlot": 4,
+        "requiredLevel": 54,
+        "requiredSkillID": 0,
+        "weaponAimBonus": 31,
+        "weaponPowerBonus": 31,
         "basePrice": 40000,
     }
     for field, expected in expected_custom.items():
@@ -87,7 +91,16 @@ def require_sword_item(
             fail(f"ItemDefsCustom {display_name} expected {field}={expected}, found {custom_entry.get(field)}")
 
     myworld_entry = require_entry(myworld_items, entry_id, "ItemDefsMyWorld")
-    for field, expected in {"meleeOffense": 72, "weaponSpeed": 4, "basePrice": 40000}.items():
+    expected_myworld = {
+        "meleeOffense": 60,
+        "weaponSpeed": 3,
+        "requiredLevel": 54,
+        "requiredSkillID": 0,
+        "weaponAimBonus": 31,
+        "weaponPowerBonus": 31,
+        "basePrice": 40000,
+    }
+    for field, expected in expected_myworld.items():
         if myworld_entry.get(field) != expected:
             fail(f"ItemDefsMyWorld {display_name} expected {field}={expected}, found {myworld_entry.get(field)}")
 
@@ -96,6 +109,14 @@ def main() -> None:
     require_sword_assets("fire-sword", "Fire sword", (48, 28))
     require_sword_assets("ice-sword", "Ice sword", (45, 29))
     require_sword_assets("earth-sword", "Earth sword", (46, 26), requires_equipment=False)
+    if png_size(ROOT / "dev/myworld/assets/animations/On Enemy/fire-sword/fire-sword1.png") != (32, 32):
+        fail("Fire sword proc frame 1 must be a 32x32 On Enemy frame")
+    if png_size(ROOT / "dev/myworld/assets/animations/On Enemy/fire-sword/fire-sword13.png") != (32, 32):
+        fail("Fire sword proc frame 13 must be a 32x32 On Enemy frame")
+    if png_size(ROOT / "dev/myworld/assets/animations/On Enemy/ice-sword/ice-sword.png") != (384, 32):
+        fail("Ice sword proc sheet must be a 12-frame 384x32 On Enemy sheet")
+    if png_size(ROOT / "dev/myworld/assets/animations/On Enemy/earth-sword/earth-sword.png") != (192, 32):
+        fail("Earth sword proc sheet must be a 6-frame 192x32 On Enemy sheet")
 
     item_id = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
     item_id_text = item_id.read_text(encoding="utf-8")
@@ -124,6 +145,13 @@ def main() -> None:
     require_text(mudclient, 'loadExternalCombatMainHandEquipmentSprite("firesword"', "External Fire sword equipment loader")
     require_text(mudclient, 'loadExternalCombatMainHandEquipmentSprite("icesword"', "External Ice sword equipment loader")
     require_text(mudclient, "PLAYER_EQUIPPABLE_HASCOMBAT", "Elemental sword combat equipment entry")
+    require_text(mudclient, "COMBAT_EFFECT_FIRE_SWORD = 59", "Fire sword proc effect id")
+    require_text(mudclient, "COMBAT_EFFECT_ICE_SWORD = 60", "Ice sword proc effect id")
+    require_text(mudclient, "COMBAT_EFFECT_EARTH_SWORD = 61", "Earth sword proc effect id")
+    require_text(mudclient, "COMBAT_EFFECT_COUNT = 61", "Elemental sword proc effect table size")
+    require_text(mudclient, '"fire-sword", "ice-sword", "earth-sword"', "Elemental sword proc effect names")
+    require_text(mudclient, 'if ("ice-sword".equals(animationName))', "Ice sword proc sheet loader")
+    require_text(mudclient, 'if ("earth-sword".equals(animationName))', "Earth sword proc sheet loader")
 
     drops = (ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java").read_text(encoding="utf-8")
     fire_giant = re.search(r'DropTable\("Fire Giant \(344\)"\).*?npcDrops\.put\(NpcId\.FIRE_GIANT\.id\(\)', drops, re.DOTALL)
@@ -155,6 +183,14 @@ def main() -> None:
     require_text(combat_formula, "applyFireSwordElementalBonus", "Fire sword combat hook")
     require_text(combat_formula, "applyIceSwordElementalBonus", "Ice sword combat hook")
     require_text(combat_formula, "applyEarthSwordElementalBonus", "Earth sword combat hook")
+    require_text(combat_formula, "ELEMENTAL_SWORD_PROC_CHANCE_PERCENT = 5", "Elemental sword proc chance")
+    require_text(combat_formula, "ELEMENTAL_SWORD_PROC_DAMAGE_PERCENT = 25", "Elemental sword proc damage percent")
+    require_text(combat_formula, "getElementalSwordProcEffect", "Elemental sword proc effect selector")
+    require_text(combat_formula, "rollElementalSwordProcDamage", "Elemental sword proc damage roll")
+    require_text(combat_formula, "applyElementalSwordProcDebuff", "Elemental sword proc debuff selector")
+    require_text(combat_formula, "target.applyFireDefenseDebuff(ELEMENTAL_SWORD_FIRE_DEBUFF_PERCENT)", "Fire sword proc debuff")
+    require_text(combat_formula, "target.applyWaterMaxHitDebuff(ELEMENTAL_SWORD_WATER_DEBUFF_PERCENT)", "Ice sword proc debuff")
+    require_text(combat_formula, "target.applyEarthAttackSpeedDebuff(ELEMENTAL_SWORD_EARTH_DEBUFF_PERCENT)", "Earth sword proc debuff")
     require_text(combat_formula, "Math.ceil(damage * 1.5D)", "Fire sword elemental multiplier")
     require_text(combat_formula, "NpcId.BLUE_DRAGON", "Fire sword blue target eligibility")
     require_text(combat_formula, "NpcId.ICE_GIANT", "Fire sword ice target eligibility")
@@ -163,6 +199,14 @@ def main() -> None:
     require_text(combat_formula, "NpcId.RED_DRAGON", "Earth sword red target eligibility")
     require_text(combat_formula, "NpcId.FIRE_GIANT", "Earth sword fire target eligibility")
     require_text(combat_formula, 'npcName.contains("fire")', "Earth sword fire name eligibility")
+    mob = (ROOT / "server/src/com/openrsc/server/model/entity/Mob.java").read_text(encoding="utf-8")
+    require_text(mob, "ATTACK_BASED_DEBUFF_ATTACKS = 5", "Elemental sword proc debuff duration")
+    pvm_melee = (ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java").read_text(encoding="utf-8")
+    combat_event = (ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java").read_text(encoding="utf-8")
+    require_text(pvm_melee, "applyElementalSwordProc(attackerMob, targetMob)", "PvM elemental sword proc hook")
+    require_text(pvm_melee, "new CombatEffect(target, effectType)", "PvM elemental sword proc visual")
+    require_text(combat_event, "applyElementalSwordProc(hitter, target)", "PvP elemental sword proc hook")
+    require_text(combat_event, "new CombatEffect(target, effectType)", "PvP elemental sword proc visual")
 
 
 if __name__ == "__main__":

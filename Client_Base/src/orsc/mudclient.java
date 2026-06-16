@@ -142,13 +142,16 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_ICE_KIN_MAGIC = 56;
 	public static final int COMBAT_EFFECT_EARTH_KIN_MAGIC = 57;
 	public static final int COMBAT_EFFECT_DRAGON_WEAPON_BREATH = 58;
+	public static final int COMBAT_EFFECT_FIRE_SWORD = 59;
+	public static final int COMBAT_EFFECT_ICE_SWORD = 60;
+	public static final int COMBAT_EFFECT_EARTH_SWORD = 61;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
 	public static final int COMBAT_EFFECT_WATER_ERUPTION = COMBAT_EFFECT_HURRICANE;
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 58;
+	public static final int COMBAT_EFFECT_COUNT = 61;
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_TICKS = 40;
@@ -923,7 +926,8 @@ public final class mudclient implements Runnable {
 		"enemy-earth-basic", "black-demon-magic", "balrog-magic",
 		"battle-mage-air", "battle-mage-earth", "battle-mage-water", "battle-mage-fire",
 		"green-dragon-magic", "fire-dragon-magic", "otherworldly-being-magic", "paladin-magic",
-		"fire-kin-magic", "ice-kin-magic", "earth-kin-magic", "dragon-weapon-breath"
+		"fire-kin-magic", "ice-kin-magic", "earth-kin-magic", "dragon-weapon-breath",
+		"fire-sword", "ice-sword", "earth-sword"
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final Sprite[][] projectileEffectMirrorSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
@@ -18577,6 +18581,14 @@ public final class mudclient implements Runnable {
 		if ("earth-kin-magic".equals(animationName)) {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "earth-kin-magic.png"),
 				targetFrames, maxTargetSize, 6, 2, 12, 0);
+		}
+		if ("ice-sword".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "ice-sword.png"),
+				targetFrames, maxTargetSize, 12, 1, 12, 0);
+		}
+		if ("earth-sword".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "earth-sword.png"),
+				targetFrames, maxTargetSize, 6, 1, 6, 0);
 		}
 		if ("dragon-breath".equals(animationName)) {
 			File sheet = new File(sourceFolder, "dragon-breath.png");

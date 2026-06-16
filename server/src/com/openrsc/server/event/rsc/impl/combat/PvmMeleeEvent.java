@@ -156,6 +156,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		applyBearMaulSecondHit(attackerMob, targetMob, damage);
 		if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 			applyDragonWeaponBreathDamage(attackerMob, targetMob);
+			applyElementalSwordProc(attackerMob, targetMob);
 		}
 		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
@@ -507,6 +508,22 @@ public class PvmMeleeEvent extends GameTickEvent {
 		inflictAuxiliaryTrueDamage(hitter, target, breathDamage);
 	}
 
+	private void applyElementalSwordProc(final Mob hitter, final Mob target) {
+		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		final int effectType = CombatFormula.getElementalSwordProcEffect(hitter);
+		if (effectType == CombatEffect.NONE || !CombatFormula.rollElementalSwordProcChance()) {
+			return;
+		}
+		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, effectType));
+		CombatFormula.applyElementalSwordProcDebuff(target, effectType);
+		final int procDamage = CombatFormula.rollElementalSwordProcDamage(hitter);
+		if (procDamage > 0) {
+			inflictAuxiliaryTrueDamage(hitter, target, procDamage);
+		}
+	}
+
 	private int applyScytheNpcCleave(final Player player, final Npc primaryTarget) {
 		if (!isScytheEquipped(player)) {
 			return 0;
@@ -528,6 +545,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			applyBearMaulSecondHit(player, npc, damage);
 			if (!getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				applyDragonWeaponBreathDamage(player, npc);
+				applyElementalSwordProc(player, npc);
 			}
 			if (player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return extraTargetsHit;

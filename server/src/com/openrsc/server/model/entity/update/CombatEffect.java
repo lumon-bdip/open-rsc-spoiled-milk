@@ -62,6 +62,9 @@ public class CombatEffect {
 	public static final int ICE_KIN_MAGIC = 56;
 	public static final int EARTH_KIN_MAGIC = 57;
 	public static final int DRAGON_WEAPON_BREATH = 58;
+	public static final int FIRE_SWORD = 59;
+	public static final int ICE_SWORD = 60;
+	public static final int EARTH_SWORD = 61;
 
 	public static final int HELLFIRE = HELLS_FIRE;
 	public static final int WIND_SLASH = AIR_SLASH;

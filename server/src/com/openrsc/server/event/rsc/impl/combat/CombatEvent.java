@@ -194,6 +194,7 @@ public class CombatEvent extends GameTickEvent {
 			applyBearMaulSecondHit(hitter, target, damage);
 			if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				applyDragonWeaponBreathDamage(hitter, target);
+				applyElementalSwordProc(hitter, target);
 			}
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
@@ -702,6 +703,22 @@ public class CombatEvent extends GameTickEvent {
 		}
 		hitter.getUpdateFlags().setCombatEffect(new CombatEffect(hitter, CombatEffect.DRAGON_WEAPON_BREATH));
 		inflictAuxiliaryTrueDamage(hitter, target, breathDamage);
+	}
+
+	private void applyElementalSwordProc(final Mob hitter, final Mob target) {
+		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		final int effectType = CombatFormula.getElementalSwordProcEffect(hitter);
+		if (effectType == CombatEffect.NONE || !CombatFormula.rollElementalSwordProcChance()) {
+			return;
+		}
+		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, effectType));
+		CombatFormula.applyElementalSwordProcDebuff(target, effectType);
+		final int procDamage = CombatFormula.rollElementalSwordProcDamage(hitter);
+		if (procDamage > 0) {
+			inflictAuxiliaryTrueDamage(hitter, target, procDamage);
+		}
 	}
 
 	// Players in combat with an NPC will receive unique NPC
