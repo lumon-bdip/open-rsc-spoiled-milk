@@ -129,21 +129,29 @@ def main() -> None:
 
     for snippet in (
         "SHURIKEN_THROW_COUNT = 3",
-        "resolvePrimaryTarget(player)",
+        "shurikenTargetLock",
+        "resolvePrimaryTarget(player, throwingID)",
         "findAutoRetaliatePrimaryTarget(player)",
+        "shouldAutoRetaliateRetarget(final Player player, final Mob attacker)",
+        "findLockedShurikenPrimary(player, attackRadius)",
+        "findLockedShurikenPrimary(player, getAttackRadius(throwingID))",
         "player.setOpponent(fallback);",
         "npc.getOpponent() == player",
         "selectThrowingTargets(player, throwingID, attackRadius)",
         "throwsToConsume = RangeUtils.SHURIKENS.contains(throwingID) ? throwingTargets.size() : 1",
         "while (throwingTargets.size() > throwsToConsume)",
+        "rememberShurikenTargets(player, throwingTargets, attackRadius);",
         "primeShurikenAggro(player, throwingTargets);",
         "targets.add(target)",
         "!target.isNpc()",
         "|| Summoning.isSummon(npc)",
-        "isAggroedToPlayer((Npc) target, player) ? 1 : 0",
+        "countAggroedShurikenTargets(candidates, player)",
         "boolean preferAggroed = aggroedCount >= SHURIKEN_THROW_COUNT",
-        "addRandomShurikenTargets(targets, preferred)",
-        "addRandomShurikenTargets(targets, fallback)",
+        "addLockedShurikenTargets(player, targets, candidates, attackRadius)",
+        "addRandomShurikenTargets(targets, newTargets)",
+        "addRandomShurikenTargets(targets, aggroedFallback)",
+        "if (countAggroedShurikenTargets(candidates, player) > SHURIKEN_THROW_COUNT)",
+        "pruneShurikenTargetLock(candidates);",
         "npc.getOpponent() == player || npc.getPreferredThreatTarget() == player",
         "npc.addRangeDamage(player, 0);",
         "npc.startPvmCounterCombat(player);",
@@ -197,7 +205,7 @@ def main() -> None:
     require(mob, "startPlayerRangedPvmCounterCombat(attacker)", "PvM auto-retaliate checks ranged before melee")
     require(mob, "new RangeEvent(player.getWorld(), player, 1, attacker)", "PvM auto-retaliate can resume bow ranged")
     require(mob, "new ThrowingEvent(player.getWorld(), player, 1, attacker)", "PvM auto-retaliate can resume throwing ranged")
-    require(mob, "throwingEvent.getTarget() == null || !throwingEvent.getTarget().equals(attacker)", "PvM auto-retaliate retargets stale throwing events safely")
+    require(mob, "throwingEvent.shouldAutoRetaliateRetarget(player, attacker)", "PvM auto-retaliate lets shuriken preserve its locked targets")
     require(mudclient, 'loadExternalItemSprite(getExternalPngFile("shuriken-thrown"), 46, 30)', "Client shuriken thrown sprite loader")
     require(mudclient, "generateShurikenProjectileFrames();", "Client shuriken spin frame generation")
     require(mudclient, "boolean enemyProjectile = true;", "Client projectile renderer tracks shooter ownership")

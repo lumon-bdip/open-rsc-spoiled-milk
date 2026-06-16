@@ -3,6 +3,7 @@ package com.openrsc.server.content;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 
 public final class EnchantingItemEffects {
@@ -42,6 +43,7 @@ public final class EnchantingItemEffects {
 	public static final int BLOOD_ALTAR = 1212;
 	public static final int SOUL_ALTAR = 1296;
 	public static final int LIFE_ALTAR = 1321;
+	private static final String LAW_BANKING_CHARGES_CACHE_PREFIX = "myworld_law_banking_charges_";
 
 	private static final int[] ALL_ALTARS = {
 		AIR_ALTAR,
@@ -568,6 +570,14 @@ public final class EnchantingItemEffects {
 		return contains(LAW_RINGS, itemId);
 	}
 
+	public static boolean isLawBankingNecklace(final int itemId) {
+		return getTierForAltar(itemId, STANDARD_NECKLACE_LINES, LAW_ALTAR) != -1;
+	}
+
+	public static boolean isLawBankingItem(final int itemId) {
+		return isLawRing(itemId) || isLawBankingNecklace(itemId);
+	}
+
 	public static int getAmuletProduct(final int altarId, final int baseAmuletId) {
 		final int[] productLine = getAmuletProductLine(altarId);
 		final int tierIndex = getTierIndexForBaseAmulet(baseAmuletId);
@@ -851,6 +861,45 @@ public final class EnchantingItemEffects {
 			}
 		}
 		return 0;
+	}
+
+	public static String getLawBankingChargesCacheKey(final int itemId) {
+		return LAW_BANKING_CHARGES_CACHE_PREFIX + itemId;
+	}
+
+	public static int getLawBankingItemCharges(final Player player, final Item item) {
+		if (player == null || item == null || !isLawBankingItem(item.getCatalogId())) {
+			return 0;
+		}
+		final int maxCharges = getLawItemMaxCharges(item.getCatalogId());
+		if (maxCharges <= 0) {
+			return 0;
+		}
+		final String cacheKey = getLawBankingChargesCacheKey(item.getCatalogId());
+		int charges = player.getCache().hasKey(cacheKey)
+			? player.getCache().getInt(cacheKey)
+			: item.getItemStatus().getDurability();
+		charges = clamp(charges, 0, maxCharges);
+		player.getCache().set(cacheKey, charges);
+		item.getItemStatus().setDurability(charges);
+		return charges;
+	}
+
+	public static void setLawBankingItemCharges(final Player player, final Item item, final int charges) {
+		if (player == null || item == null || !isLawBankingItem(item.getCatalogId())) {
+			return;
+		}
+		final int maxCharges = getLawItemMaxCharges(item.getCatalogId());
+		if (maxCharges <= 0) {
+			return;
+		}
+		final int clampedCharges = clamp(charges, 0, maxCharges);
+		player.getCache().set(getLawBankingChargesCacheKey(item.getCatalogId()), clampedCharges);
+		item.getItemStatus().setDurability(clampedCharges);
+	}
+
+	private static int clamp(final int value, final int min, final int max) {
+		return Math.max(min, Math.min(max, value));
 	}
 
 	public static int getInitialItemDurability(final int itemId) {

@@ -32,6 +32,7 @@ public class ThrowingEvent extends GameTickEvent {
 	private static final int SHURIKEN_THROW_COUNT = 3;
 	private boolean deliveredFirstProjectile;
 	private Mob target;
+	private final List<Mob> shurikenTargetLock = new ArrayList<>();
 
 	public ThrowingEvent(final World world, final Player owner, final long ticksDelay, final Mob victim) {
 		super(world, owner, ticksDelay, "Throwing Event", DuplicationStrategy.ONE_PER_MOB);
@@ -52,11 +53,24 @@ public class ThrowingEvent extends GameTickEvent {
 
 	public void reTarget(final Mob mob) {
 		target = mob;
+		shurikenTargetLock.clear();
 		setDelayTicks(2);
 		long currentTick = getPlayerOwner().getWorld().getServer().getCurrentTick();
 		if (getPlayerOwner().getAttribute("can_range_again", 0L) > currentTick + 1) {
 			getPlayerOwner().setAttribute("can_range_again", currentTick + 1);
 		}
+	}
+
+	public boolean shouldAutoRetaliateRetarget(final Player player, final Mob attacker) {
+		int throwingID = player.getThrowingEquip();
+		if (!RangeUtils.SHURIKENS.contains(throwingID)) {
+			return target == null || !target.equals(attacker);
+		}
+		if (isValidPrimaryTarget(player, target)) {
+			return false;
+		}
+		int attackRadius = getAttackRadius(throwingID);
+		return findLockedShurikenPrimary(player, attackRadius) == null;
 	}
 
 	public void restart() {
@@ -77,12 +91,12 @@ public class ThrowingEvent extends GameTickEvent {
 
 		long currentTick = player.getWorld().getServer().getCurrentTick();
 		if (player.getAttribute("can_range_again", 0L) > currentTick) return;
-		if (!resolvePrimaryTarget(player)) {
+		int throwingID = player.getThrowingEquip();
+		if (!resolvePrimaryTarget(player, throwingID)) {
 			player.resetRange();
 			return;
 		}
 
-		int throwingID = player.getThrowingEquip();
 		if (!player.loggedIn() || (player.inCombat() && !(target.isNpc()
 				&& player.getOpponent() != null
 				&& player.getOpponent().isNpc()
@@ -168,6 +182,7 @@ public class ThrowingEvent extends GameTickEvent {
 			return;
 		}
 		if (RangeUtils.SHURIKENS.contains(throwingID)) {
+			rememberShurikenTargets(player, throwingTargets, attackRadius);
 			primeShurikenAggro(player, throwingTargets);
 		}
 		/*if (!getPlayerOwner().getLocation().isMembersWild()) {
@@ -220,9 +235,17 @@ public class ThrowingEvent extends GameTickEvent {
 		return rangeType == null ? 0 : rangeType.getAmount();
 	}
 
-	private boolean resolvePrimaryTarget(Player player) {
+	private boolean resolvePrimaryTarget(Player player, int throwingID) {
 		if (isValidPrimaryTarget(player, target)) {
 			return true;
+		}
+
+		if (RangeUtils.SHURIKENS.contains(throwingID)) {
+			Mob lockedTarget = findLockedShurikenPrimary(player, getAttackRadius(throwingID));
+			if (lockedTarget != null) {
+				target = lockedTarget;
+				return true;
+			}
 		}
 
 		Mob opponent = player.getOpponent();
@@ -293,45 +316,62 @@ public class ThrowingEvent extends GameTickEvent {
 
 	private List<Mob> selectThrowingTargets(Player player, int throwingID, int attackRadius) {
 		List<Mob> targets = new ArrayList<>();
-		targets.add(target);
 		if (!RangeUtils.SHURIKENS.contains(throwingID) || !target.isNpc()) {
+			targets.add(target);
 			return targets;
 		}
 
-		List<Npc> candidates = getValidAdditionalShurikenTargets(player, attackRadius);
+		List<Npc> candidates = getValidShurikenTargets(player, attackRadius);
 		if (candidates.isEmpty()) {
+			targets.add(target);
 			return targets;
 		}
 
-		int aggroedCount = isAggroedToPlayer((Npc) target, player) ? 1 : 0;
-		for (Npc candidate : candidates) {
-			if (isAggroedToPlayer(candidate, player)) {
-				aggroedCount++;
-			}
-		}
-
-		List<Npc> preferred = new ArrayList<>();
-		List<Npc> fallback = new ArrayList<>();
+		int aggroedCount = countAggroedShurikenTargets(candidates, player);
 		boolean preferAggroed = aggroedCount >= SHURIKEN_THROW_COUNT;
 		for (Npc candidate : candidates) {
 			boolean aggroed = isAggroedToPlayer(candidate, player);
-			if (aggroed == preferAggroed) {
-				preferred.add(candidate);
-			} else {
-				fallback.add(candidate);
+			if (candidate.equals(target) && (!preferAggroed || aggroed)) {
+				addShurikenTarget(targets, candidate);
+				break;
 			}
 		}
 
-		addRandomShurikenTargets(targets, preferred);
-		addRandomShurikenTargets(targets, fallback);
+		if (preferAggroed) {
+			List<Npc> aggroed = new ArrayList<>();
+			for (Npc candidate : candidates) {
+				if (isAggroedToPlayer(candidate, player) && !containsTarget(targets, candidate)) {
+					aggroed.add(candidate);
+				}
+			}
+			addRandomShurikenTargets(targets, aggroed);
+			return targets;
+		}
+
+		addLockedShurikenTargets(player, targets, candidates, attackRadius);
+
+		List<Npc> newTargets = new ArrayList<>();
+		List<Npc> aggroedFallback = new ArrayList<>();
+		for (Npc candidate : candidates) {
+			if (containsTarget(targets, candidate)) {
+				continue;
+			}
+			if (isAggroedToPlayer(candidate, player)) {
+				aggroedFallback.add(candidate);
+			} else {
+				newTargets.add(candidate);
+			}
+		}
+
+		addRandomShurikenTargets(targets, newTargets);
+		addRandomShurikenTargets(targets, aggroedFallback);
 		return targets;
 	}
 
-	private List<Npc> getValidAdditionalShurikenTargets(Player player, int attackRadius) {
+	private List<Npc> getValidShurikenTargets(Player player, int attackRadius) {
 		List<Npc> candidates = new ArrayList<>();
 		for (Npc npc : player.getViewArea().getNpcsInView()) {
-			if (npc.equals(target)
-				|| npc.getSkills().getLevel(Skill.HITS.id()) <= 0
+			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0
 				|| Summoning.isSummon(npc)
 				|| !npc.getDef().isAttackable()
 				|| !player.withinRange(npc, attackRadius)
@@ -344,14 +384,88 @@ public class ThrowingEvent extends GameTickEvent {
 		return candidates;
 	}
 
+	private int countAggroedShurikenTargets(List<Npc> candidates, Player player) {
+		int count = 0;
+		for (Npc candidate : candidates) {
+			if (isAggroedToPlayer(candidate, player)) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	private void addLockedShurikenTargets(Player player, List<Mob> targets, List<Npc> candidates, int attackRadius) {
+		pruneShurikenTargetLock(candidates);
+		for (Mob lockedTarget : shurikenTargetLock) {
+			if (targets.size() >= SHURIKEN_THROW_COUNT) {
+				return;
+			}
+			if (!lockedTarget.isNpc()) {
+				continue;
+			}
+			Npc lockedNpc = (Npc) lockedTarget;
+			if (candidates.contains(lockedNpc)) {
+				addShurikenTarget(targets, lockedNpc);
+			}
+		}
+	}
+
 	private void addRandomShurikenTargets(List<Mob> targets, List<Npc> candidates) {
 		while (targets.size() < SHURIKEN_THROW_COUNT && !candidates.isEmpty()) {
-			targets.add(candidates.remove(DataConversions.random(0, candidates.size() - 1)));
+			addShurikenTarget(targets, candidates.remove(DataConversions.random(0, candidates.size() - 1)));
+		}
+	}
+
+	private void addShurikenTarget(List<Mob> targets, Mob candidate) {
+		if (targets.size() >= SHURIKEN_THROW_COUNT || containsTarget(targets, candidate)) {
+			return;
+		}
+		targets.add(candidate);
+	}
+
+	private boolean containsTarget(List<? extends Mob> targets, Mob candidate) {
+		for (Mob target : targets) {
+			if (target.equals(candidate)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private Mob findLockedShurikenPrimary(Player player, int attackRadius) {
+		List<Npc> candidates = getValidShurikenTargets(player, attackRadius);
+		if (countAggroedShurikenTargets(candidates, player) > SHURIKEN_THROW_COUNT) {
+			return null;
+		}
+		pruneShurikenTargetLock(candidates);
+		return shurikenTargetLock.isEmpty() ? null : shurikenTargetLock.get(0);
+	}
+
+	private void pruneShurikenTargetLock(List<Npc> validTargets) {
+		for (int index = shurikenTargetLock.size() - 1; index >= 0; index--) {
+			Mob lockedTarget = shurikenTargetLock.get(index);
+			if (!lockedTarget.isNpc()
+				|| !validTargets.contains((Npc) lockedTarget)) {
+				shurikenTargetLock.remove(index);
+			}
 		}
 	}
 
 	private boolean isAggroedToPlayer(Npc npc, Player player) {
 		return npc.getOpponent() == player || npc.getPreferredThreatTarget() == player;
+	}
+
+	private void rememberShurikenTargets(Player player, List<Mob> throwingTargets, int attackRadius) {
+		pruneShurikenTargetLock(getValidShurikenTargets(player, attackRadius));
+		for (Mob hitTarget : throwingTargets) {
+			if (!hitTarget.isNpc() || containsTarget(shurikenTargetLock, hitTarget)) {
+				continue;
+			}
+			shurikenTargetLock.add(hitTarget);
+		}
+		while (shurikenTargetLock.size() > SHURIKEN_THROW_COUNT) {
+			shurikenTargetLock.remove(shurikenTargetLock.size() - 1);
+		}
 	}
 
 	private void primeShurikenAggro(Player player, List<Mob> throwingTargets) {

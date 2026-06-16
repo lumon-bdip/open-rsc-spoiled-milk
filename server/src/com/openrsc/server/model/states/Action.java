@@ -40,6 +40,7 @@ public enum Action {
 	playerlogout(EntityType.NONE, "playerlogout"),
 	playerrangenpc(EntityType.NPC, "playerrangenpc"),
 	playerrangeplayer(EntityType.PLAYER, "playerrangeplayer"),
+	production(EntityType.NONE, "production"),
 	startup(EntityType.NONE, "startup"),
 	trade(EntityType.NONE, "opnpc"),
 	timedevent(EntityType.NONE, "timedevent");

@@ -336,6 +336,9 @@ def ensure_runtime_paths_are_wired() -> None:
     require("public static double getCosmicAmuletExtraResourceChance" in effects
             and "return 0.0D;" in effects,
             "Cosmic amulet should not inflate base resource gather chances")
+    require("getCosmicItemMaxCharges" not in effects
+            and "COSMIC_BANKING_CHARGES_CACHE_PREFIX" not in effects,
+            "Cosmic jewelry should remain passive bonus jewelry, not charged jewelry")
     require_regex(equipment, r"getChaosRecoilChance\(\).*?return Math\.min\(1\.0D,",
                   "Chaos recoil ring and necklace chance should stack and cap at 100%")
     require_regex(equipment, r"getChaosRecoilDamageDivisor\(\).*?return hasNeck && hasRing \? 5 : 10;",
@@ -434,14 +437,38 @@ def ensure_runtime_paths_are_wired() -> None:
     require("getLawItemMaxCharges" in law_jewelry
             and "new Item(target.getCatalogId(), target.getAmount(), target.getNoted())" in law_jewelry,
             "Law amulet manual banking should preserve selected stack amount and note state")
+    require("public static boolean isLawBankingNecklace" in effects
+            and "public static boolean isLawBankingItem" in effects
+            and "LAW_BANKING_CHARGES_CACHE_PREFIX" in effects,
+            "Law banking necklace/ring charge helpers should be account-backed")
+    require("getLawBankingItemCharges(final Player player, final Item item)" in effects
+            and "setLawBankingItemCharges(final Player player, final Item item, final int charges)" in effects
+            and "player.getCache().set(getLawBankingChargesCacheKey(item.getCatalogId()), clampedCharges);" in effects,
+            "Law banking necklace/ring charges should be stored on the player cache")
+    require("EnchantingItemEffects.isLawBankingItem(item.getCatalogId())" in law_jewelry
+            and "EnchantingItemEffects.getLawBankingItemCharges(player, item)" in law_jewelry
+            and "EnchantingItemEffects.setLawBankingItemCharges(player, item, charges)" in law_jewelry,
+            "Manual law ring use and recharge should share account-backed banking charges")
+    require("chargeLawRunesForBankingRecharge" in law_jewelry
+            and "getLawBankingRechargeRuneCost" in law_jewelry
+            and "return Math.max(10, (missingCharges + 9) / 10);" in law_jewelry
+            and "You need \" + requiredRunes + \" law runes to recharge this jewelry." in law_jewelry,
+            "Law banking necklaces/rings should cost 10 law runes per 100 missing charges with a 10-rune minimum")
     require("tryBankMonsterLootWithLawNecklace" in equipment
             and "final int chargeCost = Math.max(1, item.getAmount());" in equipment
-            and "remove(neckItem, 1, true);" in equipment,
-            "Law necklace monster-loot banking should spend charges and break at zero")
+            and "EnchantingItemEffects.getLawBankingItemCharges(player, neckItem)" in equipment
+            and "EnchantingItemEffects.setLawBankingItemCharges(player, neckItem, charges)" in equipment
+            and "Your law necklace sends the loot to your bank and runs out of charges." in equipment
+            and "remove(neckItem, 1, true);" not in equipment,
+            "Law necklace monster-loot banking should spend account-backed charges and run out at zero")
     require("bankSkillingDropWithLawRing" in equipment
             and "if (item.getDef(player.getWorld()).isStackable())" in equipment
+            and "EnchantingItemEffects.getLawBankingItemCharges(player, ringItem)" in equipment
+            and "EnchantingItemEffects.setLawBankingItemCharges(player, ringItem, charges)" in equipment
+            and "Your law ring sends your resources to your bank and runs out of charges." in equipment
+            and "remove(ringItem, 1, true);" not in equipment
             and "for (int count = 0; count < item.getAmount() && charges > 0; count++)" in equipment,
-            "Law ring skilling banking should skip stackables and charge per unstackable item")
+            "Law ring skilling banking should skip stackables and charge per unstackable item from account-backed charges")
 
 
 def main() -> None:

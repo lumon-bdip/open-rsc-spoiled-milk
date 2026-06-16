@@ -13,6 +13,8 @@ import com.openrsc.server.content.party.PartyRank;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.event.rsc.PluginTask;
+import com.openrsc.server.event.rsc.PluginTickEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -21,6 +23,7 @@ import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.PayloadProcessor;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.struct.incoming.OptionsStruct;
+import com.openrsc.server.plugins.PluginInterruptedException;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,6 +34,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 	 * The asynchronous logger.
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final String PRODUCTION_PLUGIN_NAME = "ProductionInterface.start";
 	private static String[] badWords = {
 		"fuck", "ass", "bitch", "admin", "mod", "dev", "developer", "nigger", "niger",
 		"whore", "pussy", "porn", "penis", "chink", "faggot", "cunt", "clit", "cock"};
@@ -169,25 +173,55 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			return;
 		}
 
-		boolean started;
-		try {
-			started = starter.start(player, session, payload.id, payload.amount);
-		} catch (RuntimeException e) {
-			LOGGER.error("Production start failed player={} itemId={} amount={} sessionType={}",
-				player.getUsername(), payload.id, payload.amount, session.getType(), e);
-			player.message("Unable to start production");
-			clearProductionState(player, session);
-			return;
-		}
-		ProductionSession currentSession = player.getAttribute("production_session", null);
-		if (currentSession != session) {
-			return;
-		}
+		scheduleProductionStart(player, session, starter, payload.id, payload.amount);
+	}
 
-		if (started) {
-			clearProductionState(player, session);
-		} else {
-			player.message("Unable to start production");
+	private void scheduleProductionStart(
+		final Player player,
+		final ProductionSession session,
+		final ProductionStarter starter,
+		final int itemId,
+		final int quantity
+	) {
+		final PluginTask task = new PluginTask(player.getWorld(), player, "production", new Object[0]) {
+			@Override
+			public int action() {
+				ProductionSession activeSession = player.getAttribute("production_session", null);
+				ProductionStarter activeStarter = player.getAttribute("production_starter", null);
+				if (activeSession != session || activeStarter != starter) {
+					return 1;
+				}
+
+				boolean started;
+				try {
+					started = starter.start(player, session, itemId, quantity);
+				} catch (PluginInterruptedException e) {
+					return 1;
+				} catch (RuntimeException e) {
+					LOGGER.error("Production start failed player={} itemId={} amount={} sessionType={}",
+						player.getUsername(), itemId, quantity, session.getType(), e);
+					player.message("Unable to start production");
+					clearProductionState(player, session);
+					return 0;
+				}
+
+				ProductionSession currentSession = player.getAttribute("production_session", null);
+				if (currentSession != session) {
+					return 1;
+				}
+
+				if (started) {
+					clearProductionState(player, session);
+				} else {
+					player.message("Unable to start production");
+				}
+				return started ? 1 : 0;
+			}
+		};
+
+		PluginTickEvent event = new PluginTickEvent(player.getWorld(), player, PRODUCTION_PLUGIN_NAME, null, task);
+		if (!player.getWorld().getServer().getGameEventHandler().add(event)) {
+			player.message("Production is already starting");
 		}
 	}
 

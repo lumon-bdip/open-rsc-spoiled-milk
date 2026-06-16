@@ -29,6 +29,16 @@ def wilderness_level(x: int, y: int) -> int:
     return 1 + wild // 6 if wild > 0 else 0
 
 
+def is_rangers_guild_overlay(loc: dict) -> bool:
+    x = int(loc["start"]["X"])
+    y = int(loc["start"]["Y"])
+    return (
+        484 <= x <= 515 and 432 <= y <= 480
+        or 484 <= x <= 515 and 1376 <= y <= 1424
+        or 484 <= x <= 515 and 3281 <= y <= 3310
+    )
+
+
 def require_valid_drop_budget(drops: str, table_name: str) -> None:
     start = drops.find(f'new DropTable("{table_name}")')
     require(start >= 0, f"Missing drop table: {table_name}")
@@ -130,7 +140,8 @@ def main() -> None:
 
     overlay_path = SERVER / "conf/server/defs/locs/MyWorldNpcLocs.json"
     overlay = json.loads(overlay_path.read_text(encoding="utf-8"))["npclocs"]
-    counts = Counter(loc["id"] for loc in overlay)
+    population_overlay = [loc for loc in overlay if not is_rangers_guild_overlay(loc)]
+    counts = Counter(loc["id"] for loc in population_overlay)
     expected_counts = {
         836: 4,
         199: 4,
@@ -155,16 +166,16 @@ def main() -> None:
         787: 3,
         104: 3,
     }
-    require(counts == expected_counts, f"Unexpected MyWorld spawn overlay counts: {dict(counts)}")
+    require(counts == expected_counts, f"Unexpected MyWorld Wilderness/God Knight spawn overlay counts: {dict(counts)}")
     heroes_guild_spawns = [
-        loc for loc in overlay
+        loc for loc in population_overlay
         if 365 <= loc["start"]["X"] <= 377 and 3264 <= loc["start"]["Y"] <= 3276
     ]
     require(len(heroes_guild_spawns) == 6, "Heroes' Guild overlay should add exactly 6 hostiles")
-    for loc in (loc for loc in overlay if loc["id"] in (199, 184) and loc not in heroes_guild_spawns):
+    for loc in (loc for loc in population_overlay if loc["id"] in (199, 184) and loc not in heroes_guild_spawns):
         require(wilderness_level(loc["start"]["X"], loc["start"]["Y"]) > 0,
                 f"Intended Wilderness addition is outside the Wilderness: {loc}")
-    wilderness_additions = [loc for loc in overlay if loc["id"] != 836 and loc not in heroes_guild_spawns]
+    wilderness_additions = [loc for loc in population_overlay if loc["id"] != 836 and loc not in heroes_guild_spawns]
     require(len(wilderness_additions) == 74, "Wilderness overlay should add exactly 74 hostiles")
     for loc in wilderness_additions:
         require(wilderness_level(loc["start"]["X"], loc["start"]["Y"]) > 0,

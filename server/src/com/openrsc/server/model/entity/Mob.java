@@ -1197,7 +1197,7 @@ public abstract class Mob extends Entity {
 
 		ThrowingEvent throwingEvent = player.getThrowingEvent();
 		if (throwingEvent != null) {
-			if (throwingEvent.getTarget() == null || !throwingEvent.getTarget().equals(attacker)) {
+			if (throwingEvent.shouldAutoRetaliateRetarget(player, attacker)) {
 				throwingEvent.reTarget(attacker);
 			}
 			throwingEvent.restart();

@@ -47,11 +47,15 @@ public final class BlessedSymbols implements UseLocTrigger {
 			player.message("Your current devotion to " + formatGodLine(godLine) + " is " + currentDevotion + ".");
 			return;
 		}
+		if (!PrayerBlessingLimit.canBless(player, godLine)) {
+			return;
+		}
 
 		if (player.getCarriedItems().remove(item) == -1) {
 			return;
 		}
 
+		PrayerBlessingLimit.recordBlessing(player);
 		give(player, productId, 1);
 		final int prayerXp = Devotion.getBlessingPrayerXp(player, godLine, SYMBOL_CRAFTING_XP);
 		if (prayerXp > 0) {

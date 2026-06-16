@@ -49,11 +49,15 @@ public final class GodKnightEquipment implements UseLocTrigger {
 			player.message("Your current devotion to " + formatGodLine(godLine) + " is " + currentDevotion + ".");
 			return;
 		}
+		if (!PrayerBlessingLimit.canBless(player, godLine)) {
+			return;
+		}
 
 		if (player.getCarriedItems().remove(item) == -1) {
 			return;
 		}
 
+		PrayerBlessingLimit.recordBlessing(player);
 		give(player, productId, 1);
 		player.message("The altar blesses the steel equipment.");
 		if (devotionRequirement > 0) {

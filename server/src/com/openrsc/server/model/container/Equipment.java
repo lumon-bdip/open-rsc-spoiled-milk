@@ -2551,8 +2551,7 @@ public class Equipment {
 		if (maxCharges <= 3) {
 			return false;
 		}
-		int charges = neckItem.getItemStatus().getDurability();
-		charges = Math.min(maxCharges, charges);
+		int charges = EnchantingItemEffects.getLawBankingItemCharges(player, neckItem);
 		if (charges <= 0) {
 			return false;
 		}
@@ -2568,10 +2567,10 @@ public class Equipment {
 		final int chargeCost = Math.max(1, item.getAmount());
 		charges -= chargeCost;
 		if (charges <= 0) {
-			remove(neckItem, 1, true);
-			player.message("@ora@Your law necklace sends the loot to your bank and crumbles.");
+			EnchantingItemEffects.setLawBankingItemCharges(player, neckItem, 0);
+			player.message("@ora@Your law necklace sends the loot to your bank and runs out of charges.");
 		} else {
-			neckItem.getItemStatus().setDurability(charges);
+			EnchantingItemEffects.setLawBankingItemCharges(player, neckItem, charges);
 			player.message("@ora@Your law necklace sends the loot to your bank. " + formatLawCharges(charges));
 		}
 		return true;
@@ -2595,8 +2594,7 @@ public class Equipment {
 		if (maxCharges <= 0) {
 			return 0;
 		}
-		int charges = ringItem.getItemStatus().getDurability();
-		charges = Math.min(maxCharges, charges);
+		int charges = EnchantingItemEffects.getLawBankingItemCharges(player, ringItem);
 		if (charges <= 0) {
 			return 0;
 		}
@@ -2613,10 +2611,10 @@ public class Equipment {
 			return 0;
 		}
 		if (charges <= 0) {
-			remove(ringItem, 1, true);
-			player.message("@ora@Your law ring sends your resources to your bank and crumbles.");
+			EnchantingItemEffects.setLawBankingItemCharges(player, ringItem, 0);
+			player.message("@ora@Your law ring sends your resources to your bank and runs out of charges.");
 		} else {
-			ringItem.getItemStatus().setDurability(charges);
+			EnchantingItemEffects.setLawBankingItemCharges(player, ringItem, charges);
 			player.message("@ora@Your law ring sends your resources to your bank. " + formatLawCharges(charges));
 		}
 		return banked;

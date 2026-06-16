@@ -8,6 +8,10 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFS = ROOT / "server/conf/server/defs"
 LOCS = DEFS / "locs"
 
+MEDIUM_IRON_HELMET_ID = 5
+LARGE_IRON_HELMET_ID = 6
+WILDERNESS_ZOMBIE_HELM_LOCATION = (170, 310)
+
 
 RETIRED_GROUND_ITEM_IDS = {
     # Generic leather equipment has been replaced by source-specific hide gear.
@@ -58,6 +62,25 @@ def main() -> None:
                 failures.append(f"{label} resolves to {name}")
             if item_id in RETIRED_GROUND_ITEM_IDS:
                 failures.append(f"{label} uses a retired MyWorld ground item")
+
+        if path.name in {"GroundItems.json", "GroundItems27.json"}:
+            wilderness_helm_ids = {
+                int(entry["id"])
+                for entry in data.get("grounditems", [])
+                if (int(entry["pos"]["X"]), int(entry["pos"]["Y"])) == WILDERNESS_ZOMBIE_HELM_LOCATION
+            }
+            if LARGE_IRON_HELMET_ID not in wilderness_helm_ids:
+                failures.append(
+                    f"{path.relative_to(ROOT)} wilderness zombie helm spawn at "
+                    f"{WILDERNESS_ZOMBIE_HELM_LOCATION[0]},{WILDERNESS_ZOMBIE_HELM_LOCATION[1]} "
+                    "should be the large Iron Helmet"
+                )
+            if MEDIUM_IRON_HELMET_ID in wilderness_helm_ids:
+                failures.append(
+                    f"{path.relative_to(ROOT)} wilderness zombie helm spawn at "
+                    f"{WILDERNESS_ZOMBIE_HELM_LOCATION[0]},{WILDERNESS_ZOMBIE_HELM_LOCATION[1]} "
+                    "should not use the medium Iron Helmet"
+                )
 
     if failures:
         raise AssertionError("\n".join(failures))

@@ -50,11 +50,15 @@ public final class BlessedWoolArmor implements UseLocTrigger {
 			player.message("Your current devotion to " + formatGodLine(godLine) + " is " + currentDevotion + ".");
 			return;
 		}
+		if (!PrayerBlessingLimit.canBless(player, godLine)) {
+			return;
+		}
 
 		if (player.getCarriedItems().remove(item) == -1) {
 			return;
 		}
 
+		PrayerBlessingLimit.recordBlessing(player);
 		give(player, productId, 1);
 		final int prayerXp = Devotion.getBlessingPrayerXp(player, godLine, getWoolCraftingXp(item.getCatalogId()));
 		if (prayerXp > 0) {

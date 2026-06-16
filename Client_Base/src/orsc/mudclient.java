@@ -18506,6 +18506,10 @@ public final class mudclient implements Runnable {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "enemy-fire-basic.png"),
 				targetFrames, maxTargetSize, 11, 1, 11, 0);
 		}
+		if ("enemy-air-basic".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "enemy-air-basic.png"),
+				targetFrames, maxTargetSize, 8, 1, 8, 0);
+		}
 		if ("water-ball".equals(animationName)) {
 			int loaded = appendExternalAnimationGridSheetFrames(new File(sourceFolder, "water-ball-stgart.png"),
 				targetFrames, maxTargetSize, 5, 5, 20, 0);

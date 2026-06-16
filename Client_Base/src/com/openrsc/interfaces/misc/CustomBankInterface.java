@@ -20,6 +20,7 @@ import static orsc.net.Opcodes.Out.ITEM_REMOVE_TO_BANK;
 import static orsc.osConfig.C_MENU_SIZE;
 
 public final class CustomBankInterface extends BankInterface {
+	private static final int HOVER_TOOLTIP_FONT = 0;
 	private static int fontSize = Config.isAndroid() ? C_MENU_SIZE : 1;
 	private static int fontSizeHeight;
 	private static final int FILTER_PANEL_WIDTH = 158;
@@ -461,7 +462,7 @@ public final class CustomBankInterface extends BankInterface {
 					// Drawing item name
 					if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + 49 && mc.getMouseY() > drawY && mc.getMouseY() < drawY + 34) {
 						if (bankItems.get(bankItem.bankID).getItem().getCatalogID() != -1) {
-							drawString(bankItems.get(bankItem.bankID).getItem().getItemDef().getName(), x + 7, y + 15, 1, 0xFFFFFF);
+							drawString(bankItems.get(bankItem.bankID).getItem().getItemDef().getName(), x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);
 						}
 
 					} else if (mc.getMouseX() <= x + 6 || mc.getMouseX() >= x + 496 || mc.getMouseY() <= y + 57 ||
@@ -604,7 +605,7 @@ public final class CustomBankInterface extends BankInterface {
 					if (selectedEquipmentSlot < Config.S_PLAYER_SLOT_COUNT) {
 						selectedEquipmentSlot = this.equipmentViewOrder[selectedEquipmentSlot];
 						if (mc.equippedItems[selectedEquipmentSlot] != null) {
-							drawString(mc.equippedItems[selectedEquipmentSlot].getName(), x + 7, y + 15, 1, 0xFFFFFF);
+							drawString(mc.equippedItems[selectedEquipmentSlot].getName(), x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);
 							if (mc.getMouseClick() == 2) {
 								rightClickMenuX = mc.getMouseX();
 								rightClickMenuY = mc.getMouseY();
@@ -750,7 +751,7 @@ public final class CustomBankInterface extends BankInterface {
 					// Draw item name on hover
 					if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + 49 && mc.getMouseY() > drawY && mc.getMouseY() < drawY + 34) {
 						if (mc.getInventoryItemID(inventorySlot) != -1) {
-							drawString(EntityHandler.getItemDef(mc.getInventoryItemID(inventorySlot), mc.getInventory()[inventorySlot].getNoted()).getName(), x + 7, y + 15, 0, 0xFFFFFF);
+							drawString(EntityHandler.getItemDef(mc.getInventoryItemID(inventorySlot), mc.getInventory()[inventorySlot].getNoted()).getName(), x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);
 						}
 
 					}

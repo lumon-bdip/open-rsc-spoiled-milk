@@ -8,6 +8,9 @@ ROOT = Path(__file__).resolve().parents[2]
 PRODUCTION_SESSION = (
     ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "production" / "ProductionSession.java"
 )
+ACTION = (
+    ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "states" / "Action.java"
+)
 SMITHING = (
     ROOT
     / "server"
@@ -96,6 +99,7 @@ def require(text: str, snippet: str, message: str) -> None:
 
 def main() -> None:
     session_text = PRODUCTION_SESSION.read_text(encoding="utf-8")
+    action_text = ACTION.read_text(encoding="utf-8")
     smithing_text = SMITHING.read_text(encoding="utf-8")
     smelting_text = SMELTING.read_text(encoding="utf-8")
     crafting_text = CRAFTING.read_text(encoding="utf-8")
@@ -244,6 +248,46 @@ def main() -> None:
         interface_handler_text,
         "catch (RuntimeException e)",
         "Production starts should fail gracefully instead of bubbling packet handler exceptions",
+    )
+    require(
+        action_text,
+        'production(EntityType.NONE, "production"),',
+        "Production interface starts should have a dedicated plugin action context",
+    )
+    require(
+        interface_handler_text,
+        'private static final String PRODUCTION_PLUGIN_NAME = "ProductionInterface.start";',
+        "Production interface starts should use one shared plugin event name",
+    )
+    require(
+        interface_handler_text,
+        'final PluginTask task = new PluginTask(player.getWorld(), player, "production", new Object[0])',
+        "Production starts should run through a ticked PluginTask so delay() works",
+    )
+    require(
+        interface_handler_text,
+        'if (activeSession != session || activeStarter != starter) {',
+        "Production starts should abort stale interface submissions",
+    )
+    require(
+        interface_handler_text,
+        "started = starter.start(player, session, itemId, quantity);",
+        "Production tasks should call the existing production starter inside the plugin context",
+    )
+    require(
+        interface_handler_text,
+        "catch (PluginInterruptedException e)",
+        "Production tasks should treat normal plugin interruption as a clean stop",
+    )
+    require(
+        interface_handler_text,
+        "new PluginTickEvent(player.getWorld(), player, PRODUCTION_PLUGIN_NAME, null, task);",
+        "Production starts should be scheduled on the player event loop",
+    )
+    require(
+        interface_handler_text,
+        "player.getWorld().getServer().getGameEventHandler().add(event)",
+        "Production start events should be registered with the game event handler",
     )
     require(
         crafting_text,

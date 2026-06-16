@@ -291,6 +291,9 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 		if (EnchantingItemEffects.isLawAmulet(item.getCatalogId()) && !chargeLawRunesForAmuletRecharge(player, item, maxCharges)) {
 			return;
 		}
+		if (EnchantingItemEffects.isLawBankingItem(item.getCatalogId()) && !chargeLawRunesForBankingRecharge(player, item, maxCharges)) {
+			return;
+		}
 
 		setRemainingCharges(player, item, maxCharges);
 		mes("You hold the jewelry against the altar.");
@@ -317,6 +320,26 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 		return player.getCarriedItems().remove(new Item(ItemId.LAW_RUNE.id(), requiredRunes)) != -1;
 	}
 
+	private boolean chargeLawRunesForBankingRecharge(final Player player, final Item item, final int maxCharges) {
+		final int missingCharges = maxCharges - getRemainingCharges(player, item);
+		final int requiredRunes = getLawBankingRechargeRuneCost(missingCharges);
+		if (requiredRunes <= 0) {
+			return true;
+		}
+		if (player.getCarriedItems().getInventory().countId(ItemId.LAW_RUNE.id(), Optional.of(false)) < requiredRunes) {
+			player.message("You need " + requiredRunes + " law runes to recharge this jewelry.");
+			return false;
+		}
+		return player.getCarriedItems().remove(new Item(ItemId.LAW_RUNE.id(), requiredRunes)) != -1;
+	}
+
+	private int getLawBankingRechargeRuneCost(final int missingCharges) {
+		if (missingCharges <= 0) {
+			return 0;
+		}
+		return Math.max(10, (missingCharges + 9) / 10);
+	}
+
 	private boolean isTeleportBlocked(final Player player) {
 		return player.getLocation().wildernessLevel() >= Constants.GLORY_TELEPORT_LIMIT
 			|| player.getLocation().isInFisherKingRealm()
@@ -325,6 +348,9 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 	}
 
 	private int getRemainingCharges(final Player player, final Item item) {
+		if (EnchantingItemEffects.isLawBankingItem(item.getCatalogId())) {
+			return EnchantingItemEffects.getLawBankingItemCharges(player, item);
+		}
 		final int maxCharges = EnchantingItemEffects.getLawItemMaxCharges(item.getCatalogId());
 		if (maxCharges <= 0) {
 			return 0;
@@ -338,6 +364,10 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 	}
 
 	private void setRemainingCharges(final Player player, final Item item, final int charges) {
+		if (EnchantingItemEffects.isLawBankingItem(item.getCatalogId())) {
+			EnchantingItemEffects.setLawBankingItemCharges(player, item, charges);
+			return;
+		}
 		item.getItemStatus().setDurability(Math.max(charges, 0));
 	}
 
