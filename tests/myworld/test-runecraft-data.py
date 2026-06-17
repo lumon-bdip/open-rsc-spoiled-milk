@@ -156,6 +156,24 @@ def ensure_law_robe_bonus_uses_fractional_carryover() -> None:
             fail(f"Law robe runecraft bonus missing fixed-point carryover snippet: {snippet}")
 
 
+def ensure_chaos_amulet_bonus_uses_fractional_carryover() -> None:
+    text = RUNES_PATH.read_text(encoding="utf-8")
+    for snippet in (
+        "CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE = 720",
+        'CHAOS_AMULET_RANDOM_RUNE_CACHE_KEY = "chaos_amulet_random_rune_bonus"',
+        "addChaosAmuletRandomRunes(player, def.getRuneId(), runeCount);",
+        "runeId != ItemId.CHAOS_RUNE.id()",
+        "getChaosAmuletRandomRuneInterval()",
+        "final int earnedPoints = runeCount * (CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE / interval);",
+        "final int bonusRunes = totalPoints / CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE;",
+        "final int remainingPoints = totalPoints % CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE;",
+        "bonusCounts[DataConversions.random(0, RUNES.length - 1)]++;",
+        "Your chaos amulet produces ",
+    ):
+        if snippet not in text:
+            fail(f"Chaos amulet random-rune bonus missing fixed-point carryover snippet: {snippet}")
+
+
 def ensure_stone_and_talismans_are_retired() -> None:
     text = ITEMS_PATH.read_text(encoding="utf-8")
     if '"id": 1299' not in text or '"name": "Stone"' not in text:
@@ -174,6 +192,7 @@ def main() -> None:
     ensure_runecraft_supports_all_runes()
     ensure_multiplier_requirements_follow_progression()
     ensure_law_robe_bonus_uses_fractional_carryover()
+    ensure_chaos_amulet_bonus_uses_fractional_carryover()
     ensure_stone_and_talismans_are_retired()
     print("PASS: runecraft/enchanting migration data validated")
     print(f"Altars validated: {len(EXPECTED_ALTARS)}")

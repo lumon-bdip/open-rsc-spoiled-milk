@@ -12,6 +12,7 @@ ITEM_DEFS_CUSTOM = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
+NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
 DROP_TABLE = ROOT / "server/src/com/openrsc/server/content/DropTable.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 POISON_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java"
@@ -25,6 +26,7 @@ MINING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/mini
 WOODCUTTING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/woodcutting/Woodcutting.java"
 HARVESTING = ROOT / "server/plugins/com/openrsc/server/plugins/custom/skills/harvesting/Harvesting.java"
 LAW_JEWELRY = ROOT / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/enchanting/LawJewelry.java"
+NATURE_ALCHEMY_AMULET = ROOT / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/enchanting/NatureAlchemyAmulet.java"
 
 AIR = 1190
 MIND = 1192
@@ -105,6 +107,19 @@ def parse_int_array(name: str) -> list[int]:
     ]
 
 
+def parse_double_array(name: str) -> list[float]:
+    text = strip_comments(EFFECTS.read_text(encoding="utf-8"))
+    pattern = rf"private static final double\[\]\s+{re.escape(name)}\s*=\s*\{{(.*?)\}};"
+    match = re.search(pattern, text, flags=re.S)
+    if not match:
+        fail(f"Missing double[] {name}")
+    return [
+        float(token.strip().removesuffix("D"))
+        for token in match.group(1).replace("\n", " ").split(",")
+        if token.strip()
+    ]
+
+
 ELEMENTAL_RINGS = {
     AIR: [1673, 1674, 1675, 1676, 1677],
     WATER: [1678, 1679, 1680, 1681, 1682],
@@ -167,6 +182,14 @@ SPECIAL_RINGS = special_rings()
 SPECIAL_AMULETS = special_amulets()
 SOUL_NECKLACES = parse_int_array("SOUL_NECKLACES")
 LIFE_NECKLACES = parse_int_array("LIFE_NECKLACES")
+MIND_BODY_JEWELRY_XP_BONUSES = parse_int_array("MIND_BODY_JEWELRY_XP_BONUSES")
+NATURE_RING_FOOD_BONUSES = parse_double_array("NATURE_RING_FOOD_BONUSES")
+CHAOS_RECOIL_CHANCES = parse_double_array("CHAOS_RECOIL_CHANCES")
+CHAOS_CHAIN_LIGHTNING_CHANCES = parse_double_array("CHAOS_CHAIN_LIGHTNING_CHANCES")
+CHAOS_AMULET_RANDOM_RUNE_INTERVALS = parse_int_array("CHAOS_AMULET_RANDOM_RUNE_INTERVALS")
+LAW_BANKING_CHARGES = parse_int_array("LAW_BANKING_CHARGES")
+NATURE_ALCHEMY_AMULET_CHARGES = parse_int_array("NATURE_ALCHEMY_AMULET_CHARGES")
+GATHERING_AMULET_YIELD_BONUSES = parse_int_array("GATHERING_AMULET_YIELD_BONUSES")
 
 
 def tier(item_id: int, line: list[int]) -> int:
@@ -177,9 +200,22 @@ def tier_for(item_id: int, lines: dict[int, list[int]], altar: int) -> int:
     return tier(item_id, lines.get(altar, []))
 
 
+def nature_food_bonus(item_id: int) -> float:
+    ring_tier = tier_for(item_id, SPECIAL_RINGS, NATURE)
+    if ring_tier != -1:
+        return NATURE_RING_FOOD_BONUSES[ring_tier - 1]
+    return 0.0
+
+
+def mind_body_jewelry_xp_bonus(item_id: int, lines: dict[int, list[int]], altar: int) -> float:
+    jewelry_tier = tier_for(item_id, lines, altar)
+    if jewelry_tier != -1:
+        return MIND_BODY_JEWELRY_XP_BONUSES[jewelry_tier - 1] / 100.0
+    return 0.0
+
+
 def elemental_power(item_id: int, style: str) -> int:
-    ring_bonus = elemental_power_from_lines(item_id, ELEMENTAL_RINGS, style)
-    return ring_bonus if ring_bonus > 0 else elemental_power_from_lines(item_id, STANDARD_NECKLACES, style)
+    return elemental_power_from_lines(item_id, ELEMENTAL_RINGS, style)
 
 
 def elemental_power_from_lines(item_id: int, lines: dict[int, list[int]], style: str) -> int:
@@ -199,17 +235,17 @@ def elemental_power_from_lines(item_id: int, lines: dict[int, list[int]], style:
 
 
 def elemental_defense(item_id: int, style: str) -> int:
-    water_tier = tier_for(item_id, ELEMENTAL_AMULETS, WATER)
+    water_tier = tier_for(item_id, STANDARD_NECKLACES, WATER)
     if water_tier != -1:
         return water_tier * 2
     if style == RANGED:
-        air_tier = tier_for(item_id, ELEMENTAL_AMULETS, AIR)
+        air_tier = tier_for(item_id, STANDARD_NECKLACES, AIR)
         return 0 if air_tier == -1 else air_tier * 3
     if style == MELEE:
-        earth_tier = tier_for(item_id, ELEMENTAL_AMULETS, EARTH)
+        earth_tier = tier_for(item_id, STANDARD_NECKLACES, EARTH)
         return 0 if earth_tier == -1 else earth_tier * 3
     if style == MAGIC:
-        fire_tier = tier_for(item_id, ELEMENTAL_AMULETS, FIRE)
+        fire_tier = tier_for(item_id, STANDARD_NECKLACES, FIRE)
         return 0 if fire_tier == -1 else fire_tier * 3
     return 0
 
@@ -238,7 +274,7 @@ def law_item_max_charges(item_id: int) -> int:
     item_tier = tier_for(item_id, SPECIAL_RINGS, LAW)
     if item_tier == -1:
         item_tier = tier_for(item_id, STANDARD_NECKLACES, LAW)
-    return {1: 50, 2: 150, 3: 300, 4: 500, 5: 750}.get(item_tier, 0)
+    return 0 if item_tier == -1 else LAW_BANKING_CHARGES[item_tier - 1]
 
 
 def ensure_formula_source_matches_design() -> None:
@@ -255,22 +291,25 @@ def ensure_formula_source_matches_design() -> None:
     require(elemental_power(1677, RANGED) == 15, "Dragonstone air ring should give +15 ranged power")
     require(elemental_power(1687, MELEE) == 15, "Dragonstone earth ring should give +15 melee power")
     require(elemental_power(1692, MAGIC) == 15, "Dragonstone fire ring should give +15 magic power")
-    require(elemental_power(1627, RANGED) == 10, "Dragonstone water necklace should give +10 ranged power")
-    require(elemental_power(1627, MELEE) == 10, "Dragonstone water necklace should give +10 melee power")
-    require(elemental_power(1627, MAGIC) == 10, "Dragonstone water necklace should give +10 magic power")
+    require(elemental_power(1627, RANGED) == 0, "Dragonstone water necklace should not retain power bonus")
 
-    require(elemental_defense(1597, RANGED) == 15, "Dragonstone air amulet should give +15 ranged defense")
-    require(elemental_defense(1607, MELEE) == 15, "Dragonstone earth amulet should give +15 melee defense")
-    require(elemental_defense(1612, MAGIC) == 15, "Dragonstone fire amulet should give +15 magic defense")
-    require(elemental_defense(1602, RANGED) == 10, "Dragonstone water amulet should give +10 ranged defense")
-    require(elemental_defense(1602, MELEE) == 10, "Dragonstone water amulet should give +10 melee defense")
-    require(elemental_defense(1602, MAGIC) == 10, "Dragonstone water amulet should give +10 magic defense")
+    require(elemental_defense(1617, RANGED) == 15, "Dragonstone air necklace should give +15 ranged defense")
+    require(elemental_defense(1632, MELEE) == 15, "Dragonstone earth necklace should give +15 melee defense")
+    require(elemental_defense(1637, MAGIC) == 15, "Dragonstone fire necklace should give +15 magic defense")
+    require(elemental_defense(1627, RANGED) == 10, "Dragonstone water necklace should give +10 ranged defense")
+    require(elemental_defense(1627, MELEE) == 10, "Dragonstone water necklace should give +10 melee defense")
+    require(elemental_defense(1627, MAGIC) == 10, "Dragonstone water necklace should give +10 magic defense")
 
-    near(tier_for(1314, SPECIAL_RINGS, CHAOS) * 0.08, 0.08, "Sapphire chaos ring recoil chance")
-    near(tier_for(1696, SPECIAL_RINGS, CHAOS) * 0.08, 0.40, "Dragonstone chaos ring recoil chance")
-    near(tier_for(1652, STANDARD_NECKLACES, CHAOS) * 0.08, 0.40, "Dragonstone chaos necklace recoil chance")
-    near(tier_for(1719, SPECIAL_AMULETS, CHAOS) * 0.15, 0.15, "Sapphire chaos amulet echo chance")
-    near(tier_for(1723, SPECIAL_AMULETS, CHAOS) * 0.15, 0.75, "Dragonstone chaos amulet echo chance")
+    require(CHAOS_RECOIL_CHANCES == [0.10, 0.20, 0.30, 0.50, 0.90],
+            "Chaos recoil should use the requested non-linear chance curve")
+    require(CHAOS_CHAIN_LIGHTNING_CHANCES == [0.10, 0.20, 0.30, 0.50, 0.90],
+            "Chaos chain lightning should use the requested non-linear chance curve")
+    near(CHAOS_RECOIL_CHANCES[tier_for(1314, SPECIAL_RINGS, CHAOS) - 1], 0.10, "Sapphire chaos ring recoil chance")
+    near(CHAOS_RECOIL_CHANCES[tier_for(1696, SPECIAL_RINGS, CHAOS) - 1], 0.90, "Dragonstone chaos ring recoil chance")
+    near(CHAOS_CHAIN_LIGHTNING_CHANCES[tier_for(1648, STANDARD_NECKLACES, CHAOS) - 1], 0.10, "Sapphire chaos necklace chain chance")
+    near(CHAOS_CHAIN_LIGHTNING_CHANCES[tier_for(1652, STANDARD_NECKLACES, CHAOS) - 1], 0.90, "Dragonstone chaos necklace chain chance")
+    require(CHAOS_AMULET_RANDOM_RUNE_INTERVALS == [20, 18, 16, 12, 2],
+            "Chaos amulets should use the requested random-rune production intervals")
 
     near(tier_for(1701, SPECIAL_RINGS, COSMIC) * 0.05, 0.05, "Sapphire cosmic ring wealth chance")
     near(tier_for(3111, SPECIAL_RINGS, COSMIC) * 0.05, 0.25, "Dragonstone cosmic ring wealth chance")
@@ -279,10 +318,12 @@ def ensure_formula_source_matches_design() -> None:
 
     for item_id in SPECIAL_AMULETS[LAW]:
         require(law_item_max_charges(item_id) == 3, f"Law amulet {item_id} should have 3 teleport charges")
-    require(law_item_max_charges(1714) == 50, "Sapphire law ring should have 50 banking charges")
-    require(law_item_max_charges(1718) == 750, "Dragonstone law ring should have 750 banking charges")
-    require(law_item_max_charges(1658) == 50, "Sapphire law necklace should have 50 banking charges")
-    require(law_item_max_charges(1662) == 750, "Dragonstone law necklace should have 750 banking charges")
+    require(LAW_BANKING_CHARGES == [100, 200, 300, 500, 1000],
+            "Law banking jewelry should use the requested charge ladder")
+    require(law_item_max_charges(1714) == 100, "Sapphire law ring should have 100 banking charges")
+    require(law_item_max_charges(1718) == 1000, "Dragonstone law ring should have 1000 banking charges")
+    require(law_item_max_charges(1658) == 100, "Sapphire law necklace should have 100 banking charges")
+    require(law_item_max_charges(1662) == 1000, "Dragonstone law necklace should have 1000 banking charges")
 
     require(tier_for(3095, SPECIAL_RINGS, BLOOD) * 2 == 10, "Dragonstone blood ring should give +10 hits")
     require(tier_for(1672, STANDARD_NECKLACES, BLOOD) * 2 == 10, "Dragonstone blood necklace should give +10 hits")
@@ -297,17 +338,27 @@ def ensure_formula_source_matches_design() -> None:
     require(tier_for(1724, SPECIAL_AMULETS, DEATH) == 1, "Sapphire death amulet should be tier 1")
     require(tier_for(1728, SPECIAL_AMULETS, DEATH) == 5, "Dragonstone death amulet should be tier 5")
 
-    near(tier_for(1622, STANDARD_NECKLACES, MIND) * 0.05, 0.25, "Dragonstone mind necklace XP chance")
-    near(tier_for(3080, SPECIAL_RINGS, MIND) * 0.05, 0.25, "Dragonstone mind ring XP chance")
-    near(tier_for(1738, SPECIAL_AMULETS, MIND) * 0.05, 0.25, "Dragonstone mind amulet combat XP chance")
-    near(tier_for(1642, STANDARD_NECKLACES, BODY) * 0.05, 0.25, "Dragonstone body necklace XP chance")
-    near(tier_for(3085, SPECIAL_RINGS, BODY) * 0.05, 0.25, "Dragonstone body ring XP chance")
-    near(tier_for(1743, SPECIAL_AMULETS, BODY) * 0.05, 0.25, "Dragonstone body amulet discipline XP chance")
+    require(MIND_BODY_JEWELRY_XP_BONUSES == [5, 10, 15, 25, 50],
+            "Mind and Body jewelry should use the requested non-linear XP curve")
+    near(mind_body_jewelry_xp_bonus(1621, STANDARD_NECKLACES, MIND), 0.25, "Diamond mind necklace XP chance")
+    near(mind_body_jewelry_xp_bonus(1622, STANDARD_NECKLACES, MIND), 0.50, "Dragonstone mind necklace XP chance")
+    near(mind_body_jewelry_xp_bonus(3079, SPECIAL_RINGS, MIND), 0.25, "Diamond mind ring XP chance")
+    near(mind_body_jewelry_xp_bonus(3080, SPECIAL_RINGS, MIND), 0.50, "Dragonstone mind ring XP chance")
+    near(mind_body_jewelry_xp_bonus(1738, SPECIAL_AMULETS, MIND), 0.50, "Dragonstone mind amulet combat XP chance")
+    near(mind_body_jewelry_xp_bonus(1641, STANDARD_NECKLACES, BODY), 0.25, "Diamond body necklace XP chance")
+    near(mind_body_jewelry_xp_bonus(1642, STANDARD_NECKLACES, BODY), 0.50, "Dragonstone body necklace XP chance")
+    near(mind_body_jewelry_xp_bonus(3084, SPECIAL_RINGS, BODY), 0.25, "Diamond body ring XP chance")
+    near(mind_body_jewelry_xp_bonus(3085, SPECIAL_RINGS, BODY), 0.50, "Dragonstone body ring XP chance")
+    near(mind_body_jewelry_xp_bonus(1743, SPECIAL_AMULETS, BODY), 0.50, "Dragonstone body amulet discipline XP chance")
 
-    near(tier_for(1657, STANDARD_NECKLACES, NATURE) * 0.10, 0.50, "Dragonstone nature necklace food bonus")
-    near(tier_for(1700, SPECIAL_RINGS, NATURE) * 0.10, 0.50, "Dragonstone nature ring food bonus")
-    near(tier_for(1748, SPECIAL_AMULETS, NATURE) * 0.10, 0.50, "Dragonstone nature amulet food bonus")
-    require(tier_for(1748, SPECIAL_AMULETS, NATURE) == 5, "Dragonstone nature amulet should add 5 poison decay power")
+    near(nature_food_bonus(1657), 0.0, "Dragonstone nature necklace should no longer give food bonus")
+    near(nature_food_bonus(1700), 1.00, "Dragonstone nature ring food bonus")
+    near(nature_food_bonus(1748), 0.0, "Dragonstone nature amulet should not retain stale food bonus")
+    require(tier_for(1657, STANDARD_NECKLACES, NATURE) == 5, "Dragonstone nature necklace should add 5 poison decay power")
+    require(NATURE_ALCHEMY_AMULET_CHARGES == [100, 200, 300, 500, 1000],
+            "Nature alchemy amulets should use the requested charge ladder")
+    require(GATHERING_AMULET_YIELD_BONUSES == [10, 20, 30, 50, 100],
+            "Gathering amulets should use the requested non-linear yield curve")
 
     require(tier_for(1708, SPECIAL_RINGS, SOUL) == 5, "Dragonstone soul ring should keep 5 extra death items")
     require(tier(1763, SOUL_NECKLACES) == 5, "Dragonstone soul necklace should keep 5 extra death items")
@@ -323,6 +374,7 @@ def ensure_runtime_paths_are_wired() -> None:
     item_defs_custom = ITEM_DEFS_CUSTOM.read_text(encoding="utf-8")
     client_entity_handler = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     equipment = EQUIPMENT.read_text(encoding="utf-8")
+    npc = NPC.read_text(encoding="utf-8")
     drop_table = DROP_TABLE.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
     poison_event = POISON_EVENT.read_text(encoding="utf-8")
@@ -332,6 +384,11 @@ def ensure_runtime_paths_are_wired() -> None:
     pvm_melee = PVM_MELEE_EVENT.read_text(encoding="utf-8")
     projectile_event = PROJECTILE_EVENT.read_text(encoding="utf-8")
     law_jewelry = LAW_JEWELRY.read_text(encoding="utf-8")
+    nature_alchemy_amulet = NATURE_ALCHEMY_AMULET.read_text(encoding="utf-8")
+    fishing = FISHING.read_text(encoding="utf-8")
+    mining = MINING.read_text(encoding="utf-8")
+    woodcutting = WOODCUTTING.read_text(encoding="utf-8")
+    harvesting = HARVESTING.read_text(encoding="utf-8")
 
     require("public static double getCosmicAmuletExtraResourceChance" in effects
             and "return 0.0D;" in effects,
@@ -339,14 +396,18 @@ def ensure_runtime_paths_are_wired() -> None:
     require("getCosmicItemMaxCharges" not in effects
             and "COSMIC_BANKING_CHARGES_CACHE_PREFIX" not in effects,
             "Cosmic jewelry should remain passive bonus jewelry, not charged jewelry")
-    require_regex(equipment, r"getChaosRecoilChance\(\).*?return Math\.min\(1\.0D,",
-                  "Chaos recoil ring and necklace chance should stack and cap at 100%")
-    require_regex(equipment, r"getChaosRecoilDamageDivisor\(\).*?return hasNeck && hasRing \? 5 : 10;",
-                  "Chaos recoil damage should double when ring and necklace are both worn")
-    require_regex(equipment, r"getEquippedElementalPowerBonus.*?getElementalPowerBonus\(neckItem.*?getElementalPowerBonus\(ringItem",
-                  "Elemental necklace and ring power bonuses should both count")
+    require("getChaosRecoilChance()" in equipment
+            and "return ringItem == null ? 0.0D : EnchantingItemEffects.getChaosRingRecoilChance(ringItem.getCatalogId());" in equipment,
+            "Chaos recoil should come only from the ring")
+    require_regex(equipment, r"getChaosRecoilDamageDivisor\(\)\s*\{\s*return 10;\s*\}",
+                  "Chaos recoil should use the ring-only damage divisor")
+    require("getChaosAmuletRandomRuneInterval()" in equipment
+            and "EnchantingItemEffects.getChaosAmuletRandomRuneInterval(neckItem.getCatalogId())" in equipment,
+            "Chaos amulet random-rune interval should be exposed through equipped neck items")
+    require_regex(equipment, r"getEquippedElementalPowerBonus.*?getElementalPowerBonus\(ringItem",
+                  "Elemental power should come from the equipped ring")
     require_regex(equipment, r"getEquippedElementalDefenseBonus.*?getElementalDefenseBonus\(neckItem",
-                  "Elemental defense should come from the equipped amulet slot")
+                  "Elemental defense should come from the equipped necklace slot")
 
     require("getWealthChance(owner)" in drop_table, "Cosmic rings should feed drop-table wealth chance")
     require("allowExtraRoll && !result.receivedRareTableReward && wealthChance > 0.0D" in drop_table,
@@ -381,23 +442,92 @@ def ensure_runtime_paths_are_wired() -> None:
                 f"Cosmic amulet rare-gathering double path missing from {path.name}")
 
     require("POWER_DRAIN_PER_TICK = 3" in poison_event, "Poison base drain should remain 3 power per tick")
-    require("poisonDrain += player.getCarriedItems().getEquipment().getNatureAmuletPoisonDecayBonus();" in poison_event,
-            "Nature amulet poison decay should add to poison tick drain")
-    require("getNatureAmuletFoodBonus" in eating and "Math.ceil(totalHeal * (1.0D + foodBonus))" in eating,
+    require("poisonDrain += player.getCarriedItems().getEquipment().getNatureCleansingPoisonDecayBonus();" in poison_event,
+            "Nature cleansing necklace should add to poison tick drain")
+    require("getNatureFoodHealingBonus" in eating and "Math.ceil(totalHeal * (1.0D + foodBonus))" in eating,
             "Nature jewelry should increase food healing")
-    require("getNatureAmuletFoodBonus()" in equipment
-            and "getNatureAmuletFoodBonus(neckItem.getCatalogId())" in equipment
-            and "getNatureAmuletFoodBonus(ringItem.getCatalogId())" in equipment,
-            "Nature ring and necklace food bonuses should stack")
+    require("getNatureFoodHealingBonus()" in equipment
+            and "getNatureFoodHealingBonus(ringItem.getCatalogId())" in equipment,
+            "Nature ring should provide food healing")
+    require("getNatureFoodHealingBonus(neckItem.getCatalogId())" not in equipment
+            and "Math.max(neckBonus, ringBonus)" not in equipment,
+            "Nature necklace should not continue providing food healing")
+    require("public static int getNatureAlchemyAmuletMaxCharges" in effects
+            and "getNatureAlchemyAmuletCharges(final Player player, final Item item)" in effects
+            and "setNatureAlchemyAmuletCharges(final Player player, final Item item, final int charges)" in effects
+            and "NATURE_ALCHEMY_CHARGES_CACHE_PREFIX" in effects,
+            "Nature alchemy amulet charges should be account-backed")
+    require("tryAlchemyMonsterLootWithNatureAmulet" in equipment
+            and "EnchantingItemEffects.getNatureAlchemyAmuletCharges(player, neckItem)" in equipment
+            and "EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, neckItem, charges)" in equipment
+            and "getHighAlchemyValue(itemDef, item.getAmount())" in equipment
+            and "alchemyValue < 1000" in equipment
+            and "new Item(ItemId.COINS.id(), alchemyValue)" in equipment
+            and "player.getCarriedItems().getInventory().canHold(coins)" in equipment
+            and "remove(neckItem, 1, true);" not in equipment,
+            "Nature alchemy amulet should auto-alch valuable monster drops without breaking")
+    require("tryAlchemyMonsterLootWithNatureAmulet(new Item(dropID, amount))" in npc
+            and "tryAlchemyMonsterLootWithNatureAmulet(new Item(dropID, amount, item.getNoted()))" in npc
+            and "tryAlchemyMonsterLootWithNatureAmulet(item)" in npc,
+            "NPC monster drop paths should offer drops to the nature alchemy amulet")
+    require("implements OpInvTrigger, UseLocTrigger" in nature_alchemy_amulet
+            and '"check".equalsIgnoreCase(command)' in nature_alchemy_amulet
+            and "EnchantingItemEffects.NATURE_ALTAR" in nature_alchemy_amulet
+            and "ItemId.NATURE_RUNE.id()" in nature_alchemy_amulet
+            and "getRechargeRuneCost" in nature_alchemy_amulet
+            and "return Math.max(10, ((maxCharges + 99) / 100) * 10);" in nature_alchemy_amulet
+            and "setNatureAlchemyAmuletCharges(player, item, maxCharges)" in nature_alchemy_amulet,
+            "Nature alchemy amulet should support Check and full-capacity nature-rune recharging")
+    for snippet in (
+        'GATHERING_AMULET_YIELD_CACHE_PREFIX = "gathering_amulet_yield_bonus_"',
+        "GATHERING_AMULET_YIELD_CACHE_PREFIX + skillId + \"_\" + itemId",
+        "itemCount * bonusPercent * GATHERING_AMULET_YIELD_POINTS_PER_PERCENT",
+        "totalPoints / GATHERING_AMULET_YIELD_POINTS_PER_ITEM",
+        "Skill.WOODCUTTING.id()",
+        "Skill.FISHING.id()",
+        "Skill.HARVESTING.id()",
+        "Skill.MINING.id()",
+    ):
+        require(snippet in effects, f"Gathering amulet shared carryover missing: {snippet}")
+    for text, snippets, label in (
+        (woodcutting, (
+            "int rewardQuantity = quantity + addGatheringAmuletBonusLogs(player, def.getLogId(), quantity);",
+            "Skill.WOODCUTTING.id(), logId, logCount",
+            "bankSkillingDropWithLawRing(new Item(def.getLogId(), rewardQuantity))",
+        ), "woodcutting"),
+        (mining, (
+            "int rewardQuantity = quantity + addGatheringAmuletBonusOre(player, ore.getCatalogId(), quantity);",
+            "Skill.MINING.id(), oreId, oreCount",
+            "bankSkillingDropWithLawRing(new Item(ore.getCatalogId(), rewardQuantity))",
+        ), "mining"),
+        (fishing, (
+            "final int rewardQuantity = 1 + addGatheringAmuletBonusFish(player, fish.getCatalogId(), 1);",
+            "Skill.FISHING.id(), fishId, fishCount",
+            "awardFishingCatch(player, object, fish, true);",
+        ), "fishing"),
+        (harvesting, (
+            "int rewardQuantity = quantity + addGatheringAmuletBonusProduce(player, produce.getCatalogId(), quantity);",
+            "Skill.HARVESTING.id(), produceId, produceCount",
+            "bankSkillingDropWithLawRing(new Item(produce.getCatalogId(), rewardQuantity))",
+        ), "harvesting"),
+    ):
+        for snippet in snippets:
+            require(snippet in text, f"Gathering amulet carryover missing from {label}: {snippet}")
 
-    require("isCraftingSkill(skill)" in player and "getMindAmuletXpBonus()" in player,
-            "Mind ring/necklace XP bonus should apply to crafting skills")
-    require("isGatheringSkill(skill)" in player and "getBodyAmuletXpBonus()" in player,
-            "Body ring/necklace XP bonus should apply to gathering skills")
-    require("isMindCombatXpSkill(skill)" in player and "getMindCombatAmuletXpBonus()" in player,
-            "Mind amulet XP bonus should apply to combat skills")
-    require("isBodyDisciplineXpSkill(skill)" in player and "getBodyDisciplineAmuletXpBonus()" in player,
-            "Body amulet XP bonus should apply to discipline skills")
+    require("getMindJewelryXpBonus(skill)" in player and "getBodyJewelryXpBonus(skill)" in player,
+            "Mind and body jewelry XP bonuses should apply through the unified skill-aware path")
+    require("isMindNecklaceXpSkill(skillId)" in equipment and "getMindNecklaceXpBonus(neckId)" in equipment,
+            "Mind necklaces should apply only to their mapped skills")
+    require("isMindRingXpSkill(skillId)" in equipment and "getMindRingXpBonus(ringItem.getCatalogId())" in equipment,
+            "Mind rings should apply only to their mapped skills")
+    require("isBodyNecklaceXpSkill(skillId)" in equipment and "getBodyNecklaceXpBonus(neckId)" in equipment,
+            "Body necklaces should apply only to their mapped skills")
+    require("isBodyRingXpSkill(skillId)" in equipment and "getBodyRingXpBonus(ringItem.getCatalogId())" in equipment,
+            "Body rings should apply only to their mapped skills")
+    require("isMindCombatAmuletXpSkill(skillId)" in equipment and "getMindCombatAmuletXpBonus(neckId)" in equipment,
+            "Mind amulets should apply only to their mapped skills")
+    require("isBodyCombatAmuletXpSkill(skillId)" in equipment and "getBodyDisciplineAmuletXpBonus(neckId)" in equipment,
+            "Body amulets should apply only to their mapped skills")
 
     require("applyBloodAmuletLifesteal" in player and "HitSplat.TYPE_HEAL" in player,
             "Blood amulet lifesteal should heal with a heal hitsplat")
@@ -417,15 +547,20 @@ def ensure_runtime_paths_are_wired() -> None:
     require("getLifeAmuletSummonMaxDamageBonus" in summoning,
             "Life amulet should increase combat summon max damage")
 
-    require("getChaosAmuletSecondHitChance" in combat_event
-            and "HitSplat.TYPE_ARMOR_PROC" in combat_event,
-            "Chaos amulet melee echo should use yellow hitsplats")
-    require("getChaosAmuletSecondHitChance" in pvm_melee
-            and "HitSplat.TYPE_ARMOR_PROC" in pvm_melee,
-            "Chaos amulet PvM melee echo should use yellow hitsplats")
-    require("getChaosAmuletSecondHitChance" in projectile_event
-            and "HitSplat.TYPE_ARMOR_PROC" in projectile_event,
-            "Chaos amulet projectile echo should use yellow hitsplats")
+    for text, label in (
+        (combat_event, "melee"),
+        (pvm_melee, "PvM melee"),
+        (projectile_event, "projectile"),
+    ):
+        require("getChaosNecklaceChainLightningChance" in text
+                and "CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3" in text
+                and "selectChaosChainLightningTarget" in text
+                and "DataConversions.getRandom().nextDouble() >= chainChance" in text
+                and "new Projectile(anchor, chainTarget, Projectile.MAGIC)" in text
+                and "Math.ceil(chainDamage / 2.0D)" in text
+                and "!Summoning.isSummon(npc)" in text
+                and "HitSplat.TYPE_ARMOR_PROC" in text,
+                f"Chaos necklace {label} chain lightning should roll each hop, show projectiles, avoid summons, and use yellow hitsplats")
     require("getChaosRecoilChance" in combat_event
             and "getChaosRecoilChance" in pvm_melee
             and "getChaosRecoilChance" in projectile_event

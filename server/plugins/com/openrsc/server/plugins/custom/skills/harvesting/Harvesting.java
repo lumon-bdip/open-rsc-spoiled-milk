@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.external.ObjectHarvestingDef;
 import com.openrsc.server.model.TimePoint;
@@ -418,8 +419,9 @@ public final class Harvesting implements OpLocTrigger {
 				player.playerServerMessage(MessageType.QUEST, "@or2@Your Harvesting cape activates, yielding double produce");
 				quantity *= 2;
 			}
-			int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(produce.getCatalogId(), quantity));
-			int remainingQuantity = quantity - bankedQuantity;
+			int rewardQuantity = quantity + addGatheringAmuletBonusProduce(player, produce.getCatalogId(), quantity);
+			int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(produce.getCatalogId(), rewardQuantity));
+			int remainingQuantity = rewardQuantity - bankedQuantity;
 			int storedQuantity = Math.min(remainingQuantity, player.getCarriedItems().getInventory().getFreeSlots());
 			if (storedQuantity > 0) {
 				give(player, produce.getCatalogId(), storedQuantity);
@@ -438,13 +440,6 @@ public final class Harvesting implements OpLocTrigger {
 			}
 
 			player.incExp(Skill.HARVESTING.id(), prodEnum.get(prodId).getXp() * quantity, true);
-
-			if (player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance() > 0.0D
-				&& DataConversions.getRandom().nextDouble() < player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance()
-				&& !player.getCarriedItems().getInventory().full()) {
-				player.getCarriedItems().getInventory().add(new Item(produce.getCatalogId(), 1));
-				player.playerServerMessage(MessageType.QUEST, "Your amulet draws out more produce.");
-			}
 			if (player.getConfig().WANT_MYWORLD && bankedQuantity + storedQuantity > 0) {
 				maybeAwardMyWorldHarvestingSeed(player, object, getShearsTier(toolId));
 			}
@@ -560,8 +555,9 @@ public final class Harvesting implements OpLocTrigger {
 					player.playerServerMessage(MessageType.QUEST, "@or2@Your Harvesting cape activates, yielding double produce");
 					quantity *= 2;
 				}
-				int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(produce.getCatalogId(), quantity));
-				int remainingQuantity = quantity - bankedQuantity;
+				int rewardQuantity = quantity + addGatheringAmuletBonusProduce(player, produce.getCatalogId(), quantity);
+				int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(produce.getCatalogId(), rewardQuantity));
+				int remainingQuantity = rewardQuantity - bankedQuantity;
 				int storedQuantity = Math.min(remainingQuantity, player.getCarriedItems().getInventory().getFreeSlots());
 				if (storedQuantity > 0) {
 					give(player, produce.getCatalogId(), storedQuantity);
@@ -727,6 +723,16 @@ public final class Harvesting implements OpLocTrigger {
 		for (int i = 0; i < amount; i++) {
 			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), 1, player));
 		}
+	}
+
+	private int addGatheringAmuletBonusProduce(Player player, int produceId, int produceCount) {
+		final int bonusProduce = EnchantingItemEffects.consumeGatheringAmuletBonusItems(player,
+			Skill.HARVESTING.id(), produceId, produceCount);
+		if (bonusProduce > 0) {
+			player.playerServerMessage(MessageType.QUEST, "@gre@Your harvester's amulet produces "
+				+ bonusProduce + " extra produce.");
+		}
+		return bonusProduce;
 	}
 
 	private int checkCare(GameObject obj, Player player) {

@@ -109,17 +109,13 @@ def expect_description(
 
 def ensure_amulet_lines(items: dict[int, dict[str, Any]]) -> None:
     lines = {
-        "Evasion": range(1593, 1598),
-        "Balance": range(1598, 1603),
-        "Guarding": range(1603, 1608),
-        "Warding": range(1608, 1613),
         "Teleportation": range(1709, 1714),
-        "Echoes": range(1719, 1724),
+        "Random Chance": range(1719, 1724),
         "Ruin": range(1724, 1729),
         "Siphoning": range(1729, 1734),
-        "Combat": range(1734, 1739),
-        "Discipline": range(1739, 1744),
-        "Cleansing": range(1744, 1749),
+        "Attunement": range(1734, 1739),
+        "Prowess": range(1739, 1744),
+        "Alchemy": range(1744, 1749),
         "Bounty": range(1749, 1754),
         "Lifesaving": range(1754, 1759),
         "Command": range(3106, 3111),
@@ -138,20 +134,32 @@ def ensure_amulet_lines(items: dict[int, dict[str, Any]]) -> None:
                     fail(f"{entry['name']} should expose Check for charge display")
                 if "Use" in commands:
                     fail(f"{entry['name']} should leave generic Use available for altar recharging")
+            if effect_name == "Alchemy" and entry["command"] != "Check":
+                fail(f"{entry['name']} should expose Check for charge display")
+    gatherer_lines = {
+        "Woodcutter's Amulet": range(1593, 1598),
+        "Angler's Amulet": range(1598, 1603),
+        "Harvester's Amulet": range(1603, 1608),
+        "Miner's Amulet": range(1608, 1613),
+    }
+    for amulet_name, ids in gatherer_lines.items():
+        for tier_name, item_id in zip(tiers, ids):
+            entry = expect_item(items, item_id, f"{tier_name} {amulet_name}")
+            if entry["wearSlot"] != 10:
+                fail(f"{entry['name']} should use neck slot")
 
 
 def ensure_necklace_lines(items: dict[int, dict[str, Any]]) -> None:
     necklace_lines = {
-        "Archery": range(1613, 1618),
-        "Craftsmanship": range(1618, 1623),
-        "Balance": range(1623, 1628),
-        "Force": range(1628, 1633),
-        "Sorcery": range(1633, 1638),
-        "Industry": range(1638, 1643),
+        "Evasion": range(1613, 1618),
+        "Artifice": range(1618, 1623),
+        "Equilibrium": range(1623, 1628),
+        "Bulwark": range(1628, 1633),
+        "Warding": range(1633, 1638),
+        "Labor": range(1638, 1643),
         "Fortune": range(1643, 1648),
-        "Recoil": range(1648, 1653),
-        "Nourishment": range(1653, 1658),
-        "Banking": range(1658, 1663),
+        "Chain Lightning": range(1648, 1653),
+        "Cleansing": range(1653, 1658),
         "Desperation": range(1663, 1668),
         "Vitality": range(1668, 1673),
         "Preservation": range(1759, 1764),
@@ -163,6 +171,13 @@ def ensure_necklace_lines(items: dict[int, dict[str, Any]]) -> None:
             entry = expect_item(items, item_id, f"{tier_name} Necklace of {effect_name}")
             if entry["wearSlot"] != 10:
                 fail(f"{entry['name']} should use neck slot")
+    law_banking_necklaces = range(1658, 1663)
+    for tier_name, item_id in zip(tiers, law_banking_necklaces):
+        entry = expect_item(items, item_id, f"{tier_name} Necklace of Loot Banking")
+        if entry["wearSlot"] != 10:
+            fail(f"{entry['name']} should use neck slot")
+        if entry["command"] != "Check":
+            fail(f"{entry['name']} should expose Check for charge display")
 
 
 def ensure_ring_lines(items: dict[int, dict[str, Any]]) -> None:
@@ -190,13 +205,13 @@ def ensure_ring_lines(items: dict[int, dict[str, Any]]) -> None:
         1706: "Emerald Ring of Preservation",
         1707: "Ruby Ring of Preservation",
         1708: "Dragonstone Ring of Preservation",
-        1714: "Sapphire Ring of Banking",
-        1715: "Emerald Ring of Banking",
-        1716: "Ruby Ring of Banking",
-        1717: "Diamond Ring of Banking",
-        1718: "Dragonstone Ring of Banking",
-        3076: "Sapphire Ring of Craftsmanship",
-        3081: "Sapphire Ring of Industry",
+        1714: "Sapphire Ring of Skill Banking",
+        1715: "Emerald Ring of Skill Banking",
+        1716: "Ruby Ring of Skill Banking",
+        1717: "Diamond Ring of Skill Banking",
+        1718: "Dragonstone Ring of Skill Banking",
+        3076: "Sapphire Ring of Hearthcraft",
+        3081: "Sapphire Ring of Acquisition",
         3086: "Sapphire Ring of Desperation",
         3091: "Sapphire Ring of Vitality",
         3096: "Sapphire Ring of Endurance",
@@ -318,11 +333,20 @@ def ensure_source_mappings_exist() -> None:
 
     for snippet in (
         'final int[] gemMasks = {19711, 3394611, 16724736, 0, 12255487};',
+        'final int[] lawBankCharges = {100, 200, 300, 500, 1000};',
         'addLawAmuletLine(1709, tiers, lawAmuletPrices, gemMasks);',
         '"Teleport,Check"',
-        'addAmuletLine(1593, tiers, "Evasion", "Adds +%d ranged defense.", 3, amuletPrices, gemMasks, "");',
-        'addNecklaceLine(1613, tiers, "Archery", "Adds +%d ranged power.", 3, necklacePrices, gemMasks);',
+        'addGatheringAmuletLine(1593, tiers, "Woodcutter\'s", "Boosts woodcutting log yield by %d%%.", amuletPrices, gemMasks);',
+        'addGatheringAmuletLine(1598, tiers, "Angler\'s", "Boosts fishing catch yield by %d%%.", amuletPrices, gemMasks);',
+        'addNecklaceLine(1613, tiers, "Evasion", "Adds +%d ranged defense.", 3, necklacePrices, gemMasks);',
+        'addNecklaceLine(1623, tiers, "Equilibrium", "Adds +%d melee, ranged, and magic defense.", 2, necklacePrices, gemMasks);',
+        'addNecklaceLine(1628, tiers, "Bulwark", "Adds +%d melee defense.", 3, necklacePrices, gemMasks);',
+        'addExplicitNecklaceLine(1618, tiers, "Artifice", "Boosts crafting, fletching, and enchanting XP by %d%%.",',
+        'addAlchemyAmuletLine(1744, tiers, amuletPrices, gemMasks);',
         'addRingLine(1673, tiers, "Archery", "Adds +%d ranged power.", 3, ringPrices, gemMasks);',
+        'addExplicitAttunedRingLine(3076, tiers, "Hearthcraft", "Boosts cooking, herblaw, and firemaking XP by %d%%.",',
+        '" Necklace of Loot Banking"',
+        '" Ring of Skill Banking"',
         'addLawBankingRingLine(1714, tiers, ringPrices, gemMasks, lawBankCharges);',
         'setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil"',
         'setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment"',
@@ -363,6 +387,9 @@ def ensure_client_jewelry_coverage() -> None:
     for match in re.finditer(r"addAmuletLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
+    for match in re.finditer(r"addExplicitAmuletLine\((\d+),\s*tiers,", client_text):
+        start = int(match.group(1))
+        client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addDeathAmuletLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
@@ -372,6 +399,9 @@ def ensure_client_jewelry_coverage() -> None:
     for match in re.finditer(r"addNecklaceLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
+    for match in re.finditer(r"addExplicitNecklaceLine\((\d+),\s*tiers,", client_text):
+        start = int(match.group(1))
+        client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addLawBankingNecklaceLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
@@ -379,6 +409,12 @@ def ensure_client_jewelry_coverage() -> None:
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addLawAmuletLine\((\d+),\s*tiers,", client_text):
+        start = int(match.group(1))
+        client_ids.update(range(start, start + 5))
+    for match in re.finditer(r"addGatheringAmuletLine\((\d+),\s*tiers,", client_text):
+        start = int(match.group(1))
+        client_ids.update(range(start, start + 5))
+    for match in re.finditer(r"addAlchemyAmuletLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addCosmicAmuletLine\((\d+),\s*tiers,", client_text):
@@ -395,7 +431,16 @@ def ensure_client_jewelry_coverage() -> None:
         args = match.group(2)
         count = 5 if args == "tiers" else len(re.findall(r'"[^"]+"', args))
         client_ids.update(range(start, start + count))
+    for match in re.finditer(r"addExplicitRingLine\((\d+),\s*(tiers|new String\[\] \{[^}]+\}),", client_text):
+        start = int(match.group(1))
+        args = match.group(2)
+        count = 5 if args == "tiers" else len(re.findall(r'"[^"]+"', args))
+        client_ids.update(range(start, start + count))
     for match in re.finditer(r"addOffsetRingLine\((\d+),\s*new String\[\] \{([^}]+)\},", client_text):
+        start = int(match.group(1))
+        count = len(re.findall(r'"[^"]+"', match.group(2)))
+        client_ids.update(range(start, start + count))
+    for match in re.finditer(r"addNatureNourishmentRingLine\((\d+),\s*new String\[\] \{([^}]+)\},", client_text):
         start = int(match.group(1))
         count = len(re.findall(r'"[^"]+"', match.group(2)))
         client_ids.update(range(start, start + count))
@@ -407,6 +452,9 @@ def ensure_client_jewelry_coverage() -> None:
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addAttunedRingLine\((\d+),\s*tiers,", client_text):
+        start = int(match.group(1))
+        client_ids.update(range(start, start + 5))
+    for match in re.finditer(r"addExplicitAttunedRingLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addLifeRingLine\((\d+),\s*tiers,", client_text):
@@ -436,20 +484,50 @@ def ensure_client_jewelry_uses_base_visuals() -> None:
 
 def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
     expected_descriptions = {
-        1613: "Adds +3 ranged power.",
+        1593: "Boosts woodcutting log yield by 10%.",
+        1598: "Boosts fishing catch yield by 10%.",
+        1603: "Boosts harvesting produce yield by 10%.",
+        1608: "Boosts mining ore yield by 10%.",
+        1613: "Adds +3 ranged defense.",
+        1618: "Boosts crafting, fletching, and enchanting XP by 5%.",
+        1621: "Boosts crafting, fletching, and enchanting XP by 25%.",
+        1622: "Boosts crafting, fletching, and enchanting XP by 50%.",
+        1623: "Adds +2 melee, ranged, and magic defense.",
+        1628: "Adds +3 melee defense.",
+        1633: "Adds +3 magic defense.",
+        1638: "Boosts mining, smithing, and woodcutting XP by 5%.",
+        1641: "Boosts mining, smithing, and woodcutting XP by 25%.",
+        1642: "Boosts mining, smithing, and woodcutting XP by 50%.",
         1643: "Has a 10% chance to roll extra standard monster loot.",
-        1648: "Has 8% chance to recoil attacker damage.",
+        1648: "Has a 10% chance per chain lightning hop.",
         1709: "Stores 3 guild teleports.",
-        1714: "Banks non-stack skilling drops. 50 charges.",
-        1719: "Has a 15% chance to echo half damage nearby.",
+        1658: "Banks non-stack monster loot. 100 charges.",
+        1662: "Banks non-stack monster loot. 1000 charges.",
+        1714: "Banks non-stack skilling drops. 100 charges.",
+        1718: "Banks non-stack skilling drops. 1000 charges.",
+        1719: "Creates 1 random rune per 20 chaos runes crafted.",
         1724: "Enemy deaths hit foes within 1 tile for 5% max Hits.",
         1729: "Steals 5% of damage dealt as healing.",
-        1734: "Boosts combat XP by 5%.",
-        1739: "Boosts hits, agility, prayer, and thieving XP by 5%.",
-        1744: "Adds +1 poison decay per tick.",
+        1734: "Boosts magic, summoning, and prayer XP by 5%.",
+        1737: "Boosts magic, summoning, and prayer XP by 25%.",
+        1738: "Boosts magic, summoning, and prayer XP by 50%.",
+        1739: "Boosts melee, ranged, hits, and agility XP by 5%.",
+        1742: "Boosts melee, ranged, hits, and agility XP by 25%.",
+        1743: "Boosts melee, ranged, hits, and agility XP by 50%.",
+        1653: "Adds +1 poison decay per tick.",
+        1744: "Auto-alchs valuable monster drops. 100 charges.",
+        1748: "Auto-alchs valuable monster drops. 1000 charges.",
         1749: "Has a 10% chance to double rare gathering rewards.",
         1754: "Has a 10% chance not to break after saving you.",
         1759: "Lets you keep 1 extra item on death.",
+        1699: "Boosts food healing by 50%.",
+        1700: "Boosts food healing by 100%.",
+        3076: "Boosts cooking, herblaw, and firemaking XP by 5%.",
+        3079: "Boosts cooking, herblaw, and firemaking XP by 25%.",
+        3080: "Boosts cooking, herblaw, and firemaking XP by 50%.",
+        3081: "Boosts fishing, harvesting, and thieving XP by 5%.",
+        3084: "Boosts fishing, harvesting, and thieving XP by 25%.",
+        3085: "Boosts fishing, harvesting, and thieving XP by 50%.",
         3111: "If a monster rare table misses, has a 25% chance to reroll the drop.",
     }
     for item_id, expected in expected_descriptions.items():
@@ -489,6 +567,8 @@ def ensure_all_enchanted_jewelry_has_effect_examine(items: dict[int, dict[str, A
         "Doubles ",
         "Extends ",
         "If ",
+        "Auto-alchs ",
+        "Creates ",
     )
     for item_id in sorted(jewelry_ids):
         entry = items.get(item_id)

@@ -5,6 +5,7 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.external.GameObjectDef;
 import com.openrsc.server.external.ObjectMiningDef;
@@ -371,8 +372,9 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 				if (maybeAwardMyWorldMiningGeode(player, rock, def.getReqLevel())) {
 					player.incExp(Skill.MINING.id(), def.getExp() * quantity, true);
 				} else {
-					int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(ore.getCatalogId(), quantity));
-					int remainingQuantity = quantity - bankedQuantity;
+					int rewardQuantity = quantity + addGatheringAmuletBonusOre(player, ore.getCatalogId(), quantity);
+					int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(ore.getCatalogId(), rewardQuantity));
+					int remainingQuantity = rewardQuantity - bankedQuantity;
 					int storedQuantity = Math.min(remainingQuantity, player.getCarriedItems().getInventory().getFreeSlots());
 					int successfulQuantity = bankedQuantity + storedQuantity;
 					if (successfulQuantity > 1) {
@@ -391,13 +393,6 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 						player.playerServerMessage(MessageType.QUEST, "Any excess falls to the ground because you have no room");
 					}
 					player.incExp(Skill.MINING.id(), def.getExp() * quantity, true);
-
-					if (player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance() > 0.0D
-						&& DataConversions.getRandom().nextDouble() < player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance()
-						&& !player.getCarriedItems().getInventory().full()) {
-						give(player, ore.getCatalogId(), 1);
-						player.playerServerMessage(MessageType.QUEST, "Your amulet resonates and you pull out extra ore.");
-					}
 				}
 			} else {
 				player.playerServerMessage(MessageType.QUEST, "You only succeed in scratching the rock");
@@ -668,6 +663,16 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		for (int i = 0; i < amount; i++) {
 			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), 1, player));
 		}
+	}
+
+	private int addGatheringAmuletBonusOre(Player player, int oreId, int oreCount) {
+		final int bonusOre = EnchantingItemEffects.consumeGatheringAmuletBonusItems(player,
+			Skill.MINING.id(), oreId, oreCount);
+		if (bonusOre > 0) {
+			player.playerServerMessage(MessageType.QUEST, "@gre@Your miner's amulet produces "
+				+ bonusOre + " extra ore" + (bonusOre == 1 ? "." : "s."));
+		}
+		return bonusOre;
 	}
 
 	private boolean maybeAwardMyWorldMiningGeode(Player player, GameObject rock, int nodeRequiredLevel) {

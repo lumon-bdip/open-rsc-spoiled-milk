@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.rsc.impl.combat.scripts.OnCombatStartScript;
+import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -28,6 +29,9 @@ public class DragonFireBreath implements OnCombatStartScript {
 		}
 		// only damage by fire if dragon attacks first player or the npc is Elvarg / KBD
 		if (attacker.isNpc() || victim.getID() == NpcId.DRAGON.id() || victim.getID() == NpcId.KING_BLACK_DRAGON.id()) {
+			if (!canDragonBreathReachPlayer(dragon, player)) {
+				return;
+			}
 			player.playerServerMessage(MessageType.QUEST, "The dragon breathes fire at you");
 			int maxHit = 65; // ELVARG & KING BLACK DRAGON - MAXIMUM HIT FOR BOTH
 			int fireDamage;
@@ -128,6 +132,11 @@ public class DragonFireBreath implements OnCombatStartScript {
 			percentage = 0;
 		}
 		return (int) Math.floor(getCurrentLevel(player, Skill.HITS.id()) * percentage / 100.0);
+	}
+
+	private boolean canDragonBreathReachPlayer(final Npc dragon, final Player player) {
+		return dragon != null && player != null
+			&& PathValidation.checkPath(dragon.getWorld(), dragon.getLocation(), player.getLocation(), true);
 	}
 
 	@Override

@@ -43,6 +43,7 @@ def main() -> None:
         "private boolean isMajorArmorPenaltySlot(Item item)",
         "private boolean isLeatherArmorPenaltyItem(Item item)",
         "private boolean isClothArmorPenaltyItem(Item item)",
+        "|| isBlessedWoolArmor(item.getCatalogId())",
         "private boolean isMetalArmorPenaltyItem(Item item)",
     ):
         require(equipment, snippet, "Equipment armor power penalty")

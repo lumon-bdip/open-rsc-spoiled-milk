@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.authentic.skills.fishing;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.external.EntityHandler;
 import com.openrsc.server.external.GameObjectDef;
 import com.openrsc.server.external.ObjectFishDef;
@@ -330,19 +331,9 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		boolean rareRewardAwarded = maybeAwardMyWorldFishingSpecialReward(player, rodTier);
 		if (!rareRewardAwarded) {
 			sendCatchMessage(player, fish);
-			if (player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(fish) <= 0) {
-				inventory.add(fish);
-			}
+			awardFishingCatch(player, object, fish, true);
 		}
 		player.incExp(Skill.FISHING.id(), caught.exp, true);
-
-		if (!rareRewardAwarded
-			&& player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance() > 0.0D
-			&& DataConversions.getRandom().nextDouble() < player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance()
-			&& !inventory.full()) {
-			inventory.add(new Item(fish.getCatalogId(), 1));
-			player.playerServerMessage(MessageType.QUEST, "Your amulet glimmers and another catch comes with it.");
-		}
 
 		ObjectFishingDef depletionDef = getAnyFishingDef(entityHandler, object);
 		if (depletionDef != null) {
@@ -571,6 +562,33 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 				player.playerServerMessage(MessageType.QUEST, "You catch a " + fishName);
 				break;
 		}
+	}
+
+	private void awardFishingCatch(Player player, GameObject object, Item fish, boolean bankWithLawRing) {
+		final int rewardQuantity = 1 + addGatheringAmuletBonusFish(player, fish.getCatalogId(), 1);
+		final int bankedQuantity = bankWithLawRing
+			? player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(fish.getCatalogId(), rewardQuantity))
+			: 0;
+		final int remainingQuantity = rewardQuantity - bankedQuantity;
+		final int storedQuantity = Math.min(remainingQuantity, player.getCarriedItems().getInventory().getFreeSlots());
+		if (storedQuantity > 0) {
+			give(player, fish.getCatalogId(), storedQuantity);
+		}
+		final int overflowQuantity = remainingQuantity - storedQuantity;
+		if (overflowQuantity > 0) {
+			dropOverflow(player, object, fish.getCatalogId(), overflowQuantity);
+			player.playerServerMessage(MessageType.QUEST, "Any excess falls to the ground because you have no room");
+		}
+	}
+
+	private int addGatheringAmuletBonusFish(Player player, int fishId, int fishCount) {
+		final int bonusFish = EnchantingItemEffects.consumeGatheringAmuletBonusItems(player,
+			Skill.FISHING.id(), fishId, fishCount);
+		if (bonusFish > 0) {
+			player.playerServerMessage(MessageType.QUEST, "@gre@Your angler's amulet produces "
+				+ bonusFish + " extra catch" + (bonusFish == 1 ? "." : "es."));
+		}
+		return bonusFish;
 	}
 
 	private FishingLocation getMyWorldFishingLocation(GameObject object) {
@@ -863,15 +881,8 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 						player.playerServerMessage(MessageType.QUEST, "You catch something really surprising: a bug! Please report this bug!");
 						break;
 				}
-				player.getCarriedItems().getInventory().add(fish);
+				awardFishingCatch(player, object, fish, false);
 				player.incExp(Skill.FISHING.id(), fishDef.getExp(), true);
-
-				if (player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance() > 0.0D
-					&& DataConversions.getRandom().nextDouble() < player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance()
-					&& !player.getCarriedItems().getInventory().full()) {
-					player.getCarriedItems().getInventory().add(new Item(fish.getCatalogId(), 1));
-					player.playerServerMessage(MessageType.QUEST, "Your amulet glimmers and another catch comes with it.");
-				}
 			}
 			if (fishLst.size() == 0 && fishRolls == 9) {
 				// An erroneous (mostly authentic) additional check on fishRolls here,
@@ -949,7 +960,7 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 						break;
 				}
 
-				inventory.add(fish);
+				awardFishingCatch(player, object, fish, false);
 				player.incExp(Skill.FISHING.id(), fishLst.get(0).getExp(), true);
 
 				// Inauthentically check if the fishing spot should deplete
@@ -995,6 +1006,19 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 
 	private int resourceRespawnMillis(int respawnTicks) {
 		return Math.max(1, (respawnTicks * config().GAME_TICK) / 2);
+	}
+
+	private void dropOverflow(Player player, GameObject object, int itemId, int amount) {
+		if (amount <= 0) {
+			return;
+		}
+		if (new Item(itemId).getDef(player.getWorld()).isStackable()) {
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), amount, player));
+			return;
+		}
+		for (int i = 0; i < amount; i++) {
+			player.getWorld().registerItem(new GroundItem(player.getWorld(), itemId, player.getX(), player.getY(), 1, player));
+		}
 	}
 
 	private int doBigNetFishingRoll(List<ObjectFishDef> fishLst, ObjectFishingDef bigNet, int playerLevel) {

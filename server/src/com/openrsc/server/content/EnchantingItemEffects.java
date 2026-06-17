@@ -44,6 +44,7 @@ public final class EnchantingItemEffects {
 	public static final int SOUL_ALTAR = 1296;
 	public static final int LIFE_ALTAR = 1321;
 	private static final String LAW_BANKING_CHARGES_CACHE_PREFIX = "myworld_law_banking_charges_";
+	private static final String NATURE_ALCHEMY_CHARGES_CACHE_PREFIX = "myworld_nature_alchemy_charges_";
 
 	private static final int[] ALL_ALTARS = {
 		AIR_ALTAR,
@@ -414,8 +415,6 @@ public final class EnchantingItemEffects {
 	};
 	private static final TieredEffect ELEMENTAL_RING_DAMAGE_EFFECT =
 		new TieredEffect(ELEMENTAL_RING_LINES, AIR_ALTAR, 3.0D);
-	private static final TieredEffect CHAOS_RING_RECOIL_EFFECT =
-		new TieredEffect(SPECIAL_RING_LINES, CHAOS_ALTAR, 0.08D);
 	private static final TieredEffect NATURE_RING_FORGING_EFFECT =
 		new TieredEffect(SPECIAL_RING_LINES, NATURE_ALTAR, 0.10D);
 	private static final TieredEffect COSMIC_RING_ADDITIONAL_ROLL_EFFECT =
@@ -424,26 +423,29 @@ public final class EnchantingItemEffects {
 		new TieredEffect(SPECIAL_RING_LINES, SOUL_ALTAR, 0.05D);
 	private static final TieredEffect NECKLACE_RUNE_PRESERVATION_EFFECT =
 		new TieredEffect(STANDARD_NECKLACE_LINES, AIR_ALTAR, 0.10D);
-	private static final TieredEffect AIR_AMULET_SPEED_EFFECT =
-		new TieredEffect(ELEMENTAL_AMULET_LINES, AIR_ALTAR, 0.02D);
-	private static final TieredEffect WATER_AMULET_HIGH_ROLL_EFFECT =
-		new TieredEffect(ELEMENTAL_AMULET_LINES, WATER_ALTAR, 0.02D);
-	private static final TieredEffect CHAOS_AMULET_SECOND_HIT_EFFECT =
-		new TieredEffect(SPECIAL_AMULET_LINES, CHAOS_ALTAR, 0.15D);
+	private static final TieredEffect AIR_NECKLACE_SPEED_EFFECT =
+		new TieredEffect(STANDARD_NECKLACE_LINES, AIR_ALTAR, 0.02D);
+	private static final TieredEffect WATER_NECKLACE_HIGH_ROLL_EFFECT =
+		new TieredEffect(STANDARD_NECKLACE_LINES, WATER_ALTAR, 0.02D);
 	private static final TieredEffect DEATH_AMULET_KILL_CHAIN_EFFECT =
 		new TieredEffect(SPECIAL_AMULET_LINES, DEATH_ALTAR, 0.01D);
 	private static final TieredEffect BLOOD_AMULET_MAX_HITS_EFFECT =
 		new TieredEffect(SPECIAL_AMULET_LINES, BLOOD_ALTAR, 0.05D);
-	private static final TieredEffect MIND_AMULET_XP_EFFECT =
-		new TieredEffect(SPECIAL_AMULET_LINES, MIND_ALTAR, 0.05D);
-	private static final TieredEffect BODY_AMULET_XP_EFFECT =
-		new TieredEffect(SPECIAL_AMULET_LINES, BODY_ALTAR, 0.05D);
-	private static final TieredEffect NATURE_AMULET_FOOD_EFFECT =
-		new TieredEffect(SPECIAL_AMULET_LINES, NATURE_ALTAR, 0.10D);
 	private static final TieredEffect COSMIC_AMULET_EXTRA_RESOURCE_EFFECT =
 		new TieredEffect(SPECIAL_AMULET_LINES, COSMIC_ALTAR, 0.03D);
 	private static final TieredEffect COSMIC_AMULET_HERB_QUALITY_EFFECT =
 		new TieredEffect(SPECIAL_AMULET_LINES, COSMIC_ALTAR, 0.03D);
+	private static final int[] MIND_BODY_JEWELRY_XP_BONUSES = {5, 10, 15, 25, 50};
+	private static final double[] NATURE_RING_FOOD_BONUSES = {0.10D, 0.20D, 0.30D, 0.50D, 1.00D};
+	private static final double[] CHAOS_RECOIL_CHANCES = {0.10D, 0.20D, 0.30D, 0.50D, 0.90D};
+	private static final double[] CHAOS_CHAIN_LIGHTNING_CHANCES = {0.10D, 0.20D, 0.30D, 0.50D, 0.90D};
+	private static final int[] CHAOS_AMULET_RANDOM_RUNE_INTERVALS = {20, 18, 16, 12, 2};
+	private static final int[] LAW_BANKING_CHARGES = {100, 200, 300, 500, 1000};
+	private static final int[] NATURE_ALCHEMY_AMULET_CHARGES = {100, 200, 300, 500, 1000};
+	private static final int[] GATHERING_AMULET_YIELD_BONUSES = {10, 20, 30, 50, 100};
+	private static final int GATHERING_AMULET_YIELD_POINTS_PER_ITEM = 10000;
+	private static final int GATHERING_AMULET_YIELD_POINTS_PER_PERCENT = 100;
+	private static final String GATHERING_AMULET_YIELD_CACHE_PREFIX = "gathering_amulet_yield_bonus_";
 
 	private EnchantingItemEffects() {
 	}
@@ -782,28 +784,24 @@ public final class EnchantingItemEffects {
 	}
 
 	public static int getElementalPowerBonus(final int itemId, final PrayerCatalog.CombatStyle combatStyle) {
-		final int ringBonus = getElementalJewelryPowerBonus(itemId, ELEMENTAL_RING_LINES, combatStyle);
-		if (ringBonus > 0) {
-			return ringBonus;
-		}
-		return getElementalJewelryPowerBonus(itemId, STANDARD_NECKLACE_LINES, combatStyle);
+		return getElementalJewelryPowerBonus(itemId, ELEMENTAL_RING_LINES, combatStyle);
 	}
 
 	public static int getElementalDefenseBonus(final int itemId, final PrayerCatalog.CombatStyle combatStyle) {
-		final int waterTier = getTierForAltar(itemId, ELEMENTAL_AMULET_LINES, WATER_ALTAR);
+		final int waterTier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, WATER_ALTAR);
 		if (waterTier != -1) {
 			return waterTier * 2;
 		}
 		final int tier;
 		switch (combatStyle) {
 			case RANGED:
-				tier = getTierForAltar(itemId, ELEMENTAL_AMULET_LINES, AIR_ALTAR);
+				tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, AIR_ALTAR);
 				return tier == -1 ? 0 : tier * 3;
 			case MELEE:
-				tier = getTierForAltar(itemId, ELEMENTAL_AMULET_LINES, EARTH_ALTAR);
+				tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, EARTH_ALTAR);
 				return tier == -1 ? 0 : tier * 3;
 			case MAGIC:
-				tier = getTierForAltar(itemId, ELEMENTAL_AMULET_LINES, FIRE_ALTAR);
+				tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, FIRE_ALTAR);
 				return tier == -1 ? 0 : tier * 3;
 			default:
 				return 0;
@@ -811,12 +809,8 @@ public final class EnchantingItemEffects {
 	}
 
 	public static double getChaosRingRecoilChance(final int itemId) {
-		final double ringChance = getTieredEffectValue(itemId, CHAOS_RING_RECOIL_EFFECT);
-		if (ringChance > 0.0D) {
-			return ringChance;
-		}
-		final int necklaceTier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, CHAOS_ALTAR);
-		return necklaceTier == -1 ? 0.0D : necklaceTier * 0.08D;
+		final int ringTier = getTierForAltar(itemId, SPECIAL_RING_LINES, CHAOS_ALTAR);
+		return getTierArrayValue(ringTier, CHAOS_RECOIL_CHANCES);
 	}
 
 	public static double getNatureRingForgingChance(final int itemId) {
@@ -845,22 +839,47 @@ public final class EnchantingItemEffects {
 			tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, LAW_ALTAR);
 		}
 		if (tier != -1) {
-			switch (tier) {
-				case 1:
-					return 50;
-				case 2:
-					return 150;
-				case 3:
-					return 300;
-				case 4:
-					return 500;
-				case 5:
-					return 750;
-				default:
-					return 0;
-			}
+			return LAW_BANKING_CHARGES[tier - 1];
 		}
 		return 0;
+	}
+
+	public static int getNatureAlchemyAmuletMaxCharges(final int itemId) {
+		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, NATURE_ALTAR);
+		return tier == -1 ? 0 : NATURE_ALCHEMY_AMULET_CHARGES[tier - 1];
+	}
+
+	public static String getNatureAlchemyChargesCacheKey(final int itemId) {
+		return NATURE_ALCHEMY_CHARGES_CACHE_PREFIX + itemId;
+	}
+
+	public static int getNatureAlchemyAmuletCharges(final Player player, final Item item) {
+		if (player == null || item == null || !isNatureAmulet(item.getCatalogId())) {
+			return 0;
+		}
+		final int maxCharges = getNatureAlchemyAmuletMaxCharges(item.getCatalogId());
+		if (maxCharges <= 0) {
+			return 0;
+		}
+		final String cacheKey = getNatureAlchemyChargesCacheKey(item.getCatalogId());
+		int charges = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : maxCharges;
+		charges = clamp(charges, 0, maxCharges);
+		player.getCache().set(cacheKey, charges);
+		item.getItemStatus().setDurability(charges);
+		return charges;
+	}
+
+	public static void setNatureAlchemyAmuletCharges(final Player player, final Item item, final int charges) {
+		if (player == null || item == null || !isNatureAmulet(item.getCatalogId())) {
+			return;
+		}
+		final int maxCharges = getNatureAlchemyAmuletMaxCharges(item.getCatalogId());
+		if (maxCharges <= 0) {
+			return;
+		}
+		final int clampedCharges = clamp(charges, 0, maxCharges);
+		player.getCache().set(getNatureAlchemyChargesCacheKey(item.getCatalogId()), clampedCharges);
+		item.getItemStatus().setDurability(clampedCharges);
 	}
 
 	public static String getLawBankingChargesCacheKey(final int itemId) {
@@ -904,7 +923,11 @@ public final class EnchantingItemEffects {
 
 	public static int getInitialItemDurability(final int itemId) {
 		final int lawCharges = getLawItemMaxCharges(itemId);
-		return lawCharges > 0 ? lawCharges : 100;
+		if (lawCharges > 0) {
+			return lawCharges;
+		}
+		final int natureAlchemyCharges = getNatureAlchemyAmuletMaxCharges(itemId);
+		return natureAlchemyCharges > 0 ? natureAlchemyCharges : 100;
 	}
 
 	public static int getLawAmuletTier(final int itemId) {
@@ -1138,7 +1161,7 @@ public final class EnchantingItemEffects {
 	}
 
 	public static double getSpeedBonus(final int itemId) {
-		return getTieredEffectValue(itemId, AIR_AMULET_SPEED_EFFECT);
+		return getTieredEffectValue(itemId, AIR_NECKLACE_SPEED_EFFECT);
 	}
 
 	public static double getHighRollBias(final int itemId) {
@@ -1146,7 +1169,7 @@ public final class EnchantingItemEffects {
 			// Special quest reward: stronger than tier 1 water, weaker than tier 2.
 			return 0.03D;
 		}
-		return getTieredEffectValue(itemId, WATER_AMULET_HIGH_ROLL_EFFECT);
+		return getTieredEffectValue(itemId, WATER_NECKLACE_HIGH_ROLL_EFFECT);
 	}
 
 	public static double getDefenseBonus(final int itemId) {
@@ -1157,8 +1180,14 @@ public final class EnchantingItemEffects {
 		return getElementalPowerBonus(itemId, PrayerCatalog.CombatStyle.MAGIC);
 	}
 
-	public static double getChaosAmuletSecondHitChance(final int itemId) {
-		return getTieredEffectValue(itemId, CHAOS_AMULET_SECOND_HIT_EFFECT);
+	public static double getChaosNecklaceChainLightningChance(final int itemId) {
+		final int tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, CHAOS_ALTAR);
+		return getTierArrayValue(tier, CHAOS_CHAIN_LIGHTNING_CHANCES);
+	}
+
+	public static int getChaosAmuletRandomRuneInterval(final int itemId) {
+		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, CHAOS_ALTAR);
+		return tier <= 0 || tier > CHAOS_AMULET_RANDOM_RUNE_INTERVALS.length ? 0 : CHAOS_AMULET_RANDOM_RUNE_INTERVALS[tier - 1];
 	}
 
 	public static double getDeathAmuletDamagePerKillBonus(final int itemId) {
@@ -1213,22 +1242,32 @@ public final class EnchantingItemEffects {
 		return 0.05D;
 	}
 
-	public static double getMindAmuletXpBonus(final int itemId) {
-		final int necklaceTier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, MIND_ALTAR);
-		if (necklaceTier != -1) {
-			return necklaceTier * 0.05D;
-		}
-		final int ringTier = getTierForAltar(itemId, SPECIAL_RING_LINES, MIND_ALTAR);
-		return ringTier == -1 ? 0.0D : ringTier * 0.05D;
+	public static double getMindNecklaceXpBonus(final int itemId) {
+		final int tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, MIND_ALTAR);
+		return getMindBodyJewelryXpBonus(tier);
 	}
 
-	public static double getBodyAmuletXpBonus(final int itemId) {
-		final int necklaceTier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, BODY_ALTAR);
-		if (necklaceTier != -1) {
-			return necklaceTier * 0.05D;
-		}
-		final int ringTier = getTierForAltar(itemId, SPECIAL_RING_LINES, BODY_ALTAR);
-		return ringTier == -1 ? 0.0D : ringTier * 0.05D;
+	public static double getMindRingXpBonus(final int itemId) {
+		final int tier = getTierForAltar(itemId, SPECIAL_RING_LINES, MIND_ALTAR);
+		return getMindBodyJewelryXpBonus(tier);
+	}
+
+	public static double getBodyNecklaceXpBonus(final int itemId) {
+		final int tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, BODY_ALTAR);
+		return getMindBodyJewelryXpBonus(tier);
+	}
+
+	public static double getBodyRingXpBonus(final int itemId) {
+		final int tier = getTierForAltar(itemId, SPECIAL_RING_LINES, BODY_ALTAR);
+		return getMindBodyJewelryXpBonus(tier);
+	}
+
+	private static double getMindBodyJewelryXpBonus(final int tier) {
+		return tier == -1 ? 0.0D : MIND_BODY_JEWELRY_XP_BONUSES[tier - 1] / 100.0D;
+	}
+
+	private static double getTierArrayValue(final int tier, final double[] values) {
+		return tier <= 0 || tier > values.length ? 0.0D : values[tier - 1];
 	}
 
 	public static double getMindAmuletPotionDurationBonus(final int itemId) {
@@ -1241,30 +1280,72 @@ public final class EnchantingItemEffects {
 
 	public static double getMindCombatAmuletXpBonus(final int itemId) {
 		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, MIND_ALTAR);
-		return tier == -1 ? 0.0D : tier * 0.05D;
+		return getMindBodyJewelryXpBonus(tier);
 	}
 
 	public static double getBodyDisciplineAmuletXpBonus(final int itemId) {
 		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, BODY_ALTAR);
-		return tier == -1 ? 0.0D : tier * 0.05D;
+		return getMindBodyJewelryXpBonus(tier);
 	}
 
-	public static double getNatureAmuletFoodBonus(final int itemId) {
-		final double amuletBonus = getTieredEffectValue(itemId, NATURE_AMULET_FOOD_EFFECT);
-		if (amuletBonus > 0.0D) {
-			return amuletBonus;
-		}
-		final int necklaceTier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, NATURE_ALTAR);
-		if (necklaceTier != -1) {
-			return necklaceTier * 0.10D;
-		}
+	public static double getNatureFoodHealingBonus(final int itemId) {
 		final int ringTier = getTierForAltar(itemId, SPECIAL_RING_LINES, NATURE_ALTAR);
-		return ringTier == -1 ? 0.0D : ringTier * 0.10D;
+		return ringTier == -1 ? 0.0D : NATURE_RING_FOOD_BONUSES[ringTier - 1];
 	}
 
-	public static int getNatureAmuletPoisonDecayBonus(final int itemId) {
-		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, NATURE_ALTAR);
+	public static int getNatureCleansingPoisonDecayBonus(final int itemId) {
+		final int tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, NATURE_ALTAR);
 		return tier == -1 ? 0 : tier;
+	}
+
+	public static int getGatheringAmuletYieldBonusPercent(final int itemId, final int skillId) {
+		final int altarId = getGatheringAmuletAltarForSkill(skillId);
+		if (altarId == -1) {
+			return 0;
+		}
+		final int tier = getTierForAltar(itemId, ELEMENTAL_AMULET_LINES, altarId);
+		return tier == -1 ? 0 : GATHERING_AMULET_YIELD_BONUSES[tier - 1];
+	}
+
+	public static int consumeGatheringAmuletBonusItems(final Player player, final int skillId, final int itemId,
+		final int itemCount) {
+		if (player == null || itemCount <= 0) {
+			return 0;
+		}
+		final int bonusPercent = player.getCarriedItems().getEquipment().getGatheringAmuletYieldBonusPercent(skillId);
+		if (bonusPercent <= 0) {
+			return 0;
+		}
+
+		final String cacheKey = GATHERING_AMULET_YIELD_CACHE_PREFIX + skillId + "_" + itemId;
+		final int storedPoints = player.getCache().hasKey(cacheKey) ? Math.max(0, player.getCache().getInt(cacheKey)) : 0;
+		final int earnedPoints = itemCount * bonusPercent * GATHERING_AMULET_YIELD_POINTS_PER_PERCENT;
+		final int totalPoints = storedPoints + earnedPoints;
+		final int bonusItems = totalPoints / GATHERING_AMULET_YIELD_POINTS_PER_ITEM;
+		final int remainingPoints = totalPoints % GATHERING_AMULET_YIELD_POINTS_PER_ITEM;
+
+		if (remainingPoints > 0) {
+			player.getCache().set(cacheKey, remainingPoints);
+		} else if (player.getCache().hasKey(cacheKey)) {
+			player.getCache().remove(cacheKey);
+		}
+		return bonusItems;
+	}
+
+	private static int getGatheringAmuletAltarForSkill(final int skillId) {
+		if (skillId == Skill.WOODCUTTING.id()) {
+			return AIR_ALTAR;
+		}
+		if (skillId == Skill.FISHING.id()) {
+			return WATER_ALTAR;
+		}
+		if (skillId == Skill.HARVESTING.id()) {
+			return EARTH_ALTAR;
+		}
+		if (skillId == Skill.MINING.id()) {
+			return FIRE_ALTAR;
+		}
+		return -1;
 	}
 
 	public static double getCosmicAmuletExtraResourceChance(final int itemId) {
@@ -1312,55 +1393,47 @@ public final class EnchantingItemEffects {
 		return tier == -1 ? 0 : tier;
 	}
 
-	public static boolean isCraftingSkill(final int skillId) {
-		switch (skillId) {
-			case 6:  // cooking
-			case 11: // firemaking
-			case 12: // crafting
-			case 13: // smithing
-			case 15: // herblaw
-			case 17: // fletching
-			case 20: // runecraft/enchanting
-			case 22: // tailoring
-			case 23: // carpentry
-				return true;
-			default:
-				return false;
-		}
+	public static boolean isMindCombatAmuletXpSkill(final int skillId) {
+		return skillId == Skill.MAGIC.id()
+			|| skillId == Skill.GOODMAGIC.id()
+			|| skillId == Skill.EVILMAGIC.id()
+			|| skillId == Skill.SUMMONING.id()
+			|| skillId == Skill.PRAYER.id()
+			|| skillId == Skill.PRAYGOOD.id()
+			|| skillId == Skill.PRAYEVIL.id();
 	}
 
-	public static boolean isGatheringSkill(final int skillId) {
-		switch (skillId) {
-			case 8:  // woodcutting
-			case 10: // fishing
-			case 14: // mining
-			case 16: // agility
-			case 18: // thieving
-			case 21: // harvesting
-				return true;
-			default:
-				return false;
-		}
+	public static boolean isMindNecklaceXpSkill(final int skillId) {
+		return skillId == Skill.CRAFTING.id()
+			|| skillId == Skill.FLETCHING.id()
+			|| skillId == Skill.RUNECRAFT.id();
 	}
 
-	public static boolean isMindCombatXpSkill(final int skillId) {
+	public static boolean isMindRingXpSkill(final int skillId) {
+		return skillId == Skill.COOKING.id()
+			|| skillId == Skill.HERBLAW.id()
+			|| skillId == Skill.FIREMAKING.id();
+	}
+
+	public static boolean isBodyCombatAmuletXpSkill(final int skillId) {
 		return skillId == Skill.MELEE.id()
 			|| skillId == Skill.ATTACK.id()
 			|| skillId == Skill.DEFENSE.id()
 			|| skillId == Skill.STRENGTH.id()
 			|| skillId == Skill.RANGED.id()
-			|| skillId == Skill.MAGIC.id()
-			|| skillId == Skill.GOODMAGIC.id()
-			|| skillId == Skill.EVILMAGIC.id()
-			|| skillId == Skill.SUMMONING.id();
+			|| skillId == Skill.HITS.id()
+			|| skillId == Skill.AGILITY.id();
 	}
 
-	public static boolean isBodyDisciplineXpSkill(final int skillId) {
-		return skillId == Skill.HITS.id()
-			|| skillId == Skill.AGILITY.id()
-			|| skillId == Skill.PRAYER.id()
-			|| skillId == Skill.PRAYGOOD.id()
-			|| skillId == Skill.PRAYEVIL.id()
+	public static boolean isBodyNecklaceXpSkill(final int skillId) {
+		return skillId == Skill.MINING.id()
+			|| skillId == Skill.SMITHING.id()
+			|| skillId == Skill.WOODCUTTING.id();
+	}
+
+	public static boolean isBodyRingXpSkill(final int skillId) {
+		return skillId == Skill.FISHING.id()
+			|| skillId == Skill.HARVESTING.id()
 			|| skillId == Skill.THIEVING.id();
 	}
 

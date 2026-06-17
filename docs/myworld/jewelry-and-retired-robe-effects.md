@@ -37,8 +37,8 @@ Implementation status:
 - Implemented: elemental ring/necklace offense, elemental amulet defense, mind
   ring/necklace crafting XP, mind amulet combat XP, body ring/necklace
   gathering XP, body amulet discipline XP, cosmic ring wealth rolls, cosmic necklace standard loot
-  rolls, cosmic amulet rare gathering duplication, chaos recoil, chaos amulet
-  splash, nature food healing, nature amulet poison decay, law ring skilling
+  rolls, cosmic amulet rare gathering duplication, chaos recoil, chaos necklace
+  chain lightning, chaos amulet random rune production, nature food healing, nature amulet poison decay, law ring skilling
   banking, law necklace monster-loot banking, law amulet teleports, death
   low-health scaling and death burst, blood max Hits and lifesteal, soul item
   saving/life saving, and life summon bonuses.
@@ -56,9 +56,9 @@ Implementation status:
 - Fire: Ring/Necklace of Sorcery; Amulet of Warding.
 - Body: Ring/Necklace of Discipline; Amulet of Discipline.
 - Cosmic: Ring/Necklace of Fortune; Amulet of Bounty.
-- Chaos: Ring/Necklace of Recoil; Amulet of Echoes.
+- Chaos: Ring of Recoil; Necklace of Chain Lightning; Amulet of Random Chance.
 - Nature: Ring/Necklace of Nourishment; Amulet of Cleansing.
-- Law: Ring/Necklace of Banking; Amulet of Teleportation.
+- Law: Ring of Skill Banking; Necklace of Loot Banking; Amulet of Teleportation.
 - Death: Ring/Necklace of Desperation; Amulet of Ruin.
 - Blood: Ring/Necklace of Vitality; Amulet of Siphoning.
 - Soul: Ring/Necklace of Preservation; Amulet of Lifesaving.

@@ -39,6 +39,8 @@ import java.util.concurrent.TimeUnit;
 
 public class PvmMeleeEvent extends GameTickEvent {
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final int CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3;
+	private static final int CHAOS_CHAIN_LIGHTNING_RADIUS = 4;
 	private static final int[] SCYTHE_IDS = {
 		ItemId.TIN_SCYTHE.id(), ItemId.COPPER_SCYTHE.id(), ItemId.BRONZE_SCYTHE.id(),
 		ItemId.IRON_SCYTHE.id(), ItemId.STEEL_SCYTHE.id(), ItemId.MITHRIL_SCYTHE.id(),
@@ -162,7 +164,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 		applyWeaponPoison(attackerMob, targetMob, damage);
-		applyChaosAmuletSecondHit(attackerMob, targetMob, damage);
+		applyChaosAmuletChainLightning(attackerMob, targetMob, damage);
 		int scytheTargetsHit = 1;
 		if (!attackSuppressed && attackerMob.isPlayer() && targetMob.isNpc()) {
 			scytheTargetsHit += applyScytheNpcCleave((Player) attackerMob, (Npc) targetMob);
@@ -173,7 +175,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			if (recoilChance > 0.0D) {
 				final double recoilRoll = DataConversions.getRandom().nextDouble();
 				final int divisor = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilDamageDivisor();
-				final int reflectedDamage = damage / divisor + ((damage > 0) ? 1 : 0);
+				final int reflectedDamage = damage <= 0 ? 0 : Math.max(1, damage / divisor);
 				final boolean proc = recoilRoll < recoilChance;
 				if (proc && reflectedDamage > 0) {
 					inflictJewelryEffectDamage(targetMob, attackerMob, reflectedDamage);
@@ -699,25 +701,30 @@ public class PvmMeleeEvent extends GameTickEvent {
 		resetCombat();
 	}
 
-	private void applyChaosAmuletSecondHit(final Mob hitter, final Mob target, final int baseDamage) {
-		if (!hitter.isPlayer() || baseDamage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+	private void applyChaosAmuletChainLightning(final Mob hitter, final Mob target, final int baseDamage) {
+		if (!hitter.isPlayer() || baseDamage <= 0 || !target.isNpc()) {
 			return;
 		}
 		final Player player = (Player) hitter;
-		final double procChance = player.getCarriedItems().getEquipment().getChaosAmuletSecondHitChance();
-		if (procChance <= 0.0D) {
+		final double chainChance = player.getCarriedItems().getEquipment().getChaosNecklaceChainLightningChance();
+		if (chainChance <= 0.0D) {
 			return;
 		}
-		final double roll = DataConversions.getRandom().nextDouble();
-		if (roll >= procChance) {
-			return;
+		Mob anchor = target;
+		int chainDamage = Math.max(1, (int) Math.ceil(baseDamage / 2.0D));
+		for (int hop = 0; hop < CHAOS_CHAIN_LIGHTNING_MAX_HOPS; hop++) {
+			if (DataConversions.getRandom().nextDouble() >= chainChance) {
+				break;
+			}
+			final Mob chainTarget = selectChaosChainLightningTarget(player, anchor);
+			if (chainTarget == null) {
+				break;
+			}
+			chainTarget.getUpdateFlags().setProjectile(new Projectile(anchor, chainTarget, Projectile.MAGIC));
+			inflictJewelryEffectDamage(hitter, chainTarget, chainDamage);
+			anchor = chainTarget;
+			chainDamage = Math.max(1, (int) Math.ceil(chainDamage / 2.0D));
 		}
-		final Mob splashTarget = selectChaosAmuletSplashTarget(player, target);
-		if (splashTarget == null) {
-			return;
-		}
-		final int extraDamage = Math.max(1, (int) Math.ceil(baseDamage / 2.0D));
-		inflictJewelryEffectDamage(hitter, splashTarget, extraDamage);
 	}
 
 	private void inflictJewelryEffectDamage(final Mob hitter, final Mob target, final int damage) {
@@ -739,15 +746,15 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 	}
 
-	private Mob selectChaosAmuletSplashTarget(final Player player, final Mob primaryTarget) {
-		if (!primaryTarget.isNpc()) {
+	private Mob selectChaosChainLightningTarget(final Player player, final Mob anchor) {
+		if (anchor == null || !anchor.isNpc()) {
 			return null;
 		}
 		final java.util.ArrayList<Npc> candidates = new java.util.ArrayList<Npc>();
 		for (Npc npc : player.getViewArea().getNpcsInView()) {
-			if (npc != null && !npc.isRemoved() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
+			if (npc != null && npc != anchor && !npc.isRemoved() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
 				&& !Summoning.isSummon(npc)
-				&& npc.withinRange(primaryTarget.getLocation(), 4)) {
+				&& npc.withinRange(anchor.getLocation(), CHAOS_CHAIN_LIGHTNING_RADIUS)) {
 				candidates.add(npc);
 			}
 		}

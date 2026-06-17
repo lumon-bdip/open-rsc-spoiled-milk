@@ -3969,7 +3969,7 @@ public class EntityHandler {
 
 
 		// Rings
-		setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil", "Has an 8% chance to recoil attacker damage.", "", 900, -1, "items:502", false, true, 1200, 19711, true, false, true, 1314));
+		setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil", "Has 10% chance to recoil attacker damage.", "", 900, -1, "items:502", false, true, 1200, 19711, true, false, true, 1314));
 		setCustomItemDefinition(1315, new ItemDef("Ring of splendor", "An enchanted ring.", "", 1275, -1, "items:502", false, true, 1200, 3394611, true, false, true, 1315));
 		setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment", "Boosts food healing by 10%.", "", 2025, -1, "items:502", false, true, 1200, 16724736, true, false, true, 1316));
 		setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Preservation", "Lets you keep 4 extra items on death.", "", 3525, -1, "items:502", false, true, 1200, 0xFFFFFF, true, false, true, 1317));
@@ -5602,22 +5602,25 @@ public class EntityHandler {
 		final int[] lawAmuletPrices = {1800, 3000, 6000, 12000, 35000};
 		final int[] soulNecklacePrices = {2000, 3300, 6400, 13000, 38000};
 		final int[] gemMasks = {19711, 3394611, 16724736, 0, 12255487};
-		final int[] lawBankCharges = {50, 150, 300, 500, 750};
+		final int[] lawBankCharges = {100, 200, 300, 500, 1000};
 
-		addAmuletLine(1593, tiers, "Evasion", "Adds +%d ranged defense.", 3, amuletPrices, gemMasks, "");
-		addAmuletLine(1598, tiers, "Balance", "Adds +%d melee, ranged, and magic defense.", 2, amuletPrices, gemMasks, "");
-		addAmuletLine(1603, tiers, "Guarding", "Adds +%d melee defense.", 3, amuletPrices, gemMasks, "");
-		addAmuletLine(1608, tiers, "Warding", "Adds +%d magic defense.", 3, amuletPrices, gemMasks, "");
+		addGatheringAmuletLine(1593, tiers, "Woodcutter's", "Boosts woodcutting log yield by %d%%.", amuletPrices, gemMasks);
+		addGatheringAmuletLine(1598, tiers, "Angler's", "Boosts fishing catch yield by %d%%.", amuletPrices, gemMasks);
+		addGatheringAmuletLine(1603, tiers, "Harvester's", "Boosts harvesting produce yield by %d%%.", amuletPrices, gemMasks);
+		addGatheringAmuletLine(1608, tiers, "Miner's", "Boosts mining ore yield by %d%%.", amuletPrices, gemMasks);
 
-		addNecklaceLine(1613, tiers, "Archery", "Adds +%d ranged power.", 3, necklacePrices, gemMasks);
-		addNecklaceLine(1618, tiers, "Craftsmanship", "Boosts crafting-style skill XP by %d%%.", 5, necklacePrices, gemMasks);
-		addNecklaceLine(1623, tiers, "Balance", "Adds +%d melee, ranged, and magic power.", 2, necklacePrices, gemMasks);
-		addNecklaceLine(1628, tiers, "Force", "Adds +%d melee power.", 3, necklacePrices, gemMasks);
-		addNecklaceLine(1633, tiers, "Sorcery", "Adds +%d magic power.", 3, necklacePrices, gemMasks);
-		addNecklaceLine(1638, tiers, "Industry", "Boosts gathering-style skill XP by %d%%.", 5, necklacePrices, gemMasks);
+		addNecklaceLine(1613, tiers, "Evasion", "Adds +%d ranged defense.", 3, necklacePrices, gemMasks);
+		addExplicitNecklaceLine(1618, tiers, "Artifice", "Boosts crafting, fletching, and enchanting XP by %d%%.",
+			new int[] {5, 10, 15, 25, 50}, necklacePrices, gemMasks);
+		addNecklaceLine(1623, tiers, "Equilibrium", "Adds +%d melee, ranged, and magic defense.", 2, necklacePrices, gemMasks);
+		addNecklaceLine(1628, tiers, "Bulwark", "Adds +%d melee defense.", 3, necklacePrices, gemMasks);
+		addNecklaceLine(1633, tiers, "Warding", "Adds +%d magic defense.", 3, necklacePrices, gemMasks);
+		addExplicitNecklaceLine(1638, tiers, "Labor", "Boosts mining, smithing, and woodcutting XP by %d%%.",
+			new int[] {5, 10, 15, 25, 50}, necklacePrices, gemMasks);
 		addNecklaceLine(1643, tiers, "Fortune", "Has a %d%% chance to roll extra standard monster loot.", 10, necklacePrices, gemMasks);
-		addNecklaceLine(1648, tiers, "Recoil", "Has %d%% chance to recoil attacker damage.", 8, necklacePrices, gemMasks);
-		addNecklaceLine(1653, tiers, "Nourishment", "Boosts food healing by %d%%.", 10, necklacePrices, gemMasks);
+		addExplicitNecklaceLine(1648, tiers, "Chain Lightning", "Has a %d%% chance per chain lightning hop.",
+			new int[] {10, 20, 30, 50, 90}, necklacePrices, gemMasks);
+		addNecklaceLine(1653, tiers, "Cleansing", "Adds +%d poison decay per tick.", 1, necklacePrices, gemMasks);
 		addLawBankingNecklaceLine(1658, tiers, necklacePrices, gemMasks, lawBankCharges);
 		addNecklaceLine(1663, tiers, "Desperation", "Raises defenses as health falls. Tier %d.", 1, necklacePrices, gemMasks);
 		addNecklaceLine(1668, tiers, "Vitality", "Adds +%d max Hits.", 2, necklacePrices, gemMasks);
@@ -5627,13 +5630,12 @@ public class EntityHandler {
 		addRingLine(1683, tiers, "Force", "Adds +%d melee power.", 3, ringPrices, gemMasks);
 		addRingLine(1688, tiers, "Sorcery", "Adds +%d magic power.", 3, ringPrices, gemMasks);
 
-		addOffsetRingLine(1693, new String[] {"Emerald", "Ruby", "Diamond", "Dragonstone"},
-			"Recoil", "Has %d%% chance to recoil attacker damage.", 8,
-			2,
+		addExplicitRingLine(1693, new String[] {"Emerald", "Ruby", "Diamond", "Dragonstone"},
+			"Recoil", "Has %d%% chance to recoil attacker damage.",
+			new int[] {20, 30, 50, 90},
 			new int[] {3000, 6000, 12000, 35000}, new int[] {3394611, 16724736, 0, 12255487});
-		addOffsetRingLine(1697, new String[] {"Emerald", "Ruby", "Diamond", "Dragonstone"},
-			"Nourishment", "Boosts food healing by %d%%.", 10,
-			2,
+		addNatureNourishmentRingLine(1697, new String[] {"Emerald", "Ruby", "Diamond", "Dragonstone"},
+			new int[] {20, 30, 50, 100},
 			new int[] {3000, 6000, 12000, 35000}, new int[] {3394611, 16724736, 0, 12255487});
 		addRingLine(1701, new String[] {"Sapphire", "Emerald", "Ruby", "Diamond"},
 			"Fortune", "If a monster rare table misses, has a %d%% chance to reroll the drop.", 5,
@@ -5696,17 +5698,22 @@ public class EntityHandler {
 		addLawAmuletLine(1709, tiers, lawAmuletPrices, gemMasks);
 		addLawBankingRingLine(1714, tiers, ringPrices, gemMasks, lawBankCharges);
 
-		addAmuletLine(1719, tiers, "Echoes", "Has a %d%% chance to echo half damage nearby.", 15, amuletPrices, gemMasks, "");
+		addExplicitAmuletLine(1719, tiers, "Random Chance", "Creates 1 random rune per %d chaos runes crafted.",
+			new int[] {20, 18, 16, 12, 2}, amuletPrices, gemMasks, "");
 		addDeathAmuletLine(1724, tiers, amuletPrices, gemMasks);
 		addAmuletLine(1729, tiers, "Siphoning", "Steals %d%% of damage dealt as healing.", 5, amuletPrices, gemMasks, "");
-		addAmuletLine(1734, tiers, "Combat", "Boosts combat XP by %d%%.", 5, amuletPrices, gemMasks, "");
-		addAmuletLine(1739, tiers, "Discipline", "Boosts hits, agility, prayer, and thieving XP by %d%%.", 5, amuletPrices, gemMasks, "");
-		addAmuletLine(1744, tiers, "Cleansing", "Adds +%d poison decay per tick.", 1, amuletPrices, gemMasks, "");
+		addExplicitAmuletLine(1734, tiers, "Attunement", "Boosts magic, summoning, and prayer XP by %d%%.",
+			new int[] {5, 10, 15, 25, 50}, amuletPrices, gemMasks, "");
+		addExplicitAmuletLine(1739, tiers, "Prowess", "Boosts melee, ranged, hits, and agility XP by %d%%.",
+			new int[] {5, 10, 15, 25, 50}, amuletPrices, gemMasks, "");
+		addAlchemyAmuletLine(1744, tiers, amuletPrices, gemMasks);
 		addCosmicAmuletLine(1749, tiers, amuletPrices, gemMasks);
 		addSoulAmuletLine(1754, tiers, amuletPrices, gemMasks);
 		addSoulNecklaceLine(1759, tiers, soulNecklacePrices, gemMasks);
-		addAttunedRingLine(3076, tiers, "Craftsmanship", "Boosts crafting-style skill XP by %d%%.", 5, ringPrices, gemMasks);
-		addAttunedRingLine(3081, tiers, "Industry", "Boosts gathering-style skill XP by %d%%.", 5, ringPrices, gemMasks);
+		addExplicitAttunedRingLine(3076, tiers, "Hearthcraft", "Boosts cooking, herblaw, and firemaking XP by %d%%.",
+			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
+		addExplicitAttunedRingLine(3081, tiers, "Acquisition", "Boosts fishing, harvesting, and thieving XP by %d%%.",
+			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
 		addAttunedRingLine(3086, tiers, "Desperation", "Raises weapon power as health falls. Tier %d.", 1, ringPrices, gemMasks);
 		addAttunedRingLine(3091, tiers, "Vitality", "Adds +%d max Hits.", 2, ringPrices, gemMasks);
 		addLifeRingLine(3096, tiers, ringPrices, gemMasks);
@@ -5781,6 +5788,70 @@ public class EntityHandler {
 		}
 	}
 
+	private static void addExplicitAmuletLine(int startId, String[] tiers, String altarName, String descriptionFormat,
+		int[] bonuses, int[] prices, int[] pictureMasks, String command) {
+		for (int i = 0; i < tiers.length; i++) {
+			setCustomItemDefinition(startId + i,
+				new ItemDef(tiers[i] + " Amulet of " + altarName,
+					String.format(descriptionFormat, bonuses[i]),
+					command,
+					prices[i],
+					125,
+					"items:125",
+					false,
+					true,
+					1024,
+					pictureMasks[i],
+					true,
+					false,
+					true,
+					startId + i));
+		}
+	}
+
+	private static void addGatheringAmuletLine(int startId, String[] tiers, String amuletName,
+		String descriptionFormat, int[] prices, int[] pictureMasks) {
+		final int[] bonuses = {10, 20, 30, 50, 100};
+		for (int i = 0; i < tiers.length; i++) {
+			setCustomItemDefinition(startId + i,
+				new ItemDef(tiers[i] + " " + amuletName + " Amulet",
+					String.format(descriptionFormat, bonuses[i]),
+					"",
+					prices[i],
+					125,
+					"items:125",
+					false,
+					true,
+					1024,
+					pictureMasks[i],
+					true,
+					false,
+					true,
+					startId + i));
+		}
+	}
+
+	private static void addAlchemyAmuletLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
+		final int[] charges = {100, 200, 300, 500, 1000};
+		for (int i = 0; i < tiers.length; i++) {
+			setCustomItemDefinition(startId + i,
+				new ItemDef(tiers[i] + " Amulet of Alchemy",
+					"Auto-alchs valuable monster drops. " + charges[i] + " charges.",
+					"Check",
+					prices[i],
+					125,
+					"items:125",
+					false,
+					true,
+					1024,
+					pictureMasks[i],
+					true,
+					false,
+					true,
+					startId + i));
+		}
+	}
+
 	private static void addNecklaceLine(int startId, String[] tiers, String altarName, String descriptionFormat,
 		int step, int[] prices, int[] pictureMasks) {
 		for (int i = 0; i < tiers.length; i++) {
@@ -5802,11 +5873,32 @@ public class EntityHandler {
 		}
 	}
 
+	private static void addExplicitNecklaceLine(int startId, String[] tiers, String altarName, String descriptionFormat,
+		int[] bonuses, int[] prices, int[] pictureMasks) {
+		for (int i = 0; i < tiers.length; i++) {
+			setCustomItemDefinition(startId + i,
+				new ItemDef(tiers[i] + " Necklace of " + altarName,
+					String.format(descriptionFormat, bonuses[i]),
+					"",
+					prices[i],
+					57,
+					"items:57",
+					false,
+					true,
+					1024,
+					pictureMasks[i],
+					true,
+					false,
+					true,
+					startId + i));
+		}
+	}
+
 	private static void addLawBankingNecklaceLine(int startId, String[] tiers, int[] prices, int[] pictureMasks,
 		int[] charges) {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Necklace of Banking",
+				new ItemDef(tiers[i] + " Necklace of Loot Banking",
 					"Banks non-stack monster loot. " + charges[i] + " charges.",
 					"Check",
 					prices[i],
@@ -5844,12 +5936,54 @@ public class EntityHandler {
 		}
 	}
 
+	private static void addExplicitRingLine(int startId, String[] tiers, String altarName, String descriptionFormat,
+		int[] bonuses, int[] prices, int[] pictureMasks) {
+		for (int i = 0; i < tiers.length; i++) {
+			setCustomItemDefinition(startId + i,
+				new ItemDef(tiers[i] + " Ring of " + altarName,
+					String.format(descriptionFormat, bonuses[i]),
+					"",
+					prices[i],
+					123,
+					"items:123",
+					false,
+					true,
+					1200,
+					pictureMasks[i],
+					true,
+					false,
+					true,
+					startId + i));
+		}
+	}
+
 	private static void addOffsetRingLine(int startId, String[] tiers, String altarName, String descriptionFormat,
 		int step, int startingTier, int[] prices, int[] pictureMasks) {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
 				new ItemDef(tiers[i] + " Ring of " + altarName,
 					String.format(descriptionFormat, step * (startingTier + i)),
+					"",
+					prices[i],
+					123,
+					"items:123",
+					false,
+					true,
+					1200,
+					pictureMasks[i],
+					true,
+					false,
+					true,
+					startId + i));
+		}
+	}
+
+	private static void addNatureNourishmentRingLine(int startId, String[] tiers, int[] bonuses, int[] prices,
+		int[] pictureMasks) {
+		for (int i = 0; i < tiers.length; i++) {
+			setCustomItemDefinition(startId + i,
+				new ItemDef(tiers[i] + " Ring of Nourishment",
+					String.format("Boosts food healing by %d%%.", bonuses[i]),
 					"",
 					prices[i],
 					123,
@@ -5907,6 +6041,27 @@ public class EntityHandler {
 		}
 	}
 
+	private static void addExplicitAttunedRingLine(int startId, String[] tiers, String altarName,
+		String descriptionFormat, int[] bonuses, int[] prices, int[] pictureMasks) {
+		for (int i = 0; i < tiers.length; i++) {
+			setCustomItemDefinition(startId + i,
+				new ItemDef(tiers[i] + " Ring of " + altarName,
+					String.format(descriptionFormat, bonuses[i]),
+					"",
+					prices[i],
+					123,
+					"items:123",
+					false,
+					true,
+					1200,
+					pictureMasks[i],
+					true,
+					false,
+					true,
+					startId + i));
+		}
+	}
+
 	private static void addLawAmuletLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
@@ -5931,7 +6086,7 @@ public class EntityHandler {
 		int[] charges) {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Ring of Banking",
+				new ItemDef(tiers[i] + " Ring of Skill Banking",
 					"Banks non-stack skilling drops. " + charges[i] + " charges.",
 					"Check",
 					prices[i],

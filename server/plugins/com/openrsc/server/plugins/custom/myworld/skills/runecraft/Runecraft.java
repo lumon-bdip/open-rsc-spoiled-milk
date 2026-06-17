@@ -19,6 +19,8 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 	private static final int LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE = 10000;
 	private static final int LAW_ROBE_RUNEPRODUCTION_POINTS_PER_PERCENT = 100;
 	private static final String LAW_ROBE_RUNEPRODUCTION_CACHE_PREFIX = "law_robe_runecraft_bonus_";
+	private static final int CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE = 720;
+	private static final String CHAOS_AMULET_RANDOM_RUNE_CACHE_KEY = "chaos_amulet_random_rune_bonus";
 
 	int[] RUNES = new int[] {
 		ItemId.FIRE_RUNE.id(),
@@ -112,6 +114,7 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 
 		if (successCount > 0) {
 			addLawRobeBonusRunes(player, def.getRuneId(), runeCount);
+			addChaosAmuletRandomRunes(player, def.getRuneId(), runeCount);
 			player.incExp(Skill.RUNECRAFT.id(), def.getExp() * successCount, true);
 		}
 	}
@@ -143,6 +146,44 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 
 	private int getLawRobeRunecraftBonusPercent(final Player player) {
 		return Math.max(0, player.getCarriedItems().getEquipment().getLawRobeTierTotal() * 2);
+	}
+
+	private void addChaosAmuletRandomRunes(final Player player, final int runeId, final int runeCount) {
+		if (runeId != ItemId.CHAOS_RUNE.id() || runeCount <= 0) {
+			return;
+		}
+		final int interval = player.getCarriedItems().getEquipment().getChaosAmuletRandomRuneInterval();
+		if (interval <= 0) {
+			return;
+		}
+
+		final int storedPoints = player.getCache().hasKey(CHAOS_AMULET_RANDOM_RUNE_CACHE_KEY)
+			? Math.max(0, player.getCache().getInt(CHAOS_AMULET_RANDOM_RUNE_CACHE_KEY))
+			: 0;
+		final int earnedPoints = runeCount * (CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE / interval);
+		final int totalPoints = storedPoints + earnedPoints;
+		final int bonusRunes = totalPoints / CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE;
+		final int remainingPoints = totalPoints % CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE;
+
+		if (remainingPoints > 0) {
+			player.getCache().set(CHAOS_AMULET_RANDOM_RUNE_CACHE_KEY, remainingPoints);
+		} else if (player.getCache().hasKey(CHAOS_AMULET_RANDOM_RUNE_CACHE_KEY)) {
+			player.getCache().remove(CHAOS_AMULET_RANDOM_RUNE_CACHE_KEY);
+		}
+		if (bonusRunes <= 0) {
+			return;
+		}
+
+		final int[] bonusCounts = new int[RUNES.length];
+		for (int i = 0; i < bonusRunes; i++) {
+			bonusCounts[DataConversions.random(0, RUNES.length - 1)]++;
+		}
+		for (int i = 0; i < bonusCounts.length; i++) {
+			if (bonusCounts[i] > 0) {
+				player.getCarriedItems().getInventory().add(new Item(RUNES[i], bonusCounts[i]));
+			}
+		}
+		player.message("@gre@Your chaos amulet produces " + bonusRunes + " random rune" + (bonusRunes == 1 ? "." : "s."));
 	}
 
 	private boolean hasRuneStone(Player player) {

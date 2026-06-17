@@ -29,6 +29,8 @@ import com.openrsc.server.util.rsc.DataConversions;
 
 public class ProjectileEvent extends SingleTickEvent {
 
+	private static final int CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3;
+	private static final int CHAOS_CHAIN_LIGHTNING_RADIUS = 4;
 	Mob caster, opponent;
 	protected int damage;
 	protected int windAccuracyDebuffPercent;
@@ -180,7 +182,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			if (caster.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
 			}
-			applyChaosAmuletSecondHit();
+			applyChaosAmuletChainLightning();
 			if (opponent.isPlayer()) {
 				final Player opponentPlayer = (Player) opponent;
 				if (opponentPlayer.getCarriedItems().getEquipment().getChaosRecoilChance() > 0.0D) {
@@ -197,40 +199,52 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 	}
 
-	private void applyChaosAmuletSecondHit() {
-		if (!caster.isPlayer() || damage <= 0 || opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+	private void applyChaosAmuletChainLightning() {
+		if (!caster.isPlayer() || damage <= 0 || !opponent.isNpc()) {
 			return;
 		}
 		final Player casterPlayer = (Player) caster;
-		final double procChance = casterPlayer.getCarriedItems().getEquipment().getChaosAmuletSecondHitChance();
-		if (procChance <= 0.0D) {
-			return;
-		}
-		final double roll = DataConversions.getRandom().nextDouble();
-		if (roll >= procChance) {
+		final double chainChance = casterPlayer.getCarriedItems().getEquipment().getChaosNecklaceChainLightningChance();
+		if (chainChance <= 0.0D) {
 			return;
 		}
 
-		final Mob splashTarget = selectChaosAmuletSplashTarget(casterPlayer, opponent);
-		if (splashTarget == null) {
+		Mob anchor = opponent;
+		int chainDamage = Math.max(1, (int) Math.ceil(damage / 2.0D));
+		for (int hop = 0; hop < CHAOS_CHAIN_LIGHTNING_MAX_HOPS; hop++) {
+			if (DataConversions.getRandom().nextDouble() >= chainChance) {
+				break;
+			}
+			final Mob chainTarget = selectChaosChainLightningTarget(casterPlayer, anchor);
+			if (chainTarget == null) {
+				break;
+			}
+			chainTarget.getUpdateFlags().setProjectile(new Projectile(anchor, chainTarget, Projectile.MAGIC));
+			inflictChainLightningDamage(casterPlayer, chainTarget, chainDamage);
+			anchor = chainTarget;
+			chainDamage = Math.max(1, (int) Math.ceil(chainDamage / 2.0D));
+		}
+	}
+
+	private void inflictChainLightningDamage(final Player casterPlayer, final Mob chainTarget, int chainDamage) {
+		if (chainDamage <= 0 || chainTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
-		int extraDamage = Math.max(1, (int) Math.ceil(damage / 2.0D));
-		if (splashTarget.isPlayer()) {
-			Player opponentPlayer = (Player) splashTarget;
+		if (chainTarget.isPlayer()) {
+			Player opponentPlayer = (Player) chainTarget;
 			if (type == 1 || type == 4) {
-				extraDamage = opponentPlayer.applyPotionMagicDamageReduction(extraDamage);
+				chainDamage = opponentPlayer.applyPotionMagicDamageReduction(chainDamage);
 			} else if (type == 2 || type == 5) {
-				extraDamage = opponentPlayer.applyPotionRangedDamageReduction(extraDamage);
+				chainDamage = opponentPlayer.applyPotionRangedDamageReduction(chainDamage);
 			}
 		}
-		int lastHits = splashTarget.getLevel(Skill.HITS.id());
-		splashTarget.getSkills().subtractLevel(Skill.HITS.id(), extraDamage, false);
-		splashTarget.getUpdateFlags().setDamage(new Damage(splashTarget, extraDamage));
-		splashTarget.getUpdateFlags().addHitSplat(new HitSplat(splashTarget, HitSplat.TYPE_ARMOR_PROC, extraDamage));
-		if (splashTarget.isNpc()) {
-			Npc npc = (Npc) splashTarget;
-			final int dealtDamage = Math.min(extraDamage, lastHits);
+		int lastHits = chainTarget.getLevel(Skill.HITS.id());
+		chainTarget.getSkills().subtractLevel(Skill.HITS.id(), chainDamage, false);
+		chainTarget.getUpdateFlags().setDamage(new Damage(chainTarget, chainDamage));
+		chainTarget.getUpdateFlags().addHitSplat(new HitSplat(chainTarget, HitSplat.TYPE_ARMOR_PROC, chainDamage));
+		if (chainTarget.isNpc()) {
+			Npc npc = (Npc) chainTarget;
+			final int dealtDamage = Math.min(chainDamage, lastHits);
 			if (type == 1 || type == 4) {
 				npc.addMageDamage(casterPlayer, dealtDamage);
 			} else if (type == 2 || type == 5) {
@@ -238,25 +252,25 @@ public class ProjectileEvent extends SingleTickEvent {
 			}
 			casterPlayer.applyBloodAmuletLifesteal(dealtDamage);
 		}
-		if (splashTarget.isPlayer()) {
-			ActionSender.sendStat((Player) splashTarget, Skill.HITS.id());
+		if (chainTarget.isPlayer()) {
+			ActionSender.sendStat((Player) chainTarget, Skill.HITS.id());
 		}
-		if (splashTarget == opponent && splashTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+		if (chainTarget == opponent && chainTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			handleDeath();
-		} else if (splashTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			splashTarget.killedBy(caster);
+		} else if (chainTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			chainTarget.killedBy(caster);
 		}
 	}
 
-	private Mob selectChaosAmuletSplashTarget(final Player player, final Mob primaryTarget) {
-		if (!primaryTarget.isNpc()) {
+	private Mob selectChaosChainLightningTarget(final Player player, final Mob anchor) {
+		if (anchor == null || !anchor.isNpc()) {
 			return null;
 		}
 		final java.util.ArrayList<Npc> candidates = new java.util.ArrayList<Npc>();
 		for (Npc npc : player.getViewArea().getNpcsInView()) {
-			if (npc != null && !npc.isRemoved() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
+			if (npc != null && npc != anchor && !npc.isRemoved() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
 				&& !Summoning.isSummon(npc)
-				&& npc.withinRange(primaryTarget.getLocation(), 4)) {
+				&& npc.withinRange(anchor.getLocation(), CHAOS_CHAIN_LIGHTNING_RADIUS)) {
 				candidates.add(npc);
 			}
 		}
@@ -273,7 +287,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		final double recoilRoll = DataConversions.getRandom().nextDouble();
 		final int divisor = opponent.getCarriedItems().getEquipment().getChaosRecoilDamageDivisor();
-		int reflectedDamage = damage / divisor + ((damage > 0) ? 1 : 0);
+		int reflectedDamage = damage <= 0 ? 0 : Math.max(1, damage / divisor);
 		final boolean proc = recoilRoll < recoilChance;
 		if (!proc || reflectedDamage == 0)
 			return;

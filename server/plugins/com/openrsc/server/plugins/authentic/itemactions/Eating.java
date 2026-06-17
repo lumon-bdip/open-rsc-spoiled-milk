@@ -213,7 +213,7 @@ public class Eating implements OpInvTrigger {
 				int baseHeal = item.eatingHeals(player.getWorld());
 				int extraHeal = item.canLevelDependentHeal(player.getWorld()) ? player.getSkills().getMaxStat(Skill.COOKING.id()) / 15 : 0;
 				int totalHeal = baseHeal + extraHeal + hitsCapeHeal(player);
-				double foodBonus = player.getCarriedItems().getEquipment().getNatureAmuletFoodBonus();
+				double foodBonus = player.getCarriedItems().getEquipment().getNatureFoodHealingBonus();
 				if (foodBonus > 0.0D) {
 					totalHeal = (int) Math.ceil(totalHeal * (1.0D + foodBonus));
 				}

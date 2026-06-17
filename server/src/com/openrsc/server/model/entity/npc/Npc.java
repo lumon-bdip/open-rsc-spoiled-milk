@@ -877,8 +877,10 @@ public class Npc extends Mob {
 			ArrayList<Item> kbdSpecificLoot = getWorld().getNpcDrops().getKbdTableCustom().rollItem(owner);
 			if (kbdSpecificLoot != null) {
 				for (Item item : kbdSpecificLoot) {
-					GroundItem groundItem = createNpcGroundItem(owner, item.getCatalogId(), item.getAmount(), item.getNoted(), personalDrop);
-					getWorld().registerItem(groundItem);
+					if (!owner.getCarriedItems().getEquipment().tryAlchemyMonsterLootWithNatureAmulet(item)) {
+						GroundItem groundItem = createNpcGroundItem(owner, item.getCatalogId(), item.getAmount(), item.getNoted(), personalDrop);
+						getWorld().registerItem(groundItem);
+					}
 					getWorld().getServer().submitSqlLogging(() -> {
 						try {
 							getWorld().getServer().getDatabase().addDropLog(
@@ -975,6 +977,9 @@ public class Npc extends Mob {
 			}
 		});
 
+		if (owner.getCarriedItems().getEquipment().tryAlchemyMonsterLootWithNatureAmulet(new Item(dropID, amount))) {
+			return;
+		}
 		if (!DropTable.handleRingOfAvarice(owner, new Item(dropID, amount))) {
 			ItemDefinition itemDef = getWorld().getServer().getEntityHandler().getItemDef(dropID);
 			if (itemDef != null && !itemDef.isStackable()
@@ -1016,6 +1021,9 @@ public class Npc extends Mob {
 				&& !getConfig().MEMBER_WORLD) {
 				continue; // Members item on a non-members world.
 			} else if (dropID != ItemId.NOTHING.id()) {
+				if (owner.getCarriedItems().getEquipment().tryAlchemyMonsterLootWithNatureAmulet(new Item(dropID, amount, item.getNoted()))) {
+					continue;
+				}
 				if (!item.getNoted()
 					&& owner.getCarriedItems().getEquipment().tryBankMonsterLootWithLawNecklace(new Item(dropID, amount))) {
 					continue;

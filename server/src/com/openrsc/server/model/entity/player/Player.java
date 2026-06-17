@@ -2699,28 +2699,10 @@ public final class Player extends Mob {
 
 		int skillXP = origSkillXP;
 		if (!fromQuest) {
-			if (EnchantingItemEffects.isCraftingSkill(skill)) {
-				final double mindBonus = getCarriedItems().getEquipment().getMindAmuletXpBonus();
-				if (mindBonus > 0.0D) {
-					skillXP = (int) Math.ceil(skillXP * (1.0D + mindBonus));
-				}
-			} else if (EnchantingItemEffects.isGatheringSkill(skill)) {
-				final double bodyBonus = getCarriedItems().getEquipment().getBodyAmuletXpBonus();
-				if (bodyBonus > 0.0D) {
-					skillXP = (int) Math.ceil(skillXP * (1.0D + bodyBonus));
-				}
-			}
-			if (EnchantingItemEffects.isMindCombatXpSkill(skill)) {
-				final double mindCombatBonus = getCarriedItems().getEquipment().getMindCombatAmuletXpBonus();
-				if (mindCombatBonus > 0.0D) {
-					skillXP = (int) Math.ceil(skillXP * (1.0D + mindCombatBonus));
-				}
-			}
-			if (EnchantingItemEffects.isBodyDisciplineXpSkill(skill)) {
-				final double bodyDisciplineBonus = getCarriedItems().getEquipment().getBodyDisciplineAmuletXpBonus();
-				if (bodyDisciplineBonus > 0.0D) {
-					skillXP = (int) Math.ceil(skillXP * (1.0D + bodyDisciplineBonus));
-				}
+			final double jewelryBonus = getCarriedItems().getEquipment().getMindJewelryXpBonus(skill)
+				+ getCarriedItems().getEquipment().getBodyJewelryXpBonus(skill);
+			if (jewelryBonus > 0.0D) {
+				skillXP = (int) Math.ceil(skillXP * (1.0D + jewelryBonus));
 			}
 			final int prayerSkillingBonusPercent = getPrayerSkillingBonusPercent(skill);
 			if (prayerSkillingBonusPercent > 0) {

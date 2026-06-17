@@ -1873,26 +1873,28 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					Npc n = (Npc) affectedMob;
 
 					if (n.getID() == NpcId.DRAGON.id() || n.getID() == NpcId.KING_BLACK_DRAGON.id()) {
-						getPlayer().playerServerMessage(MessageType.QUEST, "The dragon breathes fire at you");
-						int percentage = 20;
-						int fireDamage;
-						if (getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.ANTI_DRAGON_BREATH_SHIELD.id())) {
-							if (n.getID() == NpcId.DRAGON.id()) {
-								percentage = 10;
-							} else if (n.getID() == NpcId.KING_BLACK_DRAGON.id()) {
-								percentage = 4;
-							} else {
-								percentage = 0;
+						if (PathValidation.checkPath(getPlayer().getWorld(), n.getLocation(), getPlayer().getLocation(), true)) {
+							getPlayer().playerServerMessage(MessageType.QUEST, "The dragon breathes fire at you");
+							int percentage = 20;
+							int fireDamage;
+							if (getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.ANTI_DRAGON_BREATH_SHIELD.id())) {
+								if (n.getID() == NpcId.DRAGON.id()) {
+									percentage = 10;
+								} else if (n.getID() == NpcId.KING_BLACK_DRAGON.id()) {
+									percentage = 4;
+								} else {
+									percentage = 0;
+								}
+								getPlayer().playerServerMessage(MessageType.QUEST, "Your shield prevents some of the damage from the flames");
 							}
-							getPlayer().playerServerMessage(MessageType.QUEST, "Your shield prevents some of the damage from the flames");
-						}
-						fireDamage = (int) Math.floor(getCurrentLevel(getPlayer(), Skill.HITS.id()) * percentage / 100.0);
-						getPlayer().damage(fireDamage);
+							fireDamage = (int) Math.floor(getCurrentLevel(getPlayer(), Skill.HITS.id()) * percentage / 100.0);
+							getPlayer().damage(fireDamage);
 
-						//reduce ranged level (case for KBD)
-						if (n.getID() == NpcId.KING_BLACK_DRAGON.id()) {
-							int newLevel = getCurrentLevel(getPlayer(), Skill.RANGED.id()) - Formulae.getLevelsToReduceAttackKBD(getPlayer());
-							getPlayer().getSkills().setLevel(Skill.RANGED.id(), newLevel);
+							//reduce ranged level (case for KBD)
+							if (n.getID() == NpcId.KING_BLACK_DRAGON.id()) {
+								int newLevel = getCurrentLevel(getPlayer(), Skill.RANGED.id()) - Formulae.getLevelsToReduceAttackKBD(getPlayer());
+								getPlayer().getSkills().setLevel(Skill.RANGED.id(), newLevel);
+							}
 						}
 					} else if (inArray(n.getID(), NpcId.KOLODION_HUMAN.id(), NpcId.KOLODION_OGRE.id(), NpcId.KOLODION_SPIDER.id(),
 						NpcId.KOLODION_SOULESS.id(), NpcId.KOLODION_DEMON.id(), NpcId.BATTLE_MAGE_GUTHIX.id(),

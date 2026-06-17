@@ -2295,25 +2295,23 @@ public class Equipment {
 		return multiplier;
 	}
 
-	public double getChaosAmuletSecondHitChance() {
+	public double getChaosNecklaceChainLightningChance() {
 		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getChaosAmuletSecondHitChance(neckItem.getCatalogId());
+		return neckItem == null ? 0.0D : EnchantingItemEffects.getChaosNecklaceChainLightningChance(neckItem.getCatalogId());
+	}
+
+	public int getChaosAmuletRandomRuneInterval() {
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0 : EnchantingItemEffects.getChaosAmuletRandomRuneInterval(neckItem.getCatalogId());
 	}
 
 	public double getChaosRecoilChance() {
-		Item neckItem = getEquippedNeckItem();
 		Item ringItem = getEquippedRingItem();
-		return Math.min(1.0D,
-			(neckItem == null ? 0.0D : EnchantingItemEffects.getChaosRingRecoilChance(neckItem.getCatalogId()))
-				+ (ringItem == null ? 0.0D : EnchantingItemEffects.getChaosRingRecoilChance(ringItem.getCatalogId())));
+		return ringItem == null ? 0.0D : EnchantingItemEffects.getChaosRingRecoilChance(ringItem.getCatalogId());
 	}
 
 	public int getChaosRecoilDamageDivisor() {
-		Item neckItem = getEquippedNeckItem();
-		Item ringItem = getEquippedRingItem();
-		final boolean hasNeck = neckItem != null && EnchantingItemEffects.getChaosRingRecoilChance(neckItem.getCatalogId()) > 0.0D;
-		final boolean hasRing = ringItem != null && EnchantingItemEffects.getChaosRingRecoilChance(ringItem.getCatalogId()) > 0.0D;
-		return hasNeck && hasRing ? 5 : 10;
+		return 10;
 	}
 
 	public double getDeathAmuletDamagePerKillBonus() {
@@ -2478,18 +2476,42 @@ public class Equipment {
 		return count;
 	}
 
-	public double getMindAmuletXpBonus() {
+	public double getMindJewelryXpBonus(final int skillId) {
 		Item neckItem = getEquippedNeckItem();
 		Item ringItem = getEquippedRingItem();
-		return (neckItem == null ? 0.0D : EnchantingItemEffects.getMindAmuletXpBonus(neckItem.getCatalogId()))
-			+ (ringItem == null ? 0.0D : EnchantingItemEffects.getMindAmuletXpBonus(ringItem.getCatalogId()));
+		double bonus = 0.0D;
+		if (neckItem != null) {
+			final int neckId = neckItem.getCatalogId();
+			if (EnchantingItemEffects.isMindCombatAmuletXpSkill(skillId)) {
+				bonus += EnchantingItemEffects.getMindCombatAmuletXpBonus(neckId);
+			}
+			if (EnchantingItemEffects.isMindNecklaceXpSkill(skillId)) {
+				bonus += EnchantingItemEffects.getMindNecklaceXpBonus(neckId);
+			}
+		}
+		if (ringItem != null && EnchantingItemEffects.isMindRingXpSkill(skillId)) {
+			bonus += EnchantingItemEffects.getMindRingXpBonus(ringItem.getCatalogId());
+		}
+		return bonus;
 	}
 
-	public double getBodyAmuletXpBonus() {
+	public double getBodyJewelryXpBonus(final int skillId) {
 		Item neckItem = getEquippedNeckItem();
 		Item ringItem = getEquippedRingItem();
-		return (neckItem == null ? 0.0D : EnchantingItemEffects.getBodyAmuletXpBonus(neckItem.getCatalogId()))
-			+ (ringItem == null ? 0.0D : EnchantingItemEffects.getBodyAmuletXpBonus(ringItem.getCatalogId()));
+		double bonus = 0.0D;
+		if (neckItem != null) {
+			final int neckId = neckItem.getCatalogId();
+			if (EnchantingItemEffects.isBodyCombatAmuletXpSkill(skillId)) {
+				bonus += EnchantingItemEffects.getBodyDisciplineAmuletXpBonus(neckId);
+			}
+			if (EnchantingItemEffects.isBodyNecklaceXpSkill(skillId)) {
+				bonus += EnchantingItemEffects.getBodyNecklaceXpBonus(neckId);
+			}
+		}
+		if (ringItem != null && EnchantingItemEffects.isBodyRingXpSkill(skillId)) {
+			bonus += EnchantingItemEffects.getBodyRingXpBonus(ringItem.getCatalogId());
+		}
+		return bonus;
 	}
 
 	public double getMindAmuletPotionDurationBonus() {
@@ -2512,16 +2534,19 @@ public class Equipment {
 		return neckItem == null ? 0.0D : EnchantingItemEffects.getBodyDisciplineAmuletXpBonus(neckItem.getCatalogId());
 	}
 
-	public double getNatureAmuletFoodBonus() {
-		Item neckItem = getEquippedNeckItem();
+	public double getNatureFoodHealingBonus() {
 		Item ringItem = getEquippedRingItem();
-		return (neckItem == null ? 0.0D : EnchantingItemEffects.getNatureAmuletFoodBonus(neckItem.getCatalogId()))
-			+ (ringItem == null ? 0.0D : EnchantingItemEffects.getNatureAmuletFoodBonus(ringItem.getCatalogId()));
+		return ringItem == null ? 0.0D : EnchantingItemEffects.getNatureFoodHealingBonus(ringItem.getCatalogId());
 	}
 
-	public int getNatureAmuletPoisonDecayBonus() {
+	public int getNatureCleansingPoisonDecayBonus() {
 		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getNatureAmuletPoisonDecayBonus(neckItem.getCatalogId());
+		return neckItem == null ? 0 : EnchantingItemEffects.getNatureCleansingPoisonDecayBonus(neckItem.getCatalogId());
+	}
+
+	public int getGatheringAmuletYieldBonusPercent(final int skillId) {
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0 : EnchantingItemEffects.getGatheringAmuletYieldBonusPercent(neckItem.getCatalogId(), skillId);
 	}
 
 	public double getCosmicAmuletExtraResourceChance() {
@@ -2576,6 +2601,56 @@ public class Equipment {
 		return true;
 	}
 
+	public boolean tryAlchemyMonsterLootWithNatureAmulet(final Item item) {
+		if (item == null || item.getAmount() <= 0 || item.getCatalogId() == ItemId.COINS.id()) {
+			return false;
+		}
+		final Item neckItem = getEquippedNeckItem();
+		if (neckItem == null || !EnchantingItemEffects.isNatureAmulet(neckItem.getCatalogId())) {
+			return false;
+		}
+		int charges = EnchantingItemEffects.getNatureAlchemyAmuletCharges(player, neckItem);
+		if (charges <= 0) {
+			return false;
+		}
+		final ItemDefinition itemDef = item.getDef(player.getWorld());
+		if (itemDef == null) {
+			return false;
+		}
+		final int alchemyValue = getHighAlchemyValue(itemDef, item.getAmount());
+		if (alchemyValue < 1000) {
+			return false;
+		}
+		final Item coins = new Item(ItemId.COINS.id(), alchemyValue);
+		if (!player.getCarriedItems().getInventory().canHold(coins)) {
+			return false;
+		}
+		if (!player.getCarriedItems().getInventory().add(coins)) {
+			return false;
+		}
+
+		charges--;
+		if (charges <= 0) {
+			EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, neckItem, 0);
+			player.message("@ora@Your amulet of alchemy converts the loot and runs out of charges.");
+		} else {
+			EnchantingItemEffects.setNatureAlchemyAmuletCharges(player, neckItem, charges);
+			player.message("@ora@Your amulet of alchemy converts the loot. " + formatNatureAlchemyCharges(charges));
+		}
+		return true;
+	}
+
+	private int getHighAlchemyValue(final ItemDefinition itemDef, final int amount) {
+		if (itemDef == null || amount <= 0) {
+			return 0;
+		}
+		final double rawValue = itemDef.getDefaultPrice() * 0.6D * amount;
+		if (rawValue >= Integer.MAX_VALUE) {
+			return Integer.MAX_VALUE;
+		}
+		return (int) rawValue;
+	}
+
 	public int bankSkillingDropWithLawRing(final Item item) {
 		if (item == null || item.getAmount() <= 0) {
 			return 0;
@@ -2621,6 +2696,10 @@ public class Equipment {
 	}
 
 	private String formatLawCharges(final int charges) {
+		return "It has " + charges + " charge" + (charges == 1 ? "" : "s") + " remaining.";
+	}
+
+	private String formatNatureAlchemyCharges(final int charges) {
 		return "It has " + charges + " charge" + (charges == 1 ? "" : "s") + " remaining.";
 	}
 
@@ -2801,10 +2880,8 @@ public class Equipment {
 	}
 
 	private int getEquippedElementalPowerBonus(final PrayerCatalog.CombatStyle combatStyle) {
-		Item neckItem = getEquippedNeckItem();
 		Item ringItem = getEquippedRingItem();
-		return (neckItem == null ? 0 : EnchantingItemEffects.getElementalPowerBonus(neckItem.getCatalogId(), combatStyle))
-			+ (ringItem == null ? 0 : EnchantingItemEffects.getElementalPowerBonus(ringItem.getCatalogId(), combatStyle));
+		return ringItem == null ? 0 : EnchantingItemEffects.getElementalPowerBonus(ringItem.getCatalogId(), combatStyle);
 	}
 
 	private int getEquippedElementalDefenseBonus(final PrayerCatalog.CombatStyle combatStyle) {
@@ -3420,6 +3497,7 @@ public class Equipment {
 	private boolean isClothArmorPenaltyItem(Item item) {
 		return EnchantingItemEffects.isBaseWoolRobePiece(item.getCatalogId())
 			|| EnchantingItemEffects.isEnchantedWoolRobePiece(item.getCatalogId())
+			|| isBlessedWoolArmor(item.getCatalogId())
 			|| isMagicArmor(item);
 	}
 

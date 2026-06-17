@@ -35,21 +35,19 @@ def main() -> None:
     require("boolean rareRewardAwarded = maybeAwardMyWorldFishingSpecialReward(player, rodTier);", fishing, "Fishing rare replacement roll")
     require_regex(
         r"boolean rareRewardAwarded = maybeAwardMyWorldFishingSpecialReward\(player, rodTier\);.*?"
-        r"if \(!rareRewardAwarded\) \{.*?sendCatchMessage\(player, fish\);.*?inventory\.add\(fish\);.*?\}",
+        r"if \(!rareRewardAwarded\) \{.*?sendCatchMessage\(player, fish\);.*?awardFishingCatch\(player, object, fish, true\);.*?\}",
         fishing,
         "Fishing should only award the normal fish when no rare reward replaced it",
     )
-    require_regex(
-        r"if \(!rareRewardAwarded\s+&& player\.getCarriedItems\(\)\.getEquipment\(\)\.getCosmicAmuletExtraResourceChance\(\) > 0\.0D",
-        fishing,
-        "Fishing extra-resource amulet should not add fish after a rare replacement",
-    )
+    if "getCosmicAmuletExtraResourceChance" in fishing:
+        fail("Fishing should use fisher amulet carryover instead of the old cosmic extra-resource chance")
 
     require("private boolean maybeAwardMyWorldMiningGeode(Player player, GameObject rock, int nodeRequiredLevel)", mining, "Mining rare replacement helper")
     require_regex(
         r"if \(maybeAwardMyWorldMiningGeode\(player, rock, def\.getReqLevel\(\)\)\) \{.*?"
         r"player\.incExp\(Skill\.MINING\.id\(\), def\.getExp\(\) \* quantity, true\);.*?"
-        r"\} else \{.*?bankSkillingDropWithLawRing\(new Item\(ore\.getCatalogId\(\), quantity\)\)",
+        r"\} else \{.*?int rewardQuantity = quantity \+ addGatheringAmuletBonusOre\(player, ore\.getCatalogId\(\), quantity\);.*?"
+        r"bankSkillingDropWithLawRing\(new Item\(ore\.getCatalogId\(\), rewardQuantity\)\)",
         mining,
         "Mining should award either the geode or the ore, not both",
     )
@@ -58,8 +56,8 @@ def main() -> None:
     require("boolean rareRewardAwarded = player.getConfig().WANT_MYWORLD && maybeAwardMyWorldWoodcuttingSeed(player, object, getAxeTier(axeId));", woodcutting, "Woodcutting rare replacement roll")
     require_regex(
         r"if \(!rareRewardAwarded\) \{.*?"
-        r"bankSkillingDropWithLawRing\(new Item\(def\.getLogId\(\), quantity\)\).*?"
-        r"Your amulet hums and another log appears\.",
+        r"int rewardQuantity = quantity \+ addGatheringAmuletBonusLogs\(player, def\.getLogId\(\), quantity\);.*?"
+        r"bankSkillingDropWithLawRing\(new Item\(def\.getLogId\(\), rewardQuantity\)\)",
         woodcutting,
         "Woodcutting should only award logs and extra logs when no seed replaced them",
     )

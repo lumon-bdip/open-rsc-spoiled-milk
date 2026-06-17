@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.authentic.skills.woodcutting;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.external.ObjectWoodcuttingDef;
 import com.openrsc.server.model.container.Item;
@@ -205,8 +206,9 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 			}
 
 			if (!rareRewardAwarded) {
-				int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(def.getLogId(), quantity));
-				int remainingQuantity = quantity - bankedQuantity;
+				int rewardQuantity = quantity + addGatheringAmuletBonusLogs(player, def.getLogId(), quantity);
+				int bankedQuantity = player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(def.getLogId(), rewardQuantity));
+				int remainingQuantity = rewardQuantity - bankedQuantity;
 				int storedQuantity = Math.min(remainingQuantity, player.getCarriedItems().getInventory().getFreeSlots());
 				if (storedQuantity > 0) {
 					give(player, def.getLogId(), storedQuantity);
@@ -222,13 +224,6 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 						: "You get some wood, but have no room to keep it");
 				if (overflowQuantity > 0) {
 					player.playerServerMessage(MessageType.QUEST, "Any excess falls to the ground because you have no room");
-				}
-
-				if (player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance() > 0.0D
-					&& DataConversions.getRandom().nextDouble() < player.getCarriedItems().getEquipment().getCosmicAmuletExtraResourceChance()
-					&& !player.getCarriedItems().getInventory().full()) {
-					player.getCarriedItems().getInventory().add(new Item(def.getLogId()));
-					player.playerServerMessage(MessageType.QUEST, "Your amulet hums and another log appears.");
 				}
 			}
 
@@ -265,6 +260,16 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 
 	private int resourceRespawnMillis(int respawnSeconds) {
 		return Math.max(1, (respawnSeconds * 1000) / 4);
+	}
+
+	private int addGatheringAmuletBonusLogs(Player player, int logId, int logCount) {
+		final int bonusLogs = EnchantingItemEffects.consumeGatheringAmuletBonusItems(player,
+			Skill.WOODCUTTING.id(), logId, logCount);
+		if (bonusLogs > 0) {
+			player.playerServerMessage(MessageType.QUEST, "@gre@Your woodcutter's amulet produces "
+				+ bonusLogs + " extra log" + (bonusLogs == 1 ? "." : "s."));
+		}
+		return bonusLogs;
 	}
 
 	@Override

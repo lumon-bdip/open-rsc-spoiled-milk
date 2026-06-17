@@ -19,6 +19,8 @@ CLIENT_ENTITY_HANDLER_PATH = ROOT / "Client_Base" / "src" / "com" / "openrsc" / 
 COMBAT_FORMULA_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "CombatFormula.java"
 RANGE_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "RangeEvent.java"
 PROJECTILE_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ProjectileEvent.java"
+DRAGON_FIRE_BREATH_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "scripts" / "all" / "DragonFireBreath.java"
+SPELL_HANDLER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "SpellHandler.java"
 
 
 def fail(message: str) -> None:
@@ -259,6 +261,18 @@ def ensure_dragon_weapon_breath_split() -> None:
             fail(f"{ammo} should scale as normal ranged ammo, not trigger dragon breath true damage")
 
 
+def ensure_dragon_fire_breath_respects_obstructions() -> None:
+    dragon_fire_breath = DRAGON_FIRE_BREATH_PATH.read_text(encoding="utf-8")
+    spell_handler = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
+
+    require_text(dragon_fire_breath, "PathValidation.checkPath(dragon.getWorld(), dragon.getLocation(), player.getLocation(), true)",
+                 "Dragon fire breath combat-start obstruction check")
+    require_text(dragon_fire_breath, "if (!canDragonBreathReachPlayer(dragon, player))",
+                 "Dragon fire breath should skip damage when blocked by fences or walls")
+    require_text(spell_handler, "PathValidation.checkPath(getPlayer().getWorld(), n.getLocation(), getPlayer().getLocation(), true)",
+                 "Legacy spell-triggered dragon fire breath obstruction check")
+
+
 def main() -> None:
     item_entries = load_json_array(ITEMS_PATH, "items")
     npc_entries = load_json_array(NPCS_PATH, "npcs")
@@ -321,6 +335,7 @@ def main() -> None:
     ensure_spear_runtime_uses_item_requirement()
     ensure_myworld_item_requirements_are_data_owned()
     ensure_dragon_weapon_breath_split()
+    ensure_dragon_fire_breath_respects_obstructions()
 
     for entry in item_entries:
         if any(field in entry for field in ("meleeDefense", "rangedDefense", "magicDefense")):
