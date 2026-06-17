@@ -159,7 +159,7 @@ def ensure_law_robe_bonus_uses_fractional_carryover() -> None:
 def ensure_chaos_amulet_bonus_uses_fractional_carryover() -> None:
     text = RUNES_PATH.read_text(encoding="utf-8")
     for snippet in (
-        "CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE = 720",
+        "CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE = 6600",
         'CHAOS_AMULET_RANDOM_RUNE_CACHE_KEY = "chaos_amulet_random_rune_bonus"',
         "addChaosAmuletRandomRunes(player, def.getRuneId(), runeCount);",
         "runeId != ItemId.CHAOS_RUNE.id()",

@@ -5699,7 +5699,7 @@ public class EntityHandler {
 		addLawBankingRingLine(1714, tiers, ringPrices, gemMasks, lawBankCharges);
 
 		addExplicitAmuletLine(1719, tiers, "Random Chance", "Creates 1 random rune per %d chaos runes crafted.",
-			new int[] {20, 18, 16, 12, 2}, amuletPrices, gemMasks, "");
+			new int[] {60, 55, 50, 40, 20}, amuletPrices, gemMasks, "");
 		addDeathAmuletLine(1724, tiers, amuletPrices, gemMasks);
 		addAmuletLine(1729, tiers, "Siphoning", "Steals %d%% of damage dealt as healing.", 5, amuletPrices, gemMasks, "");
 		addExplicitAmuletLine(1734, tiers, "Attunement", "Boosts magic, summoning, and prayer XP by %d%%.",

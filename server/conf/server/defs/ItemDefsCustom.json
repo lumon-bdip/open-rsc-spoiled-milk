@@ -10744,7 +10744,7 @@
     {
       "id": 1719,
       "name": "Sapphire Amulet of Random Chance",
-      "description": "Creates 1 random rune per 20 chaos runes crafted.",
+      "description": "Creates 1 random rune per 60 chaos runes crafted.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10767,7 +10767,7 @@
     {
       "id": 1720,
       "name": "Emerald Amulet of Random Chance",
-      "description": "Creates 1 random rune per 18 chaos runes crafted.",
+      "description": "Creates 1 random rune per 55 chaos runes crafted.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10790,7 +10790,7 @@
     {
       "id": 1721,
       "name": "Ruby Amulet of Random Chance",
-      "description": "Creates 1 random rune per 16 chaos runes crafted.",
+      "description": "Creates 1 random rune per 50 chaos runes crafted.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10813,7 +10813,7 @@
     {
       "id": 1722,
       "name": "Diamond Amulet of Random Chance",
-      "description": "Creates 1 random rune per 12 chaos runes crafted.",
+      "description": "Creates 1 random rune per 40 chaos runes crafted.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10836,7 +10836,7 @@
     {
       "id": 1723,
       "name": "Dragonstone Amulet of Random Chance",
-      "description": "Creates 1 random rune per 2 chaos runes crafted.",
+      "description": "Creates 1 random rune per 20 chaos runes crafted.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

@@ -308,7 +308,7 @@ def ensure_formula_source_matches_design() -> None:
     near(CHAOS_RECOIL_CHANCES[tier_for(1696, SPECIAL_RINGS, CHAOS) - 1], 0.90, "Dragonstone chaos ring recoil chance")
     near(CHAOS_CHAIN_LIGHTNING_CHANCES[tier_for(1648, STANDARD_NECKLACES, CHAOS) - 1], 0.10, "Sapphire chaos necklace chain chance")
     near(CHAOS_CHAIN_LIGHTNING_CHANCES[tier_for(1652, STANDARD_NECKLACES, CHAOS) - 1], 0.90, "Dragonstone chaos necklace chain chance")
-    require(CHAOS_AMULET_RANDOM_RUNE_INTERVALS == [20, 18, 16, 12, 2],
+    require(CHAOS_AMULET_RANDOM_RUNE_INTERVALS == [60, 55, 50, 40, 20],
             "Chaos amulets should use the requested random-rune production intervals")
 
     near(tier_for(1701, SPECIAL_RINGS, COSMIC) * 0.05, 0.05, "Sapphire cosmic ring wealth chance")

@@ -505,7 +505,7 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         1662: "Banks non-stack monster loot. 1000 charges.",
         1714: "Banks non-stack skilling drops. 100 charges.",
         1718: "Banks non-stack skilling drops. 1000 charges.",
-        1719: "Creates 1 random rune per 20 chaos runes crafted.",
+        1719: "Creates 1 random rune per 60 chaos runes crafted.",
         1724: "Enemy deaths hit foes within 1 tile for 5% max Hits.",
         1729: "Steals 5% of damage dealt as healing.",
         1734: "Boosts magic, summoning, and prayer XP by 5%.",

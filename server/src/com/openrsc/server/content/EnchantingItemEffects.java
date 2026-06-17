@@ -439,7 +439,7 @@ public final class EnchantingItemEffects {
 	private static final double[] NATURE_RING_FOOD_BONUSES = {0.10D, 0.20D, 0.30D, 0.50D, 1.00D};
 	private static final double[] CHAOS_RECOIL_CHANCES = {0.10D, 0.20D, 0.30D, 0.50D, 0.90D};
 	private static final double[] CHAOS_CHAIN_LIGHTNING_CHANCES = {0.10D, 0.20D, 0.30D, 0.50D, 0.90D};
-	private static final int[] CHAOS_AMULET_RANDOM_RUNE_INTERVALS = {20, 18, 16, 12, 2};
+	private static final int[] CHAOS_AMULET_RANDOM_RUNE_INTERVALS = {60, 55, 50, 40, 20};
 	private static final int[] LAW_BANKING_CHARGES = {100, 200, 300, 500, 1000};
 	private static final int[] NATURE_ALCHEMY_AMULET_CHARGES = {100, 200, 300, 500, 1000};
 	private static final int[] GATHERING_AMULET_YIELD_BONUSES = {10, 20, 30, 50, 100};

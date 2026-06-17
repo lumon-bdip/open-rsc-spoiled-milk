@@ -19,7 +19,7 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 	private static final int LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE = 10000;
 	private static final int LAW_ROBE_RUNEPRODUCTION_POINTS_PER_PERCENT = 100;
 	private static final String LAW_ROBE_RUNEPRODUCTION_CACHE_PREFIX = "law_robe_runecraft_bonus_";
-	private static final int CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE = 720;
+	private static final int CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE = 6600;
 	private static final String CHAOS_AMULET_RANDOM_RUNE_CACHE_KEY = "chaos_amulet_random_rune_bonus";
 
 	int[] RUNES = new int[] {
