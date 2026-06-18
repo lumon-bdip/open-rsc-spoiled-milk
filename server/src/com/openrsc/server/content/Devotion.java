@@ -107,6 +107,20 @@ public final class Devotion {
 		adjustDevotionLevels(player, godLine, -devotionLevels);
 	}
 
+	public static void addDevotionOfferings(final Player player, final PrayerCatalog.GodLine godLine, final int offerings) {
+		if (player == null || godLine == null || offerings <= 0 || !player.getConfig().WANT_MYWORLD) {
+			return;
+		}
+		adjustDevotionOfferings(player, godLine, offerings);
+	}
+
+	public static void removeDevotionOfferings(final Player player, final PrayerCatalog.GodLine godLine, final int offerings) {
+		if (player == null || godLine == null || offerings <= 0 || !player.getConfig().WANT_MYWORLD) {
+			return;
+		}
+		adjustDevotionOfferings(player, godLine, -offerings);
+	}
+
 	public static void adjustDevotionLevels(final Player player, final PrayerCatalog.GodLine godLine, final int devotionLevels) {
 		if (player == null || godLine == null || devotionLevels == 0 || !player.getConfig().WANT_MYWORLD) {
 			return;
@@ -114,6 +128,17 @@ public final class Devotion {
 		final String cacheKey = getOfferingCacheKey(godLine);
 		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
 		player.getCache().set(cacheKey, clamp(previousOfferings + (devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL), MIN_OFFERINGS, MAX_OFFERINGS));
+		ActionSender.sendDevotion(player);
+		ActionSender.sendEquipmentStats(player);
+	}
+
+	public static void adjustDevotionOfferings(final Player player, final PrayerCatalog.GodLine godLine, final int offerings) {
+		if (player == null || godLine == null || offerings == 0 || !player.getConfig().WANT_MYWORLD) {
+			return;
+		}
+		final String cacheKey = getOfferingCacheKey(godLine);
+		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
+		player.getCache().set(cacheKey, clamp(previousOfferings + offerings, MIN_OFFERINGS, MAX_OFFERINGS));
 		ActionSender.sendDevotion(player);
 		ActionSender.sendEquipmentStats(player);
 	}

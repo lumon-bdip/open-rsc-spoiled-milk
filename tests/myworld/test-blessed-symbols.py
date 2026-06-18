@@ -111,8 +111,11 @@ def main() -> None:
 
     require("isZamorakBlessedSymbol" in destroy and "isSaradominBlessedSymbol" in destroy and "isGuthixBlessedSymbol" in destroy,
             "symbol destruction should recognize all god lines")
-    require("return 5;" in destroy and "return 200;" in destroy,
-            "symbol destruction should grant 5 devotion swing and symbol production XP")
+    require("SYMBOL_DEVOTION_OFFERING_CHANGE = Devotion.OFFERINGS_PER_DEVOTION_LEVEL / 2" in destroy
+            and "return 200;" in destroy
+            and "Devotion.addDevotionOfferings(player, worshippedGod, devotionOfferingChange)" in destroy
+            and "Devotion.removeDevotionOfferings(player, itemGod, devotionOfferingChange)" in destroy,
+            "symbol destruction should grant 0.5 devotion swing and symbol production XP")
     require('player.message("You attempt to put it on...")' in equipment
             and 'player.message("It scalds the flesh! Metaphorically, of course.")' in equipment,
             "opposing god equipment should use the scalding equip rejection message")

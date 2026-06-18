@@ -222,7 +222,9 @@ New altar mechanic:
   worshipped god.
 - Player loses `1` devotion per equivalent resource cost with the god tied to
   the destroyed object.
-- Devotion changes are clamped between `0` and `1000`.
+- Blessed god symbols are a special lightweight case: destroying one gives a
+  `0.5` devotion gain/loss instead of using the normal resource-cost rule.
+- Devotion changes are clamped between `-1000` and `1000`.
 
 Example:
 

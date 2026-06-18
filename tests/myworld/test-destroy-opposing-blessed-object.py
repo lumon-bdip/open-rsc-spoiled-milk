@@ -27,13 +27,13 @@ def main():
             "devotion reward/penalty should be resource-cost based")
     require("PRAYER_XP_MULTIPLIER = 5" in plugin,
             "destroying opposing gear should grant large Prayer XP")
-    require("Devotion.addDevotionLevels(player, worshippedGod, devotionChange)" in plugin,
+    require("Devotion.addDevotionOfferings(player, worshippedGod, devotionOfferingChange)" in plugin,
             "destroying opposing gear should reward current god devotion")
-    require("Devotion.removeDevotionLevels(player, itemGod, devotionChange)" in plugin,
+    require("Devotion.removeDevotionOfferings(player, itemGod, devotionOfferingChange)" in plugin,
             "destroying opposing gear should reduce destroyed item god devotion")
-    require('player.message("You gain " + devotionChange + " devotion to " + formatGodLine(worshippedGod) + ".")' in plugin,
+    require('player.message("You gain " + devotionChangeLabel + " devotion to " + formatGodLine(worshippedGod) + ".")' in plugin,
             "destroying opposing gear should report devotion gained")
-    require('player.message("You lose " + devotionChange + " devotion to " + formatGodLine(itemGod) + ".")' in plugin,
+    require('player.message("You lose " + devotionChangeLabel + " devotion to " + formatGodLine(itemGod) + ".")' in plugin,
             "destroying opposing gear should report devotion lost")
     require("player.getCarriedItems().remove(item)" in plugin,
             "destroying opposing gear should consume the object")
@@ -51,10 +51,15 @@ def main():
     ]:
         require(marker in plugin, f"missing destruction support for {marker}")
 
-    require("removeDevotionLevels" in devotion and "adjustDevotionLevels" in devotion,
+    require("removeDevotionLevels" in devotion and "adjustDevotionLevels" in devotion
+            and "removeDevotionOfferings" in devotion and "adjustDevotionOfferings" in devotion,
             "devotion should support clamped negative adjustments")
     require("clamp(previousOfferings + (devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL), MIN_OFFERINGS, MAX_OFFERINGS)" in devotion,
             "devotion adjustments should clamp between negative and positive caps")
+    require("SYMBOL_DEVOTION_OFFERING_CHANGE = Devotion.OFFERINGS_PER_DEVOTION_LEVEL / 2" in plugin,
+            "symbol destruction should use a half-devotion offering-point swing")
+    require("DEVOTION_OFFERINGS_PER_RESOURCE = Devotion.OFFERINGS_PER_DEVOTION_LEVEL * DEVOTION_CHANGE_PER_RESOURCE" in plugin,
+            "resource-cost destruction should still translate full devotion levels to offering points")
     require("`5x`" in plan and "`1` devotion per equivalent resource cost" in plan,
             "destroy opposing blessed object formula should be documented")
 

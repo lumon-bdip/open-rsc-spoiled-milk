@@ -17015,8 +17015,10 @@ public final class mudclient implements Runnable {
 
 	private void loadTextures() {
 		clientPort.showLoadingProgress(50, "Textures");
-		this.scene.setFrustum(0, 11, 7, getSurface().spriteTree.get("textures").size());
-		for (int i = 0; i < getSurface().spriteTree.get("textures").size(); i++) {
+		int baseTextureCount = getSurface().spriteTree.get("textures").size();
+		int customTextureCount = getCustomTextureCount();
+		this.scene.setFrustum(0, 11, 7, baseTextureCount + customTextureCount);
+		for (int i = 0; i < baseTextureCount; i++) {
 			Sprite sprite;
 			sprite = getSurface().spriteTree.get("textures").get(String.valueOf(i)).getFrames()[0].getSprite();
 
@@ -17081,6 +17083,9 @@ public final class mudclient implements Runnable {
 				indices[l1] = (byte) l2;
 			}
 			this.scene.loadTexture(i, dictionary, sprite.getSomething1() / 64 - 1, indices);
+		}
+		if (customTextureCount > 0) {
+			loadExternalGlyphTexture(baseTextureCount);
 		}
 	}
 

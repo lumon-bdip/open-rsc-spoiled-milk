@@ -11,6 +11,8 @@ import com.openrsc.server.plugins.triggers.UseLocTrigger;
 
 public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 	private static final int DEVOTION_CHANGE_PER_RESOURCE = 1;
+	private static final int DEVOTION_OFFERINGS_PER_RESOURCE = Devotion.OFFERINGS_PER_DEVOTION_LEVEL * DEVOTION_CHANGE_PER_RESOURCE;
+	private static final int SYMBOL_DEVOTION_OFFERING_CHANGE = Devotion.OFFERINGS_PER_DEVOTION_LEVEL / 2;
 	private static final int PRAYER_XP_MULTIPLIER = 5;
 
 	@Override
@@ -54,13 +56,14 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 			return;
 		}
 
-		final int devotionChange = resourceCost * DEVOTION_CHANGE_PER_RESOURCE;
-		Devotion.addDevotionLevels(player, worshippedGod, devotionChange);
-		Devotion.removeDevotionLevels(player, itemGod, devotionChange);
+		final int devotionOfferingChange = getBlessedObjectDevotionOfferingChange(item.getCatalogId());
+		final String devotionChangeLabel = formatDevotionOfferingChange(devotionOfferingChange);
+		Devotion.addDevotionOfferings(player, worshippedGod, devotionOfferingChange);
+		Devotion.removeDevotionOfferings(player, itemGod, devotionOfferingChange);
 		player.incExp(Skill.PRAYER.id(), productionXp * PRAYER_XP_MULTIPLIER, true);
 		player.message("The altar destroys the opposing blessed object.");
-		player.message("You gain " + devotionChange + " devotion to " + formatGodLine(worshippedGod) + ".");
-		player.message("You lose " + devotionChange + " devotion to " + formatGodLine(itemGod) + ".");
+		player.message("You gain " + devotionChangeLabel + " devotion to " + formatGodLine(worshippedGod) + ".");
+		player.message("You lose " + devotionChangeLabel + " devotion to " + formatGodLine(itemGod) + ".");
 	}
 
 	private PrayerCatalog.GodLine getBlessedObjectGodLine(final int itemId) {
@@ -160,6 +163,20 @@ public final class DestroyOpposingBlessedObject implements UseLocTrigger {
 			return 200;
 		}
 		return getBlessedObjectResourceCost(itemId) * 150;
+	}
+
+	private int getBlessedObjectDevotionOfferingChange(final int itemId) {
+		if (isBlessedSymbol(itemId)) {
+			return SYMBOL_DEVOTION_OFFERING_CHANGE;
+		}
+		return getBlessedObjectResourceCost(itemId) * DEVOTION_OFFERINGS_PER_RESOURCE;
+	}
+
+	private String formatDevotionOfferingChange(final int offerings) {
+		if (offerings % Devotion.OFFERINGS_PER_DEVOTION_LEVEL == 0) {
+			return String.valueOf(offerings / Devotion.OFFERINGS_PER_DEVOTION_LEVEL);
+		}
+		return String.valueOf(offerings / (double) Devotion.OFFERINGS_PER_DEVOTION_LEVEL);
 	}
 
 	private int getStaffProductionXp(final int staffTier) {
