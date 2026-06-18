@@ -5305,6 +5305,7 @@
     },
     {
       "id": 1890,
+      "description": "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.",
       "meleeDefense": 1,
       "rangedDefense": 3,
       "magicDefense": 1,
@@ -5314,6 +5315,7 @@
     },
     {
       "id": 1891,
+      "description": "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.",
       "meleeDefense": 1,
       "rangedDefense": 5,
       "magicDefense": 3,
@@ -5323,6 +5325,7 @@
     },
     {
       "id": 1892,
+      "description": "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.",
       "meleeDefense": 1,
       "rangedDefense": 5,
       "magicDefense": 3,
@@ -5332,6 +5335,7 @@
     },
     {
       "id": 1893,
+      "description": "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.",
       "meleeDefense": 2,
       "rangedDefense": 8,
       "magicDefense": 4,
@@ -5341,6 +5345,7 @@
     },
     {
       "id": 1894,
+      "description": "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.",
       "meleeDefense": 3,
       "rangedDefense": 10,
       "magicDefense": 5,

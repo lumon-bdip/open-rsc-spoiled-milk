@@ -24,6 +24,7 @@ SERVER_OBELISK_IDS = {
     "death": 1304,
     "blood": 1305,
     "soul": 1306,
+    "life": 1322,
 }
 
 
@@ -89,6 +90,7 @@ def main() -> None:
         1211: "death",
         1213: "blood",
         1296: "soul",
+        1321: "life",
     }
     overworld_anchors = {}
     for loc in load_scenery(RUNECRAFT_LOCS) + load_scenery(MYWORLD_LOCS):

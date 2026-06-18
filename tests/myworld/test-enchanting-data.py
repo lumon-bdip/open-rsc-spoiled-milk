@@ -349,6 +349,11 @@ def ensure_source_mappings_exist() -> None:
         '" Ring of Skill Banking"',
         'addLawBankingRingLine(1714, tiers, ringPrices, gemMasks, lawBankCharges);',
         'setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil"',
+        '"Has %d%% chance to recoil 10%% damage taken."',
+        '"Has %d%% per-hop chain lightning, up to 3 halving hits."',
+        'addDeathDesperationNecklaceLine(1663, tiers, necklacePrices, gemMasks);',
+        'addDeathDesperationRingLine(3086, tiers, ringPrices, gemMasks);',
+        '"Auto-alchs 1000+ gp monster drops. " + charges[i] + " charges."',
         'setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment"',
         'setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Preservation"',
         'addSoulNecklaceLine(1759, tiers, soulNecklacePrices, gemMasks);',
@@ -405,6 +410,9 @@ def ensure_client_jewelry_coverage() -> None:
     for match in re.finditer(r"addLawBankingNecklaceLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
+    for match in re.finditer(r"addDeathDesperationNecklaceLine\((\d+),\s*tiers,", client_text):
+        start = int(match.group(1))
+        client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addLifeNecklaceLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
@@ -457,6 +465,9 @@ def ensure_client_jewelry_coverage() -> None:
     for match in re.finditer(r"addExplicitAttunedRingLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
+    for match in re.finditer(r"addDeathDesperationRingLine\((\d+),\s*tiers,", client_text):
+        start = int(match.group(1))
+        client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addLifeRingLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
@@ -499,7 +510,7 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         1641: "Boosts mining, smithing, and woodcutting XP by 25%.",
         1642: "Boosts mining, smithing, and woodcutting XP by 50%.",
         1643: "Has a 10% chance to roll extra standard monster loot.",
-        1648: "Has a 10% chance per chain lightning hop.",
+        1648: "Has 10% per-hop chain lightning, up to 3 halving hits.",
         1709: "Stores 3 guild teleports.",
         1658: "Banks non-stack monster loot. 100 charges.",
         1662: "Banks non-stack monster loot. 1000 charges.",
@@ -515,8 +526,8 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         1742: "Boosts melee, ranged, hits, and agility XP by 25%.",
         1743: "Boosts melee, ranged, hits, and agility XP by 50%.",
         1653: "Adds +1 poison decay per tick.",
-        1744: "Auto-alchs valuable monster drops. 100 charges.",
-        1748: "Auto-alchs valuable monster drops. 1000 charges.",
+        1744: "Auto-alchs 1000+ gp monster drops. 100 charges.",
+        1748: "Auto-alchs 1000+ gp monster drops. 1000 charges.",
         1749: "Has a 10% chance to double rare gathering rewards.",
         1754: "Has a 10% chance not to break after saving you.",
         1759: "Lets you keep 1 extra item on death.",
@@ -531,6 +542,53 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         3111: "If a monster rare table misses, has a 25% chance to reroll the drop.",
     }
     for item_id, expected in expected_descriptions.items():
+        expect_description(items, item_id, expected)
+
+
+def ensure_jewelry_effect_ladders(items: dict[int, dict[str, Any]]) -> None:
+    exact_lines = {
+        1314: "Has 10% chance to recoil 10% damage taken.",
+        1693: "Has 20% chance to recoil 10% damage taken.",
+        1694: "Has 30% chance to recoil 10% damage taken.",
+        1695: "Has 50% chance to recoil 10% damage taken.",
+        1696: "Has 90% chance to recoil 10% damage taken.",
+        1648: "Has 10% per-hop chain lightning, up to 3 halving hits.",
+        1649: "Has 20% per-hop chain lightning, up to 3 halving hits.",
+        1650: "Has 30% per-hop chain lightning, up to 3 halving hits.",
+        1651: "Has 50% per-hop chain lightning, up to 3 halving hits.",
+        1652: "Has 90% per-hop chain lightning, up to 3 halving hits.",
+        1663: "Raises defenses by +1 per 25% missing Hits.",
+        1664: "Raises defenses by +1 per 20% missing Hits.",
+        1665: "Raises defenses by +1 per 15% missing Hits.",
+        1666: "Raises defenses by +1 per 10% missing Hits.",
+        1667: "Raises defenses by +2 per 10% missing Hits.",
+        3086: "Raises weapon power by +1 per 25% missing Hits.",
+        3087: "Raises weapon power by +1 per 20% missing Hits.",
+        3088: "Raises weapon power by +1 per 15% missing Hits.",
+        3089: "Raises weapon power by +1 per 10% missing Hits.",
+        3090: "Raises weapon power by +2 per 10% missing Hits.",
+        1719: "Creates 1 random rune per 60 chaos runes crafted.",
+        1720: "Creates 1 random rune per 55 chaos runes crafted.",
+        1721: "Creates 1 random rune per 50 chaos runes crafted.",
+        1722: "Creates 1 random rune per 40 chaos runes crafted.",
+        1723: "Creates 1 random rune per 20 chaos runes crafted.",
+        1744: "Auto-alchs 1000+ gp monster drops. 100 charges.",
+        1745: "Auto-alchs 1000+ gp monster drops. 200 charges.",
+        1746: "Auto-alchs 1000+ gp monster drops. 300 charges.",
+        1747: "Auto-alchs 1000+ gp monster drops. 500 charges.",
+        1748: "Auto-alchs 1000+ gp monster drops. 1000 charges.",
+        1658: "Banks non-stack monster loot. 100 charges.",
+        1659: "Banks non-stack monster loot. 200 charges.",
+        1660: "Banks non-stack monster loot. 300 charges.",
+        1661: "Banks non-stack monster loot. 500 charges.",
+        1662: "Banks non-stack monster loot. 1000 charges.",
+        1714: "Banks non-stack skilling drops. 100 charges.",
+        1715: "Banks non-stack skilling drops. 200 charges.",
+        1716: "Banks non-stack skilling drops. 300 charges.",
+        1717: "Banks non-stack skilling drops. 500 charges.",
+        1718: "Banks non-stack skilling drops. 1000 charges.",
+    }
+    for item_id, expected in exact_lines.items():
         expect_description(items, item_id, expected)
 
 
@@ -643,6 +701,7 @@ def main() -> None:
     expect_item(items, 2555, "Mythic Blood Robe Top")
     expect_item(items, 2681, "Mythic Soul Robe Skirt")
     ensure_examine_copy(items)
+    ensure_jewelry_effect_ladders(items)
     ensure_all_enchanted_jewelry_has_effect_examine(items)
     ensure_enchanted_wool_robes_have_effect_examine(items)
     ensure_source_mappings_exist()

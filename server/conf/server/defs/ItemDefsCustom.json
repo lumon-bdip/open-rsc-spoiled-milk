@@ -969,7 +969,7 @@
     {
       "id": 1314,
       "name": "Sapphire Ring of Recoil",
-      "description": "Has 10% chance to recoil attacker damage.",
+      "description": "Has 10% chance to recoil 10% damage taken.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 1,
@@ -8651,7 +8651,7 @@
     {
       "id": 1648,
       "name": "Sapphire Necklace of Chain Lightning",
-      "description": "Has a 10% chance per chain lightning hop.",
+      "description": "Has 10% per-hop chain lightning, up to 3 halving hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8674,7 +8674,7 @@
     {
       "id": 1649,
       "name": "Emerald Necklace of Chain Lightning",
-      "description": "Has a 20% chance per chain lightning hop.",
+      "description": "Has 20% per-hop chain lightning, up to 3 halving hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8697,7 +8697,7 @@
     {
       "id": 1650,
       "name": "Ruby Necklace of Chain Lightning",
-      "description": "Has a 30% chance per chain lightning hop.",
+      "description": "Has 30% per-hop chain lightning, up to 3 halving hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8720,7 +8720,7 @@
     {
       "id": 1651,
       "name": "Diamond Necklace of Chain Lightning",
-      "description": "Has a 50% chance per chain lightning hop.",
+      "description": "Has 50% per-hop chain lightning, up to 3 halving hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8743,7 +8743,7 @@
     {
       "id": 1652,
       "name": "Dragonstone Necklace of Chain Lightning",
-      "description": "Has a 90% chance per chain lightning hop.",
+      "description": "Has 90% per-hop chain lightning, up to 3 halving hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8996,7 +8996,7 @@
     {
       "id": 1663,
       "name": "Sapphire Necklace of Desperation",
-      "description": "Raises defenses as health falls. Tier 1.",
+      "description": "Raises defenses by +1 per 25% missing Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9019,7 +9019,7 @@
     {
       "id": 1664,
       "name": "Emerald Necklace of Desperation",
-      "description": "Raises defenses as health falls. Tier 2.",
+      "description": "Raises defenses by +1 per 20% missing Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9042,7 +9042,7 @@
     {
       "id": 1665,
       "name": "Ruby Necklace of Desperation",
-      "description": "Raises defenses as health falls. Tier 3.",
+      "description": "Raises defenses by +1 per 15% missing Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9065,7 +9065,7 @@
     {
       "id": 1666,
       "name": "Diamond Necklace of Desperation",
-      "description": "Raises defenses as health falls. Tier 4.",
+      "description": "Raises defenses by +1 per 10% missing Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9088,7 +9088,7 @@
     {
       "id": 1667,
       "name": "Dragonstone Necklace of Desperation",
-      "description": "Raises defenses as health falls. Tier 5.",
+      "description": "Raises defenses by +2 per 10% missing Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9686,7 +9686,7 @@
     {
       "id": 1693,
       "name": "Emerald Ring of Recoil",
-      "description": "Has 20% chance to recoil attacker damage.",
+      "description": "Has 20% chance to recoil 10% damage taken.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9709,7 +9709,7 @@
     {
       "id": 1694,
       "name": "Ruby Ring of Recoil",
-      "description": "Has 30% chance to recoil attacker damage.",
+      "description": "Has 30% chance to recoil 10% damage taken.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9732,7 +9732,7 @@
     {
       "id": 1695,
       "name": "Diamond Ring of Recoil",
-      "description": "Has 50% chance to recoil attacker damage.",
+      "description": "Has 50% chance to recoil 10% damage taken.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9755,7 +9755,7 @@
     {
       "id": 1696,
       "name": "Dragonstone Ring of Recoil",
-      "description": "Has 90% chance to recoil attacker damage.",
+      "description": "Has 90% chance to recoil 10% damage taken.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11319,7 +11319,7 @@
     {
       "id": 1744,
       "name": "Sapphire Amulet of Alchemy",
-      "description": "Auto-alchs valuable monster drops. 100 charges.",
+      "description": "Auto-alchs 1000+ gp monster drops. 100 charges.",
       "command": "Check",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11342,7 +11342,7 @@
     {
       "id": 1745,
       "name": "Emerald Amulet of Alchemy",
-      "description": "Auto-alchs valuable monster drops. 200 charges.",
+      "description": "Auto-alchs 1000+ gp monster drops. 200 charges.",
       "command": "Check",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11365,7 +11365,7 @@
     {
       "id": 1746,
       "name": "Ruby Amulet of Alchemy",
-      "description": "Auto-alchs valuable monster drops. 300 charges.",
+      "description": "Auto-alchs 1000+ gp monster drops. 300 charges.",
       "command": "Check",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11388,7 +11388,7 @@
     {
       "id": 1747,
       "name": "Diamond Amulet of Alchemy",
-      "description": "Auto-alchs valuable monster drops. 500 charges.",
+      "description": "Auto-alchs 1000+ gp monster drops. 500 charges.",
       "command": "Check",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11411,7 +11411,7 @@
     {
       "id": 1748,
       "name": "Dragonstone Amulet of Alchemy",
-      "description": "Auto-alchs valuable monster drops. 1000 charges.",
+      "description": "Auto-alchs 1000+ gp monster drops. 1000 charges.",
       "command": "Check",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14677,7 +14677,7 @@
     {
       "id": 1890,
       "name": "Magic-spider-carapace coif",
-      "description": "Coif made from magic spider carapace. When wearing 5 matching Magic Spider armor pieces you will get the Mystic Venom trait. Mystic Venom has a 20% chance to proc with each magic attack, applying stronger poison to your opponent.",
+      "description": "Coif made from magic spider carapace. Mystic Venom has a 20% chance to proc with each magic attack, applying stronger poison to your opponent, and removes leather armor's magic-power penalty.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14700,7 +14700,7 @@
     {
       "id": 1891,
       "name": "Magic-spider-carapace gloves",
-      "description": "Gloves made from magic spider carapace. When wearing 5 matching Magic Spider armor pieces you will get the Mystic Venom trait. Mystic Venom has a 20% chance to proc with each magic attack, applying stronger poison to your opponent.",
+      "description": "Gloves made from magic spider carapace. Mystic Venom has a 20% chance to proc with each magic attack, applying stronger poison to your opponent, and removes leather armor's magic-power penalty.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14723,7 +14723,7 @@
     {
       "id": 1892,
       "name": "Magic-spider-carapace boots",
-      "description": "Boots made from magic spider carapace. When wearing 5 matching Magic Spider armor pieces you will get the Mystic Venom trait. Mystic Venom has a 20% chance to proc with each magic attack, applying stronger poison to your opponent.",
+      "description": "Boots made from magic spider carapace. Mystic Venom has a 20% chance to proc with each magic attack, applying stronger poison to your opponent, and removes leather armor's magic-power penalty.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14746,7 +14746,7 @@
     {
       "id": 1893,
       "name": "Magic-spider-carapace chaps",
-      "description": "Chaps made from magic spider carapace. When wearing 5 matching Magic Spider armor pieces you will get the Mystic Venom trait. Mystic Venom has a 20% chance to proc with each magic attack, applying stronger poison to your opponent.",
+      "description": "Chaps made from magic spider carapace. Mystic Venom has a 20% chance to proc with each magic attack, applying stronger poison to your opponent, and removes leather armor's magic-power penalty.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14769,7 +14769,7 @@
     {
       "id": 1894,
       "name": "Magic-spider-carapace cuirass",
-      "description": "Cuirass made from magic spider carapace. When wearing 5 matching Magic Spider armor pieces you will get the Mystic Venom trait. Mystic Venom has a 20% chance to proc with each magic attack, applying stronger poison to your opponent.",
+      "description": "Cuirass made from magic spider carapace. Mystic Venom has a 20% chance to proc with each magic attack, applying stronger poison to your opponent, and removes leather armor's magic-power penalty.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42185,7 +42185,7 @@
     {
       "id": 3086,
       "name": "Sapphire Ring of Desperation",
-      "description": "Raises weapon power as health falls. Tier 1.",
+      "description": "Raises weapon power by +1 per 25% missing Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42208,7 +42208,7 @@
     {
       "id": 3087,
       "name": "Emerald Ring of Desperation",
-      "description": "Raises weapon power as health falls. Tier 2.",
+      "description": "Raises weapon power by +1 per 20% missing Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42231,7 +42231,7 @@
     {
       "id": 3088,
       "name": "Ruby Ring of Desperation",
-      "description": "Raises weapon power as health falls. Tier 3.",
+      "description": "Raises weapon power by +1 per 15% missing Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42254,7 +42254,7 @@
     {
       "id": 3089,
       "name": "Diamond Ring of Desperation",
-      "description": "Raises weapon power as health falls. Tier 4.",
+      "description": "Raises weapon power by +1 per 10% missing Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42277,7 +42277,7 @@
     {
       "id": 3090,
       "name": "Dragonstone Ring of Desperation",
-      "description": "Raises weapon power as health falls. Tier 5.",
+      "description": "Raises weapon power by +2 per 10% missing Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

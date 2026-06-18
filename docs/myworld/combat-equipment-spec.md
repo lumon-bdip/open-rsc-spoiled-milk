@@ -568,6 +568,7 @@ Leather and carapace armor use full-set bonuses tied to the source creature.
   - `20%` chance per attack
   - magic attacks only
   - applies `2` poison
+  - removes the leather/carapace magic-power armor penalty while the full set is worn
 
 - `Moss Giant` -> `Terra Brute Force`
   - proc-based

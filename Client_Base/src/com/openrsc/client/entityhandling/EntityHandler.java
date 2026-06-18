@@ -3969,7 +3969,7 @@ public class EntityHandler {
 
 
 		// Rings
-		setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil", "Has 10% chance to recoil attacker damage.", "", 900, -1, "items:502", false, true, 1200, 19711, true, false, true, 1314));
+		setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil", "Has 10% chance to recoil 10% damage taken.", "", 900, -1, "items:502", false, true, 1200, 19711, true, false, true, 1314));
 		setCustomItemDefinition(1315, new ItemDef("Ring of splendor", "An enchanted ring.", "", 1275, -1, "items:502", false, true, 1200, 3394611, true, false, true, 1315));
 		setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment", "Boosts food healing by 10%.", "", 2025, -1, "items:502", false, true, 1200, 16724736, true, false, true, 1316));
 		setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Preservation", "Lets you keep 4 extra items on death.", "", 3525, -1, "items:502", false, true, 1200, 0xFFFFFF, true, false, true, 1317));
@@ -5618,11 +5618,11 @@ public class EntityHandler {
 		addExplicitNecklaceLine(1638, tiers, "Labor", "Boosts mining, smithing, and woodcutting XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, necklacePrices, gemMasks);
 		addNecklaceLine(1643, tiers, "Fortune", "Has a %d%% chance to roll extra standard monster loot.", 10, necklacePrices, gemMasks);
-		addExplicitNecklaceLine(1648, tiers, "Chain Lightning", "Has a %d%% chance per chain lightning hop.",
+		addExplicitNecklaceLine(1648, tiers, "Chain Lightning", "Has %d%% per-hop chain lightning, up to 3 halving hits.",
 			new int[] {10, 20, 30, 50, 90}, necklacePrices, gemMasks);
 		addNecklaceLine(1653, tiers, "Cleansing", "Adds +%d poison decay per tick.", 1, necklacePrices, gemMasks);
 		addLawBankingNecklaceLine(1658, tiers, necklacePrices, gemMasks, lawBankCharges);
-		addNecklaceLine(1663, tiers, "Desperation", "Raises defenses as health falls. Tier %d.", 1, necklacePrices, gemMasks);
+		addDeathDesperationNecklaceLine(1663, tiers, necklacePrices, gemMasks);
 		addNecklaceLine(1668, tiers, "Vitality", "Adds +%d max Hits.", 2, necklacePrices, gemMasks);
 
 		addRingLine(1673, tiers, "Archery", "Adds +%d ranged power.", 3, ringPrices, gemMasks);
@@ -5631,7 +5631,7 @@ public class EntityHandler {
 		addRingLine(1688, tiers, "Sorcery", "Adds +%d magic power.", 3, ringPrices, gemMasks);
 
 		addExplicitRingLine(1693, new String[] {"Emerald", "Ruby", "Diamond", "Dragonstone"},
-			"Recoil", "Has %d%% chance to recoil attacker damage.",
+			"Recoil", "Has %d%% chance to recoil 10%% damage taken.",
 			new int[] {20, 30, 50, 90},
 			new int[] {3000, 6000, 12000, 35000}, new int[] {3394611, 16724736, 0, 12255487});
 		addNatureNourishmentRingLine(1697, new String[] {"Emerald", "Ruby", "Diamond", "Dragonstone"},
@@ -5714,7 +5714,7 @@ public class EntityHandler {
 			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
 		addExplicitAttunedRingLine(3081, tiers, "Acquisition", "Boosts fishing, harvesting, and thieving XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
-		addAttunedRingLine(3086, tiers, "Desperation", "Raises weapon power as health falls. Tier %d.", 1, ringPrices, gemMasks);
+		addDeathDesperationRingLine(3086, tiers, ringPrices, gemMasks);
 		addAttunedRingLine(3091, tiers, "Vitality", "Adds +%d max Hits.", 2, ringPrices, gemMasks);
 		addLifeRingLine(3096, tiers, ringPrices, gemMasks);
 		addLifeNecklaceLine(3101, tiers, necklacePrices, gemMasks);
@@ -5836,7 +5836,7 @@ public class EntityHandler {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
 				new ItemDef(tiers[i] + " Amulet of Alchemy",
-					"Auto-alchs valuable monster drops. " + charges[i] + " charges.",
+					"Auto-alchs 1000+ gp monster drops. " + charges[i] + " charges.",
 					"Check",
 					prices[i],
 					125,
@@ -5892,6 +5892,54 @@ public class EntityHandler {
 					true,
 					startId + i));
 		}
+	}
+
+	private static void addDeathDesperationNecklaceLine(int startId, String[] tiers, int[] prices,
+		int[] pictureMasks) {
+		for (int i = 0; i < tiers.length; i++) {
+			setCustomItemDefinition(startId + i,
+				new ItemDef(tiers[i] + " Necklace of Desperation",
+					buildDeathDesperationDescription("defenses", i),
+					"",
+					prices[i],
+					57,
+					"items:57",
+					false,
+					true,
+					1024,
+					pictureMasks[i],
+					true,
+					false,
+					true,
+					startId + i));
+		}
+	}
+
+	private static void addDeathDesperationRingLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
+		for (int i = 0; i < tiers.length; i++) {
+			setCustomItemDefinition(startId + i,
+				new ItemDef(tiers[i] + " Ring of Desperation",
+					buildDeathDesperationDescription("weapon power", i),
+					"",
+					prices[i],
+					123,
+					"items:123",
+					false,
+					true,
+					1200,
+					pictureMasks[i],
+					true,
+					false,
+					true,
+					startId + i));
+		}
+	}
+
+	private static String buildDeathDesperationDescription(String statName, int tierIndex) {
+		final int[] missingHitSteps = {25, 20, 15, 10, 10};
+		final int[] bonuses = {1, 1, 1, 1, 2};
+		return "Raises " + statName + " by +" + bonuses[tierIndex] + " per "
+			+ missingHitSteps[tierIndex] + "% missing Hits.";
 	}
 
 	private static void addLawBankingNecklaceLine(int startId, String[] tiers, int[] prices, int[] pictureMasks,
@@ -6259,7 +6307,7 @@ public class EntityHandler {
 		setLeatherSetDescription(1875, 1879, "Giant's Might: +10% of base Melee and Ranged levels.");
 		setLeatherSetDescription(1880, 1884, "Full ogre-hide set: 20% chance to stagger enemy attacks. No cooldown.");
 		setLeatherSetDescription(1885, 1889, "Full baby-dragon-hide set: 20% chance to reduce enemy accuracy by 10%.");
-		setLeatherSetDescription(1890, 1894, "Full magic-spider-carapace set: 20% magic poison chance, up to 20 poison.");
+		setLeatherSetDescription(1890, 1894, "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.");
 		setLeatherSetDescription(1895, 1899, "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.");
 		setLeatherSetDescription(1900, 1904, "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.");
 		setLeatherSetDescription(1905, 1909, "Full demon-hide set: 20% chance for infernal fire, max hit 8.");

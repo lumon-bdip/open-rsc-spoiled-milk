@@ -2484,7 +2484,7 @@ public class PacketHandler {
 	}
 
 	private void updateBank() {
-		int slot = packetsIncoming.getUnsignedByte();
+		int slot = packetsIncoming.getShort();
 		int item = packetsIncoming.getShort();
 		int itemCount = packetsIncoming.get32();
 		mc.getBank().updateBank(slot, item, itemCount);

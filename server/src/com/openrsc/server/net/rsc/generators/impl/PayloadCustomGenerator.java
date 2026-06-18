@@ -646,7 +646,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 
 				case SEND_BANK_UPDATE:
 					BankUpdateStruct bu = (BankUpdateStruct) payload;
-					builder.writeByte((byte) bu.slot);
+					builder.writeShort(bu.slot);
 					builder.writeShort(bu.catalogID);
 					builder.writeInt(bu.amount);
 					break;

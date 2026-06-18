@@ -2834,6 +2834,9 @@ public class Equipment {
 	}
 
 	private int getArmorPowerPenalty(final PrayerCatalog.CombatStyle combatStyle) {
+		if (combatStyle == PrayerCatalog.CombatStyle.MAGIC && hasFullMagicSpiderCarapaceSet()) {
+			return 0;
+		}
 		int pieces = 0;
 		if (player.getConfig().WANT_EQUIPMENT_TAB) {
 			synchronized (list) {
