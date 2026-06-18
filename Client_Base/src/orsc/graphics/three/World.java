@@ -25,13 +25,29 @@ import java.util.zip.ZipFile;
 
 
 public final class World {
+	public static final int SECTION_SIZE = 48;
+	public static final int ACTIVE_SECTION_GRID = 3;
+	public static final int LOCAL_TILE_COUNT = SECTION_SIZE * ACTIVE_SECTION_GRID;
+	public static final int LOCAL_TILE_MAX = LOCAL_TILE_COUNT - 1;
+	public static final int LOCAL_FACE_TILE_COUNT = LOCAL_TILE_COUNT - 1;
+	public static final int LEGACY_MINIMAP_TILE_COUNT = SECTION_SIZE * 2;
+	public static final int LEGACY_MINIMAP_FACE_TILE_COUNT = LEGACY_MINIMAP_TILE_COUNT - 1;
+	private static final int ACTIVE_SECTION_ORIGIN_OFFSET = ACTIVE_SECTION_GRID / 2;
+	private static final int ACTIVE_SECTION_COUNT = ACTIVE_SECTION_GRID * ACTIVE_SECTION_GRID;
+	private static final int MODEL_GRID_TILE_SIZE = 12;
+	private static final int MODEL_GRID_AXIS = LOCAL_TILE_COUNT / MODEL_GRID_TILE_SIZE;
+	private static final int MODEL_GRID_COUNT = MODEL_GRID_AXIS * MODEL_GRID_AXIS;
+	private static final int MODEL_GRID_WORLD_SIZE = MODEL_GRID_TILE_SIZE * 128;
+	private static final int MODEL_BUFFER_CAPACITY = LOCAL_TILE_COUNT * LOCAL_TILE_COUNT * 4;
+	private static final int MODEL_SPLIT_VERTEX_LIMIT = 512;
+	private static final int MINIMAP_PIXEL_SIZE = LEGACY_MINIMAP_FACE_TILE_COUNT * 3;
 	private static final int SECTOR_CACHE_LIMIT = 256;
-	private static final int SECTOR_PRELOAD_LOW_OFFSET = -2;
-	private static final int SECTOR_PRELOAD_HIGH_OFFSET = 1;
+	private static final int SECTOR_PRELOAD_LOW_OFFSET = -ACTIVE_SECTION_ORIGIN_OFFSET - 1;
+	private static final int SECTOR_PRELOAD_HIGH_OFFSET = ACTIVE_SECTION_GRID - ACTIVE_SECTION_ORIGIN_OFFSET;
 	private final int[] colorToResource = new int[256];
-	private final int[][] tileElevationCache = new int[96][96];
-	private final int[][] pathFindSource = new int[96][96];
-	private final int[][] tileDirection = new int[96][96];
+	private final int[][] tileElevationCache = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
+	private final int[][] pathFindSource = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
+	private final int[][] tileDirection = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
 	private final Object sectorCacheLock = new Object();
 	private final Object tileArchiveLock = new Object();
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
@@ -53,15 +69,15 @@ public final class World {
 	});
 	private final boolean showInvisibleWalls = false;
 	public int baseMediaSprite = 750;
-	public int[][] collisionFlags = new int[96][96];
-	public int[] faceTileX = new int[18432];
-	public int[] faceTileZ = new int[18432];
+	public int[][] collisionFlags = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
+	public int[] faceTileX = new int[MODEL_BUFFER_CAPACITY];
+	public int[] faceTileZ = new int[MODEL_BUFFER_CAPACITY];
 	public byte[] landscapePack;
 	public byte[] mapPack;
 	public byte[] memberLandscapePack;
 	public boolean playerAlive = false;
-	public RSModel[][] modelWallGrid = new RSModel[4][64];
-	public RSModel[][] modelRoofGrid = new RSModel[4][64];
+	public RSModel[][] modelWallGrid = new RSModel[4][MODEL_GRID_COUNT];
+	public RSModel[][] modelRoofGrid = new RSModel[4][MODEL_GRID_COUNT];
 	// private final byte[][] elevation = new byte[4][2304];
 	// private final byte[][] terrainColour = new byte[4][2304];
 	// private final byte[][] tileDecoration = new byte[4][2304];
@@ -74,8 +90,8 @@ public final class World {
 	private GraphicsController minimapGraphics;
 	private Scene scene;
 	private RSModel modelAccumulate;
-	private RSModel[] modelLandscapeGrid = new RSModel[64];
-	private Sector[] worldMapSector = new Sector[4];
+	private RSModel[] modelLandscapeGrid = new RSModel[MODEL_GRID_COUNT];
+	private Sector[] worldMapSector = new Sector[ACTIVE_SECTION_COUNT];
 	private int mapPointX = 0;
 	private int mapPointZ = 0;
 	private ZipFile tileArchive;
@@ -103,7 +119,7 @@ public final class World {
 				this.colorToResource[192 + var3] = GenUtil.colorToResource(96 - (int) ((double) var3 * 1.5D),
 					(int) ((double) var3 * 1.5D) + 48, 0);
 
-			sectors = new Sector[4];
+			sectors = new Sector[ACTIVE_SECTION_COUNT];
 
 			try {
 				String path;
@@ -132,11 +148,57 @@ public final class World {
 		}
 	}
 
+	public static int worldTileToSection(int worldTile) {
+		return (SECTION_SIZE / 2 + worldTile) / SECTION_SIZE;
+	}
+
+	public static int sectionToLocalBaseTile(int section) {
+		return (section - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE;
+	}
+
+	public static boolean isLocalTile(int tileX, int tileZ) {
+		return tileX >= 0 && tileZ >= 0 && tileX < LOCAL_TILE_COUNT && tileZ < LOCAL_TILE_COUNT;
+	}
+
+	public static boolean isLocalFaceTile(int tileX, int tileZ) {
+		return tileX >= 0 && tileZ >= 0 && tileX < LOCAL_FACE_TILE_COUNT && tileZ < LOCAL_FACE_TILE_COUNT;
+	}
+
+	public static int localTileKey(int tileX, int tileZ) {
+		return tileZ * LOCAL_TILE_COUNT + tileX;
+	}
+
+	private int sectorIndexForLocalTile(int tileX, int tileZ) {
+		if (!isLocalTile(tileX, tileZ)) {
+			return -1;
+		}
+		return tileZ / SECTION_SIZE * ACTIVE_SECTION_GRID + tileX / SECTION_SIZE;
+	}
+
+	private Sector sectorForLocalTile(int tileX, int tileZ) {
+		int sectorIndex = sectorIndexForLocalTile(tileX, tileZ);
+		return sectorIndex < 0 ? null : sectors[sectorIndex];
+	}
+
+	private int tileInSector(int tile) {
+		return tile % SECTION_SIZE;
+	}
+
+	private void loadSectionWindow(Sector[] target, int height, int sectionX, int sectionY) {
+		int originX = sectionX - ACTIVE_SECTION_ORIGIN_OFFSET;
+		int originY = sectionY - ACTIVE_SECTION_ORIGIN_OFFSET;
+		for (int y = 0; y < ACTIVE_SECTION_GRID; y++) {
+			for (int x = 0; x < ACTIVE_SECTION_GRID; x++) {
+				target[y * ACTIVE_SECTION_GRID + x] = loadSectorTemplate(height, originX + x, originY + y).copy();
+			}
+		}
+	}
+
 	public final void addGameObject_UpdateCollisionMap(int xTile, int zTile, int objectID, boolean var3) {
 		try {
 			if (!var3) {
 
-				if (xTile >= 0 && zTile >= 0 && xTile < 95 && zTile < 95)
+				if (isLocalFaceTile(xTile, zTile))
 					if (Objects.requireNonNull(EntityHandler.getObjectDef(objectID)).getType() == 1
 						|| Objects.requireNonNull(EntityHandler.getObjectDef(objectID)).getType() == 2) {
 						int dir = this.getTileDirection((int) xTile, zTile);
@@ -159,7 +221,7 @@ public final class World {
 									if (dir == 2) {
 										this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
 											CollisionFlag.WALL_SOUTH);
-										if (z < 95)
+										if (z < LOCAL_FACE_TILE_COUNT)
 											this.collisionFlagBitwiseOr(x, (int) (1 + z), CollisionFlag.WALL_NORTH);
 									} else if (dir != 4) {
 										if (dir == 6) {
@@ -171,7 +233,7 @@ public final class World {
 									} else {
 										this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
 											CollisionFlag.WALL_WEST);
-										if (x < 95)
+										if (x < LOCAL_FACE_TILE_COUNT)
 											this.collisionFlagBitwiseOr(x + 1, (int) z, CollisionFlag.WALL_EAST);
 									}
 								} else {
@@ -193,8 +255,8 @@ public final class World {
 		try {
 
 
-			for (int x = 0; x < 94; ++x)
-				for (int z = 0; z < 94; ++z)
+			for (int x = 0; x < LOCAL_FACE_TILE_COUNT - 1; ++x)
+				for (int z = 0; z < LOCAL_FACE_TILE_COUNT - 1; ++z)
 					if (this.getWallDiagonal(x, z) > 48000 && this.getWallDiagonal(x, z) < 60000) {
 						int diagWall = this.getWallDiagonal(x, z) - 48001;
 						int dir = this.getTileDirection((int) x, z);
@@ -221,21 +283,12 @@ public final class World {
 							for (int xi = x; x + xSize > xi; ++xi)
 								for (int zi = z; zSize + z > zi; ++zi)
 									if ((x < xi || z < zi) && diagWall == this.getWallDiagonal(xi, zi) - 48001) {
-										zTranslate = zi;
-										xTranslate = xi;
-										byte var14 = 0;
-										if (xi >= 48 && zi < 48) {
-											xTranslate = xi - 48;
-											var14 = 1;
-										} else if (xi < 48 && zi >= 48) {
-											var14 = 2;
-											zTranslate = zi - 48;
-										} else if (xi >= 48 && zi >= 48) {
-											var14 = 3;
-											zTranslate = zi - 48;
-											xTranslate = xi - 48;
+										int sectorIndex = sectorIndexForLocalTile(xi, zi);
+										if (sectorIndex >= 0) {
+											xTranslate = tileInSector(xi);
+											zTranslate = tileInSector(zi);
+											sectors[sectorIndex].getTile(xTranslate, zTranslate).diagonalWalls = 0;
 										}
-										sectors[var14].getTile(xTranslate, zTranslate).diagonalWalls = 0;
 										// this.wallsDiagonal[var14][xTranslate
 										// * 48 + zTranslate] = 0;
 									}
@@ -248,7 +301,7 @@ public final class World {
 	public final void applyWallToCollisionFlags(int wallID, int x, int z, int dir) {
 		try {
 
-			if (x >= 0 && z >= 0 && x < 95 && z < 95)
+			if (isLocalFaceTile(x, z))
 				if (Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getDoorType() == 1) {
 					if (dir == 0) {
 						this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
@@ -313,7 +366,7 @@ public final class World {
 	private int collisionFlagSafe(int x, int z) {
 		try {
 
-			return x >= 0 && z >= 0 && x < 96 && z < 96 ? this.collisionFlags[x][z] : 0;
+			return isLocalTile(x, z) ? this.collisionFlags[x][z] : 0;
 		} catch (RuntimeException var5) {
 			throw GenUtil.makeThrowable(var5, "k.JA(" + -38 + ',' + z + ',' + x + ')');
 		}
@@ -321,6 +374,9 @@ public final class World {
 
 	private void drawMinimapTile(int tileX, int tileZ, int bridge00_11, int res01, int res10) {
 		try {
+			if (!isLegacyMinimapFaceTile(tileX, tileZ)) {
+				return;
+			}
 
 			int mx = tileX * 3;
 			int my = tileZ * 3;
@@ -354,6 +410,11 @@ public final class World {
 		}
 	}
 
+	private static boolean isLegacyMinimapFaceTile(int tileX, int tileZ) {
+		return tileX >= 0 && tileZ >= 0 && tileX < LEGACY_MINIMAP_FACE_TILE_COUNT
+			&& tileZ < LEGACY_MINIMAP_FACE_TILE_COUNT;
+	}
+
 	/**
 	 * @param pathX
 	 * @param pathZ
@@ -372,8 +433,8 @@ public final class World {
 		// xLow + "-" + xHigh + "," + zLow + "-"
 		// + zHigh + "] Border good: " + reachBorder);
 		try {
-			for (int x = 0; x < 96; ++x)
-				for (int y = 0; y < 96; ++y)
+			for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
+				for (int y = 0; y < LOCAL_TILE_COUNT; ++y)
 					this.pathFindSource[x][y] = 0;
 
 
@@ -405,7 +466,7 @@ public final class World {
 						break;
 					}
 
-					if (x < 95 && 1 + x >= xLow && x + 1 <= xHigh && z >= zLow && zHigh >= z
+					if (x < LOCAL_FACE_TILE_COUNT && 1 + x >= xLow && x + 1 <= xHigh && z >= zLow && zHigh >= z
 						&& (CollisionFlag.WALL_EAST & this.collisionFlags[x + 1][z]) == 0) {
 						complete = true;
 						break;
@@ -417,7 +478,7 @@ public final class World {
 						break;
 					}
 
-					if (z < 95 && xLow <= x && x <= xHigh && zLow <= z + 1 && zHigh >= z + 1
+					if (z < LOCAL_FACE_TILE_COUNT && xLow <= x && x <= xHigh && zLow <= z + 1 && zHigh >= z + 1
 						&& (CollisionFlag.WALL_NORTH & this.collisionFlags[x][z + 1]) == 0) {
 						complete = true;
 						break;
@@ -432,7 +493,7 @@ public final class World {
 					openListWrite = (openListWrite + 1) % openListSize;
 				}
 
-				if (x < 95 && this.pathFindSource[1 + x][z] == 0
+				if (x < LOCAL_FACE_TILE_COUNT && this.pathFindSource[1 + x][z] == 0
 					&& (this.collisionFlags[1 + x][z] & CollisionFlag.EAST_BLOCKED) == 0) {
 					pathX[openListWrite] = 1 + x;
 					pathZ[openListWrite] = z;
@@ -448,7 +509,7 @@ public final class World {
 					openListWrite = (openListWrite + 1) % openListSize;
 				}
 
-				if (z < 95 && this.pathFindSource[x][1 + z] == 0
+				if (z < LOCAL_FACE_TILE_COUNT && this.pathFindSource[x][1 + z] == 0
 					&& (CollisionFlag.NORTH_BLOCKED & this.collisionFlags[x][1 + z]) == 0) {
 					pathX[openListWrite] = x;
 					pathZ[openListWrite] = z + 1;
@@ -466,7 +527,7 @@ public final class World {
 					openListWrite = (1 + openListWrite) % openListSize;
 				}
 
-				if (x < 95 && z > 0 && (this.collisionFlags[x][z - 1] & CollisionFlag.SOUTH_BLOCKED) == 0
+				if (x < LOCAL_FACE_TILE_COUNT && z > 0 && (this.collisionFlags[x][z - 1] & CollisionFlag.SOUTH_BLOCKED) == 0
 					&& (this.collisionFlags[1 + x][z] & CollisionFlag.EAST_BLOCKED) == 0
 					&& (this.collisionFlags[x + 1][z - 1] & CollisionFlag.SOUTH_EAST_BLOCKED) == 0
 					&& this.pathFindSource[1 + x][z - 1] == 0) {
@@ -476,7 +537,7 @@ public final class World {
 					openListWrite = (1 + openListWrite) % openListSize;
 				}
 
-				if (x > 0 && z < 95 && (this.collisionFlags[x][1 + z] & CollisionFlag.NORTH_BLOCKED) == 0
+				if (x > 0 && z < LOCAL_FACE_TILE_COUNT && (this.collisionFlags[x][1 + z] & CollisionFlag.NORTH_BLOCKED) == 0
 					&& (this.collisionFlags[x - 1][z] & CollisionFlag.WEST_BLOCKED) == 0
 					&& (this.collisionFlags[x - 1][1 + z] & CollisionFlag.NORTH_WEST_BLOCKED) == 0
 					&& this.pathFindSource[x - 1][1 + z] == 0) {
@@ -486,7 +547,7 @@ public final class World {
 					this.pathFindSource[x - 1][z + 1] = CollisionFlag.SOURCE_NORTH_WEST;
 				}
 
-				if (x < 95 && z < 95 && (CollisionFlag.NORTH_BLOCKED & this.collisionFlags[x][1 + z]) == 0
+				if (x < LOCAL_FACE_TILE_COUNT && z < LOCAL_FACE_TILE_COUNT && (CollisionFlag.NORTH_BLOCKED & this.collisionFlags[x][1 + z]) == 0
 					&& (this.collisionFlags[x + 1][z] & CollisionFlag.EAST_BLOCKED) == 0
 					&& (CollisionFlag.NORTH_EAST_BLOCKED & this.collisionFlags[x + 1][1 + z]) == 0
 					&& this.pathFindSource[x + 1][1 + z] == 0) {
@@ -537,29 +598,26 @@ public final class World {
 	private void generateLandscapeModel(int var1, int var2, boolean showWallOnMinimap, int plane, int var5) {
 		try {
 
-			int chunkX = (24 + var1) / 48;
-			int chunkZ = (24 + var5) / 48;
-			this.loadSection(0, plane, chunkX - 1, chunkZ - 1);
-			this.loadSection(1, plane, chunkX, chunkZ - 1);
+			int chunkX = worldTileToSection(var1);
+			int chunkZ = worldTileToSection(var5);
+			this.loadSectionWindow(sectors, plane, chunkX, chunkZ);
 			if (var2 >= 66) {
-				this.loadSection(2, plane, chunkX - 1, chunkZ);
-				this.loadSection(3, plane, chunkX, chunkZ);
 				this.setTileDecorationOnBridge();
 				if (this.modelAccumulate == null)
-					this.modelAccumulate = new RSModel(18688, 18688, true, true, false, false, true);
+					this.modelAccumulate = new RSModel(MODEL_BUFFER_CAPACITY, MODEL_BUFFER_CAPACITY, true, true, false, false, true);
 
 				if (showWallOnMinimap) {
 					this.minimapGraphics.blackScreen(true);
 
-					for (int x = 0; x < 96; ++x)
-						for (int z = 0; z < 96; ++z)
+					for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
+						for (int z = 0; z < LOCAL_TILE_COUNT; ++z)
 							this.collisionFlags[x][z] = 0;
 
 					RSModel worldMod = this.modelAccumulate;
 					worldMod.resetFaceVertHead((int) 1);
 
-					for (int x = 0; x < 96; ++x)
-						for (int z = 0; z < 96; ++z) {
+					for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
+						for (int z = 0; z < LOCAL_TILE_COUNT; ++z) {
 							int y = -this.getTileElevation(x, z);
 							if (this.getTileDecorationID(x, z, plane) > 0 && Objects.requireNonNull(EntityHandler
 								.getTileDef(getTileDecorationID(x, z, plane) - 1)).getTileValue() == 4)
@@ -581,8 +639,8 @@ public final class World {
 							worldMod.setVertexLightOther(vID, val);
 						}
 
-					for (int x = 0; x < 95; ++x)
-						for (int z = 0; z < 95; ++z) {
+					for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x)
+						for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
 							int colorResource = this.colorToResource[this.getTerrainColour(x, z)];
 							int res01 = colorResource;
 							int defaultVal = colorResource;
@@ -673,8 +731,9 @@ public final class World {
 							boolean pickableInvisibleOverlay = this.isPickableInvisibleOverlay(x, z, plane);
 							if (colorResource == res01 && slope == 0) {
 								if (colorResource != Scene.TRANSPARENT || pickableInvisibleOverlay) {
-									faceIndicies = new int[]{z - (-(x * 96) - 96), z + x * 96, 1 + x * 96 + z,
-										z - (-(x * 96) - 96) + 1};
+									faceIndicies = new int[]{z - (-(x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT),
+										z + x * LOCAL_TILE_COUNT, 1 + x * LOCAL_TILE_COUNT + z,
+										z - (-(x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT) + 1};
 									int faceID = worldMod.insertFace(4, faceIndicies, Scene.TRANSPARENT, colorResource,
 										false);
 									this.faceTileX[faceID] = x;
@@ -686,9 +745,9 @@ public final class World {
 								int[] faceIndices2 = new int[3];
 								if (bridge00_11 == 0) {
 									if (colorResource != Scene.TRANSPARENT || pickableInvisibleOverlay) {
-										faceIndicies[1] = x * 96 + z;
-										faceIndicies[0] = 96 + z + x * 96;
-										faceIndicies[2] = 1 + z + x * 96;
+										faceIndicies[1] = x * LOCAL_TILE_COUNT + z;
+										faceIndicies[0] = LOCAL_TILE_COUNT + z + x * LOCAL_TILE_COUNT;
+										faceIndicies[2] = 1 + z + x * LOCAL_TILE_COUNT;
 										int faceID = worldMod.insertFace(3, faceIndicies, Scene.TRANSPARENT,
 											colorResource, false);
 										this.faceTileX[faceID] = x;
@@ -697,9 +756,9 @@ public final class World {
 									}
 
 									if (res01 != Scene.TRANSPARENT || pickableInvisibleOverlay) {
-										faceIndices2[2] = z + x * 96 + 96;
-										faceIndices2[1] = 97 + x * 96 + z;
-										faceIndices2[0] = 1 + x * 96 + z;
+										faceIndices2[2] = z + x * LOCAL_TILE_COUNT + LOCAL_TILE_COUNT;
+										faceIndices2[1] = LOCAL_TILE_COUNT + 1 + x * LOCAL_TILE_COUNT + z;
+										faceIndices2[0] = 1 + x * LOCAL_TILE_COUNT + z;
 										int faceID = worldMod.insertFace(3, faceIndices2, Scene.TRANSPARENT, res01,
 											false);
 										this.faceTileX[faceID] = x;
@@ -708,9 +767,9 @@ public final class World {
 									}
 								} else {
 									if (colorResource != Scene.TRANSPARENT || pickableInvisibleOverlay) {
-										faceIndicies[2] = z + x * 96;
-										faceIndicies[1] = 96 + x * 96 + z + 1;
-										faceIndicies[0] = 1 + x * 96 + z;
+										faceIndicies[2] = z + x * LOCAL_TILE_COUNT;
+										faceIndicies[1] = LOCAL_TILE_COUNT + x * LOCAL_TILE_COUNT + z + 1;
+										faceIndicies[0] = 1 + x * LOCAL_TILE_COUNT + z;
 										int faceID = worldMod.insertFace(3, faceIndicies, Scene.TRANSPARENT,
 											colorResource, false);
 										this.faceTileX[faceID] = x;
@@ -719,9 +778,9 @@ public final class World {
 									}
 
 									if (res01 != Scene.TRANSPARENT || pickableInvisibleOverlay) {
-										faceIndices2[1] = z + x * 96;
-										faceIndices2[2] = z - (-(x * 96) - 97);
-										faceIndices2[0] = x * 96 + z + 96;
+										faceIndices2[1] = z + x * LOCAL_TILE_COUNT;
+										faceIndices2[2] = z - (-(x * LOCAL_TILE_COUNT) - (LOCAL_TILE_COUNT + 1));
+										faceIndices2[0] = x * LOCAL_TILE_COUNT + z + LOCAL_TILE_COUNT;
 										int faceID = worldMod.insertFace(3, faceIndices2, Scene.TRANSPARENT, res01,
 											false);
 										this.faceTileX[faceID] = x;
@@ -732,8 +791,8 @@ public final class World {
 							}
 						}
 
-					for (int x = 1; x < 95; ++x)
-						for (int z = 1; z < 95; ++z)
+					for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x)
+						for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z)
 							if (this.getTileDecorationID((int) x, z, plane) > 0 && Objects.requireNonNull(EntityHandler
 								.getTileDef(this.getTileDecorationID((int) x, z, plane) - 1)).getTileValue() == 4) {
 
@@ -840,21 +899,22 @@ public final class World {
 							}
 
 					worldMod.setDiffuseLightAndColor(-50, -10, -50, 40, 48, true, 105);
-					this.modelLandscapeGrid = this.modelAccumulate.divideModelByGrid(0, 8, 1536, 112, 64, 233, 1536,
-						false, 0);
+					this.modelLandscapeGrid = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
+						MODEL_GRID_WORLD_SIZE, 112, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT,
+						MODEL_GRID_WORLD_SIZE, false, 0);
 
-					for (int x = 0; x < 64; ++x)
+					for (int x = 0; x < MODEL_GRID_COUNT; ++x)
 						this.scene.addModel(this.modelLandscapeGrid[x]);
 
-					for (int x = 0; x < 96; ++x)
-						for (int z = 0; z < 96; ++z)
+					for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
+						for (int z = 0; z < LOCAL_TILE_COUNT; ++z)
 							this.tileElevationCache[x][z] = this.getTileElevation(x, z);
 				}
 				this.modelAccumulate.resetFaceVertHead((int) 1);
 
 				final int wallColor = 6316128;
-				for (int x = 0; x < 95; ++x)
-					for (int z = 0; z < 95; ++z) {
+				for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x)
+					for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
 
 						int wall = this.getVerticalWall(x, z);
 						if (wall > 0
@@ -867,7 +927,7 @@ public final class World {
 									this.collisionFlagBitwiseOr(x, (int) (z - 1), CollisionFlag.WALL_SOUTH);
 							}
 
-							if (showWallOnMinimap)
+							if (showWallOnMinimap && isLegacyMinimapFaceTile(x, z))
 								this.minimapGraphics.drawLineHoriz(x * 3, z * 3, 3, wallColor);
 						}
 
@@ -882,7 +942,7 @@ public final class World {
 									this.collisionFlagBitwiseOr(x - 1, (int) z, CollisionFlag.WALL_WEST);
 							}
 
-							if (showWallOnMinimap)
+							if (showWallOnMinimap && isLegacyMinimapFaceTile(x, z))
 								this.minimapGraphics.drawLineVert(x * 3, z * 3, wallColor, 3);
 						}
 
@@ -894,7 +954,7 @@ public final class World {
 								this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
 									CollisionFlag.FULL_BLOCK_B);
 
-							if (showWallOnMinimap) {
+							if (showWallOnMinimap && isLegacyMinimapFaceTile(x, z)) {
 								this.minimapGraphics.setPixel(x * 3, z * 3, wallColor);
 								this.minimapGraphics.setPixel(1 + x * 3, 1 + z * 3, wallColor);
 								this.minimapGraphics.setPixel(x * 3 + 2, 2 + z * 3, wallColor);
@@ -908,7 +968,7 @@ public final class World {
 								this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
 									CollisionFlag.FULL_BLOCK_A);
 
-							if (showWallOnMinimap) {
+							if (showWallOnMinimap && isLegacyMinimapFaceTile(x, z)) {
 								this.minimapGraphics.setPixel(2 + x * 3, z * 3, wallColor);
 								this.minimapGraphics.setPixel(x * 3 + 1, z * 3 + 1, wallColor);
 								this.minimapGraphics.setPixel(x * 3, 2 + z * 3, wallColor);
@@ -917,19 +977,21 @@ public final class World {
 					}
 
 				if (showWallOnMinimap)
-					this.minimapGraphics.copyPixelDataToSurface(GraphicsController.SPRITE_LAYER.MINIMAP, 0, 0, 285, 285);
+					this.minimapGraphics.copyPixelDataToSurface(GraphicsController.SPRITE_LAYER.MINIMAP, 0, 0,
+						MINIMAP_PIXEL_SIZE, MINIMAP_PIXEL_SIZE);
 
 				this.modelAccumulate.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, 122);
-				this.modelWallGrid[plane] = this.modelAccumulate.divideModelByGrid(0, 8, 1536, -120, 64, 338, 1536,
+				this.modelWallGrid[plane] = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
+					MODEL_GRID_WORLD_SIZE, -120, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT, MODEL_GRID_WORLD_SIZE,
 					true, 0);
 
-				for (int x = 0; x < 64; ++x)
+				for (int x = 0; x < MODEL_GRID_COUNT; ++x)
 					this.scene.addModel(this.modelWallGrid[plane][x]);
 				this.modelAccumulate.resetFaceVertHead((int) 1);
 
 				// Prepare the elevation cache.
-				for (int x = 0; x < 95; ++x)
-					for (int z = 0; z < 95; ++z) {
+				for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x)
+					for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
 						int wall = this.getVerticalWall(x, z);
 						if (wall > 0)
 							this.applyWallToElevationCache(wall - 1, x, z, x + 1, z);
@@ -947,8 +1009,8 @@ public final class World {
 					}
 
 				// Clean the elevation cache.
-				for (int x = 1; x < 95; ++x)
-					for (int z = 1; z < 95; ++z) {
+				for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x)
+					for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z) {
 						int roof = this.getWallRoof(x, z);
 						if (roof > 0) {
 							int xp1 = x + 1;
@@ -1006,8 +1068,8 @@ public final class World {
 				// Insert roof faces
 
 				// Insert roof faces
-				for (int x = 1; x < 95; ++x)
-					for (int z = 1; z < 95; ++z) {
+				for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x)
+					for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z) {
 						int roof = this.getWallRoof(x, z);
 						if (roof > 0) {
 							int x10 = x + 1;
@@ -1174,17 +1236,18 @@ public final class World {
 					}
 
 				this.modelAccumulate.setDiffuseLightAndColor(-50, -10, -50, 50, 50, true, -98);
-				this.modelRoofGrid[plane] = this.modelAccumulate.divideModelByGrid(0, 8, 1536, -112, 64, 169, 1536,
+				this.modelRoofGrid[plane] = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
+					MODEL_GRID_WORLD_SIZE, -112, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT, MODEL_GRID_WORLD_SIZE,
 					true, 0);
 
-				for (int x = 0; x < 64; ++x)
+				for (int x = 0; x < MODEL_GRID_COUNT; ++x)
 					this.scene.addModel(this.modelRoofGrid[plane][x]);
 
 				if (this.modelRoofGrid[plane][0] == null)
 					throw new RuntimeException("null roof!");
 				else
-					for (int x = 0; x < 96; ++x)
-						for (int z = 0; z < 96; ++z)
+					for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
+						for (int z = 0; z < LOCAL_TILE_COUNT; ++z)
 							if (this.tileElevationCache[x][z] >= 80000)
 								this.tileElevationCache[x][z] -= 80000;
 			}
@@ -1195,7 +1258,7 @@ public final class World {
 	}
 
 	public void registerObjectDir(int x, int y, int dir) {
-		if (x < 0 || x >= 96 || y < 0 || y >= 96) {
+		if (!isLocalTile(x, y)) {
 			return;
 		}
 		tileDirection[x][y] = (byte) dir;
@@ -1208,7 +1271,7 @@ public final class World {
 			int zTile = z >> 7;
 			int xLerp = 127 & x;
 			int zLerp = 127 & z;
-			if (xTile >= 0 && zTile >= 0 && xTile < 95 && zTile < 95) {
+			if (isLocalFaceTile(xTile, zTile)) {
 				int tileCorner;
 				int dEX;
 				int dEZ;
@@ -1235,20 +1298,9 @@ public final class World {
 	private int getTerrainColour(int tileX, int tileZ) {
 		try {
 
-			if (tileX >= 0 && tileX < 96 && tileZ >= 0 && tileZ < 96) {
-				byte chunk = 0;
-				if (tileX >= 48 && tileZ < 48) {
-					tileX -= 48;
-					chunk = 1;
-				} else if (tileX < 48 && tileZ >= 48) {
-					chunk = 2;
-					tileZ -= 48;
-				} else if (tileX >= 48 && tileZ >= 48) {
-					tileX -= 48;
-					chunk = 3;
-					tileZ -= 48;
-				}
-				return sectors[chunk].getTile(tileX, tileZ).groundTexture & 0xff;
+			Sector sector = sectorForLocalTile(tileX, tileZ);
+			if (sector != null) {
+				return sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundTexture & 0xff;
 			} else
 				return 0;
 		} catch (RuntimeException var5) {
@@ -1277,20 +1329,9 @@ public final class World {
 	private int getTileDecorationID(int xTile, int zTile, int plane) {
 		try {
 
-			if (xTile >= 0 && xTile < 96 && zTile >= 0 && zTile < 96) {
-				byte chunk = 0;
-				if (xTile >= 48 && zTile < 48) {
-					xTile -= 48;
-					chunk = 1;
-				} else if (xTile < 48 && zTile >= 48) {
-					zTile -= 48;
-					chunk = 2;
-				} else if (xTile >= 48 && zTile >= 48) {
-					zTile -= 48;
-					xTile -= 48;
-					chunk = 3;
-				}
-				return sectors[chunk].getTile(xTile, zTile).groundOverlay & 0xFF;
+			Sector sector = sectorForLocalTile(xTile, zTile);
+			if (sector != null) {
+				return sector.getTile(tileInSector(xTile), tileInSector(zTile)).groundOverlay & 0xFF;
 				// like this while adding stuff, objects etc.
 				// return 255 & this.tileDecoration[chunk][xTile * 48 + zTile];
 			} else
@@ -1303,7 +1344,7 @@ public final class World {
 	private int getTileDirection(int xTile, int zTile) {
 		try {
 
-			if (xTile >= 0 && xTile < 96 && zTile >= 0 && zTile < 96) {
+			if (isLocalTile(xTile, zTile)) {
 				return this.tileDirection[xTile][zTile];
 			} else
 				return 0;
@@ -1315,20 +1356,9 @@ public final class World {
 	private int getTileElevation(int xTile, int zTile) {
 		try {
 
-			if (xTile >= 0 && xTile < 96 && zTile >= 0 && zTile < 96) {
-				byte region = 0;
-				if (xTile >= 48 && zTile < 48) {
-					region = 1;
-					xTile -= 48;
-				} else if (xTile < 48 && zTile >= 48) {
-					zTile -= 48;
-					region = 2;
-				} else if (xTile >= 48 && zTile >= 48) {
-					region = 3;
-					zTile -= 48;
-					xTile -= 48;
-				}
-				return (sectors[region].getTile(xTile, zTile).groundElevation & 0xff) * 3;
+			Sector sector = sectorForLocalTile(xTile, zTile);
+			if (sector != null) {
+				return (sector.getTile(tileInSector(xTile), tileInSector(zTile)).groundElevation & 0xff) * 3;
 				// return (255 & this.elevation[region][xTile * 48 + zTile]) *
 				// 3;
 			} else
@@ -1341,21 +1371,9 @@ public final class World {
 	private int getWallDiagonal(int tileX, int tileZ) {
 		try {
 
-			if (tileX >= 0 && tileX < 96 && tileZ >= 0 && tileZ < 96) {
-				byte chunk = 0;
-				if (tileX >= 48 && tileZ < 48) {
-					tileX -= 48;
-					chunk = 1;
-				} else if (tileX < 48 && tileZ >= 48) {
-					chunk = 2;
-					tileZ -= 48;
-				} else if (tileX >= 48 && tileZ >= 48) {
-					tileZ -= 48;
-					chunk = 3;
-					tileX -= 48;
-				}
-
-				return sectors[chunk].getTile(tileX, tileZ).diagonalWalls;
+			Sector sector = sectorForLocalTile(tileX, tileZ);
+			if (sector != null) {
+				return sector.getTile(tileInSector(tileX), tileInSector(tileZ)).diagonalWalls;
 				// here.
 			} else
 				return 0;
@@ -1367,20 +1385,9 @@ public final class World {
 	private int getVerticalWall(int tileX, int tileZ) {
 		try {
 
-			if (tileX >= 0 && tileX < 96 && tileZ >= 0 && tileZ < 96) {
-				byte chunk = 0;
-				if (tileX >= 48 && tileZ < 48) {
-					tileX -= 48;
-					chunk = 1;
-				} else if (tileX < 48 && tileZ >= 48) {
-					tileZ -= 48;
-					chunk = 2;
-				} else if (tileX >= 48 && tileZ >= 48) {
-					tileZ -= 48;
-					tileX -= 48;
-					chunk = 3;
-				}
-				return sectors[chunk].getTile(tileX, tileZ).verticalWall & 0xff;
+			Sector sector = sectorForLocalTile(tileX, tileZ);
+			if (sector != null) {
+				return sector.getTile(tileInSector(tileX), tileInSector(tileZ)).verticalWall & 0xff;
 			} else
 				return 0;
 		} catch (RuntimeException var6) {
@@ -1391,20 +1398,9 @@ public final class World {
 	private int getHorizontalWall(int xTile, int zTile) {
 		try {
 
-			if (xTile >= 0 && xTile < 96 && zTile >= 0 && zTile < 96) {
-				byte chunk = 0;
-				if (xTile >= 48 && zTile < 48) {
-					xTile -= 48;
-					chunk = 1;
-				} else if (xTile < 48 && zTile >= 48) {
-					chunk = 2;
-					zTile -= 48;
-				} else if (xTile >= 48 && zTile >= 48) {
-					zTile -= 48;
-					xTile -= 48;
-					chunk = 3;
-				}
-				return sectors[chunk].getTile(xTile, zTile).horizontalWall & 0xFF;
+			Sector sector = sectorForLocalTile(xTile, zTile);
+			if (sector != null) {
+				return sector.getTile(tileInSector(xTile), tileInSector(zTile)).horizontalWall & 0xFF;
 			} else
 				return 0;
 		} catch (RuntimeException var6) {
@@ -1415,20 +1411,9 @@ public final class World {
 	private int getWallRoof(int tileX, int tileZ) {
 		try {
 
-			if (tileX >= 0 && tileX < 96 && tileZ >= 0 && tileZ < 96) {
-				byte chunk = 0;
-				if (tileX >= 48 && tileZ < 48) {
-					chunk = 1;
-					tileX -= 48;
-				} else if (tileX < 48 && tileZ >= 48) {
-					chunk = 2;
-					tileZ -= 48;
-				} else if (tileX >= 48 && tileZ >= 48) {
-					chunk = 3;
-					tileX -= 48;
-					tileZ -= 48;
-				}
-				return sectors[chunk].getTile(tileX, tileZ).roofTexture;
+			Sector sector = sectorForLocalTile(tileX, tileZ);
+			if (sector != null) {
+				return sector.getTile(tileInSector(tileX), tileInSector(tileZ)).roofTexture;
 				// return this.wallsRoof[chunk][tileZ + tileX * 48];
 			} else
 				return 0;
@@ -1512,17 +1497,14 @@ public final class World {
 		try {
 			this.resetModels();
 
-			int x = (24 + worldX) / 48;
+			int x = worldTileToSection(worldX);
 
 			this.generateLandscapeModel(worldX, 122, true, plane, worldZ);
-			int z = (24 + worldZ) / 48;
+			int z = worldTileToSection(worldZ);
 			if (plane == 0) {
 				this.generateLandscapeModel(worldX, 112, false, 1, worldZ);
 				this.generateLandscapeModel(worldX, 69, false, 2, worldZ);
-				this.loadSection(0, plane, x - 1, z - 1);
-				this.loadSection(1, plane, x, z - 1);
-				this.loadSection(2, plane, x - 1, z);
-				this.loadSection(3, plane, x, z);
+				this.loadSectionWindow(sectors, plane, x, z);
 				this.setTileDecorationOnBridge();
 			}
 			this.preloadSections(worldX, worldZ, plane);
@@ -1533,8 +1515,8 @@ public final class World {
 	}
 
 	public void preloadSections(int worldX, int worldZ, int plane) {
-		int sectionX = (24 + worldX) / 48;
-		int sectionY = (24 + worldZ) / 48;
+		int sectionX = worldTileToSection(worldX);
+		int sectionY = worldTileToSection(worldZ);
 		preloadSectionWindow(plane, sectionX, sectionY);
 		if (plane == 0) {
 			preloadSectionWindow(1, sectionX, sectionY);
@@ -1576,7 +1558,7 @@ public final class World {
 	public final void removeGameObject_CollisonFlags(int id, int x, int z) {
 		try {
 
-			if (x >= 0 && z >= 0 && x < 95 && z < 95)
+			if (isLocalFaceTile(x, z))
 				if (Objects.requireNonNull(EntityHandler.getObjectDef(id)).getType() == 1 || Objects.requireNonNull(EntityHandler.getObjectDef(id)).getType() == 2) {
 					int var5 = this.getTileDirection((int) x, z);
 					int var6;
@@ -1609,13 +1591,13 @@ public final class World {
 									} else {
 										this.collisionFlags[var8][var9] = FastMath
 											.bitwiseAnd(this.collisionFlags[var8][var9], ~CollisionFlag.WALL_WEST);
-										if (var8 < 95)
+										if (var8 < LOCAL_FACE_TILE_COUNT)
 											this.collisionFlagModify(1 + var8, var9, 0xFFFF, CollisionFlag.WALL_EAST);
 									}
 								} else {
 									this.collisionFlags[var8][var9] = FastMath
 										.bitwiseAnd(this.collisionFlags[var8][var9], ~CollisionFlag.WALL_SOUTH);
-									if (var9 < 95)
+									if (var9 < LOCAL_FACE_TILE_COUNT)
 										this.collisionFlagModify(var8, var9 + 1, 0xFFFF, CollisionFlag.WALL_NORTH);
 								}
 							} else
@@ -1632,7 +1614,7 @@ public final class World {
 	public final void removeWallObject_CollisionFlags(boolean var1, int dir, int z, int x, int id) {
 		try {
 
-			if (x >= 0 && z >= 0 && x < 95 && z < 95)
+			if (isLocalFaceTile(x, z))
 				if (Objects.requireNonNull(EntityHandler.getDoorDef(id)).getDoorType() == 1) {
 					if (dir == 0) {
 						this.collisionFlags[x][z] = FastMath.bitwiseAnd(this.collisionFlags[x][z],
@@ -1665,7 +1647,7 @@ public final class World {
 				this.scene.removeAllGameObjects(false);
 
 
-			for (int j = 0; j < 64; ++j) {
+			for (int j = 0; j < MODEL_GRID_COUNT; ++j) {
 				this.modelLandscapeGrid[j] = null;
 
 				int i;
@@ -1683,20 +1665,9 @@ public final class World {
 	private void setTileDecoration(int xTile, int zTile, int val) {
 		try {
 
-			if (xTile >= 0 && xTile < 96 && zTile >= 0 && zTile < 96) {
-				byte chunk = 0;
-				if (xTile >= 48 && zTile < 48) {
-					chunk = 1;
-					xTile -= 48;
-				} else if (xTile < 48 && zTile >= 48) {
-					chunk = 2;
-					zTile -= 48;
-				} else if (xTile >= 48 && zTile >= 48) {
-					xTile -= 48;
-					zTile -= 48;
-					chunk = 3;
-				}
-				sectors[chunk].getTile(xTile, zTile).groundOverlay = (byte) val;
+			Sector sector = sectorForLocalTile(xTile, zTile);
+			if (sector != null) {
+				sector.getTile(tileInSector(xTile), tileInSector(zTile)).groundOverlay = (byte) val;
 				// this.tileDecoration[chunk][zTile + xTile * 48] = (byte) val;
 			}
 		} catch (RuntimeException var6) {
@@ -1708,13 +1679,13 @@ public final class World {
 		try {
 
 
-			for (int x = 0; x < 96; ++x)
-				for (int z = 0; z < 96; ++z)
+			for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
+				for (int z = 0; z < LOCAL_TILE_COUNT; ++z)
 					if (this.getTileDecorationID((int) x, z, 0) == 250)
-						if (x == 47 && this.getTileDecorationID((int) (x + 1), z, 0) != 250
+						if (x % SECTION_SIZE == SECTION_SIZE - 1 && this.getTileDecorationID((int) (x + 1), z, 0) != 250
 							&& this.getTileDecorationID((int) (1 + x), z, 0) != 2)
 							this.setTileDecoration(x, z, 9);
-						else if (z == 47 && this.getTileDecorationID((int) x, z + 1, 0) != 250
+						else if (z % SECTION_SIZE == SECTION_SIZE - 1 && this.getTileDecorationID((int) x, z + 1, 0) != 250
 							&& this.getTileDecorationID((int) x, 1 + z, 0) != 2)
 							this.setTileDecoration(x, z, 9);
 						else
@@ -1728,7 +1699,7 @@ public final class World {
 	private void setVertexLightArea(int tileX, int tileZ, int width, int height) {
 		try {
 
-			if (tileX >= 1 && tileZ >= 1 && width + tileX < 96 && height + tileZ < 96)
+			if (tileX >= 1 && tileZ >= 1 && width + tileX < LOCAL_TILE_COUNT && height + tileZ < LOCAL_TILE_COUNT)
 				for (int x = tileX; x <= width + tileX; ++x)
 					for (int z = tileZ; tileZ + height >= z; ++z) {
 						final int flag00 = CollisionFlag.FULL_BLOCK_C | CollisionFlag.FULL_BLOCK_B
@@ -1757,10 +1728,10 @@ public final class World {
 	private void setVertexLightOther(int x, int z, int light) {
 		try {
 
-			int chunkX = x / 12;
-			int chunkZ = z / 12;
-			int chunkXM1 = (x - 1) / 12;
-			int chunkZM1 = (z - 1) / 12;
+			int chunkX = x / MODEL_GRID_TILE_SIZE;
+			int chunkZ = z / MODEL_GRID_TILE_SIZE;
+			int chunkXM1 = (x - 1) / MODEL_GRID_TILE_SIZE;
+			int chunkZM1 = (z - 1) / MODEL_GRID_TILE_SIZE;
 
 			this.setVertexLightOther((int) chunkX, chunkZ, x, z, (int) light);
 			if (chunkX != chunkXM1)
@@ -1777,7 +1748,13 @@ public final class World {
 	private void setVertexLightOther(int chunkX, int chunkZ, int tileX, int tileZ, int light) {
 		try {
 
-			RSModel m = this.modelLandscapeGrid[chunkX + chunkZ * 8];
+			if (chunkX < 0 || chunkZ < 0 || chunkX >= MODEL_GRID_AXIS || chunkZ >= MODEL_GRID_AXIS) {
+				return;
+			}
+			RSModel m = this.modelLandscapeGrid[chunkX + chunkZ * MODEL_GRID_AXIS];
+			if (m == null) {
+				return;
+			}
 
 			for (int id = 0; m.vertHead > id; ++id)
 				if (m.vertX[id] == tileX * 128 && tileZ * 128 == m.vertZ[id]) {
@@ -1800,8 +1777,8 @@ public final class World {
 	public void generateWorldMap() {
 		int plane = 0;
 
-		int chunkX = (24 + mapPointX) / 48;
-		int chunkZ = (24 + mapPointZ) / 48;
+		int chunkX = worldTileToSection(mapPointX);
+		int chunkZ = worldTileToSection(mapPointZ);
 
 		this.loadWorldmapSection(0, plane, chunkX - 1, chunkZ - 1);
 		this.loadWorldmapSection(1, plane, chunkX, chunkZ - 1);
@@ -1809,8 +1786,8 @@ public final class World {
 		this.loadWorldmapSection(3, plane, chunkX, chunkZ);
 
 		//this.minimapGraphics.blackScreen(true);
-		for (int x = 0; x < 95; ++x) {
-			for (int z = 0; z < 95; ++z) {
+		for (int x = 0; x < LEGACY_MINIMAP_FACE_TILE_COUNT; ++x) {
+			for (int z = 0; z < LEGACY_MINIMAP_FACE_TILE_COUNT; ++z) {
 				int colorResource = this.colorToResource[this.getTerrainColour(x, z)];
 				int res01 = colorResource;
 				int defaultVal = colorResource;
@@ -1885,8 +1862,8 @@ public final class World {
 				this.drawMinimapTile(x, (int) z, bridge00_11, res01, colorResource);
 			}
 		}
-		for (int x = 1; x < 95; ++x) {
-			for (int z = 1; z < 95; ++z) {
+		for (int x = 1; x < LEGACY_MINIMAP_FACE_TILE_COUNT; ++x) {
+			for (int z = 1; z < LEGACY_MINIMAP_FACE_TILE_COUNT; ++z) {
 				if (this.getTileDecorationID((int) x, z, plane) > 0 && Objects.requireNonNull(EntityHandler
 					.getTileDef(this.getTileDecorationID((int) x, z, plane) - 1)).getTileValue() == 4) {
 					int tileDecor = Objects.requireNonNull(EntityHandler.getTileDef(this.getTileDecorationID(x, z, plane) - 1)).getColour();
@@ -1925,8 +1902,8 @@ public final class World {
 		}
 
 		final int wallColor = 6316128;
-		for (int x = 0; x < 95; ++x)
-			for (int z = 0; z < 95; ++z) {
+		for (int x = 0; x < LEGACY_MINIMAP_FACE_TILE_COUNT; ++x)
+			for (int z = 0; z < LEGACY_MINIMAP_FACE_TILE_COUNT; ++z) {
 
 				int wall = this.getVerticalWall(x, z);
 				if (wall > 0 && (Objects.requireNonNull(EntityHandler.getDoorDef(wall - 1)).getUnknown() == 0 || this.showInvisibleWalls)) {
@@ -1951,7 +1928,8 @@ public final class World {
 					this.minimapGraphics.setPixel(x * 3, 2 + z * 3, wallColor);
 				}
 			}
-		this.minimapGraphics.copyPixelDataToSurface(GraphicsController.SPRITE_LAYER.WORLDMAP, 0, 0, 285, 285);
+		this.minimapGraphics.copyPixelDataToSurface(GraphicsController.SPRITE_LAYER.WORLDMAP, 0, 0,
+			MINIMAP_PIXEL_SIZE, MINIMAP_PIXEL_SIZE);
 	}
 
 	private void loadWorldmapSection(int sector, int height, int sectionX, int sectionY) {

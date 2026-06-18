@@ -21,7 +21,7 @@ def main() -> None:
     require("private boolean hasLoadedTerrainForWallObject(int x, int y, int dir)" in client,
             "Client should check wall endpoints before drawing boundary models")
     require("private boolean hasLoadedTerrainForWorldPoint(int xWorld, int zWorld)" in client
-            and "xTile < 95 && zTile < 95" in client,
+            and "return World.isLocalFaceTile(xTile, zTile);" in client,
             "Terrain checks should match the elevation interpolation window")
     require("if (hasLoadedTerrainForWallObject(x, y, dir)) {\n\t\t\tthis.scene.addModel(model);\n\t\t}" in client,
             "Boundary models should only be added to the scene when terrain exists below them")

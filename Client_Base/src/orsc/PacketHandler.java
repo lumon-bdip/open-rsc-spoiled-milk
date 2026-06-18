@@ -30,6 +30,11 @@ import java.util.Properties;
 import static orsc.Config.isAndroid;
 
 public class PacketHandler {
+	private static final int CUSTOM_MOB_COORD_OFFSET_BITS = 8;
+	private static final int CUSTOM_MOB_COORD_OFFSET_SIGN = 1 << (CUSTOM_MOB_COORD_OFFSET_BITS - 1);
+	private static final int CUSTOM_MOB_COORD_OFFSET_WRAP = 1 << CUSTOM_MOB_COORD_OFFSET_BITS;
+	private static final int PLAYER_COORD_ADD_ENTRY_BITS = 11 + CUSTOM_MOB_COORD_OFFSET_BITS + CUSTOM_MOB_COORD_OFFSET_BITS + 4;
+	private static final int NPC_COORD_ADD_ENTRY_BITS = 12 + CUSTOM_MOB_COORD_OFFSET_BITS + CUSTOM_MOB_COORD_OFFSET_BITS + 4 + 10;
 
 	private final RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(30000);
 	private Network_Socket clientStream;
@@ -44,6 +49,14 @@ public class PacketHandler {
 	}
 
 	private void logThrownAmmoAmount(String source, int slot, int itemId, boolean noted, int amount) {
+	}
+
+	private int readCustomMobCoordOffset() {
+		int offset = packetsIncoming.getBitMask(CUSTOM_MOB_COORD_OFFSET_BITS);
+		if (offset >= CUSTOM_MOB_COORD_OFFSET_SIGN) {
+			offset -= CUSTOM_MOB_COORD_OFFSET_WRAP;
+		}
+		return offset;
 	}
 
 	private static final Map<Integer, String> incomingOpcodeMap = new HashMap<Integer, String>() {{
@@ -1504,17 +1517,10 @@ public class PacketHandler {
 			mc.setPlayerCount(mc.getPlayerCount() + 1);
 		}
 
-		while (length * 8 > packetsIncoming.getBitHead() + 24) {
+		while (length * 8 >= packetsIncoming.getBitHead() + PLAYER_COORD_ADD_ENTRY_BITS) {
 			int var9 = packetsIncoming.getBitMask(11);
-			int var10 = packetsIncoming.getBitMask(6);
-			if (var10 > 31) {
-				var10 -= 64;
-			}
-
-			int var11 = packetsIncoming.getBitMask(6);
-			if (var11 > 31) {
-				var11 -= 64;
-			}
+			int var10 = readCustomMobCoordOffset();
+			int var11 = readCustomMobCoordOffset();
 
 			direction = packetsIncoming.getBitMask(4);
 			currentZ = (mc.getLocalPlayerZ() + var11) * tileSize + 64;
@@ -1997,16 +2003,10 @@ public class PacketHandler {
 			mc.setNpcCount(mc.getNpcCount() + 1);
 		}
 
-		while (length * 8 > packetsIncoming.getBitHead() + 34) {
+		while (length * 8 >= packetsIncoming.getBitHead() + NPC_COORD_ADD_ENTRY_BITS) {
 			i = packetsIncoming.getBitMask(12);
-			int var6 = packetsIncoming.getBitMask(6);
-			if (var6 > 31) {
-				var6 -= 64;
-			}
-			int var7 = packetsIncoming.getBitMask(6);
-			if (var7 > 31) {
-				var7 -= 64;
-			}
+			int var6 = readCustomMobCoordOffset();
+			int var7 = readCustomMobCoordOffset();
 			var12 = packetsIncoming.getBitMask(4);
 			rsDir = (var6 + mc.getLocalPlayerX()) * tileSize + 64;
 			waypointCurrentIndex = (var7 + mc.getLocalPlayerZ()) * tileSize + 64;

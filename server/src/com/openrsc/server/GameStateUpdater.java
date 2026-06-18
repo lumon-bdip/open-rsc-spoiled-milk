@@ -37,6 +37,9 @@ import static com.openrsc.server.net.rsc.ActionSender.isRetroClient;
 import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacket;
 
 public final class GameStateUpdater {
+	private static final int CUSTOM_MOB_COORD_OFFSET_BITS = 8;
+	private static final int CUSTOM_CLIENT_REGION_REFRESH_RADIUS = 80;
+
 	/**
 	 * The asynchronous logger.
 	 */
@@ -231,7 +234,7 @@ public final class GameStateUpdater {
 	private static int mobCoordOffset(final int coord, final int referenceCoord) {
 		int offset = coord - referenceCoord;
 		if (offset < 0) {
-			offset += 64;
+			offset += 1 << CUSTOM_MOB_COORD_OFFSET_BITS;
 		}
 		return offset;
 	}
@@ -378,13 +381,13 @@ public final class GameStateUpdater {
 					break;
 				}
 
-				final byte[] offsets = DataConversions.getMobPositionOffsets(newNPC.getLocation(), playerToUpdate.getLocation());
 				boolean forClient115 = playerToUpdate.isUsing115CompatibleClient();
 				boolean forClient140 = playerToUpdate.isUsing140CompatibleClient();
-				mobsUpdate.add(bit(safeNPCIndex(playerToUpdate, newNPC.getIndex()), forClient115 || forClient140 ? 11 : 12));
 				boolean forAuthentic = !playerToUpdate.isUsingCustomClient();
-				mobsUpdate.add(bit((int) offsets[0], forAuthentic ? 5 : 6));
-				mobsUpdate.add(bit((int) offsets[1], forAuthentic ? 5 : 6));
+				int offsetBits = forAuthentic ? 5 : CUSTOM_MOB_COORD_OFFSET_BITS;
+				mobsUpdate.add(bit(safeNPCIndex(playerToUpdate, newNPC.getIndex()), forClient115 || forClient140 ? 11 : 12));
+				mobsUpdate.add(bit(mobCoordOffset(newNPC.getX(), playerToUpdate.getX()), offsetBits));
+				mobsUpdate.add(bit(mobCoordOffset(newNPC.getY(), playerToUpdate.getY()), offsetBits));
 				mobsUpdate.add(bit(newNPC.getSprite(), 4));
 				int numBits = forClient115 ? 8 : (forClient140 ? 9 : 10);
 				mobsUpdate.add(bit(newNPC.getID(), numBits));
@@ -412,7 +415,10 @@ public final class GameStateUpdater {
 
 		Point midRegion = playerToUpdate.getAttribute("midpointRegion");
 		if (midRegion != null) {
-			if (!playerToUpdate.getLocation().inBounds(midRegion.getX() - 32, midRegion.getY() - 32, midRegion.getX() + 32, midRegion.getY() + 32)) {
+			int regionRefreshRadius = playerToUpdate.isUsingCustomClient() ? CUSTOM_CLIENT_REGION_REFRESH_RADIUS : 32;
+			if (!playerToUpdate.getLocation().inBounds(midRegion.getX() - regionRefreshRadius,
+				midRegion.getY() - regionRefreshRadius, midRegion.getX() + regionRefreshRadius,
+				midRegion.getY() + regionRefreshRadius)) {
 				playerToUpdate.setNextRegionLoad();
 				playerToUpdate.changeZone();
 			}
@@ -503,6 +509,7 @@ public final class GameStateUpdater {
 			final int visiblePlayerCount = visiblePlayers.size();
 			List<Map.Entry<Integer, Integer>> mobsUpdate = new ArrayList<>(4 + (localPlayerCount * 3) + (Math.min(255, visiblePlayerCount) * 5));
 			final boolean forAuthentic = !playerToUpdate.isUsingCustomClient();
+			final int offsetBits = forAuthentic ? 5 : CUSTOM_MOB_COORD_OFFSET_BITS;
 
 			if (playerToUpdate.isUsing140CompatibleClient() || playerToUpdate.isUsing115CompatibleClient() || playerToUpdate.isUsing69CompatibleClient()) {
 				mobsUpdate.add(bit(playerToUpdate.getX(), 10));
@@ -553,8 +560,8 @@ public final class GameStateUpdater {
 					}
 
 					mobsUpdate.add(bit(otherPlayer.getIndex(), 11));
-					mobsUpdate.add(bit(mobCoordOffset(otherPlayer.getX(), playerToUpdate.getX()), forAuthentic ? 5 : 6));
-					mobsUpdate.add(bit(mobCoordOffset(otherPlayer.getY(), playerToUpdate.getY()), forAuthentic ? 5 : 6));
+					mobsUpdate.add(bit(mobCoordOffset(otherPlayer.getX(), playerToUpdate.getX()), offsetBits));
+					mobsUpdate.add(bit(mobCoordOffset(otherPlayer.getY(), playerToUpdate.getY()), offsetBits));
 					mobsUpdate.add(bit(otherPlayer.getSprite(), 4));
 					if (usesKnownPlayers) {
 						mobsUpdate.add(bit(playerToUpdate.isKnownPlayer(otherPlayer.getIndex()) ? 1 : 0, 1));
@@ -1335,6 +1342,9 @@ public final class GameStateUpdater {
 
 			final int offsetX = newObject.getX() - playerToUpdate.getX();
 			final int offsetY = newObject.getY() - playerToUpdate.getY();
+			if (!isSignedByteOffset(offsetX, offsetY)) {
+				continue;
+			}
 
 			final int newObjectId = retroRockConverter(playerToUpdate, newObject.getLoc());
 
@@ -1392,6 +1402,9 @@ public final class GameStateUpdater {
 			}
 			final int offsetX = groundItem.getX() - playerToUpdate.getX();
 			final int offsetY = groundItem.getY() - playerToUpdate.getY();
+			if (!isSignedByteOffset(offsetX, offsetY)) {
+				continue;
+			}
 			itemLocs.add(new ItemLoc(groundItem.getID(), offsetX, offsetY, groundItem.getAmount(), 0,
 				groundItem.getNoted() && getServer().getConfig().WANT_BANK_NOTES ? 1 : 0));
 			playerToUpdate.getLocalGroundItems().add(groundItem);
@@ -1473,6 +1486,9 @@ public final class GameStateUpdater {
 
 			final int offsetX = newObject.getX() - playerToUpdate.getX();
 			final int offsetY = newObject.getY() - playerToUpdate.getY();
+			if (!isSignedByteOffset(offsetX, offsetY)) {
+				continue;
+			}
 			objectLocs.add(new GameObjectLoc(newObject.getID(), offsetX, offsetY, newObject.getDirection(), 1));
 			playerToUpdate.getLocalWallObjects().add(newObject);
 			changed = true;

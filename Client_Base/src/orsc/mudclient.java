@@ -73,6 +73,9 @@ public final class mudclient implements Runnable {
 	private static final int[][] NPC_OVERLAP_PATTERN_4 = {{-1, -1}, {1, -1}, {-1, 1}, {1, 1}};
 	private static final String DEVELOPMENT_ASSET_ROOT = "dev/myworld/assets/";
 	private static final String EMBEDDED_ASSET_ROOT = "myworld-assets/";
+	private static final int SCENE_MODEL_CAPACITY = 25000;
+	private static final int SCENE_POLYGON_CAPACITY = 120000;
+	private static final int SCENE_PICK_MODEL_CAPACITY = 1000;
 
 	public static final int spriteMedia = 2000;
 	public static final int spriteUtil = 2100;
@@ -371,7 +374,7 @@ public final class mudclient implements Runnable {
 	private final int[] groundItemZ = new int[5000];
 	private final ArrayList<GroundItem> groundItems = new ArrayList<GroundItem>();
 	private final ArrayList<Integer> groundItemRenderOrder = new ArrayList<Integer>(5000);
-	private final int[] groundItemRenderCountByTile = new int[96 * 96];
+	private final int[] groundItemRenderCountByTile = new int[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT];
 	private final int[] groundItemRenderStackIndex = new int[5000];
 	private final Item[] inventory = new Item[S_PLAYER_INVENTORY_SLOTS];
 	private final ORSCharacter[] knownPlayers = new ORSCharacter[500];
@@ -387,8 +390,8 @@ public final class mudclient implements Runnable {
 	private final int[] npcVisualOffsetZ = new int[500];
 	private final ORSCharacter[] npcsCache = new ORSCharacter[500];
 	private final ORSCharacter[] npcsServer = new ORSCharacter[5000];
-	private final int[] pathX = new int[8000];
-	private final int[] pathZ = new int[8000];
+	private final int[] pathX = new int[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT];
+	private final int[] pathZ = new int[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT];
 	private final int[] playerClothingColors = new int[]{0xFF0000, 16744448, 16769024, 10543104, '\ue000', '\u8000',
 		'\ua080', '\ub0ff', '\u80ff', 12528, 14680288, 3158064, 6307840, 8409088, 0xFFFFFF};
 	private final int[] playerHairColors = new int[]{16760880, 16752704, 8409136, 6307872, 3158064, 16736288,
@@ -3037,7 +3040,7 @@ public final class mudclient implements Runnable {
 	private boolean hasLoadedTerrainForWorldPoint(int xWorld, int zWorld) {
 		int xTile = xWorld >> 7;
 		int zTile = zWorld >> 7;
-		return xTile >= 0 && zTile >= 0 && xTile < 95 && zTile < 95;
+		return World.isLocalFaceTile(xTile, zTile);
 	}
 
 	final void draw() {
@@ -5370,7 +5373,7 @@ public final class mudclient implements Runnable {
 				} else if (this.world.playerAlive) {
 
 					int centerX;
-					for (centerX = 0; centerX < 64; ++centerX) {
+					for (centerX = 0; centerX < this.world.modelRoofGrid[this.lastHeightOffset].length; ++centerX) {
 						this.scene.removeModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
 						if (this.lastHeightOffset == 0) {
 							this.scene.removeModel(this.world.modelWallGrid[1][centerX]);
@@ -5658,7 +5661,7 @@ public final class mudclient implements Runnable {
 						if (this.worldGlyphSprites[altarIndex] != null) {
 							int glyphTileX = ALTAR_TILES[altarIndex][0] - this.midRegionBaseX;
 							int glyphTileZ = ALTAR_TILES[altarIndex][1] - this.midRegionBaseZ;
-							if (glyphTileX >= 0 && glyphTileX < 96 && glyphTileZ >= 0 && glyphTileZ < 96) {
+							if (World.isLocalTile(glyphTileX, glyphTileZ)) {
 								int glyphWorldX = this.tileSize * glyphTileX + 128;
 								int glyphWorldZ = this.tileSize * glyphTileZ + 128;
 								int glyphWorldY = -this.world.getElevation(glyphWorldX, glyphWorldZ) - 120;
@@ -5672,7 +5675,7 @@ public final class mudclient implements Runnable {
 							for (int orbIndex = 0; orbIndex < ALTAR_OBELISK_TILES[altarIndex].length; orbIndex++) {
 								int orbTileX = ALTAR_OBELISK_TILES[altarIndex][orbIndex][0] - this.midRegionBaseX;
 								int orbTileZ = ALTAR_OBELISK_TILES[altarIndex][orbIndex][1] - this.midRegionBaseZ;
-								if (orbTileX >= 0 && orbTileX < 96 && orbTileZ >= 0 && orbTileZ < 96) {
+								if (World.isLocalTile(orbTileX, orbTileZ)) {
 									int orbWorldX = this.tileSize * orbTileX + 64;
 									int orbWorldZ = this.tileSize * orbTileZ + 64;
 									int orbWorldY = -this.world.getElevation(orbWorldX, orbWorldZ) - 280;
@@ -6783,10 +6786,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getGroundItemTileKey(int tileX, int tileZ) {
-		if (tileX < 0 || tileX >= 96 || tileZ < 0 || tileZ >= 96) {
+		if (!World.isLocalTile(tileX, tileZ)) {
 			return -1;
 		}
-		return tileZ * 96 + tileX;
+		return World.localTileKey(tileX, tileZ);
 	}
 
 	private boolean isSameGroundItemTile(int index, int tileX, int tileZ) {
@@ -8736,7 +8739,7 @@ public final class mudclient implements Runnable {
 			int var3 = this.scene.b(0);
 			RSModel[] var18 = this.scene.b((byte) 124);
 			int[] var19 = this.scene.getQB((byte) 104);
-			boolean[] groundItemMenuTileAdded = new boolean[96 * 96];
+			boolean[] groundItemMenuTileAdded = new boolean[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT];
 			if (var1 != 2) {
 				this.mouseClickCount = -82;
 			}
@@ -14487,7 +14490,7 @@ public final class mudclient implements Runnable {
 					for (updateIndex = 0; updateIndex < this.gameObjectInstanceCount; ++updateIndex) {
 						var10 = this.gameObjectInstanceX[updateIndex];
 						waypointIndexCurrent = this.gameObjectInstanceZ[updateIndex];
-						if (var10 >= 0 && waypointIndexCurrent >= 0 && var10 < 96 && waypointIndexCurrent < 96) {
+						if (World.isLocalTile(var10, waypointIndexCurrent)) {
 							if (this.gameObjectInstanceID[updateIndex] == 74)
 								this.gameObjectInstanceModel[updateIndex].addRotation(1, 0, 0);
 							else if (EntityHandler.getObjectDef(this.gameObjectInstanceID[updateIndex]).getObjectModel() == "portal")
@@ -16857,15 +16860,15 @@ public final class mudclient implements Runnable {
 						// 256, this.screenOffsetY);
 						clientPort.draw();
 					}
-					int midRegionX = (wantX + 24) / 48;
-					this.midRegionBaseX = midRegionX * 48 - 48;
-					int midRegionZ = (24 + wantZ) / 48;
+					int midRegionX = World.worldTileToSection(wantX);
+					this.midRegionBaseX = World.sectionToLocalBaseTile(midRegionX);
+					int midRegionZ = World.worldTileToSection(wantZ);
 					this.lastHeightOffset = this.requestedPlane;
-					this.currentRegionMaxZ = midRegionZ * 48 + 32;
-					this.currentRegionMaxX = midRegionX * 48 + 32;
-					this.currentRegionMinZ = midRegionZ * 48 - 32;
-					this.midRegionBaseZ = midRegionZ * 48 - 48;
-					this.currentRegionMinX = midRegionX * 48 - 32;
+					this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE + 32;
+					this.currentRegionMaxX = midRegionX * World.SECTION_SIZE + 32;
+					this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE - 32;
+					this.midRegionBaseZ = World.sectionToLocalBaseTile(midRegionZ);
+					this.currentRegionMinX = midRegionX * World.SECTION_SIZE - 32;
 					this.world.loadSections(wantX, wantZ, this.lastHeightOffset);
 					this.midRegionBaseZ -= this.worldOffsetZ;
 					this.midRegionBaseX -= this.worldOffsetX;
@@ -16900,7 +16903,7 @@ public final class mudclient implements Runnable {
 
 							int x = (2 * xTile + xSize) * this.tileSize / 2;
 							int z = this.tileSize * (2 * zTile + zSize) / 2;
-							if (xTile >= 0 && zTile >= 0 && xTile < 96 && zTile < 96) {
+							if (World.isLocalTile(xTile, zTile)) {
 								this.scene.addModel(model);
 								model.setTranslate(x, -this.world.getElevation(x, z), z);
 								this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, var3);
@@ -16942,7 +16945,7 @@ public final class mudclient implements Runnable {
 						for (int i = 0; this.groundItemCount > i; ++i) {
 							int shiftedX = this.groundItemX[i] - baseDX;
 							int shiftedZ = this.groundItemZ[i] - baseDZ;
-							if (shiftedX < 0 || shiftedZ < 0 || shiftedX >= 96 || shiftedZ >= 96) {
+							if (!World.isLocalTile(shiftedX, shiftedZ)) {
 								continue;
 							}
 							this.groundItemX[newGroundItemCount] = shiftedX;
@@ -19817,7 +19820,8 @@ public final class mudclient implements Runnable {
 		byte sector_h = 0; // sector h
 		byte sector_x = 50; // sector x
 		byte sector_y = 50; // sector y    (h0x50y50 - Lumbridge sector) (h0x50y39 - deep wilderness sector)
-		this.world.loadSections(sector_x * 48 + 23, (sector_y * 48 + 23), sector_h);
+		this.world.loadSections(sector_x * World.SECTION_SIZE + World.SECTION_SIZE / 2 - 1,
+			sector_y * World.SECTION_SIZE + World.SECTION_SIZE / 2 - 1, sector_h);
 		this.world.addLoginScreenModels(this.modelCache);
 		this.worldComponentsLoaded = true;
 	}
@@ -19900,7 +19904,7 @@ public final class mudclient implements Runnable {
 			slide_x = 11136;
 			slide_y = 10368;
 
-			for (var9 = 0; var9 < 64; ++var9) {
+			for (var9 = 0; var9 < this.world.modelRoofGrid[0].length; ++var9) {
 				this.scene.removeModel(this.world.modelRoofGrid[0][var9]);
 				this.scene.removeModel(this.world.modelWallGrid[1][var9]);
 				this.scene.removeModel(this.world.modelRoofGrid[1][var9]);
@@ -22599,7 +22603,8 @@ public final class mudclient implements Runnable {
 					if (!this.errorLoadingData) {
 						this.loadEntitiesAuthentic();
 						if (!this.errorLoadingData) {
-							this.scene = new Scene(this.getSurface(), 25000, 50000, 1000);
+							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
+								SCENE_PICK_MODEL_CAPACITY);
 							this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(),
 								this.halfGameWidth(), this.halfGameHeight(), this.m_qd,
 								this.halfGameWidth());
@@ -22640,7 +22645,8 @@ public final class mudclient implements Runnable {
 					if (!this.errorLoadingData) {
 						this.loadSprites();
 						if (!this.errorLoadingData) {
-							this.scene = new Scene(this.getSurface(), 25000, 50000, 1000);
+							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
+								SCENE_PICK_MODEL_CAPACITY);
 							this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(),
 								this.halfGameWidth(), this.halfGameHeight(), this.m_qd,
 								this.halfGameWidth());
@@ -22924,7 +22930,7 @@ public final class mudclient implements Runnable {
 			int pixX = tileX - this.localPlayer.currentX / 128;
 			int pixZ = tileZ - this.localPlayer.currentZ / 128;
 			if (var1 > 2) {
-				if (tileX >= 0 && tileZ >= 0 && tileX < 96 && tileZ < 96
+				if (World.isLocalTile(tileX, tileZ)
 					&& pixX > -OBJECT_ANIMATION_TILE_RADIUS && pixX < OBJECT_ANIMATION_TILE_RADIUS
 					&& pixZ > -OBJECT_ANIMATION_TILE_RADIUS && pixZ < OBJECT_ANIMATION_TILE_RADIUS) {
 					this.scene.removeModel(this.gameObjectInstanceModel[instanceNumber]);

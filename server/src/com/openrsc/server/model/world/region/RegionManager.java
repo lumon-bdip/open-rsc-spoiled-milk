@@ -10,11 +10,9 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RegionManager {
@@ -135,36 +133,15 @@ public class RegionManager {
 		// View distance is in multiples of 8
 		final int viewDistance = gridDistance << 3;
 
-		final int regionX = location.getX() / Constants.REGION_SIZE;
-		final int regionY = location.getY() / Constants.REGION_SIZE;
-
-		final int offsetX = location.getX() % Constants.REGION_SIZE;
-		final int offsetY = location.getY() % Constants.REGION_SIZE;
-
-		List<Integer> xMod = new ArrayList<>(2);
-		List<Integer> yMod = new ArrayList<>(2);
-		xMod.add(0);
-		yMod.add(0);
-
 		final LinkedHashSet<Region> visible = new LinkedHashSet<>();
-		if(offsetX <= viewDistance) {
-			xMod.add(-1);
-		} else if(Constants.REGION_SIZE - offsetX <= viewDistance) {
-			xMod.add(1);
-		}
+		final int minRegionX = Math.floorDiv(location.getX() - viewDistance, Constants.REGION_SIZE);
+		final int maxRegionX = Math.floorDiv(location.getX() + viewDistance, Constants.REGION_SIZE);
+		final int minRegionY = Math.floorDiv(location.getY() - viewDistance, Constants.REGION_SIZE);
+		final int maxRegionY = Math.floorDiv(location.getY() + viewDistance, Constants.REGION_SIZE);
 
-		if(offsetY <= viewDistance) {
-			yMod.add(-1);
-		} else if(Constants.REGION_SIZE - offsetY <= viewDistance) {
-			yMod.add(1);
-		}
-
-		for(int x : xMod) {
-			for(int y : yMod) {
-				final Region tmpRegion = getRegionFromSectorCoordinates(
-						regionX + x,
-						regionY + y
-				);
+		for(int x = minRegionX; x <= maxRegionX; x++) {
+			for(int y = minRegionY; y <= maxRegionY; y++) {
+				final Region tmpRegion = getRegionFromSectorCoordinates(x, y);
 				if (tmpRegion != null) {
 					visible.add(tmpRegion);
 				}
