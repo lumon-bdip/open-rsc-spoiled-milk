@@ -1588,6 +1588,10 @@ public class PacketHandler {
 
 				mc.getWorld().registerObjectDir(xTile, zTile, dir);
 				if (id != 60000) {
+					if (!mc.hasGameObjectInstanceCapacity()) {
+						continue;
+					}
+					int instanceIndex = mc.getGameObjectInstanceCount();
 					int xSize, zSize;
 					if (dir == 0 || dir == 4) {
 						zSize = com.openrsc.client.entityhandling.EntityHandler.getObjectDef(id).getHeight();
@@ -1602,7 +1606,7 @@ public class PacketHandler {
 					int zWorld = (zTile * 2 + zSize) * tileSize / 2;
 					int modelIndex = com.openrsc.client.entityhandling.EntityHandler.getObjectDef(id).modelID;// CacheValues.gameObjectModelIndex[id];
 					RSModel m = mc.getModelCacheItem(modelIndex).clone();
-					m.key = mc.getGameObjectInstanceCount();
+					m.key = instanceIndex;
 					m.addRotation(0, dir * 32, 0);
 					m.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);
 					if (mc.hasLoadedTerrainForGameObject(xTile, zTile, id, dir)) {
@@ -1614,12 +1618,12 @@ public class PacketHandler {
 						}
 					}
 
-					mc.setGameObjectInstanceX(mc.getGameObjectInstanceCount(), xTile);
-					mc.setGameObjectInstanceZ(mc.getGameObjectInstanceCount(), zTile);
-					mc.setGameObjectInstanceID(mc.getGameObjectInstanceCount(), id);
-					mc.setGameObjectInstanceDir(mc.getGameObjectInstanceCount(), dir);
-					mc.setGameObjectInstanceModel(mc.getGameObjectInstanceCount(), m);
-					mc.setGameObjectInstanceCount(mc.getGameObjectInstanceCount() + 1);
+					mc.setGameObjectInstanceX(instanceIndex, xTile);
+					mc.setGameObjectInstanceZ(instanceIndex, zTile);
+					mc.setGameObjectInstanceID(instanceIndex, id);
+					mc.setGameObjectInstanceDir(instanceIndex, dir);
+					mc.setGameObjectInstanceModel(instanceIndex, m);
+					mc.setGameObjectInstanceCount(instanceIndex + 1);
 				}
 
 			} else {
@@ -1928,15 +1932,19 @@ public class PacketHandler {
 
 				mc.setWallObjectInstanceCount(localIndex);
 				if (id != 60000) {
+					if (!mc.hasWallObjectInstanceCapacity()) {
+						continue;
+					}
+					int instanceIndex = mc.getWallObjectInstanceCount();
 					mc.getWorld().applyWallToCollisionFlags(id, x, y, direction);
 					RSModel model = mc.createWallObjectModel(x, y, id, direction,
-						mc.getWallObjectInstanceCount());
-					mc.setWallObjectInstanceModel(mc.getWallObjectInstanceCount(), model);
-					mc.setWallObjectInstanceX(mc.getWallObjectInstanceCount(), x);
-					mc.setWallObjectInstanceZ(mc.getWallObjectInstanceCount(), y);
-					mc.setWallObjectInstanceID(mc.getWallObjectInstanceCount(), id);
-					mc.setWallObjectInstanceDir(mc.getWallObjectInstanceCount(), direction);
-					mc.setWallObjectInstanceCount(mc.getWallObjectInstanceCount() + 1);
+						instanceIndex);
+					mc.setWallObjectInstanceModel(instanceIndex, model);
+					mc.setWallObjectInstanceX(instanceIndex, x);
+					mc.setWallObjectInstanceZ(instanceIndex, y);
+					mc.setWallObjectInstanceID(instanceIndex, id);
+					mc.setWallObjectInstanceDir(instanceIndex, direction);
+					mc.setWallObjectInstanceCount(instanceIndex + 1);
 				}
 			}
 		}

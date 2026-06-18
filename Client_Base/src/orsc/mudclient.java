@@ -76,6 +76,9 @@ public final class mudclient implements Runnable {
 	private static final int SCENE_MODEL_CAPACITY = 25000;
 	private static final int SCENE_POLYGON_CAPACITY = 120000;
 	private static final int SCENE_PICK_MODEL_CAPACITY = 1000;
+	private static final int WALL_OBJECT_KEY_BASE = 20000;
+	private static final int GAME_OBJECT_INSTANCE_CAPACITY = WALL_OBJECT_KEY_BASE;
+	private static final int WALL_OBJECT_INSTANCE_CAPACITY = 5000;
 
 	public static final int spriteMedia = 2000;
 	public static final int spriteUtil = 2100;
@@ -363,11 +366,11 @@ public final class mudclient implements Runnable {
 	private final Item[] duelOpponent = new Item[8];
 	//private final int[] duelOpponentItemCount = new int[8];
 	private final Item[] duelOpponentConfirm = new Item[8];
-	private final boolean[] gameObjectInstance_Arg1 = new boolean[5000];
-	private final int[] gameObjectInstanceDir = new int[5000];
-	private final int[] gameObjectInstanceID = new int[5000];
-	private final RSModel[] gameObjectInstanceModel = new RSModel[5000];
-	private final int[] gameObjectInstanceX = new int[5000];
+	private final boolean[] gameObjectInstance_Arg1 = new boolean[GAME_OBJECT_INSTANCE_CAPACITY];
+	private final int[] gameObjectInstanceDir = new int[GAME_OBJECT_INSTANCE_CAPACITY];
+	private final int[] gameObjectInstanceID = new int[GAME_OBJECT_INSTANCE_CAPACITY];
+	private final RSModel[] gameObjectInstanceModel = new RSModel[GAME_OBJECT_INSTANCE_CAPACITY];
+	private final int[] gameObjectInstanceX = new int[GAME_OBJECT_INSTANCE_CAPACITY];
 	private static final int OBJECT_ANIMATION_TILE_RADIUS = 14;
 	private final int[] groundItemID = new int[5000];
 	private final int[] groundItemX = new int[5000];
@@ -472,12 +475,12 @@ public final class mudclient implements Runnable {
 	private final Item[] tradeRecipient = new Item[14];
 	//private final int[] tradeRecipientItem = new int[14];
 	//private final int[] tradeRecipientItemCount = new int[14];
-	private final boolean[] wallObjectInstance_Arg1 = new boolean[500];
-	private final int[] wallObjectInstanceDir = new int[500];
-	private final int[] wallObjectInstanceID = new int[500];
-	private final RSModel[] wallObjectInstanceModel = new RSModel[500];
-	private final int[] wallObjectInstanceX = new int[500];
-	private final int[] wallObjectInstanceZ = new int[500];
+	private final boolean[] wallObjectInstance_Arg1 = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
+	private final int[] wallObjectInstanceDir = new int[WALL_OBJECT_INSTANCE_CAPACITY];
+	private final int[] wallObjectInstanceID = new int[WALL_OBJECT_INSTANCE_CAPACITY];
+	private final RSModel[] wallObjectInstanceModel = new RSModel[WALL_OBJECT_INSTANCE_CAPACITY];
+	private final int[] wallObjectInstanceX = new int[WALL_OBJECT_INSTANCE_CAPACITY];
+	private final int[] wallObjectInstanceZ = new int[WALL_OBJECT_INSTANCE_CAPACITY];
 	//private final int[] inventoryItemEquipped = new int[S_PLAYER_INVENTORY_SLOTS];
 	//private final int[] inventoryItemID = new int[S_PLAYER_INVENTORY_SLOTS];
 	//private final int[] inventoryItemSize = new int[S_PLAYER_INVENTORY_SLOTS];
@@ -724,7 +727,7 @@ public final class mudclient implements Runnable {
 	private int currentDevotionLevel = 0;
 	private int gameHeight = 334;
 	private int gameObjectInstanceCount = 0;
-	private final int[] gameObjectInstanceZ = new int[5000];
+	private final int[] gameObjectInstanceZ = new int[GAME_OBJECT_INSTANCE_CAPACITY];
 	private int gameWidth = 512;
 	private int groundItemCount = 0;
 	private boolean inputX_Focused = true;
@@ -2995,7 +2998,7 @@ public final class mudclient implements Runnable {
 			this.scene.addModel(model);
 		}
 
-		model.key = index + 10000;
+		model.key = index + WALL_OBJECT_KEY_BASE;
 		return model;
 	}
 
@@ -8753,8 +8756,11 @@ public final class mudclient implements Runnable {
 					int id;
 					if (this.scene.m_T != var8) {
 						// wall object right click menu
-						if (var8 != null && var8.key >= 10000) {
-							var9 = var8.key - 10000;
+						if (var8 != null && var8.key >= WALL_OBJECT_KEY_BASE) {
+							var9 = var8.key - WALL_OBJECT_KEY_BASE;
+							if (var9 < 0 || var9 >= this.wallObjectInstanceCount) {
+								continue;
+							}
 							id = this.wallObjectInstanceID[var9];
 							if (!this.wallObjectInstance_Arg1[var9]) {
 								if (this.selectedSpell >= 0) {
@@ -8807,6 +8813,9 @@ public final class mudclient implements Runnable {
 						// Game Object Right Click Menu
 						else if (null != var8 && var8.key >= 0) {
 							var9 = var8.key;
+							if (var9 >= this.gameObjectInstanceCount) {
+								continue;
+							}
 							id = this.gameObjectInstanceID[var9];
 							if (!this.gameObjectInstance_Arg1[var9]) {
 								if (this.selectedSpell < 0) {
@@ -20841,6 +20850,10 @@ public final class mudclient implements Runnable {
 		this.gameObjectInstanceCount = i;
 	}
 
+	public boolean hasGameObjectInstanceCapacity() {
+		return this.gameObjectInstanceCount < GAME_OBJECT_INSTANCE_CAPACITY;
+	}
+
 	public void setGameObjectInstanceX(int i, int n) {
 		this.gameObjectInstanceX[i] = n;
 	}
@@ -20890,6 +20903,10 @@ public final class mudclient implements Runnable {
 		this.wallObjectInstanceCount = i;
 	}
 
+	public boolean hasWallObjectInstanceCapacity() {
+		return this.wallObjectInstanceCount < WALL_OBJECT_INSTANCE_CAPACITY;
+	}
+
 	public void setWallObjectInstanceX(int i, int n) {
 		this.wallObjectInstanceX[i] = n;
 	}
@@ -20908,7 +20925,7 @@ public final class mudclient implements Runnable {
 
 	public void setWallObjectInstanceModel(int i, RSModel n) {
 		this.wallObjectInstanceModel[i] = n;
-		this.wallObjectInstanceModel[i].key = i + 10000;
+		this.wallObjectInstanceModel[i].key = i + WALL_OBJECT_KEY_BASE;
 	}
 
 	public RSModel getWallObjectInstanceModel(int i) {
