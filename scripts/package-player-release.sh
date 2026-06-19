@@ -147,10 +147,44 @@ for opengl_runtime_entry in \
   "linux/x64/org/lwjgl/liblwjgl.so" \
   "linux/x64/org/lwjgl/glfw/libglfw.so" \
   "linux/x64/org/lwjgl/opengl/liblwjgl_opengl.so" \
+  "macos/x64/org/lwjgl/liblwjgl.dylib" \
+  "macos/x64/org/lwjgl/glfw/libglfw.dylib" \
+  "macos/x64/org/lwjgl/opengl/liblwjgl_opengl.dylib" \
+  "macos/arm64/org/lwjgl/liblwjgl.dylib" \
+  "macos/arm64/org/lwjgl/glfw/libglfw.dylib" \
+  "macos/arm64/org/lwjgl/opengl/liblwjgl_opengl.dylib" \
   "windows/x64/org/lwjgl/lwjgl.dll" \
   "windows/x64/org/lwjgl/glfw/glfw.dll" \
   "windows/x64/org/lwjgl/opengl/lwjgl_opengl.dll"; do
   require_client_jar_entry "$opengl_runtime_entry"
+done
+
+require_launcher_flag() {
+  local launcher="$1"
+  local flag="$2"
+
+  grep -F -- "$flag" "$launcher" >/dev/null \
+    || fail "Player launcher is missing renderer-v2 flag $flag: $launcher"
+}
+
+for launcher in \
+  "$PACKAGE_ASSETS/play-spoiled-milk.sh" \
+  "$PACKAGE_ASSETS/Play Spoiled Milk.cmd" \
+  "$PACKAGE_ASSETS/Play Spoiled Milk Windows.cmd"; do
+  for renderer_flag in \
+    "-Dspoiledmilk.directFramebuffer=true" \
+    "-Dspoiledmilk.openglPresenter=true" \
+    "-Dspoiledmilk.openglInput=true" \
+    "-Dspoiledmilk.openglPrimaryWindow=true" \
+    "-Dspoiledmilk.renderer3DGeometryCapture=true" \
+    "-Dspoiledmilk.openglWorldMesh=true" \
+    "-Dspoiledmilk.openglWorldMeshTexturedVisible=true" \
+    "-Dspoiledmilk.openglWorldMeshTexturedStaticVisible=true" \
+    "-Dspoiledmilk.openglWorldStaticTextures=true" \
+    "-Dspoiledmilk.openglWorldTexturedAlpha=1.0" \
+    "-Dspoiledmilk.openglWorldSpritesVisible=true"; do
+    require_launcher_flag "$launcher" "$renderer_flag"
+  done
 done
 
 OUTPUT_DIR="$ROOT_DIR/output/releases/$VERSION"

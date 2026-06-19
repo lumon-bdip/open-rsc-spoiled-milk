@@ -22,6 +22,10 @@ import static orsc.osConfig.C_LAST_ZOOM;
 
 public class ORSCApplet extends Applet implements ComponentListener, ImageObserver, ImageProducer, ClientPort {
 	private static final long serialVersionUID = 1L;
+	static {
+		RendererRuntimeDefaults.apply();
+	}
+
 	private static final String DIRECT_FRAMEBUFFER_PROPERTY = "spoiledmilk.directFramebuffer";
 	private static final String DIRECT_FRAMEBUFFER_ENV = "SPOILED_MILK_DIRECT_FRAMEBUFFER";
 	private static final boolean DIRECT_FRAMEBUFFER_ENABLED =

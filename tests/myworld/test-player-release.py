@@ -12,6 +12,33 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGER = ROOT / "scripts" / "package-player-release.sh"
 VERSION = "v0.1.0-alpha.1"
+RENDERER_V2_FLAGS = [
+    "-Dspoiledmilk.directFramebuffer=true",
+    "-Dspoiledmilk.openglPresenter=true",
+    "-Dspoiledmilk.openglInput=true",
+    "-Dspoiledmilk.openglPrimaryWindow=true",
+    "-Dspoiledmilk.renderer3DGeometryCapture=true",
+    "-Dspoiledmilk.openglWorldMesh=true",
+    "-Dspoiledmilk.openglWorldMeshTexturedVisible=true",
+    "-Dspoiledmilk.openglWorldMeshTexturedStaticVisible=true",
+    "-Dspoiledmilk.openglWorldStaticTextures=true",
+    "-Dspoiledmilk.openglWorldTexturedAlpha=1.0",
+    "-Dspoiledmilk.openglWorldSpritesVisible=true",
+]
+OPENGL_RUNTIME_ENTRIES = [
+    "linux/x64/org/lwjgl/liblwjgl.so",
+    "linux/x64/org/lwjgl/glfw/libglfw.so",
+    "linux/x64/org/lwjgl/opengl/liblwjgl_opengl.so",
+    "macos/x64/org/lwjgl/liblwjgl.dylib",
+    "macos/x64/org/lwjgl/glfw/libglfw.dylib",
+    "macos/x64/org/lwjgl/opengl/liblwjgl_opengl.dylib",
+    "macos/arm64/org/lwjgl/liblwjgl.dylib",
+    "macos/arm64/org/lwjgl/glfw/libglfw.dylib",
+    "macos/arm64/org/lwjgl/opengl/liblwjgl_opengl.dylib",
+    "windows/x64/org/lwjgl/lwjgl.dll",
+    "windows/x64/org/lwjgl/glfw/glfw.dll",
+    "windows/x64/org/lwjgl/opengl/lwjgl_opengl.dll",
+]
 
 
 def fail(message: str) -> None:
@@ -29,6 +56,8 @@ def make_fixture(fixture: Path, java_version: str = "17.0.13") -> Path:
     client_jar.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(client_jar, "w") as jar:
         jar.writestr("myworld-assets/animations/Projectiles/fixture/frame.png", "asset")
+        for entry in OPENGL_RUNTIME_ENTRIES:
+            jar.writestr(entry, "native")
     write(fixture / "Client_Base" / "Cache" / "audio" / "audio.dat", "audio")
     write(fixture / "Client_Base" / "Cache" / "video" / "video.dat", "video")
     write(fixture / "Client_Base" / "Cache" / "config.txt", "Menus:1\n")
@@ -166,6 +195,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-spoiled-milk.ps1"',
                     "if errorlevel 1 pause & exit /b 1",
                     "Spoiled_Milk_Client.jar",
+                    *RENDERER_V2_FLAGS,
                 ]:
                     if snippet not in launcher:
                         fail(f"{archive.name} launcher must update synchronously before launch: {snippet!r}")
@@ -191,7 +221,8 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                 'if ! sh "$GAME_DIR/update-spoiled-milk.sh"; then',
                 "Update check failed; launching installed Spoiled Milk client.",
                 '"$GAME_DIR/update-spoiled-milk.sh"',
-                'exec java -jar "$GAME_DIR/Spoiled_Milk_Client.jar"',
+                '-jar "$GAME_DIR/Spoiled_Milk_Client.jar"',
+                *RENDERER_V2_FLAGS,
             ]:
                 if snippet not in shell_launcher:
                     fail(f"generic Java shell launcher must tolerate update failure before launch: {snippet!r}")
@@ -230,7 +261,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                 fail(f"shell launcher should continue after updater failure:\n{launcher_result.stdout}{launcher_result.stderr}")
             if "Update check failed; launching installed Spoiled Milk client." not in launcher_result.stderr:
                 fail("shell launcher should warn when the updater fails")
-            if "java reached -jar" not in launcher_result.stdout:
+            if "java reached" not in launcher_result.stdout or "-jar" not in launcher_result.stdout:
                 fail(f"shell launcher did not reach java after updater failure:\n{launcher_result.stdout}{launcher_result.stderr}")
 
         expected = {}
@@ -263,6 +294,24 @@ def test_release_gates_are_enforced() -> None:
         result = run_packager(fixture, runtime, "--assets-cleared")
         if result.returncode == 0 or "Java 17+" not in result.stderr:
             fail("packager must reject the obsolete Java 8 Windows runtime")
+
+
+def test_player_launch_defaults_to_renderer_v2() -> None:
+    defaults = (ROOT / "PC_Client" / "src" / "orsc" / "RendererRuntimeDefaults.java").read_text(encoding="utf-8")
+    for flag in RENDERER_V2_FLAGS:
+        property_name, value = flag.removeprefix("-D").split("=", 1)
+        if f'"{property_name}"' not in defaults or f'"{value}"' not in defaults:
+            fail(f"RendererRuntimeDefaults is missing player default {flag}")
+
+    applet = (ROOT / "PC_Client" / "src" / "orsc" / "ORSCApplet.java").read_text(encoding="utf-8")
+    direct_default = applet.index("RendererRuntimeDefaults.apply();")
+    direct_flag = applet.index("DIRECT_FRAMEBUFFER_ENABLED")
+    if direct_default > direct_flag:
+        fail("renderer defaults must be applied before ORSCApplet reads the direct framebuffer flag")
+
+    openrsc = (ROOT / "PC_Client" / "src" / "orsc" / "OpenRSC.java").read_text(encoding="utf-8")
+    if "RendererRuntimeDefaults.apply();" not in openrsc:
+        fail("OpenRSC main should apply renderer defaults before creating the scaled window")
 
 
 def test_windows_runtime_download_helper_is_documented() -> None:

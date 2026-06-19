@@ -16,6 +16,8 @@ public class OpenRSC extends ORSCApplet {
 	private static final long serialVersionUID = 1L;
 
 	public static void main(String[] args) {
+		RendererRuntimeDefaults.apply();
+
 		// MUST do this before anything else runs in order to override OS-level dpi settings
 		// (not applicable to macOS, which implements OS-scaling in a different fashion)
 		if (!Utils.isMacOS()) {
