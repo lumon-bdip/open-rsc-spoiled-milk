@@ -387,6 +387,24 @@ public class GraphicsController {
 		return true;
 	}
 
+	private void addRenderer2DTextGlyphCommand(
+		List<Renderer2DFrame.TextCommand.GlyphCommand> glyphs,
+		boolean antiAliased,
+		byte[] fontData,
+		int x,
+		int color,
+		int indexAddr,
+		int y) {
+		if (glyphs == null) {
+			return;
+		}
+		Renderer2DFrame.TextCommand.GlyphCommand glyph =
+			createRenderer2DTextGlyphCommand(antiAliased, fontData, x, color, indexAddr, y);
+		if (glyph != null) {
+			glyphs.add(glyph);
+		}
+	}
+
 	private boolean shouldReplaceRenderer2DPrimitive(boolean captured) {
 		if (!captured
 			&& renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
@@ -2619,14 +2637,14 @@ public class GraphicsController {
 									new Renderer2DTextPlotCommand(antiAliased, fontData, 1 + x, 0, addr, y);
 								renderer2DTextPlots.add(plot);
 								if (renderer2DNativeTextReplayable) {
-									Renderer2DFrame.TextCommand.GlyphCommand glyph =
-										createRenderer2DTextGlyphCommand(antiAliased, fontData, 1 + x, 0, addr, y);
-									if (glyph == null) {
-										renderer2DNativeTextReplayable = false;
-										renderer2DNativeGlyphs = null;
-									} else {
-										renderer2DNativeGlyphs.add(glyph);
-									}
+									addRenderer2DTextGlyphCommand(
+										renderer2DNativeGlyphs,
+										antiAliased,
+										fontData,
+										1 + x,
+										0,
+										addr,
+										y);
 								}
 							}
 
@@ -2635,14 +2653,14 @@ public class GraphicsController {
 									new Renderer2DTextPlotCommand(antiAliased, fontData, x, 0, addr, y + 1);
 								renderer2DTextPlots.add(plot);
 								if (renderer2DNativeTextReplayable) {
-									Renderer2DFrame.TextCommand.GlyphCommand glyph =
-										createRenderer2DTextGlyphCommand(antiAliased, fontData, x, 0, addr, y + 1);
-									if (glyph == null) {
-										renderer2DNativeTextReplayable = false;
-										renderer2DNativeGlyphs = null;
-									} else {
-										renderer2DNativeGlyphs.add(glyph);
-									}
+									addRenderer2DTextGlyphCommand(
+										renderer2DNativeGlyphs,
+										antiAliased,
+										fontData,
+										x,
+										0,
+										addr,
+										y + 1);
 								}
 							}
 
@@ -2650,14 +2668,14 @@ public class GraphicsController {
 								new Renderer2DTextPlotCommand(antiAliased, fontData, x, color, addr, y);
 							renderer2DTextPlots.add(plot);
 							if (renderer2DNativeTextReplayable) {
-								Renderer2DFrame.TextCommand.GlyphCommand glyph =
-									createRenderer2DTextGlyphCommand(antiAliased, fontData, x, color, addr, y);
-								if (glyph == null) {
-									renderer2DNativeTextReplayable = false;
-									renderer2DNativeGlyphs = null;
-								} else {
-									renderer2DNativeGlyphs.add(glyph);
-								}
+								addRenderer2DTextGlyphCommand(
+									renderer2DNativeGlyphs,
+									antiAliased,
+									fontData,
+									x,
+									color,
+									addr,
+									y);
 							}
 							x += fontData[addr + 7];
 							renderer2DGlyphs++;
@@ -2667,7 +2685,6 @@ public class GraphicsController {
 				recordRenderer2DTextDraw(renderer2DGlyphs);
 				if (renderer2DNativeTextReplayable
 					&& renderer2DNativeGlyphs != null
-					&& renderer2DNativeGlyphs.size() == renderer2DTextPlots.size()
 					&& shouldReplaceRenderer2DText(recordRenderer2DTextCommand(renderer2DNativeGlyphs))) {
 					return;
 				}

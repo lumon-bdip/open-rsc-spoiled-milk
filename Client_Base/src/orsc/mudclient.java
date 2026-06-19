@@ -7747,20 +7747,25 @@ public final class mudclient implements Runnable {
 		}
 		int size = COMBAT_EFFECT_STANDARD_SCREEN_SIZE;
 		size = getCombatEffectScreenSize(character.combatEffectType, size);
-		if (isDragonBreathCombatEffect(character.combatEffectType)) {
-			drawDragonBreathOverlay(character, effect, x, y, width, height, size);
-			return;
+		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+		try {
+			if (isDragonBreathCombatEffect(character.combatEffectType)) {
+				drawDragonBreathOverlay(character, effect, x, y, width, height, size);
+				return;
+			}
+			int drawX = x + width / 2 - size / 2;
+			int drawY = y + height / 2 - size / 2;
+			drawX += getCombatEffectScreenXOffset(character.combatEffectType, frame, size);
+			drawY += getCombatEffectScreenYOffset(character.combatEffectType, frame, size);
+			character.hasCombatEffectScreenAnchor = true;
+			character.combatEffectScreenX = drawX;
+			character.combatEffectScreenY = drawY;
+			character.combatEffectScreenWidth = size;
+			character.combatEffectScreenHeight = size;
+			this.getSurface().drawSprite(effect, drawX, drawY, size, size, 5924, 224);
+		} finally {
+			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 		}
-		int drawX = x + width / 2 - size / 2;
-		int drawY = y + height / 2 - size / 2;
-		drawX += getCombatEffectScreenXOffset(character.combatEffectType, frame, size);
-		drawY += getCombatEffectScreenYOffset(character.combatEffectType, frame, size);
-		character.hasCombatEffectScreenAnchor = true;
-		character.combatEffectScreenX = drawX;
-		character.combatEffectScreenY = drawY;
-		character.combatEffectScreenWidth = size;
-		character.combatEffectScreenHeight = size;
-		this.getSurface().drawSprite(effect, drawX, drawY, size, size, 5924, 224);
 	}
 
 	private void drawDragonBreathOverlay(ORSCharacter character, Sprite effect, int x, int y,
@@ -7824,10 +7829,15 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawHitSplatBox(int x, int y, int amount, int color) {
-		this.getSurface().drawBoxAlpha(x, y, HIT_SPLAT_WIDTH, HIT_SPLAT_HEIGHT, color, 192);
-		this.getSurface().drawBoxBorder(x, HIT_SPLAT_WIDTH, y, HIT_SPLAT_HEIGHT, 0);
-		this.getSurface().drawColoredStringCentered(x + HIT_SPLAT_WIDTH / 2, Integer.toString(amount),
-			0xFFFFFF, 0, 0, y + 11);
+		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+		try {
+			this.getSurface().drawBoxAlpha(x, y, HIT_SPLAT_WIDTH, HIT_SPLAT_HEIGHT, color, 192);
+			this.getSurface().drawBoxBorder(x, HIT_SPLAT_WIDTH, y, HIT_SPLAT_HEIGHT, 0);
+			this.getSurface().drawColoredStringCentered(x + HIT_SPLAT_WIDTH / 2, Integer.toString(amount),
+				0xFFFFFF, 0, 0, y + 11);
+		} finally {
+			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
+		}
 	}
 
 	public final void drawPlayer(int index, int x, int y, int width, int height, int topPixelSkew, int var3,
@@ -7973,16 +7983,21 @@ public final class mudclient implements Runnable {
 					this.characterDialogString[this.characterDialogCount++] = player.message;
 				}
 
-				if (S_SHOW_FLOATING_NAMETAGS) {
-					if ((C_NAME_CLAN_TAG_OVERLAY && this.showUiTab == 0 && !C_CUSTOM_UI) || (C_CUSTOM_UI && C_NAME_CLAN_TAG_OVERLAY)) {
-						if (player.displayName != null)
-							this.getSurface().drawShadowText(player.getStaffName(), (width - this.getSurface().stringWidth(0, player.getStaffName())) / 2 + x + 1, y - 14, 0xffff00, 0, false);
+					if (S_SHOW_FLOATING_NAMETAGS) {
+						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+						try {
+							if ((C_NAME_CLAN_TAG_OVERLAY && this.showUiTab == 0 && !C_CUSTOM_UI) || (C_CUSTOM_UI && C_NAME_CLAN_TAG_OVERLAY)) {
+								if (player.displayName != null)
+									this.getSurface().drawShadowText(player.getStaffName(), (width - this.getSurface().stringWidth(0, player.getStaffName())) / 2 + x + 1, y - 14, 0xffff00, 0, false);
+							}
+							if ((C_NAME_CLAN_TAG_OVERLAY && this.showUiTab == 0 && !C_CUSTOM_UI) || (C_CUSTOM_UI && C_NAME_CLAN_TAG_OVERLAY)) {
+								if (player.clanTag != null)
+									this.getSurface().drawColoredString((width - this.getSurface().stringWidth(0, "< " + player.clanTag + " >")) / 2 + x + 1, y - 5, "< " + player.clanTag + " >", 0, 0x7CADDA, 0);
+							}
+						} finally {
+							this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
+						}
 					}
-					if ((C_NAME_CLAN_TAG_OVERLAY && this.showUiTab == 0 && !C_CUSTOM_UI) || (C_CUSTOM_UI && C_NAME_CLAN_TAG_OVERLAY)) {
-						if (player.clanTag != null)
-							this.getSurface().drawColoredString((width - this.getSurface().stringWidth(0, "< " + player.clanTag + " >")) / 2 + x + 1, y - 5, "< " + player.clanTag + " >", 0, 0x7CADDA, 0);
-					}
-				}
 
 				if (player.bubbleTimeout > 0) {
 					this.characterBubbleX[this.characterBubbleCount] = x + width / 2;
@@ -18634,23 +18649,23 @@ public final class mudclient implements Runnable {
 	}
 
 	private int loadExternalAnimationFrames(File sourceFolder, Sprite[] targetFrames, int maxTargetSize, String logPrefix, String animationName) {
-			Arrays.fill(targetFrames, null);
-			if (!assetDirectoryExists(sourceFolder)) {
-				return 0;
-			}
-			int configuredSheetFrames = loadConfiguredAnimationSheetFrames(
-				sourceFolder, targetFrames, maxTargetSize, animationName);
-			if (configuredSheetFrames >= 0) {
-				return configuredSheetFrames;
-			}
-			File[] frameFiles = getAnimationFrameFiles(sourceFolder);
-			if (frameFiles == null || frameFiles.length == 0) {
-				return 0;
-			}
-			int sheetFrameCount = getAnimationSheetFrameCount(animationName);
-			if (sheetFrameCount > 1 && frameFiles.length == 1) {
-				return loadExternalAnimationSheetFrames(frameFiles[0], targetFrames, maxTargetSize, sheetFrameCount);
-			}
+		Arrays.fill(targetFrames, null);
+		if (!assetDirectoryExists(sourceFolder)) {
+			return 0;
+		}
+		int configuredSheetFrames = loadConfiguredAnimationSheetFrames(
+			sourceFolder, targetFrames, maxTargetSize, animationName);
+		if (configuredSheetFrames >= 0) {
+			return configuredSheetFrames;
+		}
+		File[] frameFiles = getAnimationFrameFiles(sourceFolder);
+		if (frameFiles == null || frameFiles.length == 0) {
+			return 0;
+		}
+		int sheetFrameCount = getAnimationSheetFrameCount(animationName);
+		if (sheetFrameCount > 1 && frameFiles.length == 1) {
+			return loadExternalAnimationSheetFrames(frameFiles[0], targetFrames, maxTargetSize, sheetFrameCount);
+		}
 		Arrays.sort(frameFiles, new Comparator<File>() {
 			@Override
 			public int compare(File left, File right) {
@@ -18676,7 +18691,7 @@ public final class mudclient implements Runnable {
 			targetFrames[loadedFrames] = sprite;
 			loadedFrames++;
 		}
-			return loadedFrames;
+		return loadedFrames;
 	}
 
 	private int loadConfiguredAnimationSheetFrames(File sourceFolder, Sprite[] targetFrames, int maxTargetSize, String animationName) {

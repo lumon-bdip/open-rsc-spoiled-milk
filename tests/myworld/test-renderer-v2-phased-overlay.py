@@ -92,13 +92,63 @@ def main() -> None:
     )
     require(
         presenter,
+        "if (!worldReplacementComposite) {\n\t\t\trunOpenGLPass(() -> drawWorldSprites(frame));\n\t\t}",
+        "OpenGL replacement composite owns scene sprite restore without duplicate diagnostic world sprites",
+    )
+    require(
+        presenter,
         "commands[spriteIndex].getPhase() != Renderer2DFrame.Phase.UI_OVERLAY",
         "OpenGL world UI replay filters sprite phase",
     )
     require(
         presenter,
-        "&& !isOpenGLWorldOverlayPhase(commands[spriteIndex].getPhase())",
-        "OpenGL world composite direct-replays world and UI overlay sprites",
+        "&& !isOpenGLCompositeDirectSpriteCommand(commands[spriteIndex])",
+        "OpenGL world composite direct-replays overlay sprite commands",
+    )
+    require(
+        presenter,
+        "private boolean isOpenGLCompositeDirectSpriteCommand(Renderer2DFrame.SpriteCommand command)",
+        "OpenGL world composite direct-replays translucent scene sprites",
+    )
+    require(
+        presenter,
+        "command.getPhase() == Renderer2DFrame.Phase.SCENE\n\t\t\t\t&& command.getAlpha() < Renderer2DFrame.SpriteCommand.FULL_ALPHA",
+        "OpenGL world composite treats translucent scene sprites as overlays",
+    )
+    require(
+        presenter,
+        "buildOpenGLCompositeDirectOverlayCoverageMask(\n\t\t\t\tcommands,\n\t\t\t\ttextCommands,\n\t\t\t\tprimitiveCommands,",
+        "OpenGL world composite masks scene restore under direct sprite overlays",
+    )
+    require(
+        presenter,
+        "int commandVisiblePixels = drawVisibleSpriteCommand(frame, command, directSpriteMask);",
+        "OpenGL world composite clips scene restore using direct sprite mask",
+    )
+    require(
+        presenter,
+        "&& !isSceneRestoreClipped(clippedSceneRestoreMask, frame.sourceWidth, screenX, screenY))",
+        "OpenGL scene sprite restore leaves direct overlay pixels uncontested",
+    )
+    require(
+        presenter,
+        "private boolean[] markOverlayRectangle(",
+        "OpenGL world composite masks primitive and text overlay rectangles",
+    )
+    require(
+        mudclient,
+        "private void drawHitSplatBox(int x, int y, int amount, int color) {\n\t\tthis.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);",
+        "OpenGL world overlay phase for hit splat primitive/text replay",
+    )
+    require(
+        mudclient,
+        "if (S_SHOW_FLOATING_NAMETAGS) {\n\t\t\t\t\t\tthis.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);",
+        "OpenGL world overlay phase for floating nametag text replay",
+    )
+    require(
+        mudclient,
+        "this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);\n\t\ttry {\n\t\t\tif (isDragonBreathCombatEffect(character.combatEffectType))",
+        "OpenGL world overlay phase for attached combat effect replay",
     )
     require(
         presenter,
@@ -122,6 +172,31 @@ def main() -> None:
     )
     require(
         presenter,
+        "private void prepareOverlayTexturedReplayState() throws Exception",
+        "OpenGL overlay textured replay state reset",
+    )
+    require(
+        presenter,
+        "private void prepareOverlaySolidReplayState() throws Exception",
+        "OpenGL overlay solid replay state reset",
+    )
+    require(
+        presenter,
+        "gl.glDisable(gl.GL_ALPHA_TEST);\n\t\tgl.glEnable(gl.GL_BLEND);\n\t\tgl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);",
+        "OpenGL overlay replay clears inherited alpha-test state",
+    )
+    require(
+        presenter,
+        "prepareOverlayTexturedReplayState();\n\t\tOpenGLTextureRegion region = uploadSpriteTexture(command.getSprite(), command.getTransform());",
+        "OpenGL direct sprite replay owns transparent overlay state",
+    )
+    require(
+        presenter,
+        "prepareOverlayTexturedReplayState();\n\t\tfor (Renderer2DFrame.TextCommand.GlyphCommand glyph : command.getGlyphs())",
+        "OpenGL text replay owns transparent overlay state",
+    )
+    require(
+        presenter,
         "command.getPhase() == Renderer2DFrame.Phase.UI_OVERLAY && !command.requiresOrderedReplay()",
         "direct UI-phase replay guard",
     )
@@ -129,6 +204,31 @@ def main() -> None:
         presenter,
         "int commandVisiblePixels = drawVisibleSpriteCommand(frame, command);",
         "scene/world visibility fallback",
+    )
+    require(
+        presenter,
+        "logCompositeSpriteCommand(\"direct-overlay\", command, command.getWidth() * command.getHeight());\n\t\t\t\tdrawOpenGLCompositeDirectSpriteCommand(command);",
+        "OpenGL replacement composite replays direct world sprite overlays with baked alpha textures",
+    )
+    require(
+        presenter,
+        "private DynamicTextureData buildDirectSpriteTexture(Renderer2DFrame.SpriteCommand command)",
+        "OpenGL replacement composite direct sprite texture builder",
+    )
+    require(
+        presenter,
+        "Scene restoration has already been issued. Reuse its proven atlas",
+        "overlay atlas capacity is recycled after scene restoration",
+    )
+    require(
+        presenter,
+        "OpenGLTextureRegion region = visibleSpriteTextureAtlas.upload(textureData);",
+        "direct overlays use the proven dynamic sprite atlas",
+    )
+    require(
+        presenter,
+        "rgba = (replayRgb << 8) | alpha;",
+        "OpenGL replacement composite bakes command alpha into direct sprite pixels",
     )
     require(
         presenter,
@@ -172,8 +272,23 @@ def main() -> None:
     )
     require(
         graphics,
+        "private void addRenderer2DTextGlyphCommand(",
+        "OpenGL text capture keeps valid glyphs when later glyphs are clipped",
+    )
+    require(
+        graphics,
         "boolean renderer2DNativeTextReplayable = canCaptureRenderer2DNativeUiCommand();",
         "OpenGL world UI text replay capture",
+    )
+    require(
+        graphics,
+        "&& shouldReplaceRenderer2DText(recordRenderer2DTextCommand(renderer2DNativeGlyphs)))",
+        "OpenGL text replacement accepts partial clipped glyph commands",
+    )
+    require(
+        graphics,
+        "createRenderer2DTextGlyphCommand(antiAliased, fontData, x, color, indexAddr, y);",
+        "OpenGL text replay captures glyphs individually",
     )
     require(
         graphics,

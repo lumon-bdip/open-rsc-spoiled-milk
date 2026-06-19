@@ -509,7 +509,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			runOpenGLPass(() -> drawTexturedQuad());
 		}
 		runOpenGLPass(() -> drawWorldMesh(frame));
-		runOpenGLPass(() -> drawWorldSprites(frame));
+		if (!worldReplacementComposite) {
+			runOpenGLPass(() -> drawWorldSprites(frame));
+		}
 		runOpenGLPass(() -> drawSpriteOverlay(frame));
 		gl.glfwSwapBuffers(window);
 		gl.glfwPollEvents();
@@ -1071,12 +1073,19 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glEnable(gl.GL_TEXTURE_2D);
 		gl.glEnable(gl.GL_BLEND);
 		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+		boolean[] directSpriteMask =
+			buildOpenGLCompositeDirectOverlayCoverageMask(
+				commands,
+				textCommands,
+				primitiveCommands,
+				renderer2DFrame.getWidth(),
+				renderer2DFrame.getHeight());
 		for (Renderer2DFrame.SpriteCommand command : commands) {
-			if (command.getPhase() != Renderer2DFrame.Phase.SCENE) {
+			if (command.getPhase() != Renderer2DFrame.Phase.SCENE || isOpenGLCompositeDirectSpriteCommand(command)) {
 				logCompositeSpriteCommand("skip-visible", command, 0);
 				continue;
 			}
-			int commandVisiblePixels = drawVisibleSpriteCommand(frame, command);
+			int commandVisiblePixels = drawVisibleSpriteCommand(frame, command, directSpriteMask);
 			logCompositeSpriteCommand(
 				"visible-scene",
 				command,
@@ -1091,6 +1100,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				skippedInvisible++;
 			}
 		}
+		// Scene restoration has already been issued. Reuse its proven atlas from the
+		// beginning so overlay uploads cannot fall back when a complex scene fills it.
+		if (visibleSpriteTextureAtlas != null) {
+			visibleSpriteTextureAtlas.beginFrame();
+		}
 
 		int spriteIndex = 0;
 		int textIndex = 0;
@@ -1099,7 +1113,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		int circleIndex = 0;
 		while (true) {
 			while (spriteIndex < commands.length
-				&& !isOpenGLWorldOverlayPhase(commands[spriteIndex].getPhase())) {
+				&& !isOpenGLCompositeDirectSpriteCommand(commands[spriteIndex])) {
 				spriteIndex++;
 			}
 			while (textIndex < textCommands.length
@@ -1148,7 +1162,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			if (hasSprite && commands[spriteIndex].getSequence() == nextSequence) {
 				Renderer2DFrame.SpriteCommand command = commands[spriteIndex++];
 				logCompositeSpriteCommand("direct-overlay", command, command.getWidth() * command.getHeight());
-				drawSpriteCommand(command);
+				drawOpenGLCompositeDirectSpriteCommand(command);
 				staticReplayed++;
 				directReplayedByPhase[phaseIndex(command.getPhase())]++;
 			} else if (hasText && textCommands[textIndex].getSequence() == nextSequence) {
@@ -1190,6 +1204,15 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private boolean isOpenGLWorldOverlayPhase(Renderer2DFrame.Phase phase) {
 		return phase == Renderer2DFrame.Phase.WORLD_OVERLAY
 			|| phase == Renderer2DFrame.Phase.UI_OVERLAY;
+	}
+
+	private boolean isOpenGLCompositeDirectSpriteCommand(Renderer2DFrame.SpriteCommand command) {
+		if (command == null) {
+			return false;
+		}
+		return isOpenGLWorldOverlayPhase(command.getPhase())
+			|| (command.getPhase() == Renderer2DFrame.Phase.SCENE
+				&& command.getAlpha() < Renderer2DFrame.SpriteCommand.FULL_ALPHA);
 	}
 
 	private void logCompositeSpriteCommand(
@@ -1290,6 +1313,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void drawPrimitiveCommand(Renderer2DFrame.PrimitiveCommand command) throws Exception {
+		prepareOverlaySolidReplayState();
 		float red = ((command.getColor() >> 16) & 0xFF) / 255.0f;
 		float green = ((command.getColor() >> 8) & 0xFF) / 255.0f;
 		float blue = (command.getColor() & 0xFF) / 255.0f;
@@ -1314,6 +1338,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void drawCircleCommand(Renderer2DFrame.CircleCommand command) throws Exception {
+		prepareOverlaySolidReplayState();
 		float red = ((command.getColor() >> 16) & 0xFF) / 255.0f;
 		float green = ((command.getColor() >> 8) & 0xFF) / 255.0f;
 		float blue = (command.getColor() & 0xFF) / 255.0f;
@@ -1344,6 +1369,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void drawRotatedSpriteCommand(Renderer2DFrame.RotatedSpriteCommand command) throws Exception {
+		prepareOverlayTexturedReplayState();
 		OpenGLTextureRegion region = uploadSpriteTexture(command.getSprite(), command.isTransparentMask());
 
 		enableSourceClip(
@@ -1397,6 +1423,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void drawSpriteCommand(Renderer2DFrame.SpriteCommand command) throws Exception {
+		prepareOverlayTexturedReplayState();
 		OpenGLTextureRegion region = uploadSpriteTexture(command.getSprite(), command.getTransform());
 		float alpha = command.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA;
 		float topX0 = command.getTopX16() / 65536.0f;
@@ -1433,11 +1460,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return;
 		}
 
-		gl.glEnable(gl.GL_TEXTURE_2D);
-		gl.glEnable(gl.GL_BLEND);
-		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
-		gl.glDisable(gl.GL_ALPHA_TEST);
-		gl.glDisable(gl.GL_DEPTH_TEST);
+		prepareOverlayTexturedReplayState();
 		for (Renderer2DFrame.TextCommand.GlyphCommand glyph : command.getGlyphs()) {
 			OpenGLTextureRegion region = glyphTextureCache.getOrUpload(glyph);
 			float red = ((glyph.getColor() >> 16) & 0xFF) / 255.0f;
@@ -1465,12 +1488,35 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 	}
 
+	private void prepareOverlayTexturedReplayState() throws Exception {
+		gl.glDisable(gl.GL_DEPTH_TEST);
+		gl.glDisable(gl.GL_ALPHA_TEST);
+		gl.glEnable(gl.GL_BLEND);
+		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+		gl.glEnable(gl.GL_TEXTURE_2D);
+	}
+
+	private void prepareOverlaySolidReplayState() throws Exception {
+		gl.glDisable(gl.GL_DEPTH_TEST);
+		gl.glDisable(gl.GL_ALPHA_TEST);
+		gl.glEnable(gl.GL_BLEND);
+		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+		gl.glDisable(gl.GL_TEXTURE_2D);
+	}
+
 	private int drawVisibleSpriteCommand(Frame frame, Renderer2DFrame.SpriteCommand command) throws Exception {
+		return drawVisibleSpriteCommand(frame, command, null);
+	}
+
+	private int drawVisibleSpriteCommand(
+		Frame frame,
+		Renderer2DFrame.SpriteCommand command,
+		boolean[] clippedSceneRestoreMask) throws Exception {
 		if (visibleSpriteTextureAtlas == null) {
 			return 0;
 		}
 
-		DynamicTextureData textureData = buildVisibleSpriteTexture(frame, command);
+		DynamicTextureData textureData = buildVisibleSpriteTexture(frame, command, clippedSceneRestoreMask);
 		if (textureData == null) {
 			return 0;
 		}
@@ -1483,7 +1529,81 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		return textureData.visiblePixelCount;
 	}
 
-	private DynamicTextureData buildVisibleSpriteTexture(Frame frame, Renderer2DFrame.SpriteCommand command) {
+	private void drawOpenGLCompositeDirectSpriteCommand(Renderer2DFrame.SpriteCommand command) throws Exception {
+		if (command.getPhase() == Renderer2DFrame.Phase.UI_OVERLAY || visibleSpriteTextureAtlas == null) {
+			drawSpriteCommand(command);
+			return;
+		}
+
+		DynamicTextureData textureData = buildDirectSpriteTexture(command);
+		if (textureData == null) {
+			drawSpriteCommand(command);
+			return;
+		}
+
+		OpenGLTextureRegion region = visibleSpriteTextureAtlas.upload(textureData);
+		if (region == null) {
+			visibleSpriteTextureAtlas.beginFrame();
+			region = visibleSpriteTextureAtlas.upload(textureData);
+			if (region == null) {
+				drawSpriteCommand(command);
+				return;
+			}
+		}
+		drawSpriteRegion(command, region, region.getU0(), region.getU1(), region.getV0(), region.getV1(), 1.0f);
+	}
+
+	private DynamicTextureData buildDirectSpriteTexture(Renderer2DFrame.SpriteCommand command) {
+		Sprite sprite = command.getSprite();
+		int[] sourcePixels = sprite.getPixels();
+		int spriteWidth = sprite.getWidth();
+		int spriteHeight = sprite.getHeight();
+		int width = command.getWidth();
+		int height = command.getHeight();
+		int alpha = command.getAlpha();
+		if (sourcePixels == null
+			|| sourcePixels.length < spriteWidth * spriteHeight
+			|| width <= 0
+			|| height <= 0
+			|| alpha <= 0) {
+			return null;
+		}
+
+		ByteBuffer overlayPixels = ByteBuffer.allocateDirect(width * height * 4);
+		int visiblePixelCount = 0;
+
+		for (int row = 0; row < height; row++) {
+			int sourceY = (int) ((command.getSourceStartY16() + (long) row * command.getSourceScaleY16()) >> 16);
+			for (int column = 0; column < width; column++) {
+				int rgba = 0;
+				int sourceX = (int) ((command.getSourceStartX16() + (long) column * command.getSourceScaleX16()) >> 16);
+				if (sourceX >= 0
+					&& sourceX < spriteWidth
+					&& sourceY >= 0
+					&& sourceY < spriteHeight) {
+					int sourcePixel = sourcePixels[sourceY * spriteWidth + sourceX];
+					if (orsc.graphics.RendererTransparency.isVisibleSpritePixel(sourcePixel)) {
+						int replayRgb = command.getTransform().apply(sourcePixel)
+							& orsc.graphics.RendererTransparency.RGB_MASK;
+						rgba = (replayRgb << 8) | alpha;
+						visiblePixelCount++;
+					}
+				}
+				overlayPixels.putInt(rgba);
+			}
+		}
+
+		if (visiblePixelCount == 0) {
+			return null;
+		}
+		overlayPixels.flip();
+		return new DynamicTextureData(width, height, overlayPixels, visiblePixelCount);
+	}
+
+	private DynamicTextureData buildVisibleSpriteTexture(
+		Frame frame,
+		Renderer2DFrame.SpriteCommand command,
+		boolean[] clippedSceneRestoreMask) {
 		Sprite sprite = command.getSprite();
 		int[] sourcePixels = sprite.getPixels();
 		int spriteWidth = sprite.getWidth();
@@ -1521,7 +1641,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					&& sourceY >= 0
 					&& sourceY < spriteHeight) {
 					int sourcePixel = sourcePixels[sourceY * spriteWidth + sourceX];
-					if (orsc.graphics.RendererTransparency.isVisibleSpritePixel(sourcePixel)) {
+					if (orsc.graphics.RendererTransparency.isVisibleSpritePixel(sourcePixel)
+						&& !isSceneRestoreClipped(clippedSceneRestoreMask, frame.sourceWidth, screenX, screenY)) {
 						int replayRgb = command.getTransform().apply(sourcePixel) & orsc.graphics.RendererTransparency.RGB_MASK;
 						int finalRgb = (finalPixels.getInt((screenY * frame.sourceWidth + screenX) * 4) >>> 8)
 							& orsc.graphics.RendererTransparency.RGB_MASK;
@@ -1540,6 +1661,128 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 		visiblePixels.flip();
 		return new DynamicTextureData(width, height, visiblePixels, visiblePixelCount);
+	}
+
+	private boolean isSceneRestoreClipped(boolean[] mask, int sourceWidth, int x, int y) {
+		if (mask == null || sourceWidth <= 0 || x < 0 || y < 0) {
+			return false;
+		}
+		int index = y * sourceWidth + x;
+		return index >= 0 && index < mask.length && mask[index];
+	}
+
+	private boolean[] buildOpenGLCompositeDirectOverlayCoverageMask(
+		Renderer2DFrame.SpriteCommand[] commands,
+		Renderer2DFrame.TextCommand[] textCommands,
+		Renderer2DFrame.PrimitiveCommand[] primitiveCommands,
+		int sourceWidth,
+		int sourceHeight) {
+		if (sourceWidth <= 0 || sourceHeight <= 0) {
+			return null;
+		}
+
+		boolean[] mask = null;
+		if (commands != null) {
+			for (Renderer2DFrame.SpriteCommand command : commands) {
+				if (!isOpenGLCompositeDirectSpriteCommand(command)) {
+					continue;
+				}
+				Sprite sprite = command.getSprite();
+				int[] sourcePixels = sprite.getPixels();
+				int spriteWidth = sprite.getWidth();
+				int spriteHeight = sprite.getHeight();
+				int width = command.getWidth();
+				int height = command.getHeight();
+				if (sourcePixels == null
+					|| sourcePixels.length < spriteWidth * spriteHeight
+					|| width <= 0
+					|| height <= 0) {
+					continue;
+				}
+
+				if (mask == null) {
+					mask = new boolean[sourceWidth * sourceHeight];
+				}
+				long xDelta16 = (long) command.getBottomX16() - command.getTopX16();
+				for (int row = 0; row < height; row++) {
+					int screenY = command.getY() + row;
+					if (screenY < 0 || screenY >= sourceHeight) {
+						continue;
+					}
+					long rowLeft16 = command.getTopX16() + xDelta16 * row / height;
+					int screenX0 = (int) (rowLeft16 >> 16);
+					int sourceY = (int) ((command.getSourceStartY16() + (long) row * command.getSourceScaleY16()) >> 16);
+					if (sourceY < 0 || sourceY >= spriteHeight) {
+						continue;
+					}
+					for (int column = 0; column < width; column++) {
+						int screenX = screenX0 + column;
+						if (screenX < 0 || screenX >= sourceWidth) {
+							continue;
+						}
+						int sourceX = (int) ((command.getSourceStartX16() + (long) column * command.getSourceScaleX16()) >> 16);
+						if (sourceX < 0 || sourceX >= spriteWidth) {
+							continue;
+						}
+						int sourcePixel = sourcePixels[sourceY * spriteWidth + sourceX];
+						if (orsc.graphics.RendererTransparency.isVisibleSpritePixel(sourcePixel)) {
+							mask[screenY * sourceWidth + screenX] = true;
+						}
+					}
+				}
+			}
+		}
+		if (primitiveCommands != null) {
+			for (Renderer2DFrame.PrimitiveCommand command : primitiveCommands) {
+				if (!isOpenGLWorldOverlayPhase(command.getPhase())) {
+					continue;
+				}
+				mask = markOverlayRectangle(mask, sourceWidth, sourceHeight, command.getX(), command.getY(),
+					command.getWidth(), command.getHeight());
+			}
+		}
+		if (textCommands != null) {
+			for (Renderer2DFrame.TextCommand command : textCommands) {
+				if (!isOpenGLWorldOverlayPhase(command.getPhase())) {
+					continue;
+				}
+				for (Renderer2DFrame.TextCommand.GlyphCommand glyph : command.getGlyphs()) {
+					mask = markOverlayRectangle(mask, sourceWidth, sourceHeight, glyph.getX(), glyph.getY(),
+						glyph.getWidth(), glyph.getHeight());
+				}
+			}
+		}
+		return mask;
+	}
+
+	private boolean[] markOverlayRectangle(
+		boolean[] mask,
+		int sourceWidth,
+		int sourceHeight,
+		int x,
+		int y,
+		int width,
+		int height) {
+		if (width <= 0 || height <= 0) {
+			return mask;
+		}
+		int left = clamp(x, 0, sourceWidth);
+		int top = clamp(y, 0, sourceHeight);
+		int right = clamp(x + width, left, sourceWidth);
+		int bottom = clamp(y + height, top, sourceHeight);
+		if (left >= right || top >= bottom) {
+			return mask;
+		}
+		if (mask == null) {
+			mask = new boolean[sourceWidth * sourceHeight];
+		}
+		for (int row = top; row < bottom; row++) {
+			int offset = row * sourceWidth;
+			for (int column = left; column < right; column++) {
+				mask[offset + column] = true;
+			}
+		}
+		return mask;
 	}
 
 	private boolean matchesRestoredSpriteColor(int finalRgb, int replayRgb) {
@@ -1562,7 +1805,24 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float rightU,
 		float v0,
 		float v1) throws Exception {
-		float alpha = command.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA;
+		drawSpriteRegion(
+			command,
+			region,
+			leftU,
+			rightU,
+			v0,
+			v1,
+			command.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA);
+	}
+
+	private void drawSpriteRegion(
+		Renderer2DFrame.SpriteCommand command,
+		OpenGLTextureRegion region,
+		float leftU,
+		float rightU,
+		float v0,
+		float v1,
+		float alpha) throws Exception {
 		float topX0 = command.getTopX16() / 65536.0f;
 		float bottomX0 = command.getBottomX16() / 65536.0f;
 		float y0 = command.getY();

@@ -95,7 +95,7 @@ def main() -> None:
     )
     require(
         opengl_presenter,
-        "gl.glDisable(gl.GL_ALPHA_TEST);\n\t\tgl.glDisable(gl.GL_DEPTH_TEST);",
+        "prepareOverlayTexturedReplayState();\n\t\tfor (Renderer2DFrame.TextCommand.GlyphCommand glyph : command.getGlyphs())",
         "OpenGL glyph replay owns transparent text state",
     )
     require(
