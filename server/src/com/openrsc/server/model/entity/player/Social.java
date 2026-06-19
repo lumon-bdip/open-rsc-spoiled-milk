@@ -108,6 +108,7 @@ public class Social {
 		if (player.getConfig().WANT_GLOBAL_FRIEND) {
 			friendList.put(Long.MIN_VALUE, 0);
 			friendListNames.put(Long.MIN_VALUE, "Global$");
+			friendListFormerNames.put(Long.MIN_VALUE, "");
 		}
 	}
 

@@ -1412,7 +1412,7 @@ public final class EnchantingItemEffects {
 	public static boolean isMindRingXpSkill(final int skillId) {
 		return skillId == Skill.COOKING.id()
 			|| skillId == Skill.HERBLAW.id()
-			|| skillId == Skill.FIREMAKING.id();
+			|| skillId == Skill.FISHING.id();
 	}
 
 	public static boolean isBodyCombatAmuletXpSkill(final int skillId) {
@@ -1421,8 +1421,7 @@ public final class EnchantingItemEffects {
 			|| skillId == Skill.DEFENSE.id()
 			|| skillId == Skill.STRENGTH.id()
 			|| skillId == Skill.RANGED.id()
-			|| skillId == Skill.HITS.id()
-			|| skillId == Skill.AGILITY.id();
+			|| skillId == Skill.HITS.id();
 	}
 
 	public static boolean isBodyNecklaceXpSkill(final int skillId) {
@@ -1432,8 +1431,8 @@ public final class EnchantingItemEffects {
 	}
 
 	public static boolean isBodyRingXpSkill(final int skillId) {
-		return skillId == Skill.FISHING.id()
-			|| skillId == Skill.HARVESTING.id()
+		return skillId == Skill.HARVESTING.id()
+			|| skillId == Skill.AGILITY.id()
 			|| skillId == Skill.THIEVING.id();
 	}
 

@@ -180,7 +180,6 @@ public final class QuestRewardRegistrar extends AbstractRegistrar {
 			new XPReward(Skill.HERBLAW, 300, 200),
 			new XPReward(Skill.FISHING, 300, 200),
 			new XPReward(Skill.COOKING, 300, 200),
-			new XPReward(Skill.FIREMAKING, 300, 200),
 			new XPReward(Skill.WOODCUTTING, 300, 200),
 			new XPReward(Skill.MINING, 300, 200),
 			new XPReward(Skill.SMITHING, 300, 200));

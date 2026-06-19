@@ -8,6 +8,7 @@ APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 OPENGL_PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
 RENDER_SURFACE_SETTINGS = ROOT / "Client_Base/src/orsc/RenderSurfaceSettings.java"
+BRIGHTNESS_SETTINGS = ROOT / "Client_Base/src/orsc/RendererBrightnessSettings.java"
 PLAN = ROOT / "docs/myworld/renderer-v2-plan.md"
 
 
@@ -31,6 +32,7 @@ def main() -> None:
     scaled_window = SCALED_WINDOW.read_text(encoding="utf-8")
     opengl_presenter = OPENGL_PRESENTER.read_text(encoding="utf-8")
     render_surface_settings = RENDER_SURFACE_SETTINGS.read_text(encoding="utf-8")
+    brightness_settings = BRIGHTNESS_SETTINGS.read_text(encoding="utf-8")
     plan = PLAN.read_text(encoding="utf-8")
 
     require(
@@ -60,6 +62,41 @@ def main() -> None:
         mudclient,
         '"@whi@Font - " + RendererFontSettings.getMode().label',
         "player-facing OpenGL UI font row",
+    )
+    require(
+        mudclient,
+        '"@whi@Brightness - " + RendererBrightnessSettings.getMode().label',
+        "player-facing OpenGL brightness row",
+    )
+    require(
+        mudclient,
+        "if (isOpenGLPrimaryWindow && settingIndex == 58 && this.mouseButtonClick == 1)",
+        "OpenGL-primary brightness click handler",
+    )
+    require(
+        brightness_settings,
+        'HIGH("high", "@gre@High", 1.0f)',
+        "brightness high mode preserves current lighting",
+    )
+    require(
+        brightness_settings,
+        'MEDIUM("medium", "@yel@Medium", 0.9f)',
+        "brightness medium mode",
+    )
+    require(
+        brightness_settings,
+        'LOW("low", "@ora@Low", 0.8f)',
+        "brightness low mode",
+    )
+    require(
+        opengl_presenter,
+        "float brightness = RendererBrightnessSettings.getMode().multiplier;",
+        "OpenGL world mesh brightness multiplier",
+    )
+    require(
+        opengl_presenter,
+        "gl.glDisable(gl.GL_ALPHA_TEST);\n\t\tgl.glDisable(gl.GL_DEPTH_TEST);",
+        "OpenGL glyph replay owns transparent text state",
     )
     require(
         render_surface_settings,
@@ -118,7 +155,7 @@ def main() -> None:
 
     require(
         plan,
-        "two player-facing renderer rows: `Resolution` and `Font`",
+        "three player-facing renderer rows: `Resolution`, `Font`, and\n`Brightness`",
         "renderer plan documents simplified OpenGL-primary options",
     )
     require(
@@ -137,7 +174,7 @@ def main() -> None:
         "OpenGL scale mode in current alpha baseline",
     )
 
-    print("PASS: renderer-v2 OpenGL-primary options expose resolution and font")
+    print("PASS: renderer-v2 OpenGL-primary options expose resolution, font, and brightness")
 
 
 if __name__ == "__main__":

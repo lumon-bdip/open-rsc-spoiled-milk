@@ -1072,14 +1072,13 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glEnable(gl.GL_BLEND);
 		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
 		for (Renderer2DFrame.SpriteCommand command : commands) {
-			if (command.getPhase() != Renderer2DFrame.Phase.SCENE
-				&& command.getPhase() != Renderer2DFrame.Phase.WORLD_OVERLAY) {
+			if (command.getPhase() != Renderer2DFrame.Phase.SCENE) {
 				logCompositeSpriteCommand("skip-visible", command, 0);
 				continue;
 			}
 			int commandVisiblePixels = drawVisibleSpriteCommand(frame, command);
 			logCompositeSpriteCommand(
-				command.getPhase() == Renderer2DFrame.Phase.SCENE ? "visible-scene" : "visible-world",
+				"visible-scene",
 				command,
 				commandVisiblePixels);
 			if (commandVisiblePixels > 0) {
@@ -1100,7 +1099,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		int circleIndex = 0;
 		while (true) {
 			while (spriteIndex < commands.length
-				&& commands[spriteIndex].getPhase() != Renderer2DFrame.Phase.UI_OVERLAY) {
+				&& !isOpenGLWorldOverlayPhase(commands[spriteIndex].getPhase())) {
 				spriteIndex++;
 			}
 			while (textIndex < textCommands.length
@@ -1434,6 +1433,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return;
 		}
 
+		gl.glEnable(gl.GL_TEXTURE_2D);
+		gl.glEnable(gl.GL_BLEND);
+		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+		gl.glDisable(gl.GL_ALPHA_TEST);
+		gl.glDisable(gl.GL_DEPTH_TEST);
 		for (Renderer2DFrame.TextCommand.GlyphCommand glyph : command.getGlyphs()) {
 			OpenGLTextureRegion region = glyphTextureCache.getOrUpload(glyph);
 			float red = ((glyph.getColor() >> 16) & 0xFF) / 255.0f;
@@ -1445,6 +1449,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			float y1 = glyph.getY() + glyph.getHeight();
 
 			gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
+			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST);
+			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST);
 			gl.glColor4f(red, green, blue, 1.0f);
 			gl.glBegin(gl.GL_QUADS);
 			gl.glTexCoord2f(region.getU0(), region.getV0());
@@ -1940,15 +1946,53 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		return false;
 	}
 
+	private boolean isGlfwKeyDown(int glfwKey) {
+		if (gl == null || window == 0L) {
+			return false;
+		}
+		try {
+			return gl.glfwGetKey(window, glfwKey) == gl.GLFW_PRESS;
+		} catch (Exception ignored) {
+			return false;
+		}
+	}
+
+	private boolean isShiftDown() {
+		if (gl == null) {
+			return isKeyDown(KeyEvent.VK_SHIFT);
+		}
+		return isKeyDown(KeyEvent.VK_SHIFT)
+			|| isGlfwKeyDown(gl.GLFW_KEY_LEFT_SHIFT)
+			|| isGlfwKeyDown(gl.GLFW_KEY_RIGHT_SHIFT);
+	}
+
+	private boolean isControlDown() {
+		if (gl == null) {
+			return isKeyDown(KeyEvent.VK_CONTROL);
+		}
+		return isKeyDown(KeyEvent.VK_CONTROL)
+			|| isGlfwKeyDown(gl.GLFW_KEY_LEFT_CONTROL)
+			|| isGlfwKeyDown(gl.GLFW_KEY_RIGHT_CONTROL);
+	}
+
+	private boolean isAltDown() {
+		if (gl == null) {
+			return isKeyDown(KeyEvent.VK_ALT);
+		}
+		return isKeyDown(KeyEvent.VK_ALT)
+			|| isGlfwKeyDown(gl.GLFW_KEY_LEFT_ALT)
+			|| isGlfwKeyDown(gl.GLFW_KEY_RIGHT_ALT);
+	}
+
 	private int currentModifiers() {
 		int modifiers = 0;
-		if (isKeyDown(KeyEvent.VK_SHIFT)) {
+		if (isShiftDown()) {
 			modifiers |= InputEvent.SHIFT_MASK;
 		}
-		if (isKeyDown(KeyEvent.VK_CONTROL)) {
+		if (isControlDown()) {
 			modifiers |= InputEvent.CTRL_MASK;
 		}
-		if (isKeyDown(KeyEvent.VK_ALT)) {
+		if (isAltDown()) {
 			modifiers |= InputEvent.ALT_MASK;
 		}
 		if (mouseButtonDown[0]) {
@@ -2486,6 +2530,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			float[] vertices = meshFrame.getVertices();
 			int[] triangleTextures = meshFrame.getTriangleTextures();
 			Renderer3DModelKind[] triangleModelKinds = meshFrame.getTriangleModelKinds();
+			float brightness = RendererBrightnessSettings.getMode().multiplier;
 			vertexUploadBuffer.clear();
 			for (int vertex = 0; vertex < vertexCount; vertex++) {
 				int sourceOffset = vertex * Renderer3DMeshFrame.FLOATS_PER_VERTEX;
@@ -2494,18 +2539,29 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				vertexUploadBuffer.put(meshFrame.getCenterX() + vertices[sourceOffset + Renderer3DMeshFrame.SCREEN_X_OFFSET]);
 				vertexUploadBuffer.put(meshFrame.getCenterY() + vertices[sourceOffset + Renderer3DMeshFrame.SCREEN_Y_OFFSET]);
 				vertexUploadBuffer.put(-vertices[sourceOffset + Renderer3DMeshFrame.CAMERA_Z_OFFSET]);
-				vertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.RED_OFFSET]);
-				vertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.GREEN_OFFSET]);
-				vertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.BLUE_OFFSET]);
+				vertexUploadBuffer.put(brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.RED_OFFSET], brightness));
+				vertexUploadBuffer.put(brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.GREEN_OFFSET], brightness));
+				vertexUploadBuffer.put(brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.BLUE_OFFSET], brightness));
 				vertexUploadBuffer.put(atlasU(textureRegion, vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_U_OFFSET]));
 				vertexUploadBuffer.put(atlasV(textureRegion, vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_V_OFFSET]));
-				vertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_RED_OFFSET]);
-				vertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_GREEN_OFFSET]);
-				vertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_BLUE_OFFSET]);
+				vertexUploadBuffer.put(brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_RED_OFFSET], brightness));
+				vertexUploadBuffer.put(brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_GREEN_OFFSET], brightness));
+				vertexUploadBuffer.put(brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_BLUE_OFFSET], brightness));
 				vertexUploadBuffer.put(
 					vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_ALPHA_OFFSET] * TEXTURED_DIAGNOSTIC_ALPHA);
 			}
 			vertexUploadBuffer.flip();
+		}
+
+		private float brightnessColor(float color, float brightness) {
+			float adjusted = color * brightness;
+			if (adjusted < 0.0f) {
+				return 0.0f;
+			}
+			if (adjusted > 1.0f) {
+				return 1.0f;
+			}
+			return adjusted;
 		}
 
 		private void copyFullIndices(Renderer3DMeshFrame meshFrame, int indexCount) {
@@ -3951,6 +4007,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private final Method glfwGetWindowAttrib;
 		private final Method glfwGetCursorPos;
 		private final Method glfwGetMouseButton;
+		private final Method glfwGetKey;
 		private final Method createCapabilities;
 		private final Method glClearColor;
 		private final Method glClear;
@@ -4003,6 +4060,12 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private final int GLFW_RELEASE;
 		private final int GLFW_REPEAT;
 		private final int GLFW_MOD_SHIFT;
+		private final int GLFW_KEY_LEFT_SHIFT;
+		private final int GLFW_KEY_RIGHT_SHIFT;
+		private final int GLFW_KEY_LEFT_CONTROL;
+		private final int GLFW_KEY_RIGHT_CONTROL;
+		private final int GLFW_KEY_LEFT_ALT;
+		private final int GLFW_KEY_RIGHT_ALT;
 		private final int GLFW_MOUSE_BUTTON_LEFT;
 		private final int GLFW_MOUSE_BUTTON_RIGHT;
 		private final int GLFW_MOUSE_BUTTON_MIDDLE;
@@ -4122,6 +4185,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			glfwGetWindowAttrib = method(glfwClass, "glfwGetWindowAttrib", long.class, int.class);
 			glfwGetCursorPos = method(glfwClass, "glfwGetCursorPos", long.class, double[].class, double[].class);
 			glfwGetMouseButton = method(glfwClass, "glfwGetMouseButton", long.class, int.class);
+			glfwGetKey = method(glfwClass, "glfwGetKey", long.class, int.class);
 			createCapabilities = method(glClass, "createCapabilities");
 
 			glClearColor = method(gl11Class, "glClearColor", float.class, float.class, float.class, float.class);
@@ -4205,6 +4269,12 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			GLFW_RELEASE = constant(glfwClass, "GLFW_RELEASE");
 			GLFW_REPEAT = constant(glfwClass, "GLFW_REPEAT");
 			GLFW_MOD_SHIFT = constant(glfwClass, "GLFW_MOD_SHIFT");
+			GLFW_KEY_LEFT_SHIFT = constant(glfwClass, "GLFW_KEY_LEFT_SHIFT");
+			GLFW_KEY_RIGHT_SHIFT = constant(glfwClass, "GLFW_KEY_RIGHT_SHIFT");
+			GLFW_KEY_LEFT_CONTROL = constant(glfwClass, "GLFW_KEY_LEFT_CONTROL");
+			GLFW_KEY_RIGHT_CONTROL = constant(glfwClass, "GLFW_KEY_RIGHT_CONTROL");
+			GLFW_KEY_LEFT_ALT = constant(glfwClass, "GLFW_KEY_LEFT_ALT");
+			GLFW_KEY_RIGHT_ALT = constant(glfwClass, "GLFW_KEY_RIGHT_ALT");
 			GLFW_MOUSE_BUTTON_LEFT = constant(glfwClass, "GLFW_MOUSE_BUTTON_LEFT");
 			GLFW_MOUSE_BUTTON_RIGHT = constant(glfwClass, "GLFW_MOUSE_BUTTON_RIGHT");
 			GLFW_MOUSE_BUTTON_MIDDLE = constant(glfwClass, "GLFW_MOUSE_BUTTON_MIDDLE");
@@ -4446,6 +4516,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 		private int glfwGetMouseButton(long window, int button) throws Exception {
 			return ((Integer) invoke(glfwGetMouseButton, window, button)).intValue();
+		}
+
+		private int glfwGetKey(long window, int key) throws Exception {
+			return ((Integer) invoke(glfwGetKey, window, key)).intValue();
 		}
 
 		private int glfwConstant(String name) throws Exception {

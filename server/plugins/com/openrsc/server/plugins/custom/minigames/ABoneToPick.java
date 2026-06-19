@@ -542,27 +542,11 @@ public class ABoneToPick implements TimedEventTrigger, TalkNpcTrigger, KillNpcTr
 				}
 				break;
 			case 10:
-				// Insult firemaking
-				int firemakingLevel = player.getSkills().getMaxStat(Skill.FIREMAKING.id());
-				if (firemakingLevel < 40) {
-					npcsay(player, spookie, "Hey Scarie!",
-						"Let's take " + player.getUsername() + " out into the middle of nowhere",
-						"And just leave 'em there!");
-					npcsay(player, scarie, "That sounds hilarious!",
-						"With only " + firemakingLevel + " firemaking",
-						"This adventurer definitely won't last long!");
-					npcsay(player, spookie, player.getUsername() + "'ll be shivering and rattling more than we do in no time!");
-				} else {
-					npcsay(player, spookie, "Oh my",
-						firemakingLevel + " firemaking");
-					npcsay(player, scarie, "You must feel so accomplished");
-					npcsay(player, spookie, "Think of all the things you can do with such a practical skill");
-					npcsay(player, scarie, "Like...",
-						"uh...",
-						"Keeping your socks bone dry during the winter?");
-					npcsay(player, spookie, "Yes Scarie",
-						"I'm sure that " + player.getUsername() + " is very happy having invested so much time in such a useful skill");
-				}
+				npcsay(player, spookie, "Hey Scarie!",
+					"Let's take " + player.getUsername() + " out into the middle of nowhere",
+					"And just leave 'em there!");
+				npcsay(player, scarie, "That sounds hilarious!",
+					"This adventurer would be shivering and rattling more than we do in no time!");
 				break;
 			default:
 				// This shouldn't get reached

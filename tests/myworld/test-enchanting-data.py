@@ -344,7 +344,9 @@ def ensure_source_mappings_exist() -> None:
         'addExplicitNecklaceLine(1618, tiers, "Artifice", "Boosts crafting, fletching, and enchanting XP by %d%%.",',
         'addAlchemyAmuletLine(1744, tiers, amuletPrices, gemMasks);',
         'addRingLine(1673, tiers, "Archery", "Adds +%d ranged power.", 3, ringPrices, gemMasks);',
-        'addExplicitAttunedRingLine(3076, tiers, "Hearthcraft", "Boosts cooking, herblaw, and firemaking XP by %d%%.",',
+        'addExplicitAmuletLine(1739, tiers, "Prowess", "Boosts melee, ranged, and hits XP by %d%%.",',
+        'addExplicitAttunedRingLine(3076, tiers, "Hearthcraft", "Boosts cooking, herblaw, and fishing XP by %d%%.",',
+        'addExplicitAttunedRingLine(3081, tiers, "Acquisition", "Boosts harvesting, agility, and thieving XP by %d%%.",',
         '" Necklace of Loot Banking"',
         '" Ring of Skill Banking"',
         'addLawBankingRingLine(1714, tiers, ringPrices, gemMasks, lawBankCharges);',
@@ -370,6 +372,15 @@ def ensure_source_mappings_exist() -> None:
     ):
         if forbidden in client_text:
             fail(f"Preserved special ring should use fixed-id replacement, not append: {forbidden}")
+
+    for snippet in (
+        "return skillId == Skill.COOKING.id()\n\t\t\t|| skillId == Skill.HERBLAW.id()\n\t\t\t|| skillId == Skill.FISHING.id();",
+        "return skillId == Skill.HARVESTING.id()\n\t\t\t|| skillId == Skill.AGILITY.id()\n\t\t\t|| skillId == Skill.THIEVING.id();",
+    ):
+        if snippet not in effects_text:
+            fail(f"EnchantingItemEffects.java missing updated ring XP skill grouping: {snippet}")
+    if "|| skillId == Skill.RANGED.id()\n\t\t\t|| skillId == Skill.HITS.id()\n\t\t\t|| skillId == Skill.AGILITY.id();" in effects_text:
+        fail("Prowess should no longer boost agility XP")
 
     hidden_crown_options = """\t\t\toptions = new String[]{
 \t\t\t\tring,
@@ -522,9 +533,9 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         1734: "Boosts magic, summoning, and prayer XP by 5%.",
         1737: "Boosts magic, summoning, and prayer XP by 25%.",
         1738: "Boosts magic, summoning, and prayer XP by 50%.",
-        1739: "Boosts melee, ranged, hits, and agility XP by 5%.",
-        1742: "Boosts melee, ranged, hits, and agility XP by 25%.",
-        1743: "Boosts melee, ranged, hits, and agility XP by 50%.",
+        1739: "Boosts melee, ranged, and hits XP by 5%.",
+        1742: "Boosts melee, ranged, and hits XP by 25%.",
+        1743: "Boosts melee, ranged, and hits XP by 50%.",
         1653: "Adds +1 poison decay per tick.",
         1744: "Auto-alchs 1000+ gp monster drops. 100 charges.",
         1748: "Auto-alchs 1000+ gp monster drops. 1000 charges.",
@@ -533,12 +544,12 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         1759: "Lets you keep 1 extra item on death.",
         1699: "Boosts food healing by 50%.",
         1700: "Boosts food healing by 100%.",
-        3076: "Boosts cooking, herblaw, and firemaking XP by 5%.",
-        3079: "Boosts cooking, herblaw, and firemaking XP by 25%.",
-        3080: "Boosts cooking, herblaw, and firemaking XP by 50%.",
-        3081: "Boosts fishing, harvesting, and thieving XP by 5%.",
-        3084: "Boosts fishing, harvesting, and thieving XP by 25%.",
-        3085: "Boosts fishing, harvesting, and thieving XP by 50%.",
+        3076: "Boosts cooking, herblaw, and fishing XP by 5%.",
+        3079: "Boosts cooking, herblaw, and fishing XP by 25%.",
+        3080: "Boosts cooking, herblaw, and fishing XP by 50%.",
+        3081: "Boosts harvesting, agility, and thieving XP by 5%.",
+        3084: "Boosts harvesting, agility, and thieving XP by 25%.",
+        3085: "Boosts harvesting, agility, and thieving XP by 50%.",
         3111: "If a monster rare table misses, has a 25% chance to reroll the drop.",
     }
     for item_id, expected in expected_descriptions.items():

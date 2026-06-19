@@ -4245,7 +4245,7 @@ public class EntityHandler {
 		// Rest of the skillcapes
 		addItemDefinition(new ItemDef("Agility cape", "The cape worn by the most agile", "Teleport", 99000, -1, "items:479", false, true, 2048, 0, false, false, false, 1518));
 		addItemDefinition(new ItemDef("Defense cape", "The cape worn by the most formidable", "", 99000, -1, "items:483", false, true, 2048, 0, false, false, false, 1519));
-		addItemDefinition(new ItemDef("Firemaking cape", "The cape worn by pyro enthusiasts", "Combust", 99000, -1, "items:484", false, true, 2048, 0, false, false, false, 1520));
+		addItemDefinition(new ItemDef("Combustion cape", "A cape warm with stored sunlight", "Combust", 99000, -1, "items:484", false, true, 2048, 0, false, false, false, 1520));
 		addItemDefinition(new ItemDef("Herblaw cape", "The cape worn by master herblawists", "", 99000, -1, "items:487", false, true, 2048, 0, false, false, false, 1521));
 		addItemDefinition(new ItemDef("Hits cape", "The cape worn by the most sturdy", "", 99000, -1, "items:488", false, true, 2048, 0, false, false, false, 1522));
 		addItemDefinition(new ItemDef("Prayer cape", "The cape worn by the most pious", "", 99000, -1, "items:491", false, true, 2048, 0, false, false, false, 1523));
@@ -5704,15 +5704,15 @@ public class EntityHandler {
 		addAmuletLine(1729, tiers, "Siphoning", "Steals %d%% of damage dealt as healing.", 5, amuletPrices, gemMasks, "");
 		addExplicitAmuletLine(1734, tiers, "Attunement", "Boosts magic, summoning, and prayer XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, amuletPrices, gemMasks, "");
-		addExplicitAmuletLine(1739, tiers, "Prowess", "Boosts melee, ranged, hits, and agility XP by %d%%.",
+		addExplicitAmuletLine(1739, tiers, "Prowess", "Boosts melee, ranged, and hits XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, amuletPrices, gemMasks, "");
 		addAlchemyAmuletLine(1744, tiers, amuletPrices, gemMasks);
 		addCosmicAmuletLine(1749, tiers, amuletPrices, gemMasks);
 		addSoulAmuletLine(1754, tiers, amuletPrices, gemMasks);
 		addSoulNecklaceLine(1759, tiers, soulNecklacePrices, gemMasks);
-		addExplicitAttunedRingLine(3076, tiers, "Hearthcraft", "Boosts cooking, herblaw, and firemaking XP by %d%%.",
+		addExplicitAttunedRingLine(3076, tiers, "Hearthcraft", "Boosts cooking, herblaw, and fishing XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
-		addExplicitAttunedRingLine(3081, tiers, "Acquisition", "Boosts fishing, harvesting, and thieving XP by %d%%.",
+		addExplicitAttunedRingLine(3081, tiers, "Acquisition", "Boosts harvesting, agility, and thieving XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
 		addDeathDesperationRingLine(3086, tiers, ringPrices, gemMasks);
 		addAttunedRingLine(3091, tiers, "Vitality", "Adds +%d max Hits.", 2, ringPrices, gemMasks);

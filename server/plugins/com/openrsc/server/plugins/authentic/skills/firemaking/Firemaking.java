@@ -113,7 +113,6 @@ public class Firemaking implements UseObjTrigger, UseInvTrigger {
 						}
 					}
 				);
-				player.incExp(Skill.FIREMAKING.id(), getExp(player.getSkills().getMaxStat(Skill.FIREMAKING.id()), 25), true);
 			}
 
 			if (config().BATCH_PROGRESSION) {
@@ -161,11 +160,6 @@ public class Firemaking implements UseObjTrigger, UseInvTrigger {
 			return;
 		}
 
-		if (player.getSkills().getLevel(Skill.FIREMAKING.id()) < def.getRequiredLevel()) {
-			player.message("You need at least " + def.getRequiredLevel() + " firemaking to light these logs");
-			return;
-		}
-
 		if (player.getViewArea().getGameObject(gItem.getLocation()) != null) {
 			player.playerServerMessage(MessageType.QUEST, "You can't light a fire here");
 			return;
@@ -194,7 +188,7 @@ public class Firemaking implements UseObjTrigger, UseInvTrigger {
 
 				final int duration = SkillCapes.shouldActivate(player, ItemId.FIREMAKING_CAPE) ? (330 * 1000) : def.getLength();
 				player.getWorld().getServer().getGameEventHandler().add(
-					new SingleEvent(player.getWorld(), null, duration, "Firemaking Logs Lit") {
+					new SingleEvent(player.getWorld(), null, duration, "Logs Lit") {
 						@Override
 						public void action() {
 							if (fire != null) {
@@ -209,7 +203,6 @@ public class Firemaking implements UseObjTrigger, UseInvTrigger {
 						}
 					});
 
-				player.incExp(Skill.FIREMAKING.id(), def.getExp(), true);
 				if (config().BATCH_PROGRESSION) {
 					firemakingWalk(player);
 				}

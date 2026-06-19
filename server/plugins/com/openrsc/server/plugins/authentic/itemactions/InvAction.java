@@ -6,7 +6,6 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
-import com.openrsc.server.plugins.authentic.skills.firemaking.Firemaking;
 import com.openrsc.server.plugins.triggers.OpInvTrigger;
 import com.openrsc.server.util.rsc.DataConversions;
 
@@ -408,18 +407,12 @@ public class InvAction implements OpInvTrigger {
 
 	private void handleDrySticks(Player player) {
 		player.message("you rub together the dry sticks");
-		if (getCurrentLevel(player, Skill.FIREMAKING.id()) < 30) {
-			player.message("you need a firemaking level of 30 or above");
-			player.message("the sticks smoke momentarily then die out");
-			return;
-		}
 		mes("The sticks catch alight");
 		delay(3);
 		if (player.getCarriedItems().remove(new Item(ItemId.UNLIT_TORCH.id())) != -1) {
 			player.message("you place the smouldering twigs to your torch");
 			player.message("your torch lights");
 			player.getCarriedItems().getInventory().add(new Item(ItemId.LIT_TORCH.id()));
-			player.incExp(Skill.FIREMAKING.id(), Firemaking.getExp(player.getSkills().getMaxStat(Skill.FIREMAKING.id()), 25), true);
 			if (player.getQuestStage(Quests.SEA_SLUG) == 5 && !player.getCache().hasKey("lit_torch")) {
 				player.getCache().store("lit_torch", true);
 			}

@@ -91,10 +91,10 @@ public class CandleMakerShop extends AbstractShop {
 			player.setAccessingShop(shop);
 			ActionSender.showShop(player, shop);
 		} else if (Functions.config().WANT_CUSTOM_SPRITES && options.get(option).equalsIgnoreCase(optionCape)) {
-			npcsay("This is a Firemaking cape",
+			npcsay("This is a Combustion cape",
 				"It helps me light fires that stay burning for a very long time",
 				"But it isn't something we keep around anymore",
-				"Everyone is so good at firemaking now");
+				"Everyone can handle a tinderbox well enough now");
 		}
 	}
 }

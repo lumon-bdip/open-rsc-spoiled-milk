@@ -751,26 +751,6 @@ public final class SkillGuideInterface {
 					}
 			}
 		}
-		if (mc.getSkillGuideChosen().equals("Firemaking")) {
-			if (curTab == 0) {
-				skillMenuEntries.add(new SkillMenuItem(14, "1", "Normal logs"));
-				if (Config.S_CUSTOM_FIREMAKING) {
-					skillMenuEntries.add(new SkillMenuItem(2111, "8", "Pine logs"));
-					skillMenuEntries.add(new SkillMenuItem(632, "15", "Oak logs"));
-					skillMenuEntries.add(new SkillMenuItem(633, "22", "Willow logs"));
-					skillMenuEntries.add(new SkillMenuItem(2112, "30", "Palm logs"));
-					skillMenuEntries.add(new SkillMenuItem(634, "38", "Maple logs"));
-					skillMenuEntries.add(new SkillMenuItem(635, "46", "Yew logs"));
-					skillMenuEntries.add(new SkillMenuItem(2113, "54", "Ebony logs"));
-					skillMenuEntries.add(new SkillMenuItem(636, "62", "Magic logs"));
-					skillMenuEntries.add(new SkillMenuItem(2114, "70", "Blood logs"));
-				}
-			} else if (curTab == 1) {
-				if (Config.S_WANT_CUSTOM_SPRITES) {
-					addSkillCapeGuide(1520, "Firemaking");
-				}
-			}
-		}
 		if (mc.getSkillGuideChosen().equals("Crafting")) {
 			populateCraftingGuide();
 		}

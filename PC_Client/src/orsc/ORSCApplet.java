@@ -815,6 +815,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			openGLPrimaryWindow
 				? "resolution " + RenderSurfaceSettings.getMode().id
 					+ " | font " + RendererFontSettings.getMode().id
+					+ " | bright " + RendererBrightnessSettings.getMode().id
 					+ " | fps " + mudclient.getCurrentFPS()
 				: "scale " + mudclient.renderingScalar + " " + mudclient.scalingType
 					+ " | fps " + mudclient.getCurrentFPS(),

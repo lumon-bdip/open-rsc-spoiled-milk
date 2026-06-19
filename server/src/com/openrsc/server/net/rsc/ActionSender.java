@@ -613,19 +613,21 @@ public class ActionSender {
 			}
 			tryFinalizeAndSendPacket(OpcodeOut.SEND_FRIEND_LIST, struct, player);
 		} else {
-			for (int currentFriend = 0; currentFriend < player.getSocial().getFriendListEntry().size() + 1; ++currentFriend) {
-				int iteratorIndex = 0;
-				for (Entry<Long, Integer> entry : player.getSocial().getFriendListEntry()) {
-					if (iteratorIndex == currentFriend) {
-						sendFriendUpdate(player,
-							entry.getKey(),
-							player.getSocial().getFriendListNames().get(entry.getKey()),
-							player.getSocial().getFriendListFormerNames().getOrDefault(entry.getKey(), "")
-						);
-						break;
+			for (Entry<Long, Integer> entry : player.getSocial().getFriendListEntry()) {
+				long usernameHash = entry.getKey();
+				if (usernameHash == Long.MIN_VALUE && player.getConfig().WANT_GLOBAL_FRIEND) {
+					if (!player.getBlockGlobalFriend()) {
+						sendFriendUpdate(player, usernameHash, "Global$", "");
 					}
-					iteratorIndex++;
+					continue;
 				}
+
+				String username = player.getSocial().getFriendListNames().get(usernameHash);
+				if (username == null || username.length() == 0) {
+					username = DataConversions.hashToUsername(usernameHash);
+				}
+				String formerName = player.getSocial().getFriendListFormerNames().get(usernameHash);
+				sendFriendUpdate(player, usernameHash, username, formerName == null ? "" : formerName);
 			}
 		}
 	}

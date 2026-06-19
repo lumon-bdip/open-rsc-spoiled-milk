@@ -362,16 +362,19 @@ renderer-v2 layer:
     after-frame sprite overlay replay.
 
 When the OpenGL-primary path is active, the in-game general options panel
-exposes two player-facing renderer rows: `Resolution` and `Font`. The selected
-resolution changes the actual source framebuffer and visible world area;
-presentation into the window uses automatic aspect-fit bars. The selected font
-cycles the OpenGL-primary body-font candidates for readability testing: legacy
-`h12b.jf`, `h11p.jf`, `h12p.jf`, `h13b.jf`, and `h14b.jf`. `F8` still cycles
-resolution. `F6` still toggles the renderer debug overlay and `F7` still cycles
-windowed/borderless mode as alpha debug shortcuts, but those controls are no
-longer normal options-menu rows. The legacy software-presenter scaling controls
-and integer/bilinear/bicubic labels remain available only outside
-OpenGL-primary fallback presentation.
+exposes three player-facing renderer rows: `Resolution`, `Font`, and
+`Brightness`. The selected resolution changes the actual source framebuffer and
+visible world area; presentation into the window uses automatic aspect-fit bars.
+The selected font cycles the OpenGL-primary body-font candidates for readability
+testing: legacy `h12b.jf`, `h11p.jf`, `h12p.jf`, `h13b.jf`, and `h14b.jf`.
+Brightness applies to OpenGL world geometry only and defaults to `High`, which
+preserves the current accepted lighting. `Medium` and `Low` provide conservative
+step-downs for players who find the OpenGL world brighter than the legacy
+client. `F8` still cycles resolution. `F6` still toggles the renderer debug
+overlay and `F7` still cycles windowed/borderless mode as alpha debug shortcuts,
+but those controls are no longer normal options-menu rows. The legacy
+software-presenter scaling controls and integer/bilinear/bicubic labels remain
+available only outside OpenGL-primary fallback presentation.
 
 Before using the OpenGL presenter locally, run:
 
@@ -777,7 +780,7 @@ they are not visual requirements for the baseline.
 - [ ] Redesign the options menu into user-friendly renderer, display, audio,
       controls, and gameplay groups instead of exposing raw debug rows.
 - [x] Collapse the OpenGL-primary player-facing render options to
-      `Resolution` and `Font` rows.
+      `Resolution`, `Font`, and `Brightness` rows.
 - [x] Separate alpha/debug-only renderer switches from settings intended for
       normal players.
 - [ ] Add user-friendly display labels around resolution and future quality

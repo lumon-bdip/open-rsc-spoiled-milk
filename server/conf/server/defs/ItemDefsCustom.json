@@ -5706,8 +5706,8 @@
     },
     {
       "id": 1520,
-      "name": "Firemaking cape",
-      "description": "The cape worn by pyro enthusiasts",
+      "name": "Combustion cape",
+      "description": "A cape warm with stored sunlight",
       "command": "Combust",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11204,7 +11204,7 @@
     {
       "id": 1739,
       "name": "Sapphire Amulet of Prowess",
-      "description": "Boosts melee, ranged, hits, and agility XP by 5%.",
+      "description": "Boosts melee, ranged, and hits XP by 5%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11227,7 +11227,7 @@
     {
       "id": 1740,
       "name": "Emerald Amulet of Prowess",
-      "description": "Boosts melee, ranged, hits, and agility XP by 10%.",
+      "description": "Boosts melee, ranged, and hits XP by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11250,7 +11250,7 @@
     {
       "id": 1741,
       "name": "Ruby Amulet of Prowess",
-      "description": "Boosts melee, ranged, hits, and agility XP by 15%.",
+      "description": "Boosts melee, ranged, and hits XP by 15%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11273,7 +11273,7 @@
     {
       "id": 1742,
       "name": "Diamond Amulet of Prowess",
-      "description": "Boosts melee, ranged, hits, and agility XP by 25%.",
+      "description": "Boosts melee, ranged, and hits XP by 25%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11296,7 +11296,7 @@
     {
       "id": 1743,
       "name": "Dragonstone Amulet of Prowess",
-      "description": "Boosts melee, ranged, hits, and agility XP by 50%.",
+      "description": "Boosts melee, ranged, and hits XP by 50%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -41955,7 +41955,7 @@
     {
       "id": 3076,
       "name": "Sapphire Ring of Hearthcraft",
-      "description": "Boosts cooking, herblaw, and firemaking XP by 5%.",
+      "description": "Boosts cooking, herblaw, and fishing XP by 5%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -41978,7 +41978,7 @@
     {
       "id": 3077,
       "name": "Emerald Ring of Hearthcraft",
-      "description": "Boosts cooking, herblaw, and firemaking XP by 10%.",
+      "description": "Boosts cooking, herblaw, and fishing XP by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42001,7 +42001,7 @@
     {
       "id": 3078,
       "name": "Ruby Ring of Hearthcraft",
-      "description": "Boosts cooking, herblaw, and firemaking XP by 15%.",
+      "description": "Boosts cooking, herblaw, and fishing XP by 15%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42024,7 +42024,7 @@
     {
       "id": 3079,
       "name": "Diamond Ring of Hearthcraft",
-      "description": "Boosts cooking, herblaw, and firemaking XP by 25%.",
+      "description": "Boosts cooking, herblaw, and fishing XP by 25%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42047,7 +42047,7 @@
     {
       "id": 3080,
       "name": "Dragonstone Ring of Hearthcraft",
-      "description": "Boosts cooking, herblaw, and firemaking XP by 50%.",
+      "description": "Boosts cooking, herblaw, and fishing XP by 50%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42070,7 +42070,7 @@
     {
       "id": 3081,
       "name": "Sapphire Ring of Acquisition",
-      "description": "Boosts fishing, harvesting, and thieving XP by 5%.",
+      "description": "Boosts harvesting, agility, and thieving XP by 5%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42093,7 +42093,7 @@
     {
       "id": 3082,
       "name": "Emerald Ring of Acquisition",
-      "description": "Boosts fishing, harvesting, and thieving XP by 10%.",
+      "description": "Boosts harvesting, agility, and thieving XP by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42116,7 +42116,7 @@
     {
       "id": 3083,
       "name": "Ruby Ring of Acquisition",
-      "description": "Boosts fishing, harvesting, and thieving XP by 15%.",
+      "description": "Boosts harvesting, agility, and thieving XP by 15%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42139,7 +42139,7 @@
     {
       "id": 3084,
       "name": "Diamond Ring of Acquisition",
-      "description": "Boosts fishing, harvesting, and thieving XP by 25%.",
+      "description": "Boosts harvesting, agility, and thieving XP by 25%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42162,7 +42162,7 @@
     {
       "id": 3085,
       "name": "Dragonstone Ring of Acquisition",
-      "description": "Boosts fishing, harvesting, and thieving XP by 50%.",
+      "description": "Boosts harvesting, agility, and thieving XP by 50%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

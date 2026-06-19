@@ -97,6 +97,11 @@ def main() -> None:
     )
     require(
         presenter,
+        "&& !isOpenGLWorldOverlayPhase(commands[spriteIndex].getPhase())",
+        "OpenGL world composite direct-replays world and UI overlay sprites",
+    )
+    require(
+        presenter,
         "drawVisibleSpriteCommand(frame, command)",
         "OpenGL world restores software-visible scene sprites",
     )

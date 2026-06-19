@@ -124,7 +124,7 @@ public final class SeersBartender implements
 	}
 
 	private void drinkAle(Player player) {
-		int[] skillIDs = {Skill.ATTACK.id(), Skill.DEFENSE.id(), Skill.WOODCUTTING.id(), Skill.CRAFTING.id(), Skill.FIREMAKING.id()};
+		int[] skillIDs = {Skill.ATTACK.id(), Skill.DEFENSE.id(), Skill.WOODCUTTING.id(), Skill.CRAFTING.id()};
 		for (int i = 0; i < skillIDs.length; i++) {
 			setAleEffect(player, skillIDs[i]);
 		}
