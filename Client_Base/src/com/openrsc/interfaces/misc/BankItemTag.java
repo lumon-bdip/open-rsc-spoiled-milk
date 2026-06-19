@@ -207,16 +207,29 @@ enum BankItemTag {
 	}
 
 	private static boolean isCraftingJewelry(String name, boolean gem) {
-		return gem
-			|| containsAny(name, "gold ore", "gold bar", "silver ore", "silver bar", "mould")
-			|| containsAny(name, "tiara");
+		return isJewelryGemMaterial(name, gem)
+			|| equalsAny(name, "gold ore", "gold bar", "silver ore", "silver bar", "wool", "ball of wool")
+			|| isJewelryMould(name);
+	}
+
+	private static boolean isJewelryGemMaterial(String name, boolean gem) {
+		if (!gem || isJewelry(name)) {
+			return false;
+		}
+		return equalsAny(name, "sapphire", "emerald", "ruby", "diamond", "dragonstone", "opal", "jade",
+			"red topaz", "topaz", "uncut sapphire", "uncut emerald", "uncut ruby", "uncut diamond",
+			"uncut dragonstone", "uncut opal", "uncut jade", "uncut red topaz", "uncut topaz");
+	}
+
+	private static boolean isJewelryMould(String name) {
+		return equalsAny(name, "ring mould", "amulet mould", "necklace mould", "holy symbol mould",
+			"unholy symbol mould", "tiara mould");
 	}
 
 	private static boolean isCraftingOther(String name, boolean bow, boolean rangedAmmo) {
 		return bow || rangedAmmo
 			|| containsAny(name, "bow string", "bowstring", "feather", "arrow shaft", "headless arrow",
-				"knife", "ball of wool", "clay", "chisel", "glass", "spinning", "pottery")
-			|| equalsAny(name, "wool");
+				"knife", "clay", "chisel", "glass", "spinning", "pottery");
 	}
 
 	private static boolean isPrayerEquipment(String name, String description, boolean armour) {

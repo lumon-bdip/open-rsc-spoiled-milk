@@ -970,6 +970,7 @@ public final class SkillGuideInterface {
 					skillMenuEntries.add(new SkillMenuItem(469, "54", "Snape Grass - T8 shears"));
 					skillMenuEntries.add(new SkillMenuItem(442, "54", "Cadantine chance - T8 shears"));
 					skillMenuEntries.add(new SkillMenuItem(443, "70", "Dwarf Weed chance - T10 shears"));
+					skillMenuEntries.add(new SkillMenuItem(933, "70", "Torstol rare chance - T10 shears"));
 				} else if (curTab == 4) {
 					skillMenuEntries.add(new SkillMenuItem(144, "1", "Tin shears - T1, equipped tool"));
 					skillMenuEntries.add(new SkillMenuItem(2215, "8", "Copper shears - T2, equipped tool"));

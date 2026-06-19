@@ -8,8 +8,10 @@ HARVESTING_DEFS = ROOT / "server/conf/server/defs/extras/ObjectHarvesting.xml"
 SKILL_GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 WORLD_POPULATOR = ROOT / "server/src/com/openrsc/server/database/WorldPopulator.java"
 HARVESTING_PLUGIN = ROOT / "server/plugins/com/openrsc/server/plugins/custom/skills/harvesting/Harvesting.java"
+FORMULAE = ROOT / "server/src/com/openrsc/server/util/rsc/Formulae.java"
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 SCENE = ROOT / "Client_Base/src/orsc/graphics/three/Scene.java"
+MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 
 LEGACY_HARVESTABLES = (
     ("Wheat", 72, 29, 72),
@@ -31,8 +33,10 @@ def main() -> None:
     skill_guide = SKILL_GUIDE.read_text(encoding="utf-8")
     world_populator = WORLD_POPULATOR.read_text(encoding="utf-8")
     harvesting_plugin = HARVESTING_PLUGIN.read_text(encoding="utf-8")
+    formulae = FORMULAE.read_text(encoding="utf-8")
     packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
     scene = SCENE.read_text(encoding="utf-8")
+    mudclient = MUDCLIENT.read_text(encoding="utf-8")
 
     for name, object_id, produce_id, experience in LEGACY_HARVESTABLES:
         start = object_defs.index(f"<name>{name}</name>")
@@ -53,14 +57,20 @@ def main() -> None:
     require(skill_guide, 'new SkillMenuItem(29, "1", "Grain - T1 shears")', "Harvesting guide is missing grain")
     require(skill_guide, 'new SkillMenuItem(675, "15", "Flax - T3 shears")', "Harvesting guide is missing flax")
     require(skill_guide, 'new SkillMenuItem(422, "1", "Event Pumpkin - T1 shears, bonus XP")', "Harvesting guide is missing event pumpkins")
+    require(skill_guide, 'new SkillMenuItem(933, "70", "Torstol rare chance - T10 shears")', "Harvesting guide is missing torstol")
+    require(harvesting_plugin, "new ItemLevelXPTrio(ItemId.UNIDENTIFIED_TORSTOL.id(), 78, 960)", "Harvesting herb table is missing torstol")
+    require(formulae, "ItemId.UNIDENTIFIED_TORSTOL.id()", "Harvesting herb roll table is missing torstol")
+    require(formulae, "32, 25, 19, 14, 11, 8, 6, 5, 4, 3, 1", "Harvesting herb roll weights must include rare torstol")
     require(harvesting_defs, "<int>1327</int>", "Regular event pumpkins are missing a Harvesting definition")
     require(harvesting_defs, "<prodId>422</prodId>\n\t\t\t<exp>360</exp>", "Event pumpkins must grant their bonus Harvesting XP")
 
     if "prodId == ItemId.TOMATO.id()" in harvesting_plugin:
         raise AssertionError("Tomatoes must use the same damaged-ground depleted visual as onions")
-    require(packet_handler, "if (id == 191 || id >= 1265 && id <= 1268)", "Root crop click-bound override is missing")
-    require(packet_handler, "m.setPickBoundsScale(2);", "Root crop click bounds must be doubled")
+    require(packet_handler, "def.getType() == 0 && isHarvestCommand(def.getCommand1())", "Small harvestable click-bound override is missing")
+    require(packet_handler, "model.setPickBoundsScale(3);", "Small harvestable click bounds must be expanded")
+    require(mudclient, "applyExpandedGameObjectPickBounds(objectID, model);", "Region-shifted objects must keep expanded pick bounds")
     require(scene, "var6.getPickBoundsScale() > 1", "Scene picking does not honor expanded model bounds")
+    require(scene, "MIN_EXPANDED_PICK_PADDING_PIXELS", "Expanded pick bounds need a minimum screen-space padding")
 
     for item in ("CABBAGE", "CADAVABERRIES", "GRAPES", "UNIDENTIFIED_GUAM_LEAF", "REDBERRIES",
                  "ONION", "TOMATO", "PUMPKIN", "SNAPE_GRASS", "WHITE_BERRIES", "SEAWEED",

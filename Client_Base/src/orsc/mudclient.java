@@ -3296,6 +3296,28 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void applyExpandedGameObjectPickBounds(int objectId, RSModel model) {
+		if (model == null || !usesExpandedGameObjectPickBounds(objectId)) {
+			return;
+		}
+		model.setPickBoundsScale(3);
+	}
+
+	private boolean usesExpandedGameObjectPickBounds(int objectId) {
+		com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(objectId);
+		if (def == null) {
+			return false;
+		}
+		if (objectId == 191) {
+			return true;
+		}
+		return def.getType() == 0 && isHarvestCommand(def.getCommand1());
+	}
+
+	private boolean isHarvestCommand(String command) {
+		return command != null && command.equalsIgnoreCase("Harvest");
+	}
+
 	private void drawChatMessageTabs(int var1) {
 		try {
 			this.getSurface().drawSpriteClipping(spriteSelect(GUIPARTS.BLUEBAR.getDef()), 0, getGameHeight(), getGameWidth(), 10, 0, 0, 0, false, 0, 1);
@@ -17084,6 +17106,7 @@ public final class mudclient implements Runnable {
 
 							int x = (2 * xTile + xSize) * this.tileSize / 2;
 							int z = this.tileSize * (2 * zTile + zSize) / 2;
+							applyExpandedGameObjectPickBounds(objectID, model);
 							if (World.isLocalTile(xTile, zTile)) {
 								this.scene.addModel(model);
 								model.setTranslate(x, -this.world.getElevation(x, z), z);

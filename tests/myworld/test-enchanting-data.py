@@ -211,7 +211,7 @@ def ensure_ring_lines(items: dict[int, dict[str, Any]]) -> None:
         1717: "Diamond Ring of Skill Banking",
         1718: "Dragonstone Ring of Skill Banking",
         3076: "Sapphire Ring of Hearthcraft",
-        3081: "Sapphire Ring of Acquisition",
+        3081: "Sapphire Ring of Gains",
         3086: "Sapphire Ring of Desperation",
         3091: "Sapphire Ring of Vitality",
         3096: "Sapphire Ring of Endurance",
@@ -341,12 +341,12 @@ def ensure_source_mappings_exist() -> None:
         'addNecklaceLine(1613, tiers, "Evasion", "Adds +%d ranged defense.", 3, necklacePrices, gemMasks);',
         'addNecklaceLine(1623, tiers, "Equilibrium", "Adds +%d melee, ranged, and magic defense.", 2, necklacePrices, gemMasks);',
         'addNecklaceLine(1628, tiers, "Bulwark", "Adds +%d melee defense.", 3, necklacePrices, gemMasks);',
-        'addExplicitNecklaceLine(1618, tiers, "Artifice", "Boosts crafting, fletching, and enchanting XP by %d%%.",',
+        'addExplicitNecklaceLine(1618, tiers, "Artifice", "Boosts crafting, smithing, and enchanting XP by %d%%.",',
         'addAlchemyAmuletLine(1744, tiers, amuletPrices, gemMasks);',
         'addRingLine(1673, tiers, "Archery", "Adds +%d ranged power.", 3, ringPrices, gemMasks);',
-        'addExplicitAmuletLine(1739, tiers, "Prowess", "Boosts melee, ranged, and hits XP by %d%%.",',
+        'addExplicitAmuletLine(1739, tiers, "Prowess", "Boosts agility, thieving, and ranged XP by %d%%.",',
         'addExplicitAttunedRingLine(3076, tiers, "Hearthcraft", "Boosts cooking, herblaw, and fishing XP by %d%%.",',
-        'addExplicitAttunedRingLine(3081, tiers, "Acquisition", "Boosts harvesting, agility, and thieving XP by %d%%.",',
+        'addExplicitAttunedRingLine(3081, tiers, "Gains", "Boosts melee and hits XP by %d%%.",',
         '" Necklace of Loot Banking"',
         '" Ring of Skill Banking"',
         'addLawBankingRingLine(1714, tiers, ringPrices, gemMasks, lawBankCharges);',
@@ -375,12 +375,12 @@ def ensure_source_mappings_exist() -> None:
 
     for snippet in (
         "return skillId == Skill.COOKING.id()\n\t\t\t|| skillId == Skill.HERBLAW.id()\n\t\t\t|| skillId == Skill.FISHING.id();",
-        "return skillId == Skill.HARVESTING.id()\n\t\t\t|| skillId == Skill.AGILITY.id()\n\t\t\t|| skillId == Skill.THIEVING.id();",
+        "return skillId == Skill.MELEE.id()\n\t\t\t|| skillId == Skill.ATTACK.id()\n\t\t\t|| skillId == Skill.DEFENSE.id()\n\t\t\t|| skillId == Skill.STRENGTH.id()\n\t\t\t|| skillId == Skill.HITS.id();",
     ):
         if snippet not in effects_text:
             fail(f"EnchantingItemEffects.java missing updated ring XP skill grouping: {snippet}")
-    if "|| skillId == Skill.RANGED.id()\n\t\t\t|| skillId == Skill.HITS.id()\n\t\t\t|| skillId == Skill.AGILITY.id();" in effects_text:
-        fail("Prowess should no longer boost agility XP")
+    if "|| skillId == Skill.FLETCHING.id()" in effects_text:
+        fail("Artifice should no longer boost retired Fletching XP")
 
     hidden_crown_options = """\t\t\toptions = new String[]{
 \t\t\t\tring,
@@ -511,15 +511,15 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         1603: "Boosts harvesting produce yield by 10%.",
         1608: "Boosts mining ore yield by 10%.",
         1613: "Adds +3 ranged defense.",
-        1618: "Boosts crafting, fletching, and enchanting XP by 5%.",
-        1621: "Boosts crafting, fletching, and enchanting XP by 25%.",
-        1622: "Boosts crafting, fletching, and enchanting XP by 50%.",
+        1618: "Boosts crafting, smithing, and enchanting XP by 5%.",
+        1621: "Boosts crafting, smithing, and enchanting XP by 25%.",
+        1622: "Boosts crafting, smithing, and enchanting XP by 50%.",
         1623: "Adds +2 melee, ranged, and magic defense.",
         1628: "Adds +3 melee defense.",
         1633: "Adds +3 magic defense.",
-        1638: "Boosts mining, smithing, and woodcutting XP by 5%.",
-        1641: "Boosts mining, smithing, and woodcutting XP by 25%.",
-        1642: "Boosts mining, smithing, and woodcutting XP by 50%.",
+        1638: "Boosts harvesting, mining, and woodcutting XP by 5%.",
+        1641: "Boosts harvesting, mining, and woodcutting XP by 25%.",
+        1642: "Boosts harvesting, mining, and woodcutting XP by 50%.",
         1643: "Has a 10% chance to roll extra standard monster loot.",
         1648: "Has 10% per-hop chain lightning, up to 3 halving hits.",
         1709: "Stores 3 guild teleports.",
@@ -533,9 +533,9 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         1734: "Boosts magic, summoning, and prayer XP by 5%.",
         1737: "Boosts magic, summoning, and prayer XP by 25%.",
         1738: "Boosts magic, summoning, and prayer XP by 50%.",
-        1739: "Boosts melee, ranged, and hits XP by 5%.",
-        1742: "Boosts melee, ranged, and hits XP by 25%.",
-        1743: "Boosts melee, ranged, and hits XP by 50%.",
+        1739: "Boosts agility, thieving, and ranged XP by 5%.",
+        1742: "Boosts agility, thieving, and ranged XP by 25%.",
+        1743: "Boosts agility, thieving, and ranged XP by 50%.",
         1653: "Adds +1 poison decay per tick.",
         1744: "Auto-alchs 1000+ gp monster drops. 100 charges.",
         1748: "Auto-alchs 1000+ gp monster drops. 1000 charges.",
@@ -547,9 +547,9 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         3076: "Boosts cooking, herblaw, and fishing XP by 5%.",
         3079: "Boosts cooking, herblaw, and fishing XP by 25%.",
         3080: "Boosts cooking, herblaw, and fishing XP by 50%.",
-        3081: "Boosts harvesting, agility, and thieving XP by 5%.",
-        3084: "Boosts harvesting, agility, and thieving XP by 25%.",
-        3085: "Boosts harvesting, agility, and thieving XP by 50%.",
+        3081: "Boosts melee and hits XP by 5%.",
+        3084: "Boosts melee and hits XP by 25%.",
+        3085: "Boosts melee and hits XP by 50%.",
         3111: "If a monster rare table misses, has a 25% chance to reroll the drop.",
     }
     for item_id, expected in expected_descriptions.items():

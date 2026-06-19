@@ -12,6 +12,7 @@ import java.util.EnumSet;
 
 public final class Scene {
 	static final int TRANSPARENT = 12345678;
+	private static final int MIN_EXPANDED_PICK_PADDING_PIXELS = 14;
 	private final RSModel[] m_Ab;
 	private final int[] m_B = new int[40];
 	private final int m_db;
@@ -1348,8 +1349,10 @@ public final class Scene {
 							minY = Math.min(minY, var3[vertex]);
 							maxY = Math.max(maxY, var3[vertex]);
 						}
-						int xPadding = (maxX - minX) * (var6.getPickBoundsScale() - 1) / 2;
-						int yPadding = (maxY - minY) * (var6.getPickBoundsScale() - 1) / 2;
+						int xPadding = Math.max(MIN_EXPANDED_PICK_PADDING_PIXELS,
+							(maxX - minX) * (var6.getPickBoundsScale() - 1) / 2);
+						int yPadding = Math.max(MIN_EXPANDED_PICK_PADDING_PIXELS,
+							(maxY - minY) * (var6.getPickBoundsScale() - 1) / 2);
 						withinPickBounds = this.m_j >= minX - xPadding && this.m_j <= maxX + xPadding
 							&& this.m_Wb >= minY - yPadding && this.m_Wb <= maxY + yPadding;
 					}

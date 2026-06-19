@@ -1405,7 +1405,7 @@ public final class EnchantingItemEffects {
 
 	public static boolean isMindNecklaceXpSkill(final int skillId) {
 		return skillId == Skill.CRAFTING.id()
-			|| skillId == Skill.FLETCHING.id()
+			|| skillId == Skill.SMITHING.id()
 			|| skillId == Skill.RUNECRAFT.id();
 	}
 
@@ -1416,24 +1416,23 @@ public final class EnchantingItemEffects {
 	}
 
 	public static boolean isBodyCombatAmuletXpSkill(final int skillId) {
-		return skillId == Skill.MELEE.id()
-			|| skillId == Skill.ATTACK.id()
-			|| skillId == Skill.DEFENSE.id()
-			|| skillId == Skill.STRENGTH.id()
-			|| skillId == Skill.RANGED.id()
-			|| skillId == Skill.HITS.id();
+		return skillId == Skill.AGILITY.id()
+			|| skillId == Skill.THIEVING.id()
+			|| skillId == Skill.RANGED.id();
 	}
 
 	public static boolean isBodyNecklaceXpSkill(final int skillId) {
-		return skillId == Skill.MINING.id()
-			|| skillId == Skill.SMITHING.id()
+		return skillId == Skill.HARVESTING.id()
+			|| skillId == Skill.MINING.id()
 			|| skillId == Skill.WOODCUTTING.id();
 	}
 
 	public static boolean isBodyRingXpSkill(final int skillId) {
-		return skillId == Skill.HARVESTING.id()
-			|| skillId == Skill.AGILITY.id()
-			|| skillId == Skill.THIEVING.id();
+		return skillId == Skill.MELEE.id()
+			|| skillId == Skill.ATTACK.id()
+			|| skillId == Skill.DEFENSE.id()
+			|| skillId == Skill.STRENGTH.id()
+			|| skillId == Skill.HITS.id();
 	}
 
 	private static int getTierIndexForBaseAmulet(final int baseAmuletId) {

@@ -33,8 +33,8 @@ public final class Formulae {
 	private static final int[] herbDropIDs = {ItemId.UNIDENTIFIED_GUAM_LEAF.id(), ItemId.UNIDENTIFIED_MARRENTILL.id(),
 		ItemId.UNIDENTIFIED_TARROMIN.id(), ItemId.UNIDENTIFIED_HARRALANDER.id(), ItemId.UNIDENTIFIED_RANARR_WEED.id(),
 		ItemId.UNIDENTIFIED_IRIT_LEAF.id(), ItemId.UNIDENTIFIED_AVANTOE.id(), ItemId.UNIDENTIFIED_KWUARM.id(),
-		ItemId.UNIDENTIFIED_CADANTINE.id(), ItemId.UNIDENTIFIED_DWARF_WEED.id()};
-	private static final int[] herbDropWeights = {33, 25, 19, 14, 11, 8, 6, 5, 4, 3}; //128
+		ItemId.UNIDENTIFIED_CADANTINE.id(), ItemId.UNIDENTIFIED_DWARF_WEED.id(), ItemId.UNIDENTIFIED_TORSTOL.id()};
+	private static final int[] herbDropWeights = {32, 25, 19, 14, 11, 8, 6, 5, 4, 3, 1}; //128
 	public static final int[] miningAxeIDs = {ItemId.RUNE_PICKAXE.id(), ItemId.ORICHALCUM_PICKAXE.id(),
 		ItemId.ADAMANTITE_PICKAXE.id(), ItemId.TITAN_STEEL_PICKAXE.id(), ItemId.MITHRIL_PICKAXE.id(),
 		ItemId.STEEL_PICKAXE.id(), ItemId.IRON_PICKAXE.id(), ItemId.BRONZE_PICKAXE.id(),

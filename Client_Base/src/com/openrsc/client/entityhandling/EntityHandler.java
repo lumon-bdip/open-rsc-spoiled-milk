@@ -5610,12 +5610,12 @@ public class EntityHandler {
 		addGatheringAmuletLine(1608, tiers, "Miner's", "Boosts mining ore yield by %d%%.", amuletPrices, gemMasks);
 
 		addNecklaceLine(1613, tiers, "Evasion", "Adds +%d ranged defense.", 3, necklacePrices, gemMasks);
-		addExplicitNecklaceLine(1618, tiers, "Artifice", "Boosts crafting, fletching, and enchanting XP by %d%%.",
+		addExplicitNecklaceLine(1618, tiers, "Artifice", "Boosts crafting, smithing, and enchanting XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, necklacePrices, gemMasks);
 		addNecklaceLine(1623, tiers, "Equilibrium", "Adds +%d melee, ranged, and magic defense.", 2, necklacePrices, gemMasks);
 		addNecklaceLine(1628, tiers, "Bulwark", "Adds +%d melee defense.", 3, necklacePrices, gemMasks);
 		addNecklaceLine(1633, tiers, "Warding", "Adds +%d magic defense.", 3, necklacePrices, gemMasks);
-		addExplicitNecklaceLine(1638, tiers, "Labor", "Boosts mining, smithing, and woodcutting XP by %d%%.",
+		addExplicitNecklaceLine(1638, tiers, "Labor", "Boosts harvesting, mining, and woodcutting XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, necklacePrices, gemMasks);
 		addNecklaceLine(1643, tiers, "Fortune", "Has a %d%% chance to roll extra standard monster loot.", 10, necklacePrices, gemMasks);
 		addExplicitNecklaceLine(1648, tiers, "Chain Lightning", "Has %d%% per-hop chain lightning, up to 3 halving hits.",
@@ -5704,7 +5704,7 @@ public class EntityHandler {
 		addAmuletLine(1729, tiers, "Siphoning", "Steals %d%% of damage dealt as healing.", 5, amuletPrices, gemMasks, "");
 		addExplicitAmuletLine(1734, tiers, "Attunement", "Boosts magic, summoning, and prayer XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, amuletPrices, gemMasks, "");
-		addExplicitAmuletLine(1739, tiers, "Prowess", "Boosts melee, ranged, and hits XP by %d%%.",
+		addExplicitAmuletLine(1739, tiers, "Prowess", "Boosts agility, thieving, and ranged XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, amuletPrices, gemMasks, "");
 		addAlchemyAmuletLine(1744, tiers, amuletPrices, gemMasks);
 		addCosmicAmuletLine(1749, tiers, amuletPrices, gemMasks);
@@ -5712,7 +5712,7 @@ public class EntityHandler {
 		addSoulNecklaceLine(1759, tiers, soulNecklacePrices, gemMasks);
 		addExplicitAttunedRingLine(3076, tiers, "Hearthcraft", "Boosts cooking, herblaw, and fishing XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
-		addExplicitAttunedRingLine(3081, tiers, "Acquisition", "Boosts harvesting, agility, and thieving XP by %d%%.",
+		addExplicitAttunedRingLine(3081, tiers, "Gains", "Boosts melee and hits XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
 		addDeathDesperationRingLine(3086, tiers, ringPrices, gemMasks);
 		addAttunedRingLine(3091, tiers, "Vitality", "Adds +%d max Hits.", 2, ringPrices, gemMasks);

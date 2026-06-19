@@ -7961,7 +7961,7 @@
     {
       "id": 1618,
       "name": "Sapphire Necklace of Artifice",
-      "description": "Boosts crafting, fletching, and enchanting XP by 5%.",
+      "description": "Boosts crafting, smithing, and enchanting XP by 5%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -7984,7 +7984,7 @@
     {
       "id": 1619,
       "name": "Emerald Necklace of Artifice",
-      "description": "Boosts crafting, fletching, and enchanting XP by 10%.",
+      "description": "Boosts crafting, smithing, and enchanting XP by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8007,7 +8007,7 @@
     {
       "id": 1620,
       "name": "Ruby Necklace of Artifice",
-      "description": "Boosts crafting, fletching, and enchanting XP by 15%.",
+      "description": "Boosts crafting, smithing, and enchanting XP by 15%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8030,7 +8030,7 @@
     {
       "id": 1621,
       "name": "Diamond Necklace of Artifice",
-      "description": "Boosts crafting, fletching, and enchanting XP by 25%.",
+      "description": "Boosts crafting, smithing, and enchanting XP by 25%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8053,7 +8053,7 @@
     {
       "id": 1622,
       "name": "Dragonstone Necklace of Artifice",
-      "description": "Boosts crafting, fletching, and enchanting XP by 50%.",
+      "description": "Boosts crafting, smithing, and enchanting XP by 50%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8421,7 +8421,7 @@
     {
       "id": 1638,
       "name": "Sapphire Necklace of Labor",
-      "description": "Boosts mining, smithing, and woodcutting XP by 5%.",
+      "description": "Boosts harvesting, mining, and woodcutting XP by 5%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8444,7 +8444,7 @@
     {
       "id": 1639,
       "name": "Emerald Necklace of Labor",
-      "description": "Boosts mining, smithing, and woodcutting XP by 10%.",
+      "description": "Boosts harvesting, mining, and woodcutting XP by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8467,7 +8467,7 @@
     {
       "id": 1640,
       "name": "Ruby Necklace of Labor",
-      "description": "Boosts mining, smithing, and woodcutting XP by 15%.",
+      "description": "Boosts harvesting, mining, and woodcutting XP by 15%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8490,7 +8490,7 @@
     {
       "id": 1641,
       "name": "Diamond Necklace of Labor",
-      "description": "Boosts mining, smithing, and woodcutting XP by 25%.",
+      "description": "Boosts harvesting, mining, and woodcutting XP by 25%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -8513,7 +8513,7 @@
     {
       "id": 1642,
       "name": "Dragonstone Necklace of Labor",
-      "description": "Boosts mining, smithing, and woodcutting XP by 50%.",
+      "description": "Boosts harvesting, mining, and woodcutting XP by 50%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11204,7 +11204,7 @@
     {
       "id": 1739,
       "name": "Sapphire Amulet of Prowess",
-      "description": "Boosts melee, ranged, and hits XP by 5%.",
+      "description": "Boosts agility, thieving, and ranged XP by 5%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11227,7 +11227,7 @@
     {
       "id": 1740,
       "name": "Emerald Amulet of Prowess",
-      "description": "Boosts melee, ranged, and hits XP by 10%.",
+      "description": "Boosts agility, thieving, and ranged XP by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11250,7 +11250,7 @@
     {
       "id": 1741,
       "name": "Ruby Amulet of Prowess",
-      "description": "Boosts melee, ranged, and hits XP by 15%.",
+      "description": "Boosts agility, thieving, and ranged XP by 15%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11273,7 +11273,7 @@
     {
       "id": 1742,
       "name": "Diamond Amulet of Prowess",
-      "description": "Boosts melee, ranged, and hits XP by 25%.",
+      "description": "Boosts agility, thieving, and ranged XP by 25%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11296,7 +11296,7 @@
     {
       "id": 1743,
       "name": "Dragonstone Amulet of Prowess",
-      "description": "Boosts melee, ranged, and hits XP by 50%.",
+      "description": "Boosts agility, thieving, and ranged XP by 50%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42069,8 +42069,8 @@
     },
     {
       "id": 3081,
-      "name": "Sapphire Ring of Acquisition",
-      "description": "Boosts harvesting, agility, and thieving XP by 5%.",
+      "name": "Sapphire Ring of Gains",
+      "description": "Boosts melee and hits XP by 5%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42092,8 +42092,8 @@
     },
     {
       "id": 3082,
-      "name": "Emerald Ring of Acquisition",
-      "description": "Boosts harvesting, agility, and thieving XP by 10%.",
+      "name": "Emerald Ring of Gains",
+      "description": "Boosts melee and hits XP by 10%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42115,8 +42115,8 @@
     },
     {
       "id": 3083,
-      "name": "Ruby Ring of Acquisition",
-      "description": "Boosts harvesting, agility, and thieving XP by 15%.",
+      "name": "Ruby Ring of Gains",
+      "description": "Boosts melee and hits XP by 15%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42138,8 +42138,8 @@
     },
     {
       "id": 3084,
-      "name": "Diamond Ring of Acquisition",
-      "description": "Boosts harvesting, agility, and thieving XP by 25%.",
+      "name": "Diamond Ring of Gains",
+      "description": "Boosts melee and hits XP by 25%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42161,8 +42161,8 @@
     },
     {
       "id": 3085,
-      "name": "Dragonstone Ring of Acquisition",
-      "description": "Boosts harvesting, agility, and thieving XP by 50%.",
+      "name": "Dragonstone Ring of Gains",
+      "description": "Boosts melee and hits XP by 50%.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
