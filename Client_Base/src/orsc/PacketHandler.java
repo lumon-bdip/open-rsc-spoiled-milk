@@ -1606,6 +1606,9 @@ public class PacketHandler {
 					int zWorld = (zTile * 2 + zSize) * tileSize / 2;
 					int modelIndex = com.openrsc.client.entityhandling.EntityHandler.getObjectDef(id).modelID;// CacheValues.gameObjectModelIndex[id];
 					RSModel m = mc.getModelCacheItem(modelIndex).clone();
+					if (id == 191 || id >= 1265 && id <= 1268) {
+						m.setPickBoundsScale(2);
+					}
 					m.key = instanceIndex;
 					m.addRotation(0, dir * 32, 0);
 					m.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);

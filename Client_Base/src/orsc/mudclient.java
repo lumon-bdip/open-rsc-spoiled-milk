@@ -20841,13 +20841,18 @@ public final class mudclient implements Runnable {
 		int x = centerX - 32;
 		int y = actorTopY - offsetY - 9;
 
-		this.getSurface().drawBoxAlpha(x, y, 64, 14, 0x000000, 170);
-		this.getSurface().drawBoxAlpha(x + 1, y + 1, 12, 12, 0xd8d8d8, 210);
-		this.getSurface().drawBoxAlpha(x + 2, y + 2, 10, 10, 0xffffff, 90);
-		this.getSurface().drawSpriteClipping(spriteSelect(itemDef), x + 2, y + 2, 10, 10,
-			itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
-		this.getSurface().drawBoxAlpha(x + 15, y + 3, 42, 8, 0x202020, 220);
-		this.getSurface().drawBoxAlpha(x + 16, y + 4, fillWidth, 6, 0x4aa3ff, 230);
+		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+		try {
+			this.getSurface().drawBoxAlpha(x, y, 64, 14, 0x000000, 170);
+			this.getSurface().drawBoxAlpha(x + 1, y + 1, 12, 12, 0xd8d8d8, 210);
+			this.getSurface().drawBoxAlpha(x + 2, y + 2, 10, 10, 0xffffff, 90);
+			this.getSurface().drawSpriteClipping(spriteSelect(itemDef), x + 2, y + 2, 10, 10,
+				itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
+			this.getSurface().drawBoxAlpha(x + 15, y + 3, 42, 8, 0x202020, 220);
+			this.getSurface().drawBoxAlpha(x + 16, y + 4, fillWidth, 6, 0x4aa3ff, 230);
+		} finally {
+			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
+		}
 	}
 
 	public final void hidePartyMenu() {

@@ -24,6 +24,7 @@ public final class RSModel {
 	int[] faceTextureBack;
 	int[] faceTextureFront;
 	private Renderer3DModelKind renderer3DModelKind = Renderer3DModelKind.UNCLASSIFIED;
+	private int pickBoundsScale = 1;
 	boolean m_db = false;
 	boolean m_dc = true;
 	int m_hc = 0;
@@ -225,6 +226,14 @@ public final class RSModel {
 
 	public Renderer3DModelKind getRenderer3DModelKind() {
 		return renderer3DModelKind;
+	}
+
+	public void setPickBoundsScale(int pickBoundsScale) {
+		this.pickBoundsScale = Math.max(1, pickBoundsScale);
+	}
+
+	public int getPickBoundsScale() {
+		return pickBoundsScale;
 	}
 
 	private RSModel(RSModel[] var1, int var2, boolean var3, boolean var4, boolean noDiffuseCompute, boolean var6) {
@@ -573,6 +582,7 @@ public final class RSModel {
 			var3.m_cb = this.m_cb;
 			var3.m_hc = this.m_hc;
 			var3.renderer3DModelKind = this.renderer3DModelKind;
+			var3.pickBoundsScale = this.pickBoundsScale;
 			return var3;
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "ca.IA(" + -2 + ')');

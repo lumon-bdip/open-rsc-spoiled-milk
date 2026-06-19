@@ -593,8 +593,6 @@ public final class Harvesting implements OpLocTrigger {
 				depId = 1255; //exhausted pineapple
 			} else if (DataConversions.inArray(itemsBush, prodId)) {
 				depId = 1261; //depleted bush
-			} else if (prodId == ItemId.TOMATO.id()) {
-				depId = 1271; //depleted tomato
 			} else if (prodId == ItemId.CORN.id()) {
 				depId = 1272; //depleted corn
 			} else if (prodId == ItemId.DRAGONFRUIT.id()) {

@@ -7,6 +7,9 @@ OBJECT_DEFS = ROOT / "server/conf/server/defs/GameObjectDef.xml"
 HARVESTING_DEFS = ROOT / "server/conf/server/defs/extras/ObjectHarvesting.xml"
 SKILL_GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 WORLD_POPULATOR = ROOT / "server/src/com/openrsc/server/database/WorldPopulator.java"
+HARVESTING_PLUGIN = ROOT / "server/plugins/com/openrsc/server/plugins/custom/skills/harvesting/Harvesting.java"
+PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
+SCENE = ROOT / "Client_Base/src/orsc/graphics/three/Scene.java"
 
 LEGACY_HARVESTABLES = (
     ("Wheat", 72, 29, 72),
@@ -27,6 +30,9 @@ def main() -> None:
     harvesting_defs = HARVESTING_DEFS.read_text(encoding="utf-8")
     skill_guide = SKILL_GUIDE.read_text(encoding="utf-8")
     world_populator = WORLD_POPULATOR.read_text(encoding="utf-8")
+    harvesting_plugin = HARVESTING_PLUGIN.read_text(encoding="utf-8")
+    packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
+    scene = SCENE.read_text(encoding="utf-8")
 
     for name, object_id, produce_id, experience in LEGACY_HARVESTABLES:
         start = object_defs.index(f"<name>{name}</name>")
@@ -49,6 +55,12 @@ def main() -> None:
     require(skill_guide, 'new SkillMenuItem(422, "1", "Event Pumpkin - T1 shears, bonus XP")', "Harvesting guide is missing event pumpkins")
     require(harvesting_defs, "<int>1327</int>", "Regular event pumpkins are missing a Harvesting definition")
     require(harvesting_defs, "<prodId>422</prodId>\n\t\t\t<exp>360</exp>", "Event pumpkins must grant their bonus Harvesting XP")
+
+    if "prodId == ItemId.TOMATO.id()" in harvesting_plugin:
+        raise AssertionError("Tomatoes must use the same damaged-ground depleted visual as onions")
+    require(packet_handler, "if (id == 191 || id >= 1265 && id <= 1268)", "Root crop click-bound override is missing")
+    require(packet_handler, "m.setPickBoundsScale(2);", "Root crop click bounds must be doubled")
+    require(scene, "var6.getPickBoundsScale() > 1", "Scene picking does not honor expanded model bounds")
 
     for item in ("CABBAGE", "CADAVABERRIES", "GRAPES", "UNIDENTIFIED_GUAM_LEAF", "REDBERRIES",
                  "ONION", "TOMATO", "PUMPKIN", "SNAPE_GRASS", "WHITE_BERRIES", "SEAWEED",

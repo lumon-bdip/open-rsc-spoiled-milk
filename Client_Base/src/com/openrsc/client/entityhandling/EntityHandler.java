@@ -2683,7 +2683,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("water", "It's full of water", "", 1, 65, "items:65", false, false, 0, 12632319, false, false, true, 141));
 		addItemDefinition(new ItemDef("wine", "It's full of wine", "Drink", 1, 65, "items:65", false, false, 0, 12851224, false, false, true, 142));
 		addItemDefinition(new ItemDef("grapes", "Good grapes for wine making", "", 1, 21, "items:21", false, false, 0, 9386967, false, false, true, 143));
-		addItemDefinition(new ItemDef("Tin shears", "Tin shears for harvesting", "", 1, 66, "items:66", false, true, 16, 0xB7C9D9, false, false, true, 144));
+		addItemDefinition(new ItemDef("Tin shears", "Tin shears for harvesting", "", 1, 66, "items:66", false, true, 0, 0xB7C9D9, false, false, true, 144));
 		addItemDefinition(new ItemDef("wool", "I think this came from a sheep", "", 1, 67, "items:67", false, false, 0, 0, false, false, true, 145));
 		addItemDefinition(new ItemDef("fur", "This would make warm clothing", "", 10, 68, "items:68", false, false, 0, 12288534, false, false, true, 146));
 		addItemDefinition(new ItemDef("cow hide", "I should take this to the tannery", "", 1, 69, "items:69", false, false, 0, 0, false, false, true, 147));
@@ -5524,7 +5524,7 @@ public class EntityHandler {
 
 	private static void addMetalShearsDefinition(String name, int id, int price, int pictureMask) {
 		ItemDef item = new ItemDef(name, name + " for harvesting", "", price, 66, "items:66", false,
-			true, 16, pictureMask, false, false, true, id);
+			true, 0, pictureMask, false, false, true, id);
 		setCustomItemDefinition(id, item);
 	}
 

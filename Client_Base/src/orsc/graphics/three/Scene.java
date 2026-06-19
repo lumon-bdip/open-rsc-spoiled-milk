@@ -1330,9 +1330,30 @@ public final class Scene {
 			}
 
 			if (var10 == 5960) {
-				if (this.m_K && this.m_cc < this.m_db && this.m_Wb >= this.m_Xb && this.m_Cb > this.m_Wb) {
-					var52 = this.m_x[this.m_Wb];
-					if (this.m_j >= var52.m_d >> 8 && this.m_j <= var52.m_k >> 8 && var52.m_k >= var52.m_d && !var6.m_db
+				if (this.m_K && this.m_cc < this.m_db) {
+					boolean withinPickBounds = false;
+					if (this.m_Wb >= this.m_Xb && this.m_Cb > this.m_Wb) {
+						var52 = this.m_x[this.m_Wb];
+						withinPickBounds = this.m_j >= var52.m_d >> 8 && this.m_j <= var52.m_k >> 8
+							&& var52.m_k >= var52.m_d;
+					}
+					if (!withinPickBounds && var6.getPickBoundsScale() > 1) {
+						int minX = var7[0];
+						int maxX = var7[0];
+						int minY = var3[0];
+						int maxY = var3[0];
+						for (int vertex = 1; vertex < var11; vertex++) {
+							minX = Math.min(minX, var7[vertex]);
+							maxX = Math.max(maxX, var7[vertex]);
+							minY = Math.min(minY, var3[vertex]);
+							maxY = Math.max(maxY, var3[vertex]);
+						}
+						int xPadding = (maxX - minX) * (var6.getPickBoundsScale() - 1) / 2;
+						int yPadding = (maxY - minY) * (var6.getPickBoundsScale() - 1) / 2;
+						withinPickBounds = this.m_j >= minX - xPadding && this.m_j <= maxX + xPadding
+							&& this.m_Wb >= minY - yPadding && this.m_Wb <= maxY + yPadding;
+					}
+					if (withinPickBounds && !var6.m_db
 						&& var6.m_zb[var2] == 0) {
 						this.m_Ab[this.m_cc] = var6;
 						this.m_qb[this.m_cc] = var2;

@@ -27,6 +27,9 @@ def main() -> None:
             "Tool focus menu should default to temporary mode")
     require("showGatheringFocusMenuTemporarily(itemId);" in client,
             "Gathering focus menu should be triggered by action progress")
+    require("private void drawActionProgressBar" in client
+            and "Renderer2DFrame.Phase.WORLD_OVERLAY" in client[client.index("private void drawActionProgressBar"):client.index("public final void hidePartyMenu")],
+            "Actor-attached progress bar must draw in the world overlay phase")
     require("mc.completeActionProgressBar();" in packet_handler,
             "Server progress-stop updates should let the temporary focus menu linger for repeat actions")
     require("this.clearActionProgressBar();" in client and "this.gatheringFocusMenuHideAt = 0L;" in client,

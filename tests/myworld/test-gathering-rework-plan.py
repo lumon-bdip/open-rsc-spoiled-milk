@@ -154,7 +154,6 @@ def require_tool_equip_gates() -> None:
     }
     tool_defaults = {
         "isWearable": 1,
-        "wearableID": 16,
         "wearSlot": 4,
         "weaponAimBonus": 0,
         "weaponPowerBonus": 0,
@@ -169,6 +168,7 @@ def require_tool_equip_gates() -> None:
             fail(f"Tool item {item_id} missing from generated MyWorld item overrides")
         expected = {
             **tool_defaults,
+            "wearableID": 0 if skill_id == 19 else 16,
             "requiredSkillID": skill_id,
             "requiredLevel": required_level,
         }
@@ -409,8 +409,8 @@ def require_shears_smithing_and_defs() -> None:
         if item_name not in custom_defs_text:
             fail(f"Custom item defs missing expected shears definition: {item_name}")
     for server_snippet in (
-        '"name": "Copper shears",\n      "description": "Copper shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 0,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 66,',
-        '"name": "Rune shears",\n      "description": "Rune shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 0,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 66,',
+        '"name": "Copper shears",\n      "description": "Copper shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 0,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 66,\n      "wearableID": 0,',
+        '"name": "Rune shears",\n      "description": "Rune shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 0,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 66,\n      "wearableID": 0,',
     ):
         if server_snippet not in custom_defs_text:
             fail(f"Custom shears defs do not point at the real shears sprite: {server_snippet.splitlines()[0]}")
@@ -418,11 +418,11 @@ def require_shears_smithing_and_defs() -> None:
         fail("MyWorld item overrides do not rename legacy shears to Tin shears")
 
     client_snippets = (
-        'new ItemDef("Tin shears", "Tin shears for harvesting", "", 1, 66, "items:66", false, true, 16',
+        'new ItemDef("Tin shears", "Tin shears for harvesting", "", 1, 66, "items:66", false, true, 0',
         'addMetalShearsDefinition("Copper shears", 2215, 4, 0xC86A2B);',
         'addMetalShearsDefinition("Rune shears", 2223, 32000, 0x00FFFF);',
         'new ItemDef(name, name + " for harvesting", "", price, 66, "items:66"',
-        "true, 16, pictureMask, false, false, true, id);",
+        "true, 0, pictureMask, false, false, true, id);",
         "while (items.size() <= id)",
         'addMetalArrowHeadDefinition("Tin arrow heads", 2004, 1, 0xB7C9D9);',
         'addMetalArrowHeadDefinition("Copper arrow heads", 2015, 2, 0xC86A2B);',
@@ -444,9 +444,9 @@ def require_shears_smithing_and_defs() -> None:
             fail(f"Client item sprite mapping missing expected snippet: {snippet}")
     for snippet in (
         "MyWorldItemOverrides.apply(items);",
-        'new ItemOverride(144, "Tin shears", null, 40, 1, 16),',
-        "new ItemOverride(2215, null, null, 80, 1, 16),",
-        "new ItemOverride(2223, null, null, 15000, 1, 16),",
+        'new ItemOverride(144, "Tin shears", null, 40, 1, 0),',
+        "new ItemOverride(2215, null, null, 80, 1, 0),",
+        "new ItemOverride(2223, null, null, 15000, 1, 0),",
     ):
         if snippet not in client_text and snippet not in client_override_text:
             fail(f"Generated client item overrides missing expected snippet: {snippet}")
