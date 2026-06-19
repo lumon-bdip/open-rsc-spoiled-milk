@@ -136,6 +136,23 @@ done
 jar tf "$CLIENT_JAR" | grep '^myworld-assets/' >/dev/null \
   || fail "Client jar is missing embedded MyWorld visual assets; rebuild the client before packaging"
 
+require_client_jar_entry() {
+  local entry="$1"
+
+  jar tf "$CLIENT_JAR" | grep -Fx "$entry" >/dev/null \
+    || fail "Client jar is missing OpenGL runtime entry: $entry. Run scripts/download-lwjgl.sh with the release native classifiers and rebuild."
+}
+
+for opengl_runtime_entry in \
+  "linux/x64/org/lwjgl/liblwjgl.so" \
+  "linux/x64/org/lwjgl/glfw/libglfw.so" \
+  "linux/x64/org/lwjgl/opengl/liblwjgl_opengl.so" \
+  "windows/x64/org/lwjgl/lwjgl.dll" \
+  "windows/x64/org/lwjgl/glfw/glfw.dll" \
+  "windows/x64/org/lwjgl/opengl/lwjgl_opengl.dll"; do
+  require_client_jar_entry "$opengl_runtime_entry"
+done
+
 OUTPUT_DIR="$ROOT_DIR/output/releases/$VERSION"
 STAGING_DIR="$OUTPUT_DIR/staging"
 JAVA_NAME="spoiled-milk-$VERSION-java"
