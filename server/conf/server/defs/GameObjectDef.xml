@@ -795,7 +795,7 @@
     <name>Wheat</name>
     <description>nice ripe looking wheat</description>
     <command1>WalkTo</command1>
-    <command2>pick</command2>
+    <command2>Harvest</command2>
     <type>0</type>
     <width>1</width>
     <height>1</height>
@@ -2016,7 +2016,7 @@
     <name>Banana tree</name>
     <description>A tree with nice ripe bananas growing on it</description>
     <command1>WalkTo</command1>
-    <command2>Pick Banana</command2>
+    <command2>Harvest</command2>
     <type>1</type>
     <width>1</width>
     <height>1</height>
@@ -2027,7 +2027,7 @@
     <name>Banana tree</name>
     <description>There are no bananas left on the tree</description>
     <command1>WalkTo</command1>
-    <command2>Pick Banana</command2>
+    <command2>Examine</command2>
     <type>1</type>
     <width>1</width>
     <height>1</height>
@@ -2104,7 +2104,7 @@
     <name>Potato</name>
     <description>A potato plant</description>
     <command1>WalkTo</command1>
-    <command2>pick</command2>
+    <command2>Harvest</command2>
     <type>0</type>
     <width>1</width>
     <height>1</height>
@@ -3446,7 +3446,7 @@
     <name>flax</name>
     <description>A flax plant</description>
     <command1>WalkTo</command1>
-    <command2>pick</command2>
+    <command2>Harvest</command2>
     <type>0</type>
     <width>1</width>
     <height>1</height>
@@ -4733,7 +4733,7 @@
     <name>Pineapple tree</name>
     <description>A tree with nice ripe pineapples growing on it</description>
     <command1>WalkTo</command1>
-    <command2>Pick pineapple</command2>
+    <command2>Harvest</command2>
     <type>1</type>
     <width>1</width>
     <height>1</height>
@@ -4744,7 +4744,7 @@
     <name>Pineapple tree</name>
     <description>There are no pineapples left on the tree</description>
     <command1>WalkTo</command1>
-    <command2>Pick pineapple</command2>
+    <command2>Examine</command2>
     <type>1</type>
     <width>1</width>
     <height>1</height>
@@ -14594,5 +14594,16 @@
     <height>1</height>
     <groundItemVar>0</groundItemVar>
     <objectModel>ChestClosed</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Pumpkin</name>
+    <description>A ripe event pumpkin ready for harvest</description>
+    <command1>Harvest</command1>
+    <command2>Examine</command2>
+    <type>0</type>
+    <width>1</width>
+    <height>1</height>
+    <groundItemVar>0</groundItemVar>
+    <objectModel>pumpkinwhite</objectModel>
   </GameObjectDef>
 </GameObjectDef-array>

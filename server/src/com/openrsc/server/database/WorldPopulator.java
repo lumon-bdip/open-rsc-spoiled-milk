@@ -1,6 +1,8 @@
 package com.openrsc.server.database;
 
 import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.external.NPCLoc;
@@ -168,6 +170,14 @@ public final class WorldPopulator {
 					continue;
 				}
 
+				int harvestingSceneryId = harvestingSceneryForGroundItem(i.id);
+				if (getWorld().getServer().getConfig().WANT_HARVESTING && harvestingSceneryId >= 0) {
+					Point location = Point.location(i.x, i.y);
+					getWorld().registerGameObject(new GameObject(getWorld(), location, harvestingSceneryId, 0, 0));
+					getWorld().addSceneryLoc(location, harvestingSceneryId);
+					continue;
+				}
+
 				getWorld().registerItem(new GroundItem(getWorld(), i));
 				countGI++;
 			}
@@ -184,6 +194,23 @@ public final class WorldPopulator {
 			LOGGER.catching(e);
 			SystemUtil.exit(1);
 		}
+	}
+
+	private int harvestingSceneryForGroundItem(int itemId) {
+		if (itemId == ItemId.CABBAGE.id()) return SceneryId.CABBAGE.id();
+		if (itemId == ItemId.CADAVABERRIES.id()) return SceneryId.CADAVABERRY_BUSH.id();
+		if (itemId == ItemId.GRAPES.id()) return SceneryId.MYSTERIOUS_GRAPE_VINE.id();
+		if (itemId == ItemId.UNIDENTIFIED_GUAM_LEAF.id()) return SceneryId.HERB.id();
+		if (itemId == ItemId.REDBERRIES.id()) return SceneryId.REDBERRY_BUSH.id();
+		if (itemId == ItemId.ONION.id()) return SceneryId.ONION_PLANT.id();
+		if (itemId == ItemId.TOMATO.id()) return SceneryId.TOMATO_PLANT.id();
+		if (itemId == ItemId.PUMPKIN.id()) return SceneryId.REGULAR_PUMPKIN.id();
+		if (itemId == ItemId.SNAPE_GRASS.id()) return SceneryId.SNAPE_GRASS.id();
+		if (itemId == ItemId.WHITE_BERRIES.id()) return SceneryId.WHITEBERRY_BUSH.id();
+		if (itemId == ItemId.SEAWEED.id()) return SceneryId.SEA_WEED.id();
+		if (itemId == ItemId.DWELLBERRIES.id()) return SceneryId.DWELLBERRY_BUSH.id();
+		if (itemId == ItemId.JANGERBERRIES.id()) return SceneryId.JANGERBERRY_BUSH.id();
+		return -1;
 	}
 
 	public World getWorld() {

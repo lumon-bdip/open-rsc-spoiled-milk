@@ -730,7 +730,9 @@ public class GraphicsController {
 			renderer2DCaptureSkippedAlpha++;
 			return false;
 		}
-		if (transform == null || !transform.canReplayOverSoftwareFrame()) {
+		if (transform == null
+			|| (!transform.canReplayOverSoftwareFrame()
+				&& !canCaptureRenderer2DOpenGLWorldOverlayReplay())) {
 			renderer2DCaptureSkippedTransform++;
 			return false;
 		}
@@ -893,7 +895,9 @@ public class GraphicsController {
 			renderer2DCaptureSkippedInterlace++;
 			return false;
 		}
-		if (transform == null || !transform.canReplayOverSoftwareFrame()) {
+		if (transform == null
+			|| (!transform.canReplayOverSoftwareFrame()
+				&& !canCaptureRenderer2DOpenGLWorldOverlayReplay())) {
 			renderer2DCaptureSkippedTransform++;
 			return false;
 		}
@@ -958,7 +962,7 @@ public class GraphicsController {
 				srcStartY,
 				plotScaleX,
 				scaleY,
-				Renderer2DFrame.SpriteCommand.FULL_ALPHA,
+				transform.getOpacity(),
 				transform,
 				(int) topX16,
 				(int) bottomX16,

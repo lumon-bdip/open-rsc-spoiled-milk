@@ -183,6 +183,9 @@ public final class mudclient implements Runnable {
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
 	public static final int PROJECTILE_EFFECT_SCENE_RANGE = CUSTOM_PROJECTILE_COUNT * PROJECTILE_EFFECT_FRAME_SLOTS;
 	public static final int spriteProjectileEffectMirrorBase = spriteProjectileEffectBase + PROJECTILE_EFFECT_SCENE_RANGE;
+	private static final int PROJECTILE_STATIC_MIRROR_SLOTS = 256;
+	public static final int spriteProjectileStaticMirrorBase =
+		spriteProjectileEffectMirrorBase + PROJECTILE_EFFECT_SCENE_RANGE;
 	private static final int IRON_THROWING_KNIFE_ITEM_ID = 1075;
 	private static final int MAX_SPELL_ICONS = 64;
 	private static final int MAGIC_ICON_COLUMNS = 4;
@@ -945,6 +948,7 @@ public final class mudclient implements Runnable {
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final Sprite[][] projectileEffectMirrorSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
+	private final Sprite[] projectileStaticMirrorSprites = new Sprite[PROJECTILE_STATIC_MIRROR_SLOTS];
 	private final int[] projectileEffectFrameCounts = new int[CUSTOM_PROJECTILE_COUNT];
 	private final String[] projectileEffectNames = new String[] {
 		"blow-smoke", "fireball", "wind-arrow", "rock-throw", "water-ball", "throwing-knife", "arrow", "dart",
@@ -5601,8 +5605,8 @@ public final class mudclient implements Runnable {
 									var12 = var7;
 									var13 = var6;
 								}
-								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
-									shouldMirrorEnemySpellProjectile(projectileDef, var3, var16, false));
+				int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
+					shouldMirrorProjectile(var16, var3));
 								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
 								this.scene.drawSprite(projectileSprite, var13,
 									0, var11, var12, projectileSize, projectileSize, (byte) 109);
@@ -5650,8 +5654,8 @@ public final class mudclient implements Runnable {
 									var12 = var7;
 									var13 = var6;
 								}
-								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
-									shouldMirrorEnemySpellProjectile(projectileDef, var3, var16, true));
+				int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
+					shouldMirrorProjectile(var16, var3));
 								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
 								this.scene.drawSprite(projectileSprite, var13,
 									0, var11, var12, projectileSize, projectileSize, (byte) 109);
@@ -19395,10 +19399,16 @@ public final class mudclient implements Runnable {
 		return (sceneIndex >= spriteProjectileEffectBase
 				&& sceneIndex < spriteProjectileEffectBase + PROJECTILE_EFFECT_SCENE_RANGE)
 			|| (sceneIndex >= spriteProjectileEffectMirrorBase
-				&& sceneIndex < spriteProjectileEffectMirrorBase + PROJECTILE_EFFECT_SCENE_RANGE);
+				&& sceneIndex < spriteProjectileEffectMirrorBase + PROJECTILE_EFFECT_SCENE_RANGE)
+			|| (sceneIndex >= spriteProjectileStaticMirrorBase
+				&& sceneIndex < spriteProjectileStaticMirrorBase + PROJECTILE_STATIC_MIRROR_SLOTS);
 	}
 
 	public Sprite getProjectileEffectSpriteForSceneIndex(int sceneIndex) {
+		if (sceneIndex >= spriteProjectileStaticMirrorBase
+			&& sceneIndex < spriteProjectileStaticMirrorBase + PROJECTILE_STATIC_MIRROR_SLOTS) {
+			return getMirroredStaticProjectileSprite(sceneIndex - spriteProjectileStaticMirrorBase);
+		}
 		boolean mirrorX = sceneIndex >= spriteProjectileEffectMirrorBase
 			&& sceneIndex < spriteProjectileEffectMirrorBase + PROJECTILE_EFFECT_SCENE_RANGE;
 		int offset = mirrorX ? sceneIndex - spriteProjectileEffectMirrorBase : sceneIndex - spriteProjectileEffectBase;
@@ -19421,6 +19431,19 @@ public final class mudclient implements Runnable {
 			return projectileEffectSprites[projectileIndex][frame];
 		}
 		return getMirroredProjectileEffectSprite(projectileIndex, frame);
+	}
+
+	private Sprite getMirroredStaticProjectileSprite(int projectileId) {
+		if (projectileId < 0 || projectileId >= EntityHandler.projectilesCount()) {
+			return null;
+		}
+		Sprite mirrored = projectileStaticMirrorSprites[projectileId];
+		if (mirrored == null) {
+			Sprite source = spriteSelect(EntityHandler.projectiles.get(projectileId));
+			mirrored = createMirroredSprite(source);
+			projectileStaticMirrorSprites[projectileId] = mirrored;
+		}
+		return mirrored;
 	}
 
 	private Sprite getMirroredProjectileEffectSprite(int projectileIndex, int frame) {
@@ -22414,10 +22437,12 @@ public final class mudclient implements Runnable {
 
 	private int getProjectileSceneSpriteIndex(SpriteDef projectile, int projectileRange, boolean mirrorX) {
 		if (projectile == null) {
-			return spriteProjectile + PROJECTILE_TYPES.MAGIC.id();
+			return mirrorX
+				? spriteProjectileStaticMirrorBase + PROJECTILE_TYPES.MAGIC.id()
+				: spriteProjectile + PROJECTILE_TYPES.MAGIC.id();
 		}
 		if (!isCustomProjectile(projectile)) {
-			return projectile.id + spriteProjectile;
+			return mirrorX ? spriteProjectileStaticMirrorBase + projectile.id : projectile.id + spriteProjectile;
 		}
 		int projectileIndex = projectile.id - CUSTOM_PROJECTILE_FIRST;
 		int frameCount = projectileEffectFrameCounts[projectileIndex];
@@ -22430,7 +22455,7 @@ public final class mudclient implements Runnable {
 			frameCount = projectileEffectFrameCounts[projectileIndex];
 		}
 		if (frameCount <= 0) {
-			return projectile.getAuthenticSpriteID();
+			return mirrorX ? spriteProjectileStaticMirrorBase + projectile.id : projectile.getAuthenticSpriteID();
 		}
 		int elapsed = Math.max(0, this.projectileMaxRange - projectileRange);
 		int frame = (elapsed * frameCount) / Math.max(1, this.projectileMaxRange);
@@ -22441,12 +22466,8 @@ public final class mudclient implements Runnable {
 		return base + (projectileIndex * PROJECTILE_EFFECT_FRAME_SLOTS) + frame;
 	}
 
-	private boolean shouldMirrorEnemySpellProjectile(SpriteDef projectile, ORSCharacter caster, ORSCharacter victim,
-			boolean casterIsNpc) {
-		return casterIsNpc
-			&& isAnimatedCustomProjectile(projectile)
-			&& isSpellProjectile(projectile)
-			&& isProjectileCasterScreenRightOfVictim(caster, victim);
+	private boolean shouldMirrorProjectile(ORSCharacter caster, ORSCharacter victim) {
+		return isProjectileCasterScreenRightOfVictim(caster, victim);
 	}
 
 	private boolean isProjectileCasterScreenRightOfVictim(ORSCharacter caster, ORSCharacter victim) {

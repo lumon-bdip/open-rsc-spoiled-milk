@@ -924,13 +924,16 @@ public final class SkillGuideInterface {
 			}
 			if (mc.getSkillGuideChosen().equalsIgnoreCase("Harvest")) {
 				if (curTab == 0) {
+					skillMenuEntries.add(new SkillMenuItem(29, "1", "Grain - T1 shears"));
 					skillMenuEntries.add(new SkillMenuItem(348, "1", "Potato - T1 shears"));
 					skillMenuEntries.add(new SkillMenuItem(241, "1", "Onion - T1 shears"));
 					skillMenuEntries.add(new SkillMenuItem(18, "1", "Cabbage - T1 shears"));
 					skillMenuEntries.add(new SkillMenuItem(218, "8", "Garlic - T2 shears"));
+					skillMenuEntries.add(new SkillMenuItem(675, "15", "Flax - T3 shears"));
 					skillMenuEntries.add(new SkillMenuItem(320, "15", "Tomato - T3 shears"));
 					skillMenuEntries.add(new SkillMenuItem(1353, "22", "Corn - T4 shears"));
 					skillMenuEntries.add(new SkillMenuItem(1569, "1", "Lily's Pumpkin - T1 shears"));
+					skillMenuEntries.add(new SkillMenuItem(422, "1", "Event Pumpkin - T1 shears, bonus XP"));
 					skillMenuEntries.add(new SkillMenuItem(1352, "30", "Red Cabbage - T5 shears"));
 					skillMenuEntries.add(new SkillMenuItem(1354, "46", "White Pumpkin - T7 shears"));
 					skillMenuEntries.add(new SkillMenuItem(1456, "46", "Sugar Cane - T7 shears"));

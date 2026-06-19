@@ -1,5 +1,55 @@
 <map>
 	<entry>
+		<int>72</int>
+		<ObjectHarvestingDef>
+			<requiredLvl>1</requiredLvl>
+			<prodId>29</prodId>
+			<exp>72</exp>
+			<exhaust>4</exhaust>
+			<respawnTime>15</respawnTime>
+		</ObjectHarvestingDef>
+	</entry>
+	<entry>
+		<int>183</int>
+		<ObjectHarvestingDef>
+			<requiredLvl>37</requiredLvl>
+			<prodId>249</prodId>
+			<exp>88</exp>
+			<exhaust>3</exhaust>
+			<respawnTime>70</respawnTime>
+		</ObjectHarvestingDef>
+	</entry>
+	<entry>
+		<int>191</int>
+		<ObjectHarvestingDef>
+			<requiredLvl>1</requiredLvl>
+			<prodId>348</prodId>
+			<exp>72</exp>
+			<exhaust>4</exhaust>
+			<respawnTime>15</respawnTime>
+		</ObjectHarvestingDef>
+	</entry>
+	<entry>
+		<int>313</int>
+		<ObjectHarvestingDef>
+			<requiredLvl>19</requiredLvl>
+			<prodId>675</prodId>
+			<exp>40</exp>
+			<exhaust>1</exhaust>
+			<respawnTime>30</respawnTime>
+		</ObjectHarvestingDef>
+	</entry>
+	<entry>
+		<int>430</int>
+		<ObjectHarvestingDef>
+			<requiredLvl>55</requiredLvl>
+			<prodId>861</prodId>
+			<exp>176</exp>
+			<exhaust>5</exhaust>
+			<respawnTime>140</respawnTime>
+		</ObjectHarvestingDef>
+	</entry>
+	<entry>
 		<int>1243</int>
 		<ObjectHarvestingDef>
 			<requiredLvl>19</requiredLvl>
@@ -247,6 +297,16 @@
 			<exp>560</exp>
 			<exhaust>10</exhaust>
 			<respawnTime>300</respawnTime>
+		</ObjectHarvestingDef>
+	</entry>
+	<entry>
+		<int>1327</int>
+		<ObjectHarvestingDef>
+			<requiredLvl>1</requiredLvl>
+			<prodId>422</prodId>
+			<exp>360</exp>
+			<exhaust>16</exhaust>
+			<respawnTime>190</respawnTime>
 		</ObjectHarvestingDef>
 	</entry>
 	<entry>

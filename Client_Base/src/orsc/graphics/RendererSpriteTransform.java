@@ -45,6 +45,10 @@ public final class RendererSpriteTransform {
 		return mode == MODE_IDENTITY || getOpacity() == 0xFF;
 	}
 
+	public int getOpacity() {
+		return colourTransform >> 24 & 0xFF;
+	}
+
 	public int apply(int pixel) {
 		if (!RendererTransparency.isVisibleSpritePixel(pixel)) {
 			return RendererTransparency.TRANSPARENT_SAMPLE;
@@ -72,14 +76,13 @@ public final class RendererSpriteTransform {
 			blue = ((blueMask & 0xFF) * shifter) >> 16;
 		}
 
-		int opacity = getOpacity();
 		int transformRed = colourTransform >> 16 & 0xFF;
 		int transformGreen = colourTransform >> 8 & 0xFF;
 		int transformBlue = colourTransform & 0xFF;
 
-		red = (((red * transformRed) >> 8) * opacity) >> 8;
-		green = (((green * transformGreen) >> 8) * opacity) >> 8;
-		blue = (((blue * transformBlue) >> 8) * opacity) >> 8;
+		red = (red * transformRed) >> 8;
+		green = (green * transformGreen) >> 8;
+		blue = (blue * transformBlue) >> 8;
 		return red << 16 | green << 8 | blue;
 	}
 
@@ -107,10 +110,6 @@ public final class RendererSpriteTransform {
 		result = 31 * result + blueMask;
 		result = 31 * result + colourTransform;
 		return result;
-	}
-
-	private int getOpacity() {
-		return colourTransform >> 24 & 0xFF;
 	}
 
 	private static int normalizeMask(int mask) {

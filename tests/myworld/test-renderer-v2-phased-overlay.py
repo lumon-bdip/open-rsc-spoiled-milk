@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 GRAPHICS = ROOT / "Client_Base/src/orsc/graphics/two/GraphicsController.java"
 RENDERER_FRAME = ROOT / "Client_Base/src/orsc/graphics/Renderer2DFrame.java"
+RENDERER_TRANSFORM = ROOT / "Client_Base/src/orsc/graphics/RendererSpriteTransform.java"
 SETTINGS = ROOT / "Client_Base/src/orsc/graphics/Renderer2DSettings.java"
 TELEMETRY = ROOT / "Client_Base/src/orsc/RenderTelemetry.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
@@ -19,9 +20,15 @@ def require(text: str, needle: str, label: str) -> None:
         raise AssertionError(f"{label} missing expected snippet: {needle!r}")
 
 
+def forbid(text: str, needle: str, label: str) -> None:
+    if needle in text:
+        raise AssertionError(f"{label} still contains forbidden snippet: {needle!r}")
+
+
 def main() -> None:
     graphics = GRAPHICS.read_text(encoding="utf-8")
     frame = RENDERER_FRAME.read_text(encoding="utf-8")
+    renderer_transform = RENDERER_TRANSFORM.read_text(encoding="utf-8")
     settings = SETTINGS.read_text(encoding="utf-8")
     telemetry = TELEMETRY.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
@@ -314,6 +321,28 @@ def main() -> None:
         graphics,
         "boolean requiresOrderedReplay = mirrorX || destColumnSkewPerRow != 0;",
         "masked native UI ordered-replay detection",
+    )
+    require(
+        graphics,
+        "(!transform.canReplayOverSoftwareFrame()\n\t\t\t\t&& !canCaptureRenderer2DOpenGLWorldOverlayReplay())",
+        "replacement composite captures translucent masked UI sprites",
+    )
+    if graphics.count("&& !canCaptureRenderer2DOpenGLWorldOverlayReplay())") < 2:
+        raise AssertionError("both generic and masked translucent sprite capture paths must support replacement replay")
+    require(
+        graphics,
+        "transform.getOpacity(),\n\t\t\t\ttransform,",
+        "masked UI sprite opacity is carried by the OpenGL command",
+    )
+    require(
+        renderer_transform,
+        "public int getOpacity()",
+        "sprite transform exposes opacity for OpenGL replay",
+    )
+    forbid(
+        renderer_transform,
+        "((red * transformRed) >> 8) * opacity",
+        "OpenGL texture conversion must not bake opacity into sprite RGB",
     )
     require(
         graphics,
