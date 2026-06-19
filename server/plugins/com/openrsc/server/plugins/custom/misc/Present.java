@@ -265,7 +265,7 @@ public class Present implements UsePlayerTrigger, OpInvTrigger {
 		/**
 		 * Unique gift ideas!
 		 */
-		coolItemsTable.addItemDrop(ItemId.OYSTER_PEARL_BOLT_TIPS.id(), 5, 1); // maybe can make these into a necklace lol?
+		coolItemsTable.addItemDrop(ItemId.OYSTER_PEARLS.id(), 1, 1);
 		coolItemsTable.addItemDrop(ItemId.GNOME_BALL.id(), 1, 1);
 		coolItemsTable.addItemDrop(ItemId.PARAMAYA_REST_TICKET.id(), 1, 2); // hotel gift card
 		coolItemsTable.addItemDrop(ItemId.SHIP_TICKET.id(), 1, 2); // omg a cruise???
@@ -595,10 +595,10 @@ public class Present implements UsePlayerTrigger, OpInvTrigger {
 				/**
 				 * Unique gift ideas!
 				 */
-				case OYSTER_PEARL_BOLT_TIPS:
+				case OYSTER_PEARLS:
 					otherPlayer.playerServerMessage(MessageType.QUEST, "You unwrap the present...");
 					delay(unwrapDelay);
-					otherPlayer.playerServerMessage(MessageType.QUEST, "Ooh! It's some pointed pearls!");
+					otherPlayer.playerServerMessage(MessageType.QUEST, "Ooh! It's some valuable oyster pearls!");
 					otherPlayer.getCarriedItems().getInventory().add(prize);
 					break;
 				case GNOME_BALL:

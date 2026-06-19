@@ -1425,7 +1425,6 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(1013, "", "Dart tips moved to Crafting and use molds"));
 			skillMenuEntries.add(new SkillMenuItem(1996, "", "Throwing knives moved to Crafting and use molds"));
 			skillMenuEntries.add(new SkillMenuItem(3208, "", "Shuriken use Crafting and molds"));
-			skillMenuEntries.add(new SkillMenuItem(779, "", "Can be opened at level 34"));
 			skillMenuEntries.add(new SkillMenuItem(191, "", "Crafting Guild can be entered at level 40 with a brown apron"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1384, "Crafting");

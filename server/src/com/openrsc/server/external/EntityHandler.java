@@ -708,7 +708,7 @@ public final class EntityHandler {
 				ItemId.ADAMANTITE_BOLTS.id(), ItemId.POISON_ADAMANTITE_BOLTS.id(),
 				ItemId.ORICHALCUM_BOLTS.id(), ItemId.POISON_ORICHALCUM_BOLTS.id(),
 				ItemId.RUNE_BOLTS.id(), ItemId.POISON_RUNE_BOLTS.id(),
-				ItemId.OYSTER_PEARL_BOLTS.id(), ItemId.POISON_DRAGON_BOLTS.id(), ItemId.DRAGON_BOLTS.id()
+				ItemId.POISON_DRAGON_BOLTS.id(), ItemId.DRAGON_BOLTS.id()
 			};
 			for (int itemId : wieldableBolts) {
 				items.get(itemId).setWieldable(true);

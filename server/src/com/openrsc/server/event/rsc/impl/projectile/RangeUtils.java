@@ -77,7 +77,7 @@ public class RangeUtils {
 
     private final static Set<Integer> TIN_BOLTS = ImmutableSet.of(ItemId.CROSSBOW_BOLTS.id(), ItemId.POISON_CROSSBOW_BOLTS.id());
     private final static Set<Integer> COPPER_BOLTS = ImmutableSet.of(ItemId.COPPER_BOLTS.id(), ItemId.POISON_COPPER_BOLTS.id());
-    private final static Set<Integer> BRONZE_BOLTS = ImmutableSet.of(ItemId.BRONZE_BOLTS.id(), ItemId.POISON_BRONZE_BOLTS.id(), ItemId.OYSTER_PEARL_BOLTS.id());
+    private final static Set<Integer> BRONZE_BOLTS = ImmutableSet.of(ItemId.BRONZE_BOLTS.id(), ItemId.POISON_BRONZE_BOLTS.id());
     private final static Set<Integer> IRON_BOLTS = ImmutableSet.of(ItemId.IRON_BOLTS.id(), ItemId.POISON_IRON_BOLTS.id());
     private final static Set<Integer> STEEL_BOLTS = ImmutableSet.of(ItemId.STEEL_BOLTS.id(), ItemId.POISON_STEEL_BOLTS.id());
     private final static Set<Integer> MITHRIL_BOLTS = ImmutableSet.of(ItemId.MITHRIL_BOLTS.id(), ItemId.POISON_MITHRIL_BOLTS.id());

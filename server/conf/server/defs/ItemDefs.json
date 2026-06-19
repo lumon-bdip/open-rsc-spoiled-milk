@@ -17920,7 +17920,7 @@
         {
             "id": 779,
             "name": "oyster pearls",
-            "description": "I could work wonders with these and a chisel",
+            "description": "Valuable pearls from a rare oyster",
             "command": "",
             "isFemaleOnly": 0,
             "isMembersOnly": 1,
@@ -17937,7 +17937,7 @@
             "weaponPowerBonus": 0,
             "magicBonus": 0,
             "prayerBonus": 0,
-            "basePrice": 1400,
+            "basePrice": 25000,
             "isNoteable": 1
         },
         {
@@ -18081,7 +18081,7 @@
         {
             "id": 786,
             "name": "Oyster pearl bolts",
-            "description": "Great if you have a crossbow!",
+            "description": "Retired oyster pearl bolts",
             "command": "",
             "isFemaleOnly": 0,
             "isMembersOnly": 1,
@@ -18098,7 +18098,7 @@
             "weaponPowerBonus": 0,
             "magicBonus": 0,
             "prayerBonus": 0,
-            "basePrice": 110,
+            "basePrice": 1,
             "isNoteable": 0
         },
         {
@@ -18173,7 +18173,7 @@
         {
             "id": 790,
             "name": "Oyster pearl bolt tips",
-            "description": "Can be used to improve crossbow bolts",
+            "description": "Retired oyster pearl bolt tips",
             "command": "",
             "isFemaleOnly": 0,
             "isMembersOnly": 1,
@@ -18190,7 +18190,7 @@
             "weaponPowerBonus": 0,
             "magicBonus": 0,
             "prayerBonus": 0,
-            "basePrice": 56,
+            "basePrice": 1,
             "isNoteable": 0
         },
         {
@@ -18219,7 +18219,7 @@
         {
             "id": 792,
             "name": "oyster pearls",
-            "description": "I could work wonders with these and a chisel",
+            "description": "Valuable pearls from a rare oyster",
             "command": "",
             "isFemaleOnly": 0,
             "isMembersOnly": 1,
@@ -18236,13 +18236,13 @@
             "weaponPowerBonus": 0,
             "magicBonus": 0,
             "prayerBonus": 0,
-            "basePrice": 112,
+            "basePrice": 25000,
             "isNoteable": 1
         },
         {
             "id": 793,
             "name": "oyster",
-            "description": "It's a rare oyster",
+            "description": "It's a rare and valuable oyster",
             "command": "open",
             "isFemaleOnly": 0,
             "isMembersOnly": 1,
@@ -18259,7 +18259,7 @@
             "weaponPowerBonus": 0,
             "magicBonus": 0,
             "prayerBonus": 0,
-            "basePrice": 200,
+            "basePrice": 10000,
             "isNoteable": 1
         },
         {

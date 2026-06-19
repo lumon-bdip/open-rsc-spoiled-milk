@@ -19,7 +19,6 @@ public final class Gulluck extends AbstractShop {
 		new Item(ItemId.IRON_ARROWS.id(), 1000), new Item(ItemId.STEEL_ARROWS.id(), 1000), new Item(ItemId.MITHRIL_ARROWS.id(), 1000),
 		new Item(ItemId.COPPER_BOLTS.id(), 1000), new Item(ItemId.BRONZE_BOLTS.id(), 1000), new Item(ItemId.IRON_BOLTS.id(), 1000),
 		new Item(ItemId.STEEL_BOLTS.id(), 1000), new Item(ItemId.MITHRIL_BOLTS.id(), 1000),
-		new Item(ItemId.OYSTER_PEARL_BOLTS.id(), 1000),
 		new Item(ItemId.SHORTBOW.id(), 4), new Item(ItemId.LONGBOW.id(), 2), new Item(ItemId.OAK_SHORTBOW.id(), 4),
 		new Item(ItemId.OAK_LONGBOW.id(), 2), new Item(ItemId.WILLOW_SHORTBOW.id(), 3), new Item(ItemId.WILLOW_LONGBOW.id(), 2),
 		new Item(ItemId.MAPLE_SHORTBOW.id(), 2), new Item(ItemId.MAPLE_LONGBOW.id(), 2), new Item(ItemId.YEW_SHORTBOW.id(), 1),

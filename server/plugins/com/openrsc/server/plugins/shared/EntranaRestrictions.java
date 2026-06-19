@@ -116,8 +116,6 @@ public final class EntranaRestrictions {
 		// Crossbow Bolts
 		ItemId.CROSSBOW_BOLTS.id(),
 		ItemId.POISON_CROSSBOW_BOLTS.id(),
-		ItemId.OYSTER_PEARL_BOLTS.id(),
-		ItemId.OYSTER_PEARL_BOLT_TIPS.id(),
 
 		// Daggers
 		ItemId.BRONZE_DAGGER.id(),

@@ -544,7 +544,6 @@ def main() -> None:
     require_exact(items_by_id, 2181, "rangedOffense", items_by_id[2180]["rangedOffense"], "Poison bronze bolts parity")
     require_exact(items_by_id, 2183, "rangedOffense", items_by_id[2182]["rangedOffense"], "Poison iron bolts parity")
     require_exact(items_by_id, 2185, "rangedOffense", items_by_id[2184]["rangedOffense"], "Poison steel bolts parity")
-    require_exact(items_by_id, 786, "rangedOffense", items_by_id[2182]["rangedOffense"], "Oyster pearl bolts tier-4 parity")
     require_exact(items_by_id, 2187, "rangedOffense", items_by_id[2186]["rangedOffense"], "Poison mithril bolts parity")
     require_exact(items_by_id, 2189, "rangedOffense", items_by_id[2188]["rangedOffense"], "Poison titan steel bolts parity")
     require_exact(items_by_id, 2191, "rangedOffense", items_by_id[2190]["rangedOffense"], "Poison adamantite bolts parity")

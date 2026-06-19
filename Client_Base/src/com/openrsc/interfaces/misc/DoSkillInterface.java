@@ -1111,10 +1111,6 @@ public final class DoSkillInterface {
 			title = "Choose an amount to fletch";
 			skillDoing = "Fletching";
 			doSkillItems.add(new DoSkillItem(1070, "82", ""));
-		} else if (skillToDo.equals("Fletch pearl bolts")) {
-			title = "Choose an amount to fletch";
-			skillDoing = "Fletching";
-			doSkillItems.add(new DoSkillItem(786, "34", ""));
 		} else if (skillToDo.equals("Mix guam")) {
 			title = "Choose an amount to mix";
 			skillDoing = "Herblaw";

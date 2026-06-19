@@ -720,7 +720,6 @@ public class CombatFormula {
 			case POISON_IRON_ARROWS:
 			case CROSSBOW_BOLTS:
 			case POISON_CROSSBOW_BOLTS:
-			case OYSTER_PEARL_BOLTS:
 				return 20;
 			case STEEL_THROWING_DART:
 			case POISONED_STEEL_THROWING_DART:

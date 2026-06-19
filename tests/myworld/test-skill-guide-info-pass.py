@@ -64,7 +64,6 @@ def main() -> None:
         '"Bolts moved to Crafting and use molds"',
         '"Dart tips moved to Crafting and use molds"',
         '"Throwing knives moved to Crafting and use molds"',
-        '"Can be opened at level 34"',
         '"Crafting Guild can be entered at level 40 with a brown apron"',
     ):
         require(guide, snippet, "Crafting guide info")

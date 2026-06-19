@@ -162,19 +162,6 @@ public class Fletching implements UseInvTrigger {
 		} else if (item2ID == ItemId.KNIFE.id() && DataConversions.inArray(logIds, item1.getCatalogId()) && Skill.CRAFTING.id() != Skill.NONE.id()) {
 			return true;
 
-			// Cut oyster pearls.
-		} else if (item1ID == ItemId.CHISEL.id() && (item2.getCatalogId() == ItemId.QUEST_OYSTER_PEARLS.id()
-			|| item2.getCatalogId() == ItemId.OYSTER_PEARLS.id())) {
-			return true;
-		} else if (item2ID == ItemId.CHISEL.id() && (item1.getCatalogId() == ItemId.QUEST_OYSTER_PEARLS.id()
-			|| item1.getCatalogId() == ItemId.OYSTER_PEARLS.id())) {
-			return true;
-
-			// Add oyster pearl bolt tips to bolts.
-		} else if (item1ID == ItemId.OYSTER_PEARL_BOLT_TIPS.id() && item2ID == ItemId.CROSSBOW_BOLTS.id()) {
-			return true;
-		} else if (item2ID == ItemId.OYSTER_PEARL_BOLT_TIPS.id() && item1ID == ItemId.CROSSBOW_BOLTS.id()) {
-			return true;
 		}
 
 		return false;
@@ -209,17 +196,6 @@ public class Fletching implements UseInvTrigger {
 		} else if (item2ID == ItemId.KNIFE.id() && DataConversions.inArray(logIds, item1.getCatalogId()) && Skill.CRAFTING.id() != Skill.NONE.id()) {
 			doLogCut(player, item2, item1);
 
-			// Cut oyster pearls.
-		} else if (item1ID == ItemId.CHISEL.id() && (item2.getCatalogId() == ItemId.QUEST_OYSTER_PEARLS.id() || item2.getCatalogId() == ItemId.OYSTER_PEARLS.id())) {
-			doPearlCut(player, item1, item2);
-		} else if (item2ID == ItemId.CHISEL.id() && (item1.getCatalogId() == ItemId.QUEST_OYSTER_PEARLS.id() || item1.getCatalogId() == ItemId.OYSTER_PEARLS.id())) {
-			doPearlCut(player, item2, item1);
-
-			// Add oyster pearl bolt tips to bolts.
-		} else if (item1ID == ItemId.OYSTER_PEARL_BOLT_TIPS.id() && item2ID == ItemId.CROSSBOW_BOLTS.id()) {
-			doBoltMake(player, item2, item1);
-		} else if (item2ID == ItemId.OYSTER_PEARL_BOLT_TIPS.id() && item1ID == ItemId.CROSSBOW_BOLTS.id()) {
-			doBoltMake(player, item1, item2);
 		}
 	}
 
@@ -755,121 +731,6 @@ public class Fletching implements UseInvTrigger {
 			}
 		}
 		return 10;
-	}
-
-	private void doPearlCut(final Player player, final Item chisel, final Item pearl) {
-		if (!config().MEMBER_WORLD) {
-			player.sendMemberErrorMessage();
-			return;
-		}
-
-		int amount;
-		if (pearl.getCatalogId() == ItemId.QUEST_OYSTER_PEARLS.id()) {
-			amount = 25;
-		} else if (pearl.getCatalogId() == ItemId.OYSTER_PEARLS.id()) {
-			amount = 2;
-		} else {
-			player.message("Nothing interesting happens");
-			return;
-		}
-
-		final int amt = amount;
-		final int exp = 25;
-		final int pearlID = pearl.getCatalogId();
-
-		int repeat = 1;
-		if (config().BATCH_PROGRESSION) {
-			repeat = player.getCarriedItems().getInventory().countId(pearlID, Optional.of(false));
-		}
-
-		startbatch(repeat);
-		batchPearlCutting(player, pearl, amount);
-	}
-
-	private void batchPearlCutting(Player player, Item pearl, int amount) {
-		if (player.getSkills().getLevel(Skill.CRAFTING.id()) < 34) {
-			player.message("You need a crafting skill of 34 to do that");
-			return;
-		}
-		if (checkFatigue(player)) {
-			return;
-		}
-
-		while (!ifinterrupted() && !isbatchcomplete()) {
-			pearl = player.getCarriedItems().getInventory().get(
-				player.getCarriedItems().getInventory().getLastIndexById(pearl.getCatalogId(), Optional.of(false))
-			);
-			if (pearl == null) {
-				break;
-			}
-
-			player.getCarriedItems().remove(new Item(pearl.getCatalogId()));
-			player.message("you chisel the pearls into small bolt tips");
-			give(player, ItemId.OYSTER_PEARL_BOLT_TIPS.id(), amount);
-			player.incExp(Skill.CRAFTING.id(), 100, true);
-			updatebatch();
-		}
-	}
-
-	private void doBoltMake(final Player player, final Item bolts, final Item tips) {
-		if (!config().MEMBER_WORLD) {
-			player.sendMemberErrorMessage();
-			return;
-		}
-
-		if (tips.getCatalogId() != ItemId.OYSTER_PEARL_BOLT_TIPS.id()) { // not pearl tips
-			player.message("Nothing interesting happens");
-			return;
-		}
-
-		int repeat = 1; // 1 + 1000 for authentic behaviour
-		if (config().BATCH_PROGRESSION) {
-			repeat = 5;
-		}
-		startbatch(repeat);
-		batchBolts(player, bolts, tips);
-	}
-
-	private void batchBolts(Player player, Item bolts, Item tips) {
-		ServerConfiguration config = config();
-		CarriedItems ci = player.getCarriedItems();
-		int skillCapeMultiplier = SkillCapes.shouldActivate(player, ItemId.CRAFTING_CAPE) ? 2 : 1;
-		boolean authenticClientUpdates = !config().CUSTOM_IMPROVEMENTS;
-		while (!ifinterrupted() && !isbatchcomplete()) {
-			bolts = ci.getInventory().get(
-				ci.getInventory().getLastIndexById(bolts.getCatalogId(), Optional.of(false))
-			);
-			tips = ci.getInventory().get(
-				player.getCarriedItems().getInventory().getLastIndexById(tips.getCatalogId(), Optional.of(false))
-			);
-			if (bolts == null || tips == null) {
-				break;
-			}
-			int loopCount = Math.min(10, bolts.getAmount());
-			loopCount = Math.min(loopCount, tips.getAmount());
-			int timesLooped = 0;
-			for (int i = 0; i < loopCount; ++i) {
-				if (player.getSkills().getLevel(Skill.CRAFTING.id()) < 34) {
-					player.message("You need a crafting skill of 34 to do that");
-					return;
-				}
-				if (checkFatigue(player)) {
-					return;
-				}
-				ci.remove(new Item(bolts.getCatalogId(), 1), authenticClientUpdates);
-				ci.remove(new Item(tips.getCatalogId(), 1), authenticClientUpdates);
-				ci.getInventory().add(new Item(ItemId.OYSTER_PEARL_BOLTS.id(), skillCapeMultiplier), authenticClientUpdates);
-				if (authenticClientUpdates) {
-					player.incExp(Skill.CRAFTING.id(), 25 * skillCapeMultiplier, true);
-				}
-				timesLooped++;
-			}
-			if (!authenticClientUpdates) {
-				ActionSender.sendInventory(player);
-				player.incExp(Skill.CRAFTING.id(), 25 * skillCapeMultiplier * timesLooped, true);
-			}
-			updatebatch();
-		}
 	}
 
 	private boolean checkFatigue(Player player) {

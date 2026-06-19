@@ -27,7 +27,7 @@ public final class Formulae {
 			ItemId.ORICHALCUM_BOLTS.id(), ItemId.POISON_ADAMANTITE_BOLTS.id(), ItemId.ADAMANTITE_BOLTS.id(),
 			ItemId.POISON_TITAN_STEEL_BOLTS.id(), ItemId.TITAN_STEEL_BOLTS.id(), ItemId.POISON_MITHRIL_BOLTS.id(),
 			ItemId.MITHRIL_BOLTS.id(), ItemId.POISON_STEEL_BOLTS.id(), ItemId.STEEL_BOLTS.id(),
-			ItemId.POISON_IRON_BOLTS.id(), ItemId.IRON_BOLTS.id(), ItemId.OYSTER_PEARL_BOLTS.id(),
+			ItemId.POISON_IRON_BOLTS.id(), ItemId.IRON_BOLTS.id(),
 			ItemId.POISON_BRONZE_BOLTS.id(), ItemId.BRONZE_BOLTS.id(), ItemId.POISON_COPPER_BOLTS.id(),
 			ItemId.COPPER_BOLTS.id(), ItemId.POISON_CROSSBOW_BOLTS.id(), ItemId.CROSSBOW_BOLTS.id()};
 	private static final int[] herbDropIDs = {ItemId.UNIDENTIFIED_GUAM_LEAF.id(), ItemId.UNIDENTIFIED_MARRENTILL.id(),

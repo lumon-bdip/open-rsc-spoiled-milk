@@ -6,19 +6,19 @@ import java.util.EnumSet;
 import java.util.Locale;
 
 enum BankItemTag {
-	MINING("Mining", Group.SKILLS),
-	SMITHING("Smithing", Group.SKILLS),
-	CRAFTING("Crafting", Group.SKILLS),
+	MINING_SMITHING("Mining & Smithing", Group.SKILLS),
+	CRAFTING_LEATHER("Crafting: Leather", Group.SKILLS),
+	CRAFTING_JEWELRY("Crafting: Jewelry", Group.SKILLS),
+	CRAFTING_WOOD("Crafting: Wood", Group.SKILLS),
+	CRAFTING_OTHER("Crafting: Other", Group.SKILLS),
 	ENCHANTING("Enchanting", Group.SKILLS),
 	PRAYER("Prayer", Group.SKILLS),
-	WOODCUTTING("Woodcutting", Group.SKILLS),
-	FLETCHING("Fletching", Group.SKILLS),
-	FISHING("Fishing", Group.SKILLS),
+	HERBLAW("Herblaw", Group.SKILLS),
+	COOKING("Cooking", Group.SKILLS),
 
 	FOOD("Food", Group.ITEM_TYPES),
-	POTIONS("Potions", Group.ITEM_TYPES),
-	POTION_INGREDIENTS("Potion ingredients", Group.ITEM_TYPES),
-	COOKING_INGREDIENTS("Cooking ingredients", Group.ITEM_TYPES),
+	TOOLS("Tools", Group.ITEM_TYPES),
+	RARE_DROPS("Rare drops", Group.ITEM_TYPES),
 	ARMOUR("Armour", Group.ITEM_TYPES),
 	MAGIC("Magic & Summoning", Group.ITEM_TYPES),
 	MELEE("Melee", Group.ITEM_TYPES),
@@ -58,7 +58,6 @@ enum BankItemTag {
 			"opal", "jade", "topaz");
 		boolean uncutGem = gem && containsAny(name, "uncut");
 		boolean jewelry = isJewelry(name);
-		boolean craftingGem = gem && !jewelry;
 		boolean logs = containsAny(name, "logs", " log");
 		boolean bow = isBowWeapon(name);
 		boolean rangedAmmo = containsAny(name, "arrow", "bolt", "dart", "throwing knife",
@@ -73,48 +72,49 @@ enum BankItemTag {
 		boolean armour = def.isWieldable() && isArmour(name);
 		boolean melee = def.isWieldable() && isMeleeWeapon(name);
 		boolean prayerEquipment = def.isWieldable() && isPrayerEquipment(name, description, armour);
+		boolean potionIngredient = isPotionIngredient(name, description);
+		boolean cookingIngredient = isCookingIngredient(name);
+		boolean miningMaterial = ore || uncutGem || containsAny(name, "geode", "pickaxe", "mining helmet", "clay")
+			|| isRawMiningMaterial(name);
+		boolean smithingMaterial = ore || bar || containsAny(name, "hammer") && !containsAny(name, "warhammer");
 
-		if (ore || uncutGem || containsAny(name, "geode", "pickaxe", "mining helmet", "clay")
-			|| isRawMiningMaterial(name)) {
-			tags.add(MINING);
+		if (miningMaterial || smithingMaterial) {
+			tags.add(MINING_SMITHING);
 		}
-		if (ore || bar || containsAny(name, "hammer") && !containsAny(name, "warhammer")) {
-			tags.add(SMITHING);
+		if (isCraftingLeather(name)) {
+			tags.add(CRAFTING_LEATHER);
 		}
-		if (uncutGem || craftingGem || isCraftingToolOrMaterial(name)) {
-			tags.add(CRAFTING);
+		if (isCraftingJewelry(name, gem)) {
+			tags.add(CRAFTING_JEWELRY);
 		}
-		if (rune || containsAny(name, "stone") || jewelry || staff
-			|| containsAny(name, "unenchant", "unenchanted")) {
+		if (logs) {
+			tags.add(CRAFTING_WOOD);
+		}
+		if (isCraftingOther(name, bow, rangedAmmo)) {
+			tags.add(CRAFTING_OTHER);
+		}
+		if (isEnchantingInput(name, description, rune)) {
 			tags.add(ENCHANTING);
 		}
 		if (bones || demonAshes || prayerEquipment || containsAny(name, "prayer", "holy", "unholy", "blessed symbol",
 			"symbol of saradomin", "symbol of zamorak", "symbol of guthix")) {
 			tags.add(PRAYER);
 		}
-		if (logs || isWoodcuttingAxe(name)) {
-			tags.add(WOODCUTTING);
+		if (potion || potionIngredient) {
+			tags.add(HERBLAW);
 		}
-		if (logs || bow || rangedAmmo || containsAny(name, "bow string", "bowstring", "feather",
-			"arrow shaft", "headless arrow", "knife")) {
-			tags.add(FLETCHING);
-		}
-		if ((raw && isFish(name)) || containsAny(name, "fishing rod", "fly fishing rod", "harpoon",
-			"lobster pot", "fishing bait", "bait", "fishing net")) {
-			tags.add(FISHING);
+		if (food || raw || cookingIngredient) {
+			tags.add(COOKING);
 		}
 
 		if (food) {
 			tags.add(FOOD);
 		}
-		if (potion) {
-			tags.add(POTIONS);
+		if (isTool(name)) {
+			tags.add(TOOLS);
 		}
-		if (isPotionIngredient(name, description)) {
-			tags.add(POTION_INGREDIENTS);
-		}
-		if (raw || isCookingIngredient(name)) {
-			tags.add(COOKING_INGREDIENTS);
+		if (isRareDrop(name)) {
+			tags.add(RARE_DROPS);
 		}
 		if (armour) {
 			tags.add(ARMOUR);
@@ -143,6 +143,55 @@ enum BankItemTag {
 			"milk", "tea", "stew", "soup");
 	}
 
+	private static boolean isTool(String name) {
+		return isWoodcuttingAxe(name)
+			|| containsAny(name, "pickaxe", "fishing rod", "fly fishing rod", "harpoon", "lobster pot",
+				"fishing net", "shears", "hammer", "chisel", "knife", "mould", "needle", "spade",
+				"rake", "seed dibber", "watering can", "tinderbox", "pestle and mortar")
+			|| equalsAny(name, "pot", "bucket", "bowl");
+	}
+
+	private static boolean isRareDrop(String name) {
+		return endsWithAny(name, " seed")
+			|| containsAny(name, "casket", "oyster", "key half", "crystal key", "geode")
+			|| equalsAny(name, "dragonstone", "uncut dragonstone", "dragon shield half left");
+	}
+
+	private static boolean isEnchantingInput(String name, String description, boolean rune) {
+		if (containsAny(name, "mould", "blessed", "holy", "unholy", "symbol", "enchanted")
+			|| containsAny(description, "blessed by")) {
+			return false;
+		}
+		return rune
+			|| containsAny(name, "unenchant", "unenchanted")
+			|| isEnchantableBaseJewelry(name)
+			|| isEnchantableBaseStaff(name)
+			|| isEnchantableBaseWool(name);
+	}
+
+	private static boolean isEnchantableBaseJewelry(String name) {
+		return equalsAny(name,
+			"gold ring", "sapphire ring", "emerald ring", "ruby ring", "diamond ring", "dragonstone ring",
+			"gold necklace", "sapphire necklace", "emerald necklace", "ruby necklace", "diamond necklace",
+			"dragonstone necklace", "gold amulet", "sapphire amulet", "emerald amulet", "ruby amulet",
+			"diamond amulet", "dragonstone amulet");
+	}
+
+	private static boolean isEnchantableBaseStaff(String name) {
+		if (containsAny(name, "dramen", "iban", "blessed", " attuned to ")
+			|| startsWithAny(name, "air ", "water ", "earth ", "fire ", "mind ", "body ", "cosmic ",
+				"chaos ", "nature ", "law ", "death ", "soul ", "life ", "blood rune ")) {
+			return false;
+		}
+		return equalsAny(name, "staff", "pine staff", "oak staff", "willow staff", "palm staff",
+			"maple staff", "yew staff", "ebony staff", "magic staff", "blood staff");
+	}
+
+	private static boolean isEnchantableBaseWool(String name) {
+		return startsWithAny(name, "wool ")
+			&& containsAny(name, "wizard hat", "robe top", "robe skirt", "gloves", "boots");
+	}
+
 	private static boolean isJewelry(String name) {
 		return containsAny(name, "amulet", "necklace", "bracelet", "symbol", "holy mould", "tiara")
 			|| startsWithAny(name, "ring ", "ring-")
@@ -151,11 +200,23 @@ enum BankItemTag {
 			|| equalsAny(name, "ring");
 	}
 
-	private static boolean isCraftingToolOrMaterial(String name) {
-		return containsAny(name, "gold ore", "gold bar", "mould", "ball of wool", "thread", "needle",
-			"clay", "chisel", "glass", "spinning", "pottery")
-			|| equalsAny(name, "wool", "leather", "hard leather")
+	private static boolean isCraftingLeather(String name) {
+		return containsAny(name, "thread", "needle")
+			|| equalsAny(name, "leather", "hard leather")
 			|| endsWithAny(name, " hide", "-hide", " leather");
+	}
+
+	private static boolean isCraftingJewelry(String name, boolean gem) {
+		return gem
+			|| containsAny(name, "gold ore", "gold bar", "silver ore", "silver bar", "mould")
+			|| containsAny(name, "tiara");
+	}
+
+	private static boolean isCraftingOther(String name, boolean bow, boolean rangedAmmo) {
+		return bow || rangedAmmo
+			|| containsAny(name, "bow string", "bowstring", "feather", "arrow shaft", "headless arrow",
+				"knife", "ball of wool", "clay", "chisel", "glass", "spinning", "pottery")
+			|| equalsAny(name, "wool");
 	}
 
 	private static boolean isPrayerEquipment(String name, String description, boolean armour) {

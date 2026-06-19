@@ -106,7 +106,6 @@ def main() -> None:
     require(guide, 'addWoodcraftGuide("Yew", 40, 46, 665, 47, 664, 50, 2173, 51, 1779, 46);', "yew base staff woodcraft guide")
     require(guide, 'addWoodcraftGuide("Magic", 50, 62, 667, 61, 666, 64, 2175, 65, 1784, 62);', "magic base staff woodcraft guide")
     require(guide, 'addWoodcraftGuide("Blood", 55, 70, 2128, 67, 2127, 70, 2176, 72, 2146, 70);', "blood woodcraft recipe guide")
-    require(guide, 'new SkillMenuItem(779, "", "Can be opened at level 34")', "oyster pearl info wording")
     require(guide, 'new SkillMenuItem(191, "", "Crafting Guild can be entered at level 40 with a brown apron")', "crafting guild info wording")
     require(guide, 'new SkillMenuItem(1259, "", "Mining Guild can be entered at level 60")', "mining guild info wording")
     require(guide, 'new SkillMenuItem(379, "", "Fishing Guild can be entered at level 68")', "fishing guild info wording")

@@ -99,11 +99,17 @@ def main() -> None:
         "batchFeathers(player, feathers, attachment, resultID, experience);",
         "batchArrowheads(player, headlessArrows, arrowHeads, headDef);",
         "batchStringing(player, bow, bowString, stringDef);",
-        "batchPearlCutting(player, pearl, amount);",
-        "batchBolts(player, bolts, tips);",
         "while (!ifinterrupted() && !isbatchcomplete()) {",
     ):
         require(fletching_text, snippet, f"Fletching instant processing missing snippet: {snippet}")
+    for retired in (
+        "batchPearlCutting",
+        "batchBolts",
+        "OYSTER_PEARL_BOLT_TIPS",
+        "OYSTER_PEARL_BOLTS",
+    ):
+        if retired in fletching_text:
+            fail(f"Fletching should not keep retired oyster pearl bolt processing: {retired}")
     if "PluginTask" in fletching_text or "PluginTickEvent" in fletching_text or '"Crafting.logShapingStart"' in fletching_text:
         fail("Fletching should not rely on delayed log shaping scheduling anymore")
 

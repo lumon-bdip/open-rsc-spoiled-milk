@@ -30,18 +30,18 @@ def main() -> None:
     tags = TAGS.read_text(encoding="utf-8")
 
     expected_tags = (
-        'MINING("Mining", Group.SKILLS)',
-        'SMITHING("Smithing", Group.SKILLS)',
-        'CRAFTING("Crafting", Group.SKILLS)',
+        'MINING_SMITHING("Mining & Smithing", Group.SKILLS)',
+        'CRAFTING_LEATHER("Crafting: Leather", Group.SKILLS)',
+        'CRAFTING_JEWELRY("Crafting: Jewelry", Group.SKILLS)',
+        'CRAFTING_WOOD("Crafting: Wood", Group.SKILLS)',
+        'CRAFTING_OTHER("Crafting: Other", Group.SKILLS)',
         'ENCHANTING("Enchanting", Group.SKILLS)',
         'PRAYER("Prayer", Group.SKILLS)',
-        'WOODCUTTING("Woodcutting", Group.SKILLS)',
-        'FLETCHING("Fletching", Group.SKILLS)',
-        'FISHING("Fishing", Group.SKILLS)',
+        'HERBLAW("Herblaw", Group.SKILLS)',
+        'COOKING("Cooking", Group.SKILLS)',
         'FOOD("Food", Group.ITEM_TYPES)',
-        'POTIONS("Potions", Group.ITEM_TYPES)',
-        'POTION_INGREDIENTS("Potion ingredients", Group.ITEM_TYPES)',
-        'COOKING_INGREDIENTS("Cooking ingredients", Group.ITEM_TYPES)',
+        'TOOLS("Tools", Group.ITEM_TYPES)',
+        'RARE_DROPS("Rare drops", Group.ITEM_TYPES)',
         'ARMOUR("Armour", Group.ITEM_TYPES)',
         'MAGIC("Magic & Summoning", Group.ITEM_TYPES)',
         'MELEE("Melee", Group.ITEM_TYPES)',
@@ -56,6 +56,15 @@ def main() -> None:
         "FIREMAKING",
         "SEEDS",
         "HARVESTING",
+        'MINING("Mining"',
+        'SMITHING("Smithing"',
+        'CRAFTING("Crafting"',
+        "WOODCUTTING",
+        "FLETCHING",
+        "FISHING",
+        "POTIONS",
+        "POTION_INGREDIENTS",
+        "COOKING_INGREDIENTS",
         "CURRENCY",
         "VALUABLES",
         "STACKABLE",
@@ -88,13 +97,42 @@ def main() -> None:
     require(tags, "boolean prayerEquipment = def.isWieldable() && isPrayerEquipment", "prayer equipment classification")
     require(tags, 'startsWithAny(name, "ring ", "ring-")', "whole-word jewelry ring classification")
     require(tags, 'containsAny(name, " ring ")', "middle-word jewelry ring classification")
-    require(tags, "boolean craftingGem = gem && !jewelry;", "finished gem jewelry exclusion")
-    require(tags, "isCraftingToolOrMaterial(name)", "crafting input classification")
+    require(tags, "boolean miningMaterial =", "combined mining/smithing classification")
+    require(tags, "tags.add(MINING_SMITHING);", "combined mining/smithing tag")
+    require(tags, "private static boolean isCraftingLeather", "crafting leather classification")
+    require(tags, "private static boolean isCraftingJewelry", "crafting jewelry classification")
+    require(tags, "private static boolean isCraftingOther", "crafting other classification")
+    require(tags, "if (logs)", "crafting wood log classification")
+    require(tags, "tags.add(CRAFTING_WOOD);", "crafting wood tag")
+    require(tags, "bow || rangedAmmo", "fletching materials moved into crafting other")
+    require(tags, "if (potion || potionIngredient)", "herblaw skill classification")
+    require(tags, "if (food || raw || cookingIngredient)", "cooking skill classification")
+    require(tags, "private static boolean isTool(String name)", "tool classification")
+    require(tags, 'containsAny(name, "pickaxe", "fishing rod"', "tool keyword classification")
+    require(tags, "private static boolean isRareDrop(String name)", "rare drop classification")
+    require(tags, 'endsWithAny(name, " seed")', "rare drop seed classification")
+    require(tags, 'containsAny(name, "casket", "oyster", "key half", "crystal key", "geode")', "rare drop named classification")
+    require(tags, 'equalsAny(name, "dragonstone", "uncut dragonstone", "dragon shield half left")', "rare drop exact classification")
+    require(tags, "tags.add(RARE_DROPS);", "rare drops tag assignment")
+    require(tags, "private static boolean isEnchantingInput", "enchanting input classifier")
+    require(tags, 'containsAny(name, "mould", "blessed", "holy", "unholy", "symbol", "enchanted")', "enchanting exclusion classifier")
+    require(tags, "isEnchantableBaseJewelry(name)", "base jewelry enchanting input")
+    require(tags, "isEnchantableBaseStaff(name)", "base staff enchanting input")
     require(tags, "boolean bow = isBowWeapon(name);", "whole-word bow classification")
     require(tags, 'endsWithAny(name, " longbow", " shortbow", " crossbow"', "bow suffix classification")
     forbid(tags, 'boolean bonesOrAshes = containsAny(name, "bone", "ashes", "demon ash");', "generic ashes classification")
     forbid(tags, "uncutGem || gem || jewelry ||", "finished jewelry crafting classification")
     forbid(tags, 'boolean bow = containsAny(name, "bow", "crossbow");', "bowl-safe ranged classification")
+    forbid(tags, "tags.add(MINING);", "retired mining bank filter")
+    forbid(tags, "tags.add(SMITHING);", "retired smithing bank filter")
+    forbid(tags, "tags.add(CRAFTING);", "retired broad crafting bank filter")
+    forbid(tags, "tags.add(WOODCUTTING);", "retired woodcutting bank filter")
+    forbid(tags, "tags.add(FLETCHING);", "retired fletching bank filter")
+    forbid(tags, "tags.add(FISHING);", "retired fishing bank filter")
+    forbid(tags, "tags.add(POTIONS);", "retired potions bank filter")
+    forbid(tags, "tags.add(POTION_INGREDIENTS);", "retired potion ingredients bank filter")
+    forbid(tags, "tags.add(COOKING_INGREDIENTS);", "retired cooking ingredients bank filter")
+    forbid(tags, 'if (rune || containsAny(name, "stone") || jewelry || staff', "broad enchanting bank filter")
 
     print("PASS: bank filters expose the agreed tags and preserve bank-slot-safe filtering")
 

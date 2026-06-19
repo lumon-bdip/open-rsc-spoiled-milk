@@ -291,7 +291,6 @@ public class OSRSCombatFormula {
 					return 9;
 					case CROSSBOW_BOLTS:
 					case POISON_CROSSBOW_BOLTS:
-					case OYSTER_PEARL_BOLTS:
 					case TIN_SPEAR:
 					case POISONED_TIN_SPEAR:
 					case COPPER_SPEAR:
