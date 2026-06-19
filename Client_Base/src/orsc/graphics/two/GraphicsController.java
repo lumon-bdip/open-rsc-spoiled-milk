@@ -8,6 +8,10 @@ import com.openrsc.client.model.Sprite;
 import com.openrsc.data.DataConversions;
 import orsc.Config;
 import orsc.MiscFunctions;
+import orsc.graphics.Renderer2DFrame;
+import orsc.graphics.Renderer2DSettings;
+import orsc.graphics.RendererSpriteTransform;
+import orsc.graphics.RendererTransparency;
 import orsc.graphics.two.SpriteArchive.*;
 import orsc.mudclient;
 import orsc.util.FastMath;
@@ -22,9 +26,25 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class GraphicsController {
+	private static final int MAX_RENDERER_2D_SPRITE_COMMANDS = 4096;
+	private static final int MAX_RENDERER_2D_TEXT_COMMANDS = 4096;
+	private static final int MAX_RENDERER_2D_PRIMITIVE_COMMANDS = 4096;
+	private static final int MAX_RENDERER_2D_ROTATED_SPRITE_COMMANDS = 256;
+	private static final int MAX_RENDERER_2D_CIRCLE_COMMANDS = 512;
 
 	public enum SPRITE_LAYER {
 		MINIMAP, WORLDMAP, SHOP
+	}
+
+	private enum Renderer2DNativeUiBlocker {
+		SPRITE,
+		TEXT,
+		PRIMITIVE,
+		MINIMAP,
+		GRADIENT,
+		CLEAR,
+		CIRCLE,
+		PIXEL
 	}
 
 	public boolean interlace = false;
@@ -56,6 +76,51 @@ public class GraphicsController {
 	private int[] m_tb;
 	private int[] m_Tb;
 	private int[] m_Wb;
+	private final List<Renderer2DFrame.SpriteCommand> renderer2DSpriteCommands = new ArrayList<>();
+	private final List<Renderer2DFrame.TextCommand> renderer2DTextCommands = new ArrayList<>();
+	private final List<Renderer2DFrame.PrimitiveCommand> renderer2DPrimitiveCommands = new ArrayList<>();
+	private final List<Renderer2DFrame.RotatedSpriteCommand> renderer2DRotatedSpriteCommands = new ArrayList<>();
+	private final List<Renderer2DFrame.CircleCommand> renderer2DCircleCommands = new ArrayList<>();
+	private Renderer2DFrame.Phase renderer2DPhase = Renderer2DFrame.Phase.UI_OVERLAY;
+	private int renderer2DCommandSequence;
+	private int renderer2DLegacySpriteId = -1;
+	private boolean renderer2DCommandOverflowLogged;
+	private int renderer2DCaptureAttempts;
+	private int renderer2DCaptureAccepted;
+	private int renderer2DCaptureReplacedUi;
+	private int renderer2DCaptureSkippedAlpha;
+	private int renderer2DCaptureSkippedBounds;
+	private int renderer2DCaptureSkippedSource;
+	private int renderer2DCaptureSkippedTransform;
+	private int renderer2DCaptureSkippedInterlace;
+	private int renderer2DCaptureSkippedOverflow;
+	private int renderer2DCaptureSkippedInvalid;
+	private int renderer2DTextDraws;
+	private int renderer2DTextGlyphs;
+	private int renderer2DTextReplacedUi;
+	private int renderer2DTextScene;
+	private int renderer2DTextWorld;
+	private int renderer2DTextUi;
+	private int renderer2DTextUnknown;
+	private int renderer2DPrimitiveDraws;
+	private int renderer2DPrimitiveReplacedUi;
+	private int renderer2DRotatedSpriteDraws;
+	private int renderer2DRotatedSpriteCapturedUi;
+	private int renderer2DCircleDraws;
+	private int renderer2DCircleCapturedUi;
+	private int renderer2DNativeUiBlockSprite;
+	private int renderer2DNativeUiBlockText;
+	private int renderer2DNativeUiBlockPrimitive;
+	private int renderer2DNativeUiBlockMinimap;
+	private int renderer2DNativeUiBlockGradient;
+	private int renderer2DNativeUiBlockClear;
+	private int renderer2DNativeUiBlockCircle;
+	private int renderer2DNativeUiBlockPixel;
+	private boolean renderer2DNativeUiSoftwareDirty;
+	private int[] renderer2DUiBasePixels;
+	private int renderer2DUiBaseWidth;
+	private int renderer2DUiBaseHeight;
+	private boolean renderer2DUiBaseCaptured;
 	public Map<String, Map<String, Entry>> spriteTree = new HashMap<>();
 	// public int[][] image2D_pixels;
 	private int[] m_Xb;
@@ -80,6 +145,820 @@ public class GraphicsController {
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "ua.<init>(" + var1 + ',' + var2 + ',' + var3 + ')' + ')');
 		}
+	}
+
+	public final void beginRenderer2DFrame() {
+		renderer2DSpriteCommands.clear();
+		renderer2DTextCommands.clear();
+		renderer2DPrimitiveCommands.clear();
+		renderer2DRotatedSpriteCommands.clear();
+		renderer2DCircleCommands.clear();
+		renderer2DCommandSequence = 0;
+		renderer2DCommandOverflowLogged = false;
+		renderer2DPhase = Renderer2DFrame.Phase.UI_OVERLAY;
+		renderer2DCaptureAttempts = 0;
+		renderer2DCaptureAccepted = 0;
+		renderer2DCaptureReplacedUi = 0;
+		renderer2DCaptureSkippedAlpha = 0;
+		renderer2DCaptureSkippedBounds = 0;
+		renderer2DCaptureSkippedSource = 0;
+		renderer2DCaptureSkippedTransform = 0;
+		renderer2DCaptureSkippedInterlace = 0;
+		renderer2DCaptureSkippedOverflow = 0;
+		renderer2DCaptureSkippedInvalid = 0;
+		renderer2DTextDraws = 0;
+		renderer2DTextGlyphs = 0;
+		renderer2DTextReplacedUi = 0;
+		renderer2DTextScene = 0;
+		renderer2DTextWorld = 0;
+		renderer2DTextUi = 0;
+		renderer2DTextUnknown = 0;
+		renderer2DPrimitiveDraws = 0;
+		renderer2DPrimitiveReplacedUi = 0;
+		renderer2DRotatedSpriteDraws = 0;
+		renderer2DRotatedSpriteCapturedUi = 0;
+		renderer2DCircleDraws = 0;
+		renderer2DCircleCapturedUi = 0;
+		renderer2DNativeUiBlockSprite = 0;
+		renderer2DNativeUiBlockText = 0;
+		renderer2DNativeUiBlockPrimitive = 0;
+		renderer2DNativeUiBlockMinimap = 0;
+		renderer2DNativeUiBlockGradient = 0;
+		renderer2DNativeUiBlockClear = 0;
+		renderer2DNativeUiBlockCircle = 0;
+		renderer2DNativeUiBlockPixel = 0;
+		renderer2DNativeUiSoftwareDirty = false;
+		renderer2DUiBaseCaptured = false;
+	}
+
+	public final void setRenderer2DPhase(Renderer2DFrame.Phase phase) {
+		renderer2DPhase = phase == null ? Renderer2DFrame.Phase.UNKNOWN : phase;
+	}
+
+	public final Renderer2DFrame consumeRenderer2DFrame() {
+		if (!Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
+			beginRenderer2DFrame();
+			return Renderer2DFrame.empty(this.width2, this.height2);
+		}
+
+		Renderer2DFrame frame =
+			Renderer2DFrame.snapshot(
+				this.width2,
+				this.height2,
+				renderer2DSpriteCommands,
+				renderer2DTextCommands,
+				renderer2DPrimitiveCommands,
+				renderer2DRotatedSpriteCommands,
+				renderer2DCircleCommands,
+				renderer2DCaptureStats());
+		beginRenderer2DFrame();
+		return frame;
+	}
+
+	public final void captureRenderer2DUiBaseFrame() {
+		if (!Renderer2DSettings.canPresentUiBaseFrame()
+			|| pixelData == null
+			|| width2 <= 0
+			|| height2 <= 0
+			|| pixelData.length < width2 * height2) {
+			return;
+		}
+
+		int requiredPixels = width2 * height2;
+		if (renderer2DUiBasePixels == null || renderer2DUiBasePixels.length != requiredPixels) {
+			renderer2DUiBasePixels = new int[requiredPixels];
+		}
+		System.arraycopy(pixelData, 0, renderer2DUiBasePixels, 0, requiredPixels);
+		renderer2DUiBaseWidth = width2;
+		renderer2DUiBaseHeight = height2;
+		renderer2DUiBaseCaptured = true;
+	}
+
+	public final boolean hasRenderer2DUiBaseFrame() {
+		return renderer2DUiBaseCaptured
+			&& renderer2DUiBasePixels != null
+			&& renderer2DUiBaseWidth > 0
+			&& renderer2DUiBaseHeight > 0;
+	}
+
+	public final int[] getRenderer2DUiBasePixels() {
+		return renderer2DUiBasePixels;
+	}
+
+	public final int getRenderer2DUiBaseWidth() {
+		return renderer2DUiBaseWidth;
+	}
+
+	public final int getRenderer2DUiBaseHeight() {
+		return renderer2DUiBaseHeight;
+	}
+
+	private Renderer2DFrame.CaptureStats renderer2DCaptureStats() {
+		return new Renderer2DFrame.CaptureStats(
+			renderer2DCaptureAttempts,
+			renderer2DCaptureAccepted,
+			renderer2DCaptureReplacedUi,
+			renderer2DUiBaseCaptured ? 1 : 0,
+			renderer2DCaptureSkippedAlpha,
+			renderer2DCaptureSkippedBounds,
+			renderer2DCaptureSkippedSource,
+			renderer2DCaptureSkippedTransform,
+			renderer2DCaptureSkippedInterlace,
+			renderer2DCaptureSkippedOverflow,
+			renderer2DCaptureSkippedInvalid,
+			renderer2DTextDraws,
+			renderer2DTextGlyphs,
+			renderer2DTextReplacedUi,
+			renderer2DTextScene,
+			renderer2DTextWorld,
+			renderer2DTextUi,
+			renderer2DTextUnknown,
+			renderer2DPrimitiveDraws,
+			renderer2DPrimitiveReplacedUi,
+			renderer2DRotatedSpriteDraws,
+			renderer2DRotatedSpriteCapturedUi,
+			renderer2DCircleDraws,
+			renderer2DCircleCapturedUi,
+			renderer2DNativeUiBlockSprite,
+			renderer2DNativeUiBlockText,
+			renderer2DNativeUiBlockPrimitive,
+			renderer2DNativeUiBlockMinimap,
+			renderer2DNativeUiBlockGradient,
+			renderer2DNativeUiBlockClear,
+			renderer2DNativeUiBlockCircle,
+			renderer2DNativeUiBlockPixel,
+			renderer2DUiBaseCaptured && !renderer2DNativeUiSoftwareDirty ? 1 : 0);
+	}
+
+	private boolean shouldReplaceRenderer2DUiSprite(boolean captured) {
+		return shouldReplaceRenderer2DUiSprite(captured, false);
+	}
+
+	private boolean shouldReplaceRenderer2DUiSprite(boolean captured, boolean requiresOrderedReplay) {
+		boolean replace = captured
+			&& !requiresOrderedReplay
+			&& canReplaceRenderer2DNativeUi();
+		if (replace) {
+			renderer2DCaptureReplacedUi++;
+		} else if (renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
+			&& Renderer2DSettings.canReplaceUiSpritesWithOpenGL()) {
+			markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.SPRITE);
+		}
+		return replace;
+	}
+
+	private boolean canCaptureAlphaRenderer2DSprite(int alpha) {
+		return alpha >= 0
+			&& alpha <= Renderer2DFrame.SpriteCommand.FULL_ALPHA
+			&& (alpha == Renderer2DFrame.SpriteCommand.FULL_ALPHA
+				|| (renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
+					&& (Renderer2DSettings.canReplaceUiSpritesWithOpenGL()
+						|| canCaptureRenderer2DOpenGLWorldOverlayReplay()))
+				|| (renderer2DPhase == Renderer2DFrame.Phase.WORLD_OVERLAY
+					&& canCaptureRenderer2DOpenGLWorldOverlayReplay()));
+	}
+
+	private void recordRenderer2DTextDraw(int glyphCount) {
+		if (!Renderer2DSettings.isOpenGLSpriteCaptureEnabled() || glyphCount <= 0) {
+			return;
+		}
+
+		renderer2DTextDraws++;
+		renderer2DTextGlyphs += glyphCount;
+		switch (renderer2DPhase) {
+			case SCENE:
+				renderer2DTextScene++;
+				break;
+			case WORLD_OVERLAY:
+				renderer2DTextWorld++;
+				break;
+			case UI_OVERLAY:
+				renderer2DTextUi++;
+				break;
+			default:
+				renderer2DTextUnknown++;
+				break;
+		}
+	}
+
+	private boolean shouldReplaceRenderer2DText(boolean captured) {
+		boolean replace = captured
+			&& canReplaceRenderer2DNativeUi();
+		if (replace) {
+			renderer2DTextReplacedUi++;
+		} else if (renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
+			&& Renderer2DSettings.canReplaceUiSpritesWithOpenGL()) {
+			markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.TEXT);
+		}
+		return replace;
+	}
+
+	private boolean canReplaceRenderer2DTextWithOpenGL() {
+		return canReplaceRenderer2DNativeUi();
+	}
+
+	private boolean canReplaceRenderer2DNativeUi() {
+		return renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
+			&& renderer2DUiBaseCaptured
+			&& !renderer2DNativeUiSoftwareDirty
+			&& Renderer2DSettings.canPresentUiBaseFrame();
+	}
+
+	private boolean canCaptureRenderer2DOpenGLWorldOverlayReplay() {
+		return Renderer2DSettings.canReplayUiOverOpenGLWorld()
+			&& (renderer2DPhase == Renderer2DFrame.Phase.WORLD_OVERLAY
+				|| renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY);
+	}
+
+	private boolean canCaptureRenderer2DNativeUiCommand() {
+		return canReplaceRenderer2DNativeUi() || canCaptureRenderer2DOpenGLWorldOverlayReplay();
+	}
+
+	private boolean recordRenderer2DTextCommand(List<Renderer2DFrame.TextCommand.GlyphCommand> glyphs) {
+		if (!canCaptureRenderer2DNativeUiCommand() || glyphs == null || glyphs.isEmpty()) {
+			return false;
+		}
+		if (renderer2DTextCommands.size() >= MAX_RENDERER_2D_TEXT_COMMANDS) {
+			return false;
+		}
+
+		renderer2DTextCommands.add(
+			new Renderer2DFrame.TextCommand(glyphs, renderer2DPhase, renderer2DCommandSequence++));
+		return true;
+	}
+
+	private boolean shouldReplaceRenderer2DPrimitive(boolean captured) {
+		if (!captured
+			&& renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
+			&& Renderer2DSettings.canReplaceUiSpritesWithOpenGL()) {
+			markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.PRIMITIVE);
+		}
+		return false;
+	}
+
+	private boolean recordRenderer2DPrimitive(int x, int y, int width, int height, int color, int alpha) {
+		if (!canCaptureRenderer2DNativeUiCommand()
+			|| this.interlace
+			|| width <= 0
+			|| height <= 0) {
+			return false;
+		}
+		renderer2DPrimitiveDraws++;
+		if (renderer2DPrimitiveCommands.size() >= MAX_RENDERER_2D_PRIMITIVE_COMMANDS) {
+			return false;
+		}
+
+		renderer2DPrimitiveCommands.add(
+			new Renderer2DFrame.PrimitiveCommand(
+				x,
+				y,
+				width,
+				height,
+				color,
+				alpha,
+				renderer2DPhase,
+				renderer2DCommandSequence++));
+		return true;
+	}
+
+	private boolean recordRenderer2DRotatedSprite(
+		Sprite sprite,
+		int x0,
+		int y0,
+		int x1,
+		int y1,
+		int x2,
+		int y2,
+		int x3,
+		int y3,
+		int clipLeft,
+		int clipTop,
+		int clipRight,
+		int clipBottom,
+		boolean transparentMask) {
+		if (!canCaptureRenderer2DNativeUiCommand()
+			|| this.interlace
+			|| sprite == null
+			|| sprite.getPixels() == null
+			|| sprite.getWidth() <= 0
+			|| sprite.getHeight() <= 0
+			|| clipRight <= clipLeft
+			|| clipBottom <= clipTop) {
+			return false;
+		}
+		renderer2DRotatedSpriteDraws++;
+		if (renderer2DRotatedSpriteCommands.size() >= MAX_RENDERER_2D_ROTATED_SPRITE_COMMANDS) {
+			return false;
+		}
+
+		renderer2DRotatedSpriteCommands.add(
+			new Renderer2DFrame.RotatedSpriteCommand(
+				sprite,
+				x0,
+				y0,
+				x1,
+				y1,
+				x2,
+				y2,
+				x3,
+				y3,
+				clipLeft,
+				clipTop,
+				clipRight,
+				clipBottom,
+				transparentMask,
+				renderer2DPhase,
+				renderer2DCommandSequence++));
+		renderer2DRotatedSpriteCapturedUi++;
+		return true;
+	}
+
+	private boolean recordRenderer2DCircle(int x, int y, int radius, int color, int alpha) {
+		if (!canCaptureRenderer2DNativeUiCommand()
+			|| this.interlace
+			|| radius <= 0
+			|| alpha < 0
+			|| alpha > 256) {
+			return false;
+		}
+		renderer2DCircleDraws++;
+		if (renderer2DCircleCommands.size() >= MAX_RENDERER_2D_CIRCLE_COMMANDS) {
+			return false;
+		}
+
+		renderer2DCircleCommands.add(
+			new Renderer2DFrame.CircleCommand(
+				x,
+				y,
+				radius,
+				color,
+				alpha,
+				renderer2DPhase,
+				renderer2DCommandSequence++));
+		renderer2DCircleCapturedUi++;
+		return true;
+	}
+
+	private void markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker blocker) {
+		if (renderer2DUiBaseCaptured
+			&& renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
+			&& Renderer2DSettings.canReplaceUiSpritesWithOpenGL()) {
+			switch (blocker) {
+				case SPRITE:
+					renderer2DNativeUiBlockSprite++;
+					break;
+				case TEXT:
+					renderer2DNativeUiBlockText++;
+					break;
+				case PRIMITIVE:
+					renderer2DNativeUiBlockPrimitive++;
+					break;
+				case MINIMAP:
+					renderer2DNativeUiBlockMinimap++;
+					break;
+				case GRADIENT:
+					renderer2DNativeUiBlockGradient++;
+					break;
+				case CLEAR:
+					renderer2DNativeUiBlockClear++;
+					break;
+				case CIRCLE:
+					renderer2DNativeUiBlockCircle++;
+					break;
+				case PIXEL:
+					renderer2DNativeUiBlockPixel++;
+					break;
+				default:
+					break;
+			}
+			renderer2DNativeUiSoftwareDirty = true;
+		}
+	}
+
+	private Renderer2DFrame.TextCommand.GlyphCommand createRenderer2DTextGlyphCommand(
+		boolean antiAliased,
+		byte[] fontData,
+		int x,
+		int color,
+		int indexAddr,
+		int y) {
+		if (!canCaptureRenderer2DNativeUiCommand() || antiAliased || fontData == null) {
+			return null;
+		}
+		if (indexAddr < 0 || indexAddr + 7 >= fontData.length) {
+			return null;
+		}
+
+		int width = fontData[indexAddr + 3];
+		int height = fontData[indexAddr + 4];
+		int left = x + fontData[indexAddr + 5];
+		int top = y - fontData[indexAddr + 6];
+		int dataAddr = (fontData[indexAddr] << 14) + (fontData[indexAddr + 1] << 7) + fontData[indexAddr + 2];
+		if (width <= 0
+			|| height <= 0
+			|| dataAddr < 0
+			|| dataAddr + width * height > fontData.length
+			|| left < this.clipLeft
+			|| top < this.clipTop
+			|| left + width >= this.clipRight
+			|| top + height >= this.clipBottom) {
+			return null;
+		}
+
+		return new Renderer2DFrame.TextCommand.GlyphCommand(
+			fontData,
+			dataAddr,
+			left,
+			top,
+			width,
+			height,
+			color,
+			antiAliased);
+	}
+
+	private static final class Renderer2DTextPlotCommand {
+		private final boolean antiAliased;
+		private final byte[] fontData;
+		private final int x;
+		private final int color;
+		private final int indexAddr;
+		private final int y;
+
+		private Renderer2DTextPlotCommand(
+			boolean antiAliased,
+			byte[] fontData,
+			int x,
+			int color,
+			int indexAddr,
+			int y) {
+			this.antiAliased = antiAliased;
+			this.fontData = fontData;
+			this.x = x;
+			this.color = color;
+			this.indexAddr = indexAddr;
+			this.y = y;
+		}
+
+		private void plot(GraphicsController graphics) {
+			graphics.plotCharacter(antiAliased, fontData, x, color, indexAddr, y);
+		}
+	}
+
+	private boolean recordRenderer2DSprite(Sprite sprite, int x, int y, int width, int height, int alpha) {
+		if (sprite == null) {
+			return false;
+		}
+		return recordRenderer2DSprite(
+			sprite,
+			x,
+			y,
+			width,
+			height,
+			0,
+			0,
+			sprite.getWidth(),
+			sprite.getHeight(),
+			alpha);
+	}
+
+	private boolean recordRenderer2DSprite(
+		Sprite sprite,
+		int x,
+		int y,
+		int width,
+		int height,
+		int sourceX,
+		int sourceY,
+		int sourceWidth,
+		int sourceHeight,
+		int alpha) {
+		return recordRenderer2DSprite(
+			sprite,
+			x,
+			y,
+			width,
+			height,
+			sourceX,
+			sourceY,
+			sourceWidth,
+			sourceHeight,
+			alpha,
+			RendererSpriteTransform.IDENTITY);
+	}
+
+	private boolean recordRenderer2DSprite(
+		Sprite sprite,
+		int x,
+		int y,
+		int width,
+		int height,
+		int sourceX,
+		int sourceY,
+		int sourceWidth,
+		int sourceHeight,
+		int alpha,
+		RendererSpriteTransform transform) {
+		if (width <= 0 || height <= 0) {
+			return false;
+		}
+		return recordRenderer2DSprite(
+			sprite,
+			x,
+			y,
+			width,
+			height,
+			sourceX,
+			sourceY,
+			sourceWidth,
+			sourceHeight,
+			sourceX << 16,
+			sourceY << 16,
+			(sourceWidth << 16) / width,
+			(sourceHeight << 16) / height,
+			alpha,
+			transform);
+	}
+
+	private boolean recordRenderer2DSprite(
+		Sprite sprite,
+		int x,
+		int y,
+		int width,
+		int height,
+		int sourceX,
+		int sourceY,
+		int sourceWidth,
+		int sourceHeight,
+		int sourceStartX,
+		int sourceStartY,
+		int sourceScaleX,
+		int sourceScaleY,
+		int alpha,
+		RendererSpriteTransform transform) {
+		if (!Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
+			return false;
+		}
+
+		renderer2DCaptureAttempts++;
+		if (sprite == null || sprite.getPixels() == null || width <= 0 || height <= 0) {
+			renderer2DCaptureSkippedInvalid++;
+			return false;
+		}
+		if (this.interlace) {
+			renderer2DCaptureSkippedInterlace++;
+			return false;
+		}
+		if (!canCaptureAlphaRenderer2DSprite(alpha)) {
+			renderer2DCaptureSkippedAlpha++;
+			return false;
+		}
+		if (transform == null || !transform.canReplayOverSoftwareFrame()) {
+			renderer2DCaptureSkippedTransform++;
+			return false;
+		}
+		if (sourceX < 0
+			|| sourceY < 0
+			|| sourceWidth <= 0
+			|| sourceHeight <= 0
+			|| sourceX + sourceWidth > sprite.getWidth()
+			|| sourceY + sourceHeight > sprite.getHeight()) {
+			renderer2DCaptureSkippedSource++;
+			return false;
+		}
+
+		if (x < this.clipLeft
+			|| y < this.clipTop
+			|| x + width > this.clipRight
+			|| y + height > this.clipBottom) {
+			renderer2DCaptureSkippedBounds++;
+			return false;
+		}
+
+		if (renderer2DSpriteCommands.size() >= MAX_RENDERER_2D_SPRITE_COMMANDS) {
+			renderer2DCaptureSkippedOverflow++;
+			if (!renderer2DCommandOverflowLogged) {
+				System.out.println("[renderer-v2 2d] sprite command capture limit reached for this frame.");
+				renderer2DCommandOverflowLogged = true;
+			}
+			return false;
+		}
+
+		renderer2DSpriteCommands.add(
+			new Renderer2DFrame.SpriteCommand(
+				sprite,
+				x,
+				y,
+				width,
+				height,
+				sourceX,
+				sourceY,
+				sourceWidth,
+				sourceHeight,
+				sourceStartX,
+				sourceStartY,
+				sourceScaleX,
+				sourceScaleY,
+				alpha,
+				transform,
+				x << 16,
+				x << 16,
+				false,
+				false,
+				renderer2DLegacySpriteId,
+				renderer2DPhase,
+				renderer2DCommandSequence++));
+		renderer2DCaptureAccepted++;
+		return true;
+	}
+
+	private boolean recordRenderer2DScaledSprite(
+		Sprite sprite,
+		int destHead,
+		int destWidth,
+		int destHeight,
+		int srcStartX,
+		int srcStartY,
+		int scaleX,
+		int scaleY,
+		int alpha) {
+		return recordRenderer2DScaledSprite(
+			sprite,
+			destHead,
+			destWidth,
+			destHeight,
+			srcStartX,
+			srcStartY,
+			scaleX,
+			scaleY,
+			alpha,
+			RendererSpriteTransform.IDENTITY);
+	}
+
+	private boolean recordRenderer2DScaledSprite(
+		Sprite sprite,
+		int destHead,
+		int destWidth,
+		int destHeight,
+		int srcStartX,
+		int srcStartY,
+		int scaleX,
+		int scaleY,
+		int alpha,
+		RendererSpriteTransform transform) {
+		if (sprite == null || destWidth <= 0 || destHeight <= 0 || this.width2 <= 0) {
+			return false;
+		}
+
+		int sourceRight = (int) ((srcStartX + (long) (destWidth - 1) * scaleX) >> 16) + 1;
+		int sourceBottom = (int) ((srcStartY + (long) (destHeight - 1) * scaleY) >> 16) + 1;
+		int sourceX = srcStartX >> 16;
+		int sourceY = srcStartY >> 16;
+		if (sourceX < 0) {
+			sourceX = 0;
+		}
+		if (sourceY < 0) {
+			sourceY = 0;
+		}
+		if (sourceRight > sprite.getWidth()) {
+			sourceRight = sprite.getWidth();
+		}
+		if (sourceBottom > sprite.getHeight()) {
+			sourceBottom = sprite.getHeight();
+		}
+		if (sourceX >= sourceRight || sourceY >= sourceBottom) {
+			return false;
+		}
+
+		int destY = destHead / this.width2;
+		int destX = destHead - destY * this.width2;
+		return recordRenderer2DSprite(
+			sprite,
+			destX,
+			destY,
+			destWidth,
+			destHeight,
+			sourceX,
+			sourceY,
+			sourceRight - sourceX,
+			sourceBottom - sourceY,
+			srcStartX,
+			srcStartY,
+			scaleX,
+			scaleY,
+			alpha,
+			transform);
+	}
+
+	private boolean recordRenderer2DMaskedScaledSprite(
+		Sprite sprite,
+		int destRowHead,
+		int destFirstColumn,
+		int destWidth,
+		int destHeight,
+		int srcStartX,
+		int srcStartY,
+		int scaleX,
+		int scaleY,
+		int destColumnSkewPerRow,
+		boolean mirrorX,
+		RendererSpriteTransform transform) {
+		if (!Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
+			return false;
+		}
+
+		renderer2DCaptureAttempts++;
+		if (sprite == null || sprite.getPixels() == null || destWidth <= 0 || destHeight <= 0 || this.width2 <= 0) {
+			renderer2DCaptureSkippedInvalid++;
+			return false;
+		}
+		if (this.interlace) {
+			renderer2DCaptureSkippedInterlace++;
+			return false;
+		}
+		if (transform == null || !transform.canReplayOverSoftwareFrame()) {
+			renderer2DCaptureSkippedTransform++;
+			return false;
+		}
+
+		int destY = destRowHead / this.width2;
+		long topX16 = destFirstColumn;
+		long bottomX16 = topX16 + (long) destColumnSkewPerRow * destHeight;
+		int minLeft = floorFixedToInt(Math.min(topX16, bottomX16));
+		int maxLeft = ceilFixedToInt(Math.max(topX16, bottomX16));
+		if (minLeft < this.clipLeft
+			|| destY < this.clipTop
+			|| maxLeft + destWidth > this.clipRight
+			|| destY + destHeight > this.clipBottom) {
+			renderer2DCaptureSkippedBounds++;
+			return false;
+		}
+
+		int plotSrcStartX = srcStartX;
+		int plotScaleX = scaleX;
+		if (mirrorX) {
+			plotSrcStartX = (sprite.getWidth() << 16) - (srcStartX + 1);
+			plotScaleX = -scaleX;
+		}
+
+		long firstSourceX16 = plotSrcStartX;
+		long lastSourceX16 = firstSourceX16 + (long) (destWidth - 1) * plotScaleX;
+		int sourceX = floorFixedToInt(Math.min(firstSourceX16, lastSourceX16));
+		int sourceRight = floorFixedToInt(Math.max(firstSourceX16, lastSourceX16)) + 1;
+		int sourceY = srcStartY >> 16;
+		int sourceBottom = (int) ((srcStartY + (long) (destHeight - 1) * scaleY) >> 16) + 1;
+		if (sourceX < 0
+			|| sourceY < 0
+			|| sourceRight > sprite.getWidth()
+			|| sourceBottom > sprite.getHeight()
+			|| sourceX >= sourceRight
+			|| sourceY >= sourceBottom) {
+			renderer2DCaptureSkippedSource++;
+			return false;
+		}
+
+		if (renderer2DSpriteCommands.size() >= MAX_RENDERER_2D_SPRITE_COMMANDS) {
+			renderer2DCaptureSkippedOverflow++;
+			if (!renderer2DCommandOverflowLogged) {
+				System.out.println("[renderer-v2 2d] sprite command capture limit reached for this frame.");
+				renderer2DCommandOverflowLogged = true;
+			}
+			return false;
+		}
+
+		renderer2DSpriteCommands.add(
+			new Renderer2DFrame.SpriteCommand(
+				sprite,
+				floorFixedToInt(topX16),
+				destY,
+				destWidth,
+				destHeight,
+				sourceX,
+				sourceY,
+				sourceRight - sourceX,
+				sourceBottom - sourceY,
+				plotSrcStartX,
+				srcStartY,
+				plotScaleX,
+				scaleY,
+				Renderer2DFrame.SpriteCommand.FULL_ALPHA,
+				transform,
+				(int) topX16,
+				(int) bottomX16,
+				mirrorX,
+				mirrorX || destColumnSkewPerRow != 0,
+				renderer2DLegacySpriteId,
+				renderer2DPhase,
+				renderer2DCommandSequence++));
+		renderer2DCaptureAccepted++;
+		return true;
+	}
+
+	private static int floorFixedToInt(long value) {
+		return (int) (value >> 16);
+	}
+
+	private static int ceilFixedToInt(long value) {
+		return (int) ((value + 0xFFFFL) >> 16);
 	}
 
 	public static void a(int var0, int[] var1, int var2, int[] var3, int var4, int var5, int var6, int var7) {
@@ -283,6 +1162,20 @@ public class GraphicsController {
 					width -= var16;
 				}
 
+				boolean replacedByRenderer2D = shouldReplaceRenderer2DUiSprite(recordRenderer2DScaledSprite(
+					sprite,
+					var14,
+					width,
+					height,
+					var10,
+					var11,
+					scaleX,
+					scaleY,
+					var7));
+				if (replacedByRenderer2D) {
+					return;
+				}
+
 				byte var19 = 1;
 				if (this.interlace) {
 					scaleY += scaleY;
@@ -409,6 +1302,22 @@ public class GraphicsController {
 			}
 
 			if (var9 > 0 && var8 > 0) {
+				int sourceWidth = sprite.getWidth();
+				boolean replacedByRenderer2D = shouldReplaceRenderer2DUiSprite(recordRenderer2DSprite(
+					sprite,
+					var3,
+					var5,
+					var9,
+					var8,
+					var7 % sourceWidth,
+					var7 / sourceWidth,
+					var9,
+					var8,
+					var4));
+				if (replacedByRenderer2D) {
+					return;
+				}
+
 				byte var14 = 1;
 				if (this.interlace) {
 					var11 += sprite.getWidth();
@@ -530,7 +1439,13 @@ public class GraphicsController {
 	public void drawEntity(int index, int x, int y, int width, int height, int var1, int var8) {
 		try {
 			Sprite sprite = sprites[index];
-			this.drawSprite(sprite, x, y, width, height, 5924);
+			int previousLegacySpriteId = renderer2DLegacySpriteId;
+			renderer2DLegacySpriteId = index;
+			try {
+				this.drawSprite(sprite, x, y, width, height, 5924);
+			} finally {
+				renderer2DLegacySpriteId = previousLegacySpriteId;
+			}
 
 		} catch (RuntimeException var10) {
 			throw GenUtil.makeThrowable(var10, "ua.B(" + var1 + ',' + index + ',' + height + ',' + x + ',' + y + ','
@@ -707,7 +1622,7 @@ public class GraphicsController {
 			while (i < 0) {
 				int color = src[(srcHeadY >> 17) * srcWidth + (srcHeadX >> 17)];
 				// System.out.println("color: " + color);
-				if (color == 0) {
+				if (!RendererTransparency.isVisibleSpritePixel(color)) {
 					// System.out.println("color is black");
 					++destHead;
 				} else {
@@ -937,7 +1852,7 @@ public class GraphicsController {
 					for (int j = -destWidth; j < 0; ++j) {
 						int color = src[(srcStartX >> 16) + srcRowHead];
 						srcStartX += scaleX;
-						if (color != 0) {
+						if (RendererTransparency.isVisibleSpritePixel(color)) {
 							dest[destHead++] = color;
 						} else {
 							++destHead;
@@ -1054,7 +1969,7 @@ public class GraphicsController {
 					if (skipEveryOther != 0) {
 						for (var32 = var30; var30 + var31 > var32; ++var32) {
 							spritePixel = src[var29 + (srcStartX >> 16)];
-							if (spritePixel != 0) {
+							if (RendererTransparency.isVisibleSpritePixel(spritePixel)) {
 								int spritePixelR = spritePixel >> 16 & 0xFF;
 								int spritePixelG = spritePixel >> 8 & 0xFF;
 								int spritePixelB = spritePixel & 0xFF;
@@ -1185,6 +2100,7 @@ public class GraphicsController {
 
 	public final void drawVerticalGradient(int x, int y, int width, int height, int topColor, int bottomColor) {
 		try {
+			markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.GRADIENT);
 
 			if (this.clipLeft > x) {
 				width -= this.clipLeft - x;
@@ -1247,6 +2163,7 @@ public class GraphicsController {
 
 	public final void blackScreen(boolean var1) {
 		try {
+			markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.CLEAR);
 
 			int var2 = this.height2 * this.width2;
 			if (var1 == !this.interlace) {
@@ -1347,7 +2264,13 @@ public class GraphicsController {
 				var8 = 2;
 			}
 
+			if (widthh <= 0 || height <= 0) {
+				return;
+			}
 			int var10 = xr + this.width2 * yr;
+			if (shouldReplaceRenderer2DPrimitive(recordRenderer2DPrimitive(xr, yr, widthh, height, color, 256))) {
+				return;
+			}
 
 			for (int yi = -height; yi < 0; yi += var8) {
 				for (int xi = -widthh; xi < 0; ++xi) {
@@ -1400,7 +2323,13 @@ public class GraphicsController {
 				var16 = 2;
 			}
 
+			if (width <= 0 || height <= 0) {
+				return;
+			}
 			int pxi = x + this.width2 * y;
+			if (shouldReplaceRenderer2DPrimitive(recordRenderer2DPrimitive(x, y, width, height, color, alpha))) {
+				return;
+			}
 
 			for (int yi = 0; yi < height; yi += var16) {
 				for (int xi = -width; xi < 0; ++xi) {
@@ -1435,6 +2364,9 @@ public class GraphicsController {
 
 	public final void drawCircle(int x, int y, int radius, int color, int alpha, int dummy) {
 		try {
+			if (!recordRenderer2DCircle(x, y, radius, color, alpha)) {
+				markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.CIRCLE);
+			}
 
 			int destAlpha = 256 - alpha;
 			int srcR = alpha * (255 & color >> 16);
@@ -1492,6 +2424,12 @@ public class GraphicsController {
 	public final void drawColoredString(int x, int y, String str, int font, int color, int spriteHeader) {
 		try {
 			try {
+				font = RendererFontSettings.displayFont(font);
+				int renderer2DGlyphs = 0;
+				boolean renderer2DNativeTextReplayable = canCaptureRenderer2DNativeUiCommand();
+				List<Renderer2DTextPlotCommand> renderer2DTextPlots = new ArrayList<>();
+				List<Renderer2DFrame.TextCommand.GlyphCommand> renderer2DNativeGlyphs =
+					renderer2DNativeTextReplayable ? new ArrayList<Renderer2DFrame.TextCommand.GlyphCommand>() : null;
 				if (spriteHeader > 0) {
 					int iconSprite = (spriteHeader >> 24 & 0xFF) + this.iconSpriteIndex - 1;
 					int spriteHeaderMask = (spriteHeader & 0x00FFFFFF);
@@ -1675,18 +2613,69 @@ public class GraphicsController {
 							}
 
 							int addr = Fonts.inputFilterCharFontAddr[here];
-							if (this.loggedIn && !Fonts.fontAntiAliased[font] && color != 0) {
-								this.plotCharacter(Fonts.fontAntiAliased[font], fontData, 1 + x, 0, addr, y);
+							boolean antiAliased = Fonts.fontAntiAliased[font];
+							if (this.loggedIn && !antiAliased && color != 0) {
+								Renderer2DTextPlotCommand plot =
+									new Renderer2DTextPlotCommand(antiAliased, fontData, 1 + x, 0, addr, y);
+								renderer2DTextPlots.add(plot);
+								if (renderer2DNativeTextReplayable) {
+									Renderer2DFrame.TextCommand.GlyphCommand glyph =
+										createRenderer2DTextGlyphCommand(antiAliased, fontData, 1 + x, 0, addr, y);
+									if (glyph == null) {
+										renderer2DNativeTextReplayable = false;
+										renderer2DNativeGlyphs = null;
+									} else {
+										renderer2DNativeGlyphs.add(glyph);
+									}
+								}
 							}
 
-							if (this.loggedIn && !Fonts.fontAntiAliased[font] && color != 0) {
-								this.plotCharacter(Fonts.fontAntiAliased[font], fontData, x, 0, addr, y + 1);
+							if (this.loggedIn && !antiAliased && color != 0) {
+								Renderer2DTextPlotCommand plot =
+									new Renderer2DTextPlotCommand(antiAliased, fontData, x, 0, addr, y + 1);
+								renderer2DTextPlots.add(plot);
+								if (renderer2DNativeTextReplayable) {
+									Renderer2DFrame.TextCommand.GlyphCommand glyph =
+										createRenderer2DTextGlyphCommand(antiAliased, fontData, x, 0, addr, y + 1);
+									if (glyph == null) {
+										renderer2DNativeTextReplayable = false;
+										renderer2DNativeGlyphs = null;
+									} else {
+										renderer2DNativeGlyphs.add(glyph);
+									}
+								}
 							}
 
-							this.plotCharacter(Fonts.fontAntiAliased[font], fontData, x, color, addr, y);
+							Renderer2DTextPlotCommand plot =
+								new Renderer2DTextPlotCommand(antiAliased, fontData, x, color, addr, y);
+							renderer2DTextPlots.add(plot);
+							if (renderer2DNativeTextReplayable) {
+								Renderer2DFrame.TextCommand.GlyphCommand glyph =
+									createRenderer2DTextGlyphCommand(antiAliased, fontData, x, color, addr, y);
+								if (glyph == null) {
+									renderer2DNativeTextReplayable = false;
+									renderer2DNativeGlyphs = null;
+								} else {
+									renderer2DNativeGlyphs.add(glyph);
+								}
+							}
 							x += fontData[addr + 7];
+							renderer2DGlyphs++;
 						}
 					}
+				}
+				recordRenderer2DTextDraw(renderer2DGlyphs);
+				if (renderer2DNativeTextReplayable
+					&& renderer2DNativeGlyphs != null
+					&& renderer2DNativeGlyphs.size() == renderer2DTextPlots.size()
+					&& shouldReplaceRenderer2DText(recordRenderer2DTextCommand(renderer2DNativeGlyphs))) {
+					return;
+				}
+				if (!renderer2DTextPlots.isEmpty()) {
+					markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.TEXT);
+				}
+				for (Renderer2DTextPlotCommand plot : renderer2DTextPlots) {
+					plot.plot(this);
 				}
 			} catch (Exception var14) {
 				System.out.println("drawstring: " + var14);
@@ -1738,6 +2727,9 @@ public class GraphicsController {
 
 				if (width > 0) {
 					int offset = x + this.width2 * y;
+					if (shouldReplaceRenderer2DPrimitive(recordRenderer2DPrimitive(x, y, width, 1, color, 256))) {
+						return;
+					}
 
 					for (int xi = 0; width > xi; ++xi) {
 						this.pixelData[offset + xi] = color;
@@ -1764,6 +2756,9 @@ public class GraphicsController {
 
 			if (height > 0) {
 				int pxOffset = x + this.width2 * y;
+				if (shouldReplaceRenderer2DPrimitive(recordRenderer2DPrimitive(x, y, 1, height, color, 256))) {
+					return;
+				}
 
 				for (int i = 0; height > i; ++i) {
 					this.pixelData[pxOffset + this.width2 * i] = color;
@@ -1775,7 +2770,6 @@ public class GraphicsController {
 
 	public final void drawMinimapSprite(Sprite sprite, int var2, int var3, int var4, int var5, int var6) {
 		try {
-
 			int var7 = this.width2;
 			int var8 = this.height2;
 			int var9;
@@ -1808,6 +2802,23 @@ public class GraphicsController {
 			int var24 = (var18 * var12 - var17 * var11 >> 22) + var2;
 			int var25 = (var9 * var18 + var17 * var12 >> 22) + var3;
 			int var26 = var2 + (var12 * var18 - var9 * var17 >> 22);
+			if (!recordRenderer2DRotatedSprite(
+				sprite,
+				var19,
+				var20,
+				var21,
+				var22,
+				var23,
+				var24,
+				var25,
+				var26,
+				this.clipLeft,
+				this.clipTop,
+				this.clipRight,
+				this.clipBottom,
+				sprite.requiresShift())) {
+				markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.MINIMAP);
+			}
 			if (var5 == 192 && (63 & var6) == (63 & MiscFunctions.mud_s_ef)) {
 				++MiscFunctions.cachingFile_s_g;
 			} else if (var5 == 128) {
@@ -2141,6 +3152,22 @@ public class GraphicsController {
 			}
 
 			if (var8 > 0 && var7 > 0) {
+				int sourceWidth = sprite.getWidth();
+				boolean replacedByRenderer2D = shouldReplaceRenderer2DUiSprite(recordRenderer2DSprite(
+					sprite,
+					x,
+					y,
+					var8,
+					var7,
+					var6 % sourceWidth,
+					var6 / sourceWidth,
+					var8,
+					var7,
+					Renderer2DFrame.SpriteCommand.FULL_ALPHA));
+				if (replacedByRenderer2D) {
+					return;
+				}
+
 				byte var13 = 1;
 				if (this.interlace) {
 					var9 += this.width2;
@@ -2235,13 +3262,14 @@ public class GraphicsController {
 			try {
 				int spriteWidth = sprite.getWidth();
 				int spriteHeight = sprite.getHeight();
+				boolean shiftedSprite = sprite.requiresShift();
 				int srcStartX = 0;
 				int srcStartY = 0;
 				int scaleX = (spriteWidth << 16) / destWidth;
 				int scaleY = (spriteHeight << 16) / destHeight;
 				int destHead;
 				int destRowStride;
-				if (sprite.requiresShift()) {
+				if (shiftedSprite) {
 					destHead = sprite.getSomething1();
 					destRowStride = sprite.getSomething2();
 					if (destHead == 0 || destRowStride == 0) {
@@ -2292,6 +3320,20 @@ public class GraphicsController {
 					int lost = 1 + x + (destWidth - this.clipRight);
 					destRowStride += lost;
 					destWidth -= lost;
+				}
+
+				boolean replacedByRenderer2D = shouldReplaceRenderer2DUiSprite(recordRenderer2DScaledSprite(
+					sprite,
+					destHead,
+					destWidth,
+					destHeight,
+					srcStartX,
+					srcStartY,
+					scaleX,
+					scaleY,
+					Renderer2DFrame.SpriteCommand.FULL_ALPHA));
+				if (replacedByRenderer2D) {
+					return;
 				}
 
 				byte heightStep = 1;
@@ -2324,13 +3366,14 @@ public class GraphicsController {
 			try {
 				int spriteWidth = sprite.getWidth();
 				int spriteHeight = sprite.getHeight();
+				boolean shiftedSprite = sprite.requiresShift();
 				int srcStartX = 0;
 				int srcStartY = 0;
 				int scaleX = (spriteWidth << 16) / destWidth;
 				int scaleY = (spriteHeight << 16) / destHeight;
 				int destHead;
 				int destRowStride;
-				if (sprite.requiresShift()) {
+				if (shiftedSprite) {
 					destHead = sprite.getSomething1();
 					destRowStride = sprite.getSomething2();
 					if (destHead == 0 || destRowStride == 0) {
@@ -2381,6 +3424,20 @@ public class GraphicsController {
 					int lost = 1 + x + (destWidth - this.clipRight);
 					destRowStride += lost;
 					destWidth -= lost;
+				}
+
+				boolean replacedByRenderer2D = shouldReplaceRenderer2DUiSprite(recordRenderer2DScaledSprite(
+					sprite,
+					destHead,
+					destWidth,
+					destHeight,
+					srcStartX,
+					srcStartY,
+					scaleX,
+					scaleY,
+					alpha));
+				if (replacedByRenderer2D) {
+					return;
 				}
 
 				byte heightStep = 1;
@@ -2426,6 +3483,7 @@ public class GraphicsController {
 
 	public final int fontHeight(int font) {
 		try {
+			font = RendererFontSettings.displayFont(font);
 
 			return font != 0
 				? (font != 1
@@ -2579,6 +3637,9 @@ public class GraphicsController {
 		try {
 
 			if (this.clipLeft <= x && this.clipTop <= y && this.clipRight > x && this.clipBottom > y) {
+				if (!recordRenderer2DPrimitive(x, y, 1, 1, val, 256)) {
+					markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.PIXEL);
+				}
 				this.pixelData[x + this.width2 * y] = val;
 			}
 		} catch (RuntimeException var6) {
@@ -2668,6 +3729,25 @@ public class GraphicsController {
 				if (!this.interlace) {
 					skipEveryOther = 2;
 				}
+				boolean requiresOrderedReplay = mirrorX || destColumnSkewPerRow != 0;
+				boolean replacedByRenderer2D = shouldReplaceRenderer2DUiSprite(
+					recordRenderer2DMaskedScaledSprite(
+						e,
+						destRowHead,
+						destFirstColumn,
+						width,
+						height,
+						srcStartX,
+						srcStartY,
+						scaleX,
+						scaleY,
+						destColumnSkewPerRow,
+						mirrorX,
+						RendererSpriteTransform.legacyMasks(colorMask, colorMask2, blueMask, colourTransform)),
+					requiresOrderedReplay);
+				if (replacedByRenderer2D) {
+					return;
+				}
 				// TODO:Make sure this works.
 				if (colorMask2 == 0xFFFFFF) {
 					if (null != e.getPixels()) {
@@ -2704,6 +3784,7 @@ public class GraphicsController {
 
 	public final int stringWidth(int font, String str) {
 		try {
+			font = RendererFontSettings.displayFont(font);
 
 			int width = 0;
 
@@ -2766,7 +3847,7 @@ public class GraphicsController {
 					for (int j = -destWidth; j < 0; ++j) {
 						int newColor = src[rowOffset + (srcStartX >> 16)];
 						srcStartX += scaleX;
-						if (newColor == 0) {
+						if (!RendererTransparency.isVisibleSpritePixel(newColor)) {
 							++destHead;
 						} else {
 							int oldColor = dest[destHead];
@@ -2863,7 +3944,7 @@ public class GraphicsController {
 					if (skipEveryOther != 0) {
 						for (int j = duFirstColumn; j < duColumnCount + duFirstColumn; ++j) {
 							int newColor = src[srcRowHead + (srcStartX >> 16)];
-							if (newColor != 0) {
+							if (RendererTransparency.isVisibleSpritePixel(newColor)) {
 								int opacity = colourTransform >> 24 & 0xFF;
 								int inverseOpacity = 256 - opacity;
 
@@ -2994,7 +4075,7 @@ public class GraphicsController {
 					if (skipEveryOther != 0) {
 						for (int j = duStartCol; j < duColCount + duStartCol; ++j) {
 							int newColor = src[(srcStartX >> 16) + srcRowHead] & 255;
-							if (newColor != 0) {
+							if (newColor != RendererTransparency.TRANSPARENT_SAMPLE) {
 								newColor = lookupTable[newColor];
 								int newB = newColor & 255;
 								int newR = newColor >> 16 & 255;

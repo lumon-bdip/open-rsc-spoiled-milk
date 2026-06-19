@@ -140,6 +140,17 @@ public final class World {
 		}
 	}
 
+	private static void tagRenderer3DModels(RSModel[] models, Renderer3DModelKind kind) {
+		if (models == null) {
+			return;
+		}
+		for (RSModel model : models) {
+			if (model != null) {
+				model.setRenderer3DModelKind(kind);
+			}
+		}
+	}
+
 	private String generateMapHash(String path) {
 		try {
 			return GenUtil.getMD5Checksum(path);
@@ -902,6 +913,7 @@ public final class World {
 					this.modelLandscapeGrid = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
 						MODEL_GRID_WORLD_SIZE, 112, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT,
 						MODEL_GRID_WORLD_SIZE, false, 0);
+					tagRenderer3DModels(this.modelLandscapeGrid, Renderer3DModelKind.TERRAIN);
 
 					for (int x = 0; x < MODEL_GRID_COUNT; ++x)
 						this.scene.addModel(this.modelLandscapeGrid[x]);
@@ -984,6 +996,7 @@ public final class World {
 				this.modelWallGrid[plane] = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
 					MODEL_GRID_WORLD_SIZE, -120, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT, MODEL_GRID_WORLD_SIZE,
 					true, 0);
+				tagRenderer3DModels(this.modelWallGrid[plane], Renderer3DModelKind.WALL);
 
 				for (int x = 0; x < MODEL_GRID_COUNT; ++x)
 					this.scene.addModel(this.modelWallGrid[plane][x]);
@@ -1239,6 +1252,7 @@ public final class World {
 				this.modelRoofGrid[plane] = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
 					MODEL_GRID_WORLD_SIZE, -112, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT, MODEL_GRID_WORLD_SIZE,
 					true, 0);
+				tagRenderer3DModels(this.modelRoofGrid[plane], Renderer3DModelKind.ROOF);
 
 				for (int x = 0; x < MODEL_GRID_COUNT; ++x)
 					this.scene.addModel(this.modelRoofGrid[plane][x]);

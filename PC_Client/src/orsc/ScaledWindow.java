@@ -1,19 +1,19 @@
 package orsc;
 
+import orsc.graphics.Renderer2DFrame;
+import orsc.graphics.Renderer2DSettings;
+import orsc.graphics.three.Renderer3DFrame;
 import orsc.util.Utils;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.awt.image.VolatileImage;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.swing.*;
 
 import static orsc.OpenRSC.applet;
@@ -29,10 +29,23 @@ import static orsc.OpenRSC.jframe;
 public class ScaledWindow extends JFrame implements WindowListener, FocusListener, ComponentListener,
 	MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
 
+	private static final String GPU_PRESENTER_PROPERTY = "spoiledmilk.gpuPresenter";
+	private static final String GPU_PRESENTER_ENV = "SPOILED_MILK_GPU_PRESENTER";
+	private static final boolean GPU_PRESENTER_ENABLED = readBoolean(GPU_PRESENTER_PROPERTY, GPU_PRESENTER_ENV);
+	private static final String OPENGL_PRESENTER_PROPERTY = "spoiledmilk.openglPresenter";
+	private static final String OPENGL_PRESENTER_ENV = "SPOILED_MILK_OPENGL_PRESENTER";
+	private static final boolean OPENGL_PRESENTER_ENABLED =
+		readBoolean(OPENGL_PRESENTER_PROPERTY, OPENGL_PRESENTER_ENV);
+	private static final String OPENGL_INPUT_PROPERTY = "spoiledmilk.openglInput";
+	private static final String OPENGL_INPUT_ENV = "SPOILED_MILK_OPENGL_INPUT";
+	private static final boolean OPENGL_INPUT_ENABLED = readBoolean(OPENGL_INPUT_PROPERTY, OPENGL_INPUT_ENV);
+	private static final String OPENGL_PRIMARY_WINDOW_PROPERTY = "spoiledmilk.openglPrimaryWindow";
+	private static final String OPENGL_PRIMARY_WINDOW_ENV = "SPOILED_MILK_OPENGL_PRIMARY_WINDOW";
+	private static final boolean OPENGL_PRIMARY_WINDOW_ENABLED =
+		OPENGL_PRESENTER_ENABLED && readBoolean(OPENGL_PRIMARY_WINDOW_PROPERTY, OPENGL_PRIMARY_WINDOW_ENV);
 	private static ScaledWindow instance = null;
 	private static boolean initialRender = true;
 	private static int javaVersion = 0;
-	private static int numCores;
 	private static boolean isMacOS = false;
 	private static boolean shouldRealign = false;
 	private int frameWidth = 0;
@@ -40,12 +53,26 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	private ScaledViewport scaledViewport;
 	private int viewportWidth = 0;
 	private int viewportHeight = 0;
-	private BufferedImage unscaledBackground = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
-	private int previousUnscaledWidth;
-	private int previousUnscaledHeight;
+	private static final int PRESENTATION_BUFFER_COUNT = 3;
+	private final BufferedImage[] presentationBuffers = new BufferedImage[PRESENTATION_BUFFER_COUNT];
+	private final OpenGLFramePresenter openGLFramePresenter =
+		OPENGL_PRESENTER_ENABLED
+			? new OpenGLFramePresenter(
+				Config.WINDOW_TITLE,
+				OPENGL_PRIMARY_WINDOW_ENABLED || OPENGL_INPUT_ENABLED,
+				OPENGL_PRIMARY_WINDOW_ENABLED)
+			: null;
+	private int nextPresentationBufferIndex = 0;
+	private int presentationBufferWidth = 0;
+	private int presentationBufferHeight = 0;
+	private int presentationBufferType = BufferedImage.TYPE_INT_RGB;
 
 	private static final float MAX_INTEGER_SCALE = 2.0f;
 	private static final float MAX_INTERPOLATION_SCALE = 2.0f;
+
+	public static boolean isOpenGLPrimaryWindowEnabled() {
+		return OPENGL_PRIMARY_WINDOW_ENABLED;
+	}
 
 	/** Private constructor to ensure singleton nature */
 	private ScaledWindow() {
@@ -68,7 +95,6 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		try {
 			SwingUtilities.invokeAndWait(() -> {
 				javaVersion = Utils.getJavaVersion();
-				numCores = Runtime.getRuntime().availableProcessors();
 
 				runInit();
 			});
@@ -108,7 +134,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		}
 
 		// Set minimum size to applet size
-		setMinimumSize(new Dimension(512, 346));
+		setMinimumSize(RenderSurfaceSettings.getDimensions());
 
 		// Default icon, will be overridden later
 		setIconImage(Utils.getImage("icon.png").getImage());
@@ -136,8 +162,8 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		Dimension maxEffectiveWindowSize = getMaximumEffectiveWindowSize();
 		int maxRenderingScalar = 1;
 		for (int i = 6; i >= 1; i--) {
-			float width = 512 * i;
-			float height = 346 * i;
+			float width = RenderSurfaceSettings.getWidth() * i;
+			float height = RenderSurfaceSettings.getHeight() * i;
 
 			if (width <= maxEffectiveWindowSize.width && height <= maxEffectiveWindowSize.height) {
 				maxRenderingScalar = i + 1;
@@ -235,6 +261,10 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	/** Opens the window */
 	public void launchScaledWindow() {
+		if (OPENGL_PRIMARY_WINDOW_ENABLED) {
+			return;
+		}
+
 		setLocationRelativeTo(null);
 		setVisible(true);
 	}
@@ -244,9 +274,51 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	 * from {@link ORSCApplet#draw()}
 	 */
 	public void setGameImage(BufferedImage gameImage) {
+		setGameImage(gameImage, Renderer2DFrame.EMPTY);
+	}
+
+	/**
+	 * Sets the {@link BufferedImage} and optional renderer-v2 2D command snapshot
+	 * that the window should display, from {@link ORSCApplet#draw()}.
+	 */
+	public void setGameImage(BufferedImage gameImage, Renderer2DFrame renderer2DFrame) {
+		setGameImage(gameImage, renderer2DFrame, null);
+	}
+
+	/**
+	 * Sets the {@link BufferedImage}, optional renderer-v2 2D command snapshot,
+	 * and optional pre-UI OpenGL base frame that the window should display.
+	 */
+	public void setGameImage(
+		BufferedImage gameImage,
+		Renderer2DFrame renderer2DFrame,
+		BufferedImage renderer2DUiBaseImage) {
+		setGameImage(gameImage, renderer2DFrame, renderer2DUiBaseImage, null);
+	}
+
+	/**
+	 * Sets the {@link BufferedImage}, optional renderer-v2 2D command snapshot,
+	 * optional pre-UI OpenGL base frame, and optional renderer-v2 world mesh
+	 * that the window should display.
+	 */
+	public void setGameImage(
+		BufferedImage gameImage,
+		Renderer2DFrame renderer2DFrame,
+		BufferedImage renderer2DUiBaseImage,
+		Renderer3DFrame renderer3DFrame) {
 		if (gameImage == null) {
 			return;
 		}
+		if (renderer2DFrame == null) {
+			renderer2DFrame = Renderer2DFrame.EMPTY;
+		}
+
+		boolean telemetryEnabled = RenderTelemetry.isEnabled();
+		long setImageStart = RenderTelemetry.now();
+		long sourceCopyNanos = 0L;
+		long paintImmediateNanos = 0L;
+		boolean repaintRequested = false;
+		boolean paintImmediateRequested = false;
 
 		viewportWidth = gameImage.getWidth();
 		viewportHeight = gameImage.getHeight();
@@ -257,38 +329,117 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 			initialRender = false;
 		}
 
-		if (mudclient.renderingScalar == 1.0f) {
-			// Unscaled client behavior
-			int newUnscaledWidth = gameImage.getWidth();
-			int newUnscaledHeight = gameImage.getHeight();
+		boolean useRenderer2DUiBaseImage = shouldUseRenderer2DUiBaseImage(renderer2DUiBaseImage, renderer2DFrame);
+		BufferedImage openGLImage = useRenderer2DUiBaseImage
+			? renderer2DUiBaseImage
+			: gameImage;
 
-			if (previousUnscaledWidth != newUnscaledWidth || previousUnscaledHeight != newUnscaledHeight) {
-				unscaledBackground = new BufferedImage(newUnscaledWidth, newUnscaledHeight, gameImage.getType());
-				previousUnscaledWidth = newUnscaledWidth;
-				previousUnscaledHeight = newUnscaledHeight;
+		if (OPENGL_PRIMARY_WINDOW_ENABLED && openGLFramePresenter != null) {
+			openGLFramePresenter.present(
+				openGLImage,
+				1.0f,
+				ScalingAlgorithm.INTEGER_SCALING,
+				renderer2DFrame,
+				renderer3DFrame);
+			if (telemetryEnabled) {
+				RenderTelemetry.recordSetGameImage(
+					RenderTelemetry.elapsedSince(setImageStart),
+					0L,
+					0L,
+					false,
+					false);
 			}
-
-			// Draw onto a new BufferedImage to prevent flickering
-			Graphics2D g2d = (Graphics2D) unscaledBackground.getGraphics();
-			g2d.drawImage(gameImage, 0, 0, null);
-			g2d.dispose();
-
-			scaledViewport.setViewportImage(unscaledBackground);
-
-			scaledViewport.repaint();
-		} else {
-			// Scaled client behavior
-			scaledViewport.setViewportImage(gameImage);
-
-			int scaledWidth = Math.round(viewportWidth * mudclient.renderingScalar);
-			int scaledHeight = Math.round(viewportHeight * mudclient.renderingScalar);
-
-			try {
-				SwingUtilities.invokeAndWait(() -> scaledViewport.paintImmediately(0, 0, scaledWidth, scaledHeight));
-			} catch (InterruptedException | InvocationTargetException ignored) {
-				// no-op
-			}
+			return;
 		}
+
+		long sourceCopyStart = RenderTelemetry.now();
+		BufferedImage presentationImage = copyFrameToPresentationBuffer(gameImage);
+		sourceCopyNanos = RenderTelemetry.elapsedSince(sourceCopyStart);
+
+		if (openGLFramePresenter != null) {
+			openGLFramePresenter.present(
+				useRenderer2DUiBaseImage
+					? renderer2DUiBaseImage
+					: presentationImage,
+				mudclient.renderingScalar,
+				mudclient.scalingType,
+				renderer2DFrame,
+				renderer3DFrame);
+		}
+
+		scaledViewport.setViewportImage(presentationImage);
+
+		int repaintWidth = mudclient.renderingScalar == 1.0f
+			? viewportWidth
+			: Math.round(viewportWidth * mudclient.renderingScalar);
+		int repaintHeight = mudclient.renderingScalar == 1.0f
+			? viewportHeight
+			: Math.round(viewportHeight * mudclient.renderingScalar);
+		scaledViewport.repaint(0, 0, repaintWidth, repaintHeight);
+		repaintRequested = true;
+
+		if (telemetryEnabled) {
+			RenderTelemetry.recordSetGameImage(
+				RenderTelemetry.elapsedSince(setImageStart),
+				sourceCopyNanos,
+				paintImmediateNanos,
+				repaintRequested,
+				paintImmediateRequested);
+		}
+	}
+
+	private BufferedImage copyFrameToPresentationBuffer(BufferedImage gameImage) {
+		int width = gameImage.getWidth();
+		int height = gameImage.getHeight();
+		int imageType = getConcreteImageType(gameImage);
+		BufferedImage target = getNextPresentationBuffer(width, height, imageType);
+
+		Graphics2D g2d = target.createGraphics();
+		g2d.drawImage(gameImage, 0, 0, null);
+		g2d.dispose();
+
+		return target;
+	}
+
+	private BufferedImage getNextPresentationBuffer(int width, int height, int imageType) {
+		if (presentationBufferWidth != width
+			|| presentationBufferHeight != height
+			|| presentationBufferType != imageType) {
+			Arrays.fill(presentationBuffers, null);
+			presentationBufferWidth = width;
+			presentationBufferHeight = height;
+			presentationBufferType = imageType;
+			nextPresentationBufferIndex = 0;
+		}
+
+		BufferedImage currentImage = scaledViewport.getViewportImage();
+		BufferedImage paintingImage = scaledViewport.getPaintingImage();
+		for (int i = 0; i < presentationBuffers.length; i++) {
+			int index = (nextPresentationBufferIndex + i) % presentationBuffers.length;
+			BufferedImage buffer = presentationBuffers[index];
+			if (buffer != null && (buffer == currentImage || buffer == paintingImage)) {
+				continue;
+			}
+			if (buffer == null) {
+				buffer = new BufferedImage(width, height, imageType);
+				presentationBuffers[index] = buffer;
+				RenderTelemetry.recordImageAllocation("presentation-buffer", width, height, imageType);
+			}
+			nextPresentationBufferIndex = (index + 1) % presentationBuffers.length;
+			return buffer;
+		}
+
+		RenderTelemetry.recordImageAllocation("presentation-overflow-buffer", width, height, imageType);
+		return new BufferedImage(width, height, imageType);
+	}
+
+	private boolean shouldUseRenderer2DUiBaseImage(
+		BufferedImage renderer2DUiBaseImage,
+		Renderer2DFrame renderer2DFrame) {
+		return renderer2DUiBaseImage != null
+			&& Renderer2DSettings.canPresentUiBaseFrame()
+			&& renderer2DFrame != null
+			&& renderer2DFrame.getCaptureStats().isNativeUiBaseEligible();
 	}
 
 	public boolean isViewportLoaded() {
@@ -335,7 +486,9 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	/** Determines the minimum window size for the applet based on the scalar */
 	public Dimension getMinimumViewportSizeForScalar() {
-		return new Dimension(Math.round(512 * mudclient.renderingScalar), Math.round(346 * mudclient.renderingScalar));
+		int renderWidth = viewportWidth > 0 ? viewportWidth : RenderSurfaceSettings.getWidth();
+		int renderHeight = viewportHeight > 0 ? viewportHeight : RenderSurfaceSettings.getHeight();
+		return new Dimension(Math.round(renderWidth * mudclient.renderingScalar), Math.round(renderHeight * mudclient.renderingScalar));
 	}
 
 	/** Resizes the applet contained within {@link OpenRSC} */
@@ -377,11 +530,17 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	@Override
 	public void windowClosed(WindowEvent e) {
+		if (openGLFramePresenter != null) {
+			openGLFramePresenter.close();
+		}
 		jframe.dispatchEvent(new WindowEvent(jframe, WindowEvent.WINDOW_CLOSED));
 	}
 
 	@Override
 	public void windowClosing(WindowEvent e) {
+		if (openGLFramePresenter != null) {
+			openGLFramePresenter.close();
+		}
 		jframe.dispatchEvent(new WindowEvent(jframe, WindowEvent.WINDOW_CLOSING));
 	}
 
@@ -605,19 +764,35 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		return BufferedImage.TYPE_INT_RGB;
 	}
 
-	/**
-	 * @return The {@link AffineTransformOp} type based on the current {@link ScalingAlgorithm}
-	 */
-	public static int getAffineTransformOpType() {
-		if (mudclient.scalingType == ScalingAlgorithm.INTEGER_SCALING) {
-			return AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
-		} else if (mudclient.scalingType == ScalingAlgorithm.BILINEAR_INTERPOLATION) {
-			return AffineTransformOp.TYPE_BILINEAR;
+	private static int getConcreteImageType(BufferedImage image) {
+		int imageType = image.getType();
+		return imageType == BufferedImage.TYPE_CUSTOM ? BufferedImage.TYPE_INT_RGB : imageType;
+	}
+
+	private static Object getInterpolationHint() {
+		if (mudclient.scalingType == ScalingAlgorithm.BILINEAR_INTERPOLATION) {
+			return RenderingHints.VALUE_INTERPOLATION_BILINEAR;
 		} else if (mudclient.scalingType == ScalingAlgorithm.BICUBIC_INTERPOLATION) {
-			return AffineTransformOp.TYPE_BICUBIC;
+			return RenderingHints.VALUE_INTERPOLATION_BICUBIC;
 		}
 
-		return -1;
+		return RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
+	}
+
+	private static boolean readBoolean(String propertyName, String envName) {
+		String value = System.getProperty(propertyName);
+		if (value == null || value.trim().isEmpty()) {
+			value = System.getenv(envName);
+		}
+		if (value == null) {
+			return false;
+		}
+
+		value = value.trim();
+		return "true".equalsIgnoreCase(value)
+			|| "1".equals(value)
+			|| "yes".equalsIgnoreCase(value)
+			|| "on".equalsIgnoreCase(value);
 	}
 
 	/**
@@ -641,7 +816,11 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	/** JPanel used for rendering the game viewport, with scaling capabilities */
 	private static class ScaledViewport extends JPanel {
 		BufferedImage interpolationBackground = new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR);
-		BufferedImage viewportImage;
+		private volatile BufferedImage viewportImage;
+		private volatile BufferedImage paintingImage;
+		private VolatileImage gpuPresentationImage;
+		private int gpuPresentationWidth;
+		private int gpuPresentationHeight;
 
 		int previousWidth = 0;
 		int previousHeight = 0;
@@ -660,6 +839,14 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 			viewportImage = gameImage;
 		}
 
+		public BufferedImage getViewportImage() {
+			return viewportImage;
+		}
+
+		public BufferedImage getPaintingImage() {
+			return paintingImage;
+		}
+
 		/** Ensures the viewport image has been set */
 		public boolean isViewportImageLoaded() {
 			return viewportImage != null;
@@ -667,213 +854,151 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 		@Override
 		protected void paintComponent(Graphics g) {
-			if (viewportImage == null
+			BufferedImage paintImage = viewportImage;
+			if (paintImage == null
 				|| getInstance().viewportWidth == 0
 				|| getInstance().viewportHeight == 0) {
 				return;
 			}
+			paintingImage = paintImage;
 
-			// Do not perform any scaling operations at a 1.0x scalar
-			if (mudclient.renderingScalar == 1.0f) {
-				g.drawImage(viewportImage, 0, 0, null);
-				return;
-			}
+			boolean telemetryEnabled = RenderTelemetry.isEnabled();
+			long paintStart = RenderTelemetry.now();
+			long scaleNanos = 0L;
+			boolean nearestScale = false;
+			boolean interpolationScale = false;
 
-			newWidth = Math.round(viewportImage.getWidth() * mudclient.renderingScalar);
-			newHeight = Math.round(viewportImage.getHeight() * mudclient.renderingScalar);
-
-			// Nearest-neighbor scaling performs roughly 3x better when resized via drawImage(),
-			// whereas interpolation scaling performs better using AffineTransformOp.
-			if (mudclient.scalingType == ScalingAlgorithm.INTEGER_SCALING) {
-				// Workaround for direct drawImage warping which seems to only affect macOS on JDK 19
-				if (isMacOS && javaVersion >= 19) {
-					g.setClip(0, 0, newWidth, newHeight);
-				}
-
-				g.drawImage(viewportImage, 0, 0, newWidth, newHeight, null);
-			} else {
-				if (interpolationBackground == null) {
+			try {
+				// Do not perform any scaling operations at a 1.0x scalar
+				if (mudclient.renderingScalar == 1.0f) {
+					if (GPU_PRESENTER_ENABLED) {
+						long scaleStart = RenderTelemetry.now();
+						drawGpuPresentedImage(g, paintImage, paintImage.getWidth(), paintImage.getHeight());
+						scaleNanos = RenderTelemetry.elapsedSince(scaleStart);
+						RenderTelemetry.recordGpuPresenter(scaleNanos);
+					} else {
+						g.drawImage(paintImage, 0, 0, null);
+					}
 					return;
 				}
 
-				// Reset image background when the window properties have changed
-				if (previousWidth != newWidth || previousHeight != newHeight) {
-					interpolationBackground = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_3BYTE_BGR);
+				newWidth = Math.round(paintImage.getWidth() * mudclient.renderingScalar);
+				newHeight = Math.round(paintImage.getHeight() * mudclient.renderingScalar);
 
-					previousWidth = newWidth;
-					previousHeight = newHeight;
-				}
+				if (mudclient.scalingType == ScalingAlgorithm.INTEGER_SCALING) {
+					// Workaround for direct drawImage warping which seems to only affect macOS on JDK 19
+					if (isMacOS && javaVersion >= 19) {
+						g.setClip(0, 0, newWidth, newHeight);
+					}
 
-				Graphics2D g2d = (Graphics2D) interpolationBackground.getGraphics();
-
-				// Only perform multi-threading when the number of cores
-				// is enough to support true parallelization
-				if (numCores > 4) {
-					g2d.drawImage(multiThreadedInterpolationScaling(viewportImage, newWidth, newHeight), 0, 0, null);
+					long scaleStart = RenderTelemetry.now();
+					if (GPU_PRESENTER_ENABLED) {
+						drawGpuPresentedImage(g, paintImage, newWidth, newHeight);
+						RenderTelemetry.recordGpuPresenter(RenderTelemetry.elapsedSince(scaleStart));
+					} else {
+						g.drawImage(paintImage, 0, 0, newWidth, newHeight, null);
+					}
+					scaleNanos = RenderTelemetry.elapsedSince(scaleStart);
+					nearestScale = true;
 				} else {
-					g2d.drawImage(affineTransformScale(viewportImage, newWidth, newHeight), 0, 0, null);
+					if (GPU_PRESENTER_ENABLED) {
+						long scaleStart = RenderTelemetry.now();
+						drawGpuPresentedImage(g, paintImage, newWidth, newHeight);
+						scaleNanos = RenderTelemetry.elapsedSince(scaleStart);
+						RenderTelemetry.recordGpuPresenter(scaleNanos);
+					} else {
+						if (interpolationBackground == null) {
+							return;
+						}
+
+						// Reset image background when the window properties have changed
+						if (previousWidth != newWidth || previousHeight != newHeight) {
+							interpolationBackground = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_3BYTE_BGR);
+							RenderTelemetry.recordImageAllocation(
+								"interpolation-background",
+								newWidth,
+								newHeight,
+								BufferedImage.TYPE_3BYTE_BGR);
+
+							previousWidth = newWidth;
+							previousHeight = newHeight;
+						}
+
+						long scaleStart = RenderTelemetry.now();
+						Graphics2D g2d = interpolationBackground.createGraphics();
+						try {
+							g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, getInterpolationHint());
+							g2d.drawImage(paintImage, 0, 0, newWidth, newHeight, null);
+						} finally {
+							g2d.dispose();
+						}
+						scaleNanos = RenderTelemetry.elapsedSince(scaleStart);
+						RenderTelemetry.recordSmoothScale(scaleNanos);
+
+						// Draw the interpolation-scaled image
+						g.drawImage(interpolationBackground, 0, 0, null);
+					}
+					interpolationScale = true;
+				}
+			} finally {
+				paintingImage = null;
+
+				if (telemetryEnabled) {
+					RenderTelemetry.recordViewportPaint(
+						RenderTelemetry.elapsedSince(paintStart),
+						scaleNanos,
+						nearestScale,
+						interpolationScale);
+			}
+		}
+	}
+
+		private void drawGpuPresentedImage(Graphics g, BufferedImage paintImage, int width, int height) {
+			ensureGpuPresentationImage(width, height);
+
+			do {
+				int validation = gpuPresentationImage.validate(getGraphicsConfiguration());
+				if (validation == VolatileImage.IMAGE_INCOMPATIBLE) {
+					recreateGpuPresentationImage(width, height);
 				}
 
-				g2d.dispose();
-
-				// Draw the interpolation-scaled image
-				g.drawImage(interpolationBackground, 0, 0, null);
-			}
-		}
-
-		/** Scales a {@link BufferedImage} using interpolation algorithms across four threads */
-		private BufferedImage multiThreadedInterpolationScaling(
-			BufferedImage originalImage, int width, int height) {
-			BufferedImage[] splitImages = splitImage(originalImage);
-
-			CompletableFuture<BufferedImage> future0 =
-				CompletableFuture.supplyAsync(() -> interpolationScale(splitImages[0], width, height, 0));
-			CompletableFuture<BufferedImage> future1 =
-				CompletableFuture.supplyAsync(() -> interpolationScale(splitImages[1], width, height, 1));
-			CompletableFuture<BufferedImage> future2 =
-				CompletableFuture.supplyAsync(() -> interpolationScale(splitImages[2], width, height, 2));
-			CompletableFuture<BufferedImage> future3 =
-				CompletableFuture.supplyAsync(() -> interpolationScale(splitImages[3], width, height, 3));
-
-			List<BufferedImage> scaledImages =
-				Stream.of(future0, future1, future2, future3)
-					.map(CompletableFuture::join)
-					.collect(Collectors.toList());
-
-			return stitchImageParts(scaledImages);
-		}
-
-		/**
-		 * Splits a {@link BufferedImage} into four equal parts, adding extra padding to account for
-		 * sampling around the seams
-		 */
-		private static BufferedImage[] splitImage(BufferedImage originalImage) {
-			int offsetBuffer = 10;
-
-			BufferedImage[] imageParts = new BufferedImage[4];
-
-			int widthPadding = (originalImage.getWidth() & 1) == 1 ? 1 : 0;
-			int heightPadding = (originalImage.getHeight() & 1) == 1 ? 1 : 0;
-
-			originalImage = padImageIfNeeded(originalImage, widthPadding, heightPadding);
-
-			int halfWidth = originalImage.getWidth() / 2;
-			int halfHeight = originalImage.getHeight() / 2;
-
-			imageParts[0] = originalImage.getSubimage(0, 0, halfWidth + offsetBuffer, halfHeight + offsetBuffer);
-			imageParts[1] = originalImage.getSubimage(halfWidth - offsetBuffer, 0, halfWidth + offsetBuffer, halfHeight + offsetBuffer);
-			imageParts[2] = originalImage.getSubimage(0, halfHeight - offsetBuffer, halfWidth + offsetBuffer, halfHeight + offsetBuffer);
-			imageParts[3] = originalImage.getSubimage(halfWidth - offsetBuffer, halfHeight - offsetBuffer, halfWidth + offsetBuffer, halfHeight + offsetBuffer);
-
-			return imageParts;
-		}
-
-		/** Pads a {@link BufferedImage} with extra pixels in preparation for even splits */
-		private static BufferedImage padImageIfNeeded(
-			BufferedImage originalImage, int widthPadding, int heightPadding) {
-			if (widthPadding == 0 && heightPadding == 0) {
-				return originalImage;
-			}
-
-			BufferedImage paddedImage =
-				new BufferedImage(
-					originalImage.getWidth() + widthPadding,
-					originalImage.getHeight() + heightPadding,
-					originalImage.getType());
-
-			Graphics2D g2d = (Graphics2D) paddedImage.getGraphics();
-			g2d.drawImage(originalImage, 0, 0, null);
-			g2d.dispose();
-
-			return paddedImage;
-		}
-
-		/**
-		 * Scales a {@link BufferedImage} for interpolation stitching, removing extra padding used for
-		 * sampling edges
-		 */
-		private static BufferedImage interpolationScale(
-			BufferedImage originalImage, int width, int height, int n) {
-			int scaledOffsetBuffer = (int) (10 * mudclient.renderingScalar);
-
-			BufferedImage scaledImage =
-				affineTransformScale(originalImage, (width / 2) + scaledOffsetBuffer, (height / 2) + scaledOffsetBuffer);
-
-			if (n == 0) {
-				return scaledImage.getSubimage(
-					0,
-					0,
-					scaledImage.getWidth() - scaledOffsetBuffer,
-					scaledImage.getHeight() - scaledOffsetBuffer);
-			} else if (n == 1) {
-				return scaledImage.getSubimage(
-					scaledOffsetBuffer,
-					0,
-					scaledImage.getWidth() - scaledOffsetBuffer,
-					scaledImage.getHeight() - scaledOffsetBuffer);
-			} else if (n == 2) {
-				return scaledImage.getSubimage(
-					0,
-					scaledOffsetBuffer,
-					scaledImage.getWidth() - scaledOffsetBuffer,
-					scaledImage.getHeight() - scaledOffsetBuffer);
-			} else {
-				return scaledImage.getSubimage(
-					scaledOffsetBuffer,
-					scaledOffsetBuffer,
-					scaledImage.getWidth() - scaledOffsetBuffer,
-					scaledImage.getHeight() - scaledOffsetBuffer);
-			}
-		}
-
-		/** Scales a {@link BufferedImage} using the {@link AffineTransform} method */
-		public static BufferedImage affineTransformScale(
-			BufferedImage originalImage, int width, int height) {
-			int imageWidth = originalImage.getWidth();
-			int imageHeight = originalImage.getHeight();
-
-			double scaleX = (double) width / imageWidth;
-			double scaleY = (double) height / imageHeight;
-
-			AffineTransform scaleTransform = AffineTransform.getScaleInstance(scaleX, scaleY);
-			AffineTransformOp scalingOp = new AffineTransformOp(scaleTransform, getAffineTransformOpType());
-
-			return scalingOp.filter(originalImage, new BufferedImage(width, height, originalImage.getType()));
-		}
-
-		/** Stitches multiple {@link BufferedImage}s onto one canvas */
-		private static BufferedImage stitchImageParts(List<BufferedImage> imageParts) {
-			int maxHeight = 0;
-			int maxWidth = 0;
-
-			for (BufferedImage imagePart : imageParts) {
-				int imageWidth = imagePart.getWidth(null);
-				int imageHeight = imagePart.getHeight(null);
-
-				maxHeight = Math.max(maxHeight, imageHeight);
-				maxWidth = Math.max(maxWidth, imageWidth);
-			}
-
-			BufferedImage canvas = new BufferedImage(maxWidth * 2, maxHeight * 2, BufferedImage.TYPE_3BYTE_BGR);
-			Graphics g = canvas.getGraphics();
-
-			g.setColor(Color.black);
-			g.fillRect(0, 0, canvas.getWidth(null), canvas.getHeight(null));
-
-			int currCol = 0;
-			int currRow = 0;
-
-			for (BufferedImage imagePart : imageParts) {
-				g.drawImage(imagePart, currCol * maxWidth, currRow * maxHeight, null);
-				currCol++;
-
-				if (currCol >= 2) {
-					currCol = 0;
-					currRow++;
+				Graphics2D gpuGraphics = gpuPresentationImage.createGraphics();
+				try {
+					gpuGraphics.setComposite(AlphaComposite.Src);
+					gpuGraphics.setColor(Color.black);
+					gpuGraphics.fillRect(0, 0, width, height);
+					gpuGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, getInterpolationHint());
+					gpuGraphics.drawImage(paintImage, 0, 0, width, height, null);
+				} finally {
+					gpuGraphics.dispose();
 				}
+
+				g.drawImage(gpuPresentationImage, 0, 0, null);
+			} while (gpuPresentationImage.contentsLost());
+		}
+
+		private void ensureGpuPresentationImage(int width, int height) {
+			if (gpuPresentationImage == null
+				|| gpuPresentationWidth != width
+				|| gpuPresentationHeight != height) {
+				recreateGpuPresentationImage(width, height);
+			}
+		}
+
+		private void recreateGpuPresentationImage(int width, int height) {
+			GraphicsConfiguration graphicsConfiguration = getGraphicsConfiguration();
+			if (graphicsConfiguration == null) {
+				graphicsConfiguration = GraphicsEnvironment
+					.getLocalGraphicsEnvironment()
+					.getDefaultScreenDevice()
+					.getDefaultConfiguration();
 			}
 
-			return canvas;
+			gpuPresentationImage = graphicsConfiguration.createCompatibleVolatileImage(width, height, Transparency.OPAQUE);
+			gpuPresentationWidth = width;
+			gpuPresentationHeight = height;
+			RenderTelemetry.recordImageAllocation("gpu-presentation-image", width, height, BufferedImage.TYPE_INT_RGB);
 		}
+
 	}
 }

@@ -3,9 +3,12 @@ package orsc.graphics.three;
 import com.openrsc.client.model.Sprite;
 import orsc.MiscFunctions;
 import orsc.buffers.BufferStack;
+import orsc.graphics.RendererTransparency;
 import orsc.graphics.two.GraphicsController;
 import orsc.util.FastMath;
 import orsc.util.GenUtil;
+
+import java.util.EnumSet;
 
 public final class Scene {
 	static final int TRANSPARENT = 12345678;
@@ -18,6 +21,9 @@ public final class Scene {
 	private final int[] m_J = new int[40];
 	private final int[] m_qb;
 	private final int[] m_Qb = new int[40];
+	private final int[] renderer3DClippedCameraX = new int[40];
+	private final int[] renderer3DClippedCameraY = new int[40];
+	private final int[] renderer3DClippedCameraZ = new int[40];
 	private final int[] m_r;
 	private final boolean m_Ub;
 	private final int[] m_v;
@@ -70,6 +76,8 @@ public final class Scene {
 	private int m_Zb = 256;
 	private int modelCount;
 	private RSModel[] models;
+	private Renderer3DFrame renderer3DFrame;
+	private Renderer3DTextureData[] renderer3DTextures = new Renderer3DTextureData[0];
 	private int rot1024_off_x;
 	private int rot1024_off_y;
 	private int rot1024_off_z;
@@ -448,16 +456,12 @@ public final class Scene {
 			int var7;
 			for (var6 = 0; var3 > var6; ++var6) {
 				for (var7 = 0; var3 > var7; ++var7) {
-					int var8 = this.m_L[var1][this.m_g[var1][var7 + var6 * var3] & 255];
-					var8 &= 16316671;
-					if (var8 != 0) {
-						if (var8 == 16253183) {
-							this.m_S[var1] = true;
-							var8 = 0;
-						}
-					} else {
-						var8 = 1;
+					int var8 = this.m_L[var1][this.m_g[var1][var7 + var6 * var3] & 255]
+						& RendererTransparency.LEGACY_TEXTURE_COLOR_MASK;
+					if (RendererTransparency.isLegacyTextureTransparentKey(var8)) {
+						this.m_S[var1] = true;
 					}
+					var8 = RendererTransparency.normalizeLegacyTexturePaletteColor(var8);
 
 					var4[var5++] = var8;
 				}
@@ -629,6 +633,7 @@ public final class Scene {
 		try {
 			this.m_L = new int[var4][];
 			this.m_g = new byte[var4][];
+			this.renderer3DTextures = new Renderer3DTextureData[var4];
 
 			this.resourceDatabase = new int[var4][];
 			this.m_i = new int[var3][];
@@ -2339,6 +2344,10 @@ public final class Scene {
 		}
 	}
 
+	public Renderer3DFrame getRenderer3DFrame() {
+		return renderer3DFrame;
+	}
+
 	public final RSModel[] b(byte var1) {
 		try {
 			if (var1 < 95) {
@@ -2568,6 +2577,17 @@ public final class Scene {
 		try {
 
 			this.m_f = this.graphics.interlace;
+			Renderer3DFrame geometryFrame = Renderer3DSettings.isGeometryCaptureEnabled()
+				? new Renderer3DFrame(
+					this.modelCount,
+					this.fogLandscapeDistance,
+					this.graphics.width2,
+					this.graphics.height2,
+					this.m_Zb,
+					this.m_Nb,
+					this.renderer3DTextures)
+				: null;
+			this.renderer3DFrame = geometryFrame;
 			int var7 = this.m_A * this.fogLandscapeDistance >> this.rot1024_vp_src;
 			MiscFunctions.frustumFarZ = 0;
 			MiscFunctions.frustumNearZ = 0;
@@ -2689,13 +2709,39 @@ public final class Scene {
 										}
 
 										var27.m_t = var2.m_hc + var6 / var10;
-										++this.m_zb;
 										var27.m_b = var13;
+										if (geometryFrame != null) {
+											geometryFrame.addWorldFace(
+												var9,
+												var3,
+												var13,
+												this.resourceToColor(var13, true),
+												var27.orientation,
+												var27.m_t,
+												var2,
+												var11,
+												var10);
+										}
+										++this.m_zb;
 									}
 								}
 							}
 						}
 					}
+				}
+			}
+			EnumSet<Renderer3DModelKind> staticWorldKinds = null;
+			if (geometryFrame != null) {
+				staticWorldKinds = EnumSet.of(
+					Renderer3DModelKind.TERRAIN,
+					Renderer3DModelKind.WALL,
+					Renderer3DModelKind.GAME_OBJECT,
+					Renderer3DModelKind.WALL_OBJECT);
+				geometryFrame.setDepthFrame(Renderer3DDepthFrame.render(
+					geometryFrame,
+					staticWorldKinds));
+				if (Renderer3DSettings.isVisibleWorldEnabled()) {
+					geometryFrame.getDepthFrame().copyColorTo(this.pixelData);
 				}
 			}
 
@@ -2730,6 +2776,7 @@ public final class Scene {
 				}
 			}
 
+			int legacySceneDrawOrder = 0;
 			if (this.m_zb != 0) {
 				this.setFrustum(0, -1, this.polygons, this.m_zb - 1);
 				this.setFrustum(this.m_zb, 100, -53, this.polygons);
@@ -2754,8 +2801,34 @@ public final class Scene {
 						var19 = var2.vertexParam6[var11[1]] - var13;
 						int var20 = var13 - var28 / 2;
 						int var21 = this.m_Nb - (var17 - var14);
+						int spriteScale = (256 << this.rot1024_vp_src) / var15;
+						if (geometryFrame != null) {
+							int spritePickIndex = -1;
+							if (var2.facePickIndex != null && var3 >= 0 && var3 < var2.facePickIndex.length) {
+								spritePickIndex = var2.facePickIndex[var3];
+							}
+							geometryFrame.addSpriteAnchor(
+								var3,
+								this.m_gb[var3],
+								spritePickIndex,
+								legacySceneDrawOrder,
+								var25.m_t,
+								var2.vertXRot[var12],
+								var2.vertYRot[var12],
+								var15,
+								var13,
+								var14,
+								var20 + this.m_Zb,
+								var21,
+								var28,
+								var17,
+								spriteScale,
+								var19,
+								!var2.m_db && var2.m_zb[var3] == 0);
+						}
+						legacySceneDrawOrder++;
 						this.graphics.drawEntity(this.m_gb[var3], var20 + this.m_Zb, var21, var28, var17,
-							(256 << this.rot1024_vp_src) / var15, var19);
+							spriteScale, var19);
 						if (this.m_K && this.m_db > this.m_cc) {
 							var20 += (this.m_Q[var3] << this.rot1024_vp_src) / var15;
 							if (var21 <= this.m_Wb && var21 + var17 >= this.m_Wb && var20 <= this.m_j
@@ -2766,6 +2839,10 @@ public final class Scene {
 							}
 						}
 					} else {
+						if (geometryFrame != null) {
+							geometryFrame.recordLegacyDrawOrder(var25.modelIndex, var3, legacySceneDrawOrder);
+						}
+						legacySceneDrawOrder++;
 						var14 = 0;
 						var28 = 0;
 						var17 = var2.faceIndexCount[var3];
@@ -2795,6 +2872,9 @@ public final class Scene {
 							}
 
 							if (var2.vertZRot[var6] >= this.rot1024_zTop) {
+								this.renderer3DClippedCameraX[var14] = var2.vertXRot[var6];
+								this.renderer3DClippedCameraY[var14] = var2.vertYRot[var6];
+								this.renderer3DClippedCameraZ[var14] = var2.vertZRot[var6];
 								this.m_yb[var14] = var2.vertexParam6[var6];
 								this.m_B[var14] = var2.vertexParam2[var6];
 								this.m_r[var14] = var28;
@@ -2816,6 +2896,9 @@ public final class Scene {
 										* (var2.vertYRot[var6] - var2.vertYRot[var15]) / var13;
 									var26 = var2.vertXRot[var6] - (var2.vertXRot[var6] - var2.vertXRot[var15])
 										* (var2.vertZRot[var6] - this.rot1024_zTop) / var13;
+									this.renderer3DClippedCameraX[var14] = var26;
+									this.renderer3DClippedCameraY[var14] = var12;
+									this.renderer3DClippedCameraZ[var14] = this.rot1024_zTop;
 									this.m_yb[var14] = (var26 << this.rot1024_vp_src) / this.rot1024_zTop;
 									this.m_B[var14] = (var12 << this.rot1024_vp_src) / this.rot1024_zTop;
 									this.m_r[var14] = var28;
@@ -2834,12 +2917,28 @@ public final class Scene {
 										* (var2.vertYRot[var6] - var2.vertYRot[var15]) / var13;
 									var26 = var2.vertXRot[var6] - (var2.vertXRot[var6] - var2.vertXRot[var15])
 										* (var2.vertZRot[var6] - this.rot1024_zTop) / var13;
+									this.renderer3DClippedCameraX[var14] = var26;
+									this.renderer3DClippedCameraY[var14] = var12;
+									this.renderer3DClippedCameraZ[var14] = this.rot1024_zTop;
 									this.m_yb[var14] = (var26 << this.rot1024_vp_src) / this.rot1024_zTop;
 									this.m_B[var14] = (var12 << this.rot1024_vp_src) / this.rot1024_zTop;
 									this.m_r[var14] = var28;
 									++var14;
 								}
 							}
+						}
+
+						if (geometryFrame != null) {
+							geometryFrame.recordLegacyClippedGeometry(
+								var25.modelIndex,
+								var3,
+								this.renderer3DClippedCameraX,
+								this.renderer3DClippedCameraY,
+								this.renderer3DClippedCameraZ,
+								this.m_yb,
+								this.m_B,
+								this.m_r,
+								var14);
 						}
 
 						for (var19 = 0; var19 < var17; ++var19) {
@@ -2869,6 +2968,9 @@ public final class Scene {
 
 				this.m_K = false;
 			}
+			if (geometryFrame != null) {
+				geometryFrame.setMeshFrame(Renderer3DMeshFrame.build(geometryFrame, staticWorldKinds));
+			}
 		} catch (RuntimeException var22) {
 			throw GenUtil.makeThrowable(var22, "lb.P(" + var1 + ')');
 		}
@@ -2881,6 +2983,7 @@ public final class Scene {
 
 			this.m_L[var1] = var3;
 			this.m_Hb[var1] = var4;
+			this.renderer3DTextures[var1] = Renderer3DTextureData.fromLegacyPalette(var1, var3, var4, var5);
 			this.m_D[var1] = 0L;
 			this.m_S[var1] = false;
 			this.resourceDatabase[var1] = null;

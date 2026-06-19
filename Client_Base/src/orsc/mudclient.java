@@ -23,13 +23,19 @@ import orsc.buffers.RSBuffer;
 import orsc.buffers.RSBufferUtils;
 import orsc.buffers.RSBuffer_Bits;
 import orsc.enumerations.*;
+import orsc.graphics.Renderer2DFrame;
 import orsc.graphics.gui.*;
 import orsc.graphics.three.CollisionFlag;
+import orsc.graphics.three.Renderer3DDepthFrame;
+import orsc.graphics.three.Renderer3DFrame;
+import orsc.graphics.three.Renderer3DMeshFrame;
+import orsc.graphics.three.Renderer3DModelKind;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.Scene;
 import orsc.graphics.three.World;
 import orsc.graphics.two.Fonts;
 import orsc.graphics.two.MudClientGraphics;
+import orsc.graphics.two.RendererFontSettings;
 import orsc.graphics.two.SpriteArchive.Subspace;
 import orsc.graphics.two.SpriteArchive.Unpacker;
 import orsc.graphics.two.SpriteArchive.Workspace;
@@ -77,6 +83,8 @@ public final class mudclient implements Runnable {
 	private static final int SCENE_POLYGON_CAPACITY = 120000;
 	private static final int SCENE_PICK_MODEL_CAPACITY = 1000;
 	private static final int WALL_OBJECT_KEY_BASE = 20000;
+	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
+	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
 	private static final int GAME_OBJECT_INSTANCE_CAPACITY = WALL_OBJECT_KEY_BASE;
 	private static final int WALL_OBJECT_INSTANCE_CAPACITY = 5000;
 
@@ -1111,6 +1119,41 @@ public final class mudclient implements Runnable {
 		props.setProperty("scaling_type", String.valueOf(type.ordinal()));
 		props.setProperty("ui_scale", String.valueOf(scalar));
 		props.setProperty("scaling_scalar", String.valueOf(scalar));
+
+		saveClientSettings(props);
+	}
+
+	private static void saveOpenGLPresentationSettings() {
+		Properties props = loadClientSettings();
+		OpenGLPresentationSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveOpenGLWindowSettings() {
+		Properties props = loadClientSettings();
+		OpenGLWindowSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRendererDebugSettings() {
+		Properties props = loadClientSettings();
+		RendererDebugSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRenderSurfaceSettings() {
+		Properties props = loadClientSettings();
+		RenderSurfaceSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRendererFontSettings() {
+		Properties props = loadClientSettings();
+		RendererFontSettings.saveToClientSettings(props);
 
 		saveClientSettings(props);
 	}
@@ -2993,6 +3036,7 @@ public final class mudclient implements Runnable {
 		int v4 = model.insertVertex(x2, -this.world.getElevation(x2, y2), y2);
 		int[] indices = new int[]{v1, v2, v3, v4};
 		model.insertFace(4, indices, texFront, texBack, false);
+		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
 		model.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, -95);
 		if (hasLoadedTerrainForWallObject(x, y, dir)) {
 			this.scene.addModel(model);
@@ -5308,6 +5352,8 @@ public final class mudclient implements Runnable {
 
 	private void drawGame(int var1) {
 		try {
+			this.getSurface().beginRenderer2DFrame();
+			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
 
 			if (isAndroid()) {
 				this.menuCommon.font = osConfig.C_MENU_SIZE;
@@ -5373,9 +5419,10 @@ public final class mudclient implements Runnable {
 					// this.getSurface().draw(this.graphics, this.screenOffsetX,
 					// 256, this.screenOffsetY);
 					clientPort.draw();
-				} else if (this.world.playerAlive) {
+					} else if (this.world.playerAlive) {
+						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
-					int centerX;
+						int centerX;
 					for (centerX = 0; centerX < this.world.modelRoofGrid[this.lastHeightOffset].length; ++centerX) {
 						this.scene.removeModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
 						if (this.lastHeightOffset == 0) {
@@ -5776,10 +5823,38 @@ public final class mudclient implements Runnable {
 
 					this.queuedProjectileEffectCount = 0;
 					this.queuedCombatEffectCount = 0;
-					this.scene.endScene(-113);
-					this.drawQueuedProjectileEffectOverlays();
-					this.drawQueuedCombatEffectOverlays();
-					this.drawDetachedScreenCombatEffects();
+						long sceneRenderStart = RenderTelemetry.now();
+						this.scene.endScene(-113);
+						RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
+						Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
+						if (renderer3DFrame != null) {
+							Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
+							Renderer3DMeshFrame meshFrame = renderer3DFrame.getMeshFrame();
+							RenderTelemetry.recordWorldGeometryFrame(
+								renderer3DFrame.getSourceModelCount(),
+								renderer3DFrame.getWorldFaceCount(),
+								renderer3DFrame.getSpriteAnchorCount(),
+								renderer3DFrame.getWorldFaceCount(Renderer3DModelKind.TERRAIN),
+								renderer3DFrame.getWorldFaceCount(Renderer3DModelKind.WALL),
+								renderer3DFrame.getWorldFaceCount(Renderer3DModelKind.ROOF),
+								renderer3DFrame.getWorldFaceCount(Renderer3DModelKind.GAME_OBJECT),
+								renderer3DFrame.getWorldFaceCount(Renderer3DModelKind.WALL_OBJECT),
+								renderer3DFrame.getWorldFaceCount(Renderer3DModelKind.UNCLASSIFIED),
+								depthFrame == null ? 0 : depthFrame.getAcceptedFaceCount(),
+								depthFrame == null ? 0 : depthFrame.getTriangleCount(),
+								depthFrame == null ? 0 : depthFrame.getPixelWriteCount(),
+								meshFrame == null ? 0 : meshFrame.getVertexCount(),
+								meshFrame == null ? 0 : meshFrame.getIndexCount(),
+								meshFrame == null ? 0 : meshFrame.getTriangleCount(),
+								meshFrame == null ? 0 : meshFrame.getTexturedTriangleCount(),
+								meshFrame == null ? 0 : meshFrame.getFlatColorTriangleCount(),
+								meshFrame == null ? 0 : meshFrame.getTransparentTriangleCount(),
+								meshFrame == null ? 0 : meshFrame.getSkippedTriangleCount());
+						}
+						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+						this.drawQueuedProjectileEffectOverlays();
+						this.drawQueuedCombatEffectOverlays();
+						this.drawDetachedScreenCombatEffects();
 
 					// Only draw ground item names if the feature is enabled
 					// and a panel/the keyboard isn't open.
@@ -6093,16 +6168,18 @@ public final class mudclient implements Runnable {
 						}
 					}
 
-					if (isAndroid()) {
-						if (osConfig.F_SHOWING_KEYBOARD) {
-							panelMessageTabs.reposition(panelMessageEntry, 7, 130 + 10, getGameWidth() - 14, 14);
+						if (isAndroid()) {
+							if (osConfig.F_SHOWING_KEYBOARD) {
+								panelMessageTabs.reposition(panelMessageEntry, 7, 130 + 10, getGameWidth() - 14, 14);
 						} else {
 							panelMessageTabs.reposition(panelMessageEntry, 7, getGameHeight() - 10, getGameWidth() - 14, 14);
+							}
 						}
-					}
 
-					if (this.messageTabSelected == MessageTab.ALL) {
-						for (centerX = 0; centerX < messagesArray.length; ++centerX) {
+						this.getSurface().captureRenderer2DUiBaseFrame();
+						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
+						if (this.messageTabSelected == MessageTab.ALL) {
+							for (centerX = 0; centerX < messagesArray.length; ++centerX) {
 							if (MessageHistory.messageHistoryTimeout[centerX] > 0) {
 								String var17 = MessageHistory.messageHistoryColor[centerX]
 									+ StringUtil.formatMessage(MessageHistory.messageHistoryMessage[centerX],
@@ -11172,7 +11249,7 @@ public final class mudclient implements Runnable {
 		Sprite icon = getAutoAttackHudSprite();
 		if (icon != null) {
 			this.getSurface().drawSprite(icon, x + 2, y + 2, AUTO_ATTACK_HUD_SIZE - 4, AUTO_ATTACK_HUD_SIZE - 4,
-				5924, C_AUTO_RETALIATE ? 255 : 100);
+				5924);
 		}
 		if (hovered) {
 			String hoverText = "Auto attack: " + (C_AUTO_RETALIATE ? "@gre@On" : "@red@Off");
@@ -11663,10 +11740,12 @@ public final class mudclient implements Runnable {
 			}
 		}
 
-		// Client scaling is a local client-only option; it is handled by the +/- buttons below.
+		// Client scaling is a legacy software-presenter option. OpenGL-primary uses
+		// the selected render surface directly and applies automatic aspect-fit bars.
 
 		int scalarOptionIdx = wantMembers() ? 2 : 1;
-		boolean isScalarOptionOffered = !isAndroid();
+		boolean isOpenGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
+		boolean isScalarOptionOffered = !isAndroid() && !isOpenGLPrimaryWindow;
 		boolean isScalarOptionShowing = panelSettings.controlScrollAmount[0] <= scalarOptionIdx && isScalarOptionOffered;
 
 		if (isScalarOptionOffered) {
@@ -11747,6 +11826,15 @@ public final class mudclient implements Runnable {
 
 			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
 				"@whi@Scaling type - @gre@" + scalingTypeDescription, 46, null, null);
+		}
+
+		if (!isAndroid()) {
+			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
+				"@whi@Resolution - " + RenderSurfaceSettings.getMode().label, 56, null, null);
+		}
+		if (!isAndroid() && isOpenGLPrimaryWindow) {
+			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
+				"@whi@Font - " + RendererFontSettings.getMode().label, 57, null, null);
 		}
 
 		// mouse button(s) - byte index 1
@@ -12180,10 +12268,13 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		/* Client scale is a local client-only option handled by its +/- buttons. */
+		/* Client scale is a legacy software-presenter option handled by its +/- buttons. */
 
 		int scalarOptionIdx = wantMembers() ? 2 : 1;
-		boolean isScalarOptionShowing = !isAndroid() && panelSettings.controlScrollAmount[0] <= scalarOptionIdx;
+		boolean isOpenGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
+		boolean isScalarOptionShowing = !isAndroid()
+			&& !isOpenGLPrimaryWindow
+			&& panelSettings.controlScrollAmount[0] <= scalarOptionIdx;
 
 		if (isScalarOptionShowing) {
 			int yPos = yFromTopDistance + ((scalarOptionIdx - panelSettings.controlScrollAmount[0] + 1) * 15);
@@ -12208,8 +12299,15 @@ public final class mudclient implements Runnable {
 		}
 
 		// scaling type - byte index 46
-		if (settingIndex == 46 && this.mouseButtonClick == 1) {
+		if (!isOpenGLPrimaryWindow && settingIndex == 46 && this.mouseButtonClick == 1) {
 			cycleScalingType();
+		}
+
+		if (settingIndex == 56 && this.mouseButtonClick == 1) {
+			cycleRenderSurfaceMode();
+		}
+		if (isOpenGLPrimaryWindow && settingIndex == 57 && this.mouseButtonClick == 1) {
+			cycleOpenGLUiFontMode();
 		}
 
 		// one or two mouse button(s) - byte index 1
@@ -13581,6 +13679,36 @@ public final class mudclient implements Runnable {
 		}
 
 		saveScalingSettings(scalingType, newRenderingScalar);
+	}
+
+	void cycleOpenGLScaleMode() {
+		OpenGLPresentationSettings.cycleScaleMode();
+		saveOpenGLPresentationSettings();
+	}
+
+	void cycleOpenGLWindowMode() {
+		OpenGLWindowSettings.cycleMode();
+		saveOpenGLWindowSettings();
+	}
+
+	void toggleRendererDebugOverlay() {
+		boolean enabled = RendererDebugSettings.toggleOverlay();
+		saveRendererDebugSettings();
+		System.out.println("[renderer-v2] debug overlay " + (enabled ? "enabled" : "disabled"));
+	}
+
+	void cycleRenderSurfaceMode() {
+		RenderSurfaceSettings.Mode mode = RenderSurfaceSettings.cycleMode();
+		this.resizeWidth = mode.width;
+		this.resizeHeight = mode.height;
+		scalarChangedSinceLogin = true;
+		saveRenderSurfaceSettings();
+	}
+
+	void cycleOpenGLUiFontMode() {
+		RendererFontSettings.Mode mode = RendererFontSettings.cycleMode();
+		saveRendererFontSettings();
+		System.out.println("[renderer-v2] OpenGL UI font: " + mode.id);
 	}
 
 	private void fetchContainerSize() {
@@ -16790,7 +16918,14 @@ public final class mudclient implements Runnable {
 			} else {
 				modelCache[j] = new RSModel(models, k, true);
 			}
+			normalizeLoadedModel(modelName, modelCache[j]);
 			modelCache[j].m_cb = modelName.equals("giantcrystal");
+		}
+	}
+
+	private void normalizeLoadedModel(String modelName, RSModel model) {
+		if (TIN_ROCK_MODEL_NAME.equals(modelName)) {
+			model.hideBackFacesMatching(TIN_ROCK_LEGACY_RED_BACK_FACE);
 		}
 	}
 
@@ -16940,7 +17075,7 @@ public final class mudclient implements Runnable {
 							this.getWorld().registerObjectDir(xTile, zTile, dir);
 							this.world.applyWallToCollisionFlags(id, xTile, zTile, dir);
 							RSModel var25 = this.createWallObjectModel(xTile, zTile, id, dir, i);
-							this.wallObjectInstanceModel[i] = var25;
+							this.setWallObjectInstanceModel(i, var25);
 						} catch (RuntimeException var20) {
 							System.out.println("Bound Error: " + var20.getMessage());
 							var20.printStackTrace();
@@ -19963,6 +20098,7 @@ public final class mudclient implements Runnable {
 			this.elixirTimer = 0;
 			this.loginScreenNumber = 0;
 			this.logoutTimeout = 0;
+			this.hasCompletedInitialRegionLoad = false;
 
 			this.currentViewMode = GameMode.GAME;
 			this.clearInputString80((byte) -49);
@@ -20767,8 +20903,26 @@ public final class mudclient implements Runnable {
 		if (this.localPlayer == null) {
 			return;
 		}
+		if (!isValidCustomMovementDirection(direction)) {
+			return;
+		}
+
+		boolean needNextRegion = loadNextRegion(worldZ, worldX, false);
 		this.playerLocalX = worldX - this.midRegionBaseX;
 		this.playerLocalZ = worldZ - this.midRegionBaseZ;
+		if (!World.isLocalTile(this.playerLocalX, this.playerLocalZ)) {
+			return;
+		}
+
+		int currentX = this.playerLocalX * this.tileSize + 64;
+		int currentZ = this.playerLocalZ * this.tileSize + 64;
+		traceLocalWalkServerUpdate(this.playerLocalX, this.playerLocalZ, currentX, currentZ, this.localPlayer);
+		if (needNextRegion && consumeRegionLoadNeedsHardPlayerReset()) {
+			this.localPlayer.waypointIndexNext = 0;
+			this.localPlayer.waypointIndexCurrent = 0;
+			this.localPlayer.currentX = this.localPlayer.waypointsX[0] = currentX;
+			this.localPlayer.currentZ = this.localPlayer.waypointsZ[0] = currentZ;
+		}
 		appendCustomMovementWaypoint(this.localPlayer, this.playerLocalX, this.playerLocalZ, direction);
 	}
 
@@ -20795,6 +20949,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private void appendCustomMovementWaypoint(ORSCharacter character, int localTileX, int localTileZ, int direction) {
+		if (character == null || !World.isLocalTile(localTileX, localTileZ) || !isValidCustomMovementDirection(direction)) {
+			return;
+		}
 		int pixelX = localTileX * this.tileSize + 64;
 		int pixelZ = localTileZ * this.tileSize + 64;
 		int waypointIdx = character.waypointIndexCurrent;
@@ -20804,6 +20961,11 @@ public final class mudclient implements Runnable {
 			character.waypointsX[waypointIdx] = pixelX;
 			character.waypointsZ[waypointIdx] = pixelZ;
 		}
+	}
+
+	private boolean isValidCustomMovementDirection(int direction) {
+		return direction >= ORSCharacterDirection.NORTH.rsDir
+			&& direction <= ORSCharacterDirection.COMBAT_NORTH_EAST.rsDir;
 	}
 
 	public void setPlayer(int i, ORSCharacter p) {
@@ -20872,6 +21034,7 @@ public final class mudclient implements Runnable {
 
 	public void setGameObjectInstanceModel(int i, RSModel m) {
 		this.gameObjectInstanceModel[i] = m;
+		this.gameObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
 		this.gameObjectInstanceModel[i].key = i;
 	}
 
@@ -20925,6 +21088,7 @@ public final class mudclient implements Runnable {
 
 	public void setWallObjectInstanceModel(int i, RSModel n) {
 		this.wallObjectInstanceModel[i] = n;
+		this.wallObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
 		this.wallObjectInstanceModel[i].key = i + WALL_OBJECT_KEY_BASE;
 	}
 
@@ -20950,6 +21114,16 @@ public final class mudclient implements Runnable {
 
 	public Scene getScene() {
 		return this.scene;
+	}
+
+	public boolean isGameView() {
+		return this.currentViewMode == GameMode.GAME;
+	}
+
+	public boolean isRenderer3DWorldReady() {
+		return this.currentViewMode == GameMode.GAME
+			&& this.hasCompletedInitialRegionLoad
+			&& !this.loadingArea;
 	}
 
 	public RSModel getModelCacheItem(int i) {
@@ -22961,8 +23135,7 @@ public final class mudclient implements Runnable {
 					this.scene.addModel(model);
 					model.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, -74);
 					model.copyRot256AndTranslateFrom(this.gameObjectInstanceModel[instanceNumber], 6029);
-					model.key = instanceNumber;
-					this.gameObjectInstanceModel[instanceNumber] = model;
+					this.setGameObjectInstanceModel(instanceNumber, model);
 				}
 
 			}
@@ -23132,6 +23305,10 @@ public final class mudclient implements Runnable {
 
 	public int getGameWidth() {
 		return gameWidth;
+	}
+
+	static int getCurrentFPS() {
+		return FPS;
 	}
 
 	private int halfGameWidth() {

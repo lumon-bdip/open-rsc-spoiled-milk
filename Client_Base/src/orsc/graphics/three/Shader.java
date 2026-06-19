@@ -1,9 +1,13 @@
 package orsc.graphics.three;
 
+import orsc.graphics.RendererTransparency;
 import orsc.util.FastMath;
 import orsc.util.GenUtil;
 
 class Shader {
+	private static boolean isVisibleTextureSample(int sample) {
+		return RendererTransparency.isVisibleTextureSample(sample);
+	}
 
 	static void shadeScanline(int var0, int var1, int var2, int var3, int[] var4, int var5, int var6,
 							  int var7, int var8, int var9, int var10, int var11, int var12, int var13, int[] var14, int var15) {
@@ -55,7 +59,7 @@ class Shader {
 					var6 += var11;
 					if (var20 < 16) {
 						for (int var22 = 0; var20 > var22; ++var22) {
-							if ((var12 = var14[(var3 & 0x3F80) + (var2 >> 7)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var12 = var14[(var3 & 0x3F80) + (var2 >> 7)] >>> var21)) {
 								var4[var9] = var12;
 							}
 
@@ -69,28 +73,28 @@ class Shader {
 							}
 						}
 					} else {
-						if ((var12 = var14[(var3 & 0x3F80) + (var2 >> 7)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var3 & 0x3F80) + (var2 >> 7)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
 						var2 += var18;
 						++var9;
 						var3 += var19;
-						if ((var12 = var14[(var2 >> 7) + (0x3F80 & var3)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var2 >> 7) + (0x3F80 & var3)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
 						++var9;
 						var3 += var19;
 						var2 += var18;
-						if ((var12 = var14[(var2 >> 7) + (0x3F80 & var3)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var2 >> 7) + (0x3F80 & var3)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
 						++var9;
 						var3 += var19;
 						var2 += var18;
-						if ((var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
@@ -100,28 +104,28 @@ class Shader {
 						var21 = var6 >> 23;
 						var2 = (var6 & 6291456) + (16383 & var2);
 						var6 += var11;
-						if ((var12 = var14[(var3 & 0x3F80) + (var2 >> 7)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var3 & 0x3F80) + (var2 >> 7)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
 						var2 += var18;
 						++var9;
 						var3 += var19;
-						if ((var12 = var14[(0x3F80 & var3) + (var2 >> 7)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(0x3F80 & var3) + (var2 >> 7)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
 						++var9;
 						var2 += var18;
 						var3 += var19;
-						if ((var12 = var14[(var2 >> 7) + (0x3F80 & var3)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var2 >> 7) + (0x3F80 & var3)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
 						var2 += var18;
 						var3 += var19;
 						++var9;
-						if ((var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
@@ -130,7 +134,7 @@ class Shader {
 						var2 += var18;
 						var21 = var6 >> 23;
 						var2 = (var2 & 16383) + (6291456 & var6);
-						if ((var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
@@ -138,21 +142,21 @@ class Shader {
 						++var9;
 						var2 += var18;
 						var3 += var19;
-						if ((var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
 						var3 += var19;
 						++var9;
 						var2 += var18;
-						if ((var12 = var14[(0x3F80 & var3) + (var2 >> 7)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(0x3F80 & var3) + (var2 >> 7)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
 						var3 += var19;
 						var2 += var18;
 						++var9;
-						if ((var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
@@ -161,7 +165,7 @@ class Shader {
 						++var9;
 						var2 = (var2 & 16383) + (var6 & 6291456);
 						var21 = var6 >> 23;
-						if ((var12 = var14[(var3 & 0x3F80) + (var2 >> 7)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var3 & 0x3F80) + (var2 >> 7)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
@@ -169,21 +173,21 @@ class Shader {
 						var3 += var19;
 						++var9;
 						var2 += var18;
-						if ((var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
 						++var9;
 						var2 += var18;
 						var3 += var19;
-						if ((var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(var2 >> 7) + (var3 & 0x3F80)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
 						var3 += var19;
 						var2 += var18;
 						++var9;
-						if ((var12 = var14[(0x3F80 & var3) + (var2 >> 7)] >>> var21) != 0) {
+						if (isVisibleTextureSample(var12 = var14[(0x3F80 & var3) + (var2 >> 7)] >>> var21)) {
 							var4[var9] = var12;
 						}
 
@@ -817,28 +821,28 @@ class Shader {
 						int var21 = var14 >> 20;
 						var14 += var7;
 						if (var20 >= 16) {
-							if ((var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							++var10;
 							var4 += var19;
 							var12 += var18;
-							if ((var2 = var8[(var12 >> 6) + (var4 & 4032)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var12 >> 6) + (var4 & 4032)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							var4 += var19;
 							++var10;
 							var12 += var18;
-							if ((var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							var4 += var19;
 							++var10;
 							var12 += var18;
-							if ((var2 = var8[(4032 & var4) + (var12 >> 6)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(4032 & var4) + (var12 >> 6)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
@@ -848,28 +852,28 @@ class Shader {
 							var21 = var14 >> 20;
 							var12 = (786432 & var14) + (4095 & var12);
 							var14 += var7;
-							if ((var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							++var10;
 							var12 += var18;
 							var4 += var19;
-							if ((var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							++var10;
 							var12 += var18;
 							var4 += var19;
-							if ((var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							++var10;
 							var12 += var18;
 							var4 += var19;
-							if ((var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
@@ -878,7 +882,7 @@ class Shader {
 							var12 += var18;
 							var12 = (var12 & 4095) + (var14 & 786432);
 							var21 = var14 >> 20;
-							if ((var2 = var8[(var12 >> 6) + (var4 & 4032)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var12 >> 6) + (var4 & 4032)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
@@ -886,21 +890,21 @@ class Shader {
 							++var10;
 							var12 += var18;
 							var4 += var19;
-							if ((var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							var4 += var19;
 							var12 += var18;
 							++var10;
-							if ((var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							var12 += var18;
 							var4 += var19;
 							++var10;
-							if ((var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
@@ -910,35 +914,35 @@ class Shader {
 							var21 = var14 >> 20;
 							var12 = (var14 & 786432) + (var12 & 4095);
 							var14 += var7;
-							if ((var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							var4 += var19;
 							var12 += var18;
 							++var10;
-							if ((var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							++var10;
 							var12 += var18;
 							var4 += var19;
-							if ((var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(var4 & 4032) + (var12 >> 6)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							var4 += var19;
 							++var10;
 							var12 += var18;
-							if ((var2 = var8[(4032 & var4) + (var12 >> 6)] >>> var21) != 0) {
+							if (isVisibleTextureSample(var2 = var8[(4032 & var4) + (var12 >> 6)] >>> var21)) {
 								var9[var10] = var2;
 							}
 
 							++var10;
 						} else {
 							for (int var22 = 0; var20 > var22; ++var22) {
-								if ((var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21) != 0) {
+								if (isVisibleTextureSample(var2 = var8[(var12 >> 6) + (4032 & var4)] >>> var21)) {
 									var9[var10] = var2;
 								}
 

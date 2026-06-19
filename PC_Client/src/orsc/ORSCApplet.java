@@ -1,7 +1,11 @@
 package orsc;
 
 import com.openrsc.client.model.Sprite;
+import orsc.graphics.Renderer2DFrame;
+import orsc.graphics.Renderer2DSettings;
+import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.two.Fonts;
+import orsc.graphics.two.RendererFontSettings;
 import orsc.multiclient.ClientPort;
 import orsc.util.GenUtil;
 
@@ -18,6 +22,10 @@ import static orsc.osConfig.C_LAST_ZOOM;
 
 public class ORSCApplet extends Applet implements ComponentListener, ImageObserver, ImageProducer, ClientPort {
 	private static final long serialVersionUID = 1L;
+	private static final String DIRECT_FRAMEBUFFER_PROPERTY = "spoiledmilk.directFramebuffer";
+	private static final String DIRECT_FRAMEBUFFER_ENV = "SPOILED_MILK_DIRECT_FRAMEBUFFER";
+	private static final boolean DIRECT_FRAMEBUFFER_ENABLED =
+		readBoolean(DIRECT_FRAMEBUFFER_PROPERTY, DIRECT_FRAMEBUFFER_ENV);
 	public static int globalLoadingPercent = 0;
 	public static String globalLoadingState = "";
 	private static mudclient mudclient;
@@ -34,8 +42,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	boolean m_N = false;
 	private String m_p = null;
 	private int loadingPercent = 0;
-	private int height = 384;
-	private int width = 512;
+	private int height = RenderSurfaceSettings.getHeight();
+	private int width = RenderSurfaceSettings.getWidth();
 	private DirectColorModel imageModel;
 	private Image backingImage;
 	private ImageConsumer imageProducer;
@@ -45,32 +53,18 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	private static BufferedImage game_image;
 	private static Graphics2D g2dForGameImage;
 	public static float oldRenderingScalar = 1.0f;
+	private BufferedImage directFramebufferImage;
+	private int[] directFramebufferPixels;
+	private int directFramebufferWidth;
+	private int directFramebufferHeight;
+	private BufferedImage renderer2DUiBaseImage;
+	private int[] renderer2DUiBasePixels;
+	private int renderer2DUiBaseWidth;
+	private int renderer2DUiBaseHeight;
 
 	public void seedInitialLoadingFrame() {
-		int imageType = ScaledWindow.getBufferedImageType();
-		game_image = new BufferedImage(this.width, this.height, imageType);
-		g2dForGameImage = game_image.createGraphics();
-
-		Graphics2D g = g2dForGameImage;
-		g.setColor(Color.black);
-		g.fillRect(0, 0, this.width, this.height);
-
-		int x = (this.width - 281) / 2;
-		int y = (this.height - 148) / 2;
-		if (this.loadingLogo != null) {
-			g.drawImage(this.loadingLogo, x, y, this);
-		}
-		x += 2;
-		y += 90;
-		g.setColor(new Color(132, 132, 132));
-		g.drawRect(x - 2, y - 2, 280, 23);
-		g.fillRect(x, y, 0, 20);
-		g.setColor(new Color(198, 198, 198));
-		this.drawCenteredString(this.loadingFont, "Loading...", 10 + y, 138 + x, g);
-		this.drawCenteredString(this.createdbyFont, "Powered by Open RSC", 30 + y, x + 138, g);
-		this.drawCenteredString(this.createdbyFont, "We support open source development.", y + 44, x + 138, g);
-
-		scaledWindow.setGameImage(game_image);
+		applyConfiguredRenderSurfaceSize();
+		presentLoadingFrame("Loading...", 0, 126);
 	}
 
 	public MouseHandler getMouseHandler() {
@@ -102,6 +96,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 	public final boolean drawLoading(int var1) {
 		try {
+			presentLoadingFrame("Loading...", 0, var1 ^ 103);
 			Graphics var2 = this.getGraphics();
 			if (var2 != null) {
 				this.loadingGraphics = scaledWindow.getGraphics();
@@ -110,7 +105,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				this.loadingGraphics.fillRect(0, 0, this.width, this.height);
 				this.drawLoadingScreen("Loading...", 0, var1 ^ 103);
 				return true;
-			} else return false;
+			}
+			return game_image != null;
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "e.ME(" + var1 + ')');
 		}
@@ -169,6 +165,75 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		}
 	}
 
+	private void presentLoadingFrame(String state, int percent, int var3) {
+		ensureLoadingGameImage();
+		if (g2dForGameImage == null) {
+			return;
+		}
+
+		drawLoadingScreen(g2dForGameImage, state, percent, var3);
+		scaledWindow.setGameImage(game_image);
+	}
+
+	private void ensureLoadingGameImage() {
+		if (game_image != null
+			&& game_image.getWidth() == this.width
+			&& game_image.getHeight() == this.height
+			&& g2dForGameImage != null) {
+			return;
+		}
+
+		int imageType = ScaledWindow.getBufferedImageType();
+		game_image = new BufferedImage(this.width, this.height, imageType);
+		RenderTelemetry.recordImageAllocation("loading-game-image", this.width, this.height, imageType);
+		g2dForGameImage = game_image.createGraphics();
+	}
+
+	private void drawLoadingScreen(Graphics g, String state, int percent, int var3) {
+		int x = (this.width - 281) / 2;
+		int y = (this.height - 148) / 2;
+		g.setColor(Color.black);
+		g.fillRect(0, 0, this.width, this.height);
+		if (!this.m_hb && this.loadingLogo != null) {
+			g.drawImage(this.loadingLogo, x, y, this);
+		}
+
+		x += 2;
+		this.loadingPercent = percent;
+		y += 90;
+		this.loadingState = state;
+		if (var3 <= 97) {
+			mouseHandler.mouseReleased(null);
+		}
+
+		g.setColor(new Color(132, 132, 132));
+		if (this.m_hb) {
+			g.setColor(new Color(220, 0, 0));
+		}
+
+		g.drawRect(x - 2, y - 2, 280, 23);
+		g.fillRect(x, y, percent * 277 / 100, 20);
+		g.setColor(new Color(198, 198, 198));
+		if (this.m_hb) {
+			g.setColor(new Color(255, 255, 255));
+		}
+
+		this.drawCenteredString(this.loadingFont, state, 10 + y, 138 + x, g);
+
+		if (!this.m_hb) {
+			this.drawCenteredString(this.createdbyFont, "Powered by Open RSC", 30 + y, x + 138, g);
+			this.drawCenteredString(this.createdbyFont, "We support open source development.", y + 44, x + 138, g);
+		} else {
+			g.setColor(new Color(132, 132, 152));
+			this.drawCenteredString(this.copyrightFont2, "We support open source development.", this.height - 20, 138 + x, g);
+		}
+
+		if (this.m_p != null) {
+			g.setColor(Color.white);
+			this.drawCenteredString(this.createdbyFont, this.m_p, y - 120, x + 138, g);
+		}
+	}
+
 	@Override
 	public final void paint(Graphics var1) {
 		try {
@@ -206,6 +271,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				this.drawCenteredString(this.loadingFont, state, 10 + y, 138 + x, this.loadingGraphics);
 			} catch (Exception ignored) {
 			}
+			presentLoadingFrame(state, percent, 126);
 		} catch (RuntimeException var8) {
 			throw GenUtil.makeThrowable(var8, "e.EE(" + percent + ',' + (state != null ? "{...}" : "null") + ')');
 		}
@@ -239,8 +305,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	private void startApplet() {
 		try {
 			System.out.println("Started applet");
-			this.width = 512;
-			this.height = 346;
+			applyConfiguredRenderSurfaceSize();
 			mudclient.startMainThread();
 		} catch (RuntimeException var12) {
 			throw GenUtil.makeThrowable(var12, "e.OE(" + 346 + ',' + Config.CLIENT_VERSION + ',' + 12 + ',' + 512 + ')');
@@ -405,6 +470,11 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		int width = mudclient.getSurface().width2;
 		int height = mudclient.getSurface().height2;
 		if (width > 1 && height > 1) {
+			if (DIRECT_FRAMEBUFFER_ENABLED) {
+				bindDirectFramebuffer(width, height);
+				return;
+			}
+
 			this.imageModel = new DirectColorModel(32, 16711680, '\uff00', 255);
 			this.backingImage = createImage(this);
 			this.commitToImage(true);
@@ -467,18 +537,60 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	}
 
 	public final void draw() {
-		this.commitToImage(true);
+		boolean telemetryEnabled = RenderTelemetry.isEnabled();
+		long frameStart = RenderTelemetry.now();
+		long commitNanos = 0L;
 
+		long scalarResizeNanos = 0L;
 		// Re-scale when needed
 		if (orsc.mudclient.newRenderingScalar != oldRenderingScalar) {
+			long resizeStart = RenderTelemetry.now();
 			updateRenderingScalarAndResize(orsc.mudclient.newRenderingScalar, mudclient.getGameWidth(), mudclient.getGameHeight());
+			scalarResizeNanos = RenderTelemetry.elapsedSince(resizeStart);
 			oldRenderingScalar = orsc.mudclient.newRenderingScalar;
 		}
 
-		g2dForGameImage.drawImage(this.backingImage, 0, 0, null);
+		long backingCopyNanos = 0L;
+		BufferedImage frameImage;
+		String framePath;
+		if (DIRECT_FRAMEBUFFER_ENABLED) {
+			frameImage = getDirectFramebufferImage();
+			framePath = "direct-framebuffer";
+		} else {
+			long commitStart = RenderTelemetry.now();
+			this.commitToImage(true);
+			commitNanos = RenderTelemetry.elapsedSince(commitStart);
+
+			long backingCopyStart = RenderTelemetry.now();
+			g2dForGameImage.drawImage(this.backingImage, 0, 0, null);
+			backingCopyNanos = RenderTelemetry.elapsedSince(backingCopyStart);
+
+			frameImage = game_image;
+			framePath = "legacy-image-producer";
+		}
 
 		// Forward the image to be drawn by ScaledWindow.java
-		scaledWindow.setGameImage(game_image);
+		drawRendererDebugOverlay(frameImage);
+		BufferedImage renderer2DUiBaseImage = getRenderer2DUiBaseImage();
+		Renderer2DFrame renderer2DFrame = mudclient.getSurface().consumeRenderer2DFrame();
+		Renderer3DFrame renderer3DFrame = getRenderer3DFrame();
+		long presentStart = RenderTelemetry.now();
+		scaledWindow.setGameImage(frameImage, renderer2DFrame, renderer2DUiBaseImage, renderer3DFrame);
+		long presentNanos = RenderTelemetry.elapsedSince(presentStart);
+
+		if (telemetryEnabled) {
+			RenderTelemetry.recordFrame(
+				RenderTelemetry.elapsedSince(frameStart),
+				commitNanos,
+				scalarResizeNanos,
+				backingCopyNanos,
+				presentNanos,
+				frameImage.getWidth(),
+				frameImage.getHeight(),
+				orsc.mudclient.renderingScalar,
+				orsc.mudclient.scalingType,
+				framePath);
+		}
 	}
 
 	/** Updates the rendering scalar and resizes the window accordingly */
@@ -487,7 +599,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 		// Reset the game image with the current type to ensure that affineOp
 		// scaling will always have matching source and destination types
-		game_image = new BufferedImage(newWidth, newHeight, imageType);
+		if (!DIRECT_FRAMEBUFFER_ENABLED) {
+			game_image = new BufferedImage(newWidth, newHeight, imageType);
+			RenderTelemetry.recordImageAllocation("game-image-rescale", newWidth, newHeight, imageType);
+		}
 
 		// Handle rendering scalar value changes
 		orsc.mudclient.renderingScalar = scalar;
@@ -543,12 +658,282 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	public void resized() {
 		int newWidth = mudclient.getSurface().width2;
 		int newHeight = mudclient.getSurface().height2;
+		this.width = newWidth;
+		this.height = newHeight;
 
-		imageProducer.setDimensions(newWidth, newHeight);
+		if (DIRECT_FRAMEBUFFER_ENABLED) {
+			bindDirectFramebuffer(newWidth, newHeight);
+			return;
+		}
+
+		if (imageProducer != null) {
+			imageProducer.setDimensions(newWidth, newHeight);
+		}
 		initGraphics();
 
 		game_image = new BufferedImage(newWidth, newHeight, ScaledWindow.getBufferedImageType());
+		RenderTelemetry.recordImageAllocation("game-image-resize", newWidth, newHeight, ScaledWindow.getBufferedImageType());
 		g2dForGameImage = game_image.createGraphics();
+	}
+
+	private void applyConfiguredRenderSurfaceSize() {
+		this.width = RenderSurfaceSettings.getWidth();
+		this.height = RenderSurfaceSettings.getHeight();
+	}
+
+	private BufferedImage getDirectFramebufferImage() {
+		int width = mudclient.getSurface().width2;
+		int height = mudclient.getSurface().height2;
+		int[] pixels = mudclient.getSurface().pixelData;
+
+		if (directFramebufferImage == null
+			|| directFramebufferPixels != pixels
+			|| directFramebufferWidth != width
+			|| directFramebufferHeight != height) {
+			bindDirectFramebuffer(width, height);
+		}
+
+		return directFramebufferImage;
+	}
+
+	private BufferedImage getRenderer2DUiBaseImage() {
+		if (!Renderer2DSettings.canPresentUiBaseFrame() || !mudclient.getSurface().hasRenderer2DUiBaseFrame()) {
+			return null;
+		}
+
+		int width = mudclient.getSurface().getRenderer2DUiBaseWidth();
+		int height = mudclient.getSurface().getRenderer2DUiBaseHeight();
+		int[] pixels = mudclient.getSurface().getRenderer2DUiBasePixels();
+		if (pixels == null || pixels.length < width * height) {
+			return null;
+		}
+
+		if (renderer2DUiBaseImage == null
+			|| renderer2DUiBasePixels != pixels
+			|| renderer2DUiBaseWidth != width
+			|| renderer2DUiBaseHeight != height) {
+			renderer2DUiBaseImage = createDirectFramebufferImage(width, height, pixels);
+			renderer2DUiBasePixels = pixels;
+			renderer2DUiBaseWidth = width;
+			renderer2DUiBaseHeight = height;
+		}
+		return renderer2DUiBaseImage;
+	}
+
+	private Renderer3DFrame getRenderer3DFrame() {
+		if (mudclient == null || !mudclient.isRenderer3DWorldReady() || mudclient.getScene() == null) {
+			return null;
+		}
+
+		return mudclient.getScene().getRenderer3DFrame();
+	}
+
+	private void bindDirectFramebuffer(int width, int height) {
+		int[] pixels = mudclient.getSurface().pixelData;
+		directFramebufferImage = createDirectFramebufferImage(width, height, pixels);
+		directFramebufferPixels = pixels;
+		directFramebufferWidth = width;
+		directFramebufferHeight = height;
+		game_image = directFramebufferImage;
+		g2dForGameImage = null;
+	}
+
+	private static BufferedImage createDirectFramebufferImage(int width, int height, int[] pixels) {
+		if (pixels == null || pixels.length < width * height) {
+			throw new IllegalArgumentException("Cannot bind direct framebuffer to an undersized pixel buffer");
+		}
+
+		int redMask = 0x00FF0000;
+		int greenMask = 0x0000FF00;
+		int blueMask = 0x000000FF;
+		DirectColorModel colorModel = new DirectColorModel(32, redMask, greenMask, blueMask);
+		DataBufferInt dataBuffer = new DataBufferInt(pixels, pixels.length);
+		SinglePixelPackedSampleModel sampleModel =
+			new SinglePixelPackedSampleModel(
+				DataBuffer.TYPE_INT,
+				width,
+				height,
+				width,
+				new int[] {redMask, greenMask, blueMask});
+		WritableRaster raster = Raster.createWritableRaster(sampleModel, dataBuffer, new Point(0, 0));
+		return new BufferedImage(colorModel, raster, false, null);
+	}
+
+	private void drawRendererDebugOverlay(BufferedImage frameImage) {
+		if (!RendererDebugSettings.isOverlayEnabled() || frameImage == null) {
+			return;
+		}
+
+		RenderTelemetry.Snapshot telemetry = RenderTelemetry.snapshot();
+		Graphics2D g = frameImage.createGraphics();
+		try {
+			g.setFont(new Font("Monospaced", Font.PLAIN, 12));
+			FontMetrics metrics = g.getFontMetrics();
+			String[] lines = overlayLines(frameImage, telemetry);
+			int maxWidth = 0;
+			for (String line : lines) {
+				maxWidth = Math.max(maxWidth, metrics.stringWidth(line));
+			}
+
+			int padding = 6;
+			int lineHeight = metrics.getHeight();
+			int boxWidth = Math.min(frameImage.getWidth(), maxWidth + padding * 2);
+			int boxHeight = Math.min(frameImage.getHeight(), lines.length * lineHeight + padding * 2);
+
+			g.setComposite(AlphaComposite.SrcOver.derive(0.76f));
+			g.setColor(Color.black);
+			g.fillRect(6, 6, boxWidth, boxHeight);
+			g.setComposite(AlphaComposite.SrcOver);
+			g.setColor(new Color(70, 170, 255));
+			g.drawRect(6, 6, boxWidth, boxHeight);
+
+			int y = 6 + padding + metrics.getAscent();
+			for (int i = 0; i < lines.length; i++) {
+				g.setColor(i == 0 ? new Color(190, 230, 255) : Color.white);
+				g.drawString(lines[i], 6 + padding, y);
+				y += lineHeight;
+			}
+		} finally {
+			g.dispose();
+		}
+	}
+
+	private String[] overlayLines(BufferedImage frameImage, RenderTelemetry.Snapshot telemetry) {
+		boolean openGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
+		return new String[] {
+			"Renderer v2",
+			"surface " + frameImage.getWidth() + "x" + frameImage.getHeight()
+				+ " (" + RenderSurfaceSettings.getMode().id + ")",
+			"fit " + (openGLPrimaryWindow
+				? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT.id
+				: OpenGLPresentationSettings.getScaleMode().id)
+				+ " | window " + OpenGLWindowSettings.getMode().displayName,
+			openGLPrimaryWindow
+				? "resolution " + RenderSurfaceSettings.getMode().id
+					+ " | font " + RendererFontSettings.getMode().id
+					+ " | fps " + mudclient.getCurrentFPS()
+				: "scale " + mudclient.renderingScalar + " " + mudclient.scalingType
+					+ " | fps " + mudclient.getCurrentFPS(),
+			telemetry.enabled
+				? "frame avg " + telemetry.frameAverageMs + "ms max " + telemetry.frameMaxMs + "ms"
+				: "telemetry disabled",
+			telemetry.enabled
+				? "scene " + telemetry.sceneAverageMs + "ms present " + telemetry.setImageAverageMs + "ms"
+				: "",
+			telemetry.enabled
+				? "gl upload " + telemetry.openGLUploadAverageMs + "ms render " + telemetry.openGLRenderAverageMs + "ms"
+				: "",
+			telemetry.enabled
+				? "gl frames " + telemetry.openGLFrames + " dropped " + telemetry.openGLDroppedFrames
+				: "",
+			telemetry.enabled
+				? "world geom models " + telemetry.worldGeometryModelAverage
+					+ " faces " + telemetry.worldGeometryFaceAverage
+					+ " anchors " + telemetry.worldSpriteAnchorAverage
+				: "",
+			telemetry.enabled
+				? "geom t/w/r/o/wo/x " + telemetry.worldGeometryTerrainFaceAverage
+					+ "/" + telemetry.worldGeometryWallFaceAverage
+					+ "/" + telemetry.worldGeometryRoofFaceAverage
+					+ "/" + telemetry.worldGeometryGameObjectFaceAverage
+					+ "/" + telemetry.worldGeometryWallObjectFaceAverage
+					+ "/" + telemetry.worldGeometryOtherFaceAverage
+				: "",
+			telemetry.enabled
+				? "depth faces/tri/pix " + telemetry.worldDepthFaceAverage
+					+ "/" + telemetry.worldDepthTriangleAverage
+					+ "/" + telemetry.worldDepthPixelWriteAverage
+				: "",
+			telemetry.enabled
+				? "mesh v/i/t " + telemetry.worldMeshVertexAverage
+					+ "/" + telemetry.worldMeshIndexAverage
+					+ "/" + telemetry.worldMeshTriangleAverage
+				: "",
+			telemetry.enabled
+				? "gl mesh v/i/t " + telemetry.openGLWorldMeshVertexAverage
+					+ "/" + telemetry.openGLWorldMeshIndexAverage
+					+ "/" + telemetry.openGLWorldMeshTriangleAverage
+				: "",
+			telemetry.enabled
+				? "gl sprites a/m/d " + telemetry.openGLWorldSpriteAnchorAverage
+					+ "/" + telemetry.openGLWorldSpriteMatchedAverage
+					+ "/" + telemetry.openGLWorldSpriteDrawnAverage
+				: "",
+			telemetry.enabled
+				? "sprites " + Renderer2DSettings.getOpenGLSpriteOverlayModeId()
+					+ " cap " + telemetry.spriteOverlayCapturedAverage
+					+ " static " + telemetry.spriteOverlayStaticReplayAverage
+					+ " vis " + telemetry.spriteOverlayVisibleReplayAverage
+					+ " skip o/i/a " + telemetry.spriteOverlaySkippedOrderedAverage
+					+ "/" + telemetry.spriteOverlaySkippedInvisibleAverage
+					+ "/" + telemetry.spriteOverlaySkippedAtlasFullAverage
+				: "",
+			telemetry.enabled
+				? "phases scene " + telemetry.spriteOverlaySceneCommandAverage
+					+ " world " + telemetry.spriteOverlayWorldCommandAverage
+					+ " ui " + telemetry.spriteOverlayUiCommandAverage
+					+ " unk " + telemetry.spriteOverlayUnknownCommandAverage
+				: "",
+			telemetry.enabled
+				? "replay dir s/w/u " + telemetry.spriteOverlayDirectSceneAverage
+					+ "/" + telemetry.spriteOverlayDirectWorldAverage
+					+ "/" + telemetry.spriteOverlayDirectUiAverage
+					+ " vis s/w/u " + telemetry.spriteOverlayVisibleSceneAverage
+					+ "/" + telemetry.spriteOverlayVisibleWorldAverage
+					+ "/" + telemetry.spriteOverlayVisibleUiAverage
+				: "",
+			telemetry.enabled
+				? "cap try/ok " + telemetry.spriteCaptureAttemptAverage
+					+ "/" + telemetry.spriteCaptureAcceptedAverage
+					+ " replUI " + telemetry.spriteCaptureReplacedUiAverage
+					+ " base " + telemetry.spriteCaptureUiBaseAverage
+					+ " reject a/b/src " + telemetry.spriteCaptureSkippedAlphaAverage
+					+ "/" + telemetry.spriteCaptureSkippedBoundsAverage
+					+ "/" + telemetry.spriteCaptureSkippedSourceAverage
+				: "",
+			telemetry.enabled
+				? "text draws/glyphs " + telemetry.textCaptureDrawAverage
+					+ "/" + telemetry.textCaptureGlyphAverage
+					+ " replUI " + telemetry.textCaptureReplacedUiAverage
+					+ " phases s/w/u " + telemetry.textCaptureSceneAverage
+					+ "/" + telemetry.textCaptureWorldAverage
+					+ "/" + telemetry.textCaptureUiAverage
+				: "",
+			telemetry.enabled
+				? "prim draws " + telemetry.primitiveCaptureDrawAverage
+					+ " replUI " + telemetry.primitiveCaptureReplacedUiAverage
+					+ " baseReady " + telemetry.nativeUiBaseEligibleAverage
+				: "",
+			telemetry.enabled
+				? "base rot/circ " + telemetry.rotatedSpriteDrawAverage
+					+ "/" + telemetry.rotatedSpriteCapturedUiAverage
+					+ " " + telemetry.circleDrawAverage
+					+ "/" + telemetry.circleCapturedUiAverage
+					+ " block s/t/p/m " + telemetry.nativeUiBlockSpriteAverage
+					+ "/" + telemetry.nativeUiBlockTextAverage
+					+ "/" + telemetry.nativeUiBlockPrimitiveAverage
+					+ "/" + telemetry.nativeUiBlockMinimapAverage
+				: "",
+			openGLPrimaryWindow
+				? "F6 overlay F7 window F8 resolution F9 font"
+				: "F6 overlay F7 window F8 size F9 fit"
+		};
+	}
+
+	private static boolean readBoolean(String propertyName, String envName) {
+		String value = System.getProperty(propertyName);
+		if (value == null || value.trim().isEmpty()) {
+			value = System.getenv(envName);
+		}
+		if (value == null) {
+			return false;
+		}
+
+		value = value.trim();
+		return "true".equalsIgnoreCase(value)
+			|| "1".equals(value)
+			|| "yes".equalsIgnoreCase(value)
+			|| "on".equalsIgnoreCase(value);
 	}
 
 	@Override
@@ -820,9 +1205,17 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				if (keyCode == 113) Config.C_SIDE_MENU_OVERLAY = !Config.C_SIDE_MENU_OVERLAY;
 				if (keyCode == KeyEvent.VK_F3) C_LAST_ZOOM = 75;
 				if (keyCode == KeyEvent.VK_F4) mudclient.toggleFirstPersonView();
-				if (keyCode == KeyEvent.VK_F10) mudclient.cycleScalingType(); // type
-				if (keyCode == KeyEvent.VK_F11) mudclient.scaleDown(); // scale down
-				if (keyCode == KeyEvent.VK_F12) mudclient.scaleUp(); // scale up
+				if (keyCode == KeyEvent.VK_F6) mudclient.toggleRendererDebugOverlay(); // renderer overlay
+				if (keyCode == KeyEvent.VK_F7) mudclient.cycleOpenGLWindowMode(); // OpenGL window mode
+				if (keyCode == KeyEvent.VK_F8) mudclient.cycleRenderSurfaceMode(); // render size
+				if (ScaledWindow.isOpenGLPrimaryWindowEnabled()) {
+					if (keyCode == KeyEvent.VK_F9) mudclient.cycleOpenGLUiFontMode(); // OpenGL UI font
+				} else {
+					if (keyCode == KeyEvent.VK_F9) mudclient.cycleOpenGLScaleMode(); // OpenGL fit mode
+					if (keyCode == KeyEvent.VK_F10) mudclient.cycleScalingType(); // type
+					if (keyCode == KeyEvent.VK_F11) mudclient.scaleDown(); // scale down
+					if (keyCode == KeyEvent.VK_F12) mudclient.scaleUp(); // scale up
+				}
 				if (keyCode == 39) mudclient.keyRight = true;
 				if (keyCode == 37) mudclient.keyLeft = true;
 				if (keyCode == 13 || keyCode == 10) mudclient.enterPressed = true;

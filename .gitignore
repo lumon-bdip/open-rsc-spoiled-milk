@@ -153,6 +153,9 @@ server/conf/server/data/sleepwords/
 
 Client_Base/Cache/discord_inuse.txt
 
+# Local LWJGL bootstrap artifacts. Recreate with scripts/download-lwjgl.sh.
+PC_Client/lib/lwjgl/*.jar
+
 server/create_db.log
 server/create_db_error.log
 server/inc/sqlite/myworld_dev.db

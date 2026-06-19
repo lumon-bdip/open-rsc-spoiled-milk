@@ -23,6 +23,7 @@ public final class RSModel {
 	int[] scenePolyNormalMagnitude;
 	int[] faceTextureBack;
 	int[] faceTextureFront;
+	private Renderer3DModelKind renderer3DModelKind = Renderer3DModelKind.UNCLASSIFIED;
 	boolean m_db = false;
 	boolean m_dc = true;
 	int m_hc = 0;
@@ -203,6 +204,27 @@ public final class RSModel {
 			throw GenUtil.makeThrowable(var4,
 				"ca.<init>(" + (models != null ? "{...}" : "null") + ',' + modelCount + ')');
 		}
+	}
+
+	public int hideBackFacesMatching(int texture) {
+		int replaced = 0;
+		for (int face = 0; face < this.faceHead; face++) {
+			if (this.faceTextureBack[face] == texture) {
+				this.faceTextureBack[face] = this.m_Vb;
+				replaced++;
+			}
+		}
+		return replaced;
+	}
+
+	public void setRenderer3DModelKind(Renderer3DModelKind renderer3DModelKind) {
+		this.renderer3DModelKind = renderer3DModelKind == null
+			? Renderer3DModelKind.UNCLASSIFIED
+			: renderer3DModelKind;
+	}
+
+	public Renderer3DModelKind getRenderer3DModelKind() {
+		return renderer3DModelKind;
 	}
 
 	private RSModel(RSModel[] var1, int var2, boolean var3, boolean var4, boolean noDiffuseCompute, boolean var6) {
@@ -550,6 +572,7 @@ public final class RSModel {
 			RSModel var3 = new RSModel(var2, 1);
 			var3.m_cb = this.m_cb;
 			var3.m_hc = this.m_hc;
+			var3.renderer3DModelKind = this.renderer3DModelKind;
 			return var3;
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "ca.IA(" + -2 + ')');
@@ -806,6 +829,7 @@ public final class RSModel {
 				}
 
 				output[i] = new RSModel(outVertCount[i], outFaceCount[i], true, true, true, var8, true);
+				output[i].renderer3DModelKind = this.renderer3DModelKind;
 				output[i].diffuseParam2 = this.diffuseParam2;
 				output[i].diffuseParam1 = this.diffuseParam1;
 			}

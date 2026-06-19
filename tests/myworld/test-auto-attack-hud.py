@@ -26,6 +26,7 @@ def main() -> int:
         "bufferBits.putByte(47)",
         "C_AUTO_RETALIATE ? 1 : 0",
         'sprites/UI/auto-attack.png',
+        "AUTO_ATTACK_HUD_SIZE - 4,\n\t\t\t\t5924);",
     )
     for snippet in required:
         if snippet not in client:

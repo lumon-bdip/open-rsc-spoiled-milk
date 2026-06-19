@@ -1,5 +1,6 @@
 package orsc;
 
+import orsc.graphics.two.RendererFontSettings;
 import orsc.util.Utils;
 
 import javax.swing.*;
@@ -42,6 +43,11 @@ public class OpenRSC extends ORSCApplet {
 
 			try (FileInputStream in = new FileInputStream(scalingSettings.getAbsolutePath())) {
 				props.load(in);
+				OpenGLPresentationSettings.loadFromClientSettings(props);
+				OpenGLWindowSettings.loadFromClientSettings(props);
+				RendererDebugSettings.loadFromClientSettings(props);
+				RenderSurfaceSettings.loadFromClientSettings(props);
+				RendererFontSettings.loadFromClientSettings(props);
 
 				// Load scaling settings
 				String scalingTypeString = props.getProperty("scaling_type");
@@ -69,10 +75,11 @@ public class OpenRSC extends ORSCApplet {
 
 	public static void createAndShowGUI() {
 		try {
+			Dimension renderSurfaceSize = RenderSurfaceSettings.getDimensions();
 			jframe = new JFrame(Config.getServerNameWelcome());
 			applet = new OpenRSC();
 			// Here we add 12 because 12 was added back in 2009 for the skip tutorial line.
-			applet.setPreferredSize(new Dimension(512, 334 + 12));
+			applet.setPreferredSize(renderSurfaceSize);
 			jframe.getContentPane().setLayout(new BorderLayout());
 			jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			jframe.setIconImage(Utils.getImage("icon.png").getImage());
@@ -82,7 +89,7 @@ public class OpenRSC extends ORSCApplet {
 			jframe.setVisible(false); // All rendering is forwarded to the ScaledWindow class
 			jframe.setBackground(Color.black);
 			// Just like above, here we add 12 because 12 was added back in 2009 for the skip tutorial line.
-			jframe.setMinimumSize(new Dimension(512, 334 + 12));
+			jframe.setMinimumSize(renderSurfaceSize);
 			jframe.pack();
 			jframe.setLocationRelativeTo(null);
 			applet.init();
@@ -91,7 +98,7 @@ public class OpenRSC extends ORSCApplet {
 
 			scaledWindow.launchScaledWindow();
 
-			applet.resizeMudclient(512, 346);
+			applet.resizeMudclient(renderSurfaceSize.width, renderSurfaceSize.height);
 		} catch (HeadlessException e) {
 			e.printStackTrace();
 		}
