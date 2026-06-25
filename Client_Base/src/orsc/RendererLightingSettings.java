@@ -10,6 +10,7 @@ final class RendererLightingSettings {
 	private static final boolean runtimeLightingOverride =
 		hasRuntimeSetting(LIGHTING_PROPERTY, LIGHTING_ENV);
 	private static volatile Mode mode = Mode.from(readRuntimeSetting(LIGHTING_PROPERTY, LIGHTING_ENV));
+	private static boolean loggedRuntimeOverride;
 
 	private RendererLightingSettings() {
 	}
@@ -31,6 +32,7 @@ final class RendererLightingSettings {
 
 	static void loadFromClientSettings(Properties props) {
 		if (runtimeLightingOverride) {
+			logRuntimeOverride();
 			return;
 		}
 		mode = Mode.CLASSIC;
@@ -52,6 +54,14 @@ final class RendererLightingSettings {
 			value = System.getenv(envName);
 		}
 		return value == null ? "" : value.trim();
+	}
+
+	private static void logRuntimeOverride() {
+		if (loggedRuntimeOverride) {
+			return;
+		}
+		loggedRuntimeOverride = true;
+		System.out.println("[renderer-v2] OpenGL lighting runtime override: " + mode.id);
 	}
 
 	enum Mode {

@@ -78,7 +78,9 @@ public final class Renderer3DFrame {
 		int averageDepth,
 		RSModel model,
 		int[] faceIndices,
-		int vertexCount) {
+		int vertexCount,
+		int[] light,
+		int[] baseLight) {
 		int[] cameraX = new int[vertexCount];
 		int[] cameraY = new int[vertexCount];
 		int[] cameraZ = new int[vertexCount];
@@ -107,7 +109,9 @@ public final class Renderer3DFrame {
 			cameraY,
 			cameraZ,
 			screenX,
-			screenY);
+			screenY,
+			light,
+			baseLight);
 		this.worldFaces.add(face);
 		this.worldFacesByModelFace.put(worldFaceKey(modelIndex, faceId), face);
 		this.worldFaceCountsByKind[modelKind.ordinal()]++;
@@ -966,7 +970,9 @@ public final class Renderer3DFrame {
 			int[] cameraY,
 			int[] cameraZ,
 			int[] screenX,
-			int[] screenY) {
+			int[] screenY,
+			int[] light,
+			int[] baseLight) {
 			this.modelKind = modelKind;
 			this.modelIndex = modelIndex;
 			this.faceId = faceId;
@@ -979,11 +985,18 @@ public final class Renderer3DFrame {
 			this.cameraZ = cameraZ;
 			this.screenX = screenX;
 			this.screenY = screenY;
-			this.light = new int[cameraX.length];
-			this.baseLight = new int[cameraX.length];
+			this.light = copyLight(light, cameraX.length);
+			this.baseLight = copyLight(baseLight, cameraX.length);
 			this.textureU = new float[cameraX.length];
 			this.textureV = new float[cameraX.length];
 			populateTextureCoordinates(cameraX, cameraY, cameraZ, textureU, textureV);
+		}
+
+		private static int[] copyLight(int[] source, int vertexCount) {
+			if (source == null || source.length < vertexCount) {
+				return new int[vertexCount];
+			}
+			return Arrays.copyOf(source, vertexCount);
 		}
 
 		public Renderer3DModelKind getModelKind() {

@@ -27,6 +27,8 @@ public final class Scene {
 	private final int[] renderer3DClippedCameraY = new int[40];
 	private final int[] renderer3DClippedCameraZ = new int[40];
 	private final int[] renderer3DBaseLight = new int[40];
+	private final int[] renderer3DUnclippedLight = new int[40];
+	private final int[] renderer3DUnclippedBaseLight = new int[40];
 	private final int[] m_r;
 	private final boolean m_Ub;
 	private final int[] m_v;
@@ -100,6 +102,7 @@ public final class Scene {
 	private RSModel[] models;
 	private Renderer3DFrame renderer3DFrame;
 	private Renderer3DTextureData[] renderer3DTextures = new Renderer3DTextureData[0];
+	private boolean forceLegacyWorldRasterOnce;
 	private int rot1024_off_x;
 	private int rot1024_off_y;
 	private int rot1024_off_z;
@@ -187,7 +190,7 @@ public final class Scene {
 			throw GenUtil.makeThrowable(var6,
 				"lb.<init>(" + "{...}" + ',' + var2 + ',' + maxPolygonCount + ',' + var4 + ')');
 		}
-	}
+			}
 
 	private boolean polygonHit1(Polygon polyA, Polygon polyB) {
 		try {
@@ -1404,11 +1407,15 @@ public final class Scene {
 					}
 				}
 
-			}
+	}
 		} catch (RuntimeException var51) {
 			throw GenUtil.makeThrowable(var51,
 				"lb.R(" + var1 + ',' + var2 + ',' + (var3 != null ? "{...}" : "null") + ',' + var4 + ',' + var5 + ',' + (var6 != null ? "{...}" : "null") + ',' + "{...}" + ',' + (var8 != null ? "{...}" : "null") + ',' + var9 + ',' + var10 + ',' + var11 + ')');
 		}
+	}
+
+	public void forceLegacyWorldRasterOnce() {
+		this.forceLegacyWorldRasterOnce = true;
 	}
 
 	private int comparePolygonSortOrder(Polygon left, Polygon right) {
@@ -2715,6 +2722,8 @@ public final class Scene {
 					this.renderer3DTextures)
 				: null;
 			this.renderer3DFrame = geometryFrame;
+			boolean forceLegacyWorldRaster = this.forceLegacyWorldRasterOnce;
+			this.forceLegacyWorldRasterOnce = false;
 			boolean skipProjectedWorldCapture = Renderer3DSettings.canSkipProjectedWorldCapture();
 			int var7 = this.m_A * this.fogLandscapeDistance >> this.rot1024_vp_src;
 			MiscFunctions.frustumFarZ = 0;
@@ -2845,6 +2854,7 @@ public final class Scene {
 										var27.m_t = var2.m_hc + var6 / var10;
 										var27.m_b = var13;
 										if (geometryFrame != null) {
+											populateRenderer3DUnclippedLight(var2, var3, var27.orientation, var11, var10);
 											geometryFrame.addWorldFace(
 												var9,
 												var3,
@@ -2854,7 +2864,9 @@ public final class Scene {
 												var27.m_t,
 												var2,
 												var11,
-												var10);
+												var10,
+												this.renderer3DUnclippedLight,
+												this.renderer3DUnclippedBaseLight);
 										}
 										++this.m_zb;
 									}
@@ -2922,7 +2934,8 @@ public final class Scene {
 			}
 
 			int legacySceneDrawOrder = 0;
-			boolean skipLegacyWorldRaster = Renderer3DSettings.canSkipLegacyWorldRaster();
+			boolean skipLegacyWorldRaster =
+				Renderer3DSettings.canSkipLegacyWorldRaster() && !forceLegacyWorldRaster;
 			long legacyDrawStart = RenderTelemetry.now();
 			if (this.m_zb != 0) {
 				this.setFrustum(0, -1, this.polygons, this.m_zb - 1);
@@ -3003,8 +3016,11 @@ public final class Scene {
 						int[] var18 = var2.faceIndices[var3];
 						boolean mouseCouldPickProjectedFace =
 							this.m_K && projectedFaceCouldContainMouse(var2, var18, var17);
+						boolean faceNeedsNearPlaneClip = projectedFaceNeedsNearPlaneClip(var2, var18, var17);
+						boolean needsLegacyClippedGeometry =
+							needsProjectedLegacyGeometry && (!skipLegacyWorldRaster || faceNeedsNearPlaneClip);
 						if (skipLegacyWorldRaster
-							&& !needsProjectedLegacyGeometry
+							&& !needsLegacyClippedGeometry
 							&& !mouseCouldPickProjectedFace) {
 							continue;
 						}
@@ -3090,9 +3106,7 @@ public final class Scene {
 							}
 						}
 
-						if (geometryFrame != null
-							&& depthWorldKinds != null
-							&& depthWorldKinds.contains(var2.getRenderer3DModelKind())) {
+						if (geometryFrame != null && needsLegacyClippedGeometry) {
 							geometryFrame.recordLegacyClippedGeometry(
 								var25.modelIndex,
 								var3,
@@ -3192,6 +3206,50 @@ public final class Scene {
 			&& this.m_j <= maxX + xPadding
 			&& this.m_Wb >= minY - yPadding
 			&& this.m_Wb <= maxY + yPadding;
+	}
+
+	private boolean projectedFaceNeedsNearPlaneClip(RSModel model, int[] faceIndices, int vertexCount) {
+		if (model == null || faceIndices == null || vertexCount <= 0) {
+			return true;
+		}
+		for (int vertex = 0; vertex < vertexCount; vertex++) {
+			int modelVertex = faceIndices[vertex];
+			if (model.vertZRot[modelVertex] < this.rot1024_zTop) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void populateRenderer3DUnclippedLight(
+		RSModel model,
+		int faceId,
+		int orientation,
+		int[] faceIndices,
+		int vertexCount) {
+		for (int vertex = 0; vertex < vertexCount; vertex++) {
+			int modelVertex = faceIndices[vertex];
+			int baseLight = renderer3DBaseLightForVertex(model, faceId, orientation, modelVertex);
+			int light = baseLight;
+			if (model.vertZRot[modelVertex] > this.fogSmoothingStartDistance) {
+				light += (model.vertZRot[modelVertex] - this.fogSmoothingStartDistance) / this.fogZFalloff;
+			}
+			this.renderer3DUnclippedLight[vertex] = light;
+			this.renderer3DUnclippedBaseLight[vertex] = baseLight;
+		}
+	}
+
+	private int renderer3DBaseLightForVertex(RSModel model, int faceId, int orientation, int modelVertex) {
+		if (model.faceDiffuseLight[faceId] == Scene.TRANSPARENT) {
+			if (orientation < 0) {
+				return model.diffuseParam1 + model.vertLightOther[modelVertex] - model.vertDiffuseLight[modelVertex];
+			}
+			return model.vertLightOther[modelVertex] + model.diffuseParam1 + model.vertDiffuseLight[modelVertex];
+		}
+		if (orientation < 0) {
+			return model.diffuseParam1 - model.faceDiffuseLight[faceId];
+		}
+		return model.diffuseParam1 + model.faceDiffuseLight[faceId];
 	}
 
 	private void recordSpriteSubmissions(Renderer3DFrame geometryFrame) {

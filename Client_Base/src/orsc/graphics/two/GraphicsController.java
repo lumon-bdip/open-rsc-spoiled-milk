@@ -297,14 +297,21 @@ public class GraphicsController {
 	private boolean shouldReplaceRenderer2DUiSprite(boolean captured, boolean requiresOrderedReplay) {
 		boolean replace = captured
 			&& !requiresOrderedReplay
-			&& canReplaceRenderer2DNativeUi();
+			&& (canReplaceRenderer2DNativeUi() || canReplaceRenderer2DSceneSprite());
 		if (replace) {
-			renderer2DCaptureReplacedUi++;
+			if (renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY) {
+				renderer2DCaptureReplacedUi++;
+			}
 		} else if (renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
 			&& Renderer2DSettings.canReplaceUiSpritesWithOpenGL()) {
 			markRenderer2DNativeUiSoftwareDirty(Renderer2DNativeUiBlocker.SPRITE);
 		}
 		return replace;
+	}
+
+	private boolean canReplaceRenderer2DSceneSprite() {
+		return renderer2DPhase == Renderer2DFrame.Phase.SCENE
+			&& Renderer2DSettings.canReplayOpenGLWorldSprites();
 	}
 
 	private boolean canCaptureAlphaRenderer2DSprite(int alpha) {

@@ -1023,7 +1023,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				chunkDrawStats.fallbackTriangles,
 				chunkDrawStats.skippedTriangles,
 				chunkDrawStats.shadowProofChunks,
-				chunkDrawStats.shadowProofIndices);
+				chunkDrawStats.shadowProofIndices,
+				chunkDrawStats.consideredChunks,
+				chunkDrawStats.culledChunks,
+				chunkDrawStats.drawCalls,
+				chunkDrawStats.textureBinds);
 			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		}
 		if (canDrawProjectedMesh && drawProjectedObjectMeshVisible) {
@@ -5113,15 +5117,13 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private static final float WALL_DEPTH_PRIORITY_UNITS = -1.0f;
 		private static final float SHADOW_PROOF_DIRECTION_X = 0.78f;
 		private static final float SHADOW_PROOF_DIRECTION_Z = 0.46f;
-		private static final float SHADOW_PROOF_MIN_LENGTH = 192.0f;
-		private static final float SHADOW_PROOF_MAX_LENGTH = 896.0f;
-		private static final float SHADOW_PROOF_GROUND_OFFSET = 0.0f;
+		private static final float SHADOW_PROOF_MIN_LENGTH = 384.0f;
+		private static final float SHADOW_PROOF_MAX_LENGTH = 1536.0f;
 		private static final float SHADOW_PROOF_MIN_WIDTH = 32.0f;
 		private static final float SHADOW_PROOF_DIAGONAL_MIN_SPAN = 48.0f;
-		private static final int SHADOW_PROOF_VERTICES_PER_CASTER = 4;
-		private static final int SHADOW_PROOF_INDICES_PER_CASTER = 6;
-		private static final float SHADOW_PROOF_DEPTH_FACTOR = -2.0f;
-		private static final float SHADOW_PROOF_DEPTH_UNITS = -2.0f;
+		private static final float SHADOW_PROOF_DIRECTIONAL_ALPHA = 0.55f;
+		private static final float SHADOW_PROOF_TOON_ALPHA = 0.28f;
+		private static final float SHADOW_PROOF_MAX_ALPHA = 0.72f;
 		private static final Renderer3DModelKind[] WORLD_CHUNK_KIND_DRAW_ORDER = new Renderer3DModelKind[] {
 			Renderer3DModelKind.TERRAIN,
 			Renderer3DModelKind.WALL,
@@ -5140,8 +5142,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private IntBuffer materialIndexUploadBuffer;
 		private FloatBuffer worldToClipMatrixBuffer;
 		private FloatBuffer fogColorBuffer;
-		private int shadowVertexBufferId;
-		private int shadowIndexBufferId;
 		private int vertexUploadCapacity;
 		private int indexUploadCapacity;
 		private int materialIndexUploadCapacity;
@@ -5166,6 +5166,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int requestedChunks = 0;
 			int uploadedChunks = 0;
 			int reusedChunks = 0;
+			List<ShadowProofCaster> shadowProofCasters = shouldDrawProjectedShadowProof()
+				? buildProjectedShadowProofCasters(chunkFrame)
+				: Collections.<ShadowProofCaster>emptyList();
+			long shadowProofSignature = shadowProofCasterSignature(shadowProofCasters);
 			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
 				int vertexCount = chunk.getVertexCount();
 				int indexCount = chunk.getIndexCount();
@@ -5190,7 +5194,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					fogModeBits,
 					lightingModeBits,
 					geometryModeBits,
-					WORLD_CHUNKS_REPLACEMENT_COMPOSITE)) {
+					WORLD_CHUNKS_REPLACEMENT_COMPOSITE,
+					shadowProofSignature)) {
 					reusedChunks++;
 					continue;
 				}
@@ -5210,7 +5215,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					fogModeBits,
 					lightingModeBits,
 					geometryModeBits,
-					WORLD_CHUNKS_REPLACEMENT_COMPOSITE);
+					WORLD_CHUNKS_REPLACEMENT_COMPOSITE,
+					shadowProofCasters,
+					shadowProofSignature);
 				uploadedChunks++;
 			}
 
@@ -5302,7 +5309,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			}
 			return new OpenGLWorldChunkDrawStats(
+				accumulator.consideredChunkCount(),
 				drawnChunks,
+				accumulator.culledChunkCount(),
 				drawnTriangles,
 				drawnTerrainTriangles,
 				drawnWallTriangles,
@@ -5312,6 +5321,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				drawnOtherTriangles,
 				fallbackTriangles,
 				skippedTriangles,
+				accumulator.drawCalls,
+				accumulator.textureBinds,
 				accumulator.shadowProofChunks,
 				accumulator.shadowProofIndices);
 		}
@@ -5325,70 +5336,88 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			float[] fogCullViewMatrix) throws Exception {
 			for (Renderer3DModelKind kind : WORLD_CHUNK_KIND_DRAW_ORDER) {
 				drawChunkDiagnosticPass(frame, chunkFrame, textured, transparentPass, kind, accumulator, fogCullViewMatrix);
-				if (kind == Renderer3DModelKind.TERRAIN && !transparentPass) {
-					drawProjectedShadowProof(frame, chunkFrame, fogCullViewMatrix, accumulator);
-				}
-			}
-		}
-
-		private void drawProjectedShadowProof(
-			Renderer3DFrame frame,
-			Renderer3DWorldChunkFrame chunkFrame,
-			float[] fogCullViewMatrix,
-			WorldChunkDrawAccumulator accumulator) throws Exception {
-			if (!shouldDrawProjectedShadowProof() || chunkFrame == null || residentChunks.isEmpty()) {
-				return;
-			}
-
-			int shadowProofChunks = 0;
-			int shadowProofIndices = 0;
-			gl.glDisable(gl.GL_TEXTURE_2D);
-			gl.glDisable(gl.GL_ALPHA_TEST);
-			gl.glEnable(gl.GL_BLEND);
-			gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
-			gl.glEnable(gl.GL_DEPTH_TEST);
-			gl.glEnable(gl.GL_POLYGON_OFFSET_FILL);
-			gl.glPolygonOffset(SHADOW_PROOF_DEPTH_FACTOR, SHADOW_PROOF_DEPTH_UNITS);
-			gl.glDepthMask(false);
-			gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
-			gl.glEnableClientState(gl.GL_COLOR_ARRAY);
-			gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
-			gl.glVertexPointer(POSITION_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, 0L);
-			gl.glColorPointer(COLOR_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, COLOR_OFFSET_BYTES);
-			try {
-				for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
-					WorldChunkBuffer buffer = residentChunks.get(WorldChunkBufferKey.from(chunk));
-					if (buffer == null || buffer.shadowProofIndexCount <= 0) {
-						continue;
-					}
-					gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.shadowProofVertexBufferId);
-					gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, buffer.shadowProofIndexBufferId);
-					gl.glVertexPointer(POSITION_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, 0L);
-					gl.glColorPointer(COLOR_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, COLOR_OFFSET_BYTES);
-					gl.glDrawElements(gl.GL_TRIANGLES, buffer.shadowProofIndexCount, gl.GL_UNSIGNED_INT, 0L);
-					shadowProofChunks++;
-					shadowProofIndices += buffer.shadowProofIndexCount;
-				}
-			} finally {
-				gl.glDepthMask(true);
-				gl.glPolygonOffset(0.0f, 0.0f);
-				gl.glDisable(gl.GL_POLYGON_OFFSET_FILL);
-			}
-			if (accumulator != null) {
-				accumulator.recordShadowProof(shadowProofChunks, shadowProofIndices);
 			}
 		}
 
 		private boolean shouldDrawProjectedShadowProof() {
 			RendererLightingSettings.Mode lightingMode = RendererLightingSettings.getMode();
-			return WORLD_CHUNKS_SHADOW_PROOF
-				&& (lightingMode == RendererLightingSettings.Mode.DIRECTIONAL
-				|| lightingMode == RendererLightingSettings.Mode.TOON);
+			return WORLD_CHUNKS_SHADOW_PROOF && lightingMode == RendererLightingSettings.Mode.DIRECTIONAL;
+		}
+
+		private long currentShadowProofSignature(Renderer3DWorldChunkFrame chunkFrame) {
+			if (!shouldDrawProjectedShadowProof()) {
+				return 0L;
+			}
+			return shadowProofCasterSignature(buildProjectedShadowProofCasters(chunkFrame));
+		}
+
+		private long shadowProofCasterSignature(List<ShadowProofCaster> casters) {
+			long hash = 0xcbf29ce484222325L;
+			if (casters == null || casters.isEmpty()) {
+				return hash;
+			}
+			for (ShadowProofCaster caster : casters) {
+				hash = shadowProofMix(hash, (int) caster.key);
+				hash = shadowProofMix(hash, (int) (caster.key >>> 32));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.baseX0));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.baseZ0));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.baseX1));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.baseZ1));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.centerX));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.centerZ));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.fallbackY));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.height));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.length));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.halfWidth));
+				hash = shadowProofMix(hash, Float.floatToIntBits(caster.opacity));
+			}
+			return hash;
+		}
+
+		private long shadowProofMix(long hash, int value) {
+			hash ^= value & 0xffffffffL;
+			return hash * 0x100000001b3L;
+		}
+
+		private List<ShadowProofCaster> buildProjectedShadowProofCasters(Renderer3DWorldChunkFrame chunkFrame) {
+			if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
+				return Collections.emptyList();
+			}
+			Map<Long, ShadowProofCaster> castersByKey = new LinkedHashMap<Long, ShadowProofCaster>();
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				addProjectedShadowProofCasters(castersByKey, chunk);
+			}
+			return new ArrayList<ShadowProofCaster>(castersByKey.values());
 		}
 
 		private List<ShadowProofCaster> buildProjectedShadowProofCasters(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
-			int triangleCount = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
 			Map<Long, ShadowProofCaster> castersByKey = new LinkedHashMap<Long, ShadowProofCaster>();
+			addProjectedShadowProofCasters(castersByKey, chunk);
+			return new ArrayList<ShadowProofCaster>(castersByKey.values());
+		}
+
+		private void addProjectedShadowProofCasters(
+			Map<Long, ShadowProofCaster> castersByKey,
+			Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+			if (castersByKey == null || chunk == null) {
+				return;
+			}
+			if (chunk.getShadowCasterCount() > 0) {
+				for (int index = 0; index < chunk.getShadowCasterCount(); index++) {
+					Renderer3DWorldChunkFrame.ShadowCaster source = chunk.getShadowCaster(index);
+					if (!shouldCastProjectedShadowProof(source.getModelKind())) {
+						continue;
+					}
+					ShadowProofCaster caster = ShadowProofCaster.from(source);
+					if (caster == null) {
+						continue;
+					}
+					addProjectedShadowProofCaster(castersByKey, caster);
+				}
+				return;
+			}
+
+			int triangleCount = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
 			for (int triangle = 0; triangle < triangleCount; triangle++) {
 				if (!shouldCastProjectedShadowProof(chunk.getTriangleModelKind(triangle))) {
 					continue;
@@ -5397,89 +5426,147 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				if (caster == null) {
 					continue;
 				}
-				ShadowProofCaster current = castersByKey.get(caster.key);
-				if (current == null || caster.height > current.height) {
-					castersByKey.put(caster.key, caster);
-				}
+				addProjectedShadowProofCaster(castersByKey, caster);
 			}
-			return new ArrayList<ShadowProofCaster>(castersByKey.values());
+		}
+
+		private void addProjectedShadowProofCaster(
+			Map<Long, ShadowProofCaster> castersByKey,
+			ShadowProofCaster caster) {
+			ShadowProofCaster current = castersByKey.get(caster.key);
+			if (current == null || caster.height > current.height) {
+				castersByKey.put(caster.key, caster);
+			}
 		}
 
 		private boolean shouldCastProjectedShadowProof(Renderer3DModelKind kind) {
 			if (kind == null) {
 				return false;
 			}
-			return kind == Renderer3DModelKind.WALL;
+			return kind == Renderer3DModelKind.WALL
+				|| kind == Renderer3DModelKind.GAME_OBJECT
+				|| kind == Renderer3DModelKind.WALL_OBJECT;
 		}
 
-		private void appendProjectedShadowProofCaster(ShadowProofCaster caster) {
-			float baseAlpha = RendererLightingSettings.getMode() == RendererLightingSettings.Mode.TOON ? 0.28f : 0.20f;
-			float acrossX = -caster.directionZ;
-			float acrossZ = caster.directionX;
-			float centerX0 = caster.centerX;
-			float centerZ0 = caster.centerZ;
-			float centerX1 = caster.centerX + caster.directionX * caster.length;
-			float centerZ1 = caster.centerZ + caster.directionZ * caster.length;
-			int baseVertex = vertexUploadBuffer.position() / FLOATS_PER_VERTEX;
-			putProjectedShadowProofVertex(
-				centerX0 + acrossX * caster.halfWidth,
-				caster.fallbackY,
-				centerZ0 + acrossZ * caster.halfWidth,
-				baseAlpha);
-			putProjectedShadowProofVertex(
-				centerX0 - acrossX * caster.halfWidth,
-				caster.fallbackY,
-				centerZ0 - acrossZ * caster.halfWidth,
-				baseAlpha);
-			putProjectedShadowProofVertex(
-				centerX1 - acrossX * caster.halfWidth,
-				caster.fallbackY,
-				centerZ1 - acrossZ * caster.halfWidth,
-				baseAlpha);
-			putProjectedShadowProofVertex(
-				centerX1 + acrossX * caster.halfWidth,
-				caster.fallbackY,
-				centerZ1 + acrossZ * caster.halfWidth,
-				baseAlpha);
-			indexUploadBuffer.put(baseVertex);
-			indexUploadBuffer.put(baseVertex + 1);
-			indexUploadBuffer.put(baseVertex + 2);
-			indexUploadBuffer.put(baseVertex);
-			indexUploadBuffer.put(baseVertex + 2);
-			indexUploadBuffer.put(baseVertex + 3);
+		private float projectedShadowProofAlpha(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			int triangle,
+			List<ShadowProofCaster> shadowProofCasters) {
+			int sourceIndex = triangle * 3;
+			float x = 0.0f;
+			float z = 0.0f;
+			for (int index = 0; index < 3; index++) {
+				int vertex = chunk.getIndex(sourceIndex + index);
+				int coord = vertex * POSITION_COMPONENT_COUNT;
+				x += chunk.getVertexCoord(coord);
+				z += chunk.getVertexCoord(coord + 2);
+			}
+			x /= 3.0f;
+			z /= 3.0f;
+			float baseAlpha = RendererLightingSettings.getMode() == RendererLightingSettings.Mode.TOON
+				? SHADOW_PROOF_TOON_ALPHA
+				: SHADOW_PROOF_DIRECTIONAL_ALPHA;
+			float alpha = 0.0f;
+			for (ShadowProofCaster caster : shadowProofCasters) {
+				alpha += caster.alphaAt(x, z, baseAlpha);
+				if (alpha >= SHADOW_PROOF_MAX_ALPHA) {
+					return SHADOW_PROOF_MAX_ALPHA;
+				}
+			}
+			return alpha;
 		}
 
 		private static final class ShadowProofCaster {
 			private final long key;
+			private final float baseX0;
+			private final float baseZ0;
+			private final float baseX1;
+			private final float baseZ1;
 			private final float centerX;
 			private final float centerZ;
 			private final float fallbackY;
 			private final float height;
 			private final float length;
 			private final float halfWidth;
+			private final float edgeX;
+			private final float edgeZ;
+			private final float edgeLength;
 			private final float directionX;
 			private final float directionZ;
+			private final float opacity;
 
 			private ShadowProofCaster(
 				long key,
-				float centerX,
-				float centerZ,
+				float baseX0,
+				float baseZ0,
+				float baseX1,
+				float baseZ1,
 				float fallbackY,
 				float height,
 				float length,
-				float halfWidth) {
+				float halfWidth,
+				float opacity) {
+				float edgeDx = baseX1 - baseX0;
+				float edgeDz = baseZ1 - baseZ0;
+				float edgeLength = (float) Math.sqrt(edgeDx * edgeDx + edgeDz * edgeDz);
 				float directionLength = (float) Math.sqrt(
 					SHADOW_PROOF_DIRECTION_X * SHADOW_PROOF_DIRECTION_X
 						+ SHADOW_PROOF_DIRECTION_Z * SHADOW_PROOF_DIRECTION_Z);
 				this.key = key;
-				this.centerX = centerX;
-				this.centerZ = centerZ;
-				this.fallbackY = fallbackY + SHADOW_PROOF_GROUND_OFFSET;
+				this.baseX0 = baseX0;
+				this.baseZ0 = baseZ0;
+				this.baseX1 = baseX1;
+				this.baseZ1 = baseZ1;
+				this.centerX = (baseX0 + baseX1) * 0.5f;
+				this.centerZ = (baseZ0 + baseZ1) * 0.5f;
+				this.fallbackY = fallbackY;
 				this.height = height;
 				this.length = length;
 				this.halfWidth = halfWidth;
+				this.edgeLength = edgeLength;
+				this.edgeX = edgeDx / Math.max(0.0001f, edgeLength);
+				this.edgeZ = edgeDz / Math.max(0.0001f, edgeLength);
 				this.directionX = SHADOW_PROOF_DIRECTION_X / Math.max(0.0001f, directionLength);
 				this.directionZ = SHADOW_PROOF_DIRECTION_Z / Math.max(0.0001f, directionLength);
+				this.opacity = clampStatic(opacity, 0.0f, 1.0f);
+			}
+
+			private float alphaAt(float x, float z, float baseAlpha) {
+				float determinant = edgeX * directionZ - edgeZ * directionX;
+				if (edgeLength > 0.0001f && Math.abs(determinant) > 0.08f) {
+					float px = x - baseX0;
+					float pz = z - baseZ0;
+					float edgeAlong = (px * directionZ - pz * directionX) / determinant;
+					float shadowAlong = (edgeX * pz - edgeZ * px) / determinant;
+					if (shadowAlong < 0.0f || shadowAlong > length) {
+						return 0.0f;
+					}
+					if (edgeAlong < -halfWidth || edgeAlong > edgeLength + halfWidth) {
+						return 0.0f;
+					}
+					float sideFade = Math.min(
+						(edgeAlong + halfWidth) / Math.max(16.0f, halfWidth),
+						(edgeLength + halfWidth - edgeAlong) / Math.max(16.0f, halfWidth));
+					float endFade = (length - shadowAlong) / Math.max(64.0f, length * 0.22f);
+					return baseAlpha * opacity * clampStatic(Math.min(sideFade, endFade), 0.0f, 1.0f);
+				}
+				return alphaAtCenterFallback(x, z, baseAlpha);
+			}
+
+			private float alphaAtCenterFallback(float x, float z, float baseAlpha) {
+				float dx = x - centerX;
+				float dz = z - centerZ;
+				float along = dx * directionX + dz * directionZ;
+				if (along < 0.0f || along > length) {
+					return 0.0f;
+				}
+				float across = Math.abs(dx * -directionZ + dz * directionX);
+				if (across > halfWidth) {
+					return 0.0f;
+				}
+				float sideFade = (halfWidth - across) / Math.max(16.0f, halfWidth * 0.25f);
+				float endFade = (length - along) / Math.max(64.0f, length * 0.22f);
+				return baseAlpha * opacity * clampStatic(Math.min(sideFade, endFade), 0.0f, 1.0f);
 			}
 
 			private static ShadowProofCaster from(Renderer3DWorldChunkFrame.ChunkMesh chunk, int triangle) {
@@ -5518,12 +5605,58 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				float centerZ = (minZ + maxZ) * 0.5f;
 				return new ShadowProofCaster(
 					casterKey(spanX >= spanZ, centerX, centerZ, width),
-					centerX,
-					centerZ,
+					spanX >= spanZ ? minX : centerX,
+					spanX >= spanZ ? centerZ : minZ,
+					spanX >= spanZ ? maxX : centerX,
+					spanX >= spanZ ? centerZ : maxZ,
 					minY,
 					height,
 					length,
-					Math.max(SHADOW_PROOF_MIN_WIDTH, width * 0.55f));
+					Math.max(SHADOW_PROOF_MIN_WIDTH, width * 0.55f),
+					0.75f);
+			}
+
+			private static ShadowProofCaster from(Renderer3DWorldChunkFrame.ShadowCaster source) {
+				int spanX = Math.abs(source.getBaseX1() - source.getBaseX0());
+				int spanZ = Math.abs(source.getBaseZ1() - source.getBaseZ0());
+				if (spanX > SHADOW_PROOF_DIAGONAL_MIN_SPAN && spanZ > SHADOW_PROOF_DIAGONAL_MIN_SPAN) {
+					return null;
+				}
+				float height = Math.max(0.0f, source.getHeight());
+				float length = clampStatic(
+					SHADOW_PROOF_MIN_LENGTH + height * 3.0f,
+					SHADOW_PROOF_MIN_LENGTH,
+					SHADOW_PROOF_MAX_LENGTH);
+				float width = Math.max(source.getWidth(), Math.max(spanX, spanZ));
+				float centerX = (source.getBaseX0() + source.getBaseX1()) * 0.5f;
+				float centerZ = (source.getBaseZ0() + source.getBaseZ1()) * 0.5f;
+				float baseX0 = source.getBaseX0();
+				float baseZ0 = source.getBaseZ0();
+				float baseX1 = source.getBaseX1();
+				float baseZ1 = source.getBaseZ1();
+				if (source.getModelKind() == Renderer3DModelKind.GAME_OBJECT) {
+					float directionLength = (float) Math.sqrt(
+						SHADOW_PROOF_DIRECTION_X * SHADOW_PROOF_DIRECTION_X
+							+ SHADOW_PROOF_DIRECTION_Z * SHADOW_PROOF_DIRECTION_Z);
+					float normalX = -SHADOW_PROOF_DIRECTION_Z / Math.max(0.0001f, directionLength);
+					float normalZ = SHADOW_PROOF_DIRECTION_X / Math.max(0.0001f, directionLength);
+					float halfWidth = Math.max(SHADOW_PROOF_MIN_WIDTH, width * 0.5f);
+					baseX0 = centerX - normalX * halfWidth;
+					baseZ0 = centerZ - normalZ * halfWidth;
+					baseX1 = centerX + normalX * halfWidth;
+					baseZ1 = centerZ + normalZ * halfWidth;
+				}
+				return new ShadowProofCaster(
+					casterKey(spanX >= spanZ, centerX, centerZ, width),
+					baseX0,
+					baseZ0,
+					baseX1,
+					baseZ1,
+					source.getBaseY(),
+					height,
+					length,
+					Math.max(SHADOW_PROOF_MIN_WIDTH, width * 0.55f),
+					source.getOpacity() / 255.0f);
 			}
 
 			private static long casterKey(boolean xMajor, float centerX, float centerZ, float width) {
@@ -5539,22 +5672,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 		private static float clampStatic(float value, float min, float max) {
 			return Math.max(min, Math.min(max, value));
-		}
-
-		private void putProjectedShadowProofVertex(float x, float y, float z, float alpha) {
-			vertexUploadBuffer.put(x);
-			vertexUploadBuffer.put(y);
-			vertexUploadBuffer.put(z);
-			vertexUploadBuffer.put(0.0f);
-			vertexUploadBuffer.put(0.0f);
-			vertexUploadBuffer.put(0.0f);
-			vertexUploadBuffer.put(alpha);
-			vertexUploadBuffer.put(0.0f);
-			vertexUploadBuffer.put(0.0f);
-			vertexUploadBuffer.put(0.0f);
-			vertexUploadBuffer.put(0.0f);
-			vertexUploadBuffer.put(0.0f);
-			vertexUploadBuffer.put(0.0f);
 		}
 
 		private float clamp(float value, float min, float max) {
@@ -5581,6 +5698,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				gl.glEnable(gl.GL_CULL_FACE);
 				gl.glCullFace(gl.GL_BACK);
 			}
+			long shadowProofSignature = currentShadowProofSignature(chunkFrame);
 			try {
 				for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
 					WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
@@ -5595,9 +5713,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 						currentFogModeBits(),
 						currentLightingModeBits(),
 						currentGeometryModeBits(),
-						WORLD_CHUNKS_REPLACEMENT_COMPOSITE)) {
+						WORLD_CHUNKS_REPLACEMENT_COMPOSITE,
+						shadowProofSignature)) {
 						continue;
 					}
+					accumulator.recordConsideredChunk(key);
 					gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.vertexBufferId);
 					gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, buffer.materialIndexBufferId);
 					gl.glVertexPointer(POSITION_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, 0L);
@@ -5619,7 +5739,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 						}
 						WorldChunkBatchBindResult bindResult = WorldChunkBatchBindResult.TEXTURED;
 						if (textured) {
-							bindResult = bindTexturedOrFlatChunkBatch(frame, batch);
+							bindResult = bindTexturedOrFlatChunkBatch(frame, batch, accumulator);
 							if (bindResult == WorldChunkBatchBindResult.SKIPPED) {
 								accumulator.recordSkippedBatch(batch.indexCount / 3);
 								continue;
@@ -5630,6 +5750,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 							batch.indexCount,
 							gl.GL_UNSIGNED_INT,
 							batch.startIndex * 4L);
+						accumulator.recordDrawCall();
 						int batchTriangles = batch.indexCount / 3;
 						chunkDrawnTriangles += batchTriangles;
 						accumulator.recordBatch(batch.kind, batchTriangles);
@@ -5729,7 +5850,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 		private WorldChunkBatchBindResult bindTexturedOrFlatChunkBatch(
 			Renderer3DFrame frame,
-			WorldChunkMaterialBatch batch) throws Exception {
+			WorldChunkMaterialBatch batch,
+			WorldChunkDrawAccumulator accumulator) throws Exception {
 			OpenGLTextureRegion region = textureRegionForBatch(frame, batch);
 			if (region == null) {
 				return bindFlatChunkBatch(frame, batch)
@@ -5752,9 +5874,18 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				gl.GL_FLOAT,
 				STRIDE_BYTES,
 				TEXTURE_COORD_OFFSET_BYTES);
-			gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
+			bindChunkTexture(region.getTextureId(), accumulator);
 			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			return WorldChunkBatchBindResult.TEXTURED;
+		}
+
+		private void bindChunkTexture(int textureId, WorldChunkDrawAccumulator accumulator) throws Exception {
+			if (accumulator.boundTextureId == textureId) {
+				return;
+			}
+			gl.glBindTexture(gl.GL_TEXTURE_2D, textureId);
+			accumulator.boundTextureId = textureId;
+			accumulator.recordTextureBind();
 		}
 
 		private OpenGLTextureRegion textureRegionForBatch(Renderer3DFrame frame, WorldChunkMaterialBatch batch) {
@@ -6003,9 +6134,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int fogModeBits,
 			int lightingModeBits,
 			int geometryModeBits,
-			boolean replacementCompositeDrawOnly) throws Exception {
+			boolean replacementCompositeDrawOnly,
+			List<ShadowProofCaster> shadowProofCasters,
+			long shadowProofSignature) throws Exception {
 			ensureUploadBuffers(vertexCount, indexCount);
-			copyChunkVertices(chunk, frame, vertexCount, atlasTextureCoordinates);
+			copyChunkVertices(chunk, frame, vertexCount, atlasTextureCoordinates, shadowProofCasters);
 			copyChunkIndices(chunk, indexCount);
 			WorldChunkMaterialBatch[] materialBatches =
 				copyMaterialIndices(chunk, indexCount, replacementCompositeDrawOnly, shouldUseSpatialMaterialBatches());
@@ -6030,48 +6163,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			buffer.geometryModeBits = geometryModeBits;
 			buffer.replacementCompositeDrawOnly = replacementCompositeDrawOnly;
 			buffer.materialBatches = materialBatches;
-			uploadProjectedShadowProof(chunk, buffer);
-		}
-
-		private void uploadProjectedShadowProof(
-			Renderer3DWorldChunkFrame.ChunkMesh chunk,
-			WorldChunkBuffer buffer) throws Exception {
-			buffer.shadowProofIndexCount = 0;
-			if (!shouldDrawProjectedShadowProof()) {
-				return;
-			}
-			List<ShadowProofCaster> casters = buildProjectedShadowProofCasters(chunk);
-			if (casters.isEmpty()) {
-				return;
-			}
-			int shadowVertexCapacity =
-				Math.max(1, casters.size() * SHADOW_PROOF_VERTICES_PER_CASTER);
-			int shadowIndexCapacity =
-				Math.max(1, casters.size() * SHADOW_PROOF_INDICES_PER_CASTER);
-			ensureUploadBuffers(shadowVertexCapacity, shadowIndexCapacity);
-			vertexUploadBuffer.clear();
-			indexUploadBuffer.clear();
-			for (ShadowProofCaster caster : casters) {
-				appendProjectedShadowProofCaster(caster);
-			}
-			vertexUploadBuffer.flip();
-			indexUploadBuffer.flip();
-			if (!vertexUploadBuffer.hasRemaining() || !indexUploadBuffer.hasRemaining()) {
-				return;
-			}
-			if (buffer.shadowProofVertexBufferId == 0) {
-				buffer.shadowProofVertexBufferId = gl.glGenBuffers();
-			}
-			if (buffer.shadowProofIndexBufferId == 0) {
-				buffer.shadowProofIndexBufferId = gl.glGenBuffers();
-			}
-			gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.shadowProofVertexBufferId);
-			gl.glBufferData(gl.GL_ARRAY_BUFFER, vertexUploadBuffer, gl.GL_STATIC_DRAW);
-			gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, buffer.shadowProofIndexBufferId);
-			gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, indexUploadBuffer, gl.GL_STATIC_DRAW);
-			gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
-			gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
-			buffer.shadowProofIndexCount = indexUploadBuffer.limit();
+			buffer.shadowProofSignature = shadowProofSignature;
 		}
 
 		private WorldChunkMaterialBatch[] copyMaterialIndices(
@@ -6178,9 +6270,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			Renderer3DWorldChunkFrame.ChunkMesh chunk,
 			Renderer3DFrame frame,
 			int vertexCount,
-			boolean atlasTextureCoordinates) {
+			boolean atlasTextureCoordinates,
+			List<ShadowProofCaster> shadowProofCasters) {
 			vertexUploadBuffer.clear();
 			int[] smoothDiffuseLights = buildChunkSmoothDiffuseLights(chunk, vertexCount);
+			float[] bakedTerrainShadowMask = buildBakedTerrainShadowMask(chunk, shadowProofCasters);
 			for (int vertex = 0; vertex < vertexCount; vertex++) {
 				int coord = vertex * POSITION_COMPONENT_COUNT;
 				int triangle = vertex / 3;
@@ -6194,15 +6288,48 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				vertexUploadBuffer.put((float) chunk.getVertexCoord(coord + 1));
 				vertexUploadBuffer.put((float) chunk.getVertexCoord(coord + 2));
 				int legacyLight = chunkLegacyLight(chunk, vertex, smoothDiffuseLights);
+				legacyLight = applyBakedTerrainShadow(legacyLight, bakedTerrainShadowMask, triangle);
 				putChunkMaterialColor(
 					materialColorForTriangle(frame, chunk, triangle),
 					effectiveTextureId,
 					legacyLight);
 				vertexUploadBuffer.put(chunkTextureU(textureRegion, chunk.getVertexTextureU(vertex)));
 				vertexUploadBuffer.put(chunkTextureV(textureRegion, chunk.getVertexTextureV(vertex)));
-				putChunkTextureLight(legacyTextureLightFactor(legacyLight));
+				putChunkTextureLight(textureLightFactor(legacyLight));
 			}
 			vertexUploadBuffer.flip();
+		}
+
+		private float[] buildBakedTerrainShadowMask(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			List<ShadowProofCaster> shadowProofCasters) {
+			if (!shouldDrawProjectedShadowProof()
+				|| chunk == null
+				|| shadowProofCasters == null
+				|| shadowProofCasters.isEmpty()
+				|| chunk.getTerrainTriangles() <= 0) {
+				return null;
+			}
+			int triangleCount = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
+			float[] shadowMask = new float[triangleCount];
+			for (int triangle = 0; triangle < triangleCount; triangle++) {
+				if (chunk.getTriangleModelKind(triangle) != Renderer3DModelKind.TERRAIN) {
+					continue;
+				}
+				shadowMask[triangle] = projectedShadowProofAlpha(chunk, triangle, shadowProofCasters);
+			}
+			return shadowMask;
+		}
+
+		private int applyBakedTerrainShadow(int legacyLight, float[] bakedTerrainShadowMask, int triangle) {
+			if (bakedTerrainShadowMask == null || triangle < 0 || triangle >= bakedTerrainShadowMask.length) {
+				return legacyLight;
+			}
+			float shadow = bakedTerrainShadowMask[triangle];
+			if (shadow <= 0.0f) {
+				return legacyLight;
+			}
+			return clampLegacyLight(legacyLight + Math.round(shadow * 230.0f));
 		}
 
 		private int[] buildChunkSmoothDiffuseLights(Renderer3DWorldChunkFrame.ChunkMesh chunk, int vertexCount) {
@@ -6393,7 +6520,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			RendererLightingSettings.Mode mode = RendererLightingSettings.getMode();
 			int adjusted = legacyLight;
 			if (mode == RendererLightingSettings.Mode.DIRECTIONAL) {
-				adjusted = 88 + Math.round((legacyLight - 96) * 1.35f);
+				adjusted = legacyLight;
 			} else if (mode == RendererLightingSettings.Mode.TOON) {
 				int clamped = clampLegacyLight(legacyLight);
 				if (clamped < 64) {
@@ -6415,36 +6542,32 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				return 0;
 			}
 			int first = chunk.getIndex(sourceIndex);
-			int second = chunk.getIndex(sourceIndex + 1);
-			int third = chunk.getIndex(sourceIndex + 2);
-			int firstCoord = first * POSITION_COMPONENT_COUNT;
-			int secondCoord = second * POSITION_COMPONENT_COUNT;
-			int thirdCoord = third * POSITION_COMPONENT_COUNT;
-			if (firstCoord + 2 >= chunk.getVertexCount() * POSITION_COMPONENT_COUNT
-				|| secondCoord + 2 >= chunk.getVertexCount() * POSITION_COMPONENT_COUNT
-				|| thirdCoord + 2 >= chunk.getVertexCount() * POSITION_COMPONENT_COUNT) {
+			if (!isChunkVertexIndexValid(chunk, first, chunk.getVertexCount())) {
 				return 0;
 			}
-			double x21 = chunk.getVertexCoord(secondCoord) - chunk.getVertexCoord(firstCoord);
-			double y21 = chunk.getVertexCoord(secondCoord + 1) - chunk.getVertexCoord(firstCoord + 1);
-			double z21 = chunk.getVertexCoord(secondCoord + 2) - chunk.getVertexCoord(firstCoord + 2);
-			double x31 = chunk.getVertexCoord(thirdCoord) - chunk.getVertexCoord(firstCoord);
-			double y31 = chunk.getVertexCoord(thirdCoord + 1) - chunk.getVertexCoord(firstCoord + 1);
-			double z31 = chunk.getVertexCoord(thirdCoord + 2) - chunk.getVertexCoord(firstCoord + 2);
-			double normalX = z31 * y21 - z21 * y31;
-			double normalY = z21 * x31 - x21 * z31;
-			double normalZ = x21 * y31 - x31 * y21;
-			double magnitude = Math.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
-			if (magnitude <= 0.000001d) {
+			int scaledNormalX = chunk.getVertexNormalX(first);
+			int scaledNormalY = chunk.getVertexNormalY(first);
+			int scaledNormalZ = chunk.getVertexNormalZ(first);
+			if (scaledNormalX == 0 && scaledNormalY == 0 && scaledNormalZ == 0) {
 				return 0;
 			}
-			double scaledNormalX = normalX * 256.0d / magnitude;
-			double scaledNormalY = normalY * 256.0d / magnitude;
-			double scaledNormalZ = normalZ * 256.0d / magnitude;
 			if (RendererLightingSettings.getMode() == RendererLightingSettings.Mode.CLASSIC) {
 				return (int) ((scaledNormalY * -10.0d + scaledNormalX * -50.0d + scaledNormalZ * -50.0d) / 106.0d);
 			}
-			return (int) ((scaledNormalY * -65.0d + scaledNormalX * -120.0d + scaledNormalZ * -90.0d) / 166.0d);
+			if (chunk.getTriangleModelKind(triangle) == Renderer3DModelKind.TERRAIN && scaledNormalY < 0) {
+				scaledNormalX = -scaledNormalX;
+				scaledNormalY = -scaledNormalY;
+				scaledNormalZ = -scaledNormalZ;
+			}
+			return chunkDirectionalDiffuseLight(scaledNormalX, scaledNormalY, scaledNormalZ);
+		}
+
+		private int chunkDirectionalDiffuseLight(int scaledNormalX, int scaledNormalY, int scaledNormalZ) {
+			float normalX = scaledNormalX / 256.0f;
+			float normalY = scaledNormalY / 256.0f;
+			float normalZ = scaledNormalZ / 256.0f;
+			float dot = normalX * -0.58f + normalY * 0.70f + normalZ * -0.42f;
+			return Math.round(-86.0f * clamp(dot, -1.0f, 1.0f));
 		}
 
 		private int legacyFlatResourceColor(int color, int legacyLight) {
@@ -6487,6 +6610,28 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				default:
 					return 1.0f;
 			}
+		}
+
+		private float textureLightFactor(int legacyLight) {
+			RendererLightingSettings.Mode mode = RendererLightingSettings.getMode();
+			if (mode == RendererLightingSettings.Mode.DIRECTIONAL) {
+				float normalized = clamp(legacyLight / 255.0f, 0.0f, 1.0f);
+				return clamp(1.12f - normalized * 0.70f, 0.42f, 1.12f);
+			}
+			if (mode == RendererLightingSettings.Mode.TOON) {
+				int band = legacyTextureShadeBand(legacyLight);
+				switch (band) {
+					case 1:
+						return 0.86f;
+					case 2:
+						return 0.58f;
+					case 3:
+						return 0.34f;
+					default:
+						return 1.15f;
+				}
+			}
+			return legacyTextureLightFactor(legacyLight);
 		}
 
 		private int legacyTextureShadeBand(int legacyLight) {
@@ -6587,14 +6732,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				buffer.close(gl);
 			}
 			residentChunks.clear();
-			if (shadowVertexBufferId != 0) {
-				gl.glDeleteBuffers(shadowVertexBufferId);
-				shadowVertexBufferId = 0;
-			}
-			if (shadowIndexBufferId != 0) {
-				gl.glDeleteBuffers(shadowIndexBufferId);
-				shadowIndexBufferId = 0;
-			}
 		}
 	}
 
@@ -6621,9 +6758,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 	private static final class OpenGLWorldChunkDrawStats {
 		private static final OpenGLWorldChunkDrawStats EMPTY =
-			new OpenGLWorldChunkDrawStats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			new OpenGLWorldChunkDrawStats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
+		private final int consideredChunks;
 		private final int drawnChunks;
+		private final int culledChunks;
 		private final int drawnTriangles;
 		private final int drawnTerrainTriangles;
 		private final int drawnWallTriangles;
@@ -6633,11 +6772,15 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private final int drawnOtherTriangles;
 		private final int fallbackTriangles;
 		private final int skippedTriangles;
+		private final int drawCalls;
+		private final int textureBinds;
 		private final int shadowProofChunks;
 		private final int shadowProofIndices;
 
 		private OpenGLWorldChunkDrawStats(
+			int consideredChunks,
 			int drawnChunks,
+			int culledChunks,
 			int drawnTriangles,
 			int drawnTerrainTriangles,
 			int drawnWallTriangles,
@@ -6647,9 +6790,13 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int drawnOtherTriangles,
 			int fallbackTriangles,
 			int skippedTriangles,
+			int drawCalls,
+			int textureBinds,
 			int shadowProofChunks,
 			int shadowProofIndices) {
+			this.consideredChunks = consideredChunks;
 			this.drawnChunks = drawnChunks;
+			this.culledChunks = culledChunks;
 			this.drawnTriangles = drawnTriangles;
 			this.drawnTerrainTriangles = drawnTerrainTriangles;
 			this.drawnWallTriangles = drawnWallTriangles;
@@ -6659,6 +6806,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			this.drawnOtherTriangles = drawnOtherTriangles;
 			this.fallbackTriangles = fallbackTriangles;
 			this.skippedTriangles = skippedTriangles;
+			this.drawCalls = drawCalls;
+			this.textureBinds = textureBinds;
 			this.shadowProofChunks = shadowProofChunks;
 			this.shadowProofIndices = shadowProofIndices;
 		}
@@ -6671,6 +6820,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private static final class WorldChunkDrawAccumulator {
+		private final Set<WorldChunkBufferKey> consideredChunkKeys = new HashSet<WorldChunkBufferKey>();
 		private final Set<WorldChunkBufferKey> drawnChunkKeys = new HashSet<WorldChunkBufferKey>();
 		private int drawnTriangles;
 		private int drawnTerrainTriangles;
@@ -6681,15 +6831,38 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private int drawnOtherTriangles;
 		private int fallbackTriangles;
 		private int skippedTriangles;
+		private int drawCalls;
+		private int textureBinds;
+		private int boundTextureId = -1;
 		private int shadowProofChunks;
 		private int shadowProofIndices;
+
+		private void recordConsideredChunk(WorldChunkBufferKey key) {
+			consideredChunkKeys.add(key);
+		}
 
 		private void recordChunk(WorldChunkBufferKey key) {
 			drawnChunkKeys.add(key);
 		}
 
+		private int consideredChunkCount() {
+			return consideredChunkKeys.size();
+		}
+
 		private int drawnChunkCount() {
 			return drawnChunkKeys.size();
+		}
+
+		private int culledChunkCount() {
+			return Math.max(0, consideredChunkCount() - drawnChunkCount());
+		}
+
+		private void recordDrawCall() {
+			drawCalls++;
+		}
+
+		private void recordTextureBind() {
+			textureBinds++;
 		}
 
 		private void recordBatch(Renderer3DModelKind kind, int triangles) {
@@ -6986,9 +7159,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private int geometryModeBits;
 		private boolean replacementCompositeDrawOnly;
 		private WorldChunkMaterialBatch[] materialBatches = new WorldChunkMaterialBatch[0];
-		private int shadowProofVertexBufferId;
-		private int shadowProofIndexBufferId;
-		private int shadowProofIndexCount;
+		private long shadowProofSignature;
 
 		private WorldChunkBuffer(int vertexBufferId, int indexBufferId, int materialIndexBufferId) {
 			this.vertexBufferId = vertexBufferId;
@@ -7006,7 +7177,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int fogModeBits,
 			int lightingModeBits,
 			int geometryModeBits,
-			boolean replacementCompositeDrawOnly) {
+			boolean replacementCompositeDrawOnly,
+			long shadowProofSignature) {
 			return this.signature == signature
 				&& this.vertexCount == vertexCount
 				&& this.indexCount == indexCount
@@ -7016,19 +7188,14 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				&& this.fogModeBits == fogModeBits
 				&& this.lightingModeBits == lightingModeBits
 				&& this.geometryModeBits == geometryModeBits
-				&& this.replacementCompositeDrawOnly == replacementCompositeDrawOnly;
+				&& this.replacementCompositeDrawOnly == replacementCompositeDrawOnly
+				&& this.shadowProofSignature == shadowProofSignature;
 		}
 
 		private void close(LwjglBindings gl) throws Exception {
 			gl.glDeleteBuffers(vertexBufferId);
 			gl.glDeleteBuffers(indexBufferId);
 			gl.glDeleteBuffers(materialIndexBufferId);
-			if (shadowProofVertexBufferId != 0) {
-				gl.glDeleteBuffers(shadowProofVertexBufferId);
-			}
-			if (shadowProofIndexBufferId != 0) {
-				gl.glDeleteBuffers(shadowProofIndexBufferId);
-			}
 		}
 	}
 
@@ -7337,6 +7504,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				int textureId = triangle >= 0 && triangle < triangleTextures.length ? triangleTextures[triangle] : 0;
 				int rawMaterialColor =
 					triangle >= 0 && triangle < triangleFallbackColors.length ? triangleFallbackColors[triangle] : 0;
+				int legacyLight = applyLightingModeLegacyLight(
+					Math.round(vertices[sourceOffset + Renderer3DMeshFrame.LEGACY_LIGHT_OFFSET]));
+				int baseLegacyLight = applyLightingModeLegacyLight(
+					Math.round(vertices[sourceOffset + Renderer3DMeshFrame.BASE_LEGACY_LIGHT_OFFSET]));
 				boolean flatMaterial = isFlatColorMaterial(textureId);
 				OpenGLTextureRegion textureRegion =
 					textureRegionForVertex(meshFrame, triangleTextures, triangleModelKinds, vertex);
@@ -7346,8 +7517,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				float materialRed = brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.RED_OFFSET], brightness);
 				float materialGreen = brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.GREEN_OFFSET], brightness);
 				float materialBlue = brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.BLUE_OFFSET], brightness);
-				float textureLight =
-					brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_RED_OFFSET], brightness);
+				float textureLight = brightnessColor(textureLightFactor(legacyLight), brightness);
 				float alpha =
 					vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_ALPHA_OFFSET] * TEXTURED_DIAGNOSTIC_ALPHA;
 				float atlasU = atlasU(textureRegion, vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_U_OFFSET]);
@@ -7379,8 +7549,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				shaderVertexUploadBuffer.put(materialGreen);
 				shaderVertexUploadBuffer.put(materialBlue);
 				shaderVertexUploadBuffer.put(alpha);
-				shaderVertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.LEGACY_LIGHT_OFFSET]);
-				shaderVertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.BASE_LEGACY_LIGHT_OFFSET]);
+				shaderVertexUploadBuffer.put(legacyLight);
+				shaderVertexUploadBuffer.put(baseLegacyLight);
 				shaderVertexUploadBuffer.put(((rawMaterialColor >> 16) & 0xFF) / 255.0f);
 				shaderVertexUploadBuffer.put(((rawMaterialColor >> 8) & 0xFF) / 255.0f);
 				shaderVertexUploadBuffer.put((rawMaterialColor & 0xFF) / 255.0f);
@@ -7406,6 +7576,79 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				return 1.0f;
 			}
 			return adjusted;
+		}
+
+		private int applyLightingModeLegacyLight(int legacyLight) {
+			RendererLightingSettings.Mode mode = RendererLightingSettings.getMode();
+			int adjusted = legacyLight;
+			if (mode == RendererLightingSettings.Mode.DIRECTIONAL) {
+				adjusted = 88 + Math.round((legacyLight - 96) * 1.35f);
+			} else if (mode == RendererLightingSettings.Mode.TOON) {
+				int clamped = clampLegacyLight(legacyLight);
+				if (clamped < 64) {
+					adjusted = 32;
+				} else if (clamped < 128) {
+					adjusted = 96;
+				} else if (clamped < 192) {
+					adjusted = 160;
+				} else {
+					adjusted = 224;
+				}
+			}
+			return clampLegacyLight(adjusted);
+		}
+
+		private float textureLightFactor(int legacyLight) {
+			RendererLightingSettings.Mode mode = RendererLightingSettings.getMode();
+			if (mode == RendererLightingSettings.Mode.DIRECTIONAL) {
+				float normalized = clamp(legacyLight / 255.0f, 0.0f, 1.0f);
+				return clamp(1.12f - normalized * 0.70f, 0.42f, 1.12f);
+			}
+			if (mode == RendererLightingSettings.Mode.TOON) {
+				int band = legacyTextureShadeBand(legacyLight);
+				switch (band) {
+					case 1:
+						return 0.86f;
+					case 2:
+						return 0.58f;
+					case 3:
+						return 0.34f;
+					default:
+						return 1.15f;
+				}
+			}
+			return legacyTextureLightFactor(legacyLight);
+		}
+
+		private float legacyTextureLightFactor(int legacyLight) {
+			switch (legacyTextureShadeBand(legacyLight)) {
+				case 1:
+					return 216.0f / 248.0f;
+				case 2:
+					return 184.0f / 248.0f;
+				case 3:
+					return 152.0f / 248.0f;
+				default:
+					return 1.0f;
+			}
+		}
+
+		private int legacyTextureShadeBand(int legacyLight) {
+			return clampLegacyLight(legacyLight) >> 6;
+		}
+
+		private int clampLegacyLight(int legacyLight) {
+			if (legacyLight < 0) {
+				return 0;
+			}
+			if (legacyLight > 255) {
+				return 255;
+			}
+			return legacyLight;
+		}
+
+		private float clamp(float value, float min, float max) {
+			return Math.max(min, Math.min(max, value));
 		}
 
 		private void copyFullIndices(Renderer3DMeshFrame meshFrame, int indexCount) {
@@ -7612,9 +7855,19 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			texturedIndexUploadBuffer.clear();
 			int nextIndex = 0;
 			if (triangleFilter == WorldMeshTriangleFilter.ALL_STATIC) {
-				nextIndex = appendMaterialPassTriangles(
-					meshFrame, triangleTextures, triangleModelKinds, indices, orderedTriangles,
-					StaticWorldMaterialPass.OPAQUE, nextIndex);
+				boolean canBatchOpaqueTerrain =
+					fullRange && (modelFaceKeys == null || modelFaceKeys.isEmpty());
+				if (canBatchOpaqueTerrain) {
+					nextIndex = appendOpaqueTerrainMaterialBatches(
+						meshFrame, triangleTextures, triangleModelKinds, indices, orderedTriangles, nextIndex);
+					nextIndex = appendMaterialPassTriangles(
+						meshFrame, triangleTextures, triangleModelKinds, indices, orderedTriangles,
+						StaticWorldMaterialPass.OPAQUE, nextIndex, Renderer3DModelKind.TERRAIN);
+				} else {
+					nextIndex = appendMaterialPassTriangles(
+						meshFrame, triangleTextures, triangleModelKinds, indices, orderedTriangles,
+						StaticWorldMaterialPass.OPAQUE, nextIndex);
+				}
 				nextIndex = appendMaterialPassTriangles(
 					meshFrame, triangleTextures, triangleModelKinds, indices, orderedTriangles,
 					StaticWorldMaterialPass.CUTOUT, nextIndex);
@@ -7627,6 +7880,65 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return nextIndex;
 		}
 
+		private int appendOpaqueTerrainMaterialBatches(
+			Renderer3DMeshFrame meshFrame,
+			int[] triangleTextures,
+			Renderer3DModelKind[] triangleModelKinds,
+			int[] indices,
+			List<Integer> orderedTriangles,
+			int nextIndex) throws Exception {
+			Map<WorldMeshTextureBatchKey, WorldMeshTextureBatch> batchesByMaterial =
+				new LinkedHashMap<WorldMeshTextureBatchKey, WorldMeshTextureBatch>();
+			Map<WorldMeshTextureBatchKey, List<Integer>> trianglesByMaterial =
+				new LinkedHashMap<WorldMeshTextureBatchKey, List<Integer>>();
+			for (Integer orderedTriangle : orderedTriangles) {
+				int triangle = orderedTriangle.intValue();
+				if (triangleModelKinds[triangle] != Renderer3DModelKind.TERRAIN) {
+					continue;
+				}
+				Renderer3DTextureData textureData = triangleTextures[triangle] >= 0
+					? meshFrame.getTexture(triangleTextures[triangle])
+					: null;
+				StaticWorldMaterialPass materialPass =
+					classifyStaticWorldMaterial(triangleTextures[triangle], textureData);
+				if (materialPass != StaticWorldMaterialPass.OPAQUE) {
+					continue;
+				}
+				OpenGLTextureRegion region =
+					textureRegionForTriangle(meshFrame, triangleTextures[triangle], Renderer3DModelKind.TERRAIN);
+				if (!canAppendWorldMeshTriangle(triangleTextures[triangle], Renderer3DModelKind.TERRAIN, region)) {
+					continue;
+				}
+				int batchTextureId = region == null ? FLAT_COLOR_BATCH_TEXTURE_ID : region.getTextureId();
+				WorldMeshTextureBatchKey batchKey =
+					new WorldMeshTextureBatchKey(batchTextureId, materialPass, Renderer3DModelKind.TERRAIN);
+				WorldMeshTextureBatch batch = batchesByMaterial.get(batchKey);
+				if (batch == null) {
+					batch = new WorldMeshTextureBatch(
+						batchTextureId,
+						materialPass,
+						Renderer3DModelKind.TERRAIN);
+					batchesByMaterial.put(batchKey, batch);
+					trianglesByMaterial.put(batchKey, new ArrayList<Integer>());
+				}
+				trianglesByMaterial.get(batchKey).add(orderedTriangle);
+			}
+			for (Map.Entry<WorldMeshTextureBatchKey, List<Integer>> entry : trianglesByMaterial.entrySet()) {
+				WorldMeshTextureBatch batch = batchesByMaterial.get(entry.getKey());
+				batch.startIndex = nextIndex;
+				textureBatches.add(batch);
+				for (Integer terrainTriangle : entry.getValue()) {
+					int sourceIndex = terrainTriangle.intValue() * 3;
+					texturedIndexUploadBuffer.put(indices[sourceIndex]);
+					texturedIndexUploadBuffer.put(indices[sourceIndex + 1]);
+					texturedIndexUploadBuffer.put(indices[sourceIndex + 2]);
+					nextIndex += 3;
+					batch.indexCount += 3;
+				}
+			}
+			return nextIndex;
+		}
+
 		private int appendMaterialPassTriangles(
 			Renderer3DMeshFrame meshFrame,
 			int[] triangleTextures,
@@ -7635,9 +7947,33 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			List<Integer> orderedTriangles,
 			StaticWorldMaterialPass requiredPass,
 			int nextIndex) throws Exception {
+			return appendMaterialPassTriangles(
+				meshFrame,
+				triangleTextures,
+				triangleModelKinds,
+				indices,
+				orderedTriangles,
+				requiredPass,
+				nextIndex,
+				null);
+		}
+
+		private int appendMaterialPassTriangles(
+			Renderer3DMeshFrame meshFrame,
+			int[] triangleTextures,
+			Renderer3DModelKind[] triangleModelKinds,
+			int[] indices,
+			List<Integer> orderedTriangles,
+			StaticWorldMaterialPass requiredPass,
+			int nextIndex,
+			Renderer3DModelKind excludedKind) throws Exception {
 			WorldMeshTextureBatch currentBatch = null;
 			for (Integer orderedTriangle : orderedTriangles) {
 				int triangle = orderedTriangle.intValue();
+				Renderer3DModelKind modelKind = triangleModelKinds[triangle];
+				if (excludedKind != null && modelKind == excludedKind) {
+					continue;
+				}
 				Renderer3DTextureData textureData = triangleTextures[triangle] >= 0
 					? meshFrame.getTexture(triangleTextures[triangle])
 					: null;
@@ -7671,9 +8007,16 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				texturedIndexUploadBuffer.put(indices[sourceIndex + 1]);
 				texturedIndexUploadBuffer.put(indices[sourceIndex + 2]);
 				nextIndex += 3;
-				currentBatch.indexCount += 3;
+					currentBatch.indexCount += 3;
 			}
 			return nextIndex;
+		}
+
+		private boolean canAppendWorldMeshTriangle(
+			int textureId,
+			Renderer3DModelKind modelKind,
+			OpenGLTextureRegion region) {
+			return region != null || isFlatColorMaterial(textureId) || !canSampleTextureForKind(modelKind);
 		}
 
 		private long triangleModelFaceKey(int[] triangleModelIndices, int[] triangleFaceIds, int triangle) {
@@ -7971,17 +8314,22 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				gl.GL_FLOAT,
 				STRIDE_BYTES,
 				0L);
-			for (WorldMeshTextureBatch batch : textureBatches) {
-				if (batch.indexCount <= 0) {
-					continue;
+			WorldMeshBatchDrawState drawState = new WorldMeshBatchDrawState(projectionMatrix);
+			try {
+				for (WorldMeshTextureBatch batch : textureBatches) {
+					if (batch.indexCount <= 0) {
+						continue;
+					}
+					if (batch.isTextureBacked()) {
+						configureMaterialPass(batch.materialPass);
+						drawTexturedBatch(batch, drawState);
+					} else {
+						configureMaterialPass(batch.materialPass);
+						drawFlatColorBatch(batch, drawState);
+					}
 				}
-				if (batch.isTextureBacked()) {
-					configureMaterialPass(batch.materialPass);
-					drawTexturedBatch(batch, projectionMatrix);
-				} else {
-					configureMaterialPass(batch.materialPass);
-					drawFlatColorBatch(batch, projectionMatrix);
-				}
+			} finally {
+				drawState.close();
 			}
 		}
 
@@ -8008,7 +8356,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return count;
 		}
 
-		private void drawTexturedBatch(WorldMeshTextureBatch batch, FloatBuffer projectionMatrix) throws Exception {
+		private void drawTexturedBatch(WorldMeshTextureBatch batch, WorldMeshBatchDrawState drawState) throws Exception {
 			gl.glEnable(gl.GL_TEXTURE_2D);
 			if (TEXTURED_DIAGNOSTIC_ALPHA < 0.999f) {
 				gl.glDisable(gl.GL_ALPHA_TEST);
@@ -8023,8 +8371,20 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					gl.glDisable(gl.GL_ALPHA_TEST);
 				}
 			}
-			gl.glBindTexture(gl.GL_TEXTURE_2D, batch.textureId);
+			drawState.useTextured();
+			drawState.bindTexture(batch.textureId);
 			gl.glColor4f(1.0f, 1.0f, 1.0f, TEXTURED_DIAGNOSTIC_ALPHA);
+			drawWorldMeshBatchElements(batch);
+		}
+
+		private void drawFlatColorBatch(WorldMeshTextureBatch batch, WorldMeshBatchDrawState drawState) throws Exception {
+			gl.glDisable(gl.GL_TEXTURE_2D);
+			gl.glDisable(gl.GL_ALPHA_TEST);
+			drawState.useFlatColor();
+			drawWorldMeshBatchElements(batch);
+		}
+
+		private void bindTexturedBatchState(FloatBuffer projectionMatrix) throws Exception {
 			boolean shaderActive = WORLD_MESH_TEXTURED_SHADER && texturedShaderProgram != null;
 			if (shaderActive) {
 				gl.glBindBuffer(gl.GL_ARRAY_BUFFER, shaderVertexBufferId);
@@ -8043,34 +8403,24 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					SHADER_LEGACY_LIGHT_OFFSET_BYTES,
 					SHADER_BASE_LEGACY_LIGHT_OFFSET_BYTES,
 					SHADER_RAW_MATERIAL_COLOR_OFFSET_BYTES);
-			} else {
-				gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vertexBufferId);
-				gl.glEnableClientState(gl.GL_COLOR_ARRAY);
-				gl.glColorPointer(
-					TEXTURE_LIGHT_COMPONENT_COUNT,
-					gl.GL_FLOAT,
-					STRIDE_BYTES,
-					TEXTURE_LIGHT_OFFSET_BYTES);
-				gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
-				gl.glTexCoordPointer(
-					TEXTURE_COORD_COMPONENT_COUNT,
-					gl.GL_FLOAT,
-					STRIDE_BYTES,
-					TEXTURE_COORD_OFFSET_BYTES);
+				return;
 			}
-			try {
-				drawWorldMeshBatchElements(batch);
-			} finally {
-				if (shaderActive) {
-					texturedShaderProgram.unbindWorldTextureAttributes();
-					gl.glUseProgram(0);
-				}
-			}
+			gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vertexBufferId);
+			gl.glEnableClientState(gl.GL_COLOR_ARRAY);
+			gl.glColorPointer(
+				TEXTURE_LIGHT_COMPONENT_COUNT,
+				gl.GL_FLOAT,
+				STRIDE_BYTES,
+				TEXTURE_LIGHT_OFFSET_BYTES);
+			gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+			gl.glTexCoordPointer(
+				TEXTURE_COORD_COMPONENT_COUNT,
+				gl.GL_FLOAT,
+				STRIDE_BYTES,
+				TEXTURE_COORD_OFFSET_BYTES);
 		}
 
-		private void drawFlatColorBatch(WorldMeshTextureBatch batch, FloatBuffer projectionMatrix) throws Exception {
-			gl.glDisable(gl.GL_TEXTURE_2D);
-			gl.glDisable(gl.GL_ALPHA_TEST);
+		private void bindFlatColorBatchState(FloatBuffer projectionMatrix) throws Exception {
 			boolean shaderActive = WORLD_MESH_TEXTURED_SHADER && texturedShaderProgram != null;
 			if (shaderActive) {
 				gl.glBindBuffer(gl.GL_ARRAY_BUFFER, shaderVertexBufferId);
@@ -8083,23 +8433,76 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					SHADER_POSITION_OFFSET_BYTES,
 					SHADER_TEXTURE_COORD_OFFSET_BYTES,
 					SHADER_MATERIAL_COLOR_OFFSET_BYTES);
-			} else {
-				gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vertexBufferId);
-				gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
-				gl.glEnableClientState(gl.GL_COLOR_ARRAY);
-				gl.glColorPointer(
-					MATERIAL_COLOR_COMPONENT_COUNT,
-					gl.GL_FLOAT,
-					STRIDE_BYTES,
-					MATERIAL_COLOR_OFFSET_BYTES);
+				return;
 			}
-			try {
-				drawWorldMeshBatchElements(batch);
-			} finally {
-				if (shaderActive) {
-					texturedShaderProgram.unbindWorldTextureAttributes();
-					gl.glUseProgram(0);
+			gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vertexBufferId);
+			gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+			gl.glEnableClientState(gl.GL_COLOR_ARRAY);
+			gl.glColorPointer(
+				MATERIAL_COLOR_COMPONENT_COUNT,
+				gl.GL_FLOAT,
+				STRIDE_BYTES,
+				MATERIAL_COLOR_OFFSET_BYTES);
+		}
+
+		private void unbindShaderBatchState() throws Exception {
+			if (WORLD_MESH_TEXTURED_SHADER && texturedShaderProgram != null) {
+				texturedShaderProgram.unbindWorldTextureAttributes();
+				gl.glUseProgram(0);
+			}
+		}
+
+		private final class WorldMeshBatchDrawState implements AutoCloseable {
+			private static final int MODE_NONE = 0;
+			private static final int MODE_TEXTURED = 1;
+			private static final int MODE_FLAT_COLOR = 2;
+
+			private final FloatBuffer projectionMatrix;
+			private final boolean shaderActive;
+			private int mode = MODE_NONE;
+			private int boundTextureId = Integer.MIN_VALUE;
+
+			private WorldMeshBatchDrawState(FloatBuffer projectionMatrix) {
+				this.projectionMatrix = projectionMatrix;
+				this.shaderActive = WORLD_MESH_TEXTURED_SHADER && texturedShaderProgram != null;
+			}
+
+			private void useTextured() throws Exception {
+				if (mode == MODE_TEXTURED) {
+					return;
 				}
+				unbindActiveShaderState();
+				bindTexturedBatchState(projectionMatrix);
+				mode = MODE_TEXTURED;
+			}
+
+			private void useFlatColor() throws Exception {
+				if (mode == MODE_FLAT_COLOR) {
+					return;
+				}
+				unbindActiveShaderState();
+				bindFlatColorBatchState(projectionMatrix);
+				mode = MODE_FLAT_COLOR;
+			}
+
+			private void bindTexture(int textureId) throws Exception {
+				if (boundTextureId == textureId) {
+					return;
+				}
+				gl.glBindTexture(gl.GL_TEXTURE_2D, textureId);
+				boundTextureId = textureId;
+			}
+
+			private void unbindActiveShaderState() throws Exception {
+				if (shaderActive && mode != MODE_NONE) {
+					unbindShaderBatchState();
+				}
+			}
+
+			@Override
+			public void close() throws Exception {
+				unbindActiveShaderState();
+				mode = MODE_NONE;
 			}
 		}
 
@@ -8277,6 +8680,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private final int viewportHeight;
 		private final int brightnessBits;
 		private final int fogStrengthBits;
+		private final int lightingModeBits;
+		private final int geometryModeBits;
 		private final boolean hideRoofs;
 		private final WorldMeshTriangleFilter triangleFilter;
 		private final long hash;
@@ -8291,6 +8696,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int viewportHeight,
 			int brightnessBits,
 			int fogStrengthBits,
+			int lightingModeBits,
+			int geometryModeBits,
 			boolean hideRoofs,
 			WorldMeshTriangleFilter triangleFilter,
 			long hash) {
@@ -8303,6 +8710,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			this.viewportHeight = viewportHeight;
 			this.brightnessBits = brightnessBits;
 			this.fogStrengthBits = fogStrengthBits;
+			this.lightingModeBits = lightingModeBits;
+			this.geometryModeBits = geometryModeBits;
 			this.hideRoofs = hideRoofs;
 			this.triangleFilter = triangleFilter == null ? WorldMeshTriangleFilter.ALL_STATIC : triangleFilter;
 			this.hash = hash;
@@ -8323,6 +8732,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int triangleCount = meshFrame.getTriangleCount();
 			int brightnessBits = Float.floatToIntBits(RendererBrightnessSettings.getMode().multiplier);
 			int fogStrengthBits = RendererFogSettings.getMode().ordinal();
+			int lightingModeBits = RendererLightingSettings.getMode().ordinal();
+			int geometryModeBits = RendererGeometrySettings.getMode().ordinal();
 			boolean hideRoofs = Config.C_HIDE_ROOFS;
 			long hash = FNV_OFFSET_BASIS;
 			hash = mix(hash, vertexCount);
@@ -8334,6 +8745,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			hash = mix(hash, meshFrame.getViewportHeight());
 			hash = mix(hash, brightnessBits);
 			hash = mix(hash, fogStrengthBits);
+			hash = mix(hash, lightingModeBits);
+			hash = mix(hash, geometryModeBits);
 			hash = mix(hash, hideRoofs ? 1 : 0);
 			hash = mix(hash, triangleFilter == null ? 0 : triangleFilter.ordinal());
 
@@ -8369,6 +8782,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				meshFrame.getViewportHeight(),
 				brightnessBits,
 				fogStrengthBits,
+				lightingModeBits,
+				geometryModeBits,
 				hideRoofs,
 				triangleFilter,
 				hash);
@@ -8397,6 +8812,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				&& viewportHeight == signature.viewportHeight
 				&& brightnessBits == signature.brightnessBits
 				&& fogStrengthBits == signature.fogStrengthBits
+				&& lightingModeBits == signature.lightingModeBits
+				&& geometryModeBits == signature.geometryModeBits
 				&& hideRoofs == signature.hideRoofs
 				&& triangleFilter == signature.triangleFilter
 				&& hash == signature.hash;
@@ -8412,6 +8829,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			result = 31 * result + viewportWidth;
 			result = 31 * result + viewportHeight;
 			result = 31 * result + brightnessBits;
+			result = 31 * result + fogStrengthBits;
+			result = 31 * result + lightingModeBits;
+			result = 31 * result + geometryModeBits;
 			result = 31 * result + (hideRoofs ? 1 : 0);
 			result = 31 * result + triangleFilter.ordinal();
 			result = 31 * result + (int) (hash ^ (hash >>> 32));
@@ -11363,6 +11783,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			"#version 120\n"
 			+ "uniform sampler2D uTexture;\n"
 			+ "uniform int uTextureEnabled;\n"
+			+ "uniform int uLightingMode;\n"
 			+ "uniform float uBrightness;\n"
 			+ "uniform float uFogStrength;\n"
 			+ "varying vec2 vTexCoord;\n"
@@ -11373,6 +11794,36 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			+ "float effectiveLegacyLight(float baseLight, float combinedLight) {\n"
 			+ "\tfloat fogDelta = max(0.0, combinedLight - baseLight);\n"
 			+ "\treturn clamp(baseLight + fogDelta * clamp(uFogStrength, 0.0, 1.0), 0.0, 255.0);\n"
+			+ "}\n"
+			+ "float textureLightFactor(float light) {\n"
+			+ "\tfloat clamped = clamp(light, 0.0, 255.0);\n"
+			+ "\tif (uLightingMode == 1) {\n"
+			+ "\t\treturn clamp(1.12 - (clamped / 255.0) * 0.70, 0.42, 1.12);\n"
+			+ "\t}\n"
+			+ "\tif (uLightingMode == 2) {\n"
+			+ "\t\tfloat band = floor(clamped / 64.0);\n"
+			+ "\t\tif (band < 1.0) {\n"
+			+ "\t\t\treturn 1.15;\n"
+			+ "\t\t}\n"
+			+ "\t\tif (band < 2.0) {\n"
+			+ "\t\t\treturn 0.86;\n"
+			+ "\t\t}\n"
+			+ "\t\tif (band < 3.0) {\n"
+			+ "\t\t\treturn 0.58;\n"
+			+ "\t\t}\n"
+			+ "\t\treturn 0.34;\n"
+			+ "\t}\n"
+			+ "\tfloat band = floor(clamped / 64.0);\n"
+			+ "\tif (band < 1.0) {\n"
+			+ "\t\treturn 1.0;\n"
+			+ "\t}\n"
+			+ "\tif (band < 2.0) {\n"
+			+ "\t\treturn 216.0 / 248.0;\n"
+			+ "\t}\n"
+			+ "\tif (band < 3.0) {\n"
+			+ "\t\treturn 184.0 / 248.0;\n"
+			+ "\t}\n"
+			+ "\treturn 152.0 / 248.0;\n"
 			+ "}\n"
 			+ "vec3 legacyFlatMaterialColor(vec3 color, float light) {\n"
 			+ "\tfloat shade = 255.0 - clamp(light, 0.0, 255.0);\n"
@@ -11396,7 +11847,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			+ "void main() {\n"
 			+ "\tfloat effectiveLight = effectiveLegacyLight(vBaseLegacyLight, vLegacyLight);\n"
 			+ "\tgl_FragColor = uTextureEnabled != 0\n"
-			+ "\t\t? vec4(vec3(legacyTextureLightFactor(effectiveLight) * uBrightness), vMaterialColor.a) * texture2D(uTexture, vTexCoord)\n"
+			+ "\t\t? vec4(vec3(textureLightFactor(effectiveLight) * uBrightness), vMaterialColor.a) * texture2D(uTexture, vTexCoord)\n"
 			+ "\t\t: vec4(legacyFlatMaterialColor(vRawMaterialColor, effectiveLight), vMaterialColor.a);\n"
 			+ "}\n";
 
@@ -11405,6 +11856,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private final int projectionMatrixUniformLocation;
 		private final int textureUniformLocation;
 		private final int textureEnabledUniformLocation;
+		private final int lightingModeUniformLocation;
 		private final int brightnessUniformLocation;
 		private final int fogStrengthUniformLocation;
 		private boolean closed;
@@ -11415,6 +11867,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int projectionMatrixUniformLocation,
 			int textureUniformLocation,
 			int textureEnabledUniformLocation,
+			int lightingModeUniformLocation,
 			int brightnessUniformLocation,
 			int fogStrengthUniformLocation) {
 			this.gl = gl;
@@ -11422,6 +11875,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			this.projectionMatrixUniformLocation = projectionMatrixUniformLocation;
 			this.textureUniformLocation = textureUniformLocation;
 			this.textureEnabledUniformLocation = textureEnabledUniformLocation;
+			this.lightingModeUniformLocation = lightingModeUniformLocation;
 			this.brightnessUniformLocation = brightnessUniformLocation;
 			this.fogStrengthUniformLocation = fogStrengthUniformLocation;
 		}
@@ -11453,6 +11907,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 						gl.glGetUniformLocation(program, "uProjectionMatrix"),
 						gl.glGetUniformLocation(program, "uTexture"),
 						gl.glGetUniformLocation(program, "uTextureEnabled"),
+						gl.glGetUniformLocation(program, "uLightingMode"),
 						gl.glGetUniformLocation(program, "uBrightness"),
 						gl.glGetUniformLocation(program, "uFogStrength"));
 				program = 0;
@@ -11502,6 +11957,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			}
 			if (textureEnabledUniformLocation >= 0) {
 				gl.glUniform1i(textureEnabledUniformLocation, textureEnabled ? 1 : 0);
+			}
+			if (lightingModeUniformLocation >= 0) {
+				gl.glUniform1i(lightingModeUniformLocation, RendererLightingSettings.getMode().ordinal());
 			}
 			if (brightnessUniformLocation >= 0) {
 				gl.glUniform1f(brightnessUniformLocation, RendererBrightnessSettings.getMode().multiplier);

@@ -823,28 +823,50 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 	private String[] overlayLines(BufferedImage frameImage, RenderTelemetry.Snapshot telemetry) {
 		boolean openGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
+		String rendererLine = openGLPrimaryWindow
+			? "renderer " + RendererProfileSettings.getMode().id
+				+ " | resolution " + RenderSurfaceSettings.getMode().id
+				+ " | fps " + mudclient.getCurrentFPS()
+			: "scale " + mudclient.renderingScalar + " " + mudclient.scalingType
+				+ " | fps " + mudclient.getCurrentFPS();
+		String surfaceLine = "surface " + frameImage.getWidth() + "x" + frameImage.getHeight()
+			+ " | fit " + (openGLPrimaryWindow
+				? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT.id
+				: OpenGLPresentationSettings.getScaleMode().id)
+			+ " | window " + OpenGLWindowSettings.getMode().displayName;
+		String graphicsLine = "lighting " + RendererLightingSettings.getMode().id
+			+ " | geometry " + RendererGeometrySettings.getMode().id
+			+ " | fog " + RendererFogSettings.getMode().id
+			+ " | brightness " + RendererBrightnessSettings.getMode().id;
+		if (RendererDebugSettings.getMode() == RendererDebugSettings.Mode.SIMPLE) {
+			return new String[] {
+				"Renderer v2 Perf HUD",
+				rendererLine,
+				surfaceLine,
+				graphicsLine,
+				"Ctrl+F6 expanded"
+			};
+		}
 		return new String[] {
 			"Renderer v2 Perf HUD",
-			openGLPrimaryWindow
-				? "renderer " + RendererProfileSettings.getMode().id
-					+ " | resolution " + RenderSurfaceSettings.getMode().id
-					+ " | fps " + mudclient.getCurrentFPS()
-				: "scale " + mudclient.renderingScalar + " " + mudclient.scalingType
-					+ " | fps " + mudclient.getCurrentFPS(),
-			"surface " + frameImage.getWidth() + "x" + frameImage.getHeight()
-				+ " | fit " + (openGLPrimaryWindow
-					? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT.id
-					: OpenGLPresentationSettings.getScaleMode().id)
-				+ " | window " + OpenGLWindowSettings.getMode().displayName,
+			rendererLine,
+			surfaceLine,
+			graphicsLine,
 			telemetry.enabled
 				? "frame avg/max " + telemetry.frameAverageMs + "/" + telemetry.frameMaxMs
 					+ "ms | scene " + telemetry.sceneAverageMs
 					+ "ms | present " + telemetry.setImageAverageMs + "ms"
 				: "telemetry disabled",
 			telemetry.enabled
+				? "recent frame/scene/gl " + telemetry.recentFrameSummary
+				: "",
+			telemetry.enabled
 				? "gl snapshot/upload/render " + telemetry.openGLSnapshotAverageMs
 					+ "/" + telemetry.openGLUploadAverageMs
 					+ "/" + telemetry.openGLRenderAverageMs + "ms"
+				: "",
+			telemetry.enabled
+				? "recent gl snapshot/upload/render " + telemetry.recentOpenGLTimingSummary
 				: "",
 			telemetry.enabled
 				? "gl frames/dropped " + telemetry.openGLFrames
@@ -860,6 +882,9 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.openGLSwapAverageMs + "ms"
 				: "",
 			telemetry.enabled
+				? "recent gl phases b/w/ws/o/db/s " + telemetry.recentOpenGLPhaseSummary
+				: "",
+			telemetry.enabled
 				? "scene phases rot/cull/depth/draw/mesh " + telemetry.sceneModelRotateAverageMs
 					+ "/" + telemetry.sceneWorldCullAverageMs
 					+ "/" + telemetry.sceneDepthExportAverageMs
@@ -867,10 +892,20 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.sceneMeshExportAverageMs + "ms"
 				: "",
 			telemetry.enabled
+				? "recent scene phases rot/cull/depth/draw/mesh " + telemetry.recentScenePhaseSummary
+				: "",
+			telemetry.enabled
+				? "loop recent total/sleep/update/repo/draw " + telemetry.recentClientLoopSummary
+				: "",
+			telemetry.enabled
 				? "chunks c/v/i/t " + telemetry.openGLWorldChunkAverage
 					+ "/" + telemetry.openGLWorldChunkVertexAverage
 					+ "/" + telemetry.openGLWorldChunkIndexAverage
 					+ "/" + telemetry.openGLWorldChunkTriangleAverage
+				: "",
+			telemetry.enabled
+				? "chunk vis c/d/cull " + telemetry.openGLWorldChunkVisibilityAverage
+					+ " | submit calls/binds " + telemetry.openGLWorldChunkSubmitAverage
 				: "",
 			telemetry.enabled
 				? "chunk req/up/reuse/evict " + telemetry.openGLWorldChunkRequestedAverage
@@ -895,6 +930,9 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.legacySceneSpriteRestoreFallbackPixelAverage
 				: "",
 			telemetry.enabled
+				? "entity vis c/d/cull " + telemetry.openGLWorldEntityVisibilityAverage
+				: "",
+			telemetry.enabled
 				? "sprite cap/static/vis " + telemetry.spriteOverlayCapturedAverage
 					+ "/" + telemetry.spriteOverlayStaticReplayAverage
 					+ "/" + telemetry.spriteOverlayVisibleReplayAverage
@@ -912,7 +950,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.worldGeometryWallObjectFaceAverage
 					+ "/" + telemetry.worldGeometryOtherFaceAverage
 				: "",
-			"F6 overlay"
+			"F6 closes debug | Ctrl+F6 simple"
 		};
 	}
 
@@ -1201,7 +1239,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				if (keyCode == 113) Config.C_SIDE_MENU_OVERLAY = !Config.C_SIDE_MENU_OVERLAY;
 				if (keyCode == KeyEvent.VK_F3) C_LAST_ZOOM = 75;
 				if (keyCode == KeyEvent.VK_F4) mudclient.toggleFirstPersonView();
-				if (keyCode == KeyEvent.VK_F6) mudclient.toggleRendererDebugOverlay(); // renderer overlay
+				if (keyCode == KeyEvent.VK_F6 && var1.isControlDown()) mudclient.toggleRendererDebugOverlayMode();
+				else if (keyCode == KeyEvent.VK_F6) mudclient.toggleRendererDebugOverlay(); // renderer overlay
 				if (keyCode == 39) mudclient.keyRight = true;
 				if (keyCode == 37) mudclient.keyLeft = true;
 				if (keyCode == 13 || keyCode == 10) mudclient.enterPressed = true;

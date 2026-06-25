@@ -156,6 +156,41 @@ The first visually acceptable baseline is now:
 - Login/menu/loading frames remain on the uploaded software framebuffer until a
   captured 3D world mesh is ready, preventing stale or partial world geometry
   from appearing during load transitions.
+- OpenGL-primary mode now uses a runtime-gated modern client loop
+  (`spoiledmilk.modernClientLoop` / `SPOILED_MILK_MODERN_CLIENT_LOOP`) instead
+  of the legacy adaptive sleeper. The legacy loop could flip between a ~1ms and
+  ~10ms sleep after small camera changes, making FPS swing dramatically even
+  when mesh triangles, draw calls, entities, and GL timing were effectively
+  unchanged. The modern loop keeps fixed-cadence updates with bounded catch-up
+  while allowing rendering to pace toward the 60 FPS OpenGL target.
+- Login viewport sprites still force a one-shot legacy software world raster
+  before `storeSpriteVert(...)`. Those animated login graphics are captured
+  from the software framebuffer, so they must not inherit the in-game
+  `skipLegacyWorldRaster` optimization or they can capture stale UI pixels such
+  as the minimap.
+- Resident world chunks now own scaled per-vertex face normals in their captured
+  payload. Classic visuals still use the accepted shade bands, but chunk diffuse
+  lighting reads this normal stream instead of recomputing normals from triangle
+  coordinates during renderer upload. This is a no-visual-change foundation for
+  Directional/Toon/remaster lighting, terrain slope controls, and future
+  semantic shadow casters.
+- Resident wall chunks now also capture conservative semantic shadow caster
+  metadata before triangulation: wall base endpoints, base height, caster
+  height, width, opacity, and outdoor-only state. The disabled shadow proof now
+  prefers these semantic casters and keeps triangle-derived casters only as a
+  fallback. This starts the remaster shadow path from world/build data rather
+  than final draw triangles.
+- Resident object chunks now capture one conservative model-level semantic
+  caster per transformed `GAME_OBJECT`/`WALL_OBJECT`: footprint axis, base Y,
+  height, width, opacity, and outdoor-only state. This avoids deriving scenery
+  shadows from individual object triangles and gives future terrain
+  shadow-mask/decal work a compact caster list.
+- The disabled shadow proof now builds a frame-wide semantic caster list and
+  hashes that list into the resident chunk cache. Terrain chunks receive one
+  cached shadow receiver layer made from affected terrain triangles with
+  accumulated alpha, instead of drawing one blended quad per caster. This keeps
+  the proof opt-in while removing the worst transparent-geometry stacking
+  behavior from earlier experiments.
 
 This state is suitable as the first alpha rollout target because it fixes the
 major terrain flatness/neon-color regression, keeps sprites readable, keeps UI
@@ -424,7 +459,7 @@ renderer-v2 layer:
   - Hides the Swing client window and uses the OpenGL window as the only
     visible client window. This implies the OpenGL input bridge and should be
     used for field testing so telemetry reflects a single visible client.
-- `SPOILED_MILK_RENDER_SURFACE_MODE=512x346|640x480|800x600|960x540|1024x576|1280x720`
+- `SPOILED_MILK_RENDER_SURFACE_MODE=512x346|640x480|800x600|960x540|1024x576|1280x720|1920x1080`
   - Selects the actual source framebuffer size. This changes the scene
     projection and visible world area before final scaling.
 - `SPOILED_MILK_OPENGL_SCALE_MODE=aspect-fit|integer-fit|stretch`
@@ -614,6 +649,7 @@ SPOILED_MILK_OPENGL_WORLD_TEXTURED_STATIC_VISIBLE=true
 SPOILED_MILK_OPENGL_WORLD_STATIC_TEXTURES=true
 SPOILED_MILK_OPENGL_WORLD_TEXTURED_ALPHA=1.0
 SPOILED_MILK_OPENGL_WORLD_SPRITES_VISIBLE=true
+SPOILED_MILK_SKIP_LEGACY_WORLD_RASTER=true
 ```
 
 Telemetry and the debug overlay remain recommended for local validation, but
@@ -1216,47 +1252,53 @@ they are not visual requirements for the baseline.
       Deeper dynamic lights, object light sources, and shadow ownership remain
       future shader/material work.
 - [ ] Add a staged remaster shadow system for directional lighting.
-  - [x] Start with projected terrain shadows rather than full dynamic shadow
-        maps. Directional/Toon lighting should project simple flattened dark
-        geometry from walls and scenery onto terrain using the active sun/light
-        direction. This is the quickest way to give directional lighting a
-        readable direction cue while preserving the current renderer-v2
-        ownership model. The first proof now draws cached, blended,
-        terrain-only shadow overlays after terrain and before later world
-        layers. It is currently wall-only, merges duplicate per-triangle wall
-        casters into one strongest footprint per wall segment, skips diagonal
-        wall footprints because they produce misleading triangular artifacts in
-        the overlay proof, generates one flat constant-tone shadow quad per
-        caster, and stores the resulting overlay geometry in resident chunk
-        buffers so the proof does not recompute/upload every frame. Terrain
-        height sampling and segmented fades were intentionally removed after
-        visual testing produced swirled, boxy, layered shadows; this proof is a
-        hard-shadow baseline for validating direction, ownership, and cost
-        before adding any softness back. Use
-        `SPOILED_MILK_OPENGL_WORLD_CHUNK_SHADOW_PROOF=true` to opt into this
-        overlay proof for testing. It now defaults off because visual testing
-        showed the proof could pull dense-area FPS from roughly the mid-50s to
-        roughly 40 before the caster-owned rewrite.
+  - [x] Replace the transparent overlay proof with a cached terrain shadow
+        mask. The current experiment still uses
+        `SPOILED_MILK_OPENGL_WORLD_CHUNK_SHADOW_PROOF=true`, but the flag now
+        bakes a per-terrain-triangle shadow factor during resident chunk upload
+        instead of drawing a separate blended shadow layer. The mask is derived
+        from the frame-wide semantic wall/scenery caster list and folded into
+        the terrain vertex light/texture-light data, so shadows reuse resident
+        chunk caching, avoid per-frame shadow draw calls, and cannot hover
+        above terrain as alpha geometry. This path is currently gated to the
+        Directional lighting test mode only; Toon is deferred.
   - [x] Park the triangle-derived overlay shadow proof for release. Visual
         testing confirmed the first receiver-triangle pass made shadows
         faceted, the terrain-sampled segmented pass produced swirled/boxy
         layered shadows, and the simplified flat merged caster pass removed the
         squiggles but read as rectangular hovering shadows cast from building
-        tops. The proof is useful as a cost/ownership experiment, not as a
-        release-quality visual feature.
+        tops. The old overlay VBO/draw path has been removed; the remaining
+        proof uses cached light data only.
   - [x] Make terrain the only receiver for the first pass. Do not cast shadows
         onto scenery, walls, sprites, or other dynamic objects until terrain
         projection is visually accepted; clipping through objects is acceptable
-        during the proof stage. The current proof uses depth-tested blended
-        geometry with depth writes disabled, so it reads as a terrain overlay
-        without taking over wall/scenery/sprite ordering.
-  - [ ] Restart shadows from semantic shadow casters when this becomes a
-        priority again. Build caster metadata during wall/scenery/world
-        generation instead of deriving shadows from finished triangles:
-        base edge/tile, height, width/radius, outdoor-only state, opacity, and
-        optional explicit overrides. Render those casters into a terrain decal
-        or shadow mask so shadows attach to source bases and can be softened
-        without stacking transparent geometry.
+        during the proof stage. The current proof darkens only terrain triangles
+        during cached chunk upload, so it does not affect wall/scenery/sprite
+        ordering.
+  - [x] Restart shadows from semantic shadow casters. Build caster metadata
+        during wall/scenery/world generation instead of deriving shadows from
+        finished triangles: base edge/tile, height, width/radius, outdoor-only
+        state, opacity, and optional explicit overrides. The current baked
+        terrain mask consumes those casters first, using triangle-derived
+        casters only as an old-data fallback.
+  - [x] Add the first semantic wall caster payload to resident world chunks.
+        Wall chunks now store base endpoints, base Y, height, width, opacity,
+        and outdoor-only state before the wall face is triangulated. The
+        disabled proof can consume these records first, using triangle-derived
+        casters only as an old-data fallback.
+  - [x] Add semantic object caster payloads to resident object chunks.
+        Transformed game-object and wall-object models now emit one conservative
+        model-level caster before their faces are triangulated. The baked
+        shadow mask accepts these caster kinds when resident object chunks are
+        present, but release/default clients still keep the proof off.
+  - [x] Convert the disabled proof from stacked caster quads to an accumulated
+        terrain receiver layer. The proof collects semantic casters from the
+        whole chunk frame, hashes them into resident chunk cache invalidation,
+        and uploads one affected terrain-triangle layer per receiver chunk with
+        accumulated/capped alpha. This is still not release-quality shadowing,
+        but it is a better foundation for a terrain shadow mask/decal because
+        overlapping casters no longer draw multiple transparent quads over the
+        same ground.
   - [ ] Refine diagonal-wall shadow quality. The current overlay proof skips
         diagonal wall casters to avoid false triangular artifacts. Proper
         diagonal-wall shadows need a shader/material mask or explicit wall
@@ -1304,6 +1346,11 @@ they are not visual requirements for the baseline.
       legacy light/fog.
 - [ ] Add material metadata for terrain, water, walls, roofs, foliage, ore,
       objects, sprites, and effects so shader behavior is data-driven.
+- [x] Promote resident chunk face normals into owned geometry data. The first
+      implementation stores scaled per-vertex normals on `ChunkMesh` and routes
+      chunk diffuse lighting through those accessors, removing another place
+      where remaster lighting inferred geometry state from final triangle
+      coordinates at draw/upload time.
 - [ ] Add a frame-capture comparison mode that can show legacy software world,
       current OpenGL world, and shader world output for the same camera frame.
 - [ ] Add conservative shader polish controls for saturation, contrast, fog
@@ -1675,6 +1722,126 @@ they are not visual requirements for the baseline.
 - [ ] Establish minimum target hardware for alpha testing.
 - [ ] Compare legacy renderer and renderer-v2 on the same route.
 
+#### Modern Optimization Backlog
+
+These are candidate renderer-v2 optimizations to evaluate after each
+correctness pass. Do not apply them blindly: capture the relevant telemetry
+first, prove that the optimization targets the current bottleneck, and keep
+Classic visual ordering, entity occlusion, and sprite composition correct.
+
+- [x] Add an FPS/visibility capture that records chunks considered versus
+      drawn, entities considered versus drawn, static chunk rebuild count,
+      terrain/wall/scenery/sprite submission counts, draw calls, texture binds,
+      allocation rate, and CPU time split across world build, sort, upload,
+      draw, and present.
+  - [x] Extend renderer telemetry and the F6 performance HUD with chunk
+        visibility (`considered/drawn/culled`), chunk submit
+        (`draw calls/texture binds`), and world entity visibility
+        (`considered/drawn/culled`) counters. Existing telemetry already covers
+        chunk upload/reuse, terrain/wall/scenery/sprite submission buckets,
+        allocation summaries, and CPU phase timing.
+  - [x] Extend the F6 HUD with rolling recent timings and full client-loop
+        timing (`total/sleep/update/reposition/draw`). A dense-area A/B showed
+        FPS dropping from the high 50s to low 40s while render workload stayed
+        nearly identical; the old loop had switched from ~1ms to ~10ms sleep.
+        OpenGL-primary mode now defaults to the modern fixed-cadence loop, with
+        the legacy loop retained behind the runtime flag.
+- [ ] Prioritize retained static world chunks. Terrain, walls, roofs, static
+      scenery, wall objects, and game objects should stay in reusable CPU/GPU
+      chunk products and rebuild only when the area, plane, roof state,
+      material state, or affected scenery animation cell changes.
+- [ ] Add chunk-level frustum culling before per-face or per-object work. The
+      first pass should reject whole terrain/scenery chunks outside the camera
+      view, with conservative margins for Classic projection and camera
+      rotation.
+- [ ] Add whole-entity sprite visibility culling for NPCs, players, ground
+      items, projectiles, and world effects. Cull by composed sprite bounds or
+      world anchor bounds, never by individual body-part frames, so character
+      assembly cannot regress into partial-body rendering.
+- [ ] Treat draw distance/fog as a visibility ownership setting when a
+      performance profile needs it. Fog-on can still hide world edges, but a
+      performance-oriented draw-distance control should decide which chunks and
+      entities are prepared, uploaded, and submitted.
+- [ ] Make roof-off a hard layer exclusion where possible. When roofs are
+      hidden, avoid building, uploading, and drawing roof geometry instead of
+      only making it transparent or skipping it late.
+- [ ] Reduce draw calls and texture binds through material and texture
+      batching. Measure batches by terrain, walls, roofs, wall objects, game
+      objects, sprites, UI, and animated scenery before adding more visual
+      effects.
+  - [x] Cache the currently bound resident chunk atlas texture during a chunk
+        draw pass so repeated material batches sharing the same atlas do not
+        issue redundant `glBindTexture` calls. The F6 HUD now reports actual
+        chunk texture binds beside chunk draw calls.
+  - [x] Batch the full projected-world opaque terrain pass by material before
+        returning to legacy-ordered opaque non-terrain and cutout submissions.
+        This targets the high projected mesh draw-call count while leaving
+        walls, scenery, wall objects, game objects, and cutout ordering
+        conservative.
+  - [x] Default the OpenGL replacement client to skip the legacy software
+        world raster after geometry, depth, sprite-anchor, and mouse-pick data
+        have been captured. This removes redundant software pixel drawing while
+        preserving the old raster path as an explicit opt-out.
+  - [x] Skip software framebuffer raster for scene sprites after their
+        OpenGL replay command has been captured. Failed captures still fall
+        through to the legacy sprite plotter, and ordered/masked sprite cases
+        remain conservative.
+  - [x] Precompute unclipped face light during visible-world capture and skip
+        the sorted-loop clipped-geometry export for fully visible faces in
+        OpenGL skip-raster mode. Near-plane faces and mouse-pick candidates
+        still use the legacy clipped path.
+- [ ] Evaluate texture atlases or texture arrays for high-bind paths. Terrain
+      textures already have atlas work; extend the same idea only where
+      telemetry shows repeated binds for sprites, scenery, effects, or UI.
+- [ ] Evaluate instanced rendering for repeated quads and repeated static
+      pieces, including ground-item sprites, simple world effects, wall pieces,
+      and repeated scenery forms. Keep sprite ordering and occlusion ownership
+      explicit before batching instances across visual layers.
+- [ ] Add dirty-flag invalidation for renderer settings. Roof visibility, fog
+      or draw distance, geometry mode, lighting mode, brightness, texture
+      state, and animated scenery should invalidate only the chunks, buffers,
+      or material batches they affect.
+- [ ] Maintain a spatial partition for render queries. Reuse chunk grids or a
+      similar broadphase for visible entities, scenery, click picking,
+      projectile queries, and minimap/world-overlay updates instead of scanning
+      full local arrays whenever possible.
+- [ ] Throttle animated scenery work by visibility. Fountains, fishing spots,
+      windmills, signs, counters, ladders, and similar animated or multi-part
+      scenery should update/upload only when visible or near-visible, while
+      preserving animation continuity when they re-enter view.
+- [ ] Reduce per-frame allocation in renderer-critical paths. Reuse scratch
+      lists, buffers, matrices, vectors, entity bounds, and command arrays so
+      camera movement and section loading do not create avoidable GC pressure.
+- [ ] Use a stable streaming-buffer strategy for dynamic OpenGL data. Prefer
+      persistent mapped buffers, ring buffers, or safe buffer orphaning patterns
+      over small per-frame allocations and blocking uploads for sprites,
+      entities, and animated overlays.
+- [ ] Prepare static chunks asynchronously only after ownership boundaries are
+      immutable. Background work is appropriate for sector decode, CPU chunk
+      mesh generation, material lookup, and upload staging; mutable live scene
+      state should remain render-thread owned until it has explicit snapshots.
+- [ ] Precompute tile metadata used by rendering and path queries. Cache tile
+      bounds, walkability, roof layer, wall/object occupancy, terrain light,
+      terrain normal or slope, floor material, and occlusion hints where the
+      data is stable.
+- [ ] Keep simulation interpolation consistent with the renderer. Players,
+      NPCs, projectiles, and animated scenery should render between fixed
+      server ticks without requiring extra simulation updates for smoother
+      motion.
+- [ ] Stagger NPC AI and path checks to avoid frame or tick spikes. NPCs should
+      not all select movement or re-path on the same tick unless a shared event
+      explicitly requires it.
+- [ ] Add pathfinding broadphase and repath throttling. Use cheap reachability,
+      local obstacle checks, path reuse, destination-change thresholds, and
+      controlled repath intervals before invoking expensive A* work.
+- [ ] Treat occlusion culling as a later, conservative optimization. Only test
+      object/building occlusion after chunk culling, entity culling, and
+      batching are measured, because Classic transparent fences and legacy
+      wall/sprite ordering can make aggressive occlusion visually wrong.
+- [ ] Treat GPU occlusion queries as experimental only. Avoid query patterns
+      that stall the render thread; consider them only after CPU-side culling
+      and batching are already stable.
+
 ### Phase 8: Options and Quality Settings Cleanup
 
 - [ ] Redesign the options menu into user-friendly renderer, display, audio,
@@ -1712,6 +1879,10 @@ they are not visual requirements for the baseline.
 - [ ] Replace integer/bilinear/bicubic terminology with OpenGL-native quality
       controls only if field testing shows a player-facing filter option is
       still needed.
+- [x] Add 1920x1080 as an experimental render-surface size for field testing.
+      The mode is cycleable from the resolution row and available through
+      `SPOILED_MILK_RENDER_SURFACE_MODE=1920x1080`, `1080p`, `full-hd`, or
+      `fhd`.
 - [ ] Expand supported render-surface sizes in measured steps and record where
       sprites, UI panels, minimap, or world projection start to break.
 - [ ] Stress test mouse-wheel zoom beyond the old limits and document the

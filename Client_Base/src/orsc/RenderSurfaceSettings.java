@@ -71,7 +71,8 @@ final class RenderSurfaceSettings {
 		SVGA("800x600", "@ora@800x600", 800, 600),
 		WIDE("960x540", "@yel@960x540 16:9", 960, 540),
 		WIDE_PLUS("1024x576", "@ora@1024x576 16:9", 1024, 576),
-		HD("1280x720", "@gre@1280x720 16:9", 1280, 720);
+		HD("1280x720", "@gre@1280x720 16:9", 1280, 720),
+		FULL_HD("1920x1080", "@cya@1920x1080 16:9", 1920, 1080);
 
 		final String id;
 		final String label;
@@ -101,6 +102,10 @@ final class RenderSurfaceSettings {
 			}
 			if ("720p".equals(normalized) || "hd".equals(normalized) || "1280-720".equals(normalized)) {
 				return HD;
+			}
+			if ("1080p".equals(normalized) || "full-hd".equals(normalized) || "fhd".equals(normalized)
+				|| "1920-1080".equals(normalized)) {
+				return FULL_HD;
 			}
 
 			for (Mode mode : values()) {

@@ -3032,6 +3032,7 @@ public final class World {
 		private final int[] triangleTextures;
 		private final int[] triangleFallbackColors;
 		private final Renderer3DModelKind[] triangleModelKinds;
+		private final Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasters;
 		private final int terrainTriangles;
 		private final int wallTriangles;
 		private final int roofTriangles;
@@ -3051,6 +3052,7 @@ public final class World {
 			int[] triangleTextures,
 			int[] triangleFallbackColors,
 			Renderer3DModelKind[] triangleModelKinds,
+			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasters,
 			int terrainTriangles,
 			int wallTriangles,
 			int roofTriangles,
@@ -3068,6 +3070,7 @@ public final class World {
 			this.triangleTextures = triangleTextures;
 			this.triangleFallbackColors = triangleFallbackColors;
 			this.triangleModelKinds = triangleModelKinds;
+			this.shadowCasters = shadowCasters;
 			this.terrainTriangles = terrainTriangles;
 			this.wallTriangles = wallTriangles;
 			this.roofTriangles = roofTriangles;
@@ -3093,9 +3096,11 @@ public final class World {
 				triangleTextures,
 				triangleFallbackColors,
 				triangleModelKinds,
+				shadowCasters,
 				terrainTriangles,
 				wallTriangles,
 				roofTriangles,
+				false,
 				signature);
 		}
 	}
@@ -3117,6 +3122,8 @@ public final class World {
 		private final List<Integer> triangleTextures = new ArrayList<Integer>();
 		private final List<Integer> triangleFallbackColors = new ArrayList<Integer>();
 		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
+		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
+			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
 		private int terrainTriangles;
 		private int wallTriangles;
 		private int roofTriangles;
@@ -3145,6 +3152,7 @@ public final class World {
 				return;
 			}
 
+			addWallShadowCaster(kind, faceVertexCoords);
 			float[] textureU = new float[vertexCount];
 			float[] textureV = new float[vertexCount];
 			populateTextureCoordinates(texture, faceVertexCoords, textureU, textureV);
@@ -3198,6 +3206,52 @@ public final class World {
 				return resourceToRgb(fallbackColor);
 			}
 			return fallbackColor;
+		}
+
+		private void addWallShadowCaster(Renderer3DModelKind kind, int[] faceVertexCoords) {
+			if (kind != Renderer3DModelKind.WALL || faceVertexCoords == null || faceVertexCoords.length < 9) {
+				return;
+			}
+			int vertexCount = faceVertexCoords.length / 3;
+			int minY = Integer.MAX_VALUE;
+			int maxY = Integer.MIN_VALUE;
+			int bestA = 0;
+			int bestB = 0;
+			long bestDistance = 0L;
+			for (int vertex = 0; vertex < vertexCount; vertex++) {
+				int coord = vertex * 3;
+				int y = faceVertexCoords[coord + 1];
+				minY = Math.min(minY, y);
+				maxY = Math.max(maxY, y);
+				for (int other = vertex + 1; other < vertexCount; other++) {
+					int otherCoord = other * 3;
+					long dx = faceVertexCoords[otherCoord] - faceVertexCoords[coord];
+					long dz = faceVertexCoords[otherCoord + 2] - faceVertexCoords[coord + 2];
+					long distance = dx * dx + dz * dz;
+					if (distance > bestDistance) {
+						bestDistance = distance;
+						bestA = vertex;
+						bestB = other;
+					}
+				}
+			}
+			if (bestDistance <= 0L || minY == Integer.MAX_VALUE || maxY == Integer.MIN_VALUE) {
+				return;
+			}
+			int firstCoord = bestA * 3;
+			int secondCoord = bestB * 3;
+			int width = Math.max(1, (int) Math.sqrt(bestDistance));
+			shadowCasters.add(new Renderer3DWorldChunkFrame.ShadowCaster(
+				kind,
+				faceVertexCoords[firstCoord],
+				minY,
+				faceVertexCoords[firstCoord + 2],
+				faceVertexCoords[secondCoord],
+				faceVertexCoords[secondCoord + 2],
+				maxY - minY,
+				width,
+				192,
+				true));
 		}
 
 		private int resourceToRgb(int resource) {
@@ -3295,6 +3349,8 @@ public final class World {
 			int[] fallbackArray = toIntArray(triangleFallbackColors);
 			Renderer3DModelKind[] kindArray =
 				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
+			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray =
+				shadowCasters.toArray(new Renderer3DWorldChunkFrame.ShadowCaster[shadowCasters.size()]);
 			long signature = signature(
 				vertexArray,
 				textureUArray,
@@ -3303,7 +3359,8 @@ public final class World {
 				indexArray,
 				textureArray,
 				fallbackArray,
-				kindArray);
+				kindArray,
+				shadowCasterArray);
 			return new WorldGpuChunkMesh(
 				plane,
 				centerSectionX,
@@ -3318,6 +3375,7 @@ public final class World {
 				textureArray,
 				fallbackArray,
 				kindArray,
+				shadowCasterArray,
 				terrainTriangles,
 				wallTriangles,
 				roofTriangles,
@@ -3348,7 +3406,8 @@ public final class World {
 			int[] indexArray,
 			int[] textureArray,
 			int[] fallbackArray,
-			Renderer3DModelKind[] kindArray) {
+			Renderer3DModelKind[] kindArray,
+			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray) {
 			long hash = FNV_OFFSET_BASIS;
 			hash = mix(hash, plane);
 			hash = mix(hash, centerSectionX);
@@ -3378,6 +3437,18 @@ public final class World {
 			}
 			for (Renderer3DModelKind kind : kindArray) {
 				hash = mix(hash, kind.ordinal());
+			}
+			for (Renderer3DWorldChunkFrame.ShadowCaster caster : shadowCasterArray) {
+				hash = mix(hash, caster.getModelKind().ordinal());
+				hash = mix(hash, caster.getBaseX0());
+				hash = mix(hash, caster.getBaseY());
+				hash = mix(hash, caster.getBaseZ0());
+				hash = mix(hash, caster.getBaseX1());
+				hash = mix(hash, caster.getBaseZ1());
+				hash = mix(hash, caster.getHeight());
+				hash = mix(hash, caster.getWidth());
+				hash = mix(hash, caster.getOpacity());
+				hash = mix(hash, caster.isOutdoorOnly() ? 1 : 0);
 			}
 			return hash;
 		}

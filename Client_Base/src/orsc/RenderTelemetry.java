@@ -12,12 +12,18 @@ public final class RenderTelemetry {
 	private static final String REPORT_INTERVAL_PROPERTY = "spoiledmilk.rendererTelemetryInterval";
 	private static final String SLOW_FRAME_MS_PROPERTY = "spoiledmilk.rendererSlowFrameMs";
 
+	private static final int RECENT_SAMPLE_LIMIT = 120;
 	private static final boolean RUNTIME_ENABLED = readBoolean(ENABLED_PROPERTY, ENABLED_ENV);
 	private static final int REPORT_INTERVAL = Math.max(1, readInt(REPORT_INTERVAL_PROPERTY, 300));
 	private static final long SLOW_FRAME_NANOS = Math.max(1L, readInt(SLOW_FRAME_MS_PROPERTY, 35)) * 1_000_000L;
 	private static final long SLOW_REPORT_THROTTLE_NANOS = 1_000_000_000L;
 
 	private static final StageStats frameStats = new StageStats();
+	private static final StageStats clientLoopStats = new StageStats();
+	private static final StageStats clientLoopSleepStats = new StageStats();
+	private static final StageStats clientLoopUpdateStats = new StageStats();
+	private static final StageStats clientLoopRepositionStats = new StageStats();
+	private static final StageStats clientLoopDrawStats = new StageStats();
 	private static final StageStats sceneRenderStats = new StageStats();
 	private static final StageStats sceneModelRotateStats = new StageStats();
 	private static final StageStats sceneWorldCullStats = new StageStats();
@@ -102,6 +108,10 @@ public final class RenderTelemetry {
 	private static final CounterStats nativeUiBlockCircleStats = new CounterStats();
 	private static final CounterStats nativeUiBlockPixelStats = new CounterStats();
 	private static final CounterStats nativeUiBaseEligibleStats = new CounterStats();
+	private static final CounterStats clientLoopUpdateCountStats = new CounterStats();
+	private static final CounterStats clientLoopSkippedDrawStats = new CounterStats();
+	private static final CounterStats clientLoopSleepRequestStats = new CounterStats();
+	private static final CounterStats clientLoopStepSizeStats = new CounterStats();
 	private static final CounterStats worldGeometryModelStats = new CounterStats();
 	private static final CounterStats worldGeometryFaceStats = new CounterStats();
 	private static final CounterStats worldSpriteAnchorStats = new CounterStats();
@@ -138,7 +148,9 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldChunkUploadStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkReuseStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkEvictStats = new CounterStats();
+	private static final CounterStats openGLWorldChunkConsideredStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawStats = new CounterStats();
+	private static final CounterStats openGLWorldChunkCulledStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawTriangleStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawTerrainStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawWallStats = new CounterStats();
@@ -148,6 +160,8 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldChunkDrawOtherStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawFallbackStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawSkippedStats = new CounterStats();
+	private static final CounterStats openGLWorldChunkDrawCallStats = new CounterStats();
+	private static final CounterStats openGLWorldChunkTextureBindStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkShadowChunkStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkShadowIndexStats = new CounterStats();
 	private static final CounterStats openGLWorldTextureReferencedStats = new CounterStats();
@@ -158,6 +172,9 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldSpriteAnchorStats = new CounterStats();
 	private static final CounterStats openGLWorldSpriteMatchedStats = new CounterStats();
 	private static final CounterStats openGLWorldSpriteDrawnStats = new CounterStats();
+	private static final CounterStats openGLWorldEntityConsideredStats = new CounterStats();
+	private static final CounterStats openGLWorldEntityDrawnStats = new CounterStats();
+	private static final CounterStats openGLWorldEntityCulledStats = new CounterStats();
 
 	private static final Map<String, AllocationStats> allocationStats = new LinkedHashMap<>();
 
@@ -231,6 +248,33 @@ public final class RenderTelemetry {
 
 		synchronized (RenderTelemetry.class) {
 			sceneRenderStats.record(nanos);
+		}
+	}
+
+	static void recordClientLoop(
+		long loopNanos,
+		long sleepNanos,
+		long updateNanos,
+		long repositionNanos,
+		long drawNanos,
+		int updateCount,
+		int sleepRequestMillis,
+		int stepSize,
+		boolean skippedDraw) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			clientLoopStats.record(loopNanos);
+			clientLoopSleepStats.record(sleepNanos);
+			clientLoopUpdateStats.record(updateNanos);
+			clientLoopRepositionStats.record(repositionNanos);
+			clientLoopDrawStats.record(drawNanos);
+			clientLoopUpdateCountStats.record(updateCount);
+			clientLoopSkippedDrawStats.record(skippedDraw ? 1 : 0);
+			clientLoopSleepRequestStats.record(sleepRequestMillis);
+			clientLoopStepSizeStats.record(stepSize);
 		}
 	}
 
@@ -374,13 +418,19 @@ public final class RenderTelemetry {
 		int fallbackTriangles,
 		int skippedTriangles,
 		int shadowChunks,
-		int shadowIndices) {
+		int shadowIndices,
+		int consideredChunks,
+		int culledChunks,
+		int drawCalls,
+		int textureBinds) {
 		if (!isCollectionEnabled()) {
 			return;
 		}
 
 		synchronized (RenderTelemetry.class) {
+			openGLWorldChunkConsideredStats.record(consideredChunks);
 			openGLWorldChunkDrawStats.record(drawnChunks);
+			openGLWorldChunkCulledStats.record(culledChunks);
 			openGLWorldChunkDrawTriangleStats.record(drawnTriangles);
 			openGLWorldChunkDrawTerrainStats.record(drawnTerrainTriangles);
 			openGLWorldChunkDrawWallStats.record(drawnWallTriangles);
@@ -390,6 +440,8 @@ public final class RenderTelemetry {
 			openGLWorldChunkDrawOtherStats.record(drawnOtherTriangles);
 			openGLWorldChunkDrawFallbackStats.record(fallbackTriangles);
 			openGLWorldChunkDrawSkippedStats.record(skippedTriangles);
+			openGLWorldChunkDrawCallStats.record(drawCalls);
+			openGLWorldChunkTextureBindStats.record(textureBinds);
 			openGLWorldChunkShadowChunkStats.record(shadowChunks);
 			openGLWorldChunkShadowIndexStats.record(shadowIndices);
 		}
@@ -423,6 +475,9 @@ public final class RenderTelemetry {
 			openGLWorldSpriteAnchorStats.record(anchors);
 			openGLWorldSpriteMatchedStats.record(matched);
 			openGLWorldSpriteDrawnStats.record(drawn);
+			openGLWorldEntityConsideredStats.record(anchors);
+			openGLWorldEntityDrawnStats.record(drawn);
+			openGLWorldEntityCulledStats.record(Math.max(0, anchors - drawn));
 		}
 	}
 
@@ -707,6 +762,11 @@ public final class RenderTelemetry {
 				openGLFrames,
 				openGLDroppedFrames,
 				repaintRequests,
+				recentFrameSummary(),
+				recentOpenGLTimingSummary(),
+				recentOpenGLPhaseSummary(),
+				recentScenePhaseSummary(),
+				recentClientLoopSummary(),
 				formatCount(spriteOverlayCapturedStats.average()),
 				formatCount(spriteOverlayStaticReplayStats.average()),
 				formatCount(spriteOverlayVisibleReplayStats.average()),
@@ -792,6 +852,13 @@ public final class RenderTelemetry {
 				formatCount(openGLWorldChunkUploadStats.average()),
 				formatCount(openGLWorldChunkReuseStats.average()),
 				formatCount(openGLWorldChunkEvictStats.average()),
+				formatVisibility(
+					openGLWorldChunkConsideredStats,
+					openGLWorldChunkDrawStats,
+					openGLWorldChunkCulledStats,
+					false),
+				formatCount(openGLWorldChunkDrawCallStats.average())
+					+ "/" + formatCount(openGLWorldChunkTextureBindStats.average()),
 				formatCount(openGLWorldChunkDrawStats.average()),
 				formatCount(openGLWorldChunkDrawTriangleStats.average()),
 				formatCount(openGLWorldChunkDrawTerrainStats.average()),
@@ -805,6 +872,11 @@ public final class RenderTelemetry {
 				formatCount(openGLWorldSpriteAnchorStats.average()),
 				formatCount(openGLWorldSpriteMatchedStats.average()),
 				formatCount(openGLWorldSpriteDrawnStats.average()),
+				formatVisibility(
+					openGLWorldEntityConsideredStats,
+					openGLWorldEntityDrawnStats,
+					openGLWorldEntityCulledStats,
+					false),
 				allocationSummary());
 		}
 	}
@@ -889,6 +961,11 @@ public final class RenderTelemetry {
 				+ "/" + formatCount(openGLWorldChunkUploadStats.average())
 				+ "/" + formatCount(openGLWorldChunkReuseStats.average())
 				+ "/" + formatCount(openGLWorldChunkEvictStats.average())
+				+ " chunk vis c/d/cull=" + formatVisibility(
+					openGLWorldChunkConsideredStats,
+					openGLWorldChunkDrawStats,
+					openGLWorldChunkCulledStats,
+					false)
 				+ " chunk draw c/t=" + formatCount(openGLWorldChunkDrawStats.average())
 				+ "/" + formatCount(openGLWorldChunkDrawTriangleStats.average())
 				+ " chunk draw t/w/r/go/wo/o=" + formatCount(openGLWorldChunkDrawTerrainStats.average())
@@ -899,6 +976,8 @@ public final class RenderTelemetry {
 				+ "/" + formatCount(openGLWorldChunkDrawOtherStats.average())
 				+ " chunk draw fallback/skip=" + formatCount(openGLWorldChunkDrawFallbackStats.average())
 				+ "/" + formatCount(openGLWorldChunkDrawSkippedStats.average())
+				+ " chunk submit calls/binds=" + formatCount(openGLWorldChunkDrawCallStats.average())
+				+ "/" + formatCount(openGLWorldChunkTextureBindStats.average())
 				+ " chunk shadow c/i=" + formatCount(openGLWorldChunkShadowChunkStats.average())
 				+ "/" + formatCount(openGLWorldChunkShadowIndexStats.average())
 				+ " uploads/reused=" + formatCount(openGLWorldMeshUploadStats.average())
@@ -935,6 +1014,11 @@ public final class RenderTelemetry {
 				+ "/" + formatCount(openGLWorldChunkUploadStats.windowAverage())
 				+ "/" + formatCount(openGLWorldChunkReuseStats.windowAverage())
 				+ "/" + formatCount(openGLWorldChunkEvictStats.windowAverage())
+				+ " chunk vis c/d/cull=" + formatVisibility(
+					openGLWorldChunkConsideredStats,
+					openGLWorldChunkDrawStats,
+					openGLWorldChunkCulledStats,
+					true)
 				+ " chunk draw c/t=" + formatCount(openGLWorldChunkDrawStats.windowAverage())
 				+ "/" + formatCount(openGLWorldChunkDrawTriangleStats.windowAverage())
 				+ " chunk draw t/w/r/go/wo/o=" + formatCount(openGLWorldChunkDrawTerrainStats.windowAverage())
@@ -945,6 +1029,8 @@ public final class RenderTelemetry {
 				+ "/" + formatCount(openGLWorldChunkDrawOtherStats.windowAverage())
 				+ " fallback/skip=" + formatCount(openGLWorldChunkDrawFallbackStats.windowAverage())
 				+ "/" + formatCount(openGLWorldChunkDrawSkippedStats.windowAverage())
+				+ " chunk submit calls/binds=" + formatCount(openGLWorldChunkDrawCallStats.windowAverage())
+				+ "/" + formatCount(openGLWorldChunkTextureBindStats.windowAverage())
 				+ " mesh draw tri/occ/b/calls=" + formatCount(openGLWorldMeshDrawTriangleStats.windowAverage())
 				+ "/" + formatCount(openGLWorldMeshDrawOccluderTriangleStats.windowAverage())
 				+ "/" + formatCount(openGLWorldMeshDrawBatchStats.windowAverage())
@@ -978,7 +1064,12 @@ public final class RenderTelemetry {
 			"[renderer-v2 telemetry] opengl world sprites avg: anchors="
 				+ formatCount(openGLWorldSpriteAnchorStats.average())
 				+ " matched=" + formatCount(openGLWorldSpriteMatchedStats.average())
-				+ " drawn=" + formatCount(openGLWorldSpriteDrawnStats.average()));
+				+ " drawn=" + formatCount(openGLWorldSpriteDrawnStats.average())
+				+ " entity vis c/d/cull=" + formatVisibility(
+					openGLWorldEntityConsideredStats,
+					openGLWorldEntityDrawnStats,
+					openGLWorldEntityCulledStats,
+					false));
 
 		System.out.println(
 			"[renderer-v2 telemetry] presentation avg ms: setImage=" + formatMillis(setGameImageStats.average())
@@ -1096,6 +1187,11 @@ public final class RenderTelemetry {
 	private static void resetReportWindow() {
 		StageStats[] stageStats = {
 			frameStats,
+			clientLoopStats,
+			clientLoopSleepStats,
+			clientLoopUpdateStats,
+			clientLoopRepositionStats,
+			clientLoopDrawStats,
 			sceneRenderStats,
 			sceneModelRotateStats,
 			sceneWorldCullStats,
@@ -1186,6 +1282,10 @@ public final class RenderTelemetry {
 			nativeUiBlockCircleStats,
 			nativeUiBlockPixelStats,
 			nativeUiBaseEligibleStats,
+			clientLoopUpdateCountStats,
+			clientLoopSkippedDrawStats,
+			clientLoopSleepRequestStats,
+			clientLoopStepSizeStats,
 			worldGeometryModelStats,
 			worldGeometryFaceStats,
 			worldSpriteAnchorStats,
@@ -1222,7 +1322,9 @@ public final class RenderTelemetry {
 			openGLWorldChunkUploadStats,
 			openGLWorldChunkReuseStats,
 			openGLWorldChunkEvictStats,
+			openGLWorldChunkConsideredStats,
 			openGLWorldChunkDrawStats,
+			openGLWorldChunkCulledStats,
 			openGLWorldChunkDrawTriangleStats,
 			openGLWorldChunkDrawTerrainStats,
 			openGLWorldChunkDrawWallStats,
@@ -1232,6 +1334,8 @@ public final class RenderTelemetry {
 			openGLWorldChunkDrawOtherStats,
 			openGLWorldChunkDrawFallbackStats,
 			openGLWorldChunkDrawSkippedStats,
+			openGLWorldChunkDrawCallStats,
+			openGLWorldChunkTextureBindStats,
 			openGLWorldChunkShadowChunkStats,
 			openGLWorldChunkShadowIndexStats,
 			openGLWorldTextureReferencedStats,
@@ -1241,13 +1345,63 @@ public final class RenderTelemetry {
 			openGLWorldTextureAtlasStats,
 			openGLWorldSpriteAnchorStats,
 			openGLWorldSpriteMatchedStats,
-			openGLWorldSpriteDrawnStats
+			openGLWorldSpriteDrawnStats,
+			openGLWorldEntityConsideredStats,
+			openGLWorldEntityDrawnStats,
+			openGLWorldEntityCulledStats
 		};
 		for (CounterStats stats : counterStats) {
 			stats.resetWindow();
 		}
 		openGLFramesWindow = 0L;
 		openGLDroppedFramesWindow = 0L;
+	}
+
+	private static String recentFrameSummary() {
+		long frameNanos = frameStats.recentAverage();
+		return formatMillis(frameNanos)
+			+ "/" + formatMillis(sceneRenderStats.recentAverage())
+			+ "/" + formatMillis(openGLRenderStats.recentAverage())
+			+ "ms | drawfps " + formatFramesPerSecond(frameNanos);
+	}
+
+	private static String recentOpenGLTimingSummary() {
+		return formatMillis(openGLSnapshotStats.recentAverage())
+			+ "/" + formatMillis(openGLUploadStats.recentAverage())
+			+ "/" + formatMillis(openGLRenderStats.recentAverage())
+			+ "ms";
+	}
+
+	private static String recentOpenGLPhaseSummary() {
+		return formatMillis(openGLBaseStats.recentAverage())
+			+ "/" + formatMillis(openGLWorldStats.recentAverage())
+			+ "/" + formatMillis(openGLWorldSpriteStats.recentAverage())
+			+ "/" + formatMillis(openGLSpriteOverlayStats.recentAverage())
+			+ "/" + formatMillis(openGLDebugOverlayStats.recentAverage())
+			+ "/" + formatMillis(openGLSwapStats.recentAverage())
+			+ "ms";
+	}
+
+	private static String recentScenePhaseSummary() {
+		return formatMillis(sceneModelRotateStats.recentAverage())
+			+ "/" + formatMillis(sceneWorldCullStats.recentAverage())
+			+ "/" + formatMillis(sceneDepthExportStats.recentAverage())
+			+ "/" + formatMillis(sceneLegacyDrawStats.recentAverage())
+			+ "/" + formatMillis(sceneMeshExportStats.recentAverage())
+			+ "ms";
+	}
+
+	private static String recentClientLoopSummary() {
+		return formatMillis(clientLoopStats.recentAverage())
+			+ "/" + formatMillis(clientLoopSleepStats.recentAverage())
+			+ "/" + formatMillis(clientLoopUpdateStats.recentAverage())
+			+ "/" + formatMillis(clientLoopRepositionStats.recentAverage())
+			+ "/" + formatMillis(clientLoopDrawStats.recentAverage())
+			+ "ms | upd/skip/sleep/step "
+			+ formatCount(clientLoopUpdateCountStats.recentAverage())
+			+ "/" + formatCount(clientLoopSkippedDrawStats.recentAverage())
+			+ "/" + formatCount(clientLoopSleepRequestStats.recentAverage())
+			+ "/" + formatCount(clientLoopStepSizeStats.recentAverage());
 	}
 
 	private static String allocationSummary() {
@@ -1286,6 +1440,24 @@ public final class RenderTelemetry {
 			return String.valueOf(Math.round(count));
 		}
 		return String.format("%.1f", count);
+	}
+
+	private static String formatFramesPerSecond(long averageFrameNanos) {
+		if (averageFrameNanos <= 0L) {
+			return "0.0";
+		}
+		return String.format("%.1f", 1_000_000_000.0 / averageFrameNanos);
+	}
+
+	private static String formatVisibility(
+		CounterStats consideredStats,
+		CounterStats drawnStats,
+		CounterStats culledStats,
+		boolean window) {
+		double considered = window ? consideredStats.windowAverage() : consideredStats.average();
+		double drawn = window ? drawnStats.windowAverage() : drawnStats.average();
+		double culled = window ? culledStats.windowAverage() : culledStats.average();
+		return formatCount(considered) + "/" + formatCount(drawn) + "/" + formatCount(culled);
 	}
 
 	private static boolean readBoolean(String propertyName, String envName) {
@@ -1331,6 +1503,10 @@ public final class RenderTelemetry {
 		private long windowCount;
 		private long windowTotal;
 		private long windowMax;
+		private final long[] recentSamples = new long[RECENT_SAMPLE_LIMIT];
+		private int recentIndex;
+		private int recentCount;
+		private long recentTotal;
 
 		private void record(long nanos) {
 			count++;
@@ -1343,6 +1519,7 @@ public final class RenderTelemetry {
 			if (nanos > windowMax) {
 				windowMax = nanos;
 			}
+			recordRecent(nanos);
 		}
 
 		private long average() {
@@ -1353,10 +1530,27 @@ public final class RenderTelemetry {
 			return windowCount == 0L ? 0L : windowTotal / windowCount;
 		}
 
+		private long recentAverage() {
+			return recentCount == 0 ? 0L : recentTotal / recentCount;
+		}
+
 		private void resetWindow() {
 			windowCount = 0L;
 			windowTotal = 0L;
 			windowMax = 0L;
+		}
+
+		private void recordRecent(long nanos) {
+			if (recentCount < recentSamples.length) {
+				recentSamples[recentIndex] = nanos;
+				recentTotal += nanos;
+				recentCount++;
+			} else {
+				recentTotal -= recentSamples[recentIndex];
+				recentSamples[recentIndex] = nanos;
+				recentTotal += nanos;
+			}
+			recentIndex = (recentIndex + 1) % recentSamples.length;
 		}
 	}
 
@@ -1377,6 +1571,10 @@ public final class RenderTelemetry {
 		private long windowCount;
 		private long windowTotal;
 		private long windowMax;
+		private final int[] recentSamples = new int[RECENT_SAMPLE_LIMIT];
+		private int recentIndex;
+		private int recentCount;
+		private long recentTotal;
 
 		private void record(int value) {
 			count++;
@@ -1389,6 +1587,7 @@ public final class RenderTelemetry {
 			if (value > windowMax) {
 				windowMax = value;
 			}
+			recordRecent(value);
 		}
 
 		private double average() {
@@ -1399,10 +1598,27 @@ public final class RenderTelemetry {
 			return windowCount == 0L ? 0.0 : windowTotal / (double) windowCount;
 		}
 
+		private double recentAverage() {
+			return recentCount == 0 ? 0.0 : recentTotal / (double) recentCount;
+		}
+
 		private void resetWindow() {
 			windowCount = 0L;
 			windowTotal = 0L;
 			windowMax = 0L;
+		}
+
+		private void recordRecent(int value) {
+			if (recentCount < recentSamples.length) {
+				recentSamples[recentIndex] = value;
+				recentTotal += value;
+				recentCount++;
+			} else {
+				recentTotal -= recentSamples[recentIndex];
+				recentSamples[recentIndex] = value;
+				recentTotal += value;
+			}
+			recentIndex = (recentIndex + 1) % recentSamples.length;
 		}
 	}
 
@@ -1434,6 +1650,11 @@ public final class RenderTelemetry {
 		final long openGLFrames;
 		final long openGLDroppedFrames;
 		final long repaintRequests;
+		final String recentFrameSummary;
+		final String recentOpenGLTimingSummary;
+		final String recentOpenGLPhaseSummary;
+		final String recentScenePhaseSummary;
+		final String recentClientLoopSummary;
 		final String spriteOverlayCapturedAverage;
 		final String spriteOverlayStaticReplayAverage;
 		final String spriteOverlayVisibleReplayAverage;
@@ -1519,6 +1740,8 @@ public final class RenderTelemetry {
 		final String openGLWorldChunkUploadAverage;
 		final String openGLWorldChunkReuseAverage;
 		final String openGLWorldChunkEvictAverage;
+		final String openGLWorldChunkVisibilityAverage;
+		final String openGLWorldChunkSubmitAverage;
 		final String openGLWorldChunkDrawAverage;
 		final String openGLWorldChunkDrawTriangleAverage;
 		final String openGLWorldChunkDrawTerrainAverage;
@@ -1532,6 +1755,7 @@ public final class RenderTelemetry {
 		final String openGLWorldSpriteAnchorAverage;
 		final String openGLWorldSpriteMatchedAverage;
 		final String openGLWorldSpriteDrawnAverage;
+		final String openGLWorldEntityVisibilityAverage;
 		final String allocations;
 
 		private Snapshot(
@@ -1562,6 +1786,11 @@ public final class RenderTelemetry {
 			long openGLFrames,
 			long openGLDroppedFrames,
 			long repaintRequests,
+			String recentFrameSummary,
+			String recentOpenGLTimingSummary,
+			String recentOpenGLPhaseSummary,
+			String recentScenePhaseSummary,
+			String recentClientLoopSummary,
 			String spriteOverlayCapturedAverage,
 			String spriteOverlayStaticReplayAverage,
 			String spriteOverlayVisibleReplayAverage,
@@ -1647,6 +1876,8 @@ public final class RenderTelemetry {
 			String openGLWorldChunkUploadAverage,
 			String openGLWorldChunkReuseAverage,
 			String openGLWorldChunkEvictAverage,
+			String openGLWorldChunkVisibilityAverage,
+			String openGLWorldChunkSubmitAverage,
 			String openGLWorldChunkDrawAverage,
 			String openGLWorldChunkDrawTriangleAverage,
 			String openGLWorldChunkDrawTerrainAverage,
@@ -1660,6 +1891,7 @@ public final class RenderTelemetry {
 			String openGLWorldSpriteAnchorAverage,
 			String openGLWorldSpriteMatchedAverage,
 			String openGLWorldSpriteDrawnAverage,
+			String openGLWorldEntityVisibilityAverage,
 			String allocations) {
 			this.enabled = enabled;
 			this.frameCount = frameCount;
@@ -1688,6 +1920,11 @@ public final class RenderTelemetry {
 			this.openGLFrames = openGLFrames;
 			this.openGLDroppedFrames = openGLDroppedFrames;
 			this.repaintRequests = repaintRequests;
+			this.recentFrameSummary = recentFrameSummary;
+			this.recentOpenGLTimingSummary = recentOpenGLTimingSummary;
+			this.recentOpenGLPhaseSummary = recentOpenGLPhaseSummary;
+			this.recentScenePhaseSummary = recentScenePhaseSummary;
+			this.recentClientLoopSummary = recentClientLoopSummary;
 			this.spriteOverlayCapturedAverage = spriteOverlayCapturedAverage;
 			this.spriteOverlayStaticReplayAverage = spriteOverlayStaticReplayAverage;
 			this.spriteOverlayVisibleReplayAverage = spriteOverlayVisibleReplayAverage;
@@ -1773,6 +2010,8 @@ public final class RenderTelemetry {
 			this.openGLWorldChunkUploadAverage = openGLWorldChunkUploadAverage;
 			this.openGLWorldChunkReuseAverage = openGLWorldChunkReuseAverage;
 			this.openGLWorldChunkEvictAverage = openGLWorldChunkEvictAverage;
+			this.openGLWorldChunkVisibilityAverage = openGLWorldChunkVisibilityAverage;
+			this.openGLWorldChunkSubmitAverage = openGLWorldChunkSubmitAverage;
 			this.openGLWorldChunkDrawAverage = openGLWorldChunkDrawAverage;
 			this.openGLWorldChunkDrawTriangleAverage = openGLWorldChunkDrawTriangleAverage;
 			this.openGLWorldChunkDrawTerrainAverage = openGLWorldChunkDrawTerrainAverage;
@@ -1786,6 +2025,7 @@ public final class RenderTelemetry {
 			this.openGLWorldSpriteAnchorAverage = openGLWorldSpriteAnchorAverage;
 			this.openGLWorldSpriteMatchedAverage = openGLWorldSpriteMatchedAverage;
 			this.openGLWorldSpriteDrawnAverage = openGLWorldSpriteDrawnAverage;
+			this.openGLWorldEntityVisibilityAverage = openGLWorldEntityVisibilityAverage;
 			this.allocations = allocations;
 		}
 	}

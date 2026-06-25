@@ -16,6 +16,8 @@ final class RendererRuntimeDefaults {
 		setDefault("spoiledmilk.openglWorldStaticTextures", "SPOILED_MILK_OPENGL_WORLD_STATIC_TEXTURES", "true");
 		setDefault("spoiledmilk.openglWorldTexturedAlpha", "SPOILED_MILK_OPENGL_WORLD_TEXTURED_ALPHA", "1.0");
 		setDefault("spoiledmilk.openglWorldSpritesVisible", "SPOILED_MILK_OPENGL_WORLD_SPRITES_VISIBLE", "true");
+		setDefault("spoiledmilk.skipLegacyWorldRaster", "SPOILED_MILK_SKIP_LEGACY_WORLD_RASTER", "true");
+		setDefault("spoiledmilk.modernClientLoop", "SPOILED_MILK_MODERN_CLIENT_LOOP", "true");
 	}
 
 	private static void setDefault(String propertyName, String envName, String value) {

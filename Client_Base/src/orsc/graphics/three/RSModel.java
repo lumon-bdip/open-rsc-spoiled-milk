@@ -1090,6 +1090,8 @@ public final class RSModel {
 		private final List<Integer> triangleTextures = new ArrayList<Integer>();
 		private final List<Integer> triangleFallbackColors = new ArrayList<Integer>();
 		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
+		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
+			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
 
 		private ObjectChunkMeshBuilder(
 			int plane,
@@ -1109,11 +1111,12 @@ public final class RSModel {
 				return;
 			}
 			Renderer3DModelKind kind = model.getRenderer3DModelKind();
-			if (kind != Renderer3DModelKind.GAME_OBJECT && kind != Renderer3DModelKind.WALL_OBJECT) {
-				return;
-			}
-			model.resetTransformCache(7972);
-			for (int face = 0; face < model.faceHead; face++) {
+				if (kind != Renderer3DModelKind.GAME_OBJECT && kind != Renderer3DModelKind.WALL_OBJECT) {
+					return;
+				}
+				model.resetTransformCache(7972);
+				addModelShadowCaster(kind, model);
+				for (int face = 0; face < model.faceHead; face++) {
 				int vertexCount = model.faceIndexCount[face];
 				if (vertexCount < 3) {
 					continue;
@@ -1217,6 +1220,65 @@ public final class RSModel {
 			triangleModelKinds.add(kind);
 		}
 
+		private void addModelShadowCaster(Renderer3DModelKind kind, RSModel model) {
+			if (model.vertHead <= 0) {
+				return;
+			}
+			int minX = Integer.MAX_VALUE;
+			int maxX = Integer.MIN_VALUE;
+			int minY = Integer.MAX_VALUE;
+			int maxY = Integer.MIN_VALUE;
+			int minZ = Integer.MAX_VALUE;
+			int maxZ = Integer.MIN_VALUE;
+			for (int vertex = 0; vertex < model.vertHead; vertex++) {
+				minX = Math.min(minX, model.vertXTransform[vertex]);
+				maxX = Math.max(maxX, model.vertXTransform[vertex]);
+				minY = Math.min(minY, model.vertYTransform[vertex]);
+				maxY = Math.max(maxY, model.vertYTransform[vertex]);
+				minZ = Math.min(minZ, model.vertZTransform[vertex]);
+				maxZ = Math.max(maxZ, model.vertZTransform[vertex]);
+			}
+			if (minX == Integer.MAX_VALUE || minY == Integer.MAX_VALUE || minZ == Integer.MAX_VALUE) {
+				return;
+			}
+			int spanX = maxX - minX;
+			int spanZ = maxZ - minZ;
+			int height = maxY - minY;
+			if (height <= 0 || (spanX <= 0 && spanZ <= 0)) {
+				return;
+			}
+			int centerX = (minX + maxX) / 2;
+			int centerZ = (minZ + maxZ) / 2;
+			int baseX0;
+			int baseZ0;
+			int baseX1;
+			int baseZ1;
+			if (spanX >= spanZ) {
+				baseX0 = minX;
+				baseZ0 = centerZ;
+				baseX1 = maxX;
+				baseZ1 = centerZ;
+			} else {
+				baseX0 = centerX;
+				baseZ0 = minZ;
+				baseX1 = centerX;
+				baseZ1 = maxZ;
+			}
+			int width = Math.max(1, Math.max(spanX, spanZ));
+			int opacity = kind == Renderer3DModelKind.WALL_OBJECT ? 176 : 144;
+			shadowCasters.add(new Renderer3DWorldChunkFrame.ShadowCaster(
+				kind,
+				baseX0,
+				minY,
+				baseZ0,
+				baseX1,
+				baseZ1,
+				height,
+				width,
+				opacity,
+				true));
+		}
+
 		private void addVertex(
 			int[] faceVertexCoords,
 			int[] faceVertexLights,
@@ -1318,6 +1380,8 @@ public final class RSModel {
 			int[] fallbackArray = toIntArray(triangleFallbackColors);
 			Renderer3DModelKind[] kindArray =
 				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
+			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray =
+				shadowCasters.toArray(new Renderer3DWorldChunkFrame.ShadowCaster[shadowCasters.size()]);
 			long signature = signature(
 				vertexArray,
 				textureUArray,
@@ -1326,7 +1390,8 @@ public final class RSModel {
 				indexArray,
 				textureArray,
 				fallbackArray,
-				kindArray);
+				kindArray,
+				shadowCasterArray);
 			return new Renderer3DWorldChunkFrame.ChunkMesh(
 				plane,
 				centerSectionX,
@@ -1341,6 +1406,7 @@ public final class RSModel {
 				textureArray,
 				fallbackArray,
 				kindArray,
+				shadowCasterArray,
 				0,
 				0,
 				0,
@@ -1372,7 +1438,8 @@ public final class RSModel {
 			int[] indexArray,
 			int[] textureArray,
 			int[] fallbackArray,
-			Renderer3DModelKind[] kindArray) {
+			Renderer3DModelKind[] kindArray,
+			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray) {
 			long hash = FNV_OFFSET_BASIS;
 			hash = mix(hash, plane);
 			hash = mix(hash, centerSectionX);
@@ -1402,6 +1469,18 @@ public final class RSModel {
 			}
 			for (Renderer3DModelKind kind : kindArray) {
 				hash = mix(hash, kind.ordinal());
+			}
+			for (Renderer3DWorldChunkFrame.ShadowCaster caster : shadowCasterArray) {
+				hash = mix(hash, caster.getModelKind().ordinal());
+				hash = mix(hash, caster.getBaseX0());
+				hash = mix(hash, caster.getBaseY());
+				hash = mix(hash, caster.getBaseZ0());
+				hash = mix(hash, caster.getBaseX1());
+				hash = mix(hash, caster.getBaseZ1());
+				hash = mix(hash, caster.getHeight());
+				hash = mix(hash, caster.getWidth());
+				hash = mix(hash, caster.getOpacity());
+				hash = mix(hash, caster.isOutdoorOnly() ? 1 : 0);
 			}
 			return hash;
 		}

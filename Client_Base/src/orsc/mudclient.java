@@ -87,9 +87,16 @@ public final class mudclient implements Runnable {
 	private static final int WALL_OBJECT_KEY_BASE = 20000;
 	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
 	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
+	private static final String MODERN_CLIENT_LOOP_PROPERTY = "spoiledmilk.modernClientLoop";
+	private static final String MODERN_CLIENT_LOOP_ENV = "SPOILED_MILK_MODERN_CLIENT_LOOP";
 	private static final int GAME_OBJECT_INSTANCE_CAPACITY = WALL_OBJECT_KEY_BASE;
 	private static final int WALL_OBJECT_INSTANCE_CAPACITY = 5000;
 	private static final int OPENGL_PRIMARY_TARGET_FPS = 60;
+	private static final int MODERN_LOOP_MAX_CATCH_UP_UPDATES = 5;
+	private static final long NANOS_PER_MILLI = 1_000_000L;
+	private static final long NANOS_PER_SECOND = 1_000_000_000L;
+	private static final boolean MODERN_CLIENT_LOOP_ENABLED =
+		readBoolean(MODERN_CLIENT_LOOP_PROPERTY, MODERN_CLIENT_LOOP_ENV, false);
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS = 0xcbf29ce484222325L;
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_PRIME = 0x100000001b3L;
 	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
@@ -1474,7 +1481,150 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private boolean shouldUseModernClientLoop() {
+		return MODERN_CLIENT_LOOP_ENABLED && ScaledWindow.isOpenGLPrimaryWindowEnabled();
+	}
+
+	private void runModernClientLoop() {
+		try {
+			try {
+				final int targetFps = Math.max(1, OPENGL_PRIMARY_TARGET_FPS);
+				final long frameNanos = Math.max(1L, NANOS_PER_SECOND / targetFps);
+				long nextUpdateNanos = System.nanoTime();
+
+				while (this.threadState >= 0) {
+					boolean telemetryEnabled = RenderTelemetry.isEnabled();
+					long loopStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
+					long loopSleepNanos = 0L;
+					long loopUpdateNanos = 0L;
+					long loopRepositionNanos = 0L;
+					long loopDrawNanos = 0L;
+					long sleepRequestMillis = 0L;
+
+					if (this.threadState > 0) {
+						--this.threadState;
+						if (this.threadState == 0) {
+							this.closeProgram();
+							this.clientBaseThread = null;
+							return;
+						}
+					}
+
+					long now = System.nanoTime();
+					long sleepNanos = nextUpdateNanos - now;
+					if (sleepNanos > 0L) {
+						sleepRequestMillis = Math.max(1L, (sleepNanos + NANOS_PER_MILLI - 1L) / NANOS_PER_MILLI);
+						long sleepStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
+						java.util.concurrent.locks.LockSupport.parkNanos(sleepNanos);
+						if (telemetryEnabled) {
+							loopSleepNanos = RenderTelemetry.elapsedSince(sleepStart);
+						}
+						now = System.nanoTime();
+						if (now < nextUpdateNanos) {
+							if (telemetryEnabled) {
+								RenderTelemetry.recordClientLoop(
+									RenderTelemetry.elapsedSince(loopStart),
+									loopSleepNanos,
+									0L,
+									0L,
+									0L,
+									0,
+									(int)Math.min(Integer.MAX_VALUE, sleepRequestMillis),
+									256,
+									true);
+							}
+							continue;
+						}
+					}
+
+					int updateCount = 0;
+					while (now >= nextUpdateNanos && updateCount < MODERN_LOOP_MAX_CATCH_UP_UPDATES) {
+						long updateStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
+						this.update();
+						if (telemetryEnabled) {
+							loopUpdateNanos += RenderTelemetry.elapsedSince(updateStart);
+						}
+						nextUpdateNanos += frameNanos;
+						updateCount++;
+						now = System.nanoTime();
+					}
+					if (updateCount == MODERN_LOOP_MAX_CATCH_UP_UPDATES && now >= nextUpdateNanos) {
+						nextUpdateNanos = now + frameNanos;
+					}
+
+					long repositionStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
+					boolean repositioned = reposition();
+					boolean skippedDraw = repositioned || (this.currentViewMode == GameMode.LOGIN && scalarChangedSinceLogin);
+					if (telemetryEnabled) {
+						loopRepositionNanos = RenderTelemetry.elapsedSince(repositionStart);
+					}
+					if (skippedDraw) {
+						if (this.currentViewMode == GameMode.LOGIN) {
+							this.createLoginPanels(3845);
+							scalarChangedSinceLogin = false;
+							//this.renderLoginScreenViewports(-116);
+						}
+						if (telemetryEnabled) {
+							RenderTelemetry.recordClientLoop(
+								RenderTelemetry.elapsedSince(loopStart),
+								loopSleepNanos,
+								loopUpdateNanos,
+								loopRepositionNanos,
+								0L,
+								updateCount,
+								(int)Math.min(Integer.MAX_VALUE, sleepRequestMillis),
+								256,
+								true);
+						}
+						continue;
+					}
+
+					long drawStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
+					this.draw();
+					if (telemetryEnabled) {
+						loopDrawNanos = RenderTelemetry.elapsedSince(drawStart);
+					}
+					currentFPS++;
+					long time = System.currentTimeMillis();
+					if (time - lastFPSUpdate >= 1000) {
+						lastFPSUpdate = time;
+						mudclient.FPS = currentFPS;
+						currentFPS = 0;
+					}
+					if (telemetryEnabled) {
+						RenderTelemetry.recordClientLoop(
+							RenderTelemetry.elapsedSince(loopStart),
+							loopSleepNanos,
+							loopUpdateNanos,
+							loopRepositionNanos,
+							loopDrawNanos,
+							updateCount,
+							(int)Math.min(Integer.MAX_VALUE, sleepRequestMillis),
+							256,
+							false);
+					}
+				}
+
+				if (this.threadState == -1) {
+					this.closeProgram();
+				}
+
+				this.clientBaseThread = null;
+			} catch (Exception var10) {
+				var10.printStackTrace();
+				this.errorGameCrash();
+			}
+
+		} catch (RuntimeException var11) {
+			throw GenUtil.makeThrowable(var11, "e.runModernClientLoop()");
+		}
+	}
+
 	private void run2() {
+		if (shouldUseModernClientLoop()) {
+			runModernClientLoop();
+			return;
+		}
 		try {
 			try {
 				int var3 = 0;
@@ -1490,6 +1640,12 @@ public final class mudclient implements Runnable {
 				long var1 = GenUtil.currentTimeMillis();
 
 				while (this.threadState >= 0) {
+					boolean telemetryEnabled = RenderTelemetry.isEnabled();
+					long loopStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
+					long loopSleepNanos = 0L;
+					long loopUpdateNanos = 0L;
+					long loopRepositionNanos = 0L;
+					long loopDrawNanos = 0L;
 					if (this.threadState > 0) {
 						--this.threadState;
 						if (this.threadState == 0) {
@@ -1523,7 +1679,11 @@ public final class mudclient implements Runnable {
 							var5 = m_Q;
 						}
 					}
+					long sleepStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
 					GenUtil.sleepShadow(var5);
+					if (telemetryEnabled) {
+						loopSleepNanos = RenderTelemetry.elapsedSince(sleepStart);
+					}
 					this.m_F[var3] = var1;
 					int var9;
 					if (var5 > 1) {
@@ -1538,7 +1698,11 @@ public final class mudclient implements Runnable {
 					var9 = 0;
 
 					while (var6 < 256) {
+						long updateStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
 						this.update();
+						if (telemetryEnabled) {
+							loopUpdateNanos += RenderTelemetry.elapsedSince(updateStart);
+						}
 						var6 += var4;
 						++var9;
 						int m_S = 1000;
@@ -1555,15 +1719,37 @@ public final class mudclient implements Runnable {
 
 					--this.m_b;
 					var6 &= 255;
-					if (reposition() || (this.currentViewMode == GameMode.LOGIN && scalarChangedSinceLogin)) {
+					long repositionStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
+					boolean repositioned = reposition();
+					boolean skippedDraw = repositioned || (this.currentViewMode == GameMode.LOGIN && scalarChangedSinceLogin);
+					if (telemetryEnabled) {
+						loopRepositionNanos = RenderTelemetry.elapsedSince(repositionStart);
+					}
+					if (skippedDraw) {
 						if (this.currentViewMode == GameMode.LOGIN) {
 							this.createLoginPanels(3845);
 							scalarChangedSinceLogin = false;
 							//this.renderLoginScreenViewports(-116);
 						}
+						if (telemetryEnabled) {
+							RenderTelemetry.recordClientLoop(
+								RenderTelemetry.elapsedSince(loopStart),
+								loopSleepNanos,
+								loopUpdateNanos,
+								loopRepositionNanos,
+								0L,
+								var9,
+								var5,
+								var4,
+								true);
+						}
 						continue;
 					}
+					long drawStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
 					this.draw();
+					if (telemetryEnabled) {
+						loopDrawNanos = RenderTelemetry.elapsedSince(drawStart);
+					}
 					currentFPS++;
 					long time = System.currentTimeMillis();
 					if (time - lastFPSUpdate >= 1000) {
@@ -1571,6 +1757,18 @@ public final class mudclient implements Runnable {
 						mudclient.FPS = currentFPS;
 						currentFPS = 0;
 
+					}
+					if (telemetryEnabled) {
+						RenderTelemetry.recordClientLoop(
+							RenderTelemetry.elapsedSince(loopStart),
+							loopSleepNanos,
+							loopUpdateNanos,
+							loopRepositionNanos,
+							loopDrawNanos,
+							var9,
+							var5,
+							var4,
+							false);
 					}
 
 				}
@@ -14182,6 +14380,12 @@ public final class mudclient implements Runnable {
 		System.out.println("[renderer-v2] debug overlay " + (enabled ? "enabled" : "disabled"));
 	}
 
+	void toggleRendererDebugOverlayMode() {
+		RendererDebugSettings.Mode mode = RendererDebugSettings.toggleMode();
+		saveRendererDebugSettings();
+		System.out.println("[renderer-v2] debug overlay mode " + mode.id);
+	}
+
 	void cycleRenderSurfaceMode() {
 		RenderSurfaceSettings.Mode mode = RenderSurfaceSettings.cycleMode();
 		this.resizeWidth = mode.width;
@@ -20529,6 +20733,7 @@ public final class mudclient implements Runnable {
 			this.scene.fogZFalloff = 1;
 			this.scene.fogSmoothingStartDistance = 10000;
 			this.scene.setCamera(slide_x, -this.world.getElevation(slide_x, slide_y), slide_y, 912, rotation, 0, zoom_distance * 2);
+			this.scene.forceLegacyWorldRasterOnce();
 			this.scene.endScene(-124);
 			if (var1 >= -48) {
 				this.localPlayer = null;
@@ -20564,6 +20769,7 @@ public final class mudclient implements Runnable {
 			this.scene.fogSmoothingStartDistance = 10000;
 			this.scene.fogEntityDistance = 10000;
 			this.scene.setCamera(slide_x, -this.world.getElevation(slide_x, slide_y), slide_y, 912, rotation, 0, zoom_distance * 2);
+			this.scene.forceLegacyWorldRasterOnce();
 			this.scene.endScene(-114);
 			this.getSurface().fade2black(16316665);
 			this.getSurface().fade2black(16316665);
@@ -20603,6 +20809,7 @@ public final class mudclient implements Runnable {
 			this.scene.fogZFalloff = 1;
 			this.scene.fogSmoothingStartDistance = 10000;
 			this.scene.setCamera(slide_x, -this.world.getElevation(slide_x, slide_y), slide_y, 912, rotation, 0, zoom_distance * 2);
+			this.scene.forceLegacyWorldRasterOnce();
 			this.scene.endScene(-111);
 
 			this.getSurface().fade2black(16316665);
@@ -24043,6 +24250,22 @@ public final class mudclient implements Runnable {
 
 	static int getCurrentFPS() {
 		return FPS;
+	}
+
+	private static boolean readBoolean(String propertyName, String envName, boolean defaultValue) {
+		String value = System.getProperty(propertyName);
+		if (value == null || value.trim().isEmpty()) {
+			value = System.getenv(envName);
+		}
+		if (value == null || value.trim().isEmpty()) {
+			return defaultValue;
+		}
+
+		value = value.trim();
+		return "true".equalsIgnoreCase(value)
+			|| "1".equals(value)
+			|| "yes".equalsIgnoreCase(value)
+			|| "on".equalsIgnoreCase(value);
 	}
 
 	private int halfGameWidth() {
