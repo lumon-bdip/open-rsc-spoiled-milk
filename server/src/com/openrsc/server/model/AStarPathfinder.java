@@ -116,17 +116,12 @@ public class AStarPathfinder {
 	}
 
 	private Path buildPath() {
-		Point parent = closedNodes.get(closedNodes.size()-1).parent;
-		Node endNode = costBoard[parent.getX()][parent.getY()];
-		while (endNode != null) {
+		Node endNode = closedNodes.get(closedNodes.size()-1);
+		while (endNode != null && endNode.parent != null) {
 			int worldX = worldStart.getX() + depth - endNode.position.getX();
 			int worldY = worldStart.getY() - depth + endNode.position.getY();
-			if (endNode.parent == null)
-				endNode = null;
-			else {
-				path.addDirect(worldX, worldY);
-				endNode = costBoard[endNode.parent.getX()][endNode.parent.getY()];
-			}
+			path.addDirect(worldX, worldY);
+			endNode = costBoard[endNode.parent.getX()][endNode.parent.getY()];
 
 		}
 		return path;

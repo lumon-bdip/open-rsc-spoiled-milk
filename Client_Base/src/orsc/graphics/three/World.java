@@ -11,9 +11,11 @@ import orsc.util.GenUtil;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -42,6 +44,11 @@ public final class World {
 	private static final int MODEL_SPLIT_VERTEX_LIMIT = 512;
 	private static final int MINIMAP_PIXEL_SIZE = LEGACY_MINIMAP_FACE_TILE_COUNT * 3;
 	private static final int SECTOR_CACHE_LIMIT = 256;
+	private static final int CPU_SECTION_WINDOW_CACHE_LIMIT = 24;
+	private static final int TERRAIN_MODEL_INPUT_CACHE_LIMIT = 24;
+	private static final int WALL_MODEL_INPUT_CACHE_LIMIT = 24;
+	private static final int ROOF_MODEL_INPUT_CACHE_LIMIT = 24;
+	private static final int WORLD_MODEL_PRODUCT_CACHE_LIMIT = 48;
 	private static final int SECTOR_PRELOAD_LOW_OFFSET = -ACTIVE_SECTION_ORIGIN_OFFSET - 1;
 	private static final int SECTOR_PRELOAD_HIGH_OFFSET = ACTIVE_SECTION_GRID - ACTIVE_SECTION_ORIGIN_OFFSET;
 	private final int[] colorToResource = new int[256];
@@ -49,6 +56,11 @@ public final class World {
 	private final int[][] pathFindSource = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
 	private final int[][] tileDirection = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
 	private final Object sectorCacheLock = new Object();
+	private final Object cpuSectionWindowCacheLock = new Object();
+	private final Object terrainModelInputCacheLock = new Object();
+	private final Object wallModelInputCacheLock = new Object();
+	private final Object roofModelInputCacheLock = new Object();
+	private final Object worldModelProductCacheLock = new Object();
 	private final Object tileArchiveLock = new Object();
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
 		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
@@ -59,6 +71,46 @@ public final class World {
 		}
 	);
 	private final Set<String> sectorPreloadsInFlight = Collections.synchronizedSet(new HashSet<String>());
+	private final Map<String, CpuSectionWindow> cpuSectionWindowCache =
+		new LinkedHashMap<String, CpuSectionWindow>(CPU_SECTION_WINDOW_CACHE_LIMIT, 0.75F, true) {
+			@Override
+			protected boolean removeEldestEntry(Map.Entry<String, CpuSectionWindow> eldest) {
+				return size() > CPU_SECTION_WINDOW_CACHE_LIMIT;
+			}
+		};
+	private final Map<String, TerrainModelInput> terrainModelInputCache =
+		new LinkedHashMap<String, TerrainModelInput>(TERRAIN_MODEL_INPUT_CACHE_LIMIT, 0.75F, true) {
+			@Override
+			protected boolean removeEldestEntry(Map.Entry<String, TerrainModelInput> eldest) {
+				return size() > TERRAIN_MODEL_INPUT_CACHE_LIMIT;
+			}
+		};
+	private final Map<String, WallModelInput> wallModelInputCache =
+		new LinkedHashMap<String, WallModelInput>(WALL_MODEL_INPUT_CACHE_LIMIT, 0.75F, true) {
+			@Override
+			protected boolean removeEldestEntry(Map.Entry<String, WallModelInput> eldest) {
+				return size() > WALL_MODEL_INPUT_CACHE_LIMIT;
+			}
+		};
+	private final Map<String, RoofModelInput> roofModelInputCache =
+		new LinkedHashMap<String, RoofModelInput>(ROOF_MODEL_INPUT_CACHE_LIMIT, 0.75F, true) {
+			@Override
+			protected boolean removeEldestEntry(Map.Entry<String, RoofModelInput> eldest) {
+				return size() > ROOF_MODEL_INPUT_CACHE_LIMIT;
+			}
+		};
+	private final Map<String, WorldModelProduct> worldModelProductCache =
+		new LinkedHashMap<String, WorldModelProduct>(WORLD_MODEL_PRODUCT_CACHE_LIMIT, 0.75F, true) {
+			@Override
+			protected boolean removeEldestEntry(Map.Entry<String, WorldModelProduct> eldest) {
+				return size() > WORLD_MODEL_PRODUCT_CACHE_LIMIT;
+			}
+		};
+	private final Set<String> cpuSectionWindowBuildsInFlight = new HashSet<String>();
+	private final Set<String> terrainModelInputBuildsInFlight = new HashSet<String>();
+	private final Set<String> wallModelInputBuildsInFlight = new HashSet<String>();
+	private final Set<String> roofModelInputBuildsInFlight = new HashSet<String>();
+	private final Set<String> worldModelProductBuildsInFlight = new HashSet<String>();
 	private final ExecutorService sectorPreloadExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
 		@Override
 		public Thread newThread(Runnable runnable) {
@@ -96,6 +148,8 @@ public final class World {
 	private int mapPointZ = 0;
 	private ZipFile tileArchive;
 	private Sector[] sectors;
+	private final WorldStreamManager worldStreamManager = new WorldStreamManager();
+	private Renderer3DWorldChunkFrame renderer3DWorldChunkFrame = Renderer3DWorldChunkFrame.EMPTY;
 	public String mapHash;
 
 	public World(Scene var1, GraphicsController var2) {
@@ -179,7 +233,7 @@ public final class World {
 		return tileZ * LOCAL_TILE_COUNT + tileX;
 	}
 
-	private int sectorIndexForLocalTile(int tileX, int tileZ) {
+	private static int sectorIndexForLocalTile(int tileX, int tileZ) {
 		if (!isLocalTile(tileX, tileZ)) {
 			return -1;
 		}
@@ -191,18 +245,14 @@ public final class World {
 		return sectorIndex < 0 ? null : sectors[sectorIndex];
 	}
 
-	private int tileInSector(int tile) {
+	private static int tileInSector(int tile) {
 		return tile % SECTION_SIZE;
 	}
 
-	private void loadSectionWindow(Sector[] target, int height, int sectionX, int sectionY) {
-		int originX = sectionX - ACTIVE_SECTION_ORIGIN_OFFSET;
-		int originY = sectionY - ACTIVE_SECTION_ORIGIN_OFFSET;
-		for (int y = 0; y < ACTIVE_SECTION_GRID; y++) {
-			for (int x = 0; x < ACTIVE_SECTION_GRID; x++) {
-				target[y * ACTIVE_SECTION_GRID + x] = loadSectorTemplate(height, originX + x, originY + y).copy();
-			}
-		}
+	private boolean loadSectionWindow(Sector[] target, int height, int sectionX, int sectionY) {
+		CpuSectionWindow window = loadCpuSectionWindow(height, sectionX, sectionY);
+		window.copyInto(target);
+		return window.bridgeDecorationsApplied;
 	}
 
 	public final void addGameObject_UpdateCollisionMap(int xTile, int zTile, int objectID, boolean var3) {
@@ -339,16 +389,16 @@ public final class World {
 		}
 	}
 
-	private void applyWallToElevationCache(int wallID, int x1, int z1, int x2, int z2) {
+	private void applyWallToElevationCache(RoofElevationWorkspace elevations, int wallID, int x1, int z1, int x2, int z2) {
 		try {
 
 			int height = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getWallObjectHeight();
 
-			if (this.tileElevationCache[x1][z1] < 80000)
-				this.tileElevationCache[x1][z1] += height + 80000;
+			if (elevations.get(x1, z1) < 80000)
+				elevations.set(x1, z1, elevations.get(x1, z1) + height + 80000);
 
-			if (this.tileElevationCache[x2][z2] < 80000)
-				this.tileElevationCache[x2][z2] += height + 80000;
+			if (elevations.get(x2, z2) < 80000)
+				elevations.set(x2, z2, elevations.get(x2, z2) + height + 80000);
 
 		} catch (RuntimeException var8) {
 			throw GenUtil.makeThrowable(var8,
@@ -611,12 +661,21 @@ public final class World {
 
 			int chunkX = worldTileToSection(var1);
 			int chunkZ = worldTileToSection(var5);
-			this.loadSectionWindow(sectors, plane, chunkX, chunkZ);
+			boolean bridgeDecorationsApplied = this.loadSectionWindow(sectors, plane, chunkX, chunkZ);
 			if (var2 >= 66) {
-				this.setTileDecorationOnBridge();
+				if (!bridgeDecorationsApplied) {
+					this.setTileDecorationOnBridge();
+				}
 				if (this.modelAccumulate == null)
 					this.modelAccumulate = new RSModel(MODEL_BUFFER_CAPACITY, MODEL_BUFFER_CAPACITY, true, true, false, false, true);
 
+				boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
+				WorldModelProduct worldProduct = this.loadWorldModelProduct(
+					plane,
+					chunkX,
+					chunkZ,
+					showWallOnMinimap,
+					includeRoofGeometry);
 				if (showWallOnMinimap) {
 					this.minimapGraphics.blackScreen(true);
 
@@ -627,648 +686,1307 @@ public final class World {
 					RSModel worldMod = this.modelAccumulate;
 					worldMod.resetFaceVertHead((int) 1);
 
-					for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
-						for (int z = 0; z < LOCAL_TILE_COUNT; ++z) {
-							int y = -this.getTileElevation(x, z);
-							if (this.getTileDecorationID(x, z, plane) > 0 && Objects.requireNonNull(EntityHandler
-								.getTileDef(getTileDecorationID(x, z, plane) - 1)).getTileValue() == 4)
-								y = 0;
-							if (this.getTileDecorationID(x - 1, z, plane) > 0 && Objects.requireNonNull(EntityHandler
-								.getTileDef(this.getTileDecorationID(x - 1, z, plane) - 1)).getTileValue() == 4)
-								y = 0;
+					this.emitTerrainProduct(worldProduct.terrainInput, worldMod);
 
-							if (this.getTileDecorationID(x, z - 1, plane) > 0 && Objects.requireNonNull(EntityHandler
-								.getTileDef(this.getTileDecorationID(x, z - 1, plane) - 1)).getTileValue() == 4)
-								y = 0;
-
-							if (this.getTileDecorationID(x - 1, z - 1, plane) > 0 && Objects.requireNonNull(EntityHandler
-								.getTileDef(this.getTileDecorationID(x - 1, z - 1, plane) - 1)).getTileValue() == 4)
-								y = 0;
-
-							int vID = worldMod.insertVertex(x * 128, y, z * 128);
-							int val = (int) (Math.random() * 10.0D) - 5;
-							worldMod.setVertexLightOther(vID, val);
-						}
-
-					for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x)
-						for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
-							int colorResource = this.colorToResource[this.getTerrainColour(x, z)];
-							int res01 = colorResource;
-							int defaultVal = colorResource;
-							if (plane == 1 || plane == 2) {
-								colorResource = Scene.TRANSPARENT;
-								res01 = Scene.TRANSPARENT;
-								defaultVal = Scene.TRANSPARENT;
-							}
-
-							byte bridge00_11 = 0;
-							if (this.getTileDecorationID((int) x, z, plane) > 0) {
-								int decorID = this.getTileDecorationID((int) x, z, plane);
-								int decorType = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getTileValue();// CacheValues.tileType[decorID
-								// -
-								// 1];
-
-								int decorType2 = this.isTileType2(x, z, plane, 15282);
-								colorResource = res01 = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getColour();
-								if (decorType == 4) {
-									colorResource = 1;
-									res01 = 1;
-									if (decorID == 12) {
-										colorResource = 31;
-										res01 = 31;
-									}
-								}
-
-								if (decorType == 5) {
-									if (this.getWallDiagonal(x, z) > 0 && this.getWallDiagonal(x, z) < 24000)
-										if (this.getTileDecorationCacheVal(x - 1, z, plane,
-											defaultVal) != Scene.TRANSPARENT
-											&& this.getTileDecorationCacheVal(x, z - 1, plane,
-											defaultVal) != Scene.TRANSPARENT) {
-											bridge00_11 = 0;
-											colorResource = this.getTileDecorationCacheVal(x - 1, z, plane, defaultVal);
-										} else if (this.getTileDecorationCacheVal(1 + x, z, plane,
-											defaultVal) != Scene.TRANSPARENT
-											&& this.getTileDecorationCacheVal(x, 1 + z, plane,
-											defaultVal) != Scene.TRANSPARENT) {
-											res01 = this.getTileDecorationCacheVal(x + 1, z, plane, defaultVal);
-											bridge00_11 = 0;
-										} else if (this.getTileDecorationCacheVal(1 + x, z, plane,
-											defaultVal) != Scene.TRANSPARENT
-											&& this.getTileDecorationCacheVal(x, z - 1, plane,
-											defaultVal) != Scene.TRANSPARENT) {
-											res01 = this.getTileDecorationCacheVal(x + 1, z, plane, defaultVal);
-											bridge00_11 = 1;
-										} else if (this.getTileDecorationCacheVal(x - 1, z, plane,
-											defaultVal) != Scene.TRANSPARENT
-											&& this.getTileDecorationCacheVal(x, z + 1, plane,
-											defaultVal) != Scene.TRANSPARENT) {
-											bridge00_11 = 1;
-											colorResource = this.getTileDecorationCacheVal(x - 1, z, plane, defaultVal);
-										}
-								} else if (decorType != 2
-									|| this.getWallDiagonal(x, z) > 0 && this.getWallDiagonal(x, z) < 24000)
-									if (decorType2 != this.isTileType2(x - 1, z, plane, 15282)
-										&& this.isTileType2(x, z - 1, plane, 15282) != decorType2) {
-										colorResource = defaultVal;
-										bridge00_11 = 0;
-									} else if (decorType2 != this.isTileType2(x + 1, z, plane, 15282)
-										&& this.isTileType2(x, z + 1, plane, 15282) != decorType2) {
-										bridge00_11 = 0;
-										res01 = defaultVal;
-									} else if (decorType2 != this.isTileType2(1 + x, z, plane, 15282)
-										&& this.isTileType2(x, z - 1, plane, 15282) != decorType2) {
-										res01 = defaultVal;
-										bridge00_11 = 1;
-									} else if (decorType2 != this.isTileType2(x - 1, z, plane, 15282)
-										&& decorType2 != this.isTileType2(x, 1 + z, plane, 15282)) {
-										colorResource = defaultVal;
-										bridge00_11 = 1;
-									}
-
-								if (Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getObjectType() != 0)
-									this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
-										CollisionFlag.FULL_BLOCK_C);
-
-								if (Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getTileValue() == 2)
-									this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
-										CollisionFlag.OBJECT);
-							}
-
-							this.drawMinimapTile(x, (int) z, bridge00_11, res01, colorResource);
-							int slope = this.getTileElevation(x + 1, 1 + z) - this.getTileElevation(x, z)
-								+ this.getTileElevation(x, z + 1) - this.getTileElevation(x + 1, z);
-							int[] faceIndicies;
-							boolean pickableInvisibleOverlay = this.isPickableInvisibleOverlay(x, z, plane);
-							if (colorResource == res01 && slope == 0) {
-								if (colorResource != Scene.TRANSPARENT || pickableInvisibleOverlay) {
-									faceIndicies = new int[]{z - (-(x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT),
-										z + x * LOCAL_TILE_COUNT, 1 + x * LOCAL_TILE_COUNT + z,
-										z - (-(x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT) + 1};
-									int faceID = worldMod.insertFace(4, faceIndicies, Scene.TRANSPARENT, colorResource,
-										false);
-									this.faceTileX[faceID] = x;
-									this.faceTileZ[faceID] = z;
-									worldMod.facePickIndex[faceID] = faceID + 200000;
-								}
-							} else {
-								faceIndicies = new int[3];
-								int[] faceIndices2 = new int[3];
-								if (bridge00_11 == 0) {
-									if (colorResource != Scene.TRANSPARENT || pickableInvisibleOverlay) {
-										faceIndicies[1] = x * LOCAL_TILE_COUNT + z;
-										faceIndicies[0] = LOCAL_TILE_COUNT + z + x * LOCAL_TILE_COUNT;
-										faceIndicies[2] = 1 + z + x * LOCAL_TILE_COUNT;
-										int faceID = worldMod.insertFace(3, faceIndicies, Scene.TRANSPARENT,
-											colorResource, false);
-										this.faceTileX[faceID] = x;
-										this.faceTileZ[faceID] = z;
-										worldMod.facePickIndex[faceID] = faceID + 200000;
-									}
-
-									if (res01 != Scene.TRANSPARENT || pickableInvisibleOverlay) {
-										faceIndices2[2] = z + x * LOCAL_TILE_COUNT + LOCAL_TILE_COUNT;
-										faceIndices2[1] = LOCAL_TILE_COUNT + 1 + x * LOCAL_TILE_COUNT + z;
-										faceIndices2[0] = 1 + x * LOCAL_TILE_COUNT + z;
-										int faceID = worldMod.insertFace(3, faceIndices2, Scene.TRANSPARENT, res01,
-											false);
-										this.faceTileX[faceID] = x;
-										this.faceTileZ[faceID] = z;
-										worldMod.facePickIndex[faceID] = faceID + 200000;
-									}
-								} else {
-									if (colorResource != Scene.TRANSPARENT || pickableInvisibleOverlay) {
-										faceIndicies[2] = z + x * LOCAL_TILE_COUNT;
-										faceIndicies[1] = LOCAL_TILE_COUNT + x * LOCAL_TILE_COUNT + z + 1;
-										faceIndicies[0] = 1 + x * LOCAL_TILE_COUNT + z;
-										int faceID = worldMod.insertFace(3, faceIndicies, Scene.TRANSPARENT,
-											colorResource, false);
-										this.faceTileX[faceID] = x;
-										this.faceTileZ[faceID] = z;
-										worldMod.facePickIndex[faceID] = 200000 + faceID;
-									}
-
-									if (res01 != Scene.TRANSPARENT || pickableInvisibleOverlay) {
-										faceIndices2[1] = z + x * LOCAL_TILE_COUNT;
-										faceIndices2[2] = z - (-(x * LOCAL_TILE_COUNT) - (LOCAL_TILE_COUNT + 1));
-										faceIndices2[0] = x * LOCAL_TILE_COUNT + z + LOCAL_TILE_COUNT;
-										int faceID = worldMod.insertFace(3, faceIndices2, Scene.TRANSPARENT, res01,
-											false);
-										this.faceTileX[faceID] = x;
-										this.faceTileZ[faceID] = z;
-										worldMod.facePickIndex[faceID] = faceID + 200000;
-									}
-								}
-							}
-						}
-
-					for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x)
-						for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z)
-							if (this.getTileDecorationID((int) x, z, plane) > 0 && Objects.requireNonNull(EntityHandler
-								.getTileDef(this.getTileDecorationID((int) x, z, plane) - 1)).getTileValue() == 4) {
-
-								int tileDecor = Objects.requireNonNull(EntityHandler.getTileDef(this.getTileDecorationID(x, z, plane) - 1))
-									.getColour();
-								int v00 = worldMod.insertVertex(x * 128, -this.getTileElevation(x, z), z * 128);
-								int v10 = worldMod.insertVertex((x + 1) * 128, -this.getTileElevation(1 + x, z),
-									z * 128);
-								int v11 = worldMod.insertVertex((1 + x) * 128, -this.getTileElevation(x + 1, z + 1),
-									(z + 1) * 128);
-								int v01 = worldMod.insertVertex(x * 128, -this.getTileElevation(x, 1 + z),
-									128 + z * 128);
-								int[] indices = new int[]{v00, v10, v11, v01};
-								int faceID = worldMod.insertFace(4, indices, tileDecor, Scene.TRANSPARENT, false);
-								this.faceTileX[faceID] = x;
-								this.faceTileZ[faceID] = z;
-								worldMod.facePickIndex[faceID] = faceID + 200000;
-								this.drawMinimapTile(x, z, 0, tileDecor, tileDecor);
-							} else if (this.getTileDecorationID((int) x, z, plane) == 0 || Objects.requireNonNull(EntityHandler
-								.getTileDef(this.getTileDecorationID(x, z, plane) - 1)).getTileValue() != 3) {
-								if (this.getTileDecorationID(x, z + 1, plane) > 0
-									&& Objects.requireNonNull(EntityHandler.getTileDef(this.getTileDecorationID(x, 1 + z, plane) - 1))
-									.getTileValue() == 4) {
-									int tileDecor = Objects.requireNonNull(EntityHandler
-										.getTileDef(this.getTileDecorationID((int) x, z + 1, plane) - 1))
-										.getColour();
-									int v00 = worldMod.insertVertex(x * 128, -this.getTileElevation(x, z), z * 128);
-									int v10 = worldMod.insertVertex((x + 1) * 128, -this.getTileElevation(1 + x, z),
-										z * 128);
-									int v11 = worldMod.insertVertex(128 + x * 128, -this.getTileElevation(1 + x, z + 1),
-										(z + 1) * 128);
-									int v01 = worldMod.insertVertex(x * 128, -this.getTileElevation(x, 1 + z),
-										z * 128 + 128);
-									int[] indices = new int[]{v00, v10, v11, v01};
-									int faceID = worldMod.insertFace(4, indices, tileDecor, Scene.TRANSPARENT, false);
-									this.faceTileX[faceID] = x;
-									this.faceTileZ[faceID] = z;
-									worldMod.facePickIndex[faceID] = faceID + 200000;
-									this.drawMinimapTile(x, (int) z, 0, tileDecor, tileDecor);
-								}
-
-								if (this.getTileDecorationID((int) x, z - 1, plane) > 0
-									&& Objects.requireNonNull(EntityHandler.getTileDef(this.getTileDecorationID((int) x, z - 1, plane) - 1))
-									.getTileValue() == 4) {
-									int tileDecor = Objects.requireNonNull(EntityHandler
-										.getTileDef(this.getTileDecorationID((int) x, z - 1, plane) - 1))
-										.getColour();
-									int v00 = worldMod.insertVertex(x * 128, -this.getTileElevation(x, z), z * 128);
-									int v10 = worldMod.insertVertex((1 + x) * 128, -this.getTileElevation(x + 1, z),
-										z * 128);
-									int v11 = worldMod.insertVertex((1 + x) * 128, -this.getTileElevation(x + 1, z + 1),
-										(z + 1) * 128);
-									int v01 = worldMod.insertVertex(x * 128, -this.getTileElevation(x, z + 1),
-										128 + z * 128);
-									int[] indices = new int[]{v00, v10, v11, v01};
-									int faceID = worldMod.insertFace(4, indices, tileDecor, Scene.TRANSPARENT, false);
-									this.faceTileX[faceID] = x;
-									this.faceTileZ[faceID] = z;
-									worldMod.facePickIndex[faceID] = 200000 + faceID;
-									this.drawMinimapTile(x, (int) z, 0, tileDecor, tileDecor);
-								}
-
-								if (this.getTileDecorationID((int) (x + 1), z, plane) > 0 && Objects.requireNonNull(EntityHandler
-									.getTileDef(this.getTileDecorationID((int) (x + 1), z, plane) - 1))
-									.getTileValue() == 4) {
-									int tileDecor = Objects.requireNonNull(EntityHandler
-										.getTileDef(this.getTileDecorationID((int) (1 + x), z, plane) - 1))
-										.getColour();
-									int v00 = worldMod.insertVertex(x * 128, -this.getTileElevation(x, z), z * 128);
-									int v10 = worldMod.insertVertex(128 + x * 128, -this.getTileElevation(1 + x, z),
-										z * 128);
-									int v11 = worldMod.insertVertex((1 + x) * 128, -this.getTileElevation(1 + x, 1 + z),
-										z * 128 + 128);
-									int v01 = worldMod.insertVertex(x * 128, -this.getTileElevation(x, z + 1),
-										(1 + z) * 128);
-									int[] indices = new int[]{v00, v10, v11, v01};
-									int faceID = worldMod.insertFace(4, indices, tileDecor, Scene.TRANSPARENT, false);
-									this.faceTileX[faceID] = x;
-									this.faceTileZ[faceID] = z;
-									worldMod.facePickIndex[faceID] = faceID + 200000;
-									this.drawMinimapTile(x, (int) z, 0, tileDecor, tileDecor);
-								}
-
-								if (this.getTileDecorationID((int) (x - 1), z, plane) > 0 && Objects.requireNonNull(EntityHandler
-									.getTileDef(this.getTileDecorationID((int) (x - 1), z, plane) - 1))
-									.getTileValue() == 4) {
-									int tileDecor = Objects.requireNonNull(EntityHandler
-										.getTileDef(this.getTileDecorationID((int) (x - 1), z, plane) - 1))
-										.getColour();
-									int v00 = worldMod.insertVertex(x * 128, -this.getTileElevation(x, z), z * 128);
-									int v10 = worldMod.insertVertex((x + 1) * 128, -this.getTileElevation(1 + x, z),
-										z * 128);
-									int v11 = worldMod.insertVertex(128 + x * 128, -this.getTileElevation(1 + x, 1 + z),
-										z * 128 + 128);
-									int v01 = worldMod.insertVertex(x * 128, -this.getTileElevation(x, z + 1),
-										(1 + z) * 128);
-									int[] indices = new int[]{v00, v10, v11, v01};
-									int faceID = worldMod.insertFace(4, indices, tileDecor, Scene.TRANSPARENT, false);
-									this.faceTileX[faceID] = x;
-									this.faceTileZ[faceID] = z;
-									worldMod.facePickIndex[faceID] = faceID + 200000;
-									this.drawMinimapTile(x, (int) z, 0, tileDecor, tileDecor);
-								}
-							}
-
-					worldMod.setDiffuseLightAndColor(-50, -10, -50, 40, 48, true, 105);
-					this.modelLandscapeGrid = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
-						MODEL_GRID_WORLD_SIZE, 112, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT,
-						MODEL_GRID_WORLD_SIZE, false, 0);
-					tagRenderer3DModels(this.modelLandscapeGrid, Renderer3DModelKind.TERRAIN);
-
-					for (int x = 0; x < MODEL_GRID_COUNT; ++x)
-						this.scene.addModel(this.modelLandscapeGrid[x]);
-
-					for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
-						for (int z = 0; z < LOCAL_TILE_COUNT; ++z)
-							this.tileElevationCache[x][z] = this.getTileElevation(x, z);
+					this.publishTerrainProduct(worldMod);
 				}
 				this.modelAccumulate.resetFaceVertHead((int) 1);
+				this.emitWallProduct(worldProduct.wallInput, showWallOnMinimap);
+				this.publishWallProduct(plane);
 
-				final int wallColor = 6316128;
-				for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x)
-					for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
-
-						int wall = this.getVerticalWall(x, z);
-						if (wall > 0
-							&& (Objects.requireNonNull(EntityHandler.getDoorDef(wall - 1)).getUnknown() == 0 || this.showInvisibleWalls)) {
-							this.insertWallIntoModel(wall - 1, this.modelAccumulate, 1 + x, z, x, -14584, z);
-							if (showWallOnMinimap && Objects.requireNonNull(EntityHandler.getDoorDef(wall - 1)).getDoorType() != 0) {
-								this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
-									CollisionFlag.WALL_NORTH);
-								if (z > 0)
-									this.collisionFlagBitwiseOr(x, (int) (z - 1), CollisionFlag.WALL_SOUTH);
-							}
-
-							if (showWallOnMinimap && isLegacyMinimapFaceTile(x, z))
-								this.minimapGraphics.drawLineHoriz(x * 3, z * 3, 3, wallColor);
-						}
-
-						wall = this.getHorizontalWall(x, z);
-						if (wall > 0
-							&& (Objects.requireNonNull(EntityHandler.getDoorDef(wall - 1)).getUnknown() == 0 || this.showInvisibleWalls)) {
-							this.insertWallIntoModel(wall - 1, this.modelAccumulate, x, z, x, -14584, 1 + z);
-							if (showWallOnMinimap && Objects.requireNonNull(EntityHandler.getDoorDef(wall - 1)).getDoorType() != 0) {
-								this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
-									CollisionFlag.WALL_EAST);
-								if (x > 0)
-									this.collisionFlagBitwiseOr(x - 1, (int) z, CollisionFlag.WALL_WEST);
-							}
-
-							if (showWallOnMinimap && isLegacyMinimapFaceTile(x, z))
-								this.minimapGraphics.drawLineVert(x * 3, z * 3, wallColor, 3);
-						}
-
-						wall = this.getWallDiagonal(x, z);
-						if (wall > 0 && wall < 12000
-							&& (Objects.requireNonNull(EntityHandler.getDoorDef(wall - 1)).getUnknown() == 0 || this.showInvisibleWalls)) {
-							this.insertWallIntoModel(wall - 1, this.modelAccumulate, x + 1, z, x, -14584, 1 + z);
-							if (showWallOnMinimap && Objects.requireNonNull(EntityHandler.getDoorDef(wall - 1)).getDoorType() != 0)
-								this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
-									CollisionFlag.FULL_BLOCK_B);
-
-							if (showWallOnMinimap && isLegacyMinimapFaceTile(x, z)) {
-								this.minimapGraphics.setPixel(x * 3, z * 3, wallColor);
-								this.minimapGraphics.setPixel(1 + x * 3, 1 + z * 3, wallColor);
-								this.minimapGraphics.setPixel(x * 3 + 2, 2 + z * 3, wallColor);
-							}
-						}
-
-						if (wall > 12000 && wall < 24000 && (Objects.requireNonNull(EntityHandler.getDoorDef(wall - 12001)).getUnknown() == 0
-							|| this.showInvisibleWalls)) {
-							this.insertWallIntoModel(wall - 12001, this.modelAccumulate, x, z, x + 1, -14584, 1 + z);
-							if (showWallOnMinimap && Objects.requireNonNull(EntityHandler.getDoorDef(wall - 12001)).getDoorType() != 0)
-								this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
-									CollisionFlag.FULL_BLOCK_A);
-
-							if (showWallOnMinimap && isLegacyMinimapFaceTile(x, z)) {
-								this.minimapGraphics.setPixel(2 + x * 3, z * 3, wallColor);
-								this.minimapGraphics.setPixel(x * 3 + 1, z * 3 + 1, wallColor);
-								this.minimapGraphics.setPixel(x * 3, 2 + z * 3, wallColor);
-							}
-						}
-					}
-
-				if (showWallOnMinimap)
-					this.minimapGraphics.copyPixelDataToSurface(GraphicsController.SPRITE_LAYER.MINIMAP, 0, 0,
-						MINIMAP_PIXEL_SIZE, MINIMAP_PIXEL_SIZE);
-
-				this.modelAccumulate.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, 122);
-				this.modelWallGrid[plane] = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
-					MODEL_GRID_WORLD_SIZE, -120, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT, MODEL_GRID_WORLD_SIZE,
-					true, 0);
-				tagRenderer3DModels(this.modelWallGrid[plane], Renderer3DModelKind.WALL);
-
-				for (int x = 0; x < MODEL_GRID_COUNT; ++x)
-					this.scene.addModel(this.modelWallGrid[plane][x]);
-				this.modelAccumulate.resetFaceVertHead((int) 1);
-
-				// Prepare the elevation cache.
-				for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x)
-					for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
-						int wall = this.getVerticalWall(x, z);
-						if (wall > 0)
-							this.applyWallToElevationCache(wall - 1, x, z, x + 1, z);
-
-						wall = this.getHorizontalWall(x, z);
-						if (wall > 0)
-							this.applyWallToElevationCache(wall - 1, x, z, x, z + 1);
-
-						wall = this.getWallDiagonal(x, z);
-						if (wall > 0 && wall < 12000)
-							this.applyWallToElevationCache(wall - 1, x, z, x + 1, z + 1);
-
-						if (wall > 12000 && wall < 24000)
-							this.applyWallToElevationCache(wall - 12001, x + 1, z, (int) x, z + 1);
-					}
-
-				// Clean the elevation cache.
-				for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x)
-					for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z) {
-						int roof = this.getWallRoof(x, z);
-						if (roof > 0) {
-							int xp1 = x + 1;
-							int xp12 = 1 + x;
-							int zp1 = z + 1;
-							int zp12 = 1 + z;
-							int max = 0;
-							int ec00 = this.tileElevationCache[x][z];
-							int ec10 = this.tileElevationCache[xp1][z];
-							int ec11 = this.tileElevationCache[xp12][zp1];
-							int ec01 = this.tileElevationCache[x][zp12];
-
-							if (ec00 > 80000)
-								ec00 -= 80000;
-							if (ec10 > 80000)
-								ec10 -= 80000;
-							if (ec11 > 80000)
-								ec11 -= 80000;
-							if (ec01 > 80000)
-								ec01 -= 80000;
-
-							if (ec00 > max)
-								max = ec00;
-							if (max < ec10)
-								max = ec10;
-							if (max < ec11)
-								max = ec11;
-							if (max < ec01)
-								max = ec01;
-							if (max >= 80000)
-								max -= 80000;
-
-							if (ec00 < 80000)
-								this.tileElevationCache[x][z] = max;
-							else
-								this.tileElevationCache[x][z] -= 80000;
-
-							if (ec10 < 80000)
-								this.tileElevationCache[xp1][z] = max;
-							else
-								this.tileElevationCache[xp1][z] -= 80000;
-
-							if (ec11 < 80000)
-								this.tileElevationCache[xp12][zp1] = max;
-							else
-								this.tileElevationCache[xp12][zp1] -= 80000;
-
-							if (ec01 < 80000)
-								this.tileElevationCache[x][zp12] = max;
-							else
-								this.tileElevationCache[x][zp12] -= 80000;
-						}
-					}
-
-				// Insert roof faces
-
-				// Insert roof faces
-				for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x)
-					for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z) {
-						int roof = this.getWallRoof(x, z);
-						if (roof > 0) {
-							int x10 = x + 1;
-							int x11 = x + 1;
-							int z11 = 1 + z;
-							int z01 = z + 1;
-							int p00x = x * 128;
-							int p00z = z * 128;
-
-							int p10x = 128 + p00x;
-							int p11z = 128 + p00z;
-							int p01x = p00x;
-							int p10z = p00z;
-							int p11x = p10x;
-							int p01z = p11z;
-
-							int ec00 = this.tileElevationCache[x][z];
-							int ec10 = this.tileElevationCache[x10][z];
-							int ec11 = this.tileElevationCache[x11][z11];
-							int ec01 = this.tileElevationCache[x][z01];
-							int var32 = Objects.requireNonNull(EntityHandler.getElevationDef(roof - 1)).getUnknown1();
-							if (this.hasRoofTile(false, x, z) && ec00 < 80000) {
-								ec00 += var32 + 80000;
-								this.tileElevationCache[x][z] = ec00;
-							}
-
-							if (this.hasRoofTile(false, x10, z) && ec10 < 80000) {
-								ec10 += var32 + 80000;
-								this.tileElevationCache[x10][z] = ec10;
-							}
-
-							if (this.hasRoofTile(false, x11, z11) && ec11 < 80000) {
-								ec11 += 80000 + var32;
-								this.tileElevationCache[x11][z11] = ec11;
-							}
-
-							if (ec10 >= 80000)
-								ec10 -= 80000;
-
-							if (ec11 >= 80000)
-								ec11 -= 80000;
-
-							if (this.hasRoofTile(false, x, z01) && ec01 < 80000) {
-								ec01 += var32 + 80000;
-								this.tileElevationCache[x][z01] = ec01;
-							}
-
-							if (ec00 >= 80000)
-								ec00 -= 80000;
-
-							if (ec01 >= 80000)
-								ec01 -= 80000;
-
-							final byte eaveSize = 16;
-
-							if (this.hasRoofStrut(x - 1, z))
-								p00x -= eaveSize;
-							if (this.hasRoofStrut(x + 1, z))
-								p00x += eaveSize;
-							if (this.hasRoofStrut(x, z - 1))
-								p00z -= eaveSize;
-							if (this.hasRoofStrut(x, 1 + z))
-								p00z += eaveSize;
-
-							if (this.hasRoofStrut(x10 - 1, z))
-								p10x -= eaveSize;
-							if (this.hasRoofStrut(x10 + 1, z))
-								p10x += eaveSize;
-							if (this.hasRoofStrut(x10, z - 1))
-								p10z -= eaveSize;
-							if (this.hasRoofStrut(x10, z + 1))
-								p10z += eaveSize;
-
-							if (this.hasRoofStrut(x11 - 1, z11))
-								p11x -= eaveSize;
-							if (this.hasRoofStrut(1 + x11, z11))
-								p11x += eaveSize;
-							if (this.hasRoofStrut(x11, z11 - 1))
-								p11z -= eaveSize;
-							if (this.hasRoofStrut(x11, 1 + z11))
-								p11z += eaveSize;
-
-							if (this.hasRoofStrut(x - 1, z01))
-								p01x -= eaveSize;
-							if (this.hasRoofStrut(x + 1, z01))
-								p01x += eaveSize;
-							if (this.hasRoofStrut(x, z01 - 1))
-								p01z -= eaveSize;
-							if (this.hasRoofStrut(x, z01 + 1))
-								p01z += eaveSize;
-
-							roof = Objects.requireNonNull(EntityHandler.getElevationDef(roof - 1)).getUnknown2();
-							ec10 = -ec10;
-							ec01 = -ec01;
-							ec11 = -ec11;
-							ec00 = -ec00;
-							if (this.getWallDiagonal(x, z) > 12000 && this.getWallDiagonal(x, z) < 24000
-								&& this.getWallRoof(x - 1, z - 1) == 0) {
-								int[] index = new int[]{this.modelAccumulate.insertVertex(p11x, ec11, p11z),
-									this.modelAccumulate.insertVertex(p01x, ec01, p01z),
-									this.modelAccumulate.insertVertex(p10x, ec10, p10z)};
-								this.modelAccumulate.insertFace(3, index, roof, Scene.TRANSPARENT, false);
-							} else if (this.getWallDiagonal(x, z) > 12000 && this.getWallDiagonal(x, z) < 24000
-								&& this.getWallRoof(1 + x, z + 1) == 0) {
-								int[] index = new int[]{this.modelAccumulate.insertVertex(p00x, ec00, p00z),
-									this.modelAccumulate.insertVertex(p10x, ec10, p10z),
-									this.modelAccumulate.insertVertex(p01x, ec01, p01z)};
-								this.modelAccumulate.insertFace(3, index, roof, Scene.TRANSPARENT, false);
-							} else if (this.getWallDiagonal(x, z) > 0 && this.getWallDiagonal(x, z) < 12000
-								&& this.getWallRoof(x + 1, z - 1) == 0) {
-								int[] index = new int[]{this.modelAccumulate.insertVertex(p01x, ec01, p01z),
-									this.modelAccumulate.insertVertex(p00x, ec00, p00z),
-									this.modelAccumulate.insertVertex(p11x, ec11, p11z)};
-								this.modelAccumulate.insertFace(3, index, roof, Scene.TRANSPARENT, false);
-							} else if (this.getWallDiagonal(x, z) > 0 && this.getWallDiagonal(x, z) < 12000
-								&& this.getWallRoof(x - 1, 1 + z) == 0) {
-								int[] index = new int[]{this.modelAccumulate.insertVertex(p10x, ec10, p10z),
-									this.modelAccumulate.insertVertex(p11x, ec11, p11z),
-									this.modelAccumulate.insertVertex(p00x, ec00, p00z)};
-								this.modelAccumulate.insertFace(3, index, roof, Scene.TRANSPARENT, false);
-							} else if (ec10 == ec00 && ec11 == ec01) {
-								int[] index = new int[]{this.modelAccumulate.insertVertex(p00x, ec00, p00z),
-									this.modelAccumulate.insertVertex(p10x, ec10, p10z),
-									this.modelAccumulate.insertVertex(p11x, ec11, p11z),
-									this.modelAccumulate.insertVertex(p01x, ec01, p01z)};
-								this.modelAccumulate.insertFace(4, index, roof, Scene.TRANSPARENT, false);
-							} else if (ec00 == ec01 && ec11 == ec10) {
-								int[] index = new int[]{this.modelAccumulate.insertVertex(p01x, ec01, p01z),
-									this.modelAccumulate.insertVertex(p00x, ec00, p00z),
-									this.modelAccumulate.insertVertex(p10x, ec10, p10z),
-									this.modelAccumulate.insertVertex(p11x, ec11, p11z)};
-								this.modelAccumulate.insertFace(4, index, roof, Scene.TRANSPARENT, false);
-							} else {
-								boolean var34 = true;
-								if (this.getWallRoof(x - 1, z - 1) > 0)
-									var34 = false;
-
-								if (this.getWallRoof(x + 1, z + 1) > 0)
-									var34 = false;
-
-								if (!var34) {
-									int[] var35 = new int[]{this.modelAccumulate.insertVertex(p10x, ec10, p10z),
-										this.modelAccumulate.insertVertex(p11x, ec11, p11z),
-										this.modelAccumulate.insertVertex(p00x, ec00, p00z)};
-									this.modelAccumulate.insertFace(3, var35, roof, Scene.TRANSPARENT, false);
-
-									int[] index2 = new int[]{this.modelAccumulate.insertVertex(p01x, ec01, p01z),
-										this.modelAccumulate.insertVertex(p00x, ec00, p00z),
-										this.modelAccumulate.insertVertex(p11x, ec11, p11z)};
-									this.modelAccumulate.insertFace(3, index2, roof, Scene.TRANSPARENT, false);
-								} else {
-									int[] index1 = new int[]{this.modelAccumulate.insertVertex(p00x, ec00, p00z),
-										this.modelAccumulate.insertVertex(p10x, ec10, p10z),
-										this.modelAccumulate.insertVertex(p01x, ec01, p01z)};
-									this.modelAccumulate.insertFace(3, index1, roof, Scene.TRANSPARENT, false);
-
-									int[] index2 = new int[]{this.modelAccumulate.insertVertex(p11x, ec11, p11z),
-										this.modelAccumulate.insertVertex(p01x, ec01, p01z),
-										this.modelAccumulate.insertVertex(p10x, ec10, p10z)};
-									this.modelAccumulate.insertFace(3, index2, roof, Scene.TRANSPARENT, false);
-								}
-							}
-						}
-					}
-
-				this.modelAccumulate.setDiffuseLightAndColor(-50, -10, -50, 50, 50, true, -98);
-				this.modelRoofGrid[plane] = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
-					MODEL_GRID_WORLD_SIZE, -112, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT, MODEL_GRID_WORLD_SIZE,
-					true, 0);
-				tagRenderer3DModels(this.modelRoofGrid[plane], Renderer3DModelKind.ROOF);
-
-				for (int x = 0; x < MODEL_GRID_COUNT; ++x)
-					this.scene.addModel(this.modelRoofGrid[plane][x]);
-
-				if (this.modelRoofGrid[plane][0] == null)
-					throw new RuntimeException("null roof!");
-				else
-					for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
-						for (int z = 0; z < LOCAL_TILE_COUNT; ++z)
-							if (this.tileElevationCache[x][z] >= 80000)
-								this.tileElevationCache[x][z] -= 80000;
+				if (includeRoofGeometry) {
+					this.emitRoofFaceProduct(worldProduct.roofInput);
+					this.publishRoofProduct(plane, worldProduct.roofInput);
+				} else {
+					this.publishHiddenRoofProduct(plane, worldProduct.roofInput);
+				}
 			}
 		} catch (RuntimeException var37) {
 			throw GenUtil.makeThrowable(var37,
 				"k.I(" + var1 + ',' + var2 + ',' + showWallOnMinimap + ',' + plane + ',' + var5 + ')');
 		}
+	}
+
+	private WorldModelProduct loadWorldModelProduct(
+		int plane,
+		int sectionX,
+		int sectionY,
+		boolean includeTerrain,
+		boolean includeRoofGeometry) {
+		String key = worldModelProductKey(plane, sectionX, sectionY, includeRoofGeometry);
+		WorldModelProduct cached;
+		synchronized (worldModelProductCacheLock) {
+			cached = worldModelProductCache.get(key);
+		}
+		if (cached != null && cached.hasTerrainIfNeeded(includeTerrain)) {
+			this.worldStreamManager.markWorldProductCacheHit(
+				plane,
+				sectionX,
+				sectionY,
+				ACTIVE_SECTION_GRID,
+				ACTIVE_SECTION_ORIGIN_OFFSET);
+			return cached;
+		}
+
+		TerrainModelInput terrainInput = cached == null ? null : cached.terrainInput;
+		WallModelInput wallInput = cached == null ? null : cached.wallInput;
+		RoofModelInput roofInput = cached == null ? null : cached.roofInput;
+		if (includeTerrain && terrainInput == null) {
+			terrainInput = this.loadTerrainModelInput(plane, sectionX, sectionY);
+		}
+		if (wallInput == null) {
+			wallInput = this.loadWallModelInput(plane, sectionX, sectionY);
+		}
+		if (terrainInput != null) {
+			terrainInput = applyWallEndpointShadows(terrainInput, wallInput);
+		}
+		if (roofInput == null) {
+			roofInput = this.loadRoofModelInput(plane, sectionX, sectionY);
+		}
+
+		WorldGpuChunkMesh gpuChunkMesh = buildWorldGpuChunkMesh(
+			plane,
+			sectionX,
+			sectionY,
+			terrainInput,
+			wallInput,
+			roofInput,
+			includeRoofGeometry);
+		WorldModelProduct built = new WorldModelProduct(terrainInput, wallInput, roofInput, gpuChunkMesh);
+		boolean storedBuilt = false;
+		synchronized (worldModelProductCacheLock) {
+			cached = worldModelProductCache.get(key);
+			if (cached == null || !cached.hasTerrainIfNeeded(includeTerrain)) {
+				worldModelProductCache.put(key, built);
+				storedBuilt = true;
+			}
+		}
+		if (storedBuilt) {
+			this.worldStreamManager.markWorldProductBuilt(
+				plane,
+				sectionX,
+				sectionY,
+				ACTIVE_SECTION_GRID,
+				ACTIVE_SECTION_ORIGIN_OFFSET);
+			this.worldStreamManager.markGpuMeshProductBuilt(
+				plane,
+				sectionX,
+				sectionY,
+				ACTIVE_SECTION_GRID,
+				ACTIVE_SECTION_ORIGIN_OFFSET,
+				built.gpuChunkMesh.getTriangleCount());
+			return built;
+		}
+		this.worldStreamManager.markWorldProductCacheHit(
+			plane,
+			sectionX,
+			sectionY,
+			ACTIVE_SECTION_GRID,
+			ACTIVE_SECTION_ORIGIN_OFFSET);
+		return cached;
+	}
+
+	public Renderer3DWorldChunkFrame getRenderer3DWorldChunkFrame() {
+		return renderer3DWorldChunkFrame;
+	}
+
+	private Renderer3DWorldChunkFrame buildRenderer3DWorldChunkFrame(int plane, int sectionX, int sectionY) {
+		List<Renderer3DWorldChunkFrame.ChunkMesh> chunks =
+			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(plane == 0 ? 3 : 1);
+		addRenderer3DWorldChunkMesh(chunks, plane, sectionX, sectionY, true);
+		if (plane == 0) {
+			addRenderer3DWorldChunkMesh(chunks, 1, sectionX, sectionY, false);
+			addRenderer3DWorldChunkMesh(chunks, 2, sectionX, sectionY, false);
+		}
+		return Renderer3DWorldChunkFrame.fromChunks(chunks);
+	}
+
+	private void addRenderer3DWorldChunkMesh(
+		List<Renderer3DWorldChunkFrame.ChunkMesh> chunks,
+		int plane,
+		int sectionX,
+		int sectionY,
+		boolean requireTerrain) {
+		WorldModelProduct product;
+		synchronized (worldModelProductCacheLock) {
+			product = worldModelProductCache.get(worldModelProductKey(plane, sectionX, sectionY, !Config.C_HIDE_ROOFS));
+		}
+		if (product == null || !product.hasTerrainIfNeeded(requireTerrain) || product.gpuChunkMesh == null) {
+			return;
+		}
+		chunks.add(product.gpuChunkMesh.toRenderer3DWorldChunkMesh());
+	}
+
+	private static WorldGpuChunkMesh buildWorldGpuChunkMesh(
+		int plane,
+		int sectionX,
+		int sectionY,
+		TerrainModelInput terrainInput,
+		WallModelInput wallInput,
+		RoofModelInput roofInput,
+		boolean includeRoofGeometry) {
+		int originWorldX = (sectionX - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE * 128;
+		int originWorldZ = (sectionY - ACTIVE_SECTION_ORIGIN_OFFSET) * SECTION_SIZE * 128;
+		WorldGpuChunkMeshBuilder builder = new WorldGpuChunkMeshBuilder(
+			plane,
+			sectionX,
+			sectionY,
+			originWorldX,
+			originWorldZ);
+		// The current chunk frame is the active 3x3 landscape product. Keep draw
+		// vertices in the same local coordinate space as Scene camera offsets.
+		int drawOriginX = 0;
+		int drawOriginZ = 0;
+		if (terrainInput != null) {
+			addTerrainGpuChunkMesh(builder, terrainInput, drawOriginX, drawOriginZ);
+		}
+		addWallGpuChunkMesh(builder, wallInput, drawOriginX, drawOriginZ);
+		if (includeRoofGeometry) {
+			addRoofGpuChunkMesh(builder, roofInput, drawOriginX, drawOriginZ);
+		}
+		return builder.build();
+	}
+
+	private static void addTerrainGpuChunkMesh(
+		WorldGpuChunkMeshBuilder builder,
+		TerrainModelInput input,
+		int drawOriginX,
+		int drawOriginZ) {
+		for (TerrainTileFaceInput face : input.tileFaces) {
+			addTerrainTileGpuFaces(builder, input, face, drawOriginX, drawOriginZ);
+		}
+
+		for (TerrainOverlayFaceInput overlay : input.overlayFaces) {
+			builder.addFace(
+				Renderer3DModelKind.TERRAIN,
+				overlay.texture,
+				Scene.TRANSPARENT,
+				offsetCoords(drawOriginX, drawOriginZ, overlay.vertexCoords),
+				null);
+		}
+	}
+
+	private static void addTerrainTileGpuFaces(
+		WorldGpuChunkMeshBuilder builder,
+		TerrainModelInput input,
+		TerrainTileFaceInput face,
+		int drawOriginX,
+		int drawOriginZ) {
+		if (face.colorResource == face.res01 && face.slope == 0) {
+			if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+				addTerrainQuadByVertexIndex(builder, input, Scene.TRANSPARENT, face.colorResource, drawOriginX, drawOriginZ,
+					face.z - (-(face.x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT),
+					face.z + face.x * LOCAL_TILE_COUNT,
+					1 + face.x * LOCAL_TILE_COUNT + face.z,
+					face.z - (-(face.x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT) + 1);
+			}
+			return;
+		}
+
+		if (face.bridge00_11 == 0) {
+			if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+				addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.colorResource, drawOriginX, drawOriginZ,
+					LOCAL_TILE_COUNT + face.z + face.x * LOCAL_TILE_COUNT,
+					face.x * LOCAL_TILE_COUNT + face.z,
+					1 + face.z + face.x * LOCAL_TILE_COUNT);
+			}
+
+			if (face.res01 != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+				addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.res01, drawOriginX, drawOriginZ,
+					1 + face.x * LOCAL_TILE_COUNT + face.z,
+					LOCAL_TILE_COUNT + 1 + face.x * LOCAL_TILE_COUNT + face.z,
+					face.z + face.x * LOCAL_TILE_COUNT + LOCAL_TILE_COUNT);
+			}
+			return;
+		}
+
+		if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+			addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.colorResource, drawOriginX, drawOriginZ,
+				1 + face.x * LOCAL_TILE_COUNT + face.z,
+				LOCAL_TILE_COUNT + face.x * LOCAL_TILE_COUNT + face.z + 1,
+				face.z + face.x * LOCAL_TILE_COUNT);
+		}
+
+		if (face.res01 != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+			addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.res01, drawOriginX, drawOriginZ,
+				face.x * LOCAL_TILE_COUNT + face.z + LOCAL_TILE_COUNT,
+				face.z + face.x * LOCAL_TILE_COUNT,
+				face.z - (-(face.x * LOCAL_TILE_COUNT) - (LOCAL_TILE_COUNT + 1)));
+		}
+	}
+
+	private static void addTerrainQuadByVertexIndex(
+		WorldGpuChunkMeshBuilder builder,
+		TerrainModelInput input,
+		int texture,
+		int fallbackColor,
+		int drawOriginX,
+		int drawOriginZ,
+		int a,
+		int b,
+		int c,
+		int d) {
+		TerrainVertexInput va = input.vertices[a];
+		TerrainVertexInput vb = input.vertices[b];
+		TerrainVertexInput vc = input.vertices[c];
+		TerrainVertexInput vd = input.vertices[d];
+		builder.addFace(
+			Renderer3DModelKind.TERRAIN,
+			texture,
+			fallbackColor,
+			new int[] {
+				drawOriginX + va.x, va.y, drawOriginZ + va.z,
+				drawOriginX + vb.x, vb.y, drawOriginZ + vb.z,
+				drawOriginX + vc.x, vc.y, drawOriginZ + vc.z,
+				drawOriginX + vd.x, vd.y, drawOriginZ + vd.z
+			},
+			new int[] {va.light, vb.light, vc.light, vd.light});
+	}
+
+	private static void addTerrainTriangleByVertexIndex(
+		WorldGpuChunkMeshBuilder builder,
+		TerrainModelInput input,
+		int texture,
+		int fallbackColor,
+		int drawOriginX,
+		int drawOriginZ,
+		int a,
+		int b,
+		int c) {
+		TerrainVertexInput va = input.vertices[a];
+		TerrainVertexInput vb = input.vertices[b];
+		TerrainVertexInput vc = input.vertices[c];
+		builder.addFace(
+			Renderer3DModelKind.TERRAIN,
+			texture,
+			fallbackColor,
+			new int[] {
+				drawOriginX + va.x, va.y, drawOriginZ + va.z,
+				drawOriginX + vb.x, vb.y, drawOriginZ + vb.z,
+				drawOriginX + vc.x, vc.y, drawOriginZ + vc.z
+			},
+			new int[] {va.light, vb.light, vc.light});
+	}
+
+	private static void addWallGpuChunkMesh(
+		WorldGpuChunkMeshBuilder builder,
+		WallModelInput input,
+		int drawOriginX,
+		int drawOriginZ) {
+		for (WallSegmentInput segment : input.segments) {
+			builder.addFace(
+				Renderer3DModelKind.WALL,
+				segment.frontTexture,
+				segment.backTexture,
+				offsetCoords(drawOriginX, drawOriginZ, segment.vertexCoords),
+				null);
+		}
+	}
+
+	private static void addRoofGpuChunkMesh(
+		WorldGpuChunkMeshBuilder builder,
+		RoofModelInput input,
+		int drawOriginX,
+		int drawOriginZ) {
+		for (RoofFaceInput face : input.faces) {
+			builder.addFace(
+				Renderer3DModelKind.ROOF,
+				face.texture,
+				Scene.TRANSPARENT,
+				offsetCoords(drawOriginX, drawOriginZ, face.vertexCoords),
+				null);
+		}
+	}
+
+	private static int[] offsetCoords(int offsetX, int offsetZ, int[] localCoords) {
+		int[] offsetCoords = localCoords == null ? new int[0] : localCoords.clone();
+		for (int coord = 0; coord + 2 < offsetCoords.length; coord += 3) {
+			offsetCoords[coord] += offsetX;
+			offsetCoords[coord + 2] += offsetZ;
+		}
+		return offsetCoords;
+	}
+
+	private static TerrainModelInput applyWallEndpointShadows(
+		TerrainModelInput input,
+		WallModelInput wallInput) {
+		if (input == null || wallInput == null || wallInput.segments.length == 0) {
+			return input;
+		}
+		TerrainVertexInput[] vertices = input.vertices.clone();
+		boolean changed = false;
+		for (WallSegmentInput segment : wallInput.segments) {
+			changed |= applyTerrainVertexLight(vertices, segment.vertexCoords[0] / 128, segment.vertexCoords[2] / 128, 40);
+			changed |= applyTerrainVertexLight(vertices, segment.vertexCoords[9] / 128, segment.vertexCoords[11] / 128, 40);
+		}
+		return changed ? new TerrainModelInput(vertices, input.tileFaces, input.overlayFaces) : input;
+	}
+
+	private static boolean applyTerrainVertexLight(TerrainVertexInput[] vertices, int x, int z, int light) {
+		if (!isLocalTile(x, z)) {
+			return false;
+		}
+		int index = z + x * LOCAL_TILE_COUNT;
+		if (index < 0 || index >= vertices.length) {
+			return false;
+		}
+		TerrainVertexInput vertex = vertices[index];
+		if (vertex == null || vertex.light == light) {
+			return false;
+		}
+		vertices[index] = new TerrainVertexInput(vertex.x, vertex.y, vertex.z, light);
+		return true;
+	}
+
+	private TerrainModelInput buildTerrainModelInput(int plane, Sector[] sourceSectors) {
+		TerrainModelInputSource source = new TerrainModelInputSource(sourceSectors);
+		return new TerrainModelInput(
+			collectTerrainVertexInputs(plane, source),
+			collectTerrainTileFaceInputs(plane, source),
+			collectTerrainOverlayFaceInputs(plane, source));
+	}
+
+	private TerrainModelInput loadTerrainModelInput(int plane, int sectionX, int sectionY) {
+		String key = terrainModelInputKey(plane, sectionX, sectionY);
+		TerrainModelInput cached;
+		synchronized (terrainModelInputCacheLock) {
+			cached = terrainModelInputCache.get(key);
+		}
+		if (cached != null) {
+			this.worldStreamManager.markTerrainInputCacheHit(
+				plane,
+				sectionX,
+				sectionY,
+				ACTIVE_SECTION_GRID,
+				ACTIVE_SECTION_ORIGIN_OFFSET);
+			return cached;
+		}
+
+		CpuSectionWindow window = loadCpuSectionWindow(plane, sectionX, sectionY);
+		TerrainModelInput built = buildTerrainModelInput(plane, window.sectors);
+		boolean storedBuilt = false;
+		synchronized (terrainModelInputCacheLock) {
+			cached = terrainModelInputCache.get(key);
+			if (cached == null) {
+				terrainModelInputCache.put(key, built);
+				storedBuilt = true;
+			}
+		}
+		if (storedBuilt) {
+			this.worldStreamManager.markTerrainInputBuilt(
+				plane,
+				sectionX,
+				sectionY,
+				ACTIVE_SECTION_GRID,
+				ACTIVE_SECTION_ORIGIN_OFFSET);
+			return built;
+		}
+		this.worldStreamManager.markTerrainInputCacheHit(
+			plane,
+			sectionX,
+			sectionY,
+			ACTIVE_SECTION_GRID,
+			ACTIVE_SECTION_ORIGIN_OFFSET);
+		return cached;
+	}
+
+	private TerrainVertexInput[] collectTerrainVertexInputs(int plane, TerrainModelInputSource source) {
+		TerrainVertexInput[] vertices = new TerrainVertexInput[LOCAL_TILE_COUNT * LOCAL_TILE_COUNT];
+		for (int x = 0; x < LOCAL_TILE_COUNT; ++x) {
+			for (int z = 0; z < LOCAL_TILE_COUNT; ++z) {
+				int y = -source.tileElevation(x, z);
+				if (source.tileDecorationID(x, z) > 0 && Objects.requireNonNull(EntityHandler
+					.getTileDef(source.tileDecorationID(x, z) - 1)).getTileValue() == 4) {
+					y = 0;
+				}
+				if (source.tileDecorationID(x - 1, z) > 0 && Objects.requireNonNull(EntityHandler
+					.getTileDef(source.tileDecorationID(x - 1, z) - 1)).getTileValue() == 4) {
+					y = 0;
+				}
+
+				if (source.tileDecorationID(x, z - 1) > 0 && Objects.requireNonNull(EntityHandler
+					.getTileDef(source.tileDecorationID(x, z - 1) - 1)).getTileValue() == 4) {
+					y = 0;
+				}
+
+				if (source.tileDecorationID(x - 1, z - 1) > 0 && Objects.requireNonNull(EntityHandler
+					.getTileDef(source.tileDecorationID(x - 1, z - 1) - 1)).getTileValue() == 4) {
+					y = 0;
+				}
+
+				int light = (int) (Math.random() * 10.0D) - 5;
+				vertices[z + x * LOCAL_TILE_COUNT] = new TerrainVertexInput(x * 128, y, z * 128, light);
+			}
+		}
+		return vertices;
+	}
+
+	private TerrainTileFaceInput[] collectTerrainTileFaceInputs(int plane, TerrainModelInputSource source) {
+		TerrainTileFaceInput[] faces = new TerrainTileFaceInput[LOCAL_FACE_TILE_COUNT * LOCAL_FACE_TILE_COUNT];
+		int count = 0;
+		for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x) {
+			for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
+				int colorResource = this.colorToResource[source.terrainColour(x, z)];
+				int res01 = colorResource;
+				int defaultVal = colorResource;
+				if (plane == 1 || plane == 2) {
+					colorResource = Scene.TRANSPARENT;
+					res01 = Scene.TRANSPARENT;
+					defaultVal = Scene.TRANSPARENT;
+				}
+
+				byte bridge00_11 = 0;
+				boolean collisionFullBlock = false;
+				boolean collisionObject = false;
+				if (source.tileDecorationID(x, z) > 0) {
+					int decorID = source.tileDecorationID(x, z);
+					int decorType = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getTileValue();
+					int decorType2 = source.tileType2(x, z);
+					colorResource = res01 = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getColour();
+					if (decorType == 4) {
+						colorResource = 1;
+						res01 = 1;
+						if (decorID == 12) {
+							colorResource = 31;
+							res01 = 31;
+						}
+					}
+
+					if (decorType == 5) {
+						if (source.wallDiagonal(x, z) > 0 && source.wallDiagonal(x, z) < 24000) {
+							if (source.tileDecorationCacheVal(x - 1, z, defaultVal) != Scene.TRANSPARENT
+								&& source.tileDecorationCacheVal(x, z - 1, defaultVal) != Scene.TRANSPARENT) {
+								bridge00_11 = 0;
+								colorResource = source.tileDecorationCacheVal(x - 1, z, defaultVal);
+							} else if (source.tileDecorationCacheVal(x + 1, z, defaultVal) != Scene.TRANSPARENT
+								&& source.tileDecorationCacheVal(x, z + 1, defaultVal) != Scene.TRANSPARENT) {
+								res01 = source.tileDecorationCacheVal(x + 1, z, defaultVal);
+								bridge00_11 = 0;
+							} else if (source.tileDecorationCacheVal(x + 1, z, defaultVal) != Scene.TRANSPARENT
+								&& source.tileDecorationCacheVal(x, z - 1, defaultVal) != Scene.TRANSPARENT) {
+								res01 = source.tileDecorationCacheVal(x + 1, z, defaultVal);
+								bridge00_11 = 1;
+							} else if (source.tileDecorationCacheVal(x - 1, z, defaultVal) != Scene.TRANSPARENT
+								&& source.tileDecorationCacheVal(x, z + 1, defaultVal) != Scene.TRANSPARENT) {
+								bridge00_11 = 1;
+								colorResource = source.tileDecorationCacheVal(x - 1, z, defaultVal);
+							}
+						}
+					} else if (decorType != 2
+						|| source.wallDiagonal(x, z) > 0 && source.wallDiagonal(x, z) < 24000) {
+						if (decorType2 != source.tileType2(x - 1, z)
+							&& source.tileType2(x, z - 1) != decorType2) {
+							colorResource = defaultVal;
+							bridge00_11 = 0;
+						} else if (decorType2 != source.tileType2(x + 1, z)
+							&& source.tileType2(x, z + 1) != decorType2) {
+							bridge00_11 = 0;
+							res01 = defaultVal;
+						} else if (decorType2 != source.tileType2(x + 1, z)
+							&& source.tileType2(x, z - 1) != decorType2) {
+							res01 = defaultVal;
+							bridge00_11 = 1;
+						} else if (decorType2 != source.tileType2(x - 1, z)
+							&& decorType2 != source.tileType2(x, z + 1)) {
+							colorResource = defaultVal;
+							bridge00_11 = 1;
+						}
+					}
+
+					collisionFullBlock = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getObjectType() != 0;
+					collisionObject = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getTileValue() == 2;
+				}
+
+				int slope = source.tileElevation(x + 1, z + 1) - source.tileElevation(x, z)
+					+ source.tileElevation(x, z + 1) - source.tileElevation(x + 1, z);
+				faces[count++] = new TerrainTileFaceInput(
+					x,
+					z,
+					bridge00_11,
+					res01,
+					colorResource,
+					slope,
+					source.pickableInvisibleOverlay(x, z),
+					collisionFullBlock,
+					collisionObject);
+			}
+		}
+		return faces;
+	}
+
+	private TerrainOverlayFaceInput[] collectTerrainOverlayFaceInputs(int plane, TerrainModelInputSource source) {
+		List<TerrainOverlayFaceInput> overlays = new ArrayList<TerrainOverlayFaceInput>();
+		for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x) {
+			for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z) {
+				if (source.tileDecorationID(x, z) > 0 && Objects.requireNonNull(EntityHandler
+					.getTileDef(source.tileDecorationID(x, z) - 1)).getTileValue() == 4) {
+
+					int tileDecor = Objects.requireNonNull(EntityHandler.getTileDef(source.tileDecorationID(x, z) - 1))
+						.getColour();
+					addTerrainOverlayFace(overlays, x, z, tileDecor,
+						x * 128, -source.tileElevation(x, z), z * 128,
+						(x + 1) * 128, -source.tileElevation(x + 1, z), z * 128,
+						(x + 1) * 128, -source.tileElevation(x + 1, z + 1), (z + 1) * 128,
+						x * 128, -source.tileElevation(x, z + 1), 128 + z * 128);
+				} else if (source.tileDecorationID(x, z) == 0 || Objects.requireNonNull(EntityHandler
+					.getTileDef(source.tileDecorationID(x, z) - 1)).getTileValue() != 3) {
+					if (source.tileDecorationID(x, z + 1) > 0
+						&& Objects.requireNonNull(EntityHandler.getTileDef(source.tileDecorationID(x, z + 1) - 1))
+						.getTileValue() == 4) {
+						int tileDecor = Objects.requireNonNull(EntityHandler
+							.getTileDef(source.tileDecorationID(x, z + 1) - 1))
+							.getColour();
+						addTerrainOverlayFace(overlays, x, z, tileDecor,
+							x * 128, -source.tileElevation(x, z), z * 128,
+							(x + 1) * 128, -source.tileElevation(x + 1, z), z * 128,
+							128 + x * 128, -source.tileElevation(x + 1, z + 1), (z + 1) * 128,
+							x * 128, -source.tileElevation(x, z + 1), z * 128 + 128);
+					}
+
+					if (source.tileDecorationID(x, z - 1) > 0
+						&& Objects.requireNonNull(EntityHandler.getTileDef(source.tileDecorationID(x, z - 1) - 1))
+						.getTileValue() == 4) {
+						int tileDecor = Objects.requireNonNull(EntityHandler
+							.getTileDef(source.tileDecorationID(x, z - 1) - 1))
+							.getColour();
+						addTerrainOverlayFace(overlays, x, z, tileDecor,
+							x * 128, -source.tileElevation(x, z), z * 128,
+							(x + 1) * 128, -source.tileElevation(x + 1, z), z * 128,
+							(x + 1) * 128, -source.tileElevation(x + 1, z + 1), (z + 1) * 128,
+							x * 128, -source.tileElevation(x, z + 1), 128 + z * 128);
+					}
+
+					if (source.tileDecorationID(x + 1, z) > 0 && Objects.requireNonNull(EntityHandler
+						.getTileDef(source.tileDecorationID(x + 1, z) - 1))
+						.getTileValue() == 4) {
+						int tileDecor = Objects.requireNonNull(EntityHandler
+							.getTileDef(source.tileDecorationID(x + 1, z) - 1))
+							.getColour();
+						addTerrainOverlayFace(overlays, x, z, tileDecor,
+							x * 128, -source.tileElevation(x, z), z * 128,
+							128 + x * 128, -source.tileElevation(x + 1, z), z * 128,
+							(x + 1) * 128, -source.tileElevation(x + 1, z + 1), z * 128 + 128,
+							x * 128, -source.tileElevation(x, z + 1), (z + 1) * 128);
+					}
+
+					if (source.tileDecorationID(x - 1, z) > 0 && Objects.requireNonNull(EntityHandler
+						.getTileDef(source.tileDecorationID(x - 1, z) - 1))
+						.getTileValue() == 4) {
+						int tileDecor = Objects.requireNonNull(EntityHandler
+							.getTileDef(source.tileDecorationID(x - 1, z) - 1))
+							.getColour();
+						addTerrainOverlayFace(overlays, x, z, tileDecor,
+							x * 128, -source.tileElevation(x, z), z * 128,
+							(x + 1) * 128, -source.tileElevation(x + 1, z), z * 128,
+							128 + x * 128, -source.tileElevation(x + 1, z + 1), z * 128 + 128,
+							x * 128, -source.tileElevation(x, z + 1), (z + 1) * 128);
+					}
+				}
+			}
+		}
+		return overlays.toArray(new TerrainOverlayFaceInput[overlays.size()]);
+	}
+
+	private void addTerrainOverlayFace(
+		List<TerrainOverlayFaceInput> overlays,
+		int x,
+		int z,
+		int texture,
+		int... vertexCoords) {
+		overlays.add(new TerrainOverlayFaceInput(x, z, texture, vertexCoords));
+	}
+
+	private void emitTerrainProduct(TerrainModelInput input, RSModel worldMod) {
+		emitTerrainVertices(input, worldMod);
+		emitTerrainFaceProduct(input, worldMod);
+	}
+
+	private void emitTerrainVertices(TerrainModelInput input, RSModel worldMod) {
+		for (TerrainVertexInput vertex : input.vertices) {
+			int vID = worldMod.insertVertex(vertex.x, vertex.y, vertex.z);
+			worldMod.setVertexLightOther(vID, vertex.light);
+		}
+	}
+
+	private void emitTerrainFaceProduct(TerrainModelInput input, RSModel worldMod) {
+		for (TerrainTileFaceInput face : input.tileFaces) {
+			if (face.collisionFullBlock) {
+				this.collisionFlags[face.x][face.z] = FastMath.bitwiseOr(this.collisionFlags[face.x][face.z],
+					CollisionFlag.FULL_BLOCK_C);
+			}
+			if (face.collisionObject) {
+				this.collisionFlags[face.x][face.z] = FastMath.bitwiseOr(this.collisionFlags[face.x][face.z],
+					CollisionFlag.OBJECT);
+			}
+			this.drawMinimapTile(face.x, face.z, face.bridge00_11, face.res01, face.colorResource);
+			emitTerrainTileFace(worldMod, face);
+		}
+
+		for (TerrainOverlayFaceInput overlay : input.overlayFaces) {
+			int[] indices = new int[4];
+			for (int i = 0; i < 4; i++) {
+				int offset = i * 3;
+				indices[i] = worldMod.insertVertex(
+					overlay.vertexCoords[offset],
+					overlay.vertexCoords[offset + 1],
+					overlay.vertexCoords[offset + 2]);
+			}
+			int faceID = worldMod.insertFace(4, indices, overlay.texture, Scene.TRANSPARENT, false);
+			this.faceTileX[faceID] = overlay.x;
+			this.faceTileZ[faceID] = overlay.z;
+			worldMod.facePickIndex[faceID] = faceID + 200000;
+			this.drawMinimapTile(overlay.x, overlay.z, 0, overlay.texture, overlay.texture);
+		}
+	}
+
+	private void emitTerrainTileFace(RSModel worldMod, TerrainTileFaceInput face) {
+		if (face.colorResource == face.res01 && face.slope == 0) {
+			if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+				int[] faceIndicies = new int[]{face.z - (-(face.x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT),
+					face.z + face.x * LOCAL_TILE_COUNT, 1 + face.x * LOCAL_TILE_COUNT + face.z,
+					face.z - (-(face.x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT) + 1};
+				int faceID = worldMod.insertFace(4, faceIndicies, Scene.TRANSPARENT, face.colorResource, false);
+				this.faceTileX[faceID] = face.x;
+				this.faceTileZ[faceID] = face.z;
+				worldMod.facePickIndex[faceID] = faceID + 200000;
+			}
+			return;
+		}
+
+		int[] faceIndicies = new int[3];
+		int[] faceIndices2 = new int[3];
+		if (face.bridge00_11 == 0) {
+			if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+				faceIndicies[1] = face.x * LOCAL_TILE_COUNT + face.z;
+				faceIndicies[0] = LOCAL_TILE_COUNT + face.z + face.x * LOCAL_TILE_COUNT;
+				faceIndicies[2] = 1 + face.z + face.x * LOCAL_TILE_COUNT;
+				int faceID = worldMod.insertFace(3, faceIndicies, Scene.TRANSPARENT, face.colorResource, false);
+				this.faceTileX[faceID] = face.x;
+				this.faceTileZ[faceID] = face.z;
+				worldMod.facePickIndex[faceID] = faceID + 200000;
+			}
+
+			if (face.res01 != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+				faceIndices2[2] = face.z + face.x * LOCAL_TILE_COUNT + LOCAL_TILE_COUNT;
+				faceIndices2[1] = LOCAL_TILE_COUNT + 1 + face.x * LOCAL_TILE_COUNT + face.z;
+				faceIndices2[0] = 1 + face.x * LOCAL_TILE_COUNT + face.z;
+				int faceID = worldMod.insertFace(3, faceIndices2, Scene.TRANSPARENT, face.res01, false);
+				this.faceTileX[faceID] = face.x;
+				this.faceTileZ[faceID] = face.z;
+				worldMod.facePickIndex[faceID] = faceID + 200000;
+			}
+			return;
+		}
+
+		if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+			faceIndicies[2] = face.z + face.x * LOCAL_TILE_COUNT;
+			faceIndicies[1] = LOCAL_TILE_COUNT + face.x * LOCAL_TILE_COUNT + face.z + 1;
+			faceIndicies[0] = 1 + face.x * LOCAL_TILE_COUNT + face.z;
+			int faceID = worldMod.insertFace(3, faceIndicies, Scene.TRANSPARENT, face.colorResource, false);
+			this.faceTileX[faceID] = face.x;
+			this.faceTileZ[faceID] = face.z;
+			worldMod.facePickIndex[faceID] = 200000 + faceID;
+		}
+
+		if (face.res01 != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+			faceIndices2[1] = face.z + face.x * LOCAL_TILE_COUNT;
+			faceIndices2[2] = face.z - (-(face.x * LOCAL_TILE_COUNT) - (LOCAL_TILE_COUNT + 1));
+			faceIndices2[0] = face.x * LOCAL_TILE_COUNT + face.z + LOCAL_TILE_COUNT;
+			int faceID = worldMod.insertFace(3, faceIndices2, Scene.TRANSPARENT, face.res01, false);
+			this.faceTileX[faceID] = face.x;
+			this.faceTileZ[faceID] = face.z;
+			worldMod.facePickIndex[faceID] = faceID + 200000;
+		}
+	}
+
+	private void publishTerrainProduct(RSModel worldMod) {
+		worldMod.setDiffuseLightAndColor(-50, -10, -50, 40, 48, true, 105);
+		this.modelLandscapeGrid = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
+			MODEL_GRID_WORLD_SIZE, 112, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT,
+			MODEL_GRID_WORLD_SIZE, false, 0);
+		tagRenderer3DModels(this.modelLandscapeGrid, Renderer3DModelKind.TERRAIN);
+
+		for (int x = 0; x < MODEL_GRID_COUNT; ++x) {
+			this.scene.addModel(this.modelLandscapeGrid[x]);
+		}
+
+		for (int x = 0; x < LOCAL_TILE_COUNT; ++x) {
+			for (int z = 0; z < LOCAL_TILE_COUNT; ++z) {
+				this.tileElevationCache[x][z] = this.getTileElevation(x, z);
+			}
+		}
+	}
+
+	private WallModelInput loadWallModelInput(int plane, int sectionX, int sectionY) {
+		String key = wallModelInputKey(plane, sectionX, sectionY);
+		WallModelInput cached;
+		synchronized (wallModelInputCacheLock) {
+			cached = wallModelInputCache.get(key);
+		}
+		if (cached != null) {
+			this.worldStreamManager.markWallInputCacheHit(
+				plane,
+				sectionX,
+				sectionY,
+				ACTIVE_SECTION_GRID,
+				ACTIVE_SECTION_ORIGIN_OFFSET);
+			return cached;
+		}
+
+		CpuSectionWindow window = loadCpuSectionWindow(plane, sectionX, sectionY);
+		WallModelInput built = buildWallModelInput(window.sectors);
+		boolean storedBuilt = false;
+		synchronized (wallModelInputCacheLock) {
+			cached = wallModelInputCache.get(key);
+			if (cached == null) {
+				wallModelInputCache.put(key, built);
+				storedBuilt = true;
+			}
+		}
+		if (storedBuilt) {
+			this.worldStreamManager.markWallInputBuilt(
+				plane,
+				sectionX,
+				sectionY,
+				ACTIVE_SECTION_GRID,
+				ACTIVE_SECTION_ORIGIN_OFFSET);
+			return built;
+		}
+		this.worldStreamManager.markWallInputCacheHit(
+			plane,
+			sectionX,
+			sectionY,
+			ACTIVE_SECTION_GRID,
+			ACTIVE_SECTION_ORIGIN_OFFSET);
+		return cached;
+	}
+
+	private WallModelInput buildWallModelInput(Sector[] sourceSectors) {
+		TerrainModelInputSource source = new TerrainModelInputSource(sourceSectors);
+		List<WallSegmentInput> segments = new ArrayList<WallSegmentInput>();
+		for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x) {
+			for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
+				addWallSegmentInput(segments, source, source.verticalWall(x, z), WallSegmentInput.VERTICAL, x, z,
+					1 + x, z, x, z);
+				addWallSegmentInput(segments, source, source.horizontalWall(x, z), WallSegmentInput.HORIZONTAL, x, z,
+					x, z, x, 1 + z);
+
+				int wall = source.wallDiagonal(x, z);
+				if (wall > 0 && wall < 12000) {
+					addWallSegmentInput(segments, source, wall, WallSegmentInput.DIAGONAL_A, x, z,
+						x + 1, z, x, 1 + z);
+				} else if (wall > 12000 && wall < 24000) {
+					addWallSegmentInput(segments, source, wall - 12000, WallSegmentInput.DIAGONAL_B, x, z,
+						x, z, x + 1, 1 + z);
+				}
+			}
+		}
+		return new WallModelInput(segments.toArray(new WallSegmentInput[segments.size()]));
+	}
+
+	private void addWallSegmentInput(
+		List<WallSegmentInput> segments,
+		TerrainModelInputSource source,
+		int wall,
+		int kind,
+		int x,
+		int z,
+		int t2X,
+		int t1Z,
+		int t1X,
+		int t2Z) {
+		if (wall <= 0) {
+			return;
+		}
+		int wallID = wall - 1;
+		if (Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getUnknown() == 0 || this.showInvisibleWalls) {
+			int height = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getWallObjectHeight();
+			int frontTexture = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getModelVar2();
+			int backTexture = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getModelVar3();
+			int x1 = t1X * 128;
+			int z1 = t1Z * 128;
+			int x2 = t2X * 128;
+			int z2 = t2Z * 128;
+			int y1 = -source.tileElevation(t1X, t1Z);
+			int y2 = -source.tileElevation(t2X, t2Z);
+			int facePickIndex = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getUnknown() == 5
+				? 30000 + wallID
+				: 0;
+			segments.add(new WallSegmentInput(wallID, kind, x, z, frontTexture, backTexture, facePickIndex,
+				x1, y1, z1,
+				x1, y1 - height, z1,
+				x2, y2 - height, z2,
+				x2, y2, z2));
+		}
+	}
+
+	private void emitWallProduct(WallModelInput input, boolean showWallOnMinimap) {
+		final int wallColor = 6316128;
+		for (WallSegmentInput segment : input.segments) {
+			applyWallSegmentTerrainLight(segment);
+			int[] indices = new int[4];
+			for (int i = 0; i < indices.length; i++) {
+				int offset = i * 3;
+				indices[i] = this.modelAccumulate.insertVertex(
+					segment.vertexCoords[offset],
+					segment.vertexCoords[offset + 1],
+					segment.vertexCoords[offset + 2]);
+			}
+			int face = this.modelAccumulate.insertFace(4, indices, segment.frontTexture, segment.backTexture, false);
+			this.modelAccumulate.facePickIndex[face] = segment.facePickIndex;
+			if (showWallOnMinimap && Objects.requireNonNull(EntityHandler.getDoorDef(segment.wallID)).getDoorType() != 0) {
+				applyWallSegmentCollision(segment);
+			}
+			if (showWallOnMinimap && isLegacyMinimapFaceTile(segment.x, segment.z)) {
+				drawWallSegmentMinimap(segment, wallColor);
+			}
+		}
+
+		if (showWallOnMinimap) {
+			this.minimapGraphics.copyPixelDataToSurface(GraphicsController.SPRITE_LAYER.MINIMAP, 0, 0,
+				MINIMAP_PIXEL_SIZE, MINIMAP_PIXEL_SIZE);
+		}
+	}
+
+	private void applyWallSegmentTerrainLight(WallSegmentInput segment) {
+		this.setVertexLightOther(segment.vertexCoords[0] / 128, segment.vertexCoords[2] / 128, 40);
+		this.setVertexLightOther(segment.vertexCoords[9] / 128, segment.vertexCoords[11] / 128, 40);
+	}
+
+	private void applyWallSegmentCollision(WallSegmentInput segment) {
+		if (segment.kind == WallSegmentInput.VERTICAL) {
+			this.collisionFlags[segment.x][segment.z] = FastMath.bitwiseOr(this.collisionFlags[segment.x][segment.z],
+				CollisionFlag.WALL_NORTH);
+			if (segment.z > 0) {
+				this.collisionFlagBitwiseOr(segment.x, segment.z - 1, CollisionFlag.WALL_SOUTH);
+			}
+		} else if (segment.kind == WallSegmentInput.HORIZONTAL) {
+			this.collisionFlags[segment.x][segment.z] = FastMath.bitwiseOr(this.collisionFlags[segment.x][segment.z],
+				CollisionFlag.WALL_EAST);
+			if (segment.x > 0) {
+				this.collisionFlagBitwiseOr(segment.x - 1, segment.z, CollisionFlag.WALL_WEST);
+			}
+		} else if (segment.kind == WallSegmentInput.DIAGONAL_A) {
+			this.collisionFlags[segment.x][segment.z] = FastMath.bitwiseOr(this.collisionFlags[segment.x][segment.z],
+				CollisionFlag.FULL_BLOCK_B);
+		} else if (segment.kind == WallSegmentInput.DIAGONAL_B) {
+			this.collisionFlags[segment.x][segment.z] = FastMath.bitwiseOr(this.collisionFlags[segment.x][segment.z],
+				CollisionFlag.FULL_BLOCK_A);
+		}
+	}
+
+	private void drawWallSegmentMinimap(WallSegmentInput segment, int wallColor) {
+		if (segment.kind == WallSegmentInput.VERTICAL) {
+			this.minimapGraphics.drawLineHoriz(segment.x * 3, segment.z * 3, 3, wallColor);
+		} else if (segment.kind == WallSegmentInput.HORIZONTAL) {
+			this.minimapGraphics.drawLineVert(segment.x * 3, segment.z * 3, wallColor, 3);
+		} else if (segment.kind == WallSegmentInput.DIAGONAL_A) {
+			this.minimapGraphics.setPixel(segment.x * 3, segment.z * 3, wallColor);
+			this.minimapGraphics.setPixel(1 + segment.x * 3, 1 + segment.z * 3, wallColor);
+			this.minimapGraphics.setPixel(segment.x * 3 + 2, 2 + segment.z * 3, wallColor);
+		} else if (segment.kind == WallSegmentInput.DIAGONAL_B) {
+			this.minimapGraphics.setPixel(2 + segment.x * 3, segment.z * 3, wallColor);
+			this.minimapGraphics.setPixel(segment.x * 3 + 1, segment.z * 3 + 1, wallColor);
+			this.minimapGraphics.setPixel(segment.x * 3, 2 + segment.z * 3, wallColor);
+		}
+	}
+
+	private void publishWallProduct(int plane) {
+		this.modelAccumulate.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, 122);
+		this.modelWallGrid[plane] = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
+			MODEL_GRID_WORLD_SIZE, -120, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT, MODEL_GRID_WORLD_SIZE,
+			true, 0);
+		tagRenderer3DModels(this.modelWallGrid[plane], Renderer3DModelKind.WALL);
+
+		for (int x = 0; x < MODEL_GRID_COUNT; ++x) {
+			this.scene.addModel(this.modelWallGrid[plane][x]);
+		}
+		this.modelAccumulate.resetFaceVertHead((int) 1);
+	}
+
+	private RoofModelInput loadRoofModelInput(int plane, int sectionX, int sectionY) {
+		String key = roofModelInputKey(plane, sectionX, sectionY);
+		RoofModelInput cached;
+		synchronized (roofModelInputCacheLock) {
+			cached = roofModelInputCache.get(key);
+		}
+		if (cached != null) {
+			this.worldStreamManager.markRoofInputCacheHit(
+				plane,
+				sectionX,
+				sectionY,
+				ACTIVE_SECTION_GRID,
+				ACTIVE_SECTION_ORIGIN_OFFSET);
+			return cached;
+		}
+
+		CpuSectionWindow window = loadCpuSectionWindow(plane, sectionX, sectionY);
+		RoofModelInput built = buildRoofModelInput(window.sectors);
+		boolean storedBuilt = false;
+		synchronized (roofModelInputCacheLock) {
+			cached = roofModelInputCache.get(key);
+			if (cached == null) {
+				roofModelInputCache.put(key, built);
+				storedBuilt = true;
+			}
+		}
+		if (storedBuilt) {
+			this.worldStreamManager.markRoofInputBuilt(
+				plane,
+				sectionX,
+				sectionY,
+				ACTIVE_SECTION_GRID,
+				ACTIVE_SECTION_ORIGIN_OFFSET);
+			return built;
+		}
+		this.worldStreamManager.markRoofInputCacheHit(
+			plane,
+			sectionX,
+			sectionY,
+			ACTIVE_SECTION_GRID,
+			ACTIVE_SECTION_ORIGIN_OFFSET);
+		return cached;
+	}
+
+	private RoofModelInput buildRoofModelInput(Sector[] sourceSectors) {
+		TerrainModelInputSource source = new TerrainModelInputSource(sourceSectors);
+		RoofElevationWorkspace elevations = this.prepareRoofElevationProduct(source);
+		List<RoofFaceInput> faces = this.collectRoofFaceInputs(source, elevations);
+		elevations.clearRoofMarkers();
+		return new RoofModelInput(
+			faces.toArray(new RoofFaceInput[faces.size()]),
+			elevations.copyElevations());
+	}
+
+	private RoofElevationWorkspace prepareRoofElevationProduct(TerrainModelInputSource source) {
+		RoofElevationWorkspace elevations = RoofElevationWorkspace.fromSource(source);
+		for (int x = 0; x < LOCAL_FACE_TILE_COUNT; ++x) {
+			for (int z = 0; z < LOCAL_FACE_TILE_COUNT; ++z) {
+				int wall = source.verticalWall(x, z);
+				if (wall > 0) {
+					this.applyWallToElevationCache(elevations, wall - 1, x, z, x + 1, z);
+				}
+
+				wall = source.horizontalWall(x, z);
+				if (wall > 0) {
+					this.applyWallToElevationCache(elevations, wall - 1, x, z, x, z + 1);
+				}
+
+				wall = source.wallDiagonal(x, z);
+				if (wall > 0 && wall < 12000) {
+					this.applyWallToElevationCache(elevations, wall - 1, x, z, x + 1, z + 1);
+				}
+
+				if (wall > 12000 && wall < 24000) {
+					this.applyWallToElevationCache(elevations, wall - 12001, x + 1, z, x, z + 1);
+				}
+			}
+		}
+
+		for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x) {
+			for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z) {
+				int roof = source.wallRoof(x, z);
+				if (roof > 0) {
+					int xp1 = x + 1;
+					int xp12 = x + 1;
+					int zp1 = z + 1;
+					int zp12 = z + 1;
+					int max = 0;
+					int ec00 = elevations.get(x, z);
+					int ec10 = elevations.get(xp1, z);
+					int ec11 = elevations.get(xp12, zp1);
+					int ec01 = elevations.get(x, zp12);
+
+					if (ec00 > 80000) {
+						ec00 -= 80000;
+					}
+					if (ec10 > 80000) {
+						ec10 -= 80000;
+					}
+					if (ec11 > 80000) {
+						ec11 -= 80000;
+					}
+					if (ec01 > 80000) {
+						ec01 -= 80000;
+					}
+
+					if (ec00 > max) {
+						max = ec00;
+					}
+					if (max < ec10) {
+						max = ec10;
+					}
+					if (max < ec11) {
+						max = ec11;
+					}
+					if (max < ec01) {
+						max = ec01;
+					}
+					if (max >= 80000) {
+						max -= 80000;
+					}
+
+					if (ec00 < 80000) {
+						elevations.set(x, z, max);
+					} else {
+						elevations.set(x, z, elevations.get(x, z) - 80000);
+					}
+
+					if (ec10 < 80000) {
+						elevations.set(xp1, z, max);
+					} else {
+						elevations.set(xp1, z, elevations.get(xp1, z) - 80000);
+					}
+
+					if (ec11 < 80000) {
+						elevations.set(xp12, zp1, max);
+					} else {
+						elevations.set(xp12, zp1, elevations.get(xp12, zp1) - 80000);
+					}
+
+					if (ec01 < 80000) {
+						elevations.set(x, zp12, max);
+					} else {
+						elevations.set(x, zp12, elevations.get(x, zp12) - 80000);
+					}
+				}
+			}
+		}
+		return elevations;
+	}
+
+	private List<RoofFaceInput> collectRoofFaceInputs(TerrainModelInputSource source, RoofElevationWorkspace elevations) {
+		List<RoofFaceInput> faces = new ArrayList<RoofFaceInput>();
+		for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x) {
+			for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z) {
+				int roof = source.wallRoof(x, z);
+				if (roof > 0) {
+					int x10 = x + 1;
+					int x11 = x + 1;
+					int z11 = z + 1;
+					int z01 = z + 1;
+					int p00x = x * 128;
+					int p00z = z * 128;
+
+					int p10x = 128 + p00x;
+					int p11z = 128 + p00z;
+					int p01x = p00x;
+					int p10z = p00z;
+					int p11x = p10x;
+					int p01z = p11z;
+
+					int ec00 = elevations.get(x, z);
+					int ec10 = elevations.get(x10, z);
+					int ec11 = elevations.get(x11, z11);
+					int ec01 = elevations.get(x, z01);
+					int var32 = Objects.requireNonNull(EntityHandler.getElevationDef(roof - 1)).getUnknown1();
+					if (source.hasRoofTile(x, z) && ec00 < 80000) {
+						ec00 += var32 + 80000;
+						elevations.set(x, z, ec00);
+					}
+
+					if (source.hasRoofTile(x10, z) && ec10 < 80000) {
+						ec10 += var32 + 80000;
+						elevations.set(x10, z, ec10);
+					}
+
+					if (source.hasRoofTile(x11, z11) && ec11 < 80000) {
+						ec11 += 80000 + var32;
+						elevations.set(x11, z11, ec11);
+					}
+
+					if (ec10 >= 80000) {
+						ec10 -= 80000;
+					}
+
+					if (ec11 >= 80000) {
+						ec11 -= 80000;
+					}
+
+					if (source.hasRoofTile(x, z01) && ec01 < 80000) {
+						ec01 += var32 + 80000;
+						elevations.set(x, z01, ec01);
+					}
+
+					if (ec00 >= 80000) {
+						ec00 -= 80000;
+					}
+
+					if (ec01 >= 80000) {
+						ec01 -= 80000;
+					}
+
+					final byte eaveSize = 16;
+
+					if (source.hasRoofStrut(x - 1, z)) {
+						p00x -= eaveSize;
+					}
+					if (source.hasRoofStrut(x + 1, z)) {
+						p00x += eaveSize;
+					}
+					if (source.hasRoofStrut(x, z - 1)) {
+						p00z -= eaveSize;
+					}
+					if (source.hasRoofStrut(x, z + 1)) {
+						p00z += eaveSize;
+					}
+
+					if (source.hasRoofStrut(x10 - 1, z)) {
+						p10x -= eaveSize;
+					}
+					if (source.hasRoofStrut(x10 + 1, z)) {
+						p10x += eaveSize;
+					}
+					if (source.hasRoofStrut(x10, z - 1)) {
+						p10z -= eaveSize;
+					}
+					if (source.hasRoofStrut(x10, z + 1)) {
+						p10z += eaveSize;
+					}
+
+					if (source.hasRoofStrut(x11 - 1, z11)) {
+						p11x -= eaveSize;
+					}
+					if (source.hasRoofStrut(x11 + 1, z11)) {
+						p11x += eaveSize;
+					}
+					if (source.hasRoofStrut(x11, z11 - 1)) {
+						p11z -= eaveSize;
+					}
+					if (source.hasRoofStrut(x11, z11 + 1)) {
+						p11z += eaveSize;
+					}
+
+					if (source.hasRoofStrut(x - 1, z01)) {
+						p01x -= eaveSize;
+					}
+					if (source.hasRoofStrut(x + 1, z01)) {
+						p01x += eaveSize;
+					}
+					if (source.hasRoofStrut(x, z01 - 1)) {
+						p01z -= eaveSize;
+					}
+					if (source.hasRoofStrut(x, z01 + 1)) {
+						p01z += eaveSize;
+					}
+
+					roof = Objects.requireNonNull(EntityHandler.getElevationDef(roof - 1)).getUnknown2();
+					ec10 = -ec10;
+					ec01 = -ec01;
+					ec11 = -ec11;
+					ec00 = -ec00;
+					if (source.wallDiagonal(x, z) > 12000 && source.wallDiagonal(x, z) < 24000
+						&& source.wallRoof(x - 1, z - 1) == 0) {
+						addRoofFaceInput(faces, roof,
+							p11x, ec11, p11z,
+							p01x, ec01, p01z,
+							p10x, ec10, p10z);
+					} else if (source.wallDiagonal(x, z) > 12000 && source.wallDiagonal(x, z) < 24000
+						&& source.wallRoof(x + 1, z + 1) == 0) {
+						addRoofFaceInput(faces, roof,
+							p00x, ec00, p00z,
+							p10x, ec10, p10z,
+							p01x, ec01, p01z);
+					} else if (source.wallDiagonal(x, z) > 0 && source.wallDiagonal(x, z) < 12000
+						&& source.wallRoof(x + 1, z - 1) == 0) {
+						addRoofFaceInput(faces, roof,
+							p01x, ec01, p01z,
+							p00x, ec00, p00z,
+							p11x, ec11, p11z);
+					} else if (source.wallDiagonal(x, z) > 0 && source.wallDiagonal(x, z) < 12000
+						&& source.wallRoof(x - 1, z + 1) == 0) {
+						addRoofFaceInput(faces, roof,
+							p10x, ec10, p10z,
+							p11x, ec11, p11z,
+							p00x, ec00, p00z);
+					} else if (ec10 == ec00 && ec11 == ec01) {
+						addRoofFaceInput(faces, roof,
+							p00x, ec00, p00z,
+							p10x, ec10, p10z,
+							p11x, ec11, p11z,
+							p01x, ec01, p01z);
+					} else if (ec00 == ec01 && ec11 == ec10) {
+						addRoofFaceInput(faces, roof,
+							p01x, ec01, p01z,
+							p00x, ec00, p00z,
+							p10x, ec10, p10z,
+							p11x, ec11, p11z);
+					} else {
+						boolean var34 = true;
+						if (source.wallRoof(x - 1, z - 1) > 0) {
+							var34 = false;
+						}
+
+						if (source.wallRoof(x + 1, z + 1) > 0) {
+							var34 = false;
+						}
+
+						if (!var34) {
+							addRoofFaceInput(faces, roof,
+								p10x, ec10, p10z,
+								p11x, ec11, p11z,
+								p00x, ec00, p00z);
+
+							addRoofFaceInput(faces, roof,
+								p01x, ec01, p01z,
+								p00x, ec00, p00z,
+								p11x, ec11, p11z);
+						} else {
+							addRoofFaceInput(faces, roof,
+								p00x, ec00, p00z,
+								p10x, ec10, p10z,
+								p01x, ec01, p01z);
+
+							addRoofFaceInput(faces, roof,
+								p11x, ec11, p11z,
+								p01x, ec01, p01z,
+								p10x, ec10, p10z);
+						}
+					}
+				}
+			}
+		}
+		return faces;
+	}
+
+	private void addRoofFaceInput(List<RoofFaceInput> faces, int texture, int... vertexCoords) {
+		faces.add(new RoofFaceInput(texture, vertexCoords));
+	}
+
+	private void emitRoofFaceProduct(RoofModelInput input) {
+		for (RoofFaceInput face : input.faces) {
+			int[] indices = new int[face.vertexCoords.length / 3];
+			for (int i = 0; i < indices.length; i++) {
+				int offset = i * 3;
+				indices[i] = this.modelAccumulate.insertVertex(
+					face.vertexCoords[offset],
+					face.vertexCoords[offset + 1],
+					face.vertexCoords[offset + 2]);
+			}
+			this.modelAccumulate.insertFace(indices.length, indices, face.texture, Scene.TRANSPARENT, false);
+		}
+	}
+
+	private void publishRoofProduct(int plane, RoofModelInput input) {
+		this.modelAccumulate.setDiffuseLightAndColor(-50, -10, -50, 50, 50, true, -98);
+		this.modelRoofGrid[plane] = this.modelAccumulate.divideModelByGrid(0, MODEL_GRID_AXIS,
+			MODEL_GRID_WORLD_SIZE, -112, MODEL_GRID_COUNT, MODEL_SPLIT_VERTEX_LIMIT, MODEL_GRID_WORLD_SIZE,
+			true, 0);
+		tagRenderer3DModels(this.modelRoofGrid[plane], Renderer3DModelKind.ROOF);
+
+		for (int x = 0; x < MODEL_GRID_COUNT; ++x) {
+			this.scene.addModel(this.modelRoofGrid[plane][x]);
+		}
+
+		if (this.modelRoofGrid[plane][0] == null) {
+			throw new RuntimeException("null roof!");
+		}
+		input.copyElevationsInto(this.tileElevationCache);
+	}
+
+	private void publishHiddenRoofProduct(int plane, RoofModelInput input) {
+		this.modelRoofGrid[plane] = new RSModel[MODEL_GRID_COUNT];
+		input.copyElevationsInto(this.tileElevationCache);
 	}
 
 	public void registerObjectDir(int x, int y, int dir) {
@@ -1509,19 +2227,34 @@ public final class World {
 
 	public final void loadSections(int worldX, int worldZ, int plane) {
 		try {
+			long loadStart = WorldStreamManager.now();
 			this.resetModels();
 
 			int x = worldTileToSection(worldX);
+			int z = worldTileToSection(worldZ);
 
 			this.generateLandscapeModel(worldX, 122, true, plane, worldZ);
-			int z = worldTileToSection(worldZ);
 			if (plane == 0) {
 				this.generateLandscapeModel(worldX, 112, false, 1, worldZ);
 				this.generateLandscapeModel(worldX, 69, false, 2, worldZ);
-				this.loadSectionWindow(sectors, plane, x, z);
-				this.setTileDecorationOnBridge();
+				boolean bridgeDecorationsApplied = this.loadSectionWindow(sectors, plane, x, z);
+				if (!bridgeDecorationsApplied) {
+					this.setTileDecorationOnBridge();
+				}
 			}
+			this.renderer3DWorldChunkFrame = this.buildRenderer3DWorldChunkFrame(plane, x, z);
 			this.preloadSections(worldX, worldZ, plane);
+			this.worldStreamManager.markActiveWindow(
+				plane,
+				x,
+				z,
+				ACTIVE_SECTION_GRID,
+				ACTIVE_SECTION_ORIGIN_OFFSET);
+			this.worldStreamManager.recordActiveWindowLoad(
+				plane,
+				x,
+				z,
+				WorldStreamManager.elapsedSince(loadStart));
 
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "k.L(" + worldX + ',' + "dummy" + ',' + worldZ + ',' + plane + ')');
@@ -1532,13 +2265,25 @@ public final class World {
 		int sectionX = worldTileToSection(worldX);
 		int sectionY = worldTileToSection(worldZ);
 		preloadSectionWindow(plane, sectionX, sectionY);
+		queueCpuSectionWindowPreload(plane, sectionX, sectionY);
+		queueWorldModelProductPreload(plane, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);
 		if (plane == 0) {
 			preloadSectionWindow(1, sectionX, sectionY);
 			preloadSectionWindow(2, sectionX, sectionY);
+			queueCpuSectionWindowPreload(1, sectionX, sectionY);
+			queueCpuSectionWindowPreload(2, sectionX, sectionY);
+			queueWorldModelProductPreload(1, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);
+			queueWorldModelProductPreload(2, sectionX, sectionY, true, !Config.C_HIDE_ROOFS);
 		}
 	}
 
 	private void preloadSectionWindow(int height, int sectionX, int sectionY) {
+		this.worldStreamManager.markWindowRequested(
+			height,
+			sectionX,
+			sectionY,
+			SECTOR_PRELOAD_LOW_OFFSET,
+			SECTOR_PRELOAD_HIGH_OFFSET);
 		for (int x = sectionX + SECTOR_PRELOAD_LOW_OFFSET; x <= sectionX + SECTOR_PRELOAD_HIGH_OFFSET; x++) {
 			for (int y = sectionY + SECTOR_PRELOAD_LOW_OFFSET; y <= sectionY + SECTOR_PRELOAD_HIGH_OFFSET; y++) {
 				queueSectorPreload(height, x, y);
@@ -1567,6 +2312,244 @@ public final class World {
 				}
 			}
 		});
+	}
+
+	private void queueCpuSectionWindowPreload(final int height, final int sectionX, final int sectionY) {
+		final String key = sectionWindowKey(height, sectionX, sectionY);
+		synchronized (cpuSectionWindowCacheLock) {
+			if (cpuSectionWindowCache.containsKey(key) || cpuSectionWindowBuildsInFlight.contains(key)) {
+				return;
+			}
+			cpuSectionWindowBuildsInFlight.add(key);
+		}
+
+		sectorPreloadExecutor.submit(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					loadCpuSectionWindow(height, sectionX, sectionY);
+				} finally {
+					synchronized (cpuSectionWindowCacheLock) {
+						cpuSectionWindowBuildsInFlight.remove(key);
+					}
+				}
+			}
+		});
+	}
+
+	private void queueWorldModelProductPreload(
+		final int height,
+		final int sectionX,
+		final int sectionY,
+		final boolean includeTerrain,
+		final boolean includeRoofGeometry) {
+		final String key = worldModelProductKey(height, sectionX, sectionY, includeRoofGeometry);
+		final String preloadKey = key + (includeTerrain ? "-terrain" : "-surface");
+		synchronized (worldModelProductCacheLock) {
+			WorldModelProduct cached = worldModelProductCache.get(key);
+			if (cached != null && cached.hasTerrainIfNeeded(includeTerrain)
+				|| worldModelProductBuildsInFlight.contains(preloadKey)) {
+				return;
+			}
+			worldModelProductBuildsInFlight.add(preloadKey);
+		}
+
+		sectorPreloadExecutor.submit(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					loadWorldModelProduct(height, sectionX, sectionY, includeTerrain, includeRoofGeometry);
+				} finally {
+					synchronized (worldModelProductCacheLock) {
+						worldModelProductBuildsInFlight.remove(preloadKey);
+					}
+				}
+			}
+		});
+	}
+
+	private void queueTerrainModelInputPreload(final int height, final int sectionX, final int sectionY) {
+		final String key = terrainModelInputKey(height, sectionX, sectionY);
+		synchronized (terrainModelInputCacheLock) {
+			if (terrainModelInputCache.containsKey(key) || terrainModelInputBuildsInFlight.contains(key)) {
+				return;
+			}
+			terrainModelInputBuildsInFlight.add(key);
+		}
+
+		sectorPreloadExecutor.submit(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					loadTerrainModelInput(height, sectionX, sectionY);
+				} finally {
+					synchronized (terrainModelInputCacheLock) {
+						terrainModelInputBuildsInFlight.remove(key);
+					}
+				}
+			}
+		});
+	}
+
+	private void queueWallModelInputPreload(final int height, final int sectionX, final int sectionY) {
+		final String key = wallModelInputKey(height, sectionX, sectionY);
+		synchronized (wallModelInputCacheLock) {
+			if (wallModelInputCache.containsKey(key) || wallModelInputBuildsInFlight.contains(key)) {
+				return;
+			}
+			wallModelInputBuildsInFlight.add(key);
+		}
+
+		sectorPreloadExecutor.submit(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					loadWallModelInput(height, sectionX, sectionY);
+				} finally {
+					synchronized (wallModelInputCacheLock) {
+						wallModelInputBuildsInFlight.remove(key);
+					}
+				}
+			}
+		});
+	}
+
+	private void queueRoofModelInputPreload(final int height, final int sectionX, final int sectionY) {
+		final String key = roofModelInputKey(height, sectionX, sectionY);
+		synchronized (roofModelInputCacheLock) {
+			if (roofModelInputCache.containsKey(key) || roofModelInputBuildsInFlight.contains(key)) {
+				return;
+			}
+			roofModelInputBuildsInFlight.add(key);
+		}
+
+		sectorPreloadExecutor.submit(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					loadRoofModelInput(height, sectionX, sectionY);
+				} finally {
+					synchronized (roofModelInputCacheLock) {
+						roofModelInputBuildsInFlight.remove(key);
+					}
+				}
+			}
+		});
+	}
+
+	private CpuSectionWindow loadCpuSectionWindow(int height, int sectionX, int sectionY) {
+		String key = sectionWindowKey(height, sectionX, sectionY);
+		CpuSectionWindow cached;
+		synchronized (cpuSectionWindowCacheLock) {
+			cached = cpuSectionWindowCache.get(key);
+			if (cached != null) {
+				this.worldStreamManager.markCpuCacheHit(
+					height,
+					sectionX,
+					sectionY,
+					ACTIVE_SECTION_GRID,
+					ACTIVE_SECTION_ORIGIN_OFFSET);
+				return cached;
+			}
+		}
+
+		long buildStart = WorldStreamManager.now();
+		CpuSectionWindow built = buildCpuSectionWindow(height, sectionX, sectionY);
+		this.worldStreamManager.markCpuBuilt(
+			height,
+			sectionX,
+			sectionY,
+			ACTIVE_SECTION_GRID,
+			ACTIVE_SECTION_ORIGIN_OFFSET,
+			WorldStreamManager.elapsedSince(buildStart));
+		synchronized (cpuSectionWindowCacheLock) {
+			cached = cpuSectionWindowCache.get(key);
+			if (cached != null) {
+				this.worldStreamManager.markCpuCacheHit(
+					height,
+					sectionX,
+					sectionY,
+					ACTIVE_SECTION_GRID,
+					ACTIVE_SECTION_ORIGIN_OFFSET);
+				return cached;
+			}
+			cpuSectionWindowCache.put(key, built);
+			return built;
+		}
+	}
+
+	private CpuSectionWindow buildCpuSectionWindow(int height, int sectionX, int sectionY) {
+		Sector[] window = new Sector[ACTIVE_SECTION_COUNT];
+		int originX = sectionX - ACTIVE_SECTION_ORIGIN_OFFSET;
+		int originY = sectionY - ACTIVE_SECTION_ORIGIN_OFFSET;
+		for (int y = 0; y < ACTIVE_SECTION_GRID; y++) {
+			for (int x = 0; x < ACTIVE_SECTION_GRID; x++) {
+				window[y * ACTIVE_SECTION_GRID + x] = loadSectorTemplate(height, originX + x, originY + y).copy();
+			}
+		}
+		applyBridgeDecorations(window);
+		return new CpuSectionWindow(window, true);
+	}
+
+	private static void applyBridgeDecorations(Sector[] window) {
+		for (int x = 0; x < LOCAL_TILE_COUNT; ++x) {
+			for (int z = 0; z < LOCAL_TILE_COUNT; ++z) {
+				if (getTileDecorationID(window, x, z) == 250) {
+					if (x % SECTION_SIZE == SECTION_SIZE - 1
+						&& getTileDecorationID(window, x + 1, z) != 250
+						&& getTileDecorationID(window, x + 1, z) != 2) {
+						setTileDecoration(window, x, z, 9);
+					} else if (z % SECTION_SIZE == SECTION_SIZE - 1
+						&& getTileDecorationID(window, x, z + 1) != 250
+						&& getTileDecorationID(window, x, z + 1) != 2) {
+						setTileDecoration(window, x, z, 9);
+					} else {
+						setTileDecoration(window, x, z, 2);
+					}
+				}
+			}
+		}
+	}
+
+	private static int getTileDecorationID(Sector[] window, int xTile, int zTile) {
+		Sector sector = sectorForLocalTile(window, xTile, zTile);
+		if (sector == null) {
+			return 0;
+		}
+		return sector.getTile(tileInSector(xTile), tileInSector(zTile)).groundOverlay & 0xFF;
+	}
+
+	private static void setTileDecoration(Sector[] window, int xTile, int zTile, int val) {
+		Sector sector = sectorForLocalTile(window, xTile, zTile);
+		if (sector != null) {
+			sector.getTile(tileInSector(xTile), tileInSector(zTile)).groundOverlay = (byte) val;
+		}
+	}
+
+	private static Sector sectorForLocalTile(Sector[] window, int tileX, int tileZ) {
+		int sectorIndex = sectorIndexForLocalTile(tileX, tileZ);
+		return sectorIndex < 0 || sectorIndex >= window.length ? null : window[sectorIndex];
+	}
+
+	private String sectionWindowKey(int height, int sectionX, int sectionY) {
+		return sectorFilename(height, sectionX, sectionY) + "-window";
+	}
+
+	private String terrainModelInputKey(int height, int sectionX, int sectionY) {
+		return sectionWindowKey(height, sectionX, sectionY) + "-terrain-input";
+	}
+
+	private String wallModelInputKey(int height, int sectionX, int sectionY) {
+		return sectionWindowKey(height, sectionX, sectionY) + "-wall-input";
+	}
+
+	private String roofModelInputKey(int height, int sectionX, int sectionY) {
+		return sectionWindowKey(height, sectionX, sectionY) + "-roof-input";
+	}
+
+	private String worldModelProductKey(int height, int sectionX, int sectionY, boolean includeRoofGeometry) {
+		return sectionWindowKey(height, sectionX, sectionY)
+			+ (includeRoofGeometry ? "-world-product-roofs" : "-world-product-no-roofs");
 	}
 
 	public final void removeGameObject_CollisonFlags(int id, int x, int z) {
@@ -1956,18 +2939,24 @@ public final class World {
 
 	private Sector loadSectorTemplate(int height, int sectionX, int sectionY) {
 		String filename = sectorFilename(height, sectionX, sectionY);
+		this.worldStreamManager.markRequested(height, sectionX, sectionY);
 		Sector cached;
 		synchronized (sectorCacheLock) {
 			cached = sectorTemplateCache.get(filename);
 			if (cached != null) {
+				this.worldStreamManager.markCacheHit(height, sectionX, sectionY);
 				return cached;
 			}
 		}
 
+		long decodeStart = WorldStreamManager.now();
+		this.worldStreamManager.markDecoding(height, sectionX, sectionY);
 		Sector sector = readSectorTemplate(filename, height);
+		this.worldStreamManager.markDecoded(height, sectionX, sectionY, WorldStreamManager.elapsedSince(decodeStart));
 		synchronized (sectorCacheLock) {
 			cached = sectorTemplateCache.get(filename);
 			if (cached != null) {
+				this.worldStreamManager.markCacheHit(height, sectionX, sectionY);
 				return cached;
 			}
 			sectorTemplateCache.put(filename, sector);
@@ -2005,6 +2994,682 @@ public final class World {
 
 	private String sectorFilename(int height, int sectionX, int sectionY) {
 		return "h" + height + "x" + sectionX + "y" + sectionY;
+	}
+
+	private static final class WorldModelProduct {
+		private final TerrainModelInput terrainInput;
+		private final WallModelInput wallInput;
+		private final RoofModelInput roofInput;
+		private final WorldGpuChunkMesh gpuChunkMesh;
+
+		private WorldModelProduct(
+			TerrainModelInput terrainInput,
+			WallModelInput wallInput,
+			RoofModelInput roofInput,
+			WorldGpuChunkMesh gpuChunkMesh) {
+			this.terrainInput = terrainInput;
+			this.wallInput = wallInput;
+			this.roofInput = roofInput;
+			this.gpuChunkMesh = gpuChunkMesh;
+		}
+
+		private boolean hasTerrainIfNeeded(boolean includeTerrain) {
+			return !includeTerrain || terrainInput != null;
+		}
+	}
+
+	private static final class WorldGpuChunkMesh {
+		private final int plane;
+		private final int centerSectionX;
+		private final int centerSectionY;
+		private final int originWorldX;
+		private final int originWorldZ;
+		private final int[] vertexCoords;
+		private final float[] vertexTextureU;
+		private final float[] vertexTextureV;
+		private final int[] vertexLights;
+		private final int[] indices;
+		private final int[] triangleTextures;
+		private final int[] triangleFallbackColors;
+		private final Renderer3DModelKind[] triangleModelKinds;
+		private final int terrainTriangles;
+		private final int wallTriangles;
+		private final int roofTriangles;
+		private final long signature;
+
+		private WorldGpuChunkMesh(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ,
+			int[] vertexCoords,
+			float[] vertexTextureU,
+			float[] vertexTextureV,
+			int[] vertexLights,
+			int[] indices,
+			int[] triangleTextures,
+			int[] triangleFallbackColors,
+			Renderer3DModelKind[] triangleModelKinds,
+			int terrainTriangles,
+			int wallTriangles,
+			int roofTriangles,
+			long signature) {
+			this.plane = plane;
+			this.centerSectionX = centerSectionX;
+			this.centerSectionY = centerSectionY;
+			this.originWorldX = originWorldX;
+			this.originWorldZ = originWorldZ;
+			this.vertexCoords = vertexCoords;
+			this.vertexTextureU = vertexTextureU;
+			this.vertexTextureV = vertexTextureV;
+			this.vertexLights = vertexLights;
+			this.indices = indices;
+			this.triangleTextures = triangleTextures;
+			this.triangleFallbackColors = triangleFallbackColors;
+			this.triangleModelKinds = triangleModelKinds;
+			this.terrainTriangles = terrainTriangles;
+			this.wallTriangles = wallTriangles;
+			this.roofTriangles = roofTriangles;
+			this.signature = signature;
+		}
+
+		private int getTriangleCount() {
+			return triangleTextures.length;
+		}
+
+		private Renderer3DWorldChunkFrame.ChunkMesh toRenderer3DWorldChunkMesh() {
+			return new Renderer3DWorldChunkFrame.ChunkMesh(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				vertexCoords,
+				vertexTextureU,
+				vertexTextureV,
+				vertexLights,
+				indices,
+				triangleTextures,
+				triangleFallbackColors,
+				triangleModelKinds,
+				terrainTriangles,
+				wallTriangles,
+				roofTriangles,
+				signature);
+		}
+	}
+
+	private static final class WorldGpuChunkMeshBuilder {
+		private static final long FNV_OFFSET_BASIS = -3750763034362895579L;
+		private static final long FNV_PRIME = 1099511628211L;
+
+		private final int plane;
+		private final int centerSectionX;
+		private final int centerSectionY;
+		private final int originWorldX;
+		private final int originWorldZ;
+		private final List<Integer> vertexCoords = new ArrayList<Integer>();
+		private final List<Float> vertexTextureU = new ArrayList<Float>();
+		private final List<Float> vertexTextureV = new ArrayList<Float>();
+		private final List<Integer> vertexLights = new ArrayList<Integer>();
+		private final List<Integer> indices = new ArrayList<Integer>();
+		private final List<Integer> triangleTextures = new ArrayList<Integer>();
+		private final List<Integer> triangleFallbackColors = new ArrayList<Integer>();
+		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
+		private int terrainTriangles;
+		private int wallTriangles;
+		private int roofTriangles;
+
+		private WorldGpuChunkMeshBuilder(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ) {
+			this.plane = plane;
+			this.centerSectionX = centerSectionX;
+			this.centerSectionY = centerSectionY;
+			this.originWorldX = originWorldX;
+			this.originWorldZ = originWorldZ;
+		}
+
+		private void addFace(
+			Renderer3DModelKind kind,
+			int texture,
+			int fallbackColor,
+			int[] faceVertexCoords,
+			int[] faceVertexLights) {
+			int vertexCount = faceVertexCoords == null ? 0 : faceVertexCoords.length / 3;
+			if (vertexCount < 3) {
+				return;
+			}
+
+			float[] textureU = new float[vertexCount];
+			float[] textureV = new float[vertexCount];
+			populateTextureCoordinates(texture, faceVertexCoords, textureU, textureV);
+			for (int vertex = 1; vertex < vertexCount - 1; vertex++) {
+				addTriangle(
+					kind,
+					texture,
+					fallbackColor,
+					faceVertexCoords,
+					faceVertexLights,
+					textureU,
+					textureV,
+					0,
+					vertex,
+					vertex + 1);
+			}
+		}
+
+		private void addTriangle(
+			Renderer3DModelKind kind,
+			int texture,
+			int fallbackColor,
+			int[] faceVertexCoords,
+			int[] faceVertexLights,
+			float[] textureU,
+			float[] textureV,
+			int a,
+			int b,
+			int c) {
+			int baseVertex = vertexCoords.size() / 3;
+			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, a);
+			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, b);
+			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, c);
+			indices.add(Integer.valueOf(baseVertex));
+			indices.add(Integer.valueOf(baseVertex + 1));
+			indices.add(Integer.valueOf(baseVertex + 2));
+			triangleTextures.add(Integer.valueOf(texture));
+			triangleFallbackColors.add(Integer.valueOf(resolveFallbackColor(texture, fallbackColor)));
+			triangleModelKinds.add(kind);
+			if (kind == Renderer3DModelKind.TERRAIN) {
+				terrainTriangles++;
+			} else if (kind == Renderer3DModelKind.WALL) {
+				wallTriangles++;
+			} else if (kind == Renderer3DModelKind.ROOF) {
+				roofTriangles++;
+			}
+		}
+
+		private int resolveFallbackColor(int texture, int fallbackColor) {
+			if (texture == Scene.TRANSPARENT && fallbackColor != Scene.TRANSPARENT) {
+				return resourceToRgb(fallbackColor);
+			}
+			return fallbackColor;
+		}
+
+		private int resourceToRgb(int resource) {
+			if (resource == Scene.TRANSPARENT) {
+				return 0;
+			}
+			if (resource >= 0) {
+				return resource;
+			}
+
+			int encoded = -(resource + 1);
+			int red = (encoded & 0x7C00) >> 10;
+			int green = (encoded & 0x3E0) >> 5;
+			int blue = encoded & 0x1F;
+			return (red << 19) + (green << 11) + (blue << 3);
+		}
+
+		private void addVertex(
+			int[] faceVertexCoords,
+			int[] faceVertexLights,
+			float[] textureU,
+			float[] textureV,
+			int vertex) {
+			int coord = vertex * 3;
+			int x = faceVertexCoords[coord];
+			int y = faceVertexCoords[coord + 1];
+			int z = faceVertexCoords[coord + 2];
+			vertexCoords.add(Integer.valueOf(x));
+			vertexCoords.add(Integer.valueOf(y));
+			vertexCoords.add(Integer.valueOf(z));
+			vertexTextureU.add(Float.valueOf(textureU[vertex]));
+			vertexTextureV.add(Float.valueOf(textureV[vertex]));
+			vertexLights.add(Integer.valueOf(vertexLight(faceVertexLights, vertex)));
+		}
+
+		private int vertexLight(int[] faceVertexLights, int vertex) {
+			return faceVertexLights == null || vertex < 0 || vertex >= faceVertexLights.length
+				? 0
+				: faceVertexLights[vertex];
+		}
+
+		private void populateTextureCoordinates(
+			int texture,
+			int[] faceVertexCoords,
+			float[] textureU,
+			float[] textureV) {
+			if (texture < 0 || faceVertexCoords.length < 9) {
+				return;
+			}
+
+			int last = faceVertexCoords.length / 3 - 1;
+			double ux = faceVertexCoords[3] - faceVertexCoords[0];
+			double uy = faceVertexCoords[4] - faceVertexCoords[1];
+			double uz = faceVertexCoords[5] - faceVertexCoords[2];
+			double vx = faceVertexCoords[last * 3] - faceVertexCoords[0];
+			double vy = faceVertexCoords[last * 3 + 1] - faceVertexCoords[1];
+			double vz = faceVertexCoords[last * 3 + 2] - faceVertexCoords[2];
+			double uu = dot(ux, uy, uz, ux, uy, uz);
+			double uv = dot(ux, uy, uz, vx, vy, vz);
+			double vv = dot(vx, vy, vz, vx, vy, vz);
+			double determinant = uu * vv - uv * uv;
+			if (Math.abs(determinant) < 0.000001) {
+				return;
+			}
+
+			for (int vertex = 0; vertex < textureU.length; vertex++) {
+				int coord = vertex * 3;
+				double px = faceVertexCoords[coord] - faceVertexCoords[0];
+				double py = faceVertexCoords[coord + 1] - faceVertexCoords[1];
+				double pz = faceVertexCoords[coord + 2] - faceVertexCoords[2];
+				double pu = dot(px, py, pz, ux, uy, uz);
+				double pv = dot(px, py, pz, vx, vy, vz);
+				textureU[vertex] = (float) ((pu * vv - pv * uv) / determinant);
+				textureV[vertex] = (float) ((pv * uu - pu * uv) / determinant);
+			}
+		}
+
+		private static double dot(
+			double leftX,
+			double leftY,
+			double leftZ,
+			double rightX,
+			double rightY,
+			double rightZ) {
+			return leftX * rightX + leftY * rightY + leftZ * rightZ;
+		}
+
+		private WorldGpuChunkMesh build() {
+			int[] vertexArray = toIntArray(vertexCoords);
+			float[] textureUArray = toFloatArray(vertexTextureU);
+			float[] textureVArray = toFloatArray(vertexTextureV);
+			int[] lightArray = toIntArray(vertexLights);
+			int[] indexArray = toIntArray(indices);
+			int[] textureArray = toIntArray(triangleTextures);
+			int[] fallbackArray = toIntArray(triangleFallbackColors);
+			Renderer3DModelKind[] kindArray =
+				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
+			long signature = signature(
+				vertexArray,
+				textureUArray,
+				textureVArray,
+				lightArray,
+				indexArray,
+				textureArray,
+				fallbackArray,
+				kindArray);
+			return new WorldGpuChunkMesh(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				vertexArray,
+				textureUArray,
+				textureVArray,
+				lightArray,
+				indexArray,
+				textureArray,
+				fallbackArray,
+				kindArray,
+				terrainTriangles,
+				wallTriangles,
+				roofTriangles,
+				signature);
+		}
+
+		private static int[] toIntArray(List<Integer> values) {
+			int[] array = new int[values.size()];
+			for (int i = 0; i < values.size(); i++) {
+				array[i] = values.get(i).intValue();
+			}
+			return array;
+		}
+
+		private static float[] toFloatArray(List<Float> values) {
+			float[] array = new float[values.size()];
+			for (int i = 0; i < values.size(); i++) {
+				array[i] = values.get(i).floatValue();
+			}
+			return array;
+		}
+
+		private long signature(
+			int[] vertexArray,
+			float[] textureUArray,
+			float[] textureVArray,
+			int[] lightArray,
+			int[] indexArray,
+			int[] textureArray,
+			int[] fallbackArray,
+			Renderer3DModelKind[] kindArray) {
+			long hash = FNV_OFFSET_BASIS;
+			hash = mix(hash, plane);
+			hash = mix(hash, centerSectionX);
+			hash = mix(hash, centerSectionY);
+			hash = mix(hash, originWorldX);
+			hash = mix(hash, originWorldZ);
+			for (int value : vertexArray) {
+				hash = mix(hash, value);
+			}
+			for (float value : textureUArray) {
+				hash = mix(hash, Float.floatToIntBits(value));
+			}
+			for (float value : textureVArray) {
+				hash = mix(hash, Float.floatToIntBits(value));
+			}
+			for (int value : lightArray) {
+				hash = mix(hash, value);
+			}
+			for (int value : indexArray) {
+				hash = mix(hash, value);
+			}
+			for (int value : textureArray) {
+				hash = mix(hash, value);
+			}
+			for (int value : fallbackArray) {
+				hash = mix(hash, value);
+			}
+			for (Renderer3DModelKind kind : kindArray) {
+				hash = mix(hash, kind.ordinal());
+			}
+			return hash;
+		}
+
+		private static long mix(long hash, int value) {
+			hash ^= value & 0xffffffffL;
+			return hash * FNV_PRIME;
+		}
+	}
+
+	private static final class TerrainModelInput {
+		private final TerrainVertexInput[] vertices;
+		private final TerrainTileFaceInput[] tileFaces;
+		private final TerrainOverlayFaceInput[] overlayFaces;
+
+		private TerrainModelInput(
+			TerrainVertexInput[] vertices,
+			TerrainTileFaceInput[] tileFaces,
+			TerrainOverlayFaceInput[] overlayFaces) {
+			this.vertices = vertices;
+			this.tileFaces = tileFaces;
+			this.overlayFaces = overlayFaces;
+		}
+	}
+
+	private static final class TerrainModelInputSource {
+		private final Sector[] sectors;
+
+		private TerrainModelInputSource(Sector[] sectors) {
+			this.sectors = sectors;
+		}
+
+		private int terrainColour(int tileX, int tileZ) {
+			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundTexture & 0xff;
+		}
+
+		private int tileDecorationID(int tileX, int tileZ) {
+			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundOverlay & 0xff;
+		}
+
+		private int tileDecorationCacheVal(int tileX, int tileZ, int defaultVal) {
+			int id = tileDecorationID(tileX, tileZ);
+			if (id == 0) {
+				return defaultVal;
+			}
+			return Objects.requireNonNull(EntityHandler.getTileDef(id - 1)).getColour();
+		}
+
+		private int tileElevation(int tileX, int tileZ) {
+			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
+			return sector == null
+				? 0
+				: (sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundElevation & 0xff) * 3;
+		}
+
+		private int tileType2(int tileX, int tileZ) {
+			int id = tileDecorationID(tileX, tileZ);
+			if (id == 0) {
+				return -1;
+			}
+			return Objects.requireNonNull(EntityHandler.getTileDef(id - 1)).getTileValue() == 2 ? 1 : 0;
+		}
+
+		private boolean pickableInvisibleOverlay(int tileX, int tileZ) {
+			return tileDecorationID(tileX, tileZ) == 26;
+		}
+
+		private int wallDiagonal(int tileX, int tileZ) {
+			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).diagonalWalls;
+		}
+
+		private int verticalWall(int tileX, int tileZ) {
+			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).verticalWall & 0xff;
+		}
+
+		private int horizontalWall(int tileX, int tileZ) {
+			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).horizontalWall & 0xff;
+		}
+
+		private int wallRoof(int tileX, int tileZ) {
+			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
+			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).roofTexture;
+		}
+
+		private boolean hasRoofStrut(int tileX, int tileZ) {
+			return wallRoof(tileX, tileZ) <= 0
+				&& wallRoof(tileX - 1, tileZ) <= 0
+				&& wallRoof(tileX - 1, tileZ - 1) <= 0
+				&& wallRoof(tileX, tileZ - 1) <= 0;
+		}
+
+		private boolean hasRoofTile(int tileX, int tileZ) {
+			return wallRoof(tileX, tileZ) > 0
+				&& wallRoof(tileX - 1, tileZ) > 0
+				&& wallRoof(tileX - 1, tileZ - 1) > 0
+				&& wallRoof(tileX, tileZ - 1) > 0;
+		}
+	}
+
+	private static final class WallModelInput {
+		private final WallSegmentInput[] segments;
+
+		private WallModelInput(WallSegmentInput[] segments) {
+			this.segments = segments;
+		}
+	}
+
+	private static final class WallSegmentInput {
+		private static final int VERTICAL = 0;
+		private static final int HORIZONTAL = 1;
+		private static final int DIAGONAL_A = 2;
+		private static final int DIAGONAL_B = 3;
+
+		private final int wallID;
+		private final int kind;
+		private final int x;
+		private final int z;
+		private final int frontTexture;
+		private final int backTexture;
+		private final int facePickIndex;
+		private final int[] vertexCoords;
+
+		private WallSegmentInput(
+			int wallID,
+			int kind,
+			int x,
+			int z,
+			int frontTexture,
+			int backTexture,
+			int facePickIndex,
+			int... vertexCoords) {
+			this.wallID = wallID;
+			this.kind = kind;
+			this.x = x;
+			this.z = z;
+			this.frontTexture = frontTexture;
+			this.backTexture = backTexture;
+			this.facePickIndex = facePickIndex;
+			this.vertexCoords = vertexCoords.clone();
+		}
+	}
+
+	private static final class RoofElevationWorkspace {
+		private final int[][] elevations;
+
+		private RoofElevationWorkspace(int[][] elevations) {
+			this.elevations = elevations;
+		}
+
+		private static RoofElevationWorkspace fromSource(TerrainModelInputSource source) {
+			int[][] elevations = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
+			for (int x = 0; x < LOCAL_TILE_COUNT; x++) {
+				for (int z = 0; z < LOCAL_TILE_COUNT; z++) {
+					elevations[x][z] = source.tileElevation(x, z);
+				}
+			}
+			return new RoofElevationWorkspace(elevations);
+		}
+
+		private int get(int x, int z) {
+			return elevations[x][z];
+		}
+
+		private void set(int x, int z, int value) {
+			elevations[x][z] = value;
+		}
+
+		private void clearRoofMarkers() {
+			for (int x = 0; x < LOCAL_TILE_COUNT; x++) {
+				for (int z = 0; z < LOCAL_TILE_COUNT; z++) {
+					if (elevations[x][z] >= 80000) {
+						elevations[x][z] -= 80000;
+					}
+				}
+			}
+		}
+
+		private int[][] copyElevations() {
+			int[][] copy = new int[LOCAL_TILE_COUNT][LOCAL_TILE_COUNT];
+			for (int x = 0; x < LOCAL_TILE_COUNT; x++) {
+				System.arraycopy(elevations[x], 0, copy[x], 0, LOCAL_TILE_COUNT);
+			}
+			return copy;
+		}
+	}
+
+	private static final class RoofModelInput {
+		private final RoofFaceInput[] faces;
+		private final int[][] finalElevations;
+
+		private RoofModelInput(RoofFaceInput[] faces, int[][] finalElevations) {
+			this.faces = faces;
+			this.finalElevations = finalElevations;
+		}
+
+		private void copyElevationsInto(int[][] target) {
+			for (int x = 0; x < LOCAL_TILE_COUNT; x++) {
+				System.arraycopy(finalElevations[x], 0, target[x], 0, LOCAL_TILE_COUNT);
+			}
+		}
+	}
+
+	private static final class RoofFaceInput {
+		private final int texture;
+		private final int[] vertexCoords;
+
+		private RoofFaceInput(int texture, int[] vertexCoords) {
+			this.texture = texture;
+			this.vertexCoords = vertexCoords.clone();
+		}
+	}
+
+	private static final class TerrainVertexInput {
+		private final int x;
+		private final int y;
+		private final int z;
+		private final int light;
+
+		private TerrainVertexInput(int x, int y, int z, int light) {
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.light = light;
+		}
+	}
+
+	private static final class TerrainTileFaceInput {
+		private final int x;
+		private final int z;
+		private final byte bridge00_11;
+		private final int res01;
+		private final int colorResource;
+		private final int slope;
+		private final boolean pickableInvisibleOverlay;
+		private final boolean collisionFullBlock;
+		private final boolean collisionObject;
+
+		private TerrainTileFaceInput(
+			int x,
+			int z,
+			byte bridge00_11,
+			int res01,
+			int colorResource,
+			int slope,
+			boolean pickableInvisibleOverlay,
+			boolean collisionFullBlock,
+			boolean collisionObject) {
+			this.x = x;
+			this.z = z;
+			this.bridge00_11 = bridge00_11;
+			this.res01 = res01;
+			this.colorResource = colorResource;
+			this.slope = slope;
+			this.pickableInvisibleOverlay = pickableInvisibleOverlay;
+			this.collisionFullBlock = collisionFullBlock;
+			this.collisionObject = collisionObject;
+		}
+	}
+
+	private static final class TerrainOverlayFaceInput {
+		private final int x;
+		private final int z;
+		private final int texture;
+		private final int[] vertexCoords;
+
+		private TerrainOverlayFaceInput(int x, int z, int texture, int[] vertexCoords) {
+			this.x = x;
+			this.z = z;
+			this.texture = texture;
+			this.vertexCoords = vertexCoords.clone();
+		}
+	}
+
+	private static final class CpuSectionWindow {
+		private final Sector[] sectors;
+		private final boolean bridgeDecorationsApplied;
+
+		private CpuSectionWindow(Sector[] sectors, boolean bridgeDecorationsApplied) {
+			this.sectors = sectors;
+			this.bridgeDecorationsApplied = bridgeDecorationsApplied;
+		}
+
+		private void copyInto(Sector[] target) {
+			for (int i = 0; i < sectors.length; i++) {
+				target[i] = sectors[i].copy();
+			}
+		}
 	}
 
 	public int getWorldMapX() {

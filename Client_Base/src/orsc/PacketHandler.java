@@ -1392,6 +1392,7 @@ public class PacketHandler {
 		props.setProperty("S_WANT_PARTIES", wantParties == 1 ? "true" : "false"); //64
 		props.setProperty("S_MINING_ROCKS_EXTENDED", miningRocksExtended == 1 ? "true" : "false"); //65
 		props.setProperty("C_MOVE_PER_FRAME", String.valueOf(movePerFrame)); //66
+		props.setProperty("C_NPC_MOVE_PER_FRAME", String.valueOf(movePerFrame)); //66
 		props.setProperty("S_WANT_LEFTCLICK_WEBS", wantLeftclickWebs == 1 ? "true" : "false"); //67
 		props.setProperty("S_NPC_KILL_COUNTERS", npcKillCounters == 1 ? "true" : "false"); //68
 		props.setProperty("S_WANT_CUSTOM_UI", wantCustomUI == 1 ? "true" : "false"); //69
@@ -1452,6 +1453,7 @@ public class PacketHandler {
 		mc.setLocalPlayerZ(packetsIncoming.getBitMask(13));
 
 		int direction = packetsIncoming.getBitMask(4);
+		mc.preloadTerrainForIncomingWorldPosition(mc.getLocalPlayerX(), mc.getLocalPlayerZ());
 		boolean needNextRegion = mc.loadNextRegion(mc.getLocalPlayerZ(), mc.getLocalPlayerX(), false);
 		mc.setLocalPlayerX(mc.getLocalPlayerX() - mc.getMidRegionBaseX());
 		mc.setLocalPlayerZ(mc.getLocalPlayerZ() - mc.getMidRegionBaseZ());
@@ -1568,9 +1570,7 @@ public class PacketHandler {
 
 				for (int i = 0; i < mc.getGameObjectInstanceCount(); ++i) {
 					if (mc.getGameObjectInstanceX(i) == xTile && zTile == mc.getGameObjectInstanceZ(i)) {
-						mc.getScene().removeModel(mc.getGameObjectInstanceModel(i));
-						mc.getWorld().removeGameObject_CollisonFlags(mc.getGameObjectInstanceID(i),
-							mc.getGameObjectInstanceX(i), mc.getGameObjectInstanceZ(i));
+						mc.dematerializeGameObjectInstance(i);
 					} else {
 						if (count != i) {
 							mc.setGameObjectInstanceModel(count, mc.getGameObjectInstanceModel(i));
@@ -1578,6 +1578,7 @@ public class PacketHandler {
 							mc.setGameObjectInstanceZ(count, mc.getGameObjectInstanceZ(i));
 							mc.setGameObjectInstanceID(count, mc.getGameObjectInstanceID(i));
 							mc.setGameObjectInstanceDir(count, mc.getGameObjectInstanceDir(i));
+							mc.setGameObjectInstanceMaterialized(count, mc.isGameObjectInstanceMaterialized(i));
 						}
 
 						++count;
@@ -1592,38 +1593,20 @@ public class PacketHandler {
 						continue;
 					}
 					int instanceIndex = mc.getGameObjectInstanceCount();
-					int xSize, zSize;
-					if (dir == 0 || dir == 4) {
-						zSize = com.openrsc.client.entityhandling.EntityHandler.getObjectDef(id).getHeight();
-						xSize = com.openrsc.client.entityhandling.EntityHandler.getObjectDef(id).getWidth();
-					} else {
-						xSize = com.openrsc.client.entityhandling.EntityHandler.getObjectDef(id).getHeight();
-						zSize = com.openrsc.client.entityhandling.EntityHandler.getObjectDef(id).getWidth();
-					}
-
-					int tileSize = mc.getTileSize();
-					int xWorld = (xTile * 2 + xSize) * tileSize / 2;
-					int zWorld = (zTile * 2 + zSize) * tileSize / 2;
 					int modelIndex = com.openrsc.client.entityhandling.EntityHandler.getObjectDef(id).modelID;// CacheValues.gameObjectModelIndex[id];
 					RSModel m = mc.getModelCacheItem(modelIndex).clone();
 					applyExpandedGameObjectPickBounds(id, m);
 					m.key = instanceIndex;
 					m.addRotation(0, dir * 32, 0);
 					m.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);
-					if (mc.hasLoadedTerrainForGameObject(xTile, zTile, id, dir)) {
-						mc.getScene().addModel(m);
-						m.translate2(xWorld, -mc.getWorld().getElevation(xWorld, zWorld), zWorld);
-						mc.getWorld().addGameObject_UpdateCollisionMap(xTile, zTile, id, false);
-						if (id == 74) {
-							m.translate2(0, -480, 0);
-						}
-					}
 
 					mc.setGameObjectInstanceX(instanceIndex, xTile);
 					mc.setGameObjectInstanceZ(instanceIndex, zTile);
 					mc.setGameObjectInstanceID(instanceIndex, id);
 					mc.setGameObjectInstanceDir(instanceIndex, dir);
 					mc.setGameObjectInstanceModel(instanceIndex, m);
+					mc.setGameObjectInstanceMaterialized(instanceIndex, false);
+					mc.materializeGameObjectInstance(instanceIndex);
 					mc.setGameObjectInstanceCount(instanceIndex + 1);
 				}
 
@@ -1636,10 +1619,7 @@ public class PacketHandler {
 					int dxTile = (mc.getGameObjectInstanceX(localIndex) >> 3) - xTile;
 					int dzTile = (mc.getGameObjectInstanceZ(localIndex) >> 3) - zTile;
 					if (dxTile == 0 && dzTile == 0) {
-						mc.getScene().removeModel(mc.getGameObjectInstanceModel(localIndex));
-						mc.getWorld().removeGameObject_CollisonFlags(mc.getGameObjectInstanceID(localIndex),
-							mc.getGameObjectInstanceX(localIndex),
-							mc.getGameObjectInstanceZ(localIndex));
+						mc.dematerializeGameObjectInstance(localIndex);
 					} else {
 						if (localIndex != id) {
 							mc.setGameObjectInstanceModel(id, mc.getGameObjectInstanceModel(localIndex));
@@ -1647,6 +1627,7 @@ public class PacketHandler {
 							mc.setGameObjectInstanceZ(id, mc.getGameObjectInstanceZ(localIndex));
 							mc.setGameObjectInstanceID(id, mc.getGameObjectInstanceID(localIndex));
 							mc.setGameObjectInstanceDir(id, mc.getGameObjectInstanceDir(localIndex));
+							mc.setGameObjectInstanceMaterialized(id, mc.isGameObjectInstanceMaterialized(localIndex));
 						}
 						++id;
 					}
@@ -1902,12 +1883,7 @@ public class PacketHandler {
 					int dir = (mc.getWallObjectInstanceX(wallInstance) >> 3) - var19;
 					int var9 = (mc.getWallObjectInstanceZ(wallInstance) >> 3) - var6;
 					if (dir == 0 && var9 == 0) {
-						mc.getScene().removeModel(mc.getWallObjectInstanceModel(wallInstance));
-						mc.getWorld().removeWallObject_CollisionFlags(true,
-							mc.getWallObjectInstanceDir(wallInstance),
-							mc.getWallObjectInstanceZ(wallInstance),
-							mc.getWallObjectInstanceX(wallInstance),
-							mc.getWallObjectInstanceID(wallInstance));
+						mc.dematerializeWallObjectInstance(wallInstance);
 					} else {
 						if (wallID != wallInstance) {
 							mc.setWallObjectInstanceModel(wallID, mc.getWallObjectInstanceModel(wallInstance));
@@ -1915,6 +1891,7 @@ public class PacketHandler {
 							mc.setWallObjectInstanceZ(wallID, mc.getWallObjectInstanceZ(wallInstance));
 							mc.setWallObjectInstanceDir(wallID, mc.getWallObjectInstanceDir(wallInstance));
 							mc.setWallObjectInstanceID(wallID, mc.getWallObjectInstanceID(wallInstance));
+							mc.setWallObjectInstanceMaterialized(wallID, mc.isWallObjectInstanceMaterialized(wallInstance));
 						}
 
 						++wallID;
@@ -1935,12 +1912,7 @@ public class PacketHandler {
 					if (mc.getWallObjectInstanceX(var9) == x
 						&& mc.getWallObjectInstanceZ(var9) == y
 						&& direction == mc.getWallObjectInstanceDir(var9)) {
-						mc.getScene().removeModel(mc.getWallObjectInstanceModel(var9));
-						mc.getWorld().removeWallObject_CollisionFlags(true,
-							mc.getWallObjectInstanceDir(var9),
-							mc.getWallObjectInstanceZ(var9),
-							mc.getWallObjectInstanceX(var9),
-							mc.getWallObjectInstanceID(var9));
+						mc.dematerializeWallObjectInstance(var9);
 					} else {
 						if (var9 != localIndex) {
 							mc.setWallObjectInstanceModel(localIndex, mc.getWallObjectInstanceModel(var9));
@@ -1948,6 +1920,7 @@ public class PacketHandler {
 							mc.setWallObjectInstanceZ(localIndex, mc.getWallObjectInstanceZ(var9));
 							mc.setWallObjectInstanceDir(localIndex, mc.getWallObjectInstanceDir(var9));
 							mc.setWallObjectInstanceID(localIndex, mc.getWallObjectInstanceID(var9));
+							mc.setWallObjectInstanceMaterialized(localIndex, mc.isWallObjectInstanceMaterialized(var9));
 						}
 
 						++localIndex;
@@ -1960,14 +1933,13 @@ public class PacketHandler {
 						continue;
 					}
 					int instanceIndex = mc.getWallObjectInstanceCount();
-					mc.getWorld().applyWallToCollisionFlags(id, x, y, direction);
-					RSModel model = mc.createWallObjectModel(x, y, id, direction,
-						instanceIndex);
-					mc.setWallObjectInstanceModel(instanceIndex, model);
+					mc.setWallObjectInstanceModel(instanceIndex, null);
 					mc.setWallObjectInstanceX(instanceIndex, x);
 					mc.setWallObjectInstanceZ(instanceIndex, y);
 					mc.setWallObjectInstanceID(instanceIndex, id);
 					mc.setWallObjectInstanceDir(instanceIndex, direction);
+					mc.setWallObjectInstanceMaterialized(instanceIndex, false);
+					mc.materializeWallObjectInstance(instanceIndex);
 					mc.setWallObjectInstanceCount(instanceIndex + 1);
 				}
 			}
@@ -2241,11 +2213,7 @@ public class PacketHandler {
 				int var10 = (mc.getGameObjectInstanceX(oldIndex) >> 3) - x;
 				int var11 = (mc.getGameObjectInstanceZ(oldIndex) >> 3) - z;
 				if (var10 == 0 && var11 == 0) {
-					mc.getScene().removeModel(mc.getGameObjectInstanceModel(oldIndex));
-					mc.getWorld().removeGameObject_CollisonFlags(
-						mc.getGameObjectInstanceID(oldIndex),
-						mc.getGameObjectInstanceX(oldIndex),
-						mc.getGameObjectInstanceZ(oldIndex));
+					mc.dematerializeGameObjectInstance(oldIndex);
 				} else {
 					if (oldIndex != newIndex) {
 						mc.setGameObjectInstanceModel(newIndex, mc.getGameObjectInstanceModel(oldIndex));
@@ -2253,6 +2221,7 @@ public class PacketHandler {
 						mc.setGameObjectInstanceZ(newIndex, mc.getGameObjectInstanceZ(oldIndex));
 						mc.setGameObjectInstanceID(newIndex, mc.getGameObjectInstanceID(oldIndex));
 						mc.setGameObjectInstanceDir(newIndex, mc.getGameObjectInstanceDir(oldIndex));
+						mc.setGameObjectInstanceMaterialized(newIndex, mc.isGameObjectInstanceMaterialized(oldIndex));
 					}
 
 					++newIndex;
@@ -2267,12 +2236,7 @@ public class PacketHandler {
 				int wallX = (mc.getWallObjectInstanceX(oldIndex) >> 3) - x;
 				int wallZ = (mc.getWallObjectInstanceZ(oldIndex) >> 3) - z;
 				if (wallX == 0 && wallZ == 0) {
-					mc.getScene().removeModel(mc.getWallObjectInstanceModel(oldIndex));
-					mc.getWorld().removeWallObject_CollisionFlags(true,
-						mc.getWallObjectInstanceDir(oldIndex),
-						mc.getWallObjectInstanceZ(oldIndex),
-						mc.getWallObjectInstanceX(oldIndex),
-						mc.getWallObjectInstanceID(oldIndex));
+					mc.dematerializeWallObjectInstance(oldIndex);
 				} else {
 					if (oldIndex != newIndex) {
 						mc.setWallObjectInstanceModel(newIndex, mc.getWallObjectInstanceModel(oldIndex));
@@ -2280,6 +2244,7 @@ public class PacketHandler {
 						mc.setWallObjectInstanceZ(newIndex, mc.getWallObjectInstanceZ(oldIndex));
 						mc.setWallObjectInstanceDir(newIndex, mc.getWallObjectInstanceDir(oldIndex));
 						mc.setWallObjectInstanceID(newIndex, mc.getWallObjectInstanceID(oldIndex));
+						mc.setWallObjectInstanceMaterialized(newIndex, mc.isWallObjectInstanceMaterialized(oldIndex));
 					}
 
 					++newIndex;

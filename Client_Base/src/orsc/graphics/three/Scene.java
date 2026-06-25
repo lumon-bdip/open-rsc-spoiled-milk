@@ -2,6 +2,7 @@ package orsc.graphics.three;
 
 import com.openrsc.client.model.Sprite;
 import orsc.MiscFunctions;
+import orsc.RenderTelemetry;
 import orsc.buffers.BufferStack;
 import orsc.graphics.RendererTransparency;
 import orsc.graphics.two.GraphicsController;
@@ -25,6 +26,7 @@ public final class Scene {
 	private final int[] renderer3DClippedCameraX = new int[40];
 	private final int[] renderer3DClippedCameraY = new int[40];
 	private final int[] renderer3DClippedCameraZ = new int[40];
+	private final int[] renderer3DBaseLight = new int[40];
 	private final int[] m_r;
 	private final boolean m_Ub;
 	private final int[] m_v;
@@ -66,6 +68,25 @@ public final class Scene {
 	private int[] pixelData;
 	private int[] m_Q;
 	private boolean[] m_S;
+	private boolean[] renderer3DCharacterTagged;
+	private boolean[] renderer3DCharacterCombatDirection;
+	private boolean[] renderer3DCharacterActiveHitSplats;
+	private int[] renderer3DCharacterArrayIndex;
+	private int[] renderer3DCharacterServerIndex;
+	private int[] renderer3DCharacterEntityId;
+	private int[] renderer3DCharacterVisualOffsetX;
+	private int[] renderer3DCharacterVisualOffsetZ;
+	private int[] renderer3DCharacterCombatTimeout;
+	private int[] renderer3DCharacterHealthCurrent;
+	private int[] renderer3DCharacterHealthMax;
+	private int[] renderer3DCharacterDamageTaken;
+	private int[] renderer3DCharacterAttackingNpcServerIndex;
+	private int[] renderer3DCharacterAttackingPlayerServerIndex;
+	private int[] renderer3DCharacterCombatEffectType;
+	private int[] renderer3DCharacterCombatEffectTime;
+	private String[] renderer3DCharacterKind;
+	private String[] renderer3DCharacterDisplayName;
+	private String[] renderer3DCharacterDirection;
 	private int m_u;
 	private int m_vb;
 	private int m_wb = 192;
@@ -143,6 +164,25 @@ public final class Scene {
 			this.m_Q = new int[var4];
 			this.m_gb = new int[var4];
 			this.m_a = new int[var4];
+			this.renderer3DCharacterTagged = new boolean[var4];
+			this.renderer3DCharacterCombatDirection = new boolean[var4];
+			this.renderer3DCharacterActiveHitSplats = new boolean[var4];
+			this.renderer3DCharacterArrayIndex = new int[var4];
+			this.renderer3DCharacterServerIndex = new int[var4];
+			this.renderer3DCharacterEntityId = new int[var4];
+			this.renderer3DCharacterVisualOffsetX = new int[var4];
+			this.renderer3DCharacterVisualOffsetZ = new int[var4];
+			this.renderer3DCharacterCombatTimeout = new int[var4];
+			this.renderer3DCharacterHealthCurrent = new int[var4];
+			this.renderer3DCharacterHealthMax = new int[var4];
+			this.renderer3DCharacterDamageTaken = new int[var4];
+			this.renderer3DCharacterAttackingNpcServerIndex = new int[var4];
+			this.renderer3DCharacterAttackingPlayerServerIndex = new int[var4];
+			this.renderer3DCharacterCombatEffectType = new int[var4];
+			this.renderer3DCharacterCombatEffectTime = new int[var4];
+			this.renderer3DCharacterKind = new String[var4];
+			this.renderer3DCharacterDisplayName = new String[var4];
+			this.renderer3DCharacterDirection = new String[var4];
 		} catch (RuntimeException var6) {
 			throw GenUtil.makeThrowable(var6,
 				"lb.<init>(" + "{...}" + ',' + var2 + ',' + maxPolygonCount + ',' + var4 + ')');
@@ -2568,6 +2608,10 @@ public final class Scene {
 					var3[var5 + var9 * 3] = FastMath.bitwiseAnd(16316671, var6 - (var6 >>> 3) - (var6 >>> 2));
 				}
 
+				this.renderer3DTextures[var2] = Renderer3DTextureData.fromLegacyResource(
+					var2,
+					this.m_Hb[var2],
+					this.resourceDatabase[var2]);
 			}
 		} catch (RuntimeException var8) {
 			throw GenUtil.makeThrowable(var8, "lb.OA(" + var1 + ',' + var2 + ')');
@@ -2584,6 +2628,7 @@ public final class Scene {
 			this.m_ob[this.m_n] = var6;
 			this.m_Eb[this.m_n] = var7;
 			this.m_Q[this.m_n] = 0;
+			this.renderer3DCharacterTagged[this.m_n] = false;
 			int var9 = this.m_T.insertVertex2(false, var2, var4, var5);
 			int var10 = this.m_T.insertVertex2(false, var2, var4, var5 - var7);
 			int[] var11 = new int[]{var9, var10};
@@ -2597,21 +2642,80 @@ public final class Scene {
 		}
 	}
 
+	public void tagCharacterSprite(
+		int faceId,
+		String kind,
+		int arrayIndex,
+		int serverIndex,
+		int entityId,
+		String displayName,
+		int visualOffsetX,
+		int visualOffsetZ,
+		String direction,
+		boolean combatDirection,
+		int combatTimeout,
+		int healthCurrent,
+		int healthMax,
+		int damageTaken,
+		int attackingNpcServerIndex,
+		int attackingPlayerServerIndex,
+		int combatEffectType,
+		int combatEffectTime,
+		boolean activeHitSplats) {
+		if (faceId < 0 || faceId >= this.renderer3DCharacterTagged.length) {
+			return;
+		}
+		this.renderer3DCharacterTagged[faceId] = true;
+		this.renderer3DCharacterKind[faceId] = kind;
+		this.renderer3DCharacterArrayIndex[faceId] = arrayIndex;
+		this.renderer3DCharacterServerIndex[faceId] = serverIndex;
+		this.renderer3DCharacterEntityId[faceId] = entityId;
+		this.renderer3DCharacterDisplayName[faceId] = displayName;
+		this.renderer3DCharacterVisualOffsetX[faceId] = visualOffsetX;
+		this.renderer3DCharacterVisualOffsetZ[faceId] = visualOffsetZ;
+		this.renderer3DCharacterDirection[faceId] = direction;
+		this.renderer3DCharacterCombatDirection[faceId] = combatDirection;
+		this.renderer3DCharacterCombatTimeout[faceId] = combatTimeout;
+		this.renderer3DCharacterHealthCurrent[faceId] = healthCurrent;
+		this.renderer3DCharacterHealthMax[faceId] = healthMax;
+		this.renderer3DCharacterDamageTaken[faceId] = damageTaken;
+		this.renderer3DCharacterAttackingNpcServerIndex[faceId] = attackingNpcServerIndex;
+		this.renderer3DCharacterAttackingPlayerServerIndex[faceId] = attackingPlayerServerIndex;
+		this.renderer3DCharacterCombatEffectType[faceId] = combatEffectType;
+		this.renderer3DCharacterCombatEffectTime[faceId] = combatEffectTime;
+		this.renderer3DCharacterActiveHitSplats[faceId] = activeHitSplats;
+	}
+
 	public final void endScene(int var1) {
 		try {
 
+			long modelRotateNanos = 0L;
+			long worldCullNanos = 0L;
+			long depthExportNanos = 0L;
+			long legacyDrawNanos = 0L;
+			long meshExportNanos = 0L;
 			this.m_f = this.graphics.interlace;
 			Renderer3DFrame geometryFrame = Renderer3DSettings.isGeometryCaptureEnabled()
 				? new Renderer3DFrame(
 					this.modelCount,
 					this.fogLandscapeDistance,
+					this.fogSmoothingStartDistance,
 					this.graphics.width2,
 					this.graphics.height2,
 					this.m_Zb,
 					this.m_Nb,
+					this.rot1024_off_x,
+					this.rot1024_off_y,
+					this.rot1024_off_z,
+					this.cameraProjX,
+					this.cameraProjY,
+					this.cameraProjZ,
+					this.rot1024_vp_src,
+					this.rot1024_zTop,
 					this.renderer3DTextures)
 				: null;
 			this.renderer3DFrame = geometryFrame;
+			boolean skipProjectedWorldCapture = Renderer3DSettings.canSkipProjectedWorldCapture();
 			int var7 = this.m_A * this.fogLandscapeDistance >> this.rot1024_vp_src;
 			MiscFunctions.frustumFarZ = 0;
 			MiscFunctions.frustumNearZ = 0;
@@ -2637,6 +2741,7 @@ public final class Scene {
 			this.models[this.modelCount] = this.m_T;
 			this.m_T.m_Yb = 2;
 
+			long modelRotateStart = RenderTelemetry.now();
 			int var3;
 			for (var3 = 0; this.modelCount > var3; ++var3) {
 				this.models[var3].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
@@ -2645,6 +2750,10 @@ public final class Scene {
 
 			this.models[this.modelCount].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x,
 				(byte) -114, this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
+			modelRotateNanos = RenderTelemetry.elapsedSince(modelRotateStart);
+			if (geometryFrame != null) {
+				recordSpriteSubmissions(geometryFrame);
+			}
 			this.m_zb = 0;
 
 			RSModel var2;
@@ -2655,6 +2764,7 @@ public final class Scene {
 			int var12;
 			int var13;
 			int var14;
+			long worldCullStart = RenderTelemetry.now();
 			for (var9 = 0; var9 < this.modelCount; ++var9) {
 				var2 = this.models[var9];
 				if (var2.m_dc) {
@@ -2754,18 +2864,29 @@ public final class Scene {
 					}
 				}
 			}
-			EnumSet<Renderer3DModelKind> staticWorldKinds = null;
+			worldCullNanos = RenderTelemetry.elapsedSince(worldCullStart);
+			EnumSet<Renderer3DModelKind> depthWorldKinds = null;
+			EnumSet<Renderer3DModelKind> meshWorldKinds = null;
 			if (geometryFrame != null) {
-				staticWorldKinds = EnumSet.of(
-					Renderer3DModelKind.TERRAIN,
-					Renderer3DModelKind.WALL,
-					Renderer3DModelKind.GAME_OBJECT,
-					Renderer3DModelKind.WALL_OBJECT);
-				geometryFrame.setDepthFrame(Renderer3DDepthFrame.render(
-					geometryFrame,
-					staticWorldKinds));
-				if (Renderer3DSettings.isVisibleWorldEnabled()) {
-					geometryFrame.getDepthFrame().copyColorTo(this.pixelData);
+				if (skipProjectedWorldCapture) {
+					depthWorldKinds = EnumSet.of(
+						Renderer3DModelKind.WALL,
+						Renderer3DModelKind.ROOF,
+						Renderer3DModelKind.GAME_OBJECT,
+						Renderer3DModelKind.WALL_OBJECT);
+					meshWorldKinds = Renderer3DSettings.canSkipProjectedObjectMeshCapture()
+						? EnumSet.noneOf(Renderer3DModelKind.class)
+						: EnumSet.of(
+							Renderer3DModelKind.GAME_OBJECT,
+							Renderer3DModelKind.WALL_OBJECT);
+				} else {
+					depthWorldKinds = EnumSet.of(
+						Renderer3DModelKind.TERRAIN,
+						Renderer3DModelKind.WALL,
+						Renderer3DModelKind.ROOF,
+						Renderer3DModelKind.GAME_OBJECT,
+						Renderer3DModelKind.WALL_OBJECT);
+					meshWorldKinds = depthWorldKinds;
 				}
 			}
 
@@ -2801,6 +2922,8 @@ public final class Scene {
 			}
 
 			int legacySceneDrawOrder = 0;
+			boolean skipLegacyWorldRaster = Renderer3DSettings.canSkipLegacyWorldRaster();
+			long legacyDrawStart = RenderTelemetry.now();
 			if (this.m_zb != 0) {
 				this.setFrustum(0, -1, this.polygons, this.m_zb - 1);
 				this.setFrustum(this.m_zb, 100, -53, this.polygons);
@@ -2863,13 +2986,28 @@ public final class Scene {
 							}
 						}
 					} else {
-						if (geometryFrame != null) {
+						if (geometryFrame != null
+							&& depthWorldKinds != null
+							&& depthWorldKinds.contains(var2.getRenderer3DModelKind())) {
 							geometryFrame.recordLegacyDrawOrder(var25.modelIndex, var3, legacySceneDrawOrder);
 						}
 						legacySceneDrawOrder++;
+						Renderer3DModelKind rendererModelKind = var2.getRenderer3DModelKind();
+						boolean needsProjectedLegacyGeometry =
+							geometryFrame != null
+								&& ((depthWorldKinds != null && depthWorldKinds.contains(rendererModelKind))
+									|| (meshWorldKinds != null && meshWorldKinds.contains(rendererModelKind)));
 						var14 = 0;
 						var28 = 0;
 						var17 = var2.faceIndexCount[var3];
+						int[] var18 = var2.faceIndices[var3];
+						boolean mouseCouldPickProjectedFace =
+							this.m_K && projectedFaceCouldContainMouse(var2, var18, var17);
+						if (skipLegacyWorldRaster
+							&& !needsProjectedLegacyGeometry
+							&& !mouseCouldPickProjectedFace) {
+							continue;
+						}
 						if (var2.faceDiffuseLight[var3] != Scene.TRANSPARENT) {
 							if (var25.orientation < 0) {
 								var28 = var2.diffuseParam1 - var2.faceDiffuseLight[var3];
@@ -2877,8 +3015,6 @@ public final class Scene {
 								var28 = var2.diffuseParam1 + var2.faceDiffuseLight[var3];
 							}
 						}
-
-						int[] var18 = var2.faceIndices[var3];
 
 						for (var19 = 0; var17 > var19; ++var19) {
 							var6 = var18[var19];
@@ -2902,6 +3038,7 @@ public final class Scene {
 								this.m_yb[var14] = var2.vertexParam6[var6];
 								this.m_B[var14] = var2.vertexParam2[var6];
 								this.m_r[var14] = var28;
+								this.renderer3DBaseLight[var14] = var28;
 								if (var2.vertZRot[var6] > this.fogSmoothingStartDistance) {
 									this.m_r[var14] += (var2.vertZRot[var6] - this.fogSmoothingStartDistance) / this.fogZFalloff;
 								}
@@ -2926,6 +3063,7 @@ public final class Scene {
 									this.m_yb[var14] = (var26 << this.rot1024_vp_src) / this.rot1024_zTop;
 									this.m_B[var14] = (var12 << this.rot1024_vp_src) / this.rot1024_zTop;
 									this.m_r[var14] = var28;
+									this.renderer3DBaseLight[var14] = var28;
 									++var14;
 								}
 
@@ -2952,7 +3090,9 @@ public final class Scene {
 							}
 						}
 
-						if (geometryFrame != null) {
+						if (geometryFrame != null
+							&& depthWorldKinds != null
+							&& depthWorldKinds.contains(var2.getRenderer3DModelKind())) {
 							geometryFrame.recordLegacyClippedGeometry(
 								var25.modelIndex,
 								var3,
@@ -2962,6 +3102,7 @@ public final class Scene {
 								this.m_yb,
 								this.m_B,
 								this.m_r,
+								this.renderer3DBaseLight,
 								var14);
 						}
 
@@ -2983,8 +3124,12 @@ public final class Scene {
 							}
 						}
 
-						this.setFrustum(0, var3, this.m_B, 0, 0, var2, this.m_yb, this.m_r, 0, 5960, var14);
-						if (this.m_Xb < this.m_Cb && var25.m_b != Scene.TRANSPARENT) {
+						boolean needsLegacyScanline =
+							!skipLegacyWorldRaster || mouseCouldPickProjectedFace;
+						if (needsLegacyScanline) {
+							this.setFrustum(0, var3, this.m_B, 0, 0, var2, this.m_yb, this.m_r, 0, 5960, var14);
+						}
+						if (!skipLegacyWorldRaster && this.m_Xb < this.m_Cb && var25.m_b != Scene.TRANSPARENT) {
 							this.setFrustum(this.m_Vb, var2, 1, var17, var25.m_b, this.m_J, this.m_Qb, 0, 0);
 						}
 					}
@@ -2992,11 +3137,173 @@ public final class Scene {
 
 				this.m_K = false;
 			}
-			if (geometryFrame != null) {
-				geometryFrame.setMeshFrame(Renderer3DMeshFrame.build(geometryFrame, staticWorldKinds));
+			legacyDrawNanos = RenderTelemetry.elapsedSince(legacyDrawStart);
+			if (geometryFrame != null && depthWorldKinds != null) {
+				long depthExportStart = RenderTelemetry.now();
+				geometryFrame.setDepthFrame(Renderer3DDepthFrame.render(
+					geometryFrame,
+					depthWorldKinds));
+				if (Renderer3DSettings.isVisibleWorldEnabled()) {
+					geometryFrame.getDepthFrame().copyColorTo(this.pixelData);
+				}
+				depthExportNanos = RenderTelemetry.elapsedSince(depthExportStart);
+				if (meshWorldKinds != null && !meshWorldKinds.isEmpty()) {
+					long meshExportStart = RenderTelemetry.now();
+					geometryFrame.setMeshFrame(Renderer3DMeshFrame.build(geometryFrame, meshWorldKinds));
+					meshExportNanos = RenderTelemetry.elapsedSince(meshExportStart);
+				}
 			}
+			RenderTelemetry.recordScene3DPhases(
+				modelRotateNanos,
+				worldCullNanos,
+				depthExportNanos,
+				legacyDrawNanos,
+				meshExportNanos);
 		} catch (RuntimeException var22) {
 			throw GenUtil.makeThrowable(var22, "lb.P(" + var1 + ')');
+		}
+	}
+
+	private boolean projectedFaceCouldContainMouse(RSModel model, int[] faceIndices, int vertexCount) {
+		if (!this.m_K || model == null || faceIndices == null || vertexCount <= 0) {
+			return false;
+		}
+		int minX = Integer.MAX_VALUE;
+		int maxX = Integer.MIN_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxY = Integer.MIN_VALUE;
+		for (int vertex = 0; vertex < vertexCount; vertex++) {
+			int modelVertex = faceIndices[vertex];
+			int x = model.vertexParam6[modelVertex];
+			int y = this.m_Nb + model.vertexParam2[modelVertex];
+			minX = Math.min(minX, x);
+			maxX = Math.max(maxX, x);
+			minY = Math.min(minY, y);
+			maxY = Math.max(maxY, y);
+		}
+		int boundsScale = Math.max(1, model.getPickBoundsScale());
+		int xPadding = boundsScale > 1
+			? Math.max(MIN_EXPANDED_PICK_PADDING_PIXELS, (maxX - minX) * (boundsScale - 1) / 2)
+			: 2;
+		int yPadding = boundsScale > 1
+			? Math.max(MIN_EXPANDED_PICK_PADDING_PIXELS, (maxY - minY) * (boundsScale - 1) / 2)
+			: 2;
+		return this.m_j >= minX - xPadding
+			&& this.m_j <= maxX + xPadding
+			&& this.m_Wb >= minY - yPadding
+			&& this.m_Wb <= maxY + yPadding;
+	}
+
+	private void recordSpriteSubmissions(Renderer3DFrame geometryFrame) {
+		RSModel spriteModel = this.m_T;
+		if (geometryFrame == null || spriteModel == null || !spriteModel.m_dc) {
+			return;
+		}
+		int spriteFaceCount = Math.min(this.m_n, spriteModel.faceHead);
+		for (int face = 0; face < spriteFaceCount; face++) {
+			int[] faceIndices = spriteModel.faceIndices[face];
+			if (faceIndices == null || faceIndices.length < 2) {
+				continue;
+			}
+			int topVertex = faceIndices[0];
+			int bottomVertex = faceIndices[1];
+			int cameraX = spriteModel.vertXRot[topVertex];
+			int cameraY = spriteModel.vertYRot[topVertex];
+			int cameraZ = spriteModel.vertZRot[topVertex];
+			int screenX = spriteModel.vertexParam6[topVertex];
+			int screenY = spriteModel.vertexParam2[topVertex];
+			int bottomScreenX = spriteModel.vertexParam6[bottomVertex];
+			int drawWidth = 0;
+			int drawHeight = 0;
+			int drawX = 0;
+			int drawY = 0;
+			int scale = 0;
+			int horizontalSkew = bottomScreenX - screenX;
+			boolean depthVisible = this.rot1024_zTop < cameraZ && cameraZ < this.fogEntityDistance;
+			boolean horizontalVisible = false;
+			boolean verticalVisible = false;
+			if (cameraZ != 0) {
+				drawWidth = (this.m_ob[face] << this.rot1024_vp_src) / cameraZ;
+				drawHeight = (this.m_Eb[face] << this.rot1024_vp_src) / cameraZ;
+				drawX = this.m_Zb + screenX - drawWidth / 2;
+				drawY = this.m_Nb - (drawHeight - screenY);
+				scale = (256 << this.rot1024_vp_src) / cameraZ;
+				horizontalVisible = this.m_A >= screenX - drawWidth / 2
+					&& -this.m_A <= screenX + drawWidth / 2;
+				verticalVisible = screenY - drawHeight <= this.m_wb && screenY >= -this.m_wb;
+			}
+			String cullReason;
+			if (cameraZ == 0) {
+				cullReason = "zero-depth";
+			} else if (!depthVisible) {
+				cullReason = cameraZ <= this.rot1024_zTop ? "near-plane" : "entity-fog";
+			} else if (!horizontalVisible) {
+				cullReason = "horizontal-frustum";
+			} else if (!verticalVisible) {
+				cullReason = "vertical-frustum";
+			} else {
+				cullReason = "projected";
+			}
+			int pickIndex = -1;
+			if (spriteModel.facePickIndex != null && face < spriteModel.facePickIndex.length) {
+				pickIndex = spriteModel.facePickIndex[face];
+			}
+			geometryFrame.addSpriteSubmission(
+				face,
+				this.m_gb[face],
+				pickIndex,
+				this.m_Fb[face],
+				this.m_a[face],
+				this.m_Ob[face],
+				this.m_ob[face],
+				this.m_Eb[face],
+				cameraX,
+				cameraY,
+				cameraZ,
+				screenX,
+				screenY,
+				drawX,
+				drawY,
+				drawWidth,
+				drawHeight,
+				scale,
+				horizontalSkew,
+				"projected".equals(cullReason),
+				cullReason);
+			if (this.renderer3DCharacterTagged[face]) {
+				geometryFrame.addCharacterSprite(
+					this.renderer3DCharacterKind[face],
+					face,
+					this.m_gb[face],
+					this.renderer3DCharacterArrayIndex[face],
+					this.renderer3DCharacterServerIndex[face],
+					this.renderer3DCharacterEntityId[face],
+					this.renderer3DCharacterDisplayName[face],
+					this.m_Fb[face],
+					this.m_a[face],
+					this.m_Ob[face],
+					this.renderer3DCharacterVisualOffsetX[face],
+					this.renderer3DCharacterVisualOffsetZ[face],
+					this.m_ob[face],
+					this.m_Eb[face],
+					this.renderer3DCharacterDirection[face],
+					this.renderer3DCharacterCombatDirection[face],
+					this.renderer3DCharacterCombatTimeout[face],
+					this.renderer3DCharacterHealthCurrent[face],
+					this.renderer3DCharacterHealthMax[face],
+					this.renderer3DCharacterDamageTaken[face],
+					this.renderer3DCharacterAttackingNpcServerIndex[face],
+					this.renderer3DCharacterAttackingPlayerServerIndex[face],
+					this.renderer3DCharacterCombatEffectType[face],
+					this.renderer3DCharacterCombatEffectTime[face],
+					this.renderer3DCharacterActiveHitSplats[face],
+					"projected".equals(cullReason),
+					cullReason,
+					drawX,
+					drawY,
+					drawWidth,
+					drawHeight);
+			}
 		}
 	}
 

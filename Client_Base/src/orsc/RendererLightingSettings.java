@@ -2,16 +2,16 @@ package orsc;
 
 import java.util.Properties;
 
-final class RendererBrightnessSettings {
-	static final String BRIGHTNESS_PROPERTY_KEY = "opengl_brightness";
-	private static final String BRIGHTNESS_PROPERTY = "spoiledmilk.openglBrightness";
-	private static final String BRIGHTNESS_ENV = "SPOILED_MILK_OPENGL_BRIGHTNESS";
+final class RendererLightingSettings {
+	static final String LIGHTING_PROPERTY_KEY = "opengl_lighting";
+	private static final String LIGHTING_PROPERTY = "spoiledmilk.openglLighting";
+	private static final String LIGHTING_ENV = "SPOILED_MILK_OPENGL_LIGHTING";
 
-	private static final boolean runtimeBrightnessOverride =
-		hasRuntimeSetting(BRIGHTNESS_PROPERTY, BRIGHTNESS_ENV);
-	private static volatile Mode mode = Mode.from(readRuntimeSetting(BRIGHTNESS_PROPERTY, BRIGHTNESS_ENV));
+	private static final boolean runtimeLightingOverride =
+		hasRuntimeSetting(LIGHTING_PROPERTY, LIGHTING_ENV);
+	private static volatile Mode mode = Mode.from(readRuntimeSetting(LIGHTING_PROPERTY, LIGHTING_ENV));
 
-	private RendererBrightnessSettings() {
+	private RendererLightingSettings() {
 	}
 
 	static Mode getMode() {
@@ -25,23 +25,20 @@ final class RendererBrightnessSettings {
 	}
 
 	static Mode setMode(Mode next) {
-		mode = next == null ? Mode.HIGH : next;
+		mode = next == null ? Mode.CLASSIC : next;
 		return mode;
 	}
 
 	static void loadFromClientSettings(Properties props) {
-		if (runtimeBrightnessOverride || props == null) {
+		if (runtimeLightingOverride) {
 			return;
 		}
-		String configuredMode = props.getProperty(BRIGHTNESS_PROPERTY_KEY);
-		if (configuredMode != null && !configuredMode.trim().isEmpty()) {
-			mode = Mode.from(configuredMode);
-		}
+		mode = Mode.CLASSIC;
 	}
 
 	static void saveToClientSettings(Properties props) {
 		if (props != null) {
-			props.setProperty(BRIGHTNESS_PROPERTY_KEY, mode.id);
+			props.setProperty(LIGHTING_PROPERTY_KEY, Mode.CLASSIC.id);
 		}
 	}
 
@@ -58,18 +55,16 @@ final class RendererBrightnessSettings {
 	}
 
 	enum Mode {
-		HIGH("high", "@gre@High", 1.0f),
-		MEDIUM("medium", "@yel@Medium", 0.9f),
-		LOW("low", "@ora@Low", 0.8f);
+		CLASSIC("classic", "@gre@Classic"),
+		DIRECTIONAL("directional", "@yel@Directional"),
+		TOON("toon", "@cya@Toon");
 
 		final String id;
 		final String label;
-		final float multiplier;
 
-		Mode(String id, String label, float multiplier) {
+		Mode(String id, String label) {
 			this.id = id;
 			this.label = label;
-			this.multiplier = multiplier;
 		}
 
 		Mode next() {
@@ -79,7 +74,7 @@ final class RendererBrightnessSettings {
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return HIGH;
+				return CLASSIC;
 			}
 
 			String normalized = value.trim().toLowerCase().replace('_', '-');
@@ -89,8 +84,8 @@ final class RendererBrightnessSettings {
 				}
 			}
 
-			System.out.println("[renderer-v2] Unknown OpenGL brightness '" + value + "'; using high.");
-			return HIGH;
+			System.out.println("[renderer-v2] Unknown OpenGL lighting '" + value + "'; using classic.");
+			return CLASSIC;
 		}
 	}
 }

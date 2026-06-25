@@ -2,16 +2,16 @@ package orsc;
 
 import java.util.Properties;
 
-final class RendererBrightnessSettings {
-	static final String BRIGHTNESS_PROPERTY_KEY = "opengl_brightness";
-	private static final String BRIGHTNESS_PROPERTY = "spoiledmilk.openglBrightness";
-	private static final String BRIGHTNESS_ENV = "SPOILED_MILK_OPENGL_BRIGHTNESS";
+final class RendererGeometrySettings {
+	static final String GEOMETRY_PROPERTY_KEY = "opengl_geometry";
+	private static final String GEOMETRY_PROPERTY = "spoiledmilk.openglGeometry";
+	private static final String GEOMETRY_ENV = "SPOILED_MILK_OPENGL_GEOMETRY";
 
-	private static final boolean runtimeBrightnessOverride =
-		hasRuntimeSetting(BRIGHTNESS_PROPERTY, BRIGHTNESS_ENV);
-	private static volatile Mode mode = Mode.from(readRuntimeSetting(BRIGHTNESS_PROPERTY, BRIGHTNESS_ENV));
+	private static final boolean runtimeGeometryOverride =
+		hasRuntimeSetting(GEOMETRY_PROPERTY, GEOMETRY_ENV);
+	private static volatile Mode mode = Mode.from(readRuntimeSetting(GEOMETRY_PROPERTY, GEOMETRY_ENV));
 
-	private RendererBrightnessSettings() {
+	private RendererGeometrySettings() {
 	}
 
 	static Mode getMode() {
@@ -25,15 +25,15 @@ final class RendererBrightnessSettings {
 	}
 
 	static Mode setMode(Mode next) {
-		mode = next == null ? Mode.HIGH : next;
+		mode = next == null ? Mode.SMOOTH : next;
 		return mode;
 	}
 
 	static void loadFromClientSettings(Properties props) {
-		if (runtimeBrightnessOverride || props == null) {
+		if (runtimeGeometryOverride || props == null) {
 			return;
 		}
-		String configuredMode = props.getProperty(BRIGHTNESS_PROPERTY_KEY);
+		String configuredMode = props.getProperty(GEOMETRY_PROPERTY_KEY);
 		if (configuredMode != null && !configuredMode.trim().isEmpty()) {
 			mode = Mode.from(configuredMode);
 		}
@@ -41,7 +41,7 @@ final class RendererBrightnessSettings {
 
 	static void saveToClientSettings(Properties props) {
 		if (props != null) {
-			props.setProperty(BRIGHTNESS_PROPERTY_KEY, mode.id);
+			props.setProperty(GEOMETRY_PROPERTY_KEY, mode.id);
 		}
 	}
 
@@ -58,18 +58,16 @@ final class RendererBrightnessSettings {
 	}
 
 	enum Mode {
-		HIGH("high", "@gre@High", 1.0f),
-		MEDIUM("medium", "@yel@Medium", 0.9f),
-		LOW("low", "@ora@Low", 0.8f);
+		SMOOTH("smooth", "@gre@Smooth"),
+		FACETED("faceted", "@yel@Faceted"),
+		WIRE("wire", "@cya@Wire");
 
 		final String id;
 		final String label;
-		final float multiplier;
 
-		Mode(String id, String label, float multiplier) {
+		Mode(String id, String label) {
 			this.id = id;
 			this.label = label;
-			this.multiplier = multiplier;
 		}
 
 		Mode next() {
@@ -79,18 +77,24 @@ final class RendererBrightnessSettings {
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return HIGH;
+				return SMOOTH;
 			}
 
 			String normalized = value.trim().toLowerCase().replace('_', '-');
+			if ("geometric".equals(normalized) || "flat".equals(normalized)) {
+				return FACETED;
+			}
+			if ("wireframe".equals(normalized) || "triangle".equals(normalized)) {
+				return WIRE;
+			}
 			for (Mode mode : values()) {
 				if (mode.id.equals(normalized)) {
 					return mode;
 				}
 			}
 
-			System.out.println("[renderer-v2] Unknown OpenGL brightness '" + value + "'; using high.");
-			return HIGH;
+			System.out.println("[renderer-v2] Unknown OpenGL geometry '" + value + "'; using smooth.");
+			return SMOOTH;
 		}
 	}
 }

@@ -10,6 +10,8 @@ if [ -f "$GAME_DIR/update-spoiled-milk.sh" ]; then
 fi
 
 exec java \
+  -Xms512m \
+  -Xmx2g \
   -Dspoiledmilk.directFramebuffer=true \
   -Dspoiledmilk.openglPresenter=true \
   -Dspoiledmilk.openglInput=true \

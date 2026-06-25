@@ -2,16 +2,16 @@ package orsc;
 
 import java.util.Properties;
 
-final class RendererBrightnessSettings {
-	static final String BRIGHTNESS_PROPERTY_KEY = "opengl_brightness";
-	private static final String BRIGHTNESS_PROPERTY = "spoiledmilk.openglBrightness";
-	private static final String BRIGHTNESS_ENV = "SPOILED_MILK_OPENGL_BRIGHTNESS";
+final class RendererProfileSettings {
+	static final String PROFILE_PROPERTY_KEY = "opengl_renderer_profile";
+	private static final String PROFILE_PROPERTY = "spoiledmilk.openglRendererProfile";
+	private static final String PROFILE_ENV = "SPOILED_MILK_OPENGL_RENDERER_PROFILE";
 
-	private static final boolean runtimeBrightnessOverride =
-		hasRuntimeSetting(BRIGHTNESS_PROPERTY, BRIGHTNESS_ENV);
-	private static volatile Mode mode = Mode.from(readRuntimeSetting(BRIGHTNESS_PROPERTY, BRIGHTNESS_ENV));
+	private static final boolean runtimeProfileOverride =
+		hasRuntimeSetting(PROFILE_PROPERTY, PROFILE_ENV);
+	private static volatile Mode mode = Mode.from(readRuntimeSetting(PROFILE_PROPERTY, PROFILE_ENV));
 
-	private RendererBrightnessSettings() {
+	private RendererProfileSettings() {
 	}
 
 	static Mode getMode() {
@@ -25,15 +25,19 @@ final class RendererBrightnessSettings {
 	}
 
 	static Mode setMode(Mode next) {
-		mode = next == null ? Mode.HIGH : next;
+		mode = next == null ? Mode.CLASSIC : next;
 		return mode;
 	}
 
+	static Mode markCustom() {
+		return setMode(Mode.CUSTOM);
+	}
+
 	static void loadFromClientSettings(Properties props) {
-		if (runtimeBrightnessOverride || props == null) {
+		if (runtimeProfileOverride || props == null) {
 			return;
 		}
-		String configuredMode = props.getProperty(BRIGHTNESS_PROPERTY_KEY);
+		String configuredMode = props.getProperty(PROFILE_PROPERTY_KEY);
 		if (configuredMode != null && !configuredMode.trim().isEmpty()) {
 			mode = Mode.from(configuredMode);
 		}
@@ -41,7 +45,7 @@ final class RendererBrightnessSettings {
 
 	static void saveToClientSettings(Properties props) {
 		if (props != null) {
-			props.setProperty(BRIGHTNESS_PROPERTY_KEY, mode.id);
+			props.setProperty(PROFILE_PROPERTY_KEY, mode.id);
 		}
 	}
 
@@ -58,18 +62,15 @@ final class RendererBrightnessSettings {
 	}
 
 	enum Mode {
-		HIGH("high", "@gre@High", 1.0f),
-		MEDIUM("medium", "@yel@Medium", 0.9f),
-		LOW("low", "@ora@Low", 0.8f);
+		CLASSIC("classic", "@gre@Classic"),
+		CUSTOM("custom", "@yel@Custom");
 
 		final String id;
 		final String label;
-		final float multiplier;
 
-		Mode(String id, String label, float multiplier) {
+		Mode(String id, String label) {
 			this.id = id;
 			this.label = label;
-			this.multiplier = multiplier;
 		}
 
 		Mode next() {
@@ -79,7 +80,7 @@ final class RendererBrightnessSettings {
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return HIGH;
+				return CLASSIC;
 			}
 
 			String normalized = value.trim().toLowerCase().replace('_', '-');
@@ -89,8 +90,8 @@ final class RendererBrightnessSettings {
 				}
 			}
 
-			System.out.println("[renderer-v2] Unknown OpenGL brightness '" + value + "'; using high.");
-			return HIGH;
+			System.out.println("[renderer-v2] Unknown OpenGL renderer profile '" + value + "'; using classic.");
+			return CLASSIC;
 		}
 	}
 }

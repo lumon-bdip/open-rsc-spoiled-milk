@@ -22,6 +22,11 @@ def require(text: str, needle: str, description: str) -> None:
         fail(f"missing {description}: {needle}")
 
 
+def forbid(text: str, needle: str, description: str) -> None:
+    if needle in text:
+        fail(f"retired {description} still present: {needle}")
+
+
 def main() -> None:
     fonts = FONTS.read_text(encoding="utf-8")
     font_settings = FONT_SETTINGS.read_text(encoding="utf-8")
@@ -63,7 +68,7 @@ def main() -> None:
     require(mudclient, "void cycleOpenGLUiFontMode()", "mudclient UI font cycle method")
     require(mudclient, '"@whi@Font - " + RendererFontSettings.getMode().label', "General options UI font row")
     require(mudclient, "if (isOpenGLPrimaryWindow && settingIndex == 57 && this.mouseButtonClick == 1)", "General options UI font click handler")
-    require(applet, "if (keyCode == KeyEvent.VK_F9) mudclient.cycleOpenGLUiFontMode();", "F9 cycles UI font in OpenGL-primary")
+    forbid(applet, "mudclient.cycleOpenGLUiFontMode();", "F9 OpenGL-primary UI font hotkey")
     require(graphics, "font = RendererFontSettings.displayFont(font);", "font policy applied")
     require(
         graphics,

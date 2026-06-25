@@ -6,7 +6,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 public final class Renderer3DMeshFrame {
-	public static final int FLOATS_PER_VERTEX = 14;
+	public static final int FLOATS_PER_VERTEX = 16;
 	public static final int CAMERA_X_OFFSET = 0;
 	public static final int CAMERA_Y_OFFSET = 1;
 	public static final int CAMERA_Z_OFFSET = 2;
@@ -21,6 +21,8 @@ public final class Renderer3DMeshFrame {
 	public static final int TEXTURE_GREEN_OFFSET = 11;
 	public static final int TEXTURE_BLUE_OFFSET = 12;
 	public static final int TEXTURE_ALPHA_OFFSET = 13;
+	public static final int LEGACY_LIGHT_OFFSET = 14;
+	public static final int BASE_LEGACY_LIGHT_OFFSET = 15;
 	private static final int INDICES_PER_TRIANGLE = 3;
 	private final float[] vertices;
 	private final int[] indices;
@@ -243,10 +245,6 @@ public final class Renderer3DMeshFrame {
 		int maxX = Math.max(ax, Math.max(bx, cx));
 		int minY = Math.min(ay, Math.min(by, cy));
 		int maxY = Math.max(ay, Math.max(by, cy));
-		if (maxX < 0 || minX >= viewportWidth || maxY < 0 || minY >= viewportHeight) {
-			return false;
-		}
-
 		int marginX = Math.max(64, viewportWidth);
 		int marginY = Math.max(64, viewportHeight);
 		return minX >= -marginX
@@ -258,6 +256,7 @@ public final class Renderer3DMeshFrame {
 	private void addVertex(Renderer3DFrame.FaceCommand face, int vertex) {
 		int color = fallbackColorForFace(face);
 		int legacyLight = legacyLightForFace(face, vertex);
+		int baseLegacyLight = baseLegacyLightForFace(face, vertex);
 		float textureLight = textureLightForFace(face, vertex);
 		color = shadedFallbackColorForFace(face, color, legacyLight);
 		int offset = vertexCount * FLOATS_PER_VERTEX;
@@ -275,6 +274,8 @@ public final class Renderer3DMeshFrame {
 		vertices[offset + TEXTURE_GREEN_OFFSET] = textureLight;
 		vertices[offset + TEXTURE_BLUE_OFFSET] = textureLight;
 		vertices[offset + TEXTURE_ALPHA_OFFSET] = 1.0f;
+		vertices[offset + LEGACY_LIGHT_OFFSET] = legacyLight;
+		vertices[offset + BASE_LEGACY_LIGHT_OFFSET] = baseLegacyLight;
 		vertexCount++;
 	}
 
@@ -284,7 +285,15 @@ public final class Renderer3DMeshFrame {
 
 	private int legacyLightForFace(Renderer3DFrame.FaceCommand face, int vertex) {
 		int[] lights = face.getRenderLight();
-		int light = vertex >= 0 && vertex < lights.length ? lights[vertex] : 0;
+		return clampLegacyLight(vertex >= 0 && vertex < lights.length ? lights[vertex] : 0);
+	}
+
+	private int baseLegacyLightForFace(Renderer3DFrame.FaceCommand face, int vertex) {
+		int[] lights = face.getRenderBaseLight();
+		return clampLegacyLight(vertex >= 0 && vertex < lights.length ? lights[vertex] : 0);
+	}
+
+	private int clampLegacyLight(int light) {
 		if (light < 0) {
 			return 0;
 		}

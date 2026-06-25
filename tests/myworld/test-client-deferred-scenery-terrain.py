@@ -23,15 +23,22 @@ def main() -> None:
     require("private boolean hasLoadedTerrainForWorldPoint(int xWorld, int zWorld)" in client
             and "return World.isLocalFaceTile(xTile, zTile);" in client,
             "Terrain checks should match the elevation interpolation window")
-    require("if (hasLoadedTerrainForWallObject(x, y, dir)) {\n\t\t\tthis.scene.addModel(model);\n\t\t}" in client,
-            "Boundary models should only be added to the scene when terrain exists below them")
+    require("private final boolean[] gameObjectInstanceMaterialized" in client
+            and "private final boolean[] wallObjectInstanceMaterialized" in client,
+            "Deferred scenery should track explicit scene materialization state")
+    require("public void materializeGameObjectInstance(int index)" in client
+            and "if (!hasLoadedTerrainForGameObject(xTile, zTile, objectID, dir)) {\n\t\t\treturn;\n\t\t}" in client,
+            "Scenery materialization should be gated on loaded terrain")
+    require("public void materializeWallObjectInstance(int index)" in client
+            and "if (!hasLoadedTerrainForWallObject(x, z, dir)) {\n\t\t\treturn;\n\t\t}" in client,
+            "Boundary materialization should be gated before wall geometry is built")
+    require("private void materializeLoadedTerrainScenery()" in client
+            and "this.materializeLoadedTerrainScenery();" in client,
+            "Region loads should retry deferred scenery once terrain is active")
 
-    add_model = "mc.getScene().addModel(m);"
-    terrain_gate = "if (mc.hasLoadedTerrainForGameObject(xTile, zTile, id, dir)) {"
     store_record = "mc.setGameObjectInstanceModel(instanceIndex, m);"
+    materialize_record = "mc.materializeGameObjectInstance(instanceIndex);"
     capacity_guard = "if (!mc.hasGameObjectInstanceCapacity()) {\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\t}"
-    require(terrain_gate in packet_handler,
-            "Scenery model drawing should be gated on loaded terrain")
     require("private static final int WALL_OBJECT_KEY_BASE = 20000;" in client
             and "private static final int GAME_OBJECT_INSTANCE_CAPACITY = WALL_OBJECT_KEY_BASE;" in client,
             "Scenery capacity should grow past the old 5000 limit without colliding with wall pick keys")
@@ -56,14 +63,20 @@ def main() -> None:
             "Boundary pick-key encoding should move with the expanded scenery capacity")
     require(packet_handler.index(capacity_guard) < packet_handler.index(store_record),
             "Scenery capacity should be checked before storing a new instance")
-    require(packet_handler.index(terrain_gate) < packet_handler.index(add_model),
-            "Scenery terrain gate should wrap scene insertion")
-    require(packet_handler.index(add_model) < packet_handler.index(store_record),
-            "Scenery should still be stored after optional drawing")
-    require("m.translate2(xWorld, -mc.getWorld().getElevation(xWorld, zWorld), zWorld);" in packet_handler,
-            "Scenery should only query terrain elevation inside the loaded-terrain draw path")
-    require("mc.getWorld().addGameObject_UpdateCollisionMap(xTile, zTile, id, false);" in packet_handler,
-            "Scenery collision should be applied only when the local terrain tile is loaded")
+    require(packet_handler.index(store_record) < packet_handler.index(materialize_record),
+            "Scenery should be stored before terrain-ready materialization is retried")
+    require("mc.setGameObjectInstanceMaterialized(instanceIndex, false);" in packet_handler,
+            "New scenery packets should start as deferred materialization candidates")
+    require("mc.setWallObjectInstanceModel(instanceIndex, null);" in packet_handler
+            and "mc.materializeWallObjectInstance(instanceIndex);" in packet_handler,
+            "Boundary packets should defer model construction until terrain endpoints are loaded")
+    require("mc.dematerializeGameObjectInstance(" in packet_handler
+            and "mc.dematerializeWallObjectInstance(" in packet_handler,
+            "Packet removals should only remove scene/collision for materialized instances")
+    require("this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, false);" in client,
+            "Scenery collision should be applied only by terrain-ready materialization")
+    require("this.world.applyWallToCollisionFlags(id, x, z, dir);" in client,
+            "Boundary collision should be applied only by terrain-ready materialization")
 
     print("PASS: client defers scenery drawing until terrain is loaded")
 

@@ -51,6 +51,10 @@ public final class Renderer2DSettings {
 		return OPENGL_WORLD_UI_REPLAY_ENABLED;
 	}
 
+	public static boolean canReplayOpenGLWorldSprites() {
+		return OPENGL_WORLD_SPRITES_VISIBLE_ENABLED;
+	}
+
 	public static boolean canReplayOrderSensitiveSpritesAfterFrame() {
 		return OPENGL_SPRITE_OVERLAY_MODE == SpriteOverlayMode.EXPERIMENTAL_ORDER_SENSITIVE_AFTER_FRAME;
 	}

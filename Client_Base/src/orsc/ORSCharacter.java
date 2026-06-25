@@ -57,6 +57,8 @@ public final class ORSCharacter {
 	public int waypointIndexCurrent;
 	public int[] waypointsX = new int[10];
 	public int[] waypointsZ = new int[10];
+	public long movementLastFrameMillis = 0L;
+	public double movementPixelRemainder = 0.0D;
 	public String clanTag;
 	public String partyTag;
 	public boolean isInvisible = false;

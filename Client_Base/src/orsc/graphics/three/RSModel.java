@@ -3,6 +3,8 @@ package orsc.graphics.three;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import orsc.MiscFunctions;
 import orsc.buffers.RSBufferUtils;
@@ -10,6 +12,8 @@ import orsc.util.FastMath;
 import orsc.util.GenUtil;
 
 public final class RSModel {
+	private static final long FNV_OFFSET_BASIS = 0xcbf29ce484222325L;
+	private static final long FNV_PRIME = 0x100000001b3L;
 	private final int m_Vb = 12345678;
 	int[] faceDiffuseLight;
 	int faceHead;
@@ -86,6 +90,7 @@ public final class RSModel {
 	private int translateY;
 	private int translateZ;
 	private int vertexCount2;
+	private int renderer3DTransformVersion;
 	private int[] vertXTransform;
 	private int[] vertY;
 	private int[] vertYTransform;
@@ -226,6 +231,31 @@ public final class RSModel {
 
 	public Renderer3DModelKind getRenderer3DModelKind() {
 		return renderer3DModelKind;
+	}
+
+	public int getRenderer3DTransformVersion() {
+		return renderer3DTransformVersion;
+	}
+
+	public static Renderer3DWorldChunkFrame.ChunkMesh buildRenderer3DObjectChunkMesh(
+		int plane,
+		int centerSectionX,
+		int centerSectionY,
+		int originWorldX,
+		int originWorldZ,
+		RSModel[] models,
+		int modelCount) {
+		ObjectChunkMeshBuilder builder = new ObjectChunkMeshBuilder(
+			plane,
+			centerSectionX,
+			centerSectionY,
+			originWorldX,
+			originWorldZ);
+		int limit = Math.min(modelCount, models == null ? 0 : models.length);
+		for (int index = 0; index < limit; index++) {
+			builder.addModel(models[index]);
+		}
+		return builder.build();
 	}
 
 	public void setPickBoundsScale(int pickBoundsScale) {
@@ -419,6 +449,7 @@ public final class RSModel {
 			this.rot256Z = 255 & this.rot256Z + rotZ;
 			this.computeAppliedTransform();
 			this.m_Yb = 1;
+			this.renderer3DTransformVersion++;
 		} catch (RuntimeException var6) {
 			throw GenUtil.makeThrowable(var6, "ca.GA(" + rotZ + ',' + "dummy" + ',' + rotY + ',' + rotX + ')');
 		}
@@ -797,6 +828,7 @@ public final class RSModel {
 			this.rot256Z = model.rot256Z;
 			this.computeAppliedTransform();
 			this.m_Yb = 1;
+			this.renderer3DTransformVersion++;
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "ca.AA(" + "{...}" + ',' + var2 + ')');
 		}
@@ -1041,6 +1073,342 @@ public final class RSModel {
 
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "ca.V(" + var1 + ')');
+		}
+	}
+
+	private static final class ObjectChunkMeshBuilder {
+		private final int plane;
+		private final int centerSectionX;
+		private final int centerSectionY;
+		private final int originWorldX;
+		private final int originWorldZ;
+		private final List<Integer> vertexCoords = new ArrayList<Integer>();
+		private final List<Float> vertexTextureU = new ArrayList<Float>();
+		private final List<Float> vertexTextureV = new ArrayList<Float>();
+		private final List<Integer> vertexLights = new ArrayList<Integer>();
+		private final List<Integer> indices = new ArrayList<Integer>();
+		private final List<Integer> triangleTextures = new ArrayList<Integer>();
+		private final List<Integer> triangleFallbackColors = new ArrayList<Integer>();
+		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
+
+		private ObjectChunkMeshBuilder(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ) {
+			this.plane = plane;
+			this.centerSectionX = centerSectionX;
+			this.centerSectionY = centerSectionY;
+			this.originWorldX = originWorldX;
+			this.originWorldZ = originWorldZ;
+		}
+
+		private void addModel(RSModel model) {
+			if (model == null) {
+				return;
+			}
+			Renderer3DModelKind kind = model.getRenderer3DModelKind();
+			if (kind != Renderer3DModelKind.GAME_OBJECT && kind != Renderer3DModelKind.WALL_OBJECT) {
+				return;
+			}
+			model.resetTransformCache(7972);
+			for (int face = 0; face < model.faceHead; face++) {
+				int vertexCount = model.faceIndexCount[face];
+				if (vertexCount < 3) {
+					continue;
+				}
+				int[] faceVertexCoords = new int[vertexCount * 3];
+				int[] faceVertexLights = new int[vertexCount];
+				for (int vertex = 0; vertex < vertexCount; vertex++) {
+					int modelVertex = model.faceIndices[face][vertex];
+					int coord = vertex * 3;
+					faceVertexCoords[coord] = model.vertXTransform[modelVertex];
+					faceVertexCoords[coord + 1] = model.vertYTransform[modelVertex];
+					faceVertexCoords[coord + 2] = model.vertZTransform[modelVertex];
+					faceVertexLights[vertex] = model.faceDiffuseLight[face] == model.m_Vb
+						? 0
+						: model.faceDiffuseLight[face];
+				}
+				addFace(kind, model.faceTextureFront[face], model.faceTextureBack[face], faceVertexCoords, faceVertexLights);
+			}
+		}
+
+		private void addFace(
+			Renderer3DModelKind kind,
+			int frontMaterial,
+			int backMaterial,
+			int[] faceVertexCoords,
+			int[] faceVertexLights) {
+			int vertexCount = faceVertexCoords == null ? 0 : faceVertexCoords.length / 3;
+			if (vertexCount < 3) {
+				return;
+			}
+			addMaterialSide(kind, frontMaterial, faceVertexCoords, faceVertexLights, false);
+			addMaterialSide(kind, backMaterial, faceVertexCoords, faceVertexLights, true);
+		}
+
+		private void addMaterialSide(
+			Renderer3DModelKind kind,
+			int material,
+			int[] faceVertexCoords,
+			int[] faceVertexLights,
+			boolean reversed) {
+			if (material == Scene.TRANSPARENT) {
+				return;
+			}
+			int vertexCount = faceVertexCoords == null ? 0 : faceVertexCoords.length / 3;
+			if (vertexCount < 3) {
+				return;
+			}
+			ResolvedMaterial resolved = resolveMaterial(material);
+			float[] textureU = new float[vertexCount];
+			float[] textureV = new float[vertexCount];
+			populateTextureCoordinates(resolved.texture, faceVertexCoords, textureU, textureV);
+			for (int vertex = 1; vertex < vertexCount - 1; vertex++) {
+				if (reversed) {
+					addTriangle(
+						kind,
+						resolved.texture,
+						resolved.fallbackColor,
+						faceVertexCoords,
+						faceVertexLights,
+						textureU,
+						textureV,
+						0,
+						vertex + 1,
+						vertex);
+				} else {
+					addTriangle(
+						kind,
+						resolved.texture,
+						resolved.fallbackColor,
+						faceVertexCoords,
+						faceVertexLights,
+						textureU,
+						textureV,
+						0,
+						vertex,
+						vertex + 1);
+				}
+			}
+		}
+
+		private void addTriangle(
+			Renderer3DModelKind kind,
+			int texture,
+			int fallbackColor,
+			int[] faceVertexCoords,
+			int[] faceVertexLights,
+			float[] textureU,
+			float[] textureV,
+			int a,
+			int b,
+			int c) {
+			int baseVertex = vertexCoords.size() / 3;
+			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, a);
+			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, b);
+			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, c);
+			indices.add(Integer.valueOf(baseVertex));
+			indices.add(Integer.valueOf(baseVertex + 1));
+			indices.add(Integer.valueOf(baseVertex + 2));
+			triangleTextures.add(Integer.valueOf(texture));
+			triangleFallbackColors.add(Integer.valueOf(fallbackColor));
+			triangleModelKinds.add(kind);
+		}
+
+		private void addVertex(
+			int[] faceVertexCoords,
+			int[] faceVertexLights,
+			float[] textureU,
+			float[] textureV,
+			int vertex) {
+			int coord = vertex * 3;
+			vertexCoords.add(Integer.valueOf(faceVertexCoords[coord]));
+			vertexCoords.add(Integer.valueOf(faceVertexCoords[coord + 1]));
+			vertexCoords.add(Integer.valueOf(faceVertexCoords[coord + 2]));
+			vertexTextureU.add(Float.valueOf(textureU[vertex]));
+			vertexTextureV.add(Float.valueOf(textureV[vertex]));
+			vertexLights.add(Integer.valueOf(
+				faceVertexLights == null || vertex >= faceVertexLights.length ? 0 : faceVertexLights[vertex]));
+		}
+
+		private ResolvedMaterial resolveMaterial(int material) {
+			if (material < 0) {
+				return new ResolvedMaterial(Scene.TRANSPARENT, resourceToRgb(material));
+			}
+			return new ResolvedMaterial(material, Scene.TRANSPARENT);
+		}
+
+		private int resourceToRgb(int resource) {
+			if (resource == Scene.TRANSPARENT) {
+				return 0;
+			}
+			if (resource >= 0) {
+				return resource;
+			}
+			int encoded = -(resource + 1);
+			int red = (encoded & 0x7C00) >> 10;
+			int green = (encoded & 0x3E0) >> 5;
+			int blue = encoded & 0x1F;
+			return (red << 19) + (green << 11) + (blue << 3);
+		}
+
+		private void populateTextureCoordinates(
+			int texture,
+			int[] faceVertexCoords,
+			float[] textureU,
+			float[] textureV) {
+			if (texture < 0 || faceVertexCoords.length < 9) {
+				return;
+			}
+			int last = faceVertexCoords.length / 3 - 1;
+			double ux = faceVertexCoords[3] - faceVertexCoords[0];
+			double uy = faceVertexCoords[4] - faceVertexCoords[1];
+			double uz = faceVertexCoords[5] - faceVertexCoords[2];
+			double vx = faceVertexCoords[last * 3] - faceVertexCoords[0];
+			double vy = faceVertexCoords[last * 3 + 1] - faceVertexCoords[1];
+			double vz = faceVertexCoords[last * 3 + 2] - faceVertexCoords[2];
+			double uu = dot(ux, uy, uz, ux, uy, uz);
+			double uv = dot(ux, uy, uz, vx, vy, vz);
+			double vv = dot(vx, vy, vz, vx, vy, vz);
+			double determinant = uu * vv - uv * uv;
+			if (Math.abs(determinant) < 0.000001) {
+				return;
+			}
+			for (int vertex = 0; vertex < textureU.length; vertex++) {
+				int coord = vertex * 3;
+				double px = faceVertexCoords[coord] - faceVertexCoords[0];
+				double py = faceVertexCoords[coord + 1] - faceVertexCoords[1];
+				double pz = faceVertexCoords[coord + 2] - faceVertexCoords[2];
+				double pu = dot(px, py, pz, ux, uy, uz);
+				double pv = dot(px, py, pz, vx, vy, vz);
+				textureU[vertex] = (float) ((pu * vv - pv * uv) / determinant);
+				textureV[vertex] = (float) ((pv * uu - pu * uv) / determinant);
+			}
+		}
+
+		private static double dot(
+			double leftX,
+			double leftY,
+			double leftZ,
+			double rightX,
+			double rightY,
+			double rightZ) {
+			return leftX * rightX + leftY * rightY + leftZ * rightZ;
+		}
+
+		private static final class ResolvedMaterial {
+			private final int texture;
+			private final int fallbackColor;
+
+			private ResolvedMaterial(int texture, int fallbackColor) {
+				this.texture = texture;
+				this.fallbackColor = fallbackColor;
+			}
+		}
+
+		private Renderer3DWorldChunkFrame.ChunkMesh build() {
+			int[] vertexArray = toIntArray(vertexCoords);
+			float[] textureUArray = toFloatArray(vertexTextureU);
+			float[] textureVArray = toFloatArray(vertexTextureV);
+			int[] lightArray = toIntArray(vertexLights);
+			int[] indexArray = toIntArray(indices);
+			int[] textureArray = toIntArray(triangleTextures);
+			int[] fallbackArray = toIntArray(triangleFallbackColors);
+			Renderer3DModelKind[] kindArray =
+				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
+			long signature = signature(
+				vertexArray,
+				textureUArray,
+				textureVArray,
+				lightArray,
+				indexArray,
+				textureArray,
+				fallbackArray,
+				kindArray);
+			return new Renderer3DWorldChunkFrame.ChunkMesh(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				vertexArray,
+				textureUArray,
+				textureVArray,
+				lightArray,
+				indexArray,
+				textureArray,
+				fallbackArray,
+				kindArray,
+				0,
+				0,
+				0,
+				true,
+				signature);
+		}
+
+		private static int[] toIntArray(List<Integer> values) {
+			int[] array = new int[values.size()];
+			for (int i = 0; i < values.size(); i++) {
+				array[i] = values.get(i).intValue();
+			}
+			return array;
+		}
+
+		private static float[] toFloatArray(List<Float> values) {
+			float[] array = new float[values.size()];
+			for (int i = 0; i < values.size(); i++) {
+				array[i] = values.get(i).floatValue();
+			}
+			return array;
+		}
+
+		private long signature(
+			int[] vertexArray,
+			float[] textureUArray,
+			float[] textureVArray,
+			int[] lightArray,
+			int[] indexArray,
+			int[] textureArray,
+			int[] fallbackArray,
+			Renderer3DModelKind[] kindArray) {
+			long hash = FNV_OFFSET_BASIS;
+			hash = mix(hash, plane);
+			hash = mix(hash, centerSectionX);
+			hash = mix(hash, centerSectionY);
+			hash = mix(hash, originWorldX);
+			hash = mix(hash, originWorldZ);
+			for (int value : vertexArray) {
+				hash = mix(hash, value);
+			}
+			for (float value : textureUArray) {
+				hash = mix(hash, Float.floatToIntBits(value));
+			}
+			for (float value : textureVArray) {
+				hash = mix(hash, Float.floatToIntBits(value));
+			}
+			for (int value : lightArray) {
+				hash = mix(hash, value);
+			}
+			for (int value : indexArray) {
+				hash = mix(hash, value);
+			}
+			for (int value : textureArray) {
+				hash = mix(hash, value);
+			}
+			for (int value : fallbackArray) {
+				hash = mix(hash, value);
+			}
+			for (Renderer3DModelKind kind : kindArray) {
+				hash = mix(hash, kind.ordinal());
+			}
+			return hash;
+		}
+
+		private static long mix(long hash, int value) {
+			hash ^= value & 0xffffffffL;
+			return hash * FNV_PRIME;
 		}
 	}
 
@@ -1346,6 +1714,7 @@ public final class RSModel {
 			this.rot256Z = rotZ & 255;
 			this.computeAppliedTransform();
 			this.m_Yb = 1;
+			this.renderer3DTransformVersion++;
 		} catch (RuntimeException var6) {
 			throw GenUtil.makeThrowable(var6, "ca.EA(" + rotZ + ',' + "dummy" + ',' + rotX + ',' + rotY + ')');
 		}
@@ -1359,6 +1728,7 @@ public final class RSModel {
 
 			this.computeAppliedTransform();
 			this.m_Yb = 1;
+			this.renderer3DTransformVersion++;
 		} catch (RuntimeException var6) {
 			throw GenUtil.makeThrowable(var6, "ca.L(" + tY + ',' + "dummy" + ',' + tZ + ',' + tX + ')');
 		}
@@ -1396,6 +1766,7 @@ public final class RSModel {
 
 			this.computeAppliedTransform();
 			this.m_Yb = 1;
+			this.renderer3DTransformVersion++;
 		} catch (RuntimeException var6) {
 			throw GenUtil.makeThrowable(var6, "ca.O(" + tX + ',' + tZ + ',' + tY + ',' + true + ')');
 		}

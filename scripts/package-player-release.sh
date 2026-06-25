@@ -171,6 +171,8 @@ for launcher in \
   "$PACKAGE_ASSETS/play-spoiled-milk.sh" \
   "$PACKAGE_ASSETS/Play Spoiled Milk.cmd" \
   "$PACKAGE_ASSETS/Play Spoiled Milk Windows.cmd"; do
+  require_launcher_flag "$launcher" "-Xms512m"
+  require_launcher_flag "$launcher" "-Xmx2g"
   for renderer_flag in \
     "-Dspoiledmilk.directFramebuffer=true" \
     "-Dspoiledmilk.openglPresenter=true" \

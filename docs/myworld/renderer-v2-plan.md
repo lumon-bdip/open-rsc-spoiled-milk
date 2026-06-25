@@ -32,6 +32,11 @@ available.
 - Separate game simulation, scene rendering, scaling, and presentation.
 - Keep the existing server protocol, gameplay logic, cache data, maps, and
   content definitions usable.
+- Remove limits that only exist because of legacy protocol or client storage
+  widths, such as byte-sized local entity counts, narrow server ids, fixed
+  local arrays, and small coordinate windows. Temporary prioritization or
+  eviction logic is acceptable for alpha stability, but it should be treated as
+  a bridge toward wider remaster-era state packets and data structures.
 - Preserve a legacy-renderer fallback until renderer-v2 is proven in alpha.
 - Make future rendering work easier to reason about, test, and profile.
 
@@ -121,7 +126,9 @@ the OpenGL static world replacement composite enabled. In this mode the client
 still keeps the legacy renderer available as the data source and parity
 reference, but the in-game world is no longer presented as a scaled copy of the
 completed software framebuffer. The OpenGL path draws the captured static world
-from renderer-v2 mesh data, then replays visible scene/entity sprites,
+from renderer-v2 mesh data, draws legacy entity scene sprites directly through
+OpenGL, redraws texture-correct projected static-world ranges between entity
+groups using legacy scene order, then replays remaining visible scene sprites,
 world-overlay sprites, and UI commands above it.
 
 The first visually acceptable baseline is now:
@@ -138,9 +145,14 @@ The first visually acceptable baseline is now:
   the old four-band texture shade curve, while flat resource-color terrain uses
   the old 256-step shade ramp from captured per-render-vertex light/fog
   values.
-- Exact-ID scene/entity sprite restoration and software-visible sprite recovery
-  used as the current bridge so NPCs, players, items, projectiles, and world
-  overlays stay visually correct while full GPU sprite depth is still pending.
+- Entity scene sprites now bypass software-visible recovery and are submitted
+  through the OpenGL sprite path so NPCs, players, and ground item drops are
+  not made invisible by stale framebuffer occlusion tests. The replacement
+  composite then redraws only projected wall, roof, scenery, and wall-object
+  occluders whose legacy draw order falls after each world-sprite group and
+  before the next group. Terrain, water, and floor faces are no longer replayed
+  over sprites in this pass. Projectiles, teleport bubbles, and remaining
+  custom world effects still need the same explicit world-sprite treatment.
 - Login/menu/loading frames remain on the uploaded software framebuffer until a
   captured 3D world mesh is ready, preventing stale or partial world geometry
   from appearing during load transitions.
@@ -150,7 +162,98 @@ major terrain flatness/neon-color regression, keeps sprites readable, keeps UI
 above the world, and leaves the legacy renderer available for comparison. It is
 not the final architecture: the current world color pass still leans on fixed
 function OpenGL state, CPU-built color arrays, legacy sorted order, and
-software-visible sprite recovery.
+software-visible non-entity sprite recovery.
+
+## Renderer Ownership Contract
+
+This section is the short source-of-truth for AI sessions changing renderer-v2.
+Read it before changing sprite, occlusion, depth, world-composite, or
+framebuffer-replay behavior.
+
+### Ownership Map
+
+- **Static world geometry**
+  - Terrain, walls, roofs, game objects, wall objects, bridges, water, and
+    scenery should be treated as renderer-v2 world geometry.
+  - The current accepted path still uses captured legacy mesh/order data, but
+    the long-term owner is resident chunk geometry with explicit material and
+    depth metadata.
+- **Entity and ground-item sprites**
+  - Players, NPCs, and ground-item drops are OpenGL-owned in the current alpha
+    path.
+  - Do not restore these from software-visible framebuffer pixels.
+  - Do not let a failed or fully occluded depth-mask pass fall back to direct
+    full-sprite drawing. A zero-visible sprite is a valid hidden result.
+- **Projectiles and world effects**
+  - Projectiles, teleport bubbles, spell effects, and similar world overlays
+    are migration targets.
+  - Until promoted, treat their software-visible recovery as a temporary bridge
+    and prefer explicit renderer-v2 commands over new compatibility masks.
+- **UI and screen overlays**
+  - Chat, menus, panels, inventory, minimap details, hit splats, nameplates,
+    and debug text remain overlay/UI work unless explicitly promoted into a
+    world pass.
+  - These should draw after the world and world-sprite passes.
+- **Legacy framebuffer**
+  - The legacy framebuffer is a fallback, data source, and parity reference.
+  - It should not become the source of truth for renderer-v2 world visibility
+    when an explicit renderer-v2 command or depth result exists.
+
+### Ordering And Occlusion Rules
+
+- Static world color currently preserves legacy draw order where parity still
+  depends on it.
+- Sprite occlusion should use explicit renderer-v2 depth/kind data when
+  available. Terrain, walls, roofs, game objects, and wall objects are valid
+  entity-sprite occluders.
+- Entity and ground-item sprites should be hidden by later/closer valid world
+  occluders, but should not be hidden by stale framebuffer pixels.
+- The replacement composite may replay exact owned wall, game-object, and
+  wall-object faces around world-sprite groups while the explicit static
+  geometry scene queue is pending. These `FRONT_OCCLUDER_RANGE` commands must
+  carry model/face ownership and must stay narrow.
+- Terrain, water, and floor faces should not be broadly replayed over sprites
+  as a post-sprite overlay. If terrain must hide a sprite, that should happen
+  through the depth/kind occlusion mask.
+- Broad fallback redraws are risky. Prefer a narrow, inspectable ownership rule
+  over a large replay range that happens to fix one scene.
+
+### Known Bridge Code To Retire
+
+- Legacy screen-space sprite command replay is still used as a bridge for some
+  non-entity world effects and UI-adjacent overlays.
+- Exact front-occluder redraws are a bridge until renderer-v2 can submit a
+  single scene command queue with static geometry, entities, items,
+  projectiles, effects, and overlay depth metadata.
+- Fixed-function OpenGL world drawing is a bridge until the parity shader owns
+  material sampling, shade bands, fog, alpha, and brightness.
+- Projected frame-space mesh upload is a bridge until resident chunk geometry
+  fully replaces captured projected world meshes.
+
+### Debugging Guidance
+
+- If an entity disappears, first check ownership and slot/protocol visibility,
+  then verify the sprite command and anchor reach the OpenGL path.
+- If an entity appears on top of terrain, walls, roofs, or scenery, first check
+  the depth-kind occluder set and whether a zero-visible masked sprite is being
+  converted into a direct full-sprite fallback.
+- If a death or despawn sprite lingers, first check server visibility/removal
+  state and the client local-entity cache before adding renderer workarounds.
+- For deep renderer diagnostics, relaunch with
+  `SPOILED_MILK_OPENGL_FRAME_CAPTURE=true` and use `Ctrl+F9` burst captures
+  before changing ordering rules. Release/default clients keep this capture
+  hotkey disabled. Keep the same frame range for legacy source, depth-kind,
+  entity-occluder mask, OpenGL world, overlays, final output, sprite commands,
+  and sprite anchors.
+- Use the capture analyzer's entity visibility health, anchor match modes,
+  anchor geometry context/outliers, and live depth evaluations before changing
+  world-sprite ownership. `strict-id-bounds` anchor matches with nonzero
+  geometry deltas usually mean the anchor identifies the right full entity,
+  while the concrete command is a cropped body/animation piece. Command
+  crop/placement data still needs to be understood before replacing the
+  screen-space command bridge.
+- Treat repeated software-visible recovery failures as a sign that ownership
+  should move into explicit renderer-v2 passes.
 
 ## Shader Roadmap
 
@@ -197,10 +300,58 @@ current alpha baseline:
 - **GPU sprite world pass**
   - Promote players, NPCs, ground items, projectiles, spell effects, and other
     billboard sprites into a real OpenGL world pass.
+  - Current first slice: legacy entity scene sprite commands are drawn directly
+    by OpenGL instead of being reconstructed from software-visible pixels, and
+    projected sprite occluders are redrawn in legacy-order ranges around
+    entity groups. Ground item drop sprites are now also tagged with their
+    legacy scene sprite ids and routed through the same ordered OpenGL
+    world-sprite pass.
+  - Current command-boundary slice: OpenGL composite entity/item drawing builds
+    typed world-sprite commands that pair the exact legacy sprite command
+    crop/mirror/skew/alpha data with the renderer-v2 depth anchor, anchor match
+    mode, and legacy draw order. `Ctrl+F9` captures write
+    `world-sprite-commands.tsv` so this boundary can be audited offline.
+  - Current scene-queue slice: the OpenGL replacement composite consumes a
+    behavior-preserving scene command queue and captures it as
+    `scene-commands.tsv`. The queue currently emits typed world-sprite commands
+    only; static-world range commands are defined but not emitted until their
+    depth and ordering rules are narrow enough to avoid covering shifted combat
+    silhouettes.
+  - Static range interleave candidates are captured separately as
+    `static-range-candidates.tsv`. They are diagnostic only and must not be
+    drawn until a capture proves the exact occluder subset is narrow enough.
+    Candidate rows include total static faces plus screen-bounds overlap counts
+    by terrain, wall, roof, game-object, and wall-object kind against
+    world-sprite command bounds. The capture analyzer ranks the worst
+    `staticRangeOutliers` by overlapping sprite commands/faces so future
+    promotion can start with narrow low-risk ranges instead of broad replay.
+    A separate `front-occluder-candidates.tsv` stream captures only overlapping
+    wall, game-object, and wall-object faces from those ranges, excluding
+    terrain by default as the safer first live-promotion target. The analyzer
+    reports `expectedFromStaticOverlap` so the stream can be checked against
+    the static overlap subset before any live rendering uses it. The first
+    live experiment used exact `FRONT_OCCLUDER_RANGE` ownership before
+    camera-space sprite depth replaced it. Candidate capture remains diagnostic,
+    but the runtime replay command and flag have been retired.
+  - Next slice: replace the remaining legacy screen-space command dependency
+    with an explicit renderer-v2 scene command queue for static geometry,
+    entities, items, projectiles, spell effects, and other world overlays.
   - Preserve depth anchors, draw order, alpha, clipping, mirroring, and skewed
     sprite transforms without relying on software-visible pixel recovery.
   - Define transparent and semi-transparent sprite sorting rules before making
     this path source-of-truth.
+- **Frame capture and replay diagnostics**
+  - Use burst renderer-v2 frame dumps before changing more ordering rules.
+  - Capture legacy source, depth-color, depth-kind, entity-occluder mask,
+    OpenGL world, scene restore, overlays, debug overlay, final output, sprite
+    commands, sprite anchors, character projections, per-character body command
+    stats, and entity-restore stats for the same frame range.
+  - Capture per-command entity depth evaluations with live occluder kind,
+    dominant occluder face/model, anchor match mode, and command-vs-anchor
+    geometry deltas so sprite ownership changes can be audited offline.
+  - Treat repeated software-visible sprite recovery failures as evidence to
+    move ownership into explicit renderer-v2 passes instead of adding more
+    compatibility masks.
 - **Static world depth ownership**
   - Move terrain, walls, scenery, object models, roofs, bridges, water, and
     wall objects onto a coherent GPU depth model.
@@ -209,6 +360,11 @@ current alpha baseline:
 - **Texture and material cleanup**
   - Convert legacy texture/palette transparency into explicit material
     metadata.
+  - The initial world material contract is `OPAQUE` for flat colors and fully
+    opaque textures, `CUTOUT` for textures containing the legacy transparent
+    palette key, and `TRANSLUCENT` for future partial-alpha materials. Fully
+    transparent legacy face sentinels are `DISCARDED`; missing texture data is
+    `UNRESOLVED` and must fail strict capture analysis.
   - Preserve true black texture pixels without special black-to-1 behavior.
   - Add material categories for terrain, water, roof, wall, object, foliage,
     ore, and effect surfaces so shader work is data-driven.
@@ -326,6 +482,41 @@ renderer-v2 layer:
     This is intentionally diagnostic because un-clipped legacy triangles can
     cover unrelated screen regions until the GPU world path owns clipping and
     projection.
+- `SPOILED_MILK_OPENGL_WORLD_CHUNKS_VISIBLE=true`
+  - Draws active resident world-space chunk VBO/EBO buffers as a wireframe
+    diagnostic using the captured legacy camera matrix. This validates the
+    chunk upload/projection contract without replacing the current accepted
+    static-world composite.
+- `SPOILED_MILK_OPENGL_WORLD_CHUNKS_FILLED_VISIBLE=true`
+  - Draws the same active resident chunk buffers as filled diagnostic
+    material batches keyed by model kind, texture id, and fallback color. This
+    is the first comparison path for replacing the projected world mesh with
+    world-space chunk buffers.
+- `SPOILED_MILK_OPENGL_WORLD_CHUNKS_TEXTURED_VISIBLE=true`
+  - Draws texture-backed resident chunk material batches from the shared world
+    texture atlas using chunk VBO texture coordinates and texture-light
+    channels. Transparent-front flat batches draw with resolved fallback RGB;
+    texture-backed batches without a valid atlas region fall back to average
+    texture color when texture data exists. Texture-backed atlas batches are
+    split into opaque and transparent diagnostic passes.
+- `SPOILED_MILK_OPENGL_WORLD_CHUNKS_REPLACEMENT_COMPOSITE=true`
+  - Lets the textured resident chunk path replace the old full-frame software
+    base for in-game frames, then reuses the existing OpenGL world composite
+    overlay replay for scene/entity sprites, world overlays, and UI commands.
+    This is opt-in while the resident chunk path is still proving full
+    terrain, wall, roof, and ordering parity.
+- `SPOILED_MILK_OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS=true`
+  - Proof switch for drawing `GAME_OBJECT` and `WALL_OBJECT` scenery from
+    resident chunk buffers instead of the projected object bridge. Object
+    faces emit separate front/back material triangles and use back-face
+    culling so only the camera-facing side is visible. The projected object
+    mesh export is skipped in this mode, but the software depth frame still
+    includes walls, roofs, game objects, and wall objects so entity sprites can
+    be clipped behind world occluders. 2026-06-24 visual validation failed:
+    many scenery sub-materials rendered black or missing, including small
+    details such as tree flowers, and the mode did not improve FPS. Keep this
+    disabled until resident object material ownership is redesigned; the
+    projected object bridge remains the accepted scenery owner.
 - `SPOILED_MILK_OPENGL_WORLD_TEXTURED_VISIBLE=true`
   - Draws texture-backed renderer-v2 terrain triangles from the OpenGL world
     texture atlas using atlas-space mesh UVs. It defaults to an opaque
@@ -362,17 +553,39 @@ renderer-v2 layer:
     after-frame sprite overlay replay.
 
 When the OpenGL-primary path is active, the in-game general options panel
-exposes three player-facing renderer rows: `Resolution`, `Font`, and
-`Brightness`. The selected resolution changes the actual source framebuffer and
-visible world area; presentation into the window uses automatic aspect-fit bars.
+exposes six player-facing renderer rows: `Resolution`, `Renderer`, `Geometry`,
+`Brightness`, `Fog`, and `Font`. The selected resolution changes the actual source
+framebuffer and visible world area; presentation into the window uses automatic
+aspect-fit bars. `Renderer` currently exposes the official `Classic` visual
+profile as the saved baseline, giving later shader/remaster profiles a stable
+options home. Release/default lighting is locked to Classic. Directional and
+Toon remain runtime-only experimental modes for future remaster work, but they
+are not saved from normal client settings and are not exposed in the options
+menu. `Geometry` offers Smooth, Faceted, and Wire proof modes. Brightness applies to OpenGL world geometry only and defaults to
+`High`, which preserves the current accepted lighting. `Medium` and `Low`
+provide conservative step-downs for players who find the OpenGL world brighter
+than the legacy client. `Fog` is persisted and participates in the
+Classic/Custom preset state. It is intentionally binary after alpha testing:
+`On` uses the accepted 28-to-40-tile camera-depth fade and keeps the far endpoint
+as the scene/OpenGL projection cutoff, while `Off` removes the fog-light
+contribution entirely and extends scene culling to the full loaded 3x3 world.
+Older saved `Close`/`Far` fog values are migrated to `On`. The experimental
+`SPOILED_MILK_OPENGL_WORLD_CHUNKS_SPATIAL_CULL=true` backend is available as an
+A/B performance switch for resident chunk replacement. It subdivides world
+material batches into spatial cells so fog/draw-distance culling can skip
+terrain, wall, and object work before issuing draw calls. Keep it guarded until
+dense-area captures prove the lower triangle count outweighs the extra
+batch/draw-call pressure.
+The legacy Interface `Fog` on/off row has been retired. Its server-backed byte
+is still accepted for protocol compatibility, but it no longer alters camera
+fog generation or the rendered frame; `Graphics > Fog` is the sole
+player-facing fog control.
 The selected font cycles the OpenGL-primary body-font candidates for readability
-testing: legacy `h12b.jf`, `h11p.jf`, `h12p.jf`, `h13b.jf`, and `h14b.jf`.
-Brightness applies to OpenGL world geometry only and defaults to `High`, which
-preserves the current accepted lighting. `Medium` and `Low` provide conservative
-step-downs for players who find the OpenGL world brighter than the legacy
-client. `F8` still cycles resolution. `F6` still toggles the renderer debug
-overlay and `F7` still cycles windowed/borderless mode as alpha debug shortcuts,
-but those controls are no longer normal options-menu rows. The legacy
+testing: legacy `h12b.jf`, `h11p.jf`, `h12p.jf`, `h13b.jf`, and `h14b.jf`. `F6`
+still toggles the renderer debug overlay for development, but release/default
+clients no longer expose quick function-key toggles for window mode,
+resolution, font, scaling mode, or scale size. Those settings must be changed
+through the options menu or explicit runtime launch configuration. The legacy
 software-presenter scaling controls and integer/bilinear/bicubic labels remain
 available only outside OpenGL-primary fallback presentation.
 
@@ -622,6 +835,12 @@ they are not visual requirements for the baseline.
       vertex/index stream.
 - [x] Upload captured world geometry through an opt-in OpenGL VBO/EBO
       diagnostic pass.
+- [x] Cache OpenGL world mesh VBO/EBO uploads by deterministic mesh signature
+      so unchanged projected world frames can reuse resident GPU buffers instead
+      of calling `glBufferData` every frame.
+- [ ] Replace projected-frame upload signatures with persistent world-space
+      chunk VBOs keyed by plane/section once static terrain, wall, roof, and
+      scenery model products no longer depend on the legacy scene replay.
 - [x] Isolate OpenGL upload, framebuffer, world, and sprite passes with
       explicit state guards so experimental passes cannot leak texture, depth,
       client-array, or scissor state into presentation.
@@ -709,6 +928,33 @@ they are not visual requirements for the baseline.
 - [x] Gate renderer-v2 3D frame handoff until the initial region load completes,
       preventing the post-login loading interval from presenting partial or
       stale room-like world geometry.
+- [x] Add a runtime-gated renderer-v2 frame capture dump on `Ctrl+F9`, writing
+      layered PNGs plus world-face, sprite-command, sprite-anchor, character,
+      depth, entity restore, and per-command entity depth-evaluation metadata
+      for the exact frame range under investigation. This is disabled by
+      default for release builds and requires
+      `SPOILED_MILK_OPENGL_FRAME_CAPTURE=true`.
+- [ ] Build a replay harness for captured renderer-v2 frames so a problematic
+      entity/occlusion frame can be inspected without live combat timing.
+  - [x] Add an offline capture analyzer that validates `Ctrl+F9` capture
+        directories, summarizes world/sprite/entity tables, rejects missing
+        replay inputs, and reports likely entity-sprite occlusion pressure from
+        world-face draw order and screen overlap.
+  - [x] Add an offline entity-sprite occlusion verifier that rasterizes later
+        renderer-v2 world occluder faces into each sprite's local mask and
+        reports estimated covered pixels, coverage percent, contributing
+        occluder kinds, and captured depth-mask stats.
+  - [x] Add live depth-evaluation summaries to the capture analyzer so command-
+        level renderer decisions are visible separately from the coarse offline
+        polygon replay estimate.
+  - [x] Add per-command and grouped entity occluder attribution, including live
+        occluder kind counts plus dominant occluding face/model/order/depth, so
+        sprite hiding can be traced to exact world geometry instead of inferred
+        from broad screen overlap.
+  - [x] Add `entityVisibilityHealth` and `--fail-on-suspicious-visibility` to
+        the capture analyzer so expected wall/object/terrain occlusion and
+        out-of-frame commands do not fail the check, while unexplained projected
+        sprite loss can be caught as a regression.
 - [ ] Promote the OpenGL world-sprite batch from translucent diagnostic overlay
       to source-of-truth rendering after alpha, clipping, and replacement rules
       are stable.
@@ -717,19 +963,342 @@ they are not visual requirements for the baseline.
       with explicit transparency rules.
 - [ ] Add a side-by-side capture mode for software world output versus the GPU
       world backend.
-- [ ] Promote player, NPC, item, projectile, and effect sprites into the GPU
-      world pass only after depth anchors and alpha ordering are stable.
+- [x] Start replacing software-visible scene/entity sprite recovery with
+      first-class OpenGL entity sprite submission by drawing legacy entity
+      scene sprite commands after the static world pass.
+- [x] Add an ordered projected-static overlay after direct entity sprites,
+      redrawing only texture-correct static-world triangles whose legacy draw
+      order falls between entity groups.
+- [ ] Promote direct OpenGL entity sprite submission from screen-space legacy
+      command replay to world-anchored sprite commands carrying depth anchor,
+      legacy draw order, sprite frame, alpha, clipping, mirroring, and skew
+      metadata directly.
+- [x] Start that migration by introducing typed OpenGL world-sprite commands
+      that bind each entity/item sprite command to its renderer-v2 anchor,
+      anchor-match diagnosis, legacy draw order, source crop, mirror, and skew
+      state, and by capturing those commands in `world-sprite-commands.tsv`.
+- [x] Add the first live camera-space world-sprite depth path. It back-projects
+      each existing command rectangle at the legacy sprite face's interpolated
+      top/bottom camera depth, preserving exact screen framing and skew while
+      testing against the authoritative world depth buffer. Sprite depth writes
+      remain disabled so multipart character layers preserve legacy order.
+- [x] Add normalized `depthOwned` capture metadata and strict analysis requiring
+      every anchored entity and ground-item command to use GPU depth ownership.
+      The software depth mask remains diagnostic-only during this validation
+      step; direct unmasked sprite pixels feed the GPU path.
+- [ ] Validate camera-space entity and ground-item sprites during combat,
+      movement, wall crossings, terrain slopes, and crowded overlap. Keep exact
+      front-occluder replay available as a kill-switch fallback until a strict
+      capture and visual test pass with replay disabled.
+- [x] Switch exact front-occluder replay to default-off for the GPU-depth
+      validation cycle. The environment/property kill switch remains available
+      temporarily, but the normal path now relies exclusively on camera-space
+      sprite-versus-world depth.
+- [x] Retire `FRONT_OCCLUDER_RANGE`, its mesh redraw filters, and its runtime
+      flag after replay-disabled visual validation showed correct behavior. The
+      captured frame had 60 of 60 world commands depth-owned, zero live replay
+      ranges, and `suspicious:0`; candidate capture remains diagnostic only.
+- [x] Remove per-pixel software depth-mask generation from normal GPU-depth
+      sprite rendering. The legacy mask now runs only during Ctrl+F9 capture
+      preserving attribution diagnostics without paying its CPU and
+      direct-buffer allocation cost on every world-sprite command every frame.
+- [x] Remove the temporary sprite-depth rollback flag and screen-space/software
+      mask fallback after a corrected strict capture showed 190 of 190 world
+      commands depth-owned, zero replay ranges, complete static ownership, and
+      `suspicious:0`. Anchored camera-space GPU depth is now the sole world
+      entity and ground-item rendering contract.
+- [x] Retire the persistent transformed-sprite cache and atlas run batching
+      branch after it selected incorrect sprite pixels in combat/body-layer
+      cases. The stable world-sprite contract is exact command-sized source
+      sampling through depth-owned camera-space VBO quads; any future batching
+      must be reintroduced as a new path with sprite-frame parity tests.
+- [x] Composite same-anchor character clothing/body layers into one
+      command-sized transparent texture before GPU depth submission. This keeps
+      legacy pants/armor/head layer overwrite behavior intact while still
+      drawing the character as one depth-owned OpenGL sprite.
+- [x] Remove the second mirror operation from command-sized world-sprite
+      textures. The captured command source already folds mirroring into
+      `sourceStartX16` and negative `sourceScaleX16`, so OpenGL UV mirroring
+      would reverse combat and walking frames twice.
+- [x] Add a wall-only depth priority in both projected mesh and resident chunk
+      world paths so wall faces win near-tie depth tests against scenery that
+      should be hidden behind them, without changing terrain/object/sprite
+      depth behavior.
+- [ ] Reintroduce persistent sprite texture caching only after command-sized
+      parity tests cover mirror, skew, crop, combat frames, and layered player
+      equipment composition.
+- [ ] Collapse camera-space sprite projection/depth/blend setup to one pass and
+      coalesce consecutive commands sharing an atlas texture into one ordered
+      quad run. This must preserve exact legacy command order and the accepted
+      command-sized character composite behavior.
+- [x] Replace the stable command-sized camera-space world-sprite quad helpers
+      with a reusable streamed VBO and static triangle index buffer. This
+      removes immediate-mode submission from the default entity/ground-item
+      depth path while keeping the disabled atlas-run experiment isolated.
+- [x] Capture `world-sprite-batch-stats.tsv` after rendering and require strict
+      command coverage, so captures report the concrete command-to-texture-batch
+      reduction.
+- [ ] Replace the remaining immediate-mode atlas runs with a reusable VBO while
+      preserving legacy sprite-layer order.
+- [ ] Replace the ordered static-overlay bridge with a renderer-v2 scene command
+      queue that interleaves static geometry and sprites by explicit draw/depth
+      rules instead of relying on post-sprite occluder replay.
+- [x] Start the scene-command queue as a behavior-preserving OpenGL composite
+      boundary that emits typed world-sprite commands and exact owned
+      front-occluder commands. The old dormant broad static-world range command
+      type has been removed so the next static migration must be explicit
+      face-owned geometry.
+- [x] Add capture-only static-world range candidates derived from sorted
+      world-sprite legacy draw orders so the next interleave slice can be
+      planned without changing current rendering.
+- [x] Add capture-only static-range occluder attribution by model kind and
+      world-sprite bounds overlap, so risky ranges can be identified before
+      any static range is promoted into the live scene command queue.
+- [x] Rank static range candidates in the capture analyzer by overlap risk,
+      exposing the exact draw-order spans and terrain/wall/game-object mix
+      that would be dangerous to promote wholesale.
+- [x] Add capture-only front-occluder candidates for overlapping wall,
+      game-object, and wall-object faces, excluding terrain so the first live
+      interleave experiment can avoid broad ground replay.
+- [x] Add analyzer coverage checks for front-occluder candidates versus the
+      wall/game-object/wall-object subset of static range overlaps.
+- [x] Add an opt-in front-occluder scene command and mesh filter so wall,
+      game-object, and wall-object range replay can be tested without changing
+      default rendering.
+- [x] Promote front-occluder range replay to default-on for the replacement
+      composite after visual testing and strict captures showed correct
+      ordering with `suspicious:0`. This bridge was later retired after
+      camera-space sprite depth validation.
+- [x] Convert front-occluder replay from broad front-kind range filtering to
+      exact model/face ownership carried by each `FRONT_OCCLUDER_RANGE` scene
+      command and captured as `frontOccluderFaces`.
+- [x] Add capture-only face-owned base-world commands grouped by model kind,
+      with normalized ownership in `static-world-face-ownership.tsv`. Strict
+      analysis now requires one-to-one coverage of every captured world face,
+      no duplicate or orphan ownership, and ownership of every promoted front
+      occluder. The first live capture covered 20,727 of 20,727 world faces
+      across terrain, walls, game objects, and wall objects.
+- [x] Route the visible projected base-world pass through an explicit owned
+      mesh draw boundary. Exact ownership remains in the mesh's per-triangle
+      model-kind/model-index/face-id arrays instead of allocating a large face
+      hash set every frame; the capture invariant proves that this metadata
+      covers the complete draw.
+- [x] Add capture-only triangle-level world material classification in
+      `static-world-material-triangles.tsv`. Strict analysis requires every
+      owned mesh triangle to appear exactly once, rejects missing, duplicate,
+      out-of-range, and unresolved triangles, and verifies that cutout versus
+      opaque assignments agree with decoded texture alpha metadata.
+- [x] Validate the first live material capture: all 26,791 owned mesh
+      triangles were classified exactly once as 24,099 opaque, 2,224 cutout,
+      and 468 intentionally discarded, with zero unresolved or translucent
+      triangles and `suspicious:0` entity visibility.
+- [x] Promote material classification into live depth passes: opaque first
+      with depth writes, cutout second with alpha test and depth writes, then
+      future translucent surfaces back-to-front with depth testing but no
+      depth writes. Legacy order remains deterministic inside each pass.
+- [ ] Validate the live opaque/cutout depth passes across walls, bridges,
+      foliage, ore rocks, roof edges, and intersecting scenery before removing
+      the legacy-ordered fallback.
+- [x] Validate a post-promotion live capture with 19,797 material-owned
+      triangles, zero unresolved classifications, and `suspicious:0`; visual
+      inspection also found no regression in the tested scene.
+- [x] Replace projected screen-space mesh positions with captured camera-space
+      vertices and the legacy-compatible perspective matrix already used by
+      resident world chunks. This gives OpenGL perspective-correct depth and
+      texture interpolation while retaining legacy near-plane-clipped
+      geometry.
+- [x] Validate camera-space framing, near-plane transitions, sloped terrain,
+      long walls, and texture alignment visually and with a strict capture.
+      The validation frame covered 16,568 material-owned triangles with zero
+      unresolved classifications and `suspicious:0` entity visibility.
+- [x] Remove the projected-position upload branch and temporary camera-space
+      kill switch after visual and strict-capture validation. Camera-space
+      vertices are now the sole base-world mesh coordinate contract.
+- [x] Remove the temporary legacy-ordered base-world fallback and material-pass
+      kill switch after the same validation. Opaque/cutout depth passes are now
+      the sole base-world submission contract; exact legacy-ordered front
+      occluder replay remains isolated as a sprite compatibility bridge.
+- [ ] Split renderer-v2 sprite submission into explicit passes:
+      static world, entity sprites, front-wall/roof occlusion, effects/hit
+      splats/nameplates, then UI.
 
 ### Phase 4B: Shader-Backed Visual Fidelity
 
-- [ ] Add a GLSL parity shader for static world geometry that reproduces the
+- [x] Add OpenGL shader/program lifecycle plumbing for the projected world
+      shader, with explicit shader creation, compile/link diagnostics, and
+      cleanup in place for controlled migration.
+- [x] Add the projected textured-world shader path behind
+      `SPOILED_MILK_OPENGL_WORLD_TEXTURED_SHADER`. It originally shipped as an
+      opt-in diagnostic, then graduated to default-on after capture validation;
+      setting the flag false keeps the fixed-function fallback available.
+- [x] Stamp frame captures with active renderer mode metadata, including
+      textured shader opt-in state, textured alpha, static texture sampling,
+      world replacement ownership, and resident chunk replacement settings.
+      This keeps fixed-function versus shader comparisons auditable without
+      relying on startup logs.
+- [x] Move the opt-in textured world shader off compatibility color/UV built-ins
+      and onto explicit position, atlas UV, and texture-light attributes. The
+      fixed-function color and texcoord arrays remain the default fallback when
+      the shader diagnostic is disabled.
+- [x] Route projected flat-color static world batches through the same shader
+      path with `uTextureEnabled=0`, using explicit position, UV, and
+      material-color attributes while retaining the fixed-function color-array
+      fallback when the shader path is disabled.
+- [x] Promote the projected world shader path to default-on for visible
+      projected world batches, with `SPOILED_MILK_OPENGL_WORLD_TEXTURED_SHADER=false`
+      as the temporary fixed-function fallback.
+- [x] Replace the projected world shader's `gl_ModelViewProjectionMatrix`
+      dependency with an explicit `uProjectionMatrix` uniform populated from
+      renderer-v2's camera-to-clip matrix. Compatibility projection state
+      remains only for the fixed-function fallback and camera-space sprites.
+- [x] Split the projected shader's overloaded texture-light color input into
+      explicit legacy texture-light and material-color attributes.
+      The first attempt aliased new attributes onto the compatibility-packed
+      VBO and produced black flat-color base terrain while texture overlays
+      remained valid. A second attempt on the shader-native VBO produced white
+      resource-color terrain and scenery while sampled foliage remained valid;
+      the root cause was a native-upload mismatch for flat materials that use
+      the generated flat-color atlas region. The corrected native upload now
+      matches the compatibility VBO with zero position, UV, or color parity
+      mismatches, and the split-attribute shader was visually accepted in the
+      2026-06-22 Ctrl+F9 capture with native VBO mode active.
+- [x] Preserve the exact clamped `0..255` legacy light value per projected mesh
+      vertex alongside the existing pre-shaded parity colors. This is source
+      data only; the accepted shader and fixed-function paths remain unchanged
+      until the shader-native vertex layout consumes it.
+- [x] Remove the projected mesh's tight nominal-viewport triangle rejection
+      after a strict capture found a left-edge wall captured by the scene but
+      omitted from base-world ownership. The scene culler still bounds the
+      candidate set, the oversized-geometry guard remains, and OpenGL now owns
+      final viewport clipping.
+- [x] Add a shader-native projected-mesh VBO with explicit position,
+      atlas UV, material RGBA/alpha, raw legacy light, and raw material RGB.
+      Shader draws now consume this compact native VBO directly. The coarse
+      `SPOILED_MILK_OPENGL_WORLD_TEXTURED_SHADER=false` fallback still disables
+      the shader path as a whole when fixed-function comparison is needed. The
+      13-float compact layout was visually accepted in the 2026-06-22 Ctrl+F9
+      capture with strict analyzer and live-layout parity checks clean.
+- [x] Add `shader-vertex-parity.txt` to `Ctrl+F9` captures, comparing position,
+      atlas UV, and live material RGBA/alpha between compatibility and
+      shader-native CPU upload layouts. The removed CPU texture-light field is
+      no longer part of shader-native parity because lighting now derives from
+      raw legacy light in GLSL.
+- [x] Add a GLSL parity shader for static world geometry that reproduces the
       current accepted OpenGL look before adding new effects.
-- [ ] Move flat resource-color lighting into the shader using the legacy
-      256-step shade ramp and captured per-render-vertex light/fog values.
-- [ ] Move texture-backed lighting into the shader using the legacy four-band
-      texture shade curve or a prebuilt equivalent atlas/LUT.
-- [ ] Move fog application into shader code with the same captured fog values
-      used by the current renderer-v2 mesh.
+- [x] Move flat resource-color lighting into the shader using the legacy
+      256-step shade ramp and captured per-render-vertex light values. The
+      shader-native VBO now carries raw material RGB and raw legacy light next
+      to the pre-shaded parity color; the 2026-06-22 Ctrl+F9 capture accepted
+      this path visually with strict analyzer and vertex parity checks clean.
+- [x] Move texture-backed lighting into the shader using the legacy four-band
+      texture shade curve. The shader now derives the accepted texture light
+      factor from raw legacy light and brightness; the 2026-06-22 capture
+      accepted the shader path visually and analytically.
+- [x] Move the accepted legacy light/fog attenuation into shader code. The
+      captured `renderLight` value already includes the legacy distance/fog
+      addition from `Scene.m_r`; both flat and texture-backed shader lighting now
+      consume that value directly.
+- [x] Split material lighting and distance/fog into separate shader inputs so
+      visual controls can tune fog distance independently from the accepted
+      Classic lighting baseline. Classic should remain the default profile that
+      mostly matches legacy shadows and shade bands, but fog and brightness are
+      still normal player-facing controls rather than forbidden Classic edits.
+- [x] Add the first player-facing fog setting and wire it into the
+      preset state model. The row is persisted, supports runtime override
+      plumbing, restores to Classic through the Classic preset row, marks the
+      active preset Custom when manually changed, and drives the projected
+      scene range and OpenGL fog-light contribution through binary On/Off.
+- [x] Add first-pass remaster test controls for `Lighting` and `Geometry`.
+      `Geometry` remains player-facing with Smooth, Faceted, and Wire. Lighting
+      proofs for Directional and Toon remain in code for runtime experiments,
+      but release/default clients force saved lighting back to Classic and hide
+      the lighting row because Classic currently has the best visual clarity.
+      Deeper dynamic lights, object light sources, and shadow ownership remain
+      future shader/material work.
+- [ ] Add a staged remaster shadow system for directional lighting.
+  - [x] Start with projected terrain shadows rather than full dynamic shadow
+        maps. Directional/Toon lighting should project simple flattened dark
+        geometry from walls and scenery onto terrain using the active sun/light
+        direction. This is the quickest way to give directional lighting a
+        readable direction cue while preserving the current renderer-v2
+        ownership model. The first proof now draws cached, blended,
+        terrain-only shadow overlays after terrain and before later world
+        layers. It is currently wall-only, merges duplicate per-triangle wall
+        casters into one strongest footprint per wall segment, skips diagonal
+        wall footprints because they produce misleading triangular artifacts in
+        the overlay proof, generates one flat constant-tone shadow quad per
+        caster, and stores the resulting overlay geometry in resident chunk
+        buffers so the proof does not recompute/upload every frame. Terrain
+        height sampling and segmented fades were intentionally removed after
+        visual testing produced swirled, boxy, layered shadows; this proof is a
+        hard-shadow baseline for validating direction, ownership, and cost
+        before adding any softness back. Use
+        `SPOILED_MILK_OPENGL_WORLD_CHUNK_SHADOW_PROOF=true` to opt into this
+        overlay proof for testing. It now defaults off because visual testing
+        showed the proof could pull dense-area FPS from roughly the mid-50s to
+        roughly 40 before the caster-owned rewrite.
+  - [x] Park the triangle-derived overlay shadow proof for release. Visual
+        testing confirmed the first receiver-triangle pass made shadows
+        faceted, the terrain-sampled segmented pass produced swirled/boxy
+        layered shadows, and the simplified flat merged caster pass removed the
+        squiggles but read as rectangular hovering shadows cast from building
+        tops. The proof is useful as a cost/ownership experiment, not as a
+        release-quality visual feature.
+  - [x] Make terrain the only receiver for the first pass. Do not cast shadows
+        onto scenery, walls, sprites, or other dynamic objects until terrain
+        projection is visually accepted; clipping through objects is acceptable
+        during the proof stage. The current proof uses depth-tested blended
+        geometry with depth writes disabled, so it reads as a terrain overlay
+        without taking over wall/scenery/sprite ordering.
+  - [ ] Restart shadows from semantic shadow casters when this becomes a
+        priority again. Build caster metadata during wall/scenery/world
+        generation instead of deriving shadows from finished triangles:
+        base edge/tile, height, width/radius, outdoor-only state, opacity, and
+        optional explicit overrides. Render those casters into a terrain decal
+        or shadow mask so shadows attach to source bases and can be softened
+        without stacking transparent geometry.
+  - [ ] Refine diagonal-wall shadow quality. The current overlay proof skips
+        diagonal wall casters to avoid false triangular artifacts. Proper
+        diagonal-wall shadows need a shader/material mask or explicit wall
+        shadow metadata instead of more overlay subdivision.
+  - [ ] Add shadow-source metadata or heuristics for walls and scenery:
+        `castsShadow`, `shadowHeight`, `shadowRadius`/width, `shadowOpacity`,
+        and `outdoorOnly`. Begin with conservative heuristics for tall scenery,
+        trees, fences, signs, windmill blades, and walls, then add explicit
+        overrides for bad cases.
+  - [ ] Add an outdoor/indoor filter before enabling broad scenery shadows.
+        The first pass can be conservative, such as suppressing shadows when a
+        roof tile is above/near the source or when the object is on an indoor
+        plane; refine this later with explicit area/material classification.
+  - [ ] Treat full shadow maps, per-pixel dynamic shadows, object-to-object
+        shadow receiving, and point-light shadows as later remaster work after
+        material/light ownership is cleaner.
+- [ ] Add an optional terrain tile edge-blending mode for remaster visuals.
+  - Goal: reduce hard seams where adjacent ground tiles use very different
+        terrain colors or textures, such as green grass immediately beside
+        brown dirt, without requiring map authors to hand-place several
+        intermediate shade tiles.
+  - The Classic default should preserve original tile boundaries. A remaster
+        terrain polish option can blend edge pixels or shader samples between
+        neighboring tile materials so abrupt transitions appear softened while
+        keeping the original map data unchanged.
+  - First implementation target: terrain-only color/material blending across
+        shared tile edges in the resident chunk path. Keep walls, roofs,
+        objects, sprites, and minimap output unchanged during the proof stage.
+  - Useful controls/names to evaluate later: `Terrain Blend: Off / Soft` or as
+        part of a broader `Terrain Detail`/`Material Smoothing` option.
+  - Watch for failure cases: paths and floors that intentionally need crisp
+        edges, water/shore boundaries, bridge overlays, object footprint tiles,
+        and any texture atlas sampling that bleeds the wrong material across a
+        triangle edge.
+- [ ] Add renderer visual presets as setting bundles, not separate hard-coded
+      engines. Initial player-facing presets should be `Classic`, `Remaster`,
+      and `Custom`: Classic selects the accepted OpenGL Classic renderer/shader,
+      legacy-like brightness, and conservative fog; Remaster selects the newer
+      shader/material/fog defaults once validated; changing any bundled setting
+      such as renderer type, shader style, brightness, fog strength, draw
+      distance, or geometric/triangle visualization switches the active preset
+      to Custom while preserving the edited values.
 - [ ] Replace fixed-function OpenGL color arrays with explicit shader
       attributes for position, UV, material id, model kind, alpha mode, and
       legacy light/fog.
@@ -743,15 +1312,259 @@ they are not visual requirements for the baseline.
       mines, forests, water, interiors, roofs, underground areas, and crowded
       entity scenes.
 
-### Phase 5: Camera and World-Load Stability
+### Phase 5: Chunked World Streaming Backend
 
-- [ ] Audit camera smoothing and coordinate rounding.
+- [ ] Treat world loading as an explicit chunk lifecycle:
+      requested, sector decoded, CPU chunk built, GPU uploaded, presentable,
+      active, and stale.
+- [ ] Keep legacy protocol/local-coordinate behavior stable while moving visual
+      terrain, scenery, walls, roofs, and static collision readiness toward
+      world-space chunks keyed by plane and section coordinates.
+- [ ] Add chunk-state telemetry for preload requests, sector cache hits,
+      sector decodes, active-window rebuilds, and slow section transitions.
+- [ ] Separate raw sector decoding from active scene/model generation so
+      movement can warm the next terrain window before a server region update
+      forces a visible shift.
+- [ ] Build a `WorldStreamManager` that owns terrain/scenery readiness and can
+      later queue deferred scenery, wall objects, and GPU uploads when their
+      supporting terrain chunk becomes presentable.
+- [ ] Rework deferred scenery into chunk-readiness materialization instead of a
+      one-off "do not draw until terrain exists" guard.
+- [ ] Align client terrain preload radius with object, ground-item, player, and
+      NPC visibility ranges so entities do not visibly arrive before the world
+      they occupy is ready.
+- [ ] Move static OpenGL terrain/scenery toward persistent GPU chunks uploaded
+      once per chunk and drawn as resident world-space geometry instead of
+      streaming the captured legacy mesh every frame.
+- [ ] Add predictive preloading from the local walk queue/camera direction so
+      likely next chunks are decoded before the player reaches a section edge.
+  - [x] Start predictive terrain preload from client walk intent, ground-item
+        walks, blink targets, and incoming custom movement positions.
+  - [x] Extend prediction to active local-player waypoint/camera direction so
+        long continuous movement can keep warming the next window even after
+        the initial click.
+  - [ ] Promote decoded sectors into persistent CPU terrain chunks so active
+        window shifts can reuse built geometry instead of rebuilding from raw
+        sector data.
+    - [x] Start with a bounded CPU section-window cache warmed by prediction so
+          likely 3x3 active windows are assembled and bridge-normalized before
+          they become visible.
+    - [ ] Split terrain, wall, roof, collision, and minimap products out of
+          `generateLandscapeModel` so cached CPU chunks can hold reusable model
+          inputs instead of only reusable sector windows.
+      - [x] Isolate terrain and roof publication, wall product generation, and
+            roof elevation preparation behind named methods without changing
+            the live model output.
+      - [x] Move terrain face emission and roof face emission out of the
+            monolithic landscape generator.
+      - [ ] Convert the named product boundaries into cacheable model-input
+            records once the extracted phases are stable.
+        - [x] Start terrain model-input records for vertices, tile faces, and
+              overlay faces, replayed into the legacy `RSModel` path.
+        - [x] Add cache storage keyed by CPU section-window key and plane for
+              terrain model-input records.
+        - [x] Refactor terrain input builders to read from supplied sector
+              windows instead of the mutable active `sectors` array so
+              prediction can build terrain inputs before the player arrives.
+        - [x] Add cached wall model-input records for wall segments, minimap
+              strokes, and collision side effects.
+        - [x] Isolate roof elevation mutation behind a roof elevation workspace
+              so the roof path can stop mutating global elevation state
+              directly.
+        - [x] Add roof model-input records for roof faces, replayed into the
+              legacy `RSModel` path.
+        - [x] Make roof model-input records cacheable by deriving the initial
+              roof elevation workspace from CPU section-window data instead of
+              the live `tileElevationCache`.
+        - [x] Convert wall model-input records from replaying through
+              `insertWallIntoModel` to storing final wall vertices, so wall
+              products no longer depend on the live `tileElevationCache`.
+        - [x] Add telemetry for terrain, wall, and roof model-input builds and
+              cache hits so movement testing can show whether prediction is
+              reducing active-window rebuild work.
+        - [x] Group terrain, wall, and roof model inputs into bounded
+              `WorldModelProduct` records so chunk presentation has a
+              persistent CPU-side `PRESENTABLE` boundary before GPU upload.
+        - [x] Build CPU-side active-window-local GPU mesh products from each
+              `WorldModelProduct`, including expanded triangle vertices,
+              indices, material ids, model-kind classifications, stable upload
+              signatures keyed by plane/section window, and retained world
+              origin metadata for the later true resident chunk transform.
+        - [x] Key `WorldModelProduct` caches by roof-geometry inclusion so the
+              saved roofs-off option can skip roof triangles and legacy roof
+              model publication instead of only filtering roof batches at draw
+              time. Hidden-roof products still copy the roof elevation result
+              into the live elevation cache and publish a valid empty roof grid,
+              preserving camera/toggle behavior while avoiding roof geometry
+              export.
+        - [x] Publish active resident chunk mesh snapshots on
+              `Renderer3DFrame` so the OpenGL presenter can observe chunk
+              counts and upload signatures without parsing projected
+              frame-space meshes.
+        - [x] Upload active resident chunk snapshots into a bounded
+              resident OpenGL VBO/EBO cache keyed by plane, section window,
+              and mesh signature. The current replacement path keeps draw
+              vertices in active-window local coordinates to match the legacy
+              camera while retaining origin metadata for a future
+              camera-relative multi-section transform.
+        - [x] Add an opt-in resident chunk wireframe diagnostic
+              (`SPOILED_MILK_OPENGL_WORLD_CHUNKS_VISIBLE`) that draws active
+              resident chunk buffers with the captured legacy camera matrix
+              and per-triangle model-kind diagnostic colors. This proves the
+              chunk camera/projection contract without changing the default
+              OpenGL world composite.
+        - [x] Add an opt-in filled resident chunk diagnostic
+              (`SPOILED_MILK_OPENGL_WORLD_CHUNKS_FILLED_VISIBLE`) that draws
+              resident chunk buffers through material-sorted index buffers
+              keyed by model kind, texture id, and fallback color. This gives
+              the future shader path explicit draw buckets before
+              texture/material replacement is enabled.
+        - [x] Extend CPU-side world-space chunk mesh products with immutable
+              per-vertex texture coordinates and raw legacy light values, then
+              upload those channels into the resident chunk VBO layout. The
+              diagnostic path still draws kind colors, but the GPU chunk
+              backend now has the data needed for real atlas sampling and
+              shader-based lighting.
+        - [x] Move OpenGL world texture atlas ownership to the presenter and
+              share it between the projected mesh renderer and resident chunk
+              renderer, including a chunk-frame texture warmup hook for the
+              filled diagnostic path. This prevents the chunk backend from
+              growing a duplicate atlas/cache when textured chunk drawing is
+              enabled.
+        - [x] Add an opt-in textured resident chunk diagnostic
+              (`SPOILED_MILK_OPENGL_WORLD_CHUNKS_TEXTURED_VISIBLE`) that binds
+              shared-atlas texture regions for texture-backed material batches
+              and draws them from chunk VBO texture-coordinate/light channels.
+              Transparent-front flat batches draw with resolved synthetic
+              fallback RGB instead of being skipped.
+        - [x] Add average-color fallback for textured resident chunk batches
+              that cannot bind an atlas region, using the primary texture data
+              first and then any fallback material texture average available
+              from the chunk batch.
+        - [x] Resolve positive resident chunk fallback resources through the
+              captured texture catalog before treating fallbacks as literal RGB,
+              preventing legacy terrain/resource ids from rendering as black
+              when chunks own the world base.
+        - [x] Split textured resident chunk diagnostics into opaque and
+              transparent atlas-backed passes, drawing opaque/fallback
+              material batches first and transparent texture batches second
+              while keeping unique chunk draw telemetry stable.
+        - [x] Draw resident chunk diagnostics by global model-kind layers
+              instead of per-chunk material completion, so terrain is submitted
+              across all active chunks before walls, roofs, wall objects, game
+              objects, and unclassified geometry.
+        - [x] Keep depth writes enabled for resident cutout textures. Legacy
+              world texture alpha is binary and alpha-tested, so transparent
+              texels do not stamp depth while opaque fence/scenery texels must
+              occlude later entity sprites.
+        - [x] Report resident chunk fallback and skipped-material triangle
+              counts in renderer telemetry so missing atlas regions can be
+              separated from intentionally flat fallback materials while
+              proving the resident chunk replacement path.
+        - [x] Add an opt-in resident chunk replacement composite gate
+              (`SPOILED_MILK_OPENGL_WORLD_CHUNKS_REPLACEMENT_COMPOSITE`) that
+              skips the old software base only when textured chunks are active
+              and the frame has resident chunk geometry, while reusing the
+              accepted overlay/sprite replay path.
+        - [x] Suppress visible projected-mesh drawing while the resident chunk
+              replacement composite owns the world base, preventing a hybrid
+              projected/chunk static world when both diagnostic paths are
+              enabled for comparison.
+        - [x] Keep resident chunk draw vertices in active-window local
+              coordinates while storing section world-origin metadata, so the
+              replacement composite matches the captured legacy camera instead
+              of projecting active chunks outside the scene.
+        - [x] Restore scenery objects in resident chunk replacement by drawing
+              a filtered projected `GAME_OBJECT`/`WALL_OBJECT` pass after
+              resident terrain, walls, and roofs. This keeps duplicate
+              projected terrain out of the chunk path while the longer-term
+              resident object buffer is built.
+        - [x] Make the temporary projected scenery bridge depth-aware by
+              drawing projected terrain/wall/roof occluders into depth only
+              before the object color pass. The bridge still preserves legacy
+              object draw order, but scenery no longer blindly paints over
+              resident walls while resident object buffers are pending.
+        - [x] Honor the saved roof-visibility option in the resident chunk
+              replacement path by filtering `ROOF` batches at draw time, by
+              removing hidden roofs from the projected scenery bridge's
+              depth-only occluder pass, and by building a no-roof
+              `WorldModelProduct` variant when roofs are hidden.
+        - [x] Restore the first-pass resident chunk lighting baseline by
+              applying wall endpoint terrain light mutations before GPU chunk
+              upload, drawing flat fallback materials from per-vertex shaded
+              material colors, and smoothing terrain diffuse light across
+              shared terrain vertex coordinates in the chunk VBO path. This
+              replaces the solid-color terrain/floor output without waiting
+              for the longer-term shader pipeline.
+        - [x] Establish `Classic` as the resident chunk visual target: legacy
+              fallback resource materials such as wood floors are promoted to
+              real atlas-sampled textures instead of average-color fills, so
+              the OpenGL replacement preserves original material detail before
+              alternate lighting modes are introduced.
+        - [x] Promote materialized game-object and wall-object models into
+              resident object buffers for diagnostics and future remaster work.
+              The first visible-owner test exposed a classic material rule:
+              scenery faces choose `faceTextureFront` or `faceTextureBack`
+              from the camera-facing orientation, while the resident object
+              slice used a single texture side. That made one-sided details
+              such as ladders, counter tops, sign interiors, and windmill
+              blades partially disappear. Until resident object drawing has a
+              proper two-sided/front-back material path, the projected scenery
+              bridge remains authoritative for visible `GAME_OBJECT` and
+              `WALL_OBJECT` rendering.
+        - [x] Add an opt-in resident two-sided/front-back material proof path
+              for visible game-object and wall-object chunks behind
+              `SPOILED_MILK_OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS=true`.
+              Object faces now emit separate front/back material triangles
+              with reversed winding for the back side, and resident object
+              draw batches use OpenGL back-face culling so duplicate sides do
+              not fight at the same depth. The same proof now omits the
+              unused projected object mesh export while retaining object/wall
+              depth export for entity sprite clipping. 2026-06-24
+              short-window FPS telemetry showed resident terrain/wall chunk
+              draw staying stable while frame-rate swings followed the
+              projected scenery bridge: legacy scene draw, cull, depth export,
+              object mesh export, and projected object upload/draw moved with
+              camera panning. Follow-up visual validation failed: many object
+              sub-materials rendered black or disappeared, and FPS stayed
+              around the same level. Keep resident object ownership disabled
+              and leave the projected scenery bridge authoritative until
+              material-side selection, texture fallback, and tiny transparent
+              detail handling are redesigned from first principles.
+        - [x] Split resident chunk draw telemetry into terrain, wall, roof,
+              game-object, wall-object, and other triangle buckets so object
+              residency can be verified independently from static world
+              geometry during draw-distance and ordering tests.
+        - [ ] Expand textured chunk drawing into a full replacement path for
+              terrain, walls, roofs, stronger missing-asset diagnostics, and
+              full legacy ordering instead of the projected frame-space mesh
+              diagnostic. Scenery remains on the projected object bridge until
+              resident object chunks can select front/back face materials from
+              camera orientation without dropping one-sided classic details.
+        - [ ] Replace the fixed-function resident chunk lighting approximation
+              with an explicit shader/material pipeline that separates base
+              material color, texture sampling, slope diffuse, object/wall
+              shadow terms, global brightness, and future HD-remaster polish
+              controls.
+        - [ ] Add selectable visual modes once Classic parity is stable:
+              `Classic` for legacy resource textures/shade bands, then
+              experimental/remaster modes for alternate shadow softness,
+              stronger geometric lighting, richer material response, and
+              optional stylized lighting.
+- [ ] Audit camera smoothing and coordinate rounding after chunk presentation
+      no longer depends on recentering the whole visible world.
 - [ ] Ensure camera updates produce stable projected positions frame to frame.
-- [ ] Separate world section preload and render presentation timing.
-- [ ] Detect and log frame stalls during section transitions.
-- [ ] Avoid render-thread blocking on asset or sector loads where possible.
+- [ ] Avoid render-thread blocking on asset, sector, or GPU chunk uploads where
+      possible.
 - [ ] Verify that increased draw distance does not reintroduce flicker through
       unstable ordering or late-loaded assets.
+- [ ] Revisit spatial resident plane subdivision only if a future draw-distance
+      setting needs it. The accepted binary fog setting keeps the simpler
+      far-distance path because Close-style spatial culling reduced triangles
+      but underperformed due to extra batches and draw calls.
+- [x] Spatially subdivide resident game/wall objects into independently cached
+      24x24-tile cells. Animated scenery now invalidates and uploads only its
+      local cells instead of rebuilding the full loaded object world.
 
 ### Phase 6: Scaler Rebuild
 
@@ -767,8 +1580,95 @@ they are not visual requirements for the baseline.
 
 ### Phase 7: Performance and Tooling
 
+- [ ] Establish 60 FPS as the renderer-v2 performance target for normal play
+      on the alpha desktop baseline, with 1280x720, Classic visuals, normal
+      draw distance, common scenery density, and world/UI overlays enabled.
+  - [x] Give OpenGL-primary presentation a client-owned 60 FPS loop target
+        instead of inheriting the legacy server-provided 50 FPS client value.
+        Server simulation and older-client configuration remain unchanged.
+- [ ] Add a repeatable FPS benchmark route that logs frame time, upload time,
+      render time, chunk uploads/reuse, resident object counts, sprite replay
+      counts, allocation rate, and active draw-distance/resolution/profile.
+- [ ] Profile the current 25 FPS OpenGL-primary scene before adding more visual
+      features, then classify cost by CPU scene build, resident object export,
+      chunk upload/reuse, sprite/UI replay, texture atlas uploads, and GPU draw.
+  - [x] Add compact F6 phase telemetry for OpenGL render phases and legacy
+        `Scene.endScene` phases. Current alpha measurements show CPU scene work
+        around 19-21ms. After flat-material batching and chunk texture-scan
+        caching, OpenGL render work dropped from roughly 11-13ms to roughly 2ms
+        in the tested scene.
+  - [x] Confirm the current OpenGL projected mesh pass is not draw-call bound:
+        roughly 13k projected triangles are now submitted through 1 batch and 1
+        draw call in the tested scene.
+  - [x] Keep the legacy world-raster skip opt-in only
+        (`SPOILED_MILK_SKIP_LEGACY_WORLD_RASTER=true`). A narrowed version that
+        preserves picking but skips final software pixel raster improved scene
+        time slightly, but still broke sprite/scenery ordering and NPC
+        interaction visibility. The next CPU optimization must first separate
+        sprite/order ownership from software raster side effects.
+  - [x] In resident chunk replacement mode, stop capturing static projected
+        faces and skip the unused software depth-frame and projected-mesh
+        exports while retaining legacy rotation, sorting, sprite anchors, and
+        picking as the first low-risk fast-path stage.
+  - [x] In resident object chunk mode, skip the now-unused projected object
+        mesh export while keeping the object/wall depth frame for entity sprite
+        clipping. Add per-row sprite-clip spans to the depth rasterizer so it
+        walks only screen columns that can affect entity sprites before doing
+        triangle edge/depth math.
+  - [x] Preserve resident-mode static picking while rejecting projected faces
+        whose coarse screen bounds cannot contain the mouse before legacy
+        clipping, lighting, and scan conversion. Sprite sorting and anchors
+        remain on the established path.
+  - [x] Move resident-mode static pick rejection ahead of global polygon
+        collection so non-candidate static faces never enter legacy sorting or
+        precise scan conversion. Only sprite faces and cursor candidates retain
+        the old sorted path.
+  - [x] Window the software depth-mask bridge to active sprite coverage. The
+        depth frame still answers full-screen coordinate queries for entity and
+        ground-item occlusion, but its backing arrays and raster loops are now
+        bounded to the union of visible sprite rectangles instead of the whole
+        viewport.
+  - [x] Start collapsing projected flat-material world faces into the same
+        atlas-backed textured path by assigning flat faces a white atlas texel
+        and carrying their shaded material RGB through the texture color
+        channel. This preserves legacy draw order while reducing texture/flat
+        state splits.
+  - [x] Add short-window renderer telemetry alongside lifetime averages so
+        camera-pan FPS swings can be traced to the current few seconds instead
+        of launch-wide cumulative averages. Ctrl+F9 layer readbacks are timed
+        outside the normal OpenGL phase totals, so capture bursts no longer
+        poison the render averages used for FPS diagnosis.
+- [ ] Add a `High Performance` renderer profile once the bottlenecks are known.
+      It should preserve correct ordering and readable visuals while allowing
+      conservative tradeoffs such as shorter draw distance, reduced smoothing,
+      fewer diagnostic overlays, lower default resolution, cheaper shadows, or
+      lower sprite/world replay quality where safe.
+- [ ] Evaluate JVM memory/GC settings after profiling allocation rate. Treat
+      memory increases as a hitch/GC fix, not the primary path to 60 FPS unless
+      telemetry shows allocation pressure or collection pauses.
+  - [x] Confirm the local and packaged client target 64-bit Java rather than a
+        32-bit/4GB ceiling, and set explicit client launch heap defaults to
+        `-Xms512m -Xmx2g` for development and packaged launchers.
+- [ ] Evaluate multicore work only after the renderer has clear ownership
+      boundaries for immutable chunk products, dynamic object buffers, and
+      sprite/UI command snapshots. Candidate work includes background chunk
+      preparation, async texture/material upload staging, and predictive sector
+      loads, but avoid parallelizing frame-critical mutable scene state first.
+  - [x] Defer broad multicore work until renderer ownership boundaries are
+        cleaner. Current safe candidates remain background chunk/mesh
+        preparation, asset/texture staging, and predictive loading rather than
+        parallelizing mutable live scene state.
 - [ ] Add a debug overlay for frame time, render time, present time, polygon
       count, sprite count, and active scaling mode.
+  - [x] Draw the F6 renderer debug overlay natively as a final OpenGL pass in
+        OpenGL-primary mode instead of painting it into the software base
+        framebuffer, so it remains visible during world replacement and cannot
+        occlude sprites through captured overlay commands.
+  - [x] Convert the F6 renderer debug overlay into a compact performance HUD
+        for the 60 FPS push: FPS, frame/scene/present timing, OpenGL
+        snapshot/upload/render timing, chunk upload/reuse, resident draw
+        buckets, sprite replay counts, world face buckets, and allocation
+        summary.
 - [ ] Add a command-line or config option to dump frame timing to a log.
 - [ ] Add automated frame-diff tooling for the baseline acuity locations.
 - [ ] Track allocation rate during camera movement and section loading.
@@ -779,8 +1679,32 @@ they are not visual requirements for the baseline.
 
 - [ ] Redesign the options menu into user-friendly renderer, display, audio,
       controls, and gameplay groups instead of exposing raw debug rows.
+- [x] Add first-pass section headers to the current settings list so renderer
+      testing controls are grouped as `Video`, `Graphics`, and `Interface`
+      without changing the existing click IDs or settings persistence.
 - [x] Collapse the OpenGL-primary player-facing render options to
-      `Resolution`, `Font`, and `Brightness` rows.
+      `Resolution`, `Renderer`, `Geometry`, `Brightness`, `Fog`, and `Font`
+      rows for release. Alternate lighting is runtime-only until a remaster
+      lighting mode clearly beats Classic.
+- [x] Remove release/default quick function-key toggles except `F6` renderer
+      debug overlay. Resolution, font, scaling, and window-mode changes should
+      go through options or explicit runtime launch configuration.
+- [x] Retire the legacy Interface fog toggle and detach its retained protocol
+      state from rendering so `Graphics > Fog` has sole ownership.
+- [x] Add the official `Classic` renderer profile as the first saved visual
+      profile option, even before alternate/remaster profiles are available.
+- [ ] Replace the single renderer profile selector with a preset-plus-overrides
+      model. Presets should apply a known bundle of renderer type, shader style,
+      brightness, fog strength, draw-distance/quality defaults, and optional
+      diagnostic visualizers such as the geometric triangle view. Manual changes
+      to any bundled value should switch the displayed preset to `Custom`
+      without discarding the edited values.
+- [ ] Add `Remaster` as the second visual preset once shader/material/fog
+      defaults have been visually accepted across towns, forests, water,
+      interiors, roofs, mines, combat, and crowded entity scenes.
+- [ ] Add `High Performance` as a second saved renderer profile after Phase 7
+      identifies the exact settings that recover FPS without hiding correctness
+      problems behind reduced visual coverage.
 - [x] Separate alpha/debug-only renderer switches from settings intended for
       normal players.
 - [ ] Add user-friendly display labels around resolution and future quality
@@ -813,6 +1737,12 @@ they are not visual requirements for the baseline.
 - [ ] Remove unused applet-era frame plumbing from the desktop client.
 - [ ] Remove legacy scaler modes that only exist to compensate for old render
       instability.
+- [ ] Replace legacy protocol and client-cache ceilings that constrain the
+      remaster, including 8-bit local NPC/player counts, narrow local entity
+      arrays, limited coordinate deltas, and sentinel values that collide with
+      expanded direction or animation ranges.
+- [ ] Remove temporary entity-prioritization workarounds once widened
+      remaster-era packets can carry the full visible entity set directly.
 - [ ] Delete dead compatibility branches after the fallback window closes.
 - [ ] Update client settings, docs, and release notes to describe the new
       renderer behavior.
@@ -861,6 +1791,10 @@ Renderer telemetry is opt-in. Enable it with the JVM property
 `SPOILED_MILK_RENDERER_TELEMETRY=true`. Optional JVM properties:
 `-Dspoiledmilk.rendererTelemetryInterval=300` and
 `-Dspoiledmilk.rendererSlowFrameMs=35`.
+Telemetry reports include both lifetime averages and short-window averages
+since the previous report. Use the `window` lines for live FPS diagnosis;
+the cumulative `avg` lines are still useful for long-run drift and startup
+effects.
 
 The direct framebuffer path is also opt-in while it is being compared against
 the legacy image-producer path. Enable it with the JVM property

@@ -311,6 +311,8 @@ public class GraphicsController {
 		return alpha >= 0
 			&& alpha <= Renderer2DFrame.SpriteCommand.FULL_ALPHA
 			&& (alpha == Renderer2DFrame.SpriteCommand.FULL_ALPHA
+				|| (renderer2DPhase == Renderer2DFrame.Phase.SCENE
+					&& Renderer2DSettings.canReplayOpenGLWorldSprites())
 				|| (renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY
 					&& (Renderer2DSettings.canReplaceUiSpritesWithOpenGL()
 						|| canCaptureRenderer2DOpenGLWorldOverlayReplay()))
@@ -372,6 +374,20 @@ public class GraphicsController {
 
 	private boolean canCaptureRenderer2DNativeUiCommand() {
 		return canReplaceRenderer2DNativeUi() || canCaptureRenderer2DOpenGLWorldOverlayReplay();
+	}
+
+	protected final void withRenderer2DLegacySpriteId(int legacySpriteId, Runnable drawAction) {
+		if (drawAction == null) {
+			return;
+		}
+
+		int previousLegacySpriteId = renderer2DLegacySpriteId;
+		renderer2DLegacySpriteId = legacySpriteId;
+		try {
+			drawAction.run();
+		} finally {
+			renderer2DLegacySpriteId = previousLegacySpriteId;
+		}
 	}
 
 	private boolean recordRenderer2DTextCommand(List<Renderer2DFrame.TextCommand.GlyphCommand> glyphs) {
@@ -907,10 +923,10 @@ public class GraphicsController {
 		long bottomX16 = topX16 + (long) destColumnSkewPerRow * destHeight;
 		int minLeft = floorFixedToInt(Math.min(topX16, bottomX16));
 		int maxLeft = ceilFixedToInt(Math.max(topX16, bottomX16));
-		if (minLeft < this.clipLeft
-			|| destY < this.clipTop
-			|| maxLeft + destWidth > this.clipRight
-			|| destY + destHeight > this.clipBottom) {
+		if (maxLeft + destWidth <= this.clipLeft
+			|| minLeft >= this.clipRight
+			|| destY + destHeight <= this.clipTop
+			|| destY >= this.clipBottom) {
 			renderer2DCaptureSkippedBounds++;
 			return false;
 		}

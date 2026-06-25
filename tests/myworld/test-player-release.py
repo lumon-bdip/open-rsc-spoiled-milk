@@ -25,6 +25,10 @@ RENDERER_V2_FLAGS = [
     "-Dspoiledmilk.openglWorldTexturedAlpha=1.0",
     "-Dspoiledmilk.openglWorldSpritesVisible=true",
 ]
+CLIENT_JVM_MEMORY_FLAGS = [
+    "-Xms512m",
+    "-Xmx2g",
+]
 OPENGL_RUNTIME_ENTRIES = [
     "linux/x64/org/lwjgl/liblwjgl.so",
     "linux/x64/org/lwjgl/glfw/libglfw.so",
@@ -195,6 +199,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-spoiled-milk.ps1"',
                     "if errorlevel 1 pause & exit /b 1",
                     "Spoiled_Milk_Client.jar",
+                    *CLIENT_JVM_MEMORY_FLAGS,
                     *RENDERER_V2_FLAGS,
                 ]:
                     if snippet not in launcher:
@@ -222,6 +227,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                 "Update check failed; launching installed Spoiled Milk client.",
                 '"$GAME_DIR/update-spoiled-milk.sh"',
                 '-jar "$GAME_DIR/Spoiled_Milk_Client.jar"',
+                *CLIENT_JVM_MEMORY_FLAGS,
                 *RENDERER_V2_FLAGS,
             ]:
                 if snippet not in shell_launcher:

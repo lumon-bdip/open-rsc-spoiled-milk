@@ -31,7 +31,10 @@ import static com.openrsc.server.plugins.Functions.*;
 
 
 public class NpcBehavior {
-	private long lastMovement;
+	private static final int ROAM_BASE_TICKS = 4;
+	private static final int ROAM_JITTER_TICKS = 2;
+
+	private long nextRoamMovementAt;
 	private long lastTackleAttempt;
 	private static final int[] TACKLING_XP = {7, 10, 15, 20};
 	private final long gameTickMillis;
@@ -52,6 +55,8 @@ public class NpcBehavior {
 		this.npc = npc;
 		this.gameTickMillis = npc.getConfig().GAME_TICK;
 		this.tickFactor = (int)Math.ceil(640.0 / npc.getConfig().GAME_TICK);
+		this.nextRoamMovementAt = System.currentTimeMillis()
+			+ (long)DataConversions.random(0, (ROAM_BASE_TICKS + ROAM_JITTER_TICKS) * tickFactor) * gameTickMillis;
 		this.blackKnightsFortress = npc.getLoc().startX() > 274 && npc.getLoc().startX() < 283
 			&& npc.getLoc().startY() > 432 && npc.getLoc().startY() < 441;
 		this.draynorManorSkeleton = npc.getID() == NpcId.SKELETON_LVL21.id()
@@ -308,8 +313,8 @@ public class NpcBehavior {
 
 		// If NPC has not moved and is out of combat
 		// and is finished its previous path.
-		if (checkCombatTimer(now, lastMovement, 5 * tickFactor) && checkCombatTimer(now, npc.getCombatTimer(), 5 * tickFactor) && npc.finishedPath()) {
-			lastMovement = now;
+		if (now >= nextRoamMovementAt && checkCombatTimer(now, npc.getCombatTimer(), 5 * tickFactor) && npc.finishedPath()) {
+			scheduleNextRoamMovement(now);
 			int rand = DataConversions.random(0, 1);
 
 			// NPC is not busy, and we rolled to move (50% chance)
@@ -329,6 +334,11 @@ public class NpcBehavior {
 				npc.setInteractingPlayer(null);
 			}
 		}
+	}
+
+	private void scheduleNextRoamMovement(final long now) {
+		int delayTicks = (ROAM_BASE_TICKS + DataConversions.random(0, ROAM_JITTER_TICKS)) * tickFactor;
+		nextRoamMovementAt = now + (long)delayTicks * gameTickMillis;
 	}
 
 	private void handleAggro(final long now) {
@@ -387,7 +397,6 @@ public class NpcBehavior {
 		}
 
 		// If target is not waiting for "run away" timer, send them chasing
-		lastMovement = System.currentTimeMillis();
 		int numTicks = target.getCombatState() == CombatState.RUNNING ? 5 * tickFactor : (int)Math.ceil(640.0 / target.getConfig().GAME_TICK);
 		if (checkCombatTimer(now, target.getCombatTimer(), numTicks)) {
 			if (npc.getWorld().getServer().getConfig().WANT_IMPROVED_PATHFINDING)

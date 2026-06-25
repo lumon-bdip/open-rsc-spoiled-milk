@@ -28,7 +28,7 @@ def main() -> None:
     player = PLAYER.read_text(encoding="utf-8")
     require(
         text,
-        "if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.gameObjectInstanceCount = 0;\n\t\t\t\t\t\tthis.wallObjectInstanceCount = 0;\n\t\t\t\t\t}",
+        "if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.setGameObjectInstanceCount(0);\n\t\t\t\t\t\tthis.setWallObjectInstanceCount(0);\n\t\t\t\t\t}",
         "hard area/plane object cache reset",
     )
     require(

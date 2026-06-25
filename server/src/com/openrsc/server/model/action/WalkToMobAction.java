@@ -2,6 +2,7 @@ package com.openrsc.server.model.action;
 
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.Path;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 
@@ -35,6 +36,7 @@ public abstract class WalkToMobAction extends WalkToAction {
 	@Override
 	public boolean shouldExecuteInternal() {
 		boolean myworldCombatAttack = actionType == ActionType.ATTACK && getPlayer().getConfig().WANT_MYWORLD;
+		boolean myworldMeleeAttack = myworldCombatAttack && ignoreProjectileAllowed;
 		boolean projectilePathAttack = actionType == ActionType.ATTACKMAGIC;
 		Point checkedPoint = ((ignoreProjectileAllowed || projectilePathAttack) && !myworldCombatAttack)
 			? getPlayer().getWalkingQueue().getNextMovement()
@@ -53,7 +55,26 @@ public abstract class WalkToMobAction extends WalkToAction {
 			&& !actionExecutedThisTick) {
 			getPlayer().setWalkToAction(null);
 		}
+		if (myworldMeleeAttack && !actionExecutedThisTick) {
+			repathMyWorldMeleeAttackIfNeeded();
+		}
 		return actionExecutedThisTick;
+	}
+
+	private void repathMyWorldMeleeAttackIfNeeded() {
+		if (mob.isRemoved()) {
+			return;
+		}
+		final Path path = getPlayer().getWalkingQueue().path;
+		final Point pathEnd = path == null || path.isEmpty() ? null : path.getWaypoints().peekLast();
+		if (pathEnd != null
+			&& pathEnd.withinRange(mob.getLocation(), radius)
+			&& PathValidation.checkAdjacentDistance(getPlayer().getWorld(),
+			pathEnd.getX(), pathEnd.getY(), mob.getX(), mob.getY(),
+			ignoreProjectileAllowed, !ignoreProjectileAllowed)) {
+			return;
+		}
+		getPlayer().walkAdjacentToEntity(mob);
 	}
 
 	@Override

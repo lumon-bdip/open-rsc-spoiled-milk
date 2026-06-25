@@ -40,6 +40,14 @@ public final class RendererTransparency {
 		return normalized;
 	}
 
+	public static int normalizeLegacyTextureResourceColor(int color) {
+		int normalized = color & LEGACY_TEXTURE_COLOR_MASK;
+		if (normalized == TRANSPARENT_SAMPLE || isLegacyTextureTransparentKey(normalized)) {
+			return TRANSPARENT_SAMPLE;
+		}
+		return normalized;
+	}
+
 	public static int spritePixelToRgba8888(int pixel) {
 		if (!isVisibleSpritePixel(pixel)) {
 			return 0;

@@ -746,15 +746,18 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 	}
 
-	private Mob selectChaosChainLightningTarget(final Player player, final Mob anchor) {
-		if (anchor == null || !anchor.isNpc()) {
+	private Mob selectChaosChainLightningTarget(final Player player, final Mob primaryTarget) {
+		if (primaryTarget == null) {
+			return null;
+		}
+		if (!primaryTarget.isNpc()) {
 			return null;
 		}
 		final java.util.ArrayList<Npc> candidates = new java.util.ArrayList<Npc>();
 		for (Npc npc : player.getViewArea().getNpcsInView()) {
-			if (npc != null && npc != anchor && !npc.isRemoved() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
+			if (npc != null && npc != primaryTarget && !npc.isRemoved() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
 				&& !Summoning.isSummon(npc)
-				&& npc.withinRange(anchor.getLocation(), CHAOS_CHAIN_LIGHTNING_RADIUS)) {
+				&& npc.withinRange(primaryTarget.getLocation(), CHAOS_CHAIN_LIGHTNING_RADIUS)) {
 				candidates.add(npc);
 			}
 		}

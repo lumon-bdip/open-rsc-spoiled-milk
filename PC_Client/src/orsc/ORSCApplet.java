@@ -387,6 +387,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 	@Override
 	public void componentResized(ComponentEvent e) {
+		if (ScaledWindow.isOpenGLPrimaryWindowEnabled()) {
+			return;
+		}
+
 		mudclient.resizeWidth = e.getComponent().getWidth();
 		mudclient.resizeHeight = e.getComponent().getHeight();
 	}
@@ -574,12 +578,20 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		}
 
 		// Forward the image to be drawn by ScaledWindow.java
-		drawRendererDebugOverlay(frameImage);
+		String[] rendererDebugOverlayLines = rendererDebugOverlayLines(frameImage);
+		if (!ScaledWindow.isOpenGLPrimaryWindowEnabled()) {
+			drawRendererDebugOverlay(frameImage, rendererDebugOverlayLines);
+		}
 		BufferedImage renderer2DUiBaseImage = getRenderer2DUiBaseImage();
 		Renderer2DFrame renderer2DFrame = mudclient.getSurface().consumeRenderer2DFrame();
 		Renderer3DFrame renderer3DFrame = getRenderer3DFrame();
 		long presentStart = RenderTelemetry.now();
-		scaledWindow.setGameImage(frameImage, renderer2DFrame, renderer2DUiBaseImage, renderer3DFrame);
+		scaledWindow.setGameImage(
+			frameImage,
+			renderer2DFrame,
+			renderer2DUiBaseImage,
+			renderer3DFrame,
+			rendererDebugOverlayLines);
 		long presentNanos = RenderTelemetry.elapsedSince(presentStart);
 
 		if (telemetryEnabled) {
@@ -613,7 +625,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 		// Resize window only after it has begun rendering the game image,
 		// (ie. not the loading screen)
-		if (scaledWindow.isViewportLoaded()) {
+		if (!ScaledWindow.isOpenGLPrimaryWindowEnabled() && scaledWindow.isViewportLoaded()) {
 			scaledWindow.resizeWindowToScalar();
 		}
 	}
@@ -763,17 +775,24 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		return new BufferedImage(colorModel, raster, false, null);
 	}
 
-	private void drawRendererDebugOverlay(BufferedImage frameImage) {
+	private String[] rendererDebugOverlayLines(BufferedImage frameImage) {
 		if (!RendererDebugSettings.isOverlayEnabled() || frameImage == null) {
-			return;
+			return null;
 		}
 
 		RenderTelemetry.Snapshot telemetry = RenderTelemetry.snapshot();
+		return overlayLines(frameImage, telemetry);
+	}
+
+	private void drawRendererDebugOverlay(BufferedImage frameImage, String[] lines) {
+		if (lines == null || lines.length == 0 || frameImage == null) {
+			return;
+		}
+
 		Graphics2D g = frameImage.createGraphics();
 		try {
 			g.setFont(new Font("Monospaced", Font.PLAIN, 12));
 			FontMetrics metrics = g.getFontMetrics();
-			String[] lines = overlayLines(frameImage, telemetry);
 			int maxWidth = 0;
 			for (String line : lines) {
 				maxWidth = Math.max(maxWidth, metrics.stringWidth(line));
@@ -805,123 +824,95 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	private String[] overlayLines(BufferedImage frameImage, RenderTelemetry.Snapshot telemetry) {
 		boolean openGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
 		return new String[] {
-			"Renderer v2",
-			"surface " + frameImage.getWidth() + "x" + frameImage.getHeight()
-				+ " (" + RenderSurfaceSettings.getMode().id + ")",
-			"fit " + (openGLPrimaryWindow
-				? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT.id
-				: OpenGLPresentationSettings.getScaleMode().id)
-				+ " | window " + OpenGLWindowSettings.getMode().displayName,
+			"Renderer v2 Perf HUD",
 			openGLPrimaryWindow
-				? "resolution " + RenderSurfaceSettings.getMode().id
-					+ " | font " + RendererFontSettings.getMode().id
-					+ " | bright " + RendererBrightnessSettings.getMode().id
+				? "renderer " + RendererProfileSettings.getMode().id
+					+ " | resolution " + RenderSurfaceSettings.getMode().id
 					+ " | fps " + mudclient.getCurrentFPS()
 				: "scale " + mudclient.renderingScalar + " " + mudclient.scalingType
 					+ " | fps " + mudclient.getCurrentFPS(),
+			"surface " + frameImage.getWidth() + "x" + frameImage.getHeight()
+				+ " | fit " + (openGLPrimaryWindow
+					? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT.id
+					: OpenGLPresentationSettings.getScaleMode().id)
+				+ " | window " + OpenGLWindowSettings.getMode().displayName,
 			telemetry.enabled
-				? "frame avg " + telemetry.frameAverageMs + "ms max " + telemetry.frameMaxMs + "ms"
+				? "frame avg/max " + telemetry.frameAverageMs + "/" + telemetry.frameMaxMs
+					+ "ms | scene " + telemetry.sceneAverageMs
+					+ "ms | present " + telemetry.setImageAverageMs + "ms"
 				: "telemetry disabled",
 			telemetry.enabled
-				? "scene " + telemetry.sceneAverageMs + "ms present " + telemetry.setImageAverageMs + "ms"
+				? "gl snapshot/upload/render " + telemetry.openGLSnapshotAverageMs
+					+ "/" + telemetry.openGLUploadAverageMs
+					+ "/" + telemetry.openGLRenderAverageMs + "ms"
 				: "",
 			telemetry.enabled
-				? "gl upload " + telemetry.openGLUploadAverageMs + "ms render " + telemetry.openGLRenderAverageMs + "ms"
+				? "gl frames/dropped " + telemetry.openGLFrames
+					+ "/" + telemetry.openGLDroppedFrames
+					+ " | swap " + telemetry.openGLSwapAverageMs + "ms"
 				: "",
 			telemetry.enabled
-				? "gl frames " + telemetry.openGLFrames + " dropped " + telemetry.openGLDroppedFrames
+				? "gl phases b/w/ws/o/db/s " + telemetry.openGLBaseAverageMs
+					+ "/" + telemetry.openGLWorldAverageMs
+					+ "/" + telemetry.openGLWorldSpriteAverageMs
+					+ "/" + telemetry.openGLSpriteOverlayAverageMs
+					+ "/" + telemetry.openGLDebugOverlayAverageMs
+					+ "/" + telemetry.openGLSwapAverageMs + "ms"
 				: "",
 			telemetry.enabled
-				? "world geom models " + telemetry.worldGeometryModelAverage
-					+ " faces " + telemetry.worldGeometryFaceAverage
-					+ " anchors " + telemetry.worldSpriteAnchorAverage
+				? "scene phases rot/cull/depth/draw/mesh " + telemetry.sceneModelRotateAverageMs
+					+ "/" + telemetry.sceneWorldCullAverageMs
+					+ "/" + telemetry.sceneDepthExportAverageMs
+					+ "/" + telemetry.sceneLegacyDrawAverageMs
+					+ "/" + telemetry.sceneMeshExportAverageMs + "ms"
 				: "",
 			telemetry.enabled
-				? "geom t/w/r/o/wo/x " + telemetry.worldGeometryTerrainFaceAverage
+				? "chunks c/v/i/t " + telemetry.openGLWorldChunkAverage
+					+ "/" + telemetry.openGLWorldChunkVertexAverage
+					+ "/" + telemetry.openGLWorldChunkIndexAverage
+					+ "/" + telemetry.openGLWorldChunkTriangleAverage
+				: "",
+			telemetry.enabled
+				? "chunk req/up/reuse/evict " + telemetry.openGLWorldChunkRequestedAverage
+					+ "/" + telemetry.openGLWorldChunkUploadAverage
+					+ "/" + telemetry.openGLWorldChunkReuseAverage
+					+ "/" + telemetry.openGLWorldChunkEvictAverage
+				: "",
+			telemetry.enabled
+				? "mesh draw tri/occ/b/calls " + telemetry.openGLWorldMeshDrawTriangleAverage
+					+ "/" + telemetry.openGLWorldMeshDrawOccluderTriangleAverage
+					+ "/" + telemetry.openGLWorldMeshDrawBatchAverage
+					+ "/" + telemetry.openGLWorldMeshDrawCallAverage
+				: "",
+			telemetry.enabled
+				? "world split chunk/proj/chdraw " + telemetry.openGLWorldChunkUploadPhaseAverageMs
+					+ "/" + telemetry.openGLWorldProjectedMeshPhaseAverageMs
+					+ "/" + telemetry.openGLWorldChunkDrawPhaseAverageMs + "ms"
+				: "",
+			telemetry.enabled
+				? "legacy sprites cmds/fallback/pixels " + telemetry.legacySceneSpriteRestoreCommandAverage
+					+ "/" + telemetry.legacySceneSpriteRestoreFallbackAverage
+					+ "/" + telemetry.legacySceneSpriteRestoreFallbackPixelAverage
+				: "",
+			telemetry.enabled
+				? "sprite cap/static/vis " + telemetry.spriteOverlayCapturedAverage
+					+ "/" + telemetry.spriteOverlayStaticReplayAverage
+					+ "/" + telemetry.spriteOverlayVisibleReplayAverage
+				: "",
+			telemetry.enabled
+				? "overlay phases scene/world/ui " + telemetry.spriteOverlaySceneCommandAverage
+					+ "/" + telemetry.spriteOverlayWorldCommandAverage
+					+ "/" + telemetry.spriteOverlayUiCommandAverage
+				: "",
+			telemetry.enabled
+				? "world faces t/w/r/go/wo/o " + telemetry.worldGeometryTerrainFaceAverage
 					+ "/" + telemetry.worldGeometryWallFaceAverage
 					+ "/" + telemetry.worldGeometryRoofFaceAverage
 					+ "/" + telemetry.worldGeometryGameObjectFaceAverage
 					+ "/" + telemetry.worldGeometryWallObjectFaceAverage
 					+ "/" + telemetry.worldGeometryOtherFaceAverage
 				: "",
-			telemetry.enabled
-				? "depth faces/tri/pix " + telemetry.worldDepthFaceAverage
-					+ "/" + telemetry.worldDepthTriangleAverage
-					+ "/" + telemetry.worldDepthPixelWriteAverage
-				: "",
-			telemetry.enabled
-				? "mesh v/i/t " + telemetry.worldMeshVertexAverage
-					+ "/" + telemetry.worldMeshIndexAverage
-					+ "/" + telemetry.worldMeshTriangleAverage
-				: "",
-			telemetry.enabled
-				? "gl mesh v/i/t " + telemetry.openGLWorldMeshVertexAverage
-					+ "/" + telemetry.openGLWorldMeshIndexAverage
-					+ "/" + telemetry.openGLWorldMeshTriangleAverage
-				: "",
-			telemetry.enabled
-				? "gl sprites a/m/d " + telemetry.openGLWorldSpriteAnchorAverage
-					+ "/" + telemetry.openGLWorldSpriteMatchedAverage
-					+ "/" + telemetry.openGLWorldSpriteDrawnAverage
-				: "",
-			telemetry.enabled
-				? "sprites " + Renderer2DSettings.getOpenGLSpriteOverlayModeId()
-					+ " cap " + telemetry.spriteOverlayCapturedAverage
-					+ " static " + telemetry.spriteOverlayStaticReplayAverage
-					+ " vis " + telemetry.spriteOverlayVisibleReplayAverage
-					+ " skip o/i/a " + telemetry.spriteOverlaySkippedOrderedAverage
-					+ "/" + telemetry.spriteOverlaySkippedInvisibleAverage
-					+ "/" + telemetry.spriteOverlaySkippedAtlasFullAverage
-				: "",
-			telemetry.enabled
-				? "phases scene " + telemetry.spriteOverlaySceneCommandAverage
-					+ " world " + telemetry.spriteOverlayWorldCommandAverage
-					+ " ui " + telemetry.spriteOverlayUiCommandAverage
-					+ " unk " + telemetry.spriteOverlayUnknownCommandAverage
-				: "",
-			telemetry.enabled
-				? "replay dir s/w/u " + telemetry.spriteOverlayDirectSceneAverage
-					+ "/" + telemetry.spriteOverlayDirectWorldAverage
-					+ "/" + telemetry.spriteOverlayDirectUiAverage
-					+ " vis s/w/u " + telemetry.spriteOverlayVisibleSceneAverage
-					+ "/" + telemetry.spriteOverlayVisibleWorldAverage
-					+ "/" + telemetry.spriteOverlayVisibleUiAverage
-				: "",
-			telemetry.enabled
-				? "cap try/ok " + telemetry.spriteCaptureAttemptAverage
-					+ "/" + telemetry.spriteCaptureAcceptedAverage
-					+ " replUI " + telemetry.spriteCaptureReplacedUiAverage
-					+ " base " + telemetry.spriteCaptureUiBaseAverage
-					+ " reject a/b/src " + telemetry.spriteCaptureSkippedAlphaAverage
-					+ "/" + telemetry.spriteCaptureSkippedBoundsAverage
-					+ "/" + telemetry.spriteCaptureSkippedSourceAverage
-				: "",
-			telemetry.enabled
-				? "text draws/glyphs " + telemetry.textCaptureDrawAverage
-					+ "/" + telemetry.textCaptureGlyphAverage
-					+ " replUI " + telemetry.textCaptureReplacedUiAverage
-					+ " phases s/w/u " + telemetry.textCaptureSceneAverage
-					+ "/" + telemetry.textCaptureWorldAverage
-					+ "/" + telemetry.textCaptureUiAverage
-				: "",
-			telemetry.enabled
-				? "prim draws " + telemetry.primitiveCaptureDrawAverage
-					+ " replUI " + telemetry.primitiveCaptureReplacedUiAverage
-					+ " baseReady " + telemetry.nativeUiBaseEligibleAverage
-				: "",
-			telemetry.enabled
-				? "base rot/circ " + telemetry.rotatedSpriteDrawAverage
-					+ "/" + telemetry.rotatedSpriteCapturedUiAverage
-					+ " " + telemetry.circleDrawAverage
-					+ "/" + telemetry.circleCapturedUiAverage
-					+ " block s/t/p/m " + telemetry.nativeUiBlockSpriteAverage
-					+ "/" + telemetry.nativeUiBlockTextAverage
-					+ "/" + telemetry.nativeUiBlockPrimitiveAverage
-					+ "/" + telemetry.nativeUiBlockMinimapAverage
-				: "",
-			openGLPrimaryWindow
-				? "F6 overlay F7 window F8 resolution F9 font"
-				: "F6 overlay F7 window F8 size F9 fit"
+			"F6 overlay"
 		};
 	}
 
@@ -1211,16 +1202,6 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				if (keyCode == KeyEvent.VK_F3) C_LAST_ZOOM = 75;
 				if (keyCode == KeyEvent.VK_F4) mudclient.toggleFirstPersonView();
 				if (keyCode == KeyEvent.VK_F6) mudclient.toggleRendererDebugOverlay(); // renderer overlay
-				if (keyCode == KeyEvent.VK_F7) mudclient.cycleOpenGLWindowMode(); // OpenGL window mode
-				if (keyCode == KeyEvent.VK_F8) mudclient.cycleRenderSurfaceMode(); // render size
-				if (ScaledWindow.isOpenGLPrimaryWindowEnabled()) {
-					if (keyCode == KeyEvent.VK_F9) mudclient.cycleOpenGLUiFontMode(); // OpenGL UI font
-				} else {
-					if (keyCode == KeyEvent.VK_F9) mudclient.cycleOpenGLScaleMode(); // OpenGL fit mode
-					if (keyCode == KeyEvent.VK_F10) mudclient.cycleScalingType(); // type
-					if (keyCode == KeyEvent.VK_F11) mudclient.scaleDown(); // scale down
-					if (keyCode == KeyEvent.VK_F12) mudclient.scaleUp(); // scale up
-				}
 				if (keyCode == 39) mudclient.keyRight = true;
 				if (keyCode == 37) mudclient.keyLeft = true;
 				if (keyCode == 13 || keyCode == 10) mudclient.enterPressed = true;

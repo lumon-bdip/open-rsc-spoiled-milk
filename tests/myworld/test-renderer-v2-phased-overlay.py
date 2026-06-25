@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GRAPHICS = ROOT / "Client_Base/src/orsc/graphics/two/GraphicsController.java"
+MUDCLIENT_GRAPHICS = ROOT / "Client_Base/src/orsc/graphics/two/MudClientGraphics.java"
 RENDERER_FRAME = ROOT / "Client_Base/src/orsc/graphics/Renderer2DFrame.java"
 RENDERER_TRANSFORM = ROOT / "Client_Base/src/orsc/graphics/RendererSpriteTransform.java"
 SETTINGS = ROOT / "Client_Base/src/orsc/graphics/Renderer2DSettings.java"
@@ -27,6 +28,7 @@ def forbid(text: str, needle: str, label: str) -> None:
 
 def main() -> None:
     graphics = GRAPHICS.read_text(encoding="utf-8")
+    mudclient_graphics = MUDCLIENT_GRAPHICS.read_text(encoding="utf-8")
     frame = RENDERER_FRAME.read_text(encoding="utf-8")
     renderer_transform = RENDERER_TRANSFORM.read_text(encoding="utf-8")
     settings = SETTINGS.read_text(encoding="utf-8")
@@ -103,14 +105,70 @@ def main() -> None:
         "OpenGL replacement composite owns scene sprite restore without duplicate diagnostic world sprites",
     )
     require(
+        applet,
+        "String[] rendererDebugOverlayLines = rendererDebugOverlayLines(frameImage);",
+        "renderer debug overlay should be captured as data before presentation",
+    )
+    require(
+        applet,
+        "if (!ScaledWindow.isOpenGLPrimaryWindowEnabled()) {\n\t\t\tdrawRendererDebugOverlay(frameImage, rendererDebugOverlayLines);\n\t\t}",
+        "OpenGL-primary debug overlay should not be painted into the software base frame",
+    )
+    require(
+        scaled_window,
+        "String[] rendererDebugOverlayLines",
+        "ScaledWindow should pass renderer debug overlay lines to OpenGL",
+    )
+    require(
+        presenter,
+        "runOpenGLPass(() -> drawRendererDebugOverlay(frame));",
+        "OpenGL presenter should draw renderer debug overlay as a final pass",
+    )
+    require(
+        presenter,
+        "private void drawRendererDebugOverlay(Frame frame) throws Exception",
+        "OpenGL presenter should own native renderer debug overlay drawing",
+    )
+    require(
+        presenter,
+        "DEBUG_OVERLAY_TEXTURE_UPDATE_NANOS",
+        "OpenGL renderer debug overlay should throttle texture rebuilds",
+    )
+    require(
+        presenter,
+        "if (debugOverlayTextureRegion == null || now >= debugOverlayNextTextureUpdateNanos)",
+        "OpenGL renderer debug overlay should reuse cached texture regions between updates",
+    )
+    require(
+        presenter,
+        "debugOverlayTextureRegion = uploadedRegion;",
+        "OpenGL renderer debug overlay should cache uploaded texture regions",
+    )
+    require(
+        presenter,
+        "private static DynamicTextureData buildRendererDebugOverlayTexture(String[] lines)",
+        "OpenGL renderer debug overlay should be converted directly to texture data",
+    )
+    require(
+        telemetry,
+        "return RUNTIME_ENABLED || RendererDebugSettings.isOverlayEnabled();",
+        "F6 performance HUD should collect telemetry without a launch-time telemetry flag",
+    )
+    require(
+        telemetry,
+        "if (RUNTIME_ENABLED\n\t\t\t\t&& (frameStats.count % REPORT_INTERVAL == 0",
+        "F6 performance HUD should not enable periodic console telemetry reports",
+    )
+    require(
         presenter,
         "commands[spriteIndex].getPhase() != Renderer2DFrame.Phase.UI_OVERLAY",
         "OpenGL world UI replay filters sprite phase",
     )
     require(
         presenter,
-        "&& !isOpenGLCompositeDirectSpriteCommand(commands[spriteIndex])",
-        "OpenGL world composite direct-replays overlay sprite commands",
+        "&& (!isOpenGLCompositeDirectSpriteCommand(commands[spriteIndex])\n"
+        "\t\t\t\t\t|| isOpenGLCompositeWorldSpriteCommand(commands[spriteIndex]))",
+        "OpenGL world composite direct-replays overlay sprite commands without duplicating world sprites",
     )
     require(
         presenter,
@@ -131,6 +189,181 @@ def main() -> None:
         presenter,
         "int commandVisiblePixels = drawVisibleSpriteCommand(frame, command, directSpriteMask);",
         "OpenGL world composite clips scene restore using direct sprite mask",
+    )
+    require(
+        presenter,
+        "|| isOpenGLCompositeWorldSpriteCommand(command)\n\t\t\t\t|| isOpenGLCompositeDirectSpriteCommand(command))",
+        "OpenGL replacement composite keeps world sprites out of software-visible scene restore",
+    )
+    require(
+        presenter,
+        "drawOpenGLCompositeWorldSpriteCommands(frame, compositeSceneCommands);",
+        "OpenGL replacement composite submits world sprites through the typed world sprite path",
+    )
+    require(
+        presenter,
+        "depthDiagnosticTexture = buildDepthVisibleEntitySpriteTexture(\n"
+        "\t\t\t\tframe,\n"
+        "\t\t\t\tcommand,\n"
+        "\t\t\t\tworldSpriteCommand.anchor,\n"
+        "\t\t\t\tnull,\n"
+        "\t\t\t\tworldSpriteCommand.anchorMatch);",
+        "OpenGL replacement composite retains software depth diagnostics during GPU migration",
+    )
+    require(
+        presenter,
+        "worldSpriteCommand.anchor != null && activeFrameCapture != null",
+        "software sprite depth masking runs only for capture",
+    )
+    require(
+        presenter,
+        "DynamicTextureData textureData = buildDirectSpriteTexture(command);",
+        "OpenGL depth-owned sprites use exact command-sized source sampling by default",
+    )
+    require(
+        presenter,
+        "drawOpenGLCompositeCharacterSpriteLayers(frame, worldSpriteCommand.anchor, characterLayerCommands)",
+        "OpenGL character sprites composite same-anchor clothing layers before depth draw",
+    )
+    require(
+        presenter,
+        "compositeSpriteCommandInto(command, minX, minY, width, compositePixels)",
+        "OpenGL character layer composition uses legacy fixed-point sprite sampling",
+    )
+    require(
+        presenter,
+        "drawOpenGLCompositeDepthOwnedWorldSpriteTextureData(\n\t\t\t\tframe,\n\t\t\t\tworldSpriteCommand,\n\t\t\t\ttextureData,",
+        "OpenGL replacement composite submits anchored sprites to GPU depth",
+    )
+    require(
+        presenter,
+        "gl.glDepthMask(false);",
+        "OpenGL depth-owned multipart sprites do not reject their own layers",
+    )
+    require(
+        presenter,
+        "putCameraSpaceSpriteQuadVertex(\n\t\t\trenderer3DFrame",
+        "OpenGL depth-owned sprites back-project exact command rectangles",
+    )
+    require(
+        presenter,
+        "drawCameraSpaceWorldSpriteQuad(",
+        "OpenGL depth-owned sprites submit stable command-sized quads through a reusable helper",
+    )
+    require(
+        presenter,
+        "gl.glBufferData(gl.GL_ARRAY_BUFFER, worldSpriteQuadUploadBuffer, gl.GL_STREAM_DRAW);",
+        "OpenGL depth-owned sprite quads use a streamed VBO instead of immediate-mode submission",
+    )
+    require(
+        presenter,
+        "WORLD_SPRITE_QUAD_INDEX_COUNT",
+        "OpenGL depth-owned sprite quads use indexed triangle submission",
+    )
+    require(
+        presenter,
+        "region.getU0(),\n\t\t\tregion.getU1(),\n\t\t\tregion.getV0(),\n\t\t\tregion.getV1(),",
+        "OpenGL command-sized world sprite textures are not mirrored a second time",
+    )
+    forbid(
+        presenter,
+        "WORLD_SPRITE_ATLAS_BATCHING",
+        "OpenGL cached world sprite batching should remain retired after command-sized parity validation",
+    )
+    require(
+        presenter,
+        "command.getSourceStartX16()",
+        "OpenGL cached world sprites use fixed-point source x sampling",
+    )
+    require(
+        presenter,
+        "command.getSourceScaleY16()",
+        "OpenGL cached world sprites use fixed-point source y scale",
+    )
+    require(
+        presenter,
+        "worldSpriteDepthTextureBatches = drawn;",
+        "OpenGL depth-owned sprite command telemetry",
+    )
+    forbid(
+        presenter,
+        "drawOpenGLCompositeStaticWorldRange(frame, currentOrder, nextOrder);",
+        "OpenGL replacement composite must not overpaint combat sprites with broad static redraw ranges",
+    )
+    require(
+        presenter,
+        "List<OpenGLCompositeSceneCommand> sceneCommands = new ArrayList<OpenGLCompositeSceneCommand>();",
+        "OpenGL replacement composite builds an ordered scene command stream",
+    )
+    require(
+        presenter,
+        "private boolean isLegacyGroundItemSpriteCommand(Renderer2DFrame.SpriteCommand command)",
+        "OpenGL replacement composite recognizes ground item scene sprites",
+    )
+    require(
+        presenter,
+        "return legacySpriteId >= 40000 && legacySpriteId < 50000;",
+        "OpenGL replacement composite includes ground item scene sprite range",
+    )
+    require(
+        mudclient,
+        "this.scene.drawSprite(40000 + this.groundItemID[centerX]",
+        "ground items should keep their legacy scene sprite id",
+    )
+    require(
+        mudclient_graphics,
+        "withRenderer2DLegacySpriteId(index, () ->",
+        "ground item draw commands should be tagged with a legacy sprite id",
+    )
+    require(
+        mudclient_graphics,
+        "this.mudClientRef.drawItemAt(index - 40000, x, y, width, height, topPixelSkew));",
+        "ground item draw commands should be tagged for OpenGL world-sprite replay",
+    )
+    require(
+        presenter,
+        "captureLayer(activeFrameCapture, \"04c-ordered-static-overlays\");",
+        "OpenGL frame capture isolates ordered static world overlays",
+    )
+    forbid(
+        presenter,
+        "drawTexturedOverlayRange(",
+        "retired post-sprite static geometry replay",
+    )
+    require(
+        presenter,
+        "worldSpriteMatchScore(anchor, command, false)",
+        "entity ordering can recover anchors by loose bounds when sprite ids differ",
+    )
+    require(
+        presenter,
+        "Renderer3DFrame.SpriteAnchor exactIdAnchor = null;",
+        "entity ordering should keep exact sprite-id anchors before loose fallback",
+    )
+    require(
+        presenter,
+        "if (exactIdAnchor != null) {\n\t\t\treturn exactIdAnchor;\n\t\t}",
+        "entity ordering should prefer exact sprite-id anchors before loose fallback",
+    )
+    require(
+        presenter,
+        "captureLayer(activeFrameCapture, \"04b-entity-sprites\");",
+        "OpenGL frame capture isolates direct entity sprite submission",
+    )
+    require(
+        presenter,
+        "&& legacySceneSpriteCommand) {\n\t\t\ttextureData = buildVisibleSpriteTexture(frame, command, null);",
+        "OpenGL world composite retries legacy scene sprite restore if overlay mask hides it completely",
+    )
+    require(
+        presenter,
+        "&& textureData.visiblePixelCount * 10 < directTextureData.visiblePixelCount) {\n\t\t\t\t\ttextureData = directTextureData;",
+        "OpenGL world composite falls back to direct legacy scene sprite replay if software visibility mostly drops it",
+    )
+    require(
+        presenter,
+        "private boolean isLegacySceneSpriteCommand(Renderer2DFrame.SpriteCommand command)",
+        "OpenGL world composite legacy scene sprite detector",
     )
     require(
         presenter,
@@ -352,6 +585,22 @@ def main() -> None:
     )
     require(
         graphics,
+        "maxLeft + destWidth <= this.clipLeft\n"
+        "\t\t\t|| minLeft >= this.clipRight\n"
+        "\t\t\t|| destY + destHeight <= this.clipTop\n"
+        "\t\t\t|| destY >= this.clipBottom",
+        "masked sprite capture keeps partially clipped scene sprites",
+    )
+    forbid(
+        graphics,
+        "minLeft < this.clipLeft\n"
+        "\t\t\t|| destY < this.clipTop\n"
+        "\t\t\t|| maxLeft + destWidth > this.clipRight\n"
+        "\t\t\t|| destY + destHeight > this.clipBottom",
+        "masked sprite capture must not require full destination containment",
+    )
+    require(
+        graphics,
         "public final void captureRenderer2DUiBaseFrame()",
         "pre-UI base frame surface capture",
     )
@@ -359,6 +608,14 @@ def main() -> None:
         mudclient,
         "this.getSurface().captureRenderer2DUiBaseFrame();",
         "pre-UI base frame phase boundary",
+    )
+    require(
+        mudclient,
+        "this.getSurface().blackScreen(true);\n"
+        "\t\t\tthis.getSurface().captureRenderer2DUiBaseFrame();\n"
+        "\t\t\tthis.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);\n"
+        "\t\t\tthis.panelAppearance.drawPanel();",
+        "character creator native UI base capture",
     )
     require(
         applet,
@@ -507,33 +764,38 @@ def main() -> None:
     )
     require(
         applet,
-        "text draws/glyphs ",
-        "debug overlay text capture line",
+        "sprite cap/static/vis ",
+        "performance overlay sprite capture/replay line",
     )
     require(
         applet,
-        "replUI \" + telemetry.textCaptureReplacedUiAverage",
-        "debug overlay native text replacement line",
+        "overlay phases scene/world/ui ",
+        "performance overlay phase summary line",
     )
     require(
         applet,
-        "baseReady \" + telemetry.nativeUiBaseEligibleAverage",
-        "debug overlay native base readiness line",
+        "legacy sprites cmds/fallback/pixels ",
+        "performance overlay legacy scene sprite restore line",
     )
     require(
         applet,
-        "block s/t/p/m \" + telemetry.nativeUiBlockSpriteAverage",
-        "debug overlay native base blocker line",
+        "gl phases b/w/ws/o/db/s ",
+        "performance overlay OpenGL phase timing line",
+    )
+    require(
+        telemetry,
+        "static void recordOpenGLFramePhases(",
+        "OpenGL phase timing telemetry recorder",
+    )
+    require(
+        presenter,
+        "RenderTelemetry.recordOpenGLFramePhases(",
+        "OpenGL presenter should record phase timings",
     )
     require(
         applet,
-        "base rot/circ \" + telemetry.rotatedSpriteDrawAverage",
-        "debug overlay native base circle line",
-    )
-    require(
-        applet,
-        "cap try/ok ",
-        "debug overlay capture rejection line",
+        "scene phases rot/cull/depth/draw/mesh ",
+        "performance overlay scene phase timing line",
     )
     require(
         presenter,
@@ -546,11 +808,6 @@ def main() -> None:
         "atlas-full telemetry report",
     )
     require(
-        applet,
-        "skip o/i/a ",
-        "debug overlay atlas-full skip line",
-    )
-    require(
         telemetry,
         "[renderer-v2 telemetry] sprite direct phases avg:",
         "direct phase telemetry report",
@@ -559,11 +816,6 @@ def main() -> None:
         telemetry,
         "[renderer-v2 telemetry] sprite visible phases avg:",
         "visible phase telemetry report",
-    )
-    require(
-        applet,
-        "replay dir s/w/u ",
-        "debug overlay replay phase line",
     )
     require(
         graphics,

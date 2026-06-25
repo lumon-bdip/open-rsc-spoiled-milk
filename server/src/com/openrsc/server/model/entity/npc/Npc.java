@@ -43,6 +43,7 @@ public class Npc extends Mob {
 	 * The asynchronous logger.
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
+	public static final String DEATH_VISUAL_TICK_ATTRIBUTE = "npc_death_visual_tick";
 
 	private long healTimer = 0;
 	private boolean shouldRespawn = true;
@@ -1191,6 +1192,7 @@ public class Npc extends Mob {
 	}
 
 	public void remove() {
+		setAttribute(DEATH_VISUAL_TICK_ATTRIBUTE, getWorld().getServer().getCurrentTick());
 		this.killed = true;
 		resetCombatEvent();
 		clearPlayerPvmMeleeEvents();
@@ -1219,6 +1221,7 @@ public class Npc extends Mob {
 				public void run() {
 					n.killed = false;
 					n.setRemoved(false);
+					n.removeAttribute(DEATH_VISUAL_TICK_ATTRIBUTE);
 					n.getRegion().addEntity(n);
 
 					// Take 4 ticks away from the current time to get a 1 tick pause while the npc spawns,
@@ -1312,7 +1315,9 @@ public class Npc extends Mob {
 		possiblePoints.add(new Point(getX() - 1, getY() + 1));
 		possiblePoints.add(new Point(getX() - 1, getY() - 1));
 
-		for (Point possiblePoint : possiblePoints) {
+		final int startIndex = DataConversions.random(0, possiblePoints.size() - 1);
+		for (int i = 0; i < possiblePoints.size(); i++) {
+			Point possiblePoint = possiblePoints.get((startIndex + i) % possiblePoints.size());
 			if (possiblePoint.inBounds(getLoc().minX(), getLoc().minY(), getLoc().maxX(), getLoc().maxY())
 				&& canWalk(getWorld(), possiblePoint.getX(), possiblePoint.getY())) {
 				walk(possiblePoint.getX(), possiblePoint.getY());

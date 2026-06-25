@@ -3,6 +3,8 @@ cd /d "%~dp0"
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-spoiled-milk.ps1"
 if errorlevel 1 pause & exit /b 1
 java ^
+  -Xms512m ^
+  -Xmx2g ^
   -Dspoiledmilk.directFramebuffer=true ^
   -Dspoiledmilk.openglPresenter=true ^
   -Dspoiledmilk.openglInput=true ^

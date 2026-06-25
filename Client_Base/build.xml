@@ -48,7 +48,7 @@
 
     <target name="runclient">
         <java classname="orsc.OpenRSC" fork="true">
-            <jvmarg line="-Xms312m -Dsun.java2d.opengl=true"/>
+            <jvmarg line="-Xms512m -Xmx2g -Dsun.java2d.opengl=true"/>
             <classpath>
                 <pathelement path="${jar}"/>
                 <path refid="client.classpath"/>

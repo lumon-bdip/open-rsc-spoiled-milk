@@ -809,7 +809,7 @@ public abstract class Mob extends Entity {
 			return;
 		}
 
-		if (getConfig().WANT_IMPROVED_PATHFINDING) {
+		if (getConfig().WANT_MYWORLD || getConfig().WANT_IMPROVED_PATHFINDING) {
 			walkToEntityAStar(destination.getX(), destination.getY());
 		} else {
 			walkToEntity(destination.getX(), destination.getY());

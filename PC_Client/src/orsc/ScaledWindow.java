@@ -306,6 +306,15 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		Renderer2DFrame renderer2DFrame,
 		BufferedImage renderer2DUiBaseImage,
 		Renderer3DFrame renderer3DFrame) {
+		setGameImage(gameImage, renderer2DFrame, renderer2DUiBaseImage, renderer3DFrame, null);
+	}
+
+	public void setGameImage(
+		BufferedImage gameImage,
+		Renderer2DFrame renderer2DFrame,
+		BufferedImage renderer2DUiBaseImage,
+		Renderer3DFrame renderer3DFrame,
+		String[] rendererDebugOverlayLines) {
 		if (gameImage == null) {
 			return;
 		}
@@ -324,8 +333,10 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		viewportHeight = gameImage.getHeight();
 
 		if (initialRender) {
-			// Set the window size for the scalar (will be realigned in the method)
-			resizeWindowToScalar();
+			if (!OPENGL_PRIMARY_WINDOW_ENABLED) {
+				// Set the window size for the scalar (will be realigned in the method)
+				resizeWindowToScalar();
+			}
 			initialRender = false;
 		}
 
@@ -340,7 +351,8 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 				1.0f,
 				ScalingAlgorithm.INTEGER_SCALING,
 				renderer2DFrame,
-				renderer3DFrame);
+				renderer3DFrame,
+				rendererDebugOverlayLines);
 			if (telemetryEnabled) {
 				RenderTelemetry.recordSetGameImage(
 					RenderTelemetry.elapsedSince(setImageStart),
@@ -456,6 +468,10 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	/** Resizes the window size for the scalar */
 	public void resizeWindowToScalar() {
+		if (OPENGL_PRIMARY_WINDOW_ENABLED) {
+			return;
+		}
+
 		Dimension minimumWindowSizeForScalar = getMinimumWindowSizeForScalar();
 
 		if (!getSize().equals(minimumWindowSizeForScalar)) {
@@ -493,6 +509,10 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	/** Resizes the applet contained within {@link OpenRSC} */
 	private void resizeApplet() {
+		if (OPENGL_PRIMARY_WINDOW_ENABLED) {
+			return;
+		}
+
 		if (mudclient.renderingScalar == 0.0f || !isViewportLoaded()) {
 			return;
 		}
@@ -513,6 +533,10 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	/** Resizes the mudclient if its dimensions don't match the current frame size */
 	public void validateAppletSize() {
+		if (OPENGL_PRIMARY_WINDOW_ENABLED) {
+			return;
+		}
+
 		if (applet == null) return;
 
 		int newWidth = Math.round(scaledViewport.getWidth() / mudclient.renderingScalar);
@@ -579,7 +603,9 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	@Override
 	public void componentResized(ComponentEvent e) {
-		resizeApplet();
+		if (!OPENGL_PRIMARY_WINDOW_ENABLED) {
+			resizeApplet();
+		}
 
 		frameWidth = e.getComponent().getWidth();
 		frameHeight = e.getComponent().getHeight();

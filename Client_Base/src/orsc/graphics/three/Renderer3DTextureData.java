@@ -16,6 +16,7 @@ public final class Renderer3DTextureData {
 	private final int opaquePixelCount;
 	private final int transparentPixelCount;
 	private final int averageOpaqueRgb;
+	private final long signature;
 
 	private Renderer3DTextureData(
 		int textureId,
@@ -28,7 +29,8 @@ public final class Renderer3DTextureData {
 		boolean hasTransparency,
 		int opaquePixelCount,
 		int transparentPixelCount,
-		int averageOpaqueRgb) {
+		int averageOpaqueRgb,
+		long signature) {
 		this.textureId = textureId;
 		this.width = width;
 		this.height = height;
@@ -40,6 +42,7 @@ public final class Renderer3DTextureData {
 		this.opaquePixelCount = opaquePixelCount;
 		this.transparentPixelCount = transparentPixelCount;
 		this.averageOpaqueRgb = averageOpaqueRgb;
+		this.signature = signature;
 	}
 
 	static Renderer3DTextureData fromLegacyPalette(int textureId, int[] palette, int textureType, byte[] sourceIndices) {
@@ -52,23 +55,56 @@ public final class Renderer3DTextureData {
 			System.arraycopy(sourceIndices, 0, indices, 0, Math.min(sourceIndices.length, indices.length));
 		}
 
+		return fromRgbaPixels(textureId, width, height, textureType, paletteRgb, indices, buildRgbaPixels(paletteRgb, indices));
+	}
+
+	static Renderer3DTextureData fromLegacyResource(int textureId, int textureType, int[] resourcePixels) {
+		int width = textureType != 0 ? 128 : 64;
+		int height = width;
+		int pixelCount = width * height;
 		int[] rgbaPixels = new int[pixelCount];
+		if (resourcePixels != null) {
+			for (int i = 0; i < pixelCount && i < resourcePixels.length; i++) {
+				int rgb = RendererTransparency.normalizeLegacyTextureResourceColor(resourcePixels[i]);
+				rgbaPixels[i] = rgb == RendererTransparency.TRANSPARENT_SAMPLE
+					? 0
+					: (rgb & RendererTransparency.RGB_MASK) << 8 | 0xFF;
+			}
+		}
+		return fromRgbaPixels(textureId, width, height, textureType, new int[0], new byte[pixelCount], rgbaPixels);
+	}
+
+	private static int[] buildRgbaPixels(int[] paletteRgb, byte[] indices) {
+		int[] rgbaPixels = new int[indices.length];
+		for (int i = 0; i < indices.length; i++) {
+			int paletteIndex = indices[i] & 255;
+			int rgb = paletteIndex < paletteRgb.length ? paletteRgb[paletteIndex] : RendererTransparency.TRANSPARENT_SAMPLE;
+			rgbaPixels[i] = rgb == RendererTransparency.TRANSPARENT_SAMPLE
+				? 0
+				: (rgb & RendererTransparency.RGB_MASK) << 8 | 0xFF;
+		}
+		return rgbaPixels;
+	}
+
+	private static Renderer3DTextureData fromRgbaPixels(
+		int textureId,
+		int width,
+		int height,
+		int textureType,
+		int[] paletteRgb,
+		byte[] indices,
+		int[] rgbaPixels) {
 		int opaquePixels = 0;
 		int transparentPixels = 0;
 		long redTotal = 0L;
 		long greenTotal = 0L;
 		long blueTotal = 0L;
-		for (int i = 0; i < pixelCount; i++) {
-			int paletteIndex = indices[i] & 255;
-			int rgb = paletteIndex < paletteRgb.length ? paletteRgb[paletteIndex] : RendererTransparency.TRANSPARENT_SAMPLE;
-			int rgba = rgb == RendererTransparency.TRANSPARENT_SAMPLE
-				? 0
-				: (rgb & RendererTransparency.RGB_MASK) << 8 | 0xFF;
-			rgbaPixels[i] = rgba;
+		for (int rgba : rgbaPixels) {
 			if (rgba == 0) {
 				transparentPixels++;
 			} else {
 				opaquePixels++;
+				int rgb = (rgba >>> 8) & RendererTransparency.RGB_MASK;
 				redTotal += (rgb >> 16) & 0xFF;
 				greenTotal += (rgb >> 8) & 0xFF;
 				blueTotal += rgb & 0xFF;
@@ -93,7 +129,25 @@ public final class Renderer3DTextureData {
 			transparentPixels > 0,
 			opaquePixels,
 			transparentPixels,
-			averageOpaqueRgb);
+			averageOpaqueRgb,
+			computeSignature(textureId, width, height, textureType, rgbaPixels));
+	}
+
+	private static long computeSignature(int textureId, int width, int height, int textureType, int[] rgbaPixels) {
+		long signature = 1469598103934665603L;
+		signature = mixSignature(signature, textureId);
+		signature = mixSignature(signature, width);
+		signature = mixSignature(signature, height);
+		signature = mixSignature(signature, textureType);
+		for (int rgba : rgbaPixels) {
+			signature = mixSignature(signature, rgba);
+		}
+		return signature;
+	}
+
+	private static long mixSignature(long signature, long value) {
+		signature ^= value;
+		return signature * 1099511628211L;
 	}
 
 	private static int[] copyNormalizedPalette(int[] palette) {
@@ -149,6 +203,10 @@ public final class Renderer3DTextureData {
 
 	public int getAverageOpaqueRgb() {
 		return averageOpaqueRgb;
+	}
+
+	public long getSignature() {
+		return signature;
 	}
 
 	public ByteBuffer copyToDirectRgbaBuffer() {

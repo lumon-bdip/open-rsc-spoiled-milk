@@ -39,6 +39,8 @@ import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacket;
 public final class GameStateUpdater {
 	private static final int CUSTOM_MOB_COORD_OFFSET_BITS = 8;
 	private static final int CUSTOM_CLIENT_REGION_REFRESH_RADIUS = 80;
+	private static final int LOCAL_NPC_LIMIT = 255;
+	private static final String NPC_DEATH_VISUAL_SENT_TICK_PREFIX = "npc_death_visual_sent_tick_";
 
 	/**
 	 * The asynchronous logger.
@@ -239,6 +241,62 @@ public final class GameStateUpdater {
 		return offset;
 	}
 
+	private static int npcDistanceToPlayer(final Player player, final Npc npc) {
+		return Math.abs(npc.getX() - player.getX()) + Math.abs(npc.getY() - player.getY());
+	}
+
+	private static int npcPriorityRank(final Player player, final Npc npc) {
+		if (npc.equals(player.getOpponent()) || player.equals(npc.getOpponent())) {
+			return 0;
+		}
+		if (npc.inCombat()) {
+			return 1;
+		}
+		return 2;
+	}
+
+	private static boolean canSendNpcToPlayer(final Player player, final Npc npc) {
+		if (npc.isInvisibleTo(player)) {
+			return false;
+		}
+		if (npc.getID() == NpcId.NED_BOAT.id() && !player.getCache().hasKey("ned_hired")) {
+			return false;
+		}
+		return !npc.isRemoved()
+			&& !npc.isRespawning()
+			&& npc.withinAuthenticRangeAdditionally(player)
+			&& player.withinRange(npc);
+	}
+
+	private static List<Npc> prioritizeVisibleNpcs(final Player player, final Collection<Npc> visibleNpcs) {
+		final HashSet<Npc> existingLocalNpcs = new HashSet<>(player.getLocalNpcs());
+		final ArrayList<Npc> prioritizedNpcs = new ArrayList<>(visibleNpcs.size());
+		for (final Npc npc : visibleNpcs) {
+			if (canSendNpcToPlayer(player, npc)) {
+				prioritizedNpcs.add(npc);
+			}
+		}
+		prioritizedNpcs.sort((left, right) -> {
+			int comparison = Integer.compare(npcPriorityRank(player, left), npcPriorityRank(player, right));
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(npcDistanceToPlayer(player, left), npcDistanceToPlayer(player, right));
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Boolean.compare(!existingLocalNpcs.contains(left), !existingLocalNpcs.contains(right));
+			if (comparison != 0) {
+				return comparison;
+			}
+			return Integer.compare(left.getIndex(), right.getIndex());
+		});
+		if (prioritizedNpcs.size() > LOCAL_NPC_LIMIT) {
+			return prioritizedNpcs.subList(0, LOCAL_NPC_LIMIT);
+		}
+		return prioritizedNpcs;
+	}
+
 	protected void updateNpcs(final Player playerToUpdate) {
 		MobsUpdateStruct struct = new MobsUpdateStruct();
 		ClearMobsStruct clearStruct = new ClearMobsStruct();
@@ -296,7 +354,8 @@ public final class GameStateUpdater {
 			struct.mobsUpdate = mobsUpdate;
 		} else {
 			final int localNpcCount = playerToUpdate.getLocalNpcs().size();
-			final int visibleNpcCount = playerToUpdate.getViewArea().getNpcsInView().size();
+			final Collection<Npc> visibleNpcs = playerToUpdate.getViewArea().getNpcsInView();
+			final int visibleNpcCount = visibleNpcs.size();
 			List<Map.Entry<Integer, Integer>> mobsUpdate = new ArrayList<>(1 + (localNpcCount * 3) + (Math.min(255, visibleNpcCount) * 5));
 			final boolean traceNpcPackets = playerToUpdate.getAttribute("debug_npc_trace", false);
 			final int traceRadius = playerToUpdate.getAttribute("debug_npc_trace_radius", 12);
@@ -309,28 +368,51 @@ public final class GameStateUpdater {
 			final int REMOVE_NPC = 3;
 			final boolean useCustomMovementStream = playerToUpdate.isUsingCustomClient()
 				&& getServer().getConfig().WANT_CUSTOM_WALK_SPEED;
+			final List<Npc> prioritizedVisibleNpcs = useCustomMovementStream
+				? prioritizeVisibleNpcs(playerToUpdate, visibleNpcs)
+				: null;
+			final HashSet<Npc> prioritizedVisibleNpcSet = prioritizedVisibleNpcs == null
+				? null
+				: new HashSet<>(prioritizedVisibleNpcs);
 
 			mobsUpdate.add(bit(playerToUpdate.getLocalNpcs().size(), 8));
 			for (final Iterator<Npc> it$ = playerToUpdate.getLocalNpcs().iterator(); it$.hasNext(); ) {
 				Npc localNpc = it$.next();
 				final UpdateFlags updateFlags = localNpc.getUpdateFlags();
+				final long deathVisualTick = localNpc.getAttribute(Npc.DEATH_VISUAL_TICK_ATTRIBUTE, -1L);
+				final String deathVisualViewerKey = NPC_DEATH_VISUAL_SENT_TICK_PREFIX + playerToUpdate.getIndex();
+				final long deathVisualSentTick = localNpc.getAttribute(deathVisualViewerKey, Long.MIN_VALUE);
 				final boolean hasPendingDeathVisual = playerToUpdate.isUsingCustomClient()
 					&& (localNpc.isRemoved() || localNpc.isRespawning())
 					&& playerToUpdate.withinRange(localNpc)
 					&& localNpc.withinAuthenticRangeAdditionally(playerToUpdate)
+					&& deathVisualTick >= 0
+					&& deathVisualSentTick != deathVisualTick
 					&& (updateFlags.hasCombatEffect() || updateFlags.hasHitSplats() || updateFlags.hasTakenDamage());
+				final boolean spriteNeedsFullRefresh = useCustomMovementStream
+					&& localNpc.spriteChanged()
+					&& localNpc.getSprite() >= 12;
+				final boolean evictForNpcPriority = prioritizedVisibleNpcSet != null
+					&& !hasPendingDeathVisual
+					&& !prioritizedVisibleNpcSet.contains(localNpc);
+				if (hasPendingDeathVisual) {
+					localNpc.setAttribute(deathVisualViewerKey, deathVisualTick);
+				}
 
 				if (localNpc.isInvisibleTo(playerToUpdate)) {
 					it$.remove();
 					mobsUpdate.add(bit(UPDATE_REQUIRED, 1));
 					mobsUpdate.add(bit(NOT_MOVING, 1));
 					mobsUpdate.add(bit(REMOVE_NPC, 2));
+					continue;
 				}
 
 				if (!localNpc.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(localNpc) || // remove because they are out of range
 					(localNpc.isRemoved() && !hasPendingDeathVisual) || // remove because they are removed
 					localNpc.isTeleporting() || // if they've teleported, then they may have moved more than one square, and thus require a full coordinate refresh
-					(localNpc.inCombat() && !hasPendingDeathVisual) || // remove because when FIRST entering combat, they may have advanced towards the player, then their sprite is incompatible with a movement update (no direction, and > 7) TODO: should be inCombatChanged(), since it's only necessary on the first round of combat.
+					(localNpc.inCombat() && !hasPendingDeathVisual && !useCustomMovementStream) || // remove because when FIRST entering combat, they may have advanced towards the player, then their sprite is incompatible with a movement update (no direction, and > 7) TODO: should be inCombatChanged(), since it's only necessary on the first round of combat.
+					spriteNeedsFullRefresh || // remove/re-add because the legacy no-move update reserves high two-bit value 3 as remove, colliding with sprites 12-15.
+					evictForNpcPriority || // remove lower-priority locals so nearby/combat NPCs fit in the 8-bit local NPC cache.
 					(localNpc.isRespawning() && !hasPendingDeathVisual) // removed because they have not yet respawned; may not be necessary, but there's no scenario where this is true & they shouldn't be removed.
 					) {
 					it$.remove(); // removes NPC from player's localNpcs list
@@ -349,7 +431,7 @@ public final class GameStateUpdater {
 									+ localNpc.getX() + "," + localNpc.getY() + " sprite=" + localNpc.getSprite());
 							}
 						}
-					} else if (localNpc.spriteChanged() && !useCustomMovementStream) {
+					} else if (localNpc.spriteChanged()) {
 						mobsUpdate.add(bit(UPDATE_REQUIRED, 1));
 						mobsUpdate.add(bit(NOT_MOVING, 1));
 						mobsUpdate.add(bit(localNpc.getSprite(), 4)); // 4 bits to accommodate sprites 8 & 9, used for fighting
@@ -359,25 +441,13 @@ public final class GameStateUpdater {
 				}
 			}
 
-			for (final Npc newNPC : playerToUpdate.getViewArea().getNpcsInView()) {
-				if (newNPC.isInvisibleTo(playerToUpdate)) {
-					continue;
-				}
-
-				if (newNPC.getID() == NpcId.NED_BOAT.id() && !playerToUpdate.getCache().hasKey("ned_hired")) {
-					// TODO: probably this is incorrect & should be removed.
-					// There are authentically 4 versions of the Lady Lumbridge interior, to accommodate Ned being present or not & ship being crashed or not.
-					continue;
-				}
-
+			for (final Npc newNPC : prioritizedVisibleNpcs == null ? visibleNpcs : prioritizedVisibleNpcs) {
 				if (playerToUpdate.getLocalNpcs().contains(newNPC) || // The NPC is cached & updated successfully. Don't refresh & don't duplicate them in the localNpcs cache.
-					newNPC.isRemoved() || // The NPC is removed & shouldn't be added.
-					newNPC.isRespawning() || // The NPC has not yet spawned & shouldn't be added.
-					!newNPC.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(newNPC) // only have 5 bits in the rsc235 protocol, so the npc can only be shown up to 16 tiles away
+					!canSendNpcToPlayer(playerToUpdate, newNPC) // only have 5 bits in the rsc235 protocol, so the npc can only be shown up to 16 tiles away
 					// || (newNPC.isTeleporting() && !newNPC.inCombat()) // ??? Might be a bug. If they teleported this tick, and ended up within range, we want to refresh them for sure, right?
-				) {
+					) {
 					continue;
-				} else if (playerToUpdate.getLocalNpcs().size() >= 255) {
+				} else if (playerToUpdate.getLocalNpcs().size() >= LOCAL_NPC_LIMIT) {
 					break;
 				}
 

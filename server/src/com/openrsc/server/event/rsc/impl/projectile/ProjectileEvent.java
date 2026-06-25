@@ -552,6 +552,9 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private Npc selectSplinterTarget(final Player casterPlayer, final Mob primaryTarget) {
+		if (!primaryTarget.isNpc()) {
+			return null;
+		}
 		final java.util.ArrayList<Npc> candidates = new java.util.ArrayList<Npc>();
 		for (Npc npc : casterPlayer.getViewArea().getNpcsInView()) {
 			if (npc != null && npc != primaryTarget && !npc.isRemoved()

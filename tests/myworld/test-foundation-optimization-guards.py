@@ -136,6 +136,16 @@ def main() -> None:
     require_snippet(WALKING_QUEUE, "PathValidation.checkAdjacent(mob, startX, startY, destX, destY)", "WalkingQueue primitive movement adjacent check")
     require_snippet(WALKING_QUEUE, "PathValidation.checkAdjacent(mob, curPoint.getX(), curPoint.getY(), destPoint.getX(), destPoint.getY())", "WalkingQueue primitive next-movement adjacent check")
     reject_snippet(WALKING_QUEUE, "PathValidation.checkAdjacent(mob, new Point", "WalkingQueue throwaway adjacent point")
+    require_snippet(
+        ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "AStarPathfinder.java",
+        "Node endNode = closedNodes.get(closedNodes.size()-1);",
+        "AStar endpoint-preserving path build",
+    )
+    require_snippet(
+        ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "AStarPathfinder.java",
+        "while (endNode != null && endNode.parent != null)",
+        "AStar skips only the start tile",
+    )
     require_snippet(MOB, "if (destination == null) {\n\t\t\tresetPath();\n\t\t\treturn;\n\t\t}", "MyWorld melee approach unavailable-adjacent reset")
     reject_snippet(MOB, "walkToEntityAStar(target.getX(), target.getY())", "MyWorld melee approach exact-target AStar fallback")
     reject_snippet(MOB, "walkToEntity(target.getX(), target.getY())", "MyWorld melee approach exact-target fallback")
@@ -143,8 +153,11 @@ def main() -> None:
     require_snippet(PLAYER, "PathValidation.checkAdjacentDistance(getWorld(), getX(), getY(), getFollowing().getX(), getFollowing().getY(), true, false)", "Player following primitive adjacent-distance check")
     require_snippet(NPC_BEHAVIOR, "PathValidation.checkAdjacentDistance(npc.getWorld(), checkedPoint.getX(), checkedPoint.getY(), target.getX(), target.getY(), true, false)", "NPC behavior primitive adjacent-distance check")
     require_snippet(WALK_TO_MOB_ACTION, "boolean sameTileCombatAttack = myworldCombatAttack", "walk-to-mob MyWorld same-tile combat guard")
+    require_snippet(WALK_TO_MOB_ACTION, "boolean myworldMeleeAttack = myworldCombatAttack && ignoreProjectileAllowed;", "walk-to-mob MyWorld melee attack distinction")
     require_snippet(WALK_TO_MOB_ACTION, "boolean pathingCheckPassed = !sameTileCombatAttack\n\t\t\t&& PathValidation.checkAdjacentDistance(getPlayer().getWorld(),", "walk-to-mob same-tile combat rejection")
     require_snippet(WALK_TO_MOB_ACTION, "checkedPoint.getX(), checkedPoint.getY(), mob.getX(), mob.getY()", "walk-to-mob primitive adjacent-distance check")
+    require_snippet(WALK_TO_MOB_ACTION, "repathMyWorldMeleeAttackIfNeeded()", "walk-to-mob dynamic MyWorld melee repath")
+    require_snippet(WALK_TO_MOB_ACTION, "getPlayer().walkAdjacentToEntity(mob);", "walk-to-mob dynamic MyWorld melee path refresh")
     require_snippet(NPC_COMMAND, "PathValidation.checkAdjacentDistance(player.getWorld(), player.getX(), player.getY(), affectedNpc.getX(), affectedNpc.getY(), true)", "NPC command primitive adjacent-distance check")
     require_snippet(PVM_MELEE_EVENT, "boolean sameTile = attackerMob.getX() == targetMob.getX()", "PVM melee same-tile guard")
     require_snippet(PVM_MELEE_EVENT, "boolean adjacent = !sameTile && PathValidation.checkAdjacentDistance(attackerMob.getWorld(),", "PVM melee cached primitive adjacent check")

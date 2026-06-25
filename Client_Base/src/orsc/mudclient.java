@@ -30,6 +30,8 @@ import orsc.graphics.three.Renderer3DDepthFrame;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.Renderer3DMeshFrame;
 import orsc.graphics.three.Renderer3DModelKind;
+import orsc.graphics.three.Renderer3DSettings;
+import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.Scene;
 import orsc.graphics.three.World;
@@ -87,6 +89,16 @@ public final class mudclient implements Runnable {
 	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
 	private static final int GAME_OBJECT_INSTANCE_CAPACITY = WALL_OBJECT_KEY_BASE;
 	private static final int WALL_OBJECT_INSTANCE_CAPACITY = 5000;
+	private static final int OPENGL_PRIMARY_TARGET_FPS = 60;
+	private static final long RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS = 0xcbf29ce484222325L;
+	private static final long RESIDENT_OBJECT_CHUNK_FNV_PRIME = 0x100000001b3L;
+	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
+	private static final int PREDICTIVE_PRELOAD_SOURCE_TARGET = 0;
+	private static final int PREDICTIVE_PRELOAD_SOURCE_WAYPOINT = 1;
+	private static final int PREDICTIVE_PRELOAD_SOURCE_CAMERA = 2;
+	private static final int PREDICTIVE_CAMERA_PRELOAD_DISTANCE_TILES = World.SECTION_SIZE;
+	private static final int[] PREDICTIVE_CAMERA_STEP_X = {0, 1, 1, 1, 0, -1, -1, -1};
+	private static final int[] PREDICTIVE_CAMERA_STEP_Z = {1, 1, 0, -1, -1, -1, 0, 1};
 
 	public static final int spriteMedia = 2000;
 	public static final int spriteUtil = 2100;
@@ -380,6 +392,7 @@ public final class mudclient implements Runnable {
 	private final boolean[] gameObjectInstance_Arg1 = new boolean[GAME_OBJECT_INSTANCE_CAPACITY];
 	private final int[] gameObjectInstanceDir = new int[GAME_OBJECT_INSTANCE_CAPACITY];
 	private final int[] gameObjectInstanceID = new int[GAME_OBJECT_INSTANCE_CAPACITY];
+	private final boolean[] gameObjectInstanceMaterialized = new boolean[GAME_OBJECT_INSTANCE_CAPACITY];
 	private final RSModel[] gameObjectInstanceModel = new RSModel[GAME_OBJECT_INSTANCE_CAPACITY];
 	private final int[] gameObjectInstanceX = new int[GAME_OBJECT_INSTANCE_CAPACITY];
 	private static final int OBJECT_ANIMATION_TILE_RADIUS = 14;
@@ -489,6 +502,7 @@ public final class mudclient implements Runnable {
 	private final boolean[] wallObjectInstance_Arg1 = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
 	private final int[] wallObjectInstanceDir = new int[WALL_OBJECT_INSTANCE_CAPACITY];
 	private final int[] wallObjectInstanceID = new int[WALL_OBJECT_INSTANCE_CAPACITY];
+	private final boolean[] wallObjectInstanceMaterialized = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
 	private final RSModel[] wallObjectInstanceModel = new RSModel[WALL_OBJECT_INSTANCE_CAPACITY];
 	private final int[] wallObjectInstanceX = new int[WALL_OBJECT_INSTANCE_CAPACITY];
 	private final int[] wallObjectInstanceZ = new int[WALL_OBJECT_INSTANCE_CAPACITY];
@@ -565,6 +579,7 @@ public final class mudclient implements Runnable {
 	private static final int SETTINGS_SCALE_MINUS_X_OFFSET = 96;
 	private static final int SETTINGS_SCALE_LABEL_X_OFFSET = 73;
 	private static final int SETTINGS_SCALE_PLUS_X_OFFSET = 45;
+	private static final int SETTINGS_SECTION_ROW = -1000;
 	public int resizeWidth;
 	public int resizeHeight;
 	public Clan clan;
@@ -763,6 +778,17 @@ public final class mudclient implements Runnable {
 	private boolean loadingArea = false;
 	private boolean regionLoadNeedsHardPlayerReset = false;
 	private boolean hasCompletedInitialRegionLoad = false;
+	private int predictivePreloadPlane = Integer.MIN_VALUE;
+	private int predictivePreloadSectionX = Integer.MIN_VALUE;
+	private int predictivePreloadSectionZ = Integer.MIN_VALUE;
+	private int predictiveWaypointPreloadPlane = Integer.MIN_VALUE;
+	private int predictiveWaypointPreloadSectionX = Integer.MIN_VALUE;
+	private int predictiveWaypointPreloadSectionZ = Integer.MIN_VALUE;
+	private int predictiveCameraPreloadPlane = Integer.MIN_VALUE;
+	private int predictiveCameraPreloadSectionX = Integer.MIN_VALUE;
+	private int predictiveCameraPreloadSectionZ = Integer.MIN_VALUE;
+	private final Map<Integer, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
+		new HashMap<Integer, ResidentObjectChunkCacheEntry>();
 	private int logoutTimeout = 0;
 	private int controlButtonAppearanceBottom2;
 	private int m_be;
@@ -911,6 +937,7 @@ public final class mudclient implements Runnable {
 	private int shopSelectedItemType = -2;
 	private int shopSellPriceMod = 0;
 	private boolean showAppearanceChange = false;
+	private int appearanceInputBlockTicks = 0;
 	private boolean showSetRecoveryQuestion = false;
 	private boolean showSetContactDetails = false;
 	private boolean showDialogBank = false;
@@ -1155,6 +1182,13 @@ public final class mudclient implements Runnable {
 		saveClientSettings(props);
 	}
 
+	private static void saveRendererProfileSettings() {
+		Properties props = loadClientSettings();
+		RendererProfileSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
 	private static void saveRendererFontSettings() {
 		Properties props = loadClientSettings();
 		RendererFontSettings.saveToClientSettings(props);
@@ -1165,6 +1199,27 @@ public final class mudclient implements Runnable {
 	private static void saveRendererBrightnessSettings() {
 		Properties props = loadClientSettings();
 		RendererBrightnessSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRendererFogSettings() {
+		Properties props = loadClientSettings();
+		RendererFogSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRendererLightingSettings() {
+		Properties props = loadClientSettings();
+		RendererLightingSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRendererGeometrySettings() {
+		Properties props = loadClientSettings();
+		RendererGeometrySettings.saveToClientSettings(props);
 
 		saveClientSettings(props);
 	}
@@ -2768,6 +2823,7 @@ public final class mudclient implements Runnable {
 				character.direction = ORSCharacterDirection.lookup(sprite);
 				character.animationNext = character.direction.rsDir;
 				character.stepFrame = 0;
+				resetMovementInterpolation(character);
 				character.npcId = type;
 				character.waypointsZ[0] = character.currentZ = y;
 			}
@@ -2843,6 +2899,7 @@ public final class mudclient implements Runnable {
 				c.waypointIndexCurrent = 0;
 				c.waypointIndexNext = 0;
 				c.stepFrame = 0;
+				resetMovementInterpolation(c);
 				c.direction = direction;
 				c.animationNext = direction.rsDir;
 				c.waypointsZ[0] = c.currentZ = zPosition;
@@ -3049,12 +3106,346 @@ public final class mudclient implements Runnable {
 		model.insertFace(4, indices, texFront, texBack, false);
 		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
 		model.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, -95);
-		if (hasLoadedTerrainForWallObject(x, y, dir)) {
-			this.scene.addModel(model);
-		}
-
 		model.key = index + WALL_OBJECT_KEY_BASE;
 		return model;
+	}
+
+	public void materializeGameObjectInstance(int index) {
+		if (index < 0 || index >= GAME_OBJECT_INSTANCE_CAPACITY || this.gameObjectInstanceMaterialized[index]) {
+			return;
+		}
+		RSModel model = this.gameObjectInstanceModel[index];
+		if (model == null) {
+			return;
+		}
+		int xTile = this.gameObjectInstanceX[index];
+		int zTile = this.gameObjectInstanceZ[index];
+		int objectID = this.gameObjectInstanceID[index];
+		int dir = this.gameObjectInstanceDir[index];
+		if (!hasLoadedTerrainForGameObject(xTile, zTile, objectID, dir)) {
+			return;
+		}
+
+		int xSize;
+		int zSize;
+		if (dir == 0 || dir == 4) {
+			xSize = EntityHandler.getObjectDef(objectID).getWidth();
+			zSize = EntityHandler.getObjectDef(objectID).getHeight();
+		} else {
+			xSize = EntityHandler.getObjectDef(objectID).getHeight();
+			zSize = EntityHandler.getObjectDef(objectID).getWidth();
+		}
+
+		int x = (2 * xTile + xSize) * this.tileSize / 2;
+		int z = this.tileSize * (2 * zTile + zSize) / 2;
+		applyExpandedGameObjectPickBounds(objectID, model);
+		this.scene.addModel(model);
+		model.setTranslate(x, -this.world.getElevation(x, z), z);
+		this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, false);
+		if (objectID == 74) {
+			model.translate2(0, -480, 0);
+		}
+		this.gameObjectInstanceMaterialized[index] = true;
+	}
+
+	public void dematerializeGameObjectInstance(int index) {
+		if (index < 0 || index >= GAME_OBJECT_INSTANCE_CAPACITY || !this.gameObjectInstanceMaterialized[index]) {
+			return;
+		}
+		this.scene.removeModel(this.gameObjectInstanceModel[index]);
+		this.world.removeGameObject_CollisonFlags(this.gameObjectInstanceID[index],
+			this.gameObjectInstanceX[index], this.gameObjectInstanceZ[index]);
+		this.gameObjectInstanceMaterialized[index] = false;
+	}
+
+	public void materializeWallObjectInstance(int index) {
+		if (index < 0 || index >= WALL_OBJECT_INSTANCE_CAPACITY || this.wallObjectInstanceMaterialized[index]) {
+			return;
+		}
+		int x = this.wallObjectInstanceX[index];
+		int z = this.wallObjectInstanceZ[index];
+		int id = this.wallObjectInstanceID[index];
+		int dir = this.wallObjectInstanceDir[index];
+		if (!hasLoadedTerrainForWallObject(x, z, dir)) {
+			return;
+		}
+
+		RSModel model = this.createWallObjectModel(x, z, id, dir, index);
+		this.setWallObjectInstanceModel(index, model);
+		this.scene.addModel(model);
+		this.world.applyWallToCollisionFlags(id, x, z, dir);
+		this.wallObjectInstanceMaterialized[index] = true;
+	}
+
+	public void dematerializeWallObjectInstance(int index) {
+		if (index < 0 || index >= WALL_OBJECT_INSTANCE_CAPACITY || !this.wallObjectInstanceMaterialized[index]) {
+			return;
+		}
+		this.scene.removeModel(this.wallObjectInstanceModel[index]);
+		this.world.removeWallObject_CollisionFlags(true,
+			this.wallObjectInstanceDir[index],
+			this.wallObjectInstanceZ[index],
+			this.wallObjectInstanceX[index],
+			this.wallObjectInstanceID[index]);
+		this.wallObjectInstanceMaterialized[index] = false;
+	}
+
+	private void materializeLoadedTerrainScenery() {
+		for (int i = 0; i < this.gameObjectInstanceCount; i++) {
+			materializeGameObjectInstance(i);
+		}
+		for (int i = 0; i < this.wallObjectInstanceCount; i++) {
+			materializeWallObjectInstance(i);
+		}
+	}
+
+	private void updateSceneryAnimations() {
+		this.scene.d(25013, 17);
+		this.objectAnimationCount++;
+		if (this.objectAnimationCount > 5) {
+			this.objectAnimationCount = 0;
+			this.objectAnimationNumberTorch = (this.objectAnimationNumberTorch + 1) % 4;
+			this.objectAnimationNumberCosmicSparkles =
+				(this.objectAnimationNumberCosmicSparkles + 1) % 4;
+			this.objectAnimationNumberFireLightningSpell =
+				(this.objectAnimationNumberFireLightningSpell + 1) % 3;
+			this.objectAnimationNumberClaw = (this.objectAnimationNumberClaw + 1) % 5;
+		}
+
+		for (int index = 0; index < this.gameObjectInstanceCount; index++) {
+			int x = this.gameObjectInstanceX[index];
+			int z = this.gameObjectInstanceZ[index];
+			if (!World.isLocalTile(x, z) || !this.gameObjectInstanceMaterialized[index]) {
+				continue;
+			}
+			RSModel model = this.gameObjectInstanceModel[index];
+			if (model == null) {
+				continue;
+			}
+			int objectId = this.gameObjectInstanceID[index];
+			if (objectId == 74) {
+				model.addRotation(1, 0, 0);
+				continue;
+			}
+			com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(objectId);
+			if (def != null && "portal".equals(def.getObjectModel())) {
+				model.addRotation(0, 1, 0);
+			}
+		}
+	}
+
+	private Renderer3DWorldChunkFrame appendResidentObjectChunkFrame(Renderer3DWorldChunkFrame baseFrame) {
+		if (!Renderer3DSettings.canUseResidentObjectChunks()) {
+			clearResidentObjectChunkCache();
+			return baseFrame;
+		}
+		if (baseFrame == null || baseFrame.getChunkCount() <= 0) {
+			clearResidentObjectChunkCache();
+			return baseFrame;
+		}
+		List<ResidentObjectChunkInput> objectInputs = buildResidentObjectChunkInputs(baseFrame);
+		if (objectInputs.isEmpty()) {
+			clearResidentObjectChunkCache();
+			return baseFrame;
+		}
+		ArrayList<Renderer3DWorldChunkFrame.ChunkMesh> chunks =
+			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(baseFrame.getChunks());
+		Set<Integer> activeCells = new HashSet<Integer>();
+		for (ResidentObjectChunkInput input : objectInputs) {
+			activeCells.add(input.cellKey);
+			ResidentObjectChunkCacheEntry cached = this.cachedResidentObjectChunks.get(input.cellKey);
+			Renderer3DWorldChunkFrame.ChunkMesh objectChunk;
+			if (cached != null && cached.cacheKey == input.cacheKey) {
+				objectChunk = cached.chunk;
+			} else {
+				objectChunk = buildResidentObjectChunkMesh(input);
+				if (objectChunk == null || objectChunk.getTriangleCount() <= 0) {
+					this.cachedResidentObjectChunks.remove(input.cellKey);
+					continue;
+				}
+				this.cachedResidentObjectChunks.put(
+					input.cellKey,
+					new ResidentObjectChunkCacheEntry(input.cacheKey, objectChunk));
+			}
+			chunks.add(objectChunk);
+		}
+		this.cachedResidentObjectChunks.keySet().retainAll(activeCells);
+		return Renderer3DWorldChunkFrame.fromChunks(chunks);
+	}
+
+	private List<ResidentObjectChunkInput> buildResidentObjectChunkInputs(Renderer3DWorldChunkFrame baseFrame) {
+		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
+		Map<Integer, ResidentObjectChunkInputBuilder> builders =
+			new TreeMap<Integer, ResidentObjectChunkInputBuilder>();
+		for (int i = 0; i < this.gameObjectInstanceCount; i++) {
+			if (this.gameObjectInstanceMaterialized[i] && this.gameObjectInstanceModel[i] != null) {
+				addResidentObjectChunkModel(
+					builders,
+					anchor,
+					this.gameObjectInstanceX[i],
+					this.gameObjectInstanceZ[i],
+					Renderer3DModelKind.GAME_OBJECT,
+					i,
+					this.gameObjectInstanceID[i],
+					this.gameObjectInstanceDir[i],
+					this.gameObjectInstanceModel[i]);
+			}
+		}
+		for (int i = 0; i < this.wallObjectInstanceCount; i++) {
+			if (this.wallObjectInstanceMaterialized[i] && this.wallObjectInstanceModel[i] != null) {
+				addResidentObjectChunkModel(
+					builders,
+					anchor,
+					this.wallObjectInstanceX[i],
+					this.wallObjectInstanceZ[i],
+					Renderer3DModelKind.WALL_OBJECT,
+					i,
+					this.wallObjectInstanceID[i],
+					this.wallObjectInstanceDir[i],
+					this.wallObjectInstanceModel[i]);
+			}
+		}
+		List<ResidentObjectChunkInput> inputs = new ArrayList<ResidentObjectChunkInput>(builders.size());
+		for (ResidentObjectChunkInputBuilder builder : builders.values()) {
+			inputs.add(builder.build());
+		}
+		return inputs;
+	}
+
+	private void addResidentObjectChunkModel(
+		Map<Integer, ResidentObjectChunkInputBuilder> builders,
+		Renderer3DWorldChunkFrame.ChunkMesh anchor,
+		int tileX,
+		int tileZ,
+		Renderer3DModelKind kind,
+		int instanceIndex,
+		int objectId,
+		int direction,
+		RSModel model) {
+		int cellX = Math.floorDiv(tileX, RESIDENT_OBJECT_CHUNK_TILE_SIZE);
+		int cellZ = Math.floorDiv(tileZ, RESIDENT_OBJECT_CHUNK_TILE_SIZE);
+		int cellKey = cellZ * 1024 + cellX;
+		ResidentObjectChunkInputBuilder builder = builders.get(cellKey);
+		if (builder == null) {
+			builder = new ResidentObjectChunkInputBuilder(anchor, cellKey, cellX, cellZ);
+			builders.put(cellKey, builder);
+		}
+		builder.add(kind, instanceIndex, tileX, tileZ, objectId, direction, model);
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input) {
+		return RSModel.buildRenderer3DObjectChunkMesh(
+			input.anchor.getPlane(),
+			input.anchor.getCenterSectionX(),
+			input.anchor.getCenterSectionY(),
+			input.anchor.getOriginWorldX() + input.cellX * RESIDENT_OBJECT_CHUNK_TILE_SIZE * this.tileSize,
+			input.anchor.getOriginWorldZ() + input.cellZ * RESIDENT_OBJECT_CHUNK_TILE_SIZE * this.tileSize,
+			input.models,
+			input.modelCount);
+	}
+
+	private void clearResidentObjectChunkCache() {
+		this.cachedResidentObjectChunks.clear();
+	}
+
+	private static long mixResidentObjectChunkCacheKey(long hash, int value) {
+		hash ^= value & 0xffffffffL;
+		return hash * RESIDENT_OBJECT_CHUNK_FNV_PRIME;
+	}
+
+	private static final class ResidentObjectChunkInput {
+		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
+		private final int cellKey;
+		private final int cellX;
+		private final int cellZ;
+		private final RSModel[] models;
+		private final int modelCount;
+		private final long cacheKey;
+
+		private ResidentObjectChunkInput(
+			Renderer3DWorldChunkFrame.ChunkMesh anchor,
+			int cellKey,
+			int cellX,
+			int cellZ,
+			RSModel[] models,
+			int modelCount,
+			long cacheKey) {
+			this.anchor = anchor;
+			this.cellKey = cellKey;
+			this.cellX = cellX;
+			this.cellZ = cellZ;
+			this.models = models;
+			this.modelCount = modelCount;
+			this.cacheKey = cacheKey;
+		}
+	}
+
+	private static final class ResidentObjectChunkInputBuilder {
+		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
+		private final int cellKey;
+		private final int cellX;
+		private final int cellZ;
+		private final List<RSModel> models = new ArrayList<RSModel>();
+		private long cacheKey;
+
+		private ResidentObjectChunkInputBuilder(
+			Renderer3DWorldChunkFrame.ChunkMesh anchor,
+			int cellKey,
+			int cellX,
+			int cellZ) {
+			this.anchor = anchor;
+			this.cellKey = cellKey;
+			this.cellX = cellX;
+			this.cellZ = cellZ;
+			this.cacheKey = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getPlane());
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getCenterSectionX());
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getCenterSectionY());
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, cellKey);
+		}
+
+		private void add(
+			Renderer3DModelKind kind,
+			int instanceIndex,
+			int tileX,
+			int tileZ,
+			int objectId,
+			int direction,
+			RSModel model) {
+			this.models.add(model);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, kind.ordinal());
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, instanceIndex);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, tileX);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, tileZ);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, objectId);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, direction);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, model.key);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, System.identityHashCode(model));
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, model.getRenderer3DTransformVersion());
+		}
+
+		private ResidentObjectChunkInput build() {
+			RSModel[] modelArray = this.models.toArray(new RSModel[this.models.size()]);
+			long finalCacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, modelArray.length);
+			return new ResidentObjectChunkInput(
+				this.anchor,
+				this.cellKey,
+				this.cellX,
+				this.cellZ,
+				modelArray,
+				modelArray.length,
+				finalCacheKey);
+		}
+	}
+
+	private static final class ResidentObjectChunkCacheEntry {
+		private final long cacheKey;
+		private final Renderer3DWorldChunkFrame.ChunkMesh chunk;
+
+		private ResidentObjectChunkCacheEntry(long cacheKey, Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+			this.cacheKey = cacheKey;
+			this.chunk = chunk;
+		}
 	}
 
 	public boolean hasLoadedTerrainForGameObject(int xTile, int zTile, int objectID, int dir) {
@@ -3154,6 +3545,8 @@ public final class mudclient implements Runnable {
 
 			this.getSurface().interlace = false;
 			this.getSurface().blackScreen(true);
+			this.getSurface().captureRenderer2DUiBaseFrame();
+			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
 			this.panelAppearance.drawPanel();
 			short var2 = 140;
 			int var5 = var2 + 116;
@@ -5576,6 +5969,26 @@ public final class mudclient implements Runnable {
 								int var6 = -this.world.getElevation(var4, var5);
 								int var7 = this.scene.drawSprite(centerX + 5000, var5, centerX + 10000, var4, var6, 145,
 									220, (byte) 109);
+								this.scene.tagCharacterSprite(
+									var7,
+									"PLAYER",
+									centerX,
+									var3.serverIndex,
+									-1,
+									var3.displayName == null ? var3.accountName : var3.displayName,
+									0,
+									0,
+									String.valueOf(var3.direction),
+									isCombatDirection(var3.direction),
+									var3.combatTimeout,
+									var3.healthCurrent,
+									var3.healthMax,
+									var3.damageTaken,
+									var3.attackingNpcServerIndex,
+									var3.attackingPlayerServerIndex,
+									var3.combatEffectType,
+									var3.combatEffectTime,
+									var3.hasActiveHitSplats());
 								++this.spriteCount;
 								if (this.localPlayer == var3) {
 									this.scene.setFaceSpriteLocalPlayer('\u8000', var7);
@@ -5693,9 +6106,30 @@ public final class mudclient implements Runnable {
 						int var4 = var3.currentX + this.npcVisualOffsetX[centerX];
 						int var5 = var3.currentZ + this.npcVisualOffsetZ[centerX];
 						int var6 = -this.world.getElevation(var4, var5);
+						NPCDef npcDef = EntityHandler.getNpcDef(var3.npcId);
 						int var7 = this.scene.drawSprite(20000 + centerX, var5, centerX + 30000, var4, var6,
-							EntityHandler.getNpcDef(var3.npcId).getCamera1(),
-							EntityHandler.getNpcDef(var3.npcId).getCamera2(), (byte) 109);
+							npcDef.getCamera1(),
+							npcDef.getCamera2(), (byte) 109);
+						this.scene.tagCharacterSprite(
+							var7,
+							"NPC",
+							centerX,
+							var3.serverIndex,
+							var3.npcId,
+							npcDef.getName(),
+							this.npcVisualOffsetX[centerX],
+							this.npcVisualOffsetZ[centerX],
+							String.valueOf(var3.direction),
+							isCombatDirection(var3.direction),
+							var3.combatTimeout,
+							var3.healthCurrent,
+							var3.healthMax,
+							var3.damageTaken,
+							var3.attackingNpcServerIndex,
+							var3.attackingPlayerServerIndex,
+							var3.combatEffectType,
+							var3.combatEffectTime,
+							var3.hasActiveHitSplats());
 						++this.spriteCount;
 						if (!useWorldAnchoredCombatSprites() && isCombatDirection(var3.direction)) {
 							this.scene.setCombatXOffset(useCombatBFrames(var3.direction) ? var1 ^ 99 : 86,
@@ -5797,10 +6231,6 @@ public final class mudclient implements Runnable {
 						}
 
 						this.cameraRotation = this.cameraAngle * 32;
-						this.scene.fogLandscapeDistance = 3000;
-						this.scene.fogEntityDistance = 3000;
-						this.scene.fogZFalloff = 1;
-						this.scene.fogSmoothingStartDistance = 2800;
 
 						centerX = this.cameraPositionX + this.cameraAutoMoveX;
 						centerZ = this.cameraPositionZ + this.cameraAutoMoveZ;
@@ -5813,6 +6243,7 @@ public final class mudclient implements Runnable {
 
 						int baseCameraZoom = this.cameraZoom + zoomMultiplier;
 						int scaledCameraZoom = getWorldScaledCameraZoom(baseCameraZoom);
+						applyGameplayFog(scaledCameraZoom);
 						int centerY = -this.world.getElevation(centerX, centerZ) + 180;
 						this.scene.setCamera(centerX, getCameraHeightCompensatedCenterY(centerY, baseCameraZoom, scaledCameraZoom),
 							centerZ, this.getCameraPitch(), this.cameraRotation * 4, 0,
@@ -5822,27 +6253,7 @@ public final class mudclient implements Runnable {
 						if (this.optionCameraModeAuto && !this.isInFirstPersonView() && !this.doCameraZoom) {
 							this.autoRotateCamera((byte) 94);
 						}
-						if (C_HIDE_FOG) {
-							if (!this.interlace) {
-								this.scene.fogZFalloff = 1;
-								int scaledCameraZoom = getWorldScaledCameraZoom(cameraZoom);
-								this.scene.fogLandscapeDistance = gameWidth * 2 + scaledCameraZoom * 2 - 124;
-								this.scene.fogEntityDistance = gameWidth * 2 + scaledCameraZoom * 2 - 124;
-								this.scene.fogSmoothingStartDistance = gameWidth * 2 + scaledCameraZoom * 2 - 224;
-							} else {
-								this.scene.fogZFalloff = 1;
-								int scaledCameraZoom = getWorldScaledCameraZoom(cameraZoom);
-								this.scene.fogLandscapeDistance = gameWidth * 2 + scaledCameraZoom * 2 - 324;
-								this.scene.fogEntityDistance = gameWidth * 2 + scaledCameraZoom * 2 - 324;
-								this.scene.fogSmoothingStartDistance = gameWidth * 2 + scaledCameraZoom * 2 - 424;
-							}
-						} else {
-							this.scene.fogZFalloff = 1;
-							int scaledCameraZoom = getWorldScaledCameraZoom(cameraZoom);
-							this.scene.fogLandscapeDistance = scaledCameraZoom * 6;
-							this.scene.fogEntityDistance = scaledCameraZoom * 6;
-							this.scene.fogSmoothingStartDistance = scaledCameraZoom * 6;
-						}
+						applyGameplayFog(getWorldScaledCameraZoom(cameraZoom));
 
 						centerX = this.cameraPositionX + this.cameraAutoMoveX;
 						centerZ = this.cameraPositionZ + this.cameraAutoMoveZ;
@@ -5854,6 +6265,7 @@ public final class mudclient implements Runnable {
 							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2);
 					}
 
+					this.updateSceneryAnimations();
 					this.queuedProjectileEffectCount = 0;
 					this.queuedCombatEffectCount = 0;
 						long sceneRenderStart = RenderTelemetry.now();
@@ -5861,6 +6273,8 @@ public final class mudclient implements Runnable {
 						RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 						Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
 						if (renderer3DFrame != null) {
+							renderer3DFrame.setWorldChunkFrame(
+								this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame()));
 							Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
 							Renderer3DMeshFrame meshFrame = renderer3DFrame.getMeshFrame();
 							RenderTelemetry.recordWorldGeometryFrame(
@@ -11762,39 +12176,63 @@ public final class mudclient implements Runnable {
 	}
 
 	// custom general menu tab
+	private int addSettingsSection(int index, String label) {
+		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
+			"@yel@" + label, SETTINGS_SECTION_ROW, null, null);
+		return index;
+	}
+
+	private int addSettingsRow(int index, String label, int action) {
+		this.panelSettings.setListEntry(this.controlSettingPanel, index++, label, action, null, null);
+		return index;
+	}
+
+	private int getLegacyScalingSettingsRowIndex() {
+		int index = 0;
+		index++; // Gameplay section.
+		index++; // Camera angle mode.
+		if (wantMembers()) {
+			index++; // Sound effects.
+		}
+		index++; // Video section.
+		return index;
+	}
+
 	private void drawGeneralSettingsOptions(int baseX, short boxWidth, int x, int y) {
 		int var4 = y - 15;
 		this.panelSettings.clearList(this.controlSettingPanel);
 		int index = 0;
 		this.getSurface().drawString("Game options", 3 + baseX, y, 0, 1);
 
+		index = addSettingsSection(index, "Gameplay");
+
 		// camera angle mode - byte index 1
 		if (this.optionCameraModeAuto) {
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Camera angle mode - @gre@Auto", 0, null, null);
+			index = addSettingsRow(index, "@whi@Camera angle mode - @gre@Auto", 0);
 		} else {
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Camera angle mode - @red@Manual", 0, null, null);
+			index = addSettingsRow(index, "@whi@Camera angle mode - @red@Manual", 0);
 		}
 
 		// sound effects - byte index 2
 		if (wantMembers()) {
 			if (optionSoundDisabled) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Sound effects - @red@off", 2, null, null);
+				index = addSettingsRow(index, "@whi@Sound effects - @red@off", 2);
 			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Sound effects - @gre@on", 2, null, null);
+				index = addSettingsRow(index, "@whi@Sound effects - @gre@on", 2);
 			}
 		}
 
 		// Client scaling is a legacy software-presenter option. OpenGL-primary uses
 		// the selected render surface directly and applies automatic aspect-fit bars.
 
-		int scalarOptionIdx = wantMembers() ? 2 : 1;
 		boolean isOpenGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
 		boolean isScalarOptionOffered = !isAndroid() && !isOpenGLPrimaryWindow;
+		int scalarOptionIdx = getLegacyScalingSettingsRowIndex();
 		boolean isScalarOptionShowing = panelSettings.controlScrollAmount[0] <= scalarOptionIdx && isScalarOptionOffered;
+
+		if (!isAndroid()) {
+			index = addSettingsSection(index, "Video");
+		}
 
 		if (isScalarOptionOffered) {
 			if (isScalarOptionShowing) {
@@ -11855,7 +12293,7 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawString("[ " + plusButtonLabel + " ]", this.gameWidth - SETTINGS_SCALE_PLUS_X_OFFSET, yPos, plusButtonColor, 1);
 			}
 
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++, "@whi@Scaling - ", 49, null, null);
+			index = addSettingsRow(index, "@whi@Scaling - ", 49);
 
 			// scaling type - byte index 46
 			String scalingTypeDescription;
@@ -11872,35 +12310,37 @@ public final class mudclient implements Runnable {
 					break;
 			}
 
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Scaling type - @gre@" + scalingTypeDescription, 46, null, null);
+			index = addSettingsRow(index, "@whi@Scaling type - @gre@" + scalingTypeDescription, 46);
 		}
 
 		if (!isAndroid()) {
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Resolution - " + RenderSurfaceSettings.getMode().label, 56, null, null);
+			index = addSettingsRow(index, "@whi@Resolution - " + RenderSurfaceSettings.getMode().label, 56);
 		}
 		if (!isAndroid() && isOpenGLPrimaryWindow) {
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Font - " + RendererFontSettings.getMode().label, 57, null, null);
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Brightness - " + RendererBrightnessSettings.getMode().label, 58, null, null);
+			index = addSettingsSection(index, "Graphics");
+			index = addSettingsRow(index, "@whi@Renderer - " + RendererProfileSettings.getMode().label, 59);
+			index = addSettingsRow(index, "@whi@Geometry - " + RendererGeometrySettings.getMode().label, 62);
+			index = addSettingsRow(index, "@whi@Brightness - " + RendererBrightnessSettings.getMode().label, 58);
+			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
+			index = addSettingsSection(index, "Interface");
+			index = addSettingsRow(index, "@whi@Font - " + RendererFontSettings.getMode().label, 57);
+		}
+
+		if (!isOpenGLPrimaryWindow) {
+			index = addSettingsSection(index, "Interface");
 		}
 
 		// mouse button(s) - byte index 1
 		if (this.optionMouseButtonOne) {
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Mouse buttons - @red@One", 1, null, null);
+			index = addSettingsRow(index, "@whi@Mouse buttons - @red@One", 1);
 		} else {
-			this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-				"@whi@Mouse buttons - @gre@Two", 1, null, null);
+			index = addSettingsRow(index, "@whi@Mouse buttons - @gre@Two", 1);
 		}
 
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-			"@whi@Minimap position - @gre@" + this.getMinimapPositionLabel(), 50, null, null);
+		index = addSettingsRow(index, "@whi@Minimap position - @gre@" + this.getMinimapPositionLabel(), 50);
 
-		this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-			"@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"), 51, null, null);
+		index = addSettingsRow(index,
+			"@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"), 51);
 
 		// custom UI
 		if (S_WANT_CUSTOM_UI) {
@@ -11969,17 +12409,6 @@ public final class mudclient implements Runnable {
 			} else {
 				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
 					"@whi@Hide Roofs - @gre@On", 26, null, null);
-			}
-		}
-
-		// fog toggle
-		if (S_FOG_TOGGLE) {
-			if (!C_HIDE_FOG) {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Fog - @red@Off", 27, null, null);
-			} else {
-				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
-					"@whi@Fog - @gre@On", 27, null, null);
 			}
 		}
 
@@ -12299,6 +12728,9 @@ public final class mudclient implements Runnable {
 			settingIndex = checkPosition;
 
 		//System.out.println("Setting index is: " + settingIndex); // DO NOT REMOVE THIS, IT IS VERY HELPFUL
+		if (settingIndex == SETTINGS_SECTION_ROW) {
+			return;
+		}
 
 		// camera mode - byte index 0
 		if (settingIndex == 0 && this.mouseButtonClick == 1) {
@@ -12320,8 +12752,8 @@ public final class mudclient implements Runnable {
 
 		/* Client scale is a legacy software-presenter option handled by its +/- buttons. */
 
-		int scalarOptionIdx = wantMembers() ? 2 : 1;
 		boolean isOpenGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
+		int scalarOptionIdx = getLegacyScalingSettingsRowIndex();
 		boolean isScalarOptionShowing = !isAndroid()
 			&& !isOpenGLPrimaryWindow
 			&& panelSettings.controlScrollAmount[0] <= scalarOptionIdx;
@@ -12362,6 +12794,15 @@ public final class mudclient implements Runnable {
 		if (isOpenGLPrimaryWindow && settingIndex == 58 && this.mouseButtonClick == 1) {
 			cycleOpenGLBrightnessMode();
 		}
+		if (isOpenGLPrimaryWindow && settingIndex == 59 && this.mouseButtonClick == 1) {
+			cycleOpenGLRendererProfileMode();
+		}
+		if (isOpenGLPrimaryWindow && settingIndex == 60 && this.mouseButtonClick == 1) {
+			cycleOpenGLFogMode();
+		}
+		if (isOpenGLPrimaryWindow && settingIndex == 62 && this.mouseButtonClick == 1) {
+			cycleOpenGLGeometryMode();
+		}
 
 		// one or two mouse button(s) - byte index 1
 		if (settingIndex == 1 && this.mouseButtonClick == 1) {
@@ -12399,20 +12840,11 @@ public final class mudclient implements Runnable {
 		// hide roofs toggle - byte index 26
 		if (settingIndex == 26 && this.mouseButtonClick == 1 && S_SHOW_ROOF_TOGGLE) {
 			C_HIDE_ROOFS = !C_HIDE_ROOFS;
+			this.reloadCurrentRegionForRoofVisibility();
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(26);
 			boolean optionHideRoofs = C_HIDE_ROOFS;
 			this.packetHandler.getClientStream().bufferBits.putByte(optionHideRoofs ? 1 : 0);
-			this.packetHandler.getClientStream().finishPacket();
-		}
-
-		// fog toggle - byte index 27
-		if (settingIndex == 27 && this.mouseButtonClick == 1 && S_FOG_TOGGLE) {
-			C_HIDE_FOG = !C_HIDE_FOG;
-			this.packetHandler.getClientStream().newPacket(111);
-			this.packetHandler.getClientStream().bufferBits.putByte(27);
-			boolean setting = C_HIDE_FOG;
-			this.packetHandler.getClientStream().bufferBits.putByte(setting ? 1 : 0);
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
@@ -13764,10 +14196,50 @@ public final class mudclient implements Runnable {
 		System.out.println("[renderer-v2] OpenGL UI font: " + mode.id);
 	}
 
+	void cycleOpenGLRendererProfileMode() {
+		RendererProfileSettings.Mode mode = RendererProfileSettings.setMode(RendererProfileSettings.Mode.CLASSIC);
+		RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
+		RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
+		RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);
+		RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
+		saveRendererBrightnessSettings();
+		saveRendererFogSettings();
+		saveRendererLightingSettings();
+		saveRendererGeometrySettings();
+		saveRendererProfileSettings();
+		System.out.println("[renderer-v2] OpenGL renderer profile: " + mode.id);
+	}
+
 	void cycleOpenGLBrightnessMode() {
 		RendererBrightnessSettings.Mode mode = RendererBrightnessSettings.cycleMode();
+		RendererProfileSettings.markCustom();
 		saveRendererBrightnessSettings();
+		saveRendererProfileSettings();
 		System.out.println("[renderer-v2] OpenGL brightness: " + mode.id);
+	}
+
+	void cycleOpenGLFogMode() {
+		RendererFogSettings.Mode mode = RendererFogSettings.cycleMode();
+		RendererProfileSettings.markCustom();
+		saveRendererFogSettings();
+		saveRendererProfileSettings();
+		System.out.println("[renderer-v2] OpenGL fog: " + mode.id);
+	}
+
+	void cycleOpenGLLightingMode() {
+		RendererLightingSettings.Mode mode = RendererLightingSettings.cycleMode();
+		RendererProfileSettings.markCustom();
+		saveRendererLightingSettings();
+		saveRendererProfileSettings();
+		System.out.println("[renderer-v2] OpenGL lighting: " + mode.id);
+	}
+
+	void cycleOpenGLGeometryMode() {
+		RendererGeometrySettings.Mode mode = RendererGeometrySettings.cycleMode();
+		RendererProfileSettings.markCustom();
+		saveRendererGeometrySettings();
+		saveRendererProfileSettings();
+		System.out.println("[renderer-v2] OpenGL geometry: " + mode.id);
 	}
 
 	private void fetchContainerSize() {
@@ -14078,7 +14550,13 @@ public final class mudclient implements Runnable {
 			}
 
 			if (this.showAppearanceChange) {
-				this.handleAppearancePanelControls(86);
+				if (this.appearanceInputBlockTicks > 0) {
+					this.appearanceInputBlockTicks--;
+					this.currentMouseButtonDown = 0;
+					this.lastMouseButtonDown = 0;
+				} else {
+					this.handleAppearancePanelControls(86);
+				}
 			} else if (this.showSetRecoveryQuestion) {
 				this.method_181();
 			} else if (this.showSetContactDetails) {
@@ -14090,10 +14568,12 @@ public final class mudclient implements Runnable {
 				int waypointIndexNext;
 				int stepsToMove;
 				int amountToMove;
+				final long movementFrameNow = System.currentTimeMillis();
 				for (updateIndex = 0; updateIndex < this.playerCount; ++updateIndex) {
 					updateEntity = this.players[updateIndex];
 					waypointIndexCurrent = (1 + updateEntity.waypointIndexCurrent) % 10;
 					if (updateEntity.waypointIndexNext == waypointIndexCurrent) {
+						resetMovementInterpolation(updateEntity);
 						updateEntity.direction = ORSCharacterDirection.lookup(updateEntity.animationNext);
 					} else {
 						ORSCharacterDirection characterDirection = null;
@@ -14104,7 +14584,7 @@ public final class mudclient implements Runnable {
 							stepsToMove = 10 + waypointIndexCurrent - waypointIndexNext;
 						}
 
-						amountToMove = Config.C_MOVE_PER_FRAME;
+						amountToMove = movementAmountForFrame(updateEntity, Config.C_MOVE_PER_FRAME, movementFrameNow);
 						if (stepsToMove > 2) {
 							amountToMove = stepsToMove * amountToMove - amountToMove;
 						}
@@ -14162,6 +14642,7 @@ public final class mudclient implements Runnable {
 						} else {
 							updateEntity.currentX = updateEntity.waypointsX[waypointIndexNext];
 							updateEntity.currentZ = updateEntity.waypointsZ[waypointIndexNext];
+							resetMovementInterpolation(updateEntity);
 						}
 
 						if (characterDirection != null) {
@@ -14206,6 +14687,7 @@ public final class mudclient implements Runnable {
 					updateEntity = this.npcs[updateIndex];
 					waypointIndexCurrent = (updateEntity.waypointIndexCurrent + 1) % 10;
 					if (waypointIndexCurrent == updateEntity.waypointIndexNext) {
+						resetMovementInterpolation(updateEntity);
 						if (updateEntity.npcId == 43) {
 							++updateEntity.stepFrame;
 						}
@@ -14220,7 +14702,7 @@ public final class mudclient implements Runnable {
 							stepsToMove = waypointIndexCurrent - waypointIndexNext;
 						}
 
-						amountToMove = Config.C_NPC_MOVE_PER_FRAME;
+						amountToMove = movementAmountForFrame(updateEntity, Config.C_NPC_MOVE_PER_FRAME, movementFrameNow);
 						if (stepsToMove > 2) {
 							amountToMove = (stepsToMove - 1) * amountToMove;
 						}
@@ -14278,6 +14760,7 @@ public final class mudclient implements Runnable {
 						} else {
 							updateEntity.currentX = updateEntity.waypointsX[waypointIndexNext];
 							updateEntity.currentZ = updateEntity.waypointsZ[waypointIndexNext];
+							resetMovementInterpolation(updateEntity);
 						}
 
 						if (characterDirection != null) {
@@ -14401,6 +14884,8 @@ public final class mudclient implements Runnable {
 					this.cameraPositionX = this.localPlayer.currentX;
 					this.cameraPositionZ = this.localPlayer.currentZ;
 				}
+
+				this.preloadTerrainForActiveMovementContext();
 
 				if (!this.isSleeping) {
 					if (mouseY > (getGameHeight() - 4)) { // Chat Tab Selection
@@ -14671,29 +15156,6 @@ public final class mudclient implements Runnable {
 						amountToZoom += 1;
 					}
 
-					this.scene.d(25013, 17);
-					++this.objectAnimationCount;
-					if (this.objectAnimationCount > 5) {
-						this.objectAnimationCount = 0;
-						this.objectAnimationNumberTorch = (1 + this.objectAnimationNumberTorch) % 4;
-						this.objectAnimationNumberCosmicSparkles =
-							(1 + this.objectAnimationNumberCosmicSparkles) % 4;
-						this.objectAnimationNumberFireLightningSpell = (1
-							+ this.objectAnimationNumberFireLightningSpell) % 3;
-						this.objectAnimationNumberClaw = (1 + this.objectAnimationNumberClaw) % 5;
-					}
-
-					for (updateIndex = 0; updateIndex < this.gameObjectInstanceCount; ++updateIndex) {
-						var10 = this.gameObjectInstanceX[updateIndex];
-						waypointIndexCurrent = this.gameObjectInstanceZ[updateIndex];
-						if (World.isLocalTile(var10, waypointIndexCurrent)) {
-							if (this.gameObjectInstanceID[updateIndex] == 74)
-								this.gameObjectInstanceModel[updateIndex].addRotation(1, 0, 0);
-							else if (EntityHandler.getObjectDef(this.gameObjectInstanceID[updateIndex]).getObjectModel() == "portal")
-								this.gameObjectInstanceModel[updateIndex].addRotation(0, 1, 0);
-						}
-					}
-
 					for (updateIndex = 0; updateIndex < this.teleportBubbleCount; ++updateIndex) {
 						++this.teleportBubbleTime[updateIndex];
 						if (this.teleportBubbleTime[updateIndex] > 50) {
@@ -14776,6 +15238,26 @@ public final class mudclient implements Runnable {
 
 	private int getWorldScaledCameraZoom(int zoom) {
 		return zoom;
+	}
+
+	private void applyGameplayFog(int scaledCameraZoom) {
+		RendererFogSettings.Mode fogMode = RendererFogSettings.getMode();
+		int cameraDepthOffset = scaledCameraZoom * 2;
+		int drawDistance;
+		int fogStartDistance;
+		if (fogMode == RendererFogSettings.Mode.OFF) {
+			drawDistance = cameraDepthOffset + World.LOCAL_TILE_COUNT * this.tileSize;
+			fogStartDistance = drawDistance;
+		} else {
+			drawDistance = cameraDepthOffset + fogMode.drawDistanceTiles * this.tileSize;
+			fogStartDistance = cameraDepthOffset + fogMode.fogStartTiles * this.tileSize;
+		}
+
+		this.scene.fogLandscapeDistance = drawDistance;
+		this.scene.fogEntityDistance = drawDistance;
+		this.scene.fogSmoothingStartDistance = fogStartDistance;
+		int fadeDistance = Math.max(0, drawDistance - fogStartDistance);
+		this.scene.fogZFalloff = Math.max(1, (fadeDistance + 254) / 255);
 	}
 
 	private int getCameraHeightCompensatedCenterY(int baseCenterY, int baseZoom, int scaledZoom) {
@@ -17079,8 +17561,8 @@ public final class mudclient implements Runnable {
 					int baseDZ = this.midRegionBaseZ - oldBaseZ;
 
 					if (hardAreaLoad || heightOffsetChanged) {
-						this.gameObjectInstanceCount = 0;
-						this.wallObjectInstanceCount = 0;
+						this.setGameObjectInstanceCount(0);
+						this.setWallObjectInstanceCount(0);
 					}
 
 					for (int i = 0; this.gameObjectInstanceCount > i; ++i) {
@@ -17088,37 +17570,14 @@ public final class mudclient implements Runnable {
 						this.gameObjectInstanceZ[i] -= baseDZ;
 						int xTile = this.gameObjectInstanceX[i];
 						int zTile = this.gameObjectInstanceZ[i];
-						int objectID = this.gameObjectInstanceID[i];
-						RSModel model = this.gameObjectInstanceModel[i];
+						this.gameObjectInstanceMaterialized[i] = false;
 
 						try {
 							int dir = this.gameObjectInstanceDir[i];
 							this.getWorld().registerObjectDir(xTile, zTile, dir);
-							int xSize;
-							int zSize;
-							if (dir == 0 || dir == 4) {
-								xSize = EntityHandler.getObjectDef(objectID).getWidth();
-								zSize = EntityHandler.getObjectDef(objectID).getHeight();
-							} else {
-								xSize = EntityHandler.getObjectDef(objectID).getHeight();
-								zSize = EntityHandler.getObjectDef(objectID).getWidth();
-							}
-
-							int x = (2 * xTile + xSize) * this.tileSize / 2;
-							int z = this.tileSize * (2 * zTile + zSize) / 2;
-							applyExpandedGameObjectPickBounds(objectID, model);
-							if (World.isLocalTile(xTile, zTile)) {
-								this.scene.addModel(model);
-								model.setTranslate(x, -this.world.getElevation(x, z), z);
-								this.world.addGameObject_UpdateCollisionMap(xTile, zTile, objectID, var3);
-								if (objectID == 74) {
-									model.translate2(0, -480, 0);
-								}
-
-							}
 						} catch (RuntimeException var21) {
 							System.out.println("Loc Error: " + var21.getMessage());
-							System.out.println("i:" + i + " obj:" + model);
+							System.out.println("i:" + i + " obj:" + this.gameObjectInstanceModel[i]);
 							var21.printStackTrace();
 						}
 					}
@@ -17128,19 +17587,18 @@ public final class mudclient implements Runnable {
 						this.wallObjectInstanceZ[i] -= baseDZ;
 						int xTile = this.wallObjectInstanceX[i];
 						int zTile = this.wallObjectInstanceZ[i];
-						int id = this.wallObjectInstanceID[i];
 						int dir = this.wallObjectInstanceDir[i];
+						this.wallObjectInstanceMaterialized[i] = false;
+						this.wallObjectInstanceModel[i] = null;
 
 						try {
 							this.getWorld().registerObjectDir(xTile, zTile, dir);
-							this.world.applyWallToCollisionFlags(id, xTile, zTile, dir);
-							RSModel var25 = this.createWallObjectModel(xTile, zTile, id, dir, i);
-							this.setWallObjectInstanceModel(i, var25);
 						} catch (RuntimeException var20) {
 							System.out.println("Bound Error: " + var20.getMessage());
 							var20.printStackTrace();
 						}
 					}
+					this.materializeLoadedTerrainScenery();
 
 					if (hardAreaLoad || heightOffsetChanged) {
 						this.groundItemCount = 0;
@@ -20178,6 +20636,7 @@ public final class mudclient implements Runnable {
 			this.loginScreenNumber = 0;
 			this.logoutTimeout = 0;
 			this.hasCompletedInitialRegionLoad = false;
+			this.resetPredictiveTerrainPreload();
 
 			this.currentViewMode = GameMode.GAME;
 			this.clearInputString80((byte) -49);
@@ -20197,20 +20656,16 @@ public final class mudclient implements Runnable {
 
 			int i;
 			for (i = 0; i < this.gameObjectInstanceCount; ++i) {
-				this.scene.removeModel(this.gameObjectInstanceModel[i]);
-				this.world.removeGameObject_CollisonFlags(this.gameObjectInstanceID[i],
-					this.gameObjectInstanceX[i], this.gameObjectInstanceZ[i]);
+				this.dematerializeGameObjectInstance(i);
 			}
 
 			for (i = 0; i < this.wallObjectInstanceCount; ++i) {
-				this.scene.removeModel(this.wallObjectInstanceModel[i]);
-				this.world.removeWallObject_CollisionFlags(true, this.wallObjectInstanceDir[i],
-					this.wallObjectInstanceZ[i], this.wallObjectInstanceX[i], this.wallObjectInstanceID[i]);
+				this.dematerializeWallObjectInstance(i);
 			}
 
 			this.groundItemCount = 0;
-			this.gameObjectInstanceCount = 0;
-			this.wallObjectInstanceCount = 0;
+			this.setGameObjectInstanceCount(0);
+			this.setWallObjectInstanceCount(0);
 			this.playerCount = 0;
 
 			for (i = 0; i < 4000; ++i) {
@@ -20346,6 +20801,7 @@ public final class mudclient implements Runnable {
 	private void sendBlinkToTile(int tileX, int tileZ) {
 		int clickX = tileX + this.midRegionBaseX;
 		int clickY = tileZ + this.midRegionBaseZ;
+		preloadTerrainForLocalTarget(tileX, tileZ);
 		this.packetHandler.getClientStream().newPacket(Opcodes.Out.BLINK.getOpcode());
 		this.packetHandler.getClientStream().bufferBits.putShort(clickX);
 		this.packetHandler.getClientStream().bufferBits.putShort(clickY);
@@ -20411,6 +20867,7 @@ public final class mudclient implements Runnable {
 					this.packetHandler.getClientStream().bufferBits.putByte(this.pathZ[var11] - startZ);
 				}
 
+				preloadTerrainForLocalTarget(x1, z1);
 				this.packetHandler.getClientStream().finishPacket();
 				this.mouseWalkX = this.mouseX;
 				this.mouseWalkY = this.mouseY;
@@ -20983,6 +21440,10 @@ public final class mudclient implements Runnable {
 		debugLocalWalkUpdateBudget--;
 	}
 
+	public void preloadTerrainForIncomingWorldPosition(int worldX, int worldZ) {
+		preloadTerrainForWorldTarget(worldX, worldZ);
+	}
+
 	public void applyCustomMovementUpdate(int worldX, int worldZ, int direction) {
 		if (this.localPlayer == null) {
 			return;
@@ -20991,6 +21452,7 @@ public final class mudclient implements Runnable {
 			return;
 		}
 
+		preloadTerrainForIncomingWorldPosition(worldX, worldZ);
 		boolean needNextRegion = loadNextRegion(worldZ, worldX, false);
 		this.playerLocalX = worldX - this.midRegionBaseX;
 		this.playerLocalZ = worldZ - this.midRegionBaseZ;
@@ -21006,8 +21468,144 @@ public final class mudclient implements Runnable {
 			this.localPlayer.waypointIndexCurrent = 0;
 			this.localPlayer.currentX = this.localPlayer.waypointsX[0] = currentX;
 			this.localPlayer.currentZ = this.localPlayer.waypointsZ[0] = currentZ;
+			resetMovementInterpolation(this.localPlayer);
 		}
 		appendCustomMovementWaypoint(this.localPlayer, this.playerLocalX, this.playerLocalZ, direction);
+	}
+
+	private void preloadTerrainForLocalTarget(int localTileX, int localTileZ) {
+		preloadTerrainForWorldTarget(this.midRegionBaseX + localTileX, this.midRegionBaseZ + localTileZ);
+	}
+
+	private void preloadTerrainForWorldTarget(int worldX, int worldZ) {
+		preloadTerrainForWorldTarget(worldX, worldZ, PREDICTIVE_PRELOAD_SOURCE_TARGET);
+	}
+
+	private void preloadTerrainForWorldTarget(int worldX, int worldZ, int source) {
+		if (this.world == null || !this.hasCompletedInitialRegionLoad || this.loadingArea) {
+			return;
+		}
+		int preloadWorldX = worldX + this.worldOffsetX;
+		int preloadWorldZ = worldZ + this.worldOffsetZ;
+		int sectionX = World.worldTileToSection(preloadWorldX);
+		int sectionZ = World.worldTileToSection(preloadWorldZ);
+		if (isPredictivePreloadSectionCurrent(source, sectionX, sectionZ)) {
+			return;
+		}
+		markPredictivePreloadSection(source, sectionX, sectionZ);
+		this.world.preloadSections(preloadWorldX, preloadWorldZ, this.requestedPlane);
+	}
+
+	private boolean isPredictivePreloadSectionCurrent(int source, int sectionX, int sectionZ) {
+		if (source == PREDICTIVE_PRELOAD_SOURCE_WAYPOINT) {
+			return this.predictiveWaypointPreloadPlane == this.requestedPlane
+				&& this.predictiveWaypointPreloadSectionX == sectionX
+				&& this.predictiveWaypointPreloadSectionZ == sectionZ;
+		}
+		if (source == PREDICTIVE_PRELOAD_SOURCE_CAMERA) {
+			return this.predictiveCameraPreloadPlane == this.requestedPlane
+				&& this.predictiveCameraPreloadSectionX == sectionX
+				&& this.predictiveCameraPreloadSectionZ == sectionZ;
+		}
+		return this.predictivePreloadPlane == this.requestedPlane
+			&& this.predictivePreloadSectionX == sectionX
+			&& this.predictivePreloadSectionZ == sectionZ;
+	}
+
+	private void markPredictivePreloadSection(int source, int sectionX, int sectionZ) {
+		if (source == PREDICTIVE_PRELOAD_SOURCE_WAYPOINT) {
+			this.predictiveWaypointPreloadPlane = this.requestedPlane;
+			this.predictiveWaypointPreloadSectionX = sectionX;
+			this.predictiveWaypointPreloadSectionZ = sectionZ;
+			return;
+		}
+		if (source == PREDICTIVE_PRELOAD_SOURCE_CAMERA) {
+			this.predictiveCameraPreloadPlane = this.requestedPlane;
+			this.predictiveCameraPreloadSectionX = sectionX;
+			this.predictiveCameraPreloadSectionZ = sectionZ;
+			return;
+		}
+		this.predictivePreloadPlane = this.requestedPlane;
+		this.predictivePreloadSectionX = sectionX;
+		this.predictivePreloadSectionZ = sectionZ;
+	}
+
+	private void preloadTerrainForActiveMovementContext() {
+		if (this.localPlayer == null || this.world == null || !this.hasCompletedInitialRegionLoad || this.loadingArea) {
+			return;
+		}
+		preloadTerrainForActiveWaypoint();
+		preloadTerrainForCameraDirection();
+	}
+
+	private void preloadTerrainForActiveWaypoint() {
+		int nextWaypoint = this.localPlayer.waypointIndexNext;
+		if (nextWaypoint < 0 || nextWaypoint >= this.localPlayer.waypointsX.length) {
+			return;
+		}
+		int inactiveWaypoint = (this.localPlayer.waypointIndexCurrent + 1) % this.localPlayer.waypointsX.length;
+		if (nextWaypoint == inactiveWaypoint) {
+			return;
+		}
+		int targetTileX = localPixelToTile(this.localPlayer.waypointsX[nextWaypoint]);
+		int targetTileZ = localPixelToTile(this.localPlayer.waypointsZ[nextWaypoint]);
+		preloadTerrainForWorldTarget(
+			this.midRegionBaseX + targetTileX,
+			this.midRegionBaseZ + targetTileZ,
+			PREDICTIVE_PRELOAD_SOURCE_WAYPOINT);
+	}
+
+	private void preloadTerrainForCameraDirection() {
+		int direction = ((this.cameraRotation + 16) / 32) & 7;
+		int playerTileX = localPixelToTile(this.localPlayer.currentX);
+		int playerTileZ = localPixelToTile(this.localPlayer.currentZ);
+		int targetTileX = playerTileX + PREDICTIVE_CAMERA_STEP_X[direction] * PREDICTIVE_CAMERA_PRELOAD_DISTANCE_TILES;
+		int targetTileZ = playerTileZ + PREDICTIVE_CAMERA_STEP_Z[direction] * PREDICTIVE_CAMERA_PRELOAD_DISTANCE_TILES;
+		preloadTerrainForWorldTarget(
+			this.midRegionBaseX + targetTileX,
+			this.midRegionBaseZ + targetTileZ,
+			PREDICTIVE_PRELOAD_SOURCE_CAMERA);
+	}
+
+	private int localPixelToTile(int localPixel) {
+		return Math.floorDiv(localPixel - 64, this.tileSize);
+	}
+
+	private int movementAmountForFrame(ORSCharacter character, int configuredPixelsPerClassicFrame, long frameNow) {
+		int safeMovePerClassicFrame = Math.max(1, configuredPixelsPerClassicFrame);
+		long previousFrame = character.movementLastFrameMillis;
+		int targetFps = ScaledWindow.isOpenGLPrimaryWindowEnabled()
+			? OPENGL_PRIMARY_TARGET_FPS
+			: Math.max(1, getFPS());
+		double elapsedMillis = previousFrame <= 0L
+			? 1000.0D / targetFps
+			: Math.max(1L, Math.min(250L, frameNow - previousFrame));
+		character.movementLastFrameMillis = frameNow;
+
+		double pixels = (elapsedMillis / 20.0D) * safeMovePerClassicFrame + character.movementPixelRemainder;
+		int amount = (int)Math.floor(pixels);
+		character.movementPixelRemainder = pixels - amount;
+		return Math.max(1, amount);
+	}
+
+	private void resetMovementInterpolation(ORSCharacter character) {
+		if (character == null) {
+			return;
+		}
+		character.movementLastFrameMillis = 0L;
+		character.movementPixelRemainder = 0.0D;
+	}
+
+	private void resetPredictiveTerrainPreload() {
+		this.predictivePreloadPlane = Integer.MIN_VALUE;
+		this.predictivePreloadSectionX = Integer.MIN_VALUE;
+		this.predictivePreloadSectionZ = Integer.MIN_VALUE;
+		this.predictiveWaypointPreloadPlane = Integer.MIN_VALUE;
+		this.predictiveWaypointPreloadSectionX = Integer.MIN_VALUE;
+		this.predictiveWaypointPreloadSectionZ = Integer.MIN_VALUE;
+		this.predictiveCameraPreloadPlane = Integer.MIN_VALUE;
+		this.predictiveCameraPreloadSectionX = Integer.MIN_VALUE;
+		this.predictiveCameraPreloadSectionZ = Integer.MIN_VALUE;
 	}
 
 	public void applyCustomPlayerMovementUpdate(int serverIndex, int worldX, int worldZ, int direction) {
@@ -21039,8 +21637,12 @@ public final class mudclient implements Runnable {
 		int pixelX = localTileX * this.tileSize + 64;
 		int pixelZ = localTileZ * this.tileSize + 64;
 		int waypointIdx = character.waypointIndexCurrent;
+		boolean wasIdle = character.waypointIndexNext == (waypointIdx + 1) % character.waypointsX.length;
 		character.animationNext = direction;
 		if (character.waypointsX[waypointIdx] != pixelX || character.waypointsZ[waypointIdx] != pixelZ) {
+			if (wasIdle) {
+				resetMovementInterpolation(character);
+			}
 			character.waypointIndexCurrent = waypointIdx = (waypointIdx + 1) % 10;
 			character.waypointsX[waypointIdx] = pixelX;
 			character.waypointsZ[waypointIdx] = pixelZ;
@@ -21093,6 +21695,10 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGameObjectInstanceCount(int i) {
+		for (int index = Math.max(0, i); index < this.gameObjectInstanceCount; index++) {
+			this.gameObjectInstanceMaterialized[index] = false;
+			this.gameObjectInstanceModel[index] = null;
+		}
 		this.gameObjectInstanceCount = i;
 	}
 
@@ -21118,12 +21724,22 @@ public final class mudclient implements Runnable {
 
 	public void setGameObjectInstanceModel(int i, RSModel m) {
 		this.gameObjectInstanceModel[i] = m;
-		this.gameObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
-		this.gameObjectInstanceModel[i].key = i;
+		if (this.gameObjectInstanceModel[i] != null) {
+			this.gameObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
+			this.gameObjectInstanceModel[i].key = i;
+		}
 	}
 
 	public RSModel getGameObjectInstanceModel(int i) {
 		return this.gameObjectInstanceModel[i];
+	}
+
+	public boolean isGameObjectInstanceMaterialized(int i) {
+		return this.gameObjectInstanceMaterialized[i];
+	}
+
+	public void setGameObjectInstanceMaterialized(int i, boolean materialized) {
+		this.gameObjectInstanceMaterialized[i] = materialized;
 	}
 
 	public void setGameObjectInstanceID(int i, int n) {
@@ -21147,6 +21763,10 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setWallObjectInstanceCount(int i) {
+		for (int index = Math.max(0, i); index < this.wallObjectInstanceCount; index++) {
+			this.wallObjectInstanceMaterialized[index] = false;
+			this.wallObjectInstanceModel[index] = null;
+		}
 		this.wallObjectInstanceCount = i;
 	}
 
@@ -21172,12 +21792,22 @@ public final class mudclient implements Runnable {
 
 	public void setWallObjectInstanceModel(int i, RSModel n) {
 		this.wallObjectInstanceModel[i] = n;
-		this.wallObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
-		this.wallObjectInstanceModel[i].key = i + WALL_OBJECT_KEY_BASE;
+		if (this.wallObjectInstanceModel[i] != null) {
+			this.wallObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
+			this.wallObjectInstanceModel[i].key = i + WALL_OBJECT_KEY_BASE;
+		}
 	}
 
 	public RSModel getWallObjectInstanceModel(int i) {
 		return this.wallObjectInstanceModel[i];
+	}
+
+	public boolean isWallObjectInstanceMaterialized(int i) {
+		return this.wallObjectInstanceMaterialized[i];
+	}
+
+	public void setWallObjectInstanceMaterialized(int i, boolean materialized) {
+		this.wallObjectInstanceMaterialized[i] = materialized;
 	}
 
 	public void setWallObjectInstanceDir(int i, int n) {
@@ -21207,7 +21837,16 @@ public final class mudclient implements Runnable {
 	public boolean isRenderer3DWorldReady() {
 		return this.currentViewMode == GameMode.GAME
 			&& this.hasCompletedInitialRegionLoad
-			&& !this.loadingArea;
+			&& !this.loadingArea
+			&& !this.isFullScreenModalUiActive();
+	}
+
+	public boolean isFullScreenModalUiActive() {
+		return this.deathScreenTimeout != 0
+			|| this.showAppearanceChange
+			|| this.showSetRecoveryQuestion
+			|| this.showSetContactDetails
+			|| this.isSleeping;
 	}
 
 	public RSModel getModelCacheItem(int i) {
@@ -21582,6 +22221,15 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setShowAppearanceChange(boolean show) {
+		if (show && this.panelAppearance == null) {
+			this.createAppearancePanel(-24595, Config.S_CHARACTER_CREATION_MODE);
+		}
+		if (show) {
+			this.appearanceInputBlockTicks = 2;
+			this.currentMouseButtonDown = 0;
+			this.lastMouseButtonDown = 0;
+			this.enterPressed = false;
+		}
 		this.showAppearanceChange = show;
 	}
 
@@ -22712,7 +23360,9 @@ public final class mudclient implements Runnable {
 			this.loadGameConfig(false);
 			if (!this.errorLoadingData) {
 
-				this.setFPS(getFPS(), (byte) 107); // Client FPS
+				this.setFPS(
+					ScaledWindow.isOpenGLPrimaryWindowEnabled() ? OPENGL_PRIMARY_TARGET_FPS : getFPS(),
+					(byte) 107);
 				this.setSurface(new MudClientGraphics(this.getGameWidth(), this.getGameHeight() + 12, 4501));
 
 				clientPort.setTitle(Config.getServerName());
@@ -23209,15 +23859,16 @@ public final class mudclient implements Runnable {
 			int pixZ = tileZ - this.localPlayer.currentZ / 128;
 			if (var1 > 2) {
 				if (World.isLocalTile(tileX, tileZ)
+					&& this.gameObjectInstanceMaterialized[instanceNumber]
 					&& pixX > -OBJECT_ANIMATION_TILE_RADIUS && pixX < OBJECT_ANIMATION_TILE_RADIUS
 					&& pixZ > -OBJECT_ANIMATION_TILE_RADIUS && pixZ < OBJECT_ANIMATION_TILE_RADIUS) {
-					this.scene.removeModel(this.gameObjectInstanceModel[instanceNumber]);
+					this.dematerializeGameObjectInstance(instanceNumber);
 					int modelFileIndex = EntityHandler.storeModel(modelFileName);
 					RSModel model = this.modelCache[modelFileIndex].clone();
-					this.scene.addModel(model);
 					model.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, -74);
 					model.copyRot256AndTranslateFrom(this.gameObjectInstanceModel[instanceNumber], 6029);
 					this.setGameObjectInstanceModel(instanceNumber, model);
+					this.materializeGameObjectInstance(instanceNumber);
 				}
 
 			}
@@ -23292,6 +23943,7 @@ public final class mudclient implements Runnable {
 				//System.out.println("walkToArea, count: " + count + ", pathZ[" + i + "]: " + (this.pathZ[i] - startZ) + " (" + this.pathZ[i] + " - " + startZ + ")");
 			}
 
+			preloadTerrainForLocalTarget(x1, z1);
 			this.packetHandler.getClientStream().finishPacket();
 			this.clearActionProgressBar();
 			this.beginLocalWalkDebug(this.playerLocalX, this.playerLocalZ, debugStartTileX, debugStartTileZ, walkToEntity);
@@ -24056,6 +24708,24 @@ public final class mudclient implements Runnable {
 
 	public void setOptionHideRoofs(boolean b) {
 		C_HIDE_ROOFS = b;
+	}
+
+	private void reloadCurrentRegionForRoofVisibility() {
+		if (!this.hasCompletedInitialRegionLoad || this.localPlayer == null) {
+			return;
+		}
+		int worldX = this.midRegionBaseX + this.playerLocalX;
+		int worldZ = this.midRegionBaseZ + this.playerLocalZ;
+		int shiftedWorldX = worldX + this.worldOffsetX;
+		int shiftedWorldZ = worldZ + this.worldOffsetZ;
+		int midRegionX = World.worldTileToSection(shiftedWorldX);
+		int midRegionZ = World.worldTileToSection(shiftedWorldZ);
+		this.currentRegionMaxX = midRegionX * World.SECTION_SIZE + 32;
+		this.currentRegionMinX = midRegionX * World.SECTION_SIZE - 32;
+		this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE + 32;
+		this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE - 32;
+		this.world.loadSections(shiftedWorldX, shiftedWorldZ, this.requestedPlane);
+		this.world.playerAlive = true;
 	}
 
 	public void setOptionHideUndergroundFlicker(boolean b) {

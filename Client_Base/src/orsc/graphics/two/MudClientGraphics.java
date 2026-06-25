@@ -22,12 +22,14 @@ public final class MudClientGraphics extends GraphicsController {
 			if (index >= mudclient.spriteWorldGlyphBase && index < mudclient.spriteWorldGlyphBase + mudclient.ALTAR_VISUAL_COUNT) {
 				Sprite glyph = this.mudClientRef.getWorldGlyphSprite(index - mudclient.spriteWorldGlyphBase);
 				if (glyph != null) {
-					super.drawSprite(glyph, x, y, width, height, 5924, ALTAR_GLYPH_ALPHA);
+					withRenderer2DLegacySpriteId(index, () ->
+						super.drawSprite(glyph, x, y, width, height, 5924, ALTAR_GLYPH_ALPHA));
 				}
 			} else if (index >= mudclient.spriteWorldOrbBase && index < mudclient.spriteWorldOrbBase + mudclient.ALTAR_VISUAL_COUNT) {
 				Sprite orb = this.mudClientRef.getWorldOrbSprite(index - mudclient.spriteWorldOrbBase);
 				if (orb != null) {
-					super.drawSprite(orb, x, y, width, height, 5924, ALTAR_ORB_ALPHA);
+					withRenderer2DLegacySpriteId(index, () ->
+						super.drawSprite(orb, x, y, width, height, 5924, ALTAR_ORB_ALPHA));
 				}
 			} else if (index >= mudclient.spriteCombatEffectBase
 				&& index < mudclient.spriteCombatEffectBase + (mudclient.COMBAT_EFFECT_COUNT * mudclient.COMBAT_EFFECT_FRAME_SLOTS)) {
@@ -45,22 +47,26 @@ public final class MudClientGraphics extends GraphicsController {
 					}
 				}
 			} else if (Config.S_WANT_BANK_NOTES && index == -1) {
-				this.mudClientRef.drawItemAt(-1, x, y, width, height, topPixelSkew);
+				withRenderer2DLegacySpriteId(index, () ->
+					this.mudClientRef.drawItemAt(-1, x, y, width, height, topPixelSkew));
 			}
 			else if (index < 50000) {
 				if (index < 40000) {
 					if (index >= 20000) {
-						this.mudClientRef.drawNPC(index - 20000, x, y, width, height, topPixelSkew, 105,
-							overlayMovement);
+						withRenderer2DLegacySpriteId(index, () ->
+							this.mudClientRef.drawNPC(index - 20000, x, y, width, height, topPixelSkew, 105,
+								overlayMovement));
 					} else if (index < 5000) {
 						Sprite projectile = spriteSelect(EntityHandler.projectiles.get(index-mudclient.spriteProjectile));
 						super.drawSprite(projectile, x, y, width, height, 5924);
 					} else {
-						this.mudClientRef.drawPlayer(index - 5000, x, y, width, height, topPixelSkew, 20,
-							overlayMovement);
+						withRenderer2DLegacySpriteId(index, () ->
+							this.mudClientRef.drawPlayer(index - 5000, x, y, width, height, topPixelSkew, 20,
+								overlayMovement));
 					}
 				} else {
-					this.mudClientRef.drawItemAt(index - 40000, x, y, width, height, topPixelSkew);
+					withRenderer2DLegacySpriteId(index, () ->
+						this.mudClientRef.drawItemAt(index - 40000, x, y, width, height, topPixelSkew));
 				}
 			} else {
 				this.mudClientRef.drawTeleportBubble(index - 50000, x, y, width, height, topPixelSkew, 2);

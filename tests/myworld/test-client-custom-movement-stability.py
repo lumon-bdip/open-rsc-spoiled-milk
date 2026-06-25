@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
+SERVER_UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
 
 
 def require(text: str, needle: str, label: str) -> None:
@@ -15,6 +16,7 @@ def require(text: str, needle: str, label: str) -> None:
 def main() -> None:
     client = CLIENT.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
+    server_updater = SERVER_UPDATER.read_text(encoding="utf-8")
 
     require(
         client,
@@ -42,9 +44,94 @@ def main() -> None:
         "custom movement waypoint guard",
     )
     require(
+        client,
+        "private int movementAmountForFrame(ORSCharacter character, int configuredPixelsPerClassicFrame, long frameNow)",
+        "custom movement frame-time interpolation helper",
+    )
+    require(
+        client,
+        "double pixels = (elapsedMillis / 20.0D) * safeMovePerClassicFrame + character.movementPixelRemainder;",
+        "custom movement should derive movement from elapsed frame time",
+    )
+    require(
+        client,
+        "resetMovementInterpolation(updateEntity);",
+        "custom movement should clear interpolation state when idle or snapped",
+    )
+    require(
+        (ROOT / "Client_Base/src/orsc/ORSCharacter.java").read_text(encoding="utf-8"),
+        "public double movementPixelRemainder = 0.0D;",
+        "custom movement should retain subpixel interpolation remainder per character",
+    )
+    require(
+        (ROOT / "Client_Base/src/orsc/PacketHandler.java").read_text(encoding="utf-8"),
+        "props.setProperty(\"C_NPC_MOVE_PER_FRAME\", String.valueOf(movePerFrame)); //66",
+        "custom movement should mirror server movement speed to NPC interpolation",
+    )
+    require(
         applet,
         "if (imageProducer != null) {\n\t\t\timageProducer.setDimensions(newWidth, newHeight);\n\t\t}",
         "resize image producer null guard",
+    )
+    require(
+        server_updater,
+        "(localNpc.inCombat() && !hasPendingDeathVisual && !useCustomMovementStream)",
+        "custom movement NPC combat cache stability",
+    )
+    require(
+        server_updater,
+        "} else if (localNpc.spriteChanged()) {\n\t\t\t\t\t\tmobsUpdate.add(bit(UPDATE_REQUIRED, 1));",
+        "custom movement NPC combat sprite update",
+    )
+    require(
+        server_updater,
+        "&& localNpc.getSprite() >= 12;",
+        "custom movement NPC high combat sprite refresh guard",
+    )
+    require(
+        server_updater,
+        "spriteNeedsFullRefresh ||",
+        "custom movement NPC high combat sprite remove/re-add path",
+    )
+    require(
+        server_updater,
+        "private static final int LOCAL_NPC_LIMIT = 255;",
+        "custom movement NPC local cache limit constant",
+    )
+    require(
+        server_updater,
+        "private static List<Npc> prioritizeVisibleNpcs",
+        "custom movement NPC prioritization helper",
+    )
+    require(
+        server_updater,
+        "npc.equals(player.getOpponent()) || player.equals(npc.getOpponent())",
+        "custom movement NPC combat target priority",
+    )
+    require(
+        server_updater,
+        "evictForNpcPriority ||",
+        "custom movement NPC priority eviction path",
+    )
+    require(
+        server_updater,
+        "NPC_DEATH_VISUAL_SENT_TICK_PREFIX + playerToUpdate.getIndex()",
+        "custom movement NPC death visual should be tracked per viewer",
+    )
+    require(
+        server_updater,
+        "deathVisualSentTick != deathVisualTick",
+        "custom movement NPC death visual should be single-use per death",
+    )
+    require(
+        server_updater,
+        "localNpc.setAttribute(deathVisualViewerKey, deathVisualTick);",
+        "custom movement NPC death visual should mark consumption before removal retry",
+    )
+    require(
+        (ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java").read_text(encoding="utf-8"),
+        "public static final String DEATH_VISUAL_TICK_ATTRIBUTE = \"npc_death_visual_tick\";",
+        "NPC death visual tick marker",
     )
 
     print("PASS: custom movement update and resize stability guards are present")

@@ -63,6 +63,15 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "npc.startCombat(target);")
     require_contains(PROJECTILE_EVENT, "Player preferredThreatTarget = npc.getPreferredThreatTarget();")
     require_contains(ATTACK_HANDLER, "getPlayer().startCombat(npc);")
+    require_contains(
+        ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "action" / "WalkToMobAction.java",
+        "repathMyWorldMeleeAttackIfNeeded()",
+    )
+    require_contains(
+        ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "action" / "WalkToMobAction.java",
+        "getPlayer().walkAdjacentToEntity(mob);",
+    )
+    require_contains(MOB, "getConfig().WANT_MYWORLD || getConfig().WANT_IMPROVED_PATHFINDING")
     require_contains(NPC, "private int getTotalDamageBy(final UUID id)")
     require_contains(NPC, "private Pair<UUID, Long> getTopDamageDealer(final Mob fallbackAttacker)")
     require_contains(NPC, "private ArrayList<UUID> getAllDamageDealerIds()")
