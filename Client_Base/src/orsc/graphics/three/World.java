@@ -245,6 +245,15 @@ public final class World {
 		return sectorIndex < 0 ? null : sectors[sectorIndex];
 	}
 
+	public boolean isTerrainLoadedAtLocalTile(int tileX, int tileZ) {
+		Sector sector = sectorForLocalTile(tileX, tileZ);
+		return sector != null && sector.isLoaded();
+	}
+
+	public boolean isTerrainLoadedAtLocalPixel(int pixelX, int pixelZ) {
+		return isTerrainLoadedAtLocalTile(pixelX >> 7, pixelZ >> 7);
+	}
+
 	private static int tileInSector(int tile) {
 		return tile % SECTION_SIZE;
 	}

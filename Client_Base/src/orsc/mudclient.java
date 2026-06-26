@@ -6165,6 +6165,9 @@ public final class mudclient implements Runnable {
 							if (var3.colourBottom != 255) {
 								int var4 = var3.currentX;
 								int var5 = var3.currentZ;
+								if (!canDrawWorldSpriteAtLocalPixel(var4, var5)) {
+									continue;
+								}
 								int var6 = -this.world.getElevation(var4, var5);
 								int var7 = this.scene.drawSprite(centerX + 5000, var5, centerX + 10000, var4, var6, 145,
 									220, (byte) 109);
@@ -6243,6 +6246,9 @@ public final class mudclient implements Runnable {
 									var12 = var7;
 									var13 = var6;
 								}
+								if (!canDrawWorldSpriteAtLocalPixel(var11, var13)) {
+									continue;
+								}
 								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
 									shouldMirrorProjectile(var16, var3));
 								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
@@ -6296,6 +6302,9 @@ public final class mudclient implements Runnable {
 									var12 = var7;
 									var13 = var6;
 								}
+								if (!canDrawWorldSpriteAtLocalPixel(var11, var13)) {
+									continue;
+								}
 								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
 									shouldMirrorProjectile(var16, var3));
 								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
@@ -6313,6 +6322,9 @@ public final class mudclient implements Runnable {
 						ORSCharacter var3 = this.npcs[centerX];
 						int var4 = var3.currentX + this.npcVisualOffsetX[centerX];
 						int var5 = var3.currentZ + this.npcVisualOffsetZ[centerX];
+						if (!canDrawWorldSpriteAtLocalPixel(var4, var5)) {
+							continue;
+						}
 						int var6 = -this.world.getElevation(var4, var5);
 						NPCDef npcDef = EntityHandler.getNpcDef(var3.npcId);
 						int var7 = this.scene.drawSprite(20000 + centerX, var5, centerX + 30000, var4, var6,
@@ -6351,6 +6363,9 @@ public final class mudclient implements Runnable {
 
 						for (int renderIndex = 0; renderIndex < this.groundItemRenderOrder.size(); ++renderIndex) {
 							centerX = this.groundItemRenderOrder.get(renderIndex);
+							if (!canDrawWorldSpriteAtLocalTile(this.groundItemX[centerX], this.groundItemZ[centerX])) {
+								continue;
+							}
 							int stackOffsetX = this.getGroundItemStackOffsetX(this.groundItemRenderStackIndex[centerX]);
 							int stackOffsetZ = this.getGroundItemStackOffsetZ(this.groundItemRenderStackIndex[centerX]);
 							centerZ = this.groundItemX[centerX] * this.tileSize + 64 + stackOffsetX;
@@ -6366,6 +6381,9 @@ public final class mudclient implements Runnable {
 						}
 					}
 					for (centerX = 0; this.teleportBubbleCount > centerX; ++centerX) {
+						if (!canDrawWorldSpriteAtLocalTile(this.teleportBubbleX[centerX], this.teleportBubbleZ[centerX])) {
+							continue;
+						}
 						centerZ = 64 + this.tileSize * this.teleportBubbleX[centerX];
 						int var4 = this.teleportBubbleZ[centerX] * this.tileSize + 64;
 						int var5 = this.teleportBubbleType[centerX];
@@ -6386,7 +6404,7 @@ public final class mudclient implements Runnable {
 						if (this.worldGlyphSprites[altarIndex] != null) {
 							int glyphTileX = ALTAR_TILES[altarIndex][0] - this.midRegionBaseX;
 							int glyphTileZ = ALTAR_TILES[altarIndex][1] - this.midRegionBaseZ;
-							if (World.isLocalTile(glyphTileX, glyphTileZ)) {
+							if (canDrawWorldSpriteAtLocalTile(glyphTileX, glyphTileZ)) {
 								int glyphWorldX = this.tileSize * glyphTileX + 128;
 								int glyphWorldZ = this.tileSize * glyphTileZ + 128;
 								int glyphWorldY = -this.world.getElevation(glyphWorldX, glyphWorldZ) - 120;
@@ -6400,7 +6418,7 @@ public final class mudclient implements Runnable {
 							for (int orbIndex = 0; orbIndex < ALTAR_OBELISK_TILES[altarIndex].length; orbIndex++) {
 								int orbTileX = ALTAR_OBELISK_TILES[altarIndex][orbIndex][0] - this.midRegionBaseX;
 								int orbTileZ = ALTAR_OBELISK_TILES[altarIndex][orbIndex][1] - this.midRegionBaseZ;
-								if (World.isLocalTile(orbTileX, orbTileZ)) {
+								if (canDrawWorldSpriteAtLocalTile(orbTileX, orbTileZ)) {
 									int orbWorldX = this.tileSize * orbTileX + 64;
 									int orbWorldZ = this.tileSize * orbTileZ + 64;
 									int orbWorldY = -this.world.getElevation(orbWorldX, orbWorldZ) - 280;
@@ -18160,11 +18178,13 @@ public final class mudclient implements Runnable {
 			if (getCombatEffectSprite(effectType, frame) != null) {
 				int worldX = detachedCombatEffectX[i];
 				int worldZ = detachedCombatEffectZ[i];
-				int worldY = -this.world.getElevation(worldX, worldZ) - detachedCombatEffectHeightOffset[i];
-				int sceneSprite = spriteCombatEffectBase + ((effectType - 1) * COMBAT_EFFECT_FRAME_SLOTS) + frame;
-				int effectSize = getCombatEffectSceneSize(effectType);
-				this.scene.drawSprite(sceneSprite, worldZ, 78000 + i, worldX, worldY, effectSize, effectSize, (byte) 109);
-				++this.spriteCount;
+				if (canDrawWorldSpriteAtLocalPixel(worldX, worldZ)) {
+					int worldY = -this.world.getElevation(worldX, worldZ) - detachedCombatEffectHeightOffset[i];
+					int sceneSprite = spriteCombatEffectBase + ((effectType - 1) * COMBAT_EFFECT_FRAME_SLOTS) + frame;
+					int effectSize = getCombatEffectSceneSize(effectType);
+					this.scene.drawSprite(sceneSprite, worldZ, 78000 + i, worldX, worldY, effectSize, effectSize, (byte) 109);
+					++this.spriteCount;
+				}
 			}
 			effectTime--;
 			if (effectTime > 0) {
@@ -18197,6 +18217,9 @@ public final class mudclient implements Runnable {
 		}
 		int worldX = character.currentX;
 		int worldZ = character.currentZ;
+		if (!canDrawWorldSpriteAtLocalPixel(worldX, worldZ)) {
+			return;
+		}
 		int heightOffset = npc ? getNpcCombatEffectHeightOffset(character)
 			: getPlayerCombatEffectHeightOffset(character.combatEffectType);
 		int worldY = -this.world.getElevation(worldX, worldZ) - heightOffset;
@@ -21786,6 +21809,14 @@ public final class mudclient implements Runnable {
 
 	private int localPixelToTile(int localPixel) {
 		return Math.floorDiv(localPixel - 64, this.tileSize);
+	}
+
+	private boolean canDrawWorldSpriteAtLocalTile(int tileX, int tileZ) {
+		return this.world != null && this.world.isTerrainLoadedAtLocalTile(tileX, tileZ);
+	}
+
+	private boolean canDrawWorldSpriteAtLocalPixel(int pixelX, int pixelZ) {
+		return this.world != null && this.world.isTerrainLoadedAtLocalPixel(pixelX, pixelZ);
 	}
 
 	private int movementAmountForFrame(ORSCharacter character, int configuredPixelsPerClassicFrame, long frameNow) {

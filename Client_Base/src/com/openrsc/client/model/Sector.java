@@ -18,11 +18,17 @@ public class Sector {
 	 * An array containing all the tiles within this Sector
 	 */
 	private Tile[] tiles;
+	private boolean loaded;
 
 	/**
 	 * Creates a new Sector full of blank tiles
 	 */
 	public Sector() {
+		this(false);
+	}
+
+	private Sector(boolean loaded) {
+		this.loaded = loaded;
 		tiles = new Tile[Sector.WIDTH * Sector.HEIGHT];
 		for (int i = 0; i < tiles.length; i++) {
 			tiles[i] = new Tile();
@@ -37,7 +43,7 @@ public class Sector {
 		if (in.remaining() < (10 * length)) {
 			throw new IOException("Provided buffer too short");
 		}
-		Sector sector = new Sector();
+		Sector sector = new Sector(true);
 
 		for (int i = 0; i < length; i++) {
 			sector.setTile(i, Tile.unpack(in));
@@ -47,11 +53,15 @@ public class Sector {
 	}
 
 	public Sector copy() {
-		Sector sector = new Sector();
+		Sector sector = new Sector(loaded);
 		for (int i = 0; i < tiles.length; i++) {
 			sector.tiles[i] = tiles[i].copy();
 		}
 		return sector;
+	}
+
+	public boolean isLoaded() {
+		return loaded;
 	}
 
 	/**

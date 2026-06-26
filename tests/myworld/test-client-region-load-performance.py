@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+SECTOR = ROOT / "Client_Base/src/com/openrsc/client/model/Sector.java"
 
 
 def require(condition: bool, message: str) -> None:
@@ -15,6 +16,7 @@ def require(condition: bool, message: str) -> None:
 def main() -> None:
     world = WORLD.read_text(encoding="utf-8")
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
+    sector = SECTOR.read_text(encoding="utf-8")
 
     require("private void resetModels()" in world,
             "World region reset method should still exist")
@@ -26,8 +28,24 @@ def main() -> None:
             "World should expose predictive sector preloading")
     require("sectors[sector] = loadSectorTemplate(height, sectionX, sectionY).copy();" in world,
             "Active 2x2 sectors should be cloned from cached templates")
-    require("public Sector copy()" in (ROOT / "Client_Base/src/com/openrsc/client/model/Sector.java").read_text(encoding="utf-8"),
+    require("public Sector copy()" in sector,
             "Sector templates should support cloning before active-world mutation")
+    require("private Sector(boolean loaded)" in sector and "new Sector(true)" in sector,
+            "Sector templates should distinguish decoded terrain from missing blank fallback sectors")
+    require("public boolean isLoaded()" in sector,
+            "Sector loaded state should be queryable by world rendering")
+    require("public boolean isTerrainLoadedAtLocalTile(int tileX, int tileZ)" in world,
+            "World should expose loaded-terrain checks for sprite culling")
+    require("return sector != null && sector.isLoaded();" in world,
+            "World loaded-terrain checks should use decoded sector state")
+    require("return new Sector();" in world,
+            "Missing landscape archive entries should remain unloaded blank sectors")
+    require("private boolean canDrawWorldSpriteAtLocalPixel(int pixelX, int pixelZ)" in mudclient,
+            "Client should centralize terrain-loaded sprite gating")
+    require("if (!canDrawWorldSpriteAtLocalPixel(var4, var5))" in mudclient,
+            "Player and NPC sprites should not draw over unloaded terrain")
+    require("if (!canDrawWorldSpriteAtLocalTile(this.groundItemX[centerX], this.groundItemZ[centerX]))" in mudclient,
+            "Ground item sprites should not draw over unloaded terrain")
     require("this.world.preloadSections(wantX, wantZ, this.requestedPlane);" in mudclient,
             "Normal movement updates should warm sectors before boundary crossings")
 

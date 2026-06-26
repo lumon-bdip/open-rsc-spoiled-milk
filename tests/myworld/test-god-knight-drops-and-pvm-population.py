@@ -39,10 +39,10 @@ def is_rangers_guild_overlay(loc: dict) -> bool:
     )
 
 
-def is_karamja_death_altar_overlay(loc: dict) -> bool:
+def is_karamja_volcano_fire_warrior_overlay(loc: dict) -> bool:
     x = int(loc["start"]["X"])
     y = int(loc["start"]["Y"])
-    return int(loc["id"]) == 843 and 397 <= x <= 404 and 3535 <= y <= 3544
+    return int(loc["id"]) == 843 and 417 <= x <= 424 and 3544 <= y <= 3550
 
 
 def require_valid_drop_budget(drops: str, table_name: str) -> None:
@@ -146,11 +146,19 @@ def main() -> None:
 
     overlay_path = SERVER / "conf/server/defs/locs/MyWorldNpcLocs.json"
     overlay = json.loads(overlay_path.read_text(encoding="utf-8"))["npclocs"]
-    karamja_fire_warriors = [loc for loc in overlay if is_karamja_death_altar_overlay(loc)]
-    require(len(karamja_fire_warriors) == 4, "Karamja death altar route should have exactly 4 Fire warrior spawns")
+    karamja_fire_warriors = [loc for loc in overlay if is_karamja_volcano_fire_warrior_overlay(loc)]
+    require(len(karamja_fire_warriors) == 4, "Karamja volcano should have exactly 4 Fire warrior spawns")
+    fire_warrior_starts = {
+        (int(loc["start"]["X"]), int(loc["start"]["Y"]))
+        for loc in karamja_fire_warriors
+    }
+    require(
+        fire_warrior_starts == {(418, 3546), (420, 3547), (422, 3548), (424, 3546)},
+        "Karamja Fire warrior starts should be clustered around 420,3547",
+    )
     population_overlay = [
         loc for loc in overlay
-        if not is_rangers_guild_overlay(loc) and not is_karamja_death_altar_overlay(loc)
+        if not is_rangers_guild_overlay(loc) and not is_karamja_volcano_fire_warrior_overlay(loc)
     ]
     counts = Counter(loc["id"] for loc in population_overlay)
     expected_counts = {
