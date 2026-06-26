@@ -348,8 +348,13 @@ def test_windows_runtime_download_helper_is_documented() -> None:
 
 
 def test_uid_first_run_state_is_not_packaged_or_reused() -> None:
-    uid_file = ROOT / "Client_Base" / "Cache" / "uid.dat"
-    if uid_file.exists():
+    tracked_uid = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", "Client_Base/Cache/uid.dat"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if tracked_uid.returncode == 0:
         fail("tracked blank uid.dat must not remain in the release client cache")
 
     source = (ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java").read_text(encoding="utf-8")

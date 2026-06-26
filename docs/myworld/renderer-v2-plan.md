@@ -562,23 +562,19 @@ renderer-v2 layer:
     world unless resident readiness reports drawable terrain batches and
     trusted ownership is enabled.
 - `SPOILED_MILK_OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT=true`
-  - Allows resident chunks to suppress projected terrain, walls, and roofs
-    after readiness checks pass. This is default-enabled for the static world
-    only. The projected `GAME_OBJECT`/`WALL_OBJECT` bridge remains the visible
-    scenery owner unless `SPOILED_MILK_OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS`
-    is explicitly enabled.
+  - Allows resident chunks to suppress projected terrain, walls, roofs, game
+    objects, and wall objects after readiness checks pass. This is
+    default-enabled for the accepted resident world ownership path.
 - `SPOILED_MILK_OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS=true`
-  - Proof switch for drawing `GAME_OBJECT` and `WALL_OBJECT` scenery from
-    resident chunk buffers instead of the projected object bridge. Object
-    faces emit separate front/back material triangles and use back-face
-    culling so only the camera-facing side is visible. The projected object
-    mesh export is skipped in this mode, but the software depth frame still
-    includes walls, roofs, game objects, and wall objects so entity sprites can
-    be clipped behind world occluders. 2026-06-24 visual validation failed:
-    many scenery sub-materials rendered black or missing, including small
-    details such as tree flowers, and the mode did not improve FPS. Keep this
-    disabled until resident object material ownership is redesigned; the
-    projected object bridge remains the accepted scenery owner.
+  - Draws `GAME_OBJECT` and `WALL_OBJECT` scenery from resident chunk buffers
+    instead of the projected object bridge. Object faces emit separate
+    front/back material triangles, one-sided classic details are mirrored onto
+    both culling windings, and captured front/back legacy side lighting is used
+    directly. The projected object mesh export is skipped in this mode, but
+    the software depth frame still includes walls, roofs, game objects, and
+    wall objects so entity sprites can be clipped behind world occluders.
+    After 2026-06-26 visual validation, this is default-enabled for the
+    release client.
 - `SPOILED_MILK_OPENGL_WORLD_TEXTURED_VISIBLE=true`
   - Draws texture-backed renderer-v2 terrain triangles from the OpenGL world
     texture atlas using atlas-space mesh UVs. It defaults to an opaque
@@ -1563,8 +1559,8 @@ they are not visual requirements for the baseline.
               `SPOILED_MILK_OPENGL_WORLD_CHUNKS_REPLACEMENT_COMPOSITE=true`,
               and
               `SPOILED_MILK_OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT=true`.
-              Keep resident object chunks disabled by default until two-sided
-              scenery material ownership is redesigned.
+              Resident object chunks stayed disabled at this point until
+              two-sided scenery material ownership could be proven.
         - [x] Remove resident-owned terrain from the projected legacy polygon
               path when static resident chunk ownership is active. This
               reduces cull/sort/export work now that terrain pixels and
@@ -1665,7 +1661,7 @@ they are not visual requirements for the baseline.
               as ladders, sign interiors, counter tops, windmill blades, or
               small foliage details from disappearing when resident object
               ownership is being tested.
-        - [x] Let the experimental resident object owner suppress projected
+        - [x] Let the resident object owner suppress projected
               `GAME_OBJECT` and `WALL_OBJECT` faces from the legacy CPU
               polygon list, while retaining only mouse-pickable candidates
               near the cursor and forced legacy capture frames. This is the
@@ -1679,16 +1675,22 @@ they are not visual requirements for the baseline.
               `vertDiffuseLight`; the OpenGL resident object path then uses
               that captured value directly instead of recomputing scenery
               lighting from resident chunk normals.
+        - [x] Promote resident object chunks to the renderer-v2 runtime
+              defaults with
+              `SPOILED_MILK_OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS=true`.
+              2026-06-26 validation showed restored scenery details, matching
+              classic object color, correct wall/scenery/sprite ordering,
+              combat and movement still functioning, and dense-area FPS
+              reaching the 60 FPS target in the accepted test location.
         - [x] Split resident chunk draw telemetry into terrain, wall, roof,
               game-object, wall-object, and other triangle buckets so object
               residency can be verified independently from static world
               geometry during draw-distance and ordering tests.
         - [x] Expand textured chunk drawing into a full default replacement
               path for terrain, walls, and roofs with readiness telemetry and
-              fail-closed projected fallback. Scenery remains on the projected
-              object bridge until resident object chunks can select front/back
-              face materials from camera orientation without dropping
-              one-sided classic details.
+              fail-closed projected fallback. This was the static-world
+              default before the later resident object promotion added
+              game-object and wall-object ownership.
         - [ ] Replace the fixed-function resident chunk lighting approximation
               with an explicit shader/material pipeline that separates base
               material color, texture sampling, slope diffuse, object/wall

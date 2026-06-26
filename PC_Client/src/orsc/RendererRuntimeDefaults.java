@@ -18,6 +18,7 @@ final class RendererRuntimeDefaults {
 		setDefault("spoiledmilk.openglWorldChunksTexturedVisible", "SPOILED_MILK_OPENGL_WORLD_CHUNKS_TEXTURED_VISIBLE", "true");
 		setDefault("spoiledmilk.openglWorldChunksReplacementComposite", "SPOILED_MILK_OPENGL_WORLD_CHUNKS_REPLACEMENT_COMPOSITE", "true");
 		setDefault("spoiledmilk.openglWorldChunksTrustedReplacement", "SPOILED_MILK_OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT", "true");
+		setDefault("spoiledmilk.openglWorldChunksResidentObjects", "SPOILED_MILK_OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS", "true");
 		setDefault("spoiledmilk.openglWorldSpritesVisible", "SPOILED_MILK_OPENGL_WORLD_SPRITES_VISIBLE", "true");
 		setDefault("spoiledmilk.skipLegacyWorldRaster", "SPOILED_MILK_SKIP_LEGACY_WORLD_RASTER", "true");
 		setDefault("spoiledmilk.modernClientLoop", "SPOILED_MILK_MODERN_CLIENT_LOOP", "true");
