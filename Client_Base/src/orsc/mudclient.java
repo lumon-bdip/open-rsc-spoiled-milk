@@ -3401,6 +3401,35 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private void rematerializeLoadedTerrainSceneryAfterWorldReload() {
+		for (int i = 0; i < this.gameObjectInstanceCount; i++) {
+			this.gameObjectInstanceMaterialized[i] = false;
+			try {
+				this.getWorld().registerObjectDir(
+					this.gameObjectInstanceX[i],
+					this.gameObjectInstanceZ[i],
+					this.gameObjectInstanceDir[i]);
+			} catch (RuntimeException ex) {
+				System.out.println("Loc Error: " + ex.getMessage());
+				ex.printStackTrace();
+			}
+		}
+		for (int i = 0; i < this.wallObjectInstanceCount; i++) {
+			this.wallObjectInstanceMaterialized[i] = false;
+			this.wallObjectInstanceModel[i] = null;
+			try {
+				this.getWorld().registerObjectDir(
+					this.wallObjectInstanceX[i],
+					this.wallObjectInstanceZ[i],
+					this.wallObjectInstanceDir[i]);
+			} catch (RuntimeException ex) {
+				System.out.println("Bound Error: " + ex.getMessage());
+				ex.printStackTrace();
+			}
+		}
+		this.materializeLoadedTerrainScenery();
+	}
+
 	private void updateSceneryAnimations() {
 		this.scene.d(25013, 17);
 		this.objectAnimationCount++;
@@ -6516,7 +6545,9 @@ public final class mudclient implements Runnable {
 								renderer3DFrame.getWorldFaceCount(Renderer3DModelKind.GAME_OBJECT),
 								renderer3DFrame.getWorldFaceCount(Renderer3DModelKind.WALL_OBJECT),
 								renderer3DFrame.getWorldFaceCount(Renderer3DModelKind.UNCLASSIFIED),
+								depthFrame == null ? 0 : depthFrame.getConsideredFaceCount(),
 								depthFrame == null ? 0 : depthFrame.getAcceptedFaceCount(),
+								depthFrame == null ? 0 : depthFrame.getRejectedFaceCount(),
 								depthFrame == null ? 0 : depthFrame.getTriangleCount(),
 								depthFrame == null ? 0 : depthFrame.getPixelWriteCount(),
 								meshFrame == null ? 0 : meshFrame.getVertexCount(),
@@ -25020,6 +25051,7 @@ public final class mudclient implements Runnable {
 		this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE + 32;
 		this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE - 32;
 		this.world.loadSections(shiftedWorldX, shiftedWorldZ, this.requestedPlane);
+		this.rematerializeLoadedTerrainSceneryAfterWorldReload();
 		this.world.playerAlive = true;
 	}
 

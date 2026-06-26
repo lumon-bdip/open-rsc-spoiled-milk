@@ -178,6 +178,10 @@ def main() -> None:
             "Materialized object transform changes should invalidate resident object chunks")
     require(rsmodel, "model.resetTransformCache(7972);",
             "Resident object mesh export should consume transformed world-space model vertices")
+    require(rsmodel, "if (visibleFront != visibleBack) {",
+            "One-sided resident object materials should emit both culling sides for parity")
+    require(rsmodel, "int visibleMaterial = visibleFront ? frontMaterial : backMaterial;",
+            "Resident object one-sided fallback should preserve the visible legacy material")
     require(rsmodel, "kind != Renderer3DModelKind.GAME_OBJECT && kind != Renderer3DModelKind.WALL_OBJECT",
             "Resident object mesh export should only include scenery and wall-object models")
     require(mudclient, "private Renderer3DWorldChunkFrame appendResidentObjectChunkFrame(Renderer3DWorldChunkFrame baseFrame)",

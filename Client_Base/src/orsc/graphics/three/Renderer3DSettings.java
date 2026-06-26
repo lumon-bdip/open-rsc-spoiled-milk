@@ -27,6 +27,10 @@ public final class Renderer3DSettings {
 		"spoiledmilk.openglWorldChunksReplacementComposite";
 	private static final String OPENGL_WORLD_CHUNKS_REPLACEMENT_COMPOSITE_ENV =
 		"SPOILED_MILK_OPENGL_WORLD_CHUNKS_REPLACEMENT_COMPOSITE";
+	private static final String OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT_PROPERTY =
+		"spoiledmilk.openglWorldChunksTrustedReplacement";
+	private static final String OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT_ENV =
+		"SPOILED_MILK_OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT";
 	private static final String OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS_PROPERTY =
 		"spoiledmilk.openglWorldChunksResidentObjects";
 	private static final String OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS_ENV =
@@ -56,6 +60,12 @@ public final class Renderer3DSettings {
 			&& readBoolean(
 				OPENGL_WORLD_CHUNKS_REPLACEMENT_COMPOSITE_PROPERTY,
 				OPENGL_WORLD_CHUNKS_REPLACEMENT_COMPOSITE_ENV);
+	private static final boolean RESIDENT_CHUNK_TRUSTED_REPLACEMENT_ENABLED =
+		RESIDENT_CHUNK_REPLACEMENT_ENABLED
+			&& readBoolean(
+				OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT_PROPERTY,
+				OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT_ENV,
+				false);
 	private static final boolean RESIDENT_CHUNK_OBJECTS_ENABLED =
 		RESIDENT_CHUNK_REPLACEMENT_ENABLED
 			&& readBoolean(
@@ -79,7 +89,7 @@ public final class Renderer3DSettings {
 	}
 
 	static boolean canSkipProjectedWorldCapture() {
-		return RESIDENT_CHUNK_REPLACEMENT_ENABLED;
+		return RESIDENT_CHUNK_TRUSTED_REPLACEMENT_ENABLED;
 	}
 
 	public static boolean canUseResidentObjectChunks() {

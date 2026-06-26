@@ -2828,6 +2828,17 @@ public final class Scene {
 								}
 
 								if (var23 == 3) {
+									Renderer3DModelKind rendererModelKind = var2.getRenderer3DModelKind();
+									if (shouldSkipResidentOwnedProjectedFace(
+										rendererModelKind,
+										var2,
+										var3,
+										var11,
+										var10,
+										skipProjectedWorldCapture,
+										forceLegacyWorldRaster)) {
+										continue;
+									}
 									Polygon var27 = this.polygons[this.m_zb];
 									var27.model = var2;
 									var27.faceID = var3;
@@ -3015,7 +3026,9 @@ public final class Scene {
 						var17 = var2.faceIndexCount[var3];
 						int[] var18 = var2.faceIndices[var3];
 						boolean mouseCouldPickProjectedFace =
-							this.m_K && projectedFaceCouldContainMouse(var2, var18, var17);
+							this.m_K
+								&& isProjectedFacePickable(var2, var3)
+								&& projectedFaceCouldContainMouse(var2, var18, var17);
 						boolean faceNeedsNearPlaneClip = projectedFaceNeedsNearPlaneClip(var2, var18, var17);
 						boolean needsLegacyClippedGeometry =
 							needsProjectedLegacyGeometry && (!skipLegacyWorldRaster || faceNeedsNearPlaneClip);
@@ -3176,6 +3189,44 @@ public final class Scene {
 		} catch (RuntimeException var22) {
 			throw GenUtil.makeThrowable(var22, "lb.P(" + var1 + ')');
 		}
+	}
+
+	private boolean shouldSkipResidentOwnedProjectedFace(
+		Renderer3DModelKind modelKind,
+		RSModel model,
+		int faceId,
+		int[] faceIndices,
+		int vertexCount,
+		boolean skipProjectedWorldCapture,
+		boolean forceLegacyWorldRaster) {
+		if (!skipProjectedWorldCapture || forceLegacyWorldRaster) {
+			return false;
+		}
+		boolean residentOwnedProjectedFace = modelKind == Renderer3DModelKind.TERRAIN
+			|| (Renderer3DSettings.canUseResidentObjectChunks()
+				&& (modelKind == Renderer3DModelKind.GAME_OBJECT
+					|| modelKind == Renderer3DModelKind.WALL_OBJECT));
+		if (!residentOwnedProjectedFace) {
+			return false;
+		}
+		if (this.m_K
+			&& isProjectedFacePickable(model, faceId)
+			&& projectedFaceCouldContainMouse(model, faceIndices, vertexCount)) {
+			return false;
+		}
+		return true;
+	}
+
+	private boolean isProjectedFacePickable(RSModel model, int faceId) {
+		return model != null
+			&& !model.m_db
+			&& model.m_zb != null
+			&& faceId >= 0
+			&& faceId < model.m_zb.length
+			&& model.m_zb[faceId] == 0
+			&& model.facePickIndex != null
+			&& faceId < model.facePickIndex.length
+			&& model.facePickIndex[faceId] >= 0;
 	}
 
 	private boolean projectedFaceCouldContainMouse(RSModel model, int[] faceIndices, int vertexCount) {

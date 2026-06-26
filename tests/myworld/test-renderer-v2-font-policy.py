@@ -52,6 +52,14 @@ def main() -> None:
     require(font_settings, 'H12P("h12p", "@gre@h12p Regular", 2)', "h12p font mode")
     require(font_settings, 'H13B("h13b", "@ora@h13b Bold", 3)', "h13b font mode")
     require(font_settings, 'H14B("h14b", "@ora@h14b Large", 4)', "h14b font mode")
+    forbid(font_settings, 'H16B("h16b"', "oversized UI font mode")
+    forbid(font_settings, 'H20B("h20b"', "oversized UI font mode")
+    forbid(font_settings, 'H24B("h24b"', "oversized UI font mode")
+    require(
+        font_settings,
+        '"h16b".equals(normalized) || "h20b".equals(normalized) || "h24b".equals(normalized)',
+        "retired oversized UI font fallback",
+    )
     require(
         font_settings,
         "public static Mode cycleMode()",
@@ -69,6 +77,7 @@ def main() -> None:
     require(mudclient, '"@whi@Font - " + RendererFontSettings.getMode().label', "General options UI font row")
     require(mudclient, "if (isOpenGLPrimaryWindow && settingIndex == 57 && this.mouseButtonClick == 1)", "General options UI font click handler")
     forbid(applet, "mudclient.cycleOpenGLUiFontMode();", "F9 OpenGL-primary UI font hotkey")
+    require(applet, 'new Font("Monospaced", Font.PLAIN, 13)', "debug overlay font size")
     require(graphics, "font = RendererFontSettings.displayFont(font);", "font policy applied")
     require(
         graphics,
@@ -84,6 +93,11 @@ def main() -> None:
         plan,
         "cycles the OpenGL-primary body-font candidates",
         "renderer plan documents OpenGL font option",
+    )
+    require(
+        plan,
+        "debug overlay uses a separate 13pt monospaced font",
+        "renderer plan documents debug overlay font size",
     )
 
     print("PASS: renderer-v2 OpenGL-primary font policy is selectable from General options")

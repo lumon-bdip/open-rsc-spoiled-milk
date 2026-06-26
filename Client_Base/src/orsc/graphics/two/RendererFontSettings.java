@@ -118,6 +118,11 @@ public final class RendererFontSettings {
 			if ("default".equals(normalized) || "h12b".equals(normalized)) {
 				return LEGACY;
 			}
+			if ("h16b".equals(normalized) || "h20b".equals(normalized) || "h24b".equals(normalized)
+				|| "readable".equals(normalized) || "big".equals(normalized)
+				|| "large".equals(normalized) || "huge".equals(normalized) || "xl".equals(normalized)) {
+				return H14B;
+			}
 			for (Mode mode : values()) {
 				if (mode.id.equals(normalized)) {
 					return mode;

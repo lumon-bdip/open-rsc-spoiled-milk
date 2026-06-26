@@ -25,7 +25,9 @@ public final class Renderer3DDepthFrame {
 	private final int clipMinY;
 	private final int clipMaxX;
 	private final int clipMaxY;
+	private int consideredFaceCount;
 	private int acceptedFaceCount;
+	private int rejectedFaceCount;
 	private int triangleCount;
 	private int pixelWriteCount;
 
@@ -61,7 +63,7 @@ public final class Renderer3DDepthFrame {
 	}
 
 	static Renderer3DDepthFrame render(Renderer3DFrame frame, EnumSet<Renderer3DModelKind> includedKinds) {
-		SpriteClipMask spriteClipMask = SpriteClipMask.from(frame);
+		SpriteClipMask spriteClipMask = SpriteClipMask.from(frame, Renderer3DSettings.isVisibleWorldEnabled());
 		Renderer3DDepthFrame depthFrame = new Renderer3DDepthFrame(
 			frame.getViewportWidth(),
 			frame.getViewportHeight(),
@@ -74,12 +76,72 @@ public final class Renderer3DDepthFrame {
 			if (face.getRenderVertexCount() < 3) {
 				continue;
 			}
+			depthFrame.consideredFaceCount++;
+			if (!depthFrame.faceIntersectsClip(frame, face)) {
+				depthFrame.rejectedFaceCount++;
+				continue;
+			}
 			depthFrame.acceptedFaceCount++;
 			for (int vertex = 1; vertex < face.getRenderVertexCount() - 1; vertex++) {
 				depthFrame.rasterizeTriangle(frame, face, 0, vertex, vertex + 1);
 			}
 		}
 		return depthFrame;
+	}
+
+	private boolean faceIntersectsClip(Renderer3DFrame frame, Renderer3DFrame.FaceCommand face) {
+		if (clipMaxX < clipMinX || clipMaxY < clipMinY) {
+			return false;
+		}
+		int vertexCount = face.getRenderVertexCount();
+		int[] screenX = face.getRenderScreenX();
+		int[] screenY = face.getRenderScreenY();
+		int minX = Integer.MAX_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxX = Integer.MIN_VALUE;
+		int maxY = Integer.MIN_VALUE;
+		for (int vertex = 0; vertex < vertexCount; vertex++) {
+			int x = frame.getCenterX() + screenX[vertex];
+			int y = frame.getCenterY() + screenY[vertex];
+			minX = Math.min(minX, x);
+			minY = Math.min(minY, y);
+			maxX = Math.max(maxX, x);
+			maxY = Math.max(maxY, y);
+		}
+		return maxX >= clipMinX
+			&& minX <= clipMaxX
+			&& maxY >= clipMinY
+			&& minY <= clipMaxY
+			&& faceIntersectsClipRows(minX, minY, maxX, maxY);
+	}
+
+	private boolean faceIntersectsClipRows(int minX, int minY, int maxX, int maxY) {
+		int rowMinY = Math.max(minY, clipMinY);
+		int rowMaxY = Math.min(maxY, clipMaxY);
+		int clampedMinX = Math.max(minX, clipMinX);
+		int clampedMaxX = Math.min(maxX, clipMaxX);
+		if (rowMinY > rowMaxY || clampedMinX > clampedMaxX) {
+			return false;
+		}
+		if (spriteClipMask == null) {
+			return true;
+		}
+		for (int y = rowMinY; y <= rowMaxY; y++) {
+			int localRow = y - bufferOriginY;
+			if (localRow < 0 || localRow >= bufferHeight) {
+				continue;
+			}
+			int maskRowMinX = spriteClipRowMinX[localRow];
+			if (maskRowMinX < 0) {
+				continue;
+			}
+			int maskRowMaxX = spriteClipRowMaxX[localRow];
+			if (bufferOriginX + maskRowMaxX >= clampedMinX
+				&& bufferOriginX + maskRowMinX <= clampedMaxX) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public int getWidth() {
@@ -90,8 +152,16 @@ public final class Renderer3DDepthFrame {
 		return height;
 	}
 
+	public int getConsideredFaceCount() {
+		return consideredFaceCount;
+	}
+
 	public int getAcceptedFaceCount() {
 		return acceptedFaceCount;
+	}
+
+	public int getRejectedFaceCount() {
+		return rejectedFaceCount;
 	}
 
 	public int getTriangleCount() {
@@ -417,7 +487,7 @@ public final class Renderer3DDepthFrame {
 			this.rowMaxX = rowMaxX;
 		}
 
-		private static SpriteClipMask from(Renderer3DFrame frame) {
+		private static SpriteClipMask from(Renderer3DFrame frame, boolean fullViewportFallback) {
 			int width = frame.getViewportWidth();
 			int height = frame.getViewportHeight();
 			List<Renderer3DFrame.SpriteAnchor> anchors = frame.getSpriteAnchors();
@@ -425,7 +495,7 @@ public final class Renderer3DDepthFrame {
 				return empty();
 			}
 			if (anchors.isEmpty()) {
-				return full(width, height);
+				return fullViewportFallback ? full(width, height) : empty();
 			}
 			int minX = width;
 			int minY = height;

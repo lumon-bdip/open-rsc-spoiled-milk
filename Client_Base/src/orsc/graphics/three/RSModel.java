@@ -1122,19 +1122,38 @@ public final class RSModel {
 					continue;
 				}
 				int[] faceVertexCoords = new int[vertexCount * 3];
-				int[] faceVertexLights = new int[vertexCount];
+				int[] frontVertexLights = new int[vertexCount];
+				int[] backVertexLights = new int[vertexCount];
 				for (int vertex = 0; vertex < vertexCount; vertex++) {
 					int modelVertex = model.faceIndices[face][vertex];
 					int coord = vertex * 3;
 					faceVertexCoords[coord] = model.vertXTransform[modelVertex];
 					faceVertexCoords[coord + 1] = model.vertYTransform[modelVertex];
 					faceVertexCoords[coord + 2] = model.vertZTransform[modelVertex];
-					faceVertexLights[vertex] = model.faceDiffuseLight[face] == model.m_Vb
-						? 0
-						: model.faceDiffuseLight[face];
+					frontVertexLights[vertex] = objectLegacyLightForVertex(model, face, modelVertex, true);
+					backVertexLights[vertex] = objectLegacyLightForVertex(model, face, modelVertex, false);
 				}
-				addFace(kind, model.faceTextureFront[face], model.faceTextureBack[face], faceVertexCoords, faceVertexLights);
+				addFace(
+					kind,
+					model.faceTextureFront[face],
+					model.faceTextureBack[face],
+					faceVertexCoords,
+					frontVertexLights,
+					backVertexLights);
 			}
+		}
+
+		private int objectLegacyLightForVertex(RSModel model, int face, int modelVertex, boolean frontSide) {
+			if (model.faceDiffuseLight[face] == model.m_Vb) {
+				int vertexOther = model.vertLightOther == null ? 0 : model.vertLightOther[modelVertex];
+				int vertexDiffuse = model.vertDiffuseLight == null ? 0 : model.vertDiffuseLight[modelVertex];
+				return frontSide
+					? model.diffuseParam1 + vertexOther - vertexDiffuse
+					: model.diffuseParam1 + vertexOther + vertexDiffuse;
+			}
+			return frontSide
+				? model.diffuseParam1 - model.faceDiffuseLight[face]
+				: model.diffuseParam1 + model.faceDiffuseLight[face];
 		}
 
 		private void addFace(
@@ -1142,13 +1161,33 @@ public final class RSModel {
 			int frontMaterial,
 			int backMaterial,
 			int[] faceVertexCoords,
-			int[] faceVertexLights) {
+			int[] frontVertexLights,
+			int[] backVertexLights) {
 			int vertexCount = faceVertexCoords == null ? 0 : faceVertexCoords.length / 3;
 			if (vertexCount < 3) {
 				return;
 			}
-			addMaterialSide(kind, frontMaterial, faceVertexCoords, faceVertexLights, false);
-			addMaterialSide(kind, backMaterial, faceVertexCoords, faceVertexLights, true);
+			boolean visibleFront = isVisibleMaterial(frontMaterial);
+			boolean visibleBack = isVisibleMaterial(backMaterial);
+			if (visibleFront) {
+				addMaterialSide(kind, frontMaterial, faceVertexCoords, frontVertexLights, false);
+			}
+			if (visibleBack) {
+				addMaterialSide(kind, backMaterial, faceVertexCoords, backVertexLights, true);
+			}
+			if (visibleFront != visibleBack) {
+				int visibleMaterial = visibleFront ? frontMaterial : backMaterial;
+				addMaterialSide(
+					kind,
+					visibleMaterial,
+					faceVertexCoords,
+					visibleFront ? backVertexLights : frontVertexLights,
+					visibleFront);
+			}
+		}
+
+		private boolean isVisibleMaterial(int material) {
+			return material != Scene.TRANSPARENT;
 		}
 
 		private void addMaterialSide(

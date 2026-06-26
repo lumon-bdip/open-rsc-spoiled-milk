@@ -11,8 +11,8 @@ The numbered limited-alpha release sequence ended with
 
 Current version progression:
 
-- The next release is `v0.1.6`.
-- Normal updates advance the patch version: `v0.1.3`, `v0.1.4`, and so on.
+- The current release line is `v0.1.x`; normal updates advance the patch
+  version from the latest published tag.
 - After `v0.1.9`, the next release is `v0.2.0`.
 - Patch versions are used for fixes, balancing, polish, and incremental work
   within the current milestone.

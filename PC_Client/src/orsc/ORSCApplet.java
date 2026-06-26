@@ -791,7 +791,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 		Graphics2D g = frameImage.createGraphics();
 		try {
-			g.setFont(new Font("Monospaced", Font.PLAIN, 12));
+			g.setFont(new Font("Monospaced", Font.PLAIN, 13));
 			FontMetrics metrics = g.getFontMetrics();
 			int maxWidth = 0;
 			for (String line : lines) {
@@ -914,6 +914,15 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.openGLWorldChunkEvictAverage
 				: "",
 			telemetry.enabled
+				? "resident req/active/fallback " + telemetry.openGLResidentChunkReplacementRequestedAverage
+					+ "/" + telemetry.openGLResidentChunkReplacementActiveAverage
+					+ "/" + telemetry.openGLResidentChunkReplacementFallbackAverage
+					+ " | reason " + telemetry.openGLResidentChunkReplacementReason
+					+ " | batches t/w/r " + telemetry.openGLResidentChunkDrawableTerrainBatchAverage
+					+ "/" + telemetry.openGLResidentChunkDrawableWallBatchAverage
+					+ "/" + telemetry.openGLResidentChunkDrawableRoofBatchAverage
+				: "",
+			telemetry.enabled
 				? "mesh draw tri/occ/b/calls " + telemetry.openGLWorldMeshDrawTriangleAverage
 					+ "/" + telemetry.openGLWorldMeshDrawOccluderTriangleAverage
 					+ "/" + telemetry.openGLWorldMeshDrawBatchAverage
@@ -949,6 +958,12 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.worldGeometryGameObjectFaceAverage
 					+ "/" + telemetry.worldGeometryWallObjectFaceAverage
 					+ "/" + telemetry.worldGeometryOtherFaceAverage
+				: "",
+			telemetry.enabled
+				? "depth f/t/p " + telemetry.worldDepthFaceAverage
+					+ "/" + telemetry.worldDepthTriangleAverage
+					+ "/" + telemetry.worldDepthPixelWriteAverage
+					+ " | c/a/r " + telemetry.worldDepthCullAverage
 				: "",
 			"F6 closes debug | Ctrl+F6 simple"
 		};

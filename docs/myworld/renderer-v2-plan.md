@@ -205,6 +205,23 @@ This section is the short source-of-truth for AI sessions changing renderer-v2.
 Read it before changing sprite, occlusion, depth, world-composite, or
 framebuffer-replay behavior.
 
+### Alpha Remaster Strategy
+
+- The renderer-v2 goal is an alpha-era remaster architecture, not a local
+  micro-optimization exercise. Big rendering overhauls are allowed and
+  expected while the game is still in alpha.
+- Do not get bogged down in overly optimizing one aspect of the renderer. Lock
+  down a major rendering surface enough that visuals, ordering, and release
+  safety are acceptable, then move to the next large architectural swing.
+- Avoid tunnel vision. If repeated optimization passes on one subsystem stop
+  producing meaningful gains, step back and prioritize the next structural
+  migration: retained/static world ownership, GPU-first depth and ordering,
+  chunk/entity culling, shader/material ownership, or another broad renderer
+  boundary.
+- Keep the player-facing target stable: authentic RuneScape Classic spritework,
+  objects, readability, and game feel, with a substantially modernized engine
+  underneath.
+
 ### Ownership Map
 
 - **Static world geometry**
@@ -461,7 +478,9 @@ renderer-v2 layer:
     used for field testing so telemetry reflects a single visible client.
 - `SPOILED_MILK_RENDER_SURFACE_MODE=512x346|640x480|800x600|960x540|1024x576|1280x720|1920x1080`
   - Selects the actual source framebuffer size. This changes the scene
-    projection and visible world area before final scaling.
+    projection and visible world area before final scaling. `1920x1080`
+    remains a runtime-only field-test mode; the normal in-game Resolution
+    cycle stops at `1280x720` until true 1080p performance is acceptable.
 - `SPOILED_MILK_OPENGL_SCALE_MODE=aspect-fit|integer-fit|stretch`
   - Legacy/debug fit-policy override for non-primary OpenGL mirror testing.
     OpenGL-primary ignores this setting and always uses automatic aspect-fit
@@ -533,13 +552,21 @@ renderer-v2 layer:
     channels. Transparent-front flat batches draw with resolved fallback RGB;
     texture-backed batches without a valid atlas region fall back to average
     texture color when texture data exists. Texture-backed atlas batches are
-    split into opaque and transparent diagnostic passes.
+    split into opaque and transparent passes. This is now part of the default
+    static-world resident chunk path after terrain, wall, roof, roof-toggle,
+    scenery bridge, and sprite-ordering parity were visually validated on
+    2026-06-26.
 - `SPOILED_MILK_OPENGL_WORLD_CHUNKS_REPLACEMENT_COMPOSITE=true`
-  - Lets the textured resident chunk path replace the old full-frame software
-    base for in-game frames, then reuses the existing OpenGL world composite
-    overlay replay for scene/entity sprites, world overlays, and UI commands.
-    This is opt-in while the resident chunk path is still proving full
-    terrain, wall, roof, and ordering parity.
+  - Requests textured resident chunk replacement. This is default-enabled for
+    static terrain, walls, and roofs, but still fail-closes to the projected
+    world unless resident readiness reports drawable terrain batches and
+    trusted ownership is enabled.
+- `SPOILED_MILK_OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT=true`
+  - Allows resident chunks to suppress projected terrain, walls, and roofs
+    after readiness checks pass. This is default-enabled for the static world
+    only. The projected `GAME_OBJECT`/`WALL_OBJECT` bridge remains the visible
+    scenery owner unless `SPOILED_MILK_OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS`
+    is explicitly enabled.
 - `SPOILED_MILK_OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS=true`
   - Proof switch for drawing `GAME_OBJECT` and `WALL_OBJECT` scenery from
     resident chunk buffers instead of the projected object bridge. Object
@@ -616,7 +643,10 @@ is still accepted for protocol compatibility, but it no longer alters camera
 fog generation or the rendered frame; `Graphics > Fog` is the sole
 player-facing fog control.
 The selected font cycles the OpenGL-primary body-font candidates for readability
-testing: legacy `h12b.jf`, `h11p.jf`, `h12p.jf`, `h13b.jf`, and `h14b.jf`. `F6`
+testing: legacy `h12b.jf`, `h11p.jf`, `h12p.jf`, `h13b.jf`, and `h14b.jf`.
+The F6 debug overlay uses a separate 13pt monospaced font so the telemetry is
+more readable at 1280x720 and fullscreen desktop presentation without making
+the main UI overflow. `F6`
 still toggles the renderer debug overlay for development, but release/default
 clients no longer expose quick function-key toggles for window mode,
 resolution, font, scaling mode, or scale size. Those settings must be changed
@@ -1513,6 +1543,55 @@ they are not visual requirements for the baseline.
               skips the old software base only when textured chunks are active
               and the frame has resident chunk geometry, while reusing the
               accepted overlay/sprite replay path.
+        - [x] Attempt default promotion of textured resident chunk
+              replacement and roll it back after visual validation. Terrain
+              and walls failed to draw, and toggling roofs off corrupted
+              projected scenery objects without exposing usable roofs.
+              Resident chunk replacement must stay opt-in until terrain,
+              wall, roof, and roof-toggle parity are fixed.
+        - [x] Fix resident static chunk parity before the next default
+              promotion attempt: terrain/wall chunks render in the replacement
+              composite, roof visibility exposes/removes roofs without
+              corrupting scenery, and projected object bridge state survives
+              roof option changes. 2026-06-26 visual validation showed correct
+              terrain, walls, roofs, scenery bridge occlusion, and sprite
+              ordering, with F6 reporting
+              `resident req/active/fallback 1.0/1.0/0.0 | reason active`.
+        - [x] Promote textured resident static chunk replacement to the
+              renderer-v2 runtime defaults:
+              `SPOILED_MILK_OPENGL_WORLD_CHUNKS_TEXTURED_VISIBLE=true`,
+              `SPOILED_MILK_OPENGL_WORLD_CHUNKS_REPLACEMENT_COMPOSITE=true`,
+              and
+              `SPOILED_MILK_OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT=true`.
+              Keep resident object chunks disabled by default until two-sided
+              scenery material ownership is redesigned.
+        - [x] Remove resident-owned terrain from the projected legacy polygon
+              path when static resident chunk ownership is active. This
+              reduces cull/sort/export work now that terrain pixels and
+              terrain depth are owned by resident chunks. The optimization is
+              disabled during one-shot legacy raster captures, and it retains
+              only terrain faces that are pickable and near the current mouse
+              position during mouse-pick passes so ground interaction keeps
+              the old picking behavior without projecting every terrain face.
+              2026-06-26 F6 validation in the dense Seers/Camelot test area
+              showed terrain projected faces dropping from roughly 8100 to
+              about 5, scene cull dropping from about 5 ms to about 3 ms, scene
+              draw dropping from about 10 ms to about 6 ms, and FPS reaching
+              60 with no visible regressions.
+        - [ ] Revisit projected scenery bridge culling with a better object
+              and face-level visibility model. A 2026-06-26 experiment that
+              changed the mesh gate from oversized containment padding to
+              viewport intersection with a 128px safety margin lowered FPS in
+              the dense farm/fence test area because near-camera oversized
+              scenery triangles were retained more often. Do not reapply that
+              simple intersection rule; the bridge needs model-cell,
+              draw-order, and occluder-aware culling instead.
+        - [x] Gate legacy picker scanline work on projected face pickability.
+              The old scene loop still needs picker rasterization for
+              selectable scenery/ground/sprite faces, but non-pickable
+              projected faces no longer pay the expensive `setFrustum(...,
+              5960, ...)` scanline path just because their screen bounds touch
+              the current mouse position.
         - [x] Suppress visible projected-mesh drawing while the resident chunk
               replacement composite owns the world base, preventing a hybrid
               projected/chunk static world when both diagnostic paths are
@@ -1578,16 +1657,38 @@ they are not visual requirements for the baseline.
               and leave the projected scenery bridge authoritative until
               material-side selection, texture fallback, and tiny transparent
               detail handling are redesigned from first principles.
+        - [x] Add a resident object one-sided material parity rule. If a
+              legacy object face has exactly one visible side, the resident
+              object chunk now emits that visible material on both culling
+              windings. This keeps depth/culling behavior for normal
+              two-sided faces while preventing classic one-sided details such
+              as ladders, sign interiors, counter tops, windmill blades, or
+              small foliage details from disappearing when resident object
+              ownership is being tested.
+        - [x] Let the experimental resident object owner suppress projected
+              `GAME_OBJECT` and `WALL_OBJECT` faces from the legacy CPU
+              polygon list, while retaining only mouse-pickable candidates
+              near the cursor and forced legacy capture frames. This is the
+              first proof that resident object chunks can remove the old
+              projected scenery bridge cost instead of only replacing the
+              visible OpenGL draw.
+        - [x] Preserve object-model legacy side lighting in resident object
+              chunks. The object chunk builder records the same front/back
+              side light that the projected renderer derived from
+              `diffuseParam1`, `faceDiffuseLight`, `vertLightOther`, and
+              `vertDiffuseLight`; the OpenGL resident object path then uses
+              that captured value directly instead of recomputing scenery
+              lighting from resident chunk normals.
         - [x] Split resident chunk draw telemetry into terrain, wall, roof,
               game-object, wall-object, and other triangle buckets so object
               residency can be verified independently from static world
               geometry during draw-distance and ordering tests.
-        - [ ] Expand textured chunk drawing into a full replacement path for
-              terrain, walls, roofs, stronger missing-asset diagnostics, and
-              full legacy ordering instead of the projected frame-space mesh
-              diagnostic. Scenery remains on the projected object bridge until
-              resident object chunks can select front/back face materials from
-              camera orientation without dropping one-sided classic details.
+        - [x] Expand textured chunk drawing into a full default replacement
+              path for terrain, walls, and roofs with readiness telemetry and
+              fail-closed projected fallback. Scenery remains on the projected
+              object bridge until resident object chunks can select front/back
+              face materials from camera orientation without dropping
+              one-sided classic details.
         - [ ] Replace the fixed-function resident chunk lighting approximation
               with an explicit shader/material pipeline that separates base
               material color, texture sampling, slope diffuse, object/wall
@@ -1675,6 +1776,23 @@ they are not visual requirements for the baseline.
         ground-item occlusion, but its backing arrays and raster loops are now
         bounded to the union of visible sprite rectangles instead of the whole
         viewport.
+  - [x] Add a coarse face-bounds reject before the software depth bridge
+        triangulates a world face. Faces that cannot overlap the sprite-depth
+        clip window skip triangle setup entirely; intersecting faces continue
+        through the existing conservative per-row and per-pixel mask checks.
+  - [x] Make the software depth bridge sprite-scoped by default. When there
+        are no projected sprite anchors, normal rendering now builds an empty
+        depth frame instead of falling back to a full-viewport CPU depth pass;
+        the full-viewport path is reserved for the visible-world diagnostic.
+        Face rejection now also checks sprite row spans before rasterization,
+        and expanded F6 telemetry reports depth `c/a/r` so dense-area captures
+        show considered, accepted, and rejected depth faces directly.
+  - [ ] Continue separating visual rendering from sprite-depth ownership. The
+        current GLSL parity shader is intentionally small, while dense-scene
+        captures show frame swings following scene cull/depth/draw CPU work.
+        Future optimization should reject whole static cells before legacy
+        polygon sort and produce CPU occlusion only for faces that can affect
+        visible sprites or picking.
   - [x] Start collapsing projected flat-material world faces into the same
         atlas-backed textured path by assigning flat faces a white atlas texel
         and carrying their shaded material RGB through the texture color
@@ -1754,6 +1872,17 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
       first pass should reject whole terrain/scenery chunks outside the camera
       view, with conservative margins for Classic projection and camera
       rotation.
+  - [x] Add conservative resident material-batch bounds culling before texture
+        binds and draw calls. Batches that cross the near plane are retained,
+        and projected screen bounds use a safety margin to avoid clipping walls
+        or scenery at the viewport edge. This benefits object cells and
+        smaller material batches now; full terrain/wall chunk subdivision
+        remains the larger follow-up.
+  - [x] Expose resident material-batch visibility in telemetry separately from
+        whole-chunk visibility. The current world is still usually three large
+        resident chunks, so chunk `considered/drawn/culled` can remain flat
+        while batch `considered/drawn/culled` shows whether frustum and fog
+        culling are actually removing submissions.
 - [ ] Add whole-entity sprite visibility culling for NPCs, players, ground
       items, projectiles, and world effects. Cull by composed sprite bounds or
       world anchor bounds, never by individual body-part frames, so character
@@ -1778,6 +1907,10 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
         This targets the high projected mesh draw-call count while leaving
         walls, scenery, wall objects, game objects, and cutout ordering
         conservative.
+  - [x] Extend projected-world opaque material batching to walls, roofs, game
+        objects, and wall objects in the full static path. Cutout and
+        translucent submissions remain legacy ordered until visual testing
+        proves they can be safely grouped.
   - [x] Default the OpenGL replacement client to skip the legacy software
         world raster after geometry, depth, sprite-anchor, and mouse-pick data
         have been captured. This removes redundant software pixel drawing while
@@ -1880,9 +2013,10 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
       controls only if field testing shows a player-facing filter option is
       still needed.
 - [x] Add 1920x1080 as an experimental render-surface size for field testing.
-      The mode is cycleable from the resolution row and available through
+      The mode remains available through
       `SPOILED_MILK_RENDER_SURFACE_MODE=1920x1080`, `1080p`, `full-hd`, or
-      `fhd`.
+      `fhd`, but it is hidden from the normal in-game Resolution cycle until
+      true 1080p performance is acceptable.
 - [ ] Expand supported render-surface sizes in measured steps and record where
       sprites, UI panels, minimap, or world projection start to break.
 - [ ] Stress test mouse-wheel zoom beyond the old limits and document the

@@ -388,7 +388,7 @@ def main() -> None:
     )
     require(
         render_surface_settings,
-        'HD("1280x720", "@gre@1280x720 16:9", 1280, 720)',
+        'HD("1280x720", "@gre@1280x720 16:9", 1280, 720, true)',
         "1280x720 render-surface mode",
     )
     require(
@@ -432,7 +432,7 @@ def main() -> None:
     )
     require(
         applet,
-        '"F6 overlay"',
+        '"Ctrl+F6 expanded"',
         "release debug overlay shortcut hint",
     )
     require(

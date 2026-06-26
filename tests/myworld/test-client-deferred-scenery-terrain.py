@@ -35,6 +35,12 @@ def main() -> None:
     require("private void materializeLoadedTerrainScenery()" in client
             and "this.materializeLoadedTerrainScenery();" in client,
             "Region loads should retry deferred scenery once terrain is active")
+    require("private void rematerializeLoadedTerrainSceneryAfterWorldReload()" in client
+            and "this.rematerializeLoadedTerrainSceneryAfterWorldReload();" in client,
+            "Roof-only world reloads should reattach scenery to the rebuilt terrain scene")
+    require("this.wallObjectInstanceModel[i] = null;" in client
+            and "this.getWorld().registerObjectDir(\n\t\t\t\t\tthis.wallObjectInstanceX[i]," in client,
+            "Roof-only world reloads should rebuild wall object models and object directions")
 
     store_record = "mc.setGameObjectInstanceModel(instanceIndex, m);"
     materialize_record = "mc.materializeGameObjectInstance(instanceIndex);"

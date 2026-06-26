@@ -121,7 +121,9 @@ public final class RenderTelemetry {
 	private static final CounterStats worldGeometryGameObjectFaceStats = new CounterStats();
 	private static final CounterStats worldGeometryWallObjectFaceStats = new CounterStats();
 	private static final CounterStats worldGeometryOtherFaceStats = new CounterStats();
+	private static final CounterStats worldDepthConsideredFaceStats = new CounterStats();
 	private static final CounterStats worldDepthFaceStats = new CounterStats();
+	private static final CounterStats worldDepthRejectedFaceStats = new CounterStats();
 	private static final CounterStats worldDepthTriangleStats = new CounterStats();
 	private static final CounterStats worldDepthPixelWriteStats = new CounterStats();
 	private static final CounterStats worldMeshVertexStats = new CounterStats();
@@ -151,6 +153,9 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldChunkConsideredStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkCulledStats = new CounterStats();
+	private static final CounterStats openGLWorldChunkBatchConsideredStats = new CounterStats();
+	private static final CounterStats openGLWorldChunkBatchDrawStats = new CounterStats();
+	private static final CounterStats openGLWorldChunkBatchCulledStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawTriangleStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawTerrainStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawWallStats = new CounterStats();
@@ -164,6 +169,12 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldChunkTextureBindStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkShadowChunkStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkShadowIndexStats = new CounterStats();
+	private static final CounterStats openGLResidentChunkReplacementRequestedStats = new CounterStats();
+	private static final CounterStats openGLResidentChunkReplacementActiveStats = new CounterStats();
+	private static final CounterStats openGLResidentChunkReplacementFallbackStats = new CounterStats();
+	private static final CounterStats openGLResidentChunkDrawableTerrainBatchStats = new CounterStats();
+	private static final CounterStats openGLResidentChunkDrawableWallBatchStats = new CounterStats();
+	private static final CounterStats openGLResidentChunkDrawableRoofBatchStats = new CounterStats();
 	private static final CounterStats openGLWorldTextureReferencedStats = new CounterStats();
 	private static final CounterStats openGLWorldTextureCachedStats = new CounterStats();
 	private static final CounterStats openGLWorldTextureUploadedStats = new CounterStats();
@@ -188,6 +199,7 @@ public final class RenderTelemetry {
 	private static long openGLFramesWindow;
 	private static long openGLDroppedFramesWindow;
 	private static long lastReportNanos;
+	private static String openGLResidentChunkReplacementReason = "not-requested";
 
 	private RenderTelemetry() {
 	}
@@ -307,7 +319,9 @@ public final class RenderTelemetry {
 		int gameObjectFaces,
 		int wallObjectFaces,
 		int otherFaces,
+		int depthConsideredFaces,
 		int depthFaces,
+		int depthRejectedFaces,
 		int depthTriangles,
 		int depthPixelWrites,
 		int meshVertices,
@@ -331,7 +345,9 @@ public final class RenderTelemetry {
 			worldGeometryGameObjectFaceStats.record(gameObjectFaces);
 			worldGeometryWallObjectFaceStats.record(wallObjectFaces);
 			worldGeometryOtherFaceStats.record(otherFaces);
+			worldDepthConsideredFaceStats.record(depthConsideredFaces);
 			worldDepthFaceStats.record(depthFaces);
+			worldDepthRejectedFaceStats.record(depthRejectedFaces);
 			worldDepthTriangleStats.record(depthTriangles);
 			worldDepthPixelWriteStats.record(depthPixelWrites);
 			worldMeshVertexStats.record(meshVertices);
@@ -421,6 +437,9 @@ public final class RenderTelemetry {
 		int shadowIndices,
 		int consideredChunks,
 		int culledChunks,
+		int consideredBatches,
+		int drawnBatches,
+		int culledBatches,
 		int drawCalls,
 		int textureBinds) {
 		if (!isCollectionEnabled()) {
@@ -431,6 +450,9 @@ public final class RenderTelemetry {
 			openGLWorldChunkConsideredStats.record(consideredChunks);
 			openGLWorldChunkDrawStats.record(drawnChunks);
 			openGLWorldChunkCulledStats.record(culledChunks);
+			openGLWorldChunkBatchConsideredStats.record(consideredBatches);
+			openGLWorldChunkBatchDrawStats.record(drawnBatches);
+			openGLWorldChunkBatchCulledStats.record(culledBatches);
 			openGLWorldChunkDrawTriangleStats.record(drawnTriangles);
 			openGLWorldChunkDrawTerrainStats.record(drawnTerrainTriangles);
 			openGLWorldChunkDrawWallStats.record(drawnWallTriangles);
@@ -444,6 +466,29 @@ public final class RenderTelemetry {
 			openGLWorldChunkTextureBindStats.record(textureBinds);
 			openGLWorldChunkShadowChunkStats.record(shadowChunks);
 			openGLWorldChunkShadowIndexStats.record(shadowIndices);
+		}
+	}
+
+	static void recordOpenGLResidentChunkReplacement(
+		boolean requested,
+		boolean active,
+		String reason,
+		int drawableTerrainBatches,
+		int drawableWallBatches,
+		int drawableRoofBatches) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			openGLResidentChunkReplacementRequestedStats.record(requested ? 1 : 0);
+			openGLResidentChunkReplacementActiveStats.record(active ? 1 : 0);
+			openGLResidentChunkReplacementFallbackStats.record(requested && !active ? 1 : 0);
+			openGLResidentChunkDrawableTerrainBatchStats.record(drawableTerrainBatches);
+			openGLResidentChunkDrawableWallBatchStats.record(drawableWallBatches);
+			openGLResidentChunkDrawableRoofBatchStats.record(drawableRoofBatches);
+			openGLResidentChunkReplacementReason =
+				reason == null || reason.trim().isEmpty() ? "unknown" : reason;
 		}
 	}
 
@@ -834,6 +879,11 @@ public final class RenderTelemetry {
 				formatCount(worldDepthFaceStats.average()),
 				formatCount(worldDepthTriangleStats.average()),
 				formatCount(worldDepthPixelWriteStats.average()),
+				formatVisibility(
+					worldDepthConsideredFaceStats,
+					worldDepthFaceStats,
+					worldDepthRejectedFaceStats,
+					false),
 				formatCount(worldMeshVertexStats.average()),
 				formatCount(worldMeshIndexStats.average()),
 				formatCount(worldMeshTriangleStats.average()),
@@ -856,7 +906,12 @@ public final class RenderTelemetry {
 					openGLWorldChunkConsideredStats,
 					openGLWorldChunkDrawStats,
 					openGLWorldChunkCulledStats,
-					false),
+					false)
+					+ " | batch c/d/cull " + formatVisibility(
+						openGLWorldChunkBatchConsideredStats,
+						openGLWorldChunkBatchDrawStats,
+						openGLWorldChunkBatchCulledStats,
+						false),
 				formatCount(openGLWorldChunkDrawCallStats.average())
 					+ "/" + formatCount(openGLWorldChunkTextureBindStats.average()),
 				formatCount(openGLWorldChunkDrawStats.average()),
@@ -869,6 +924,13 @@ public final class RenderTelemetry {
 				formatCount(openGLWorldChunkDrawOtherStats.average()),
 				formatCount(openGLWorldChunkDrawFallbackStats.average()),
 				formatCount(openGLWorldChunkDrawSkippedStats.average()),
+				formatCount(openGLResidentChunkReplacementRequestedStats.average()),
+				formatCount(openGLResidentChunkReplacementActiveStats.average()),
+				formatCount(openGLResidentChunkReplacementFallbackStats.average()),
+				openGLResidentChunkReplacementReason,
+				formatCount(openGLResidentChunkDrawableTerrainBatchStats.average()),
+				formatCount(openGLResidentChunkDrawableWallBatchStats.average()),
+				formatCount(openGLResidentChunkDrawableRoofBatchStats.average()),
 				formatCount(openGLWorldSpriteAnchorStats.average()),
 				formatCount(openGLWorldSpriteMatchedStats.average()),
 				formatCount(openGLWorldSpriteDrawnStats.average()),
@@ -947,6 +1009,11 @@ public final class RenderTelemetry {
 				+ " depth f/t/p=" + formatCount(worldDepthFaceStats.average())
 				+ "/" + formatCount(worldDepthTriangleStats.average())
 				+ "/" + formatCount(worldDepthPixelWriteStats.average())
+				+ " depth c/a/r=" + formatVisibility(
+					worldDepthConsideredFaceStats,
+					worldDepthFaceStats,
+					worldDepthRejectedFaceStats,
+					false)
 				+ " mesh v/i/t=" + formatCount(worldMeshVertexStats.average())
 				+ "/" + formatCount(worldMeshIndexStats.average())
 				+ "/" + formatCount(worldMeshTriangleStats.average())
@@ -966,6 +1033,11 @@ public final class RenderTelemetry {
 					openGLWorldChunkDrawStats,
 					openGLWorldChunkCulledStats,
 					false)
+				+ " batch c/d/cull=" + formatVisibility(
+					openGLWorldChunkBatchConsideredStats,
+					openGLWorldChunkBatchDrawStats,
+					openGLWorldChunkBatchCulledStats,
+					false)
 				+ " chunk draw c/t=" + formatCount(openGLWorldChunkDrawStats.average())
 				+ "/" + formatCount(openGLWorldChunkDrawTriangleStats.average())
 				+ " chunk draw t/w/r/go/wo/o=" + formatCount(openGLWorldChunkDrawTerrainStats.average())
@@ -980,6 +1052,15 @@ public final class RenderTelemetry {
 				+ "/" + formatCount(openGLWorldChunkTextureBindStats.average())
 				+ " chunk shadow c/i=" + formatCount(openGLWorldChunkShadowChunkStats.average())
 				+ "/" + formatCount(openGLWorldChunkShadowIndexStats.average())
+				+ " resident req/active/fallback="
+				+ formatCount(openGLResidentChunkReplacementRequestedStats.average())
+				+ "/" + formatCount(openGLResidentChunkReplacementActiveStats.average())
+				+ "/" + formatCount(openGLResidentChunkReplacementFallbackStats.average())
+				+ " resident batches t/w/r="
+				+ formatCount(openGLResidentChunkDrawableTerrainBatchStats.average())
+				+ "/" + formatCount(openGLResidentChunkDrawableWallBatchStats.average())
+				+ "/" + formatCount(openGLResidentChunkDrawableRoofBatchStats.average())
+				+ " reason=" + openGLResidentChunkReplacementReason
 				+ " uploads/reused=" + formatCount(openGLWorldMeshUploadStats.average())
 				+ "/" + formatCount(openGLWorldMeshReuseStats.average()));
 
@@ -997,6 +1078,11 @@ public final class RenderTelemetry {
 				+ " depth f/t/p=" + formatCount(worldDepthFaceStats.windowAverage())
 				+ "/" + formatCount(worldDepthTriangleStats.windowAverage())
 				+ "/" + formatCount(worldDepthPixelWriteStats.windowAverage())
+				+ " depth c/a/r=" + formatVisibility(
+					worldDepthConsideredFaceStats,
+					worldDepthFaceStats,
+					worldDepthRejectedFaceStats,
+					true)
 				+ " mesh v/i/t=" + formatCount(worldMeshVertexStats.windowAverage())
 				+ "/" + formatCount(worldMeshIndexStats.windowAverage())
 				+ "/" + formatCount(worldMeshTriangleStats.windowAverage()));
@@ -1019,6 +1105,11 @@ public final class RenderTelemetry {
 					openGLWorldChunkDrawStats,
 					openGLWorldChunkCulledStats,
 					true)
+				+ " batch c/d/cull=" + formatVisibility(
+					openGLWorldChunkBatchConsideredStats,
+					openGLWorldChunkBatchDrawStats,
+					openGLWorldChunkBatchCulledStats,
+					true)
 				+ " chunk draw c/t=" + formatCount(openGLWorldChunkDrawStats.windowAverage())
 				+ "/" + formatCount(openGLWorldChunkDrawTriangleStats.windowAverage())
 				+ " chunk draw t/w/r/go/wo/o=" + formatCount(openGLWorldChunkDrawTerrainStats.windowAverage())
@@ -1031,6 +1122,15 @@ public final class RenderTelemetry {
 				+ "/" + formatCount(openGLWorldChunkDrawSkippedStats.windowAverage())
 				+ " chunk submit calls/binds=" + formatCount(openGLWorldChunkDrawCallStats.windowAverage())
 				+ "/" + formatCount(openGLWorldChunkTextureBindStats.windowAverage())
+				+ " resident req/active/fallback="
+				+ formatCount(openGLResidentChunkReplacementRequestedStats.windowAverage())
+				+ "/" + formatCount(openGLResidentChunkReplacementActiveStats.windowAverage())
+				+ "/" + formatCount(openGLResidentChunkReplacementFallbackStats.windowAverage())
+				+ " batches t/w/r="
+				+ formatCount(openGLResidentChunkDrawableTerrainBatchStats.windowAverage())
+				+ "/" + formatCount(openGLResidentChunkDrawableWallBatchStats.windowAverage())
+				+ "/" + formatCount(openGLResidentChunkDrawableRoofBatchStats.windowAverage())
+				+ " reason=" + openGLResidentChunkReplacementReason
 				+ " mesh draw tri/occ/b/calls=" + formatCount(openGLWorldMeshDrawTriangleStats.windowAverage())
 				+ "/" + formatCount(openGLWorldMeshDrawOccluderTriangleStats.windowAverage())
 				+ "/" + formatCount(openGLWorldMeshDrawBatchStats.windowAverage())
@@ -1295,7 +1395,9 @@ public final class RenderTelemetry {
 			worldGeometryGameObjectFaceStats,
 			worldGeometryWallObjectFaceStats,
 			worldGeometryOtherFaceStats,
+			worldDepthConsideredFaceStats,
 			worldDepthFaceStats,
+			worldDepthRejectedFaceStats,
 			worldDepthTriangleStats,
 			worldDepthPixelWriteStats,
 			worldMeshVertexStats,
@@ -1325,6 +1427,9 @@ public final class RenderTelemetry {
 			openGLWorldChunkConsideredStats,
 			openGLWorldChunkDrawStats,
 			openGLWorldChunkCulledStats,
+			openGLWorldChunkBatchConsideredStats,
+			openGLWorldChunkBatchDrawStats,
+			openGLWorldChunkBatchCulledStats,
 			openGLWorldChunkDrawTriangleStats,
 			openGLWorldChunkDrawTerrainStats,
 			openGLWorldChunkDrawWallStats,
@@ -1338,6 +1443,12 @@ public final class RenderTelemetry {
 			openGLWorldChunkTextureBindStats,
 			openGLWorldChunkShadowChunkStats,
 			openGLWorldChunkShadowIndexStats,
+			openGLResidentChunkReplacementRequestedStats,
+			openGLResidentChunkReplacementActiveStats,
+			openGLResidentChunkReplacementFallbackStats,
+			openGLResidentChunkDrawableTerrainBatchStats,
+			openGLResidentChunkDrawableWallBatchStats,
+			openGLResidentChunkDrawableRoofBatchStats,
 			openGLWorldTextureReferencedStats,
 			openGLWorldTextureCachedStats,
 			openGLWorldTextureUploadedStats,
@@ -1722,6 +1833,7 @@ public final class RenderTelemetry {
 		final String worldDepthFaceAverage;
 		final String worldDepthTriangleAverage;
 		final String worldDepthPixelWriteAverage;
+		final String worldDepthCullAverage;
 		final String worldMeshVertexAverage;
 		final String worldMeshIndexAverage;
 		final String worldMeshTriangleAverage;
@@ -1752,6 +1864,13 @@ public final class RenderTelemetry {
 		final String openGLWorldChunkDrawOtherAverage;
 		final String openGLWorldChunkDrawFallbackAverage;
 		final String openGLWorldChunkDrawSkippedAverage;
+		final String openGLResidentChunkReplacementRequestedAverage;
+		final String openGLResidentChunkReplacementActiveAverage;
+		final String openGLResidentChunkReplacementFallbackAverage;
+		final String openGLResidentChunkReplacementReason;
+		final String openGLResidentChunkDrawableTerrainBatchAverage;
+		final String openGLResidentChunkDrawableWallBatchAverage;
+		final String openGLResidentChunkDrawableRoofBatchAverage;
 		final String openGLWorldSpriteAnchorAverage;
 		final String openGLWorldSpriteMatchedAverage;
 		final String openGLWorldSpriteDrawnAverage;
@@ -1858,6 +1977,7 @@ public final class RenderTelemetry {
 			String worldDepthFaceAverage,
 			String worldDepthTriangleAverage,
 			String worldDepthPixelWriteAverage,
+			String worldDepthCullAverage,
 			String worldMeshVertexAverage,
 			String worldMeshIndexAverage,
 			String worldMeshTriangleAverage,
@@ -1888,6 +2008,13 @@ public final class RenderTelemetry {
 			String openGLWorldChunkDrawOtherAverage,
 			String openGLWorldChunkDrawFallbackAverage,
 			String openGLWorldChunkDrawSkippedAverage,
+			String openGLResidentChunkReplacementRequestedAverage,
+			String openGLResidentChunkReplacementActiveAverage,
+			String openGLResidentChunkReplacementFallbackAverage,
+			String openGLResidentChunkReplacementReason,
+			String openGLResidentChunkDrawableTerrainBatchAverage,
+			String openGLResidentChunkDrawableWallBatchAverage,
+			String openGLResidentChunkDrawableRoofBatchAverage,
 			String openGLWorldSpriteAnchorAverage,
 			String openGLWorldSpriteMatchedAverage,
 			String openGLWorldSpriteDrawnAverage,
@@ -1992,6 +2119,7 @@ public final class RenderTelemetry {
 			this.worldDepthFaceAverage = worldDepthFaceAverage;
 			this.worldDepthTriangleAverage = worldDepthTriangleAverage;
 			this.worldDepthPixelWriteAverage = worldDepthPixelWriteAverage;
+			this.worldDepthCullAverage = worldDepthCullAverage;
 			this.worldMeshVertexAverage = worldMeshVertexAverage;
 			this.worldMeshIndexAverage = worldMeshIndexAverage;
 			this.worldMeshTriangleAverage = worldMeshTriangleAverage;
@@ -2022,6 +2150,13 @@ public final class RenderTelemetry {
 			this.openGLWorldChunkDrawOtherAverage = openGLWorldChunkDrawOtherAverage;
 			this.openGLWorldChunkDrawFallbackAverage = openGLWorldChunkDrawFallbackAverage;
 			this.openGLWorldChunkDrawSkippedAverage = openGLWorldChunkDrawSkippedAverage;
+			this.openGLResidentChunkReplacementRequestedAverage = openGLResidentChunkReplacementRequestedAverage;
+			this.openGLResidentChunkReplacementActiveAverage = openGLResidentChunkReplacementActiveAverage;
+			this.openGLResidentChunkReplacementFallbackAverage = openGLResidentChunkReplacementFallbackAverage;
+			this.openGLResidentChunkReplacementReason = openGLResidentChunkReplacementReason;
+			this.openGLResidentChunkDrawableTerrainBatchAverage = openGLResidentChunkDrawableTerrainBatchAverage;
+			this.openGLResidentChunkDrawableWallBatchAverage = openGLResidentChunkDrawableWallBatchAverage;
+			this.openGLResidentChunkDrawableRoofBatchAverage = openGLResidentChunkDrawableRoofBatchAverage;
 			this.openGLWorldSpriteAnchorAverage = openGLWorldSpriteAnchorAverage;
 			this.openGLWorldSpriteMatchedAverage = openGLWorldSpriteMatchedAverage;
 			this.openGLWorldSpriteDrawnAverage = openGLWorldSpriteDrawnAverage;

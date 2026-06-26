@@ -66,29 +66,37 @@ final class RenderSurfaceSettings {
 	}
 
 	enum Mode {
-		CLASSIC("512x346", "@gre@512x346 Classic", 512, 346),
-		VGA("640x480", "@yel@640x480", 640, 480),
-		SVGA("800x600", "@ora@800x600", 800, 600),
-		WIDE("960x540", "@yel@960x540 16:9", 960, 540),
-		WIDE_PLUS("1024x576", "@ora@1024x576 16:9", 1024, 576),
-		HD("1280x720", "@gre@1280x720 16:9", 1280, 720),
-		FULL_HD("1920x1080", "@cya@1920x1080 16:9", 1920, 1080);
+		CLASSIC("512x346", "@gre@512x346 Classic", 512, 346, true),
+		VGA("640x480", "@yel@640x480", 640, 480, true),
+		SVGA("800x600", "@ora@800x600", 800, 600, true),
+		WIDE("960x540", "@yel@960x540 16:9", 960, 540, true),
+		WIDE_PLUS("1024x576", "@ora@1024x576 16:9", 1024, 576, true),
+		HD("1280x720", "@gre@1280x720 16:9", 1280, 720, true),
+		FULL_HD("1920x1080", "@cya@1920x1080 16:9", 1920, 1080, false);
 
 		final String id;
 		final String label;
 		final int width;
 		final int height;
+		private final boolean playerVisible;
 
-		Mode(String id, String label, int width, int height) {
+		Mode(String id, String label, int width, int height, boolean playerVisible) {
 			this.id = id;
 			this.label = label;
 			this.width = width;
 			this.height = height;
+			this.playerVisible = playerVisible;
 		}
 
 		Mode next() {
 			Mode[] modes = values();
-			return modes[(ordinal() + 1) % modes.length];
+			for (int step = 1; step <= modes.length; step++) {
+				Mode candidate = modes[(ordinal() + step) % modes.length];
+				if (candidate.playerVisible) {
+					return candidate;
+				}
+			}
+			return CLASSIC;
 		}
 
 		static Mode from(String value) {

@@ -103,6 +103,13 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private static final boolean WORLD_CHUNKS_REPLACEMENT_COMPOSITE =
 		WORLD_CHUNKS_TEXTURED_VISIBLE
 			&& readBoolean(WORLD_CHUNKS_REPLACEMENT_COMPOSITE_PROPERTY, WORLD_CHUNKS_REPLACEMENT_COMPOSITE_ENV);
+	private static final String WORLD_CHUNKS_TRUSTED_REPLACEMENT_PROPERTY =
+		"spoiledmilk.openglWorldChunksTrustedReplacement";
+	private static final String WORLD_CHUNKS_TRUSTED_REPLACEMENT_ENV =
+		"SPOILED_MILK_OPENGL_WORLD_CHUNKS_TRUSTED_REPLACEMENT";
+	private static final boolean WORLD_CHUNKS_TRUSTED_REPLACEMENT =
+		WORLD_CHUNKS_REPLACEMENT_COMPOSITE
+			&& readBoolean(WORLD_CHUNKS_TRUSTED_REPLACEMENT_PROPERTY, WORLD_CHUNKS_TRUSTED_REPLACEMENT_ENV, false);
 	private static final String WORLD_CHUNKS_RESIDENT_OBJECTS_PROPERTY =
 		"spoiledmilk.openglWorldChunksResidentObjects";
 	private static final String WORLD_CHUNKS_RESIDENT_OBJECTS_ENV =
@@ -411,7 +418,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					log("OpenGL world replacement composite active.");
 				}
 				if (WORLD_CHUNKS_REPLACEMENT_COMPOSITE) {
-					log("OpenGL resident chunk replacement composite active.");
+					log("OpenGL resident chunk replacement proof active; projected ownership is guarded.");
+				}
+				if (WORLD_CHUNKS_TRUSTED_REPLACEMENT) {
+					log("OpenGL resident chunk trusted replacement ownership active.");
 				}
 			}
 			if (WORLD_SPRITES_VISIBLE) {
@@ -977,8 +987,34 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				chunkUploadStats.reusedChunks,
 				chunkUploadStats.evictedChunks);
 		}
-		boolean residentChunkReplacementComposite =
+		boolean requestedResidentChunkReplacementComposite =
 			worldReplacementComposite && shouldUseResidentChunkReplacementComposite(frame);
+		ResidentChunkReadiness residentChunkReadiness =
+			requestedResidentChunkReplacementComposite && worldChunkRenderer != null
+				? worldChunkRenderer.inspectDrawableResidentStaticWorld(
+					frame.renderer3DFrame,
+					worldChunkFrame,
+					WORLD_CHUNKS_TEXTURED_VISIBLE)
+				: ResidentChunkReadiness.notRequested(
+					requestedResidentChunkReplacementComposite ? "no-chunk-renderer" : "not-requested");
+		boolean residentChunkReplacementComposite =
+			requestedResidentChunkReplacementComposite
+				&& WORLD_CHUNKS_TRUSTED_REPLACEMENT
+				&& residentChunkReadiness.canReplace;
+		String residentReplacementReason =
+			requestedResidentChunkReplacementComposite
+				&& !residentChunkReplacementComposite
+				&& residentChunkReadiness.canReplace
+				&& !WORLD_CHUNKS_TRUSTED_REPLACEMENT
+					? "not-trusted"
+					: residentChunkReadiness.reason;
+		RenderTelemetry.recordOpenGLResidentChunkReplacement(
+			requestedResidentChunkReplacementComposite,
+			residentChunkReplacementComposite,
+			residentReplacementReason,
+			residentChunkReadiness.drawableTerrainBatches,
+			residentChunkReadiness.drawableWallBatches,
+			residentChunkReadiness.drawableRoofBatches);
 		boolean canDrawProjectedMesh = WORLD_MESH_ENABLED && worldMeshRenderer != null && renderer3DMeshFrame != null;
 		boolean drawProjectedMeshVisible =
 			!residentChunkReplacementComposite && (WORLD_MESH_VISIBLE || WORLD_MESH_TEXTURED_VISIBLE);
@@ -1001,7 +1037,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			worldMeshRenderer.uploadAndMaybeDraw(renderer3DMeshFrame, false, false, null);
 			projectedMeshPhaseNanos += RenderTelemetry.elapsedSince(projectedMeshPhaseStart);
 		}
-		if ((WORLD_CHUNKS_VISIBLE || WORLD_CHUNKS_FILLED_VISIBLE || WORLD_CHUNKS_TEXTURED_VISIBLE)
+		boolean drawResidentChunkDiagnostic =
+			(WORLD_CHUNKS_VISIBLE || WORLD_CHUNKS_FILLED_VISIBLE || WORLD_CHUNKS_TEXTURED_VISIBLE)
+				&& (!WORLD_CHUNKS_REPLACEMENT_COMPOSITE || residentChunkReplacementComposite);
+		if (drawResidentChunkDiagnostic
 			&& worldChunkRenderer != null
 			&& frame.renderer3DFrame != null) {
 			long chunkDrawPhaseStart = RenderTelemetry.now();
@@ -1026,6 +1065,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				chunkDrawStats.shadowProofIndices,
 				chunkDrawStats.consideredChunks,
 				chunkDrawStats.culledChunks,
+				chunkDrawStats.consideredBatches,
+				chunkDrawStats.drawnBatches,
+				chunkDrawStats.culledBatches,
 				chunkDrawStats.drawCalls,
 				chunkDrawStats.textureBinds);
 			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
@@ -5115,6 +5157,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private static final int SPATIAL_BATCH_WORLD_SIZE = SPATIAL_BATCH_TILE_SIZE * 128;
 		private static final int SPATIAL_BATCH_AXIS = 24;
 		private static final int SPATIAL_BATCH_DISABLED = -1;
+		private static final float FRUSTUM_BATCH_CULL_SCREEN_PADDING = 128.0f;
 		private static final float FOG_BATCH_CULL_PADDING = 0.0f;
 		private static final float WALL_DEPTH_PRIORITY_FACTOR = -1.0f;
 		private static final float WALL_DEPTH_PRIORITY_UNITS = -1.0f;
@@ -5172,7 +5215,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			List<ShadowProofCaster> shadowProofCasters = shouldDrawProjectedShadowProof()
 				? buildProjectedShadowProofCasters(chunkFrame)
 				: Collections.<ShadowProofCaster>emptyList();
-			long shadowProofSignature = shadowProofCasterSignature(shadowProofCasters);
+			long shadowProofSignature =
+				shouldDrawProjectedShadowProof() ? shadowProofCasterSignature(shadowProofCasters) : 0L;
 			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
 				int vertexCount = chunk.getVertexCount();
 				int indexCount = chunk.getIndexCount();
@@ -5273,17 +5317,17 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int fallbackTriangles = 0;
 			int skippedTriangles = 0;
 			WorldChunkDrawAccumulator accumulator = new WorldChunkDrawAccumulator();
-			float[] fogCullViewMatrix = shouldUseSpatialMaterialBatches() ? worldViewMatrix(frame) : null;
+			float[] batchCullViewMatrix = worldViewMatrix(frame);
 			try {
 				if (textured) {
-					drawChunkDiagnosticLayers(frame, chunkFrame, true, false, accumulator, fogCullViewMatrix);
+					drawChunkDiagnosticLayers(frame, chunkFrame, true, false, accumulator, batchCullViewMatrix);
 					gl.glEnable(gl.GL_BLEND);
 					gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
 					gl.glEnable(gl.GL_ALPHA_TEST);
 					gl.glAlphaFunc(gl.GL_GREATER, 0.0f);
-					drawChunkDiagnosticLayers(frame, chunkFrame, true, true, accumulator, fogCullViewMatrix);
+					drawChunkDiagnosticLayers(frame, chunkFrame, true, true, accumulator, batchCullViewMatrix);
 				} else {
-					drawChunkDiagnosticLayers(frame, chunkFrame, false, false, accumulator, fogCullViewMatrix);
+					drawChunkDiagnosticLayers(frame, chunkFrame, false, false, accumulator, batchCullViewMatrix);
 				}
 				drawnChunks = accumulator.drawnChunkCount();
 				drawnTriangles = accumulator.drawnTriangles;
@@ -5324,10 +5368,87 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				drawnOtherTriangles,
 				fallbackTriangles,
 				skippedTriangles,
+				accumulator.consideredBatches,
+				accumulator.drawnBatches,
+				accumulator.culledBatches,
 				accumulator.drawCalls,
 				accumulator.textureBinds,
 				accumulator.shadowProofChunks,
 				accumulator.shadowProofIndices);
+		}
+
+		private ResidentChunkReadiness inspectDrawableResidentStaticWorld(
+			Renderer3DFrame frame,
+			Renderer3DWorldChunkFrame chunkFrame,
+			boolean textured) {
+			if (chunkFrame == null || chunkFrame.getChunkCount() <= 0 || residentChunks.isEmpty()) {
+				return ResidentChunkReadiness.notRequested("no-resident-chunks");
+			}
+			long shadowProofSignature = currentShadowProofSignature(chunkFrame);
+			boolean matchedBuffer = false;
+			int drawableTerrainBatches = 0;
+			int drawableWallBatches = 0;
+			int drawableRoofBatches = 0;
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
+				WorldChunkBuffer buffer = residentChunks.get(key);
+				if (buffer == null || !buffer.matches(
+					chunk.getSignature(),
+					chunk.getVertexCount(),
+					chunk.getIndexCount(),
+					chunk.getTriangleCount(),
+					textured,
+					currentBrightnessBits(),
+					currentFogModeBits(),
+					currentLightingModeBits(),
+					currentGeometryModeBits(),
+					WORLD_CHUNKS_REPLACEMENT_COMPOSITE,
+					shadowProofSignature)) {
+					continue;
+				}
+				matchedBuffer = true;
+				for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
+					if (batch.indexCount <= 0 || !shouldDrawChunkModelKind(batch.kind)) {
+						continue;
+					}
+					if (!isDrawableResidentStaticBatch(frame, batch, textured)) {
+						continue;
+					}
+					if (batch.kind == Renderer3DModelKind.TERRAIN) {
+						drawableTerrainBatches++;
+					} else if (batch.kind == Renderer3DModelKind.WALL) {
+						drawableWallBatches++;
+					} else if (batch.kind == Renderer3DModelKind.ROOF) {
+						drawableRoofBatches++;
+					}
+				}
+			}
+			if (!matchedBuffer) {
+				return ResidentChunkReadiness.notRequested("no-matching-buffers");
+			}
+			if (drawableTerrainBatches <= 0) {
+				return new ResidentChunkReadiness(
+					false,
+					"no-drawable-terrain",
+					drawableTerrainBatches,
+					drawableWallBatches,
+					drawableRoofBatches);
+			}
+			return new ResidentChunkReadiness(
+				true,
+				"active",
+				drawableTerrainBatches,
+				drawableWallBatches,
+				drawableRoofBatches);
+		}
+
+		private boolean isDrawableResidentStaticBatch(
+			Renderer3DFrame frame,
+			WorldChunkMaterialBatch batch,
+			boolean textured) {
+			return !textured
+				|| textureRegionForBatch(frame, batch) != null
+				|| fallbackColorForBatch(frame, batch) != NO_FALLBACK_COLOR;
 		}
 
 		private void drawChunkDiagnosticLayers(
@@ -5336,9 +5457,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			boolean textured,
 			boolean transparentPass,
 			WorldChunkDrawAccumulator accumulator,
-			float[] fogCullViewMatrix) throws Exception {
+			float[] batchCullViewMatrix) throws Exception {
 			for (Renderer3DModelKind kind : WORLD_CHUNK_KIND_DRAW_ORDER) {
-				drawChunkDiagnosticPass(frame, chunkFrame, textured, transparentPass, kind, accumulator, fogCullViewMatrix);
+				drawChunkDiagnosticPass(frame, chunkFrame, textured, transparentPass, kind, accumulator, batchCullViewMatrix);
 			}
 		}
 
@@ -5688,7 +5809,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			boolean transparentPass,
 			Renderer3DModelKind modelKind,
 			WorldChunkDrawAccumulator accumulator,
-			float[] fogCullViewMatrix) throws Exception {
+			float[] batchCullViewMatrix) throws Exception {
 			if (!shouldDrawChunkModelKind(modelKind)) {
 				return;
 			}
@@ -5736,7 +5857,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 						if (textured && isTransparentChunkBatch(frame, batch) != transparentPass) {
 							continue;
 						}
-						if (isFogCulledChunkBatch(frame, batch, fogCullViewMatrix)) {
+						accumulator.recordConsideredBatch();
+						if (isFrustumCulledChunkBatch(frame, batch, batchCullViewMatrix)
+							|| isFogCulledChunkBatch(frame, batch, batchCullViewMatrix)) {
+							accumulator.recordCulledBatch();
 							accumulator.recordSkippedBatch(batch.indexCount / 3);
 							continue;
 						}
@@ -5753,6 +5877,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 							batch.indexCount,
 							gl.GL_UNSIGNED_INT,
 							batch.startIndex * 4L);
+						accumulator.recordDrawnBatch();
 						accumulator.recordDrawCall();
 						int batchTriangles = batch.indexCount / 3;
 						chunkDrawnTriangles += batchTriangles;
@@ -5824,6 +5949,53 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private boolean isTransparentChunkBatch(Renderer3DFrame frame, WorldChunkMaterialBatch batch) {
 			OpenGLTextureRegion region = textureRegionForBatch(frame, batch);
 			return region != null && region.hasTransparency();
+		}
+
+		private boolean isFrustumCulledChunkBatch(
+			Renderer3DFrame frame,
+			WorldChunkMaterialBatch batch,
+			float[] viewMatrix) {
+			if (frame == null || batch == null || viewMatrix == null || !batch.hasBounds()) {
+				return false;
+			}
+			float near = Math.max(1.0f, frame.getNearPlane());
+			float scale = (float) (1 << Math.max(0, Math.min(24, frame.getPerspectiveShift())));
+			float viewportWidth = Math.max(1.0f, frame.getViewportWidth());
+			float viewportHeight = Math.max(1.0f, frame.getViewportHeight());
+			float centerX = frame.getCenterX();
+			float centerY = frame.getCenterY();
+			float minScreenX = Float.MAX_VALUE;
+			float maxScreenX = -Float.MAX_VALUE;
+			float minScreenY = Float.MAX_VALUE;
+			float maxScreenY = -Float.MAX_VALUE;
+			for (int xIndex = 0; xIndex < 2; xIndex++) {
+				float x = xIndex == 0 ? batch.minX : batch.maxX;
+				for (int yIndex = 0; yIndex < 2; yIndex++) {
+					float y = yIndex == 0 ? batch.minY : batch.maxY;
+					for (int zIndex = 0; zIndex < 2; zIndex++) {
+						float z = zIndex == 0 ? batch.minZ : batch.maxZ;
+						float cameraX = viewMatrix[0] * x + viewMatrix[1] * y + viewMatrix[2] * z + viewMatrix[3];
+						float cameraY = viewMatrix[4] * x + viewMatrix[5] * y + viewMatrix[6] * z + viewMatrix[7];
+						float cameraZ = viewMatrix[8] * x + viewMatrix[9] * y + viewMatrix[10] * z + viewMatrix[11];
+						if (cameraZ <= near) {
+							return false;
+						}
+						float screenX = centerX + scale * cameraX / cameraZ;
+						float screenY = centerY - scale * cameraY / cameraZ;
+						minScreenX = Math.min(minScreenX, screenX);
+						maxScreenX = Math.max(maxScreenX, screenX);
+						minScreenY = Math.min(minScreenY, screenY);
+						maxScreenY = Math.max(maxScreenY, screenY);
+					}
+				}
+			}
+			if (minScreenX == Float.MAX_VALUE || minScreenY == Float.MAX_VALUE) {
+				return false;
+			}
+			return maxScreenX < -FRUSTUM_BATCH_CULL_SCREEN_PADDING
+				|| minScreenX > viewportWidth + FRUSTUM_BATCH_CULL_SCREEN_PADDING
+				|| maxScreenY < -FRUSTUM_BATCH_CULL_SCREEN_PADDING
+				|| minScreenY > viewportHeight + FRUSTUM_BATCH_CULL_SCREEN_PADDING;
 		}
 
 		private boolean isFogCulledChunkBatch(
@@ -6512,10 +6684,18 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			Renderer3DWorldChunkFrame.ChunkMesh chunk,
 			int vertex,
 			int[] diffuseLights) {
+			int triangle = vertex / 3;
+			Renderer3DModelKind modelKind = triangle >= 0 && triangle < chunk.getTriangleCount()
+				? chunk.getTriangleModelKind(triangle)
+				: Renderer3DModelKind.UNCLASSIFIED;
 			int vertexLightOther = clampLegacyLight(chunk.getVertexLight(vertex));
 			int diffuseLight = diffuseLights == null || vertex < 0 || vertex >= diffuseLights.length
 				? 0
 				: diffuseLights[vertex];
+			if (modelKind == Renderer3DModelKind.GAME_OBJECT
+				|| modelKind == Renderer3DModelKind.WALL_OBJECT) {
+				return applyLightingModeLegacyLight(vertexLightOther);
+			}
 			return applyLightingModeLegacyLight(96 + vertexLightOther + diffuseLight);
 		}
 
@@ -6759,9 +6939,34 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 	}
 
+	private static final class ResidentChunkReadiness {
+		private final boolean canReplace;
+		private final String reason;
+		private final int drawableTerrainBatches;
+		private final int drawableWallBatches;
+		private final int drawableRoofBatches;
+
+		private ResidentChunkReadiness(
+			boolean canReplace,
+			String reason,
+			int drawableTerrainBatches,
+			int drawableWallBatches,
+			int drawableRoofBatches) {
+			this.canReplace = canReplace;
+			this.reason = reason == null || reason.trim().isEmpty() ? "unknown" : reason;
+			this.drawableTerrainBatches = Math.max(0, drawableTerrainBatches);
+			this.drawableWallBatches = Math.max(0, drawableWallBatches);
+			this.drawableRoofBatches = Math.max(0, drawableRoofBatches);
+		}
+
+		private static ResidentChunkReadiness notRequested(String reason) {
+			return new ResidentChunkReadiness(false, reason, 0, 0, 0);
+		}
+	}
+
 	private static final class OpenGLWorldChunkDrawStats {
 		private static final OpenGLWorldChunkDrawStats EMPTY =
-			new OpenGLWorldChunkDrawStats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+			new OpenGLWorldChunkDrawStats(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 		private final int consideredChunks;
 		private final int drawnChunks;
@@ -6775,6 +6980,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private final int drawnOtherTriangles;
 		private final int fallbackTriangles;
 		private final int skippedTriangles;
+		private final int consideredBatches;
+		private final int drawnBatches;
+		private final int culledBatches;
 		private final int drawCalls;
 		private final int textureBinds;
 		private final int shadowProofChunks;
@@ -6793,6 +7001,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int drawnOtherTriangles,
 			int fallbackTriangles,
 			int skippedTriangles,
+			int consideredBatches,
+			int drawnBatches,
+			int culledBatches,
 			int drawCalls,
 			int textureBinds,
 			int shadowProofChunks,
@@ -6809,6 +7020,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			this.drawnOtherTriangles = drawnOtherTriangles;
 			this.fallbackTriangles = fallbackTriangles;
 			this.skippedTriangles = skippedTriangles;
+			this.consideredBatches = consideredBatches;
+			this.drawnBatches = drawnBatches;
+			this.culledBatches = culledBatches;
 			this.drawCalls = drawCalls;
 			this.textureBinds = textureBinds;
 			this.shadowProofChunks = shadowProofChunks;
@@ -6834,6 +7048,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private int drawnOtherTriangles;
 		private int fallbackTriangles;
 		private int skippedTriangles;
+		private int consideredBatches;
+		private int drawnBatches;
+		private int culledBatches;
 		private int drawCalls;
 		private int textureBinds;
 		private int boundTextureId = -1;
@@ -6858,6 +7075,18 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 		private int culledChunkCount() {
 			return Math.max(0, consideredChunkCount() - drawnChunkCount());
+		}
+
+		private void recordConsideredBatch() {
+			consideredBatches++;
+		}
+
+		private void recordDrawnBatch() {
+			drawnBatches++;
+		}
+
+		private void recordCulledBatch() {
+			culledBatches++;
 		}
 
 		private void recordDrawCall() {
@@ -6946,6 +7175,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private boolean hasSpatialBounds() {
 			return spatialX != OpenGLWorldChunkRenderer.SPATIAL_BATCH_DISABLED
 				&& spatialZ != OpenGLWorldChunkRenderer.SPATIAL_BATCH_DISABLED;
+		}
+
+		private boolean hasBounds() {
+			return indexCount > 0 && minX <= maxX && minY <= maxY && minZ <= maxZ;
 		}
 	}
 
@@ -7940,14 +8173,14 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			texturedIndexUploadBuffer.clear();
 			int nextIndex = 0;
 			if (triangleFilter == WorldMeshTriangleFilter.ALL_STATIC) {
-				boolean canBatchOpaqueTerrain =
+				boolean canBatchOpaqueStatic =
 					fullRange && (modelFaceKeys == null || modelFaceKeys.isEmpty());
-				if (canBatchOpaqueTerrain) {
-					nextIndex = appendOpaqueTerrainMaterialBatches(
+				if (canBatchOpaqueStatic) {
+					nextIndex = appendOpaqueStaticMaterialBatches(
 						meshFrame, triangleTextures, triangleModelKinds, indices, orderedTriangles, nextIndex);
 					nextIndex = appendMaterialPassTriangles(
 						meshFrame, triangleTextures, triangleModelKinds, indices, orderedTriangles,
-						StaticWorldMaterialPass.OPAQUE, nextIndex, Renderer3DModelKind.TERRAIN);
+						StaticWorldMaterialPass.OPAQUE, nextIndex, true);
 				} else {
 					nextIndex = appendMaterialPassTriangles(
 						meshFrame, triangleTextures, triangleModelKinds, indices, orderedTriangles,
@@ -7965,7 +8198,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return nextIndex;
 		}
 
-		private int appendOpaqueTerrainMaterialBatches(
+		private int appendOpaqueStaticMaterialBatches(
 			Renderer3DMeshFrame meshFrame,
 			int[] triangleTextures,
 			Renderer3DModelKind[] triangleModelKinds,
@@ -7978,7 +8211,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				new LinkedHashMap<WorldMeshTextureBatchKey, List<Integer>>();
 			for (Integer orderedTriangle : orderedTriangles) {
 				int triangle = orderedTriangle.intValue();
-				if (triangleModelKinds[triangle] != Renderer3DModelKind.TERRAIN) {
+				Renderer3DModelKind modelKind = triangleModelKinds[triangle];
+				if (!isProjectedMeshOpaqueBatchKind(modelKind)) {
 					continue;
 				}
 				Renderer3DTextureData textureData = triangleTextures[triangle] >= 0
@@ -7990,19 +8224,19 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					continue;
 				}
 				OpenGLTextureRegion region =
-					textureRegionForTriangle(meshFrame, triangleTextures[triangle], Renderer3DModelKind.TERRAIN);
-				if (!canAppendWorldMeshTriangle(triangleTextures[triangle], Renderer3DModelKind.TERRAIN, region)) {
+					textureRegionForTriangle(meshFrame, triangleTextures[triangle], modelKind);
+				if (!canAppendWorldMeshTriangle(triangleTextures[triangle], modelKind, region)) {
 					continue;
 				}
 				int batchTextureId = region == null ? FLAT_COLOR_BATCH_TEXTURE_ID : region.getTextureId();
 				WorldMeshTextureBatchKey batchKey =
-					new WorldMeshTextureBatchKey(batchTextureId, materialPass, Renderer3DModelKind.TERRAIN);
+					new WorldMeshTextureBatchKey(batchTextureId, materialPass, modelKind);
 				WorldMeshTextureBatch batch = batchesByMaterial.get(batchKey);
 				if (batch == null) {
 					batch = new WorldMeshTextureBatch(
 						batchTextureId,
 						materialPass,
-						Renderer3DModelKind.TERRAIN);
+						modelKind);
 					batchesByMaterial.put(batchKey, batch);
 					trianglesByMaterial.put(batchKey, new ArrayList<Integer>());
 				}
@@ -8022,6 +8256,14 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				}
 			}
 			return nextIndex;
+		}
+
+		private boolean isProjectedMeshOpaqueBatchKind(Renderer3DModelKind modelKind) {
+			return modelKind == Renderer3DModelKind.TERRAIN
+				|| modelKind == Renderer3DModelKind.WALL
+				|| modelKind == Renderer3DModelKind.ROOF
+				|| modelKind == Renderer3DModelKind.GAME_OBJECT
+				|| modelKind == Renderer3DModelKind.WALL_OBJECT;
 		}
 
 		private int appendMaterialPassTriangles(
@@ -8052,11 +8294,57 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			StaticWorldMaterialPass requiredPass,
 			int nextIndex,
 			Renderer3DModelKind excludedKind) throws Exception {
+			return appendMaterialPassTriangles(
+				meshFrame,
+				triangleTextures,
+				triangleModelKinds,
+				indices,
+				orderedTriangles,
+				requiredPass,
+				nextIndex,
+				excludedKind,
+				false);
+		}
+
+		private int appendMaterialPassTriangles(
+			Renderer3DMeshFrame meshFrame,
+			int[] triangleTextures,
+			Renderer3DModelKind[] triangleModelKinds,
+			int[] indices,
+			List<Integer> orderedTriangles,
+			StaticWorldMaterialPass requiredPass,
+			int nextIndex,
+			boolean excludeOpaqueBatchKinds) throws Exception {
+			return appendMaterialPassTriangles(
+				meshFrame,
+				triangleTextures,
+				triangleModelKinds,
+				indices,
+				orderedTriangles,
+				requiredPass,
+				nextIndex,
+				null,
+				excludeOpaqueBatchKinds);
+		}
+
+		private int appendMaterialPassTriangles(
+			Renderer3DMeshFrame meshFrame,
+			int[] triangleTextures,
+			Renderer3DModelKind[] triangleModelKinds,
+			int[] indices,
+			List<Integer> orderedTriangles,
+			StaticWorldMaterialPass requiredPass,
+			int nextIndex,
+			Renderer3DModelKind excludedKind,
+			boolean excludeOpaqueBatchKinds) throws Exception {
 			WorldMeshTextureBatch currentBatch = null;
 			for (Integer orderedTriangle : orderedTriangles) {
 				int triangle = orderedTriangle.intValue();
 				Renderer3DModelKind modelKind = triangleModelKinds[triangle];
 				if (excludedKind != null && modelKind == excludedKind) {
+					continue;
+				}
+				if (excludeOpaqueBatchKinds && isProjectedMeshOpaqueBatchKind(modelKind)) {
 					continue;
 				}
 				Renderer3DTextureData textureData = triangleTextures[triangle] >= 0
@@ -9660,6 +9948,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			writer.println("rendererMode.worldReplacementComposite=" + worldReplacementComposite);
 			writer.println("rendererMode.worldReplacementCompositeConfigured=" + WORLD_REPLACEMENT_COMPOSITE);
 			writer.println("rendererMode.worldChunksReplacementCompositeConfigured=" + WORLD_CHUNKS_REPLACEMENT_COMPOSITE);
+			writer.println("rendererMode.worldChunksTrustedReplacement=" + WORLD_CHUNKS_TRUSTED_REPLACEMENT);
 			writer.println("rendererMode.worldChunksResidentObjects=" + WORLD_CHUNKS_RESIDENT_OBJECTS);
 			writer.println("rendererMode.worldSpritesVisible=" + WORLD_SPRITES_VISIBLE);
 		}
