@@ -72,7 +72,7 @@ final class RenderSurfaceSettings {
 		WIDE("960x540", "@yel@960x540 16:9", 960, 540, true),
 		WIDE_PLUS("1024x576", "@ora@1024x576 16:9", 1024, 576, true),
 		HD("1280x720", "@gre@1280x720 16:9", 1280, 720, true),
-		FULL_HD("1920x1080", "@cya@1920x1080 16:9", 1920, 1080, false);
+		FULL_HD("1920x1080", "@cya@1920x1080 16:9", 1920, 1080, true);
 
 		final String id;
 		final String label;

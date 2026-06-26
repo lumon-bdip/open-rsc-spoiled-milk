@@ -7,6 +7,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 ACTION_SENDER = ROOT / "server/src/com/openrsc/server/net/rsc/ActionSender.java"
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+MYWORLD_CONF = ROOT / "server/myworld.conf"
+MYWORLD_HOST_CONF = ROOT / "server/myworld-host.conf"
+APPEARANCE_UPDATER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/PlayerAppearanceUpdater.java"
 
 
 def fail(message: str) -> None:
@@ -26,6 +29,9 @@ def forbid(text: str, needle: str, description: str) -> None:
 def main() -> None:
     action_sender = ACTION_SENDER.read_text(encoding="utf-8")
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
+    myworld_conf = MYWORLD_CONF.read_text(encoding="utf-8")
+    myworld_host_conf = MYWORLD_HOST_CONF.read_text(encoding="utf-8")
+    appearance_updater = APPEARANCE_UPDATER.read_text(encoding="utf-8")
 
     require(
         action_sender,
@@ -85,6 +91,30 @@ def main() -> None:
         "\t\t\t|| this.showAppearanceChange",
         "full-screen modal UI helper includes character creator",
     )
+    require(
+        mudclient,
+        "// type 1 is for worlds with the 1x XP mode selector",
+        "character creator mode 1 XP-only label",
+    )
+    require(
+        mudclient,
+        "this.packetHandler.getClientStream().bufferBits.putByte(0);\n"
+        "\t\t\t\tthis.packetHandler.getClientStream().bufferBits.putByte(Config.S_CHARACTER_CREATION_MODE == 1\n"
+        "\t\t\t\t\t? this.panelAppearance.getControlClickedListIndex(this.playerMode2)\n"
+        "\t\t\t\t\t: 0);",
+        "new characters always send regular Ironman mode while preserving 1x XP choice",
+    )
+    forbid(mudclient, "modes_ironman", "Ironman character creator mode list")
+    forbid(mudclient, "\"Regular\", \"Ironman\", \"Ultimate\", \"Hardcore\"", "Ironman character creator labels")
+    require(myworld_conf, "spawn_iron_man_npcs: false # MODIFIED", "local Ironman NPC spawns disabled")
+    require(myworld_host_conf, "spawn_iron_man_npcs: false # MODIFIED", "hosted Ironman NPC spawns disabled")
+    require(
+        appearance_updater,
+        "player.setIronMan(IronmanMode.None.id());\n"
+        "\t\t\t\tplayer.setOneXp(isOneXp == 1);",
+        "server ignores custom Ironman mode during MyWorld character creation",
+    )
+    forbid(appearance_updater, "player.setIronMan(ironmanMode);", "server-side Ironman creation assignment")
 
     print("PASS: character creation login opens appearance UI")
 

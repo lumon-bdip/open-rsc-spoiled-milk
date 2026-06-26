@@ -479,8 +479,8 @@ def main() -> None:
     )
     require(
         plan,
-        "1024x576|1280x720",
-        "renderer plan documents 1280x720 resolution option",
+        "1024x576|1280x720|1920x1080",
+        "renderer plan documents 1920x1080 resolution option",
     )
     require(
         plan,

@@ -473,7 +473,7 @@ def main() -> None:
     require(applet, "if (keyCode == KeyEvent.VK_F6 && var1.isControlDown()) mudclient.toggleRendererDebugOverlayMode();", "Ctrl+F6 switches debug overlay modes")
     require(applet, "else if (keyCode == KeyEvent.VK_F6) mudclient.toggleRendererDebugOverlay();", "F6 toggles debug overlay visibility")
     require_absent(applet, "if (keyCode == KeyEvent.VK_F7) mudclient.cycleOpenGLLightingMode();", "F7 lighting toggle should be removed for release-facing testing")
-    require(render_surface, 'FULL_HD("1920x1080", "@cya@1920x1080 16:9", 1920, 1080, false)', "render surface settings keep 1920x1080 as debug-only")
+    require(render_surface, 'FULL_HD("1920x1080", "@cya@1920x1080 16:9", 1920, 1080, true)', "render surface settings expose 1920x1080 for field testing")
     require(render_surface, "if (candidate.playerVisible) {\n\t\t\t\t\treturn candidate;\n\t\t\t\t}", "render surface cycle skips debug-only modes")
     require(render_surface, '"1080p".equals(normalized)', "render surface settings accept 1080p alias")
     require(applet, '"frame avg/max " + telemetry.frameAverageMs', "performance overlay frame timing line")

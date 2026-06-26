@@ -1,5 +1,6 @@
 package com.openrsc.server.net.rsc.handlers;
 
+import com.openrsc.server.constants.IronmanMode;
 import com.openrsc.server.content.PlayerClass;
 import com.openrsc.server.model.PlayerAppearance;
 import com.openrsc.server.model.container.Inventory;
@@ -53,7 +54,6 @@ public class PlayerAppearanceUpdater implements PayloadProcessor<PlayerAppearanc
 		int topColour = payload.topColour;
 		int trouserColour = payload.trouserColour;
 		int skinColour = payload.skinColour;
-		int ironmanMode = payload.ironmanMode; // custom protocol
 		int isOneXp = payload.isOneXp; // custom protocol
 
 		int headSprite = headType + 1;
@@ -114,7 +114,7 @@ public class PlayerAppearanceUpdater implements PayloadProcessor<PlayerAppearanc
 			}
 
 			if (player.getConfig().CHARACTER_CREATION_MODE == 1) {
-				player.setIronMan(ironmanMode);
+				player.setIronMan(IronmanMode.None.id());
 				player.setOneXp(isOneXp == 1);
 			}
 		}

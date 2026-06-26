@@ -810,7 +810,6 @@ public final class mudclient implements Runnable {
 	private int controlButtonAppearanceHair2;
 	private int cameraAutoMoveAmountX = 2;
 	private int controlButtonAppearanceAccept;
-	private int playerMode1;
 	private int playerMode2;
 	private int controlButtonAppearanceTop2;
 	private int controlButtonAppearanceGender1;
@@ -2698,7 +2697,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void createAppearancePanel(int var1, int type) {
-		// type 1 is for worlds with ironman and 1x mode selectors
+		// type 1 is for worlds with the 1x XP mode selector
 		// type 2 is for world with classes and global pk mode
 		int factor = type > 0 ? 2 : 1;
 		try {
@@ -2773,27 +2772,14 @@ public final class mudclient implements Runnable {
 			yFromTopDistance = 50;
 			if (type == 1) {
 				var6 = 372;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "Each player mode has different", 0, true);
+				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "Use the world's " + Config.S_SKILLING_EXP_RATE + "X xp rate", 0, true);
 				yFromTopDistance += 13;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "challenges. But the choice you make here", 0, true);
+				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "or keep the original 1X rate.", 0, true);
 				yFromTopDistance += 13;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "isn't strictly permanent, and you may", 0, true);
+				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "This only affects your new character.", 0, true);
 				yFromTopDistance += 13;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "request to change to regular at any time.", 0, true);
-				yFromTopDistance += 73;
-				this.panelAppearance.addDecoratedBox(var6, yFromTopDistance, 215, 125);
-				String[] modes_ironman = {
-					"Regular", "Ironman", "Ultimate", "Hardcore"
-				};
-				this.playerMode1 = this.panelAppearance.addVerticalList(var6, yFromTopDistance + 2, modes_ironman, 4, true);
-				yFromTopDistance += 75;
+				yFromTopDistance += 60;
 				this.panelAppearance.addDecoratedBox(var6, yFromTopDistance + 21, 215, 60);
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "Do you wish to use the world's " + Config.S_SKILLING_EXP_RATE + "X", 0, true);
-				yFromTopDistance += 13;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "xp rate? Note: By choosing no you can", 0, true);
-				yFromTopDistance += 13;
-				this.panelAppearance.addCenteredText(var6, yFromTopDistance, "experience the original 1X xp rate!", 0, true);
-				yFromTopDistance += 13;
 				String[] modes_xp = {
 					"Yes please", "No, original"
 				};
@@ -14753,8 +14739,10 @@ public final class mudclient implements Runnable {
 				this.packetHandler.getClientStream().bufferBits.putByte(this.characterTopColour);
 				this.packetHandler.getClientStream().bufferBits.putByte(this.characterBottomColour);
 				this.packetHandler.getClientStream().bufferBits.putByte(this.appearanceSkinColour);
-				this.packetHandler.getClientStream().bufferBits.putByte(this.panelAppearance.getControlClickedListIndex(this.playerMode1));
-				this.packetHandler.getClientStream().bufferBits.putByte(this.panelAppearance.getControlClickedListIndex(this.playerMode2));
+				this.packetHandler.getClientStream().bufferBits.putByte(0);
+				this.packetHandler.getClientStream().bufferBits.putByte(Config.S_CHARACTER_CREATION_MODE == 1
+					? this.panelAppearance.getControlClickedListIndex(this.playerMode2)
+					: 0);
 				this.packetHandler.getClientStream().finishPacket();
 				this.getSurface().blackScreen(true);
 				this.showAppearanceChange = false;

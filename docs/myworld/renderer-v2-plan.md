@@ -478,9 +478,9 @@ renderer-v2 layer:
     used for field testing so telemetry reflects a single visible client.
 - `SPOILED_MILK_RENDER_SURFACE_MODE=512x346|640x480|800x600|960x540|1024x576|1280x720|1920x1080`
   - Selects the actual source framebuffer size. This changes the scene
-    projection and visible world area before final scaling. `1920x1080`
-    remains a runtime-only field-test mode; the normal in-game Resolution
-    cycle stops at `1280x720` until true 1080p performance is acceptable.
+    projection and visible world area before final scaling. `1920x1080` is
+    available in the normal in-game Resolution cycle again for 1080p FPS field
+    testing.
 - `SPOILED_MILK_OPENGL_SCALE_MODE=aspect-fit|integer-fit|stretch`
   - Legacy/debug fit-policy override for non-primary OpenGL mirror testing.
     OpenGL-primary ignores this setting and always uses automatic aspect-fit
@@ -2015,10 +2015,9 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
       controls only if field testing shows a player-facing filter option is
       still needed.
 - [x] Add 1920x1080 as an experimental render-surface size for field testing.
-      The mode remains available through
-      `SPOILED_MILK_RENDER_SURFACE_MODE=1920x1080`, `1080p`, `full-hd`, or
-      `fhd`, but it is hidden from the normal in-game Resolution cycle until
-      true 1080p performance is acceptable.
+      The mode is available through the normal in-game Resolution cycle and
+      through `SPOILED_MILK_RENDER_SURFACE_MODE=1920x1080`, `1080p`,
+      `full-hd`, or `fhd` for direct launches.
 - [ ] Expand supported render-surface sizes in measured steps and record where
       sprites, UI panels, minimap, or world projection start to break.
 - [ ] Stress test mouse-wheel zoom beyond the old limits and document the
