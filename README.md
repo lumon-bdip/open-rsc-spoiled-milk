@@ -129,7 +129,7 @@ start here.
     <td width="100%" valign="top"><img src="docs/myworld/screenshots/readme/quest-shortcut.png" alt="Quest shortcut option in dialogue" width="100%"></td>
   </tr>
   <tr>
-    <td width="100%" valign="top">Already done the quests? Done them a lot? Do not want to do them again? Skip them. Take the rewards, or do not. Your call.</td>
+    <td width="100%" valign="top">Already done the quests before? Don't want to do them again? Well now you can skip them and still get the rewards by telling the quest giver you've already done the quest.</td>
   </tr>
 </table>
 
