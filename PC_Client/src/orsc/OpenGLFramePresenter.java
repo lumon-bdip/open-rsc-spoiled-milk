@@ -4277,11 +4277,13 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return;
 		}
 
-		if (action == gl.GLFW_REPEAT) {
+		KeyBinding binding = keyBindings[keyIndex];
+		boolean repeated = action == gl.GLFW_REPEAT;
+		if (repeated && !binding.postsRepeatPressEvents()) {
 			return;
 		}
 
-		boolean pressed = action == gl.GLFW_PRESS;
+		boolean pressed = action == gl.GLFW_PRESS || repeated;
 		boolean released = action == gl.GLFW_RELEASE;
 		if (!pressed && !released) {
 			return;
@@ -4295,12 +4297,13 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return;
 		}
 
-		if (pressed == keyDown[keyIndex]) {
+		if (!repeated && pressed == keyDown[keyIndex]) {
 			return;
 		}
 
-		KeyBinding binding = keyBindings[keyIndex];
-		keyDown[keyIndex] = pressed;
+		if (!repeated) {
+			keyDown[keyIndex] = pressed;
+		}
 		if (pressed
 			&& FRAME_CAPTURE_HOTKEY_ENABLED
 			&& binding.awtKeyCode == KeyEvent.VK_F9
@@ -9219,6 +9222,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				|| normalChar == '\n'
 				|| normalChar == '\t'
 				|| normalChar == 27;
+		}
+
+		private boolean postsRepeatPressEvents() {
+			return normalChar == '\b';
 		}
 	}
 

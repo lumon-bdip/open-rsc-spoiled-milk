@@ -48,6 +48,31 @@ def main() -> None:
     require(presenter, "if (isControlDown()) {\n\t\t\tmodifiers |= InputEvent.CTRL_MASK;", "AWT Ctrl mask emission")
     require(presenter, "if (isShiftDown()) {\n\t\t\tmodifiers |= InputEvent.SHIFT_MASK;", "AWT Shift mask emission")
     require(presenter, "if (isAltDown()) {\n\t\t\tmodifiers |= InputEvent.ALT_MASK;", "AWT Alt mask emission")
+    require(
+        presenter,
+        "boolean repeated = action == gl.GLFW_REPEAT;",
+        "OpenGL key repeat detection",
+    )
+    require(
+        presenter,
+        "if (repeated && !binding.postsRepeatPressEvents())",
+        "OpenGL key repeat filter",
+    )
+    require(
+        presenter,
+        "boolean pressed = action == gl.GLFW_PRESS || repeated;",
+        "OpenGL repeat emits legacy pressed events",
+    )
+    require(
+        presenter,
+        "if (!repeated && pressed == keyDown[keyIndex])",
+        "OpenGL held-key duplicate guard keeps repeats eligible",
+    )
+    require(
+        presenter,
+        "return normalChar == '\\b';",
+        "OpenGL backspace repeat whitelist",
+    )
 
     require(
         bank,

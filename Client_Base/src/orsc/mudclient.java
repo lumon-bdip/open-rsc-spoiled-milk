@@ -196,6 +196,7 @@ public final class mudclient implements Runnable {
 	private static final int SUMMON_CHARGE_LOOP_CYCLE_REDUCTION = 1;
 	private static final int SUMMON_CHARGE_LOOP_X_OFFSET = -5;
 	private static final int SUMMON_BAT_VAMPIRISM_PROJECTILE_SIZE = 144;
+	private static final int PLAYER_PROJECTILE_SCENE_HEIGHT = 220;
 	private static final int SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT = 34;
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
 	public static final int CUSTOM_PROJECTILE_COUNT = 21;
@@ -6204,6 +6205,7 @@ public final class mudclient implements Runnable {
 						ORSCharacter var3 = this.players[centerX];
 						if (var3.projectileRange > 0) {
 							ORSCharacter var16 = null;
+							boolean shooterIsNpc = false;
 							boolean enemyProjectile = true;
 							if (var3.attackingNpcServerIndex == -1) {
 								if (var3.attackingPlayerServerIndex != -1) {
@@ -6212,15 +6214,18 @@ public final class mudclient implements Runnable {
 								}
 							} else {
 								var16 = this.npcsServer[var3.attackingNpcServerIndex];
+								shooterIsNpc = true;
 							}
 
 							if (null != var16) {
 								int var5 = var16.currentX;
 								int var6 = var16.currentZ;
-								int var7 = -this.world.getElevation(var5, var6) - 110;
+								int var7 = shooterIsNpc
+									? getNpcProjectileCenterY(var16)
+									: getPlayerProjectileCenterY(var16);
 								int var8 = var3.currentX;
 								int var9 = var3.currentZ;
-								int var10 = -this.world.getElevation(var8, var9) - 110;
+								int var10 = getPlayerProjectileCenterY(var3);
 								SpriteDef projectileDef = var3.incomingProjectileSprite;
 								int var11 = (var8 * (this.projectileMaxRange - var3.projectileRange)
 									+ var5 * var3.projectileRange) / this.projectileMaxRange;
@@ -6238,11 +6243,12 @@ public final class mudclient implements Runnable {
 									var12 = var7;
 									var13 = var6;
 								}
-				int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
-					shouldMirrorProjectile(var16, var3));
+								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
+									shouldMirrorProjectile(var16, var3));
 								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
+								int projectileBottomY = getProjectileSpriteBottomY(var12, projectileSize);
 								this.scene.drawSprite(projectileSprite, var13,
-									0, var11, var12, projectileSize, projectileSize, (byte) 109);
+									0, var11, projectileBottomY, projectileSize, projectileSize, (byte) 109);
 								++this.spriteCount;
 							}
 						}
@@ -6252,6 +6258,7 @@ public final class mudclient implements Runnable {
 						ORSCharacter var3 = this.npcs[centerX];
 						if (var3.projectileRange > 0) {
 							ORSCharacter var16 = null;
+							boolean shooterIsNpc = false;
 							boolean enemyProjectile = true;
 							if (var3.attackingNpcServerIndex == -1) {
 								if (var3.attackingPlayerServerIndex != -1) {
@@ -6260,16 +6267,18 @@ public final class mudclient implements Runnable {
 								}
 							} else {
 								var16 = this.npcsServer[var3.attackingNpcServerIndex];
+								shooterIsNpc = true;
 							}
 
 							if (null != var16) {
 								int var5 = var16.currentX;
 								int var6 = var16.currentZ;
-								int var7 = -this.world.getElevation(var5, var6) - 110;
+								int var7 = shooterIsNpc
+									? getNpcProjectileCenterY(var16)
+									: getPlayerProjectileCenterY(var16);
 								int var8 = var3.currentX;
 								int var9 = var3.currentZ;
-								int var10 = -this.world.getElevation(var8, var9)
-									- EntityHandler.getNpcDef(var3.npcId).getCamera2() / 2;
+								int var10 = getNpcProjectileCenterY(var3);
 								SpriteDef projectileDef = var3.incomingProjectileSprite;
 								int var11 = (var8 * (this.projectileMaxRange - var3.projectileRange)
 									+ var5 * var3.projectileRange) / this.projectileMaxRange;
@@ -6287,11 +6296,12 @@ public final class mudclient implements Runnable {
 									var12 = var7;
 									var13 = var6;
 								}
-				int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
-					shouldMirrorProjectile(var16, var3));
+								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
+									shouldMirrorProjectile(var16, var3));
 								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
+								int projectileBottomY = getProjectileSpriteBottomY(var12, projectileSize);
 								this.scene.drawSprite(projectileSprite, var13,
-									0, var11, var12, projectileSize, projectileSize, (byte) 109);
+									0, var11, projectileBottomY, projectileSize, projectileSize, (byte) 109);
 								++this.spriteCount;
 							}
 						}
@@ -23316,6 +23326,23 @@ public final class mudclient implements Runnable {
 		return projectile != null
 			&& projectile.id >= CUSTOM_PROJECTILE_FIRST
 			&& projectile.id < CUSTOM_PROJECTILE_FIRST + CUSTOM_PROJECTILE_COUNT;
+	}
+
+	private int getPlayerProjectileCenterY(ORSCharacter player) {
+		return getProjectileCenterY(player.currentX, player.currentZ, PLAYER_PROJECTILE_SCENE_HEIGHT);
+	}
+
+	private int getNpcProjectileCenterY(ORSCharacter npc) {
+		NPCDef npcDef = EntityHandler.getNpcDef(npc.npcId);
+		return getProjectileCenterY(npc.currentX, npc.currentZ, npcDef.getCamera2());
+	}
+
+	private int getProjectileCenterY(int x, int z, int sceneHeight) {
+		return -this.world.getElevation(x, z) - Math.max(1, sceneHeight) / 2;
+	}
+
+	private int getProjectileSpriteBottomY(int centerY, int projectileSize) {
+		return centerY + Math.max(1, projectileSize) / 2;
 	}
 
 	private int getProjectileSceneSpriteIndex(SpriteDef projectile, int projectileRange, boolean mirrorX) {
