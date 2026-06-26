@@ -18,17 +18,17 @@ public class DigsiteGuide implements TalkNpcTrigger {
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
 		if (n.getID() == NpcId.DIGSITE_GUIDE.id()) {
-			say(player, n, "Hello, who are you ?");
+			say(player, n, "Hello, who are you?");
 			npcsay(player, n, "Hello, I am the panning guide",
 				"I'm here to teach you how to pan for gold");
 			say(player, n, "Excellent!");
 			npcsay(player, n, "Let me explain how panning works...",
-				"First You need a panning tray",
-				"Use the tray in the panning points in the water",
+				"First, you need a panning tray",
+				"Use the tray at the panning points in the water",
 				"Then examine your tray",
 				"If you find any gold, take it to the expert",
 				"Up in the museum storage facility",
-				"He will calculate it's value for you");
+				"He will calculate its value for you");
 			say(player, n, "Okay thanks");
 		}
 	}

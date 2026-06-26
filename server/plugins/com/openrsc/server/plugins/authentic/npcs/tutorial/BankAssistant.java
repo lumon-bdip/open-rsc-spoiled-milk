@@ -17,7 +17,7 @@ public class BankAssistant implements
 
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
-		npcsay(player, n, "Hello welcome to the bank of runescape",
+		npcsay(player, n, "Hello welcome to the bank of RuneScape",
 			"You can deposit your items in banks",
 			"This allows you to own much more equipment",
 			"Than can be fitted in your inventory",
@@ -34,7 +34,7 @@ public class BankAssistant implements
 		} else {
 			npcsay(player, n, "Now proceed through the next door");
 			int menu = multi(player, n, "Can I access my bank account please?",
-				"Okay thankyou for your help");
+				"Okay thank you for your help");
 			if (menu == 0) {
 				npcsay(player, n, player.getText("BankersRegularCertainly"));
 				player.setAccessingBank(true);

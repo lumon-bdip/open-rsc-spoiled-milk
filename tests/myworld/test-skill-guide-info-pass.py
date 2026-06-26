@@ -57,6 +57,7 @@ def main() -> None:
 
     for snippet in (
         '"Leather armor has set effects if all five pieces are worn"',
+        '"Leather armor mimics the defenses of its creature"',
         '"Hides and carapaces must be tanned at tanning racks"',
         '"Examine armor pieces to read their trait"',
         '"Set traits can grant stats, procs, or spirits"',

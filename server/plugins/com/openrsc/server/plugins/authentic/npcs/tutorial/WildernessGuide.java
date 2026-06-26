@@ -24,7 +24,7 @@ public class WildernessGuide implements TalkNpcTrigger {
 				"That is the area of the game where you can attack other players",
 				"Be careful though",
 				"Other players can be a lot more dangerous than monsters",
-				"they will be much more persistant in chasing after you",
+				"they will be much more persistent in chasing after you",
 				"Especially when they hunt in groups");
 			optionsDialogue(player, n);
 		} else if (menu == 1) {

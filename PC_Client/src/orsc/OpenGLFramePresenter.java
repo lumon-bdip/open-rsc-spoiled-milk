@@ -7499,6 +7499,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int[] triangleFallbackColors = meshFrame.getTriangleFallbackColors();
 			Renderer3DModelKind[] triangleModelKinds = meshFrame.getTriangleModelKinds();
 			float brightness = RendererBrightnessSettings.getMode().multiplier;
+			boolean flatGeometryLighting = usesTriangleFlatWorldMeshLighting();
+			int cachedFlatLightTriangle = -1;
+			int cachedFlatLegacyLight = 0;
+			int cachedFlatBaseLegacyLight = 0;
 			vertexUploadBuffer.clear();
 			shaderVertexUploadBuffer.clear();
 			for (int vertex = 0; vertex < vertexCount; vertex++) {
@@ -7507,19 +7511,45 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				int textureId = triangle >= 0 && triangle < triangleTextures.length ? triangleTextures[triangle] : 0;
 				int rawMaterialColor =
 					triangle >= 0 && triangle < triangleFallbackColors.length ? triangleFallbackColors[triangle] : 0;
-				int legacyLight = applyLightingModeLegacyLight(
-					Math.round(vertices[sourceOffset + Renderer3DMeshFrame.LEGACY_LIGHT_OFFSET]));
-				int baseLegacyLight = applyLightingModeLegacyLight(
-					Math.round(vertices[sourceOffset + Renderer3DMeshFrame.BASE_LEGACY_LIGHT_OFFSET]));
+				if (flatGeometryLighting && triangle != cachedFlatLightTriangle) {
+					cachedFlatLightTriangle = triangle;
+					cachedFlatLegacyLight = triangleAverageLegacyLight(
+						vertices,
+						vertexCount,
+						triangle,
+						Renderer3DMeshFrame.LEGACY_LIGHT_OFFSET);
+					cachedFlatBaseLegacyLight = triangleAverageLegacyLight(
+						vertices,
+						vertexCount,
+						triangle,
+						Renderer3DMeshFrame.BASE_LEGACY_LIGHT_OFFSET);
+				}
+				int sourceLegacyLight = flatGeometryLighting
+					? cachedFlatLegacyLight
+					: Math.round(vertices[sourceOffset + Renderer3DMeshFrame.LEGACY_LIGHT_OFFSET]);
+				int sourceBaseLegacyLight = flatGeometryLighting
+					? cachedFlatBaseLegacyLight
+					: Math.round(vertices[sourceOffset + Renderer3DMeshFrame.BASE_LEGACY_LIGHT_OFFSET]);
+				int legacyLight = applyLightingModeLegacyLight(sourceLegacyLight);
+				int baseLegacyLight = applyLightingModeLegacyLight(sourceBaseLegacyLight);
 				boolean flatMaterial = isFlatColorMaterial(textureId);
 				OpenGLTextureRegion textureRegion =
 					textureRegionForVertex(meshFrame, triangleTextures, triangleModelKinds, vertex);
 				vertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.CAMERA_X_OFFSET]);
 				vertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.CAMERA_Y_OFFSET]);
 				vertexUploadBuffer.put(vertices[sourceOffset + Renderer3DMeshFrame.CAMERA_Z_OFFSET]);
-				float materialRed = brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.RED_OFFSET], brightness);
-				float materialGreen = brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.GREEN_OFFSET], brightness);
-				float materialBlue = brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.BLUE_OFFSET], brightness);
+				int flatGeometryMaterialColor = flatGeometryLighting && textureRegion == null
+					? shadedWorldMeshMaterialColor(rawMaterialColor, textureId, legacyLight)
+					: -1;
+				float materialRed = flatGeometryMaterialColor >= 0
+					? brightnessColor(((flatGeometryMaterialColor >> 16) & 0xFF) / 255.0f, brightness)
+					: brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.RED_OFFSET], brightness);
+				float materialGreen = flatGeometryMaterialColor >= 0
+					? brightnessColor(((flatGeometryMaterialColor >> 8) & 0xFF) / 255.0f, brightness)
+					: brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.GREEN_OFFSET], brightness);
+				float materialBlue = flatGeometryMaterialColor >= 0
+					? brightnessColor((flatGeometryMaterialColor & 0xFF) / 255.0f, brightness)
+					: brightnessColor(vertices[sourceOffset + Renderer3DMeshFrame.BLUE_OFFSET], brightness);
 				float textureLight = brightnessColor(textureLightFactor(legacyLight), brightness);
 				float alpha =
 					vertices[sourceOffset + Renderer3DMeshFrame.TEXTURE_ALPHA_OFFSET] * TEXTURED_DIAGNOSTIC_ALPHA;
@@ -7564,6 +7594,58 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				vertexUploadBuffer,
 				shaderVertexUploadBuffer,
 				vertexCount);
+		}
+
+		private boolean usesTriangleFlatWorldMeshLighting() {
+			RendererGeometrySettings.Mode mode = RendererGeometrySettings.getMode();
+			return mode == RendererGeometrySettings.Mode.FACETED
+				|| mode == RendererGeometrySettings.Mode.WIRE;
+		}
+
+		private int triangleAverageLegacyLight(float[] vertices, int vertexCount, int triangle, int lightOffset) {
+			int firstVertex = triangle * 3;
+			int total = 0;
+			int count = 0;
+			for (int i = 0; i < 3; i++) {
+				int vertex = firstVertex + i;
+				int offset = vertex * Renderer3DMeshFrame.FLOATS_PER_VERTEX + lightOffset;
+				if (vertex < 0 || vertex >= vertexCount || offset < 0 || offset >= vertices.length) {
+					continue;
+				}
+				total += Math.round(vertices[offset]);
+				count++;
+			}
+			return count <= 0 ? 0 : Math.round((float) total / count);
+		}
+
+		private int shadedWorldMeshMaterialColor(int color, int textureId, int legacyLight) {
+			int normalizedLight = clampLegacyLight(legacyLight);
+			if (textureId < 0 || textureId == LEGACY_TRANSPARENT_TEXTURE) {
+				return legacyFlatResourceColor(color, normalizedLight);
+			}
+			return legacyTextureShadeColor(color, legacyTextureShadeBand(normalizedLight));
+		}
+
+		private int legacyFlatResourceColor(int color, int legacyLight) {
+			int shade = 255 - legacyLight;
+			int shadeSquared = shade * shade;
+			int red = (((color >> 16) & 0xFF) * shadeSquared) / 65536;
+			int green = (((color >> 8) & 0xFF) * shadeSquared) / 65536;
+			int blue = ((color & 0xFF) * shadeSquared) / 65536;
+			return red << 16 | green << 8 | blue;
+		}
+
+		private int legacyTextureShadeColor(int color, int shadeBand) {
+			switch (shadeBand) {
+				case 1:
+					return (color - (color >>> 3)) & 0xFFFFFF;
+				case 2:
+					return (color - (color >>> 2)) & 0xFFFFFF;
+				case 3:
+					return (color - (color >>> 3) - (color >>> 2)) & 0xFFFFFF;
+				default:
+					return color;
+			}
 		}
 
 		private ShaderVertexParityStats getLastShaderVertexParityStats() {
@@ -8317,6 +8399,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				gl.GL_FLOAT,
 				STRIDE_BYTES,
 				0L);
+			boolean wireGeometry = RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.WIRE;
+			gl.glPolygonMode(gl.GL_FRONT_AND_BACK, wireGeometry ? gl.GL_LINE : gl.GL_FILL);
 			WorldMeshBatchDrawState drawState = new WorldMeshBatchDrawState(projectionMatrix);
 			try {
 				for (WorldMeshTextureBatch batch : textureBatches) {
@@ -8333,6 +8417,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				}
 			} finally {
 				drawState.close();
+				if (wireGeometry) {
+					gl.glPolygonMode(gl.GL_FRONT_AND_BACK, gl.GL_FILL);
+				}
 			}
 		}
 

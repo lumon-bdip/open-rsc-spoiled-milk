@@ -465,9 +465,9 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(258, "", "Redberry Pie - Heals 6 (3 per slice)"));
 				skillMenuEntries.add(new SkillMenuItem(259, "", "Meat Pie - Heals 8 (4 per slice)"));
 				skillMenuEntries.add(new SkillMenuItem(257, "", "Apple Pie - Heals 10 (5 per slice)"));
-				skillMenuEntries.add(new SkillMenuItem(1571, "", "Lily's pumpkin pie - Heals 12 (6 per slice)"));
-				skillMenuEntries.add(new SkillMenuItem(1490, "", "Pumpkin pie - Heals 24 (12 per slice)"));
-				skillMenuEntries.add(new SkillMenuItem(1493, "", "White pumpkin pie - Heals 16 (8 per slice)"));
+				skillMenuEntries.add(new SkillMenuItem(1571, "", "Lily's Pumpkin Pie - Heals 12 (6 per slice)"));
+				skillMenuEntries.add(new SkillMenuItem(1490, "", "Pumpkin Pie - Heals 24 (12 per slice)"));
+				skillMenuEntries.add(new SkillMenuItem(1493, "", "White Pumpkin Pie - Heals 16 (8 per slice)"));
 			} else if (curTab == 3) { // Produce
 				skillMenuEntries.add(new SkillMenuItem(18, "", "Cabbage - Heals 1"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1352, "", "Red Cabbage - Heals 1"));
@@ -475,79 +475,79 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(320, "", "Tomato - Heals 2"));
 				skillMenuEntries.add(new SkillMenuItem(249, "", "Banana - Heals 2"));
 				skillMenuEntries.add(new SkillMenuItem(855, "", "Lemon - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(856, "", "Lemon slices - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(860, "", "Diced lemon - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(856, "", "Lemon Slices - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(860, "", "Diced Lemon - Heals 2"));
 				skillMenuEntries.add(new SkillMenuItem(863, "", "Lime - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(865, "", "Lime slices - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(864, "", "Lime chunks - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(857, "", "orange - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(858, "", "Orange slices - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(859, "", "Diced orange - Heals 2"));
-				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1349, "", "grapefruit - Heals 2"));
-				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1359, "", "grapefruit slices - Heals 2"));
-				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1360, "", "Diced grapefruit - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(865, "", "Lime Slices - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(864, "", "Lime Chunks - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(857, "", "Orange - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(858, "", "Orange Slices - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(859, "", "Diced Orange - Heals 2"));
+				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1349, "", "Grapefruit - Heals 2"));
+				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1359, "", "Grapefruit Slices - Heals 2"));
+				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1360, "", "Diced Grapefruit - Heals 2"));
 				skillMenuEntries.add(new SkillMenuItem(748, "", "Fresh Pineapple - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(749, "", "Pineapple ring - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(862, "", "Pineapple chunks - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(749, "", "Pineapple Ring - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(862, "", "Pineapple Chunks - Heals 2"));
 				skillMenuEntries.add(new SkillMenuItem(936, "", "Jangerberries - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(1245, "", "Edible seaweed - Heals 4"));
-				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1348, "", "red apple - Heals 4"));
+				skillMenuEntries.add(new SkillMenuItem(1245, "", "Edible Seaweed - Heals 4"));
+				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1348, "", "Red Apple - Heals 4"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1353, "", "Corn - Heals 6"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1569, "", "Lily's Pumpkin - Heals 7"));
-				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1350, "", "papaya - Heals 8"));
+				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1350, "", "Papaya - Heals 8"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1354, "", "White Pumpkin - Heals 10"));
 			} else if (curTab == 4) { // Gnome Food
-				skillMenuEntries.add(new SkillMenuItem(897, "", "King worm - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(896, "", "Toad legs - Heals 3"));
-				skillMenuEntries.add(new SkillMenuItem(911, "", "Choc crunchies - Heals 7"));
-				skillMenuEntries.add(new SkillMenuItem(914, "", "Spice crunchies - Heals 7"));
-				skillMenuEntries.add(new SkillMenuItem(912, "", "Worm crunchies - Heals 8"));
-				skillMenuEntries.add(new SkillMenuItem(913, "", "Toad crunchies - Heals 8"));
-				skillMenuEntries.add(new SkillMenuItem(901, "", "Cheese and tomato batta - Heals 11"));
-				skillMenuEntries.add(new SkillMenuItem(905, "", "Fruit batta - Heals 11"));
-				skillMenuEntries.add(new SkillMenuItem(902, "", "Toad batta - Heals 11"));
-				skillMenuEntries.add(new SkillMenuItem(906, "", "Veg batta - Heals 11"));
-				skillMenuEntries.add(new SkillMenuItem(904, "", "Worm batta - Heals 11"));
+				skillMenuEntries.add(new SkillMenuItem(897, "", "King Worm - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(896, "", "Toad Legs - Heals 3"));
+				skillMenuEntries.add(new SkillMenuItem(911, "", "Choc Crunchies - Heals 7"));
+				skillMenuEntries.add(new SkillMenuItem(914, "", "Spice Crunchies - Heals 7"));
+				skillMenuEntries.add(new SkillMenuItem(912, "", "Worm Crunchies - Heals 8"));
+				skillMenuEntries.add(new SkillMenuItem(913, "", "Toad Crunchies - Heals 8"));
+				skillMenuEntries.add(new SkillMenuItem(901, "", "Cheese and Tomato Batta - Heals 11"));
+				skillMenuEntries.add(new SkillMenuItem(905, "", "Fruit Batta - Heals 11"));
+				skillMenuEntries.add(new SkillMenuItem(902, "", "Toad Batta - Heals 11"));
+				skillMenuEntries.add(new SkillMenuItem(906, "", "Veg Batta - Heals 11"));
+				skillMenuEntries.add(new SkillMenuItem(904, "", "Worm Batta - Heals 11"));
 				skillMenuEntries.add(new SkillMenuItem(908, "", "Vegball - Heals 12"));
-				skillMenuEntries.add(new SkillMenuItem(909, "", "Worm hole - Heals 12"));
-				skillMenuEntries.add(new SkillMenuItem(907, "", "Chocolate bomb - Heals 15"));
-				skillMenuEntries.add(new SkillMenuItem(910, "", "Tangled toads legs - Heals 15"));
+				skillMenuEntries.add(new SkillMenuItem(909, "", "Worm Hole - Heals 12"));
+				skillMenuEntries.add(new SkillMenuItem(907, "", "Chocolate Bomb - Heals 15"));
+				skillMenuEntries.add(new SkillMenuItem(910, "", "Tangled Toads Legs - Heals 15"));
 			} else if (curTab == 5) { // Drinks
 				skillMenuEntries.add(new SkillMenuItem(193, "", "Beer - Heals 1"));
 				skillMenuEntries.add(new SkillMenuItem(269, "", "Dwarven Stout - Heals 1"));
-				skillMenuEntries.add(new SkillMenuItem(830, "", "Greenmans ale - Heals 1"));
+				skillMenuEntries.add(new SkillMenuItem(830, "", "Greenman's Ale - Heals 1"));
 				skillMenuEntries.add(new SkillMenuItem(268, "", "Wizard's Mind Bomb - Heals 1"));
 				skillMenuEntries.add(new SkillMenuItem(267, "", "Asgarnian Ale - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(739, "", "Cup of tea - Heals 2-3"));
+				skillMenuEntries.add(new SkillMenuItem(739, "", "Cup of Tea - Heals 2-3"));
 				skillMenuEntries.add(new SkillMenuItem(598, "", "Grog - Heals 3"));
-				skillMenuEntries.add(new SkillMenuItem(870, "", "gin - Heals 4"));
-				skillMenuEntries.add(new SkillMenuItem(869, "", "vodka - Heals 4"));
+				skillMenuEntries.add(new SkillMenuItem(870, "", "Gin - Heals 4"));
+				skillMenuEntries.add(new SkillMenuItem(869, "", "Vodka - Heals 4"));
 				skillMenuEntries.add(new SkillMenuItem(868, "", "Whisky - Heals 4"));
-				skillMenuEntries.add(new SkillMenuItem(770, "", "chocolaty milk - Heals 4"));
-				skillMenuEntries.add(new SkillMenuItem(876, "", "brandy - Heals 5"));
-				skillMenuEntries.add(new SkillMenuItem(877, "", "blurberry special - Heals 5"));
-				skillMenuEntries.add(new SkillMenuItem(875, "", "Chocolate saturday - Heals 5"));
-				skillMenuEntries.add(new SkillMenuItem(872, "", "Drunk dragon - Heals 5"));
+				skillMenuEntries.add(new SkillMenuItem(770, "", "Chocolaty Milk - Heals 4"));
+				skillMenuEntries.add(new SkillMenuItem(876, "", "Brandy - Heals 5"));
+				skillMenuEntries.add(new SkillMenuItem(877, "", "Blurberry Special - Heals 5"));
+				skillMenuEntries.add(new SkillMenuItem(875, "", "Chocolate Saturday - Heals 5"));
+				skillMenuEntries.add(new SkillMenuItem(872, "", "Drunk Dragon - Heals 5"));
 				skillMenuEntries.add(new SkillMenuItem(874, "", "SGG - Heals 5"));
-				skillMenuEntries.add(new SkillMenuItem(878, "", "wizard blizzard - Heals 5"));
-				skillMenuEntries.add(new SkillMenuItem(866, "", "fruit blast - Heals 8"));
-				skillMenuEntries.add(new SkillMenuItem(879, "", "pineapple punch - Heals 9"));
-				skillMenuEntries.add(new SkillMenuItem(142, "", "wine - Heals 11"));
-				skillMenuEntries.add(new SkillMenuItem(737, "", "Poison chalice - ???"));
+				skillMenuEntries.add(new SkillMenuItem(878, "", "Wizard Blizzard - Heals 5"));
+				skillMenuEntries.add(new SkillMenuItem(866, "", "Fruit Blast - Heals 8"));
+				skillMenuEntries.add(new SkillMenuItem(879, "", "Pineapple Punch - Heals 9"));
+				skillMenuEntries.add(new SkillMenuItem(142, "", "Wine - Heals 11"));
+				skillMenuEntries.add(new SkillMenuItem(737, "", "Poison Chalice - ???"));
 			} else if (curTab == 6) { // Other
 				if (runecraft) skillMenuEntries.add(new SkillMenuItem(1410, "", "Fish oil - 50% chance to heal 1"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1459, "", "Sweetened Slices - Heals 1 or 2"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1460, "", "Sweetened Chunks - Heals 1 or 2"));
 				skillMenuEntries.add(new SkillMenuItem(319, "", "Cheese - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(179, "", "spinach roll - Heals 2"));
+				skillMenuEntries.add(new SkillMenuItem(179, "", "Spinach Roll - Heals 2"));
 				if (customSprites) skillMenuEntries.add(new SkillMenuItem(1417, "", "Pizza Bagel - Heals 2"));
-				skillMenuEntries.add(new SkillMenuItem(132, "", "cookedmeat - Heals 3"));
+				skillMenuEntries.add(new SkillMenuItem(132, "", "Cooked Meat - Heals 3"));
 				skillMenuEntries.add(new SkillMenuItem(1103, "", "Cooked Ugthanki Meat - Heals 3"));
 				skillMenuEntries.add(new SkillMenuItem(337, "", "Chocolate Bar - Heals 3"));
 				skillMenuEntries.add(new SkillMenuItem(138, "", "Bread - Heals 4"));
-				skillMenuEntries.add(new SkillMenuItem(1269, "", "Oomlie meat Parcel - Heals 8"));
+				skillMenuEntries.add(new SkillMenuItem(1269, "", "Oomlie Meat Parcel - Heals 8"));
 				skillMenuEntries.add(new SkillMenuItem(346, "", "Stew - Heals 9"));
-				skillMenuEntries.add(new SkillMenuItem(677, "", "Easter egg - Heals 14"));
+				skillMenuEntries.add(new SkillMenuItem(677, "", "Easter Egg - Heals 14"));
 				skillMenuEntries.add(new SkillMenuItem(330, "", "Cake - Heals 12 (4 per slice)"));
 				skillMenuEntries.add(new SkillMenuItem(422, "", "Pumpkin - Heals 14"));
 				skillMenuEntries.add(new SkillMenuItem(332, "", "Chocolate Cake - Heals 15 (5 per slice)"));
@@ -570,28 +570,28 @@ public final class SkillGuideInterface {
 		if (mc.getSkillGuideChosen().equals("Magic")) {
 			if (curTab == 0) {
 				addMagicSpellGuideEntries();
-				} else if (curTab == 1) {
-					addEnchantedStaffTierGuide();
-					skillMenuEntries.add(new SkillMenuItem(1000, "50", "Staff of Iban"));
-					skillMenuEntries.add(new SkillMenuItem(1218, "70", "Staff of Saradomin"));
-					skillMenuEntries.add(new SkillMenuItem(1216, "70", "Staff of Zamorak"));
-					skillMenuEntries.add(new SkillMenuItem(1217, "70", "Staff of Guthix"));
-					addSkillCapeGuide(1382, "Magic");
-				} else if (curTab == 2) {
-					skillMenuEntries.add(new SkillMenuItem(185, "", "Magic Guild can be entered at level 66"));
-					skillMenuEntries.add(new SkillMenuItem(35, "", "Combat spells can be toggled for auto-cast"));
-					skillMenuEntries.add(new SkillMenuItem(36, "", "Heal spells have their own cooldown"));
-					skillMenuEntries.add(new SkillMenuItem(42, "", "Teleport spells charge before moving you"));
-					skillMenuEntries.add(new SkillMenuItem(33, "", "Unsteady lowers average damage for 5 attacks"));
-					skillMenuEntries.add(new SkillMenuItem(32, "", "Dampen lowers max damage for 5 attacks"));
-					skillMenuEntries.add(new SkillMenuItem(34, "", "Slow lowers attack speed for 5 attacks"));
-					skillMenuEntries.add(new SkillMenuItem(31, "", "Scorch lowers defense for 5 attacks"));
-					skillMenuEntries.add(new SkillMenuItem(41, "", "Withering combines all elemental debuffs"));
-					skillMenuEntries.add(new SkillMenuItem(701, "", "Spells using mind runes will do damage equal to chaos runes"));
-					skillMenuEntries.add(new SkillMenuItem(31, "", "Thunder spells can Startle and negate the next attack"));
-					skillMenuEntries.add(new SkillMenuItem(34, "", "Acid spells can Corrode and apply poison"));
-					skillMenuEntries.add(new SkillMenuItem(33, "", "Ice spells can Frostbite and reflect damage"));
-					skillMenuEntries.add(new SkillMenuItem(32, "", "Wood spells can Splinter to hit another NPC"));
+			} else if (curTab == 1) {
+				addEnchantedStaffTierGuide();
+				skillMenuEntries.add(new SkillMenuItem(1000, "50", "Staff of Iban"));
+				skillMenuEntries.add(new SkillMenuItem(1218, "70", "Staff of Saradomin"));
+				skillMenuEntries.add(new SkillMenuItem(1216, "70", "Staff of Zamorak"));
+				skillMenuEntries.add(new SkillMenuItem(1217, "70", "Staff of Guthix"));
+				addSkillCapeGuide(1382, "Magic");
+			} else if (curTab == 2) {
+				skillMenuEntries.add(new SkillMenuItem(185, "", "Magic Guild can be entered at level 66"));
+				skillMenuEntries.add(new SkillMenuItem(35, "", "Combat spells can be toggled for auto-cast"));
+				skillMenuEntries.add(new SkillMenuItem(36, "", "Heal spells have their own cooldown"));
+				skillMenuEntries.add(new SkillMenuItem(42, "", "Teleport spells charge before moving you"));
+				skillMenuEntries.add(new SkillMenuItem(33, "", "Unsteady lowers average damage for 5 attacks"));
+				skillMenuEntries.add(new SkillMenuItem(32, "", "Dampen lowers max damage for 5 attacks"));
+				skillMenuEntries.add(new SkillMenuItem(34, "", "Slow lowers attack speed for 5 attacks"));
+				skillMenuEntries.add(new SkillMenuItem(31, "", "Scorch lowers defense for 5 attacks"));
+				skillMenuEntries.add(new SkillMenuItem(41, "", "Withering combines all elemental debuffs"));
+				skillMenuEntries.add(new SkillMenuItem(701, "", "Spells using mind runes will do damage equal to chaos runes"));
+				skillMenuEntries.add(new SkillMenuItem(31, "", "Thunder spells can Startle and negate the next attack"));
+				skillMenuEntries.add(new SkillMenuItem(34, "", "Acid spells can Corrode and apply poison"));
+				skillMenuEntries.add(new SkillMenuItem(33, "", "Ice spells can Frostbite and reflect damage"));
+				skillMenuEntries.add(new SkillMenuItem(32, "", "Wood spells can Splinter to hit another NPC"));
 			}
 		}
 		if (mc.getSkillGuideChosen().equals("Cooking")) {
@@ -625,9 +625,9 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(258, "10", "Redberry Pie"));
 				skillMenuEntries.add(new SkillMenuItem(259, "20", "Meat Pie"));
 				skillMenuEntries.add(new SkillMenuItem(257, "28", "Apple Pie"));
-				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1571, "36", "Lily's pumpkin pie"));
-				if (Config.S_WANT_CUSTOM_SPRITES) skillMenuEntries.add(new SkillMenuItem(1490, "68", "Pumpkin pie"));
-				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1493, "68", "White pumpkin pie"));
+				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1571, "36", "Lily's Pumpkin Pie"));
+				if (Config.S_WANT_CUSTOM_SPRITES) skillMenuEntries.add(new SkillMenuItem(1490, "68", "Pumpkin Pie"));
+				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1493, "68", "White Pumpkin Pie"));
 			} else if (curTab == 3) {
 				skillMenuEntries.add(new SkillMenuItem(346, "24", "Stew"));
 				skillMenuEntries.add(new SkillMenuItem(709, "60", "Curry"));
@@ -702,18 +702,18 @@ public final class SkillGuideInterface {
 					addSkillCapeGuide(1525, "Woodcutting");
 				}
 			}
-			}
-			if (mc.getSkillGuideChosen().equals("Fletching")) {
-				skillMenuEntries.add(new SkillMenuItem(189, "", "MyWorld folds active bow, arrow, dart, and staff shaping into Crafting"));
-				skillMenuEntries.add(new SkillMenuItem(189, "", "Check the Crafting guide for the live production path"));
-			}
+		}
+		if (mc.getSkillGuideChosen().equals("Fletching")) {
+			skillMenuEntries.add(new SkillMenuItem(189, "", "MyWorld folds active bow, arrow, dart, and staff shaping into Crafting"));
+			skillMenuEntries.add(new SkillMenuItem(189, "", "Check the Crafting guide for the live production path"));
+		}
 		if (mc.getSkillGuideChosen().equals("Fishing")) {
 			if (curTab == 0) {
 				skillMenuEntries.add(new SkillMenuItem(349, "1", "Shrimp - Fishing Rod (T1)"));
 				skillMenuEntries.add(new SkillMenuItem(354, "1", "Sardine - Fishing Rod (T1)"));
 				skillMenuEntries.add(new SkillMenuItem(361, "8", "Herring - Pine Fishing Rod (T2)"));
-					skillMenuEntries.add(new SkillMenuItem(552, "15", "Mackerel - Oak Fishing Rod (T3)"));
-					skillMenuEntries.add(new SkillMenuItem(351, "15", "Anchovies - Oak Fishing Rod (T3)"));
+				skillMenuEntries.add(new SkillMenuItem(552, "15", "Mackerel - Oak Fishing Rod (T3)"));
+				skillMenuEntries.add(new SkillMenuItem(351, "15", "Anchovies - Oak Fishing Rod (T3)"));
 				skillMenuEntries.add(new SkillMenuItem(358, "22", "Trout - Willow Fishing Rod (T4)"));
 				skillMenuEntries.add(new SkillMenuItem(550, "22", "Cod - Willow Fishing Rod (T4)"));
 				skillMenuEntries.add(new SkillMenuItem(363, "30", "Pike - Palm Fishing Rod (T5)"));
@@ -735,20 +735,20 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(2688, "54", "Ebony Fishing Rod - T8, +35 effective Fishing"));
 				skillMenuEntries.add(new SkillMenuItem(2689, "62", "Magic Fishing Rod - T9, +40 effective Fishing"));
 				skillMenuEntries.add(new SkillMenuItem(2690, "70", "Blood Fishing Rod - T10, +45 effective Fishing"));
-				} else if (curTab == 2) {
-					skillMenuEntries.add(new SkillMenuItem(379, "", "Fishing Guild can be entered at level 68"));
-					skillMenuEntries.add(new SkillMenuItem(377, "", "Fishing shops sell rods through T6"));
-					skillMenuEntries.add(new SkillMenuItem(2686, "", "Fishing Guild sells rods through T10"));
-					skillMenuEntries.add(new SkillMenuItem(377, "", "Rods catch their tier and 3 tiers below"));
-					skillMenuEntries.add(new SkillMenuItem(793, "", "Side rewards: oyster, seaweed, casket"));
-					skillMenuEntries.add(new SkillMenuItem(1837, "", "Side rewards: leather gloves and boots by rod tier"));
-					skillMenuEntries.add(new SkillMenuItem(793, "", "Loot focus: Just the fish, A little, Plenty, Lots"));
-					skillMenuEntries.add(new SkillMenuItem(1837, "", "Side loot can roll up to rod tier plus 2"));
-					skillMenuEntries.add(new SkillMenuItem(1837, "", "Above-tier side loot rolls at reduced weight"));
-					skillMenuEntries.add(new SkillMenuItem(589, "", "Fishing Contest and Dragon Slayer keep quest exceptions"));
-					if (Config.S_WANT_CUSTOM_SPRITES) {
-						addSkillCapeGuide(1380, "Fishing");
-					}
+			} else if (curTab == 2) {
+				skillMenuEntries.add(new SkillMenuItem(379, "", "Fishing Guild can be entered at level 68"));
+				skillMenuEntries.add(new SkillMenuItem(377, "", "Fishing shops sell rods through T6"));
+				skillMenuEntries.add(new SkillMenuItem(2686, "", "Fishing Guild sells rods through T10"));
+				skillMenuEntries.add(new SkillMenuItem(377, "", "Rods catch their tier and 3 tiers below"));
+				skillMenuEntries.add(new SkillMenuItem(793, "", "Side rewards: oyster, seaweed, casket"));
+				skillMenuEntries.add(new SkillMenuItem(1837, "", "Side rewards: leather gloves and boots by rod tier"));
+				skillMenuEntries.add(new SkillMenuItem(793, "", "Loot focus: Just the fish, A little, Plenty, Lots"));
+				skillMenuEntries.add(new SkillMenuItem(1837, "", "Side loot can roll up to rod tier plus 2"));
+				skillMenuEntries.add(new SkillMenuItem(1837, "", "Above-tier side loot rolls at reduced weight"));
+				skillMenuEntries.add(new SkillMenuItem(589, "", "Fishing Contest and Dragon Slayer keep quest exceptions"));
+				if (Config.S_WANT_CUSTOM_SPRITES) {
+					addSkillCapeGuide(1380, "Fishing");
+				}
 			}
 		}
 		if (mc.getSkillGuideChosen().equals("Crafting")) {
@@ -894,108 +894,108 @@ public final class SkillGuideInterface {
 				}
 			}
 		}
-			if (mc.getSkillGuideChosen().equalsIgnoreCase("Enchanting")
-				|| mc.getSkillGuideChosen().equalsIgnoreCase("Magecraft")
-				|| mc.getSkillGuideChosen().equalsIgnoreCase("Runecraft")) {
-				if (curTab == 0) {
-					addStaffTierGuide();
-				} else if (curTab == 1) {
-					addRobeTierGuide();
-				} else if (curTab == 2) {
-					addJewelryTierGuide();
-				} else if (curTab == 3) {
-					addRuneTierGuide();
-				} else if (curTab == 4) {
-					skillMenuEntries.add(new SkillMenuItem(33, "", "Rune output improves every 10 levels past req"));
-					skillMenuEntries.add(new SkillMenuItem(1299, "", "Stone is mined from regular rocks"));
-					skillMenuEntries.add(new SkillMenuItem(1299, "", "Stone is used on overworld altars to craft runes"));
-					skillMenuEntries.add(new SkillMenuItem(1299, "", "Talismans and tiaras have been retired"));
-					skillMenuEntries.add(new SkillMenuItem(619, "", "Every altar offers a unique effect"));
-					skillMenuEntries.add(new SkillMenuItem(100, "", "Unenchanted staves work at every altar"));
-					skillMenuEntries.add(new SkillMenuItem(2051, "", "Unenchanted robes and hats work at every altar"));
-					skillMenuEntries.add(new SkillMenuItem(302, "", "Unenchanted jewelry works at every altar"));
-					skillMenuEntries.add(new SkillMenuItem(2051, "", "Each cloth piece preserves 10% matching rune"));
-					skillMenuEntries.add(new SkillMenuItem(101, "", "Matching enchanted staff preserves 50%"));
-					skillMenuEntries.add(new SkillMenuItem(101, "", "Matching cloth and staff can preserve 100%"));
-					skillMenuEntries.add(new SkillMenuItem(284, "", "Jewelry requires both gem and altar levels"));
-					skillMenuEntries.add(new SkillMenuItem(544, "", "Examine jewelry for details on their effects"));
-					addSkillCapeGuide(1527, "Enchanting");
-				}
+		if (mc.getSkillGuideChosen().equalsIgnoreCase("Enchanting")
+			|| mc.getSkillGuideChosen().equalsIgnoreCase("Magecraft")
+			|| mc.getSkillGuideChosen().equalsIgnoreCase("Runecraft")) {
+			if (curTab == 0) {
+				addStaffTierGuide();
+			} else if (curTab == 1) {
+				addRobeTierGuide();
+			} else if (curTab == 2) {
+				addJewelryTierGuide();
+			} else if (curTab == 3) {
+				addRuneTierGuide();
+			} else if (curTab == 4) {
+				skillMenuEntries.add(new SkillMenuItem(33, "", "Rune output improves every 10 levels past req"));
+				skillMenuEntries.add(new SkillMenuItem(1299, "", "Stone is mined from regular rocks"));
+				skillMenuEntries.add(new SkillMenuItem(1299, "", "Stone is used on overworld altars to craft runes"));
+				skillMenuEntries.add(new SkillMenuItem(1299, "", "Talismans and tiaras have been retired"));
+				skillMenuEntries.add(new SkillMenuItem(619, "", "Every altar offers a unique effect"));
+				skillMenuEntries.add(new SkillMenuItem(100, "", "Unenchanted staves work at every altar"));
+				skillMenuEntries.add(new SkillMenuItem(2051, "", "Unenchanted robes and hats work at every altar"));
+				skillMenuEntries.add(new SkillMenuItem(302, "", "Unenchanted jewelry works at every altar"));
+				skillMenuEntries.add(new SkillMenuItem(2051, "", "Each cloth piece preserves 10% matching rune"));
+				skillMenuEntries.add(new SkillMenuItem(101, "", "Matching enchanted staff preserves 50%"));
+				skillMenuEntries.add(new SkillMenuItem(101, "", "Matching cloth and staff can preserve 100%"));
+				skillMenuEntries.add(new SkillMenuItem(284, "", "Jewelry requires both gem and altar levels"));
+				skillMenuEntries.add(new SkillMenuItem(544, "", "Examine jewelry for details on their effects"));
+				addSkillCapeGuide(1527, "Enchanting");
 			}
-			if (mc.getSkillGuideChosen().equalsIgnoreCase("Harvest")) {
-				if (curTab == 0) {
-					skillMenuEntries.add(new SkillMenuItem(29, "1", "Grain - T1 shears"));
-					skillMenuEntries.add(new SkillMenuItem(348, "1", "Potato - T1 shears"));
-					skillMenuEntries.add(new SkillMenuItem(241, "1", "Onion - T1 shears"));
-					skillMenuEntries.add(new SkillMenuItem(18, "1", "Cabbage - T1 shears"));
-					skillMenuEntries.add(new SkillMenuItem(218, "8", "Garlic - T2 shears"));
-					skillMenuEntries.add(new SkillMenuItem(675, "15", "Flax - T3 shears"));
-					skillMenuEntries.add(new SkillMenuItem(320, "15", "Tomato - T3 shears"));
-					skillMenuEntries.add(new SkillMenuItem(1353, "22", "Corn - T4 shears"));
-					skillMenuEntries.add(new SkillMenuItem(1569, "1", "Lily's Pumpkin - T1 shears"));
-					skillMenuEntries.add(new SkillMenuItem(422, "1", "Event Pumpkin - T1 shears, bonus XP"));
-					skillMenuEntries.add(new SkillMenuItem(1352, "30", "Red Cabbage - T5 shears"));
-					skillMenuEntries.add(new SkillMenuItem(1354, "46", "White Pumpkin - T7 shears"));
-					skillMenuEntries.add(new SkillMenuItem(1456, "46", "Sugar Cane - T7 shears"));
-				} else if (curTab == 1) {
-					skillMenuEntries.add(new SkillMenuItem(855, "15", "Lemon Tree - T3 shears"));
-					skillMenuEntries.add(new SkillMenuItem(863, "22", "Lime Tree - T4 shears"));
-					skillMenuEntries.add(new SkillMenuItem(1348, "30", "Apple Tree - T5 shears"));
-					skillMenuEntries.add(new SkillMenuItem(249, "30", "Banana Palm - T5 shears"));
-					skillMenuEntries.add(new SkillMenuItem(143, "38", "Grape Vine - T6 shears"));
-					skillMenuEntries.add(new SkillMenuItem(857, "38", "Orange Tree - T6 shears"));
-					skillMenuEntries.add(new SkillMenuItem(861, "54", "Pineapple Plant - T8 shears"));
-					skillMenuEntries.add(new SkillMenuItem(1349, "54", "Grapefruit Tree - T8 shears"));
-					skillMenuEntries.add(new SkillMenuItem(1350, "54", "Papaya Palm - T8 shears"));
-					skillMenuEntries.add(new SkillMenuItem(1351, "62", "Coconut Palm - T9 shears"));
-					skillMenuEntries.add(new SkillMenuItem(1457, "70", "Dragonfruit Tree - T10 shears"));
-					skillMenuEntries.add(new SkillMenuItem(1465, "70", "Bless/Curse Grapes"));
-				} else if (curTab == 2) {
-					skillMenuEntries.add(new SkillMenuItem(236, "8", "Redberry Bush - T2 shears"));
-					skillMenuEntries.add(new SkillMenuItem(55, "22", "Cadavaberry Bush - T4 shears"));
-					skillMenuEntries.add(new SkillMenuItem(765, "38", "Dwellberry Bush - T6 shears"));
-					skillMenuEntries.add(new SkillMenuItem(936, "46", "Jangerberry Bush - T7 shears"));
-					skillMenuEntries.add(new SkillMenuItem(471, "62", "Whiteberry Bush - T9 shears"));
-				} else if (curTab == 3) {
-					skillMenuEntries.add(new SkillMenuItem(165, "1", "Guam herb chance - T1 shears"));
-					skillMenuEntries.add(new SkillMenuItem(435, "8", "Marrentill chance - T2 shears"));
-					skillMenuEntries.add(new SkillMenuItem(436, "15", "Tarromin chance - T3 shears"));
-					skillMenuEntries.add(new SkillMenuItem(622, "22", "Sea weed - T4 shears"));
-					skillMenuEntries.add(new SkillMenuItem(437, "22", "Harralander chance - T4 shears"));
-					skillMenuEntries.add(new SkillMenuItem(438, "30", "Ranarr Weed chance - T5 shears"));
-					skillMenuEntries.add(new SkillMenuItem(220, "38", "Limpwurt Root - T6 shears"));
-					skillMenuEntries.add(new SkillMenuItem(439, "38", "Irit Leaf chance - T6 shears"));
-					skillMenuEntries.add(new SkillMenuItem(440, "46", "Avantoe chance - T7 shears"));
-					skillMenuEntries.add(new SkillMenuItem(441, "54", "Kwuarm chance - T8 shears"));
-					skillMenuEntries.add(new SkillMenuItem(469, "54", "Snape Grass - T8 shears"));
-					skillMenuEntries.add(new SkillMenuItem(442, "54", "Cadantine chance - T8 shears"));
-					skillMenuEntries.add(new SkillMenuItem(443, "70", "Dwarf Weed chance - T10 shears"));
-					skillMenuEntries.add(new SkillMenuItem(933, "70", "Torstol rare chance - T10 shears"));
-				} else if (curTab == 4) {
-					skillMenuEntries.add(new SkillMenuItem(144, "1", "Tin shears - T1, equipped tool"));
-					skillMenuEntries.add(new SkillMenuItem(2215, "8", "Copper shears - T2, equipped tool"));
-					skillMenuEntries.add(new SkillMenuItem(2216, "15", "Bronze shears - T3, equipped tool"));
-					skillMenuEntries.add(new SkillMenuItem(2217, "22", "Iron shears - T4, equipped tool"));
-					skillMenuEntries.add(new SkillMenuItem(2218, "30", "Steel shears - T5, equipped tool"));
-					skillMenuEntries.add(new SkillMenuItem(2219, "38", "Mithril shears - T6, equipped tool"));
-					skillMenuEntries.add(new SkillMenuItem(2220, "46", "Titan steel shears - T7, equipped tool"));
-					skillMenuEntries.add(new SkillMenuItem(2221, "54", "Adamantite shears - T8, equipped tool"));
-					skillMenuEntries.add(new SkillMenuItem(2222, "62", "Orichalcum shears - T9, equipped tool"));
-					skillMenuEntries.add(new SkillMenuItem(2223, "70", "Rune shears - T10, equipped tool"));
-				} else if (curTab == 5) {
-					if (Config.S_WANT_CUSTOM_SPRITES) {
-						addSkillCapeGuide(1526, "Harvesting");
-					}
-					skillMenuEntries.add(new SkillMenuItem(144, "", "Harvestables unlock by equipped shears tier"));
-					skillMenuEntries.add(new SkillMenuItem(144, "", "Harvesting level gates which shears you can use"));
-					skillMenuEntries.add(new SkillMenuItem(439, "", "Herb rolls use shears tier and 3 tiers below"));
-					skillMenuEntries.add(new SkillMenuItem(2709, "", "Resource seeds can appear as side rewards"));
-					skillMenuEntries.add(new SkillMenuItem(2709, "", "Seed focus: No seeds, A few, More, or Even more"));
-					skillMenuEntries.add(new SkillMenuItem(2709, "", "Seeds can roll up to shears tier plus 2"));
-					skillMenuEntries.add(new SkillMenuItem(2709, "", "Above-tier seeds roll at reduced weight"));
-					skillMenuEntries.add(new SkillMenuItem(2708, "", "Knowledge and Money seeds scale to your level"));
+		}
+		if (mc.getSkillGuideChosen().equalsIgnoreCase("Harvest")) {
+			if (curTab == 0) {
+				skillMenuEntries.add(new SkillMenuItem(29, "1", "Grain - T1 shears"));
+				skillMenuEntries.add(new SkillMenuItem(348, "1", "Potato - T1 shears"));
+				skillMenuEntries.add(new SkillMenuItem(241, "1", "Onion - T1 shears"));
+				skillMenuEntries.add(new SkillMenuItem(18, "1", "Cabbage - T1 shears"));
+				skillMenuEntries.add(new SkillMenuItem(218, "8", "Garlic - T2 shears"));
+				skillMenuEntries.add(new SkillMenuItem(675, "15", "Flax - T3 shears"));
+				skillMenuEntries.add(new SkillMenuItem(320, "15", "Tomato - T3 shears"));
+				skillMenuEntries.add(new SkillMenuItem(1353, "22", "Corn - T4 shears"));
+				skillMenuEntries.add(new SkillMenuItem(1569, "1", "Lily's Pumpkin - T1 shears"));
+				skillMenuEntries.add(new SkillMenuItem(422, "1", "Event Pumpkin - T1 shears, bonus XP"));
+				skillMenuEntries.add(new SkillMenuItem(1352, "30", "Red Cabbage - T5 shears"));
+				skillMenuEntries.add(new SkillMenuItem(1354, "46", "White Pumpkin - T7 shears"));
+				skillMenuEntries.add(new SkillMenuItem(1456, "46", "Sugar Cane - T7 shears"));
+			} else if (curTab == 1) {
+				skillMenuEntries.add(new SkillMenuItem(855, "15", "Lemon Tree - T3 shears"));
+				skillMenuEntries.add(new SkillMenuItem(863, "22", "Lime Tree - T4 shears"));
+				skillMenuEntries.add(new SkillMenuItem(1348, "30", "Apple Tree - T5 shears"));
+				skillMenuEntries.add(new SkillMenuItem(249, "30", "Banana Palm - T5 shears"));
+				skillMenuEntries.add(new SkillMenuItem(143, "38", "Grape Vine - T6 shears"));
+				skillMenuEntries.add(new SkillMenuItem(857, "38", "Orange Tree - T6 shears"));
+				skillMenuEntries.add(new SkillMenuItem(861, "54", "Pineapple Plant - T8 shears"));
+				skillMenuEntries.add(new SkillMenuItem(1349, "54", "Grapefruit Tree - T8 shears"));
+				skillMenuEntries.add(new SkillMenuItem(1350, "54", "Papaya Palm - T8 shears"));
+				skillMenuEntries.add(new SkillMenuItem(1351, "62", "Coconut Palm - T9 shears"));
+				skillMenuEntries.add(new SkillMenuItem(1457, "70", "Dragonfruit Tree - T10 shears"));
+				skillMenuEntries.add(new SkillMenuItem(1465, "70", "Bless/Curse Grapes"));
+			} else if (curTab == 2) {
+				skillMenuEntries.add(new SkillMenuItem(236, "8", "Redberry Bush - T2 shears"));
+				skillMenuEntries.add(new SkillMenuItem(55, "22", "Cadavaberry Bush - T4 shears"));
+				skillMenuEntries.add(new SkillMenuItem(765, "38", "Dwellberry Bush - T6 shears"));
+				skillMenuEntries.add(new SkillMenuItem(936, "46", "Jangerberry Bush - T7 shears"));
+				skillMenuEntries.add(new SkillMenuItem(471, "62", "Whiteberry Bush - T9 shears"));
+			} else if (curTab == 3) {
+				skillMenuEntries.add(new SkillMenuItem(165, "1", "Guam herb chance - T1 shears"));
+				skillMenuEntries.add(new SkillMenuItem(435, "8", "Marrentill chance - T2 shears"));
+				skillMenuEntries.add(new SkillMenuItem(436, "15", "Tarromin chance - T3 shears"));
+				skillMenuEntries.add(new SkillMenuItem(622, "22", "Sea weed - T4 shears"));
+				skillMenuEntries.add(new SkillMenuItem(437, "22", "Harralander chance - T4 shears"));
+				skillMenuEntries.add(new SkillMenuItem(438, "30", "Ranarr Weed chance - T5 shears"));
+				skillMenuEntries.add(new SkillMenuItem(220, "38", "Limpwurt Root - T6 shears"));
+				skillMenuEntries.add(new SkillMenuItem(439, "38", "Irit Leaf chance - T6 shears"));
+				skillMenuEntries.add(new SkillMenuItem(440, "46", "Avantoe chance - T7 shears"));
+				skillMenuEntries.add(new SkillMenuItem(441, "54", "Kwuarm chance - T8 shears"));
+				skillMenuEntries.add(new SkillMenuItem(469, "54", "Snape Grass - T8 shears"));
+				skillMenuEntries.add(new SkillMenuItem(442, "54", "Cadantine chance - T8 shears"));
+				skillMenuEntries.add(new SkillMenuItem(443, "70", "Dwarf Weed chance - T10 shears"));
+				skillMenuEntries.add(new SkillMenuItem(933, "70", "Torstol rare chance - T10 shears"));
+			} else if (curTab == 4) {
+				skillMenuEntries.add(new SkillMenuItem(144, "1", "Tin shears - T1, equipped tool"));
+				skillMenuEntries.add(new SkillMenuItem(2215, "8", "Copper shears - T2, equipped tool"));
+				skillMenuEntries.add(new SkillMenuItem(2216, "15", "Bronze shears - T3, equipped tool"));
+				skillMenuEntries.add(new SkillMenuItem(2217, "22", "Iron shears - T4, equipped tool"));
+				skillMenuEntries.add(new SkillMenuItem(2218, "30", "Steel shears - T5, equipped tool"));
+				skillMenuEntries.add(new SkillMenuItem(2219, "38", "Mithril shears - T6, equipped tool"));
+				skillMenuEntries.add(new SkillMenuItem(2220, "46", "Titan steel shears - T7, equipped tool"));
+				skillMenuEntries.add(new SkillMenuItem(2221, "54", "Adamantite shears - T8, equipped tool"));
+				skillMenuEntries.add(new SkillMenuItem(2222, "62", "Orichalcum shears - T9, equipped tool"));
+				skillMenuEntries.add(new SkillMenuItem(2223, "70", "Rune shears - T10, equipped tool"));
+			} else if (curTab == 5) {
+				if (Config.S_WANT_CUSTOM_SPRITES) {
+					addSkillCapeGuide(1526, "Harvesting");
 				}
+				skillMenuEntries.add(new SkillMenuItem(144, "", "Harvestables unlock by equipped shears tier"));
+				skillMenuEntries.add(new SkillMenuItem(144, "", "Harvesting level gates which shears you can use"));
+				skillMenuEntries.add(new SkillMenuItem(439, "", "Herb rolls use shears tier and 3 tiers below"));
+				skillMenuEntries.add(new SkillMenuItem(2709, "", "Resource seeds can appear as side rewards"));
+				skillMenuEntries.add(new SkillMenuItem(2709, "", "Seed focus: No seeds, A few, More, or Even more"));
+				skillMenuEntries.add(new SkillMenuItem(2709, "", "Seeds can roll up to shears tier plus 2"));
+				skillMenuEntries.add(new SkillMenuItem(2709, "", "Above-tier seeds roll at reduced weight"));
+				skillMenuEntries.add(new SkillMenuItem(2708, "", "Knowledge and Money seeds scale to your level"));
 			}
+		}
 		if (mc.getSkillGuideChosen().equalsIgnoreCase("Summoning")) {
 			populateSummoningGuide();
 		}
@@ -1416,7 +1416,7 @@ public final class SkillGuideInterface {
 			addWoodcraftGuide("Blood", 55, 70, 2128, 67, 2127, 70, 2176, 72, 2146, 70);
 		} else if (curTab == 6) {
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor has set effects if all five pieces are worn"));
-			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor mimics the defenses of it's creature"));
+			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor mimics the defenses of its creature"));
 			skillMenuEntries.add(new SkillMenuItem(148, "", "Hides and carapaces must be tanned at tanning racks"));
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Examine armor pieces to read their trait"));
 			skillMenuEntries.add(new SkillMenuItem(1869, "", "Set traits can grant stats, procs, or spirits"));

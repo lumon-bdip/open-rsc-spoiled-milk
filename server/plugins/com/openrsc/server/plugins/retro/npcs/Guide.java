@@ -71,7 +71,7 @@ public class Guide implements TalkNpcTrigger {
 						"How can I avoid dying?",
 						"How can I see who is best to attack?",
 						"What is my strength, and how can I improve it?",
-						"You have been a great help, thankyou");
+						"You have been a great help, thank you");
 
 					if (optKilled == 0) {
 						GuideDialogue(player, npc, GUIDE.AVOID_DYING);
@@ -148,7 +148,7 @@ public class Guide implements TalkNpcTrigger {
 
 				case GUIDE.PEOPLE_AND_CREATURES:
 					npcsay(player, npc, "Some characters here are other games players,",
-						"Some are creatures and people that live in runescape",
+						"Some are creatures and people that live in RuneScape",
 						"You can talk and trade and fight with most of them, if you want to");
 
 					int optPeople = multi(player, npc,
@@ -252,7 +252,7 @@ public class Guide implements TalkNpcTrigger {
 					int optDying = multi(player, npc,
 						"How can I see who is best to attack?",
 						"What is my strength, and how can I improve it?",
-						"You have been a great help, thankyou");
+						"You have been a great help, thank you");
 
 					if (optDying == 0) {
 						GuideDialogue(player, npc, GUIDE.BEST_TO_ATTACK);
@@ -266,14 +266,14 @@ public class Guide implements TalkNpcTrigger {
 				case GUIDE.BEST_TO_ATTACK:
 					npcsay(player, npc, "When you put the mouse over a character, see if you can attack.",
 						"If the attack choice is red then it will be hard to win.",
-						"If the attack is green You should win unless you are already injured,",
+						"If the attack is green you should win unless you are already injured,",
 						"Try the goblins over the bridge, most people can beat them",
 						"Just be sure you are wearing your armour and wielding your best weapon");
 
 					int optAttack = multi(player, npc,
 						"How can I avoid dying?",
 						"What is my strength, and how can I improve it?",
-						"You have been a great help, thankyou");
+						"You have been a great help, thank you");
 
 					if (optAttack == 0) {
 						GuideDialogue(player, npc, GUIDE.AVOID_DYING);
@@ -294,7 +294,7 @@ public class Guide implements TalkNpcTrigger {
 					int optStrength = multi(player, npc,
 						"How can I avoid dying?",
 						"How can I see who is best to attack?",
-						"You have been a great help, thankyou");
+						"You have been a great help, thank you");
 
 					if (optStrength == 0) {
 						GuideDialogue(player, npc, GUIDE.AVOID_DYING);
@@ -334,7 +334,7 @@ public class Guide implements TalkNpcTrigger {
 
 				case GUIDE.SPEAK_PLAYERS:
 					npcsay(player, npc, "You can type to speak to other players. Anyone close to you will hear.",
-						"Just be careful about paying for player advice, Its not usually worth it.",
+						"Just be careful about paying for player advice, it's not usually worth it.",
 						"You can spot the real players because you can trade directly with them.",
 						"Other players will have knowledge of the game, many will be happy to help");
 

@@ -12,6 +12,7 @@ FORMULAE = ROOT / "server/src/com/openrsc/server/util/rsc/Formulae.java"
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 SCENE = ROOT / "Client_Base/src/orsc/graphics/three/Scene.java"
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 
 LEGACY_HARVESTABLES = (
     ("Wheat", 72, 29, 72),
@@ -37,6 +38,7 @@ def main() -> None:
     packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
     scene = SCENE.read_text(encoding="utf-8")
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
+    entity_handler = ENTITY_HANDLER.read_text(encoding="utf-8")
 
     for name, object_id, produce_id, experience in LEGACY_HARVESTABLES:
         start = object_defs.index(f"<name>{name}</name>")
@@ -54,6 +56,17 @@ def main() -> None:
 
     if "<command2>pick</command2>" in object_defs.lower():
         raise AssertionError("A generic scenery Pick action still bypasses Harvesting")
+    for stale_client_label in ('"pick"', '"Pick Banana"', '"Pick pineapple"'):
+        if stale_client_label in entity_handler:
+            raise AssertionError(f"Client object definitions still expose legacy {stale_client_label} harvesting")
+    require(entity_handler, '"Wheat", "nice ripe looking wheat", "WalkTo", "Harvest"', "Client wheat action must mirror Harvest")
+    require(entity_handler, '"Banana tree", "A tree with nice ripe bananas growing on it", "WalkTo", "Harvest"', "Client banana action must mirror Harvest")
+    require(entity_handler, '"Banana tree", "There are no bananas left on the tree", "WalkTo", "Examine"', "Client empty banana tree must not expose Harvest")
+    require(entity_handler, '"Potato", "A potato plant", "WalkTo", "Harvest"', "Client potato action must mirror Harvest")
+    require(entity_handler, 'Config.S_BATCH_PROGRESSION ? "Harvest" : "WalkTo"', "Client flax primary action must not use legacy Pick")
+    require(entity_handler, 'Config.S_BATCH_PROGRESSION ? "Examine" : "Harvest"', "Client flax secondary action must mirror Harvest")
+    require(entity_handler, '"Pineapple tree", "A tree with nice ripe pineapples growing on it", "WalkTo", "Harvest"', "Client pineapple action must mirror Harvest")
+    require(entity_handler, '"Pineapple tree", "There are no pineapples left on the tree", "WalkTo", "Examine"', "Client empty pineapple tree must not expose Harvest")
     require(skill_guide, 'new SkillMenuItem(29, "1", "Grain - T1 shears")', "Harvesting guide is missing grain")
     require(skill_guide, 'new SkillMenuItem(675, "15", "Flax - T3 shears")', "Harvesting guide is missing flax")
     require(skill_guide, 'new SkillMenuItem(422, "1", "Event Pumpkin - T1 shears, bonus XP")', "Harvesting guide is missing event pumpkins")

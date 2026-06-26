@@ -111,6 +111,7 @@ python3 ./tests/myworld/test-robe-defense-budgets.py
 python3 ./tests/myworld/test-shop-tiering.py
 python3 ./tests/myworld/test-brown-apron-crafting-guild.py
 python3 ./tests/myworld/test-ore-crusher.py
+python3 ./tests/myworld/test-guide-text-polish.py
 python3 ./tests/myworld/test-skill-guide-info-pass.py
 python3 ./tests/myworld/test-skill-guides.py
 python3 ./tests/myworld/test-summoning-animation-effect.py

@@ -8278,7 +8278,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Dolmen", "A sort of ancient altar thingy", "WalkTo", "Examine", 1, 2, 2, 0, "dolmen", i++));
 		objects.add(new GameObjectDef("Tree", "This tree doesn't look too healthy", "Chop", "Examine", 1, 1, 1, 0, "deadtree1", i++));//70
 		objects.add(new GameObjectDef("cupboard", "Perhaps I should search it", "Search", "close", 1, 1, 2, 0, "cupboardopen", i++));
-		objects.add(new GameObjectDef("Wheat", "nice ripe looking wheat", "WalkTo", "pick", 0, 1, 1, 0, "wheat", i++));
+		objects.add(new GameObjectDef("Wheat", "nice ripe looking wheat", "WalkTo", "Harvest", 0, 1, 1, 0, "wheat", i++));
 		objects.add(new GameObjectDef("sign", "The blue moon inn", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
 		objects.add(new GameObjectDef("sails", "The windmill's sails", "WalkTo", "Examine", 0, 1, 3, 0, "windmillsail", i++));
 		objects.add(new GameObjectDef("sign", "estate agent", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
@@ -8389,15 +8389,15 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("gate", "A gate from Lumbridge to Al Kharid", "Open", "Examine", 2, 1, 2, 0, "metalgateclosed", i++));
 		objects.add(new GameObjectDef("gate", "This gate is open", "WalkTo", "Examine", 2, 1, 2, 0, "metalgateopen", i++));
 		objects.add(new GameObjectDef("crate", "A crate used for storing bananas", "WalkTo", "Search", 1, 1, 1, 0, "crate", i++));
-		objects.add(new GameObjectDef("Banana tree", "A tree with nice ripe bananas growing on it", "WalkTo", "Pick Banana", 1, 1, 1, 0, "palm2", i++));
-		objects.add(new GameObjectDef("Banana tree", "There are no bananas left on the tree", "WalkTo", "Pick Banana", 1, 1, 1, 0, "palm2", i++));
+		objects.add(new GameObjectDef("Banana tree", "A tree with nice ripe bananas growing on it", "WalkTo", "Harvest", 1, 1, 1, 0, "palm2", i++));
+		objects.add(new GameObjectDef("Banana tree", "There are no bananas left on the tree", "WalkTo", "Examine", 1, 1, 1, 0, "palm2", i++));
 		objects.add(new GameObjectDef("crate", "A crate used for storing bananas", "WalkTo", "Search", 1, 1, 1, 0, "crate", i++));
 		objects.add(new GameObjectDef("Chest", "A battered old chest", "WalkTo", "Examine", 1, 1, 1, 0, "ChestOpen", i++));
 		objects.add(new GameObjectDef("Chest", "I wonder what is inside...", "Open", "Examine", 1, 1, 1, 0, "ChestClosed", i++));
 		objects.add(new GameObjectDef("Flower", "Ooh thats pretty", "WalkTo", "Examine", 0, 1, 1, 0, "flower", i++));
 		objects.add(new GameObjectDef("sign", "Fishing Supplies", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
 		objects.add(new GameObjectDef("sign", "Jewellers", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
-		objects.add(new GameObjectDef("Potato", "A potato plant", "WalkTo", "pick", 0, 1, 1, 0, "potato", i++));
+		objects.add(new GameObjectDef("Potato", "A potato plant", "WalkTo", "Harvest", 0, 1, 1, 0, "potato", i++));
 		objects.add(new GameObjectDef("fish", "I can see fish swimming in the water", "Fish", "Examine", 0, 1, 1, 0, "fishing", i++));
 		objects.add(new GameObjectDef("fish", "I can see fish swimming in the water", "Fish", "Examine", 0, 1, 1, 0, "fishing", i++));
 		objects.add(new GameObjectDef("fish", "I can see fish swimming in the water", "Fish", "Examine", 0, 1, 1, 0, "fishing", i++));
@@ -8519,7 +8519,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef(Config.S_IMPROVED_ITEM_OBJECT_NAMES ? "Magic Tree" : "Tree", "A magical tree", "Chop", "Examine", 1, 1, 1, 0, "magictree", i++));
 		objects.add(new GameObjectDef("gate", "A gate guarded by a fierce barbarian", "open", "Examine", 2, 1, 2, 0, "metalgateclosed", i++));
 		objects.add(new GameObjectDef("sign", "The forester's arms", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
-		objects.add(new GameObjectDef("flax", "A flax plant", Config.S_BATCH_PROGRESSION ? "pick" : "WalkTo", Config.S_BATCH_PROGRESSION ? "Examine" : "pick", 0, 1, 1, 0, "flax", i++));
+		objects.add(new GameObjectDef("flax", "A flax plant", Config.S_BATCH_PROGRESSION ? "Harvest" : "WalkTo", Config.S_BATCH_PROGRESSION ? "Examine" : "Harvest", 0, 1, 1, 0, "flax", i++));
 		objects.add(new GameObjectDef("Large treestump", "Someone has chopped this tree down!", "WalkTo", "Examine", 1, 2, 2, 0, "treestump", i++));
 		objects.add(new GameObjectDef("Rocks", "A rocky outcrop", "Mine", "Prospect", 1, 1, 1, 0, "goldrock1", i++));
 		objects.add(new GameObjectDef("Lever", "It's a lever", "Pull", "Inspect", 0, 1, 1, 0, "leverup", i++));
@@ -8640,8 +8640,8 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("tree platform", "A tree gnome construction", "WalkTo", "Examine", 0, 1, 1, 0, "treeplatformlow2", i++));
 		objects.add(new GameObjectDef("tree platform", "A tree gnome construction", "WalkTo", "Examine", 0, 1, 1, 0, "treeplatformhigh2", i++));
 		objects.add(new GameObjectDef("Tribal brew", "A very large pot", "WalkTo", "drink", 1, 1, 1, 0, "cauldron", i++));
-		objects.add(new GameObjectDef("Pineapple tree", "A tree with nice ripe pineapples growing on it", "WalkTo", "Pick pineapple", 1, 1, 1, 0, "palm2", i++));
-		objects.add(new GameObjectDef("Pineapple tree", "There are no pineapples left on the tree", "WalkTo", "Pick pineapple", 1, 1, 1, 0, "palm2", i++));
+		objects.add(new GameObjectDef("Pineapple tree", "A tree with nice ripe pineapples growing on it", "WalkTo", "Harvest", 1, 1, 1, 0, "palm2", i++));
+		objects.add(new GameObjectDef("Pineapple tree", "There are no pineapples left on the tree", "WalkTo", "Examine", 1, 1, 1, 0, "palm2", i++));
 		objects.add(new GameObjectDef("log raft", "A mighty fine raft", "board", "Examine", 0, 1, 1, 96, "lograft", i++));
 		objects.add(new GameObjectDef("log raft", "A mighty fine raft", "board", "Examine", 0, 1, 1, 96, "lograft", i++));
 		objects.add(new GameObjectDef("Tomb of hazeel", "A clay shrine to lord hazeel", "WalkTo", "Examine", 1, 1, 2, 96, "hazeeltomb", i++));

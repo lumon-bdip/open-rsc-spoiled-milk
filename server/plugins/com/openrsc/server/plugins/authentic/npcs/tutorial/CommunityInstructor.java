@@ -16,7 +16,7 @@ public class CommunityInstructor implements TalkNpcTrigger {
 	 */
 
 	private final String HOW_TO_COMMUNICATE = "How can I communicate with other players?";
-	private final String ARE_THERE_RULES = "Are there rules on ingame behaviour?";
+	private final String ARE_THERE_RULES = "Are there rules on in-game behaviour?";
 	private final String GOODBYE = "goodbye then";
 	private final String GLOBAL_CHAT = "Is there a global chat?";
 
@@ -67,7 +67,7 @@ public class CommunityInstructor implements TalkNpcTrigger {
 	private void behaviourDialogue(Player player, Npc n) {
 		npcsay(player, n, "Yes you should read the rules of conduct on our front page",
 			"To make sure you do nothing to get yourself banned",
-			"but as general guide always try to be courteous to people in game",
+			"but as a general guide always try to be courteous to people in-game",
 			"Remember the people in the game are real people somewhere",
 			"With real feelings",
 			"If you go round being abusive or causing trouble",
