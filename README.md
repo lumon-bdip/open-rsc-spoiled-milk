@@ -145,8 +145,8 @@ the short version.
   built per god, and each god has its own set of prayers.
 - Herblaw has new potions for the updated mechanics.
 - Gathering skills have new rare drop tables.
-- Gathering starts slower but ramps up quickly as tools improve and become more
-  efficient.
+- Gathering mechanics have been given a make-over and may at first glance seem
+  slower but will quickly ramp up and become much more efficient.
 - XP gain should keep a better pace as the game progresses, with more in-game
   ways to boost it.
 - Agility gives reward pouches when you complete obstacle courses. The rewards
