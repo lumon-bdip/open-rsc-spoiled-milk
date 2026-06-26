@@ -159,7 +159,7 @@ as I add things, but I am also intentionally not listing everything here.
 RuneScape Classic was a game of discovery before every answer lived in a wiki,
 and I want Spoiled Milk to leave room for that.
 
-Huge thanks to Andry, Fezmilk in game, for doing so much playtesting.
+Huge thanks to Fezzik, Fezmilk in game, for doing so much playtesting.
 
 ## Technical Stuff For Technical Nerds
 
