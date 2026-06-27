@@ -451,6 +451,8 @@ public final class EnchantingItemEffects {
 	private static final double[] BLOOD_NECKLACE_LEACH_PERCENTS = {0.10D, 0.20D, 0.30D, 0.50D, 1.00D};
 	private static final double[] SOUL_RING_SURVIVAL_CHANCES = {0.10D, 0.20D, 0.30D, 0.50D, 0.90D};
 	private static final int[] SOUL_NECKLACE_EXTRA_KEPT_ITEMS = {1, 2, 3, 5, 8};
+	private static final double[] DEATH_NECKLACE_GUARANTEED_DROP_BONUS_CHANCES = {0.25D, 0.40D, 0.60D, 0.90D, 1.00D};
+	private static final double DEATH_NECKLACE_DRAGONSTONE_EXTRA_DROP_CHANCE = 0.10D;
 	private static final int[] DEATH_AMULET_BURST_MIN_DAMAGE = {1, 3, 6, 9, 10};
 	private static final int[] DEATH_AMULET_BURST_MAX_DAMAGE = {3, 6, 9, 14, 20};
 	private static final int[] SOUL_AMULET_BURST_MIN_HEAL = {1, 1, 2, 3, 5};
@@ -1366,9 +1368,14 @@ public final class EnchantingItemEffects {
 		}
 	}
 
-	public static int getDeathNecklaceLowHealthDefenseBonus(final int itemId, final int currentHits, final int maxHits) {
+	public static double getDeathNecklaceGuaranteedDropBonusChance(final int itemId) {
 		final int tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, DEATH_ALTAR);
-		return getDeathLowHealthBonus(tier, currentHits, maxHits);
+		return getTierArrayValue(tier, DEATH_NECKLACE_GUARANTEED_DROP_BONUS_CHANCES);
+	}
+
+	public static double getDeathNecklaceGuaranteedDropExtraChance(final int itemId) {
+		final int tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, DEATH_ALTAR);
+		return tier == 5 ? DEATH_NECKLACE_DRAGONSTONE_EXTRA_DROP_CHANCE : 0.0D;
 	}
 
 	public static int getDeathAmuletBurstRadius(final int itemId) {
@@ -1700,38 +1707,6 @@ public final class EnchantingItemEffects {
 			default:
 				return 0;
 		}
-	}
-
-	private static int getDeathLowHealthBonus(final int tier, final int currentHits, final int maxHits) {
-		if (tier <= 0 || maxHits <= 0 || currentHits >= maxHits) {
-			return 0;
-		}
-		final double missingPercent = Math.max(0.0D, (maxHits - currentHits) / (double) maxHits);
-		final double step;
-		final int bonusPerStep;
-		switch (tier) {
-			case 1:
-				step = 0.25D;
-				bonusPerStep = 1;
-				break;
-			case 2:
-				step = 0.20D;
-				bonusPerStep = 1;
-				break;
-			case 3:
-				step = 0.15D;
-				bonusPerStep = 1;
-				break;
-			case 4:
-				step = 0.10D;
-				bonusPerStep = 1;
-				break;
-			default:
-				step = 0.10D;
-				bonusPerStep = 2;
-				break;
-		}
-		return (int) Math.floor(missingPercent / step) * bonusPerStep;
 	}
 
 	private static int getTierIndexForItem(final int itemId, final int[] line) {

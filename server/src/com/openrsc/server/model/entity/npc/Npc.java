@@ -759,12 +759,21 @@ public class Npc extends Mob {
 
 		/* 2. Drop bones (or nothing). */
 		int bones = getBonesDrop();
-		if (bones != ItemId.NOTHING.id() && !Summoning.tryAutoBuryDrop(owner, bones, 1)) {
-			final ItemDefinition boneDef = getWorld().getServer().getEntityHandler().getItemDef(bones);
-			if (boneDef == null || boneDef.isStackable()
-				|| !owner.getCarriedItems().getEquipment().tryBankMonsterLootWithLawNecklace(new Item(bones, 1))) {
-				GroundItem groundItem = createNpcGroundItem(owner, bones, 1, false, personalDrop);
-				getWorld().registerItem(groundItem);
+		if (bones != ItemId.NOTHING.id()) {
+			final Item boneDrop = applyDeathNecklaceGuaranteedDropBonus(owner, new Item(bones, 1));
+			final int boneAmount = boneDrop.getAmount();
+			if (!Summoning.tryAutoBuryDrop(owner, bones, boneAmount)) {
+				final ItemDefinition boneDef = getWorld().getServer().getEntityHandler().getItemDef(bones);
+				if (boneDef == null || boneDef.isStackable()
+					|| !owner.getCarriedItems().getEquipment().tryBankMonsterLootWithLawNecklace(new Item(bones, boneAmount))) {
+					final boolean stackGroundItem = boneDef == null || boneDef.isStackable();
+					final int groundItemCount = stackGroundItem ? 1 : boneAmount;
+					final int groundItemAmount = stackGroundItem ? boneAmount : 1;
+					for (int count = 0; count < groundItemCount; count++) {
+						GroundItem groundItem = createNpcGroundItem(owner, bones, groundItemAmount, false, personalDrop);
+						getWorld().registerItem(groundItem);
+					}
+				}
 			}
 		}
 
@@ -782,6 +791,7 @@ public class Npc extends Mob {
 			if (!worldAllowsDrop(item)) {
 				continue;
 			}
+			item = applyDeathNecklaceGuaranteedDropBonus(owner, item);
 			if (Summoning.tryAutoBuryDrop(owner, item.getCatalogId(), item.getAmount())) {
 				continue;
 			}
@@ -812,6 +822,18 @@ public class Npc extends Mob {
 				}
 			}
 		}
+	}
+
+	private Item applyDeathNecklaceGuaranteedDropBonus(final Player owner, final Item item) {
+		if (owner == null || item == null || item.getCatalogId() == ItemId.NOTHING.id() || item.getAmount() <= 0) {
+			return item;
+		}
+		final int bonusItems = owner.getCarriedItems().getEquipment().rollDeathNecklaceGuaranteedDropBonus();
+		if (bonusItems <= 0) {
+			return item;
+		}
+		owner.playerServerMessage(MessageType.QUEST, "@ora@Your death necklace shines brightly");
+		return new Item(item.getCatalogId(), item.getAmount() + bonusItems, item.getNoted());
 	}
 
 	private GroundItem createNpcGroundItem(Player owner, int itemId, int amount, boolean noted, boolean personalDrop) {

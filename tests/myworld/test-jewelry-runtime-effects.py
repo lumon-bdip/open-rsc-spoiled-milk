@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import math
 import re
 import sys
 from pathlib import Path
@@ -191,6 +190,7 @@ BLOOD_RING_HITS_BONUSES = parse_int_array("BLOOD_RING_HITS_BONUSES")
 BLOOD_NECKLACE_LEACH_PERCENTS = parse_double_array("BLOOD_NECKLACE_LEACH_PERCENTS")
 SOUL_RING_SURVIVAL_CHANCES = parse_double_array("SOUL_RING_SURVIVAL_CHANCES")
 SOUL_NECKLACE_EXTRA_KEPT_ITEMS = parse_int_array("SOUL_NECKLACE_EXTRA_KEPT_ITEMS")
+DEATH_NECKLACE_GUARANTEED_DROP_BONUS_CHANCES = parse_double_array("DEATH_NECKLACE_GUARANTEED_DROP_BONUS_CHANCES")
 DEATH_AMULET_BURST_MIN_DAMAGE = parse_int_array("DEATH_AMULET_BURST_MIN_DAMAGE")
 DEATH_AMULET_BURST_MAX_DAMAGE = parse_int_array("DEATH_AMULET_BURST_MAX_DAMAGE")
 SOUL_AMULET_BURST_MIN_HEAL = parse_int_array("SOUL_AMULET_BURST_MIN_HEAL")
@@ -258,24 +258,6 @@ def elemental_defense(item_id: int, style: str) -> int:
         fire_tier = tier_for(item_id, STANDARD_NECKLACES, FIRE)
         return 0 if fire_tier == -1 else fire_tier * 3
     return 0
-
-
-def death_low_health_bonus(item_id: int, lines: dict[int, list[int]], altar: int, current_hits: int, max_hits: int) -> int:
-    item_tier = tier_for(item_id, lines, altar)
-    if item_tier <= 0 or current_hits >= max_hits:
-        return 0
-    missing_percent = max(0.0, (max_hits - current_hits) / float(max_hits))
-    if item_tier == 1:
-        step, bonus_per_step = 0.25, 1
-    elif item_tier == 2:
-        step, bonus_per_step = 0.20, 1
-    elif item_tier == 3:
-        step, bonus_per_step = 0.15, 1
-    elif item_tier == 4:
-        step, bonus_per_step = 0.10, 1
-    else:
-        step, bonus_per_step = 0.10, 2
-    return math.floor((missing_percent / step) + 0.0000001) * bonus_per_step
 
 
 def law_item_max_charges(item_id: int) -> int:
@@ -351,8 +333,10 @@ def ensure_formula_source_matches_design() -> None:
             "Sapphire death ring should cap at 20 charge")
     require(DEATH_RING_CHARGE_CAPS[tier_for(3090, SPECIAL_RINGS, DEATH) - 1] == 100,
             "Dragonstone death ring should cap at 100 charge")
-    require(death_low_health_bonus(1667, STANDARD_NECKLACES, DEATH, 50, 100) == 10,
-            "Dragonstone death necklace should grant +10 defense at 50% missing hits")
+    require(DEATH_NECKLACE_GUARANTEED_DROP_BONUS_CHANCES == [0.25, 0.40, 0.60, 0.90, 1.00],
+            "Death necklaces should use the requested guaranteed-drop bonus chance ladder")
+    near(DEATH_NECKLACE_GUARANTEED_DROP_BONUS_CHANCES[tier_for(1667, STANDARD_NECKLACES, DEATH) - 1], 1.00,
+         "Dragonstone death necklace should guarantee +1 on eligible guaranteed drops")
     require(tier_for(1724, SPECIAL_AMULETS, DEATH) == 1, "Sapphire death amulet should be tier 1")
     require(tier_for(1728, SPECIAL_AMULETS, DEATH) == 5, "Dragonstone death amulet should be tier 5")
 
@@ -604,6 +588,17 @@ def ensure_runtime_paths_are_wired() -> None:
             and "applyDeathRingChargeHit" in pvm_melee
             and "applyDeathRingChargeHit" in projectile_event,
             "Death ring yellow damage should be wired into melee and projectile combat")
+    require("rollDeathNecklaceGuaranteedDropBonus" in equipment
+            and "getDeathNecklaceGuaranteedDropBonusChance(neckItem.getCatalogId())" in equipment
+            and "getDeathNecklaceGuaranteedDropExtraChance(neckItem.getCatalogId())" in equipment,
+            "Death necklace should roll the guaranteed-drop bonus from equipment")
+    require("getDeathNecklaceLowHealthDefenseBonus" not in equipment
+            and "getDeathNecklaceLowHealthDefenseBonus" not in effects,
+            "Death necklace should no longer provide low-health defenses")
+    require("applyDeathNecklaceGuaranteedDropBonus(owner, new Item(bones, 1))" in npc
+            and "item = applyDeathNecklaceGuaranteedDropBonus(owner, item);" in npc
+            and "Your death necklace shines brightly" in npc,
+            "Death necklace should boost bones and invariable guaranteed NPC drops")
     inventory = (ROOT / "server/src/com/openrsc/server/model/container/Inventory.java").read_text(encoding="utf-8")
     require("getSoulNecklaceExtraKeptItems" in equipment
             and "getSoulNecklaceExtraKeptItems()" in inventory,
@@ -620,7 +615,7 @@ def ensure_runtime_paths_are_wired() -> None:
             and "healSoulBurstTarget" in player
             and "HitSplat.TYPE_HEAL" in player
             and "owner.applySoulAmuletBurst(this);" in npc,
-            "Soul amulet should charge persistently from NPC kills and fire Burst healing")
+            "Soul amulet should charge persistently from NPC kills and fire Renewal healing")
 
     require("getLifeNecklaceSummonHealthPercent" in summoning,
             "Life necklace should increase combat summon health")

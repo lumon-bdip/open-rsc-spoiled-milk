@@ -117,7 +117,7 @@ def ensure_amulet_lines(items: dict[int, dict[str, Any]]) -> None:
         "Prowess": range(1739, 1744),
         "Alchemy": range(1744, 1749),
         "Bounty": range(1749, 1754),
-        "Burst": range(1754, 1759),
+        "Renewal": range(1754, 1759),
         "Command": range(3106, 3111),
     }
     tiers = ["Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone"]
@@ -160,7 +160,7 @@ def ensure_necklace_lines(items: dict[int, dict[str, Any]]) -> None:
         "Fortune": range(1643, 1648),
         "Chain Lightning": range(1648, 1653),
         "Cleansing": range(1653, 1658),
-        "Desperation": range(1663, 1668),
+        "Reaping": range(1663, 1668),
         "Leach": range(1668, 1673),
         "Preservation": range(1759, 1764),
         "Vigor": range(3101, 3106),
@@ -212,7 +212,7 @@ def ensure_ring_lines(items: dict[int, dict[str, Any]]) -> None:
         1718: "Dragonstone Ring of Skill Banking",
         3076: "Sapphire Ring of Hearthcraft",
         3081: "Sapphire Ring of Gains",
-        3086: "Sapphire Ring of Desperation",
+        3086: "Sapphire Ring of Reckoning",
         3091: "Sapphire Ring of Vitality",
         3096: "Sapphire Ring of Endurance",
         3111: "Dragonstone Ring of Fortune",
@@ -353,8 +353,9 @@ def ensure_source_mappings_exist() -> None:
         'setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil"',
         '"Has %d%% chance to recoil 10%% damage taken."',
         '"Has %d%% per-hop chain lightning, up to 3 halving hits."',
-        'addDeathDesperationNecklaceLine(1663, tiers, necklacePrices, gemMasks);',
-        'addDeathDesperationRingLine(3086, tiers, ringPrices, gemMasks);',
+        'addDeathReapingNecklaceLine(1663, tiers, necklacePrices, gemMasks);',
+        'addDeathReckoningRingLine(3086, tiers, ringPrices, gemMasks);',
+        'addSoulRenewalAmuletLine(1754, tiers, amuletPrices, gemMasks);',
         '"Auto-alchs 1000+ gp monster drops. " + charges[i] + " charges."',
         'setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment"',
         'setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Lifesaving"',
@@ -421,7 +422,7 @@ def ensure_client_jewelry_coverage() -> None:
     for match in re.finditer(r"addLawBankingNecklaceLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
-    for match in re.finditer(r"addDeathDesperationNecklaceLine\((\d+),\s*tiers,", client_text):
+    for match in re.finditer(r"addDeathReapingNecklaceLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addLifeNecklaceLine\((\d+),\s*tiers,", client_text):
@@ -439,7 +440,7 @@ def ensure_client_jewelry_coverage() -> None:
     for match in re.finditer(r"addCosmicAmuletLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
-    for match in re.finditer(r"addSoulAmuletLine\((\d+),\s*tiers,", client_text):
+    for match in re.finditer(r"addSoulRenewalAmuletLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addSoulNecklaceLine\((\d+),\s*tiers,", client_text):
@@ -476,7 +477,7 @@ def ensure_client_jewelry_coverage() -> None:
     for match in re.finditer(r"addExplicitAttunedRingLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
-    for match in re.finditer(r"addDeathDesperationRingLine\((\d+),\s*tiers,", client_text):
+    for match in re.finditer(r"addDeathReckoningRingLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addLifeRingLine\((\d+),\s*tiers,", client_text):
@@ -572,11 +573,11 @@ def ensure_jewelry_effect_ladders(items: dict[int, dict[str, Any]]) -> None:
         1650: "Has 30% per-hop chain lightning, up to 3 halving hits.",
         1651: "Has 50% per-hop chain lightning, up to 3 halving hits.",
         1652: "Has 90% per-hop chain lightning, up to 3 halving hits.",
-        1663: "Raises defenses by +1 per 25% missing Hits.",
-        1664: "Raises defenses by +1 per 20% missing Hits.",
-        1665: "Raises defenses by +1 per 15% missing Hits.",
-        1666: "Raises defenses by +1 per 10% missing Hits.",
-        1667: "Raises defenses by +2 per 10% missing Hits.",
+        1663: "Has 25% chance to add +1 to each guaranteed NPC drop.",
+        1664: "Has 40% chance to add +1 to each guaranteed NPC drop.",
+        1665: "Has 60% chance to add +1 to each guaranteed NPC drop.",
+        1666: "Has 90% chance to add +1 to each guaranteed NPC drop.",
+        1667: "Guaranteed +1 to each guaranteed NPC drop; 10% chance for +2.",
         1668: "Has 10% poison Leach from poison damage dealt.",
         1669: "Has 20% poison Leach from poison damage dealt.",
         1670: "Has 30% poison Leach from poison damage dealt.",
@@ -674,6 +675,7 @@ def ensure_all_enchanted_jewelry_has_effect_examine(items: dict[int, dict[str, A
         "Auto-alchs ",
         "Creates ",
         "Charges ",
+        "Guaranteed ",
     )
     for item_id in sorted(jewelry_ids):
         entry = items.get(item_id)

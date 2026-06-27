@@ -18,9 +18,9 @@ defense and matching-rune preservation.
 - Chaos: reflected damage.
 - Law: incoming damage smoothing through extra damage rolls.
 - Nature: flat poison tick damage mitigation.
-- Death: increased defenses while missing health.
+- Death: charged damage, Reaping, and Burst damage.
 - Blood: max Hits, poison Leach, and lifesteal.
-- Soul: lifesaving, item preservation, and charged healing Burst.
+- Soul: lifesaving, item preservation, and charged healing Renewal.
 - Life: no established robe-specific runtime effect.
 
 ## Superseded Design Notes
@@ -40,9 +40,10 @@ Implementation status:
   necklace standard loot rolls, cosmic amulet rare gathering duplication, chaos
   recoil, chaos necklace chain lightning, chaos amulet random rune production,
   nature food healing, nature amulet poison decay, law ring skilling banking,
-  law necklace monster-loot banking, law amulet teleports, death low-health
-  scaling and charged death burst, blood max Hits, poison Leach, and lifesteal,
-  soul item saving/life saving/healing Burst, and life summon bonuses.
+  law necklace monster-loot banking, law amulet teleports, death ring charge,
+  death guaranteed-drop bonuses, charged death burst, blood max Hits, poison
+  Leach, and lifesteal, soul item saving/life saving/healing Renewal, and life
+  summon bonuses.
 - Scrapped in runtime: nature ring iron-smelting protection and old cosmic
   amulet normal-resource duplication.
 - Item names and examine descriptions now match the implemented effects in the
@@ -60,9 +61,9 @@ Implementation status:
 - Chaos: Ring of Recoil; Necklace of Chain Lightning; Amulet of Random Chance.
 - Nature: Ring/Necklace of Nourishment; Amulet of Cleansing.
 - Law: Ring of Skill Banking; Necklace of Loot Banking; Amulet of Teleportation.
-- Death: Ring/Necklace of Desperation; Amulet of Ruin.
+- Death: Ring of Reckoning; Necklace of Reaping; Amulet of Ruin.
 - Blood: Ring of Vitality; Necklace of Leach; Amulet of Siphoning.
-- Soul: Ring of Lifesaving; Necklace of Preservation; Amulet of Burst.
+- Soul: Ring of Lifesaving; Necklace of Preservation; Amulet of Renewal.
 - Life: Ring of Endurance; Necklace of Vigor; Amulet of Command.
 
 ### Air
@@ -253,8 +254,17 @@ Ring/necklace:
   - Death ring charge is stored on the player cache by ring item ID, not as
     separate item variants.
 - Death necklace:
-  - same scaling concept as the ring, but grants defenses instead of weapon
-    power.
+  - boosts NPC drops in the guaranteed `100%` drop-rate category, such as
+    bones, demon ash, hides, and invariable material drops.
+  - each eligible item rolls independently.
+  - "Double" means `+1` item, not duplicating the full stack.
+  - tier 1: `25%` chance to add `+1`.
+  - tier 2: `40%` chance to add `+1`.
+  - tier 3: `60%` chance to add `+1`.
+  - tier 4: `90%` chance to add `+1`.
+  - tier 5: guaranteed `+1`, plus `10%` chance to add another `+1`.
+  - when the necklace grants at least one bonus item, the player sees
+    `Your death necklace shines brightly`.
 
 Amulet:
 
@@ -323,7 +333,7 @@ Necklace:
 
 Amulet:
 
-- Healing Burst.
+- Healing Renewal.
 - Killing an NPC while a Soul amulet is equipped adds soul charge equal to `10%`
   of that NPC's combat level.
 - At `200` soul charge, the amulet spends `200` charge and bursts around the

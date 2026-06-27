@@ -8995,8 +8995,8 @@
     },
     {
       "id": 1663,
-      "name": "Sapphire Necklace of Desperation",
-      "description": "Raises defenses by +1 per 25% missing Hits.",
+      "name": "Sapphire Necklace of Reaping",
+      "description": "Has 25% chance to add +1 to each guaranteed NPC drop.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9018,8 +9018,8 @@
     },
     {
       "id": 1664,
-      "name": "Emerald Necklace of Desperation",
-      "description": "Raises defenses by +1 per 20% missing Hits.",
+      "name": "Emerald Necklace of Reaping",
+      "description": "Has 40% chance to add +1 to each guaranteed NPC drop.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9041,8 +9041,8 @@
     },
     {
       "id": 1665,
-      "name": "Ruby Necklace of Desperation",
-      "description": "Raises defenses by +1 per 15% missing Hits.",
+      "name": "Ruby Necklace of Reaping",
+      "description": "Has 60% chance to add +1 to each guaranteed NPC drop.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9064,8 +9064,8 @@
     },
     {
       "id": 1666,
-      "name": "Diamond Necklace of Desperation",
-      "description": "Raises defenses by +1 per 10% missing Hits.",
+      "name": "Diamond Necklace of Reaping",
+      "description": "Has 90% chance to add +1 to each guaranteed NPC drop.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9087,8 +9087,8 @@
     },
     {
       "id": 1667,
-      "name": "Dragonstone Necklace of Desperation",
-      "description": "Raises defenses by +2 per 10% missing Hits.",
+      "name": "Dragonstone Necklace of Reaping",
+      "description": "Guaranteed +1 to each guaranteed NPC drop; 10% chance for +2.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11548,7 +11548,7 @@
     },
     {
       "id": 1754,
-      "name": "Sapphire Amulet of Burst",
+      "name": "Sapphire Amulet of Renewal",
       "description": "At 200 soul charge, heals 1-2 Hits within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
@@ -11571,7 +11571,7 @@
     },
     {
       "id": 1755,
-      "name": "Emerald Amulet of Burst",
+      "name": "Emerald Amulet of Renewal",
       "description": "At 200 soul charge, heals 1-3 Hits within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
@@ -11594,7 +11594,7 @@
     },
     {
       "id": 1756,
-      "name": "Ruby Amulet of Burst",
+      "name": "Ruby Amulet of Renewal",
       "description": "At 200 soul charge, heals 2-4 Hits within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
@@ -11617,7 +11617,7 @@
     },
     {
       "id": 1757,
-      "name": "Diamond Amulet of Burst",
+      "name": "Diamond Amulet of Renewal",
       "description": "At 200 soul charge, heals 3-6 Hits within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
@@ -11640,7 +11640,7 @@
     },
     {
       "id": 1758,
-      "name": "Dragonstone Amulet of Burst",
+      "name": "Dragonstone Amulet of Renewal",
       "description": "At 200 soul charge, heals 5-10 Hits within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
@@ -42184,7 +42184,7 @@
     },
     {
       "id": 3086,
-      "name": "Sapphire Ring of Desperation",
+      "name": "Sapphire Ring of Reckoning",
       "description": "Charges on NPC kills; +1 yellow damage per 10 charges, up to 20.",
       "command": "",
       "isFemaleOnly": 0,
@@ -42207,7 +42207,7 @@
     },
     {
       "id": 3087,
-      "name": "Emerald Ring of Desperation",
+      "name": "Emerald Ring of Reckoning",
       "description": "Charges on NPC kills; +1 yellow damage per 10 charges, up to 30.",
       "command": "",
       "isFemaleOnly": 0,
@@ -42230,7 +42230,7 @@
     },
     {
       "id": 3088,
-      "name": "Ruby Ring of Desperation",
+      "name": "Ruby Ring of Reckoning",
       "description": "Charges on NPC kills; +1 yellow damage per 10 charges, up to 40.",
       "command": "",
       "isFemaleOnly": 0,
@@ -42253,7 +42253,7 @@
     },
     {
       "id": 3089,
-      "name": "Diamond Ring of Desperation",
+      "name": "Diamond Ring of Reckoning",
       "description": "Charges on NPC kills; +1 yellow damage per 10 charges, up to 60.",
       "command": "",
       "isFemaleOnly": 0,
@@ -42276,7 +42276,7 @@
     },
     {
       "id": 3090,
-      "name": "Dragonstone Ring of Desperation",
+      "name": "Dragonstone Ring of Reckoning",
       "description": "Charges on NPC kills; +1 yellow damage per 10 charges, up to 100.",
       "command": "",
       "isFemaleOnly": 0,

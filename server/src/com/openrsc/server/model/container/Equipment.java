@@ -2329,13 +2329,21 @@ public class Equipment {
 		return neckItem == null ? 0.0D : EnchantingItemEffects.getBloodNecklaceLeachPercent(neckItem.getCatalogId());
 	}
 
-	public int getDeathNecklaceLowHealthDefenseBonus() {
+	public int rollDeathNecklaceGuaranteedDropBonus() {
 		Item neckItem = getEquippedNeckItem();
 		if (neckItem == null) {
 			return 0;
 		}
-		return EnchantingItemEffects.getDeathNecklaceLowHealthDefenseBonus(neckItem.getCatalogId(),
-			player.getSkills().getLevel(Skill.HITS.id()), player.getSkills().getMaxStat(Skill.HITS.id()));
+		int bonusItems = 0;
+		final double bonusChance = EnchantingItemEffects.getDeathNecklaceGuaranteedDropBonusChance(neckItem.getCatalogId());
+		if (bonusChance > 0.0D && DataConversions.getRandom().nextDouble() < bonusChance) {
+			bonusItems++;
+		}
+		final double extraChance = EnchantingItemEffects.getDeathNecklaceGuaranteedDropExtraChance(neckItem.getCatalogId());
+		if (bonusItems > 0 && extraChance > 0.0D && DataConversions.getRandom().nextDouble() < extraChance) {
+			bonusItems++;
+		}
+		return bonusItems;
 	}
 
 	public int getDeathAmuletBurstRadius() {
@@ -2887,7 +2895,7 @@ public class Equipment {
 	}
 
 	private int applyDefenseBonus(final PrayerCatalog.CombatStyle combatStyle, final int total) {
-		final int bonus = getEquippedElementalDefenseBonus(combatStyle) + getDeathNecklaceLowHealthDefenseBonus();
+		final int bonus = getEquippedElementalDefenseBonus(combatStyle);
 		if (bonus <= 0) {
 			return total;
 		}

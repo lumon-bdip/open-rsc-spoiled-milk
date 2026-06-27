@@ -5622,7 +5622,7 @@ public class EntityHandler {
 			new int[] {10, 20, 30, 50, 90}, necklacePrices, gemMasks);
 		addNecklaceLine(1653, tiers, "Cleansing", "Adds +%d poison decay per tick.", 1, necklacePrices, gemMasks);
 		addLawBankingNecklaceLine(1658, tiers, necklacePrices, gemMasks, lawBankCharges);
-		addDeathDesperationNecklaceLine(1663, tiers, necklacePrices, gemMasks);
+		addDeathReapingNecklaceLine(1663, tiers, necklacePrices, gemMasks);
 		addExplicitNecklaceLine(1668, tiers, "Leach", "Has %d%% poison Leach from poison damage dealt.",
 			new int[] {10, 20, 30, 50, 100}, necklacePrices, gemMasks);
 
@@ -5709,13 +5709,13 @@ public class EntityHandler {
 			new int[] {5, 10, 15, 25, 50}, amuletPrices, gemMasks, "");
 		addAlchemyAmuletLine(1744, tiers, amuletPrices, gemMasks);
 		addCosmicAmuletLine(1749, tiers, amuletPrices, gemMasks);
-		addSoulAmuletLine(1754, tiers, amuletPrices, gemMasks);
+		addSoulRenewalAmuletLine(1754, tiers, amuletPrices, gemMasks);
 		addSoulNecklaceLine(1759, tiers, soulNecklacePrices, gemMasks);
 		addExplicitAttunedRingLine(3076, tiers, "Hearthcraft", "Boosts cooking, herblaw, and fishing XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
 		addExplicitAttunedRingLine(3081, tiers, "Gains", "Boosts melee and hits XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
-		addDeathDesperationRingLine(3086, tiers, ringPrices, gemMasks);
+		addDeathReckoningRingLine(3086, tiers, ringPrices, gemMasks);
 		addExplicitAttunedRingLine(3091, tiers, "Vitality", "Adds +%d max Hits.",
 			new int[] {2, 4, 6, 10, 20}, ringPrices, gemMasks);
 		addLifeRingLine(3096, tiers, ringPrices, gemMasks);
@@ -5896,12 +5896,16 @@ public class EntityHandler {
 		}
 	}
 
-	private static void addDeathDesperationNecklaceLine(int startId, String[] tiers, int[] prices,
+	private static void addDeathReapingNecklaceLine(int startId, String[] tiers, int[] prices,
 		int[] pictureMasks) {
+		final int[] bonusChances = {25, 40, 60, 90, 100};
 		for (int i = 0; i < tiers.length; i++) {
+			final String description = i == tiers.length - 1
+				? "Guaranteed +1 to each guaranteed NPC drop; 10% chance for +2."
+				: "Has " + bonusChances[i] + "% chance to add +1 to each guaranteed NPC drop.";
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Necklace of Desperation",
-					buildDeathDesperationDescription("defenses", i),
+				new ItemDef(tiers[i] + " Necklace of Reaping",
+					description,
 					"",
 					prices[i],
 					57,
@@ -5917,10 +5921,10 @@ public class EntityHandler {
 		}
 	}
 
-	private static void addDeathDesperationRingLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
+	private static void addDeathReckoningRingLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Ring of Desperation",
+				new ItemDef(tiers[i] + " Ring of Reckoning",
 					buildDeathRingChargeDescription(i),
 					"",
 					prices[i],
@@ -5941,13 +5945,6 @@ public class EntityHandler {
 		final int[] chargeCaps = {20, 30, 40, 60, 100};
 		return "Charges on NPC kills; +1 yellow damage per 10 charges, up to "
 			+ chargeCaps[tierIndex] + ".";
-	}
-
-	private static String buildDeathDesperationDescription(String statName, int tierIndex) {
-		final int[] missingHitSteps = {25, 20, 15, 10, 10};
-		final int[] bonuses = {1, 1, 1, 1, 2};
-		return "Raises " + statName + " by +" + bonuses[tierIndex] + " per "
-			+ missingHitSteps[tierIndex] + "% missing Hits.";
 	}
 
 	private static void addLawBankingNecklaceLine(int startId, String[] tiers, int[] prices, int[] pictureMasks,
@@ -6202,12 +6199,12 @@ public class EntityHandler {
 		}
 	}
 
-	private static void addSoulAmuletLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
+	private static void addSoulRenewalAmuletLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
 		final int[] minHeal = {1, 1, 2, 3, 5};
 		final int[] maxHeal = {2, 3, 4, 6, 10};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of Burst",
+				new ItemDef(tiers[i] + " Amulet of Renewal",
 					"At 200 soul charge, heals " + minHeal[i] + "-" + maxHeal[i] + " Hits within 2 tiles.",
 					"",
 					prices[i],
