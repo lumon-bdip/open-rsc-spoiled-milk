@@ -53,6 +53,7 @@ public class StatRestorationEvent extends GameTickEvent {
 		if (getOwner().isPlayer()) {
 			Player player = (Player) getOwner();
 			player.tickBodyRobeWeaponPowerDecay();
+			player.tickDeathRingChargeDecay();
 		}
 
 		// Add new skills to the restoration cycle

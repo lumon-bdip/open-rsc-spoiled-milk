@@ -4146,6 +4146,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			key("GLFW_KEY_RIGHT", KeyEvent.VK_RIGHT, KeyEvent.CHAR_UNDEFINED, KeyEvent.CHAR_UNDEFINED),
 			key("GLFW_KEY_UP", KeyEvent.VK_UP, KeyEvent.CHAR_UNDEFINED, KeyEvent.CHAR_UNDEFINED),
 			key("GLFW_KEY_DOWN", KeyEvent.VK_DOWN, KeyEvent.CHAR_UNDEFINED, KeyEvent.CHAR_UNDEFINED),
+			key("GLFW_KEY_HOME", KeyEvent.VK_HOME, KeyEvent.CHAR_UNDEFINED, KeyEvent.CHAR_UNDEFINED),
 			key("GLFW_KEY_PAGE_UP", KeyEvent.VK_PAGE_UP, KeyEvent.CHAR_UNDEFINED, KeyEvent.CHAR_UNDEFINED),
 			key("GLFW_KEY_PAGE_DOWN", KeyEvent.VK_PAGE_DOWN, KeyEvent.CHAR_UNDEFINED, KeyEvent.CHAR_UNDEFINED),
 			key("GLFW_KEY_ENTER", KeyEvent.VK_ENTER, '\n', '\n'),

@@ -2157,7 +2157,7 @@ public class Equipment {
 
 	private String getOffenseDebugSummary(final PrayerCatalog.CombatStyle combatStyle, final String label) {
 		final int base = getRawOffense(combatStyle);
-		final int jewelryBonus = getEquippedElementalPowerBonus(combatStyle) + getDeathRingLowHealthPowerBonus();
+		final int jewelryBonus = getEquippedElementalPowerBonus(combatStyle);
 		final int penalty = getArmorPowerPenalty(combatStyle);
 		final int displayValue = getDisplayedModifiedOffense(combatStyle);
 		final int combatValue = Math.max(0, displayValue);
@@ -2324,13 +2324,9 @@ public class Equipment {
 		return neckItem == null ? 0.0D : EnchantingItemEffects.getBloodAmuletLifestealChance(neckItem.getCatalogId());
 	}
 
-	public int getDeathRingLowHealthPowerBonus() {
-		Item ringItem = getEquippedRingItem();
-		if (ringItem == null) {
-			return 0;
-		}
-		return EnchantingItemEffects.getDeathRingLowHealthPowerBonus(ringItem.getCatalogId(),
-			player.getSkills().getLevel(Skill.HITS.id()), player.getSkills().getMaxStat(Skill.HITS.id()));
+	public double getBloodNecklaceLeachPercent() {
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0.0D : EnchantingItemEffects.getBloodNecklaceLeachPercent(neckItem.getCatalogId());
 	}
 
 	public int getDeathNecklaceLowHealthDefenseBonus() {
@@ -2347,9 +2343,14 @@ public class Equipment {
 		return neckItem == null ? 0 : EnchantingItemEffects.getDeathAmuletBurstRadius(neckItem.getCatalogId());
 	}
 
-	public double getDeathAmuletBurstPercent() {
+	public int getDeathAmuletBurstMinDamage() {
 		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0.0D : EnchantingItemEffects.getDeathAmuletBurstPercent(neckItem.getCatalogId());
+		return neckItem == null ? 0 : EnchantingItemEffects.getDeathAmuletBurstMinDamage(neckItem.getCatalogId());
+	}
+
+	public int getDeathAmuletBurstMaxDamage() {
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0 : EnchantingItemEffects.getDeathAmuletBurstMaxDamage(neckItem.getCatalogId());
 	}
 
 	public int getLifeNecklaceSummonHealthPercent() {
@@ -2367,11 +2368,9 @@ public class Equipment {
 		return neckItem == null ? 0 : EnchantingItemEffects.getLifeAmuletSummonMaxDamageBonus(neckItem.getCatalogId());
 	}
 
-	public int getBloodAmuletHitsBonus(final int baseHits) {
-		Item neckItem = getEquippedNeckItem();
+	public int getBloodRingHitsBonus() {
 		Item ringItem = getEquippedRingItem();
-		return (neckItem == null ? 0 : EnchantingItemEffects.getBloodJewelryHitsBonus(neckItem.getCatalogId()))
-			+ (ringItem == null ? 0 : EnchantingItemEffects.getBloodJewelryHitsBonus(ringItem.getCatalogId()));
+		return ringItem == null ? 0 : EnchantingItemEffects.getBloodRingHitsBonus(ringItem.getCatalogId());
 	}
 
 	public boolean hasFullCowHideSet() {
@@ -2735,11 +2734,24 @@ public class Equipment {
 		return Math.min(1.0D, chance);
 	}
 
-	public int getSoulAmuletExtraKeptItems() {
+	public int getSoulNecklaceExtraKeptItems() {
 		Item neckItem = getEquippedNeckItem();
-		Item ringItem = getEquippedRingItem();
-		return (neckItem == null ? 0 : EnchantingItemEffects.getSoulAmuletExtraKeptItems(neckItem.getCatalogId()))
-			+ (ringItem == null ? 0 : EnchantingItemEffects.getSoulAmuletExtraKeptItems(ringItem.getCatalogId()));
+		return neckItem == null ? 0 : EnchantingItemEffects.getSoulNecklaceExtraKeptItems(neckItem.getCatalogId());
+	}
+
+	public int getSoulAmuletBurstRadius() {
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0 : EnchantingItemEffects.getSoulAmuletBurstRadius(neckItem.getCatalogId());
+	}
+
+	public int getSoulAmuletBurstMinHeal() {
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0 : EnchantingItemEffects.getSoulAmuletBurstMinHeal(neckItem.getCatalogId());
+	}
+
+	public int getSoulAmuletBurstMaxHeal() {
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0 : EnchantingItemEffects.getSoulAmuletBurstMaxHeal(neckItem.getCatalogId());
 	}
 
 	public int getMeleeDefense() {
@@ -2826,7 +2838,7 @@ public class Equipment {
 	}
 
 	private int applyOffenseBonus(final PrayerCatalog.CombatStyle combatStyle, final int total) {
-		final int bonus = getEquippedElementalPowerBonus(combatStyle) + getDeathRingLowHealthPowerBonus();
+		final int bonus = getEquippedElementalPowerBonus(combatStyle);
 		if (bonus <= 0) {
 			return total;
 		}
@@ -3005,7 +3017,7 @@ public class Equipment {
 		return getEquippedRobeEffects().lifeTierTotal;
 	}
 
-	private Item getEquippedNeckItem() {
+	public Item getEquippedNeckItem() {
 		if (player.getConfig().WANT_EQUIPMENT_TAB) {
 			synchronized (list) {
 				return list[EquipmentSlot.SLOT_NECK.getIndex()];
@@ -3021,7 +3033,7 @@ public class Equipment {
 		return null;
 	}
 
-	private Item getEquippedRingItem() {
+	public Item getEquippedRingItem() {
 		if (player.getConfig().WANT_EQUIPMENT_TAB) {
 			synchronized (list) {
 				return list[EquipmentSlot.SLOT_RING.getIndex()];

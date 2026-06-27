@@ -45,6 +45,16 @@ public final class EnchantingItemEffects {
 	public static final int LIFE_ALTAR = 1321;
 	private static final String LAW_BANKING_CHARGES_CACHE_PREFIX = "myworld_law_banking_charges_";
 	private static final String NATURE_ALCHEMY_CHARGES_CACHE_PREFIX = "myworld_nature_alchemy_charges_";
+	private static final String SOUL_AMULET_BURST_CHARGE_CACHE_PREFIX = "myworld_soul_amulet_burst_charge_";
+	private static final String DEATH_AMULET_BURST_CHARGE_CACHE_PREFIX = "myworld_death_amulet_burst_charge_";
+	private static final String DEATH_RING_CHARGE_CACHE_PREFIX = "myworld_death_ring_charge_";
+	private static final int SOUL_AMULET_BURST_CHARGE_REQUIRED_POINTS = 20000;
+	private static final int SOUL_AMULET_BURST_CHARGE_POINTS_PER_COMBAT_LEVEL = 10;
+	private static final int DEATH_AMULET_BURST_CHARGE_REQUIRED_POINTS = 10000;
+	private static final int DEATH_AMULET_BURST_CHARGE_POINTS_PER_COMBAT_LEVEL = 10;
+	private static final int DEATH_RING_CHARGE_PER_NPC_KILL = 10;
+	private static final int DEATH_RING_CHARGE_PER_BONUS_DAMAGE = 10;
+	private static final int DEATH_RING_CHARGE_DECAY_POINTS = 10;
 
 	private static final int[] ALL_ALTARS = {
 		AIR_ALTAR,
@@ -419,8 +429,6 @@ public final class EnchantingItemEffects {
 		new TieredEffect(SPECIAL_RING_LINES, NATURE_ALTAR, 0.10D);
 	private static final TieredEffect COSMIC_RING_ADDITIONAL_ROLL_EFFECT =
 		new TieredEffect(SPECIAL_RING_LINES, COSMIC_ALTAR, 0.05D);
-	private static final TieredEffect SOUL_RING_SURVIVAL_EFFECT =
-		new TieredEffect(SPECIAL_RING_LINES, SOUL_ALTAR, 0.05D);
 	private static final TieredEffect NECKLACE_RUNE_PRESERVATION_EFFECT =
 		new TieredEffect(STANDARD_NECKLACE_LINES, AIR_ALTAR, 0.10D);
 	private static final TieredEffect AIR_NECKLACE_SPEED_EFFECT =
@@ -429,7 +437,7 @@ public final class EnchantingItemEffects {
 		new TieredEffect(STANDARD_NECKLACE_LINES, WATER_ALTAR, 0.02D);
 	private static final TieredEffect DEATH_AMULET_KILL_CHAIN_EFFECT =
 		new TieredEffect(SPECIAL_AMULET_LINES, DEATH_ALTAR, 0.01D);
-	private static final TieredEffect BLOOD_AMULET_MAX_HITS_EFFECT =
+	private static final TieredEffect BLOOD_AMULET_LIFESTEAL_EFFECT =
 		new TieredEffect(SPECIAL_AMULET_LINES, BLOOD_ALTAR, 0.05D);
 	private static final TieredEffect COSMIC_AMULET_EXTRA_RESOURCE_EFFECT =
 		new TieredEffect(SPECIAL_AMULET_LINES, COSMIC_ALTAR, 0.03D);
@@ -439,6 +447,15 @@ public final class EnchantingItemEffects {
 	private static final double[] NATURE_RING_FOOD_BONUSES = {0.10D, 0.20D, 0.30D, 0.50D, 1.00D};
 	private static final double[] CHAOS_RECOIL_CHANCES = {0.10D, 0.20D, 0.30D, 0.50D, 0.90D};
 	private static final double[] CHAOS_CHAIN_LIGHTNING_CHANCES = {0.10D, 0.20D, 0.30D, 0.50D, 0.90D};
+	private static final int[] BLOOD_RING_HITS_BONUSES = {2, 4, 6, 10, 20};
+	private static final double[] BLOOD_NECKLACE_LEACH_PERCENTS = {0.10D, 0.20D, 0.30D, 0.50D, 1.00D};
+	private static final double[] SOUL_RING_SURVIVAL_CHANCES = {0.10D, 0.20D, 0.30D, 0.50D, 0.90D};
+	private static final int[] SOUL_NECKLACE_EXTRA_KEPT_ITEMS = {1, 2, 3, 5, 8};
+	private static final int[] DEATH_AMULET_BURST_MIN_DAMAGE = {1, 3, 6, 9, 10};
+	private static final int[] DEATH_AMULET_BURST_MAX_DAMAGE = {3, 6, 9, 14, 20};
+	private static final int[] SOUL_AMULET_BURST_MIN_HEAL = {1, 1, 2, 3, 5};
+	private static final int[] SOUL_AMULET_BURST_MAX_HEAL = {2, 3, 4, 6, 10};
+	private static final int[] DEATH_RING_CHARGE_CAPS = {20, 30, 40, 60, 100};
 	private static final int[] CHAOS_AMULET_RANDOM_RUNE_INTERVALS = {60, 55, 50, 40, 20};
 	private static final int[] LAW_BANKING_CHARGES = {100, 200, 300, 500, 1000};
 	private static final int[] NATURE_ALCHEMY_AMULET_CHARGES = {100, 200, 300, 500, 1000};
@@ -554,6 +571,10 @@ public final class EnchantingItemEffects {
 
 	public static boolean isChaosRing(final int itemId) {
 		return contains(CHAOS_RINGS, itemId);
+	}
+
+	public static boolean isDeathRing(final int itemId) {
+		return contains(DEATH_RINGS, itemId);
 	}
 
 	public static boolean isNatureRing(final int itemId) {
@@ -827,7 +848,8 @@ public final class EnchantingItemEffects {
 	}
 
 	public static double getSoulRingSurvivalChance(final int itemId) {
-		return getTieredEffectValue(itemId, SOUL_RING_SURVIVAL_EFFECT);
+		final int tier = getTierForAltar(itemId, SPECIAL_RING_LINES, SOUL_ALTAR);
+		return getTierArrayValue(tier, SOUL_RING_SURVIVAL_CHANCES);
 	}
 
 	public static int getLawItemMaxCharges(final int itemId) {
@@ -915,6 +937,72 @@ public final class EnchantingItemEffects {
 		final int clampedCharges = clamp(charges, 0, maxCharges);
 		player.getCache().set(getLawBankingChargesCacheKey(item.getCatalogId()), clampedCharges);
 		item.getItemStatus().setDurability(clampedCharges);
+	}
+
+	public static String getSoulAmuletBurstChargeCacheKey(final int itemId) {
+		return SOUL_AMULET_BURST_CHARGE_CACHE_PREFIX + itemId;
+	}
+
+	public static int getSoulAmuletBurstChargeRequiredPoints() {
+		return SOUL_AMULET_BURST_CHARGE_REQUIRED_POINTS;
+	}
+
+	public static int getSoulAmuletBurstChargePointsForNpc(final int combatLevel) {
+		return Math.max(0, combatLevel) * SOUL_AMULET_BURST_CHARGE_POINTS_PER_COMBAT_LEVEL;
+	}
+
+	public static int getSoulAmuletBurstChargePoints(final Player player, final Item item) {
+		if (player == null || item == null || !isSoulAmulet(item.getCatalogId())) {
+			return 0;
+		}
+		final String cacheKey = getSoulAmuletBurstChargeCacheKey(item.getCatalogId());
+		final int chargePoints = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
+		final int clampedChargePoints = clamp(chargePoints, 0, SOUL_AMULET_BURST_CHARGE_REQUIRED_POINTS);
+		if (clampedChargePoints != chargePoints || !player.getCache().hasKey(cacheKey)) {
+			player.getCache().set(cacheKey, clampedChargePoints);
+		}
+		return clampedChargePoints;
+	}
+
+	public static void setSoulAmuletBurstChargePoints(final Player player, final Item item, final int chargePoints) {
+		if (player == null || item == null || !isSoulAmulet(item.getCatalogId())) {
+			return;
+		}
+		final int clampedChargePoints = clamp(chargePoints, 0, SOUL_AMULET_BURST_CHARGE_REQUIRED_POINTS);
+		player.getCache().set(getSoulAmuletBurstChargeCacheKey(item.getCatalogId()), clampedChargePoints);
+	}
+
+	public static String getDeathAmuletBurstChargeCacheKey(final int itemId) {
+		return DEATH_AMULET_BURST_CHARGE_CACHE_PREFIX + itemId;
+	}
+
+	public static int getDeathAmuletBurstChargeRequiredPoints() {
+		return DEATH_AMULET_BURST_CHARGE_REQUIRED_POINTS;
+	}
+
+	public static int getDeathAmuletBurstChargePointsForNpc(final int combatLevel) {
+		return Math.max(0, combatLevel) * DEATH_AMULET_BURST_CHARGE_POINTS_PER_COMBAT_LEVEL;
+	}
+
+	public static int getDeathAmuletBurstChargePoints(final Player player, final Item item) {
+		if (player == null || item == null || !isDeathAmulet(item.getCatalogId())) {
+			return 0;
+		}
+		final String cacheKey = getDeathAmuletBurstChargeCacheKey(item.getCatalogId());
+		final int chargePoints = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
+		final int clampedChargePoints = clamp(chargePoints, 0, DEATH_AMULET_BURST_CHARGE_REQUIRED_POINTS);
+		if (clampedChargePoints != chargePoints || !player.getCache().hasKey(cacheKey)) {
+			player.getCache().set(cacheKey, clampedChargePoints);
+		}
+		return clampedChargePoints;
+	}
+
+	public static void setDeathAmuletBurstChargePoints(final Player player, final Item item, final int chargePoints) {
+		if (player == null || item == null || !isDeathAmulet(item.getCatalogId())) {
+			return;
+		}
+		final int clampedChargePoints = clamp(chargePoints, 0, DEATH_AMULET_BURST_CHARGE_REQUIRED_POINTS);
+		player.getCache().set(getDeathAmuletBurstChargeCacheKey(item.getCatalogId()), clampedChargePoints);
 	}
 
 	private static int clamp(final int value, final int min, final int max) {
@@ -1194,25 +1282,88 @@ public final class EnchantingItemEffects {
 		return 0.0D;
 	}
 
-	public static double getBloodAmuletMaxHitsBonus(final int itemId) {
-		return 0.0D;
+	public static int getBloodRingHitsBonus(final int itemId) {
+		final int tier = getTierForAltar(itemId, SPECIAL_RING_LINES, BLOOD_ALTAR);
+		return tier == -1 ? 0 : BLOOD_RING_HITS_BONUSES[tier - 1];
 	}
 
-	public static int getBloodJewelryHitsBonus(final int itemId) {
-		int tier = getTierForAltar(itemId, SPECIAL_RING_LINES, BLOOD_ALTAR);
-		if (tier == -1) {
-			tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, BLOOD_ALTAR);
-		}
-		return tier == -1 ? 0 : tier * 2;
+	public static double getBloodNecklaceLeachPercent(final int itemId) {
+		final int tier = getTierForAltar(itemId, STANDARD_NECKLACE_LINES, BLOOD_ALTAR);
+		return tier == -1 ? 0.0D : BLOOD_NECKLACE_LEACH_PERCENTS[tier - 1];
 	}
 
 	public static double getBloodAmuletLifestealChance(final int itemId) {
-		return getTieredEffectValue(itemId, BLOOD_AMULET_MAX_HITS_EFFECT);
+		return getTieredEffectValue(itemId, BLOOD_AMULET_LIFESTEAL_EFFECT);
 	}
 
-	public static int getDeathRingLowHealthPowerBonus(final int itemId, final int currentHits, final int maxHits) {
+	public static String getDeathRingChargeCacheKey(final int itemId) {
+		return DEATH_RING_CHARGE_CACHE_PREFIX + itemId;
+	}
+
+	public static int getDeathRingChargeCap(final int itemId) {
 		final int tier = getTierForAltar(itemId, SPECIAL_RING_LINES, DEATH_ALTAR);
-		return getDeathLowHealthBonus(tier, currentHits, maxHits);
+		return getTierArrayValue(tier, DEATH_RING_CHARGE_CAPS);
+	}
+
+	public static int getDeathRingChargePerNpcKill() {
+		return DEATH_RING_CHARGE_PER_NPC_KILL;
+	}
+
+	public static int getDeathRingChargeDecayPoints() {
+		return DEATH_RING_CHARGE_DECAY_POINTS;
+	}
+
+	public static int getDeathRingChargePoints(final Player player, final Item item) {
+		if (player == null || item == null || !isDeathRing(item.getCatalogId())) {
+			return 0;
+		}
+		final int cap = getDeathRingChargeCap(item.getCatalogId());
+		if (cap <= 0) {
+			return 0;
+		}
+		final String cacheKey = getDeathRingChargeCacheKey(item.getCatalogId());
+		final int chargePoints = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
+		final int clampedChargePoints = clamp(chargePoints, 0, cap);
+		if (clampedChargePoints != chargePoints || !player.getCache().hasKey(cacheKey)) {
+			player.getCache().set(cacheKey, clampedChargePoints);
+		}
+		return clampedChargePoints;
+	}
+
+	public static void setDeathRingChargePoints(final Player player, final Item item, final int chargePoints) {
+		if (player == null || item == null || !isDeathRing(item.getCatalogId())) {
+			return;
+		}
+		final int cap = getDeathRingChargeCap(item.getCatalogId());
+		if (cap <= 0) {
+			return;
+		}
+		player.getCache().set(getDeathRingChargeCacheKey(item.getCatalogId()), clamp(chargePoints, 0, cap));
+	}
+
+	public static int getDeathRingChargeDamage(final Player player, final Item item) {
+		if (player == null || item == null || !isDeathRing(item.getCatalogId())) {
+			return 0;
+		}
+		return getDeathRingChargePoints(player, item) / DEATH_RING_CHARGE_PER_BONUS_DAMAGE;
+	}
+
+	public static void decayDeathRingCharges(final Player player, final int chargePoints) {
+		if (player == null || chargePoints <= 0) {
+			return;
+		}
+		for (int itemId : DEATH_RINGS) {
+			final String cacheKey = getDeathRingChargeCacheKey(itemId);
+			if (!player.getCache().hasKey(cacheKey)) {
+				continue;
+			}
+			final int current = clamp(player.getCache().getInt(cacheKey), 0, getDeathRingChargeCap(itemId));
+			if (current <= 0) {
+				player.getCache().set(cacheKey, 0);
+				continue;
+			}
+			player.getCache().set(cacheKey, Math.max(0, current - chargePoints));
+		}
 	}
 
 	public static int getDeathNecklaceLowHealthDefenseBonus(final int itemId, final int currentHits, final int maxHits) {
@@ -1222,24 +1373,17 @@ public final class EnchantingItemEffects {
 
 	public static int getDeathAmuletBurstRadius(final int itemId) {
 		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, DEATH_ALTAR);
-		if (tier <= 0) {
-			return 0;
-		}
-		return tier >= 5 ? 3 : tier >= 3 ? 2 : 1;
+		return tier == -1 ? 0 : 2;
 	}
 
-	public static double getDeathAmuletBurstPercent(final int itemId) {
+	public static int getDeathAmuletBurstMinDamage(final int itemId) {
 		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, DEATH_ALTAR);
-		if (tier <= 0) {
-			return 0.0D;
-		}
-		if (tier >= 4) {
-			return 0.15D;
-		}
-		if (tier >= 2) {
-			return 0.10D;
-		}
-		return 0.05D;
+		return getTierArrayValue(tier, DEATH_AMULET_BURST_MIN_DAMAGE);
+	}
+
+	public static int getDeathAmuletBurstMaxDamage(final int itemId) {
+		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, DEATH_ALTAR);
+		return getTierArrayValue(tier, DEATH_AMULET_BURST_MAX_DAMAGE);
 	}
 
 	public static double getMindNecklaceXpBonus(final int itemId) {
@@ -1268,6 +1412,10 @@ public final class EnchantingItemEffects {
 
 	private static double getTierArrayValue(final int tier, final double[] values) {
 		return tier <= 0 || tier > values.length ? 0.0D : values[tier - 1];
+	}
+
+	private static int getTierArrayValue(final int tier, final int[] values) {
+		return tier <= 0 || tier > values.length ? 0 : values[tier - 1];
 	}
 
 	public static double getMindAmuletPotionDurationBonus(final int itemId) {
@@ -1365,17 +1513,24 @@ public final class EnchantingItemEffects {
 		return 0.0D;
 	}
 
-	public static int getSoulAmuletExtraKeptItems(final int itemId) {
-		int tier = getTierForAltar(itemId, SPECIAL_RING_LINES, SOUL_ALTAR);
-		if (tier == -1) {
-			tier = getTierForAltar(itemId, new TieredLine[] {new TieredLine(SOUL_ALTAR, SOUL_NECKLACES)}, SOUL_ALTAR);
-		}
-		return tier == -1 ? 0 : tier;
+	public static int getSoulNecklaceExtraKeptItems(final int itemId) {
+		final int tier = getTierForAltar(itemId, new TieredLine[] {new TieredLine(SOUL_ALTAR, SOUL_NECKLACES)}, SOUL_ALTAR);
+		return getTierArrayValue(tier, SOUL_NECKLACE_EXTRA_KEPT_ITEMS);
 	}
 
-	public static double getSoulAmuletSurvivalChance(final int itemId) {
+	public static int getSoulAmuletBurstRadius(final int itemId) {
 		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, SOUL_ALTAR);
-		return tier == -1 ? 0.0D : tier * 0.10D;
+		return tier == -1 ? 0 : 2;
+	}
+
+	public static int getSoulAmuletBurstMinHeal(final int itemId) {
+		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, SOUL_ALTAR);
+		return getTierArrayValue(tier, SOUL_AMULET_BURST_MIN_HEAL);
+	}
+
+	public static int getSoulAmuletBurstMaxHeal(final int itemId) {
+		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, SOUL_ALTAR);
+		return getTierArrayValue(tier, SOUL_AMULET_BURST_MAX_HEAL);
 	}
 
 	public static int getLifeNecklaceSummonHealthPercent(final int itemId) {

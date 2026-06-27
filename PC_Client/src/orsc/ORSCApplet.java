@@ -18,7 +18,6 @@ import java.awt.image.*;
 import java.io.ByteArrayInputStream;
 
 import static orsc.Config.S_ZOOM_VIEW_TOGGLE;
-import static orsc.osConfig.C_LAST_ZOOM;
 
 public class ORSCApplet extends Applet implements ComponentListener, ImageObserver, ImageProducer, ClientPort {
 	private static final long serialVersionUID = 1L;
@@ -1115,27 +1114,17 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					boolean touchedMessagePanelArea = mudclient.getGameHeight() - Math.max(mudclient.mouseY, mudclient.mouseLastProcessedY) <= 66;
 
 					boolean scrollableMessagePanel = mudclient.hasScroll(mudclient.messageTabSelected) && touchedMessagePanelArea;
-					boolean mayBeScrollable = mudclient.showUiTab != 0;
+					boolean mayBeScrollable = mudclient.isMouseOverOpenUiTabPanel(mudclient.mouseX, mudclient.mouseY)
+						|| mudclient.isMouseOverOpenUiTabPanel(mudclient.mouseLastProcessedX, mudclient.mouseLastProcessedY);
 					boolean zoomable = (!scrollableMessagePanel && !mayBeScrollable) || osConfig.C_SWIPE_TO_SCROLL_MODE == 0;
 
 					if (!mudclient.isInFirstPersonView() && zoomable && (S_ZOOM_VIEW_TOGGLE || mudclient.getLocalPlayer().isStaff()) && !var1.isControlDown()) {
 						if (osConfig.C_SWIPE_TO_ZOOM_MODE != 0) {
 							int dir = osConfig.C_SWIPE_TO_ZOOM_MODE == 2 ? -1 : 1;
-							int newZoom = C_LAST_ZOOM + dir * distanceY;
-							// Keep C_LAST_ZOOM aka the zoom increments on the range of [0, 255]
-							if (newZoom >= 0 && newZoom <= 255) {
-								C_LAST_ZOOM = newZoom;
-							}
+							mudclient.adjustCameraZoomSetting(dir * distanceY);
 						}
 					} else if (mudclient.isInFirstPersonView() && mudclient.cameraAllowPitchModification) {
-						mudclient.cameraPitch = (mudclient.cameraPitch + (-distanceY * 2)) & 1023;
-
-						// Limit on the half circled where everything is right side up
-						if (mudclient.cameraPitch > 256 && mudclient.cameraPitch <= 512)
-							mudclient.cameraPitch = 256;
-
-						if (mudclient.cameraPitch < 768 && mudclient.cameraPitch > 512)
-							mudclient.cameraPitch = 768;
+						mudclient.adjustCameraPitch(-distanceY * 2);
 					}
 					if (osConfig.C_SWIPE_TO_ROTATE_MODE != 0) {
 						// camera set to auto does not like manual like rotation
@@ -1200,7 +1189,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			boolean touchedMessagePanelArea = getHeight() - e.getY() <= 75;
 
 			boolean scrollableMessagePanel = mudclient.hasScroll(mudclient.messageTabSelected) && touchedMessagePanelArea;
-			boolean mayBeScrollable = mudclient.showUiTab != 0;
+			boolean mayBeScrollable = mudclient.isMouseOverOpenUiTabPanel(e.getX(), e.getY());
 			boolean zoomable = !scrollableMessagePanel && !mayBeScrollable;
 
 
@@ -1215,11 +1204,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				e.consume();
 				final int zoomIncrement = 10;
 				int zoomAmount = e.getWheelRotation() * zoomIncrement;
-				int newZoom = C_LAST_ZOOM + zoomAmount;
-				// Keep C_LAST_ZOOM aka the zoom increments on the range of [0, 255]
-				if (newZoom >= 0 && newZoom <= 255) {
-					C_LAST_ZOOM = newZoom;
-				}
+				mudclient.adjustCameraZoomSetting(zoomAmount);
 			}
 
 			if (inScrollable || !zoomable) {
@@ -1252,8 +1237,9 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 				if (keyCode == 112) mudclient.interlace = !mudclient.interlace;
 				if (keyCode == 113) Config.C_SIDE_MENU_OVERLAY = !Config.C_SIDE_MENU_OVERLAY;
-				if (keyCode == KeyEvent.VK_F3) C_LAST_ZOOM = 75;
+				if (keyCode == KeyEvent.VK_F3) mudclient.setCameraZoomSetting(75);
 				if (keyCode == KeyEvent.VK_F4) mudclient.toggleFirstPersonView();
+				if (keyCode == KeyEvent.VK_HOME) mudclient.resetCameraNorth();
 				if (keyCode == KeyEvent.VK_F6 && var1.isControlDown()) mudclient.toggleRendererDebugOverlayMode();
 				else if (keyCode == KeyEvent.VK_F6) mudclient.toggleRendererDebugOverlay(); // renderer overlay
 				if (keyCode == 39) mudclient.keyRight = true;

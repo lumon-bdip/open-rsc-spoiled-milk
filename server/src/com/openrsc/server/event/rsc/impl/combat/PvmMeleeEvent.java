@@ -264,6 +264,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 			Summoning.recordOwnerCombatSummonDamage(player, n, damage);
 			DivineGrace.apply(player, damage);
 			player.applyBloodAmuletLifesteal(damage);
+			if (target.getSkills().getLevel(Skill.HITS.id()) > 0 && player.applyDeathRingChargeHit(n)) {
+				onDeath(target, hitter);
+				return;
+			}
 		}
 		if (target.isPlayer() && hitter.isPlayer()) {
 			DivineGrace.apply((Player) hitter, damageDealt);
@@ -606,11 +610,17 @@ public class PvmMeleeEvent extends GameTickEvent {
 		DivineGrace.apply(player, damageDealt);
 		player.applyBloodAmuletLifesteal(damageDealt);
 		Summoning.applySummonLifesteal(player, npc, damageDealt);
+		if (npc.getSkills().getLevel(Skill.HITS.id()) > 0 && player.applyDeathRingChargeHit(npc)) {
+			npc.setLastCombatState(CombatState.LOST);
+			player.setKillType(KillType.COMBAT);
+			npc.killedBy(player);
+			updateParty(player);
+			return;
+		}
 		if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			npc.setLastCombatState(CombatState.LOST);
 			player.setKillType(KillType.COMBAT);
 			applyDeathRobeOverkillSplash(player, npc, damage - lastHits);
-			player.applyDeathAmuletBurst(npc);
 			npc.killedBy(player);
 			updateParty(player);
 		} else if (damage > 0) {
@@ -691,9 +701,6 @@ public class PvmMeleeEvent extends GameTickEvent {
 		killed.setLastCombatState(CombatState.LOST);
 		killer.setLastCombatState(CombatState.WON);
 		killer.setKillType(KillType.COMBAT);
-		if (killer.isPlayer()) {
-			((Player) killer).applyDeathAmuletBurst(killed);
-		}
 		killed.killedBy(killer);
 		if (killer.isPlayer() && killer != attackerMob) {
 			updateParty((Player) killer);
@@ -802,7 +809,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 
-		target.applyPoison(appliedPoisonPower, totalMaxPower);
+			target.applyPoison(appliedPoisonPower, totalMaxPower, player);
 		if (target.isNpc()) {
 			player.message("@gr3@You @gr2@have @gr1@poisioned @gr2@the " + ((Npc) target).getDef().name + "!");
 		}

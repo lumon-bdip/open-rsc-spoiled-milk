@@ -20,7 +20,7 @@ public final class CorrosiveAura {
 			return false;
 		}
 		final int poisonPower = getPoisonPower(defender);
-		attacker.applyPoison(poisonPower, attacker.getCurrentPoisonPower() + poisonPower);
+		attacker.applyPoison(poisonPower, attacker.getCurrentPoisonPower() + poisonPower, defender);
 		attacker.getUpdateFlags().setCombatEffect(new CombatEffect(attacker, CombatEffect.CORROSIVE_AURA));
 		return true;
 	}

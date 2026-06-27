@@ -3972,7 +3972,7 @@ public class EntityHandler {
 		setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil", "Has 10% chance to recoil 10% damage taken.", "", 900, -1, "items:502", false, true, 1200, 19711, true, false, true, 1314));
 		setCustomItemDefinition(1315, new ItemDef("Ring of splendor", "An enchanted ring.", "", 1275, -1, "items:502", false, true, 1200, 3394611, true, false, true, 1315));
 		setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment", "Boosts food healing by 10%.", "", 2025, -1, "items:502", false, true, 1200, 16724736, true, false, true, 1316));
-		setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Preservation", "Lets you keep 4 extra items on death.", "", 3525, -1, "items:502", false, true, 1200, 0xFFFFFF, true, false, true, 1317));
+		setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Lifesaving", "Has a 50% chance not to break after saving you.", "", 3525, -1, "items:502", false, true, 1200, 0xFFFFFF, true, false, true, 1317));
 		setCustomItemDefinition(1318, new ItemDef("Ring of Wealth", "A legacy ring without a current effect.", "", 17625, -1, "items:502", false, true, 1200, 12255487, true, false, true, 1318));
 		setCustomItemDefinition(1319, new ItemDef("Ring of avarice", "An enchanted ring.", "", 17625, -1, "items:503", false, true, 1200, 12255487, true, false, true, 1319));
 		setCustomItemDefinition(1320, new ItemDef("Dwarven ring", "An uncharged ring.", "", 400, -1, "items:503", false, true, 1200, 16777124, true, false, true, 1320));
@@ -5623,7 +5623,8 @@ public class EntityHandler {
 		addNecklaceLine(1653, tiers, "Cleansing", "Adds +%d poison decay per tick.", 1, necklacePrices, gemMasks);
 		addLawBankingNecklaceLine(1658, tiers, necklacePrices, gemMasks, lawBankCharges);
 		addDeathDesperationNecklaceLine(1663, tiers, necklacePrices, gemMasks);
-		addNecklaceLine(1668, tiers, "Vitality", "Adds +%d max Hits.", 2, necklacePrices, gemMasks);
+		addExplicitNecklaceLine(1668, tiers, "Leach", "Has %d%% poison Leach from poison damage dealt.",
+			new int[] {10, 20, 30, 50, 100}, necklacePrices, gemMasks);
 
 		addRingLine(1673, tiers, "Archery", "Adds +%d ranged power.", 3, ringPrices, gemMasks);
 		addRingLine(1678, tiers, "Balance", "Adds +%d melee, ranged, and magic power.", 2, ringPrices, gemMasks);
@@ -5715,7 +5716,8 @@ public class EntityHandler {
 		addExplicitAttunedRingLine(3081, tiers, "Gains", "Boosts melee and hits XP by %d%%.",
 			new int[] {5, 10, 15, 25, 50}, ringPrices, gemMasks);
 		addDeathDesperationRingLine(3086, tiers, ringPrices, gemMasks);
-		addAttunedRingLine(3091, tiers, "Vitality", "Adds +%d max Hits.", 2, ringPrices, gemMasks);
+		addExplicitAttunedRingLine(3091, tiers, "Vitality", "Adds +%d max Hits.",
+			new int[] {2, 4, 6, 10, 20}, ringPrices, gemMasks);
 		addLifeRingLine(3096, tiers, ringPrices, gemMasks);
 		addLifeNecklaceLine(3101, tiers, necklacePrices, gemMasks);
 		addLifeAmuletLine(3106, tiers, lawAmuletPrices, gemMasks);
@@ -5919,7 +5921,7 @@ public class EntityHandler {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
 				new ItemDef(tiers[i] + " Ring of Desperation",
-					buildDeathDesperationDescription("weapon power", i),
+					buildDeathRingChargeDescription(i),
 					"",
 					prices[i],
 					123,
@@ -5933,6 +5935,12 @@ public class EntityHandler {
 					true,
 					startId + i));
 		}
+	}
+
+	private static String buildDeathRingChargeDescription(int tierIndex) {
+		final int[] chargeCaps = {20, 30, 40, 60, 100};
+		return "Charges on NPC kills; +1 yellow damage per 10 charges, up to "
+			+ chargeCaps[tierIndex] + ".";
 	}
 
 	private static String buildDeathDesperationDescription(String statName, int tierIndex) {
@@ -6048,11 +6056,11 @@ public class EntityHandler {
 	}
 
 	private static void addSoulRingLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
-		final int[] keptItems = {1, 2, 3, 5};
+		final int[] survivalChances = {10, 20, 30, 90};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Ring of Preservation",
-					"Lets you keep " + keptItems[i] + " extra item" + (keptItems[i] == 1 ? "" : "s") + " on death.",
+				new ItemDef(tiers[i] + " Ring of Lifesaving",
+					"Has a " + survivalChances[i] + "% chance not to break after saving you.",
 					"",
 					prices[i],
 					123,
@@ -6173,13 +6181,12 @@ public class EntityHandler {
 	}
 
 	private static void addDeathAmuletLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
-		final int[] radius = {1, 1, 2, 2, 3};
-		final int[] percent = {5, 10, 10, 15, 15};
+		final int[] minDamage = {1, 3, 6, 9, 10};
+		final int[] maxDamage = {3, 6, 9, 14, 20};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
 				new ItemDef(tiers[i] + " Amulet of Ruin",
-					"Enemy deaths hit foes within " + radius[i] + " tile" + (radius[i] == 1 ? "" : "s")
-						+ " for " + percent[i] + "% max Hits.",
+					"At 100 death charge, bursts for " + minDamage[i] + "-" + maxDamage[i] + " damage within 2 tiles.",
 					"",
 					prices[i],
 					125,
@@ -6196,10 +6203,12 @@ public class EntityHandler {
 	}
 
 	private static void addSoulAmuletLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
+		final int[] minHeal = {1, 1, 2, 3, 5};
+		final int[] maxHeal = {2, 3, 4, 6, 10};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Amulet of Lifesaving",
-					"Has a " + ((i + 1) * 10) + "% chance not to break after saving you.",
+				new ItemDef(tiers[i] + " Amulet of Burst",
+					"At 200 soul charge, heals " + minHeal[i] + "-" + maxHeal[i] + " Hits within 2 tiles.",
 					"",
 					prices[i],
 					125,
@@ -6216,10 +6225,11 @@ public class EntityHandler {
 	}
 
 	private static void addSoulNecklaceLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
+		final int[] keptItems = {1, 2, 3, 5, 8};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
 				new ItemDef(tiers[i] + " Necklace of Preservation",
-					"Lets you keep " + (i + 1) + " extra item" + ((i + 1) == 1 ? "" : "s") + " on death.",
+					"Lets you keep " + keptItems[i] + " extra item" + (keptItems[i] == 1 ? "" : "s") + " on death.",
 					"",
 					prices[i],
 					57,

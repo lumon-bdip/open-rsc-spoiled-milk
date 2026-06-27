@@ -85,6 +85,7 @@ public abstract class Mob extends Entity {
 	private int infernalFireDefenseDebuffAttacksRemaining = 0;
 	private int poisonDamage = 0;
 	private int poisonMaxPower = 0;
+	private UUID poisonOwnerId = null;
 	private int waterSlowPercent = 0;
 	private RangeEventNpc rangeEventNpc;
 	private long lastRun = 0;
@@ -1316,10 +1317,10 @@ public abstract class Mob extends Entity {
 	}
 
 	public void curePoison() {
-			final Mob me = this;
-			final PoisonEvent poisonEvent = getAttribute("poisonEvent", null);
-			if (poisonEvent != null) {
-				poisonEvent.stop();
+		final Mob me = this;
+		final PoisonEvent poisonEvent = getAttribute("poisonEvent", null);
+		if (poisonEvent != null) {
+			poisonEvent.stop();
 			removeAttribute("poisonEvent");
 			if (me.isPlayer()) {
 				if (((Player) me).getCache().hasKey("poisoned")) {
@@ -1331,6 +1332,7 @@ public abstract class Mob extends Entity {
 			}
 		}
 		poisonMaxPower = 0;
+		poisonOwnerId = null;
 		setPoisonDamage(0);
 	}
 
@@ -1638,15 +1640,16 @@ public abstract class Mob extends Entity {
 	}
 
 	public void startPoisonEvent() {
-			final PoisonEvent existingPoisonEvent = getAttribute("poisonEvent", null);
-			if (existingPoisonEvent != null) {
-				existingPoisonEvent.setPoisonPower(getPoisonDamage());
-				return;
-			}
-		final PoisonEvent poisonEvent = new PoisonEvent(getWorld(), this, getPoisonDamage());
-			setAttribute("poisonEvent", poisonEvent);
-			getWorld().getServer().getGameEventHandler().add(poisonEvent);
+		final PoisonEvent existingPoisonEvent = getAttribute("poisonEvent", null);
+		if (existingPoisonEvent != null) {
+			existingPoisonEvent.setPoisonPower(getPoisonDamage());
+			existingPoisonEvent.setPoisonOwnerId(poisonOwnerId);
+			return;
 		}
+		final PoisonEvent poisonEvent = new PoisonEvent(getWorld(), this, getPoisonDamage(), poisonOwnerId);
+		setAttribute("poisonEvent", poisonEvent);
+		getWorld().getServer().getGameEventHandler().add(poisonEvent);
+	}
 
 	public void startBurnEvent() {
 		if (getAttribute("burnEvent", null) != null) {
@@ -1727,17 +1730,26 @@ public abstract class Mob extends Entity {
 	}
 
 	public void applyPoison(final int appliedPoisonPower, final int maxPoisonPower) {
+		applyPoison(appliedPoisonPower, maxPoisonPower, null);
+	}
+
+	public void applyPoison(final int appliedPoisonPower, final int maxPoisonPower, final Mob poisonSource) {
 		if (appliedPoisonPower <= 0 || maxPoisonPower <= 0) {
 			return;
 		}
-			final int nextMaxPower = Math.max(getPoisonMaxPower(), maxPoisonPower);
-			setPoisonMaxPower(nextMaxPower);
-			setPoisonDamage(Math.min(nextMaxPower, getCurrentPoisonPower() + appliedPoisonPower));
-			startPoisonEvent();
-		}
+		poisonOwnerId = poisonSource != null && poisonSource.isPlayer() ? poisonSource.getUUID() : null;
+		final int nextMaxPower = Math.max(getPoisonMaxPower(), maxPoisonPower);
+		setPoisonMaxPower(nextMaxPower);
+		setPoisonDamage(Math.min(nextMaxPower, getCurrentPoisonPower() + appliedPoisonPower));
+		startPoisonEvent();
+	}
 
 	public void applyPoison(final int poisonPower) {
-		applyPoison(poisonPower, poisonPower);
+		applyPoison(poisonPower, poisonPower, null);
+	}
+
+	public void applyPoison(final int poisonPower, final Mob poisonSource) {
+		applyPoison(poisonPower, poisonPower, poisonSource);
 	}
 
 	// part of NPC poison feature

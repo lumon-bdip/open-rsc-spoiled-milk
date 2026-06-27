@@ -1037,8 +1037,8 @@
     },
     {
       "id": 1317,
-      "name": "Diamond Ring of Preservation",
-      "description": "Lets you keep 4 extra items on death.",
+      "name": "Diamond Ring of Lifesaving",
+      "description": "Has a 50% chance not to break after saving you.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 1,
@@ -9110,8 +9110,8 @@
     },
     {
       "id": 1668,
-      "name": "Sapphire Necklace of Vitality",
-      "description": "Adds +2 max Hits.",
+      "name": "Sapphire Necklace of Leach",
+      "description": "Has 10% poison Leach from poison damage dealt.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9133,8 +9133,8 @@
     },
     {
       "id": 1669,
-      "name": "Emerald Necklace of Vitality",
-      "description": "Adds +4 max Hits.",
+      "name": "Emerald Necklace of Leach",
+      "description": "Has 20% poison Leach from poison damage dealt.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9156,8 +9156,8 @@
     },
     {
       "id": 1670,
-      "name": "Ruby Necklace of Vitality",
-      "description": "Adds +6 max Hits.",
+      "name": "Ruby Necklace of Leach",
+      "description": "Has 30% poison Leach from poison damage dealt.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9179,8 +9179,8 @@
     },
     {
       "id": 1671,
-      "name": "Diamond Necklace of Vitality",
-      "description": "Adds +8 max Hits.",
+      "name": "Diamond Necklace of Leach",
+      "description": "Has 50% poison Leach from poison damage dealt.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9202,8 +9202,8 @@
     },
     {
       "id": 1672,
-      "name": "Dragonstone Necklace of Vitality",
-      "description": "Adds +10 max Hits.",
+      "name": "Dragonstone Necklace of Leach",
+      "description": "Has 100% poison Leach from poison damage dealt.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10421,8 +10421,8 @@
     },
     {
       "id": 1705,
-      "name": "Sapphire Ring of Preservation",
-      "description": "Lets you keep 1 extra item on death.",
+      "name": "Sapphire Ring of Lifesaving",
+      "description": "Has a 10% chance not to break after saving you.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10444,8 +10444,8 @@
     },
     {
       "id": 1706,
-      "name": "Emerald Ring of Preservation",
-      "description": "Lets you keep 2 extra items on death.",
+      "name": "Emerald Ring of Lifesaving",
+      "description": "Has a 20% chance not to break after saving you.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10467,8 +10467,8 @@
     },
     {
       "id": 1707,
-      "name": "Ruby Ring of Preservation",
-      "description": "Lets you keep 3 extra items on death.",
+      "name": "Ruby Ring of Lifesaving",
+      "description": "Has a 30% chance not to break after saving you.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10490,8 +10490,8 @@
     },
     {
       "id": 1708,
-      "name": "Dragonstone Ring of Preservation",
-      "description": "Lets you keep 5 extra items on death.",
+      "name": "Dragonstone Ring of Lifesaving",
+      "description": "Has a 90% chance not to break after saving you.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10859,7 +10859,7 @@
     {
       "id": 1724,
       "name": "Sapphire Amulet of Ruin",
-      "description": "Enemy deaths hit foes within 1 tile for 5% max Hits.",
+      "description": "At 100 death charge, bursts for 1-3 damage within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10882,7 +10882,7 @@
     {
       "id": 1725,
       "name": "Emerald Amulet of Ruin",
-      "description": "Enemy deaths hit foes within 1 tile for 10% max Hits.",
+      "description": "At 100 death charge, bursts for 3-6 damage within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10905,7 +10905,7 @@
     {
       "id": 1726,
       "name": "Ruby Amulet of Ruin",
-      "description": "Enemy deaths hit foes within 2 tiles for 10% max Hits.",
+      "description": "At 100 death charge, bursts for 6-9 damage within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10928,7 +10928,7 @@
     {
       "id": 1727,
       "name": "Diamond Amulet of Ruin",
-      "description": "Enemy deaths hit foes within 2 tiles for 15% max Hits.",
+      "description": "At 100 death charge, bursts for 9-14 damage within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10951,7 +10951,7 @@
     {
       "id": 1728,
       "name": "Dragonstone Amulet of Ruin",
-      "description": "Enemy deaths hit foes within 3 tiles for 15% max Hits.",
+      "description": "At 100 death charge, bursts for 10-20 damage within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11548,8 +11548,8 @@
     },
     {
       "id": 1754,
-      "name": "Sapphire Amulet of Lifesaving",
-      "description": "Has a 10% chance not to break after saving you.",
+      "name": "Sapphire Amulet of Burst",
+      "description": "At 200 soul charge, heals 1-2 Hits within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11571,8 +11571,8 @@
     },
     {
       "id": 1755,
-      "name": "Emerald Amulet of Lifesaving",
-      "description": "Has a 20% chance not to break after saving you.",
+      "name": "Emerald Amulet of Burst",
+      "description": "At 200 soul charge, heals 1-3 Hits within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11594,8 +11594,8 @@
     },
     {
       "id": 1756,
-      "name": "Ruby Amulet of Lifesaving",
-      "description": "Has a 30% chance not to break after saving you.",
+      "name": "Ruby Amulet of Burst",
+      "description": "At 200 soul charge, heals 2-4 Hits within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11617,8 +11617,8 @@
     },
     {
       "id": 1757,
-      "name": "Diamond Amulet of Lifesaving",
-      "description": "Has a 40% chance not to break after saving you.",
+      "name": "Diamond Amulet of Burst",
+      "description": "At 200 soul charge, heals 3-6 Hits within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11640,8 +11640,8 @@
     },
     {
       "id": 1758,
-      "name": "Dragonstone Amulet of Lifesaving",
-      "description": "Has a 50% chance not to break after saving you.",
+      "name": "Dragonstone Amulet of Burst",
+      "description": "At 200 soul charge, heals 5-10 Hits within 2 tiles.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11733,7 +11733,7 @@
     {
       "id": 1762,
       "name": "Diamond Necklace of Preservation",
-      "description": "Lets you keep 4 extra items on death.",
+      "description": "Lets you keep 5 extra items on death.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -11756,7 +11756,7 @@
     {
       "id": 1763,
       "name": "Dragonstone Necklace of Preservation",
-      "description": "Lets you keep 5 extra items on death.",
+      "description": "Lets you keep 8 extra items on death.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42185,7 +42185,7 @@
     {
       "id": 3086,
       "name": "Sapphire Ring of Desperation",
-      "description": "Raises weapon power by +1 per 25% missing Hits.",
+      "description": "Charges on NPC kills; +1 yellow damage per 10 charges, up to 20.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42208,7 +42208,7 @@
     {
       "id": 3087,
       "name": "Emerald Ring of Desperation",
-      "description": "Raises weapon power by +1 per 20% missing Hits.",
+      "description": "Charges on NPC kills; +1 yellow damage per 10 charges, up to 30.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42231,7 +42231,7 @@
     {
       "id": 3088,
       "name": "Ruby Ring of Desperation",
-      "description": "Raises weapon power by +1 per 15% missing Hits.",
+      "description": "Charges on NPC kills; +1 yellow damage per 10 charges, up to 40.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42254,7 +42254,7 @@
     {
       "id": 3089,
       "name": "Diamond Ring of Desperation",
-      "description": "Raises weapon power by +1 per 10% missing Hits.",
+      "description": "Charges on NPC kills; +1 yellow damage per 10 charges, up to 60.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42277,7 +42277,7 @@
     {
       "id": 3090,
       "name": "Dragonstone Ring of Desperation",
-      "description": "Raises weapon power by +2 per 10% missing Hits.",
+      "description": "Charges on NPC kills; +1 yellow damage per 10 charges, up to 100.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42369,7 +42369,7 @@
     {
       "id": 3094,
       "name": "Diamond Ring of Vitality",
-      "description": "Adds +8 max Hits.",
+      "description": "Adds +10 max Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -42392,7 +42392,7 @@
     {
       "id": 3095,
       "name": "Dragonstone Ring of Vitality",
-      "description": "Adds +10 max Hits.",
+      "description": "Adds +20 max Hits.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

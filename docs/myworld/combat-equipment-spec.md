@@ -469,6 +469,36 @@ Leather and carapace armor use full-set bonuses tied to the source creature.
 - this same attack-counter model should also be used for spell-line debuffs in
   place of timer-based behavior
 
+### Official Effect Definitions
+
+- Burst is a charged area-damage effect. A source accumulates charge from
+  qualifying kills, spends a fixed threshold when full, and deals tier-defined
+  flat damage in a fixed radius.
+- Death Burst gains death charge equal to `10%` of the killed NPC's combat
+  level, requires `100` charge, spends `100` charge when fired, and hits NPCs
+  within `2` tiles of the player.
+- Death Burst charge is player-cache state keyed by the Death amulet item ID.
+  Do not model Death amulet charge as separate item IDs or bank-slot variants.
+- Soul Burst gains soul charge equal to `10%` of the killed NPC's combat level,
+  requires `200` charge, spends `200` charge when fired, and heals the wearer
+  and nearby players within `2` tiles of the player.
+- Soul Burst charge is player-cache state keyed by the Soul amulet item ID.
+  Do not model Soul amulet charge as separate item IDs or bank-slot variants.
+- Death ring charge is a combat momentum effect. NPC kills add `10` charge to
+  the equipped Death ring, each full `10` charge adds `+1` yellow damage against
+  NPCs, and charge decays by `10` per minute out of combat. The charge is
+  player-cache state keyed by Death ring item ID.
+- Leach heals the source player for a percentage of damage dealt by an owned
+  effect.
+- Leach healing is `floor(damage * percent)`, with a minimum heal of `1` when
+  positive damage and a positive Leach percent are present.
+- Leach cannot heal above the player's maximum Hits.
+- Poison Leach uses the player who applied the poison as the source owner, and
+  resolves after the poison tick deals damage.
+- The current poison model tracks one poison owner per poisoned mob. If poison
+  is renewed by another player, future poison Leach ticks belong to that latest
+  player source.
+
 ### Poison Rules
 
 - poison tracks current poison power and max poison power separately

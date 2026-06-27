@@ -8,6 +8,7 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 EFFECTS = ROOT / "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
+LEACH = ROOT / "server/src/com/openrsc/server/content/Leach.java"
 ITEM_DEFS_CUSTOM = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
@@ -186,6 +187,15 @@ MIND_BODY_JEWELRY_XP_BONUSES = parse_int_array("MIND_BODY_JEWELRY_XP_BONUSES")
 NATURE_RING_FOOD_BONUSES = parse_double_array("NATURE_RING_FOOD_BONUSES")
 CHAOS_RECOIL_CHANCES = parse_double_array("CHAOS_RECOIL_CHANCES")
 CHAOS_CHAIN_LIGHTNING_CHANCES = parse_double_array("CHAOS_CHAIN_LIGHTNING_CHANCES")
+BLOOD_RING_HITS_BONUSES = parse_int_array("BLOOD_RING_HITS_BONUSES")
+BLOOD_NECKLACE_LEACH_PERCENTS = parse_double_array("BLOOD_NECKLACE_LEACH_PERCENTS")
+SOUL_RING_SURVIVAL_CHANCES = parse_double_array("SOUL_RING_SURVIVAL_CHANCES")
+SOUL_NECKLACE_EXTRA_KEPT_ITEMS = parse_int_array("SOUL_NECKLACE_EXTRA_KEPT_ITEMS")
+DEATH_AMULET_BURST_MIN_DAMAGE = parse_int_array("DEATH_AMULET_BURST_MIN_DAMAGE")
+DEATH_AMULET_BURST_MAX_DAMAGE = parse_int_array("DEATH_AMULET_BURST_MAX_DAMAGE")
+SOUL_AMULET_BURST_MIN_HEAL = parse_int_array("SOUL_AMULET_BURST_MIN_HEAL")
+SOUL_AMULET_BURST_MAX_HEAL = parse_int_array("SOUL_AMULET_BURST_MAX_HEAL")
+DEATH_RING_CHARGE_CAPS = parse_int_array("DEATH_RING_CHARGE_CAPS")
 CHAOS_AMULET_RANDOM_RUNE_INTERVALS = parse_int_array("CHAOS_AMULET_RANDOM_RUNE_INTERVALS")
 LAW_BANKING_CHARGES = parse_int_array("LAW_BANKING_CHARGES")
 NATURE_ALCHEMY_AMULET_CHARGES = parse_int_array("NATURE_ALCHEMY_AMULET_CHARGES")
@@ -325,14 +335,22 @@ def ensure_formula_source_matches_design() -> None:
     require(law_item_max_charges(1658) == 100, "Sapphire law necklace should have 100 banking charges")
     require(law_item_max_charges(1662) == 1000, "Dragonstone law necklace should have 1000 banking charges")
 
-    require(tier_for(3095, SPECIAL_RINGS, BLOOD) * 2 == 10, "Dragonstone blood ring should give +10 hits")
-    require(tier_for(1672, STANDARD_NECKLACES, BLOOD) * 2 == 10, "Dragonstone blood necklace should give +10 hits")
+    require(BLOOD_RING_HITS_BONUSES == [2, 4, 6, 10, 20],
+            "Blood ring should use the requested max-Hits ladder")
+    require(BLOOD_RING_HITS_BONUSES[tier_for(3095, SPECIAL_RINGS, BLOOD) - 1] == 20,
+            "Dragonstone blood ring should give +20 hits")
+    require(BLOOD_NECKLACE_LEACH_PERCENTS == [0.10, 0.20, 0.30, 0.50, 1.00],
+            "Blood necklace should use the requested Leach ladder")
+    near(BLOOD_NECKLACE_LEACH_PERCENTS[tier_for(1672, STANDARD_NECKLACES, BLOOD) - 1], 1.00,
+         "Dragonstone blood necklace should Leach 100 percent of poison damage")
     near(tier_for(1733, SPECIAL_AMULETS, BLOOD) * 0.05, 0.25, "Dragonstone blood amulet lifesteal chance")
 
-    require(death_low_health_bonus(3086, SPECIAL_RINGS, DEATH, 75, 100) == 1,
-            "Sapphire death ring should grant +1 power at 25% missing hits")
-    require(death_low_health_bonus(3090, SPECIAL_RINGS, DEATH, 50, 100) == 10,
-            "Dragonstone death ring should grant +10 power at 50% missing hits")
+    require(DEATH_RING_CHARGE_CAPS == [20, 30, 40, 60, 100],
+            "Death rings should use the requested charge caps")
+    require(DEATH_RING_CHARGE_CAPS[tier_for(3086, SPECIAL_RINGS, DEATH) - 1] == 20,
+            "Sapphire death ring should cap at 20 charge")
+    require(DEATH_RING_CHARGE_CAPS[tier_for(3090, SPECIAL_RINGS, DEATH) - 1] == 100,
+            "Dragonstone death ring should cap at 100 charge")
     require(death_low_health_bonus(1667, STANDARD_NECKLACES, DEATH, 50, 100) == 10,
             "Dragonstone death necklace should grant +10 defense at 50% missing hits")
     require(tier_for(1724, SPECIAL_AMULETS, DEATH) == 1, "Sapphire death amulet should be tier 1")
@@ -360,9 +378,22 @@ def ensure_formula_source_matches_design() -> None:
     require(GATHERING_AMULET_YIELD_BONUSES == [10, 20, 30, 50, 100],
             "Gathering amulets should use the requested non-linear yield curve")
 
-    require(tier_for(1708, SPECIAL_RINGS, SOUL) == 5, "Dragonstone soul ring should keep 5 extra death items")
-    require(tier(1763, SOUL_NECKLACES) == 5, "Dragonstone soul necklace should keep 5 extra death items")
-    near(tier_for(1758, SPECIAL_AMULETS, SOUL) * 0.10, 0.50, "Dragonstone soul amulet survival chance")
+    require(SOUL_RING_SURVIVAL_CHANCES == [0.10, 0.20, 0.30, 0.50, 0.90],
+            "Soul rings should use the requested lifesaving survival ladder")
+    near(SOUL_RING_SURVIVAL_CHANCES[tier_for(1708, SPECIAL_RINGS, SOUL) - 1], 0.90,
+         "Dragonstone soul ring should have 90 percent non-break chance")
+    require(SOUL_NECKLACE_EXTRA_KEPT_ITEMS == [1, 2, 3, 5, 8],
+            "Soul necklaces should use the requested extra-kept-items ladder")
+    require(SOUL_NECKLACE_EXTRA_KEPT_ITEMS[tier(1763, SOUL_NECKLACES) - 1] == 8,
+            "Dragonstone soul necklace should keep 8 extra death items")
+    require(DEATH_AMULET_BURST_MIN_DAMAGE == [1, 3, 6, 9, 10],
+            "Death amulets should use the requested Burst minimum damage ladder")
+    require(DEATH_AMULET_BURST_MAX_DAMAGE == [3, 6, 9, 14, 20],
+            "Death amulets should use the requested Burst maximum damage ladder")
+    require(SOUL_AMULET_BURST_MIN_HEAL == [1, 1, 2, 3, 5],
+            "Soul amulets should use the requested Burst minimum healing ladder")
+    require(SOUL_AMULET_BURST_MAX_HEAL == [2, 3, 4, 6, 10],
+            "Soul amulets should use the requested Burst maximum healing ladder")
 
     require(tier(3105, LIFE_NECKLACES) * 10 == 50, "Dragonstone life necklace should add 50% summon health")
     require(tier_for(3100, SPECIAL_RINGS, LIFE) * 20 == 100, "Dragonstone life ring should double support-summon duration")
@@ -378,6 +409,7 @@ def ensure_runtime_paths_are_wired() -> None:
     drop_table = DROP_TABLE.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
     poison_event = POISON_EVENT.read_text(encoding="utf-8")
+    leach = LEACH.read_text(encoding="utf-8")
     eating = EATING.read_text(encoding="utf-8")
     summoning = SUMMONING.read_text(encoding="utf-8")
     combat_event = COMBAT_EVENT.read_text(encoding="utf-8")
@@ -529,16 +561,66 @@ def ensure_runtime_paths_are_wired() -> None:
     require("isBodyCombatAmuletXpSkill(skillId)" in equipment and "getBodyDisciplineAmuletXpBonus(neckId)" in equipment,
             "Body amulets should apply only to their mapped skills")
 
-    require("applyBloodAmuletLifesteal" in player and "HitSplat.TYPE_HEAL" in player,
-            "Blood amulet lifesteal should heal with a heal hitsplat")
-    require("syncHitsEquipmentBonuses" in player and "getBloodAmuletHitsBonus" in player,
-            "Blood ring and necklace should synchronize max Hits bonuses")
-    require("applyDeathAmuletBurst" in player and "HitSplat.TYPE_ARMOR_PROC" in player,
-            "Death amulet bursts should use non-direct-combat yellow hitsplats")
-    require("getSoulAmuletExtraKeptItems" in equipment and "extraKeptItems" in (ROOT / "server/src/com/openrsc/server/model/container/Inventory.java").read_text(encoding="utf-8"),
-            "Soul ring and necklace should feed death item retention")
-    require("checkRingOfLife" in player and "getSoulAmuletSurvivalChance" in player,
-            "Soul amulet should own the life-saving break chance")
+    require("public final class Leach" in leach
+            and "calculateHealing" in leach
+            and "HitSplat.TYPE_HEAL" in leach,
+            "Leach should be a named reusable heal-from-damage effect")
+    require("applyBloodAmuletLifesteal" in player and "Leach.heal(this, damageDealt, lifestealChance);" in player,
+            "Blood amulet lifesteal should use the shared Leach helper")
+    require("syncHitsEquipmentBonuses" in player and "getBloodRingHitsBonus" in player,
+            "Blood ring should synchronize max Hits bonuses")
+    require("getBloodNecklaceLeachPercent" in equipment
+            and "getBloodNecklaceLeachPercent(neckItem.getCatalogId())" in equipment,
+            "Blood necklace should expose the Leach percentage")
+    require("setPoisonOwnerId" in poison_event
+            and "getBloodNecklaceLeachPercent()" in poison_event
+            and "Leach.heal(poisonOwner, damage, leachPercent);" in poison_event,
+            "Poison ticks should Leach to the player source when equipped")
+    require("applyDeathAmuletBurst" in player
+            and "getDeathAmuletBurstChargePointsForNpc" in player
+            and "setDeathAmuletBurstChargePoints(this, deathAmulet" in player
+            and "getDeathAmuletBurstMinDamage(deathAmulet.getCatalogId())" in player
+            and "HitSplat.TYPE_ARMOR_PROC" in player
+            and "Summoning.isSummon(npc)" in player
+            and "owner.applyDeathAmuletBurst(this);" in npc,
+            "Death amulet should charge persistently from NPC kills and fire Burst damage")
+    require("applyDeathRingChargeHit" in player
+            and "chargeDeathRingFromKill" in player
+            and "tickDeathRingChargeDecay" in player
+            and "getDeathRingChargeDamage(this, deathRing)" in player
+            and "HitSplat.TYPE_ARMOR_PROC" in player,
+            "Death ring should use persistent charge for yellow bonus damage")
+    require("DEATH_RING_CHARGE_CACHE_PREFIX" in effects
+            and "getDeathRingChargeCacheKey(final int itemId)" in effects
+            and "getDeathRingChargePoints(final Player player, final Item item)" in effects
+            and "setDeathRingChargePoints(final Player player, final Item item, final int chargePoints)" in effects
+            and "decayDeathRingCharges(final Player player, final int chargePoints)" in effects,
+            "Death ring charge should use player-cache storage instead of item variants")
+    require("chargeDeathRingFromKill(this);" in npc,
+            "NPC deaths should charge equipped Death rings")
+    require("player.tickDeathRingChargeDecay();" in (ROOT / "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java").read_text(encoding="utf-8"),
+            "Death ring charge should decay from the player tick path")
+    require("applyDeathRingChargeHit" in combat_event
+            and "applyDeathRingChargeHit" in pvm_melee
+            and "applyDeathRingChargeHit" in projectile_event,
+            "Death ring yellow damage should be wired into melee and projectile combat")
+    inventory = (ROOT / "server/src/com/openrsc/server/model/container/Inventory.java").read_text(encoding="utf-8")
+    require("getSoulNecklaceExtraKeptItems" in equipment
+            and "getSoulNecklaceExtraKeptItems()" in inventory,
+            "Soul necklace should feed death item retention")
+    require("checkRingOfLife" in player
+            and "getRingItem()" in player
+            and "isSoulRing" in player
+            and "getSoulRingSurvivalChance" in player,
+            "Soul ring should own the life-saving break chance")
+    require("applySoulAmuletBurst" in player
+            and "getSoulAmuletBurstChargePointsForNpc" in player
+            and "setSoulAmuletBurstChargePoints(this, soulAmulet" in player
+            and "getSoulAmuletBurstMinHeal(soulAmulet.getCatalogId())" in player
+            and "healSoulBurstTarget" in player
+            and "HitSplat.TYPE_HEAL" in player
+            and "owner.applySoulAmuletBurst(this);" in npc,
+            "Soul amulet should charge persistently from NPC kills and fire Burst healing")
 
     require("getLifeNecklaceSummonHealthPercent" in summoning,
             "Life necklace should increase combat summon health")
@@ -580,6 +662,22 @@ def ensure_runtime_paths_are_wired() -> None:
             and "setLawBankingItemCharges(final Player player, final Item item, final int charges)" in effects
             and "player.getCache().set(getLawBankingChargesCacheKey(item.getCatalogId()), clampedCharges);" in effects,
             "Law banking necklace/ring charges should be stored on the player cache")
+    require("DEATH_AMULET_BURST_CHARGE_CACHE_PREFIX" in effects
+            and "DEATH_AMULET_BURST_CHARGE_REQUIRED_POINTS = 10000" in effects
+            and "DEATH_AMULET_BURST_CHARGE_POINTS_PER_COMBAT_LEVEL = 10" in effects
+            and "getDeathAmuletBurstChargeCacheKey(final int itemId)" in effects
+            and "getDeathAmuletBurstChargePoints(final Player player, final Item item)" in effects
+            and "setDeathAmuletBurstChargePoints(final Player player, final Item item, final int chargePoints)" in effects
+            and "player.getCache().set(getDeathAmuletBurstChargeCacheKey(item.getCatalogId()), clampedChargePoints);" in effects,
+            "Death amulet Burst charge should use player-cache storage instead of per-item charge variants")
+    require("SOUL_AMULET_BURST_CHARGE_CACHE_PREFIX" in effects
+            and "SOUL_AMULET_BURST_CHARGE_REQUIRED_POINTS = 20000" in effects
+            and "SOUL_AMULET_BURST_CHARGE_POINTS_PER_COMBAT_LEVEL = 10" in effects
+            and "getSoulAmuletBurstChargeCacheKey(final int itemId)" in effects
+            and "getSoulAmuletBurstChargePoints(final Player player, final Item item)" in effects
+            and "setSoulAmuletBurstChargePoints(final Player player, final Item item, final int chargePoints)" in effects
+            and "player.getCache().set(getSoulAmuletBurstChargeCacheKey(item.getCatalogId()), clampedChargePoints);" in effects,
+            "Soul amulet Burst charge should use player-cache storage instead of per-item charge variants")
     require("EnchantingItemEffects.isLawBankingItem(item.getCatalogId())" in law_jewelry
             and "EnchantingItemEffects.getLawBankingItemCharges(player, item)" in law_jewelry
             and "EnchantingItemEffects.setLawBankingItemCharges(player, item, charges)" in law_jewelry,

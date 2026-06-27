@@ -147,6 +147,21 @@ start here.
   </tr>
 </table>
 
+<table width="100%">
+  <tr>
+    <th width="50%">Camera tilt</th>
+    <th width="50%">Extra zoom</th>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><img src="docs/myworld/screenshots/readme/opengl-camera-tilt-birds-eye.png" alt="Spoiled Milk with the OpenGL camera tilted into a bird's-eye view" width="100%"></td>
+    <td width="50%" valign="top"><img src="docs/myworld/screenshots/readme/opengl-extra-zoom-selfie.png" alt="Spoiled Milk with the OpenGL camera zoomed in for a close player view" width="100%"></td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">Added camera tilting so you can get a nice birds eye view</td>
+    <td width="50%" valign="top">And also extra zoom in for a selfie</td>
+  </tr>
+</table>
+
 ## What Else Changed?
 
 There is a lot of content that does not fit neatly into screenshots, so here is

@@ -116,10 +116,6 @@ public class CombatEvent extends GameTickEvent {
 		killed.setLastCombatState(CombatState.LOST);
 		killer.setLastCombatState(CombatState.WON);
 
-		if (killer.isPlayer()) {
-			((Player) killer).applyDeathAmuletBurst(killed);
-		}
-
 			if (killed.isPlayer() && killer.isPlayer()) {
 				int[] skillsDist = new int[Skill.maxId(Skill.MELEE.name(), Skill.HITS.name()) + 1];
 
@@ -357,7 +353,7 @@ public class CombatEvent extends GameTickEvent {
 			return;
 		}
 
-		target.applyPoison(appliedPoisonPower, totalMaxPower);
+			target.applyPoison(appliedPoisonPower, totalMaxPower, player);
 		if (target.isNpc()) {
 			player.message("@gr3@You @gr2@have @gr1@poisioned @gr2@the " + ((Npc) target).getDef().name + "!");
 		}
@@ -472,6 +468,10 @@ public class CombatEvent extends GameTickEvent {
 			Summoning.recordOwnerCombatSummonDamage(player, n, damage);
 			DivineGrace.apply(player, damage);
 			player.applyBloodAmuletLifesteal(damage);
+			if (target.getSkills().getLevel(Skill.HITS.id()) > 0 && player.applyDeathRingChargeHit(n)) {
+				onDeath(target, hitter);
+				return;
+			}
 		}
 		if (target.isPlayer() && hitter.isPlayer()) {
 			DivineGrace.apply((Player) hitter, damageDealt);

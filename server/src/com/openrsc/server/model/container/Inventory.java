@@ -491,8 +491,8 @@ public class Inventory {
 			}
 		}
 
-		// Soul amulets add extra kept-item slots on top of the current death baseline.
-		final int extraKeptItems = player.getCarriedItems().getEquipment().getSoulAmuletExtraKeptItems();
+		// Soul necklaces add extra kept-item slots on top of the current death baseline.
+		final int extraKeptItems = player.getCarriedItems().getEquipment().getSoulNecklaceExtraKeptItems();
 		for (int items = 0; items < extraKeptItems && iterator.hasNext(); items++) {
 			if (iterator.next().getDef(player.getWorld()).isStackable()) {
 				iterator.previous();

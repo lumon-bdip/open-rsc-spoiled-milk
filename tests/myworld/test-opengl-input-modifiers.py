@@ -34,6 +34,17 @@ def main() -> None:
         "mudclient.shiftPressed = (mod & Event.SHIFT_MASK) != 0;",
         "legacy AWT Shift modifier consumer",
     )
+    require(
+        applet,
+        "boolean mayBeScrollable = mudclient.isMouseOverOpenUiTabPanel(e.getX(), e.getY());",
+        "mouse wheel zoom only yields to an open tab under the cursor",
+    )
+    require(
+        applet,
+        "mudclient.isMouseOverOpenUiTabPanel(mudclient.mouseX, mudclient.mouseY)\n"
+        "\t\t\t\t\t\t|| mudclient.isMouseOverOpenUiTabPanel(mudclient.mouseLastProcessedX, mudclient.mouseLastProcessedY);",
+        "drag zoom only yields to an open tab under the drag path",
+    )
 
     require(
         presenter,
@@ -92,6 +103,8 @@ def main() -> None:
     require(client, 'normalizedLabel.equals("bank")', "NPC bank shortcut label")
     require(client, 'normalizedLabel.equals("shop") || normalizedLabel.equals("trade")', "NPC shop/trade shortcut label")
     require(client, 'equalsIgnoreCase("Travel")', "object travel shortcut label")
+    require(client, "public boolean isMouseOverOpenUiTabPanel(int x, int y)", "open tab hover helper")
+    require(client, "if (this.showUiTab == 0 || this.getSurface() == null)", "open tab hover ignores closed tabs")
 
     print("PASS: OpenGL input bridge preserves legacy Ctrl-click shortcut modifiers")
 

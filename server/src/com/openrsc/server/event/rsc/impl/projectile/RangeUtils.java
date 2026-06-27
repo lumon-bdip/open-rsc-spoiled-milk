@@ -296,7 +296,7 @@ public class RangeUtils {
     );
 
     public static void poisonTarget(Mob aggressor, Mob target, int poisonDamage) {
-        target.applyPoison(poisonDamage);
+        target.applyPoison(poisonDamage, aggressor);
         if(aggressor instanceof Player
                 && target instanceof Npc
                 && aggressor.getConfig().WANT_POISON_NPCS

@@ -55,6 +55,7 @@ public class OpenRSC extends ORSCApplet {
 				RendererFogSettings.loadFromClientSettings(props);
 				RendererLightingSettings.loadFromClientSettings(props);
 				RendererGeometrySettings.loadFromClientSettings(props);
+				RendererExperimentalSettings.loadFromClientSettings(props);
 
 				// Load scaling settings
 				String scalingTypeString = props.getProperty("scaling_type");

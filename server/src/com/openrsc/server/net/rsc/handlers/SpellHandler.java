@@ -2487,13 +2487,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private void applyGuthixGodSpellPoison(final Player caster, final Mob target, final boolean advancedSpell,
 										   final boolean primaryTarget) {
 		if (primaryTarget) {
-			target.applyPoison(advancedSpell ? 40 : 20, advancedSpell ? 80 : 40);
+			target.applyPoison(advancedSpell ? 40 : 20, advancedSpell ? 80 : 40, caster);
 		} else {
 			final double chance = advancedSpell ? 0.50D : 0.25D;
 			if (DataConversions.getRandom().nextDouble() >= chance) {
 				return;
 			}
-			target.applyPoison(advancedSpell ? 20 : 10, advancedSpell ? 40 : 20);
+			target.applyPoison(advancedSpell ? 20 : 10, advancedSpell ? 40 : 20, caster);
 		}
 		if (target.isNpc()) {
 			caster.message("@gr3@You @gr2@have @gr1@poisioned @gr2@the " + ((Npc) target).getDef().name + "!");

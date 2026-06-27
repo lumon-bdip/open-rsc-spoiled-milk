@@ -3,6 +3,7 @@ package com.openrsc.server.model.entity.player;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.constants.*;
 import com.openrsc.server.content.EnchantingItemEffects;
+import com.openrsc.server.content.Leach;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.achievement.Achievement;
 import com.openrsc.server.content.clan.Clan;
@@ -77,6 +78,8 @@ public final class Player extends Mob {
 	private static final String BODY_ROBE_POWER_KEY = "body_robe_weapon_power";
 	private static final String BODY_ROBE_POWER_LAST_DECAY_KEY = "body_robe_weapon_power_last_decay";
 	private static final int BODY_ROBE_POWER_DECAY_TICKS = 10;
+	private static final String DEATH_RING_CHARGE_LAST_DECAY_KEY = "death_ring_charge_last_decay";
+	private static final long DEATH_RING_CHARGE_DECAY_INTERVAL_MS = 60000L;
 
 	/**
 	 * The asynchronous logger.
@@ -2036,40 +2039,45 @@ public final class Player extends Mob {
 		if (lifestealChance <= 0.0D) {
 			return;
 		}
-		final int maxHits = getSkills().getMaxStat(Skill.HITS.id());
-		final int currentHits = getSkills().getLevel(Skill.HITS.id());
-		if (currentHits >= maxHits) {
-			return;
-		}
-		final int healing = Math.max(1, (int) Math.floor(damageDealt * lifestealChance));
-		final int healed = Math.min(healing, maxHits - currentHits);
-		if (healed <= 0) {
-			return;
-		}
-		getSkills().setLevel(Skill.HITS.id(), currentHits + healed);
-		getUpdateFlags().addHitSplat(new HitSplat(this, HitSplat.TYPE_HEAL, healed));
-		ActionSender.sendStat(this, Skill.HITS.id());
+		Leach.heal(this, damageDealt, lifestealChance);
 	}
 
 	public void applyDeathAmuletBurst(final Mob killed) {
 		if (killed == null || !killed.isNpc()) {
 			return;
 		}
-		final int radius = getCarriedItems().getEquipment().getDeathAmuletBurstRadius();
-		final double percent = getCarriedItems().getEquipment().getDeathAmuletBurstPercent();
-		if (radius <= 0 || percent <= 0.0D) {
+		final Npc killedNpc = (Npc) killed;
+		final Item deathAmulet = getCarriedItems().getEquipment().getEquippedNeckItem();
+		if (deathAmulet == null || !EnchantingItemEffects.isDeathAmulet(deathAmulet.getCatalogId())) {
 			return;
 		}
-		final Point center = killed.getLocation();
+		final int radius = EnchantingItemEffects.getDeathAmuletBurstRadius(deathAmulet.getCatalogId());
+		final int minDamage = EnchantingItemEffects.getDeathAmuletBurstMinDamage(deathAmulet.getCatalogId());
+		final int maxDamage = EnchantingItemEffects.getDeathAmuletBurstMaxDamage(deathAmulet.getCatalogId());
+		if (radius <= 0 || minDamage <= 0 || maxDamage < minDamage) {
+			return;
+		}
+		final int gainedChargePoints = EnchantingItemEffects.getDeathAmuletBurstChargePointsForNpc(killedNpc.getNPCCombatLevel());
+		if (gainedChargePoints <= 0) {
+			return;
+		}
+		final int requiredChargePoints = EnchantingItemEffects.getDeathAmuletBurstChargeRequiredPoints();
+		final int nextChargePoints = EnchantingItemEffects.getDeathAmuletBurstChargePoints(this, deathAmulet) + gainedChargePoints;
+		if (nextChargePoints < requiredChargePoints) {
+			EnchantingItemEffects.setDeathAmuletBurstChargePoints(this, deathAmulet, nextChargePoints);
+			return;
+		}
+		EnchantingItemEffects.setDeathAmuletBurstChargePoints(this, deathAmulet, nextChargePoints - requiredChargePoints);
+		final Point center = getLocation();
 		for (Npc npc : getViewArea().getNpcsInView()) {
-			if (npc == null || npc == killed || npc.isRemoved() || npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			if (npc == null || npc == killed || npc.isRemoved() || Summoning.isSummon(npc)
+				|| npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				continue;
 			}
 			if (!npc.withinRange(center, radius)) {
 				continue;
 			}
-			final int maxHits = Math.max(1, npc.getSkills().getMaxStat(Skill.HITS.id()));
-			final int damage = Math.max(1, (int) Math.ceil(maxHits * percent));
+			final int damage = minDamage + DataConversions.getRandom().nextInt(maxDamage - minDamage + 1);
 			final int lastHits = npc.getSkills().getLevel(Skill.HITS.id());
 			npc.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
 			npc.getUpdateFlags().setDamage(new Damage(npc, damage));
@@ -2081,15 +2089,113 @@ public final class Player extends Mob {
 		}
 	}
 
+	public void chargeDeathRingFromKill(final Npc killed) {
+		if (killed == null) {
+			return;
+		}
+		final Item deathRing = getCarriedItems().getEquipment().getEquippedRingItem();
+		if (deathRing == null || !EnchantingItemEffects.isDeathRing(deathRing.getCatalogId())) {
+			return;
+		}
+		final int currentCharge = EnchantingItemEffects.getDeathRingChargePoints(this, deathRing);
+		final int cap = EnchantingItemEffects.getDeathRingChargeCap(deathRing.getCatalogId());
+		if (currentCharge >= cap) {
+			return;
+		}
+		EnchantingItemEffects.setDeathRingChargePoints(this, deathRing,
+			currentCharge + EnchantingItemEffects.getDeathRingChargePerNpcKill());
+		setAttribute(DEATH_RING_CHARGE_LAST_DECAY_KEY, System.currentTimeMillis());
+	}
+
+	public boolean applyDeathRingChargeHit(final Npc target) {
+		if (target == null || target.isRemoved() || target.isRespawning()
+			|| target.getSkills().getLevel(Skill.HITS.id()) <= 0 || Summoning.isSummon(target)) {
+			return false;
+		}
+		final Item deathRing = getCarriedItems().getEquipment().getEquippedRingItem();
+		final int bonusDamage = EnchantingItemEffects.getDeathRingChargeDamage(this, deathRing);
+		if (bonusDamage <= 0) {
+			return false;
+		}
+		final int lastHits = target.getSkills().getLevel(Skill.HITS.id());
+		target.getSkills().subtractLevel(Skill.HITS.id(), bonusDamage, false);
+		target.getUpdateFlags().setDamage(new Damage(target, bonusDamage));
+		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_ARMOR_PROC, bonusDamage));
+		final int damageDealt = Math.min(bonusDamage, lastHits);
+		target.addCombatDamage(this, damageDealt);
+		Summoning.recordOwnerCombatSummonDamage(this, target, damageDealt);
+		return target.getSkills().getLevel(Skill.HITS.id()) <= 0;
+	}
+
+	public void applySoulAmuletBurst(final Npc killed) {
+		if (killed == null) {
+			return;
+		}
+		final Item soulAmulet = getCarriedItems().getEquipment().getEquippedNeckItem();
+		if (soulAmulet == null || !EnchantingItemEffects.isSoulAmulet(soulAmulet.getCatalogId())) {
+			return;
+		}
+		final int radius = EnchantingItemEffects.getSoulAmuletBurstRadius(soulAmulet.getCatalogId());
+		final int minHeal = EnchantingItemEffects.getSoulAmuletBurstMinHeal(soulAmulet.getCatalogId());
+		final int maxHeal = EnchantingItemEffects.getSoulAmuletBurstMaxHeal(soulAmulet.getCatalogId());
+		if (radius <= 0 || minHeal <= 0 || maxHeal < minHeal) {
+			return;
+		}
+		final int gainedChargePoints = EnchantingItemEffects.getSoulAmuletBurstChargePointsForNpc(killed.getNPCCombatLevel());
+		if (gainedChargePoints <= 0) {
+			return;
+		}
+		final int requiredChargePoints = EnchantingItemEffects.getSoulAmuletBurstChargeRequiredPoints();
+		final int nextChargePoints = EnchantingItemEffects.getSoulAmuletBurstChargePoints(this, soulAmulet) + gainedChargePoints;
+		if (nextChargePoints < requiredChargePoints) {
+			EnchantingItemEffects.setSoulAmuletBurstChargePoints(this, soulAmulet, nextChargePoints);
+			return;
+		}
+		EnchantingItemEffects.setSoulAmuletBurstChargePoints(this, soulAmulet, nextChargePoints - requiredChargePoints);
+		final Point center = getLocation();
+		healSoulBurstTarget(this, minHeal, maxHeal);
+		for (Player player : getViewArea().getPlayersInView()) {
+			if (player == null || player == this || player.isRemoved()) {
+				continue;
+			}
+			if (!player.withinRange(center, radius)) {
+				continue;
+			}
+			healSoulBurstTarget(player, minHeal, maxHeal);
+		}
+	}
+
+	private void healSoulBurstTarget(final Player target, final int minHeal, final int maxHeal) {
+		if (target == null || minHeal <= 0 || maxHeal < minHeal) {
+			return;
+		}
+		final int maxHits = target.getSkills().getMaxStat(Skill.HITS.id());
+		final int currentHits = target.getSkills().getLevel(Skill.HITS.id());
+		if (currentHits >= maxHits) {
+			return;
+		}
+		final int healing = minHeal + DataConversions.getRandom().nextInt(maxHeal - minHeal + 1);
+		final int healed = Math.min(healing, maxHits - currentHits);
+		if (healed <= 0) {
+			return;
+		}
+		target.getSkills().setLevel(Skill.HITS.id(), currentHits + healed);
+		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_HEAL, healed));
+		ActionSender.sendStat(target, Skill.HITS.id());
+		if (target.getConfig().WANT_PARTIES && target.getParty() != null) {
+			target.getParty().sendParty();
+		}
+	}
+
 	public void syncHitsEquipmentBonuses() {
 		final int previousCowBonus = getAttribute("cow_hide_hits_bonus", 0);
-		final int previousBonus = getAttribute("blood_amulet_hits_bonus", 0);
+		final int previousBonus = getAttribute("blood_ring_hits_bonus", 0);
 		final int currentMax = getSkills().getMaxStat(Skill.HITS.id());
 		final int currentHits = getSkills().getLevel(Skill.HITS.id());
 		final int baseMax = Math.max(1, currentMax - previousCowBonus - previousBonus);
 		final int nextCowBonus = getCarriedItems().getEquipment().getCowHideHitsBonus();
 		final int maxBeforeBlood = baseMax + nextCowBonus;
-		final int nextBonus = getCarriedItems().getEquipment().getBloodAmuletHitsBonus(maxBeforeBlood);
+		final int nextBonus = getCarriedItems().getEquipment().getBloodRingHitsBonus();
 		if (previousCowBonus == nextCowBonus && previousBonus == nextBonus) {
 			return;
 		}
@@ -2099,7 +2205,7 @@ public final class Player extends Mob {
 		final int nextHits = Math.max(0, nextMax - missingHits);
 		getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), Math.min(nextHits, nextMax), nextMax, true);
 		setAttribute("cow_hide_hits_bonus", nextCowBonus);
-		setAttribute("blood_amulet_hits_bonus", nextBonus);
+		setAttribute("blood_ring_hits_bonus", nextBonus);
 	}
 
 	public boolean hasFullBearHideSet() {
@@ -2396,6 +2502,34 @@ public final class Player extends Mob {
 			setAttribute(BODY_ROBE_POWER_KEY, next);
 			setAttribute(BODY_ROBE_POWER_LAST_DECAY_KEY, lastDecay + (decay * interval));
 		}
+	}
+
+	public void tickDeathRingChargeDecay() {
+		final long now = System.currentTimeMillis();
+		if (hasActiveDeathRingCombat()) {
+			setAttribute(DEATH_RING_CHARGE_LAST_DECAY_KEY, now);
+			return;
+		}
+		final long lastDecay = getAttribute(DEATH_RING_CHARGE_LAST_DECAY_KEY, now);
+		if (now - lastDecay < DEATH_RING_CHARGE_DECAY_INTERVAL_MS) {
+			return;
+		}
+		final int decayCycles = Math.max(1, (int) ((now - lastDecay) / DEATH_RING_CHARGE_DECAY_INTERVAL_MS));
+		EnchantingItemEffects.decayDeathRingCharges(this,
+			decayCycles * EnchantingItemEffects.getDeathRingChargeDecayPoints());
+		setAttribute(DEATH_RING_CHARGE_LAST_DECAY_KEY,
+			lastDecay + (decayCycles * DEATH_RING_CHARGE_DECAY_INTERVAL_MS));
+	}
+
+	private boolean hasActiveDeathRingCombat() {
+		return inCombat()
+			|| getOpponent() != null
+			|| getCombatEvent() != null
+			|| getPvmMeleeEvent() != null
+			|| getRangeEvent() != null
+			|| getThrowingEvent() != null
+			|| getMagicCombatEvent() != null
+			|| isHostile();
 	}
 
 	public double getDeathRobeOverkillSplashPercent() {
@@ -4965,8 +5099,8 @@ public final class Player extends Mob {
 	}
 
 	public boolean checkRingOfLife(final Mob hitter) {
-		final Item wornAmulet = getCarriedItems().getEquipment().getNeckItem();
-		if (this.isPlayer() && wornAmulet != null && EnchantingItemEffects.isSoulAmulet(wornAmulet.getCatalogId())
+		final Item wornRing = getCarriedItems().getEquipment().getRingItem();
+		if (this.isPlayer() && wornRing != null && EnchantingItemEffects.isSoulRing(wornRing.getCatalogId())
 			&& (!this.getLocation().inWilderness()
 			|| (this.getLocation().inWilderness() && this.getLocation().wildernessLevel() <= Constants.GLORY_TELEPORT_LIMIT))) {
 			if (((float) this.getSkills().getLevel(Skill.HITS.id())) / ((float) this.getSkills().getMaxStat(Skill.HITS.id())) <= 0.1f) {
@@ -4979,10 +5113,10 @@ public final class Player extends Mob {
 					((Player) hitter).resetAll();
 				}
 				this.teleport(getConfig().RESPAWN_LOCATION_X, getConfig().RESPAWN_LOCATION_Y, false);
-				this.message("Your amulet of life shines brightly");
-				final double survivalChance = EnchantingItemEffects.getSoulAmuletSurvivalChance(wornAmulet.getCatalogId());
+				this.message("Your ring of life shines brightly");
+				final double survivalChance = EnchantingItemEffects.getSoulRingSurvivalChance(wornRing.getCatalogId());
 				if (DataConversions.getRandom().nextDouble() >= survivalChance) {
-					getCarriedItems().shatter(new Item(wornAmulet.getCatalogId()));
+					getCarriedItems().shatter(new Item(wornRing.getCatalogId()));
 				}
 				return true;
 			}

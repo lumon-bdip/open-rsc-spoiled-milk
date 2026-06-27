@@ -73,6 +73,11 @@ branch.
   tile-center pauses.
 - Visual field test: stand near grouped roaming NPCs and watch whether their
   movement still pulses together.
+- Watch for rare NPC server/client desync symptoms: NPCs visually wandering far
+  outside their spawn/roam bounds, appearing at a stale client-side tile after
+  combat or pathing changes, or snapping back only after a full local NPC cache
+  refresh. If seen, capture location, NPC id/name, client type, combat state,
+  recent movement/teleport events, and whether older clients reproduce it.
 - Pathing field test: click around fences, counters, building corners, doors,
   and diagonal walls.
 - Regression tests should guard packet shape before and after any client/server

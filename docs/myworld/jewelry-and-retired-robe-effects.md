@@ -19,8 +19,8 @@ defense and matching-rune preservation.
 - Law: incoming damage smoothing through extra damage rolls.
 - Nature: flat poison tick damage mitigation.
 - Death: increased defenses while missing health.
-- Blood: lifesteal from spell damage.
-- Soul: rechargeable damage shield.
+- Blood: max Hits, poison Leach, and lifesteal.
+- Soul: lifesaving, item preservation, and charged healing Burst.
 - Life: no established robe-specific runtime effect.
 
 ## Superseded Design Notes
@@ -36,12 +36,13 @@ Implementation status:
 
 - Implemented: elemental ring/necklace offense, elemental amulet defense, mind
   ring/necklace crafting XP, mind amulet combat XP, body ring/necklace
-  gathering XP, body amulet discipline XP, cosmic ring wealth rolls, cosmic necklace standard loot
-  rolls, cosmic amulet rare gathering duplication, chaos recoil, chaos necklace
-  chain lightning, chaos amulet random rune production, nature food healing, nature amulet poison decay, law ring skilling
-  banking, law necklace monster-loot banking, law amulet teleports, death
-  low-health scaling and death burst, blood max Hits and lifesteal, soul item
-  saving/life saving, and life summon bonuses.
+  gathering XP, body amulet discipline XP, cosmic ring wealth rolls, cosmic
+  necklace standard loot rolls, cosmic amulet rare gathering duplication, chaos
+  recoil, chaos necklace chain lightning, chaos amulet random rune production,
+  nature food healing, nature amulet poison decay, law ring skilling banking,
+  law necklace monster-loot banking, law amulet teleports, death low-health
+  scaling and charged death burst, blood max Hits, poison Leach, and lifesteal,
+  soul item saving/life saving/healing Burst, and life summon bonuses.
 - Scrapped in runtime: nature ring iron-smelting protection and old cosmic
   amulet normal-resource duplication.
 - Item names and examine descriptions now match the implemented effects in the
@@ -60,8 +61,8 @@ Implementation status:
 - Nature: Ring/Necklace of Nourishment; Amulet of Cleansing.
 - Law: Ring of Skill Banking; Necklace of Loot Banking; Amulet of Teleportation.
 - Death: Ring/Necklace of Desperation; Amulet of Ruin.
-- Blood: Ring/Necklace of Vitality; Amulet of Siphoning.
-- Soul: Ring/Necklace of Preservation; Amulet of Lifesaving.
+- Blood: Ring of Vitality; Necklace of Leach; Amulet of Siphoning.
+- Soul: Ring of Lifesaving; Necklace of Preservation; Amulet of Burst.
 - Life: Ring of Endurance; Necklace of Vigor; Amulet of Command.
 
 ### Air
@@ -240,34 +241,58 @@ Amulet:
 Ring/necklace:
 
 - Death ring:
-  - grants weapon power as the player's health drops below maximum.
-  - tier 1: `+1` weapon power for every `25%` below max health.
-  - tier 2: `+1` weapon power for every `20%` below max health.
-  - tier 3: `+1` weapon power for every `15%` below max health.
-  - tier 4: `+1` weapon power for every `10%` below max health.
-  - tier 5: `+2` weapon power for every `10%` below max health.
+  - charged alternate damage hit.
+  - NPC kills add `10` charge to the equipped Death ring, up to the tier cap.
+  - each full `10` charge adds a constant `+1` yellow damage hit against NPCs.
+  - charge decays by `10` per minute while the player is out of combat.
+  - tier 1: `20` charge cap, up to `+2` yellow damage.
+  - tier 2: `30` charge cap, up to `+3` yellow damage.
+  - tier 3: `40` charge cap, up to `+4` yellow damage.
+  - tier 4: `60` charge cap, up to `+6` yellow damage.
+  - tier 5: `100` charge cap, up to `+10` yellow damage.
+  - Death ring charge is stored on the player cache by ring item ID, not as
+    separate item variants.
 - Death necklace:
   - same scaling concept as the ring, but grants defenses instead of weapon
     power.
 
 Amulet:
 
-- Whenever an enemy dies, nearby enemies take damage based on their own maximum
-  health.
-- Tier 1: enemies within `1` tile take `5%` max health damage, rounded up.
-- Tier 2: enemies within `1` tile take `10%` max health damage, rounded up.
-- Tier 3: enemies within `2` tiles take `10%` max health damage, rounded up.
-- Tier 4: enemies within `2` tiles take `15%` max health damage, rounded up.
-- Tier 5: enemies within `3` tiles take `15%` max health damage, rounded up.
+- Burst.
+- Killing an NPC while a Death amulet is equipped adds death charge equal to
+  `10%` of that NPC's combat level.
+- At `100` death charge, the amulet spends `100` charge and bursts around the
+  player, hitting NPCs within `2` tiles.
+- Death charge is stored on the player cache by amulet item ID, not as separate
+  item variants. This keeps bank storage clean while preserving charge through
+  logout and banking.
+- Tier 1: `1-3` damage.
+- Tier 2: `3-6` damage.
+- Tier 3: `6-9` damage.
+- Tier 4: `9-14` damage.
+- Tier 5: `10-20` damage.
 
 ### Blood
 
-Ring/necklace:
+Ring:
 
 - Max Hits bonus.
-- Ring: `+2` max Hits per tier.
-- Necklace: `+2` max Hits per tier.
-- Ring and necklace stack.
+- Tier 1: `+2` max Hits.
+- Tier 2: `+4` max Hits.
+- Tier 3: `+6` max Hits.
+- Tier 4: `+10` max Hits.
+- Tier 5: `+20` max Hits.
+
+Necklace:
+
+- Leach.
+- Leach heals the wearer for a percentage of poison tick damage dealt by poison
+  they own.
+- Tier 1: `10%` poison Leach.
+- Tier 2: `20%` poison Leach.
+- Tier 3: `30%` poison Leach.
+- Tier 4: `50%` poison Leach.
+- Tier 5: `100%` poison Leach.
 
 Amulet:
 
@@ -276,17 +301,41 @@ Amulet:
 
 ### Soul
 
-Ring/necklace:
+Ring:
 
-- Save-from-death theme.
-- Ring: keep `+1` additional item on death per tier.
-- Necklace: keep `+1` additional item on death per tier.
-- Ring and necklace stack unless later capped.
+- Life-saving effect.
+- When the wearer falls to `10%` Hits or lower, the ring teleports them to the
+  respawn location if teleport rules allow it.
+- Tier 1: `10%` chance not to break after saving the wearer.
+- Tier 2: `20%` chance not to break after saving the wearer.
+- Tier 3: `30%` chance not to break after saving the wearer.
+- Tier 4: `50%` chance not to break after saving the wearer.
+- Tier 5: `90%` chance not to break after saving the wearer.
+
+Necklace:
+
+- Item preservation on death.
+- Tier 1: keep `+1` extra item.
+- Tier 2: keep `+2` extra items.
+- Tier 3: keep `+3` extra items.
+- Tier 4: keep `+5` extra items.
+- Tier 5: keep `+8` extra items.
 
 Amulet:
 
-- Life-saving effect.
-- `10%` chance per tier not to break when the life-saving effect activates.
+- Healing Burst.
+- Killing an NPC while a Soul amulet is equipped adds soul charge equal to `10%`
+  of that NPC's combat level.
+- At `200` soul charge, the amulet spends `200` charge and bursts around the
+  player, healing the wearer and nearby players within `2` tiles.
+- Soul charge is stored on the player cache by amulet item ID, not as separate
+  item variants. This keeps bank storage clean while preserving charge through
+  logout and banking.
+- Tier 1: `1-2` Hits.
+- Tier 2: `1-3` Hits.
+- Tier 3: `2-4` Hits.
+- Tier 4: `3-6` Hits.
+- Tier 5: `5-10` Hits.
 
 ### Life
 

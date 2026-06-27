@@ -591,6 +591,16 @@ public final class mudclient implements Runnable {
 	private static final int SETTINGS_SCALE_LABEL_X_OFFSET = 73;
 	private static final int SETTINGS_SCALE_PLUS_X_OFFSET = 45;
 	private static final int SETTINGS_SECTION_ROW = -1000;
+	private static final int SETTINGS_ACTION_EXPERIMENTAL_CAMERA_TILT = 63;
+	private static final int SETTINGS_ACTION_EXPERIMENTAL_EXTRA_ZOOM = 64;
+	private static final int NORMAL_CAMERA_ZOOM_MIN = 0;
+	private static final int NORMAL_CAMERA_ZOOM_MAX = 255;
+	private static final int EXTRA_CAMERA_ZOOM_MIN = -100;
+	private static final int EXTRA_CAMERA_ZOOM_MAX = 900;
+	private static final int EXPERIMENTAL_CAMERA_PITCH_MIN = 768;
+	private static final int EXPERIMENTAL_CAMERA_PITCH_MAX = 1023;
+	private static final int NORTH_CAMERA_ROTATION = ORSCharacterDirection.NORTH.rotation;
+	private static final int NORTH_CAMERA_ANGLE = NORTH_CAMERA_ROTATION / 32;
 	public int resizeWidth;
 	public int resizeHeight;
 	public Clan clan;
@@ -1230,6 +1240,13 @@ public final class mudclient implements Runnable {
 	private static void saveRendererGeometrySettings() {
 		Properties props = loadClientSettings();
 		RendererGeometrySettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRendererExperimentalSettings() {
+		Properties props = loadClientSettings();
+		RendererExperimentalSettings.saveToClientSettings(props);
 
 		saveClientSettings(props);
 	}
@@ -12570,6 +12587,12 @@ public final class mudclient implements Runnable {
 			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
 			index = addSettingsSection(index, "Interface");
 			index = addSettingsRow(index, "@whi@Font - " + RendererFontSettings.getMode().label, 57);
+			index = addSettingsRow(index, "@whi@Camera tilt - "
+				+ (RendererExperimentalSettings.isCameraTiltEnabled() ? "@gre@On" : "@red@Off"),
+				SETTINGS_ACTION_EXPERIMENTAL_CAMERA_TILT);
+			index = addSettingsRow(index, "@whi@Extra zoom - "
+				+ (RendererExperimentalSettings.isExtraZoomEnabled() ? "@gre@On" : "@red@Off"),
+				SETTINGS_ACTION_EXPERIMENTAL_EXTRA_ZOOM);
 		}
 
 		if (!isOpenGLPrimaryWindow) {
@@ -13048,6 +13071,12 @@ public final class mudclient implements Runnable {
 		}
 		if (isOpenGLPrimaryWindow && settingIndex == 62 && this.mouseButtonClick == 1) {
 			cycleOpenGLGeometryMode();
+		}
+		if (isOpenGLPrimaryWindow && settingIndex == SETTINGS_ACTION_EXPERIMENTAL_CAMERA_TILT && this.mouseButtonClick == 1) {
+			toggleExperimentalCameraTilt();
+		}
+		if (isOpenGLPrimaryWindow && settingIndex == SETTINGS_ACTION_EXPERIMENTAL_EXTRA_ZOOM && this.mouseButtonClick == 1) {
+			toggleExperimentalExtraZoom();
 		}
 
 		// one or two mouse button(s) - byte index 1
@@ -14494,6 +14523,24 @@ public final class mudclient implements Runnable {
 		System.out.println("[renderer-v2] OpenGL geometry: " + mode.id);
 	}
 
+	void toggleExperimentalCameraTilt() {
+		boolean enabled = RendererExperimentalSettings.toggleCameraTilt();
+		if (enabled) {
+			ensureExperimentalCameraPitch();
+		} else if (!this.isInFirstPersonView()) {
+			this.cameraPitch = DEFAULT_CAMERA_PITCH;
+		}
+		saveRendererExperimentalSettings();
+		System.out.println("[renderer-v2] experimental camera tilt " + (enabled ? "enabled" : "disabled"));
+	}
+
+	void toggleExperimentalExtraZoom() {
+		boolean enabled = RendererExperimentalSettings.toggleExtraZoom();
+		setCameraZoomSetting(osConfig.C_LAST_ZOOM);
+		saveRendererExperimentalSettings();
+		System.out.println("[renderer-v2] experimental extra zoom " + (enabled ? "enabled" : "disabled"));
+	}
+
 	private void fetchContainerSize() {
 		try {
 
@@ -15342,51 +15389,42 @@ public final class mudclient implements Runnable {
 						this.cameraRotation = 255 & this.cameraRotation - 2;
 					} else if (this.keyDown) {
 						if (S_ZOOM_VIEW_TOGGLE || getLocalPlayer().isStaff()) {
-							// Don't want to go over 255
-							if (osConfig.C_LAST_ZOOM < 254) {
-								osConfig.C_LAST_ZOOM += 2;
-							}
+							adjustCameraZoomSetting(2);
 						} else {
-							if (this.cameraAllowPitchModification) {
-								this.cameraPitch = (this.cameraPitch + 4) & 1023;
-
-								// Limit on the half circled where everything is right side up
-								if (this.cameraPitch > 256 && this.cameraPitch <= 512)
-									this.cameraPitch = 256;
-
-								if (this.cameraPitch < 768 && this.cameraPitch > 512)
-									this.cameraPitch = 768;
-							}
+							adjustCameraPitch(4);
 						}
 					} else if (this.keyUp) {
 						if (S_ZOOM_VIEW_TOGGLE || getLocalPlayer().isStaff()) {
-							// Don't want to go under 0
-							if (osConfig.C_LAST_ZOOM > 1) {
-								osConfig.C_LAST_ZOOM -= 2;
-							}
+							adjustCameraZoomSetting(-2);
 						} else {
-							if (this.cameraAllowPitchModification) {
-								this.cameraPitch = (this.cameraPitch + 1024 - 4) & 1023;
-							}
+							adjustCameraPitch(-4);
 						}
 					} else if (this.pageDown) {
-						currentChat++;
-						if (currentChat >= messages.size()) {
-							currentChat = messages.size() - 1;
+						if (RendererExperimentalSettings.isCameraTiltEnabled()) {
+							adjustCameraPitch(4);
+						} else {
+							currentChat++;
+							if (currentChat >= messages.size()) {
+								currentChat = messages.size() - 1;
+								this.pageDown = false;
+								return;
+							}
+							panelMessageTabs.setText(panelMessageEntry, messages.get(currentChat));
 							this.pageDown = false;
-							return;
 						}
-						panelMessageTabs.setText(panelMessageEntry, messages.get(currentChat));
-						this.pageDown = false;
 					} else if (this.pageUp) {
-						currentChat--;
-						if (currentChat < 0) {
-							currentChat = 0;
+						if (RendererExperimentalSettings.isCameraTiltEnabled()) {
+							adjustCameraPitch(-4);
+						} else {
+							currentChat--;
+							if (currentChat < 0) {
+								currentChat = 0;
+								this.pageUp = false;
+								return;
+							}
+							panelMessageTabs.setText(panelMessageEntry, messages.get(currentChat));
 							this.pageUp = false;
-							return;
 						}
-						panelMessageTabs.setText(panelMessageEntry, messages.get(currentChat));
-						this.pageUp = false;
 					}
 
 					if (this.mouseClickXStep > 0) {
@@ -15479,14 +15517,69 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private static int clampInt(int value, int min, int max) {
+		return Math.max(min, Math.min(max, value));
+	}
+
+	private int getCameraZoomSettingMin() {
+		return RendererExperimentalSettings.isExtraZoomEnabled() ? EXTRA_CAMERA_ZOOM_MIN : NORMAL_CAMERA_ZOOM_MIN;
+	}
+
+	private int getCameraZoomSettingMax() {
+		return RendererExperimentalSettings.isExtraZoomEnabled() ? EXTRA_CAMERA_ZOOM_MAX : NORMAL_CAMERA_ZOOM_MAX;
+	}
+
+	public void setCameraZoomSetting(int zoomSetting) {
+		osConfig.C_LAST_ZOOM = clampInt(zoomSetting, getCameraZoomSettingMin(), getCameraZoomSettingMax());
+	}
+
+	public void adjustCameraZoomSetting(int amount) {
+		setCameraZoomSetting(osConfig.C_LAST_ZOOM + amount);
+	}
+
+	private int getPersistableCameraZoomSetting() {
+		return clampInt(osConfig.C_LAST_ZOOM, NORMAL_CAMERA_ZOOM_MIN, NORMAL_CAMERA_ZOOM_MAX);
+	}
+
+	private void ensureExperimentalCameraPitch() {
+		if (this.cameraPitch < EXPERIMENTAL_CAMERA_PITCH_MIN || this.cameraPitch > EXPERIMENTAL_CAMERA_PITCH_MAX) {
+			this.cameraPitch = DEFAULT_CAMERA_PITCH;
+		}
+	}
+
+	private void clampUprightCameraPitch() {
+		if (this.cameraPitch > 256 && this.cameraPitch <= 512)
+			this.cameraPitch = 256;
+
+		if (this.cameraPitch < 768 && this.cameraPitch > 512)
+			this.cameraPitch = 768;
+	}
+
+	public void adjustCameraPitch(int amount) {
+		if (!this.cameraAllowPitchModification) {
+			return;
+		}
+		if (this.isInFirstPersonView()) {
+			this.cameraPitch = (this.cameraPitch + amount) & 1023;
+			clampUprightCameraPitch();
+		} else if (RendererExperimentalSettings.isCameraTiltEnabled()) {
+			ensureExperimentalCameraPitch();
+			this.cameraPitch = clampInt(
+				this.cameraPitch + amount,
+				EXPERIMENTAL_CAMERA_PITCH_MIN,
+				EXPERIMENTAL_CAMERA_PITCH_MAX);
+		}
+	}
+
 	public void saveZoomDistance() {
-		if (lastSavedCameraZoom != osConfig.C_LAST_ZOOM) {
+		int persistableCameraZoom = getPersistableCameraZoomSetting();
+		if (lastSavedCameraZoom != persistableCameraZoom) {
 			// Saves last zoom distance
 			this.packetHandler.getClientStream().newPacket(111);
 			this.packetHandler.getClientStream().bufferBits.putByte(23);
-			this.packetHandler.getClientStream().bufferBits.putByte(osConfig.C_LAST_ZOOM);
+			this.packetHandler.getClientStream().bufferBits.putByte(persistableCameraZoom);
 			this.packetHandler.getClientStream().finishPacket();
-			lastSavedCameraZoom = osConfig.C_LAST_ZOOM;
+			lastSavedCameraZoom = persistableCameraZoom;
 		}
 	}
 
@@ -17148,6 +17241,19 @@ public final class mudclient implements Runnable {
 			return getGameHeight() - 32 - 10;
 		else
 			return 3;
+	}
+
+	public boolean isMouseOverOpenUiTabPanel(int x, int y) {
+		if (this.showUiTab == 0 || this.getSurface() == null) {
+			return false;
+		}
+
+		int width = this.getSurface().width2;
+		if (C_CUSTOM_UI) {
+			int panelTop = Math.max(0, getUITabsY() - 340);
+			return x >= width - 250 && x < width && y >= panelTop && y < getGameHeight();
+		}
+		return x >= width - 250 && x < width && y >= 0 && y < getGameHeight();
 	}
 
 	private boolean handleTabUIClick() {
@@ -24945,7 +25051,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setLastZoom(int i) {
-		osConfig.C_LAST_ZOOM = i;
+		osConfig.C_LAST_ZOOM = clampInt(i, NORMAL_CAMERA_ZOOM_MIN, NORMAL_CAMERA_ZOOM_MAX);
 	}
 
 	public void setGroundItemsToggle(int i) {
@@ -25189,14 +25295,27 @@ public final class mudclient implements Runnable {
 	}
 
 	public void toggleFirstPersonView() {
-		osConfig.C_LAST_ZOOM = 75;
+		setCameraZoomSetting(75);
 		this.isFirstPersonView = !this.isFirstPersonView;
 		this.cameraPitch = this.isInFirstPersonView() ? 0 : DEFAULT_CAMERA_PITCH;
 		this.cameraRotation = this.localPlayer.direction.rotation;
 	}
 
+	public void resetCameraNorth() {
+		this.cameraAngle = NORTH_CAMERA_ANGLE;
+		this.cameraRotation = NORTH_CAMERA_ROTATION;
+		this.cameraPitch = this.isInFirstPersonView() ? 0 : DEFAULT_CAMERA_PITCH;
+		this.m_Wc = 0;
+		this.keyLeft = false;
+		this.keyRight = false;
+		this.pageDown = false;
+		this.pageUp = false;
+	}
+
 	public int getCameraPitch() {
-		return this.isInFirstPersonView() ? this.cameraPitch : DEFAULT_CAMERA_PITCH;
+		return this.isInFirstPersonView() || RendererExperimentalSettings.isCameraTiltEnabled()
+			? this.cameraPitch
+			: DEFAULT_CAMERA_PITCH;
 	}
 
 	class XPNotification {

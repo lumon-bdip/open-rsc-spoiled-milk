@@ -110,7 +110,7 @@ def main():
     require("MIN_POISON_POWER = 10" in corrosive_aura and "MAX_POISON_POWER = 50" in corrosive_aura
             and "MAX_POWER_HEALTH_FRACTION = 0.30D" in corrosive_aura,
             "Corrosive Aura poison stacks should scale from 10 to 50 below 30% HP")
-    require("attacker.applyPoison(poisonPower, attacker.getCurrentPoisonPower() + poisonPower)" in corrosive_aura,
+    require("attacker.applyPoison(poisonPower, attacker.getCurrentPoisonPower() + poisonPower, defender)" in corrosive_aura,
             "Corrosive Aura should add poison stacks every time it procs")
     require("new CombatEffect(attacker, CombatEffect.CORROSIVE_AURA)" in corrosive_aura,
             "Corrosive Aura proc should display its on-enemy combat effect")

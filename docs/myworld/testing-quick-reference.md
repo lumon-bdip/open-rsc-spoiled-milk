@@ -181,10 +181,14 @@ Confirmed working:
 - Body jewelry effects are working.
 - Nature jewelry effects are working.
 - Blood jewelry effects are working.
-- Death jewelry effects are working.
+- Death jewelry effects are working. Death rings build charge from NPC kills
+  and spend that charge as yellow bonus damage against NPCs. Death amulets
+  build death charge and spend it on area Burst damage.
 - Chaos recoil and chaos amulet splash are working.
 - Law ring and necklace banking are working, with charge display/depletion.
-- Soul jewelry item-saving is working.
+- Soul ring lifesaving, necklace item-saving, and amulet healing Burst are
+  working. Soul Burst charge persists through the player cache, keyed by amulet
+  item ID.
 - Cosmic jewelry is working. Bounty amulets do not increase the chance to find
   a mining gem; they only double a rare gathering reward after it drops.
 

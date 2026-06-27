@@ -403,6 +403,12 @@ public class ProjectileEvent extends SingleTickEvent {
 			((Player) caster).applyBloodAmuletLifesteal(damage);
 		}
 
+		if (caster.isPlayer() && opponent.isNpc() && opponent.getSkills().getLevel(Skill.HITS.id()) > 0
+			&& ((Player) caster).applyDeathRingChargeHit((Npc) opponent)) {
+			handleDeath();
+			return;
+		}
+
 		applySplinterOnHitEffect();
 		if (opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			if (caster.isPlayer() && opponent.isNpc()) {
@@ -455,7 +461,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			opponent.applyStartleDebuff(caster);
 		}
 		if (acidPoisonPower > 0 && rollsPercent(getDualElementProcChancePercent())) {
-			opponent.applyPoison(acidPoisonPower, acidPoisonPower);
+				opponent.applyPoison(acidPoisonPower, acidPoisonPower, caster);
 			if (caster.isPlayer() && opponent.isNpc()) {
 				((Player) caster).message("@gr2@Corrode poisons the " + ((Npc) opponent).getDef().name + ".");
 			}
@@ -610,7 +616,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 
-		opponent.applyPoison(appliedPoisonPower, totalMaxPower);
+			opponent.applyPoison(appliedPoisonPower, totalMaxPower, casterPlayer);
 		if (opponent.isNpc()) {
 			casterPlayer.message("@gr3@You @gr2@have @gr1@poisioned @gr2@the " + ((Npc) opponent).getDef().name + "!");
 		}
@@ -888,7 +894,6 @@ public class ProjectileEvent extends SingleTickEvent {
 	private void handleDeath() {
 		if (caster.isPlayer()) {
 			Player player = (Player) caster;
-			player.applyDeathAmuletBurst(opponent);
 			if (type == 2 || type == 5) {
 				player.resetRange();
 			}
