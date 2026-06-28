@@ -107,6 +107,18 @@ def parse_int_array(name: str) -> list[int]:
     ]
 
 
+def parse_int_matrix(name: str) -> list[list[int]]:
+    text = strip_comments(EFFECTS.read_text(encoding="utf-8"))
+    pattern = rf"private static final int\[\]\[\]\s+{re.escape(name)}\s*=\s*\{{(.*?)\}};"
+    match = re.search(pattern, text, flags=re.S)
+    if not match:
+        fail(f"Missing int[][] {name}")
+    return [
+        [resolve_java_int(token) for token in row.split(",") if token.strip()]
+        for row in re.findall(r"\{([^{}]+)\}", match.group(1))
+    ]
+
+
 def parse_double_array(name: str) -> list[float]:
     text = strip_comments(EFFECTS.read_text(encoding="utf-8"))
     pattern = rf"private static final double\[\]\s+{re.escape(name)}\s*=\s*\{{(.*?)\}};"
@@ -196,7 +208,8 @@ DEATH_AMULET_BURST_MAX_DAMAGE = parse_int_array("DEATH_AMULET_BURST_MAX_DAMAGE")
 SOUL_AMULET_BURST_MIN_HEAL = parse_int_array("SOUL_AMULET_BURST_MIN_HEAL")
 SOUL_AMULET_BURST_MAX_HEAL = parse_int_array("SOUL_AMULET_BURST_MAX_HEAL")
 DEATH_RING_CHARGE_CAPS = parse_int_array("DEATH_RING_CHARGE_CAPS")
-CHAOS_AMULET_RANDOM_RUNE_INTERVALS = parse_int_array("CHAOS_AMULET_RANDOM_RUNE_INTERVALS")
+CHAOS_AMULET_YIELD_BONUS_PERCENTS = parse_int_array("CHAOS_AMULET_YIELD_BONUS_PERCENTS")
+CHAOS_AMULET_BONUS_RUNE_WEIGHTS = parse_int_matrix("CHAOS_AMULET_BONUS_RUNE_WEIGHTS")
 LAW_BANKING_CHARGES = parse_int_array("LAW_BANKING_CHARGES")
 NATURE_ALCHEMY_AMULET_CHARGES = parse_int_array("NATURE_ALCHEMY_AMULET_CHARGES")
 GATHERING_AMULET_YIELD_BONUSES = parse_int_array("GATHERING_AMULET_YIELD_BONUSES")
@@ -300,8 +313,15 @@ def ensure_formula_source_matches_design() -> None:
     near(CHAOS_RECOIL_CHANCES[tier_for(1696, SPECIAL_RINGS, CHAOS) - 1], 0.90, "Dragonstone chaos ring recoil chance")
     near(CHAOS_CHAIN_LIGHTNING_CHANCES[tier_for(1648, STANDARD_NECKLACES, CHAOS) - 1], 0.10, "Sapphire chaos necklace chain chance")
     near(CHAOS_CHAIN_LIGHTNING_CHANCES[tier_for(1652, STANDARD_NECKLACES, CHAOS) - 1], 0.90, "Dragonstone chaos necklace chain chance")
-    require(CHAOS_AMULET_RANDOM_RUNE_INTERVALS == [60, 55, 50, 40, 20],
-            "Chaos amulets should use the requested random-rune production intervals")
+    require(CHAOS_AMULET_YIELD_BONUS_PERCENTS == [20, 35, 50, 70, 100],
+            "Chaos amulets should use the requested weighted-rune yield bonuses")
+    require(CHAOS_AMULET_BONUS_RUNE_WEIGHTS == [
+        [50, 25, 20, 5],
+        [42, 27, 23, 8],
+        [35, 28, 25, 12],
+        [27, 29, 28, 16],
+        [20, 30, 30, 20],
+    ], "Chaos amulets should shift from mind-heavy to higher-rune-heavy weights")
 
     near(tier_for(1701, SPECIAL_RINGS, COSMIC) * 0.05, 0.05, "Sapphire cosmic ring wealth chance")
     near(tier_for(3111, SPECIAL_RINGS, COSMIC) * 0.05, 0.25, "Dragonstone cosmic ring wealth chance")
@@ -415,11 +435,13 @@ def ensure_runtime_paths_are_wired() -> None:
     require("getChaosRecoilChance()" in equipment
             and "return ringItem == null ? 0.0D : EnchantingItemEffects.getChaosRingRecoilChance(ringItem.getCatalogId());" in equipment,
             "Chaos recoil should come only from the ring")
-    require_regex(equipment, r"getChaosRecoilDamageDivisor\(\)\s*\{\s*return 10;\s*\}",
-                  "Chaos recoil should use the ring-only damage divisor")
-    require("getChaosAmuletRandomRuneInterval()" in equipment
-            and "EnchantingItemEffects.getChaosAmuletRandomRuneInterval(neckItem.getCatalogId())" in equipment,
-            "Chaos amulet random-rune interval should be exposed through equipped neck items")
+    require_regex(equipment, r"getChaosRecoilDamageDivisor\(\)\s*\{\s*return 4;\s*\}",
+                  "Chaos recoil should reflect 25% damage on successful procs")
+    require("getChaosAmuletYieldBonusPercent()" in equipment
+            and "EnchantingItemEffects.getChaosAmuletYieldBonusPercent(neckItem.getCatalogId())" in equipment
+            and "getChaosAmuletBonusRuneWeights()" in equipment
+            and "EnchantingItemEffects.getChaosAmuletBonusRuneWeights(neckItem.getCatalogId())" in equipment,
+            "Chaos amulet weighted-rune yield data should be exposed through equipped neck items")
     require_regex(equipment, r"getEquippedElementalPowerBonus.*?getElementalPowerBonus\(ringItem",
                   "Elemental power should come from the equipped ring")
     require_regex(equipment, r"getEquippedElementalDefenseBonus.*?getElementalDefenseBonus\(neckItem",
@@ -633,11 +655,14 @@ def ensure_runtime_paths_are_wired() -> None:
                 and "CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3" in text
                 and "selectChaosChainLightningTarget" in text
                 and "DataConversions.getRandom().nextDouble() >= chainChance" in text
-                and "new Projectile(anchor, chainTarget, Projectile.MAGIC)" in text
+                and "new Projectile(anchor, chainTarget, getChaosChainLightningProjectile(hop))" in text
+                and "Projectile.CHAIN_LIGHTNING_A" in text
+                and "Projectile.CHAIN_LIGHTNING_B" in text
+                and "Projectile.CHAIN_LIGHTNING_C" in text
                 and "Math.ceil(chainDamage / 2.0D)" in text
                 and "!Summoning.isSummon(npc)" in text
                 and "HitSplat.TYPE_ARMOR_PROC" in text,
-                f"Chaos necklace {label} chain lightning should roll each hop, show projectiles, avoid summons, and use yellow hitsplats")
+                f"Chaos necklace {label} chain lightning should roll each hop, use A/B/C projectiles, avoid summons, and use yellow hitsplats")
     require("getChaosRecoilChance" in combat_event
             and "getChaosRecoilChance" in pvm_melee
             and "getChaosRecoilChance" in projectile_event

@@ -2437,6 +2437,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private boolean isValidIbanBlastAreaTarget(final Mob primaryTarget, final Mob possibleTarget) {
 		return possibleTarget != null && !possibleTarget.isRemoved()
 			&& possibleTarget.isNpc()
+			&& ((Npc) possibleTarget).getDef().isAttackable()
 			&& !Summoning.isSummon(possibleTarget)
 			&& possibleTarget.getSkills().getLevel(Skill.HITS.id()) > 0
 			&& primaryTarget.getLocation().withinRange(possibleTarget.getLocation(), 2);
@@ -2445,6 +2446,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private boolean isValidGodSpellAreaTarget(final Mob primaryTarget, final Mob possibleTarget) {
 		if (possibleTarget == null || possibleTarget.isRemoved()
 			|| !possibleTarget.isNpc()
+			|| !((Npc) possibleTarget).getDef().isAttackable()
 			|| Summoning.isSummon(possibleTarget)
 			|| possibleTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return false;

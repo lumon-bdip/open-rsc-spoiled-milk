@@ -969,7 +969,7 @@
     {
       "id": 1314,
       "name": "Sapphire Ring of Recoil",
-      "description": "Has 10% chance to recoil 10% damage taken.",
+      "description": "Has 10% chance to recoil 25% damage taken.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 1,
@@ -9686,7 +9686,7 @@
     {
       "id": 1693,
       "name": "Emerald Ring of Recoil",
-      "description": "Has 20% chance to recoil 10% damage taken.",
+      "description": "Has 20% chance to recoil 25% damage taken.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9709,7 +9709,7 @@
     {
       "id": 1694,
       "name": "Ruby Ring of Recoil",
-      "description": "Has 30% chance to recoil 10% damage taken.",
+      "description": "Has 30% chance to recoil 25% damage taken.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9732,7 +9732,7 @@
     {
       "id": 1695,
       "name": "Diamond Ring of Recoil",
-      "description": "Has 50% chance to recoil 10% damage taken.",
+      "description": "Has 50% chance to recoil 25% damage taken.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -9755,7 +9755,7 @@
     {
       "id": 1696,
       "name": "Dragonstone Ring of Recoil",
-      "description": "Has 90% chance to recoil 10% damage taken.",
+      "description": "Has 90% chance to recoil 25% damage taken.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10743,8 +10743,8 @@
     },
     {
       "id": 1719,
-      "name": "Sapphire Amulet of Random Chance",
-      "description": "Creates 1 random rune per 60 chaos runes crafted.",
+      "name": "Sapphire Amulet of Chaos Weaving",
+      "description": "Boosts chaos rune yield by 20%; bonus mind/chaos/death/blood: 50/25/20/5.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10766,8 +10766,8 @@
     },
     {
       "id": 1720,
-      "name": "Emerald Amulet of Random Chance",
-      "description": "Creates 1 random rune per 55 chaos runes crafted.",
+      "name": "Emerald Amulet of Chaos Weaving",
+      "description": "Boosts chaos rune yield by 35%; bonus mind/chaos/death/blood: 42/27/23/8.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10789,8 +10789,8 @@
     },
     {
       "id": 1721,
-      "name": "Ruby Amulet of Random Chance",
-      "description": "Creates 1 random rune per 50 chaos runes crafted.",
+      "name": "Ruby Amulet of Chaos Weaving",
+      "description": "Boosts chaos rune yield by 50%; bonus mind/chaos/death/blood: 35/28/25/12.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10812,8 +10812,8 @@
     },
     {
       "id": 1722,
-      "name": "Diamond Amulet of Random Chance",
-      "description": "Creates 1 random rune per 40 chaos runes crafted.",
+      "name": "Diamond Amulet of Chaos Weaving",
+      "description": "Boosts chaos rune yield by 70%; bonus mind/chaos/death/blood: 27/29/28/16.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -10835,8 +10835,8 @@
     },
     {
       "id": 1723,
-      "name": "Dragonstone Amulet of Random Chance",
-      "description": "Creates 1 random rune per 20 chaos runes crafted.",
+      "name": "Dragonstone Amulet of Chaos Weaving",
+      "description": "Boosts chaos rune yield by 100%; bonus mind/chaos/death/blood: 20/30/30/20.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

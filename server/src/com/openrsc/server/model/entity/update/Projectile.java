@@ -31,6 +31,9 @@ public class Projectile {
 	public static final int ENEMY_AIR_BASIC = 25;
 	public static final int ENEMY_WATER_BASIC = 26;
 	public static final int BLUE_DRAGON_MAGIC = 27;
+	public static final int CHAIN_LIGHTNING_A = 28;
+	public static final int CHAIN_LIGHTNING_B = 29;
+	public static final int CHAIN_LIGHTNING_C = 30;
 
 	/**
 	 * Who fired the projectile

@@ -223,6 +223,78 @@ public final class RSModel {
 		return replaced;
 	}
 
+	public RSModel withFishingSpotClarityOverlay() {
+		RSModel overlay = createFishingSpotClarityOverlay();
+		RSModel combined = new RSModel(new RSModel[] {this, overlay}, 2);
+		combined.m_cb = this.m_cb;
+		combined.m_hc = this.m_hc;
+		combined.renderer3DModelKind = this.renderer3DModelKind;
+		combined.pickBoundsScale = this.pickBoundsScale;
+		return combined;
+	}
+
+	private static RSModel createFishingSpotClarityOverlay() {
+		RSModel model = new RSModel(96, 40);
+		int white = GenUtil.colorToResource(245, 255, 255);
+		int cyan = GenUtil.colorToResource(112, 220, 255);
+		int blue = GenUtil.colorToResource(54, 155, 210);
+
+		addHorizontalQuad(model, -34, -38, 34, -38, 3, -3, cyan);
+		addHorizontalQuad(model, -34, 38, 34, 38, 3, -3, cyan);
+		addHorizontalQuad(model, -42, -28, -42, 28, 3, -3, blue);
+		addHorizontalQuad(model, 42, -28, 42, 28, 3, -3, blue);
+		addHorizontalQuad(model, -18, -21, 18, -21, 2, -5, white);
+		addHorizontalQuad(model, -18, 21, 18, 21, 2, -5, white);
+		addHorizontalQuad(model, -24, -12, -24, 12, 2, -5, cyan);
+		addHorizontalQuad(model, 24, -12, 24, 12, 2, -5, cyan);
+
+		addBubblePyramid(model, 0, 0, 8, -8, 15, white);
+		addBubblePyramid(model, -18, 12, 6, -7, 11, cyan);
+		addBubblePyramid(model, 19, -11, 5, -7, 10, white);
+		addBubblePyramid(model, 10, 23, 4, -8, 8, cyan);
+
+		model.setDiffuseLightAndColor(-50, -10, -50, 44, 56, true, -74);
+		return model;
+	}
+
+	private static void addHorizontalQuad(RSModel model, int x1, int z1, int x2, int z2, int halfWidth, int y,
+										 int color) {
+		int[] vertices = new int[4];
+		if (x1 == x2) {
+			vertices[0] = model.insertVertex(x1 - halfWidth, y, z1);
+			vertices[1] = model.insertVertex(x1 + halfWidth, y, z1);
+			vertices[2] = model.insertVertex(x2 + halfWidth, y, z2);
+			vertices[3] = model.insertVertex(x2 - halfWidth, y, z2);
+		} else {
+			vertices[0] = model.insertVertex(x1, y, z1 - halfWidth);
+			vertices[1] = model.insertVertex(x2, y, z2 - halfWidth);
+			vertices[2] = model.insertVertex(x2, y, z2 + halfWidth);
+			vertices[3] = model.insertVertex(x1, y, z1 + halfWidth);
+		}
+		addFaceLit(model, 4, vertices, color);
+	}
+
+	private static void addBubblePyramid(RSModel model, int x, int z, int radius, int baseY, int height, int color) {
+		int north = model.insertVertex(x, baseY, z - radius);
+		int east = model.insertVertex(x + radius, baseY, z);
+		int south = model.insertVertex(x, baseY, z + radius);
+		int west = model.insertVertex(x - radius, baseY, z);
+		int apex = model.insertVertex(x, baseY - height, z);
+
+		addFaceLit(model, 3, new int[] {apex, east, north}, color);
+		addFaceLit(model, 3, new int[] {apex, south, east}, color);
+		addFaceLit(model, 3, new int[] {apex, west, south}, color);
+		addFaceLit(model, 3, new int[] {apex, north, west}, color);
+		addFaceLit(model, 4, new int[] {north, east, south, west}, color);
+	}
+
+	private static void addFaceLit(RSModel model, int count, int[] indices, int color) {
+		int face = model.insertFace(count, indices, color, color, false);
+		if (face >= 0) {
+			model.faceDiffuseLight[face] = model.m_Vb;
+		}
+	}
+
 	public void setRenderer3DModelKind(Renderer3DModelKind renderer3DModelKind) {
 		this.renderer3DModelKind = renderer3DModelKind == null
 			? Renderer3DModelKind.UNCLASSIFIED

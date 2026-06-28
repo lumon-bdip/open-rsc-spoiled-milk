@@ -491,7 +491,10 @@ public class EntityHandler {
 		SHURIKEN(24),
 		ENEMY_AIR_BASIC(25),
 		ENEMY_WATER_BASIC(26),
-		BLUE_DRAGON_MAGIC(27);
+		BLUE_DRAGON_MAGIC(27),
+		CHAIN_LIGHTNING_A(28),
+		CHAIN_LIGHTNING_B(29),
+		CHAIN_LIGHTNING_C(30);
 
 		private final int value;
 
@@ -537,6 +540,9 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("enemy air basic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 25));
 		projectiles.add(new SpriteDef("enemy water basic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 26));
 		projectiles.add(new SpriteDef("blue dragon magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 27));
+		projectiles.add(new SpriteDef("chain lightning A projectile", mudclient.spriteProjectile + 1, "projectiles:1", 28));
+		projectiles.add(new SpriteDef("chain lightning B projectile", mudclient.spriteProjectile + 1, "projectiles:1", 29));
+		projectiles.add(new SpriteDef("chain lightning C projectile", mudclient.spriteProjectile + 1, "projectiles:1", 30));
 	}
 
 	public enum GUIPARTS {
@@ -3969,7 +3975,7 @@ public class EntityHandler {
 
 
 		// Rings
-		setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil", "Has 10% chance to recoil 10% damage taken.", "", 900, -1, "items:502", false, true, 1200, 19711, true, false, true, 1314));
+		setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil", "Has 10% chance to recoil 25% damage taken.", "", 900, -1, "items:502", false, true, 1200, 19711, true, false, true, 1314));
 		setCustomItemDefinition(1315, new ItemDef("Ring of splendor", "An enchanted ring.", "", 1275, -1, "items:502", false, true, 1200, 3394611, true, false, true, 1315));
 		setCustomItemDefinition(1316, new ItemDef("Sapphire Ring of Nourishment", "Boosts food healing by 10%.", "", 2025, -1, "items:502", false, true, 1200, 16724736, true, false, true, 1316));
 		setCustomItemDefinition(1317, new ItemDef("Diamond Ring of Lifesaving", "Has a 50% chance not to break after saving you.", "", 3525, -1, "items:502", false, true, 1200, 0xFFFFFF, true, false, true, 1317));
@@ -5632,7 +5638,7 @@ public class EntityHandler {
 		addRingLine(1688, tiers, "Sorcery", "Adds +%d magic power.", 3, ringPrices, gemMasks);
 
 		addExplicitRingLine(1693, new String[] {"Emerald", "Ruby", "Diamond", "Dragonstone"},
-			"Recoil", "Has %d%% chance to recoil 10%% damage taken.",
+			"Recoil", "Has %d%% chance to recoil 25%% damage taken.",
 			new int[] {20, 30, 50, 90},
 			new int[] {3000, 6000, 12000, 35000}, new int[] {3394611, 16724736, 0, 12255487});
 		addNatureNourishmentRingLine(1697, new String[] {"Emerald", "Ruby", "Diamond", "Dragonstone"},
@@ -5699,8 +5705,7 @@ public class EntityHandler {
 		addLawAmuletLine(1709, tiers, lawAmuletPrices, gemMasks);
 		addLawBankingRingLine(1714, tiers, ringPrices, gemMasks, lawBankCharges);
 
-		addExplicitAmuletLine(1719, tiers, "Random Chance", "Creates 1 random rune per %d chaos runes crafted.",
-			new int[] {60, 55, 50, 40, 20}, amuletPrices, gemMasks, "");
+		addChaosWeavingAmuletLine(1719, tiers, amuletPrices, gemMasks);
 		addDeathAmuletLine(1724, tiers, amuletPrices, gemMasks);
 		addAmuletLine(1729, tiers, "Siphoning", "Steals %d%% of damage dealt as healing.", 5, amuletPrices, gemMasks, "");
 		addExplicitAmuletLine(1734, tiers, "Attunement", "Boosts magic, summoning, and prayer XP by %d%%.",
@@ -5797,6 +5802,35 @@ public class EntityHandler {
 				new ItemDef(tiers[i] + " Amulet of " + altarName,
 					String.format(descriptionFormat, bonuses[i]),
 					command,
+					prices[i],
+					125,
+					"items:125",
+					false,
+					true,
+					1024,
+					pictureMasks[i],
+					true,
+					false,
+					true,
+					startId + i));
+		}
+	}
+
+	private static void addChaosWeavingAmuletLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
+		final int[] yieldBonuses = {20, 35, 50, 70, 100};
+		final int[][] weights = {
+			{50, 25, 20, 5},
+			{42, 27, 23, 8},
+			{35, 28, 25, 12},
+			{27, 29, 28, 16},
+			{20, 30, 30, 20}
+		};
+		for (int i = 0; i < tiers.length; i++) {
+			setCustomItemDefinition(startId + i,
+				new ItemDef(tiers[i] + " Amulet of Chaos Weaving",
+					"Boosts chaos rune yield by " + yieldBonuses[i] + "%; bonus mind/chaos/death/blood: "
+						+ weights[i][0] + "/" + weights[i][1] + "/" + weights[i][2] + "/" + weights[i][3] + ".",
+					"",
 					prices[i],
 					125,
 					"items:125",

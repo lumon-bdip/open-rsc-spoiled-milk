@@ -2070,7 +2070,8 @@ public final class Player extends Mob {
 		EnchantingItemEffects.setDeathAmuletBurstChargePoints(this, deathAmulet, nextChargePoints - requiredChargePoints);
 		final Point center = getLocation();
 		for (Npc npc : getViewArea().getNpcsInView()) {
-			if (npc == null || npc == killed || npc.isRemoved() || Summoning.isSummon(npc)
+			if (npc == null || npc == killed || npc.isRemoved() || npc.isRespawning()
+				|| Summoning.isSummon(npc) || !npc.getDef().isAttackable()
 				|| npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				continue;
 			}
@@ -2443,7 +2444,8 @@ public final class Player extends Mob {
 		}
 		int adjacentEnemies = 0;
 		for (Npc npc : getViewArea().getNpcsInView()) {
-			if (npc == null || npc.isRemoved() || npc.isRespawning() || Summoning.isSummon(npc)) {
+			if (npc == null || npc.isRemoved() || npc.isRespawning() || Summoning.isSummon(npc)
+				|| !npc.getDef().isAttackable()) {
 				continue;
 			}
 			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
@@ -4162,14 +4164,14 @@ public final class Player extends Mob {
 				return 60;
 			case 35:
 				return 157;
-			case 295:
-				return 298;
-			case 318:
-				return 534;
-			case 321:
+			case 296:
+				return 299;
+			case 319:
 				return 535;
-			case 324:
+			case 322:
 				return 536;
+			case 325:
+				return 537;
 			default:
 				return appearanceId;
 		}

@@ -85,8 +85,12 @@ public final class mudclient implements Runnable {
 	private static final int SCENE_POLYGON_CAPACITY = 120000;
 	private static final int SCENE_PICK_MODEL_CAPACITY = 1000;
 	private static final int WALL_OBJECT_KEY_BASE = 20000;
+	private static final int GROUND_ITEM_PICK_INDEX_BASE = 20000;
+	private static final int GROUND_ITEM_NAMEPLATE_LINE_HEIGHT = 12;
+	private static final int GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING = 6;
 	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
 	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
+	private static final String FISHING_SPOT_MODEL_NAME = "fishing";
 	private static final String MODERN_CLIENT_LOOP_PROPERTY = "spoiledmilk.modernClientLoop";
 	private static final String MODERN_CLIENT_LOOP_ENV = "SPOILED_MILK_MODERN_CLIENT_LOOP";
 	private static final int GAME_OBJECT_INSTANCE_CAPACITY = WALL_OBJECT_KEY_BASE;
@@ -200,9 +204,10 @@ public final class mudclient implements Runnable {
 	private static final int PLAYER_PROJECTILE_SCENE_HEIGHT = 220;
 	private static final int THROWING_KNIFE_PROJECTILE_SCENE_SIZE = 32;
 	private static final int SHURIKEN_PROJECTILE_SCENE_SIZE = 64;
+	private static final int CHAIN_LIGHTNING_PROJECTILE_SCENE_SIZE = 96;
 	private static final int SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT = 34;
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
-	public static final int CUSTOM_PROJECTILE_COUNT = 21;
+	public static final int CUSTOM_PROJECTILE_COUNT = 24;
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
 	public static final int PROJECTILE_EFFECT_SCENE_RANGE = CUSTOM_PROJECTILE_COUNT * PROJECTILE_EFFECT_FRAME_SLOTS;
 	public static final int spriteProjectileEffectMirrorBase = spriteProjectileEffectBase + PROJECTILE_EFFECT_SCENE_RANGE;
@@ -1000,7 +1005,8 @@ public final class mudclient implements Runnable {
 	private final String[] projectileEffectNames = new String[] {
 		"blow-smoke", "fireball", "wind-arrow", "rock-throw", "water-ball", "throwing-knife", "arrow", "dart",
 		"claws-of-guthix", "thunder-ball", "icicle-shot", "acid-drop", "spore", "bolt", "enemy-fire-basic", "holy-magic",
-		"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic"
+		"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic",
+		"chain-lightning/A", "chain-lightning/B", "chain-lightning/C"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
@@ -7424,25 +7430,38 @@ public final class mudclient implements Runnable {
 	}
 
 	public final void drawItemAt(int id, int x, int y, int width, int height, int topPixelSkew) {
+		drawItemAt(id, x, y, width, height, topPixelSkew, -1);
+	}
+
+	public final void drawItemAt(int id, int x, int y, int width, int height, int topPixelSkew,
+								 int groundItemIndex) {
 		try {
 			Sprite sprite;
+			ItemDef renderItemDef;
 			if (S_WANT_BANK_NOTES && id == -1) {
 				if (S_WANT_CERT_AS_NOTES) {
-					sprite = spriteSelect(EntityHandler.noteDef);
+					renderItemDef = EntityHandler.noteDef;
 				} else {
-					sprite = spriteSelect(EntityHandler.certificateDef);
+					renderItemDef = EntityHandler.certificateDef;
 				}
+				sprite = spriteSelect(renderItemDef);
 			}
 			else {
-				sprite = spriteSelect(EntityHandler.getItemDef(id));
+				renderItemDef = EntityHandler.getItemDef(id);
+				sprite = spriteSelect(renderItemDef);
 			}
 
-			ItemDef itemDef = EntityHandler.getItemDef(id);
-			int mask = itemDef.getPictureMask();
+			ItemDef nameplateItemDef = this.getGroundItemNameplateItemDef(id, groundItemIndex);
+			int mask = renderItemDef.getPictureMask();
 			this.getSurface().drawSpriteClipping(sprite, x, y, width, height, mask, 0,
-				itemDef.getBlueMask(), false, 0, 1);
+				renderItemDef.getBlueMask(), false, 0, 1);
 
-			groundItems.add(new GroundItem(id, x, y, width, height, itemDef, sprite));
+			if (this.isValidGroundItemIndex(groundItemIndex)) {
+				groundItems.add(new GroundItem(id, x, y, width, height, nameplateItemDef, sprite,
+					this.groundItemX[groundItemIndex], this.groundItemZ[groundItemIndex]));
+			} else {
+				groundItems.add(new GroundItem(id, x, y, width, height, nameplateItemDef, sprite));
+			}
 
 		} catch (RuntimeException var10) {
 			throw GenUtil.makeThrowable(var10, "client.CA(" + height + ',' + topPixelSkew + ',' + x + ',' + id + ',' + width
@@ -7450,39 +7469,201 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void drawGroundItemNames() {
-		Collections.sort(groundItems, new GroundItem.GroundItemComparator());
+	private ItemDef getGroundItemNameplateItemDef(int id, int groundItemIndex) {
+		if (this.isValidGroundItemIndex(groundItemIndex)) {
+			return EntityHandler.getItemDef(this.groundItemID[groundItemIndex]);
+		}
+		return EntityHandler.getItemDef(id);
+	}
 
-		ArrayList<ScreenPoint> namePoints = new ArrayList<ScreenPoint>();
-		int yOffset = 0;
-		GroundItem lastItem = null;
+	public int getGroundItemIndexFromScenePickIndex(int scenePickIndex) {
+		int groundItemIndex = scenePickIndex - GROUND_ITEM_PICK_INDEX_BASE;
+		return this.isValidGroundItemIndex(groundItemIndex) ? groundItemIndex : -1;
+	}
+
+	private boolean isValidGroundItemIndex(int groundItemIndex) {
+		return groundItemIndex >= 0 && groundItemIndex < this.groundItemCount;
+	}
+
+	private void drawGroundItemNames() {
+		LinkedHashMap<GroundItemNameplateKey, GroundItemNameplateGroup> groups =
+			new LinkedHashMap<GroundItemNameplateKey, GroundItemNameplateGroup>();
 		for (GroundItem groundItem : groundItems) {
-			// The ground items are sorted alphabetically and by position, so if the current item is the same as the last item, we can skip it, since it's already been drawn.
-			if (groundItem.equals(lastItem)) {
+			if (groundItem.getName() == null || groundItem.getName().length() == 0) {
 				continue;
 			}
-			lastItem = groundItem;
-
-			int x = groundItem.getX() + (groundItem.getWidth() / 2);
-            int y = groundItem.getY() - 6;
-			int frequency = Collections.frequency(groundItems, groundItem);
-
-			// Loop through the array of occupied points.
-			// If the point we're trying to write to is occupied, move the string up
-			for (ScreenPoint point : namePoints) {
-				if (x == point.x && y == point.y) {
-					y -= 12;
-				}
+			GroundItemNameplateKey key = GroundItemNameplateKey.from(groundItem);
+			GroundItemNameplateGroup group = groups.get(key);
+			if (group == null) {
+				group = new GroundItemNameplateGroup();
+				groups.put(key, group);
 			}
-			namePoints.add(new ScreenPoint(x, y));
+			group.add(groundItem);
+		}
 
-			String itemName = groundItem.getName() + (frequency > 1 ? " (" + frequency + ")" : "");
-			int displayWidth = getSurface().stringWidth(0, itemName);
-			// Recalculate x for display
-			x = groundItem.getX() + groundItem.getWidth() / 2 - displayWidth / 2;
+		ArrayList<GroundItemNameplateGroup> sortedGroups =
+			new ArrayList<GroundItemNameplateGroup>(groups.values());
+		Collections.sort(sortedGroups, new Comparator<GroundItemNameplateGroup>() {
+			@Override
+			public int compare(GroundItemNameplateGroup left, GroundItemNameplateGroup right) {
+				int yCompare = left.getBaseY() - right.getBaseY();
+				if (yCompare != 0) {
+					return yCompare;
+				}
+				return left.getAnchorX() - right.getAnchorX();
+			}
+		});
 
-			getSurface().drawShadowText(itemName, x, y, 0xFFFFFF, 0, false);
-			yOffset += 10;
+		ArrayList<Rectangle> occupiedNameplateBounds = new ArrayList<Rectangle>();
+		for (GroundItemNameplateGroup group : sortedGroups) {
+			ArrayList<GroundItemNameplateLine> lines = group.getSortedLines();
+			if (lines.isEmpty()) {
+				continue;
+			}
+			int maxWidth = getGroundItemNameplateMaxWidth(lines);
+			int anchorX = group.getAnchorX();
+			int topY = group.getBaseY() - (lines.size() - 1) * GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
+			Rectangle bounds = createGroundItemNameplateBounds(anchorX, topY, maxWidth, lines.size());
+			while (intersectsAnyGroundItemNameplate(bounds, occupiedNameplateBounds)) {
+				topY -= GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
+				bounds.y -= GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
+			}
+			occupiedNameplateBounds.add(bounds);
+
+			for (int lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
+				String itemName = lines.get(lineIndex).getDisplayText();
+				int displayWidth = getSurface().stringWidth(0, itemName);
+				int x = anchorX - displayWidth / 2;
+				int y = topY + lineIndex * GROUND_ITEM_NAMEPLATE_LINE_HEIGHT;
+				getSurface().drawShadowText(itemName, x, y, 0xFFFFFF, 0, false);
+			}
+		}
+	}
+
+	private int getGroundItemNameplateMaxWidth(ArrayList<GroundItemNameplateLine> lines) {
+		int maxWidth = 0;
+		for (GroundItemNameplateLine line : lines) {
+			maxWidth = Math.max(maxWidth, getSurface().stringWidth(0, line.getDisplayText()));
+		}
+		return maxWidth;
+	}
+
+	private Rectangle createGroundItemNameplateBounds(int anchorX, int topY, int maxWidth, int lineCount) {
+		return new Rectangle(
+			anchorX - maxWidth / 2 - 2,
+			topY - 10,
+			maxWidth + 4,
+			lineCount * GROUND_ITEM_NAMEPLATE_LINE_HEIGHT + 2);
+	}
+
+	private boolean intersectsAnyGroundItemNameplate(Rectangle candidate, ArrayList<Rectangle> occupiedBounds) {
+		for (Rectangle bounds : occupiedBounds) {
+			if (candidate.intersects(bounds)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static final class GroundItemNameplateKey {
+		private final boolean tileBacked;
+		private final int x;
+		private final int z;
+
+		private GroundItemNameplateKey(boolean tileBacked, int x, int z) {
+			this.tileBacked = tileBacked;
+			this.x = x;
+			this.z = z;
+		}
+
+		static GroundItemNameplateKey from(GroundItem groundItem) {
+			if (groundItem.hasTile()) {
+				return new GroundItemNameplateKey(true, groundItem.getTileX(), groundItem.getTileZ());
+			}
+			return new GroundItemNameplateKey(false,
+				groundItem.getX() + groundItem.getWidth() / 2,
+				groundItem.getY());
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (!(other instanceof GroundItemNameplateKey)) {
+				return false;
+			}
+			GroundItemNameplateKey key = (GroundItemNameplateKey) other;
+			return this.tileBacked == key.tileBacked && this.x == key.x && this.z == key.z;
+		}
+
+		@Override
+		public int hashCode() {
+			int result = this.tileBacked ? 1 : 0;
+			result = 31 * result + this.x;
+			result = 31 * result + this.z;
+			return result;
+		}
+	}
+
+	private static final class GroundItemNameplateGroup {
+		private final LinkedHashMap<String, GroundItemNameplateLine> lines =
+			new LinkedHashMap<String, GroundItemNameplateLine>();
+		private int minCenterX = Integer.MAX_VALUE;
+		private int maxCenterX = Integer.MIN_VALUE;
+		private int minY = Integer.MAX_VALUE;
+
+		void add(GroundItem groundItem) {
+			int centerX = groundItem.getX() + groundItem.getWidth() / 2;
+			this.minCenterX = Math.min(this.minCenterX, centerX);
+			this.maxCenterX = Math.max(this.maxCenterX, centerX);
+			this.minY = Math.min(this.minY, groundItem.getY());
+
+			String name = groundItem.getName();
+			String nameKey = name.toLowerCase(Locale.ROOT);
+			GroundItemNameplateLine line = this.lines.get(nameKey);
+			if (line == null) {
+				line = new GroundItemNameplateLine(name);
+				this.lines.put(nameKey, line);
+			}
+			line.increment();
+		}
+
+		int getAnchorX() {
+			if (this.minCenterX == Integer.MAX_VALUE || this.maxCenterX == Integer.MIN_VALUE) {
+				return 0;
+			}
+			return (this.minCenterX + this.maxCenterX) / 2;
+		}
+
+		int getBaseY() {
+			return this.minY == Integer.MAX_VALUE ? 0 : this.minY - GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING;
+		}
+
+		ArrayList<GroundItemNameplateLine> getSortedLines() {
+			ArrayList<GroundItemNameplateLine> sorted =
+				new ArrayList<GroundItemNameplateLine>(this.lines.values());
+			Collections.sort(sorted, new Comparator<GroundItemNameplateLine>() {
+				@Override
+				public int compare(GroundItemNameplateLine left, GroundItemNameplateLine right) {
+					return left.name.compareToIgnoreCase(right.name);
+				}
+			});
+			return sorted;
+		}
+	}
+
+	private static final class GroundItemNameplateLine {
+		private final String name;
+		private int count;
+
+		private GroundItemNameplateLine(String name) {
+			this.name = name;
+		}
+
+		void increment() {
+			this.count++;
+		}
+
+		String getDisplayText() {
+			return this.count > 1 ? this.name + " (" + this.count + ")" : this.name;
 		}
 	}
 
@@ -17819,15 +18000,19 @@ public final class mudclient implements Runnable {
 			} else {
 				modelCache[j] = new RSModel(models, k, true);
 			}
-			normalizeLoadedModel(modelName, modelCache[j]);
+			modelCache[j] = normalizeLoadedModel(modelName, modelCache[j]);
 			modelCache[j].m_cb = modelName.equals("giantcrystal");
 		}
 	}
 
-	private void normalizeLoadedModel(String modelName, RSModel model) {
+	private RSModel normalizeLoadedModel(String modelName, RSModel model) {
 		if (TIN_ROCK_MODEL_NAME.equals(modelName)) {
 			model.hideBackFacesMatching(TIN_ROCK_LEGACY_RED_BACK_FACE);
 		}
+		if (FISHING_SPOT_MODEL_NAME.equals(modelName)) {
+			return model.withFishingSpotClarityOverlay();
+		}
+		return model;
 	}
 
 	private RSModel createGeneratedModel(String modelName) {
@@ -23583,6 +23768,11 @@ public final class mudclient implements Runnable {
 		if (projectile != null && projectile.id == PROJECTILE_TYPES.SUMMON_BAT_VAMPIRISM.id()) {
 			return SUMMON_BAT_VAMPIRISM_PROJECTILE_SIZE;
 		}
+		if (projectile != null && (projectile.id == PROJECTILE_TYPES.CHAIN_LIGHTNING_A.id()
+			|| projectile.id == PROJECTILE_TYPES.CHAIN_LIGHTNING_B.id()
+			|| projectile.id == PROJECTILE_TYPES.CHAIN_LIGHTNING_C.id())) {
+			return CHAIN_LIGHTNING_PROJECTILE_SCENE_SIZE;
+		}
 		if (projectile != null && projectile.id == COMBAT_EFFECT_WOOD_DRILL) {
 			return 144;
 		}
@@ -23631,7 +23821,10 @@ public final class mudclient implements Runnable {
 			|| projectile.id == PROJECTILE_TYPES.SUMMON_BAT_VAMPIRISM.id()
 			|| projectile.id == PROJECTILE_TYPES.ENEMY_AIR_BASIC.id()
 			|| projectile.id == PROJECTILE_TYPES.ENEMY_WATER_BASIC.id()
-			|| projectile.id == PROJECTILE_TYPES.BLUE_DRAGON_MAGIC.id();
+			|| projectile.id == PROJECTILE_TYPES.BLUE_DRAGON_MAGIC.id()
+			|| projectile.id == PROJECTILE_TYPES.CHAIN_LIGHTNING_A.id()
+			|| projectile.id == PROJECTILE_TYPES.CHAIN_LIGHTNING_B.id()
+			|| projectile.id == PROJECTILE_TYPES.CHAIN_LIGHTNING_C.id();
 	}
 
 	private boolean isRootedProjectile(SpriteDef projectile) {
@@ -25335,13 +25528,4 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	class ScreenPoint {
-		public int x;
-		public int y;
-
-		public ScreenPoint(int x, int y) {
-			this.x = x;
-			this.y = y;
-		}
-	}
 }

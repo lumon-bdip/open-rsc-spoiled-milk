@@ -29,6 +29,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	private static final String DIRECT_FRAMEBUFFER_ENV = "SPOILED_MILK_DIRECT_FRAMEBUFFER";
 	private static final boolean DIRECT_FRAMEBUFFER_ENABLED =
 		readBoolean(DIRECT_FRAMEBUFFER_PROPERTY, DIRECT_FRAMEBUFFER_ENV);
+	private static final int MESSAGE_WHEEL_SCROLL_AREA_HEIGHT = 75;
 	public static int globalLoadingPercent = 0;
 	public static String globalLoadingState = "";
 	private static mudclient mudclient;
@@ -76,6 +77,14 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 	public KeyHandler getKeyHandler() {
 		return keyHandler;
+	}
+
+	private static int getClientMouseX(MouseEvent e) {
+		return e.getX() - mudclient.screenOffsetX;
+	}
+
+	private static int getClientMouseY(MouseEvent e) {
+		return e.getY() - mudclient.screenOffsetY;
 	}
 
 	void addMouseClick(int button, int x, int y) {
@@ -1186,10 +1195,12 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		public final synchronized void mouseWheelMoved(MouseWheelEvent e) {
 			updateControlShiftState(e);
 
-			boolean touchedMessagePanelArea = getHeight() - e.getY() <= 75;
+			int mouseX = getClientMouseX(e);
+			int mouseY = getClientMouseY(e);
+			boolean touchedMessagePanelArea = mudclient.getGameHeight() - mouseY <= MESSAGE_WHEEL_SCROLL_AREA_HEIGHT;
 
 			boolean scrollableMessagePanel = mudclient.hasScroll(mudclient.messageTabSelected) && touchedMessagePanelArea;
-			boolean mayBeScrollable = mudclient.isMouseOverOpenUiTabPanel(e.getX(), e.getY());
+			boolean mayBeScrollable = mudclient.isMouseOverOpenUiTabPanel(mouseX, mouseY);
 			boolean zoomable = !scrollableMessagePanel && !mayBeScrollable;
 
 

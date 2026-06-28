@@ -164,6 +164,7 @@ def main() -> None:
     require("applyScytheNpcCleave((Player) attackerMob, (Npc) targetMob)" in pvm_melee,
             "PvM melee should run scythe cleave from player-vs-NPC combat")
     require("Summoning.isSummon(npc)" in pvm_melee, "Scythe cleave must exclude summons")
+    require("!npc.getDef().isAttackable()" in pvm_melee, "Scythe cleave must exclude non-attackable NPCs")
     require("targetMob.isNpc()" in pvm_melee, "Scythe cleave should stay NPC-only in the first pass")
     require("delayTicks += scytheTargetsHit - 1;" in pvm_melee,
             "Scythe cleave should add follow-up delay per extra target")

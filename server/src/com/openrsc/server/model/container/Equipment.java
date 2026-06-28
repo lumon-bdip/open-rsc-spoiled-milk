@@ -2300,9 +2300,14 @@ public class Equipment {
 		return neckItem == null ? 0.0D : EnchantingItemEffects.getChaosNecklaceChainLightningChance(neckItem.getCatalogId());
 	}
 
-	public int getChaosAmuletRandomRuneInterval() {
+	public int getChaosAmuletYieldBonusPercent() {
 		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getChaosAmuletRandomRuneInterval(neckItem.getCatalogId());
+		return neckItem == null ? 0 : EnchantingItemEffects.getChaosAmuletYieldBonusPercent(neckItem.getCatalogId());
+	}
+
+	public int[] getChaosAmuletBonusRuneWeights() {
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? new int[0] : EnchantingItemEffects.getChaosAmuletBonusRuneWeights(neckItem.getCatalogId());
 	}
 
 	public double getChaosRecoilChance() {
@@ -2311,7 +2316,7 @@ public class Equipment {
 	}
 
 	public int getChaosRecoilDamageDivisor() {
-		return 10;
+		return 4;
 	}
 
 	public double getDeathAmuletDamagePerKillBonus() {

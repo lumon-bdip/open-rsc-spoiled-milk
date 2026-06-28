@@ -238,10 +238,21 @@ public class CombatEvent extends GameTickEvent {
 			if (chainTarget == null) {
 				break;
 			}
-			chainTarget.getUpdateFlags().setProjectile(new Projectile(anchor, chainTarget, Projectile.MAGIC));
+			chainTarget.getUpdateFlags().setProjectile(new Projectile(anchor, chainTarget, getChaosChainLightningProjectile(hop)));
 			inflictJewelryEffectDamage(hitter, chainTarget, chainDamage);
 			anchor = chainTarget;
 			chainDamage = Math.max(1, (int) Math.ceil(chainDamage / 2.0D));
+		}
+	}
+
+	private int getChaosChainLightningProjectile(final int hop) {
+		switch (hop % 3) {
+			case 0:
+				return Projectile.CHAIN_LIGHTNING_A;
+			case 1:
+				return Projectile.CHAIN_LIGHTNING_B;
+			default:
+				return Projectile.CHAIN_LIGHTNING_C;
 		}
 	}
 
@@ -307,6 +318,7 @@ public class CombatEvent extends GameTickEvent {
 		final java.util.ArrayList<Npc> candidates = new java.util.ArrayList<Npc>();
 		for (Npc npc : player.getViewArea().getNpcsInView()) {
 			if (npc != null && npc != primaryTarget && !npc.isRemoved() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
+				&& npc.getDef().isAttackable()
 				&& !Summoning.isSummon(npc)
 				&& npc.withinRange(primaryTarget.getLocation(), CHAOS_CHAIN_LIGHTNING_RADIUS)) {
 				candidates.add(npc);
@@ -524,7 +536,8 @@ public class CombatEvent extends GameTickEvent {
 		}
 		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));
 		for (Npc npc : player.getViewArea().getNpcsInView()) {
-			if (npc == null || npc == primaryTarget || npc.isRemoved() || npc.isRespawning() || Summoning.isSummon(npc)) {
+			if (npc == null || npc == primaryTarget || npc.isRemoved() || npc.isRespawning()
+				|| Summoning.isSummon(npc) || !npc.getDef().isAttackable()) {
 				continue;
 			}
 			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(primaryTarget.getLocation(), 2)) {

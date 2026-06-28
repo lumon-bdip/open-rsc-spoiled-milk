@@ -1482,6 +1482,10 @@ public class GraphicsController {
 	}
 
 	public void drawEntity(int index, int x, int y, int width, int height, int var1, int var8) {
+		drawEntity(index, x, y, width, height, var1, var8, -1);
+	}
+
+	public void drawEntity(int index, int x, int y, int width, int height, int var1, int var8, int scenePickIndex) {
 		try {
 			Sprite sprite = sprites[index];
 			int previousLegacySpriteId = renderer2DLegacySpriteId;

@@ -56,6 +56,12 @@ def main():
         "Projectiles/holy-magic/holy-magic1.png": (32, 32),
         "Projectiles/holy-magic/holy-magic11.png": (32, 32),
         "Projectiles/summon-bat-vampirism-reverse/summon-bat-vampirism-reverse.png": (256, 32),
+        "Projectiles/chain-lightning/A/chain-lightning-A1.png": (64, 32),
+        "Projectiles/chain-lightning/A/chain-lightning-A9.png": (64, 32),
+        "Projectiles/chain-lightning/B/chain-lightning-B1.png": (64, 32),
+        "Projectiles/chain-lightning/B/chain-lightning-B9.png": (64, 32),
+        "Projectiles/chain-lightning/C/chain-lightning-C1.png": (64, 32),
+        "Projectiles/chain-lightning/C/chain-lightning-C8.png": (64, 32),
         "On Player/dragon-breath/dragon-breath.png": (384, 144),
         "On Player/alchemy/alchemy.png": (192, 16),
         "On Player/divine-grace/divine-grace.png": (816, 48),
@@ -81,7 +87,7 @@ def main():
     client = read("Client_Base/src/orsc/mudclient.java")
     require(client, [
         "public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;",
-        "public static final int CUSTOM_PROJECTILE_COUNT = 21;",
+        "public static final int CUSTOM_PROJECTILE_COUNT = 24;",
         "public static final int PROJECTILE_EFFECT_SCENE_RANGE = CUSTOM_PROJECTILE_COUNT * PROJECTILE_EFFECT_FRAME_SLOTS;",
         "public static final int spriteProjectileEffectMirrorBase = spriteProjectileEffectBase + PROJECTILE_EFFECT_SCENE_RANGE;",
         "public static final int spriteProjectileStaticMirrorBase =",
@@ -196,7 +202,8 @@ def main():
     require(client, [
         '"dev/myworld/assets/sprites/UI/magic"',
         '"spore", "bolt", "enemy-fire-basic", "holy-magic",',
-        '"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic"',
+        '"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic",',
+        '"chain-lightning/A", "chain-lightning/B", "chain-lightning/C"',
         'return "zamoraks-void";',
         'return "claws-of-guthix";',
         'return "thunder-wave";',
@@ -226,12 +233,18 @@ def main():
         "SUMMON_BAT_VAMPIRISM(23)",
         "SHURIKEN(24)",
         "BLUE_DRAGON_MAGIC(27)",
+        "CHAIN_LIGHTNING_A(28)",
+        "CHAIN_LIGHTNING_B(29)",
+        "CHAIN_LIGHTNING_C(30)",
         'new SpriteDef("bolt projectile", mudclient.spriteProjectile + 2, "projectiles:2", 20)',
         'new SpriteDef("enemy fire basic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 21)',
         'new SpriteDef("holy magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 22)',
         'new SpriteDef("summon bat vampirism projectile", mudclient.spriteProjectile + 1, "projectiles:1", 23)',
         'new SpriteDef("shuriken projectile", mudclient.spriteProjectile + 6, "projectiles:6", 24)',
         'new SpriteDef("blue dragon magic projectile", mudclient.spriteProjectile + 1, "projectiles:1", 27)',
+        'new SpriteDef("chain lightning A projectile", mudclient.spriteProjectile + 1, "projectiles:1", 28)',
+        'new SpriteDef("chain lightning B projectile", mudclient.spriteProjectile + 1, "projectiles:1", 29)',
+        'new SpriteDef("chain lightning C projectile", mudclient.spriteProjectile + 1, "projectiles:1", 30)',
     ], "EntityHandler.java")
     require(read("server/conf/server/defs/SpellDef.xml"), spell_names, "SpellDef.xml")
 

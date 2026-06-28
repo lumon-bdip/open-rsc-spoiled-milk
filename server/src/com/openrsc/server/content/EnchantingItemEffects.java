@@ -458,7 +458,14 @@ public final class EnchantingItemEffects {
 	private static final int[] SOUL_AMULET_BURST_MIN_HEAL = {1, 1, 2, 3, 5};
 	private static final int[] SOUL_AMULET_BURST_MAX_HEAL = {2, 3, 4, 6, 10};
 	private static final int[] DEATH_RING_CHARGE_CAPS = {20, 30, 40, 60, 100};
-	private static final int[] CHAOS_AMULET_RANDOM_RUNE_INTERVALS = {60, 55, 50, 40, 20};
+	private static final int[] CHAOS_AMULET_YIELD_BONUS_PERCENTS = {20, 35, 50, 70, 100};
+	private static final int[][] CHAOS_AMULET_BONUS_RUNE_WEIGHTS = {
+		{50, 25, 20, 5},
+		{42, 27, 23, 8},
+		{35, 28, 25, 12},
+		{27, 29, 28, 16},
+		{20, 30, 30, 20}
+	};
 	private static final int[] LAW_BANKING_CHARGES = {100, 200, 300, 500, 1000};
 	private static final int[] NATURE_ALCHEMY_AMULET_CHARGES = {100, 200, 300, 500, 1000};
 	private static final int[] GATHERING_AMULET_YIELD_BONUSES = {10, 20, 30, 50, 100};
@@ -1275,9 +1282,17 @@ public final class EnchantingItemEffects {
 		return getTierArrayValue(tier, CHAOS_CHAIN_LIGHTNING_CHANCES);
 	}
 
-	public static int getChaosAmuletRandomRuneInterval(final int itemId) {
+	public static int getChaosAmuletYieldBonusPercent(final int itemId) {
 		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, CHAOS_ALTAR);
-		return tier <= 0 || tier > CHAOS_AMULET_RANDOM_RUNE_INTERVALS.length ? 0 : CHAOS_AMULET_RANDOM_RUNE_INTERVALS[tier - 1];
+		return getTierArrayValue(tier, CHAOS_AMULET_YIELD_BONUS_PERCENTS);
+	}
+
+	public static int[] getChaosAmuletBonusRuneWeights(final int itemId) {
+		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, CHAOS_ALTAR);
+		if (tier <= 0 || tier > CHAOS_AMULET_BONUS_RUNE_WEIGHTS.length) {
+			return new int[0];
+		}
+		return CHAOS_AMULET_BONUS_RUNE_WEIGHTS[tier - 1].clone();
 	}
 
 	public static double getDeathAmuletDamagePerKillBonus(final int itemId) {

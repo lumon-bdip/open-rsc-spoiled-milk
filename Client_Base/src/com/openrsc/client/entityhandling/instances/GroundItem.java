@@ -7,15 +7,23 @@ import com.openrsc.client.model.Sprite;
 import java.util.Comparator;
 
 public class GroundItem {
+    private static final int NO_TILE = Integer.MIN_VALUE;
+
     private int id;
     private int x;
     private int y;
     private int width;
     private int height;
+    private int tileX;
+    private int tileZ;
     private Sprite sprite;
     private ItemDef itemDef;
 
     public GroundItem(int id, int x, int y, int width, int height, ItemDef itemDef, Sprite sprite) {
+        this(id, x, y, width, height, itemDef, sprite, NO_TILE, NO_TILE);
+    }
+
+    public GroundItem(int id, int x, int y, int width, int height, ItemDef itemDef, Sprite sprite, int tileX, int tileZ) {
         this.id = id;
         this.x = x;
         this.y = y;
@@ -23,6 +31,8 @@ public class GroundItem {
         this.height = height;
         this.itemDef = itemDef;
         this.sprite = sprite;
+        this.tileX = tileX;
+        this.tileZ = tileZ;
     }
 
     public GroundItem(int id, int x, int y, int width, int height) {
@@ -37,6 +47,9 @@ public class GroundItem {
         }
 
         GroundItem g = (GroundItem)o;
+        if (this.hasTile() && g.hasTile()) {
+            return this.getName().equals(g.getName()) && this.getTileX() == g.getTileX() && this.getTileZ() == g.getTileZ();
+        }
         return this.getName().equals(g.getName()) && this.getX() == g.getX() && this.getY() == g.getY();
     }
 
@@ -58,6 +71,18 @@ public class GroundItem {
 
     public int getHeight() {
         return height;
+    }
+
+    public boolean hasTile() {
+        return tileX != NO_TILE && tileZ != NO_TILE;
+    }
+
+    public int getTileX() {
+        return tileX;
+    }
+
+    public int getTileZ() {
+        return tileZ;
     }
 
     public Sprite getSprite() {
@@ -90,7 +115,9 @@ public class GroundItem {
                 // not just having
                 // the same name, so that we can use "last_item" in a useful way
             } else {
-                if (a.getX() == b.getX() && a.getY() == b.getY()) {
+                if (a.hasTile() && b.hasTile() && a.getTileX() == b.getTileX() && a.getTileZ() == b.getTileZ()) {
+                    offset = 0;
+                } else if (a.getX() == b.getX() && a.getY() == b.getY()) {
                     offset = 0; // name is the same and so is location, items are considered equal
                 } else {
                     if (a.getX() < b.getX()) {

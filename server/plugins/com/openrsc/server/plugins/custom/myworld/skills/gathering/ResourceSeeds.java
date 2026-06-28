@@ -315,7 +315,7 @@ public class ResourceSeeds implements OpInvTrigger, OpLocTrigger {
 			DEFAULT_NODE_LIFETIME_MS, YieldType.XP));
 		register(new ResourceSeedDefinition(ItemId.WOODCUTTING_MONEY_SEED.id(), SceneryId.MONEY_TREE.id(),
 			ItemId.COINS.id(), Skill.WOODCUTTING.id(), ToolBubble.TREE, "money tree", "coins",
-			"A magical tree glittering with coins.", 500, 2000, 0, DEFAULT_NODE_YIELDS, DEFAULT_NODE_ACTION_DELAY,
+			"A magical tree glittering with coins.", 250, 1000, 0, DEFAULT_NODE_YIELDS, DEFAULT_NODE_ACTION_DELAY,
 			DEFAULT_NODE_LIFETIME_MS, YieldType.GOLD));
 		register(new ResourceSeedDefinition(ItemId.HARVESTING_KNOWLEDGE_SEED.id(), SceneryId.KNOWLEDGE_PLANT.id(),
 			ItemId.NOTHING.id(), Skill.HARVESTING.id(), ToolBubble.PLANT, "knowledge plant", "Harvesting experience",
@@ -323,7 +323,7 @@ public class ResourceSeeds implements OpInvTrigger, OpLocTrigger {
 			DEFAULT_NODE_LIFETIME_MS, YieldType.XP));
 		register(new ResourceSeedDefinition(ItemId.HARVESTING_MONEY_SEED.id(), SceneryId.MONEY_PLANT.id(),
 			ItemId.COINS.id(), Skill.HARVESTING.id(), ToolBubble.PLANT, "money plant", "coins",
-			"A magical plant glittering with coins.", 500, 2000, 0, DEFAULT_NODE_YIELDS, DEFAULT_NODE_ACTION_DELAY,
+			"A magical plant glittering with coins.", 250, 1000, 0, DEFAULT_NODE_YIELDS, DEFAULT_NODE_ACTION_DELAY,
 			DEFAULT_NODE_LIFETIME_MS, YieldType.GOLD));
 		register(new ResourceSeedDefinition(ItemId.OAK_LOG_SEED.id(), SceneryId.RESOURCE_TREE.id(),
 			ItemId.OAK_LOGS.id(), Skill.WOODCUTTING.id(), ToolBubble.TREE, "resource tree", "oak logs",

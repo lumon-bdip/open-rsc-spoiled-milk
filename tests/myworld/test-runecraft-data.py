@@ -159,19 +159,26 @@ def ensure_law_robe_bonus_uses_fractional_carryover() -> None:
 def ensure_chaos_amulet_bonus_uses_fractional_carryover() -> None:
     text = RUNES_PATH.read_text(encoding="utf-8")
     for snippet in (
-        "CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE = 6600",
-        'CHAOS_AMULET_RANDOM_RUNE_CACHE_KEY = "chaos_amulet_random_rune_bonus"',
-        "addChaosAmuletRandomRunes(player, def.getRuneId(), runeCount);",
+        "CHAOS_AMULET_YIELD_POINTS_PER_RUNE = 10000",
+        "CHAOS_AMULET_YIELD_POINTS_PER_PERCENT = 100",
+        'CHAOS_AMULET_YIELD_CACHE_KEY = "chaos_amulet_weighted_rune_bonus"',
+        "addChaosAmuletBonusRunes(player, def.getRuneId(), runeCount);",
         "runeId != ItemId.CHAOS_RUNE.id()",
-        "getChaosAmuletRandomRuneInterval()",
-        "final int earnedPoints = runeCount * (CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE / interval);",
-        "final int bonusRunes = totalPoints / CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE;",
-        "final int remainingPoints = totalPoints % CHAOS_AMULET_RANDOM_RUNE_POINTS_PER_RUNE;",
-        "bonusCounts[DataConversions.random(0, RUNES.length - 1)]++;",
-        "Your chaos amulet produces ",
+        "getChaosAmuletYieldBonusPercent()",
+        "getChaosAmuletBonusRuneWeights()",
+        "final int earnedPoints = runeCount * bonusPercent * CHAOS_AMULET_YIELD_POINTS_PER_PERCENT;",
+        "final int bonusRunes = totalPoints / CHAOS_AMULET_YIELD_POINTS_PER_RUNE;",
+        "final int remainingPoints = totalPoints % CHAOS_AMULET_YIELD_POINTS_PER_RUNE;",
+        "ItemId.MIND_RUNE.id()",
+        "ItemId.CHAOS_RUNE.id()",
+        "ItemId.DEATH_RUNE.id()",
+        "ItemId.BLOOD_RUNE.id()",
+        "rollChaosAmuletBonusRuneIndex(weights)",
+        "DataConversions.random(1, totalWeight)",
+        "Your chaos amulet weaves ",
     ):
         if snippet not in text:
-            fail(f"Chaos amulet random-rune bonus missing fixed-point carryover snippet: {snippet}")
+            fail(f"Chaos amulet weighted-rune bonus missing fixed-point carryover snippet: {snippet}")
 
 
 def ensure_stone_and_talismans_are_retired() -> None:

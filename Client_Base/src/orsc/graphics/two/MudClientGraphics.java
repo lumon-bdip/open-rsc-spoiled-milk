@@ -18,6 +18,12 @@ public final class MudClientGraphics extends GraphicsController {
 
 	@Override
 	public final void drawEntity(int index, int x, int y, int width, int height, int overlayMovement, int topPixelSkew) {
+		drawEntity(index, x, y, width, height, overlayMovement, topPixelSkew, -1);
+	}
+
+	@Override
+	public final void drawEntity(int index, int x, int y, int width, int height, int overlayMovement, int topPixelSkew,
+								 int scenePickIndex) {
 		try {
 			if (index >= mudclient.spriteWorldGlyphBase && index < mudclient.spriteWorldGlyphBase + mudclient.ALTAR_VISUAL_COUNT) {
 				Sprite glyph = this.mudClientRef.getWorldGlyphSprite(index - mudclient.spriteWorldGlyphBase);
@@ -48,7 +54,8 @@ public final class MudClientGraphics extends GraphicsController {
 				}
 			} else if (Config.S_WANT_BANK_NOTES && index == -1) {
 				withRenderer2DLegacySpriteId(index, () ->
-					this.mudClientRef.drawItemAt(-1, x, y, width, height, topPixelSkew));
+					this.mudClientRef.drawItemAt(-1, x, y, width, height, topPixelSkew,
+						this.mudClientRef.getGroundItemIndexFromScenePickIndex(scenePickIndex)));
 			}
 			else if (index < 50000) {
 				if (index < 40000) {
@@ -66,7 +73,8 @@ public final class MudClientGraphics extends GraphicsController {
 					}
 				} else {
 					withRenderer2DLegacySpriteId(index, () ->
-						this.mudClientRef.drawItemAt(index - 40000, x, y, width, height, topPixelSkew));
+						this.mudClientRef.drawItemAt(index - 40000, x, y, width, height, topPixelSkew,
+							this.mudClientRef.getGroundItemIndexFromScenePickIndex(scenePickIndex)));
 				}
 			} else {
 				this.mudClientRef.drawTeleportBubble(index - 50000, x, y, width, height, topPixelSkew, 2);

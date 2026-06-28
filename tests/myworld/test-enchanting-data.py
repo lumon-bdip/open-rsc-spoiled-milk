@@ -110,7 +110,7 @@ def expect_description(
 def ensure_amulet_lines(items: dict[int, dict[str, Any]]) -> None:
     lines = {
         "Teleportation": range(1709, 1714),
-        "Random Chance": range(1719, 1724),
+        "Chaos Weaving": range(1719, 1724),
         "Ruin": range(1724, 1729),
         "Siphoning": range(1729, 1734),
         "Attunement": range(1734, 1739),
@@ -351,8 +351,9 @@ def ensure_source_mappings_exist() -> None:
         '" Ring of Skill Banking"',
         'addLawBankingRingLine(1714, tiers, ringPrices, gemMasks, lawBankCharges);',
         'setCustomItemDefinition(1314, new ItemDef("Sapphire Ring of Recoil"',
-        '"Has %d%% chance to recoil 10%% damage taken."',
+        '"Has %d%% chance to recoil 25%% damage taken."',
         '"Has %d%% per-hop chain lightning, up to 3 halving hits."',
+        'addChaosWeavingAmuletLine(1719, tiers, amuletPrices, gemMasks);',
         'addDeathReapingNecklaceLine(1663, tiers, necklacePrices, gemMasks);',
         'addDeathReckoningRingLine(3086, tiers, ringPrices, gemMasks);',
         'addSoulRenewalAmuletLine(1754, tiers, amuletPrices, gemMasks);',
@@ -405,6 +406,9 @@ def ensure_client_jewelry_coverage() -> None:
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addExplicitAmuletLine\((\d+),\s*tiers,", client_text):
+        start = int(match.group(1))
+        client_ids.update(range(start, start + 5))
+    for match in re.finditer(r"addChaosWeavingAmuletLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addDeathAmuletLine\((\d+),\s*tiers,", client_text):
@@ -532,7 +536,7 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
         1672: "Has 100% poison Leach from poison damage dealt.",
         3091: "Adds +2 max Hits.",
         3095: "Adds +20 max Hits.",
-        1719: "Creates 1 random rune per 60 chaos runes crafted.",
+        1719: "Boosts chaos rune yield by 20%; bonus mind/chaos/death/blood: 50/25/20/5.",
         1724: "At 100 death charge, bursts for 1-3 damage within 2 tiles.",
         1729: "Steals 5% of damage dealt as healing.",
         1734: "Boosts magic, summoning, and prayer XP by 5%.",
@@ -563,11 +567,11 @@ def ensure_examine_copy(items: dict[int, dict[str, Any]]) -> None:
 
 def ensure_jewelry_effect_ladders(items: dict[int, dict[str, Any]]) -> None:
     exact_lines = {
-        1314: "Has 10% chance to recoil 10% damage taken.",
-        1693: "Has 20% chance to recoil 10% damage taken.",
-        1694: "Has 30% chance to recoil 10% damage taken.",
-        1695: "Has 50% chance to recoil 10% damage taken.",
-        1696: "Has 90% chance to recoil 10% damage taken.",
+        1314: "Has 10% chance to recoil 25% damage taken.",
+        1693: "Has 20% chance to recoil 25% damage taken.",
+        1694: "Has 30% chance to recoil 25% damage taken.",
+        1695: "Has 50% chance to recoil 25% damage taken.",
+        1696: "Has 90% chance to recoil 25% damage taken.",
         1648: "Has 10% per-hop chain lightning, up to 3 halving hits.",
         1649: "Has 20% per-hop chain lightning, up to 3 halving hits.",
         1650: "Has 30% per-hop chain lightning, up to 3 halving hits.",
@@ -613,11 +617,11 @@ def ensure_jewelry_effect_ladders(items: dict[int, dict[str, Any]]) -> None:
         1761: "Lets you keep 3 extra items on death.",
         1762: "Lets you keep 5 extra items on death.",
         1763: "Lets you keep 8 extra items on death.",
-        1719: "Creates 1 random rune per 60 chaos runes crafted.",
-        1720: "Creates 1 random rune per 55 chaos runes crafted.",
-        1721: "Creates 1 random rune per 50 chaos runes crafted.",
-        1722: "Creates 1 random rune per 40 chaos runes crafted.",
-        1723: "Creates 1 random rune per 20 chaos runes crafted.",
+        1719: "Boosts chaos rune yield by 20%; bonus mind/chaos/death/blood: 50/25/20/5.",
+        1720: "Boosts chaos rune yield by 35%; bonus mind/chaos/death/blood: 42/27/23/8.",
+        1721: "Boosts chaos rune yield by 50%; bonus mind/chaos/death/blood: 35/28/25/12.",
+        1722: "Boosts chaos rune yield by 70%; bonus mind/chaos/death/blood: 27/29/28/16.",
+        1723: "Boosts chaos rune yield by 100%; bonus mind/chaos/death/blood: 20/30/30/20.",
         1744: "Auto-alchs 1000+ gp monster drops. 100 charges.",
         1745: "Auto-alchs 1000+ gp monster drops. 200 charges.",
         1746: "Auto-alchs 1000+ gp monster drops. 300 charges.",

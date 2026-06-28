@@ -38,7 +38,7 @@ Implementation status:
   ring/necklace crafting XP, mind amulet combat XP, body ring/necklace
   gathering XP, body amulet discipline XP, cosmic ring wealth rolls, cosmic
   necklace standard loot rolls, cosmic amulet rare gathering duplication, chaos
-  recoil, chaos necklace chain lightning, chaos amulet random rune production,
+  recoil, chaos necklace chain lightning, chaos amulet chaos-rune yield weaving,
   nature food healing, nature amulet poison decay, law ring skilling banking,
   law necklace monster-loot banking, law amulet teleports, death ring charge,
   death guaranteed-drop bonuses, charged death burst, blood max Hits, poison
@@ -58,7 +58,7 @@ Implementation status:
 - Fire: Ring/Necklace of Sorcery; Amulet of Warding.
 - Body: Ring/Necklace of Discipline; Amulet of Discipline.
 - Cosmic: Ring/Necklace of Fortune; Amulet of Bounty.
-- Chaos: Ring of Recoil; Necklace of Chain Lightning; Amulet of Random Chance.
+- Chaos: Ring of Recoil; Necklace of Chain Lightning; Amulet of Chaos Weaving.
 - Nature: Ring/Necklace of Nourishment; Amulet of Cleansing.
 - Law: Ring of Skill Banking; Necklace of Loot Banking; Amulet of Teleportation.
 - Death: Ring of Reckoning; Necklace of Reaping; Amulet of Ruin.

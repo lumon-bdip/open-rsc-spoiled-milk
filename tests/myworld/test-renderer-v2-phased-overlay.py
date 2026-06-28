@@ -317,8 +317,8 @@ def main() -> None:
     )
     require(
         mudclient_graphics,
-        "this.mudClientRef.drawItemAt(index - 40000, x, y, width, height, topPixelSkew));",
-        "ground item draw commands should be tagged for OpenGL world-sprite replay",
+        "this.mudClientRef.drawItemAt(index - 40000, x, y, width, height, topPixelSkew,\n\t\t\t\t\t\t\tthis.mudClientRef.getGroundItemIndexFromScenePickIndex(scenePickIndex))",
+        "ground item draw commands should be tagged for OpenGL world-sprite replay with source index",
     )
     require(
         presenter,
