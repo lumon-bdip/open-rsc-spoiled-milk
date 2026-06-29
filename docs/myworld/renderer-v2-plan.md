@@ -1359,6 +1359,11 @@ they are not visual requirements for the baseline.
         includes a rate multiplier so dev-only `::advtime MMSS` can visually
         fast-forward color grading and shadow movement without changing the
         player-facing lighting settings.
+  - [x] Prevent server-cycle shadow movement from invalidating the software
+        terrain shadow mask every frame. The mask builder now consumes coarse
+        azimuth/elevation buckets for cache signatures and caster projection,
+        keeping day/night shadow motion visible over time without repeating a
+        full 1024x1024 mask rebuild each frame.
   - [ ] Refine diagonal-wall shadow quality. The current overlay proof skips
         diagonal wall casters to avoid false triangular artifacts. Proper
         diagonal-wall shadows need a shader/material mask or explicit wall

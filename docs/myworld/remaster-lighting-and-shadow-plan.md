@@ -299,6 +299,11 @@ mode.
       elevation near midday for shorter shadows, and continues rotating through
       night without separate moon logic. Ambient/direct intensity remain fixed
       remaster-light settings for now.
+- [x] Bucket the terrain shadow-mask sun input before cache/signature
+      generation. The visual light can move continuously, but the software
+      terrain mask must not rebuild every frame as the server-cycle angle
+      changes; use coarse azimuth/elevation buckets until this becomes a
+      cheaper GPU-side or incremental path.
 - [x] Add dev-only server time controls: `::settime MMSS` immediately sets the
       server-owned cycle position, while `::advtime MMSS` advances the server
       clock at an accelerated visible rate so day/night color and shadow motion

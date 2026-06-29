@@ -5483,6 +5483,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private static final int REMASTER_SHADOW_MASK_TEXTURE_SIZE = 1024;
 		private static final float REMASTER_SHADOW_MASK_TEXTURE_PADDING = 384.0f;
 		private static final int REMASTER_SHADOW_MASK_BLUR_RADIUS = 7;
+		private static final float REMASTER_SHADOW_MASK_AZIMUTH_BUCKET_DEGREES = 6.0f;
+		private static final float REMASTER_SHADOW_MASK_ELEVATION_BUCKET_DEGREES = 3.0f;
 		private static final float REMASTER_SHADOW_MASK_CENTER_RETAIN = 0.82f;
 		private static final float REMASTER_SHADOW_MASK_BLUR_BOOST = 1.18f;
 		private static final float REMASTER_SHADOW_MASK_CLIP_START_OFFSET = 24.0f;
@@ -6461,6 +6463,28 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return hash * 0x100000001b3L;
 		}
 
+		private static float remasterShadowMaskLightAzimuthDegrees() {
+			return quantize(
+				RendererRemasterLightSettings.getAzimuthDegrees(),
+				REMASTER_SHADOW_MASK_AZIMUTH_BUCKET_DEGREES);
+		}
+
+		private static float remasterShadowMaskLightElevationDegrees() {
+			return clampStatic(
+				quantize(
+					RendererRemasterLightSettings.getElevationDegrees(),
+					REMASTER_SHADOW_MASK_ELEVATION_BUCKET_DEGREES),
+				5.0f,
+				85.0f);
+		}
+
+		private static float quantize(float value, float bucketSize) {
+			if (bucketSize <= 0.0f) {
+				return value;
+			}
+			return Math.round(value / bucketSize) * bucketSize;
+		}
+
 		private List<ShadowProofCaster> buildProjectedShadowProofCasters(Renderer3DWorldChunkFrame chunkFrame) {
 			if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
 				return Collections.emptyList();
@@ -6955,9 +6979,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				if (source == null || source.getHeight() <= 0) {
 					return null;
 				}
-				float lightX = RendererRemasterLightSettings.getLightDirectionX();
-				float lightY = Math.max(0.12f, Math.abs(RendererRemasterLightSettings.getLightDirectionY()));
-				float lightZ = RendererRemasterLightSettings.getLightDirectionZ();
+				double azimuth = Math.toRadians(remasterShadowMaskLightAzimuthDegrees());
+				double elevation = Math.toRadians(remasterShadowMaskLightElevationDegrees());
+				float lightX = (float) (Math.cos(elevation) * Math.cos(azimuth));
+				float lightY = Math.max(0.12f, Math.abs((float) Math.sin(elevation)));
+				float lightZ = (float) (Math.cos(elevation) * Math.sin(azimuth));
 				float horizontalLength = (float) Math.sqrt(lightX * lightX + lightZ * lightZ);
 				if (horizontalLength <= 0.0001f) {
 					return null;

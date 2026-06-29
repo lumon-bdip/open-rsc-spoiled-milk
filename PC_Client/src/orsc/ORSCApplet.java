@@ -905,6 +905,11 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT.id
 				: OpenGLPresentationSettings.getScaleMode().id)
 			+ " | window " + OpenGLWindowSettings.getMode().displayName;
+		String openGLLine = telemetry.enabled
+			? "opengl frames/dropped " + telemetry.openGLFrames
+				+ "/" + telemetry.openGLDroppedFrames
+				+ " | render " + telemetry.openGLRenderAverageMs + "ms"
+			: "opengl telemetry unavailable";
 		String graphicsLine = "lighting " + RendererLightingSettings.getMode().id
 			+ " | geometry " + RendererGeometrySettings.getMode().id
 			+ " | fog " + RendererFogSettings.getMode().id
@@ -915,6 +920,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			return new String[] {
 				"Renderer v2 Perf HUD",
 				rendererLine,
+				openGLLine,
 				surfaceLine,
 				graphicsLine,
 				"Ctrl+F6 expanded"
