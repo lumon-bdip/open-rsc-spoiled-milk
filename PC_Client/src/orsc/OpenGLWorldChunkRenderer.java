@@ -674,6 +674,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			remasterShadowMaskLastUploadSkip,
 			shadowBuild.stripCasterCount,
 			shadowBuild.softSceneryCasterCount,
+			shadowBuild.reason,
 			buildNanos,
 			uploadNanos);
 		activeRemasterShadowMask = shadowMask;

@@ -7,6 +7,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +21,8 @@ final class RemasterShadowMaskBuilder {
 	private static final String AZIMUTH_BUCKET_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_AZIMUTH_BUCKET";
 	private static final String ELEVATION_BUCKET_PROPERTY = "spoiledmilk.remasterShadowMaskElevationBucket";
 	private static final String ELEVATION_BUCKET_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_ELEVATION_BUCKET";
+	private static final String CACHE_ENTRIES_PROPERTY = "spoiledmilk.remasterShadowMaskCacheEntries";
+	private static final String CACHE_ENTRIES_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_CACHE_ENTRIES";
 
 	static final int REMASTER_SHADOW_MASK_GRID_SIZE = 512;
 	static final float REMASTER_SHADOW_MASK_BASE_ALPHA = 0.42f;
@@ -39,21 +43,36 @@ final class RemasterShadowMaskBuilder {
 	static final float REMASTER_SHADOW_MASK_CENTER_RETAIN = 0.82f;
 	static final float REMASTER_SHADOW_MASK_BLUR_BOOST = 1.18f;
 	static final float REMASTER_SHADOW_MASK_CLIP_START_OFFSET = 24.0f;
+	static final int REMASTER_SHADOW_MASK_CACHE_ENTRIES =
+		readInt(CACHE_ENTRIES_PROPERTY, CACHE_ENTRIES_ENV, 16, 1, 64);
 	static final boolean REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP = RemasterShadowClassifier.DIRECT_WALL_SEGMENT_CLIP;
 
-	private RemasterTerrainShadowMask cache;
-	private long cacheSignature;
+	private final LinkedHashMap<Long, RemasterTerrainShadowMask> cacheBySignature =
+		new LinkedHashMap<Long, RemasterTerrainShadowMask>(16, 0.75f, true);
 	private RemasterShadowMaskBuild lastBuild;
 	private long lastInputSignature;
 	private boolean lastInputSignatureKnown;
+	private long lastWorldSignature;
+	private float lastLightAzimuthDegrees;
+	private float lastLightElevationDegrees;
+	private long lastSettingsSignature;
+	private boolean lastInputComponentsKnown;
 	private boolean lastCacheHit;
 	private boolean lastRebuild;
+	private String lastBuildReason = "cold";
 
 	RemasterShadowMaskBuild build(
 		Renderer3DWorldChunkFrame chunkFrame,
 		RemasterShadowRoofCoverage roofCoverage,
 		long worldSignature) {
-		long inputSignature = remasterTerrainShadowInputSignature(worldSignature);
+		float lightAzimuthDegrees = remasterShadowMaskLightAzimuthDegrees();
+		float lightElevationDegrees = remasterShadowMaskLightElevationDegrees();
+		long settingsSignature = remasterTerrainShadowSettingsSignature();
+		long inputSignature = remasterTerrainShadowInputSignature(
+			worldSignature,
+			lightAzimuthDegrees,
+			lightElevationDegrees,
+			settingsSignature);
 		if (lastInputSignatureKnown && lastInputSignature == inputSignature) {
 			if (lastBuild == null || lastBuild.mask == null) {
 				return null;
@@ -63,41 +82,72 @@ final class RemasterShadowMaskBuilder {
 				lastBuild.stripCasterCount,
 				lastBuild.softSceneryCasterCount,
 				true,
-				false);
+				false,
+				"same-input");
 		}
+		String inputReason = remasterTerrainShadowInputReason(
+			worldSignature,
+			lightAzimuthDegrees,
+			lightElevationDegrees,
+			settingsSignature);
 		List<RemasterTerrainShadowCaster> casters = buildRemasterTerrainShadowCasters(chunkFrame, roofCoverage);
 		if (casters.isEmpty()) {
-			lastInputSignature = inputSignature;
-			lastInputSignatureKnown = true;
+			rememberInput(
+				inputSignature,
+				worldSignature,
+				lightAzimuthDegrees,
+				lightElevationDegrees,
+				settingsSignature);
 			lastBuild = null;
+			lastBuildReason = "no-casters:" + inputReason;
 			return null;
 		}
 		int stripCasterCount = countRemasterShadowMaskCasters(casters, RemasterTerrainShadowCaster.STYLE_STRIP);
 		int softSceneryCasterCount =
 			countRemasterShadowMaskCasters(casters, RemasterTerrainShadowCaster.STYLE_SOFT_SCENERY);
-		RemasterTerrainShadowMask mask = buildMaskTexture(roofCoverage, chunkFrame, casters);
+		RemasterTerrainShadowMask mask = buildMaskTexture(roofCoverage, chunkFrame, casters, inputReason);
 		if (mask == null) {
-			lastInputSignature = inputSignature;
-			lastInputSignatureKnown = true;
+			rememberInput(
+				inputSignature,
+				worldSignature,
+				lightAzimuthDegrees,
+				lightElevationDegrees,
+				settingsSignature);
 			lastBuild = null;
+			lastBuildReason = "empty-mask:" + inputReason;
 			return null;
 		}
 		RemasterShadowMaskBuild build =
-			new RemasterShadowMaskBuild(mask, stripCasterCount, softSceneryCasterCount, lastCacheHit, lastRebuild);
-		lastInputSignature = inputSignature;
-		lastInputSignatureKnown = true;
+			new RemasterShadowMaskBuild(
+				mask,
+				stripCasterCount,
+				softSceneryCasterCount,
+				lastCacheHit,
+				lastRebuild,
+				lastBuildReason);
+		rememberInput(
+			inputSignature,
+			worldSignature,
+			lightAzimuthDegrees,
+			lightElevationDegrees,
+			settingsSignature);
 		lastBuild = build;
 		return build;
 	}
 
 	void clear() {
-		cache = null;
-		cacheSignature = 0L;
+		cacheBySignature.clear();
 		lastBuild = null;
 		lastInputSignature = 0L;
 		lastInputSignatureKnown = false;
+		lastWorldSignature = 0L;
+		lastLightAzimuthDegrees = 0.0f;
+		lastLightElevationDegrees = 0.0f;
+		lastSettingsSignature = 0L;
+		lastInputComponentsKnown = false;
 		lastCacheHit = false;
 		lastRebuild = false;
+		lastBuildReason = "cleared";
 	}
 
 	static long remasterShadowWorldSignature(Renderer3DWorldChunkFrame chunkFrame) {
@@ -149,12 +199,66 @@ final class RemasterShadowMaskBuilder {
 		return mix(hash, caster.isOutdoorOnly() ? 1 : 0);
 	}
 
-	private long remasterTerrainShadowInputSignature(long worldSignature) {
+	private void rememberInput(
+		long inputSignature,
+		long worldSignature,
+		float lightAzimuthDegrees,
+		float lightElevationDegrees,
+		long settingsSignature) {
+		lastInputSignature = inputSignature;
+		lastInputSignatureKnown = true;
+		lastWorldSignature = worldSignature;
+		lastLightAzimuthDegrees = lightAzimuthDegrees;
+		lastLightElevationDegrees = lightElevationDegrees;
+		lastSettingsSignature = settingsSignature;
+		lastInputComponentsKnown = true;
+	}
+
+	private String remasterTerrainShadowInputReason(
+		long worldSignature,
+		float lightAzimuthDegrees,
+		float lightElevationDegrees,
+		long settingsSignature) {
+		if (!lastInputComponentsKnown) {
+			return "cold";
+		}
+		StringBuilder reason = new StringBuilder();
+		if (lastWorldSignature != worldSignature) {
+			appendReason(reason, "world");
+		}
+		if (Float.compare(lastLightAzimuthDegrees, lightAzimuthDegrees) != 0
+			|| Float.compare(lastLightElevationDegrees, lightElevationDegrees) != 0) {
+			appendReason(reason, "sun");
+		}
+		if (lastSettingsSignature != settingsSignature) {
+			appendReason(reason, "settings");
+		}
+		return reason.length() == 0 ? "input" : reason.toString();
+	}
+
+	private static void appendReason(StringBuilder reason, String value) {
+		if (reason.length() > 0) {
+			reason.append('+');
+		}
+		reason.append(value);
+	}
+
+	private long remasterTerrainShadowInputSignature(
+		long worldSignature,
+		float lightAzimuthDegrees,
+		float lightElevationDegrees,
+		long settingsSignature) {
 		long hash = 0xcbf29ce484222325L;
 		hash = mix(hash, (int) worldSignature);
 		hash = mix(hash, (int) (worldSignature >>> 32));
-		hash = mix(hash, Float.floatToIntBits(remasterShadowMaskLightAzimuthDegrees()));
-		hash = mix(hash, Float.floatToIntBits(remasterShadowMaskLightElevationDegrees()));
+		hash = mix(hash, Float.floatToIntBits(lightAzimuthDegrees));
+		hash = mix(hash, Float.floatToIntBits(lightElevationDegrees));
+		hash = mix(hash, (int) settingsSignature);
+		return mix(hash, (int) (settingsSignature >>> 32));
+	}
+
+	private long remasterTerrainShadowSettingsSignature() {
+		long hash = 0xcbf29ce484222325L;
 		hash = mix(hash, REMASTER_SHADOW_MASK_TEXTURE_SIZE);
 		hash = mix(hash, REMASTER_SHADOW_MASK_BLUR_RADIUS);
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_TEXTURE_PADDING));
@@ -162,26 +266,30 @@ final class RemasterShadowMaskBuilder {
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_BLUR_BOOST));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CLIP_START_OFFSET));
 		hash = mix(hash, REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP ? 1 : 0);
-		return hash;
+		return mix(hash, REMASTER_SHADOW_MASK_CACHE_ENTRIES);
 	}
 
 	private RemasterTerrainShadowMask buildMaskTexture(
 		RemasterShadowRoofCoverage roofCoverage,
 		Renderer3DWorldChunkFrame chunkFrame,
-		List<RemasterTerrainShadowCaster> casters) {
+		List<RemasterTerrainShadowCaster> casters,
+		String inputReason) {
 		RemasterShadowMaskBounds bounds = RemasterShadowMaskBounds.from(roofCoverage, chunkFrame);
 		if (bounds == null) {
 			return null;
 		}
 		bounds = bounds.withPadding(REMASTER_SHADOW_MASK_TEXTURE_PADDING);
 		long signature = remasterTerrainShadowMaskSignature(casters, bounds);
-		if (cache != null && cacheSignature == signature) {
+		RemasterTerrainShadowMask cachedMask = cacheBySignature.get(signature);
+		if (cachedMask != null) {
 			lastCacheHit = true;
 			lastRebuild = false;
-			return cache;
+			lastBuildReason = "mask-cache:" + inputReason;
+			return cachedMask;
 		}
 		lastCacheHit = false;
 		lastRebuild = true;
+		lastBuildReason = "rebuilt:" + inputReason;
 		int width = REMASTER_SHADOW_MASK_TEXTURE_SIZE;
 		int height = REMASTER_SHADOW_MASK_TEXTURE_SIZE;
 		float[] sourceAlpha = new float[width * height];
@@ -218,7 +326,7 @@ final class RemasterShadowMaskBuilder {
 			return null;
 		}
 		pixels.flip();
-		cache = new RemasterTerrainShadowMask(
+		RemasterTerrainShadowMask mask = new RemasterTerrainShadowMask(
 			signature,
 			width,
 			height,
@@ -228,8 +336,17 @@ final class RemasterShadowMaskBuilder {
 			bounds.invSpanX(),
 			bounds.invSpanZ(),
 			pixels);
-		cacheSignature = signature;
-		return cache;
+		cacheBySignature.put(Long.valueOf(signature), mask);
+		trimRemasterShadowMaskCache();
+		return mask;
+	}
+
+	private void trimRemasterShadowMaskCache() {
+		Iterator<Map.Entry<Long, RemasterTerrainShadowMask>> iterator = cacheBySignature.entrySet().iterator();
+		while (cacheBySignature.size() > REMASTER_SHADOW_MASK_CACHE_ENTRIES && iterator.hasNext()) {
+			iterator.next();
+			iterator.remove();
+		}
 	}
 
 	private long remasterTerrainShadowMaskSignature(
@@ -495,18 +612,21 @@ final class RemasterShadowMaskBuild {
 	final int softSceneryCasterCount;
 	final boolean cacheHit;
 	final boolean rebuild;
+	final String reason;
 
 	RemasterShadowMaskBuild(
 		RemasterTerrainShadowMask mask,
 		int stripCasterCount,
 		int softSceneryCasterCount,
 		boolean cacheHit,
-		boolean rebuild) {
+		boolean rebuild,
+		String reason) {
 		this.mask = mask;
 		this.stripCasterCount = stripCasterCount;
 		this.softSceneryCasterCount = softSceneryCasterCount;
 		this.cacheHit = cacheHit;
 		this.rebuild = rebuild;
+		this.reason = reason == null ? "" : reason;
 	}
 }
 

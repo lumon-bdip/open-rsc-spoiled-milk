@@ -239,6 +239,7 @@ public final class RenderTelemetry {
 	private static long lastOpenGLFrameNanos;
 	private static long openGLWorldChunkUploadBudgetLimitNanos;
 	private static long lastReportNanos;
+	private static String openGLRemasterShadowMaskReason = "not-built";
 	private static String openGLResidentChunkReplacementReason = "not-requested";
 
 	private RenderTelemetry() {
@@ -638,6 +639,7 @@ public final class RenderTelemetry {
 		boolean uploadSkipped,
 		int stripCasters,
 		int softSceneryCasters,
+		String reason,
 		long buildNanos,
 		long uploadNanos) {
 		if (!isCollectionEnabled()) {
@@ -654,6 +656,8 @@ public final class RenderTelemetry {
 			openGLRemasterShadowMaskUploadSkipStats.record(uploadSkipped ? 1 : 0);
 			openGLRemasterShadowMaskStripCasterStats.record(stripCasters);
 			openGLRemasterShadowMaskSoftSceneryCasterStats.record(softSceneryCasters);
+			openGLRemasterShadowMaskReason =
+				reason == null || reason.trim().isEmpty() ? "unknown" : reason;
 			openGLRemasterShadowMaskBuildStats.record(buildNanos);
 			openGLRemasterShadowMaskUploadStats.record(uploadNanos);
 		}
@@ -1168,6 +1172,7 @@ public final class RenderTelemetry {
 					+ "/" + formatCount(openGLRemasterShadowMaskUploadSkipStats.average()),
 				formatCount(openGLRemasterShadowMaskStripCasterStats.average())
 					+ "/" + formatCount(openGLRemasterShadowMaskSoftSceneryCasterStats.average()),
+				openGLRemasterShadowMaskReason,
 				formatCount(openGLResidentChunkReplacementRequestedStats.average()),
 				formatCount(openGLResidentChunkReplacementActiveStats.average()),
 				formatCount(openGLResidentChunkReplacementFallbackStats.average()),
@@ -2191,6 +2196,7 @@ public final class RenderTelemetry {
 		final String openGLRemasterShadowMaskTimingAverageMs;
 		final String openGLRemasterShadowMaskCacheAverage;
 		final String openGLRemasterShadowMaskCasterAverage;
+		final String openGLRemasterShadowMaskReason;
 		final String openGLResidentChunkReplacementRequestedAverage;
 		final String openGLResidentChunkReplacementActiveAverage;
 		final String openGLResidentChunkReplacementFallbackAverage;
@@ -2356,6 +2362,7 @@ public final class RenderTelemetry {
 			String openGLRemasterShadowMaskTimingAverageMs,
 			String openGLRemasterShadowMaskCacheAverage,
 			String openGLRemasterShadowMaskCasterAverage,
+			String openGLRemasterShadowMaskReason,
 			String openGLResidentChunkReplacementRequestedAverage,
 			String openGLResidentChunkReplacementActiveAverage,
 			String openGLResidentChunkReplacementFallbackAverage,
@@ -2521,6 +2528,7 @@ public final class RenderTelemetry {
 			this.openGLRemasterShadowMaskTimingAverageMs = openGLRemasterShadowMaskTimingAverageMs;
 			this.openGLRemasterShadowMaskCacheAverage = openGLRemasterShadowMaskCacheAverage;
 			this.openGLRemasterShadowMaskCasterAverage = openGLRemasterShadowMaskCasterAverage;
+			this.openGLRemasterShadowMaskReason = openGLRemasterShadowMaskReason;
 			this.openGLResidentChunkReplacementRequestedAverage = openGLResidentChunkReplacementRequestedAverage;
 			this.openGLResidentChunkReplacementActiveAverage = openGLResidentChunkReplacementActiveAverage;
 			this.openGLResidentChunkReplacementFallbackAverage = openGLResidentChunkReplacementFallbackAverage;
