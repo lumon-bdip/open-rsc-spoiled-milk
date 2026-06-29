@@ -178,6 +178,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		int uploadedChunks = 0;
 		int reusedChunks = 0;
 		int deferredChunks = 0;
+		String uploadReason = "steady";
 		long uploadBudgetStart = System.nanoTime();
 		List<ShadowProofCaster> shadowProofCasters = shouldDrawProjectedShadowProof()
 			? buildProjectedShadowProofCasters(chunkFrame)
@@ -198,6 +199,22 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			int fogModeBits = currentFogModeBits();
 			int lightingModeBits = currentLightingModeBits();
 			int geometryModeBits = currentGeometryModeBits();
+			String mismatchReason = buffer == null
+				? "new"
+				: buffer.mismatchReason(
+					chunk.getSignature(),
+					vertexCount,
+					indexCount,
+					chunk.getTriangleCount(),
+					atlasTextureCoordinates,
+					brightnessBits,
+					fogModeBits,
+					lightingModeBits,
+					geometryModeBits,
+					replacementCompositeEnabled,
+					shadowProofSignature,
+					chunk.isObjectChunk(),
+					chunk.getChunkRole());
 			if (buffer != null && buffer.matches(
 				chunk.getSignature(),
 				vertexCount,
@@ -217,14 +234,17 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			if (buffer == null) {
 				if (shouldDeferChunkUpload(uploadBudgetStart, uploadedChunks, budgetedUploadsAllowed)) {
 					deferredChunks++;
+					uploadReason = mergeUploadReason(uploadReason, "defer:" + mismatchReason);
 					continue;
 				}
 				buffer = new WorldChunkBuffer(gl.glGenBuffers(), gl.glGenBuffers(), gl.glGenBuffers());
 				residentChunks.put(key, buffer);
 			} else if (shouldDeferChunkUpload(uploadBudgetStart, uploadedChunks, budgetedUploadsAllowed)) {
 				deferredChunks++;
+				uploadReason = mergeUploadReason(uploadReason, "defer:" + mismatchReason);
 				continue;
 			}
+			uploadReason = mergeUploadReason(uploadReason, mismatchReason);
 			uploadChunk(
 				chunk,
 				buffer,
@@ -249,8 +269,22 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			reusedChunks,
 			deferredChunks,
 			evictedChunks,
+			uploadReason,
 			Math.max(0L, System.nanoTime() - uploadBudgetStart),
 			budgetedUploadsAllowed ? CHUNK_UPLOAD_BUDGET_NANOS : 0L);
+	}
+
+	private String mergeUploadReason(String currentReason, String nextReason) {
+		if (nextReason == null || nextReason.trim().isEmpty()) {
+			return currentReason;
+		}
+		if (currentReason == null || currentReason.length() == 0 || "steady".equals(currentReason)) {
+			return nextReason;
+		}
+		if (currentReason.equals(nextReason) || currentReason.indexOf(nextReason) >= 0) {
+			return currentReason;
+		}
+		return currentReason + "+" + nextReason;
 	}
 
 	private boolean shouldDeferChunkUpload(
@@ -289,6 +323,12 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			gl.glDisable(gl.GL_FOG);
 		} else {
 			configureFog(frame);
+		}
+		if (shaderActive) {
+			bindResidentChunkShaderPass(
+				frame,
+				residentWorldToClipMatrix,
+				residentWorldViewMatrix);
 		}
 		if (textured) {
 			gl.glEnable(gl.GL_TEXTURE_2D);
@@ -1287,6 +1327,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 					gl.glVertexPointer(POSITION_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, 0L);
 					bindChunkVertexAttributes(textured);
 				}
+				Boolean shaderTextureEnabled = null;
 				int chunkDrawnTriangles = 0;
 				WorldChunkDrawRange pendingRange = null;
 				for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
@@ -1318,11 +1359,12 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 					if (pendingRange == null) {
 						bindChunkBatchDrawState(drawState, accumulator, shaderActive);
 						if (shaderActive) {
-							bindResidentChunkShaderBatch(
-								frame,
-								drawState.textureEnabled,
-								residentWorldToClipMatrix,
-								residentWorldViewMatrix);
+							if (shaderTextureEnabled == null
+								|| shaderTextureEnabled.booleanValue() != drawState.textureEnabled) {
+								residentChunkShader.setTextureEnabled(drawState.textureEnabled);
+								bindResidentChunkShaderAttributes(drawState.textureEnabled);
+								shaderTextureEnabled = Boolean.valueOf(drawState.textureEnabled);
+							}
 						}
 						pendingRange = new WorldChunkDrawRange(batch, drawState);
 					} else {
@@ -1401,9 +1443,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return textured && texturedShaderEnabled && residentChunkShader != null;
 	}
 
-	private void bindResidentChunkShaderBatch(
+	private void bindResidentChunkShaderPass(
 		Renderer3DFrame frame,
-		boolean textureEnabled,
 		FloatBuffer residentWorldToClipMatrix,
 		FloatBuffer residentWorldViewMatrix) throws Exception {
 		boolean remasterLightingEnabled =
@@ -1413,12 +1454,15 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		residentChunkShader.useResidentChunk(
 			residentWorldToClipMatrix,
 			residentWorldViewMatrix,
-			textureEnabled,
+			true,
 			rawMaterialMode,
 			remasterLightingEnabled,
 			frame,
 			activeRemasterShadowMask);
 		bindPreparedRemasterShadowMask();
+	}
+
+	private void bindResidentChunkShaderAttributes(boolean textureEnabled) throws Exception {
 		residentChunkShader.bindWorldParityAttributes(
 			POSITION_COMPONENT_COUNT,
 			TEXTURE_COORD_COMPONENT_COUNT,
@@ -2584,6 +2628,7 @@ final class OpenGLWorldChunkUploadStats {
 			0,
 			0,
 			0,
+			"empty",
 			0L,
 			OpenGLWorldChunkRenderer.CHUNK_UPLOAD_BUDGET_NANOS);
 
@@ -2592,6 +2637,7 @@ final class OpenGLWorldChunkUploadStats {
 	final int reusedChunks;
 	final int deferredChunks;
 	final int evictedChunks;
+	final String reason;
 	final long budgetUsedNanos;
 	final long budgetLimitNanos;
 
@@ -2601,6 +2647,7 @@ final class OpenGLWorldChunkUploadStats {
 		int reusedChunks,
 		int deferredChunks,
 		int evictedChunks,
+		String reason,
 		long budgetUsedNanos,
 		long budgetLimitNanos) {
 		this.requestedChunks = requestedChunks;
@@ -2608,6 +2655,7 @@ final class OpenGLWorldChunkUploadStats {
 		this.reusedChunks = reusedChunks;
 		this.deferredChunks = deferredChunks;
 		this.evictedChunks = evictedChunks;
+		this.reason = reason == null || reason.trim().isEmpty() ? "unknown" : reason;
 		this.budgetUsedNanos = Math.max(0L, budgetUsedNanos);
 		this.budgetLimitNanos = Math.max(0L, budgetLimitNanos);
 	}
@@ -3058,6 +3106,7 @@ final class WorldChunkBufferKey {
 	final int originWorldX;
 	final int originWorldZ;
 	final boolean objectOnly;
+	final int chunkRole;
 
 	WorldChunkBufferKey(
 		int plane,
@@ -3065,13 +3114,15 @@ final class WorldChunkBufferKey {
 		int centerSectionY,
 		int originWorldX,
 		int originWorldZ,
-		boolean objectOnly) {
+		boolean objectOnly,
+		int chunkRole) {
 		this.plane = plane;
 		this.centerSectionX = centerSectionX;
 		this.centerSectionY = centerSectionY;
 		this.originWorldX = originWorldX;
 		this.originWorldZ = originWorldZ;
 		this.objectOnly = objectOnly;
+		this.chunkRole = chunkRole;
 	}
 
 	static WorldChunkBufferKey from(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
@@ -3081,7 +3132,8 @@ final class WorldChunkBufferKey {
 			chunk.getCenterSectionY(),
 			chunk.getOriginWorldX(),
 			chunk.getOriginWorldZ(),
-			chunk.isObjectChunk());
+			chunk.isObjectChunk(),
+			chunk.getChunkRole());
 	}
 
 	@Override
@@ -3098,7 +3150,8 @@ final class WorldChunkBufferKey {
 			&& centerSectionY == key.centerSectionY
 			&& originWorldX == key.originWorldX
 			&& originWorldZ == key.originWorldZ
-			&& objectOnly == key.objectOnly;
+			&& objectOnly == key.objectOnly
+			&& chunkRole == key.chunkRole;
 	}
 
 	@Override
@@ -3109,6 +3162,7 @@ final class WorldChunkBufferKey {
 		result = 31 * result + originWorldX;
 		result = 31 * result + originWorldZ;
 		result = 31 * result + (objectOnly ? 1 : 0);
+		result = 31 * result + chunkRole;
 		return result;
 	}
 }
@@ -3159,6 +3213,61 @@ final class WorldChunkBuffer {
 			&& this.geometryModeBits == geometryModeBits
 			&& this.replacementCompositeDrawOnly == replacementCompositeDrawOnly
 			&& this.shadowProofSignature == shadowProofSignature;
+	}
+
+	String mismatchReason(
+		long signature,
+		int vertexCount,
+		int indexCount,
+		int triangleCount,
+		boolean atlasTextureCoordinates,
+		int brightnessBits,
+		int fogModeBits,
+		int lightingModeBits,
+		int geometryModeBits,
+		boolean replacementCompositeDrawOnly,
+		long shadowProofSignature,
+		boolean objectChunk,
+		int chunkRole) {
+		if (this.signature != signature) {
+			if (!objectChunk) {
+				return "static-signature";
+			}
+			return chunkRole == Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
+				? "animated-object-signature"
+				: "static-object-signature";
+		}
+		if (this.vertexCount != vertexCount) {
+			return objectChunk ? "object-vertices" : "static-vertices";
+		}
+		if (this.indexCount != indexCount) {
+			return objectChunk ? "object-indices" : "static-indices";
+		}
+		if (this.triangleCount != triangleCount) {
+			return objectChunk ? "object-triangles" : "static-triangles";
+		}
+		if (this.atlasTextureCoordinates != atlasTextureCoordinates) {
+			return "texture-coords";
+		}
+		if (this.brightnessBits != brightnessBits) {
+			return "brightness";
+		}
+		if (this.fogModeBits != fogModeBits) {
+			return "fog";
+		}
+		if (this.lightingModeBits != lightingModeBits) {
+			return "lighting";
+		}
+		if (this.geometryModeBits != geometryModeBits) {
+			return "geometry";
+		}
+		if (this.replacementCompositeDrawOnly != replacementCompositeDrawOnly) {
+			return "replacement-mode";
+		}
+		if (this.shadowProofSignature != shadowProofSignature) {
+			return "shadow-proof";
+		}
+		return "unknown";
 	}
 
 	void close(LwjglBindings gl) throws Exception {

@@ -238,6 +238,7 @@ public final class RenderTelemetry {
 	private static long openGLDroppedFramesWindow;
 	private static long lastOpenGLFrameNanos;
 	private static long openGLWorldChunkUploadBudgetLimitNanos;
+	private static String openGLWorldChunkUploadReason = "steady";
 	private static long lastReportNanos;
 	private static String openGLRemasterShadowMaskReason = "not-built";
 	private static String openGLResidentChunkReplacementReason = "not-requested";
@@ -522,6 +523,7 @@ public final class RenderTelemetry {
 		int reused,
 		int deferred,
 		int evicted,
+		String reason,
 		long budgetUsedNanos,
 		long budgetLimitNanos) {
 		if (!isCollectionEnabled()) {
@@ -534,6 +536,8 @@ public final class RenderTelemetry {
 			openGLWorldChunkReuseStats.record(reused);
 			openGLWorldChunkDeferredStats.record(deferred);
 			openGLWorldChunkEvictStats.record(evicted);
+			openGLWorldChunkUploadReason =
+				reason == null || reason.trim().isEmpty() ? "unknown" : reason;
 			openGLWorldChunkUploadBudgetStats.record(budgetUsedNanos);
 			openGLWorldChunkUploadBudgetLimitNanos = Math.max(0L, budgetLimitNanos);
 		}
@@ -1122,6 +1126,7 @@ public final class RenderTelemetry {
 				formatCount(openGLWorldChunkUploadStats.average()),
 				formatCount(openGLWorldChunkReuseStats.average()),
 				formatCount(openGLWorldChunkEvictStats.average()),
+				openGLWorldChunkUploadReason,
 				formatVisibility(
 					openGLWorldChunkConsideredStats,
 					openGLWorldChunkDrawStats,
@@ -2163,6 +2168,7 @@ public final class RenderTelemetry {
 		final String openGLWorldChunkUploadAverage;
 		final String openGLWorldChunkReuseAverage;
 		final String openGLWorldChunkEvictAverage;
+		final String openGLWorldChunkUploadReason;
 		final String openGLWorldChunkVisibilityAverage;
 		final String openGLWorldChunkSubmitAverage;
 		final String openGLWorldChunkDrawAverage;
@@ -2329,6 +2335,7 @@ public final class RenderTelemetry {
 			String openGLWorldChunkUploadAverage,
 			String openGLWorldChunkReuseAverage,
 			String openGLWorldChunkEvictAverage,
+			String openGLWorldChunkUploadReason,
 			String openGLWorldChunkVisibilityAverage,
 			String openGLWorldChunkSubmitAverage,
 			String openGLWorldChunkDrawAverage,
@@ -2493,6 +2500,7 @@ public final class RenderTelemetry {
 			this.openGLWorldChunkUploadAverage = openGLWorldChunkUploadAverage;
 			this.openGLWorldChunkReuseAverage = openGLWorldChunkReuseAverage;
 			this.openGLWorldChunkEvictAverage = openGLWorldChunkEvictAverage;
+			this.openGLWorldChunkUploadReason = openGLWorldChunkUploadReason;
 			this.openGLWorldChunkVisibilityAverage = openGLWorldChunkVisibilityAverage;
 			this.openGLWorldChunkSubmitAverage = openGLWorldChunkSubmitAverage;
 			this.openGLWorldChunkDrawAverage = openGLWorldChunkDrawAverage;

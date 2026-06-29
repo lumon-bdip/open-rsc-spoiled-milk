@@ -9,6 +9,9 @@ import java.util.Map;
 public final class Renderer3DWorldChunkFrame {
 	public static final Renderer3DWorldChunkFrame EMPTY =
 		new Renderer3DWorldChunkFrame(Collections.<ChunkMesh>emptyList(), 0, 0, 0);
+	public static final int CHUNK_ROLE_WORLD = 0;
+	public static final int CHUNK_ROLE_STATIC_OBJECTS = 1;
+	public static final int CHUNK_ROLE_ANIMATED_OBJECTS = 2;
 	private static final int TILE_SIZE = 128;
 
 	private final List<ChunkMesh> chunks;
@@ -93,6 +96,7 @@ public final class Renderer3DWorldChunkFrame {
 		private final int wallTriangles;
 		private final int roofTriangles;
 		private final boolean objectChunk;
+		private final int chunkRole;
 		private final long signature;
 
 		public ChunkMesh(
@@ -132,6 +136,7 @@ public final class Renderer3DWorldChunkFrame {
 				wallTriangles,
 				roofTriangles,
 				false,
+				CHUNK_ROLE_WORLD,
 				signature);
 		}
 
@@ -173,6 +178,7 @@ public final class Renderer3DWorldChunkFrame {
 				wallTriangles,
 				roofTriangles,
 				objectChunk,
+				objectChunk ? CHUNK_ROLE_STATIC_OBJECTS : CHUNK_ROLE_WORLD,
 				signature);
 		}
 
@@ -195,6 +201,50 @@ public final class Renderer3DWorldChunkFrame {
 			int wallTriangles,
 			int roofTriangles,
 			boolean objectChunk,
+			long signature) {
+			this(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				vertexCoords,
+				vertexTextureU,
+				vertexTextureV,
+				vertexLights,
+				indices,
+				triangleTextures,
+				triangleFallbackColors,
+				triangleModelKinds,
+				shadowCasters,
+				terrainTriangles,
+				wallTriangles,
+				roofTriangles,
+				objectChunk,
+				objectChunk ? CHUNK_ROLE_STATIC_OBJECTS : CHUNK_ROLE_WORLD,
+				signature);
+		}
+
+		public ChunkMesh(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ,
+			int[] vertexCoords,
+			float[] vertexTextureU,
+			float[] vertexTextureV,
+			int[] vertexLights,
+			int[] indices,
+			int[] triangleTextures,
+			int[] triangleFallbackColors,
+			Renderer3DModelKind[] triangleModelKinds,
+			ShadowCaster[] shadowCasters,
+			int terrainTriangles,
+			int wallTriangles,
+			int roofTriangles,
+			boolean objectChunk,
+			int chunkRole,
 			long signature) {
 			this.plane = plane;
 			this.centerSectionX = centerSectionX;
@@ -227,6 +277,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.wallTriangles = wallTriangles;
 			this.roofTriangles = roofTriangles;
 			this.objectChunk = objectChunk;
+			this.chunkRole = normalizeChunkRole(objectChunk, chunkRole);
 			this.signature = signature;
 		}
 
@@ -252,6 +303,56 @@ public final class Renderer3DWorldChunkFrame {
 			int wallTriangles,
 			int roofTriangles,
 			boolean objectChunk,
+			long signature) {
+			this(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				vertexCoords,
+				vertexTextureU,
+				vertexTextureV,
+				vertexLights,
+				indices,
+				triangleTextures,
+				triangleFallbackColors,
+				triangleModelKinds,
+				shadowCasters,
+				roofCoverageBits,
+				roofCoverageAxis,
+				roofCoveredTileCount,
+				terrainTriangles,
+				wallTriangles,
+				roofTriangles,
+				objectChunk,
+				objectChunk ? CHUNK_ROLE_STATIC_OBJECTS : CHUNK_ROLE_WORLD,
+				signature);
+		}
+
+		public ChunkMesh(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ,
+			int[] vertexCoords,
+			float[] vertexTextureU,
+			float[] vertexTextureV,
+			int[] vertexLights,
+			int[] indices,
+			int[] triangleTextures,
+			int[] triangleFallbackColors,
+			Renderer3DModelKind[] triangleModelKinds,
+			ShadowCaster[] shadowCasters,
+			long[] roofCoverageBits,
+			int roofCoverageAxis,
+			int roofCoveredTileCount,
+			int terrainTriangles,
+			int wallTriangles,
+			int roofTriangles,
+			boolean objectChunk,
+			int chunkRole,
 			long signature) {
 			this.plane = plane;
 			this.centerSectionX = centerSectionX;
@@ -284,7 +385,17 @@ public final class Renderer3DWorldChunkFrame {
 			this.wallTriangles = wallTriangles;
 			this.roofTriangles = roofTriangles;
 			this.objectChunk = objectChunk;
+			this.chunkRole = normalizeChunkRole(objectChunk, chunkRole);
 			this.signature = signature;
+		}
+
+		private static int normalizeChunkRole(boolean objectChunk, int chunkRole) {
+			if (!objectChunk) {
+				return CHUNK_ROLE_WORLD;
+			}
+			return chunkRole == CHUNK_ROLE_ANIMATED_OBJECTS
+				? CHUNK_ROLE_ANIMATED_OBJECTS
+				: CHUNK_ROLE_STATIC_OBJECTS;
 		}
 
 		private static float[] normalizeFloatArray(float[] values, int count, float defaultValue) {
@@ -583,6 +694,10 @@ public final class Renderer3DWorldChunkFrame {
 
 		public boolean isObjectChunk() {
 			return objectChunk;
+		}
+
+		public int getChunkRole() {
+			return chunkRole;
 		}
 
 		public int getShadowCasterCount() {

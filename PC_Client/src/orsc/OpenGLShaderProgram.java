@@ -610,6 +610,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		}
 	}
 
+	void setTextureEnabled(boolean textureEnabled) throws Exception {
+		if (textureEnabledUniformLocation >= 0) {
+			gl.glUniform1i(textureEnabledUniformLocation, textureEnabled ? 1 : 0);
+		}
+	}
+
 	void bindWorldParityAttributes(
 		int positionComponents,
 		int textureCoordComponents,

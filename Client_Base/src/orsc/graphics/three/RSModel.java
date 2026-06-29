@@ -317,12 +317,33 @@ public final class RSModel {
 		int originWorldZ,
 		RSModel[] models,
 		int modelCount) {
+		return buildRenderer3DObjectChunkMesh(
+			plane,
+			centerSectionX,
+			centerSectionY,
+			originWorldX,
+			originWorldZ,
+			models,
+			modelCount,
+			Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS);
+	}
+
+	public static Renderer3DWorldChunkFrame.ChunkMesh buildRenderer3DObjectChunkMesh(
+		int plane,
+		int centerSectionX,
+		int centerSectionY,
+		int originWorldX,
+		int originWorldZ,
+		RSModel[] models,
+		int modelCount,
+		int chunkRole) {
 		ObjectChunkMeshBuilder builder = new ObjectChunkMeshBuilder(
 			plane,
 			centerSectionX,
 			centerSectionY,
 			originWorldX,
-			originWorldZ);
+			originWorldZ,
+			chunkRole);
 		int limit = Math.min(modelCount, models == null ? 0 : models.length);
 		for (int index = 0; index < limit; index++) {
 			builder.addModel(models[index]);
@@ -1154,6 +1175,7 @@ public final class RSModel {
 		private final int centerSectionY;
 		private final int originWorldX;
 		private final int originWorldZ;
+		private final int chunkRole;
 		private final List<Integer> vertexCoords = new ArrayList<Integer>();
 		private final List<Float> vertexTextureU = new ArrayList<Float>();
 		private final List<Float> vertexTextureV = new ArrayList<Float>();
@@ -1170,12 +1192,14 @@ public final class RSModel {
 			int centerSectionX,
 			int centerSectionY,
 			int originWorldX,
-			int originWorldZ) {
+			int originWorldZ,
+			int chunkRole) {
 			this.plane = plane;
 			this.centerSectionX = centerSectionX;
 			this.centerSectionY = centerSectionY;
 			this.originWorldX = originWorldX;
 			this.originWorldZ = originWorldZ;
+			this.chunkRole = chunkRole;
 		}
 
 		private void addModel(RSModel model) {
@@ -1522,6 +1546,7 @@ public final class RSModel {
 				0,
 				0,
 				true,
+				chunkRole,
 				signature);
 		}
 
@@ -1557,6 +1582,7 @@ public final class RSModel {
 			hash = mix(hash, centerSectionY);
 			hash = mix(hash, originWorldX);
 			hash = mix(hash, originWorldZ);
+			hash = mix(hash, chunkRole);
 			for (int value : vertexArray) {
 				hash = mix(hash, value);
 			}

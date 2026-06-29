@@ -1154,6 +1154,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				chunkUploadStats.reusedChunks,
 				chunkUploadStats.deferredChunks,
 				chunkUploadStats.evictedChunks,
+				chunkUploadStats.reason,
 				chunkUploadStats.budgetUsedNanos,
 				chunkUploadStats.budgetLimitNanos);
 		}

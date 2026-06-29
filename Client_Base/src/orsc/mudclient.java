@@ -3586,13 +3586,27 @@ public final class mudclient implements Runnable {
 		RSModel model) {
 		int cellX = Math.floorDiv(tileX, RESIDENT_OBJECT_CHUNK_TILE_SIZE);
 		int cellZ = Math.floorDiv(tileZ, RESIDENT_OBJECT_CHUNK_TILE_SIZE);
-		int cellKey = cellZ * 1024 + cellX;
+		int chunkRole = isAnimatedResidentObjectChunkModel(kind, objectId)
+			? Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
+			: Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
+		int cellKey = (cellZ * 1024 + cellX) * 4 + chunkRole;
 		ResidentObjectChunkInputBuilder builder = builders.get(cellKey);
 		if (builder == null) {
-			builder = new ResidentObjectChunkInputBuilder(anchor, cellKey, cellX, cellZ);
+			builder = new ResidentObjectChunkInputBuilder(anchor, cellKey, cellX, cellZ, chunkRole);
 			builders.put(cellKey, builder);
 		}
 		builder.add(kind, instanceIndex, tileX, tileZ, objectId, direction, model);
+	}
+
+	private boolean isAnimatedResidentObjectChunkModel(Renderer3DModelKind kind, int objectId) {
+		if (kind != Renderer3DModelKind.GAME_OBJECT) {
+			return false;
+		}
+		if (objectId == 74) {
+			return true;
+		}
+		com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(objectId);
+		return def != null && "portal".equals(def.getObjectModel());
 	}
 
 	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input) {
@@ -3603,7 +3617,8 @@ public final class mudclient implements Runnable {
 			input.anchor.getOriginWorldX() + input.cellX * RESIDENT_OBJECT_CHUNK_TILE_SIZE * this.tileSize,
 			input.anchor.getOriginWorldZ() + input.cellZ * RESIDENT_OBJECT_CHUNK_TILE_SIZE * this.tileSize,
 			input.models,
-			input.modelCount);
+			input.modelCount,
+			input.chunkRole);
 	}
 
 	private void clearResidentObjectChunkCache() {
@@ -3620,6 +3635,7 @@ public final class mudclient implements Runnable {
 		private final int cellKey;
 		private final int cellX;
 		private final int cellZ;
+		private final int chunkRole;
 		private final RSModel[] models;
 		private final int modelCount;
 		private final long cacheKey;
@@ -3629,6 +3645,7 @@ public final class mudclient implements Runnable {
 			int cellKey,
 			int cellX,
 			int cellZ,
+			int chunkRole,
 			RSModel[] models,
 			int modelCount,
 			long cacheKey) {
@@ -3636,6 +3653,7 @@ public final class mudclient implements Runnable {
 			this.cellKey = cellKey;
 			this.cellX = cellX;
 			this.cellZ = cellZ;
+			this.chunkRole = chunkRole;
 			this.models = models;
 			this.modelCount = modelCount;
 			this.cacheKey = cacheKey;
@@ -3647,6 +3665,7 @@ public final class mudclient implements Runnable {
 		private final int cellKey;
 		private final int cellX;
 		private final int cellZ;
+		private final int chunkRole;
 		private final List<RSModel> models = new ArrayList<RSModel>();
 		private long cacheKey;
 
@@ -3654,16 +3673,19 @@ public final class mudclient implements Runnable {
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
 			int cellKey,
 			int cellX,
-			int cellZ) {
+			int cellZ,
+			int chunkRole) {
 			this.anchor = anchor;
 			this.cellKey = cellKey;
 			this.cellX = cellX;
 			this.cellZ = cellZ;
+			this.chunkRole = chunkRole;
 			this.cacheKey = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getPlane());
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getCenterSectionX());
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getCenterSectionY());
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, cellKey);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, chunkRole);
 		}
 
 		private void add(
@@ -3694,6 +3716,7 @@ public final class mudclient implements Runnable {
 				this.cellKey,
 				this.cellX,
 				this.cellZ,
+				this.chunkRole,
 				modelArray,
 				modelArray.length,
 				finalCacheKey);

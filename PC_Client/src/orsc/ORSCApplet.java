@@ -979,6 +979,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + RenderTelemetry.worldChunkUploadDeferredSummary()
 					+ "/" + telemetry.openGLWorldChunkEvictAverage
 					+ " | budget " + RenderTelemetry.worldChunkUploadBudgetSummary()
+					+ " | reason " + telemetry.openGLWorldChunkUploadReason
 				: "",
 			telemetry.enabled
 				? "resident req/active/fallback " + telemetry.openGLResidentChunkReplacementRequestedAverage

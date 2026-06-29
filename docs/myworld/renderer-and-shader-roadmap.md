@@ -124,6 +124,16 @@ they need to be.
   after culling. F6 `batch c/d/cull` still reports logical material batches,
   while `submit calls/binds` reports the reduced GL draw submissions and
   texture binds.
+- Resident object chunks distinguish static object cells from animated object
+  cells. Animated scenery may still rebuild a small dynamic chunk, but it must
+  not dirty or re-upload the surrounding static scenery cell. Expanded F6
+  reports chunk upload reasons such as `static-object-signature` and
+  `animated-object-signature` so this ownership rule can be checked in dense
+  animated areas.
+- Resident chunk shader setup now separates pass-level uniforms from per-range
+  texture/fallback state. Lighting, tone, fog, shadow-mask, and matrix uniforms
+  should be bound once for the resident pass unless the pass itself changes,
+  not resent for every material range.
 - The shadow-mask cache key has been narrowed to shadow-owned inputs only.
   Broad resident chunk render signatures must not invalidate the shadow mask.
 - Remaster shadow preparation now has a signature-first steady-state path.
@@ -315,9 +325,11 @@ Still incomplete:
 
 - Resident chunk backend: strong foundation, but still needs clearer dirty
   flags, async or incremental preparation, quality-aware build windows, and
-  less dependence on baked visual settings. Spatial draw culling is now on by
-  default, but true streaming ownership should eventually avoid preparing work
-  that cannot contribute to the visible frame.
+  less dependence on baked visual settings. Static and animated object chunks
+  are now separated, but the remaining animated chunk rebuild is still CPU-side
+  proof work. Spatial draw culling is now on by default, but true streaming
+  ownership should eventually avoid preparing work that cannot contribute to
+  the visible frame.
 - Shader path: enough exists to prove direction, but material ownership and
   fixed-function retirement remain large wins.
 - Terrain/scenery shadows: visually promising, but currently the most proof-like
@@ -342,7 +354,8 @@ Still incomplete:
 1. Lock the day/night color and shadow presentation if current visual testing is
    accepted.
 2. Stop time-of-day and other presentation-only settings from invalidating or
-   rebuilding resident chunks.
+   rebuilding resident chunks. Static resident object chunks should also remain
+   reusable when nearby animated scenery changes.
 3. Continue shader ownership cleanup: brightness, fog, tone, and material terms
    should become uniforms or material data rather than baked geometry state.
 4. Smoke-test the refactor branch, migrate it back to the main worktree, and
