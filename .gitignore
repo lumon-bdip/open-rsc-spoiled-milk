@@ -125,6 +125,7 @@ Client_Base/Cache/credentials.txt
 Client_Base/Cache/uid.dat
 Client_Base/clientSettings.conf
 Client_Base/renderer-v2-captures/
+spoiled-milk-client.log
 
 Android_Client/import-summary.txt
 Android_Client/.idea/

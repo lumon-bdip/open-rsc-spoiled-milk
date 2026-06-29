@@ -1364,12 +1364,19 @@ public final class mudclient implements Runnable {
 
 			if (!this.hasGameCrashed) {
 				this.hasGameCrashed = true;
+				ClientRuntimeLogger.log("error_game_crash");
 				System.out.println("error_game_crash");
 			}
 		} catch (RuntimeException var6) {
 			var6.printStackTrace();
 			throw GenUtil.makeThrowable(var6, "e.KE(" + "{...}" + ',' + "dummy" + ')');
 		}
+	}
+
+	private void logClientLoopFailure(String context, Throwable throwable) {
+		ClientRuntimeLogger.logThrowable(context, throwable);
+		throwable.printStackTrace();
+		this.errorGameCrash();
 	}
 
 	private void closeProgram() {
@@ -1498,8 +1505,7 @@ public final class mudclient implements Runnable {
 				}
 
 			} catch (Exception var10) {
-				var10.printStackTrace();
-				this.errorGameCrash();
+				this.logClientLoopFailure("Client bootstrap loop failed", var10);
 			}
 
 		} catch (RuntimeException var11) {
@@ -1637,8 +1643,7 @@ public final class mudclient implements Runnable {
 
 				this.clientBaseThread = null;
 			} catch (Exception var10) {
-				var10.printStackTrace();
-				this.errorGameCrash();
+				this.logClientLoopFailure("Modern client loop failed", var10);
 			}
 
 		} catch (RuntimeException var11) {
@@ -1805,8 +1810,7 @@ public final class mudclient implements Runnable {
 
 				this.clientBaseThread = null;
 			} catch (Exception var10) {
-				var10.printStackTrace();
-				this.errorGameCrash();
+				this.logClientLoopFailure("Legacy client loop failed", var10);
 			}
 
 		} catch (RuntimeException var11) {
@@ -1815,7 +1819,9 @@ public final class mudclient implements Runnable {
 	}
 
 	public void startMainThread() {
-		this.clientBaseThread = new Thread(this);
+		this.clientBaseThread = new Thread(this, "Spoiled Milk Client Loop");
+		this.clientBaseThread.setUncaughtExceptionHandler((thread, throwable) ->
+			ClientRuntimeLogger.logThrowable("Uncaught exception in " + thread.getName(), throwable));
 		this.clientBaseThread.start();
 		if (!isAndroid()) {
 			this.clientBaseThread.setPriority(1);
@@ -2369,19 +2375,35 @@ public final class mudclient implements Runnable {
 	public final void closeConnection(boolean sendPacket) {
 		try {
 
-			if (sendPacket && null != this.packetHandler.getClientStream()) {
+			Network_Socket clientStream = this.packetHandler.getClientStream();
+			if (sendPacket && null != clientStream) {
 				try {
-					this.packetHandler.getClientStream().newPacket(31);
-					this.packetHandler.getClientStream().finishPacketAndFlush();
+					clientStream.newPacket(31);
+					clientStream.finishPacketAndFlush();
 				} catch (IOException var4) {
 				}
 			}
+			this.closeClientStreamOnly();
 
 			this.setUsername("");
 			this.password = "";
 			this.jumpToLogin();
 		} catch (RuntimeException var5) {
 			throw GenUtil.makeThrowable(var5, "client.RB(" + sendPacket + ',' + "dummy" + ')');
+		}
+	}
+
+	private void closeClientStreamOnly() {
+		Network_Socket clientStream = this.packetHandler.getClientStream();
+		if (clientStream == null) {
+			return;
+		}
+		try {
+			clientStream.close();
+		} catch (RuntimeException e) {
+			ClientRuntimeLogger.logThrowable("Failed to close client stream", e);
+		} finally {
+			this.packetHandler.setClientStream(null);
 		}
 	}
 
@@ -15813,13 +15835,17 @@ public final class mudclient implements Runnable {
 	}
 
 	public void saveZoomDistance() {
+		Network_Socket clientStream = this.packetHandler.getClientStream();
+		if (this.currentViewMode != GameMode.GAME || clientStream == null) {
+			return;
+		}
 		int persistableCameraZoom = getPersistableCameraZoomSetting();
 		if (lastSavedCameraZoom != persistableCameraZoom) {
 			// Saves last zoom distance
-			this.packetHandler.getClientStream().newPacket(111);
-			this.packetHandler.getClientStream().bufferBits.putByte(23);
-			this.packetHandler.getClientStream().bufferBits.putByte(persistableCameraZoom);
-			this.packetHandler.getClientStream().finishPacket();
+			clientStream.newPacket(111);
+			clientStream.bufferBits.putByte(23);
+			clientStream.bufferBits.putByte(persistableCameraZoom);
+			clientStream.finishPacket();
 			lastSavedCameraZoom = persistableCameraZoom;
 		}
 	}
@@ -20734,6 +20760,8 @@ public final class mudclient implements Runnable {
 								"Connection lost! Please wait...");
 						}
 
+						this.closeClientStreamOnly();
+
 						String ip;
 						if ((Config.SERVER_IP != null)) {
 							ip = Config.SERVER_IP; // allows override if manually set in Config code
@@ -21035,6 +21063,7 @@ public final class mudclient implements Runnable {
 			}
 
 			if (this.logoutTimeout != 0) {
+				this.closeClientStreamOnly();
 				this.jumpToLogin();
 			} else {
 				System.out.println("Lost connection");
@@ -21256,6 +21285,10 @@ public final class mudclient implements Runnable {
 
 			this.currentViewMode = GameMode.GAME;
 			this.clearInputString80((byte) -49);
+			this.localPlayer = new ORSCharacter();
+			this.localPlayerServerIndex = -1;
+			this.knownPlayerCount = 0;
+			Arrays.fill(this.knownPlayers, null);
 
 			for (NComponent n : mainComponent.subComponents())
 				n.setVisible(false);

@@ -2403,7 +2403,7 @@ public final class Scene {
 		try {
 
 			if (mod == null) {
-				System.out.println("Warning tried to add null object!");
+				return;
 			}
 			if (this.modelCount < this.m_u) {
 				this.m_jb[this.modelCount] = 0;
