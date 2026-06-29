@@ -304,6 +304,12 @@ mode.
       terrain mask must not rebuild every frame as the server-cycle angle
       changes; use coarse azimuth/elevation buckets until this becomes a
       cheaper GPU-side or incremental path.
+- [x] Keep the terrain shadow-mask cache signature scoped to shadow-owned
+      inputs only: mask constants, mask bounds, quantized light/caster
+      projections, and caster geometry. Do not mix full resident chunk render
+      signatures into this cache key, because animated or otherwise unrelated
+      chunk state can force expensive 1024x1024 mask rebuilds even when the
+      projected shadow set is unchanged.
 - [x] Add dev-only server time controls: `::settime MMSS` immediately sets the
       server-owned cycle position, while `::advtime MMSS` advances the server
       clock at an accelerated visible rate so day/night color and shadow motion

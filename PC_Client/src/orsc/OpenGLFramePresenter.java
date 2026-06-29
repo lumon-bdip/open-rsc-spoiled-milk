@@ -6051,7 +6051,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				return null;
 			}
 			bounds = bounds.withPadding(REMASTER_SHADOW_MASK_TEXTURE_PADDING);
-			long signature = remasterTerrainShadowMaskSignature(chunkFrame, casters, bounds);
+			long signature = remasterTerrainShadowMaskSignature(casters, bounds);
 			if (remasterShadowMaskCache != null && remasterShadowMaskCacheSignature == signature) {
 				remasterShadowMaskLastCacheHit = true;
 				remasterShadowMaskLastRebuild = false;
@@ -6159,7 +6159,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 
 		private long remasterTerrainShadowMaskSignature(
-			Renderer3DWorldChunkFrame chunkFrame,
 			List<RemasterTerrainShadowCaster> casters,
 			RemasterShadowMaskBounds bounds) {
 			long hash = 0xcbf29ce484222325L;
@@ -6174,16 +6173,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			hash = shadowProofMix(hash, Float.floatToIntBits(bounds.maxX));
 			hash = shadowProofMix(hash, Float.floatToIntBits(bounds.minZ));
 			hash = shadowProofMix(hash, Float.floatToIntBits(bounds.maxZ));
-			hash = shadowProofMix(hash, chunkFrame == null ? 0 : chunkFrame.getChunkCount());
-			if (chunkFrame != null) {
-				for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
-					hash = shadowProofMix(hash, chunk.getPlane());
-					hash = shadowProofMix(hash, (int) chunk.getSignature());
-					hash = shadowProofMix(hash, (int) (chunk.getSignature() >>> 32));
-					hash = shadowProofMix(hash, chunk.getTriangleCount());
-					hash = shadowProofMix(hash, chunk.getShadowCasterCount());
-				}
-			}
 			hash = shadowProofMix(hash, casters == null ? 0 : casters.size());
 			if (casters != null) {
 				for (RemasterTerrainShadowCaster caster : casters) {

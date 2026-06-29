@@ -1364,6 +1364,13 @@ they are not visual requirements for the baseline.
         azimuth/elevation buckets for cache signatures and caster projection,
         keeping day/night shadow motion visible over time without repeating a
         full 1024x1024 mask rebuild each frame.
+  - [x] Narrow terrain shadow-mask cache invalidation to shadow-owned inputs.
+        The cache key intentionally excludes broad resident chunk render
+        signatures; those signatures can change for animation, rebuild, or
+        visual reasons that do not alter projected caster geometry. Shadow-mask
+        reuse should be governed by mask bounds, mask constants, quantized light
+        buckets, and caster signatures until the mask moves to a GPU-side or
+        incremental path.
   - [ ] Refine diagonal-wall shadow quality. The current overlay proof skips
         diagonal wall casters to avoid false triangular artifacts. Proper
         diagonal-wall shadows need a shader/material mask or explicit wall
