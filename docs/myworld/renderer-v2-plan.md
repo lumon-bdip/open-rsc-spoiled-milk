@@ -286,6 +286,127 @@ framebuffer-replay behavior.
 - Projected frame-space mesh upload is a bridge until resident chunk geometry
   fully replaces captured projected world meshes.
 
+### Current File Split Status
+
+This section tracks the active renderer-file refactor that started because
+`OpenGLFramePresenter.java` had become too large to safely maintain.
+
+Current ownership after the first split:
+
+- `OpenGLFramePresenter`
+  - Owns GLFW window lifecycle, frame orchestration, input forwarding,
+    high-level pass sequencing, capture triggering, and remaining UI/world
+    composite glue.
+  - Should continue shrinking. Do not move shader source, atlas internals,
+    resident chunk upload, projected mesh upload, or shadow-mask generation
+    back into this file.
+- `LwjglBindings` and `MonitorMode`
+  - Own LWJGL reflection, OpenGL/GLFW constants, and monitor-mode queries.
+  - The presenter should call this facade instead of growing more reflection
+    or raw LWJGL lookup code.
+- `OpenGLFrame.java` / `Frame`
+  - Owns the per-frame source pixels, target sizing, renderer 2D/3D snapshots,
+    debug overlay lines, and reusable frame-buffer lifetime.
+- `OpenGLCompositeSceneCommand`
+  - Owns package-local composite scene-command, world-sprite command,
+    static-world command, and related sprite diagnostic records.
+- `OpenGLCompositeSceneBuilder`
+  - Owns pure composite scene-command assembly, legacy world-sprite
+    classification, sprite-anchor matching, front-occluder face-key selection,
+    and capture/static material command derivation.
+- `OpenGLWorldSpriteDrawController`
+  - Owns high-level world-sprite draw orchestration: scene-command consumption,
+    same-anchor character-layer grouping, dynamic atlas upload decisions,
+    fallback routing, and anchored depth-owned sprite submission.
+  - Still calls presenter bridge callbacks for projection setup, fallback
+    screen-space draws, and capture-only depth diagnostics.
+- `OpenGLWorldSpriteRenderer`
+  - Owns camera-space world-sprite quad VBO/EBO lifecycle, depth interpolation,
+    day/night tone application for sprite quads, and GPU submission for
+    depth-owned NPC/player/item billboards.
+- `OpenGLSpriteTextureBuilder`
+  - Owns CPU-built command-sized dynamic sprite textures, including direct
+    sprite texture rebuilds and same-character layer compositing.
+  - This is still a bridge texture path, but it is no longer presenter-owned.
+- `OpenGLShaderProgram`
+  - Owns GLSL source strings, shader compilation/linking, attribute binding,
+    and shader uniform setup.
+  - New visual inputs should usually be shader uniforms or explicit vertex
+    attributes here, not baked ad hoc into presenter code.
+- `OpenGLWorldChunkRenderer`
+  - Owns resident chunk VBO/EBO upload, chunk material batches, resident
+    terrain/wall/roof/object draw calls, chunk culling, resident shader
+    attributes, and terrain shadow-mask application/debug drawing.
+  - This is the current owner for static world geometry.
+- `OpenGLWorldMeshRenderer`
+  - Owns the projected/captured world-mesh bridge.
+  - Treat this as compatibility/diagnostic support. New renderer features
+    should prefer resident chunk ownership instead of expanding this bridge.
+- `OpenGLTextureAtlas`, `OpenGLDynamicTextureAtlas`, `OpenGLTextureRegion`,
+  `OpenGLTexturePixels`, `OpenGLSpriteTextureCache`, `OpenGLGlyphTextureCache`,
+  and `OpenGLWorldTextureCache`
+  - Own texture upload, atlas packing, cached sprite/glyph/world texture
+    regions, and pixel conversion.
+  - Texture transparency rules should be centralized here or in material
+    classifiers, not repeated in presenter draw paths.
+- `OpenGLFrameCapture` and `OpenGLRendererLog`
+  - Own renderer diagnostics, capture file emission, and OpenGL log messages.
+  - Keep capture expansion here unless the data source belongs in a renderer
+    owner first.
+- `OpenGLStaticWorldMaterials` and `StaticWorldMaterialPass`
+  - Own coarse material classification and static-world material pass labels.
+  - Future material metadata should build on this rather than reintroducing
+    magic texture checks in draw code.
+- `RemasterShadowClassifier` and `RemasterShadowMaskBuilder`
+  - Own shadow caster/receiver inspection and the CPU-built terrain shadow-mask
+    proof.
+  - They are shadow-system code, not presenter code. A later GPU/incremental
+    shadow pass should replace or supplement them without merging them back
+    into the presenter.
+
+Current split completeness:
+
+- Done enough for this pass: low-level LWJGL access, shader compilation,
+  texture atlas/cache work, resident chunk drawing, projected mesh drawing,
+  frame capture, renderer logging, static material labels, composite
+  scene-command records, pure scene-command builder/classifier logic,
+  world-sprite draw orchestration, command-sized sprite texture building,
+  camera-space world-sprite quad submission, initial bridge/owner code labels,
+  and remaster shadow mask helpers are separated from the presenter.
+- Still in the presenter: window lifecycle, input bridge, pass sequencing,
+  UI replay, projection setup, capture-only depth diagnostics, and some
+  compatibility decisions. These are
+  acceptable short-term, but any new large renderer behavior should get its own
+  owner instead of expanding the presenter.
+- Not done: extracting a full static/entity scene-queue owner, native UI
+  renderer ownership, and final deletion of bridge paths after the fallback
+  window closes.
+
+### Legacy Bridge Labeling Rules
+
+When touching renderer-v2 code, separate active design from compatibility
+bridges loudly enough that future AI sessions do not resurrect old paths.
+
+- Use a short `LEGACY BRIDGE:` comment on code that still depends on legacy
+  framebuffer pixels, projected software draw order, fixed-function OpenGL
+  color arrays, old scaler settings, or software-visible sprite recovery.
+- Use a short `RENDERER-V2 OWNER:` comment when a path has become the intended
+  owner for a surface, such as resident chunks for static world geometry or
+  shader uniforms for presentation-only lighting state.
+- Do not add new behavior to a `LEGACY BRIDGE` path unless the change is a
+  narrow parity fix and the long-term owner is named in the nearby comment or
+  this document.
+- Old software-presenter scaling modes and `ui_scale`/`scaling_scalar`
+  settings are legacy-presenter compatibility. OpenGL-primary uses aspect-fit
+  presentation and render-surface/aspect settings; do not reintroduce the old
+  scaler as a modern graphics option.
+- Projected mesh upload, screen-space sprite command replay, and exact
+  front-occluder range replay are compatibility paths. If a new bug appears in
+  one of those areas, first ask whether the fix belongs in resident chunks,
+  world-space sprites, shader/material ownership, or an explicit scene queue.
+- If a bridge is still needed for release safety, document what keeps it alive
+  and what condition allows it to be removed.
+
 ### Debugging Guidance
 
 - If an entity disappears, first check ownership and slot/protocol visibility,
@@ -1150,6 +1271,22 @@ they are not visual requirements for the baseline.
       front-occluder commands. The old dormant broad static-world range command
       type has been removed so the next static migration must be explicit
       face-owned geometry.
+- [x] Extract the pure OpenGL composite scene-command builder/classifier from
+      `OpenGLFramePresenter` into `OpenGLCompositeSceneBuilder`, including
+      legacy world-sprite classification, anchor matching, sorted scene-command
+      assembly, front-occluder key selection, and capture/static material
+      command derivation.
+- [x] Extract camera-space world-sprite quad submission from
+      `OpenGLFramePresenter` into `OpenGLWorldSpriteRenderer`, including the
+      streamed VBO/EBO lifecycle, sprite-depth interpolation, day/night tone
+      application, and depth-owned quad draw calls.
+- [x] Extract the remaining world-sprite stopping-point ownership from
+      `OpenGLFramePresenter` into `OpenGLWorldSpriteDrawController` and
+      `OpenGLSpriteTextureBuilder`, including world-sprite scene-command
+      consumption, same-anchor character-layer compositing, dynamic atlas
+      upload decisions, fallback routing, and command-sized sprite texture
+      construction. This is the chosen stopping point before returning to
+      renderer optimization/shadow work.
 - [x] Add capture-only static-world range candidates derived from sorted
       world-sprite legacy draw orders so the next interleave slice can be
       planned without changing current rendering.

@@ -314,6 +314,12 @@ mode.
       signatures into this cache key, because animated or otherwise unrelated
       chunk state can force expensive 1024x1024 mask rebuilds even when the
       projected shadow set is unchanged.
+- [ ] Recheck terrain shadow movement after the renderer file-size refactor is
+      wrapped. Visual testing on `2026-06-29` suggests terrain shadows are not
+      moving with directional light/time changes, or the movement is too subtle
+      to notice in normal play. Nothing appears outwardly broken, so keep this
+      as the first shadow follow-up after the presenter/world-renderer split is
+      stable.
 - [x] Add dev-only server time controls: `::settime MMSS` immediately sets the
       server-owned cycle position, while `::advtime MMSS` advances the server
       clock at an accelerated visible rate so day/night color and shadow motion

@@ -1170,6 +1170,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private static void saveScalingSettings(ScalingAlgorithm type, float scalar) {
+		// LEGACY BRIDGE: software-presenter scaling only. Do not expose this as
+		// the modern OpenGL resolution/aspect path.
 		Properties props = loadClientSettings();
 		props.setProperty("scaling_type", String.valueOf(type.ordinal()));
 		props.setProperty("ui_scale", String.valueOf(scalar));

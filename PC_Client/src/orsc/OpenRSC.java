@@ -58,7 +58,8 @@ public class OpenRSC extends ORSCApplet {
 				RendererToneSettings.loadFromClientSettings(props);
 				RendererExperimentalSettings.loadFromClientSettings(props);
 
-				// Load scaling settings
+				// LEGACY BRIDGE: these scaler settings belong to the software
+				// presenter. OpenGL-primary uses aspect-fit/render-surface settings.
 				String scalingTypeString = props.getProperty("scaling_type");
 				String scalarString = props.getProperty("ui_scale");
 				if (scalarString == null || scalarString.isEmpty()) {

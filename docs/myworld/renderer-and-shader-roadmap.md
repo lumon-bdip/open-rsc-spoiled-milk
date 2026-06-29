@@ -69,6 +69,17 @@ they need to be.
   renderer debug overlay controls.
 - The shadow-mask cache key has been narrowed to shadow-owned inputs only.
   Broad resident chunk render signatures must not invalidate the shadow mask.
+- The first renderer file-size refactor pass has split shader, texture atlas,
+  resident chunk, projected mesh, frame capture, logging, material-label, and
+  remaster shadow helper code out of `OpenGLFramePresenter`. It also split the
+  package-local composite scene-command/world-sprite records and pure
+  scene-command builder/classifier logic out of the presenter. Camera-space
+  world-sprite quad submission now lives in `OpenGLWorldSpriteRenderer`, while
+  world-sprite draw orchestration and command-sized sprite texture construction
+  live in `OpenGLWorldSpriteDrawController` and `OpenGLSpriteTextureBuilder`.
+  The presenter still owns window/input/pass orchestration and some bridge
+  callbacks, but it should no longer be treated as the place to add low-level
+  renderer systems.
 
 ## Current Shader State
 
@@ -126,6 +137,9 @@ Still incomplete:
   triangular artifacts.
 - Scenery shadows use broad heuristics, not per-asset shadow metadata.
 - Shadows do not yet receive onto objects, walls, sprites, players, or NPCs.
+- Terrain shadows currently appear static, or their movement is too subtle,
+  when directional light/time changes. Treat this as the first shadow follow-up
+  after the current renderer refactor is wrapped.
 - Shadow movement is visibly stepped during `::advtime` because mask rebuilds
   are bucketed. This is acceptable for normal play but not a final high-quality
   shadow solution.
@@ -205,6 +219,11 @@ Still incomplete:
   terrain, water, walls, roofs, foliage, ore, scenery, sprites, projectiles, and
   effects as different material families instead of applying one generic rule to
   everything.
+- Subtle material variation for broad flat areas. Large runs of identical
+  terrain or scenery color can still read too flat even after relief lighting.
+  A future remaster polish pass should test deterministic low-amplitude color
+  variation or noise, keyed by tile/material position, so repeated same-texture
+  areas gain visual breakup without changing original assets or flickering.
 
 ## Long-Term Renderer Goals
 
@@ -235,14 +254,21 @@ Still incomplete:
 - Shader path: enough exists to prove direction, but material ownership and
   fixed-function retirement remain large wins.
 - Terrain/scenery shadows: visually promising, but currently the most proof-like
-  remaster system. It needs better metadata, cheaper rebuilds, and cleaner
-  diagonal/interior handling before treating it as final.
+  remaster system. It needs the static/subtle terrain-shadow movement issue
+  rechecked, better metadata, cheaper rebuilds, and cleaner diagonal/interior
+  handling before treating it as final.
 - Entity sprites: visually much better than earlier alpha work, but still an
   important modernization target because sprites are central to Classic.
 - Quality settings: presets exist, but settings do not yet consistently reduce
   underlying renderer work.
 - Tooling: F6 telemetry is good for live diagnosis, but capture replay and
   benchmark automation would prevent repeated manual rediscovery.
+- Code organization: the initial OpenGL presenter split and first code-level
+  `LEGACY BRIDGE` / `RENDERER-V2 OWNER` labels are in place. Pure composite
+  scene-command building, camera-space world-sprite quad submission,
+  world-sprite draw orchestration, and command-sized sprite texture building
+  now live outside the presenter. This is a good stopping point for the first
+  refactor pass before returning to renderer optimization.
 
 ## Recommended Near-Term Order
 
@@ -252,11 +278,13 @@ Still incomplete:
    rebuilding resident chunks.
 3. Continue shader ownership cleanup: brightness, fog, tone, and material terms
    should become uniforms or material data rather than baked geometry state.
-4. Pick one performance-facing quality setting and make it reduce real work,
+4. Smoke-test the refactor branch, migrate it back to the main worktree, and
+   clean the worktree so optimization work starts from a stable baseline.
+5. Pick one performance-facing quality setting and make it reduce real work,
    preferably entity distance, roof exclusion, or draw-distance/chunk culling.
-5. Decide whether the next shadow swing is GPU/incremental masks or whether
+6. Decide whether the next shadow swing is GPU/incremental masks or whether
    shadows should pause while renderer ownership and streaming mature.
-6. Add benchmark/capture routes before another large optimization pass.
+7. Add benchmark/capture routes before another large optimization pass.
 
 ## Open Long-Term Questions
 
