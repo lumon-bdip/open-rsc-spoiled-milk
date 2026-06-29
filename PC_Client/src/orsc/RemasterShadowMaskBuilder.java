@@ -106,8 +106,6 @@ final class RemasterShadowMaskBuilder {
 			return mix(hash, 0);
 		}
 		hash = mix(hash, chunkFrame.getChunkCount());
-		hash = mix(hash, chunkFrame.getTotalVertexCount());
-		hash = mix(hash, chunkFrame.getTotalIndexCount());
 		hash = mix(hash, chunkFrame.getTotalTriangleCount());
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
 			hash = mix(hash, chunk.getPlane());
@@ -119,13 +117,36 @@ final class RemasterShadowMaskBuilder {
 			hash = mix(hash, chunk.getTerrainTriangles());
 			hash = mix(hash, chunk.getWallTriangles());
 			hash = mix(hash, chunk.getRoofTriangles());
-			hash = mix(hash, chunk.getShadowCasterCount());
 			hash = mix(hash, chunk.hasRoofCoverageData() ? 1 : 0);
 			hash = mix(hash, chunk.getRoofCoveredTileCount());
-			hash = mix(hash, (int) chunk.getSignature());
-			hash = mix(hash, (int) (chunk.getSignature() >>> 32));
+			if (!chunk.isObjectChunk()) {
+				hash = mix(hash, (int) chunk.getSignature());
+				hash = mix(hash, (int) (chunk.getSignature() >>> 32));
+			}
+			hash = mix(hash, chunk.getShadowCasterCount());
+			for (int index = 0; index < chunk.getShadowCasterCount(); index++) {
+				hash = mixShadowRelevantCaster(hash, chunk.getShadowCaster(index));
+			}
 		}
 		return hash;
+	}
+
+	private static long mixShadowRelevantCaster(
+		long hash,
+		Renderer3DWorldChunkFrame.ShadowCaster caster) {
+		if (caster == null) {
+			return mix(hash, 0);
+		}
+		hash = mix(hash, caster.getModelKind().ordinal());
+		hash = mix(hash, signatureShadowCasterWorld(caster.getBaseX0()));
+		hash = mix(hash, signatureShadowCasterWorld(caster.getBaseY()));
+		hash = mix(hash, signatureShadowCasterWorld(caster.getBaseZ0()));
+		hash = mix(hash, signatureShadowCasterWorld(caster.getBaseX1()));
+		hash = mix(hash, signatureShadowCasterWorld(caster.getBaseZ1()));
+		hash = mix(hash, signatureShadowCasterSize(caster.getHeight()));
+		hash = mix(hash, signatureShadowCasterSize(caster.getWidth()));
+		hash = mix(hash, caster.getOpacity());
+		return mix(hash, caster.isOutdoorOnly() ? 1 : 0);
 	}
 
 	private long remasterTerrainShadowInputSignature(long worldSignature) {
@@ -409,6 +430,14 @@ final class RemasterShadowMaskBuilder {
 
 	static int signatureUnitFloat(float value) {
 		return Math.round(value * 1000.0f);
+	}
+
+	private static int signatureShadowCasterWorld(int value) {
+		return Math.round(value / 32.0f);
+	}
+
+	private static int signatureShadowCasterSize(int value) {
+		return Math.round(value / 32.0f);
 	}
 
 	private static int readInt(
