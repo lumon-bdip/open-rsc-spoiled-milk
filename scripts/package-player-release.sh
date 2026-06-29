@@ -173,18 +173,29 @@ for launcher in \
   "$PACKAGE_ASSETS/Play Spoiled Milk Windows.cmd"; do
   require_launcher_flag "$launcher" "-Xms512m"
   require_launcher_flag "$launcher" "-Xmx2g"
+  require_launcher_flag "$launcher" "-Dsun.java2d.opengl=true"
   for renderer_flag in \
     "-Dspoiledmilk.directFramebuffer=true" \
     "-Dspoiledmilk.openglPresenter=true" \
     "-Dspoiledmilk.openglInput=true" \
     "-Dspoiledmilk.openglPrimaryWindow=true" \
+    "-Dspoiledmilk.openglVsync=false" \
     "-Dspoiledmilk.renderer3DGeometryCapture=true" \
     "-Dspoiledmilk.openglWorldMesh=true" \
     "-Dspoiledmilk.openglWorldMeshTexturedVisible=true" \
     "-Dspoiledmilk.openglWorldMeshTexturedStaticVisible=true" \
     "-Dspoiledmilk.openglWorldStaticTextures=true" \
     "-Dspoiledmilk.openglWorldTexturedAlpha=1.0" \
-    "-Dspoiledmilk.openglWorldSpritesVisible=true"; do
+    "-Dspoiledmilk.openglWorldChunksTexturedVisible=true" \
+    "-Dspoiledmilk.openglWorldChunksReplacementComposite=true" \
+    "-Dspoiledmilk.openglWorldChunksTrustedReplacement=true" \
+    "-Dspoiledmilk.openglWorldChunksResidentObjects=true" \
+    "-Dspoiledmilk.openglWorldChunksSpatialCull=true" \
+    "-Dspoiledmilk.openglWorldChunkUploadBudgetMs=3.0" \
+    "-Dspoiledmilk.openglWorldChunksRemasterLightingShader=true" \
+    "-Dspoiledmilk.openglWorldSpritesVisible=true" \
+    "-Dspoiledmilk.skipLegacyWorldRaster=true" \
+    "-Dspoiledmilk.modernClientLoop=true"; do
     require_launcher_flag "$launcher" "$renderer_flag"
   done
 done
