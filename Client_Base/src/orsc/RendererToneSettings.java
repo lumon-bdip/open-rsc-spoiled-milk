@@ -55,9 +55,9 @@ final class RendererToneSettings {
 	enum Mode {
 		DAY("day", "@gre@Day", 1.0f, 1.0f, 1.0f, 0.0f),
 		CYCLE("cycle", "@cya@Cycle", 1.0f, 1.0f, 1.0f, 0.0f),
-		SUNRISE_AMBER("sunrise-amber", "@ora@Sunrise Amber", 1.16f, 0.93f, 0.74f, 0.42f),
+		SUNRISE_AMBER("sunrise-amber", "@ora@Sunrise Amber", 1.26f, 0.96f, 0.64f, 0.56f),
 		DAWN_GOLD("dawn-gold", "@yel@Dawn Gold", 1.20f, 0.96f, 0.62f, 0.46f),
-		ROSE_DUSK("rose-dusk", "@red@Rose Dusk", 1.16f, 0.78f, 0.86f, 0.38f),
+		ROSE_DUSK("rose-dusk", "@red@Rose Dusk", 1.26f, 0.70f, 0.84f, 0.52f),
 		COOL_NIGHT("cool-night", "@cya@Cool Night", 0.72f, 0.84f, 1.18f, 0.44f),
 		DEEP_BLUE("deep-blue", "@blu@Deep Blue", 0.62f, 0.76f, 1.24f, 0.50f);
 

@@ -45,8 +45,8 @@ final class RendererDayNightCycle {
 		if (cycleMillis < dawnEndMillis) {
 			float t = fraction(cycleMillis, 0L, dawnEndMillis);
 			return new Presentation(
-				morningTone(t),
-				transitionBrightness(),
+				applyTransitionDim(morningTone(t), t),
+				savedBrightness,
 				"dawn");
 		}
 		if (cycleMillis < dayEndMillis) {
@@ -55,17 +55,30 @@ final class RendererDayNightCycle {
 		if (cycleMillis < duskEndMillis) {
 			float t = fraction(cycleMillis, dayEndMillis, duskEndMillis);
 			return new Presentation(
-				eveningTone(t),
-				transitionBrightness(),
+				applyTransitionDim(eveningTone(t), t),
+				savedBrightness,
 				"dusk");
 		}
 		if (cycleMillis < nightCoolInEndMillis) {
-			return Presentation.fromMode(RendererToneSettings.Mode.COOL_NIGHT, savedBrightness, "night-cool");
+			float t = fraction(cycleMillis, duskEndMillis, nightCoolInEndMillis);
+			return new Presentation(
+				mix(
+					RendererToneSettings.Mode.COOL_NIGHT,
+					RendererToneSettings.Mode.DEEP_BLUE,
+					smoothstep(t)),
+				savedBrightness,
+				"night-cool-deep");
 		}
 		if (cycleMillis < nightDeepEndMillis) {
 			return Presentation.fromMode(RendererToneSettings.Mode.DEEP_BLUE, savedBrightness, "night-deep");
 		}
-		return Presentation.fromMode(RendererToneSettings.Mode.COOL_NIGHT, savedBrightness, "night-cool");
+		return new Presentation(
+			mix(
+				RendererToneSettings.Mode.DEEP_BLUE,
+				RendererToneSettings.Mode.COOL_NIGHT,
+				smoothstep(fraction(cycleMillis, nightDeepEndMillis, cycle.cycleMillis))),
+			savedBrightness,
+			"night-deep-cool");
 	}
 
 	static float currentBrightnessMultiplier() {
@@ -123,16 +136,44 @@ final class RendererDayNightCycle {
 		return value < 10L ? "0" + value : Long.toString(value);
 	}
 
-	private static float transitionBrightness() {
+	private static RendererToneSettings.ToneValues applyTransitionDim(
+		RendererToneSettings.ToneValues toneValues,
+		float phaseFraction) {
+		float dimFactor = transitionDimFactor(phaseFraction);
+		return new RendererToneSettings.ToneValues(
+			toneValues.redMultiplier * dimFactor,
+			toneValues.greenMultiplier * dimFactor,
+			toneValues.blueMultiplier * dimFactor,
+			toneValues.blend);
+	}
+
+	private static float transitionDimFactor(float phaseFraction) {
+		float savedBrightness = RendererBrightnessSettings.getMode().multiplier;
+		float dimmedBrightness;
 		switch (RendererBrightnessSettings.getMode()) {
 			case HIGH:
-				return RendererBrightnessSettings.Mode.MEDIUM.multiplier;
+				dimmedBrightness = RendererBrightnessSettings.Mode.MEDIUM.multiplier;
+				break;
 			case MEDIUM:
-				return RendererBrightnessSettings.Mode.LOW.multiplier;
+				dimmedBrightness = RendererBrightnessSettings.Mode.LOW.multiplier;
+				break;
 			case LOW:
 			default:
-				return 0.7f;
+				dimmedBrightness = 0.7f;
+				break;
 		}
+		if (savedBrightness <= 0.0f) {
+			return 1.0f;
+		}
+		float dimAmount;
+		if (phaseFraction < 0.2f) {
+			dimAmount = smoothstep(phaseFraction / 0.2f);
+		} else if (phaseFraction > 0.8f) {
+			dimAmount = 1.0f - smoothstep((phaseFraction - 0.8f) / 0.2f);
+		} else {
+			dimAmount = 1.0f;
+		}
+		return lerp(1.0f, dimmedBrightness / savedBrightness, dimAmount);
 	}
 
 	private static RendererToneSettings.ToneValues morningTone(float t) {
@@ -140,13 +181,13 @@ final class RendererDayNightCycle {
 			return mix(
 				RendererToneSettings.Mode.COOL_NIGHT,
 				RendererToneSettings.Mode.SUNRISE_AMBER,
-				t / 0.2f);
+				smoothstep(t / 0.2f));
 		}
 		if (t > 0.8f) {
 			return mix(
 				RendererToneSettings.Mode.SUNRISE_AMBER,
 				RendererToneSettings.Mode.DAY,
-				(t - 0.8f) / 0.2f);
+				smoothstep((t - 0.8f) / 0.2f));
 		}
 		return RendererToneSettings.Mode.SUNRISE_AMBER.toneValues();
 	}
@@ -156,13 +197,13 @@ final class RendererDayNightCycle {
 			return mix(
 				RendererToneSettings.Mode.DAY,
 				RendererToneSettings.Mode.ROSE_DUSK,
-				t / 0.2f);
+				smoothstep(t / 0.2f));
 		}
 		if (t > 0.8f) {
 			return mix(
 				RendererToneSettings.Mode.ROSE_DUSK,
 				RendererToneSettings.Mode.COOL_NIGHT,
-				(t - 0.8f) / 0.2f);
+				smoothstep((t - 0.8f) / 0.2f));
 		}
 		return RendererToneSettings.Mode.ROSE_DUSK.toneValues();
 	}
@@ -176,6 +217,15 @@ final class RendererDayNightCycle {
 
 	private static float fraction(long value, long start, long end) {
 		return clamp01((value - start) / (float) Math.max(1L, end - start));
+	}
+
+	private static float smoothstep(float value) {
+		float t = clamp01(value);
+		return t * t * (3.0f - 2.0f * t);
+	}
+
+	private static float lerp(float from, float to, float t) {
+		return from + (to - from) * clamp01(t);
 	}
 
 	private static float clamp01(float value) {

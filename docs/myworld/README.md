@@ -16,6 +16,7 @@ repository root [`README.md`](../../README.md).
 - [new-ideas-and-issues.md](new-ideas-and-issues.md): lightweight intake list for ideas and newly spotted issues before they become scoped work.
 - [pvm-population-and-cluster-plan.md](pvm-population-and-cluster-plan.md): implemented pre-release PvM population passes and remaining expansion decisions.
 - [terrain-expansion-plan.md](terrain-expansion-plan.md): staged Heroes' Guild basement and northern Wilderness terrain expansion plan, including isolated testing and map safety requirements.
+- [renderer-and-shader-roadmap.md](renderer-and-shader-roadmap.md): AI-facing current state and forward roadmap for renderer-v2, shaders, remaster lighting, shadows, and big-swing optimization work.
 - [renderer-v2-plan.md](renderer-v2-plan.md): active alpha-era client renderer rewrite plan, including the renderer ownership contract, remaster strategy, current OpenGL rollout baseline, legacy-derived terrain lighting, longer-term shader work, scaling, and rollout gates.
 - [remaster-lighting-and-shadow-plan.md](remaster-lighting-and-shadow-plan.md): focused forward plan for clean-slate directional remaster lighting, semantic shadow casters, indoor/outdoor classification, and clipping-aware terrain shadows.
 - [movement-pathing-release-plan.md](movement-pathing-release-plan.md): release-facing diagnosis and staged plan for walking smoothness, NPC roam batching, and proper obstacle pathfinding.

@@ -4,6 +4,10 @@ This document is the forward path for Spoiled Milk's remaster lighting work.
 It exists so future AI sessions can start from the accepted raw-material
 baseline instead of reopening old Classic-lighting and shadow-proof experiments.
 
+For the combined renderer and shader status map, start with
+[renderer-and-shader-roadmap.md](renderer-and-shader-roadmap.md). This mini plan
+remains the focused implementation ledger for remaster lighting and shadows.
+
 ## Current Baseline
 
 - The clean visual starting point is the resident chunk raw-material shader:
@@ -336,6 +340,21 @@ mode.
       `Medium` presents as `Low`, and `Low` should use one extra internal dim
       step below the saved `Low`. This must not mutate or display as a changed
       player setting; it is only the active day/night presentation multiplier.
+- [x] Ease dawn/dusk brightness into and out of that dimmed presentation rather
+      than stepping brightness down at the exact phase boundary. This keeps
+      dusk from looking like it gets dark before the rose/cool-night tones are
+      visible, and keeps dawn from snapping darker before the amber tone reads.
+      Implementation note: the runtime day/night cycle must keep
+      `currentBrightnessMultiplier()` stable during automatic time changes,
+      because renderer chunks bake/signature brightness. Temporary transition
+      dimming is applied through the tone RGB uniforms instead.
+- [x] Strengthen the first accepted `Sunrise Amber` and `Rose Dusk` values so
+      they are clearly visible during normal play instead of only reading as a
+      mild brightness shift.
+- [x] Cross-fade the night edge phases instead of hard switching filters:
+      dusk fades to `Cool Night`, `Cool Night` fades into `Deep Blue`, and the
+      end of night fades back to `Cool Night` before dawn. Color interpolation
+      uses an eased curve so phase handoffs do not flash black or visibly gap.
 - [x] Keep gameplay ownership separate from renderer settings. Settings may
       control visual richness later, but they should not decide whether world
       time exists.
@@ -344,24 +363,27 @@ mode.
 
 Goal: turn the proof into a usable remaster option.
 
-- Add softness controls or fixed soft edges only after hard-edged projection is
+- [ ] Add softness controls or fixed soft edges only after hard-edged projection is
   correct.
-- Add light debug presets only as development tools; production day/night
+- [x] Add light debug presets only as development tools; production day/night
   should come from server-owned world time.
-- Add per-asset shadow overrides for bad scenery cases.
-- Add a player-facing Remaster lighting option only after visual validation in
-  dense towns, forests, dungeons, and mixed indoor/outdoor buildings.
+- [ ] Add per-asset shadow overrides for bad scenery cases.
+- [x] Add a first player-facing Remaster lighting path after visual validation.
+  The live version is still alpha quality: terrain lighting, day/night tones,
+  and terrain-receiver shadows are usable, while full shadow/material polish is
+  still future work.
 
 ## Debug Tools Needed
 
-- Raw material baseline toggle.
-- Directional light vector display.
-- Caster outline overlay.
-- Receiver terrain overlay.
-- Indoor/outdoor classification overlay.
-- Shadow mask overlay before final material application.
-- Clipping boundary overlay.
-- Per-frame counts: casters, receivers, clipped spans, mask cache hits/misses.
+- [x] Raw material baseline toggle.
+- [x] Directional light vector display.
+- [x] Caster outline overlay.
+- [x] Receiver terrain overlay.
+- [x] Indoor/outdoor classification overlay.
+- [ ] Shadow mask overlay before final material application.
+- [ ] Clipping boundary overlay.
+- [x] Per-frame counts: casters, receivers, clipped spans, mask cache
+  hits/misses.
 
 ## Open Questions
 

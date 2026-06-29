@@ -12754,6 +12754,10 @@ public final class mudclient implements Runnable {
 			index = addSettingsSection(index, "Graphics");
 			index = addSettingsRow(index, "@whi@Preset - " + RendererProfileSettings.getMode().label, 59);
 			index = addSettingsRow(index, "@whi@Aspect Ratio - " + RenderSurfaceSettings.getAspectLabel(), 56);
+			String borderlessLabel = OpenGLWindowSettings.getMode() == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN
+				? "@gre@On"
+				: "@red@Off";
+			index = addSettingsRow(index, "@whi@Borderless - " + borderlessLabel, 63);
 			index = addSettingsRow(index, "@whi@Lighting - " + RendererLightingSettings.getMode().label, 61);
 			index = addSettingsRow(index, "@whi@Geometry - " + RendererGeometrySettings.getMode().label, 62);
 			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
@@ -13241,6 +13245,9 @@ public final class mudclient implements Runnable {
 		}
 		if (isOpenGLPrimaryWindow && settingIndex == 62 && this.mouseButtonClick == 1) {
 			cycleOpenGLGeometryMode();
+		}
+		if (isOpenGLPrimaryWindow && settingIndex == 63 && this.mouseButtonClick == 1) {
+			cycleOpenGLWindowMode();
 		}
 
 		// one or two mouse button(s) - byte index 1
@@ -14611,8 +14618,11 @@ public final class mudclient implements Runnable {
 	}
 
 	void cycleOpenGLWindowMode() {
-		OpenGLWindowSettings.cycleMode();
+		OpenGLWindowSettings.Mode mode = OpenGLWindowSettings.cycleMode();
+		RendererProfileSettings.markCustom();
 		saveOpenGLWindowSettings();
+		saveRendererProfileSettings();
+		System.out.println("[renderer-v2 opengl] OpenGL window mode: " + mode.id);
 	}
 
 	void toggleRendererDebugOverlay() {
@@ -14652,6 +14662,7 @@ public final class mudclient implements Runnable {
 	private void applyOpenGLRendererProfileMode(RendererProfileSettings.Mode mode) {
 		if (mode == RendererProfileSettings.Mode.CLASSIC) {
 			RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);
+			OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
 			RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);
 			RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
 			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
@@ -14660,6 +14671,7 @@ public final class mudclient implements Runnable {
 			applyRenderSurfaceResize();
 		} else if (mode == RendererProfileSettings.Mode.REMASTER) {
 			RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.WIDE);
+			OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
 			RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);
 			RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
 			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
@@ -14668,6 +14680,7 @@ public final class mudclient implements Runnable {
 			applyRenderSurfaceResize();
 		}
 		saveRenderSurfaceSettings();
+		saveOpenGLWindowSettings();
 		saveRendererBrightnessSettings();
 		saveRendererFogSettings();
 		saveRendererLightingSettings();

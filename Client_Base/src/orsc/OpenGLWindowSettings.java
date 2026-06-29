@@ -23,6 +23,11 @@ final class OpenGLWindowSettings {
 		return next;
 	}
 
+	static Mode setMode(Mode next) {
+		mode = next == null ? Mode.BORDERLESS_FULLSCREEN : next;
+		return mode;
+	}
+
 	static void loadFromClientSettings(Properties props) {
 		if (runtimeWindowModeOverride || props == null) {
 			return;
@@ -72,7 +77,7 @@ final class OpenGLWindowSettings {
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return WINDOWED;
+				return BORDERLESS_FULLSCREEN;
 			}
 
 			String normalized = value.trim().toLowerCase().replace('_', '-');

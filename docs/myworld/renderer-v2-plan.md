@@ -5,6 +5,10 @@ The working assumption is that this is the right time to make drastic
 under-the-hood changes if they remove old engine limits, improve visual
 stability, and make the client easier to work with.
 
+For the current AI-facing summary and future planning map, start with
+[renderer-and-shader-roadmap.md](renderer-and-shader-roadmap.md). This file is
+the detailed renderer implementation ledger and historical checklist.
+
 ## Baseline Decision
 
 Do not treat integer, bilinear, and bicubic scaling as the main problem.
@@ -312,6 +316,12 @@ framebuffer-replay behavior.
 The next large visual-quality step should be a shader-backed world renderer,
 but it should be built in two deliberate stages.
 
+Status note: the projected world shader, resident chunk parity shader,
+resident raw-material inspection shader, and resident remaster lighting shader
+now exist. The remaining shader roadmap is no longer about proving GLSL can
+draw the world; it is about moving visual ownership out of fixed-function and
+baked CPU geometry state into explicit shader/material inputs.
+
 1. **Parity shader**
    - Reproduce the current accepted look before adding new visual effects.
    - Move texture sampling, color-key alpha, flat resource-color shade ramps,
@@ -612,18 +622,19 @@ renderer-v2 layer:
 
 When the OpenGL-primary path is active, the in-game general options panel
 exposes player-facing renderer rows under `Graphics`: `Preset`, `Aspect Ratio`,
-`Lighting`, `Geometry`, `Fog`, and `Brightness`. The old `Video` section,
-free-form `Resolution` row, and manual `Tone` row are retired. `Aspect Ratio`
-is the source-framebuffer choice: `4:3` uses `800x600`, and `16:9` uses `960x540`.
+`Borderless`, `Lighting`, `Geometry`, `Fog`, and `Brightness`. The old `Video`
+section, free-form `Resolution` row, and manual `Tone` row are retired.
+`Aspect Ratio` is the source-framebuffer choice: `4:3` uses `800x600`, and
+`16:9` uses `960x540`.
 Wider field of view is handled by camera zoom rather than by exposing many
 framebuffer sizes. Camera tilt and extended zoom are now default-on baseline
 camera behavior rather than player-facing option rows; launch properties/env
 vars remain available only for diagnostics.
 `Preset` provides `Classic`, `Remaster`, and `Custom`. `Classic` applies `4:3`,
-Classic lighting, Smooth geometry, neutral Day tone, Fog On, and High
-brightness. `Remaster` applies `16:9`, Directional lighting, Smooth geometry,
-the server-synced day/night Cycle tone, Fog On, and High brightness. Manual edits to any
-bundled row mark the preset as `Custom`.
+Borderless On, Classic lighting, Smooth geometry, neutral Day tone, Fog On, and
+High brightness. `Remaster` applies `16:9`, Borderless On, Directional lighting,
+Smooth geometry, the server-synced day/night Cycle tone, Fog On, and High
+brightness. Manual edits to any bundled row mark the preset as `Custom`.
 Fresh installs default to `Remaster`; existing saved settings are migrated by
 aspect and retained as much as possible. `Geometry` offers Smooth, Faceted, and
 Wire proof modes. Tone is now an internal day/night presentation state instead
@@ -637,7 +648,20 @@ Brightness applies to OpenGL world geometry only and defaults to
 provide conservative step-downs for players who find the OpenGL world brighter
 than the legacy client. The day/night cycle temporarily dims dawn/dusk one step
 below the saved brightness without changing the player's stored brightness
-setting. `Fog` is persisted and participates in the
+setting, but the dimming is eased into and out of the dawn/dusk window so color
+tone and brightness move together instead of producing a hard dark snap.
+Automatic day/night presentation must not animate
+`RendererDayNightCycle.currentBrightnessMultiplier()` directly, because the
+world mesh and resident chunk paths bake/signature brightness; transition
+dimming belongs in tone RGB uniforms until brightness is fully shader-owned.
+`Sunrise Amber` and `Rose Dusk` are intentionally stronger than the first
+preview constants so those phases are visible during normal play. Night edge
+tones cross-fade between dusk, `Cool Night`, and `Deep Blue` instead of hard
+switching filters. `Borderless` toggles between decorated windowed OpenGL and
+borderless fullscreen. It defaults on for fresh/default settings and is
+reapplied by both Classic and Remaster presets, while testers can explicitly
+turn it off when investigating resize or window-manager issues. `Fog` is
+persisted and participates in the
 Classic/Custom preset state. It is intentionally binary after alpha testing:
 `On` uses the accepted 28-to-40-tile camera-depth fade and keeps the far endpoint
 as the scene/OpenGL projection cutoff, while `Off` removes the fog-light
@@ -750,8 +774,9 @@ they are not visual requirements for the baseline.
       modes.
 - [x] Retire OpenGL fit from the player-facing options menu; keep the old fit
       override only for non-primary mirror/debug testing.
-- [x] Add in-game options and `F7` cycling for windowed versus
-      borderless-fullscreen OpenGL primary mode.
+- [x] Add an in-game Graphics option for windowed versus borderless-fullscreen
+      OpenGL primary mode. The old quick function-key toggle was removed for
+      release-facing builds.
 - [x] Add in-game options and `F6` cycling for a renderer-v2 debug overlay.
 - [x] Forward OpenGL mouse wheel scroll into the existing zoom and scroll
       handlers.
@@ -1380,10 +1405,11 @@ they are not visual requirements for the baseline.
         and `outdoorOnly`. Begin with conservative heuristics for tall scenery,
         trees, fences, signs, windmill blades, and walls, then add explicit
         overrides for bad cases.
-  - [ ] Add an outdoor/indoor filter before enabling broad scenery shadows.
-        The first pass can be conservative, such as suppressing shadows when a
-        roof tile is above/near the source or when the object is on an indoor
-        plane; refine this later with explicit area/material classification.
+  - [x] Add a first-pass outdoor/indoor filter before enabling broad scenery
+        shadows. Roof coverage, cross-chunk lookup, roofless-interior flood
+        fill, and sunlight eligibility telemetry now suppress many interior
+        shadow artifacts. Explicit area/material classification remains a
+        later refinement.
   - [ ] Treat full shadow maps, per-pixel dynamic shadows, object-to-object
         shadow receiving, and point-light shadows as later remaster work after
         material/light ownership is cleaner.
@@ -1405,14 +1431,16 @@ they are not visual requirements for the baseline.
         edges, water/shore boundaries, bridge overlays, object footprint tiles,
         and any texture atlas sampling that bleeds the wrong material across a
         triangle edge.
-- [ ] Add renderer visual presets as setting bundles, not separate hard-coded
+- [x] Add renderer visual presets as setting bundles, not separate hard-coded
       engines. Initial player-facing presets should be `Classic`, `Remaster`,
       and `Custom`: Classic selects the accepted OpenGL Classic renderer/shader,
       legacy-like brightness, and conservative fog; Remaster selects the newer
       shader/material/fog defaults once validated; changing any bundled setting
       such as renderer type, shader style, brightness, fog strength, draw
       distance, or geometric/triangle visualization switches the active preset
-      to Custom while preserving the edited values.
+      to Custom while preserving the edited values. The first player-facing
+      preset pass is live with `Classic`, `Remaster`, and `Custom`; future
+      profiles such as `High Performance` remain separate work.
 - [ ] Replace fixed-function OpenGL color arrays with explicit shader
       attributes for position, UV, material id, model kind, alpha mode, and
       legacy light/fog.
@@ -2058,10 +2086,10 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
       testing controls are grouped for release-facing use without changing the
       existing click IDs or settings persistence.
 - [x] Collapse the OpenGL-primary player-facing render options to
-      `Preset`, `Aspect Ratio`, `Lighting`, `Geometry`, `Fog`, `Brightness`,
-      and `Font`, with the rendering rows under `Graphics` and the font under
-      `Interface`. The manual `Tone` row was retired after server-owned
-      day/night time landed.
+      `Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`, `Fog`,
+      `Brightness`, and `Font`, with the rendering rows under `Graphics` and
+      the font under `Interface`. The manual `Tone` row was retired after
+      server-owned day/night time landed.
 - [x] Remove release/default quick function-key toggles except `F6` renderer
       debug overlay. Resolution, font, scaling, and window-mode changes should
       go through options or explicit runtime launch configuration.
