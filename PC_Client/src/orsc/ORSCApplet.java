@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.ByteArrayInputStream;
+import java.lang.management.ManagementFactory;
 
 import static orsc.Config.S_ZOOM_VIEW_TOGGLE;
 
@@ -30,6 +31,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	private static final boolean DIRECT_FRAMEBUFFER_ENABLED =
 		readBoolean(DIRECT_FRAMEBUFFER_PROPERTY, DIRECT_FRAMEBUFFER_ENV);
 	private static final int MESSAGE_WHEEL_SCROLL_AREA_HEIGHT = 75;
+	private static final CpuUsageSampler CPU_USAGE_SAMPLER = new CpuUsageSampler();
 	public static int globalLoadingPercent = 0;
 	public static String globalLoadingState = "";
 	private static mudclient mudclient;
@@ -85,6 +87,64 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 	private static int getClientMouseY(MouseEvent e) {
 		return e.getY() - mudclient.screenOffsetY;
+	}
+
+	private static final class CpuUsageSampler {
+		private static final long SAMPLE_INTERVAL_NANOS = 500_000_000L;
+
+		private final com.sun.management.OperatingSystemMXBean operatingSystemBean;
+		private long lastWallNanos;
+		private long lastProcessCpuNanos;
+		private String lastProcessCpuPercent = "n/a";
+
+		private CpuUsageSampler() {
+			java.lang.management.OperatingSystemMXBean bean = ManagementFactory.getOperatingSystemMXBean();
+			if (bean instanceof com.sun.management.OperatingSystemMXBean) {
+				this.operatingSystemBean = (com.sun.management.OperatingSystemMXBean) bean;
+				this.lastWallNanos = System.nanoTime();
+				this.lastProcessCpuNanos = Math.max(0L, this.operatingSystemBean.getProcessCpuTime());
+			} else {
+				this.operatingSystemBean = null;
+				this.lastWallNanos = 0L;
+				this.lastProcessCpuNanos = 0L;
+			}
+		}
+
+		private synchronized String sampleProcessCpuPercent() {
+			if (operatingSystemBean == null) {
+				return "n/a";
+			}
+
+			long now = System.nanoTime();
+			if (now - lastWallNanos < SAMPLE_INTERVAL_NANOS) {
+				return lastProcessCpuPercent;
+			}
+
+			long processCpuNanos = operatingSystemBean.getProcessCpuTime();
+			if (processCpuNanos < 0L) {
+				lastProcessCpuPercent = "n/a";
+				lastWallNanos = now;
+				return lastProcessCpuPercent;
+			}
+
+			long wallDelta = now - lastWallNanos;
+			long cpuDelta = processCpuNanos - lastProcessCpuNanos;
+			if (wallDelta > 0L && cpuDelta >= 0L) {
+				lastProcessCpuPercent = formatPercent((cpuDelta * 100.0D) / wallDelta);
+			}
+			lastWallNanos = now;
+			lastProcessCpuNanos = processCpuNanos;
+			return lastProcessCpuPercent;
+		}
+
+		private static String formatPercent(double value) {
+			if (Double.isNaN(value) || Double.isInfinite(value) || value < 0.0D) {
+				return "n/a";
+			}
+
+			int rounded = (int) Math.round(Math.min(value, 9999.9D));
+			return Integer.toString(rounded) + "%";
+		}
 	}
 
 	void addMouseClick(int button, int x, int y) {
@@ -831,12 +891,15 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 	private String[] overlayLines(BufferedImage frameImage, RenderTelemetry.Snapshot telemetry) {
 		boolean openGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
+		String cpuUsage = CPU_USAGE_SAMPLER.sampleProcessCpuPercent();
 		String rendererLine = openGLPrimaryWindow
 			? "renderer " + RendererProfileSettings.getMode().id
-				+ " | resolution " + RenderSurfaceSettings.getMode().id
+				+ " | aspect " + RenderSurfaceSettings.getMode().id
 				+ " | fps " + mudclient.getCurrentFPS()
+				+ " | proc cpu " + cpuUsage
 			: "scale " + mudclient.renderingScalar + " " + mudclient.scalingType
-				+ " | fps " + mudclient.getCurrentFPS();
+				+ " | fps " + mudclient.getCurrentFPS()
+				+ " | proc cpu " + cpuUsage;
 		String surfaceLine = "surface " + frameImage.getWidth() + "x" + frameImage.getHeight()
 			+ " | fit " + (openGLPrimaryWindow
 				? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT.id
@@ -845,7 +908,9 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		String graphicsLine = "lighting " + RendererLightingSettings.getMode().id
 			+ " | geometry " + RendererGeometrySettings.getMode().id
 			+ " | fog " + RendererFogSettings.getMode().id
-			+ " | brightness " + RendererBrightnessSettings.getMode().id;
+			+ " | brightness " + RendererBrightnessSettings.getMode().id
+			+ " | tone " + RendererDayNightCycle.debugSummary();
+		String remasterLightLine = "remaster light " + RendererRemasterLightSettings.debugSummary();
 		if (RendererDebugSettings.getMode() == RendererDebugSettings.Mode.SIMPLE) {
 			return new String[] {
 				"Renderer v2 Perf HUD",
@@ -860,6 +925,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			rendererLine,
 			surfaceLine,
 			graphicsLine,
+			remasterLightLine,
 			telemetry.enabled
 				? "frame avg/max " + telemetry.frameAverageMs + "/" + telemetry.frameMaxMs
 					+ "ms | scene " + telemetry.sceneAverageMs
@@ -929,6 +995,39 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ " | batches t/w/r " + telemetry.openGLResidentChunkDrawableTerrainBatchAverage
 					+ "/" + telemetry.openGLResidentChunkDrawableWallBatchAverage
 					+ "/" + telemetry.openGLResidentChunkDrawableRoofBatchAverage
+				: "",
+			telemetry.enabled
+				? "shadow inv recv c/t " + telemetry.openGLRemasterShadowReceiverChunkAverage
+					+ "/" + telemetry.openGLRemasterShadowReceiverTriangleAverage
+					+ " | casters all/w/go/wo/out/clip "
+					+ telemetry.openGLRemasterShadowCasterAverage
+					+ "/" + telemetry.openGLRemasterShadowWallCasterAverage
+					+ "/" + telemetry.openGLRemasterShadowGameObjectCasterAverage
+					+ "/" + telemetry.openGLRemasterShadowWallObjectCasterAverage
+					+ "/" + telemetry.openGLRemasterShadowOutdoorOnlyCasterAverage
+					+ "/" + telemetry.openGLRemasterShadowClippingCandidateAverage
+				: "",
+			telemetry.enabled
+				? "shadow class recv in/out/unk "
+					+ telemetry.openGLRemasterShadowRoofedReceiverAverage
+					+ "/" + telemetry.openGLRemasterShadowOutdoorReceiverAverage
+					+ "/" + telemetry.openGLRemasterShadowUnknownReceiverAverage
+					+ " | casters in/out/unk "
+					+ telemetry.openGLRemasterShadowRoofedCasterAverage
+					+ "/" + telemetry.openGLRemasterShadowOutdoorCasterAverage
+					+ "/" + telemetry.openGLRemasterShadowUnknownCasterAverage
+				: "",
+			telemetry.enabled
+				? "shadow sunlight cast/supIn/supUnk "
+					+ telemetry.openGLRemasterShadowSunlightEligibleCasterAverage
+					+ "/" + telemetry.openGLRemasterShadowSunlightSuppressedRoofedCasterAverage
+					+ "/" + telemetry.openGLRemasterShadowSunlightSuppressedUnknownCasterAverage
+				: "",
+			telemetry.enabled
+				? "shadow mask size/pix " + telemetry.openGLRemasterShadowMaskSizeAverage
+					+ " | build/upload " + telemetry.openGLRemasterShadowMaskTimingAverageMs + "ms"
+					+ " | hit/rebuild/up/skip " + telemetry.openGLRemasterShadowMaskCacheAverage
+					+ " | caster strip/soft " + telemetry.openGLRemasterShadowMaskCasterAverage
 				: "",
 			telemetry.enabled
 				? "mesh draw tri/occ/b/calls " + telemetry.openGLWorldMeshDrawTriangleAverage

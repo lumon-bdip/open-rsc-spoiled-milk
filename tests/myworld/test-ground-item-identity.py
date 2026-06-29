@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 GROUND_ITEM = ROOT / "server/src/com/openrsc/server/model/entity/GroundItem.java"
 REGION = ROOT / "server/src/com/openrsc/server/model/world/region/Region.java"
 GROUND_ITEM_TAKE = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/GroundItemTake.java"
+PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 
 
 def fail(message: str) -> None:
@@ -26,6 +27,7 @@ def main() -> None:
     ground_item = GROUND_ITEM.read_text(encoding="utf-8")
     region = REGION.read_text(encoding="utf-8")
     take = GROUND_ITEM_TAKE.read_text(encoding="utf-8")
+    player = PLAYER.read_text(encoding="utf-8")
 
     forbid(ground_item, "boolean equals(final Entity", "GroundItem value-based Entity equality overload")
     forbid(ground_item, "boolean equals(Object", "GroundItem value-based Object equality override")
@@ -35,7 +37,11 @@ def main() -> None:
     require(region, ".filter(item -> id == item.getID())", "explicit id lookup for client pickup packets")
     require(take, "final GroundItem item = player.getViewArea().getVisibleGroundItem(itemId, location, player);",
             "pickup captures the specific visible ground item")
-    require(take, "item == null || item.isRemoved()", "pickup rechecks captured ground item")
+    require(take, "getPlayer().canTakeVisibleGroundItem(item)", "pickup rechecks captured ground item")
+    require(player, "item == null || item.isInvisibleTo(this)", "shared pickup visibility validation")
+    require(player, "checkPlayerActionState && (isBusy() || isRanging())", "shared pickup action-state validation")
+    require(player, "item.isRemoved() || getRegion().getItem(item.getID(), item.getLocation(), this) == null",
+            "shared pickup removal validation")
 
     print("PASS: ground items keep object identity while lookups remain explicit")
 

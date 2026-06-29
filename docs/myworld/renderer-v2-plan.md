@@ -476,11 +476,11 @@ renderer-v2 layer:
   - Hides the Swing client window and uses the OpenGL window as the only
     visible client window. This implies the OpenGL input bridge and should be
     used for field testing so telemetry reflects a single visible client.
-- `SPOILED_MILK_RENDER_SURFACE_MODE=512x346|640x480|800x600|960x540|1024x576|1280x720|1920x1080`
-  - Selects the actual source framebuffer size. This changes the scene
-    projection and visible world area before final scaling. `1920x1080` is
-    available in the normal in-game Resolution cycle again for 1080p FPS field
-    testing.
+- `SPOILED_MILK_RENDER_SURFACE_MODE=4:3|800x600|16:9|960x540`
+  - Selects the player-facing aspect/source framebuffer. The in-game option is
+    `Graphics > Aspect Ratio`, where `4:3` maps to `800x600` and `16:9` maps to
+    `960x540`. Older saved or runtime values such as `512x346`, `1280x720`, and
+    `1920x1080` are migrated by aspect to one of those two active modes.
 - `SPOILED_MILK_OPENGL_SCALE_MODE=aspect-fit|integer-fit|stretch`
   - Legacy/debug fit-policy override for non-primary OpenGL mirror testing.
     OpenGL-primary ignores this setting and always uses automatic aspect-fit
@@ -611,18 +611,33 @@ renderer-v2 layer:
     after-frame sprite overlay replay.
 
 When the OpenGL-primary path is active, the in-game general options panel
-exposes six player-facing renderer rows: `Resolution`, `Renderer`, `Geometry`,
-`Brightness`, `Fog`, and `Font`. The selected resolution changes the actual source
-framebuffer and visible world area; presentation into the window uses automatic
-aspect-fit bars. `Renderer` currently exposes the official `Classic` visual
-profile as the saved baseline, giving later shader/remaster profiles a stable
-options home. Release/default lighting is locked to Classic. Directional and
-Toon remain runtime-only experimental modes for future remaster work, but they
-are not saved from normal client settings and are not exposed in the options
-menu. `Geometry` offers Smooth, Faceted, and Wire proof modes. Brightness applies to OpenGL world geometry only and defaults to
+exposes player-facing renderer rows under `Graphics`: `Preset`, `Aspect Ratio`,
+`Lighting`, `Geometry`, `Fog`, and `Brightness`. The old `Video` section,
+free-form `Resolution` row, and manual `Tone` row are retired. `Aspect Ratio`
+is the source-framebuffer choice: `4:3` uses `800x600`, and `16:9` uses `960x540`.
+Wider field of view is handled by camera zoom rather than by exposing many
+framebuffer sizes. Camera tilt and extended zoom are now default-on baseline
+camera behavior rather than player-facing option rows; launch properties/env
+vars remain available only for diagnostics.
+`Preset` provides `Classic`, `Remaster`, and `Custom`. `Classic` applies `4:3`,
+Classic lighting, Smooth geometry, neutral Day tone, Fog On, and High
+brightness. `Remaster` applies `16:9`, Directional lighting, Smooth geometry,
+the server-synced day/night Cycle tone, Fog On, and High brightness. Manual edits to any
+bundled row mark the preset as `Custom`.
+Fresh installs default to `Remaster`; existing saved settings are migrated by
+aspect and retained as much as possible. `Geometry` offers Smooth, Faceted, and
+Wire proof modes. Tone is now an internal day/night presentation state instead
+of a player option. The accepted first target is `Sunrise Amber` for dawn,
+`Rose Dusk` for dusk, `Cool Night` for the brief night edges, and `Deep Blue`
+for most of night. The cycle consumes the server-owned 60-minute world clock
+when connected to a custom server and locally interpolates between sync packets;
+before a sync arrives it falls back to a local 60-minute preview clock.
+Brightness applies to OpenGL world geometry only and defaults to
 `High`, which preserves the current accepted lighting. `Medium` and `Low`
 provide conservative step-downs for players who find the OpenGL world brighter
-than the legacy client. `Fog` is persisted and participates in the
+than the legacy client. The day/night cycle temporarily dims dawn/dusk one step
+below the saved brightness without changing the player's stored brightness
+setting. `Fog` is persisted and participates in the
 Classic/Custom preset state. It is intentionally binary after alpha testing:
 `On` uses the accepted 28-to-40-tile camera-depth fade and keeps the far endpoint
 as the scene/OpenGL projection cutoff, while `Off` removes the fog-light
@@ -645,7 +660,7 @@ more readable at 1280x720 and fullscreen desktop presentation without making
 the main UI overflow. `F6`
 still toggles the renderer debug overlay for development, but release/default
 clients no longer expose quick function-key toggles for window mode,
-resolution, font, scaling mode, or scale size. Those settings must be changed
+aspect ratio, font, scaling mode, or scale size. Those settings must be changed
 through the options menu or explicit runtime launch configuration. The legacy
 software-presenter scaling controls and integer/bilinear/bicubic labels remain
 available only outside OpenGL-primary fallback presentation.
@@ -1278,16 +1293,30 @@ they are not visual requirements for the baseline.
       Deeper dynamic lights, object light sources, and shadow ownership remain
       future shader/material work.
 - [ ] Add a staged remaster shadow system for directional lighting.
-  - [x] Replace the transparent overlay proof with a cached terrain shadow
-        mask. The current experiment still uses
-        `SPOILED_MILK_OPENGL_WORLD_CHUNK_SHADOW_PROOF=true`, but the flag now
-        bakes a per-terrain-triangle shadow factor during resident chunk upload
-        instead of drawing a separate blended shadow layer. The mask is derived
-        from the frame-wide semantic wall/scenery caster list and folded into
-        the terrain vertex light/texture-light data, so shadows reuse resident
-        chunk caching, avoid per-frame shadow draw calls, and cannot hover
-        above terrain as alpha geometry. This path is currently gated to the
-        Directional lighting test mode only; Toon is deferred.
+  - Forward work should follow
+        [`remaster-lighting-and-shadow-plan.md`](remaster-lighting-and-shadow-plan.md).
+        The accepted starting point is the raw-material resident chunk shader,
+        then movable directional light, semantic caster/receiver inventory,
+        indoor/outdoor filtering, and clipping-aware terrain shadows.
+  - [ ] Restart the next Directional lighting attempt from a clean slate. Do
+        not extend the parked proof by adding more light sources, caster
+        exceptions, or diagonal-wall tweaks on top of the current behavior.
+        First audit and remove or disable every remaster-side light source,
+        shadow caster, shadow mask, shadow payload, and shadow-causing fallback
+        that can influence Directional mode. Classic may keep its nostalgic
+        legacy directional shade bands, including occasional diagonal-wall odd
+        shadows, because Classic currently works visually for the original
+        look. Remaster lighting should be rebuilt for the OpenGL/resident-chunk
+        renderer from first principles, with an explicit movable light source
+        whose terrain, wall, and scenery shadows adjust predictably as the
+        source moves.
+  - [x] Promote the accepted world-space terrain shadow mask into the normal
+        Directional lighting path. `SPOILED_MILK_REMASTER_TERRAIN_SHADOW_MASK`
+        can force it on/off for diagnostics, and the old
+        `SPOILED_MILK_REMASTER_TERRAIN_SHADOW_MASK_DEBUG` name remains a
+        compatibility alias. The legacy
+        `SPOILED_MILK_OPENGL_WORLD_CHUNK_SHADOW_PROOF` proof remains parked and
+        should not be treated as the player-facing shadow path.
   - [x] Park the triangle-derived overlay shadow proof for release. Visual
         testing confirmed the first receiver-triangle pass made shadows
         faceted, the terrain-sampled segmented pass produced swirled/boxy
@@ -1696,6 +1725,33 @@ they are not visual requirements for the baseline.
               material color, texture sampling, slope diffuse, object/wall
               shadow terms, global brightness, and future HD-remaster polish
               controls.
+          - [x] Append shader-ready resident chunk vertex inputs to the
+                existing fixed-function VBO layout without changing the active
+                draw path: effective legacy light, base legacy light, raw
+                material RGB, normalized vertex normal, and model-kind id.
+                The fixed-function offsets stay first for parity, while the
+                appended fields give the next chunk shader pass the same owned
+                data contract already proven on the projected mesh shader path.
+          - [x] Add the resident chunk parity shader opt-in behind
+                `SPOILED_MILK_OPENGL_WORLD_CHUNKS_TEXTURED_SHADER=true` /
+                `-Dspoiledmilk.openglWorldChunksTexturedShader=true`.
+                This shader consumes the already-baked resident material color
+                and texture-light attributes plus explicit world matrices and
+                fog values. It is for shader-readiness validation only: do not
+                port or extend the projected mesh shader's legacy light-band
+                formulas here. Future remaster lighting should ignore the
+                baked legacy-light attributes and instead use raw material
+                color, normals, model kind, and new clean-slate light/shadow
+                inputs.
+          - [x] Add the raw-material resident chunk inspection opt-in behind
+                `SPOILED_MILK_OPENGL_WORLD_CHUNKS_RAW_MATERIAL_SHADER=true` /
+                `-Dspoiledmilk.openglWorldChunksRawMaterialShader=true`. This
+                mode still draws through GLSL, but ignores baked resident
+                texture-light and shaded material-color data: textured faces
+                sample the texture directly, flat fallback faces use raw
+                material RGB, and shader fog is disabled. Use it as the
+                clean-slate visual baseline before building remaster lighting,
+                not as an intended player-facing renderer.
         - [ ] Add selectable visual modes once Classic parity is stable:
               `Classic` for legacy resource textures/shade bands, then
               experimental/remaster modes for alternate shadow softness,
@@ -1982,42 +2038,42 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
 - [ ] Redesign the options menu into user-friendly renderer, display, audio,
       controls, and gameplay groups instead of exposing raw debug rows.
 - [x] Add first-pass section headers to the current settings list so renderer
-      testing controls are grouped as `Video`, `Graphics`, and `Interface`
-      without changing the existing click IDs or settings persistence.
+      testing controls are grouped for release-facing use without changing the
+      existing click IDs or settings persistence.
 - [x] Collapse the OpenGL-primary player-facing render options to
-      `Resolution`, `Renderer`, `Geometry`, `Brightness`, `Fog`, and `Font`
-      rows for release. Alternate lighting is runtime-only until a remaster
-      lighting mode clearly beats Classic.
+      `Preset`, `Aspect Ratio`, `Lighting`, `Geometry`, `Fog`, `Brightness`,
+      and `Font`, with the rendering rows under `Graphics` and the font under
+      `Interface`. The manual `Tone` row was retired after server-owned
+      day/night time landed.
 - [x] Remove release/default quick function-key toggles except `F6` renderer
       debug overlay. Resolution, font, scaling, and window-mode changes should
       go through options or explicit runtime launch configuration.
 - [x] Retire the legacy Interface fog toggle and detach its retained protocol
       state from rendering so `Graphics > Fog` has sole ownership.
-- [x] Add the official `Classic` renderer profile as the first saved visual
-      profile option, even before alternate/remaster profiles are available.
-- [ ] Replace the single renderer profile selector with a preset-plus-overrides
-      model. Presets should apply a known bundle of renderer type, shader style,
-      brightness, fog strength, draw-distance/quality defaults, and optional
-      diagnostic visualizers such as the geometric triangle view. Manual changes
-      to any bundled value should switch the displayed preset to `Custom`
-      without discarding the edited values.
-- [ ] Add `Remaster` as the second visual preset once shader/material/fog
-      defaults have been visually accepted across towns, forests, water,
-      interiors, roofs, mines, combat, and crowded entity scenes.
+- [x] Add the official `Classic` and `Remaster` renderer presets plus `Custom`.
+      Presets apply known bundles, and manual changes to bundled values switch
+      the displayed preset to `Custom` without discarding the edited values.
+- [x] Add a temporary client-side `Graphics > Tone` preview row for day/night
+      palette testing, then retire the row once the server-owned clock landed.
+      The internal cycle now consumes the server-owned 60-minute world clock
+      over the custom `WORLD_TIME` packet and locally interpolates between
+      syncs. It falls back to a local 60-minute preview clock until the first
+      sync arrives.
 - [ ] Add `High Performance` as a second saved renderer profile after Phase 7
       identifies the exact settings that recover FPS without hiding correctness
       problems behind reduced visual coverage.
 - [x] Separate alpha/debug-only renderer switches from settings intended for
       normal players.
-- [ ] Add user-friendly display labels around resolution and future quality
-      settings after the old options menu is redesigned.
+- [x] Replace the player-facing resolution list with `Graphics > Aspect Ratio`.
+      Active player choices are `4:3` (`800x600`) and `16:9` (`960x540`);
+      higher old values are migrated by aspect instead of remaining visible
+      player choices.
 - [ ] Replace integer/bilinear/bicubic terminology with OpenGL-native quality
       controls only if field testing shows a player-facing filter option is
       still needed.
-- [x] Add 1920x1080 as an experimental render-surface size for field testing.
-      The mode is available through the normal in-game Resolution cycle and
-      through `SPOILED_MILK_RENDER_SURFACE_MODE=1920x1080`, `1080p`,
-      `full-hd`, or `fhd` for direct launches.
+- [x] Retire 720p/1080p from the normal in-game surface cycle after zoom testing
+      showed aspect ratio and UI readability are the practical player-facing
+      choices. Older 720p/1080p settings now migrate to `16:9`/`960x540`.
 - [ ] Expand supported render-surface sizes in measured steps and record where
       sprites, UI panels, minimap, or world projection start to break.
 - [ ] Stress test mouse-wheel zoom beyond the old limits and document the

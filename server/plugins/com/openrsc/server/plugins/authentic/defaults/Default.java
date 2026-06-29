@@ -211,7 +211,7 @@ public class Default implements DefaultHandler,
 	@Override
 	public void onTakeObj(Player player, GroundItem i) {
 		player.setLastTileClicked(null);
-		player.groundItemTake(i);
+		player.groundItemTakeMatching(i);
 	}
 
 	@Override

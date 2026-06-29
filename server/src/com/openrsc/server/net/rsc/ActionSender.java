@@ -21,6 +21,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
+import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.net.rsc.generators.PayloadGenerator;
@@ -1967,6 +1968,17 @@ public class ActionSender {
 		struct.planeFloor = Formulae.getHeight(player.getLocation());
 		struct.distanceBetweenFloors = 944;
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_WORLD_INFO, struct, player);
+	}
+
+	public static void sendWorldTime(Player player) {
+		if (!player.isUsingCustomClient()) {
+			return;
+		}
+		WorldDayNightClock clock = player.getWorld().getServer().getWorldDayNightClock();
+		WorldTimeStruct struct = new WorldTimeStruct();
+		struct.cycleMillis = clock.getCycleMillis();
+		struct.currentCycleMillis = clock.getCurrentCycleMillis();
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_WORLD_TIME, struct, player);
 	}
 
 	/**

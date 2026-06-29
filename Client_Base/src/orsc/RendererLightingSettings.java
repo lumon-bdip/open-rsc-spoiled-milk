@@ -35,12 +35,22 @@ final class RendererLightingSettings {
 			logRuntimeOverride();
 			return;
 		}
-		mode = Mode.CLASSIC;
+		if (props == null) {
+			return;
+		}
+		String configuredMode = props.getProperty(LIGHTING_PROPERTY_KEY);
+		if (configuredMode != null && !configuredMode.trim().isEmpty()) {
+			mode = Mode.from(configuredMode);
+		} else if (RendererProfileSettings.getMode() == RendererProfileSettings.Mode.CLASSIC) {
+			mode = Mode.CLASSIC;
+		} else {
+			mode = Mode.DIRECTIONAL;
+		}
 	}
 
 	static void saveToClientSettings(Properties props) {
 		if (props != null) {
-			props.setProperty(LIGHTING_PROPERTY_KEY, Mode.CLASSIC.id);
+			props.setProperty(LIGHTING_PROPERTY_KEY, mode.id);
 		}
 	}
 
@@ -66,8 +76,7 @@ final class RendererLightingSettings {
 
 	enum Mode {
 		CLASSIC("classic", "@gre@Classic"),
-		DIRECTIONAL("directional", "@yel@Directional"),
-		TOON("toon", "@cya@Toon");
+		DIRECTIONAL("directional", "@yel@Directional");
 
 		final String id;
 		final String label;
@@ -84,7 +93,7 @@ final class RendererLightingSettings {
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return CLASSIC;
+				return DIRECTIONAL;
 			}
 
 			String normalized = value.trim().toLowerCase().replace('_', '-');

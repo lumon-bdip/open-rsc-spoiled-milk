@@ -8,4 +8,5 @@ public class TargetPositionStruct extends AbstractStruct<OpcodeIn> {
 
 	public Point coordinate;
 	public int itemId;
+	public int takeCount = 1;
 }

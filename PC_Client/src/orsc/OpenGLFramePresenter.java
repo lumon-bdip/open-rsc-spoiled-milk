@@ -96,6 +96,33 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private static final boolean WORLD_CHUNKS_TEXTURED_VISIBLE =
 		WORLD_MESH_ENABLED
 			&& readBoolean(WORLD_CHUNKS_TEXTURED_VISIBLE_PROPERTY, WORLD_CHUNKS_TEXTURED_VISIBLE_ENV);
+	private static final String WORLD_CHUNKS_TEXTURED_SHADER_PROPERTY =
+		"spoiledmilk.openglWorldChunksTexturedShader";
+	private static final String WORLD_CHUNKS_TEXTURED_SHADER_ENV =
+		"SPOILED_MILK_OPENGL_WORLD_CHUNKS_TEXTURED_SHADER";
+	private static final String WORLD_CHUNKS_RAW_MATERIAL_SHADER_PROPERTY =
+		"spoiledmilk.openglWorldChunksRawMaterialShader";
+	private static final String WORLD_CHUNKS_RAW_MATERIAL_SHADER_ENV =
+		"SPOILED_MILK_OPENGL_WORLD_CHUNKS_RAW_MATERIAL_SHADER";
+	private static final String WORLD_CHUNKS_REMASTER_LIGHTING_SHADER_PROPERTY =
+		"spoiledmilk.openglWorldChunksRemasterLightingShader";
+	private static final String WORLD_CHUNKS_REMASTER_LIGHTING_SHADER_ENV =
+		"SPOILED_MILK_OPENGL_WORLD_CHUNKS_REMASTER_LIGHTING_SHADER";
+	private static final boolean WORLD_CHUNKS_RAW_MATERIAL_SHADER =
+		WORLD_CHUNKS_TEXTURED_VISIBLE
+			&& readBoolean(WORLD_CHUNKS_RAW_MATERIAL_SHADER_PROPERTY, WORLD_CHUNKS_RAW_MATERIAL_SHADER_ENV, false);
+	private static final boolean WORLD_CHUNKS_REMASTER_LIGHTING_SHADER =
+		WORLD_CHUNKS_TEXTURED_VISIBLE
+			&& !WORLD_CHUNKS_RAW_MATERIAL_SHADER
+			&& readBoolean(
+				WORLD_CHUNKS_REMASTER_LIGHTING_SHADER_PROPERTY,
+				WORLD_CHUNKS_REMASTER_LIGHTING_SHADER_ENV,
+				true);
+	private static final boolean WORLD_CHUNKS_TEXTURED_SHADER =
+		WORLD_CHUNKS_TEXTURED_VISIBLE
+			&& (WORLD_CHUNKS_RAW_MATERIAL_SHADER
+				|| WORLD_CHUNKS_REMASTER_LIGHTING_SHADER
+				|| readBoolean(WORLD_CHUNKS_TEXTURED_SHADER_PROPERTY, WORLD_CHUNKS_TEXTURED_SHADER_ENV, false));
 	private static final String WORLD_CHUNKS_REPLACEMENT_COMPOSITE_PROPERTY =
 		"spoiledmilk.openglWorldChunksReplacementComposite";
 	private static final String WORLD_CHUNKS_REPLACEMENT_COMPOSITE_ENV =
@@ -124,6 +151,33 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private static final boolean WORLD_CHUNKS_SHADOW_PROOF =
 		WORLD_CHUNKS_REPLACEMENT_COMPOSITE
 			&& readBoolean(WORLD_CHUNKS_SHADOW_PROOF_PROPERTY, WORLD_CHUNKS_SHADOW_PROOF_ENV, false);
+	private static final String REMASTER_SHADOW_INVENTORY_DEBUG_PROPERTY =
+		"spoiledmilk.remasterShadowInventoryDebug";
+	private static final String REMASTER_SHADOW_INVENTORY_DEBUG_ENV =
+		"SPOILED_MILK_REMASTER_SHADOW_INVENTORY_DEBUG";
+	private static final boolean REMASTER_SHADOW_INVENTORY_DEBUG =
+		WORLD_CHUNKS_REPLACEMENT_COMPOSITE
+			&& readBoolean(
+				REMASTER_SHADOW_INVENTORY_DEBUG_PROPERTY,
+				REMASTER_SHADOW_INVENTORY_DEBUG_ENV,
+				false);
+	private static final String REMASTER_TERRAIN_SHADOW_MASK_PROPERTY =
+		"spoiledmilk.remasterTerrainShadowMask";
+	private static final String REMASTER_TERRAIN_SHADOW_MASK_ENV =
+		"SPOILED_MILK_REMASTER_TERRAIN_SHADOW_MASK";
+	private static final String REMASTER_TERRAIN_SHADOW_MASK_DEBUG_PROPERTY =
+		"spoiledmilk.remasterTerrainShadowMaskDebug";
+	private static final String REMASTER_TERRAIN_SHADOW_MASK_DEBUG_ENV =
+		"SPOILED_MILK_REMASTER_TERRAIN_SHADOW_MASK_DEBUG";
+	private static final boolean REMASTER_TERRAIN_SHADOW_MASK =
+		WORLD_CHUNKS_REPLACEMENT_COMPOSITE
+			&& readBoolean(
+				REMASTER_TERRAIN_SHADOW_MASK_PROPERTY,
+				REMASTER_TERRAIN_SHADOW_MASK_ENV,
+				readBoolean(
+					REMASTER_TERRAIN_SHADOW_MASK_DEBUG_PROPERTY,
+					REMASTER_TERRAIN_SHADOW_MASK_DEBUG_ENV,
+					true));
 	private static final String WORLD_CHUNKS_SPATIAL_CULL_PROPERTY =
 		"spoiledmilk.openglWorldChunksSpatialCull";
 	private static final String WORLD_CHUNKS_SPATIAL_CULL_ENV =
@@ -229,6 +283,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private OpenGLWorldMeshRenderer worldMeshRenderer;
 	private OpenGLWorldChunkRenderer worldChunkRenderer;
 	private OpenGLShaderProgram projectedWorldShader;
+	private OpenGLShaderProgram residentChunkShader;
 	private int unitQuadVertexBufferId;
 	private int unitQuadIndexBufferId;
 	private int screenQuadVertexBufferId;
@@ -408,6 +463,15 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				} else if (WORLD_MESH_TEXTURED_VISIBLE) {
 					log("OpenGL projected world shader path disabled; fixed-function fallback active.");
 				}
+				if (WORLD_CHUNKS_RAW_MATERIAL_SHADER) {
+					log("OpenGL resident chunk raw material shader path active; baked lighting ignored.");
+				} else if (WORLD_CHUNKS_REMASTER_LIGHTING_SHADER) {
+					log("OpenGL resident chunk remaster-capable shader path active.");
+				} else if (WORLD_CHUNKS_TEXTURED_SHADER) {
+					log("OpenGL resident chunk parity shader path active.");
+				} else if (WORLD_CHUNKS_TEXTURED_VISIBLE) {
+					log("OpenGL resident chunk shader path disabled; fixed-function fallback active.");
+				}
 				if (WORLD_MESH_TEXTURED_STATIC_VISIBLE) {
 					log("OpenGL static world texture sampling: "
 						+ (WORLD_STATIC_TEXTURES ? "enabled" : "flat-material fallback")
@@ -422,6 +486,12 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				}
 				if (WORLD_CHUNKS_TRUSTED_REPLACEMENT) {
 					log("OpenGL resident chunk trusted replacement ownership active.");
+				}
+				if (REMASTER_SHADOW_INVENTORY_DEBUG) {
+					log("OpenGL remaster shadow inventory debug overlay active.");
+				}
+				if (REMASTER_TERRAIN_SHADOW_MASK) {
+					log("OpenGL remaster terrain shadow mask active for Directional lighting.");
 				}
 			}
 			if (WORLD_SPRITES_VISIBLE) {
@@ -508,7 +578,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		if (WORLD_MESH_ENABLED) {
 			worldTextureCache = new OpenGLWorldTextureCache(gl);
 			worldMeshRenderer = new OpenGLWorldMeshRenderer(gl, worldTextureCache, projectedWorldShader);
-			worldChunkRenderer = new OpenGLWorldChunkRenderer(gl, worldTextureCache);
+			worldChunkRenderer = new OpenGLWorldChunkRenderer(gl, worldTextureCache, residentChunkShader);
 		}
 		gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	}
@@ -525,6 +595,18 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			} catch (Throwable ignored) {
 			}
 			log("OpenGL projected world shader program unavailable: " + t.getMessage());
+		}
+		try {
+			residentChunkShader = OpenGLShaderProgram.createResidentChunkParity(gl);
+			gl.glUseProgram(0);
+			log("OpenGL resident chunk shader program compiled.");
+		} catch (Throwable t) {
+			residentChunkShader = null;
+			try {
+				gl.glUseProgram(0);
+			} catch (Throwable ignored) {
+			}
+			log("OpenGL resident chunk shader program unavailable: " + t.getMessage());
 		}
 	}
 
@@ -974,6 +1056,27 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			worldChunkFrame.getTotalVertexCount(),
 			worldChunkFrame.getTotalIndexCount(),
 			worldChunkFrame.getTotalTriangleCount());
+		RemasterShadowInventory shadowInventory = RenderTelemetry.isEnabled()
+			? inspectRemasterShadowInventory(worldChunkFrame)
+			: RemasterShadowInventory.EMPTY;
+		RenderTelemetry.recordOpenGLRemasterShadowInventory(
+			shadowInventory.receiverChunks,
+			shadowInventory.receiverTriangles,
+			shadowInventory.totalCasters,
+			shadowInventory.wallCasters,
+			shadowInventory.gameObjectCasters,
+			shadowInventory.wallObjectCasters,
+			shadowInventory.outdoorOnlyCasters,
+			shadowInventory.clippingCandidates,
+			shadowInventory.roofedReceivers,
+			shadowInventory.outdoorReceivers,
+			shadowInventory.unknownReceivers,
+			shadowInventory.roofedCasters,
+			shadowInventory.outdoorCasters,
+			shadowInventory.unknownCasters,
+			shadowInventory.sunlightEligibleCasters,
+			shadowInventory.sunlightSuppressedRoofedCasters,
+			shadowInventory.sunlightSuppressedUnknownCasters);
 		if (WORLD_MESH_ENABLED && worldChunkRenderer != null) {
 			long chunkUploadPhaseStart = RenderTelemetry.now();
 			OpenGLWorldChunkUploadStats chunkUploadStats = worldChunkRenderer.upload(
@@ -1079,10 +1182,172 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			projectedMeshPhaseNanos += RenderTelemetry.elapsedSince(projectedMeshPhaseStart);
 			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		}
+		if (REMASTER_SHADOW_INVENTORY_DEBUG
+			&& worldChunkRenderer != null
+			&& frame.renderer3DFrame != null) {
+			worldChunkRenderer.drawRemasterShadowInventoryDebug(frame.renderer3DFrame);
+			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
+		}
+		if (shouldDrawRemasterTerrainShadowMask()
+			&& worldChunkRenderer != null
+			&& frame.renderer3DFrame != null) {
+			worldChunkRenderer.drawRemasterTerrainShadowMask(frame.renderer3DFrame);
+			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
+		}
 		RenderTelemetry.recordOpenGLWorldPhaseBreakdown(
 			chunkUploadPhaseNanos,
 			projectedMeshPhaseNanos,
 			chunkDrawPhaseNanos);
+	}
+
+	private static RemasterShadowInventory inspectRemasterShadowInventory(
+		Renderer3DWorldChunkFrame worldChunkFrame) {
+		if (worldChunkFrame == null || worldChunkFrame.getChunkCount() <= 0) {
+			return RemasterShadowInventory.EMPTY;
+		}
+
+		int receiverChunks = 0;
+		int receiverTriangles = 0;
+		int totalCasters = 0;
+		int wallCasters = 0;
+		int gameObjectCasters = 0;
+		int wallObjectCasters = 0;
+		int outdoorOnlyCasters = 0;
+		int clippingCandidates = 0;
+		int roofedReceivers = 0;
+		int outdoorReceivers = 0;
+		int unknownReceivers = 0;
+		int roofedCasters = 0;
+		int outdoorCasters = 0;
+		int unknownCasters = 0;
+		int sunlightEligibleCasters = 0;
+		int sunlightSuppressedRoofedCasters = 0;
+		int sunlightSuppressedUnknownCasters = 0;
+		RemasterShadowRoofCoverage roofCoverage = RemasterShadowRoofCoverage.from(worldChunkFrame);
+		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : worldChunkFrame.getChunks()) {
+			int terrainTriangles = Math.max(0, chunk.getTerrainTriangles());
+			if (terrainTriangles > 0) {
+				receiverChunks++;
+				receiverTriangles += terrainTriangles;
+			}
+			int triangleLimit = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
+			for (int triangle = 0; triangle < triangleLimit; triangle++) {
+				if (chunk.getTriangleModelKind(triangle) != Renderer3DModelKind.TERRAIN) {
+					continue;
+				}
+				int classification = roofClassificationForTriangle(roofCoverage, chunk, triangle);
+				if (classification > 0) {
+					roofedReceivers++;
+				} else if (classification == 0) {
+					outdoorReceivers++;
+				} else {
+					unknownReceivers++;
+				}
+			}
+			int casterCount = chunk.getShadowCasterCount();
+			for (int index = 0; index < casterCount; index++) {
+				Renderer3DWorldChunkFrame.ShadowCaster caster = chunk.getShadowCaster(index);
+				if (!isRemasterShadowEligibleCaster(caster)) {
+					continue;
+				}
+				totalCasters++;
+				Renderer3DModelKind kind = caster.getModelKind();
+				if (kind == Renderer3DModelKind.WALL) {
+					wallCasters++;
+				} else if (kind == Renderer3DModelKind.GAME_OBJECT) {
+					gameObjectCasters++;
+				} else if (kind == Renderer3DModelKind.WALL_OBJECT) {
+					wallObjectCasters++;
+				}
+				if (caster.isOutdoorOnly()) {
+					outdoorOnlyCasters++;
+				}
+				if (isRemasterShadowClippingCandidate(caster)) {
+					clippingCandidates++;
+				}
+				int classification = roofClassificationForCaster(roofCoverage, chunk, caster);
+				if (classification > 0) {
+					roofedCasters++;
+					sunlightSuppressedRoofedCasters++;
+				} else if (classification == 0) {
+					outdoorCasters++;
+					sunlightEligibleCasters++;
+				} else {
+					unknownCasters++;
+					sunlightSuppressedUnknownCasters++;
+				}
+			}
+		}
+		return new RemasterShadowInventory(
+			receiverChunks,
+			receiverTriangles,
+			totalCasters,
+			wallCasters,
+			gameObjectCasters,
+			wallObjectCasters,
+			outdoorOnlyCasters,
+			clippingCandidates,
+			roofedReceivers,
+			outdoorReceivers,
+			unknownReceivers,
+			roofedCasters,
+			outdoorCasters,
+			unknownCasters,
+			sunlightEligibleCasters,
+			sunlightSuppressedRoofedCasters,
+			sunlightSuppressedUnknownCasters);
+	}
+
+	private static boolean isRemasterShadowEligibleCaster(Renderer3DWorldChunkFrame.ShadowCaster caster) {
+		return caster != null && caster.getHeight() > 0 && caster.getOpacity() > 0;
+	}
+
+	private static boolean isRemasterShadowClippingCandidate(Renderer3DWorldChunkFrame.ShadowCaster caster) {
+		if (!isRemasterShadowEligibleCaster(caster)) {
+			return false;
+		}
+		Renderer3DModelKind kind = caster.getModelKind();
+		return kind == Renderer3DModelKind.WALL || kind == Renderer3DModelKind.WALL_OBJECT;
+	}
+
+	private static int roofClassificationForTriangle(
+		RemasterShadowRoofCoverage roofCoverage,
+		Renderer3DWorldChunkFrame.ChunkMesh chunk,
+		int triangle) {
+		if (chunk == null || roofCoverage == null) {
+			return -1;
+		}
+		int sourceIndex = triangle * 3;
+		int x = 0;
+		int z = 0;
+		for (int corner = 0; corner < 3; corner++) {
+			int vertex = chunk.getIndex(sourceIndex + corner);
+			int coord = vertex * 3;
+			x += chunk.getVertexCoord(coord);
+			z += chunk.getVertexCoord(coord + 2);
+		}
+		return roofCoverage.classify(chunk.getPlane(), x / 3, z / 3);
+	}
+
+	private static int roofClassificationForCaster(
+		RemasterShadowRoofCoverage roofCoverage,
+		Renderer3DWorldChunkFrame.ChunkMesh chunk,
+		Renderer3DWorldChunkFrame.ShadowCaster caster) {
+		if (chunk == null || caster == null || roofCoverage == null) {
+			return -1;
+		}
+		if (caster.getModelKind() == Renderer3DModelKind.WALL
+			|| caster.getModelKind() == Renderer3DModelKind.WALL_OBJECT) {
+			return roofCoverage.classifyBoundaryCaster(
+				chunk.getPlane(),
+				caster.getBaseX0(),
+				caster.getBaseZ0(),
+				caster.getBaseX1(),
+				caster.getBaseZ1());
+		}
+		int x = (caster.getBaseX0() + caster.getBaseX1()) / 2;
+		int z = (caster.getBaseZ0() + caster.getBaseZ1()) / 2;
+		return roofCoverage.classify(chunk.getPlane(), x, z);
 	}
 
 	private void drawWorldSprites(Frame frame) throws Exception {
@@ -1262,7 +1527,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float rightU = command.isMirrorX() ? u0 : u1;
 
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-		gl.glColor4f(1.0f, 1.0f, 1.0f, alpha);
+		useWorldToneColor(alpha);
 		drawScreenQuad(
 			topX0,
 			y0,
@@ -1280,6 +1545,15 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			y1,
 			leftU,
 			v1);
+	}
+
+	private void useWorldToneColor(float alpha) throws Exception {
+		RendererDayNightCycle.Presentation presentation = RendererDayNightCycle.currentPresentation();
+		gl.glColor4f(
+			presentation.redMultiplier,
+			presentation.greenMultiplier,
+			presentation.blueMultiplier,
+			alpha);
 	}
 
 	private void drawSpriteOverlay(Frame frame) throws Exception {
@@ -2970,7 +3244,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float bottomDepth = estimateEntitySpriteDepth(anchor, y + height);
 		float scale = (float) (1 << Math.max(0, Math.min(24, renderer3DFrame.getPerspectiveShift())));
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-		gl.glColor4f(1.0f, 1.0f, 1.0f, alpha);
+		useWorldToneColor(alpha);
 		drawCameraSpaceWorldSpriteQuad(
 			renderer3DFrame,
 			x,
@@ -2997,7 +3271,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float bottomDepth = estimateEntitySpriteDepth(anchor, command.getY() + command.getHeight());
 		float scale = (float) (1 << Math.max(0, Math.min(24, renderer3DFrame.getPerspectiveShift())));
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-		gl.glColor4f(1.0f, 1.0f, 1.0f, alpha);
+		useWorldToneColor(alpha);
 		drawCameraSpaceWorldSpriteQuad(
 			renderer3DFrame,
 			command.getTopX16() / 65536.0f,
@@ -3043,7 +3317,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float rightU = command.isMirrorX() ? u0 : u1;
 
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-		gl.glColor4f(1.0f, 1.0f, 1.0f, alpha);
+		useWorldToneColor(alpha);
 		drawCameraSpaceWorldSpriteQuad(
 			renderer3DFrame,
 			topScreenX,
@@ -4686,6 +4960,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					projectedWorldShader.close();
 					projectedWorldShader = null;
 				}
+				if (residentChunkShader != null) {
+					residentChunkShader.close();
+					residentChunkShader = null;
+				}
 				deleteWorldSpriteQuadBuffers();
 				deleteScreenQuadBuffers();
 				deleteUnitQuadBuffers();
@@ -4814,6 +5092,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			|| "1".equals(value)
 			|| "yes".equalsIgnoreCase(value)
 			|| "on".equalsIgnoreCase(value);
+	}
+
+	private static boolean shouldDrawRemasterTerrainShadowMask() {
+		return REMASTER_TERRAIN_SHADOW_MASK
+			&& RendererLightingSettings.getMode() == RendererLightingSettings.Mode.DIRECTIONAL;
 	}
 
 	private static float readFloat(
@@ -5143,16 +5426,36 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private static final int COLOR_COMPONENT_COUNT = 4;
 		private static final int TEXTURE_COORD_COMPONENT_COUNT = 2;
 		private static final int TEXTURE_LIGHT_COMPONENT_COUNT = 4;
+		private static final int LEGACY_LIGHT_COMPONENT_COUNT = 1;
+		private static final int BASE_LEGACY_LIGHT_COMPONENT_COUNT = 1;
+		private static final int RAW_MATERIAL_COLOR_COMPONENT_COUNT = 3;
+		private static final int NORMAL_COMPONENT_COUNT = 3;
+		private static final int MODEL_KIND_COMPONENT_COUNT = 1;
 		private static final int FLOATS_PER_VERTEX =
 			POSITION_COMPONENT_COUNT
 				+ COLOR_COMPONENT_COUNT
 				+ TEXTURE_COORD_COMPONENT_COUNT
-				+ TEXTURE_LIGHT_COMPONENT_COUNT;
+				+ TEXTURE_LIGHT_COMPONENT_COUNT
+				+ LEGACY_LIGHT_COMPONENT_COUNT
+				+ BASE_LEGACY_LIGHT_COMPONENT_COUNT
+				+ RAW_MATERIAL_COLOR_COMPONENT_COUNT
+				+ NORMAL_COMPONENT_COUNT
+				+ MODEL_KIND_COMPONENT_COUNT;
 		private static final int COLOR_OFFSET_BYTES = POSITION_COMPONENT_COUNT * 4;
 		private static final int TEXTURE_COORD_OFFSET_BYTES =
 			(POSITION_COMPONENT_COUNT + COLOR_COMPONENT_COUNT) * 4;
 		private static final int TEXTURE_LIGHT_OFFSET_BYTES =
 			(POSITION_COMPONENT_COUNT + COLOR_COMPONENT_COUNT + TEXTURE_COORD_COMPONENT_COUNT) * 4;
+		private static final int LEGACY_LIGHT_OFFSET_BYTES =
+			TEXTURE_LIGHT_OFFSET_BYTES + TEXTURE_LIGHT_COMPONENT_COUNT * 4;
+		private static final int BASE_LEGACY_LIGHT_OFFSET_BYTES =
+			LEGACY_LIGHT_OFFSET_BYTES + LEGACY_LIGHT_COMPONENT_COUNT * 4;
+		private static final int RAW_MATERIAL_COLOR_OFFSET_BYTES =
+			BASE_LEGACY_LIGHT_OFFSET_BYTES + BASE_LEGACY_LIGHT_COMPONENT_COUNT * 4;
+		private static final int NORMAL_OFFSET_BYTES =
+			RAW_MATERIAL_COLOR_OFFSET_BYTES + RAW_MATERIAL_COLOR_COMPONENT_COUNT * 4;
+		private static final int MODEL_KIND_OFFSET_BYTES =
+			NORMAL_OFFSET_BYTES + NORMAL_COMPONENT_COUNT * 4;
 		private static final int STRIDE_BYTES = FLOATS_PER_VERTEX * 4;
 		private static final int SPATIAL_BATCH_TILE_SIZE = 6;
 		private static final int SPATIAL_BATCH_WORLD_SIZE = SPATIAL_BATCH_TILE_SIZE * 128;
@@ -5169,8 +5472,21 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private static final float SHADOW_PROOF_MIN_WIDTH = 32.0f;
 		private static final float SHADOW_PROOF_DIAGONAL_MIN_SPAN = 48.0f;
 		private static final float SHADOW_PROOF_DIRECTIONAL_ALPHA = 0.55f;
-		private static final float SHADOW_PROOF_TOON_ALPHA = 0.28f;
 		private static final float SHADOW_PROOF_MAX_ALPHA = 0.72f;
+		private static final int REMASTER_SHADOW_MASK_GRID_SIZE = 512;
+		private static final float REMASTER_SHADOW_MASK_BASE_ALPHA = 0.42f;
+		private static final float REMASTER_SHADOW_MASK_MAX_ALPHA = 0.58f;
+		private static final float REMASTER_SHADOW_MASK_MIN_LENGTH = 96.0f;
+		private static final float REMASTER_SHADOW_MASK_MAX_LENGTH = 1792.0f;
+		private static final float REMASTER_SHADOW_MASK_MIN_WIDTH = 24.0f;
+		private static final float REMASTER_SHADOW_MASK_MIN_DRAW_ALPHA = 0.018f;
+		private static final int REMASTER_SHADOW_MASK_TEXTURE_SIZE = 1024;
+		private static final float REMASTER_SHADOW_MASK_TEXTURE_PADDING = 384.0f;
+		private static final int REMASTER_SHADOW_MASK_BLUR_RADIUS = 7;
+		private static final float REMASTER_SHADOW_MASK_CENTER_RETAIN = 0.82f;
+		private static final float REMASTER_SHADOW_MASK_BLUR_BOOST = 1.18f;
+		private static final float REMASTER_SHADOW_MASK_CLIP_START_OFFSET = 24.0f;
+		private static final boolean REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP = false;
 		private static final Renderer3DModelKind[] WORLD_CHUNK_KIND_DRAW_ORDER = new Renderer3DModelKind[] {
 			Renderer3DModelKind.TERRAIN,
 			Renderer3DModelKind.WALL,
@@ -5182,21 +5498,37 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 		private final LwjglBindings gl;
 		private final OpenGLWorldTextureCache textureCache;
+		private final OpenGLShaderProgram residentChunkShader;
 		private final LinkedHashMap<WorldChunkBufferKey, WorldChunkBuffer> residentChunks =
 			new LinkedHashMap<WorldChunkBufferKey, WorldChunkBuffer>(MAX_RESIDENT_CHUNKS, 0.75f, true);
 		private FloatBuffer vertexUploadBuffer;
 		private IntBuffer indexUploadBuffer;
 		private IntBuffer materialIndexUploadBuffer;
 		private FloatBuffer worldToClipMatrixBuffer;
+		private FloatBuffer worldViewMatrixBuffer;
 		private FloatBuffer fogColorBuffer;
 		private int vertexUploadCapacity;
 		private int indexUploadCapacity;
 		private int materialIndexUploadCapacity;
+		private int remasterShadowMaskTextureId;
+		private int remasterShadowMaskTextureWidth;
+		private int remasterShadowMaskTextureHeight;
+		private long remasterShadowMaskUploadedSignature;
+		private RemasterTerrainShadowMask remasterShadowMaskCache;
+		private long remasterShadowMaskCacheSignature;
+		private boolean remasterShadowMaskLastCacheHit;
+		private boolean remasterShadowMaskLastRebuild;
+		private boolean remasterShadowMaskLastUpload;
+		private boolean remasterShadowMaskLastUploadSkip;
 		private boolean closed;
 
-		private OpenGLWorldChunkRenderer(LwjglBindings gl, OpenGLWorldTextureCache textureCache) {
+		private OpenGLWorldChunkRenderer(
+			LwjglBindings gl,
+			OpenGLWorldTextureCache textureCache,
+			OpenGLShaderProgram residentChunkShader) {
 			this.gl = gl;
 			this.textureCache = textureCache;
+			this.residentChunkShader = residentChunkShader;
 		}
 
 		private OpenGLWorldChunkUploadStats upload(
@@ -5285,8 +5617,21 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				textureCache.uploadReferencedTextures(frame, chunkFrame);
 			}
 
+			boolean shaderActive = useResidentChunkShader(textured);
+			FloatBuffer residentWorldToClipMatrix = null;
+			FloatBuffer residentWorldViewMatrix = null;
 			loadWorldProjectionAndView(frame);
-			configureFog(frame);
+			float[] batchCullViewMatrix = worldViewMatrix(frame);
+			if (shaderActive) {
+				residentWorldToClipMatrix = putWorldToClipMatrix(
+					multiply(projectionMatrix(frame), batchCullViewMatrix));
+				residentWorldViewMatrix = putWorldViewMatrix(batchCullViewMatrix);
+			}
+			if (shaderActive) {
+				gl.glDisable(gl.GL_FOG);
+			} else {
+				configureFog(frame);
+			}
 			if (textured) {
 				gl.glEnable(gl.GL_TEXTURE_2D);
 				gl.glDisable(gl.GL_BLEND);
@@ -5302,10 +5647,16 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			gl.glClear(gl.GL_DEPTH_BUFFER_BIT);
 			boolean wireGeometry = RendererGeometrySettings.getMode() == RendererGeometrySettings.Mode.WIRE;
 			gl.glPolygonMode(gl.GL_FRONT_AND_BACK, wireGeometry || (!filled && !textured) ? gl.GL_LINE : gl.GL_FILL);
-			gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
-			gl.glEnableClientState(gl.GL_COLOR_ARRAY);
-			if (textured) {
-				gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+			if (shaderActive) {
+				gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+				gl.glDisableClientState(gl.GL_COLOR_ARRAY);
+				gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+			} else {
+				gl.glEnableClientState(gl.GL_VERTEX_ARRAY);
+				gl.glEnableClientState(gl.GL_COLOR_ARRAY);
+				if (textured) {
+					gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+				}
 			}
 			int drawnChunks = 0;
 			int drawnTriangles = 0;
@@ -5318,17 +5669,43 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int fallbackTriangles = 0;
 			int skippedTriangles = 0;
 			WorldChunkDrawAccumulator accumulator = new WorldChunkDrawAccumulator();
-			float[] batchCullViewMatrix = worldViewMatrix(frame);
 			try {
 				if (textured) {
-					drawChunkDiagnosticLayers(frame, chunkFrame, true, false, accumulator, batchCullViewMatrix);
+					drawChunkDiagnosticLayers(
+						frame,
+						chunkFrame,
+						true,
+						false,
+						accumulator,
+						batchCullViewMatrix,
+						shaderActive,
+						residentWorldToClipMatrix,
+						residentWorldViewMatrix);
 					gl.glEnable(gl.GL_BLEND);
 					gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
 					gl.glEnable(gl.GL_ALPHA_TEST);
 					gl.glAlphaFunc(gl.GL_GREATER, 0.0f);
-					drawChunkDiagnosticLayers(frame, chunkFrame, true, true, accumulator, batchCullViewMatrix);
+					drawChunkDiagnosticLayers(
+						frame,
+						chunkFrame,
+						true,
+						true,
+						accumulator,
+						batchCullViewMatrix,
+						shaderActive,
+						residentWorldToClipMatrix,
+						residentWorldViewMatrix);
 				} else {
-					drawChunkDiagnosticLayers(frame, chunkFrame, false, false, accumulator, batchCullViewMatrix);
+					drawChunkDiagnosticLayers(
+						frame,
+						chunkFrame,
+						false,
+						false,
+						accumulator,
+						batchCullViewMatrix,
+						false,
+						null,
+						null);
 				}
 				drawnChunks = accumulator.drawnChunkCount();
 				drawnTriangles = accumulator.drawnTriangles;
@@ -5341,6 +5718,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				fallbackTriangles = accumulator.fallbackTriangles;
 				skippedTriangles = accumulator.skippedTriangles;
 			} finally {
+				if (shaderActive && residentChunkShader != null) {
+					residentChunkShader.unbindWorldTextureAttributes();
+					gl.glUseProgram(0);
+				}
 				gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
 				gl.glDisableClientState(gl.GL_COLOR_ARRAY);
 				gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
@@ -5376,6 +5757,569 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				accumulator.textureBinds,
 				accumulator.shadowProofChunks,
 				accumulator.shadowProofIndices);
+		}
+
+		private void drawRemasterShadowInventoryDebug(Renderer3DFrame frame) throws Exception {
+			Renderer3DWorldChunkFrame chunkFrame = frame == null ? null : frame.getWorldChunkFrame();
+			if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
+				return;
+			}
+
+			loadWorldProjectionAndView(frame);
+			gl.glUseProgram(0);
+			gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
+			gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
+			gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+			gl.glDisableClientState(gl.GL_COLOR_ARRAY);
+			gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+			gl.glDisable(gl.GL_TEXTURE_2D);
+			gl.glDisable(gl.GL_ALPHA_TEST);
+			gl.glDisable(gl.GL_FOG);
+			gl.glDisable(gl.GL_CULL_FACE);
+			gl.glEnable(gl.GL_BLEND);
+			gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+			gl.glDepthMask(false);
+			try {
+				RemasterShadowRoofCoverage roofCoverage = RemasterShadowRoofCoverage.from(chunkFrame);
+				drawRemasterShadowReceiverDebug(chunkFrame, roofCoverage);
+				drawRemasterShadowCasterDebug(chunkFrame, roofCoverage);
+			} finally {
+				gl.glDisable(gl.GL_POLYGON_OFFSET_FILL);
+				gl.glLineWidth(1.0f);
+				gl.glDepthMask(true);
+				gl.glDisable(gl.GL_BLEND);
+				gl.glDisable(gl.GL_DEPTH_TEST);
+				gl.glDisable(gl.GL_ALPHA_TEST);
+				gl.glDisable(gl.GL_FOG);
+				gl.glDisable(gl.GL_CULL_FACE);
+				gl.glEnable(gl.GL_TEXTURE_2D);
+				gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			}
+		}
+
+		private void drawRemasterShadowReceiverDebug(
+			Renderer3DWorldChunkFrame chunkFrame,
+			RemasterShadowRoofCoverage roofCoverage) throws Exception {
+			gl.glDisable(gl.GL_DEPTH_TEST);
+			gl.glBegin(gl.GL_TRIANGLES);
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				int triangleCount = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
+				for (int triangle = 0; triangle < triangleCount; triangle++) {
+					if (chunk.getTriangleModelKind(triangle) != Renderer3DModelKind.TERRAIN) {
+						continue;
+					}
+					applyRemasterShadowReceiverDebugColor(roofClassificationForTriangle(roofCoverage, chunk, triangle));
+					int indexBase = triangle * 3;
+					for (int corner = 0; corner < 3; corner++) {
+						drawChunkVertex(chunk, chunk.getIndex(indexBase + corner));
+					}
+				}
+			}
+			gl.glEnd();
+		}
+
+		private void drawRemasterShadowCasterDebug(
+			Renderer3DWorldChunkFrame chunkFrame,
+			RemasterShadowRoofCoverage roofCoverage) throws Exception {
+			gl.glDisable(gl.GL_DEPTH_TEST);
+			gl.glLineWidth(2.0f);
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				int casterCount = chunk.getShadowCasterCount();
+				for (int index = 0; index < casterCount; index++) {
+					Renderer3DWorldChunkFrame.ShadowCaster caster = chunk.getShadowCaster(index);
+					if (!isRemasterShadowEligibleCaster(caster)) {
+						continue;
+					}
+					applyRemasterShadowCasterDebugColor(caster.getModelKind());
+					drawRemasterShadowCasterOutline(caster, 0.0f);
+				}
+			}
+
+			gl.glLineWidth(4.0f);
+			gl.glColor4f(1.0f, 0.05f, 0.0f, 0.95f);
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				int casterCount = chunk.getShadowCasterCount();
+				for (int index = 0; index < casterCount; index++) {
+					Renderer3DWorldChunkFrame.ShadowCaster caster = chunk.getShadowCaster(index);
+					if (isRemasterShadowClippingCandidate(caster)) {
+						drawRemasterShadowCasterTopEdge(caster, 16.0f);
+					}
+				}
+			}
+
+			gl.glLineWidth(3.0f);
+			gl.glColor4f(0.25f, 0.45f, 1.0f, 0.95f);
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				int casterCount = chunk.getShadowCasterCount();
+				for (int index = 0; index < casterCount; index++) {
+					Renderer3DWorldChunkFrame.ShadowCaster caster = chunk.getShadowCaster(index);
+					if (isRemasterShadowEligibleCaster(caster)
+						&& roofClassificationForCaster(roofCoverage, chunk, caster) > 0) {
+						drawRemasterShadowCasterTopEdge(caster, 32.0f);
+					}
+				}
+			}
+
+			gl.glLineWidth(2.0f);
+			gl.glColor4f(0.1f, 1.0f, 0.15f, 0.85f);
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				int casterCount = chunk.getShadowCasterCount();
+				for (int index = 0; index < casterCount; index++) {
+					Renderer3DWorldChunkFrame.ShadowCaster caster = chunk.getShadowCaster(index);
+					if (isRemasterShadowEligibleCaster(caster)
+						&& roofClassificationForCaster(roofCoverage, chunk, caster) == 0) {
+						drawRemasterShadowCasterTopEdge(caster, 48.0f);
+					}
+				}
+			}
+		}
+
+		private void applyRemasterShadowReceiverDebugColor(int classification) throws Exception {
+			if (classification > 0) {
+				gl.glColor4f(1.0f, 0.62f, 0.0f, 0.32f);
+			} else if (classification == 0) {
+				gl.glColor4f(0.0f, 0.82f, 1.0f, 0.20f);
+			} else {
+				gl.glColor4f(1.0f, 1.0f, 1.0f, 0.18f);
+			}
+		}
+
+		private void applyRemasterShadowCasterDebugColor(Renderer3DModelKind kind) throws Exception {
+			if (kind == Renderer3DModelKind.WALL) {
+				gl.glColor4f(1.0f, 0.88f, 0.05f, 0.95f);
+			} else if (kind == Renderer3DModelKind.GAME_OBJECT) {
+				gl.glColor4f(1.0f, 0.2f, 0.95f, 0.95f);
+			} else if (kind == Renderer3DModelKind.WALL_OBJECT) {
+				gl.glColor4f(0.0f, 1.0f, 0.85f, 0.95f);
+			} else {
+				gl.glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
+			}
+		}
+
+		private void drawRemasterShadowCasterOutline(
+			Renderer3DWorldChunkFrame.ShadowCaster caster,
+			float yOffset) throws Exception {
+			float baseY = caster.getBaseY() + yOffset;
+			float topY = caster.getBaseY() + caster.getHeight() + yOffset;
+			gl.glBegin(gl.GL_LINES);
+			gl.glVertex3f(caster.getBaseX0(), baseY, caster.getBaseZ0());
+			gl.glVertex3f(caster.getBaseX1(), baseY, caster.getBaseZ1());
+			gl.glVertex3f(caster.getBaseX0(), topY, caster.getBaseZ0());
+			gl.glVertex3f(caster.getBaseX1(), topY, caster.getBaseZ1());
+			gl.glVertex3f(caster.getBaseX0(), baseY, caster.getBaseZ0());
+			gl.glVertex3f(caster.getBaseX0(), topY, caster.getBaseZ0());
+			gl.glVertex3f(caster.getBaseX1(), baseY, caster.getBaseZ1());
+			gl.glVertex3f(caster.getBaseX1(), topY, caster.getBaseZ1());
+			gl.glEnd();
+		}
+
+		private void drawRemasterShadowCasterTopEdge(
+			Renderer3DWorldChunkFrame.ShadowCaster caster,
+			float yOffset) throws Exception {
+			float y = caster.getBaseY() + caster.getHeight() + yOffset;
+			gl.glBegin(gl.GL_LINES);
+			gl.glVertex3f(caster.getBaseX0(), y, caster.getBaseZ0());
+			gl.glVertex3f(caster.getBaseX1(), y, caster.getBaseZ1());
+			gl.glEnd();
+		}
+
+		private void drawChunkVertex(Renderer3DWorldChunkFrame.ChunkMesh chunk, int vertex) throws Exception {
+			int coord = vertex * POSITION_COMPONENT_COUNT;
+			gl.glVertex3f(
+				chunk.getVertexCoord(coord),
+				chunk.getVertexCoord(coord + 1),
+				chunk.getVertexCoord(coord + 2));
+		}
+
+		private void drawRemasterTerrainShadowMask(Renderer3DFrame frame) throws Exception {
+			Renderer3DWorldChunkFrame chunkFrame = frame == null ? null : frame.getWorldChunkFrame();
+			if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
+				return;
+			}
+			RemasterShadowRoofCoverage roofCoverage = RemasterShadowRoofCoverage.from(chunkFrame);
+			List<RemasterTerrainShadowCaster> casters =
+				buildRemasterTerrainShadowCasters(chunkFrame, roofCoverage);
+			if (casters.isEmpty()) {
+				return;
+			}
+			int stripCasterCount = countRemasterShadowMaskCasters(casters, RemasterTerrainShadowCaster.STYLE_STRIP);
+			int softSceneryCasterCount =
+				countRemasterShadowMaskCasters(casters, RemasterTerrainShadowCaster.STYLE_SOFT_SCENERY);
+			long buildStart = RenderTelemetry.now();
+			RemasterTerrainShadowMask shadowMask =
+				buildRemasterTerrainShadowMaskTexture(roofCoverage, chunkFrame, casters);
+			long buildNanos = RenderTelemetry.elapsedSince(buildStart);
+			if (shadowMask == null) {
+				return;
+			}
+			long uploadStart = RenderTelemetry.now();
+			uploadRemasterTerrainShadowMask(shadowMask);
+			long uploadNanos = RenderTelemetry.elapsedSince(uploadStart);
+			RenderTelemetry.recordOpenGLRemasterShadowMask(
+				shadowMask.width,
+				shadowMask.height,
+				shadowMask.visiblePixels,
+				remasterShadowMaskLastCacheHit,
+				remasterShadowMaskLastRebuild,
+				remasterShadowMaskLastUpload,
+				remasterShadowMaskLastUploadSkip,
+				stripCasterCount,
+				softSceneryCasterCount,
+				buildNanos,
+				uploadNanos);
+
+			loadWorldProjectionAndView(frame);
+			gl.glUseProgram(0);
+			gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
+			gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
+			gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+			gl.glDisableClientState(gl.GL_COLOR_ARRAY);
+			gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+			gl.glEnable(gl.GL_TEXTURE_2D);
+			gl.glBindTexture(gl.GL_TEXTURE_2D, remasterShadowMaskTextureId);
+			gl.glDisable(gl.GL_ALPHA_TEST);
+			gl.glDisable(gl.GL_FOG);
+			gl.glDisable(gl.GL_CULL_FACE);
+			gl.glEnable(gl.GL_BLEND);
+			gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+			gl.glEnable(gl.GL_DEPTH_TEST);
+			gl.glEnable(gl.GL_POLYGON_OFFSET_FILL);
+			gl.glPolygonOffset(-4.0f, -4.0f);
+			gl.glDepthMask(false);
+			try {
+				gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+				gl.glBegin(gl.GL_TRIANGLES);
+				for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+					drawRemasterTerrainShadowMaskChunk(roofCoverage, shadowMask, chunk);
+				}
+				gl.glEnd();
+			} finally {
+				gl.glDisable(gl.GL_POLYGON_OFFSET_FILL);
+				gl.glDepthMask(true);
+				gl.glDisable(gl.GL_DEPTH_TEST);
+				gl.glDisable(gl.GL_BLEND);
+				gl.glDisable(gl.GL_ALPHA_TEST);
+				gl.glDisable(gl.GL_FOG);
+				gl.glDisable(gl.GL_CULL_FACE);
+				gl.glBindTexture(gl.GL_TEXTURE_2D, 0);
+				gl.glEnable(gl.GL_TEXTURE_2D);
+				gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			}
+		}
+
+		private void drawRemasterTerrainShadowMaskChunk(
+			RemasterShadowRoofCoverage roofCoverage,
+			RemasterTerrainShadowMask shadowMask,
+			Renderer3DWorldChunkFrame.ChunkMesh chunk) throws Exception {
+			int triangleCount = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
+			for (int triangle = 0; triangle < triangleCount; triangle++) {
+				if (chunk.getTriangleModelKind(triangle) != Renderer3DModelKind.TERRAIN) {
+					continue;
+				}
+				if (roofClassificationForTriangle(roofCoverage, chunk, triangle) != 0) {
+					continue;
+				}
+				int indexBase = triangle * 3;
+				int vertex0 = chunk.getIndex(indexBase);
+				int vertex1 = chunk.getIndex(indexBase + 1);
+				int vertex2 = chunk.getIndex(indexBase + 2);
+				drawRemasterTerrainShadowMaskVertex(shadowMask, chunk, vertex0);
+				drawRemasterTerrainShadowMaskVertex(shadowMask, chunk, vertex1);
+				drawRemasterTerrainShadowMaskVertex(shadowMask, chunk, vertex2);
+			}
+		}
+
+		private void drawRemasterTerrainShadowMaskVertex(
+			RemasterTerrainShadowMask shadowMask,
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			int vertex) throws Exception {
+			int coord = vertex * POSITION_COMPONENT_COUNT;
+			float x = chunk.getVertexCoord(coord);
+			float z = chunk.getVertexCoord(coord + 2);
+			gl.glTexCoord2f(shadowMask.u(x), shadowMask.v(z));
+			gl.glVertex3f(x, chunk.getVertexCoord(coord + 1), z);
+		}
+
+		private RemasterTerrainShadowMask buildRemasterTerrainShadowMaskTexture(
+			RemasterShadowRoofCoverage roofCoverage,
+			Renderer3DWorldChunkFrame chunkFrame,
+			List<RemasterTerrainShadowCaster> casters) {
+			RemasterShadowMaskBounds bounds = RemasterShadowMaskBounds.from(roofCoverage, chunkFrame);
+			if (bounds == null) {
+				return null;
+			}
+			bounds = bounds.withPadding(REMASTER_SHADOW_MASK_TEXTURE_PADDING);
+			long signature = remasterTerrainShadowMaskSignature(chunkFrame, casters, bounds);
+			if (remasterShadowMaskCache != null && remasterShadowMaskCacheSignature == signature) {
+				remasterShadowMaskLastCacheHit = true;
+				remasterShadowMaskLastRebuild = false;
+				return remasterShadowMaskCache;
+			}
+			remasterShadowMaskLastCacheHit = false;
+			remasterShadowMaskLastRebuild = true;
+			int width = REMASTER_SHADOW_MASK_TEXTURE_SIZE;
+			int height = REMASTER_SHADOW_MASK_TEXTURE_SIZE;
+			float[] sourceAlpha = new float[width * height];
+			float[] horizontalAlpha = new float[width * height];
+			float[] blurredAlpha = new float[width * height];
+			Map<Long, List<RemasterTerrainShadowCaster>> casterGrid =
+				buildRemasterTerrainShadowCasterGrid(casters);
+			for (int y = 0; y < height; y++) {
+				float z = bounds.zAt(y, height);
+				int row = y * width;
+				for (int x = 0; x < width; x++) {
+					sourceAlpha[row + x] =
+						remasterTerrainShadowMaskAlpha(roofCoverage, casterGrid, bounds.xAt(x, width), z);
+				}
+			}
+			blurHorizontal(sourceAlpha, horizontalAlpha, width, height, REMASTER_SHADOW_MASK_BLUR_RADIUS);
+			blurVertical(horizontalAlpha, blurredAlpha, width, height, REMASTER_SHADOW_MASK_BLUR_RADIUS);
+			ByteBuffer pixels = ByteBuffer.allocateDirect(width * height * 4);
+			int visiblePixels = 0;
+			for (int index = 0; index < sourceAlpha.length; index++) {
+				float alpha = Math.max(
+					sourceAlpha[index] * REMASTER_SHADOW_MASK_CENTER_RETAIN,
+					blurredAlpha[index] * REMASTER_SHADOW_MASK_BLUR_BOOST);
+				alpha = clampStatic(alpha, 0.0f, REMASTER_SHADOW_MASK_MAX_ALPHA);
+				if (alpha > REMASTER_SHADOW_MASK_MIN_DRAW_ALPHA) {
+					visiblePixels++;
+				}
+				pixels.put((byte) 0);
+				pixels.put((byte) 0);
+				pixels.put((byte) 0);
+				pixels.put((byte) Math.round(alpha * 255.0f));
+			}
+			if (visiblePixels <= 0) {
+				return null;
+			}
+			pixels.flip();
+			remasterShadowMaskCache = new RemasterTerrainShadowMask(
+				signature,
+				width,
+				height,
+				visiblePixels,
+				bounds.minX,
+				bounds.minZ,
+				bounds.invSpanX(),
+				bounds.invSpanZ(),
+				pixels);
+			remasterShadowMaskCacheSignature = signature;
+			return remasterShadowMaskCache;
+		}
+
+		private void uploadRemasterTerrainShadowMask(RemasterTerrainShadowMask shadowMask) throws Exception {
+			if (remasterShadowMaskTextureId == 0) {
+				remasterShadowMaskTextureId = gl.glGenTextures();
+				gl.glBindTexture(gl.GL_TEXTURE_2D, remasterShadowMaskTextureId);
+				gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR);
+				gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR);
+				gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE);
+				gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE);
+			} else {
+				gl.glBindTexture(gl.GL_TEXTURE_2D, remasterShadowMaskTextureId);
+			}
+			if (remasterShadowMaskUploadedSignature == shadowMask.signature
+				&& remasterShadowMaskTextureWidth == shadowMask.width
+				&& remasterShadowMaskTextureHeight == shadowMask.height) {
+				remasterShadowMaskLastUpload = false;
+				remasterShadowMaskLastUploadSkip = true;
+				return;
+			}
+			remasterShadowMaskLastUpload = true;
+			remasterShadowMaskLastUploadSkip = false;
+			if (remasterShadowMaskTextureWidth != shadowMask.width
+				|| remasterShadowMaskTextureHeight != shadowMask.height) {
+				gl.glTexImage2D(
+					gl.GL_TEXTURE_2D,
+					0,
+					gl.GL_RGBA,
+					shadowMask.width,
+					shadowMask.height,
+					0,
+					gl.GL_RGBA,
+					gl.GL_UNSIGNED_BYTE,
+					shadowMask.pixels());
+				remasterShadowMaskTextureWidth = shadowMask.width;
+				remasterShadowMaskTextureHeight = shadowMask.height;
+			} else {
+				gl.glTexSubImage2D(
+					gl.GL_TEXTURE_2D,
+					0,
+					0,
+					0,
+					shadowMask.width,
+					shadowMask.height,
+					gl.GL_RGBA,
+					gl.GL_UNSIGNED_BYTE,
+					shadowMask.pixels());
+			}
+			remasterShadowMaskUploadedSignature = shadowMask.signature;
+		}
+
+		private long remasterTerrainShadowMaskSignature(
+			Renderer3DWorldChunkFrame chunkFrame,
+			List<RemasterTerrainShadowCaster> casters,
+			RemasterShadowMaskBounds bounds) {
+			long hash = 0xcbf29ce484222325L;
+			hash = shadowProofMix(hash, REMASTER_SHADOW_MASK_TEXTURE_SIZE);
+			hash = shadowProofMix(hash, REMASTER_SHADOW_MASK_BLUR_RADIUS);
+			hash = shadowProofMix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_TEXTURE_PADDING));
+			hash = shadowProofMix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CENTER_RETAIN));
+			hash = shadowProofMix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_BLUR_BOOST));
+			hash = shadowProofMix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CLIP_START_OFFSET));
+			hash = shadowProofMix(hash, REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP ? 1 : 0);
+			hash = shadowProofMix(hash, Float.floatToIntBits(bounds.minX));
+			hash = shadowProofMix(hash, Float.floatToIntBits(bounds.maxX));
+			hash = shadowProofMix(hash, Float.floatToIntBits(bounds.minZ));
+			hash = shadowProofMix(hash, Float.floatToIntBits(bounds.maxZ));
+			hash = shadowProofMix(hash, chunkFrame == null ? 0 : chunkFrame.getChunkCount());
+			if (chunkFrame != null) {
+				for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+					hash = shadowProofMix(hash, chunk.getPlane());
+					hash = shadowProofMix(hash, (int) chunk.getSignature());
+					hash = shadowProofMix(hash, (int) (chunk.getSignature() >>> 32));
+					hash = shadowProofMix(hash, chunk.getTriangleCount());
+					hash = shadowProofMix(hash, chunk.getShadowCasterCount());
+				}
+			}
+			hash = shadowProofMix(hash, casters == null ? 0 : casters.size());
+			if (casters != null) {
+				for (RemasterTerrainShadowCaster caster : casters) {
+					hash = caster.mixSignature(hash);
+				}
+			}
+			return hash;
+		}
+
+		private float remasterTerrainShadowMaskAlpha(
+			RemasterShadowRoofCoverage roofCoverage,
+			Map<Long, List<RemasterTerrainShadowCaster>> casterGrid,
+			float x,
+			float z) {
+			List<RemasterTerrainShadowCaster> casters =
+				casterGrid.get(remasterShadowMaskCellKey(remasterShadowMaskCell(x), remasterShadowMaskCell(z)));
+			if (casters == null || casters.isEmpty()) {
+				return 0.0f;
+			}
+			float alpha = 0.0f;
+			for (RemasterTerrainShadowCaster caster : casters) {
+				float casterAlpha = caster.alphaAt(x, z);
+				if (casterAlpha <= 0.0f || caster.isBlockedBy(roofCoverage, x, z)) {
+					continue;
+				}
+				alpha = Math.max(alpha, casterAlpha);
+			}
+			return clampStatic(alpha, 0.0f, REMASTER_SHADOW_MASK_MAX_ALPHA);
+		}
+
+		private static void blurHorizontal(float[] source, float[] target, int width, int height, int radius) {
+			if (radius <= 0) {
+				System.arraycopy(source, 0, target, 0, source.length);
+				return;
+			}
+			for (int y = 0; y < height; y++) {
+				int row = y * width;
+				for (int x = 0; x < width; x++) {
+					float total = 0.0f;
+					int count = 0;
+					for (int offset = -radius; offset <= radius; offset++) {
+						int sampleX = x + offset;
+						if (sampleX < 0 || sampleX >= width) {
+							continue;
+						}
+						total += source[row + sampleX];
+						count++;
+					}
+					target[row + x] = count <= 0 ? 0.0f : total / count;
+				}
+			}
+		}
+
+		private static void blurVertical(float[] source, float[] target, int width, int height, int radius) {
+			if (radius <= 0) {
+				System.arraycopy(source, 0, target, 0, source.length);
+				return;
+			}
+			for (int y = 0; y < height; y++) {
+				for (int x = 0; x < width; x++) {
+					float total = 0.0f;
+					int count = 0;
+					for (int offset = -radius; offset <= radius; offset++) {
+						int sampleY = y + offset;
+						if (sampleY < 0 || sampleY >= height) {
+							continue;
+						}
+						total += source[sampleY * width + x];
+						count++;
+					}
+					target[y * width + x] = count <= 0 ? 0.0f : total / count;
+				}
+			}
+		}
+
+		private List<RemasterTerrainShadowCaster> buildRemasterTerrainShadowCasters(
+			Renderer3DWorldChunkFrame chunkFrame,
+			RemasterShadowRoofCoverage roofCoverage) {
+			List<RemasterTerrainShadowCaster> casters = new ArrayList<RemasterTerrainShadowCaster>();
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				int casterCount = chunk.getShadowCasterCount();
+				for (int index = 0; index < casterCount; index++) {
+					Renderer3DWorldChunkFrame.ShadowCaster caster = chunk.getShadowCaster(index);
+					if (!isRemasterShadowEligibleCaster(caster)) {
+						continue;
+					}
+					if (roofClassificationForCaster(roofCoverage, chunk, caster) != 0) {
+						continue;
+					}
+					RemasterTerrainShadowCaster projected = RemasterTerrainShadowCaster.from(caster, chunk.getPlane());
+					if (projected != null) {
+						casters.add(projected);
+					}
+				}
+			}
+			return casters;
+		}
+
+		private int countRemasterShadowMaskCasters(List<RemasterTerrainShadowCaster> casters, int style) {
+			int count = 0;
+			for (RemasterTerrainShadowCaster caster : casters) {
+				if (caster.style == style) {
+					count++;
+				}
+			}
+			return count;
+		}
+
+		private Map<Long, List<RemasterTerrainShadowCaster>> buildRemasterTerrainShadowCasterGrid(
+			List<RemasterTerrainShadowCaster> casters) {
+			Map<Long, List<RemasterTerrainShadowCaster>> grid =
+				new HashMap<Long, List<RemasterTerrainShadowCaster>>();
+			for (RemasterTerrainShadowCaster caster : casters) {
+				int minCellX = remasterShadowMaskCell(caster.minX);
+				int maxCellX = remasterShadowMaskCell(caster.maxX);
+				int minCellZ = remasterShadowMaskCell(caster.minZ);
+				int maxCellZ = remasterShadowMaskCell(caster.maxZ);
+				for (int cellX = minCellX; cellX <= maxCellX; cellX++) {
+					for (int cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
+						long key = remasterShadowMaskCellKey(cellX, cellZ);
+						List<RemasterTerrainShadowCaster> cellCasters = grid.get(key);
+						if (cellCasters == null) {
+							cellCasters = new ArrayList<RemasterTerrainShadowCaster>();
+							grid.put(key, cellCasters);
+						}
+						cellCasters.add(caster);
+					}
+				}
+			}
+			return grid;
+		}
+
+		private static int remasterShadowMaskCell(float value) {
+			return (int) Math.floor(value / REMASTER_SHADOW_MASK_GRID_SIZE);
+		}
+
+		private static long remasterShadowMaskCellKey(int cellX, int cellZ) {
+			return ((long) cellX << 32) ^ (cellZ & 0xffffffffL);
 		}
 
 		private ResidentChunkReadiness inspectDrawableResidentStaticWorld(
@@ -5458,9 +6402,22 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			boolean textured,
 			boolean transparentPass,
 			WorldChunkDrawAccumulator accumulator,
-			float[] batchCullViewMatrix) throws Exception {
+			float[] batchCullViewMatrix,
+			boolean shaderActive,
+			FloatBuffer residentWorldToClipMatrix,
+			FloatBuffer residentWorldViewMatrix) throws Exception {
 			for (Renderer3DModelKind kind : WORLD_CHUNK_KIND_DRAW_ORDER) {
-				drawChunkDiagnosticPass(frame, chunkFrame, textured, transparentPass, kind, accumulator, batchCullViewMatrix);
+				drawChunkDiagnosticPass(
+					frame,
+					chunkFrame,
+					textured,
+					transparentPass,
+					kind,
+					accumulator,
+					batchCullViewMatrix,
+					shaderActive,
+					residentWorldToClipMatrix,
+					residentWorldViewMatrix);
 			}
 		}
 
@@ -5499,7 +6456,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return hash;
 		}
 
-		private long shadowProofMix(long hash, int value) {
+		private static long shadowProofMix(long hash, int value) {
 			hash ^= value & 0xffffffffL;
 			return hash * 0x100000001b3L;
 		}
@@ -5588,9 +6545,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			}
 			x /= 3.0f;
 			z /= 3.0f;
-			float baseAlpha = RendererLightingSettings.getMode() == RendererLightingSettings.Mode.TOON
-				? SHADOW_PROOF_TOON_ALPHA
-				: SHADOW_PROOF_DIRECTIONAL_ALPHA;
+			float baseAlpha = SHADOW_PROOF_DIRECTIONAL_ALPHA;
 			float alpha = 0.0f;
 			for (ShadowProofCaster caster : shadowProofCasters) {
 				alpha += caster.alphaAt(x, z, baseAlpha);
@@ -5795,6 +6750,405 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			}
 		}
 
+		private static final class RemasterTerrainShadowMask {
+			private final long signature;
+			private final int width;
+			private final int height;
+			private final int visiblePixels;
+			private final float minX;
+			private final float minZ;
+			private final float invSpanX;
+			private final float invSpanZ;
+			private final ByteBuffer pixels;
+
+			private RemasterTerrainShadowMask(
+				long signature,
+				int width,
+				int height,
+				int visiblePixels,
+				float minX,
+				float minZ,
+				float invSpanX,
+				float invSpanZ,
+				ByteBuffer pixels) {
+				this.signature = signature;
+				this.width = width;
+				this.height = height;
+				this.visiblePixels = visiblePixels;
+				this.minX = minX;
+				this.minZ = minZ;
+				this.invSpanX = invSpanX;
+				this.invSpanZ = invSpanZ;
+				this.pixels = pixels;
+			}
+
+			private float u(float x) {
+				return clampStatic((x - minX) * invSpanX, 0.0f, 1.0f);
+			}
+
+			private float v(float z) {
+				return clampStatic((z - minZ) * invSpanZ, 0.0f, 1.0f);
+			}
+
+			private ByteBuffer pixels() {
+				ByteBuffer duplicate = pixels.duplicate();
+				duplicate.position(0);
+				return duplicate;
+			}
+		}
+
+		private static final class RemasterShadowMaskBounds {
+			private final float minX;
+			private final float maxX;
+			private final float minZ;
+			private final float maxZ;
+
+			private RemasterShadowMaskBounds(float minX, float maxX, float minZ, float maxZ) {
+				this.minX = minX;
+				this.maxX = maxX;
+				this.minZ = minZ;
+				this.maxZ = maxZ;
+			}
+
+			private static RemasterShadowMaskBounds from(
+				RemasterShadowRoofCoverage roofCoverage,
+				Renderer3DWorldChunkFrame chunkFrame) {
+				float minX = Float.POSITIVE_INFINITY;
+				float maxX = Float.NEGATIVE_INFINITY;
+				float minZ = Float.POSITIVE_INFINITY;
+				float maxZ = Float.NEGATIVE_INFINITY;
+				for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+					int triangleCount = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
+					for (int triangle = 0; triangle < triangleCount; triangle++) {
+						if (chunk.getTriangleModelKind(triangle) != Renderer3DModelKind.TERRAIN) {
+							continue;
+						}
+						if (roofClassificationForTriangle(roofCoverage, chunk, triangle) != 0) {
+							continue;
+						}
+						int sourceIndex = triangle * 3;
+						for (int corner = 0; corner < 3; corner++) {
+							int vertex = chunk.getIndex(sourceIndex + corner);
+							int coord = vertex * POSITION_COMPONENT_COUNT;
+							float x = chunk.getVertexCoord(coord);
+							float z = chunk.getVertexCoord(coord + 2);
+							minX = Math.min(minX, x);
+							maxX = Math.max(maxX, x);
+							minZ = Math.min(minZ, z);
+							maxZ = Math.max(maxZ, z);
+						}
+					}
+				}
+				if (!Float.isFinite(minX)
+					|| !Float.isFinite(maxX)
+					|| !Float.isFinite(minZ)
+					|| !Float.isFinite(maxZ)
+					|| maxX <= minX
+					|| maxZ <= minZ) {
+					return null;
+				}
+				return new RemasterShadowMaskBounds(minX, maxX, minZ, maxZ);
+			}
+
+			private RemasterShadowMaskBounds withPadding(float padding) {
+				return new RemasterShadowMaskBounds(
+					minX - padding,
+					maxX + padding,
+					minZ - padding,
+					maxZ + padding);
+			}
+
+			private float xAt(int pixelX, int width) {
+				return minX + ((pixelX + 0.5f) / Math.max(1.0f, (float) width)) * spanX();
+			}
+
+			private float zAt(int pixelY, int height) {
+				return minZ + ((pixelY + 0.5f) / Math.max(1.0f, (float) height)) * spanZ();
+			}
+
+			private float invSpanX() {
+				return 1.0f / Math.max(1.0f, spanX());
+			}
+
+			private float invSpanZ() {
+				return 1.0f / Math.max(1.0f, spanZ());
+			}
+
+			private float spanX() {
+				return maxX - minX;
+			}
+
+			private float spanZ() {
+				return maxZ - minZ;
+			}
+		}
+
+		private static final class RemasterTerrainShadowCaster {
+			private static final int STYLE_STRIP = 0;
+			private static final int STYLE_SOFT_SCENERY = 1;
+
+			private final int style;
+			private final int plane;
+			private final float baseX0;
+			private final float baseZ0;
+			private final float baseX1;
+			private final float baseZ1;
+			private final float centerX;
+			private final float centerZ;
+			private final float length;
+			private final float halfWidth;
+			private final float edgeX;
+			private final float edgeZ;
+			private final float edgeLength;
+			private final float directionX;
+			private final float directionZ;
+			private final float opacity;
+			private final float minX;
+			private final float maxX;
+			private final float minZ;
+			private final float maxZ;
+
+			private RemasterTerrainShadowCaster(
+				int style,
+				int plane,
+				float baseX0,
+				float baseZ0,
+				float baseX1,
+				float baseZ1,
+				float length,
+				float halfWidth,
+				float directionX,
+				float directionZ,
+				float opacity) {
+				float edgeDx = baseX1 - baseX0;
+				float edgeDz = baseZ1 - baseZ0;
+				float edgeLength = (float) Math.sqrt(edgeDx * edgeDx + edgeDz * edgeDz);
+				this.style = style;
+				this.plane = plane;
+				this.baseX0 = baseX0;
+				this.baseZ0 = baseZ0;
+				this.baseX1 = baseX1;
+				this.baseZ1 = baseZ1;
+				this.centerX = (baseX0 + baseX1) * 0.5f;
+				this.centerZ = (baseZ0 + baseZ1) * 0.5f;
+				this.length = length;
+				this.halfWidth = halfWidth;
+				this.edgeLength = edgeLength;
+				this.edgeX = edgeDx / Math.max(0.0001f, edgeLength);
+				this.edgeZ = edgeDz / Math.max(0.0001f, edgeLength);
+				this.directionX = directionX;
+				this.directionZ = directionZ;
+				this.opacity = clampStatic(opacity, 0.0f, 1.0f);
+				float projectedX0 = baseX0 + directionX * length;
+				float projectedZ0 = baseZ0 + directionZ * length;
+				float projectedX1 = baseX1 + directionX * length;
+				float projectedZ1 = baseZ1 + directionZ * length;
+				this.minX = Math.min(Math.min(baseX0, baseX1), Math.min(projectedX0, projectedX1)) - halfWidth;
+				this.maxX = Math.max(Math.max(baseX0, baseX1), Math.max(projectedX0, projectedX1)) + halfWidth;
+				this.minZ = Math.min(Math.min(baseZ0, baseZ1), Math.min(projectedZ0, projectedZ1)) - halfWidth;
+				this.maxZ = Math.max(Math.max(baseZ0, baseZ1), Math.max(projectedZ0, projectedZ1)) + halfWidth;
+			}
+
+			private static RemasterTerrainShadowCaster from(
+				Renderer3DWorldChunkFrame.ShadowCaster source,
+				int plane) {
+				if (source == null || source.getHeight() <= 0) {
+					return null;
+				}
+				float lightX = RendererRemasterLightSettings.getLightDirectionX();
+				float lightY = Math.max(0.12f, Math.abs(RendererRemasterLightSettings.getLightDirectionY()));
+				float lightZ = RendererRemasterLightSettings.getLightDirectionZ();
+				float horizontalLength = (float) Math.sqrt(lightX * lightX + lightZ * lightZ);
+				if (horizontalLength <= 0.0001f) {
+					return null;
+				}
+				float shadowDirectionX = -lightX / horizontalLength;
+				float shadowDirectionZ = -lightZ / horizontalLength;
+				float height = Math.max(0.0f, source.getHeight());
+				float length = clampStatic(
+					REMASTER_SHADOW_MASK_MIN_LENGTH + height * (horizontalLength / lightY) * 2.0f,
+					REMASTER_SHADOW_MASK_MIN_LENGTH,
+					REMASTER_SHADOW_MASK_MAX_LENGTH);
+				float width = Math.max(
+					source.getWidth(),
+					Math.max(
+						Math.abs(source.getBaseX1() - source.getBaseX0()),
+						Math.abs(source.getBaseZ1() - source.getBaseZ0())));
+				Renderer3DModelKind kind = source.getModelKind();
+				int style = kind == Renderer3DModelKind.GAME_OBJECT ? STYLE_SOFT_SCENERY : STYLE_STRIP;
+				float halfWidth = remasterShadowHalfWidth(kind, width);
+				float baseX0 = source.getBaseX0();
+				float baseZ0 = source.getBaseZ0();
+				float baseX1 = source.getBaseX1();
+				float baseZ1 = source.getBaseZ1();
+				if (style == STYLE_SOFT_SCENERY) {
+					float centerX = (source.getBaseX0() + source.getBaseX1()) * 0.5f;
+					float centerZ = (source.getBaseZ0() + source.getBaseZ1()) * 0.5f;
+					float normalX = -shadowDirectionZ;
+					float normalZ = shadowDirectionX;
+					halfWidth = Math.max(36.0f, Math.min(132.0f, width * 0.30f));
+					baseX0 = centerX - normalX * halfWidth;
+					baseZ0 = centerZ - normalZ * halfWidth;
+					baseX1 = centerX + normalX * halfWidth;
+					baseZ1 = centerZ + normalZ * halfWidth;
+				}
+				return new RemasterTerrainShadowCaster(
+					style,
+					plane,
+					baseX0,
+					baseZ0,
+					baseX1,
+					baseZ1,
+					length,
+					halfWidth,
+					shadowDirectionX,
+					shadowDirectionZ,
+					source.getOpacity() / 255.0f);
+			}
+
+			private static float remasterShadowHalfWidth(Renderer3DModelKind kind, float width) {
+				if (kind == Renderer3DModelKind.GAME_OBJECT) {
+					return Math.max(36.0f, Math.min(132.0f, width * 0.30f));
+				}
+				if (kind == Renderer3DModelKind.WALL_OBJECT) {
+					return Math.max(32.0f, width * 0.28f);
+				}
+				return Math.max(REMASTER_SHADOW_MASK_MIN_WIDTH, Math.min(96.0f, width * 0.18f));
+			}
+
+			private float alphaAt(float x, float z) {
+				if (style == STYLE_SOFT_SCENERY) {
+					return alphaAtSoftScenery(x, z);
+				}
+				float determinant = edgeX * directionZ - edgeZ * directionX;
+				if (edgeLength > 0.0001f && Math.abs(determinant) > 0.08f) {
+					float px = x - baseX0;
+					float pz = z - baseZ0;
+					float edgeAlong = (px * directionZ - pz * directionX) / determinant;
+					float shadowAlong = (edgeX * pz - edgeZ * px) / determinant;
+					if (shadowAlong < 0.0f || shadowAlong > length) {
+						return 0.0f;
+					}
+					if (edgeAlong < -halfWidth || edgeAlong > edgeLength + halfWidth) {
+						return 0.0f;
+					}
+					float sideFade = Math.min(
+						(edgeAlong + halfWidth) / Math.max(16.0f, halfWidth),
+						(edgeLength + halfWidth - edgeAlong) / Math.max(16.0f, halfWidth));
+					float endFade = (length - shadowAlong) / Math.max(64.0f, length * 0.22f);
+					return REMASTER_SHADOW_MASK_BASE_ALPHA
+						* opacity
+						* clampStatic(Math.min(sideFade, endFade), 0.0f, 1.0f);
+				}
+				return alphaAtCenterFallback(x, z);
+			}
+
+			private float alphaAtSoftScenery(float x, float z) {
+				float dx = x - centerX;
+				float dz = z - centerZ;
+				float along = dx * directionX + dz * directionZ;
+				if (along < -halfWidth * 0.45f || along > length) {
+					return 0.0f;
+				}
+				float across = Math.abs(dx * -directionZ + dz * directionX);
+				float farFade = smoothStep(0.0f, Math.max(96.0f, length * 0.28f), length - along);
+				float startFade = smoothStep(-halfWidth * 0.35f, Math.max(16.0f, halfWidth * 0.45f), along);
+				float trunkWidth = Math.max(9.0f, Math.min(26.0f, halfWidth * 0.24f));
+				float trunk = 1.0f - smoothStep(trunkWidth, trunkWidth * 3.2f, across);
+				float trunkFade = smoothStep(0.0f, Math.max(36.0f, halfWidth * 0.75f), along)
+					* smoothStep(0.0f, Math.max(112.0f, length * 0.36f), length - along);
+				float canopyCenter = Math.min(length * 0.36f, Math.max(72.0f, halfWidth * 1.45f));
+				float canopyRadiusAlong = Math.max(112.0f, halfWidth * 2.35f);
+				float canopyRadiusAcross = Math.max(48.0f, halfWidth * 1.25f);
+				float canopyAlong = (along - canopyCenter) / canopyRadiusAlong;
+				float canopyAcross = across / canopyRadiusAcross;
+				float canopyDistance = canopyAlong * canopyAlong + canopyAcross * canopyAcross;
+				float canopy = 1.0f - smoothStep(0.16f, 1.0f, canopyDistance);
+				float shapedAlpha = Math.max(trunk * trunkFade * 0.85f, canopy * startFade * farFade * 0.55f);
+				return REMASTER_SHADOW_MASK_BASE_ALPHA
+					* opacity
+					* clampStatic(shapedAlpha, 0.0f, 1.0f);
+			}
+
+			private float alphaAtCenterFallback(float x, float z) {
+				float dx = x - centerX;
+				float dz = z - centerZ;
+				float along = dx * directionX + dz * directionZ;
+				if (along < 0.0f || along > length) {
+					return 0.0f;
+				}
+				float across = Math.abs(dx * -directionZ + dz * directionX);
+				if (across > halfWidth) {
+					return 0.0f;
+				}
+				float sideFade = (halfWidth - across) / Math.max(16.0f, halfWidth * 0.25f);
+				float endFade = (length - along) / Math.max(64.0f, length * 0.22f);
+				return REMASTER_SHADOW_MASK_BASE_ALPHA
+					* opacity
+					* clampStatic(Math.min(sideFade, endFade), 0.0f, 1.0f);
+			}
+
+			private boolean isBlockedBy(RemasterShadowRoofCoverage roofCoverage, float x, float z) {
+				if (roofCoverage == null) {
+					return false;
+				}
+				float along = shadowAlongAt(x, z);
+				if (along <= REMASTER_SHADOW_MASK_CLIP_START_OFFSET) {
+					return false;
+				}
+				float sourceX = x - directionX * along;
+				float sourceZ = z - directionZ * along;
+				float startX = sourceX + directionX * REMASTER_SHADOW_MASK_CLIP_START_OFFSET;
+				float startZ = sourceZ + directionZ * REMASTER_SHADOW_MASK_CLIP_START_OFFSET;
+				return roofCoverage.crossesShadowBlocker(plane, startX, startZ, x, z);
+			}
+
+			private float shadowAlongAt(float x, float z) {
+				if (style == STYLE_SOFT_SCENERY) {
+					float dx = x - centerX;
+					float dz = z - centerZ;
+					return dx * directionX + dz * directionZ;
+				}
+				float determinant = edgeX * directionZ - edgeZ * directionX;
+				if (edgeLength > 0.0001f && Math.abs(determinant) > 0.08f) {
+					float px = x - baseX0;
+					float pz = z - baseZ0;
+					return (edgeX * pz - edgeZ * px) / determinant;
+				}
+				float dx = x - centerX;
+				float dz = z - centerZ;
+				return dx * directionX + dz * directionZ;
+			}
+
+			private long mixSignature(long hash) {
+				hash = shadowProofMix(hash, style);
+				hash = shadowProofMix(hash, plane);
+				hash = shadowProofMix(hash, Float.floatToIntBits(baseX0));
+				hash = shadowProofMix(hash, Float.floatToIntBits(baseZ0));
+				hash = shadowProofMix(hash, Float.floatToIntBits(baseX1));
+				hash = shadowProofMix(hash, Float.floatToIntBits(baseZ1));
+				hash = shadowProofMix(hash, Float.floatToIntBits(centerX));
+				hash = shadowProofMix(hash, Float.floatToIntBits(centerZ));
+				hash = shadowProofMix(hash, Float.floatToIntBits(length));
+				hash = shadowProofMix(hash, Float.floatToIntBits(halfWidth));
+				hash = shadowProofMix(hash, Float.floatToIntBits(directionX));
+				hash = shadowProofMix(hash, Float.floatToIntBits(directionZ));
+				hash = shadowProofMix(hash, Float.floatToIntBits(opacity));
+				hash = shadowProofMix(hash, Float.floatToIntBits(minX));
+				hash = shadowProofMix(hash, Float.floatToIntBits(maxX));
+				hash = shadowProofMix(hash, Float.floatToIntBits(minZ));
+				return shadowProofMix(hash, Float.floatToIntBits(maxZ));
+			}
+
+			private static float smoothStep(float edge0, float edge1, float value) {
+				if (edge1 <= edge0) {
+					return value >= edge1 ? 1.0f : 0.0f;
+				}
+				float t = clampStatic((value - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+				return t * t * (3.0f - 2.0f * t);
+			}
+		}
+
 		private static float clampStatic(float value, float min, float max) {
 			return Math.max(min, Math.min(max, value));
 		}
@@ -5810,7 +7164,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			boolean transparentPass,
 			Renderer3DModelKind modelKind,
 			WorldChunkDrawAccumulator accumulator,
-			float[] batchCullViewMatrix) throws Exception {
+			float[] batchCullViewMatrix,
+			boolean shaderActive,
+			FloatBuffer residentWorldToClipMatrix,
+			FloatBuffer residentWorldViewMatrix) throws Exception {
 			if (!shouldDrawChunkModelKind(modelKind)) {
 				return;
 			}
@@ -5845,8 +7202,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					accumulator.recordConsideredChunk(key);
 					gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.vertexBufferId);
 					gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, buffer.materialIndexBufferId);
-					gl.glVertexPointer(POSITION_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, 0L);
-					bindChunkVertexAttributes(textured);
+					if (!shaderActive) {
+						gl.glVertexPointer(POSITION_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, 0L);
+						bindChunkVertexAttributes(textured);
+					}
 					int chunkDrawnTriangles = 0;
 					for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
 						if (batch.indexCount <= 0) {
@@ -5867,11 +7226,18 @@ final class OpenGLFramePresenter implements AutoCloseable {
 						}
 						WorldChunkBatchBindResult bindResult = WorldChunkBatchBindResult.TEXTURED;
 						if (textured) {
-							bindResult = bindTexturedOrFlatChunkBatch(frame, batch, accumulator);
+							bindResult = bindTexturedOrFlatChunkBatch(frame, batch, accumulator, shaderActive);
 							if (bindResult == WorldChunkBatchBindResult.SKIPPED) {
 								accumulator.recordSkippedBatch(batch.indexCount / 3);
 								continue;
 							}
+						}
+						if (shaderActive) {
+							bindResidentChunkShaderBatch(
+								frame,
+								bindResult == WorldChunkBatchBindResult.TEXTURED,
+								residentWorldToClipMatrix,
+								residentWorldViewMatrix);
 						}
 						gl.glDrawElements(
 							gl.GL_TRIANGLES,
@@ -5945,6 +7311,42 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				gl.glEnableClientState(gl.GL_COLOR_ARRAY);
 				gl.glColorPointer(COLOR_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, COLOR_OFFSET_BYTES);
 			}
+		}
+
+		private boolean useResidentChunkShader(boolean textured) {
+			return textured && WORLD_CHUNKS_TEXTURED_SHADER && residentChunkShader != null;
+		}
+
+		private void bindResidentChunkShaderBatch(
+			Renderer3DFrame frame,
+			boolean textureEnabled,
+			FloatBuffer residentWorldToClipMatrix,
+			FloatBuffer residentWorldViewMatrix) throws Exception {
+			boolean remasterLightingEnabled =
+				WORLD_CHUNKS_REMASTER_LIGHTING_SHADER
+					&& RendererLightingSettings.getMode() == RendererLightingSettings.Mode.DIRECTIONAL;
+			boolean rawMaterialMode = WORLD_CHUNKS_RAW_MATERIAL_SHADER;
+			residentChunkShader.useResidentChunk(
+				residentWorldToClipMatrix,
+				residentWorldViewMatrix,
+				textureEnabled,
+				rawMaterialMode,
+				remasterLightingEnabled,
+				frame);
+			residentChunkShader.bindWorldParityAttributes(
+				POSITION_COMPONENT_COUNT,
+				TEXTURE_COORD_COMPONENT_COUNT,
+				textureEnabled ? TEXTURE_LIGHT_COMPONENT_COUNT : COLOR_COMPONENT_COUNT,
+				RAW_MATERIAL_COLOR_COMPONENT_COUNT,
+				NORMAL_COMPONENT_COUNT,
+				MODEL_KIND_COMPONENT_COUNT,
+				STRIDE_BYTES,
+				0L,
+				TEXTURE_COORD_OFFSET_BYTES,
+				textureEnabled ? TEXTURE_LIGHT_OFFSET_BYTES : COLOR_OFFSET_BYTES,
+				RAW_MATERIAL_COLOR_OFFSET_BYTES,
+				NORMAL_OFFSET_BYTES,
+				MODEL_KIND_OFFSET_BYTES);
 		}
 
 		private boolean isTransparentChunkBatch(Renderer3DFrame frame, WorldChunkMaterialBatch batch) {
@@ -6027,10 +7429,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private WorldChunkBatchBindResult bindTexturedOrFlatChunkBatch(
 			Renderer3DFrame frame,
 			WorldChunkMaterialBatch batch,
-			WorldChunkDrawAccumulator accumulator) throws Exception {
+			WorldChunkDrawAccumulator accumulator,
+			boolean shaderActive) throws Exception {
 			OpenGLTextureRegion region = textureRegionForBatch(frame, batch);
 			if (region == null) {
-				return bindFlatChunkBatch(frame, batch)
+				return bindFlatChunkBatch(frame, batch, shaderActive)
 					? WorldChunkBatchBindResult.FLAT_FALLBACK
 					: WorldChunkBatchBindResult.SKIPPED;
 			}
@@ -6038,18 +7441,20 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			gl.glEnable(gl.GL_ALPHA_TEST);
 			gl.glAlphaFunc(gl.GL_GREATER, 0.5f);
 			gl.glDisable(gl.GL_BLEND);
-			gl.glEnableClientState(gl.GL_COLOR_ARRAY);
-			gl.glColorPointer(
-				TEXTURE_LIGHT_COMPONENT_COUNT,
-				gl.GL_FLOAT,
-				STRIDE_BYTES,
-				TEXTURE_LIGHT_OFFSET_BYTES);
-			gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
-			gl.glTexCoordPointer(
-				TEXTURE_COORD_COMPONENT_COUNT,
-				gl.GL_FLOAT,
-				STRIDE_BYTES,
-				TEXTURE_COORD_OFFSET_BYTES);
+			if (!shaderActive) {
+				gl.glEnableClientState(gl.GL_COLOR_ARRAY);
+				gl.glColorPointer(
+					TEXTURE_LIGHT_COMPONENT_COUNT,
+					gl.GL_FLOAT,
+					STRIDE_BYTES,
+					TEXTURE_LIGHT_OFFSET_BYTES);
+				gl.glEnableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+				gl.glTexCoordPointer(
+					TEXTURE_COORD_COMPONENT_COUNT,
+					gl.GL_FLOAT,
+					STRIDE_BYTES,
+					TEXTURE_COORD_OFFSET_BYTES);
+			}
 			bindChunkTexture(region.getTextureId(), accumulator);
 			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			return WorldChunkBatchBindResult.TEXTURED;
@@ -6072,7 +7477,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return textureId == LEGACY_TRANSPARENT_TEXTURE ? null : textureCache.getRegion(frame, textureId);
 		}
 
-		private boolean bindFlatChunkBatch(Renderer3DFrame frame, WorldChunkMaterialBatch batch) throws Exception {
+		private boolean bindFlatChunkBatch(
+			Renderer3DFrame frame,
+			WorldChunkMaterialBatch batch,
+			boolean shaderActive) throws Exception {
 			int fallbackColor = fallbackColorForBatch(frame, batch);
 			if (fallbackColor == NO_FALLBACK_COLOR) {
 				return false;
@@ -6080,9 +7488,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			gl.glDisable(gl.GL_TEXTURE_2D);
 			gl.glDisable(gl.GL_ALPHA_TEST);
 			gl.glDisable(gl.GL_BLEND);
-			gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
-			gl.glEnableClientState(gl.GL_COLOR_ARRAY);
-			gl.glColorPointer(COLOR_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, COLOR_OFFSET_BYTES);
+			if (!shaderActive) {
+				gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+				gl.glEnableClientState(gl.GL_COLOR_ARRAY);
+				gl.glColorPointer(COLOR_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, COLOR_OFFSET_BYTES);
+			}
 			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			return true;
 		}
@@ -6122,7 +7532,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 
 		private void putFlatFallbackColor(int color) throws Exception {
-			float brightness = RendererBrightnessSettings.getMode().multiplier;
+			float brightness = RendererDayNightCycle.currentBrightnessMultiplier();
 			gl.glColor4f(
 				brightnessColor(((color >> 16) & 0xFF) / 255.0f, brightness),
 				brightnessColor(((color >> 8) & 0xFF) / 255.0f, brightness),
@@ -6142,7 +7552,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 
 		private int currentBrightnessBits() {
-			return Float.floatToIntBits(RendererBrightnessSettings.getMode().multiplier);
+			return Float.floatToIntBits(RendererDayNightCycle.currentBrightnessMultiplier());
 		}
 
 		private int currentFogModeBits() {
@@ -6182,6 +7592,37 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			worldToClipMatrixBuffer.flip();
 			gl.glMatrixMode(matrixMode);
 			gl.glLoadMatrixf(worldToClipMatrixBuffer);
+		}
+
+		private FloatBuffer putWorldToClipMatrix(float[] matrix) {
+			if (worldToClipMatrixBuffer == null) {
+				worldToClipMatrixBuffer = ByteBuffer
+					.allocateDirect(16 * 4)
+					.order(ByteOrder.nativeOrder())
+					.asFloatBuffer();
+			}
+			return putColumnMajorMatrix(worldToClipMatrixBuffer, matrix);
+		}
+
+		private FloatBuffer putWorldViewMatrix(float[] matrix) {
+			if (worldViewMatrixBuffer == null) {
+				worldViewMatrixBuffer = ByteBuffer
+					.allocateDirect(16 * 4)
+					.order(ByteOrder.nativeOrder())
+					.asFloatBuffer();
+			}
+			return putColumnMajorMatrix(worldViewMatrixBuffer, matrix);
+		}
+
+		private FloatBuffer putColumnMajorMatrix(FloatBuffer buffer, float[] matrix) {
+			buffer.clear();
+			for (int column = 0; column < 4; column++) {
+				for (int row = 0; row < 4; row++) {
+					buffer.put(matrix[row * 4 + column]);
+				}
+			}
+			buffer.flip();
+			return buffer;
 		}
 
 		private float[] worldViewMatrix(Renderer3DFrame frame) {
@@ -6460,10 +7901,12 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					frame,
 					chunk.getTriangleTexture(triangle),
 					chunk.getTriangleFallbackColor(triangle));
+				int rawMaterialColor = rawMaterialColorForTriangle(frame, chunk, triangle);
 				vertexUploadBuffer.put((float) chunk.getVertexCoord(coord));
 				vertexUploadBuffer.put((float) chunk.getVertexCoord(coord + 1));
 				vertexUploadBuffer.put((float) chunk.getVertexCoord(coord + 2));
 				int legacyLight = chunkLegacyLight(chunk, vertex, smoothDiffuseLights);
+				int baseLegacyLight = legacyLight;
 				legacyLight = applyBakedTerrainShadow(legacyLight, bakedTerrainShadowMask, triangle);
 				putChunkMaterialColor(
 					materialColorForTriangle(frame, chunk, triangle),
@@ -6472,8 +7915,30 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				vertexUploadBuffer.put(chunkTextureU(textureRegion, chunk.getVertexTextureU(vertex)));
 				vertexUploadBuffer.put(chunkTextureV(textureRegion, chunk.getVertexTextureV(vertex)));
 				putChunkTextureLight(textureLightFactor(legacyLight));
+				putChunkShaderInputs(chunk, vertex, triangle, legacyLight, baseLegacyLight, rawMaterialColor);
 			}
 			vertexUploadBuffer.flip();
+		}
+
+		private void putChunkShaderInputs(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			int vertex,
+			int triangle,
+			int legacyLight,
+			int baseLegacyLight,
+			int rawMaterialColor) {
+			vertexUploadBuffer.put((float) clampLegacyLight(legacyLight));
+			vertexUploadBuffer.put((float) clampLegacyLight(baseLegacyLight));
+			vertexUploadBuffer.put(((rawMaterialColor >> 16) & 0xFF) / 255.0f);
+			vertexUploadBuffer.put(((rawMaterialColor >> 8) & 0xFF) / 255.0f);
+			vertexUploadBuffer.put((rawMaterialColor & 0xFF) / 255.0f);
+			vertexUploadBuffer.put(chunk.getVertexNormalX(vertex) / 256.0f);
+			vertexUploadBuffer.put(chunk.getVertexNormalY(vertex) / 256.0f);
+			vertexUploadBuffer.put(chunk.getVertexNormalZ(vertex) / 256.0f);
+			Renderer3DModelKind modelKind = triangle >= 0 && triangle < chunk.getTriangleCount()
+				? chunk.getTriangleModelKind(triangle)
+				: Renderer3DModelKind.UNCLASSIFIED;
+			vertexUploadBuffer.put((float) modelKind.ordinal());
 		}
 
 		private float[] buildBakedTerrainShadowMask(
@@ -6602,6 +8067,27 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return modelKindDiagnosticColor(chunk.getTriangleModelKind(triangle));
 		}
 
+		private int rawMaterialColorForTriangle(
+			Renderer3DFrame frame,
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			int triangle) {
+			if (triangle < 0 || triangle >= chunk.getTriangleCount()) {
+				return modelKindDiagnosticColor(Renderer3DModelKind.UNCLASSIFIED);
+			}
+			int fallbackColor = chunk.getTriangleFallbackColor(triangle);
+			int textureId = chunk.getTriangleTexture(triangle);
+			if (textureId == LEGACY_TRANSPARENT_TEXTURE
+				&& fallbackColor != LEGACY_TRANSPARENT_TEXTURE
+				&& !isFrameTextureReference(frame, fallbackColor)) {
+				return fallbackColor & 0xFFFFFF;
+			}
+			int fallbackTextureAverageColor = averageTextureColor(frame, fallbackColor);
+			if (fallbackTextureAverageColor != NO_FALLBACK_COLOR) {
+				return fallbackTextureAverageColor;
+			}
+			return materialColorForTriangle(frame, chunk, triangle);
+		}
+
 		private OpenGLTextureRegion textureRegionForVertex(
 			Renderer3DFrame frame,
 			Renderer3DWorldChunkFrame.ChunkMesh chunk,
@@ -6666,7 +8152,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 		private void putChunkMaterialColor(int color, int textureId, int legacyLight) {
 			int shadedColor = shadedChunkMaterialColor(color, textureId, legacyLight);
-			float brightness = RendererBrightnessSettings.getMode().multiplier;
+			float brightness = RendererDayNightCycle.currentBrightnessMultiplier();
 			vertexUploadBuffer.put(brightnessColor(((shadedColor >> 16) & 0xFF) / 255.0f, brightness));
 			vertexUploadBuffer.put(brightnessColor(((shadedColor >> 8) & 0xFF) / 255.0f, brightness));
 			vertexUploadBuffer.put(brightnessColor((shadedColor & 0xFF) / 255.0f, brightness));
@@ -6701,23 +8187,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 
 		private int applyLightingModeLegacyLight(int legacyLight) {
-			RendererLightingSettings.Mode mode = RendererLightingSettings.getMode();
-			int adjusted = legacyLight;
-			if (mode == RendererLightingSettings.Mode.DIRECTIONAL) {
-				adjusted = legacyLight;
-			} else if (mode == RendererLightingSettings.Mode.TOON) {
-				int clamped = clampLegacyLight(legacyLight);
-				if (clamped < 64) {
-					adjusted = 32;
-				} else if (clamped < 128) {
-					adjusted = 96;
-				} else if (clamped < 192) {
-					adjusted = 160;
-				} else {
-					adjusted = 224;
-				}
-			}
-			return clampLegacyLight(adjusted);
+			return clampLegacyLight(legacyLight);
 		}
 
 		private int chunkFaceDiffuseLight(Renderer3DWorldChunkFrame.ChunkMesh chunk, int triangle) {
@@ -6735,23 +8205,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			if (scaledNormalX == 0 && scaledNormalY == 0 && scaledNormalZ == 0) {
 				return 0;
 			}
-			if (RendererLightingSettings.getMode() == RendererLightingSettings.Mode.CLASSIC) {
-				return (int) ((scaledNormalY * -10.0d + scaledNormalX * -50.0d + scaledNormalZ * -50.0d) / 106.0d);
-			}
-			if (chunk.getTriangleModelKind(triangle) == Renderer3DModelKind.TERRAIN && scaledNormalY < 0) {
-				scaledNormalX = -scaledNormalX;
-				scaledNormalY = -scaledNormalY;
-				scaledNormalZ = -scaledNormalZ;
-			}
-			return chunkDirectionalDiffuseLight(scaledNormalX, scaledNormalY, scaledNormalZ);
-		}
-
-		private int chunkDirectionalDiffuseLight(int scaledNormalX, int scaledNormalY, int scaledNormalZ) {
-			float normalX = scaledNormalX / 256.0f;
-			float normalY = scaledNormalY / 256.0f;
-			float normalZ = scaledNormalZ / 256.0f;
-			float dot = normalX * -0.58f + normalY * 0.70f + normalZ * -0.42f;
-			return Math.round(-86.0f * clamp(dot, -1.0f, 1.0f));
+			return (int) ((scaledNormalY * -10.0d + scaledNormalX * -50.0d + scaledNormalZ * -50.0d) / 106.0d);
 		}
 
 		private int legacyFlatResourceColor(int color, int legacyLight) {
@@ -6797,24 +8251,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 
 		private float textureLightFactor(int legacyLight) {
-			RendererLightingSettings.Mode mode = RendererLightingSettings.getMode();
-			if (mode == RendererLightingSettings.Mode.DIRECTIONAL) {
-				float normalized = clamp(legacyLight / 255.0f, 0.0f, 1.0f);
-				return clamp(1.12f - normalized * 0.70f, 0.42f, 1.12f);
-			}
-			if (mode == RendererLightingSettings.Mode.TOON) {
-				int band = legacyTextureShadeBand(legacyLight);
-				switch (band) {
-					case 1:
-						return 0.86f;
-					case 2:
-						return 0.58f;
-					case 3:
-						return 0.34f;
-					default:
-						return 1.15f;
-				}
-			}
 			return legacyTextureLightFactor(legacyLight);
 		}
 
@@ -6916,6 +8352,739 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				buffer.close(gl);
 			}
 			residentChunks.clear();
+			if (remasterShadowMaskTextureId != 0) {
+				gl.glDeleteTextures(remasterShadowMaskTextureId);
+				remasterShadowMaskTextureId = 0;
+				remasterShadowMaskTextureWidth = 0;
+				remasterShadowMaskTextureHeight = 0;
+				remasterShadowMaskUploadedSignature = 0L;
+			}
+			remasterShadowMaskCache = null;
+			remasterShadowMaskCacheSignature = 0L;
+			remasterShadowMaskLastCacheHit = false;
+			remasterShadowMaskLastRebuild = false;
+			remasterShadowMaskLastUpload = false;
+			remasterShadowMaskLastUploadSkip = false;
+		}
+	}
+
+	private static final class RemasterShadowInventory {
+		private static final RemasterShadowInventory EMPTY =
+			new RemasterShadowInventory(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+		private final int receiverChunks;
+		private final int receiverTriangles;
+		private final int totalCasters;
+		private final int wallCasters;
+		private final int gameObjectCasters;
+		private final int wallObjectCasters;
+		private final int outdoorOnlyCasters;
+		private final int clippingCandidates;
+		private final int roofedReceivers;
+		private final int outdoorReceivers;
+		private final int unknownReceivers;
+		private final int roofedCasters;
+		private final int outdoorCasters;
+		private final int unknownCasters;
+		private final int sunlightEligibleCasters;
+		private final int sunlightSuppressedRoofedCasters;
+		private final int sunlightSuppressedUnknownCasters;
+
+		private RemasterShadowInventory(
+			int receiverChunks,
+			int receiverTriangles,
+			int totalCasters,
+			int wallCasters,
+			int gameObjectCasters,
+			int wallObjectCasters,
+			int outdoorOnlyCasters,
+			int clippingCandidates,
+			int roofedReceivers,
+			int outdoorReceivers,
+			int unknownReceivers,
+			int roofedCasters,
+			int outdoorCasters,
+			int unknownCasters,
+			int sunlightEligibleCasters,
+			int sunlightSuppressedRoofedCasters,
+			int sunlightSuppressedUnknownCasters) {
+			this.receiverChunks = receiverChunks;
+			this.receiverTriangles = receiverTriangles;
+			this.totalCasters = totalCasters;
+			this.wallCasters = wallCasters;
+			this.gameObjectCasters = gameObjectCasters;
+			this.wallObjectCasters = wallObjectCasters;
+			this.outdoorOnlyCasters = outdoorOnlyCasters;
+			this.clippingCandidates = clippingCandidates;
+			this.roofedReceivers = roofedReceivers;
+			this.outdoorReceivers = outdoorReceivers;
+			this.unknownReceivers = unknownReceivers;
+			this.roofedCasters = roofedCasters;
+			this.outdoorCasters = outdoorCasters;
+			this.unknownCasters = unknownCasters;
+			this.sunlightEligibleCasters = sunlightEligibleCasters;
+			this.sunlightSuppressedRoofedCasters = sunlightSuppressedRoofedCasters;
+			this.sunlightSuppressedUnknownCasters = sunlightSuppressedUnknownCasters;
+		}
+	}
+
+	private static final class RemasterShadowRoofCoverage {
+		private static final RemasterShadowRoofCoverage EMPTY =
+			new RemasterShadowRoofCoverage(
+				Collections.<Renderer3DWorldChunkFrame.ChunkMesh>emptyList(),
+				Collections.<Integer, RemasterShadowIndoorFlood>emptyMap());
+		private static final int TILE_SIZE = 128;
+		private static final int BOUNDARY_SAMPLE_OFFSET = TILE_SIZE / 2;
+
+		private final List<Renderer3DWorldChunkFrame.ChunkMesh> roofChunks;
+		private final Map<Integer, RemasterShadowIndoorFlood> indoorFloodByPlane;
+
+		private RemasterShadowRoofCoverage(
+			List<Renderer3DWorldChunkFrame.ChunkMesh> roofChunks,
+			Map<Integer, RemasterShadowIndoorFlood> indoorFloodByPlane) {
+			this.roofChunks = roofChunks == null
+				? Collections.<Renderer3DWorldChunkFrame.ChunkMesh>emptyList()
+				: roofChunks;
+			this.indoorFloodByPlane = indoorFloodByPlane == null
+				? Collections.<Integer, RemasterShadowIndoorFlood>emptyMap()
+				: indoorFloodByPlane;
+		}
+
+		private static RemasterShadowRoofCoverage from(Renderer3DWorldChunkFrame chunkFrame) {
+			if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
+				return EMPTY;
+			}
+			List<Renderer3DWorldChunkFrame.ChunkMesh> roofChunks =
+				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>();
+			Map<Integer, RemasterShadowIndoorFlood.Builder> floodBuilders =
+				new HashMap<Integer, RemasterShadowIndoorFlood.Builder>();
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				if (chunk.hasRoofCoverageData()) {
+					roofChunks.add(chunk);
+				}
+				RemasterShadowIndoorFlood.Builder builder = floodBuilderForPlane(floodBuilders, chunk.getPlane());
+				builder.addTerrain(chunk);
+			}
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				RemasterShadowIndoorFlood.Builder builder = floodBuilders.get(Integer.valueOf(chunk.getPlane()));
+				if (builder == null) {
+					continue;
+				}
+				builder.addWallBlockers(chunk);
+			}
+			Map<Integer, RemasterShadowIndoorFlood> floodByPlane =
+				new HashMap<Integer, RemasterShadowIndoorFlood>();
+			for (Map.Entry<Integer, RemasterShadowIndoorFlood.Builder> entry : floodBuilders.entrySet()) {
+				RemasterShadowIndoorFlood flood = entry.getValue().build();
+				if (flood != null) {
+					floodByPlane.put(entry.getKey(), flood);
+				}
+			}
+			return roofChunks.isEmpty() && floodByPlane.isEmpty()
+				? EMPTY
+				: new RemasterShadowRoofCoverage(roofChunks, floodByPlane);
+		}
+
+		private int classify(int plane, int worldX, int worldZ) {
+			int roofClassification = -1;
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : roofChunks) {
+				if (chunk.getPlane() != plane) {
+					continue;
+				}
+				int classification = chunk.roofClassificationForWorldPoint(worldX, worldZ);
+				if (classification > 0) {
+					return 1;
+				}
+				if (classification == 0) {
+					roofClassification = 0;
+				}
+			}
+			RemasterShadowIndoorFlood flood = indoorFloodByPlane.get(Integer.valueOf(plane));
+			if (flood != null) {
+				int classification = flood.classify(worldX, worldZ);
+				if (classification >= 0) {
+					return classification;
+				}
+			}
+			return roofClassification;
+		}
+
+		private int classifyBoundaryCaster(int plane, int x0, int z0, int x1, int z1) {
+			int midX = (x0 + x1) / 2;
+			int midZ = (z0 + z1) / 2;
+			int dx = x1 - x0;
+			int dz = z1 - z0;
+			double length = Math.sqrt((double) dx * dx + (double) dz * dz);
+			if (length < 1.0d) {
+				return classify(plane, midX, midZ);
+			}
+
+			int offsetX = (int) Math.round((-dz / length) * BOUNDARY_SAMPLE_OFFSET);
+			int offsetZ = (int) Math.round((dx / length) * BOUNDARY_SAMPLE_OFFSET);
+			int sideA = classify(plane, midX + offsetX, midZ + offsetZ);
+			int sideB = classify(plane, midX - offsetX, midZ - offsetZ);
+			if (sideA == 0 || sideB == 0) {
+				return 0;
+			}
+			if (sideA > 0 && sideB > 0) {
+				return 1;
+			}
+			if (sideA > 0 || sideB > 0) {
+				return 1;
+			}
+			return classify(plane, midX, midZ);
+		}
+
+		private boolean crossesShadowBlocker(int plane, float startX, float startZ, float endX, float endZ) {
+			RemasterShadowIndoorFlood flood = indoorFloodByPlane.get(Integer.valueOf(plane));
+			return flood != null && flood.crossesBlocker(startX, startZ, endX, endZ);
+		}
+
+		private static RemasterShadowIndoorFlood.Builder floodBuilderForPlane(
+			Map<Integer, RemasterShadowIndoorFlood.Builder> floodBuilders,
+			int plane) {
+			Integer key = Integer.valueOf(plane);
+			RemasterShadowIndoorFlood.Builder builder = floodBuilders.get(key);
+			if (builder == null) {
+				builder = new RemasterShadowIndoorFlood.Builder(plane);
+				floodBuilders.put(key, builder);
+			}
+			return builder;
+		}
+
+		private static int tileForWorld(int world) {
+			return Math.floorDiv(world, TILE_SIZE);
+		}
+
+		private static int boundaryForWorld(int world) {
+			return Math.round(world / (float) TILE_SIZE);
+		}
+	}
+
+	private static final class RemasterShadowIndoorFlood {
+		private static final int BOUNDS_PADDING_TILES = 2;
+
+		private final int minTileX;
+		private final int minTileZ;
+		private final int width;
+		private final int height;
+		private final boolean[] outdoorTiles;
+		private final boolean[] blockEast;
+		private final boolean[] blockSouth;
+		private final Map<Long, List<WallEdge>> wallEdgesByTile;
+
+		private RemasterShadowIndoorFlood(
+			int minTileX,
+			int minTileZ,
+			int width,
+			int height,
+			boolean[] outdoorTiles,
+			boolean[] blockEast,
+			boolean[] blockSouth,
+			Map<Long, List<WallEdge>> wallEdgesByTile) {
+			this.minTileX = minTileX;
+			this.minTileZ = minTileZ;
+			this.width = width;
+			this.height = height;
+			this.outdoorTiles = outdoorTiles;
+			this.blockEast = blockEast == null ? new boolean[0] : blockEast;
+			this.blockSouth = blockSouth == null ? new boolean[0] : blockSouth;
+			this.wallEdgesByTile = wallEdgesByTile == null
+				? Collections.<Long, List<WallEdge>>emptyMap()
+				: wallEdgesByTile;
+		}
+
+		private int classify(int worldX, int worldZ) {
+			int tileX = RemasterShadowRoofCoverage.tileForWorld(worldX);
+			int tileZ = RemasterShadowRoofCoverage.tileForWorld(worldZ);
+			int localX = tileX - minTileX;
+			int localZ = tileZ - minTileZ;
+			if (localX < 0 || localZ < 0 || localX >= width || localZ >= height) {
+				return -1;
+			}
+			return outdoorTiles[index(localX, localZ, width)] ? 0 : 1;
+		}
+
+		private boolean crossesBlocker(float worldX0, float worldZ0, float worldX1, float worldZ1) {
+			float dx = worldX1 - worldX0;
+			float dz = worldZ1 - worldZ0;
+			float distance = (float) Math.sqrt(dx * dx + dz * dz);
+			if (distance < 1.0f) {
+				return false;
+			}
+			int steps = Math.max(
+				1,
+				(int) Math.ceil(distance / Math.max(16.0f, RemasterShadowRoofCoverage.TILE_SIZE * 0.25f)));
+			int lastX = localTileX(worldX0);
+			int lastZ = localTileZ(worldZ0);
+			float lastWorldX = worldX0;
+			float lastWorldZ = worldZ0;
+			for (int step = 1; step <= steps; step++) {
+				float t = step / (float) steps;
+				float nextWorldX = worldX0 + dx * t;
+				float nextWorldZ = worldZ0 + dz * t;
+				int nextX = localTileX(nextWorldX);
+				int nextZ = localTileZ(nextWorldZ);
+				if (OpenGLWorldChunkRenderer.REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP
+					&& crossesDirectWallEdge(lastWorldX, lastWorldZ, nextWorldX, nextWorldZ, lastX, lastZ, nextX, nextZ)) {
+					return true;
+				}
+				if (crossesBlockedTransition(lastX, lastZ, nextX, nextZ)) {
+					return true;
+				}
+				lastX = nextX;
+				lastZ = nextZ;
+				lastWorldX = nextWorldX;
+				lastWorldZ = nextWorldZ;
+			}
+			return false;
+		}
+
+		private int localTileX(float worldX) {
+			return RemasterShadowRoofCoverage.tileForWorld((int) Math.floor(worldX)) - minTileX;
+		}
+
+		private int localTileZ(float worldZ) {
+			return RemasterShadowRoofCoverage.tileForWorld((int) Math.floor(worldZ)) - minTileZ;
+		}
+
+		private boolean crossesBlockedTransition(int x, int z, int nextX, int nextZ) {
+			if (x == nextX && z == nextZ) {
+				return false;
+			}
+			if (nextX > x) {
+				for (int boundaryX = x; boundaryX < nextX; boundaryX++) {
+					if (isVerticalBlocked(boundaryX, z) || isVerticalBlocked(boundaryX, nextZ)) {
+						return true;
+					}
+				}
+			} else if (nextX < x) {
+				for (int boundaryX = nextX; boundaryX < x; boundaryX++) {
+					if (isVerticalBlocked(boundaryX, z) || isVerticalBlocked(boundaryX, nextZ)) {
+						return true;
+					}
+				}
+			}
+			if (nextZ > z) {
+				for (int boundaryZ = z; boundaryZ < nextZ; boundaryZ++) {
+					if (isHorizontalBlocked(x, boundaryZ) || isHorizontalBlocked(nextX, boundaryZ)) {
+						return true;
+					}
+				}
+			} else if (nextZ < z) {
+				for (int boundaryZ = nextZ; boundaryZ < z; boundaryZ++) {
+					if (isHorizontalBlocked(x, boundaryZ) || isHorizontalBlocked(nextX, boundaryZ)) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		private boolean crossesDirectWallEdge(
+			float worldX0,
+			float worldZ0,
+			float worldX1,
+			float worldZ1,
+			int localX0,
+			int localZ0,
+			int localX1,
+			int localZ1) {
+			int minX = Math.min(localX0, localX1) - 1;
+			int maxX = Math.max(localX0, localX1) + 1;
+			int minZ = Math.min(localZ0, localZ1) - 1;
+			int maxZ = Math.max(localZ0, localZ1) + 1;
+			for (int z = minZ; z <= maxZ; z++) {
+				for (int x = minX; x <= maxX; x++) {
+					List<WallEdge> edges = wallEdgesByTile.get(tileKey(x, z));
+					if (edges == null) {
+						continue;
+					}
+					for (WallEdge edge : edges) {
+						if (edge.intersectsSegment(worldX0, worldZ0, worldX1, worldZ1)) {
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		}
+
+		private boolean isVerticalBlocked(int leftTileX, int tileZ) {
+			if (leftTileX < 0 || leftTileX >= width - 1 || tileZ < 0 || tileZ >= height) {
+				return false;
+			}
+			int index = tileZ * (width - 1) + leftTileX;
+			return index >= 0 && index < blockEast.length && blockEast[index];
+		}
+
+		private boolean isHorizontalBlocked(int tileX, int topTileZ) {
+			if (tileX < 0 || tileX >= width || topTileZ < 0 || topTileZ >= height - 1) {
+				return false;
+			}
+			int index = topTileZ * width + tileX;
+			return index >= 0 && index < blockSouth.length && blockSouth[index];
+		}
+
+		private static int index(int x, int z, int width) {
+			return z * width + x;
+		}
+
+		private static final class Builder {
+			private final int plane;
+			private final List<WallEdge> wallEdges = new ArrayList<WallEdge>();
+			private int minTileX = Integer.MAX_VALUE;
+			private int maxTileX = Integer.MIN_VALUE;
+			private int minTileZ = Integer.MAX_VALUE;
+			private int maxTileZ = Integer.MIN_VALUE;
+
+			private Builder(int plane) {
+				this.plane = plane;
+			}
+
+			private void addTerrain(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+				if (chunk == null || chunk.getPlane() != plane) {
+					return;
+				}
+				int triangleCount = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
+				for (int triangle = 0; triangle < triangleCount; triangle++) {
+					if (chunk.getTriangleModelKind(triangle) != Renderer3DModelKind.TERRAIN) {
+						continue;
+					}
+					int sourceIndex = triangle * 3;
+					for (int corner = 0; corner < 3; corner++) {
+						int vertex = chunk.getIndex(sourceIndex + corner);
+						int coord = vertex * 3;
+						addTile(
+							RemasterShadowRoofCoverage.tileForWorld(chunk.getVertexCoord(coord)),
+							RemasterShadowRoofCoverage.tileForWorld(chunk.getVertexCoord(coord + 2)));
+					}
+				}
+			}
+
+			private void addWallBlockers(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+				if (chunk == null || chunk.getPlane() != plane) {
+					return;
+				}
+				for (int index = 0; index < chunk.getShadowCasterCount(); index++) {
+					Renderer3DWorldChunkFrame.ShadowCaster caster = chunk.getShadowCaster(index);
+					if (caster == null || caster.getModelKind() != Renderer3DModelKind.WALL) {
+						continue;
+					}
+					wallEdges.add(new WallEdge(
+						caster.getBaseX0(),
+						caster.getBaseZ0(),
+						caster.getBaseX1(),
+						caster.getBaseZ1()));
+				}
+			}
+
+			private RemasterShadowIndoorFlood build() {
+				if (minTileX == Integer.MAX_VALUE || minTileZ == Integer.MAX_VALUE) {
+					return null;
+				}
+				int paddedMinTileX = minTileX - BOUNDS_PADDING_TILES;
+				int paddedMinTileZ = minTileZ - BOUNDS_PADDING_TILES;
+				int paddedMaxTileX = maxTileX + BOUNDS_PADDING_TILES;
+				int paddedMaxTileZ = maxTileZ + BOUNDS_PADDING_TILES;
+				int width = Math.max(1, paddedMaxTileX - paddedMinTileX + 1);
+				int height = Math.max(1, paddedMaxTileZ - paddedMinTileZ + 1);
+				boolean[] blockEast = new boolean[Math.max(0, width - 1) * height];
+				boolean[] blockSouth = new boolean[width * Math.max(0, height - 1)];
+				for (WallEdge edge : wallEdges) {
+					edge.addBlockers(paddedMinTileX, paddedMinTileZ, width, height, blockEast, blockSouth);
+				}
+				closeSingleTileWallGaps(width, height, blockEast, blockSouth);
+				boolean[] outdoor = floodOutdoor(width, height, blockEast, blockSouth);
+				Map<Long, List<WallEdge>> wallEdgesByTile =
+					OpenGLWorldChunkRenderer.REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP
+					? buildWallEdgeGrid(paddedMinTileX, paddedMinTileZ, width, height, wallEdges)
+					: Collections.<Long, List<WallEdge>>emptyMap();
+				return new RemasterShadowIndoorFlood(
+					paddedMinTileX,
+					paddedMinTileZ,
+					width,
+					height,
+					outdoor,
+					blockEast,
+					blockSouth,
+					wallEdgesByTile);
+			}
+
+			private void addTile(int tileX, int tileZ) {
+				minTileX = Math.min(minTileX, tileX);
+				maxTileX = Math.max(maxTileX, tileX);
+				minTileZ = Math.min(minTileZ, tileZ);
+				maxTileZ = Math.max(maxTileZ, tileZ);
+			}
+
+			private static void closeSingleTileWallGaps(
+				int width,
+				int height,
+				boolean[] blockEast,
+				boolean[] blockSouth) {
+				boolean[] originalEast = blockEast.clone();
+				for (int x = 0; x < width - 1; x++) {
+					for (int z = 1; z < height - 1; z++) {
+						int index = z * (width - 1) + x;
+						if (!originalEast[index]
+							&& originalEast[(z - 1) * (width - 1) + x]
+							&& originalEast[(z + 1) * (width - 1) + x]) {
+							blockEast[index] = true;
+						}
+					}
+				}
+				boolean[] originalSouth = blockSouth.clone();
+				for (int z = 0; z < height - 1; z++) {
+					for (int x = 1; x < width - 1; x++) {
+						int index = z * width + x;
+						if (!originalSouth[index]
+							&& originalSouth[z * width + x - 1]
+							&& originalSouth[z * width + x + 1]) {
+							blockSouth[index] = true;
+						}
+					}
+				}
+			}
+
+			private static boolean[] floodOutdoor(
+				int width,
+				int height,
+				boolean[] blockEast,
+				boolean[] blockSouth) {
+				boolean[] outdoor = new boolean[width * height];
+				ArrayDeque<Integer> queue = new ArrayDeque<Integer>();
+				for (int x = 0; x < width; x++) {
+					addFloodSeed(x, 0, width, height, outdoor, queue);
+					addFloodSeed(x, height - 1, width, height, outdoor, queue);
+				}
+				for (int z = 1; z < height - 1; z++) {
+					addFloodSeed(0, z, width, height, outdoor, queue);
+					addFloodSeed(width - 1, z, width, height, outdoor, queue);
+				}
+				while (!queue.isEmpty()) {
+					int packed = queue.removeFirst().intValue();
+					int x = packed & 0xffff;
+					int z = packed >>> 16;
+					addFloodNeighbor(x, z, x + 1, z, width, height, blockEast, blockSouth, outdoor, queue);
+					addFloodNeighbor(x, z, x - 1, z, width, height, blockEast, blockSouth, outdoor, queue);
+					addFloodNeighbor(x, z, x, z + 1, width, height, blockEast, blockSouth, outdoor, queue);
+					addFloodNeighbor(x, z, x, z - 1, width, height, blockEast, blockSouth, outdoor, queue);
+				}
+				return outdoor;
+			}
+
+			private static Map<Long, List<WallEdge>> buildWallEdgeGrid(
+				int minTileX,
+				int minTileZ,
+				int width,
+				int height,
+				List<WallEdge> wallEdges) {
+				if (wallEdges == null || wallEdges.isEmpty()) {
+					return Collections.emptyMap();
+				}
+				Map<Long, List<WallEdge>> grid = new HashMap<Long, List<WallEdge>>();
+				for (WallEdge edge : wallEdges) {
+					edge.addToGrid(minTileX, minTileZ, width, height, grid);
+				}
+				return grid;
+			}
+
+			private static void addFloodSeed(
+				int x,
+				int z,
+				int width,
+				int height,
+				boolean[] outdoor,
+				ArrayDeque<Integer> queue) {
+				if (x < 0 || z < 0 || x >= width || z >= height) {
+					return;
+				}
+				int index = index(x, z, width);
+				if (outdoor[index]) {
+					return;
+				}
+				outdoor[index] = true;
+				queue.add(Integer.valueOf((z << 16) | x));
+			}
+
+			private static void addFloodNeighbor(
+				int x,
+				int z,
+				int nextX,
+				int nextZ,
+				int width,
+				int height,
+				boolean[] blockEast,
+				boolean[] blockSouth,
+				boolean[] outdoor,
+				ArrayDeque<Integer> queue) {
+				if (nextX < 0 || nextZ < 0 || nextX >= width || nextZ >= height) {
+					return;
+				}
+				if (isBlocked(x, z, nextX, nextZ, width, blockEast, blockSouth)) {
+					return;
+				}
+				int index = index(nextX, nextZ, width);
+				if (outdoor[index]) {
+					return;
+				}
+				outdoor[index] = true;
+				queue.add(Integer.valueOf((nextZ << 16) | nextX));
+			}
+
+			private static boolean isBlocked(
+				int x,
+				int z,
+				int nextX,
+				int nextZ,
+				int width,
+				boolean[] blockEast,
+				boolean[] blockSouth) {
+				if (nextX == x + 1) {
+					return blockEast[z * (width - 1) + x];
+				}
+				if (nextX == x - 1) {
+					return blockEast[z * (width - 1) + nextX];
+				}
+				if (nextZ == z + 1) {
+					return blockSouth[z * width + x];
+				}
+				if (nextZ == z - 1) {
+					return blockSouth[nextZ * width + x];
+				}
+				return false;
+			}
+		}
+
+		private static final class WallEdge {
+			private static final float INTERSECTION_EPSILON = 0.001f;
+
+			private final int x0;
+			private final int z0;
+			private final int x1;
+			private final int z1;
+
+			private WallEdge(int x0, int z0, int x1, int z1) {
+				this.x0 = x0;
+				this.z0 = z0;
+				this.x1 = x1;
+				this.z1 = z1;
+			}
+
+			private void addBlockers(
+				int minTileX,
+				int minTileZ,
+				int width,
+				int height,
+				boolean[] blockEast,
+				boolean[] blockSouth) {
+				int dx = Math.abs(x1 - x0);
+				int dz = Math.abs(z1 - z0);
+				if (dx <= 8 && dz > 0) {
+					int boundaryX = RemasterShadowRoofCoverage.boundaryForWorld((x0 + x1) / 2);
+					int startTileZ = RemasterShadowRoofCoverage.tileForWorld(Math.min(z0, z1));
+					int endTileZ = RemasterShadowRoofCoverage.tileForWorld(Math.max(z0, z1) - 1);
+					for (int tileZ = startTileZ; tileZ <= endTileZ; tileZ++) {
+						addVerticalBlock(boundaryX, tileZ, minTileX, minTileZ, width, height, blockEast);
+					}
+				} else if (dz <= 8 && dx > 0) {
+					int boundaryZ = RemasterShadowRoofCoverage.boundaryForWorld((z0 + z1) / 2);
+					int startTileX = RemasterShadowRoofCoverage.tileForWorld(Math.min(x0, x1));
+					int endTileX = RemasterShadowRoofCoverage.tileForWorld(Math.max(x0, x1) - 1);
+					for (int tileX = startTileX; tileX <= endTileX; tileX++) {
+						addHorizontalBlock(tileX, boundaryZ, minTileX, minTileZ, width, height, blockSouth);
+					}
+				}
+			}
+
+			private void addToGrid(
+				int minTileX,
+				int minTileZ,
+				int width,
+				int height,
+				Map<Long, List<WallEdge>> grid) {
+				int startTileX = RemasterShadowRoofCoverage.tileForWorld(Math.min(x0, x1)) - minTileX - 1;
+				int endTileX = RemasterShadowRoofCoverage.tileForWorld(Math.max(x0, x1)) - minTileX + 1;
+				int startTileZ = RemasterShadowRoofCoverage.tileForWorld(Math.min(z0, z1)) - minTileZ - 1;
+				int endTileZ = RemasterShadowRoofCoverage.tileForWorld(Math.max(z0, z1)) - minTileZ + 1;
+				for (int z = startTileZ; z <= endTileZ; z++) {
+					if (z < 0 || z >= height) {
+						continue;
+					}
+					for (int x = startTileX; x <= endTileX; x++) {
+						if (x < 0 || x >= width) {
+							continue;
+						}
+						long key = tileKey(x, z);
+						List<WallEdge> edges = grid.get(Long.valueOf(key));
+						if (edges == null) {
+							edges = new ArrayList<WallEdge>();
+							grid.put(Long.valueOf(key), edges);
+						}
+						edges.add(this);
+					}
+				}
+			}
+
+			private boolean intersectsSegment(float segmentX0, float segmentZ0, float segmentX1, float segmentZ1) {
+				float dx = segmentX1 - segmentX0;
+				float dz = segmentZ1 - segmentZ0;
+				float edgeDx = x1 - x0;
+				float edgeDz = z1 - z0;
+				float denominator = cross(dx, dz, edgeDx, edgeDz);
+				if (Math.abs(denominator) <= INTERSECTION_EPSILON) {
+					return false;
+				}
+				float offsetX = x0 - segmentX0;
+				float offsetZ = z0 - segmentZ0;
+				float segmentT = cross(offsetX, offsetZ, edgeDx, edgeDz) / denominator;
+				float edgeT = cross(offsetX, offsetZ, dx, dz) / denominator;
+				return segmentT > INTERSECTION_EPSILON
+					&& segmentT < 1.0f - INTERSECTION_EPSILON
+					&& edgeT > INTERSECTION_EPSILON
+					&& edgeT < 1.0f - INTERSECTION_EPSILON;
+			}
+
+			private static float cross(float ax, float az, float bx, float bz) {
+				return ax * bz - az * bx;
+			}
+
+			private static void addVerticalBlock(
+				int boundaryX,
+				int tileZ,
+				int minTileX,
+				int minTileZ,
+				int width,
+				int height,
+				boolean[] blockEast) {
+				int localBoundaryX = boundaryX - minTileX;
+				int localZ = tileZ - minTileZ;
+				if (localBoundaryX <= 0 || localBoundaryX >= width || localZ < 0 || localZ >= height) {
+					return;
+				}
+				blockEast[localZ * (width - 1) + localBoundaryX - 1] = true;
+			}
+
+			private static void addHorizontalBlock(
+				int tileX,
+				int boundaryZ,
+				int minTileX,
+				int minTileZ,
+				int width,
+				int height,
+				boolean[] blockSouth) {
+				int localX = tileX - minTileX;
+				int localBoundaryZ = boundaryZ - minTileZ;
+				if (localX < 0 || localX >= width || localBoundaryZ <= 0 || localBoundaryZ >= height) {
+					return;
+				}
+				blockSouth[(localBoundaryZ - 1) * width + localX] = true;
+			}
+		}
+
+		private static long tileKey(int localX, int localZ) {
+			return ((long) localX << 32) ^ (localZ & 0xffffffffL);
 		}
 	}
 
@@ -7732,7 +9901,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int[] triangleTextures = meshFrame.getTriangleTextures();
 			int[] triangleFallbackColors = meshFrame.getTriangleFallbackColors();
 			Renderer3DModelKind[] triangleModelKinds = meshFrame.getTriangleModelKinds();
-			float brightness = RendererBrightnessSettings.getMode().multiplier;
+			float brightness = RendererDayNightCycle.currentBrightnessMultiplier();
 			boolean flatGeometryLighting = usesTriangleFlatWorldMeshLighting();
 			int cachedFlatLightTriangle = -1;
 			int cachedFlatLegacyLight = 0;
@@ -7898,44 +10067,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 
 		private int applyLightingModeLegacyLight(int legacyLight) {
-			RendererLightingSettings.Mode mode = RendererLightingSettings.getMode();
-			int adjusted = legacyLight;
-			if (mode == RendererLightingSettings.Mode.DIRECTIONAL) {
-				adjusted = 88 + Math.round((legacyLight - 96) * 1.35f);
-			} else if (mode == RendererLightingSettings.Mode.TOON) {
-				int clamped = clampLegacyLight(legacyLight);
-				if (clamped < 64) {
-					adjusted = 32;
-				} else if (clamped < 128) {
-					adjusted = 96;
-				} else if (clamped < 192) {
-					adjusted = 160;
-				} else {
-					adjusted = 224;
-				}
-			}
-			return clampLegacyLight(adjusted);
+			return clampLegacyLight(legacyLight);
 		}
 
 		private float textureLightFactor(int legacyLight) {
-			RendererLightingSettings.Mode mode = RendererLightingSettings.getMode();
-			if (mode == RendererLightingSettings.Mode.DIRECTIONAL) {
-				float normalized = clamp(legacyLight / 255.0f, 0.0f, 1.0f);
-				return clamp(1.12f - normalized * 0.70f, 0.42f, 1.12f);
-			}
-			if (mode == RendererLightingSettings.Mode.TOON) {
-				int band = legacyTextureShadeBand(legacyLight);
-				switch (band) {
-					case 1:
-						return 0.86f;
-					case 2:
-						return 0.58f;
-					case 3:
-						return 0.34f;
-					default:
-						return 1.15f;
-				}
-			}
 			return legacyTextureLightFactor(legacyLight);
 		}
 
@@ -9109,7 +11244,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			int indexCount,
 			WorldMeshTriangleFilter triangleFilter) {
 			int triangleCount = meshFrame.getTriangleCount();
-			int brightnessBits = Float.floatToIntBits(RendererBrightnessSettings.getMode().multiplier);
+			int brightnessBits = Float.floatToIntBits(RendererDayNightCycle.currentBrightnessMultiplier());
 			int fogStrengthBits = RendererFogSettings.getMode().ordinal();
 			int lightingModeBits = RendererLightingSettings.getMode().ordinal();
 			int geometryModeBits = RendererGeometrySettings.getMode().ordinal();
@@ -12141,6 +14276,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private static final int LEGACY_LIGHT_ATTRIBUTE_LOCATION = 3;
 		private static final int RAW_MATERIAL_COLOR_ATTRIBUTE_LOCATION = 4;
 		private static final int BASE_LEGACY_LIGHT_ATTRIBUTE_LOCATION = 5;
+		private static final int NORMAL_ATTRIBUTE_LOCATION = 6;
+		private static final int MODEL_KIND_ATTRIBUTE_LOCATION = 7;
 		private static final String FIXED_PIPELINE_VERTEX_SHADER =
 			"#version 120\n"
 				+ "uniform mat4 uProjectionMatrix;\n"
@@ -12170,6 +14307,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			+ "uniform int uLightingMode;\n"
 			+ "uniform float uBrightness;\n"
 			+ "uniform float uFogStrength;\n"
+			+ "uniform float uToneRed;\n"
+			+ "uniform float uToneGreen;\n"
+			+ "uniform float uToneBlue;\n"
+			+ "uniform float uToneBlend;\n"
 			+ "varying vec2 vTexCoord;\n"
 			+ "varying vec4 vMaterialColor;\n"
 			+ "varying float vLegacyLight;\n"
@@ -12181,22 +14322,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			+ "}\n"
 			+ "float textureLightFactor(float light) {\n"
 			+ "\tfloat clamped = clamp(light, 0.0, 255.0);\n"
-			+ "\tif (uLightingMode == 1) {\n"
-			+ "\t\treturn clamp(1.12 - (clamped / 255.0) * 0.70, 0.42, 1.12);\n"
-			+ "\t}\n"
-			+ "\tif (uLightingMode == 2) {\n"
-			+ "\t\tfloat band = floor(clamped / 64.0);\n"
-			+ "\t\tif (band < 1.0) {\n"
-			+ "\t\t\treturn 1.15;\n"
-			+ "\t\t}\n"
-			+ "\t\tif (band < 2.0) {\n"
-			+ "\t\t\treturn 0.86;\n"
-			+ "\t\t}\n"
-			+ "\t\tif (band < 3.0) {\n"
-			+ "\t\t\treturn 0.58;\n"
-			+ "\t\t}\n"
-			+ "\t\treturn 0.34;\n"
-			+ "\t}\n"
 			+ "\tfloat band = floor(clamped / 64.0);\n"
 			+ "\tif (band < 1.0) {\n"
 			+ "\t\treturn 1.0;\n"
@@ -12228,40 +14353,192 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			+ "\t}\n"
 			+ "\treturn 152.0 / 248.0;\n"
 			+ "}\n"
+			+ "vec3 applyTone(vec3 color) {\n"
+			+ "\tvec3 toned = clamp(color * vec3(uToneRed, uToneGreen, uToneBlue), 0.0, 1.0);\n"
+			+ "\treturn mix(color, toned, clamp(uToneBlend, 0.0, 1.0));\n"
+			+ "}\n"
 			+ "void main() {\n"
 			+ "\tfloat effectiveLight = effectiveLegacyLight(vBaseLegacyLight, vLegacyLight);\n"
-			+ "\tgl_FragColor = uTextureEnabled != 0\n"
+			+ "\tvec4 color = uTextureEnabled != 0\n"
 			+ "\t\t? vec4(vec3(textureLightFactor(effectiveLight) * uBrightness), vMaterialColor.a) * texture2D(uTexture, vTexCoord)\n"
 			+ "\t\t: vec4(legacyFlatMaterialColor(vRawMaterialColor, effectiveLight), vMaterialColor.a);\n"
+			+ "\tcolor.rgb = applyTone(color.rgb);\n"
+			+ "\tgl_FragColor = color;\n"
 			+ "}\n";
+		private static final String RESIDENT_CHUNK_PARITY_VERTEX_SHADER =
+			"#version 120\n"
+				+ "uniform mat4 uProjectionMatrix;\n"
+				+ "uniform mat4 uWorldViewMatrix;\n"
+				+ "attribute vec3 aPosition;\n"
+				+ "attribute vec2 aTexCoord;\n"
+				+ "attribute vec4 aMaterialColor;\n"
+				+ "attribute vec3 aRawMaterialColor;\n"
+				+ "attribute vec3 aNormal;\n"
+				+ "attribute float aModelKind;\n"
+				+ "varying vec2 vTexCoord;\n"
+				+ "varying vec4 vMaterialColor;\n"
+				+ "varying vec3 vRawMaterialColor;\n"
+				+ "varying vec3 vNormal;\n"
+				+ "varying float vModelKind;\n"
+				+ "varying float vCameraDepth;\n"
+				+ "void main() {\n"
+				+ "\tvec4 worldPosition = vec4(aPosition, 1.0);\n"
+				+ "\tgl_Position = uProjectionMatrix * worldPosition;\n"
+				+ "\tvTexCoord = aTexCoord;\n"
+				+ "\tvMaterialColor = aMaterialColor;\n"
+				+ "\tvRawMaterialColor = aRawMaterialColor;\n"
+				+ "\tvNormal = aNormal;\n"
+				+ "\tvModelKind = aModelKind;\n"
+				+ "\tvCameraDepth = (uWorldViewMatrix * worldPosition).z;\n"
+				+ "}\n";
+		private static final String RESIDENT_CHUNK_PARITY_FRAGMENT_SHADER =
+			"#version 120\n"
+				+ "uniform sampler2D uTexture;\n"
+				+ "uniform int uTextureEnabled;\n"
+				+ "uniform int uRawMaterialMode;\n"
+				+ "uniform int uRemasterLightingEnabled;\n"
+				+ "uniform float uLightDirectionX;\n"
+				+ "uniform float uLightDirectionY;\n"
+				+ "uniform float uLightDirectionZ;\n"
+				+ "uniform float uLightAmbient;\n"
+				+ "uniform float uLightIntensity;\n"
+				+ "uniform int uFogEnabled;\n"
+				+ "uniform float uFogStart;\n"
+				+ "uniform float uFogEnd;\n"
+				+ "uniform float uToneRed;\n"
+				+ "uniform float uToneGreen;\n"
+				+ "uniform float uToneBlue;\n"
+				+ "uniform float uToneBlend;\n"
+				+ "varying vec2 vTexCoord;\n"
+				+ "varying vec4 vMaterialColor;\n"
+				+ "varying vec3 vRawMaterialColor;\n"
+				+ "varying vec3 vNormal;\n"
+				+ "varying float vModelKind;\n"
+				+ "varying float vCameraDepth;\n"
+				+ "vec3 remasterNormal() {\n"
+				+ "\tfloat normalLengthSquared = dot(vNormal, vNormal);\n"
+				+ "\tif (normalLengthSquared <= 0.0001) {\n"
+				+ "\t\treturn vModelKind > 1.5 && vModelKind < 2.5 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);\n"
+				+ "\t}\n"
+				+ "\treturn normalize(vNormal);\n"
+				+ "}\n"
+				+ "float wrappedDiffuse(vec3 normal, vec3 lightDirection, float wrap) {\n"
+				+ "\treturn clamp((dot(normal, lightDirection) + wrap) / (1.0 + wrap), 0.0, 1.0);\n"
+				+ "}\n"
+				+ "float remasterDiffuse(vec3 lightDirection) {\n"
+				+ "\tvec3 normal = remasterNormal();\n"
+				+ "\tif (vModelKind > 0.5 && vModelKind < 1.5) {\n"
+				+ "\t\tvec3 terrainNormal = normalize(mix(vec3(0.0, 1.0, 0.0), normal, 0.85));\n"
+				+ "\t\tfloat terrainDiffuse = wrappedDiffuse(terrainNormal, lightDirection, 0.08);\n"
+				+ "\t\treturn smoothstep(0.08, 0.92, terrainDiffuse);\n"
+				+ "\t}\n"
+				+ "\tfloat wrapped = wrappedDiffuse(normal, lightDirection, 0.65);\n"
+				+ "\tfloat twoSided = abs(dot(normal, lightDirection)) * 0.45;\n"
+				+ "\tfloat skyFill = max(lightDirection.y, 0.0) * 0.20;\n"
+				+ "\treturn clamp(max(wrapped, twoSided) + skyFill, 0.0, 1.0);\n"
+				+ "}\n"
+				+ "vec3 applyTone(vec3 color) {\n"
+				+ "\tvec3 toned = clamp(color * vec3(uToneRed, uToneGreen, uToneBlue), 0.0, 1.0);\n"
+				+ "\treturn mix(color, toned, clamp(uToneBlend, 0.0, 1.0));\n"
+				+ "}\n"
+				+ "void main() {\n"
+				+ "\tvec4 color;\n"
+				+ "\tif (uRawMaterialMode != 0) {\n"
+				+ "\t\tcolor = uTextureEnabled != 0\n"
+				+ "\t\t\t? texture2D(uTexture, vTexCoord)\n"
+				+ "\t\t\t: vec4(vRawMaterialColor, vMaterialColor.a);\n"
+				+ "\t} else {\n"
+				+ "\t\tcolor = uTextureEnabled != 0\n"
+				+ "\t\t\t? texture2D(uTexture, vTexCoord) * vMaterialColor\n"
+				+ "\t\t\t: vMaterialColor;\n"
+				+ "\t}\n"
+				+ "\tif (uRemasterLightingEnabled != 0) {\n"
+				+ "\t\tvec3 lightDirection = normalize(vec3(uLightDirectionX, uLightDirectionY, uLightDirectionZ));\n"
+				+ "\t\tfloat diffuse = remasterDiffuse(lightDirection);\n"
+				+ "\t\tfloat light = clamp(uLightAmbient + diffuse * uLightIntensity, 0.0, 1.0);\n"
+				+ "\t\tcolor.rgb *= light;\n"
+				+ "\t}\n"
+				+ "\tcolor.rgb = applyTone(color.rgb);\n"
+				+ "\tif (uFogEnabled != 0) {\n"
+				+ "\t\tfloat fogRange = max(1.0, uFogEnd - uFogStart);\n"
+				+ "\t\tfloat fogFactor = clamp((uFogEnd - vCameraDepth) / fogRange, 0.0, 1.0);\n"
+				+ "\t\tcolor.rgb = mix(vec3(0.0, 0.0, 0.0), color.rgb, fogFactor);\n"
+				+ "\t}\n"
+				+ "\tgl_FragColor = color;\n"
+				+ "}\n";
 
 		private final LwjglBindings gl;
 		private final int programId;
 		private final int projectionMatrixUniformLocation;
+		private final int worldViewMatrixUniformLocation;
 		private final int textureUniformLocation;
 		private final int textureEnabledUniformLocation;
+		private final int rawMaterialModeUniformLocation;
+		private final int remasterLightingEnabledUniformLocation;
+		private final int lightDirectionXUniformLocation;
+		private final int lightDirectionYUniformLocation;
+		private final int lightDirectionZUniformLocation;
+		private final int lightAmbientUniformLocation;
+		private final int lightIntensityUniformLocation;
 		private final int lightingModeUniformLocation;
 		private final int brightnessUniformLocation;
 		private final int fogStrengthUniformLocation;
+		private final int toneRedUniformLocation;
+		private final int toneGreenUniformLocation;
+		private final int toneBlueUniformLocation;
+		private final int toneBlendUniformLocation;
+		private final int fogEnabledUniformLocation;
+		private final int fogStartUniformLocation;
+		private final int fogEndUniformLocation;
 		private boolean closed;
 
 		private OpenGLShaderProgram(
 			LwjglBindings gl,
 			int programId,
 			int projectionMatrixUniformLocation,
+			int worldViewMatrixUniformLocation,
 			int textureUniformLocation,
 			int textureEnabledUniformLocation,
+			int rawMaterialModeUniformLocation,
+			int remasterLightingEnabledUniformLocation,
+			int lightDirectionXUniformLocation,
+			int lightDirectionYUniformLocation,
+			int lightDirectionZUniformLocation,
+			int lightAmbientUniformLocation,
+			int lightIntensityUniformLocation,
 			int lightingModeUniformLocation,
 			int brightnessUniformLocation,
-			int fogStrengthUniformLocation) {
+			int fogStrengthUniformLocation,
+			int toneRedUniformLocation,
+			int toneGreenUniformLocation,
+			int toneBlueUniformLocation,
+			int toneBlendUniformLocation,
+			int fogEnabledUniformLocation,
+			int fogStartUniformLocation,
+			int fogEndUniformLocation) {
 			this.gl = gl;
 			this.programId = programId;
 			this.projectionMatrixUniformLocation = projectionMatrixUniformLocation;
+			this.worldViewMatrixUniformLocation = worldViewMatrixUniformLocation;
 			this.textureUniformLocation = textureUniformLocation;
 			this.textureEnabledUniformLocation = textureEnabledUniformLocation;
+			this.rawMaterialModeUniformLocation = rawMaterialModeUniformLocation;
+			this.remasterLightingEnabledUniformLocation = remasterLightingEnabledUniformLocation;
+			this.lightDirectionXUniformLocation = lightDirectionXUniformLocation;
+			this.lightDirectionYUniformLocation = lightDirectionYUniformLocation;
+			this.lightDirectionZUniformLocation = lightDirectionZUniformLocation;
+			this.lightAmbientUniformLocation = lightAmbientUniformLocation;
+			this.lightIntensityUniformLocation = lightIntensityUniformLocation;
 			this.lightingModeUniformLocation = lightingModeUniformLocation;
 			this.brightnessUniformLocation = brightnessUniformLocation;
 			this.fogStrengthUniformLocation = fogStrengthUniformLocation;
+			this.toneRedUniformLocation = toneRedUniformLocation;
+			this.toneGreenUniformLocation = toneGreenUniformLocation;
+			this.toneBlueUniformLocation = toneBlueUniformLocation;
+			this.toneBlendUniformLocation = toneBlendUniformLocation;
+			this.fogEnabledUniformLocation = fogEnabledUniformLocation;
+			this.fogStartUniformLocation = fogStartUniformLocation;
+			this.fogEndUniformLocation = fogEndUniformLocation;
 		}
 
 		private static OpenGLShaderProgram createProjectedWorld(LwjglBindings gl) throws Exception {
@@ -12289,11 +14566,86 @@ final class OpenGLFramePresenter implements AutoCloseable {
 						gl,
 						program,
 						gl.glGetUniformLocation(program, "uProjectionMatrix"),
+						-1,
 						gl.glGetUniformLocation(program, "uTexture"),
 						gl.glGetUniformLocation(program, "uTextureEnabled"),
+						-1,
+						-1,
+						-1,
+						-1,
+						-1,
+						-1,
+						-1,
 						gl.glGetUniformLocation(program, "uLightingMode"),
 						gl.glGetUniformLocation(program, "uBrightness"),
-						gl.glGetUniformLocation(program, "uFogStrength"));
+						gl.glGetUniformLocation(program, "uFogStrength"),
+						gl.glGetUniformLocation(program, "uToneRed"),
+						gl.glGetUniformLocation(program, "uToneGreen"),
+						gl.glGetUniformLocation(program, "uToneBlue"),
+						gl.glGetUniformLocation(program, "uToneBlend"),
+						-1,
+						-1,
+						-1);
+				program = 0;
+				return shaderProgram;
+			} finally {
+				if (program != 0) {
+					gl.glDeleteProgram(program);
+				}
+				if (fragmentShader != 0) {
+					gl.glDeleteShader(fragmentShader);
+				}
+				if (vertexShader != 0) {
+					gl.glDeleteShader(vertexShader);
+				}
+			}
+		}
+
+		private static OpenGLShaderProgram createResidentChunkParity(LwjglBindings gl) throws Exception {
+			int vertexShader = compileShader(gl, gl.GL_VERTEX_SHADER, RESIDENT_CHUNK_PARITY_VERTEX_SHADER);
+			int fragmentShader = 0;
+			int program = 0;
+			try {
+				fragmentShader = compileShader(gl, gl.GL_FRAGMENT_SHADER, RESIDENT_CHUNK_PARITY_FRAGMENT_SHADER);
+				program = gl.glCreateProgram();
+				gl.glAttachShader(program, vertexShader);
+				gl.glAttachShader(program, fragmentShader);
+				gl.glBindAttribLocation(program, POSITION_ATTRIBUTE_LOCATION, "aPosition");
+				gl.glBindAttribLocation(program, TEXTURE_COORD_ATTRIBUTE_LOCATION, "aTexCoord");
+				gl.glBindAttribLocation(program, MATERIAL_COLOR_ATTRIBUTE_LOCATION, "aMaterialColor");
+				gl.glBindAttribLocation(program, RAW_MATERIAL_COLOR_ATTRIBUTE_LOCATION, "aRawMaterialColor");
+				gl.glBindAttribLocation(program, NORMAL_ATTRIBUTE_LOCATION, "aNormal");
+				gl.glBindAttribLocation(program, MODEL_KIND_ATTRIBUTE_LOCATION, "aModelKind");
+				gl.glLinkProgram(program);
+				if (gl.glGetProgrami(program, gl.GL_LINK_STATUS) == 0) {
+					String log = gl.glGetProgramInfoLog(program);
+					throw new IllegalStateException("shader link failed: " + log);
+				}
+				OpenGLShaderProgram shaderProgram =
+					new OpenGLShaderProgram(
+						gl,
+						program,
+						gl.glGetUniformLocation(program, "uProjectionMatrix"),
+						gl.glGetUniformLocation(program, "uWorldViewMatrix"),
+						gl.glGetUniformLocation(program, "uTexture"),
+						gl.glGetUniformLocation(program, "uTextureEnabled"),
+						gl.glGetUniformLocation(program, "uRawMaterialMode"),
+						gl.glGetUniformLocation(program, "uRemasterLightingEnabled"),
+						gl.glGetUniformLocation(program, "uLightDirectionX"),
+						gl.glGetUniformLocation(program, "uLightDirectionY"),
+						gl.glGetUniformLocation(program, "uLightDirectionZ"),
+						gl.glGetUniformLocation(program, "uLightAmbient"),
+						gl.glGetUniformLocation(program, "uLightIntensity"),
+						-1,
+						-1,
+						-1,
+						gl.glGetUniformLocation(program, "uToneRed"),
+						gl.glGetUniformLocation(program, "uToneGreen"),
+						gl.glGetUniformLocation(program, "uToneBlue"),
+						gl.glGetUniformLocation(program, "uToneBlend"),
+						gl.glGetUniformLocation(program, "uFogEnabled"),
+						gl.glGetUniformLocation(program, "uFogStart"),
+						gl.glGetUniformLocation(program, "uFogEnd"));
 				program = 0;
 				return shaderProgram;
 			} finally {
@@ -12346,11 +14698,141 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				gl.glUniform1i(lightingModeUniformLocation, RendererLightingSettings.getMode().ordinal());
 			}
 			if (brightnessUniformLocation >= 0) {
-				gl.glUniform1f(brightnessUniformLocation, RendererBrightnessSettings.getMode().multiplier);
+				gl.glUniform1f(brightnessUniformLocation, RendererDayNightCycle.currentBrightnessMultiplier());
 			}
 			if (fogStrengthUniformLocation >= 0) {
 				gl.glUniform1f(fogStrengthUniformLocation, RendererFogSettings.getMode().multiplier);
 			}
+			RendererDayNightCycle.Presentation presentation = RendererDayNightCycle.currentPresentation();
+			if (toneRedUniformLocation >= 0) {
+				gl.glUniform1f(toneRedUniformLocation, presentation.redMultiplier);
+			}
+			if (toneGreenUniformLocation >= 0) {
+				gl.glUniform1f(toneGreenUniformLocation, presentation.greenMultiplier);
+			}
+			if (toneBlueUniformLocation >= 0) {
+				gl.glUniform1f(toneBlueUniformLocation, presentation.blueMultiplier);
+			}
+			if (toneBlendUniformLocation >= 0) {
+				gl.glUniform1f(toneBlendUniformLocation, presentation.toneBlend);
+			}
+		}
+
+		private void useResidentChunk(
+			FloatBuffer worldToClipMatrix,
+			FloatBuffer worldViewMatrix,
+			boolean textureEnabled,
+			boolean rawMaterialMode,
+			boolean remasterLightingEnabled,
+			Renderer3DFrame frame) throws Exception {
+			if (worldViewMatrix == null) {
+				throw new IllegalArgumentException("resident chunk shader requires an explicit world-view matrix");
+			}
+			useWorld(worldToClipMatrix, textureEnabled);
+			if (worldViewMatrixUniformLocation >= 0) {
+				gl.glUniformMatrix4fv(worldViewMatrixUniformLocation, false, worldViewMatrix);
+			}
+			if (rawMaterialModeUniformLocation >= 0) {
+				gl.glUniform1i(rawMaterialModeUniformLocation, rawMaterialMode ? 1 : 0);
+			}
+			if (remasterLightingEnabledUniformLocation >= 0) {
+				gl.glUniform1i(remasterLightingEnabledUniformLocation, remasterLightingEnabled ? 1 : 0);
+			}
+			if (lightDirectionXUniformLocation >= 0) {
+				gl.glUniform1f(lightDirectionXUniformLocation, RendererRemasterLightSettings.getLightDirectionX());
+			}
+			if (lightDirectionYUniformLocation >= 0) {
+				gl.glUniform1f(lightDirectionYUniformLocation, RendererRemasterLightSettings.getLightDirectionY());
+			}
+			if (lightDirectionZUniformLocation >= 0) {
+				gl.glUniform1f(lightDirectionZUniformLocation, RendererRemasterLightSettings.getLightDirectionZ());
+			}
+			if (lightAmbientUniformLocation >= 0) {
+				gl.glUniform1f(lightAmbientUniformLocation, RendererRemasterLightSettings.getAmbient());
+			}
+			if (lightIntensityUniformLocation >= 0) {
+				gl.glUniform1f(lightIntensityUniformLocation, RendererRemasterLightSettings.getIntensity());
+			}
+			boolean fogEnabled =
+				!rawMaterialMode
+					&& !remasterLightingEnabled
+					&& frame != null
+					&& RendererFogSettings.getMode() != RendererFogSettings.Mode.OFF;
+			if (fogEnabledUniformLocation >= 0) {
+				gl.glUniform1i(fogEnabledUniformLocation, fogEnabled ? 1 : 0);
+			}
+			if (fogStartUniformLocation >= 0) {
+				gl.glUniform1f(fogStartUniformLocation, fogEnabled ? frame.getFogStartDistance() : 0.0f);
+			}
+			if (fogEndUniformLocation >= 0) {
+				gl.glUniform1f(fogEndUniformLocation, fogEnabled ? frame.getFogDistance() : 1.0f);
+			}
+		}
+
+		private void bindWorldParityAttributes(
+			int positionComponents,
+			int textureCoordComponents,
+			int materialColorComponents,
+			int rawMaterialColorComponents,
+			int normalComponents,
+			int modelKindComponents,
+			int strideBytes,
+			long positionOffsetBytes,
+			long textureCoordOffsetBytes,
+			long materialColorOffsetBytes,
+			long rawMaterialColorOffsetBytes,
+			long normalOffsetBytes,
+			long modelKindOffsetBytes) throws Exception {
+			gl.glDisableClientState(gl.GL_COLOR_ARRAY);
+			gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+			gl.glEnableVertexAttribArray(POSITION_ATTRIBUTE_LOCATION);
+			gl.glEnableVertexAttribArray(TEXTURE_COORD_ATTRIBUTE_LOCATION);
+			gl.glEnableVertexAttribArray(MATERIAL_COLOR_ATTRIBUTE_LOCATION);
+			gl.glEnableVertexAttribArray(RAW_MATERIAL_COLOR_ATTRIBUTE_LOCATION);
+			gl.glEnableVertexAttribArray(NORMAL_ATTRIBUTE_LOCATION);
+			gl.glEnableVertexAttribArray(MODEL_KIND_ATTRIBUTE_LOCATION);
+			gl.glVertexAttribPointer(
+				POSITION_ATTRIBUTE_LOCATION,
+				positionComponents,
+				gl.GL_FLOAT,
+				false,
+				strideBytes,
+				positionOffsetBytes);
+			gl.glVertexAttribPointer(
+				TEXTURE_COORD_ATTRIBUTE_LOCATION,
+				textureCoordComponents,
+				gl.GL_FLOAT,
+				false,
+				strideBytes,
+				textureCoordOffsetBytes);
+			gl.glVertexAttribPointer(
+				MATERIAL_COLOR_ATTRIBUTE_LOCATION,
+				materialColorComponents,
+				gl.GL_FLOAT,
+				false,
+				strideBytes,
+				materialColorOffsetBytes);
+			gl.glVertexAttribPointer(
+				RAW_MATERIAL_COLOR_ATTRIBUTE_LOCATION,
+				rawMaterialColorComponents,
+				gl.GL_FLOAT,
+				false,
+				strideBytes,
+				rawMaterialColorOffsetBytes);
+			gl.glVertexAttribPointer(
+				NORMAL_ATTRIBUTE_LOCATION,
+				normalComponents,
+				gl.GL_FLOAT,
+				false,
+				strideBytes,
+				normalOffsetBytes);
+			gl.glVertexAttribPointer(
+				MODEL_KIND_ATTRIBUTE_LOCATION,
+				modelKindComponents,
+				gl.GL_FLOAT,
+				false,
+				strideBytes,
+				modelKindOffsetBytes);
 		}
 
 		private void bindWorldTextureAttributes(
@@ -12444,6 +14926,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 
 		private void unbindWorldTextureAttributes() throws Exception {
+			gl.glDisableVertexAttribArray(MODEL_KIND_ATTRIBUTE_LOCATION);
+			gl.glDisableVertexAttribArray(NORMAL_ATTRIBUTE_LOCATION);
 			gl.glDisableVertexAttribArray(RAW_MATERIAL_COLOR_ATTRIBUTE_LOCATION);
 			gl.glDisableVertexAttribArray(BASE_LEGACY_LIGHT_ATTRIBUTE_LOCATION);
 			gl.glDisableVertexAttribArray(LEGACY_LIGHT_ATTRIBUTE_LOCATION);
@@ -12554,6 +15038,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private final Method glColorPointer;
 		private final Method glTexCoordPointer;
 		private final Method glDrawElements;
+		private final Method glBegin;
+		private final Method glEnd;
+		private final Method glTexCoord2f;
+		private final Method glVertex3f;
+		private final Method glLineWidth;
 		private final Method glCreateShader;
 		private final Method glShaderSource;
 		private final Method glCompileShader;
@@ -12630,6 +15119,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		private final int GL_FRONT_AND_BACK;
 		private final int GL_LINE;
 		private final int GL_FILL;
+		private final int GL_LINES;
 		private final int GL_QUADS;
 		private final int GL_TRIANGLES;
 		private final int GL_VERTEX_ARRAY;
@@ -12813,6 +15303,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			glColorPointer = method(gl11Class, "glColorPointer", int.class, int.class, int.class, long.class);
 			glTexCoordPointer = method(gl11Class, "glTexCoordPointer", int.class, int.class, int.class, long.class);
 			glDrawElements = method(gl11Class, "glDrawElements", int.class, int.class, int.class, long.class);
+			glBegin = method(gl11Class, "glBegin", int.class);
+			glEnd = method(gl11Class, "glEnd");
+			glTexCoord2f = method(gl11Class, "glTexCoord2f", float.class, float.class);
+			glVertex3f = method(gl11Class, "glVertex3f", float.class, float.class, float.class);
+			glLineWidth = method(gl11Class, "glLineWidth", float.class);
 			glCreateShader = method(gl20Class, "glCreateShader", int.class);
 			glShaderSource = method(gl20Class, "glShaderSource", int.class, CharSequence.class);
 			glCompileShader = method(gl20Class, "glCompileShader", int.class);
@@ -12890,6 +15385,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			GL_FRONT_AND_BACK = constant(gl11Class, "GL_FRONT_AND_BACK");
 			GL_LINE = constant(gl11Class, "GL_LINE");
 			GL_FILL = constant(gl11Class, "GL_FILL");
+			GL_LINES = constant(gl11Class, "GL_LINES");
 			GL_QUADS = constant(gl11Class, "GL_QUADS");
 			GL_TRIANGLES = constant(gl11Class, "GL_TRIANGLES");
 			GL_VERTEX_ARRAY = constant(gl11Class, "GL_VERTEX_ARRAY");
@@ -13325,6 +15821,26 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 		private void glDrawElements(int mode, int count, int type, long indices) throws Exception {
 			invoke(glDrawElements, mode, count, type, indices);
+		}
+
+		private void glBegin(int mode) throws Exception {
+			invoke(glBegin, mode);
+		}
+
+		private void glEnd() throws Exception {
+			invoke(glEnd);
+		}
+
+		private void glTexCoord2f(float s, float t) throws Exception {
+			invoke(glTexCoord2f, s, t);
+		}
+
+		private void glVertex3f(float x, float y, float z) throws Exception {
+			invoke(glVertex3f, x, y, z);
+		}
+
+		private void glLineWidth(float width) throws Exception {
+			invoke(glLineWidth, width);
 		}
 
 		private int glCreateShader(int type) throws Exception {

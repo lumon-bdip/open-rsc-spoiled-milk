@@ -97,6 +97,7 @@ public class PacketHandler {
 		put(131, "SEND_MESSAGE");
 		put(137, "EXIT_SHOP");
 		put(141, "MOVEMENT_UPDATE");
+		put(142, "WORLD_TIME");
 		put(149, "UPDATE_FRIEND");
 		put(153, "SET_EQUIP_STATS");
 		put(156, "SET_STATS");
@@ -266,6 +267,8 @@ public class PacketHandler {
 			else if (opcode == 118) announceKill(); // Kill Announcement
 
 			else if (opcode == 141) updateMovement();
+
+			else if (opcode == 142) updateWorldTime();
 
 			else if (opcode == 131) showMessage(); // Chat Message
 
@@ -1556,6 +1559,12 @@ public class PacketHandler {
 			int direction = packetsIncoming.getUnsignedByte();
 			mc.applyCustomNpcMovementUpdate(serverIndex, x, z, direction);
 		}
+	}
+
+	private void updateWorldTime() {
+		int cycleMillis = packetsIncoming.get32();
+		int currentCycleMillis = packetsIncoming.get32();
+		RendererDayNightCycle.syncServerTime(cycleMillis, currentCycleMillis);
 	}
 
 	private void showGameObjects(int length) {

@@ -137,13 +137,13 @@ start here.
 
 <table width="100%">
   <tr>
-    <th width="100%">1080p field of view</th>
+    <th width="100%">Widescreen OpenGL view</th>
   </tr>
   <tr>
-    <td width="100%" valign="top"><img src="docs/myworld/screenshots/readme/opengl-1080p-wide-view.png" alt="Spoiled Milk running in the OpenGL renderer at 1920x1080" width="100%"></td>
+    <td width="100%" valign="top"><img src="docs/myworld/screenshots/readme/opengl-1080p-wide-view.png" alt="Spoiled Milk running in the OpenGL renderer with a widescreen field of view" width="100%"></td>
   </tr>
   <tr>
-    <td width="100%" valign="top">The new OpenGL renderer supports up to 1920x1080 resolution with increased field of view and draw distance. As the other pictures show, I find this a bit overkill.</td>
+    <td width="100%" valign="top">The new OpenGL renderer supports readable 4:3 and 16:9 aspect modes, with extra zoom providing the larger field of view and draw distance.</td>
   </tr>
 </table>
 

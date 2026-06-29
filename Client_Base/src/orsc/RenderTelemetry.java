@@ -50,6 +50,8 @@ public final class RenderTelemetry {
 	private static final StageStats openGLWorldChunkUploadPhaseStats = new StageStats();
 	private static final StageStats openGLWorldProjectedMeshPhaseStats = new StageStats();
 	private static final StageStats openGLWorldChunkDrawPhaseStats = new StageStats();
+	private static final StageStats openGLRemasterShadowMaskBuildStats = new StageStats();
+	private static final StageStats openGLRemasterShadowMaskUploadStats = new StageStats();
 	private static final StageStats openGLSpriteOverlayStats = new StageStats();
 	private static final StageStats openGLDebugOverlayStats = new StageStats();
 	private static final StageStats openGLSwapStats = new StageStats();
@@ -169,6 +171,32 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldChunkTextureBindStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkShadowChunkStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkShadowIndexStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowReceiverChunkStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowReceiverTriangleStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowWallCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowGameObjectCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowWallObjectCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowOutdoorOnlyCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowClippingCandidateStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowRoofedReceiverStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowOutdoorReceiverStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowUnknownReceiverStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowRoofedCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowOutdoorCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowUnknownCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowSunlightEligibleCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowSunlightSuppressedRoofedCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowSunlightSuppressedUnknownCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowMaskWidthStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowMaskHeightStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowMaskVisiblePixelStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowMaskCacheHitStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowMaskRebuildStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowMaskUploadCountStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowMaskUploadSkipStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowMaskStripCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowMaskSoftSceneryCasterStats = new CounterStats();
 	private static final CounterStats openGLResidentChunkReplacementRequestedStats = new CounterStats();
 	private static final CounterStats openGLResidentChunkReplacementActiveStats = new CounterStats();
 	private static final CounterStats openGLResidentChunkReplacementFallbackStats = new CounterStats();
@@ -466,6 +494,80 @@ public final class RenderTelemetry {
 			openGLWorldChunkTextureBindStats.record(textureBinds);
 			openGLWorldChunkShadowChunkStats.record(shadowChunks);
 			openGLWorldChunkShadowIndexStats.record(shadowIndices);
+		}
+	}
+
+	static void recordOpenGLRemasterShadowInventory(
+		int receiverChunks,
+		int receiverTriangles,
+		int totalCasters,
+		int wallCasters,
+		int gameObjectCasters,
+		int wallObjectCasters,
+		int outdoorOnlyCasters,
+		int clippingCandidates,
+		int roofedReceivers,
+		int outdoorReceivers,
+		int unknownReceivers,
+		int roofedCasters,
+		int outdoorCasters,
+		int unknownCasters,
+		int sunlightEligibleCasters,
+		int sunlightSuppressedRoofedCasters,
+		int sunlightSuppressedUnknownCasters) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			openGLRemasterShadowReceiverChunkStats.record(receiverChunks);
+			openGLRemasterShadowReceiverTriangleStats.record(receiverTriangles);
+			openGLRemasterShadowCasterStats.record(totalCasters);
+			openGLRemasterShadowWallCasterStats.record(wallCasters);
+			openGLRemasterShadowGameObjectCasterStats.record(gameObjectCasters);
+			openGLRemasterShadowWallObjectCasterStats.record(wallObjectCasters);
+			openGLRemasterShadowOutdoorOnlyCasterStats.record(outdoorOnlyCasters);
+			openGLRemasterShadowClippingCandidateStats.record(clippingCandidates);
+			openGLRemasterShadowRoofedReceiverStats.record(roofedReceivers);
+			openGLRemasterShadowOutdoorReceiverStats.record(outdoorReceivers);
+			openGLRemasterShadowUnknownReceiverStats.record(unknownReceivers);
+			openGLRemasterShadowRoofedCasterStats.record(roofedCasters);
+			openGLRemasterShadowOutdoorCasterStats.record(outdoorCasters);
+			openGLRemasterShadowUnknownCasterStats.record(unknownCasters);
+			openGLRemasterShadowSunlightEligibleCasterStats.record(sunlightEligibleCasters);
+			openGLRemasterShadowSunlightSuppressedRoofedCasterStats.record(sunlightSuppressedRoofedCasters);
+			openGLRemasterShadowSunlightSuppressedUnknownCasterStats.record(sunlightSuppressedUnknownCasters);
+		}
+	}
+
+	static void recordOpenGLRemasterShadowMask(
+		int width,
+		int height,
+		int visiblePixels,
+		boolean cacheHit,
+		boolean rebuilt,
+		boolean uploaded,
+		boolean uploadSkipped,
+		int stripCasters,
+		int softSceneryCasters,
+		long buildNanos,
+		long uploadNanos) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			openGLRemasterShadowMaskWidthStats.record(width);
+			openGLRemasterShadowMaskHeightStats.record(height);
+			openGLRemasterShadowMaskVisiblePixelStats.record(visiblePixels);
+			openGLRemasterShadowMaskCacheHitStats.record(cacheHit ? 1 : 0);
+			openGLRemasterShadowMaskRebuildStats.record(rebuilt ? 1 : 0);
+			openGLRemasterShadowMaskUploadCountStats.record(uploaded ? 1 : 0);
+			openGLRemasterShadowMaskUploadSkipStats.record(uploadSkipped ? 1 : 0);
+			openGLRemasterShadowMaskStripCasterStats.record(stripCasters);
+			openGLRemasterShadowMaskSoftSceneryCasterStats.record(softSceneryCasters);
+			openGLRemasterShadowMaskBuildStats.record(buildNanos);
+			openGLRemasterShadowMaskUploadStats.record(uploadNanos);
 		}
 	}
 
@@ -924,6 +1026,34 @@ public final class RenderTelemetry {
 				formatCount(openGLWorldChunkDrawOtherStats.average()),
 				formatCount(openGLWorldChunkDrawFallbackStats.average()),
 				formatCount(openGLWorldChunkDrawSkippedStats.average()),
+				formatCount(openGLRemasterShadowReceiverChunkStats.average()),
+				formatCount(openGLRemasterShadowReceiverTriangleStats.average()),
+				formatCount(openGLRemasterShadowCasterStats.average()),
+				formatCount(openGLRemasterShadowWallCasterStats.average()),
+				formatCount(openGLRemasterShadowGameObjectCasterStats.average()),
+				formatCount(openGLRemasterShadowWallObjectCasterStats.average()),
+				formatCount(openGLRemasterShadowOutdoorOnlyCasterStats.average()),
+				formatCount(openGLRemasterShadowClippingCandidateStats.average()),
+				formatCount(openGLRemasterShadowRoofedReceiverStats.average()),
+				formatCount(openGLRemasterShadowOutdoorReceiverStats.average()),
+				formatCount(openGLRemasterShadowUnknownReceiverStats.average()),
+				formatCount(openGLRemasterShadowRoofedCasterStats.average()),
+				formatCount(openGLRemasterShadowOutdoorCasterStats.average()),
+				formatCount(openGLRemasterShadowUnknownCasterStats.average()),
+				formatCount(openGLRemasterShadowSunlightEligibleCasterStats.average()),
+				formatCount(openGLRemasterShadowSunlightSuppressedRoofedCasterStats.average()),
+				formatCount(openGLRemasterShadowSunlightSuppressedUnknownCasterStats.average()),
+				formatCount(openGLRemasterShadowMaskWidthStats.average())
+					+ "x" + formatCount(openGLRemasterShadowMaskHeightStats.average())
+					+ "/" + formatCount(openGLRemasterShadowMaskVisiblePixelStats.average()),
+				formatMillis(openGLRemasterShadowMaskBuildStats.average())
+					+ "/" + formatMillis(openGLRemasterShadowMaskUploadStats.average()),
+				formatCount(openGLRemasterShadowMaskCacheHitStats.average())
+					+ "/" + formatCount(openGLRemasterShadowMaskRebuildStats.average())
+					+ "/" + formatCount(openGLRemasterShadowMaskUploadCountStats.average())
+					+ "/" + formatCount(openGLRemasterShadowMaskUploadSkipStats.average()),
+				formatCount(openGLRemasterShadowMaskStripCasterStats.average())
+					+ "/" + formatCount(openGLRemasterShadowMaskSoftSceneryCasterStats.average()),
 				formatCount(openGLResidentChunkReplacementRequestedStats.average()),
 				formatCount(openGLResidentChunkReplacementActiveStats.average()),
 				formatCount(openGLResidentChunkReplacementFallbackStats.average()),
@@ -1052,6 +1182,15 @@ public final class RenderTelemetry {
 				+ "/" + formatCount(openGLWorldChunkTextureBindStats.average())
 				+ " chunk shadow c/i=" + formatCount(openGLWorldChunkShadowChunkStats.average())
 				+ "/" + formatCount(openGLWorldChunkShadowIndexStats.average())
+				+ " remaster shadow recv c/t=" + formatCount(openGLRemasterShadowReceiverChunkStats.average())
+				+ "/" + formatCount(openGLRemasterShadowReceiverTriangleStats.average())
+				+ " casters all/w/go/wo/out/clip="
+				+ formatCount(openGLRemasterShadowCasterStats.average())
+				+ "/" + formatCount(openGLRemasterShadowWallCasterStats.average())
+				+ "/" + formatCount(openGLRemasterShadowGameObjectCasterStats.average())
+				+ "/" + formatCount(openGLRemasterShadowWallObjectCasterStats.average())
+				+ "/" + formatCount(openGLRemasterShadowOutdoorOnlyCasterStats.average())
+				+ "/" + formatCount(openGLRemasterShadowClippingCandidateStats.average())
 				+ " resident req/active/fallback="
 				+ formatCount(openGLResidentChunkReplacementRequestedStats.average())
 				+ "/" + formatCount(openGLResidentChunkReplacementActiveStats.average())
@@ -1122,6 +1261,15 @@ public final class RenderTelemetry {
 				+ "/" + formatCount(openGLWorldChunkDrawSkippedStats.windowAverage())
 				+ " chunk submit calls/binds=" + formatCount(openGLWorldChunkDrawCallStats.windowAverage())
 				+ "/" + formatCount(openGLWorldChunkTextureBindStats.windowAverage())
+				+ " remaster shadow recv c/t=" + formatCount(openGLRemasterShadowReceiverChunkStats.windowAverage())
+				+ "/" + formatCount(openGLRemasterShadowReceiverTriangleStats.windowAverage())
+				+ " casters all/w/go/wo/out/clip="
+				+ formatCount(openGLRemasterShadowCasterStats.windowAverage())
+				+ "/" + formatCount(openGLRemasterShadowWallCasterStats.windowAverage())
+				+ "/" + formatCount(openGLRemasterShadowGameObjectCasterStats.windowAverage())
+				+ "/" + formatCount(openGLRemasterShadowWallObjectCasterStats.windowAverage())
+				+ "/" + formatCount(openGLRemasterShadowOutdoorOnlyCasterStats.windowAverage())
+				+ "/" + formatCount(openGLRemasterShadowClippingCandidateStats.windowAverage())
 				+ " resident req/active/fallback="
 				+ formatCount(openGLResidentChunkReplacementRequestedStats.windowAverage())
 				+ "/" + formatCount(openGLResidentChunkReplacementActiveStats.windowAverage())
@@ -1318,6 +1466,8 @@ public final class RenderTelemetry {
 			openGLWorldChunkUploadPhaseStats,
 			openGLWorldProjectedMeshPhaseStats,
 			openGLWorldChunkDrawPhaseStats,
+			openGLRemasterShadowMaskBuildStats,
+			openGLRemasterShadowMaskUploadStats,
 			openGLSpriteOverlayStats,
 			openGLDebugOverlayStats,
 			openGLSwapStats
@@ -1443,6 +1593,32 @@ public final class RenderTelemetry {
 			openGLWorldChunkTextureBindStats,
 			openGLWorldChunkShadowChunkStats,
 			openGLWorldChunkShadowIndexStats,
+			openGLRemasterShadowReceiverChunkStats,
+			openGLRemasterShadowReceiverTriangleStats,
+			openGLRemasterShadowCasterStats,
+			openGLRemasterShadowWallCasterStats,
+			openGLRemasterShadowGameObjectCasterStats,
+			openGLRemasterShadowWallObjectCasterStats,
+			openGLRemasterShadowOutdoorOnlyCasterStats,
+			openGLRemasterShadowClippingCandidateStats,
+			openGLRemasterShadowRoofedReceiverStats,
+			openGLRemasterShadowOutdoorReceiverStats,
+			openGLRemasterShadowUnknownReceiverStats,
+			openGLRemasterShadowRoofedCasterStats,
+			openGLRemasterShadowOutdoorCasterStats,
+			openGLRemasterShadowUnknownCasterStats,
+			openGLRemasterShadowSunlightEligibleCasterStats,
+			openGLRemasterShadowSunlightSuppressedRoofedCasterStats,
+			openGLRemasterShadowSunlightSuppressedUnknownCasterStats,
+			openGLRemasterShadowMaskWidthStats,
+			openGLRemasterShadowMaskHeightStats,
+			openGLRemasterShadowMaskVisiblePixelStats,
+			openGLRemasterShadowMaskCacheHitStats,
+			openGLRemasterShadowMaskRebuildStats,
+			openGLRemasterShadowMaskUploadCountStats,
+			openGLRemasterShadowMaskUploadSkipStats,
+			openGLRemasterShadowMaskStripCasterStats,
+			openGLRemasterShadowMaskSoftSceneryCasterStats,
 			openGLResidentChunkReplacementRequestedStats,
 			openGLResidentChunkReplacementActiveStats,
 			openGLResidentChunkReplacementFallbackStats,
@@ -1864,6 +2040,27 @@ public final class RenderTelemetry {
 		final String openGLWorldChunkDrawOtherAverage;
 		final String openGLWorldChunkDrawFallbackAverage;
 		final String openGLWorldChunkDrawSkippedAverage;
+		final String openGLRemasterShadowReceiverChunkAverage;
+		final String openGLRemasterShadowReceiverTriangleAverage;
+		final String openGLRemasterShadowCasterAverage;
+		final String openGLRemasterShadowWallCasterAverage;
+		final String openGLRemasterShadowGameObjectCasterAverage;
+		final String openGLRemasterShadowWallObjectCasterAverage;
+		final String openGLRemasterShadowOutdoorOnlyCasterAverage;
+		final String openGLRemasterShadowClippingCandidateAverage;
+		final String openGLRemasterShadowRoofedReceiverAverage;
+		final String openGLRemasterShadowOutdoorReceiverAverage;
+		final String openGLRemasterShadowUnknownReceiverAverage;
+		final String openGLRemasterShadowRoofedCasterAverage;
+		final String openGLRemasterShadowOutdoorCasterAverage;
+		final String openGLRemasterShadowUnknownCasterAverage;
+		final String openGLRemasterShadowSunlightEligibleCasterAverage;
+		final String openGLRemasterShadowSunlightSuppressedRoofedCasterAverage;
+		final String openGLRemasterShadowSunlightSuppressedUnknownCasterAverage;
+		final String openGLRemasterShadowMaskSizeAverage;
+		final String openGLRemasterShadowMaskTimingAverageMs;
+		final String openGLRemasterShadowMaskCacheAverage;
+		final String openGLRemasterShadowMaskCasterAverage;
 		final String openGLResidentChunkReplacementRequestedAverage;
 		final String openGLResidentChunkReplacementActiveAverage;
 		final String openGLResidentChunkReplacementFallbackAverage;
@@ -2008,6 +2205,27 @@ public final class RenderTelemetry {
 			String openGLWorldChunkDrawOtherAverage,
 			String openGLWorldChunkDrawFallbackAverage,
 			String openGLWorldChunkDrawSkippedAverage,
+			String openGLRemasterShadowReceiverChunkAverage,
+			String openGLRemasterShadowReceiverTriangleAverage,
+			String openGLRemasterShadowCasterAverage,
+			String openGLRemasterShadowWallCasterAverage,
+			String openGLRemasterShadowGameObjectCasterAverage,
+			String openGLRemasterShadowWallObjectCasterAverage,
+			String openGLRemasterShadowOutdoorOnlyCasterAverage,
+			String openGLRemasterShadowClippingCandidateAverage,
+			String openGLRemasterShadowRoofedReceiverAverage,
+			String openGLRemasterShadowOutdoorReceiverAverage,
+			String openGLRemasterShadowUnknownReceiverAverage,
+			String openGLRemasterShadowRoofedCasterAverage,
+			String openGLRemasterShadowOutdoorCasterAverage,
+			String openGLRemasterShadowUnknownCasterAverage,
+			String openGLRemasterShadowSunlightEligibleCasterAverage,
+			String openGLRemasterShadowSunlightSuppressedRoofedCasterAverage,
+			String openGLRemasterShadowSunlightSuppressedUnknownCasterAverage,
+			String openGLRemasterShadowMaskSizeAverage,
+			String openGLRemasterShadowMaskTimingAverageMs,
+			String openGLRemasterShadowMaskCacheAverage,
+			String openGLRemasterShadowMaskCasterAverage,
 			String openGLResidentChunkReplacementRequestedAverage,
 			String openGLResidentChunkReplacementActiveAverage,
 			String openGLResidentChunkReplacementFallbackAverage,
@@ -2150,6 +2368,29 @@ public final class RenderTelemetry {
 			this.openGLWorldChunkDrawOtherAverage = openGLWorldChunkDrawOtherAverage;
 			this.openGLWorldChunkDrawFallbackAverage = openGLWorldChunkDrawFallbackAverage;
 			this.openGLWorldChunkDrawSkippedAverage = openGLWorldChunkDrawSkippedAverage;
+			this.openGLRemasterShadowReceiverChunkAverage = openGLRemasterShadowReceiverChunkAverage;
+			this.openGLRemasterShadowReceiverTriangleAverage = openGLRemasterShadowReceiverTriangleAverage;
+			this.openGLRemasterShadowCasterAverage = openGLRemasterShadowCasterAverage;
+			this.openGLRemasterShadowWallCasterAverage = openGLRemasterShadowWallCasterAverage;
+			this.openGLRemasterShadowGameObjectCasterAverage = openGLRemasterShadowGameObjectCasterAverage;
+			this.openGLRemasterShadowWallObjectCasterAverage = openGLRemasterShadowWallObjectCasterAverage;
+			this.openGLRemasterShadowOutdoorOnlyCasterAverage = openGLRemasterShadowOutdoorOnlyCasterAverage;
+			this.openGLRemasterShadowClippingCandidateAverage = openGLRemasterShadowClippingCandidateAverage;
+			this.openGLRemasterShadowRoofedReceiverAverage = openGLRemasterShadowRoofedReceiverAverage;
+			this.openGLRemasterShadowOutdoorReceiverAverage = openGLRemasterShadowOutdoorReceiverAverage;
+			this.openGLRemasterShadowUnknownReceiverAverage = openGLRemasterShadowUnknownReceiverAverage;
+			this.openGLRemasterShadowRoofedCasterAverage = openGLRemasterShadowRoofedCasterAverage;
+			this.openGLRemasterShadowOutdoorCasterAverage = openGLRemasterShadowOutdoorCasterAverage;
+			this.openGLRemasterShadowUnknownCasterAverage = openGLRemasterShadowUnknownCasterAverage;
+			this.openGLRemasterShadowSunlightEligibleCasterAverage = openGLRemasterShadowSunlightEligibleCasterAverage;
+			this.openGLRemasterShadowSunlightSuppressedRoofedCasterAverage =
+				openGLRemasterShadowSunlightSuppressedRoofedCasterAverage;
+			this.openGLRemasterShadowSunlightSuppressedUnknownCasterAverage =
+				openGLRemasterShadowSunlightSuppressedUnknownCasterAverage;
+			this.openGLRemasterShadowMaskSizeAverage = openGLRemasterShadowMaskSizeAverage;
+			this.openGLRemasterShadowMaskTimingAverageMs = openGLRemasterShadowMaskTimingAverageMs;
+			this.openGLRemasterShadowMaskCacheAverage = openGLRemasterShadowMaskCacheAverage;
+			this.openGLRemasterShadowMaskCasterAverage = openGLRemasterShadowMaskCasterAverage;
 			this.openGLResidentChunkReplacementRequestedAverage = openGLResidentChunkReplacementRequestedAverage;
 			this.openGLResidentChunkReplacementActiveAverage = openGLResidentChunkReplacementActiveAverage;
 			this.openGLResidentChunkReplacementFallbackAverage = openGLResidentChunkReplacementFallbackAverage;

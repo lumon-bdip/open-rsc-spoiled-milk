@@ -26,6 +26,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.DiscordService;
 import com.openrsc.server.net.RSCConnectionHandler;
@@ -84,6 +85,7 @@ public class Server implements Runnable {
 	public static final ConcurrentHashMap<String, Server> serversList = new ConcurrentHashMap<>();
 
 	private final GameStateUpdater gameUpdater;
+	private final WorldDayNightClock worldDayNightClock;
 	private final GameEventHandler gameEventHandler;
 	private final DiscordService discordService;
 	private final LoginExecutor loginExecutor;
@@ -329,6 +331,7 @@ public class Server implements Runnable {
 		LOGGER.info("Server configuration loaded: " + getConfig().configFile);
 
 		name = getConfig().SERVER_NAME;
+		worldDayNightClock = new WorldDayNightClock();
 
 		packetFilter = new RSCPacketFilter(this);
 
@@ -1510,6 +1513,10 @@ public class Server implements Runnable {
 
 	public final GameStateUpdater getGameUpdater() {
 		return gameUpdater;
+	}
+
+	public WorldDayNightClock getWorldDayNightClock() {
+		return worldDayNightClock;
 	}
 
 	public final DiscordService getDiscordService() {

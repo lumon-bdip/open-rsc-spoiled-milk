@@ -31,10 +31,19 @@ final class RenderSurfaceSettings {
 		return new Dimension(mode.width, mode.height);
 	}
 
+	static String getAspectLabel() {
+		return mode.aspectLabel;
+	}
+
 	static Mode cycleMode() {
 		Mode next = mode.next();
 		mode = next;
 		return next;
+	}
+
+	static Mode setMode(Mode next) {
+		mode = next == null ? Mode.WIDE : next.normalizedPlayerMode();
+		return mode;
 	}
 
 	static void loadFromClientSettings(Properties props) {
@@ -66,64 +75,81 @@ final class RenderSurfaceSettings {
 	}
 
 	enum Mode {
-		CLASSIC("512x346", "@gre@512x346 Classic", 512, 346, true),
-		VGA("640x480", "@yel@640x480", 640, 480, true),
-		SVGA("800x600", "@ora@800x600", 800, 600, true),
-		WIDE("960x540", "@yel@960x540 16:9", 960, 540, true),
-		WIDE_PLUS("1024x576", "@ora@1024x576 16:9", 1024, 576, true),
-		HD("1280x720", "@gre@1280x720 16:9", 1280, 720, true),
-		FULL_HD("1920x1080", "@cya@1920x1080 16:9", 1920, 1080, true);
+		CLASSIC("512x346", "@gre@4:3", 512, 346, false, "@gre@4:3"),
+		VGA("640x480", "@gre@4:3", 640, 480, false, "@gre@4:3"),
+		SVGA("800x600", "@gre@4:3", 800, 600, true, "@gre@4:3"),
+		WIDE("960x540", "@yel@16:9", 960, 540, true, "@yel@16:9"),
+		WIDE_PLUS("1024x576", "@yel@16:9", 1024, 576, false, "@yel@16:9"),
+		HD("1280x720", "@yel@16:9", 1280, 720, false, "@yel@16:9"),
+		FULL_HD("1920x1080", "@yel@16:9", 1920, 1080, false, "@yel@16:9");
 
 		final String id;
 		final String label;
 		final int width;
 		final int height;
+		final String aspectLabel;
 		private final boolean playerVisible;
 
-		Mode(String id, String label, int width, int height, boolean playerVisible) {
+		Mode(String id, String label, int width, int height, boolean playerVisible, String aspectLabel) {
 			this.id = id;
 			this.label = label;
 			this.width = width;
 			this.height = height;
 			this.playerVisible = playerVisible;
+			this.aspectLabel = aspectLabel;
 		}
 
 		Mode next() {
+			Mode current = normalizedPlayerMode();
 			Mode[] modes = values();
 			for (int step = 1; step <= modes.length; step++) {
-				Mode candidate = modes[(ordinal() + step) % modes.length];
+				Mode candidate = modes[(current.ordinal() + step) % modes.length];
 				if (candidate.playerVisible) {
 					return candidate;
 				}
 			}
-			return CLASSIC;
+			return WIDE;
+		}
+
+		Mode normalizedPlayerMode() {
+			return isWideAspect() ? WIDE : SVGA;
+		}
+
+		private boolean isWideAspect() {
+			return width * 9 == height * 16;
 		}
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return CLASSIC;
+				return WIDE;
 			}
 
 			String normalized = value.trim().toLowerCase().replace('_', '-');
-			if ("classic".equals(normalized) || "512-346".equals(normalized)) {
-				return CLASSIC;
+			if ("4:3".equals(normalized) || "4-3".equals(normalized) || "classic".equals(normalized)
+				|| "512-346".equals(normalized) || "640x480".equals(normalized) || "640-480".equals(normalized)
+				|| "800x600".equals(normalized) || "800-600".equals(normalized)) {
+				return SVGA;
 			}
-			if ("720p".equals(normalized) || "hd".equals(normalized) || "1280-720".equals(normalized)) {
-				return HD;
+			if ("16:9".equals(normalized) || "16-9".equals(normalized) || "wide".equals(normalized)
+				|| "960x540".equals(normalized) || "960-540".equals(normalized)
+				|| "1024x576".equals(normalized) || "1024-576".equals(normalized)
+				|| "720p".equals(normalized) || "hd".equals(normalized) || "1280x720".equals(normalized)
+				|| "1280-720".equals(normalized)) {
+				return WIDE;
 			}
 			if ("1080p".equals(normalized) || "full-hd".equals(normalized) || "fhd".equals(normalized)
-				|| "1920-1080".equals(normalized)) {
-				return FULL_HD;
+				|| "1920x1080".equals(normalized) || "1920-1080".equals(normalized)) {
+				return WIDE;
 			}
 
 			for (Mode mode : values()) {
 				if (mode.id.equals(normalized)) {
-					return mode;
+					return mode.normalizedPlayerMode();
 				}
 			}
 
-			System.out.println("[renderer-v2] Unknown render surface mode '" + value + "'; using 512x346.");
-			return CLASSIC;
+			System.out.println("[renderer-v2] Unknown render surface mode '" + value + "'; using 16:9.");
+			return WIDE;
 		}
 	}
 }

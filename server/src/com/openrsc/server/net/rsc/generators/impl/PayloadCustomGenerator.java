@@ -78,6 +78,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_BANK_PIN_INTERFACE, 135); // custom
 		put(OpcodeOut.SEND_ONLINE_LIST, 136); // custom
 		put(OpcodeOut.SEND_MOVEMENT_UPDATE, 141); // custom
+		put(OpcodeOut.SEND_WORLD_TIME, 142); // custom
 		put(OpcodeOut.SEND_DEVOTION, 145); // custom
 		put(OpcodeOut.SEND_PRODUCTION_INTERFACE, 138); // custom
 		put(OpcodeOut.SEND_PRAYER_BOOK, 139); // custom
@@ -736,6 +737,12 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeShort(npcMovement.y);
 						builder.writeByte((byte) npcMovement.sprite);
 					}
+					break;
+
+				case SEND_WORLD_TIME:
+					WorldTimeStruct worldTime = (WorldTimeStruct) payload;
+					builder.writeInt(worldTime.cycleMillis);
+					builder.writeInt(worldTime.currentCycleMillis);
 					break;
 
 				case SEND_PRAYER_BOOK:

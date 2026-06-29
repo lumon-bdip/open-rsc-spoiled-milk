@@ -3,8 +3,6 @@ package orsc;
 import java.util.Properties;
 
 final class RendererExperimentalSettings {
-	static final String CAMERA_TILT_PROPERTY_KEY = "experimental_camera_tilt";
-	static final String EXTRA_ZOOM_PROPERTY_KEY = "experimental_extra_zoom";
 	private static final String CAMERA_TILT_PROPERTY = "spoiledmilk.experimentalCameraTilt";
 	private static final String CAMERA_TILT_ENV = "SPOILED_MILK_EXPERIMENTAL_CAMERA_TILT";
 	private static final String EXTRA_ZOOM_PROPERTY = "spoiledmilk.experimentalExtraZoom";
@@ -30,39 +28,9 @@ final class RendererExperimentalSettings {
 		return extraZoomEnabled;
 	}
 
-	static boolean toggleCameraTilt() {
-		cameraTiltEnabled = !cameraTiltEnabled;
-		return cameraTiltEnabled;
-	}
-
-	static boolean toggleExtraZoom() {
-		extraZoomEnabled = !extraZoomEnabled;
-		return extraZoomEnabled;
-	}
-
 	static void loadFromClientSettings(Properties props) {
-		if (props == null) {
-			return;
-		}
-		if (!runtimeCameraTiltOverride) {
-			String configuredCameraTilt = props.getProperty(CAMERA_TILT_PROPERTY_KEY);
-			if (configuredCameraTilt != null && !configuredCameraTilt.trim().isEmpty()) {
-				cameraTiltEnabled = parseBoolean(configuredCameraTilt, cameraTiltEnabled);
-			}
-		}
-		if (!runtimeExtraZoomOverride) {
-			String configuredExtraZoom = props.getProperty(EXTRA_ZOOM_PROPERTY_KEY);
-			if (configuredExtraZoom != null && !configuredExtraZoom.trim().isEmpty()) {
-				extraZoomEnabled = parseBoolean(configuredExtraZoom, extraZoomEnabled);
-			}
-		}
-	}
-
-	static void saveToClientSettings(Properties props) {
-		if (props != null) {
-			props.setProperty(CAMERA_TILT_PROPERTY_KEY, String.valueOf(cameraTiltEnabled));
-			props.setProperty(EXTRA_ZOOM_PROPERTY_KEY, String.valueOf(extraZoomEnabled));
-		}
+		// These are no longer player-facing options. Defaults are always on; only
+		// explicit launch properties/env vars can change them for diagnostics.
 	}
 
 	private static boolean hasRuntimeSetting(String propertyName, String envName) {

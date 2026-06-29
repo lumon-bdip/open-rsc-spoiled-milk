@@ -2,11 +2,14 @@ package orsc.graphics.three;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class Renderer3DWorldChunkFrame {
 	public static final Renderer3DWorldChunkFrame EMPTY =
 		new Renderer3DWorldChunkFrame(Collections.<ChunkMesh>emptyList(), 0, 0, 0);
+	private static final int TILE_SIZE = 128;
 
 	private final List<ChunkMesh> chunks;
 	private final int totalVertexCount;
@@ -83,6 +86,9 @@ public final class Renderer3DWorldChunkFrame {
 		private final int[] triangleFallbackColors;
 		private final Renderer3DModelKind[] triangleModelKinds;
 		private final ShadowCaster[] shadowCasters;
+		private final long[] roofCoverageBits;
+		private final int roofCoverageAxis;
+		private final int roofCoveredTileCount;
 		private final int terrainTriangles;
 		private final int wallTriangles;
 		private final int roofTriangles;
@@ -205,11 +211,75 @@ public final class Renderer3DWorldChunkFrame {
 			this.triangleFallbackColors =
 				triangleFallbackColors == null ? new int[0] : triangleFallbackColors.clone();
 			this.triangleModelKinds = normalizeKinds(triangleModelKinds, this.triangleTextures.length);
-			int[][] vertexNormals = buildVertexNormals(this.vertexCoords, this.indices, this.triangleTextures.length);
+			int[][] vertexNormals = buildVertexNormals(
+				this.vertexCoords,
+				this.indices,
+				this.triangleTextures.length,
+				this.triangleModelKinds);
 			this.vertexNormalX = vertexNormals[0];
 			this.vertexNormalY = vertexNormals[1];
 			this.vertexNormalZ = vertexNormals[2];
 			this.shadowCasters = normalizeShadowCasters(shadowCasters);
+			this.roofCoverageBits = new long[0];
+			this.roofCoverageAxis = 0;
+			this.roofCoveredTileCount = 0;
+			this.terrainTriangles = terrainTriangles;
+			this.wallTriangles = wallTriangles;
+			this.roofTriangles = roofTriangles;
+			this.objectChunk = objectChunk;
+			this.signature = signature;
+		}
+
+		public ChunkMesh(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ,
+			int[] vertexCoords,
+			float[] vertexTextureU,
+			float[] vertexTextureV,
+			int[] vertexLights,
+			int[] indices,
+			int[] triangleTextures,
+			int[] triangleFallbackColors,
+			Renderer3DModelKind[] triangleModelKinds,
+			ShadowCaster[] shadowCasters,
+			long[] roofCoverageBits,
+			int roofCoverageAxis,
+			int roofCoveredTileCount,
+			int terrainTriangles,
+			int wallTriangles,
+			int roofTriangles,
+			boolean objectChunk,
+			long signature) {
+			this.plane = plane;
+			this.centerSectionX = centerSectionX;
+			this.centerSectionY = centerSectionY;
+			this.originWorldX = originWorldX;
+			this.originWorldZ = originWorldZ;
+			this.vertexCoords = vertexCoords == null ? new int[0] : vertexCoords.clone();
+			int vertexCount = this.vertexCoords.length / 3;
+			this.vertexTextureU = normalizeFloatArray(vertexTextureU, vertexCount, 0.0f);
+			this.vertexTextureV = normalizeFloatArray(vertexTextureV, vertexCount, 0.0f);
+			this.vertexLights = normalizeIntArray(vertexLights, vertexCount, 0);
+			this.indices = indices == null ? new int[0] : indices.clone();
+			this.triangleTextures = triangleTextures == null ? new int[0] : triangleTextures.clone();
+			this.triangleFallbackColors =
+				triangleFallbackColors == null ? new int[0] : triangleFallbackColors.clone();
+			this.triangleModelKinds = normalizeKinds(triangleModelKinds, this.triangleTextures.length);
+			int[][] vertexNormals = buildVertexNormals(
+				this.vertexCoords,
+				this.indices,
+				this.triangleTextures.length,
+				this.triangleModelKinds);
+			this.vertexNormalX = vertexNormals[0];
+			this.vertexNormalY = vertexNormals[1];
+			this.vertexNormalZ = vertexNormals[2];
+			this.shadowCasters = normalizeShadowCasters(shadowCasters);
+			this.roofCoverageAxis = roofCoverageAxis <= 0 || roofCoverageBits == null ? 0 : roofCoverageAxis;
+			this.roofCoverageBits = this.roofCoverageAxis <= 0 ? new long[0] : roofCoverageBits.clone();
+			this.roofCoveredTileCount = Math.max(0, roofCoveredTileCount);
 			this.terrainTriangles = terrainTriangles;
 			this.wallTriangles = wallTriangles;
 			this.roofTriangles = roofTriangles;
@@ -249,7 +319,8 @@ public final class Renderer3DWorldChunkFrame {
 		private static int[][] buildVertexNormals(
 			int[] vertexCoords,
 			int[] indices,
-			int triangleCount) {
+			int triangleCount,
+			Renderer3DModelKind[] triangleModelKinds) {
 			int vertexCount = vertexCoords.length / 3;
 			int[] normalX = new int[vertexCount];
 			int[] normalY = new int[vertexCount];
@@ -259,6 +330,8 @@ public final class Renderer3DWorldChunkFrame {
 			}
 
 			int limit = Math.min(triangleCount, indices.length / 3);
+			Map<VertexCoordKey, NormalAccumulator> terrainNormals =
+				new HashMap<VertexCoordKey, NormalAccumulator>();
 			for (int triangle = 0; triangle < limit; triangle++) {
 				int sourceIndex = triangle * 3;
 				int first = indices[sourceIndex];
@@ -281,6 +354,14 @@ public final class Renderer3DWorldChunkFrame {
 				double faceNormalX = z31 * y21 - z21 * y31;
 				double faceNormalY = z21 * x31 - x21 * z31;
 				double faceNormalZ = x21 * y31 - x31 * y21;
+				boolean terrainTriangle = triangleModelKinds != null
+					&& triangle < triangleModelKinds.length
+					&& triangleModelKinds[triangle] == Renderer3DModelKind.TERRAIN;
+				if (terrainTriangle && faceNormalY < 0.0d) {
+					faceNormalX = -faceNormalX;
+					faceNormalY = -faceNormalY;
+					faceNormalZ = -faceNormalZ;
+				}
 				double magnitude = Math.sqrt(
 					faceNormalX * faceNormalX
 						+ faceNormalY * faceNormalY
@@ -300,12 +381,125 @@ public final class Renderer3DWorldChunkFrame {
 				normalX[third] = scaledNormalX;
 				normalY[third] = scaledNormalY;
 				normalZ[third] = scaledNormalZ;
+				if (terrainTriangle) {
+					addTerrainNormal(terrainNormals, vertexCoords, firstCoord, faceNormalX, faceNormalY, faceNormalZ);
+					addTerrainNormal(terrainNormals, vertexCoords, secondCoord, faceNormalX, faceNormalY, faceNormalZ);
+					addTerrainNormal(terrainNormals, vertexCoords, thirdCoord, faceNormalX, faceNormalY, faceNormalZ);
+				}
+			}
+			if (!terrainNormals.isEmpty()) {
+				applySmoothedTerrainNormals(normalX, normalY, normalZ, vertexCoords, indices, limit, triangleModelKinds, terrainNormals);
 			}
 			return new int[][] {normalX, normalY, normalZ};
 		}
 
+		private static void addTerrainNormal(
+			Map<VertexCoordKey, NormalAccumulator> terrainNormals,
+			int[] vertexCoords,
+			int coord,
+			double normalX,
+			double normalY,
+			double normalZ) {
+			VertexCoordKey key = VertexCoordKey.from(vertexCoords, coord);
+			NormalAccumulator accumulator = terrainNormals.get(key);
+			if (accumulator == null) {
+				accumulator = new NormalAccumulator();
+				terrainNormals.put(key, accumulator);
+			}
+			accumulator.add(normalX, normalY, normalZ);
+		}
+
+		private static void applySmoothedTerrainNormals(
+			int[] normalX,
+			int[] normalY,
+			int[] normalZ,
+			int[] vertexCoords,
+			int[] indices,
+			int triangleLimit,
+			Renderer3DModelKind[] triangleModelKinds,
+			Map<VertexCoordKey, NormalAccumulator> terrainNormals) {
+			int vertexCount = vertexCoords.length / 3;
+			for (int triangle = 0; triangle < triangleLimit; triangle++) {
+				if (triangleModelKinds == null
+					|| triangle >= triangleModelKinds.length
+					|| triangleModelKinds[triangle] != Renderer3DModelKind.TERRAIN) {
+					continue;
+				}
+				int sourceIndex = triangle * 3;
+				for (int offset = 0; offset < 3; offset++) {
+					int vertex = indices[sourceIndex + offset];
+					if (!isNormalVertexIndexValid(vertex, vertexCount)) {
+						continue;
+					}
+					int coord = vertex * 3;
+					NormalAccumulator accumulator = terrainNormals.get(VertexCoordKey.from(vertexCoords, coord));
+					if (accumulator != null) {
+						accumulator.writeTo(normalX, normalY, normalZ, vertex);
+					}
+				}
+			}
+		}
+
 		private static boolean isNormalVertexIndexValid(int vertex, int vertexCount) {
 			return vertex >= 0 && vertex < vertexCount;
+		}
+
+		private static final class VertexCoordKey {
+			private final int x;
+			private final int y;
+			private final int z;
+
+			private VertexCoordKey(int x, int y, int z) {
+				this.x = x;
+				this.y = y;
+				this.z = z;
+			}
+
+			private static VertexCoordKey from(int[] vertexCoords, int coord) {
+				return new VertexCoordKey(vertexCoords[coord], vertexCoords[coord + 1], vertexCoords[coord + 2]);
+			}
+
+			@Override
+			public boolean equals(Object other) {
+				if (this == other) {
+					return true;
+				}
+				if (!(other instanceof VertexCoordKey)) {
+					return false;
+				}
+				VertexCoordKey key = (VertexCoordKey) other;
+				return x == key.x && y == key.y && z == key.z;
+			}
+
+			@Override
+			public int hashCode() {
+				int result = x;
+				result = 31 * result + y;
+				result = 31 * result + z;
+				return result;
+			}
+		}
+
+		private static final class NormalAccumulator {
+			private double x;
+			private double y;
+			private double z;
+
+			private void add(double normalX, double normalY, double normalZ) {
+				x += normalX;
+				y += normalY;
+				z += normalZ;
+			}
+
+			private void writeTo(int[] normalX, int[] normalY, int[] normalZ, int vertex) {
+				double magnitude = Math.sqrt(x * x + y * y + z * z);
+				if (magnitude <= 0.000001d) {
+					return;
+				}
+				normalX[vertex] = (int) (x * 256.0d / magnitude);
+				normalY[vertex] = (int) (y * 256.0d / magnitude);
+				normalZ[vertex] = (int) (z * 256.0d / magnitude);
+			}
 		}
 
 		public int getPlane() {
@@ -350,6 +544,41 @@ public final class Renderer3DWorldChunkFrame {
 
 		public int getRoofTriangles() {
 			return roofTriangles;
+		}
+
+		public boolean hasRoofCoverageData() {
+			return roofCoverageAxis > 0;
+		}
+
+		public int getRoofCoveredTileCount() {
+			return roofCoveredTileCount;
+		}
+
+		public boolean isRoofCoveredTile(int tileX, int tileZ) {
+			if (roofCoverageAxis <= 0
+				|| tileX < 0
+				|| tileZ < 0
+				|| tileX >= roofCoverageAxis
+				|| tileZ >= roofCoverageAxis) {
+				return false;
+			}
+			int bitIndex = tileZ + tileX * roofCoverageAxis;
+			int wordIndex = bitIndex >>> 6;
+			return wordIndex >= 0
+				&& wordIndex < roofCoverageBits.length
+				&& (roofCoverageBits[wordIndex] & (1L << (bitIndex & 63))) != 0L;
+		}
+
+		public int roofClassificationForWorldPoint(int worldX, int worldZ) {
+			if (!hasRoofCoverageData()) {
+				return -1;
+			}
+			int tileX = Math.floorDiv(worldX, TILE_SIZE);
+			int tileZ = Math.floorDiv(worldZ, TILE_SIZE);
+			if (tileX < 0 || tileZ < 0 || tileX >= roofCoverageAxis || tileZ >= roofCoverageAxis) {
+				return -1;
+			}
+			return isRoofCoveredTile(tileX, tileZ) ? 1 : 0;
 		}
 
 		public boolean isObjectChunk() {

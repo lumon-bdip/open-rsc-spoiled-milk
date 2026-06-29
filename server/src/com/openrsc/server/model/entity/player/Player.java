@@ -54,6 +54,7 @@ import com.openrsc.server.util.PidShuffler;
 import com.openrsc.server.util.UsernameChange;
 import com.openrsc.server.util.languages.PreferredLanguage;
 import com.openrsc.server.util.rsc.DataConversions;
+import com.openrsc.server.util.rsc.CertUtil;
 import com.openrsc.server.util.rsc.Formulae;
 import com.openrsc.server.util.rsc.MessageType;
 import com.openrsc.server.util.rsc.PrerenderedSleepword;
@@ -75,6 +76,9 @@ import static com.openrsc.server.plugins.Functions.inArray;
  * A single player.
  */
 public final class Player extends Mob {
+	public static final String BULK_GROUND_ITEM_TAKE_COUNT_ATTRIBUTE = "bulkGroundItemTakeCount";
+	public static final int MAX_BULK_GROUND_ITEM_TAKE_COUNT = 5000;
+
 	private static final String BODY_ROBE_POWER_KEY = "body_robe_weapon_power";
 	private static final String BODY_ROBE_POWER_LAST_DECAY_KEY = "body_robe_weapon_power_last_decay";
 	private static final int BODY_ROBE_POWER_DECAY_TICKS = 10;
@@ -5098,6 +5102,72 @@ public final class Player extends Mob {
 			+ item.getAmount() + " at " + this.getLocation().toString()));
 
 		return true;
+	}
+
+	public int groundItemTakeMatching(final GroundItem firstItem) {
+		int requestedTakeCount = firstItem.getAttribute(BULK_GROUND_ITEM_TAKE_COUNT_ATTRIBUTE, 1);
+		firstItem.removeAttribute(BULK_GROUND_ITEM_TAKE_COUNT_ATTRIBUTE);
+		requestedTakeCount = Math.max(1, Math.min(MAX_BULK_GROUND_ITEM_TAKE_COUNT, requestedTakeCount));
+
+		final int itemId = firstItem.getID();
+		final Point location = firstItem.getLocation();
+		int taken = 0;
+		GroundItem item = firstItem;
+
+		while (item != null && taken < requestedTakeCount) {
+			if (!canTakeVisibleGroundItem(item, false)) {
+				break;
+			}
+			if (!groundItemTake(item)) {
+				break;
+			}
+			++taken;
+			if (taken < requestedTakeCount) {
+				item = getViewArea().getVisibleGroundItem(itemId, location, this);
+			}
+		}
+		return taken;
+	}
+
+	public boolean canTakeVisibleGroundItem(final GroundItem item) {
+		return canTakeVisibleGroundItem(item, true);
+	}
+
+	private boolean canTakeVisibleGroundItem(final GroundItem item, final boolean checkPlayerActionState) {
+		if (item == null || item.isInvisibleTo(this)) {
+			return false;
+		}
+		if (checkPlayerActionState && (isBusy() || isRanging())) {
+			return false;
+		}
+		if (item.isRemoved() || getRegion().getItem(item.getID(), item.getLocation(), this) == null
+			|| !canReach(item) || item.getAmount() < 1) {
+			return false;
+		}
+		if (item.getLocation().inWilderness() && !item.belongsTo(this) && item.getAttribute("playerKill", false)
+			&& isRestrictedIronmanForGroundItems()) {
+			message("You're an Ironman, so you can't loot items from players.");
+			return false;
+		}
+		if (!item.belongsTo(this) && isRestrictedIronmanForGroundItems()) {
+			message("You're an Ironman, so you can't take items that other players have dropped.");
+			return false;
+		}
+		if (!item.belongsTo(this) && item.getAttribute("isTransferIronmanItem", false)) {
+			message("That belongs to a Transfer Ironman player.");
+			return false;
+		}
+		if (CertUtil.isCert(item.getID()) && getCertOptOut()
+			&& item.getOwnerUsernameHash() != 0 && !item.belongsTo(this)) {
+			message("You have opted out of taking certs that other players have dropped.");
+			return false;
+		}
+		return true;
+	}
+
+	private boolean isRestrictedIronmanForGroundItems() {
+		return isIronMan(IronmanMode.Ironman.id()) || isIronMan(IronmanMode.Ultimate.id())
+			|| isIronMan(IronmanMode.Hardcore.id()) || isIronMan(IronmanMode.Transfer.id());
 	}
 
 	public boolean checkRingOfLife(final Mob hitter) {

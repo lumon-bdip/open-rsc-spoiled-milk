@@ -596,8 +596,6 @@ public final class mudclient implements Runnable {
 	private static final int SETTINGS_SCALE_LABEL_X_OFFSET = 73;
 	private static final int SETTINGS_SCALE_PLUS_X_OFFSET = 45;
 	private static final int SETTINGS_SECTION_ROW = -1000;
-	private static final int SETTINGS_ACTION_EXPERIMENTAL_CAMERA_TILT = 63;
-	private static final int SETTINGS_ACTION_EXPERIMENTAL_EXTRA_ZOOM = 64;
 	private static final int NORMAL_CAMERA_ZOOM_MIN = 0;
 	private static final int NORMAL_CAMERA_ZOOM_MAX = 255;
 	private static final int EXTRA_CAMERA_ZOOM_MIN = -100;
@@ -1250,9 +1248,9 @@ public final class mudclient implements Runnable {
 		saveClientSettings(props);
 	}
 
-	private static void saveRendererExperimentalSettings() {
+	private static void saveRendererToneSettings() {
 		Properties props = loadClientSettings();
-		RendererExperimentalSettings.saveToClientSettings(props);
+		RendererToneSettings.saveToClientSettings(props);
 
 		saveClientSettings(props);
 	}
@@ -12638,7 +12636,6 @@ public final class mudclient implements Runnable {
 		if (wantMembers()) {
 			index++; // Sound effects.
 		}
-		index++; // Video section.
 		return index;
 	}
 
@@ -12673,10 +12670,6 @@ public final class mudclient implements Runnable {
 		boolean isScalarOptionOffered = !isAndroid() && !isOpenGLPrimaryWindow;
 		int scalarOptionIdx = getLegacyScalingSettingsRowIndex();
 		boolean isScalarOptionShowing = panelSettings.controlScrollAmount[0] <= scalarOptionIdx && isScalarOptionOffered;
-
-		if (!isAndroid()) {
-			index = addSettingsSection(index, "Video");
-		}
 
 		if (isScalarOptionOffered) {
 			if (isScalarOptionShowing) {
@@ -12757,23 +12750,16 @@ public final class mudclient implements Runnable {
 			index = addSettingsRow(index, "@whi@Scaling type - @gre@" + scalingTypeDescription, 46);
 		}
 
-		if (!isAndroid()) {
-			index = addSettingsRow(index, "@whi@Resolution - " + RenderSurfaceSettings.getMode().label, 56);
-		}
 		if (!isAndroid() && isOpenGLPrimaryWindow) {
 			index = addSettingsSection(index, "Graphics");
-			index = addSettingsRow(index, "@whi@Renderer - " + RendererProfileSettings.getMode().label, 59);
+			index = addSettingsRow(index, "@whi@Preset - " + RendererProfileSettings.getMode().label, 59);
+			index = addSettingsRow(index, "@whi@Aspect Ratio - " + RenderSurfaceSettings.getAspectLabel(), 56);
+			index = addSettingsRow(index, "@whi@Lighting - " + RendererLightingSettings.getMode().label, 61);
 			index = addSettingsRow(index, "@whi@Geometry - " + RendererGeometrySettings.getMode().label, 62);
-			index = addSettingsRow(index, "@whi@Brightness - " + RendererBrightnessSettings.getMode().label, 58);
 			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
+			index = addSettingsRow(index, "@whi@Brightness - " + RendererBrightnessSettings.getMode().label, 58);
 			index = addSettingsSection(index, "Interface");
 			index = addSettingsRow(index, "@whi@Font - " + RendererFontSettings.getMode().label, 57);
-			index = addSettingsRow(index, "@whi@Camera tilt - "
-				+ (RendererExperimentalSettings.isCameraTiltEnabled() ? "@gre@On" : "@red@Off"),
-				SETTINGS_ACTION_EXPERIMENTAL_CAMERA_TILT);
-			index = addSettingsRow(index, "@whi@Extra zoom - "
-				+ (RendererExperimentalSettings.isExtraZoomEnabled() ? "@gre@On" : "@red@Off"),
-				SETTINGS_ACTION_EXPERIMENTAL_EXTRA_ZOOM);
 		}
 
 		if (!isOpenGLPrimaryWindow) {
@@ -13250,14 +13236,11 @@ public final class mudclient implements Runnable {
 		if (isOpenGLPrimaryWindow && settingIndex == 60 && this.mouseButtonClick == 1) {
 			cycleOpenGLFogMode();
 		}
+		if (isOpenGLPrimaryWindow && settingIndex == 61 && this.mouseButtonClick == 1) {
+			cycleOpenGLLightingMode();
+		}
 		if (isOpenGLPrimaryWindow && settingIndex == 62 && this.mouseButtonClick == 1) {
 			cycleOpenGLGeometryMode();
-		}
-		if (isOpenGLPrimaryWindow && settingIndex == SETTINGS_ACTION_EXPERIMENTAL_CAMERA_TILT && this.mouseButtonClick == 1) {
-			toggleExperimentalCameraTilt();
-		}
-		if (isOpenGLPrimaryWindow && settingIndex == SETTINGS_ACTION_EXPERIMENTAL_EXTRA_ZOOM && this.mouseButtonClick == 1) {
-			toggleExperimentalExtraZoom();
 		}
 
 		// one or two mouse button(s) - byte index 1
@@ -14649,7 +14632,9 @@ public final class mudclient implements Runnable {
 		this.resizeWidth = mode.width;
 		this.resizeHeight = mode.height;
 		scalarChangedSinceLogin = true;
+		RendererProfileSettings.markCustom();
 		saveRenderSurfaceSettings();
+		saveRendererProfileSettings();
 	}
 
 	void cycleOpenGLUiFontMode() {
@@ -14659,17 +14644,43 @@ public final class mudclient implements Runnable {
 	}
 
 	void cycleOpenGLRendererProfileMode() {
-		RendererProfileSettings.Mode mode = RendererProfileSettings.setMode(RendererProfileSettings.Mode.CLASSIC);
-		RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
-		RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
-		RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);
-		RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
+		RendererProfileSettings.Mode mode = RendererProfileSettings.cycleMode();
+		applyOpenGLRendererProfileMode(mode);
+		System.out.println("[renderer-v2] OpenGL renderer profile: " + mode.id);
+	}
+
+	private void applyOpenGLRendererProfileMode(RendererProfileSettings.Mode mode) {
+		if (mode == RendererProfileSettings.Mode.CLASSIC) {
+			RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);
+			RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);
+			RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
+			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
+			RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
+			RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);
+			applyRenderSurfaceResize();
+		} else if (mode == RendererProfileSettings.Mode.REMASTER) {
+			RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.WIDE);
+			RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);
+			RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
+			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
+			RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
+			RendererToneSettings.setMode(RendererToneSettings.Mode.CYCLE);
+			applyRenderSurfaceResize();
+		}
+		saveRenderSurfaceSettings();
 		saveRendererBrightnessSettings();
 		saveRendererFogSettings();
 		saveRendererLightingSettings();
 		saveRendererGeometrySettings();
+		saveRendererToneSettings();
 		saveRendererProfileSettings();
-		System.out.println("[renderer-v2] OpenGL renderer profile: " + mode.id);
+	}
+
+	private void applyRenderSurfaceResize() {
+		RenderSurfaceSettings.Mode surfaceMode = RenderSurfaceSettings.getMode();
+		this.resizeWidth = surfaceMode.width;
+		this.resizeHeight = surfaceMode.height;
+		scalarChangedSinceLogin = true;
 	}
 
 	void cycleOpenGLBrightnessMode() {
@@ -14702,24 +14713,6 @@ public final class mudclient implements Runnable {
 		saveRendererGeometrySettings();
 		saveRendererProfileSettings();
 		System.out.println("[renderer-v2] OpenGL geometry: " + mode.id);
-	}
-
-	void toggleExperimentalCameraTilt() {
-		boolean enabled = RendererExperimentalSettings.toggleCameraTilt();
-		if (enabled) {
-			ensureExperimentalCameraPitch();
-		} else if (!this.isInFirstPersonView()) {
-			this.cameraPitch = DEFAULT_CAMERA_PITCH;
-		}
-		saveRendererExperimentalSettings();
-		System.out.println("[renderer-v2] experimental camera tilt " + (enabled ? "enabled" : "disabled"));
-	}
-
-	void toggleExperimentalExtraZoom() {
-		boolean enabled = RendererExperimentalSettings.toggleExtraZoom();
-		setCameraZoomSetting(osConfig.C_LAST_ZOOM);
-		saveRendererExperimentalSettings();
-		System.out.println("[renderer-v2] experimental extra zoom " + (enabled ? "enabled" : "disabled"));
 	}
 
 	private void fetchContainerSize() {
@@ -14840,6 +14833,58 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var5) {
 			throw GenUtil.makeThrowable(var5, "client.HB(" + "dummy" + ',' + id + ')');
 		}
+	}
+
+	private void sendGroundItemTakePacket(int localX, int localZ, int itemId, int takeCount) {
+		this.packetHandler.getClientStream().newPacket(247);
+		this.packetHandler.getClientStream().bufferBits.putShort(localX + this.midRegionBaseX);
+		this.packetHandler.getClientStream().bufferBits.putShort(this.midRegionBaseZ + localZ);
+		this.packetHandler.getClientStream().bufferBits.putShort(itemId);
+		if (takeCount > 1) {
+			this.packetHandler.getClientStream().bufferBits.putShort(takeCount);
+		}
+		this.packetHandler.getClientStream().finishPacket();
+	}
+
+	private int getCtrlGroundItemTakeCount(int localX, int localZ, int itemId) {
+		int matchingItems = this.countMatchingGroundItemsOnTile(localX, localZ, itemId);
+		if (matchingItems <= 1) {
+			return 1;
+		}
+
+		ItemDef itemDef = EntityHandler.getItemDef(itemId);
+		if (itemDef != null && (itemDef.isStackable() || this.isFirstMatchingGroundItemNoted(localX, localZ, itemId))) {
+			return matchingItems;
+		}
+
+		int availableSlots = Math.max(0, S_PLAYER_INVENTORY_SLOTS - this.inventoryItemCount);
+		return Math.max(1, Math.min(matchingItems, availableSlots));
+	}
+
+	private int countMatchingGroundItemsOnTile(int localX, int localZ, int itemId) {
+		int count = 0;
+		for (int index = 0; index < this.groundItemCount; ++index) {
+			if (this.isMatchingGroundItemOnTile(index, localX, localZ, itemId)) {
+				++count;
+			}
+		}
+		return count;
+	}
+
+	private boolean isFirstMatchingGroundItemNoted(int localX, int localZ, int itemId) {
+		for (int index = 0; index < this.groundItemCount; ++index) {
+			if (this.isMatchingGroundItemOnTile(index, localX, localZ, itemId)) {
+				return this.groundItemNoted[index];
+			}
+		}
+		return false;
+	}
+
+	private boolean isMatchingGroundItemOnTile(int index, int localX, int localZ, int itemId) {
+		return this.groundItemX[index] == localX
+			&& this.groundItemZ[index] == localZ
+			&& this.groundItemID[index] == itemId
+			&& this.isGroundItemVisibleByFilter(index);
 	}
 
 	private ORSCharacter getServerNPC(int serverIndex) {
@@ -16378,11 +16423,8 @@ public final class mudclient implements Runnable {
 				}
 				case GROUND_ITEM_TAKE: {
 					this.walkToGroundItem(this.playerLocalX, this.playerLocalZ, indexOrX, idOrZ, true);
-					this.packetHandler.getClientStream().newPacket(247);
-					this.packetHandler.getClientStream().bufferBits.putShort(indexOrX + this.midRegionBaseX);
-					this.packetHandler.getClientStream().bufferBits.putShort(this.midRegionBaseZ + idOrZ);
-					this.packetHandler.getClientStream().bufferBits.putShort(dir);
-					this.packetHandler.getClientStream().finishPacket();
+					int takeCount = this.controlPressed ? this.getCtrlGroundItemTakeCount(indexOrX, idOrZ, dir) : 1;
+					this.sendGroundItemTakePacket(indexOrX, idOrZ, dir, takeCount);
 					break;
 				}
 				case GROUND_ITEM_EXAMINE: {

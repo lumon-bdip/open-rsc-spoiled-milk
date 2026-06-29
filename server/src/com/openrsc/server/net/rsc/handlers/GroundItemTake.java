@@ -1,6 +1,5 @@
 package com.openrsc.server.net.rsc.handlers;
 
-import com.openrsc.server.constants.IronmanMode;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.action.WalkToPointAction;
@@ -10,10 +9,8 @@ import com.openrsc.server.net.rsc.PayloadProcessor;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.struct.incoming.TargetPositionStruct;
 import com.openrsc.server.plugins.triggers.TakeObjTrigger;
-import com.openrsc.server.util.rsc.CertUtil;
 
 public class GroundItemTake implements PayloadProcessor<TargetPositionStruct, OpcodeIn> {
-
 	public void process(TargetPositionStruct payload, Player player) throws Exception {
 		if (!player.getConfig().WANT_MYWORLD && player.inCombat()) {
 			player.message("You can't do that whilst you are fighting");
@@ -40,6 +37,7 @@ public class GroundItemTake implements PayloadProcessor<TargetPositionStruct, Op
 		if (itemId < 0 || itemId >= player.getWorld().getServer().getEntityHandler().getItemCount()) {
 			return;
 		}
+		final int takeCount = Math.max(1, Math.min(Player.MAX_BULK_GROUND_ITEM_TAKE_COUNT, payload.takeCount));
 
 		final GroundItem item = player.getViewArea().getVisibleGroundItem(itemId, location, player);
 
@@ -58,47 +56,20 @@ public class GroundItemTake implements PayloadProcessor<TargetPositionStruct, Op
 		}
 		player.setWalkToAction(new WalkToPointAction(player, item.getLocation(), distance) {
 			public void executeInternal() {
-				if (item.isInvisibleTo(getPlayer()))
-					return;
-
-				if (getPlayer().isBusy() || getPlayer().isRanging() || item == null || item.isRemoved()
-					|| getPlayer().getRegion().getItem(itemId, getLocation(), getPlayer()) == null || !getPlayer().canReach(item)
-					|| item.getAmount() < 1) {
-					return;
-				}
-
-				// not authentic, member objects should be able to be picked up in f2p
-				// if (item.getDef().isMembersOnly() && !getPlayer().getConfig().MEMBER_WORLD) {
-				//	getPlayer().sendMemberErrorMessage();
-				//	return;
-				// }
-				if (item.getLocation().inWilderness() && !item.belongsTo(getPlayer()) && item.getAttribute("playerKill", false)
-					&& (getPlayer().isIronMan(IronmanMode.Ironman.id()) || getPlayer().isIronMan(IronmanMode.Ultimate.id())
-					|| getPlayer().isIronMan(IronmanMode.Hardcore.id()) || getPlayer().isIronMan(IronmanMode.Transfer.id()))) {
-					getPlayer().message("You're an Ironman, so you can't loot items from players.");
-					return;
-				}
-				if (!item.belongsTo(getPlayer())
-					&& (getPlayer().isIronMan(IronmanMode.Ironman.id()) || getPlayer().isIronMan(IronmanMode.Ultimate.id())
-					|| getPlayer().isIronMan(IronmanMode.Hardcore.id()) || getPlayer().isIronMan(IronmanMode.Transfer.id()))) {
-					getPlayer().message("You're an Ironman, so you can't take items that other players have dropped.");
-					return;
-				}
-
-				if (!item.belongsTo(getPlayer()) && item.getAttribute("isTransferIronmanItem", false)) {
-					getPlayer().message("That belongs to a Transfer Ironman player.");
-					return;
-				}
-
-				if (CertUtil.isCert(item.getID()) && getPlayer().getCertOptOut()
-					&& item.getOwnerUsernameHash() != 0 && !item.belongsTo(getPlayer())) {
-					getPlayer().message("You have opted out of taking certs that other players have dropped.");
+				if (!getPlayer().canTakeVisibleGroundItem(item)) {
 					return;
 				}
 
 				getPlayer().resetAll();
+				if (takeCount > 1) {
+					item.setAttribute(Player.BULK_GROUND_ITEM_TAKE_COUNT_ATTRIBUTE, takeCount);
+				}
 
-				getPlayer().getWorld().getServer().getPluginHandler().handlePlugin(TakeObjTrigger.class, getPlayer(), new Object[]{getPlayer(), item}, this);
+				boolean blockedDefault = getPlayer().getWorld().getServer().getPluginHandler()
+					.handlePlugin(TakeObjTrigger.class, getPlayer(), new Object[]{getPlayer(), item}, this);
+				if (blockedDefault) {
+					item.removeAttribute(Player.BULK_GROUND_ITEM_TAKE_COUNT_ATTRIBUTE);
+				}
 			}
 		});
 	}

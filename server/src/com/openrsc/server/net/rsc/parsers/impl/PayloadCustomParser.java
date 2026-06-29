@@ -387,7 +387,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case BLINK:
 				return packet.getLength() == 4;
 			case GROUND_ITEM_TAKE:
-				return packet.getLength() == 6;
+				return packet.getLength() == 6 || packet.getLength() == 8;
 			case ITEM_COMMAND:
 				return packet.getLength() >= 7;
 			case ITEM_DROP:
@@ -634,6 +634,9 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 				tp = new TargetPositionStruct();
 				tp.coordinate = new Point(packet.readShort(), packet.readShort());
 				tp.itemId = packet.readShort();
+				if (packet.getReadableBytes() >= 2) {
+					tp.takeCount = packet.readShort();
+				}
 				result = tp;
 				break;
 

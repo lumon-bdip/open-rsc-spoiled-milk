@@ -25,7 +25,7 @@ final class RendererProfileSettings {
 	}
 
 	static Mode setMode(Mode next) {
-		mode = next == null ? Mode.CLASSIC : next;
+		mode = next == null ? Mode.REMASTER : next;
 		return mode;
 	}
 
@@ -63,6 +63,7 @@ final class RendererProfileSettings {
 
 	enum Mode {
 		CLASSIC("classic", "@gre@Classic"),
+		REMASTER("remaster", "@cya@Remaster"),
 		CUSTOM("custom", "@yel@Custom");
 
 		final String id;
@@ -80,7 +81,7 @@ final class RendererProfileSettings {
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return CLASSIC;
+				return REMASTER;
 			}
 
 			String normalized = value.trim().toLowerCase().replace('_', '-');
@@ -90,8 +91,8 @@ final class RendererProfileSettings {
 				}
 			}
 
-			System.out.println("[renderer-v2] Unknown OpenGL renderer profile '" + value + "'; using classic.");
-			return CLASSIC;
+			System.out.println("[renderer-v2] Unknown OpenGL renderer profile '" + value + "'; using remaster.");
+			return REMASTER;
 		}
 	}
 }

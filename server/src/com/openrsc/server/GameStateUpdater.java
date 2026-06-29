@@ -41,6 +41,8 @@ public final class GameStateUpdater {
 	private static final int CUSTOM_CLIENT_REGION_REFRESH_RADIUS = 80;
 	private static final int LOCAL_NPC_LIMIT = 255;
 	private static final String NPC_DEATH_VISUAL_SENT_TICK_PREFIX = "npc_death_visual_sent_tick_";
+	private static final String WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE = "world_time_last_sync_millis";
+	private static final long WORLD_TIME_SYNC_INTERVAL_MILLIS = 15000L;
 
 	/**
 	 * The asynchronous logger.
@@ -91,6 +93,20 @@ public final class GameStateUpdater {
 		recordUpdateWallObjects(() -> updateWallObjects(player, visibleGameObjects));
 		recordUpdateGroundItems(() -> updateGroundItems(player, visibleGroundItems));
 		recordUpdateTimeouts(() -> updateTimeouts(player));
+		sendWorldTimeIfNeeded(player);
+	}
+
+	private void sendWorldTimeIfNeeded(final Player player) {
+		if (!player.isUsingCustomClient()) {
+			return;
+		}
+		final long now = System.currentTimeMillis();
+		final long lastSyncMillis = player.getAttribute(WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE, 0L);
+		if (lastSyncMillis > 0L && now - lastSyncMillis < WORLD_TIME_SYNC_INTERVAL_MILLIS) {
+			return;
+		}
+		ActionSender.sendWorldTime(player);
+		player.setAttribute(WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE, now);
 	}
 
 	private void recordUpdatePlayers(final Runnable update) {

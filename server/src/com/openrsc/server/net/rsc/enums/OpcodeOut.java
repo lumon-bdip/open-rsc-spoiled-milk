@@ -56,6 +56,7 @@ public enum OpcodeOut {
 	SEND_FISHING_TRAWLER, // custom
 	SEND_STATUS_PROGRESS_BAR, // custom
 	SEND_MOVEMENT_UPDATE, // custom
+	SEND_WORLD_TIME, // custom
 	SEND_PRAYER_BOOK, // custom
 	SEND_DEVOTION, // custom
 	SEND_PRODUCTION_INTERFACE, // custom

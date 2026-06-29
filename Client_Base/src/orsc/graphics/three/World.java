@@ -842,6 +842,12 @@ public final class World {
 			sectionY,
 			originWorldX,
 			originWorldZ);
+		if (roofInput != null) {
+			builder.setRoofCoverage(
+				roofInput.roofCoverageBits,
+				LOCAL_FACE_TILE_COUNT,
+				roofInput.roofCoveredTileCount);
+		}
 		// The current chunk frame is the active 3x3 landscape product. Keep draw
 		// vertices in the same local coordinate space as Scene camera offsets.
 		int drawOriginX = 0;
@@ -1661,10 +1667,29 @@ public final class World {
 		TerrainModelInputSource source = new TerrainModelInputSource(sourceSectors);
 		RoofElevationWorkspace elevations = this.prepareRoofElevationProduct(source);
 		List<RoofFaceInput> faces = this.collectRoofFaceInputs(source, elevations);
+		RoofCoverageTiles roofCoverage = collectRoofCoverageTiles(source);
 		elevations.clearRoofMarkers();
 		return new RoofModelInput(
 			faces.toArray(new RoofFaceInput[faces.size()]),
-			elevations.copyElevations());
+			elevations.copyElevations(),
+			roofCoverage.bits,
+			roofCoverage.count);
+	}
+
+	private RoofCoverageTiles collectRoofCoverageTiles(TerrainModelInputSource source) {
+		long[] bits = new long[((LOCAL_FACE_TILE_COUNT * LOCAL_FACE_TILE_COUNT) + 63) / 64];
+		int count = 0;
+		for (int x = 0; x < LOCAL_FACE_TILE_COUNT; x++) {
+			for (int z = 0; z < LOCAL_FACE_TILE_COUNT; z++) {
+				if (source.wallRoof(x, z) <= 0) {
+					continue;
+				}
+				int bitIndex = z + x * LOCAL_FACE_TILE_COUNT;
+				bits[bitIndex >>> 6] |= 1L << (bitIndex & 63);
+				count++;
+			}
+		}
+		return new RoofCoverageTiles(bits, count);
 	}
 
 	private RoofElevationWorkspace prepareRoofElevationProduct(TerrainModelInputSource source) {
@@ -3042,6 +3067,9 @@ public final class World {
 		private final int[] triangleFallbackColors;
 		private final Renderer3DModelKind[] triangleModelKinds;
 		private final Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasters;
+		private final long[] roofCoverageBits;
+		private final int roofCoverageAxis;
+		private final int roofCoveredTileCount;
 		private final int terrainTriangles;
 		private final int wallTriangles;
 		private final int roofTriangles;
@@ -3062,6 +3090,9 @@ public final class World {
 			int[] triangleFallbackColors,
 			Renderer3DModelKind[] triangleModelKinds,
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasters,
+			long[] roofCoverageBits,
+			int roofCoverageAxis,
+			int roofCoveredTileCount,
 			int terrainTriangles,
 			int wallTriangles,
 			int roofTriangles,
@@ -3080,6 +3111,9 @@ public final class World {
 			this.triangleFallbackColors = triangleFallbackColors;
 			this.triangleModelKinds = triangleModelKinds;
 			this.shadowCasters = shadowCasters;
+			this.roofCoverageBits = roofCoverageBits;
+			this.roofCoverageAxis = roofCoverageAxis;
+			this.roofCoveredTileCount = roofCoveredTileCount;
 			this.terrainTriangles = terrainTriangles;
 			this.wallTriangles = wallTriangles;
 			this.roofTriangles = roofTriangles;
@@ -3106,6 +3140,9 @@ public final class World {
 				triangleFallbackColors,
 				triangleModelKinds,
 				shadowCasters,
+				roofCoverageBits,
+				roofCoverageAxis,
+				roofCoveredTileCount,
 				terrainTriangles,
 				wallTriangles,
 				roofTriangles,
@@ -3133,6 +3170,9 @@ public final class World {
 		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
 		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
 			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
+		private long[] roofCoverageBits = new long[0];
+		private int roofCoverageAxis;
+		private int roofCoveredTileCount;
 		private int terrainTriangles;
 		private int wallTriangles;
 		private int roofTriangles;
@@ -3148,6 +3188,12 @@ public final class World {
 			this.centerSectionY = centerSectionY;
 			this.originWorldX = originWorldX;
 			this.originWorldZ = originWorldZ;
+		}
+
+		private void setRoofCoverage(long[] bits, int axis, int coveredTileCount) {
+			this.roofCoverageBits = bits == null ? new long[0] : bits.clone();
+			this.roofCoverageAxis = axis <= 0 ? 0 : axis;
+			this.roofCoveredTileCount = Math.max(0, coveredTileCount);
 		}
 
 		private void addFace(
@@ -3369,7 +3415,10 @@ public final class World {
 				textureArray,
 				fallbackArray,
 				kindArray,
-				shadowCasterArray);
+				shadowCasterArray,
+				roofCoverageBits,
+				roofCoverageAxis,
+				roofCoveredTileCount);
 			return new WorldGpuChunkMesh(
 				plane,
 				centerSectionX,
@@ -3385,6 +3434,9 @@ public final class World {
 				fallbackArray,
 				kindArray,
 				shadowCasterArray,
+				roofCoverageBits.clone(),
+				roofCoverageAxis,
+				roofCoveredTileCount,
 				terrainTriangles,
 				wallTriangles,
 				roofTriangles,
@@ -3416,7 +3468,10 @@ public final class World {
 			int[] textureArray,
 			int[] fallbackArray,
 			Renderer3DModelKind[] kindArray,
-			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray) {
+			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray,
+			long[] roofCoverageBits,
+			int roofCoverageAxis,
+			int roofCoveredTileCount) {
 			long hash = FNV_OFFSET_BASIS;
 			hash = mix(hash, plane);
 			hash = mix(hash, centerSectionX);
@@ -3458,6 +3513,12 @@ public final class World {
 				hash = mix(hash, caster.getWidth());
 				hash = mix(hash, caster.getOpacity());
 				hash = mix(hash, caster.isOutdoorOnly() ? 1 : 0);
+			}
+			hash = mix(hash, roofCoverageAxis);
+			hash = mix(hash, roofCoveredTileCount);
+			for (long value : roofCoverageBits) {
+				hash = mix(hash, (int) value);
+				hash = mix(hash, (int) (value >>> 32));
 			}
 			return hash;
 		}
@@ -3652,16 +3713,34 @@ public final class World {
 	private static final class RoofModelInput {
 		private final RoofFaceInput[] faces;
 		private final int[][] finalElevations;
+		private final long[] roofCoverageBits;
+		private final int roofCoveredTileCount;
 
-		private RoofModelInput(RoofFaceInput[] faces, int[][] finalElevations) {
+		private RoofModelInput(
+			RoofFaceInput[] faces,
+			int[][] finalElevations,
+			long[] roofCoverageBits,
+			int roofCoveredTileCount) {
 			this.faces = faces;
 			this.finalElevations = finalElevations;
+			this.roofCoverageBits = roofCoverageBits == null ? new long[0] : roofCoverageBits.clone();
+			this.roofCoveredTileCount = Math.max(0, roofCoveredTileCount);
 		}
 
 		private void copyElevationsInto(int[][] target) {
 			for (int x = 0; x < LOCAL_TILE_COUNT; x++) {
 				System.arraycopy(finalElevations[x], 0, target[x], 0, LOCAL_TILE_COUNT);
 			}
+		}
+	}
+
+	private static final class RoofCoverageTiles {
+		private final long[] bits;
+		private final int count;
+
+		private RoofCoverageTiles(long[] bits, int count) {
+			this.bits = bits == null ? new long[0] : bits;
+			this.count = Math.max(0, count);
 		}
 	}
 
