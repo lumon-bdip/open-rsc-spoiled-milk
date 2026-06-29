@@ -5,17 +5,23 @@ final class RendererDayNightCycle {
 	private static final int MIN_CYCLE_MILLIS = 60 * 1000;
 	private static volatile int syncedCycleMillis = DEFAULT_CYCLE_MILLIS;
 	private static volatile int syncedCyclePositionMillis = -1;
+	private static volatile int syncedRateMultiplier = 1;
 	private static volatile long syncedAtClientMillis = 0L;
 
 	private RendererDayNightCycle() {
 	}
 
 	static void syncServerTime(int cycleMillis, int currentCycleMillis) {
+		syncServerTime(cycleMillis, currentCycleMillis, 1);
+	}
+
+	static void syncServerTime(int cycleMillis, int currentCycleMillis, int rateMultiplier) {
 		if (cycleMillis < MIN_CYCLE_MILLIS) {
 			return;
 		}
 		syncedCycleMillis = cycleMillis;
 		syncedCyclePositionMillis = Math.floorMod(currentCycleMillis, cycleMillis);
+		syncedRateMultiplier = clampRateMultiplier(rateMultiplier);
 		syncedAtClientMillis = System.currentTimeMillis();
 	}
 
@@ -66,6 +72,11 @@ final class RendererDayNightCycle {
 		return currentPresentation().brightnessMultiplier;
 	}
 
+	static float currentCycleFraction() {
+		CyclePosition cycle = currentCyclePosition();
+		return cycle.positionMillis / (float) Math.max(1, cycle.cycleMillis);
+	}
+
 	static String debugSummary() {
 		Presentation presentation = currentPresentation();
 		if (RendererToneSettings.getMode() != RendererToneSettings.Mode.CYCLE) {
@@ -76,25 +87,36 @@ final class RendererDayNightCycle {
 		long second = (cycle.positionMillis / 1000L) % 60L;
 		return (cycle.serverSynced ? "server-cycle:" : "local-cycle:")
 			+ presentation.debugLabel + " "
-			+ twoDigits(minute) + ":" + twoDigits(second);
+			+ twoDigits(minute) + ":" + twoDigits(second)
+			+ (cycle.rateMultiplier > 1 ? " x" + cycle.rateMultiplier : "");
 	}
 
 	private static CyclePosition currentCyclePosition() {
 		int cycleMillis = syncedCycleMillis;
 		int cyclePositionMillis = syncedCyclePositionMillis;
 		long syncedAtMillis = syncedAtClientMillis;
+		int rateMultiplier = syncedRateMultiplier;
 		long now = System.currentTimeMillis();
 		if (cyclePositionMillis >= 0 && cycleMillis >= MIN_CYCLE_MILLIS) {
-			long elapsedMillis = Math.max(0L, now - syncedAtMillis);
+			long elapsedMillis = Math.max(0L, now - syncedAtMillis) * (long) clampRateMultiplier(rateMultiplier);
 			return new CyclePosition(
 				cycleMillis,
 				Math.floorMod((long) cyclePositionMillis + elapsedMillis, (long) cycleMillis),
-				true);
+				true,
+				rateMultiplier);
 		}
 		return new CyclePosition(
 			DEFAULT_CYCLE_MILLIS,
 			Math.floorMod(now, (long) DEFAULT_CYCLE_MILLIS),
-			false);
+			false,
+			1);
+	}
+
+	private static int clampRateMultiplier(int rateMultiplier) {
+		if (rateMultiplier < 1) {
+			return 1;
+		}
+		return Math.min(rateMultiplier, 3600);
 	}
 
 	private static String twoDigits(long value) {
@@ -198,11 +220,13 @@ final class RendererDayNightCycle {
 		final int cycleMillis;
 		final long positionMillis;
 		final boolean serverSynced;
+		final int rateMultiplier;
 
-		CyclePosition(int cycleMillis, long positionMillis, boolean serverSynced) {
+		CyclePosition(int cycleMillis, long positionMillis, boolean serverSynced, int rateMultiplier) {
 			this.cycleMillis = cycleMillis;
 			this.positionMillis = positionMillis;
 			this.serverSynced = serverSynced;
+			this.rateMultiplier = rateMultiplier;
 		}
 	}
 }

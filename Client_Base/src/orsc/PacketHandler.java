@@ -268,7 +268,7 @@ public class PacketHandler {
 
 			else if (opcode == 141) updateMovement();
 
-			else if (opcode == 142) updateWorldTime();
+			else if (opcode == 142) updateWorldTime(length);
 
 			else if (opcode == 131) showMessage(); // Chat Message
 
@@ -1561,10 +1561,11 @@ public class PacketHandler {
 		}
 	}
 
-	private void updateWorldTime() {
+	private void updateWorldTime(int length) {
 		int cycleMillis = packetsIncoming.get32();
 		int currentCycleMillis = packetsIncoming.get32();
-		RendererDayNightCycle.syncServerTime(cycleMillis, currentCycleMillis);
+		int rateMultiplier = packetsIncoming.packetEnd < length ? packetsIncoming.get32() : 1;
+		RendererDayNightCycle.syncServerTime(cycleMillis, currentCycleMillis, rateMultiplier);
 	}
 
 	private void showGameObjects(int length) {

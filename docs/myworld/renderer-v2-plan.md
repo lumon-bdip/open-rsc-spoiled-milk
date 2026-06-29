@@ -1354,6 +1354,11 @@ they are not visual requirements for the baseline.
         but it is a better foundation for a terrain shadow mask/decal because
         overlapping casters no longer draw multiple transparent quads over the
         same ground.
+  - [x] Connect remaster sun azimuth/elevation and terrain shadow length to the
+        server-owned 60-minute day/night cycle. The custom world-time packet now
+        includes a rate multiplier so dev-only `::advtime MMSS` can visually
+        fast-forward color grading and shadow movement without changing the
+        player-facing lighting settings.
   - [ ] Refine diagonal-wall shadow quality. The current overlay proof skips
         diagonal wall casters to avoid false triangular artifacts. Proper
         diagonal-wall shadows need a shader/material mask or explicit wall

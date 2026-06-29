@@ -9,7 +9,11 @@ final class RendererRemasterLightSettings {
 	private static final String AMBIENT_ENV = "SPOILED_MILK_REMASTER_LIGHT_AMBIENT";
 	private static final String INTENSITY_PROPERTY = "spoiledmilk.remasterLightIntensity";
 	private static final String INTENSITY_ENV = "SPOILED_MILK_REMASTER_LIGHT_INTENSITY";
+	private static final float MIN_CYCLE_ELEVATION_DEGREES = 10.0f;
+	private static final float MAX_CYCLE_ELEVATION_DEGREES = 72.0f;
 
+	private static volatile boolean azimuthOverride = hasRuntimeSetting(AZIMUTH_PROPERTY, AZIMUTH_ENV);
+	private static volatile boolean elevationOverride = hasRuntimeSetting(ELEVATION_PROPERTY, ELEVATION_ENV);
 	private static volatile float azimuthDegrees = normalizeDegrees(
 		readFloat(AZIMUTH_PROPERTY, AZIMUTH_ENV, 135.0f));
 	private static volatile float elevationDegrees = clamp(
@@ -29,11 +33,17 @@ final class RendererRemasterLightSettings {
 	}
 
 	static float getAzimuthDegrees() {
-		return azimuthDegrees;
+		if (azimuthOverride) {
+			return azimuthDegrees;
+		}
+		return dayNightAzimuthDegrees();
 	}
 
 	static float getElevationDegrees() {
-		return elevationDegrees;
+		if (elevationOverride) {
+			return elevationDegrees;
+		}
+		return dayNightElevationDegrees();
 	}
 
 	static float getAmbient() {
@@ -45,11 +55,13 @@ final class RendererRemasterLightSettings {
 	}
 
 	static float adjustAzimuth(float deltaDegrees) {
+		azimuthOverride = true;
 		azimuthDegrees = normalizeDegrees(azimuthDegrees + deltaDegrees);
 		return azimuthDegrees;
 	}
 
 	static float adjustElevation(float deltaDegrees) {
+		elevationOverride = true;
 		elevationDegrees = clamp(elevationDegrees + deltaDegrees, 5.0f, 85.0f);
 		return elevationDegrees;
 	}
@@ -71,7 +83,8 @@ final class RendererRemasterLightSettings {
 	}
 
 	static String debugSummary() {
-		return "az " + Math.round(getAzimuthDegrees())
+		return (azimuthOverride || elevationOverride ? "manual " : "cycle ")
+			+ "az " + Math.round(getAzimuthDegrees())
 			+ " elev " + Math.round(getElevationDegrees())
 			+ " amb " + roundedPercent(getAmbient())
 			+ " int " + roundedPercent(getIntensity());
@@ -88,6 +101,25 @@ final class RendererRemasterLightSettings {
 
 	private static float clamp(float value, float min, float max) {
 		return Math.max(min, Math.min(max, value));
+	}
+
+	private static float dayNightAzimuthDegrees() {
+		return normalizeDegrees(180.0f - 360.0f * RendererDayNightCycle.currentCycleFraction());
+	}
+
+	private static float dayNightElevationDegrees() {
+		double daylightArc = Math.sin(RendererDayNightCycle.currentCycleFraction() * Math.PI * 2.0);
+		float dayHeight = (float) Math.max(0.0, daylightArc);
+		return MIN_CYCLE_ELEVATION_DEGREES
+			+ (MAX_CYCLE_ELEVATION_DEGREES - MIN_CYCLE_ELEVATION_DEGREES) * dayHeight;
+	}
+
+	private static boolean hasRuntimeSetting(String propertyName, String envName) {
+		String value = System.getProperty(propertyName);
+		if (value == null || value.trim().isEmpty()) {
+			value = System.getenv(envName);
+		}
+		return value != null && !value.trim().isEmpty();
 	}
 
 	private static float readFloat(String propertyName, String envName, float defaultValue) {

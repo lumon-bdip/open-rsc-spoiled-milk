@@ -743,6 +743,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					WorldTimeStruct worldTime = (WorldTimeStruct) payload;
 					builder.writeInt(worldTime.cycleMillis);
 					builder.writeInt(worldTime.currentCycleMillis);
+					builder.writeInt(worldTime.rateMultiplier);
 					break;
 
 				case SEND_PRAYER_BOOK:

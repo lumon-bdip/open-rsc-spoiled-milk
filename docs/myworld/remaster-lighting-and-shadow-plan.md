@@ -293,9 +293,16 @@ mode.
       older clients can continue playing without day/night visuals.
 - [ ] Have Classic presentation consume the same world time with a simple clock
       or phase indicator while preserving Classic lighting.
-- [ ] Have Directional/Remaster presentation convert server time into sun
-      azimuth, sun elevation, ambient/direct intensity, shadow length, shadow
-      update cadence, and later warm dawn/dusk plus cool night color grading.
+- [x] Have Directional/Remaster presentation convert server time into sun
+      azimuth, sun elevation, shadow direction, and shadow length. The first
+      server-cycle curve keeps dawn/dusk light low for longer shadows, raises
+      elevation near midday for shorter shadows, and continues rotating through
+      night without separate moon logic. Ambient/direct intensity remain fixed
+      remaster-light settings for now.
+- [x] Add dev-only server time controls: `::settime MMSS` immediately sets the
+      server-owned cycle position, while `::advtime MMSS` advances the server
+      clock at an accelerated visible rate so day/night color and shadow motion
+      can be inspected in-game.
 - [x] Add a temporary client-side tone preview under `Graphics > Tone` so dawn,
       dusk, and night palettes could be tested, then retire the manual row once
       server-owned world time landed. Tone is now an internal presentation state

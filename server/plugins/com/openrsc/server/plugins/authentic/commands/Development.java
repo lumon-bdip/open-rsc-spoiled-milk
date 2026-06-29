@@ -15,6 +15,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.authentic.quests.members.touristtrap.Tourist_Trap_Mechanism;
@@ -88,6 +89,12 @@ public final class Development implements CommandTrigger {
 		else if (command.equalsIgnoreCase("serverstats")) {
 			serverStats(player, args);
 		}
+		else if (command.equalsIgnoreCase("settime")) {
+			setWorldTime(player, command, args);
+		}
+		else if (command.equalsIgnoreCase("advtime")) {
+			advanceWorldTime(player, command, args);
+		}
 		else if (command.equalsIgnoreCase("error")) {
 			// used to verify logging of errors/stdout
 			System.out.println(args[0]);
@@ -153,6 +160,83 @@ public final class Development implements CommandTrigger {
 		else if (command.equalsIgnoreCase("aggroall") || command.equalsIgnoreCase("aggronear") || command.equalsIgnoreCase("forceaggro")) {
 			forceNearbyNpcAggro(player, command, args);
 		}
+	}
+
+	private void setWorldTime(Player player, String command, String[] args) {
+		int timeMillis = parseMinuteSecondArgument(player, command, args, false);
+		if (timeMillis < 0) {
+			return;
+		}
+
+		WorldDayNightClock clock = player.getWorld().getServer().getWorldDayNightClock();
+		clock.setCurrentCycleMillis(timeMillis);
+		syncWorldTimeToCustomClients(player);
+		player.message(messagePrefix + "World time set to " + formatMinuteSecond(timeMillis) + ".");
+	}
+
+	private void advanceWorldTime(Player player, String command, String[] args) {
+		int advanceMillis = parseMinuteSecondArgument(player, command, args, true);
+		if (advanceMillis < 0) {
+			return;
+		}
+		if (advanceMillis == 0) {
+			player.message(badSyntaxPrefix + command.toUpperCase() + " MMSS must be greater than 0000");
+			return;
+		}
+
+		WorldDayNightClock clock = player.getWorld().getServer().getWorldDayNightClock();
+		clock.advanceSmoothly(advanceMillis);
+		syncWorldTimeToCustomClients(player);
+		player.message(messagePrefix + "World time advancing by " + formatMinuteSecond(advanceMillis)
+			+ " at " + WorldDayNightClock.ADVANCE_RATE_MULTIPLIER + "x.");
+	}
+
+	private int parseMinuteSecondArgument(Player player, String command, String[] args, boolean allowHourOverflow) {
+		if (args.length != 1) {
+			player.message(badSyntaxPrefix + command.toUpperCase() + " MMSS");
+			return -1;
+		}
+
+		String value = args[0].trim();
+		if (value.length() == 0 || value.length() > 4) {
+			player.message(badSyntaxPrefix + command.toUpperCase() + " MMSS");
+			return -1;
+		}
+
+		for (int i = 0; i < value.length(); i++) {
+			if (!Character.isDigit(value.charAt(i))) {
+				player.message(badSyntaxPrefix + command.toUpperCase() + " MMSS");
+				return -1;
+			}
+		}
+
+		int split = Math.max(0, value.length() - 2);
+		int minutes = split == 0 ? 0 : Integer.parseInt(value.substring(0, split));
+		int seconds = Integer.parseInt(value.substring(split));
+		if (seconds >= 60 || (!allowHourOverflow && minutes >= 60)) {
+			player.message(badSyntaxPrefix + command.toUpperCase()
+				+ (allowHourOverflow ? " MMSS (seconds must be 00-59)" : " MMSS (00:00-59:59)"));
+			return -1;
+		}
+
+		return (minutes * 60 + seconds) * 1000;
+	}
+
+	private void syncWorldTimeToCustomClients(Player sourcePlayer) {
+		for (Player onlinePlayer : sourcePlayer.getWorld().getPlayers()) {
+			ActionSender.sendWorldTime(onlinePlayer);
+		}
+	}
+
+	private String formatMinuteSecond(int millis) {
+		int totalSeconds = Math.max(0, millis / 1000);
+		int minutes = totalSeconds / 60;
+		int seconds = totalSeconds % 60;
+		return twoDigits(minutes) + ":" + twoDigits(seconds);
+	}
+
+	private String twoDigits(int value) {
+		return value < 10 ? "0" + value : Integer.toString(value);
 	}
 
 	private void forceNearbyNpcAggro(Player player, String command, String[] args) {

@@ -43,6 +43,7 @@ public final class GameStateUpdater {
 	private static final String NPC_DEATH_VISUAL_SENT_TICK_PREFIX = "npc_death_visual_sent_tick_";
 	private static final String WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE = "world_time_last_sync_millis";
 	private static final long WORLD_TIME_SYNC_INTERVAL_MILLIS = 15000L;
+	private static final long WORLD_TIME_FAST_SYNC_INTERVAL_MILLIS = 250L;
 
 	/**
 	 * The asynchronous logger.
@@ -102,7 +103,10 @@ public final class GameStateUpdater {
 		}
 		final long now = System.currentTimeMillis();
 		final long lastSyncMillis = player.getAttribute(WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE, 0L);
-		if (lastSyncMillis > 0L && now - lastSyncMillis < WORLD_TIME_SYNC_INTERVAL_MILLIS) {
+		final long syncIntervalMillis = getServer().getWorldDayNightClock().shouldSyncFrequently()
+			? WORLD_TIME_FAST_SYNC_INTERVAL_MILLIS
+			: WORLD_TIME_SYNC_INTERVAL_MILLIS;
+		if (lastSyncMillis > 0L && now - lastSyncMillis < syncIntervalMillis) {
 			return;
 		}
 		ActionSender.sendWorldTime(player);

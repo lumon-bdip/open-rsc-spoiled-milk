@@ -1978,6 +1978,7 @@ public class ActionSender {
 		WorldTimeStruct struct = new WorldTimeStruct();
 		struct.cycleMillis = clock.getCycleMillis();
 		struct.currentCycleMillis = clock.getCurrentCycleMillis();
+		struct.rateMultiplier = clock.getRateMultiplier();
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_WORLD_TIME, struct, player);
 	}
 
