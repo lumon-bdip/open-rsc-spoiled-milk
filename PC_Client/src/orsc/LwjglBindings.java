@@ -85,6 +85,7 @@ final class LwjglBindings {
 	private final Method glCullFace;
 	private final Method glGenTextures;
 	private final Method glDeleteTextures;
+	private final Method glActiveTexture;
 	private final Method glBindTexture;
 	private final Method glTexParameteri;
 	private final Method glTexImage2D;
@@ -167,6 +168,8 @@ final class LwjglBindings {
 	final int GL_ALL_ATTRIB_BITS;
 	final int GL_CLIENT_ALL_ATTRIB_BITS;
 	final int GL_TEXTURE_2D;
+	final int GL_TEXTURE0;
+	final int GL_TEXTURE1;
 	final int GL_TEXTURE_MIN_FILTER;
 	final int GL_TEXTURE_MAG_FILTER;
 	final int GL_TEXTURE_WRAP_S;
@@ -222,9 +225,10 @@ final class LwjglBindings {
 		Class<?> glClass = Class.forName("org.lwjgl.opengl.GL");
 		Class<?> gl11Class = Class.forName("org.lwjgl.opengl.GL11");
 		Class<?> gl12Class = optionalClass("org.lwjgl.opengl.GL12");
+		Class<?> gl13Class = Class.forName("org.lwjgl.opengl.GL13");
 		Class<?> gl15Class = Class.forName("org.lwjgl.opengl.GL15");
 		Class<?> gl20Class = Class.forName("org.lwjgl.opengl.GL20");
-		return new LwjglBindings(glfwClass, glClass, gl11Class, gl12Class, gl15Class, gl20Class);
+		return new LwjglBindings(glfwClass, glClass, gl11Class, gl12Class, gl13Class, gl15Class, gl20Class);
 	}
 
 	private LwjglBindings(
@@ -232,6 +236,7 @@ final class LwjglBindings {
 		Class<?> glClass,
 		Class<?> gl11Class,
 		Class<?> gl12Class,
+		Class<?> gl13Class,
 		Class<?> gl15Class,
 		Class<?> gl20Class)
 		throws Exception {
@@ -311,6 +316,7 @@ final class LwjglBindings {
 		glCullFace = method(gl11Class, "glCullFace", int.class);
 		glGenTextures = method(gl11Class, "glGenTextures");
 		glDeleteTextures = method(gl11Class, "glDeleteTextures", int.class);
+		glActiveTexture = method(gl13Class, "glActiveTexture", int.class);
 		glBindTexture = method(gl11Class, "glBindTexture", int.class, int.class);
 		glTexParameteri = method(gl11Class, "glTexParameteri", int.class, int.class, int.class);
 		glTexImage2D = method(
@@ -433,6 +439,8 @@ final class LwjglBindings {
 		GL_ALL_ATTRIB_BITS = constant(gl11Class, "GL_ALL_ATTRIB_BITS");
 		GL_CLIENT_ALL_ATTRIB_BITS = constant(gl11Class, "GL_CLIENT_ALL_ATTRIB_BITS");
 		GL_TEXTURE_2D = constant(gl11Class, "GL_TEXTURE_2D");
+		GL_TEXTURE0 = constant(gl13Class, "GL_TEXTURE0");
+		GL_TEXTURE1 = constant(gl13Class, "GL_TEXTURE1");
 		GL_TEXTURE_MIN_FILTER = constant(gl11Class, "GL_TEXTURE_MIN_FILTER");
 		GL_TEXTURE_MAG_FILTER = constant(gl11Class, "GL_TEXTURE_MAG_FILTER");
 		GL_TEXTURE_WRAP_S = constant(gl11Class, "GL_TEXTURE_WRAP_S");
@@ -753,6 +761,10 @@ final class LwjglBindings {
 		if (texture != 0) {
 			invoke(glDeleteTextures, texture);
 		}
+	}
+
+	void glActiveTexture(int textureUnit) throws Exception {
+		invoke(glActiveTexture, textureUnit);
 	}
 
 	void glBindTexture(int target, int texture) throws Exception {

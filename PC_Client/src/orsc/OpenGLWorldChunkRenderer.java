@@ -64,9 +64,25 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private static final int MODEL_KIND_OFFSET_BYTES =
 		NORMAL_OFFSET_BYTES + NORMAL_COMPONENT_COUNT * 4;
 	private static final int STRIDE_BYTES = FLOATS_PER_VERTEX * 4;
-	private static final int SPATIAL_BATCH_TILE_SIZE = 6;
+	private static final String SPATIAL_BATCH_TILE_SIZE_PROPERTY =
+		"spoiledmilk.openglWorldChunksSpatialTileSize";
+	private static final String SPATIAL_BATCH_TILE_SIZE_ENV =
+		"SPOILED_MILK_OPENGL_WORLD_CHUNKS_SPATIAL_TILE_SIZE";
+	private static final String CHUNK_UPLOAD_BUDGET_MS_PROPERTY =
+		"spoiledmilk.openglWorldChunkUploadBudgetMs";
+	private static final String CHUNK_UPLOAD_BUDGET_MS_ENV =
+		"SPOILED_MILK_OPENGL_WORLD_CHUNK_UPLOAD_BUDGET_MS";
+	private static final int WORLD_CHUNK_TILE_AXIS = 144;
+	private static final int DEFAULT_SPATIAL_BATCH_TILE_SIZE = 12;
+	private static final int MIN_SPATIAL_BATCH_TILE_SIZE = 4;
+	private static final int MAX_SPATIAL_BATCH_TILE_SIZE = 24;
+	private static final int SPATIAL_BATCH_TILE_SIZE = readSpatialBatchTileSize();
+	static final long CHUNK_UPLOAD_BUDGET_NANOS =
+		Math.round(readFloat(CHUNK_UPLOAD_BUDGET_MS_PROPERTY, CHUNK_UPLOAD_BUDGET_MS_ENV, 3.0f, 0.0f, 16.0f)
+			* 1_000_000.0f);
 	static final int SPATIAL_BATCH_WORLD_SIZE = SPATIAL_BATCH_TILE_SIZE * 128;
-	static final int SPATIAL_BATCH_AXIS = 24;
+	static final int SPATIAL_BATCH_AXIS =
+		Math.max(1, (WORLD_CHUNK_TILE_AXIS + SPATIAL_BATCH_TILE_SIZE - 1) / SPATIAL_BATCH_TILE_SIZE);
 	static final int SPATIAL_BATCH_DISABLED = -1;
 	private static final float FRUSTUM_BATCH_CULL_SCREEN_PADDING = 128.0f;
 	private static final float FOG_BATCH_CULL_PADDING = 0.0f;
@@ -115,6 +131,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private int remasterShadowMaskTextureHeight;
 	private long remasterShadowMaskUploadedSignature;
 	private final RemasterShadowMaskBuilder remasterShadowMaskBuilder = new RemasterShadowMaskBuilder();
+	private RemasterTerrainShadowMask activeRemasterShadowMask;
+	private RemasterShadowRoofCoverage cachedRemasterShadowRoofCoverage;
+	private long cachedRemasterShadowRoofCoverageSignature;
+	private boolean cachedRemasterShadowRoofCoverageKnown;
 	private boolean remasterShadowMaskLastUpload;
 	private boolean remasterShadowMaskLastUploadSkip;
 	private boolean closed;
@@ -145,7 +165,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	OpenGLWorldChunkUploadStats upload(
 		Renderer3DFrame frame,
 		Renderer3DWorldChunkFrame chunkFrame,
-		boolean atlasTextureCoordinates) throws Exception {
+		boolean atlasTextureCoordinates,
+		boolean budgetedUploadsAllowed) throws Exception {
 		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
 			return OpenGLWorldChunkUploadStats.EMPTY;
 		}
@@ -156,6 +177,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		int requestedChunks = 0;
 		int uploadedChunks = 0;
 		int reusedChunks = 0;
+		int deferredChunks = 0;
+		long uploadBudgetStart = System.nanoTime();
 		List<ShadowProofCaster> shadowProofCasters = shouldDrawProjectedShadowProof()
 			? buildProjectedShadowProofCasters(chunkFrame)
 			: Collections.<ShadowProofCaster>emptyList();
@@ -192,8 +215,15 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			}
 
 			if (buffer == null) {
+				if (shouldDeferChunkUpload(uploadBudgetStart, uploadedChunks, budgetedUploadsAllowed)) {
+					deferredChunks++;
+					continue;
+				}
 				buffer = new WorldChunkBuffer(gl.glGenBuffers(), gl.glGenBuffers(), gl.glGenBuffers());
 				residentChunks.put(key, buffer);
+			} else if (shouldDeferChunkUpload(uploadBudgetStart, uploadedChunks, budgetedUploadsAllowed)) {
+				deferredChunks++;
+				continue;
 			}
 			uploadChunk(
 				chunk,
@@ -213,7 +243,24 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 
 		int evictedChunks = evictOverflow();
-		return new OpenGLWorldChunkUploadStats(requestedChunks, uploadedChunks, reusedChunks, evictedChunks);
+		return new OpenGLWorldChunkUploadStats(
+			requestedChunks,
+			uploadedChunks,
+			reusedChunks,
+			deferredChunks,
+			evictedChunks,
+			Math.max(0L, System.nanoTime() - uploadBudgetStart),
+			budgetedUploadsAllowed ? CHUNK_UPLOAD_BUDGET_NANOS : 0L);
+	}
+
+	private boolean shouldDeferChunkUpload(
+		long uploadBudgetStart,
+		int uploadedChunks,
+		boolean budgetedUploadsAllowed) {
+		return budgetedUploadsAllowed
+			&& CHUNK_UPLOAD_BUDGET_NANOS > 0L
+			&& uploadedChunks > 0
+			&& System.nanoTime() - uploadBudgetStart >= CHUNK_UPLOAD_BUDGET_NANOS;
 	}
 
 	OpenGLWorldChunkDrawStats drawDiagnostic(
@@ -368,6 +415,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			accumulator.textureBinds,
 			accumulator.shadowProofChunks,
 			accumulator.shadowProofIndices);
+	}
+
+	boolean canApplyRemasterTerrainShadowMaskInChunkShader(boolean textured) {
+		return useResidentChunkShader(textured) && remasterLightingShaderEnabled;
 	}
 
 	void drawRemasterShadowInventoryDebug(Renderer3DFrame frame) throws Exception {
@@ -543,33 +594,16 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	void drawRemasterTerrainShadowMask(Renderer3DFrame frame) throws Exception {
+		if (!prepareRemasterTerrainShadowMask(frame)) {
+			return;
+		}
+		RemasterTerrainShadowMask shadowMask = activeRemasterShadowMask;
 		Renderer3DWorldChunkFrame chunkFrame = frame == null ? null : frame.getWorldChunkFrame();
-		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
+		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0 || shadowMask == null) {
 			return;
 		}
-		RemasterShadowRoofCoverage roofCoverage = RemasterShadowRoofCoverage.from(chunkFrame);
-		long buildStart = RenderTelemetry.now();
-		RemasterShadowMaskBuild shadowBuild = remasterShadowMaskBuilder.build(chunkFrame, roofCoverage);
-		long buildNanos = RenderTelemetry.elapsedSince(buildStart);
-		if (shadowBuild == null || shadowBuild.mask == null) {
-			return;
-		}
-		RemasterTerrainShadowMask shadowMask = shadowBuild.mask;
-		long uploadStart = RenderTelemetry.now();
-		uploadRemasterTerrainShadowMask(shadowMask);
-		long uploadNanos = RenderTelemetry.elapsedSince(uploadStart);
-		RenderTelemetry.recordOpenGLRemasterShadowMask(
-			shadowMask.width,
-			shadowMask.height,
-			shadowMask.visiblePixels,
-			shadowBuild.cacheHit,
-			shadowBuild.rebuild,
-			remasterShadowMaskLastUpload,
-			remasterShadowMaskLastUploadSkip,
-			shadowBuild.stripCasterCount,
-			shadowBuild.softSceneryCasterCount,
-			buildNanos,
-			uploadNanos);
+		long worldSignature = RemasterShadowMaskBuilder.remasterShadowWorldSignature(chunkFrame);
+		RemasterShadowRoofCoverage roofCoverage = remasterShadowRoofCoverage(chunkFrame, worldSignature);
 
 		loadWorldProjectionAndView(frame);
 		gl.glUseProgram(0);
@@ -578,6 +612,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
 		gl.glDisableClientState(gl.GL_COLOR_ARRAY);
 		gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+		gl.glActiveTexture(gl.GL_TEXTURE0);
 		gl.glEnable(gl.GL_TEXTURE_2D);
 		gl.glBindTexture(gl.GL_TEXTURE_2D, remasterShadowMaskTextureId);
 		gl.glDisable(gl.GL_ALPHA_TEST);
@@ -610,6 +645,58 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 	}
 
+	boolean prepareRemasterTerrainShadowMask(Renderer3DFrame frame) throws Exception {
+		activeRemasterShadowMask = null;
+		Renderer3DWorldChunkFrame chunkFrame = frame == null ? null : frame.getWorldChunkFrame();
+		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
+			return false;
+		}
+		long worldSignature = RemasterShadowMaskBuilder.remasterShadowWorldSignature(chunkFrame);
+		RemasterShadowRoofCoverage roofCoverage = remasterShadowRoofCoverage(chunkFrame, worldSignature);
+		long buildStart = RenderTelemetry.now();
+		RemasterShadowMaskBuild shadowBuild =
+			remasterShadowMaskBuilder.build(chunkFrame, roofCoverage, worldSignature);
+		long buildNanos = RenderTelemetry.elapsedSince(buildStart);
+		if (shadowBuild == null || shadowBuild.mask == null) {
+			return false;
+		}
+		RemasterTerrainShadowMask shadowMask = shadowBuild.mask;
+		long uploadStart = RenderTelemetry.now();
+		uploadRemasterTerrainShadowMask(shadowMask);
+		long uploadNanos = RenderTelemetry.elapsedSince(uploadStart);
+		RenderTelemetry.recordOpenGLRemasterShadowMask(
+			shadowMask.width,
+			shadowMask.height,
+			shadowMask.visiblePixels,
+			shadowBuild.cacheHit,
+			shadowBuild.rebuild,
+			remasterShadowMaskLastUpload,
+			remasterShadowMaskLastUploadSkip,
+			shadowBuild.stripCasterCount,
+			shadowBuild.softSceneryCasterCount,
+			buildNanos,
+			uploadNanos);
+		activeRemasterShadowMask = shadowMask;
+		return true;
+	}
+
+	void clearPreparedRemasterTerrainShadowMask() {
+		activeRemasterShadowMask = null;
+	}
+
+	private RemasterShadowRoofCoverage remasterShadowRoofCoverage(
+		Renderer3DWorldChunkFrame chunkFrame,
+		long worldSignature) {
+		if (cachedRemasterShadowRoofCoverageKnown
+			&& cachedRemasterShadowRoofCoverageSignature == worldSignature
+			&& cachedRemasterShadowRoofCoverage != null) {
+			return cachedRemasterShadowRoofCoverage;
+		}
+		cachedRemasterShadowRoofCoverage = RemasterShadowRoofCoverage.from(chunkFrame);
+		cachedRemasterShadowRoofCoverageSignature = worldSignature;
+		cachedRemasterShadowRoofCoverageKnown = true;
+		return cachedRemasterShadowRoofCoverage;
+	}
 
 	private void drawRemasterTerrainShadowMaskChunk(
 		RemasterShadowRoofCoverage roofCoverage,
@@ -706,10 +793,16 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 		long shadowProofSignature = currentShadowProofSignature(chunkFrame);
 		boolean matchedBuffer = false;
+		int requiredResidentChunks = 0;
+		int matchedResidentChunks = 0;
 		int drawableTerrainBatches = 0;
 		int drawableWallBatches = 0;
 		int drawableRoofBatches = 0;
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+			if (chunk.getVertexCount() <= 0 || chunk.getIndexCount() <= 0) {
+				continue;
+			}
+			requiredResidentChunks++;
 			WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
 			WorldChunkBuffer buffer = residentChunks.get(key);
 			if (buffer == null || !buffer.matches(
@@ -727,6 +820,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				continue;
 			}
 			matchedBuffer = true;
+			matchedResidentChunks++;
 			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
 				if (batch.indexCount <= 0 || !shouldDrawChunkModelKind(batch.kind)) {
 					continue;
@@ -745,6 +839,14 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 		if (!matchedBuffer) {
 			return ResidentChunkReadiness.notRequested("no-matching-buffers");
+		}
+		if (matchedResidentChunks < requiredResidentChunks) {
+			return new ResidentChunkReadiness(
+				false,
+				"resident-loading " + matchedResidentChunks + "/" + requiredResidentChunks,
+				drawableTerrainBatches,
+				drawableWallBatches,
+				drawableRoofBatches);
 		}
 		if (drawableTerrainBatches <= 0) {
 			return new ResidentChunkReadiness(
@@ -1185,6 +1287,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 					bindChunkVertexAttributes(textured);
 				}
 				int chunkDrawnTriangles = 0;
+				WorldChunkDrawRange pendingRange = null;
 				for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
 					if (batch.indexCount <= 0) {
 						continue;
@@ -1202,35 +1305,37 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 						accumulator.recordSkippedBatch(batch.indexCount / 3);
 						continue;
 					}
-					WorldChunkBatchBindResult bindResult = WorldChunkBatchBindResult.TEXTURED;
-					if (textured) {
-						bindResult = bindTexturedOrFlatChunkBatch(frame, batch, accumulator, shaderActive);
-						if (bindResult == WorldChunkBatchBindResult.SKIPPED) {
-							accumulator.recordSkippedBatch(batch.indexCount / 3);
-							continue;
+					WorldChunkBatchDrawState drawState = chunkBatchDrawState(frame, batch, textured);
+					if (drawState.bindResult == WorldChunkBatchBindResult.SKIPPED) {
+						accumulator.recordSkippedBatch(batch.indexCount / 3);
+						continue;
+					}
+					if (pendingRange != null && !pendingRange.canAppend(batch, drawState)) {
+						flushChunkDrawRange(pendingRange, accumulator);
+						pendingRange = null;
+					}
+					if (pendingRange == null) {
+						bindChunkBatchDrawState(drawState, accumulator, shaderActive);
+						if (shaderActive) {
+							bindResidentChunkShaderBatch(
+								frame,
+								drawState.textureEnabled,
+								residentWorldToClipMatrix,
+								residentWorldViewMatrix);
 						}
+						pendingRange = new WorldChunkDrawRange(batch, drawState);
+					} else {
+						pendingRange.append(batch);
 					}
-					if (shaderActive) {
-						bindResidentChunkShaderBatch(
-							frame,
-							bindResult == WorldChunkBatchBindResult.TEXTURED,
-							residentWorldToClipMatrix,
-							residentWorldViewMatrix);
-					}
-					gl.glDrawElements(
-						gl.GL_TRIANGLES,
-						batch.indexCount,
-						gl.GL_UNSIGNED_INT,
-						batch.startIndex * 4L);
 					accumulator.recordDrawnBatch();
-					accumulator.recordDrawCall();
 					int batchTriangles = batch.indexCount / 3;
 					chunkDrawnTriangles += batchTriangles;
 					accumulator.recordBatch(batch.kind, batchTriangles);
-					if (bindResult == WorldChunkBatchBindResult.FLAT_FALLBACK) {
+					if (drawState.bindResult == WorldChunkBatchBindResult.FLAT_FALLBACK) {
 						accumulator.recordFallbackBatch(batchTriangles);
 					}
 				}
+				flushChunkDrawRange(pendingRange, accumulator);
 				if (chunkDrawnTriangles > 0) {
 					accumulator.recordChunk(key);
 				}
@@ -1310,7 +1415,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			textureEnabled,
 			rawMaterialMode,
 			remasterLightingEnabled,
-			frame);
+			frame,
+			activeRemasterShadowMask);
+		bindPreparedRemasterShadowMask();
 		residentChunkShader.bindWorldParityAttributes(
 			POSITION_COMPONENT_COUNT,
 			TEXTURE_COORD_COMPONENT_COUNT,
@@ -1327,6 +1434,15 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			BASE_LEGACY_LIGHT_OFFSET_BYTES,
 			NORMAL_OFFSET_BYTES,
 			MODEL_KIND_OFFSET_BYTES);
+	}
+
+	private void bindPreparedRemasterShadowMask() throws Exception {
+		if (activeRemasterShadowMask == null || remasterShadowMaskTextureId == 0) {
+			return;
+		}
+		gl.glActiveTexture(gl.GL_TEXTURE1);
+		gl.glBindTexture(gl.GL_TEXTURE_2D, remasterShadowMaskTextureId);
+		gl.glActiveTexture(gl.GL_TEXTURE0);
 	}
 
 	private boolean isTransparentChunkBatch(Renderer3DFrame frame, WorldChunkMaterialBatch batch) {
@@ -1406,16 +1522,61 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return nearestCameraZ > fogEnd;
 	}
 
-	private WorldChunkBatchBindResult bindTexturedOrFlatChunkBatch(
+	private void bindChunkTexture(int textureId, WorldChunkDrawAccumulator accumulator) throws Exception {
+		gl.glActiveTexture(gl.GL_TEXTURE0);
+		if (accumulator.boundTextureId == textureId) {
+			return;
+		}
+		gl.glBindTexture(gl.GL_TEXTURE_2D, textureId);
+		accumulator.boundTextureId = textureId;
+		accumulator.recordTextureBind();
+	}
+
+	private OpenGLTextureRegion textureRegionForBatch(Renderer3DFrame frame, WorldChunkMaterialBatch batch) {
+		if (textureCache == null || batch == null) {
+			return null;
+		}
+		int textureId = effectiveChunkTextureId(frame, batch.textureId, batch.fallbackColor);
+		return textureId == LEGACY_TRANSPARENT_TEXTURE ? null : textureCache.getRegion(frame, textureId);
+	}
+
+	private WorldChunkBatchDrawState chunkBatchDrawState(
 		Renderer3DFrame frame,
 		WorldChunkMaterialBatch batch,
-		WorldChunkDrawAccumulator accumulator,
-		boolean shaderActive) throws Exception {
+		boolean textured) {
+		if (!textured) {
+			return WorldChunkBatchDrawState.UNTEXTURED;
+		}
 		OpenGLTextureRegion region = textureRegionForBatch(frame, batch);
 		if (region == null) {
-			return bindFlatChunkBatch(frame, batch, shaderActive)
-				? WorldChunkBatchBindResult.FLAT_FALLBACK
-				: WorldChunkBatchBindResult.SKIPPED;
+			return fallbackColorForBatch(frame, batch) == NO_FALLBACK_COLOR
+				? WorldChunkBatchDrawState.SKIPPED
+				: WorldChunkBatchDrawState.FLAT_FALLBACK;
+		}
+		return WorldChunkBatchDrawState.textured(region.getTextureId());
+	}
+
+	private void bindChunkBatchDrawState(
+		WorldChunkBatchDrawState drawState,
+		WorldChunkDrawAccumulator accumulator,
+		boolean shaderActive) throws Exception {
+		if (drawState == null || drawState.bindResult == WorldChunkBatchBindResult.SKIPPED) {
+			return;
+		}
+		if (drawState.bindResult == WorldChunkBatchBindResult.UNTEXTURED) {
+			return;
+		}
+		if (drawState.bindResult == WorldChunkBatchBindResult.FLAT_FALLBACK) {
+			gl.glDisable(gl.GL_TEXTURE_2D);
+			gl.glDisable(gl.GL_ALPHA_TEST);
+			gl.glDisable(gl.GL_BLEND);
+			if (!shaderActive) {
+				gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+				gl.glEnableClientState(gl.GL_COLOR_ARRAY);
+				gl.glColorPointer(COLOR_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, COLOR_OFFSET_BYTES);
+			}
+			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			return;
 		}
 		gl.glEnable(gl.GL_TEXTURE_2D);
 		gl.glEnable(gl.GL_ALPHA_TEST);
@@ -1435,46 +1596,22 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				STRIDE_BYTES,
 				TEXTURE_COORD_OFFSET_BYTES);
 		}
-		bindChunkTexture(region.getTextureId(), accumulator);
+		bindChunkTexture(drawState.textureId, accumulator);
 		gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		return WorldChunkBatchBindResult.TEXTURED;
 	}
 
-	private void bindChunkTexture(int textureId, WorldChunkDrawAccumulator accumulator) throws Exception {
-		if (accumulator.boundTextureId == textureId) {
+	private void flushChunkDrawRange(
+		WorldChunkDrawRange range,
+		WorldChunkDrawAccumulator accumulator) throws Exception {
+		if (range == null || range.indexCount <= 0) {
 			return;
 		}
-		gl.glBindTexture(gl.GL_TEXTURE_2D, textureId);
-		accumulator.boundTextureId = textureId;
-		accumulator.recordTextureBind();
-	}
-
-	private OpenGLTextureRegion textureRegionForBatch(Renderer3DFrame frame, WorldChunkMaterialBatch batch) {
-		if (textureCache == null || batch == null) {
-			return null;
-		}
-		int textureId = effectiveChunkTextureId(frame, batch.textureId, batch.fallbackColor);
-		return textureId == LEGACY_TRANSPARENT_TEXTURE ? null : textureCache.getRegion(frame, textureId);
-	}
-
-	private boolean bindFlatChunkBatch(
-		Renderer3DFrame frame,
-		WorldChunkMaterialBatch batch,
-		boolean shaderActive) throws Exception {
-		int fallbackColor = fallbackColorForBatch(frame, batch);
-		if (fallbackColor == NO_FALLBACK_COLOR) {
-			return false;
-		}
-		gl.glDisable(gl.GL_TEXTURE_2D);
-		gl.glDisable(gl.GL_ALPHA_TEST);
-		gl.glDisable(gl.GL_BLEND);
-		if (!shaderActive) {
-			gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
-			gl.glEnableClientState(gl.GL_COLOR_ARRAY);
-			gl.glColorPointer(COLOR_COMPONENT_COUNT, gl.GL_FLOAT, STRIDE_BYTES, COLOR_OFFSET_BYTES);
-		}
-		gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		return true;
+		gl.glDrawElements(
+			gl.GL_TRIANGLES,
+			range.indexCount,
+			gl.GL_UNSIGNED_INT,
+			range.startIndex * 4L);
+		accumulator.recordDrawCall();
 	}
 
 	private int fallbackColorForBatch(Renderer3DFrame frame, WorldChunkMaterialBatch batch) {
@@ -1532,6 +1669,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	private int currentBrightnessBits() {
+		if (shouldUseUnbakedRemasterMaterialBase()) {
+			return 0;
+		}
 		return Float.floatToIntBits(RendererDayNightCycle.currentBrightnessMultiplier());
 	}
 
@@ -1549,6 +1689,65 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 
 	private boolean shouldUseSpatialMaterialBatches() {
 		return spatialCullEnabled;
+	}
+
+	static int spatialBatchTileSize() {
+		return SPATIAL_BATCH_TILE_SIZE;
+	}
+
+	private static int readSpatialBatchTileSize() {
+		String value = System.getProperty(SPATIAL_BATCH_TILE_SIZE_PROPERTY);
+		if (value == null || value.trim().isEmpty()) {
+			value = System.getenv(SPATIAL_BATCH_TILE_SIZE_ENV);
+		}
+		if (value == null || value.trim().isEmpty()) {
+			return DEFAULT_SPATIAL_BATCH_TILE_SIZE;
+		}
+		try {
+			int parsed = Integer.parseInt(value.trim());
+			if (parsed < MIN_SPATIAL_BATCH_TILE_SIZE || parsed > MAX_SPATIAL_BATCH_TILE_SIZE) {
+				System.out.println(
+					"[renderer-v2] Invalid spatial chunk tile size '" + value
+						+ "'; using " + DEFAULT_SPATIAL_BATCH_TILE_SIZE + ".");
+				return DEFAULT_SPATIAL_BATCH_TILE_SIZE;
+			}
+			return parsed;
+		} catch (NumberFormatException ignored) {
+			System.out.println(
+				"[renderer-v2] Invalid spatial chunk tile size '" + value
+					+ "'; using " + DEFAULT_SPATIAL_BATCH_TILE_SIZE + ".");
+			return DEFAULT_SPATIAL_BATCH_TILE_SIZE;
+		}
+	}
+
+	private static float readFloat(
+		String propertyName,
+		String envName,
+		float defaultValue,
+		float minValue,
+		float maxValue) {
+		String value = System.getProperty(propertyName);
+		if (value == null || value.trim().isEmpty()) {
+			value = System.getenv(envName);
+		}
+		if (value == null || value.trim().isEmpty()) {
+			return defaultValue;
+		}
+		try {
+			float parsed = Float.parseFloat(value.trim());
+			if (Float.isNaN(parsed) || parsed < minValue || parsed > maxValue) {
+				System.out.println(
+					"[renderer-v2] Invalid world chunk upload budget '" + value
+						+ "'; using " + defaultValue + "ms.");
+				return defaultValue;
+			}
+			return parsed;
+		} catch (NumberFormatException ignored) {
+			System.out.println(
+				"[renderer-v2] Invalid world chunk upload budget '" + value
+					+ "'; using " + defaultValue + "ms.");
+			return defaultValue;
+		}
 	}
 
 	private void loadWorldProjectionAndView(Renderer3DFrame frame) throws Exception {
@@ -1897,9 +2096,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				unbakedRemasterBase);
 			vertexUploadBuffer.put(chunkTextureU(textureRegion, chunk.getVertexTextureU(vertex)));
 			vertexUploadBuffer.put(chunkTextureV(textureRegion, chunk.getVertexTextureV(vertex)));
-			putChunkTextureLight(unbakedRemasterBase
-				? RendererDayNightCycle.currentBrightnessMultiplier()
-				: textureLightFactor(legacyLight));
+			putChunkTextureLight(unbakedRemasterBase ? 1.0f : textureLightFactor(legacyLight));
 			putChunkShaderInputs(chunk, vertex, triangle, legacyLight, baseLegacyLight, rawMaterialColor);
 		}
 		vertexUploadBuffer.flip();
@@ -2160,13 +2357,12 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	private void putUnbakedChunkMaterialColor(int rawMaterialColor, int textureId) {
-		float brightness = RendererDayNightCycle.currentBrightnessMultiplier();
 		int color = textureId >= 0 && textureId != LEGACY_TRANSPARENT_TEXTURE
 			? 0xFFFFFF
 			: rawMaterialColor;
-		vertexUploadBuffer.put(brightnessColor(((color >> 16) & 0xFF) / 255.0f, brightness));
-		vertexUploadBuffer.put(brightnessColor(((color >> 8) & 0xFF) / 255.0f, brightness));
-		vertexUploadBuffer.put(brightnessColor((color & 0xFF) / 255.0f, brightness));
+		vertexUploadBuffer.put(((color >> 16) & 0xFF) / 255.0f);
+		vertexUploadBuffer.put(((color >> 8) & 0xFF) / 255.0f);
+		vertexUploadBuffer.put((color & 0xFF) / 255.0f);
 		vertexUploadBuffer.put(1.0f);
 	}
 
@@ -2371,6 +2567,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			remasterShadowMaskUploadedSignature = 0L;
 		}
 		remasterShadowMaskBuilder.clear();
+		cachedRemasterShadowRoofCoverage = null;
+		cachedRemasterShadowRoofCoverageSignature = 0L;
+		cachedRemasterShadowRoofCoverageKnown = false;
 		remasterShadowMaskLastUpload = false;
 		remasterShadowMaskLastUploadSkip = false;
 	}
@@ -2378,22 +2577,38 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 
 final class OpenGLWorldChunkUploadStats {
 	static final OpenGLWorldChunkUploadStats EMPTY =
-		new OpenGLWorldChunkUploadStats(0, 0, 0, 0);
+		new OpenGLWorldChunkUploadStats(
+			0,
+			0,
+			0,
+			0,
+			0,
+			0L,
+			OpenGLWorldChunkRenderer.CHUNK_UPLOAD_BUDGET_NANOS);
 
 	final int requestedChunks;
 	final int uploadedChunks;
 	final int reusedChunks;
+	final int deferredChunks;
 	final int evictedChunks;
+	final long budgetUsedNanos;
+	final long budgetLimitNanos;
 
 	OpenGLWorldChunkUploadStats(
 		int requestedChunks,
 		int uploadedChunks,
 		int reusedChunks,
-		int evictedChunks) {
+		int deferredChunks,
+		int evictedChunks,
+		long budgetUsedNanos,
+		long budgetLimitNanos) {
 		this.requestedChunks = requestedChunks;
 		this.uploadedChunks = uploadedChunks;
 		this.reusedChunks = reusedChunks;
+		this.deferredChunks = deferredChunks;
 		this.evictedChunks = evictedChunks;
+		this.budgetUsedNanos = Math.max(0L, budgetUsedNanos);
+		this.budgetLimitNanos = Math.max(0L, budgetLimitNanos);
 	}
 }
 
@@ -2491,7 +2706,66 @@ final class OpenGLWorldChunkDrawStats {
 enum WorldChunkBatchBindResult {
 	TEXTURED,
 	FLAT_FALLBACK,
+	UNTEXTURED,
 	SKIPPED
+}
+
+final class WorldChunkBatchDrawState {
+	static final WorldChunkBatchDrawState FLAT_FALLBACK =
+		new WorldChunkBatchDrawState(WorldChunkBatchBindResult.FLAT_FALLBACK, -1, false);
+	static final WorldChunkBatchDrawState UNTEXTURED =
+		new WorldChunkBatchDrawState(WorldChunkBatchBindResult.UNTEXTURED, -1, false);
+	static final WorldChunkBatchDrawState SKIPPED =
+		new WorldChunkBatchDrawState(WorldChunkBatchBindResult.SKIPPED, -1, false);
+
+	final WorldChunkBatchBindResult bindResult;
+	final int textureId;
+	final boolean textureEnabled;
+
+	private WorldChunkBatchDrawState(
+		WorldChunkBatchBindResult bindResult,
+		int textureId,
+		boolean textureEnabled) {
+		this.bindResult = bindResult == null ? WorldChunkBatchBindResult.SKIPPED : bindResult;
+		this.textureId = textureId;
+		this.textureEnabled = textureEnabled;
+	}
+
+	static WorldChunkBatchDrawState textured(int textureId) {
+		return new WorldChunkBatchDrawState(WorldChunkBatchBindResult.TEXTURED, textureId, true);
+	}
+
+	boolean isCompatibleWith(WorldChunkBatchDrawState other) {
+		return other != null
+			&& bindResult == other.bindResult
+			&& textureId == other.textureId
+			&& textureEnabled == other.textureEnabled;
+	}
+}
+
+final class WorldChunkDrawRange {
+	final int startIndex;
+	final WorldChunkBatchDrawState drawState;
+	int indexCount;
+
+	WorldChunkDrawRange(WorldChunkMaterialBatch batch, WorldChunkBatchDrawState drawState) {
+		this.startIndex = batch == null ? 0 : batch.startIndex;
+		this.indexCount = batch == null ? 0 : batch.indexCount;
+		this.drawState = drawState;
+	}
+
+	boolean canAppend(WorldChunkMaterialBatch batch, WorldChunkBatchDrawState nextState) {
+		return batch != null
+			&& drawState != null
+			&& drawState.isCompatibleWith(nextState)
+			&& batch.startIndex == startIndex + indexCount;
+	}
+
+	void append(WorldChunkMaterialBatch batch) {
+		if (batch != null) {
+			indexCount += batch.indexCount;
+		}
+	}
 }
 
 final class WorldChunkDrawAccumulator {

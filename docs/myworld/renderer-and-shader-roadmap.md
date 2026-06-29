@@ -67,10 +67,71 @@ they need to be.
 - Texture atlas ownership is shared between projected and resident renderers.
 - Renderer telemetry covers OpenGL phases, resident chunks, batch culling,
   sprite overlay behavior, shadow mask cost, and rolling recent timings.
+- Resident chunk spatial culling is promoted into the default renderer-v2
+  runtime path. It subdivides static-world material batches so frustum/fog
+  culling can skip smaller terrain, wall, roof, scenery, and wall-object work
+  before draw submission. Expanded F6 and frame captures report whether the
+  spatial path is active. Dense-area testing showed the original 6-tile
+  spatial cells culled aggressively but produced very high draw-call counts, so
+  the default cell size is now a coarser 12 tiles with a runtime override
+  available for A/B testing.
+- Resident chunk uploads are now frame-budgeted. The default budget is
+  `3.0ms` per rendered frame via `spoiledmilk.openglWorldChunkUploadBudgetMs`
+  / `SPOILED_MILK_OPENGL_WORLD_CHUNK_UPLOAD_BUDGET_MS`; `0` disables the cap
+  for A/B testing. Reused chunks are always accepted immediately, at least one
+  dirty chunk upload is allowed per frame, and remaining dirty chunks are
+  deferred so section/teleport bursts do not land entirely on one frame. Upload
+  budgeting is fallback-aware: if the projected static-world bridge is not
+  available for the current frame, resident uploads are forced to complete
+  rather than presenting black terrain/scenery while chunks are partially
+  resident. If resident chunks are incomplete and fallback exists, the
+  projected-world bridge remains the visual fallback until resident ownership
+  catches up. Expanded F6 reports `req/up/reuse/defer/evict` plus upload budget
+  used/limit.
+- Expanded F6 now includes `world load avg/max/recent`, measuring
+  `World.loadSections` directly, plus `world load phases
+  reset/main/up/bridge/chunk/preload`. Use these to confirm whether zoomed-out
+  walking hitches line up with active section/window rebuilds rather than
+  steady-state draw cost, then target the dominant blocking phase instead of
+  tuning steady renderer draw.
+- In OpenGL-primary mode, the F6 `fps` value is observed/rendered FPS from
+  completed OpenGL frame cadence, not the legacy client loop counter. This is
+  the number testers expect because it reflects what they visually see when
+  frames are dropped or GL render time exceeds the frame budget.
+- OpenGL-primary presentation defaults to game-loop pacing instead of GLFW
+  vsync (`spoiledmilk.openglVsync=false`). The client loop already targets
+  60 Hz; letting both the game loop and swap interval throttle presentation can
+  create phase drift where cheap frames are still presented at an uneven
+  cadence. `spoiledmilk.openglVsync` / `SPOILED_MILK_OPENGL_VSYNC` remain
+  available for A/B testing.
+- Remaster terrain shadow masks are intentionally kept cheaper than the first
+  proof pass. The default mask is 512x512 with a smaller blur and coarser
+  light-angle buckets so server day/night movement does not trigger 1024x1024
+  CPU mask rebuilds during normal play. Runtime overrides remain available:
+  `spoiledmilk.remasterShadowMaskTextureSize`,
+  `spoiledmilk.remasterShadowMaskBlurRadius`,
+  `spoiledmilk.remasterShadowMaskAzimuthBucket`, and
+  `spoiledmilk.remasterShadowMaskElevationBucket`.
+- Terrain shadow masks are applied in the resident chunk shader when that path
+  is active. The old immediate-mode shadow overlay remains only as a fallback;
+  normal remaster rendering should not pay for a second terrain pass.
+- Remaster brightness is shader-owned for resident chunks. Day/night/player
+  brightness should not dirty static chunk buffers while directional remaster
+  lighting is active.
 - Runtime release/debug function-key clutter has been removed except for the
   renderer debug overlay controls.
+- Resident chunk draw submission coalesces adjacent compatible material ranges
+  after culling. F6 `batch c/d/cull` still reports logical material batches,
+  while `submit calls/binds` reports the reduced GL draw submissions and
+  texture binds.
 - The shadow-mask cache key has been narrowed to shadow-owned inputs only.
   Broad resident chunk render signatures must not invalidate the shadow mask.
+- Remaster shadow preparation now has a signature-first steady-state path.
+  Roof/interior classification is cached by static world-chunk signature, and
+  the shadow mask builder returns the existing mask immediately when the world
+  signature plus quantized sun bucket are unchanged. This keeps normal frames
+  from rebuilding caster lists or indoor/outdoor data just to rediscover a
+  cache hit.
 - The first renderer file-size refactor pass has split shader, texture atlas,
   resident chunk, projected mesh, frame capture, logging, material-label, and
   remaster shadow helper code out of `OpenGLFramePresenter`. It also split the
@@ -131,6 +192,8 @@ Implemented or started:
 - Wall-boundary clipping exists for the world-space shadow mask.
 - Terrain shadow masks are quantized by light buckets so normal day/night
   motion does not rebuild the mask every frame.
+- Unchanged shadow frames reuse prior roof coverage, caster inventory, and mask
+  results from signatures instead of walking the full shadow path every frame.
 
 Still incomplete:
 
@@ -251,8 +314,10 @@ Still incomplete:
 ## Started Areas With Most Improvement Room
 
 - Resident chunk backend: strong foundation, but still needs clearer dirty
-  flags, async or incremental preparation, tighter culling, and less dependence
-  on baked visual settings.
+  flags, async or incremental preparation, quality-aware build windows, and
+  less dependence on baked visual settings. Spatial draw culling is now on by
+  default, but true streaming ownership should eventually avoid preparing work
+  that cannot contribute to the visible frame.
 - Shader path: enough exists to prove direction, but material ownership and
   fixed-function retirement remain large wins.
 - Terrain/scenery shadows: visually promising, but currently the most proof-like
@@ -282,8 +347,11 @@ Still incomplete:
    should become uniforms or material data rather than baked geometry state.
 4. Smoke-test the refactor branch, migrate it back to the main worktree, and
    clean the worktree so optimization work starts from a stable baseline.
-5. Pick one performance-facing quality setting and make it reduce real work,
-   preferably entity distance, roof exclusion, or draw-distance/chunk culling.
+5. Validate the coarser default resident chunk spatial culling in dense areas.
+   Compare F6 drawn/culled batch counts, draw calls, texture binds, triangle
+   counts, process CPU, and FPS with fog on/off and multiple camera rotations.
+   If it holds visually and improves or stabilizes frame time, use it as the
+   bridge toward quality-aware world-stream culling.
 6. Decide whether the next shadow swing is GPU/incremental masks or whether
    shadows should pause while renderer ownership and streaming mature.
 7. Add benchmark/capture routes before another large optimization pass.

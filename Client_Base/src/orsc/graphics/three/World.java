@@ -4,6 +4,7 @@ import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.model.Sector;
 import com.openrsc.data.DataConversions;
 import orsc.Config;
+import orsc.RenderTelemetry;
 import orsc.graphics.two.GraphicsController;
 import orsc.util.FastMath;
 import orsc.util.GenUtil;
@@ -2262,22 +2263,37 @@ public final class World {
 	public final void loadSections(int worldX, int worldZ, int plane) {
 		try {
 			long loadStart = WorldStreamManager.now();
+			long telemetryLoadStart = RenderTelemetry.now();
+			long phaseStart = RenderTelemetry.now();
 			this.resetModels();
+			long resetNanos = RenderTelemetry.elapsedSince(phaseStart);
 
 			int x = worldTileToSection(worldX);
 			int z = worldTileToSection(worldZ);
 
+			phaseStart = RenderTelemetry.now();
 			this.generateLandscapeModel(worldX, 122, true, plane, worldZ);
+			long activePlaneNanos = RenderTelemetry.elapsedSince(phaseStart);
+			long upperPlanesNanos = 0L;
+			long bridgeNanos = 0L;
 			if (plane == 0) {
+				phaseStart = RenderTelemetry.now();
 				this.generateLandscapeModel(worldX, 112, false, 1, worldZ);
 				this.generateLandscapeModel(worldX, 69, false, 2, worldZ);
+				upperPlanesNanos = RenderTelemetry.elapsedSince(phaseStart);
+				phaseStart = RenderTelemetry.now();
 				boolean bridgeDecorationsApplied = this.loadSectionWindow(sectors, plane, x, z);
 				if (!bridgeDecorationsApplied) {
 					this.setTileDecorationOnBridge();
 				}
+				bridgeNanos = RenderTelemetry.elapsedSince(phaseStart);
 			}
+			phaseStart = RenderTelemetry.now();
 			this.renderer3DWorldChunkFrame = this.buildRenderer3DWorldChunkFrame(plane, x, z);
+			long chunkFrameNanos = RenderTelemetry.elapsedSince(phaseStart);
+			phaseStart = RenderTelemetry.now();
 			this.preloadSections(worldX, worldZ, plane);
+			long preloadNanos = RenderTelemetry.elapsedSince(phaseStart);
 			this.worldStreamManager.markActiveWindow(
 				plane,
 				x,
@@ -2289,6 +2305,14 @@ public final class World {
 				x,
 				z,
 				WorldStreamManager.elapsedSince(loadStart));
+			RenderTelemetry.recordWorldSectionLoadPhases(
+				resetNanos,
+				activePlaneNanos,
+				upperPlanesNanos,
+				bridgeNanos,
+				chunkFrameNanos,
+				preloadNanos);
+			RenderTelemetry.recordWorldSectionLoad(RenderTelemetry.elapsedSince(telemetryLoadStart));
 
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "k.L(" + worldX + ',' + "dummy" + ',' + worldZ + ',' + plane + ')');

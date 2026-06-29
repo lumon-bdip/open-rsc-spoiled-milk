@@ -5,11 +5,21 @@ import orsc.graphics.three.Renderer3DWorldChunkFrame;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 final class RemasterShadowMaskBuilder {
+	private static final String TEXTURE_SIZE_PROPERTY = "spoiledmilk.remasterShadowMaskTextureSize";
+	private static final String TEXTURE_SIZE_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_TEXTURE_SIZE";
+	private static final String BLUR_RADIUS_PROPERTY = "spoiledmilk.remasterShadowMaskBlurRadius";
+	private static final String BLUR_RADIUS_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_BLUR_RADIUS";
+	private static final String AZIMUTH_BUCKET_PROPERTY = "spoiledmilk.remasterShadowMaskAzimuthBucket";
+	private static final String AZIMUTH_BUCKET_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_AZIMUTH_BUCKET";
+	private static final String ELEVATION_BUCKET_PROPERTY = "spoiledmilk.remasterShadowMaskElevationBucket";
+	private static final String ELEVATION_BUCKET_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_ELEVATION_BUCKET";
+
 	static final int REMASTER_SHADOW_MASK_GRID_SIZE = 512;
 	static final float REMASTER_SHADOW_MASK_BASE_ALPHA = 0.42f;
 	static final float REMASTER_SHADOW_MASK_MAX_ALPHA = 0.58f;
@@ -17,11 +27,15 @@ final class RemasterShadowMaskBuilder {
 	static final float REMASTER_SHADOW_MASK_MAX_LENGTH = 1792.0f;
 	static final float REMASTER_SHADOW_MASK_MIN_WIDTH = 24.0f;
 	static final float REMASTER_SHADOW_MASK_MIN_DRAW_ALPHA = 0.018f;
-	static final int REMASTER_SHADOW_MASK_TEXTURE_SIZE = 1024;
+	static final int REMASTER_SHADOW_MASK_TEXTURE_SIZE =
+		readInt(TEXTURE_SIZE_PROPERTY, TEXTURE_SIZE_ENV, 512, 256, 1024);
 	static final float REMASTER_SHADOW_MASK_TEXTURE_PADDING = 384.0f;
-	static final int REMASTER_SHADOW_MASK_BLUR_RADIUS = 7;
-	static final float REMASTER_SHADOW_MASK_AZIMUTH_BUCKET_DEGREES = 6.0f;
-	static final float REMASTER_SHADOW_MASK_ELEVATION_BUCKET_DEGREES = 3.0f;
+	static final int REMASTER_SHADOW_MASK_BLUR_RADIUS =
+		readInt(BLUR_RADIUS_PROPERTY, BLUR_RADIUS_ENV, 4, 0, 12);
+	static final float REMASTER_SHADOW_MASK_AZIMUTH_BUCKET_DEGREES =
+		readFloat(AZIMUTH_BUCKET_PROPERTY, AZIMUTH_BUCKET_ENV, 12.0f, 1.0f, 45.0f);
+	static final float REMASTER_SHADOW_MASK_ELEVATION_BUCKET_DEGREES =
+		readFloat(ELEVATION_BUCKET_PROPERTY, ELEVATION_BUCKET_ENV, 6.0f, 1.0f, 30.0f);
 	static final float REMASTER_SHADOW_MASK_CENTER_RETAIN = 0.82f;
 	static final float REMASTER_SHADOW_MASK_BLUR_BOOST = 1.18f;
 	static final float REMASTER_SHADOW_MASK_CLIP_START_OFFSET = 24.0f;
@@ -29,14 +43,33 @@ final class RemasterShadowMaskBuilder {
 
 	private RemasterTerrainShadowMask cache;
 	private long cacheSignature;
+	private RemasterShadowMaskBuild lastBuild;
+	private long lastInputSignature;
+	private boolean lastInputSignatureKnown;
 	private boolean lastCacheHit;
 	private boolean lastRebuild;
 
 	RemasterShadowMaskBuild build(
 		Renderer3DWorldChunkFrame chunkFrame,
-		RemasterShadowRoofCoverage roofCoverage) {
+		RemasterShadowRoofCoverage roofCoverage,
+		long worldSignature) {
+		long inputSignature = remasterTerrainShadowInputSignature(worldSignature);
+		if (lastInputSignatureKnown && lastInputSignature == inputSignature) {
+			if (lastBuild == null || lastBuild.mask == null) {
+				return null;
+			}
+			return new RemasterShadowMaskBuild(
+				lastBuild.mask,
+				lastBuild.stripCasterCount,
+				lastBuild.softSceneryCasterCount,
+				true,
+				false);
+		}
 		List<RemasterTerrainShadowCaster> casters = buildRemasterTerrainShadowCasters(chunkFrame, roofCoverage);
 		if (casters.isEmpty()) {
+			lastInputSignature = inputSignature;
+			lastInputSignatureKnown = true;
+			lastBuild = null;
 			return null;
 		}
 		int stripCasterCount = countRemasterShadowMaskCasters(casters, RemasterTerrainShadowCaster.STYLE_STRIP);
@@ -44,16 +77,71 @@ final class RemasterShadowMaskBuilder {
 			countRemasterShadowMaskCasters(casters, RemasterTerrainShadowCaster.STYLE_SOFT_SCENERY);
 		RemasterTerrainShadowMask mask = buildMaskTexture(roofCoverage, chunkFrame, casters);
 		if (mask == null) {
+			lastInputSignature = inputSignature;
+			lastInputSignatureKnown = true;
+			lastBuild = null;
 			return null;
 		}
-		return new RemasterShadowMaskBuild(mask, stripCasterCount, softSceneryCasterCount, lastCacheHit, lastRebuild);
+		RemasterShadowMaskBuild build =
+			new RemasterShadowMaskBuild(mask, stripCasterCount, softSceneryCasterCount, lastCacheHit, lastRebuild);
+		lastInputSignature = inputSignature;
+		lastInputSignatureKnown = true;
+		lastBuild = build;
+		return build;
 	}
 
 	void clear() {
 		cache = null;
 		cacheSignature = 0L;
+		lastBuild = null;
+		lastInputSignature = 0L;
+		lastInputSignatureKnown = false;
 		lastCacheHit = false;
 		lastRebuild = false;
+	}
+
+	static long remasterShadowWorldSignature(Renderer3DWorldChunkFrame chunkFrame) {
+		long hash = 0xcbf29ce484222325L;
+		if (chunkFrame == null) {
+			return mix(hash, 0);
+		}
+		hash = mix(hash, chunkFrame.getChunkCount());
+		hash = mix(hash, chunkFrame.getTotalVertexCount());
+		hash = mix(hash, chunkFrame.getTotalIndexCount());
+		hash = mix(hash, chunkFrame.getTotalTriangleCount());
+		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+			hash = mix(hash, chunk.getPlane());
+			hash = mix(hash, chunk.getCenterSectionX());
+			hash = mix(hash, chunk.getCenterSectionY());
+			hash = mix(hash, chunk.getOriginWorldX());
+			hash = mix(hash, chunk.getOriginWorldZ());
+			hash = mix(hash, chunk.isObjectChunk() ? 1 : 0);
+			hash = mix(hash, chunk.getTerrainTriangles());
+			hash = mix(hash, chunk.getWallTriangles());
+			hash = mix(hash, chunk.getRoofTriangles());
+			hash = mix(hash, chunk.getShadowCasterCount());
+			hash = mix(hash, chunk.hasRoofCoverageData() ? 1 : 0);
+			hash = mix(hash, chunk.getRoofCoveredTileCount());
+			hash = mix(hash, (int) chunk.getSignature());
+			hash = mix(hash, (int) (chunk.getSignature() >>> 32));
+		}
+		return hash;
+	}
+
+	private long remasterTerrainShadowInputSignature(long worldSignature) {
+		long hash = 0xcbf29ce484222325L;
+		hash = mix(hash, (int) worldSignature);
+		hash = mix(hash, (int) (worldSignature >>> 32));
+		hash = mix(hash, Float.floatToIntBits(remasterShadowMaskLightAzimuthDegrees()));
+		hash = mix(hash, Float.floatToIntBits(remasterShadowMaskLightElevationDegrees()));
+		hash = mix(hash, REMASTER_SHADOW_MASK_TEXTURE_SIZE);
+		hash = mix(hash, REMASTER_SHADOW_MASK_BLUR_RADIUS);
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_TEXTURE_PADDING));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CENTER_RETAIN));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_BLUR_BOOST));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CLIP_START_OFFSET));
+		hash = mix(hash, REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP ? 1 : 0);
+		return hash;
 	}
 
 	private RemasterTerrainShadowMask buildMaskTexture(
@@ -134,14 +222,20 @@ final class RemasterShadowMaskBuilder {
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_BLUR_BOOST));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CLIP_START_OFFSET));
 		hash = mix(hash, REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP ? 1 : 0);
-		hash = mix(hash, Float.floatToIntBits(bounds.minX));
-		hash = mix(hash, Float.floatToIntBits(bounds.maxX));
-		hash = mix(hash, Float.floatToIntBits(bounds.minZ));
-		hash = mix(hash, Float.floatToIntBits(bounds.maxZ));
+		hash = mix(hash, signatureWorldFloat(bounds.minX));
+		hash = mix(hash, signatureWorldFloat(bounds.maxX));
+		hash = mix(hash, signatureWorldFloat(bounds.minZ));
+		hash = mix(hash, signatureWorldFloat(bounds.maxZ));
 		hash = mix(hash, casters == null ? 0 : casters.size());
 		if (casters != null) {
-			for (RemasterTerrainShadowCaster caster : casters) {
-				hash = caster.mixSignature(hash);
+			long[] casterSignatures = new long[casters.size()];
+			for (int index = 0; index < casters.size(); index++) {
+				casterSignatures[index] = casters.get(index).stableSignature();
+			}
+			Arrays.sort(casterSignatures);
+			for (long casterSignature : casterSignatures) {
+				hash = mix(hash, (int) casterSignature);
+				hash = mix(hash, (int) (casterSignature >>> 32));
 			}
 		}
 		return hash;
@@ -307,6 +401,62 @@ final class RemasterShadowMaskBuilder {
 	static long mix(long hash, int value) {
 		hash ^= value;
 		return hash * 0x100000001b3L;
+	}
+
+	static int signatureWorldFloat(float value) {
+		return Math.round(value / 4.0f);
+	}
+
+	static int signatureUnitFloat(float value) {
+		return Math.round(value * 1000.0f);
+	}
+
+	private static int readInt(
+		String propertyName,
+		String envName,
+		int defaultValue,
+		int minValue,
+		int maxValue) {
+		String value = System.getProperty(propertyName);
+		if (value == null || value.trim().isEmpty()) {
+			value = System.getenv(envName);
+		}
+		if (value == null || value.trim().isEmpty()) {
+			return defaultValue;
+		}
+
+		try {
+			int parsed = Integer.parseInt(value.trim());
+			return Math.max(minValue, Math.min(maxValue, parsed));
+		} catch (NumberFormatException ex) {
+			System.out.println("[renderer-v2 opengl] Invalid remaster shadow integer '" + value
+				+ "' for " + propertyName + "; using " + defaultValue + ".");
+			return defaultValue;
+		}
+	}
+
+	private static float readFloat(
+		String propertyName,
+		String envName,
+		float defaultValue,
+		float minValue,
+		float maxValue) {
+		String value = System.getProperty(propertyName);
+		if (value == null || value.trim().isEmpty()) {
+			value = System.getenv(envName);
+		}
+		if (value == null || value.trim().isEmpty()) {
+			return defaultValue;
+		}
+
+		try {
+			float parsed = Float.parseFloat(value.trim());
+			return clamp(parsed, minValue, maxValue);
+		} catch (NumberFormatException ex) {
+			System.out.println("[renderer-v2 opengl] Invalid remaster shadow float '" + value
+				+ "' for " + propertyName + "; using " + defaultValue + ".");
+			return defaultValue;
+		}
 	}
 }
 
@@ -704,23 +854,30 @@ final class RemasterTerrainShadowCaster {
 	}
 
 	long mixSignature(long hash) {
+		long signature = stableSignature();
+		hash = RemasterShadowMaskBuilder.mix(hash, (int) signature);
+		return RemasterShadowMaskBuilder.mix(hash, (int) (signature >>> 32));
+	}
+
+	long stableSignature() {
+		long hash = 0xcbf29ce484222325L;
 		hash = RemasterShadowMaskBuilder.mix(hash, style);
 		hash = RemasterShadowMaskBuilder.mix(hash, plane);
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(baseX0));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(baseZ0));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(baseX1));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(baseZ1));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(centerX));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(centerZ));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(length));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(halfWidth));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(directionX));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(directionZ));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(opacity));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(minX));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(maxX));
-		hash = RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(minZ));
-		return RemasterShadowMaskBuilder.mix(hash, Float.floatToIntBits(maxZ));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(baseX0));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(baseZ0));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(baseX1));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(baseZ1));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(centerX));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(centerZ));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(length));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(halfWidth));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureUnitFloat(directionX));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureUnitFloat(directionZ));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureUnitFloat(opacity));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(minX));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(maxX));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(minZ));
+		return RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(maxZ));
 	}
 
 	private static float smoothStep(float edge0, float edge1, float value) {

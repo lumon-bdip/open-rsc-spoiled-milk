@@ -30,6 +30,13 @@ public final class RenderTelemetry {
 	private static final StageStats sceneDepthExportStats = new StageStats();
 	private static final StageStats sceneLegacyDrawStats = new StageStats();
 	private static final StageStats sceneMeshExportStats = new StageStats();
+	private static final StageStats worldSectionLoadStats = new StageStats();
+	private static final StageStats worldSectionLoadResetStats = new StageStats();
+	private static final StageStats worldSectionLoadActivePlaneStats = new StageStats();
+	private static final StageStats worldSectionLoadUpperPlanesStats = new StageStats();
+	private static final StageStats worldSectionLoadBridgeStats = new StageStats();
+	private static final StageStats worldSectionLoadChunkFrameStats = new StageStats();
+	private static final StageStats worldSectionLoadPreloadStats = new StageStats();
 	private static final StageStats commitStats = new StageStats();
 	private static final StageStats scalarResizeStats = new StageStats();
 	private static final StageStats backingCopyStats = new StageStats();
@@ -44,9 +51,11 @@ public final class RenderTelemetry {
 	private static final StageStats openGLSnapshotStats = new StageStats();
 	private static final StageStats openGLUploadStats = new StageStats();
 	private static final StageStats openGLRenderStats = new StageStats();
+	private static final StageStats openGLFrameIntervalStats = new StageStats();
 	private static final StageStats openGLBaseStats = new StageStats();
 	private static final StageStats openGLWorldStats = new StageStats();
 	private static final StageStats openGLWorldSpriteStats = new StageStats();
+	private static final StageStats openGLWorldChunkUploadBudgetStats = new StageStats();
 	private static final StageStats openGLWorldChunkUploadPhaseStats = new StageStats();
 	private static final StageStats openGLWorldProjectedMeshPhaseStats = new StageStats();
 	private static final StageStats openGLWorldChunkDrawPhaseStats = new StageStats();
@@ -151,6 +160,7 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldChunkRequestedStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkUploadStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkReuseStats = new CounterStats();
+	private static final CounterStats openGLWorldChunkDeferredStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkEvictStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkConsideredStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkDrawStats = new CounterStats();
@@ -226,6 +236,8 @@ public final class RenderTelemetry {
 	private static long openGLDroppedFrames;
 	private static long openGLFramesWindow;
 	private static long openGLDroppedFramesWindow;
+	private static long lastOpenGLFrameNanos;
+	private static long openGLWorldChunkUploadBudgetLimitNanos;
 	private static long lastReportNanos;
 	private static String openGLResidentChunkReplacementReason = "not-requested";
 
@@ -337,6 +349,72 @@ public final class RenderTelemetry {
 		}
 	}
 
+	public static void recordWorldSectionLoad(long nanos) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			worldSectionLoadStats.record(nanos);
+		}
+	}
+
+	public static void recordWorldSectionLoadPhases(
+		long resetNanos,
+		long activePlaneNanos,
+		long upperPlanesNanos,
+		long bridgeNanos,
+		long chunkFrameNanos,
+		long preloadNanos) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			worldSectionLoadResetStats.record(resetNanos);
+			worldSectionLoadActivePlaneStats.record(activePlaneNanos);
+			worldSectionLoadUpperPlanesStats.record(upperPlanesNanos);
+			worldSectionLoadBridgeStats.record(bridgeNanos);
+			worldSectionLoadChunkFrameStats.record(chunkFrameNanos);
+			worldSectionLoadPreloadStats.record(preloadNanos);
+		}
+	}
+
+	public static String worldSectionLoadSummary() {
+		synchronized (RenderTelemetry.class) {
+			return formatMillis(worldSectionLoadStats.average())
+				+ "/" + formatMillis(worldSectionLoadStats.max)
+				+ "/" + formatMillis(worldSectionLoadStats.recentAverage())
+				+ "ms | loads " + worldSectionLoadStats.count;
+		}
+	}
+
+	public static String worldSectionLoadPhaseSummary() {
+		synchronized (RenderTelemetry.class) {
+			return formatMillis(worldSectionLoadResetStats.recentAverage())
+				+ "/" + formatMillis(worldSectionLoadActivePlaneStats.recentAverage())
+				+ "/" + formatMillis(worldSectionLoadUpperPlanesStats.recentAverage())
+				+ "/" + formatMillis(worldSectionLoadBridgeStats.recentAverage())
+				+ "/" + formatMillis(worldSectionLoadChunkFrameStats.recentAverage())
+				+ "/" + formatMillis(worldSectionLoadPreloadStats.recentAverage()) + "ms";
+		}
+	}
+
+	public static String worldChunkUploadDeferredSummary() {
+		synchronized (RenderTelemetry.class) {
+			return formatCount(openGLWorldChunkDeferredStats.recentAverage());
+		}
+	}
+
+	public static String worldChunkUploadBudgetSummary() {
+		synchronized (RenderTelemetry.class) {
+			return formatMillis(openGLWorldChunkUploadBudgetStats.recentAverage())
+				+ "/"
+				+ formatMillis(openGLWorldChunkUploadBudgetLimitNanos)
+				+ "ms";
+		}
+	}
+
 	static void recordWorldGeometryFrame(
 		int sourceModels,
 		int worldFaces,
@@ -437,7 +515,14 @@ public final class RenderTelemetry {
 		}
 	}
 
-	static void recordOpenGLWorldChunkUpload(int requested, int uploaded, int reused, int evicted) {
+	static void recordOpenGLWorldChunkUpload(
+		int requested,
+		int uploaded,
+		int reused,
+		int deferred,
+		int evicted,
+		long budgetUsedNanos,
+		long budgetLimitNanos) {
 		if (!isCollectionEnabled()) {
 			return;
 		}
@@ -446,7 +531,10 @@ public final class RenderTelemetry {
 			openGLWorldChunkRequestedStats.record(requested);
 			openGLWorldChunkUploadStats.record(uploaded);
 			openGLWorldChunkReuseStats.record(reused);
+			openGLWorldChunkDeferredStats.record(deferred);
 			openGLWorldChunkEvictStats.record(evicted);
+			openGLWorldChunkUploadBudgetStats.record(budgetUsedNanos);
+			openGLWorldChunkUploadBudgetLimitNanos = Math.max(0L, budgetLimitNanos);
 		}
 	}
 
@@ -709,10 +797,36 @@ public final class RenderTelemetry {
 		}
 
 		synchronized (RenderTelemetry.class) {
+			long now = System.nanoTime();
+			if (lastOpenGLFrameNanos != 0L && now > lastOpenGLFrameNanos) {
+				openGLFrameIntervalStats.record(now - lastOpenGLFrameNanos);
+			}
+			lastOpenGLFrameNanos = now;
 			openGLUploadStats.record(uploadNanos);
 			openGLRenderStats.record(renderNanos);
 			openGLFrames++;
 			openGLFramesWindow++;
+		}
+	}
+
+	static void resetOpenGLFramePacing() {
+		synchronized (RenderTelemetry.class) {
+			lastOpenGLFrameNanos = 0L;
+			openGLFrameIntervalStats.resetRecent();
+		}
+	}
+
+	public static String observedOpenGLFps(int fallbackFps) {
+		synchronized (RenderTelemetry.class) {
+			long frameInterval = openGLFrameIntervalStats.recentAverage();
+			if (frameInterval <= 0L) {
+				frameInterval = openGLRenderStats.recentAverage();
+			}
+			if (frameInterval <= 0L) {
+				return String.valueOf(fallbackFps);
+			}
+			int observed = (int) Math.round(1_000_000_000.0 / frameInterval);
+			return String.valueOf(Math.max(0, Math.min(Math.max(1, fallbackFps), observed)));
 		}
 	}
 
@@ -1446,6 +1560,13 @@ public final class RenderTelemetry {
 			sceneDepthExportStats,
 			sceneLegacyDrawStats,
 			sceneMeshExportStats,
+			worldSectionLoadStats,
+			worldSectionLoadResetStats,
+			worldSectionLoadActivePlaneStats,
+			worldSectionLoadUpperPlanesStats,
+			worldSectionLoadBridgeStats,
+			worldSectionLoadChunkFrameStats,
+			worldSectionLoadPreloadStats,
 			commitStats,
 			scalarResizeStats,
 			backingCopyStats,
@@ -1460,9 +1581,11 @@ public final class RenderTelemetry {
 			openGLSnapshotStats,
 			openGLUploadStats,
 			openGLRenderStats,
+			openGLFrameIntervalStats,
 			openGLBaseStats,
 			openGLWorldStats,
 			openGLWorldSpriteStats,
+			openGLWorldChunkUploadBudgetStats,
 			openGLWorldChunkUploadPhaseStats,
 			openGLWorldProjectedMeshPhaseStats,
 			openGLWorldChunkDrawPhaseStats,
@@ -1573,6 +1696,7 @@ public final class RenderTelemetry {
 			openGLWorldChunkRequestedStats,
 			openGLWorldChunkUploadStats,
 			openGLWorldChunkReuseStats,
+			openGLWorldChunkDeferredStats,
 			openGLWorldChunkEvictStats,
 			openGLWorldChunkConsideredStats,
 			openGLWorldChunkDrawStats,
@@ -1825,6 +1949,12 @@ public final class RenderTelemetry {
 			windowCount = 0L;
 			windowTotal = 0L;
 			windowMax = 0L;
+		}
+
+		private void resetRecent() {
+			recentIndex = 0;
+			recentCount = 0;
+			recentTotal = 0L;
 		}
 
 		private void recordRecent(long nanos) {

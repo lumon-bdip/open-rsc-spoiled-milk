@@ -892,19 +892,17 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	private String[] overlayLines(BufferedImage frameImage, RenderTelemetry.Snapshot telemetry) {
 		boolean openGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
 		String cpuUsage = CPU_USAGE_SAMPLER.sampleProcessCpuPercent();
+		String displayedFps = openGLPrimaryWindow
+			? RenderTelemetry.observedOpenGLFps(mudclient.getCurrentFPS())
+			: String.valueOf(mudclient.getCurrentFPS());
 		String rendererLine = openGLPrimaryWindow
 			? "renderer " + RendererProfileSettings.getMode().id
-				+ " | aspect " + RenderSurfaceSettings.getMode().id
-				+ " | fps " + mudclient.getCurrentFPS()
+				+ " | aspect " + RenderSurfaceSettings.getDebugAspectLabel()
+				+ " | fps " + displayedFps
 				+ " | proc cpu " + cpuUsage
 			: "scale " + mudclient.renderingScalar + " " + mudclient.scalingType
-				+ " | fps " + mudclient.getCurrentFPS()
+				+ " | fps " + displayedFps
 				+ " | proc cpu " + cpuUsage;
-		String surfaceLine = "surface " + frameImage.getWidth() + "x" + frameImage.getHeight()
-			+ " | fit " + (openGLPrimaryWindow
-				? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT.id
-				: OpenGLPresentationSettings.getScaleMode().id)
-			+ " | window " + OpenGLWindowSettings.getMode().displayName;
 		String openGLLine = telemetry.enabled
 			? "opengl frames/dropped " + telemetry.openGLFrames
 				+ "/" + telemetry.openGLDroppedFrames
@@ -915,13 +913,16 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			+ " | fog " + RendererFogSettings.getMode().id
 			+ " | brightness " + RendererBrightnessSettings.getMode().id
 			+ " | tone " + RendererDayNightCycle.debugSummary();
+		String chunkCullLine = "chunk cull spatial "
+			+ (OpenGLFramePresenter.WORLD_CHUNKS_SPATIAL_CULL ? "on" : "off")
+			+ " | cell " + OpenGLWorldChunkRenderer.spatialBatchTileSize() + "t"
+			+ " | fog draw " + RendererFogSettings.getMode().drawDistanceTiles + "t";
 		String remasterLightLine = "remaster light " + RendererRemasterLightSettings.debugSummary();
 		if (RendererDebugSettings.getMode() == RendererDebugSettings.Mode.SIMPLE) {
 			return new String[] {
 				"Renderer v2 Perf HUD",
 				rendererLine,
 				openGLLine,
-				surfaceLine,
 				graphicsLine,
 				"Ctrl+F6 expanded"
 			};
@@ -929,7 +930,6 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		return new String[] {
 			"Renderer v2 Perf HUD",
 			rendererLine,
-			surfaceLine,
 			graphicsLine,
 			remasterLightLine,
 			telemetry.enabled
@@ -941,11 +941,6 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				? "recent frame/scene/gl " + telemetry.recentFrameSummary
 				: "",
 			telemetry.enabled
-				? "gl snapshot/upload/render " + telemetry.openGLSnapshotAverageMs
-					+ "/" + telemetry.openGLUploadAverageMs
-					+ "/" + telemetry.openGLRenderAverageMs + "ms"
-				: "",
-			telemetry.enabled
 				? "recent gl snapshot/upload/render " + telemetry.recentOpenGLTimingSummary
 				: "",
 			telemetry.enabled
@@ -954,25 +949,14 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ " | swap " + telemetry.openGLSwapAverageMs + "ms"
 				: "",
 			telemetry.enabled
-				? "gl phases b/w/ws/o/db/s " + telemetry.openGLBaseAverageMs
-					+ "/" + telemetry.openGLWorldAverageMs
-					+ "/" + telemetry.openGLWorldSpriteAverageMs
-					+ "/" + telemetry.openGLSpriteOverlayAverageMs
-					+ "/" + telemetry.openGLDebugOverlayAverageMs
-					+ "/" + telemetry.openGLSwapAverageMs + "ms"
-				: "",
-			telemetry.enabled
 				? "recent gl phases b/w/ws/o/db/s " + telemetry.recentOpenGLPhaseSummary
 				: "",
 			telemetry.enabled
-				? "scene phases rot/cull/depth/draw/mesh " + telemetry.sceneModelRotateAverageMs
-					+ "/" + telemetry.sceneWorldCullAverageMs
-					+ "/" + telemetry.sceneDepthExportAverageMs
-					+ "/" + telemetry.sceneLegacyDrawAverageMs
-					+ "/" + telemetry.sceneMeshExportAverageMs + "ms"
+				? "world load avg/max/recent " + RenderTelemetry.worldSectionLoadSummary()
 				: "",
 			telemetry.enabled
-				? "recent scene phases rot/cull/depth/draw/mesh " + telemetry.recentScenePhaseSummary
+				? "world load phases reset/main/up/bridge/chunk/preload "
+					+ RenderTelemetry.worldSectionLoadPhaseSummary()
 				: "",
 			telemetry.enabled
 				? "loop recent total/sleep/update/repo/draw " + telemetry.recentClientLoopSummary
@@ -987,11 +971,14 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				? "chunk vis c/d/cull " + telemetry.openGLWorldChunkVisibilityAverage
 					+ " | submit calls/binds " + telemetry.openGLWorldChunkSubmitAverage
 				: "",
+			chunkCullLine,
 			telemetry.enabled
-				? "chunk req/up/reuse/evict " + telemetry.openGLWorldChunkRequestedAverage
+				? "chunk req/up/reuse/defer/evict " + telemetry.openGLWorldChunkRequestedAverage
 					+ "/" + telemetry.openGLWorldChunkUploadAverage
 					+ "/" + telemetry.openGLWorldChunkReuseAverage
+					+ "/" + RenderTelemetry.worldChunkUploadDeferredSummary()
 					+ "/" + telemetry.openGLWorldChunkEvictAverage
+					+ " | budget " + RenderTelemetry.worldChunkUploadBudgetSummary()
 				: "",
 			telemetry.enabled
 				? "resident req/active/fallback " + telemetry.openGLResidentChunkReplacementRequestedAverage
@@ -1003,53 +990,15 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.openGLResidentChunkDrawableRoofBatchAverage
 				: "",
 			telemetry.enabled
-				? "shadow inv recv c/t " + telemetry.openGLRemasterShadowReceiverChunkAverage
-					+ "/" + telemetry.openGLRemasterShadowReceiverTriangleAverage
-					+ " | casters all/w/go/wo/out/clip "
-					+ telemetry.openGLRemasterShadowCasterAverage
-					+ "/" + telemetry.openGLRemasterShadowWallCasterAverage
-					+ "/" + telemetry.openGLRemasterShadowGameObjectCasterAverage
-					+ "/" + telemetry.openGLRemasterShadowWallObjectCasterAverage
-					+ "/" + telemetry.openGLRemasterShadowOutdoorOnlyCasterAverage
-					+ "/" + telemetry.openGLRemasterShadowClippingCandidateAverage
-				: "",
-			telemetry.enabled
-				? "shadow class recv in/out/unk "
-					+ telemetry.openGLRemasterShadowRoofedReceiverAverage
-					+ "/" + telemetry.openGLRemasterShadowOutdoorReceiverAverage
-					+ "/" + telemetry.openGLRemasterShadowUnknownReceiverAverage
-					+ " | casters in/out/unk "
-					+ telemetry.openGLRemasterShadowRoofedCasterAverage
-					+ "/" + telemetry.openGLRemasterShadowOutdoorCasterAverage
-					+ "/" + telemetry.openGLRemasterShadowUnknownCasterAverage
-				: "",
-			telemetry.enabled
-				? "shadow sunlight cast/supIn/supUnk "
-					+ telemetry.openGLRemasterShadowSunlightEligibleCasterAverage
-					+ "/" + telemetry.openGLRemasterShadowSunlightSuppressedRoofedCasterAverage
-					+ "/" + telemetry.openGLRemasterShadowSunlightSuppressedUnknownCasterAverage
-				: "",
-			telemetry.enabled
 				? "shadow mask size/pix " + telemetry.openGLRemasterShadowMaskSizeAverage
 					+ " | build/upload " + telemetry.openGLRemasterShadowMaskTimingAverageMs + "ms"
 					+ " | hit/rebuild/up/skip " + telemetry.openGLRemasterShadowMaskCacheAverage
 					+ " | caster strip/soft " + telemetry.openGLRemasterShadowMaskCasterAverage
 				: "",
 			telemetry.enabled
-				? "mesh draw tri/occ/b/calls " + telemetry.openGLWorldMeshDrawTriangleAverage
-					+ "/" + telemetry.openGLWorldMeshDrawOccluderTriangleAverage
-					+ "/" + telemetry.openGLWorldMeshDrawBatchAverage
-					+ "/" + telemetry.openGLWorldMeshDrawCallAverage
-				: "",
-			telemetry.enabled
 				? "world split chunk/proj/chdraw " + telemetry.openGLWorldChunkUploadPhaseAverageMs
 					+ "/" + telemetry.openGLWorldProjectedMeshPhaseAverageMs
 					+ "/" + telemetry.openGLWorldChunkDrawPhaseAverageMs + "ms"
-				: "",
-			telemetry.enabled
-				? "legacy sprites cmds/fallback/pixels " + telemetry.legacySceneSpriteRestoreCommandAverage
-					+ "/" + telemetry.legacySceneSpriteRestoreFallbackAverage
-					+ "/" + telemetry.legacySceneSpriteRestoreFallbackPixelAverage
 				: "",
 			telemetry.enabled
 				? "entity vis c/d/cull " + telemetry.openGLWorldEntityVisibilityAverage
@@ -1058,11 +1007,6 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				? "sprite cap/static/vis " + telemetry.spriteOverlayCapturedAverage
 					+ "/" + telemetry.spriteOverlayStaticReplayAverage
 					+ "/" + telemetry.spriteOverlayVisibleReplayAverage
-				: "",
-			telemetry.enabled
-				? "overlay phases scene/world/ui " + telemetry.spriteOverlaySceneCommandAverage
-					+ "/" + telemetry.spriteOverlayWorldCommandAverage
-					+ "/" + telemetry.spriteOverlayUiCommandAverage
 				: "",
 			telemetry.enabled
 				? "world faces t/w/r/go/wo/o " + telemetry.worldGeometryTerrainFaceAverage

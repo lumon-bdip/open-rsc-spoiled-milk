@@ -355,6 +355,8 @@ final class OpenGLFrameCapture {
 		writer.println("rendererMode.worldChunksReplacementCompositeConfigured=" + WORLD_CHUNKS_REPLACEMENT_COMPOSITE);
 		writer.println("rendererMode.worldChunksTrustedReplacement=" + WORLD_CHUNKS_TRUSTED_REPLACEMENT);
 		writer.println("rendererMode.worldChunksResidentObjects=" + WORLD_CHUNKS_RESIDENT_OBJECTS);
+		writer.println("rendererMode.worldChunksSpatialCull=" + WORLD_CHUNKS_SPATIAL_CULL);
+		writer.println("rendererMode.worldChunksSpatialTileSize=" + OpenGLWorldChunkRenderer.spatialBatchTileSize());
 		writer.println("rendererMode.worldSpritesVisible=" + WORLD_SPRITES_VISIBLE);
 	}
 
@@ -1447,8 +1449,6 @@ final class OpenGLFrameCapture {
 		return value.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ');
 	}
 }
-
-
 
 
 

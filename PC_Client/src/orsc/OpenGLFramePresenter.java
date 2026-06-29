@@ -58,6 +58,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private static final int INITIAL_HEIGHT = RenderSurfaceSettings.getHeight();
 	private static final int MOUSE_BUTTON_COUNT = 3;
 	private static final int VISIBLE_SPRITE_ATLAS_FULL = -1;
+	private static final String OPENGL_VSYNC_PROPERTY = "spoiledmilk.openglVsync";
+	private static final String OPENGL_VSYNC_ENV = "SPOILED_MILK_OPENGL_VSYNC";
+	private static final boolean OPENGL_VSYNC_ENABLED =
+		readBoolean(OPENGL_VSYNC_PROPERTY, OPENGL_VSYNC_ENV, false);
 	private static final String WORLD_MESH_PROPERTY = "spoiledmilk.openglWorldMesh";
 	private static final String WORLD_MESH_ENV = "SPOILED_MILK_OPENGL_WORLD_MESH";
 	static final boolean WORLD_MESH_ENABLED = readBoolean(WORLD_MESH_PROPERTY, WORLD_MESH_ENV);
@@ -178,7 +182,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		"spoiledmilk.openglWorldChunksSpatialCull";
 	private static final String WORLD_CHUNKS_SPATIAL_CULL_ENV =
 		"SPOILED_MILK_OPENGL_WORLD_CHUNKS_SPATIAL_CULL";
-	private static final boolean WORLD_CHUNKS_SPATIAL_CULL =
+	static final boolean WORLD_CHUNKS_SPATIAL_CULL =
 		WORLD_CHUNKS_REPLACEMENT_COMPOSITE
 			&& readBoolean(WORLD_CHUNKS_SPATIAL_CULL_PROPERTY, WORLD_CHUNKS_SPATIAL_CULL_ENV, false);
 	static final String WORLD_STATIC_TEXTURES_PROPERTY =
@@ -537,7 +541,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glfwMakeContextCurrent(window);
 		gl.createCapabilities();
 		logOpenGLDevice();
-		gl.glfwSwapInterval(1);
+		gl.glfwSwapInterval(OPENGL_VSYNC_ENABLED ? 1 : 0);
+		log("OpenGL vsync: " + (OPENGL_VSYNC_ENABLED ? "enabled" : "disabled") + ".");
 		gl.glfwShowWindow(window);
 		syncWindowMode(width, height);
 
@@ -1132,18 +1137,25 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			shadowInventory.sunlightEligibleCasters,
 			shadowInventory.sunlightSuppressedRoofedCasters,
 			shadowInventory.sunlightSuppressedUnknownCasters);
+		boolean canDrawProjectedMesh = WORLD_MESH_ENABLED && worldMeshRenderer != null && renderer3DMeshFrame != null;
+		boolean canDrawProjectedStaticFallback =
+			canDrawProjectedMesh && (WORLD_MESH_VISIBLE || WORLD_MESH_TEXTURED_VISIBLE);
 		if (WORLD_MESH_ENABLED && worldChunkRenderer != null) {
 			long chunkUploadPhaseStart = RenderTelemetry.now();
 			OpenGLWorldChunkUploadStats chunkUploadStats = worldChunkRenderer.upload(
 				frame.renderer3DFrame,
 				worldChunkFrame,
-				WORLD_CHUNKS_TEXTURED_VISIBLE);
+				WORLD_CHUNKS_TEXTURED_VISIBLE,
+				canDrawProjectedStaticFallback);
 			chunkUploadPhaseNanos = RenderTelemetry.elapsedSince(chunkUploadPhaseStart);
 			RenderTelemetry.recordOpenGLWorldChunkUpload(
 				chunkUploadStats.requestedChunks,
 				chunkUploadStats.uploadedChunks,
 				chunkUploadStats.reusedChunks,
-				chunkUploadStats.evictedChunks);
+				chunkUploadStats.deferredChunks,
+				chunkUploadStats.evictedChunks,
+				chunkUploadStats.budgetUsedNanos,
+				chunkUploadStats.budgetLimitNanos);
 		}
 		boolean requestedResidentChunkReplacementComposite =
 			worldReplacementComposite && shouldUseResidentChunkReplacementComposite(frame);
@@ -1173,9 +1185,12 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			residentChunkReadiness.drawableTerrainBatches,
 			residentChunkReadiness.drawableWallBatches,
 			residentChunkReadiness.drawableRoofBatches);
+		boolean remasterTerrainShadowMaskPrepared = false;
+		if (worldChunkRenderer != null) {
+			worldChunkRenderer.clearPreparedRemasterTerrainShadowMask();
+		}
 		// RENDERER-V2 OWNER: resident chunks are the preferred static-world path.
 		// Projected mesh drawing below remains only as fallback/diagnostic bridge.
-		boolean canDrawProjectedMesh = WORLD_MESH_ENABLED && worldMeshRenderer != null && renderer3DMeshFrame != null;
 		boolean drawProjectedMeshVisible =
 			!residentChunkReplacementComposite && (WORLD_MESH_VISIBLE || WORLD_MESH_TEXTURED_VISIBLE);
 		// LEGACY BRIDGE: projected object mesh covers scenery/wall objects only
@@ -1202,6 +1217,14 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		boolean drawResidentChunkDiagnostic =
 			(WORLD_CHUNKS_VISIBLE || WORLD_CHUNKS_FILLED_VISIBLE || WORLD_CHUNKS_TEXTURED_VISIBLE)
 				&& (!WORLD_CHUNKS_REPLACEMENT_COMPOSITE || residentChunkReplacementComposite);
+		if (shouldDrawRemasterTerrainShadowMask()
+			&& drawResidentChunkDiagnostic
+			&& worldChunkRenderer != null
+			&& frame.renderer3DFrame != null
+			&& worldChunkRenderer.canApplyRemasterTerrainShadowMaskInChunkShader(WORLD_CHUNKS_TEXTURED_VISIBLE)) {
+			remasterTerrainShadowMaskPrepared =
+				worldChunkRenderer.prepareRemasterTerrainShadowMask(frame.renderer3DFrame);
+		}
 		if (drawResidentChunkDiagnostic
 			&& worldChunkRenderer != null
 			&& frame.renderer3DFrame != null) {
@@ -1249,7 +1272,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 		if (shouldDrawRemasterTerrainShadowMask()
 			&& worldChunkRenderer != null
-			&& frame.renderer3DFrame != null) {
+			&& frame.renderer3DFrame != null
+			&& !remasterTerrainShadowMaskPrepared) {
 			worldChunkRenderer.drawRemasterTerrainShadowMask(frame.renderer3DFrame);
 			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		}

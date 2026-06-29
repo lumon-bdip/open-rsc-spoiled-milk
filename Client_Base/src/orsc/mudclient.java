@@ -15432,14 +15432,15 @@ public final class mudclient implements Runnable {
 						}
 					}
 
+					int cameraFollowDivisor = getCameraFollowSmoothingDivisor();
 					if (this.localPlayer.currentZ != this.cameraPositionZ) {
 						this.cameraPositionZ += (this.localPlayer.currentZ - this.cameraPositionZ)
-							/ ((this.cameraZoom - 500) / 15 + 16);
+							/ cameraFollowDivisor;
 					}
 
 					if (this.cameraPositionX != this.localPlayer.currentX) {
 						this.cameraPositionX += (this.localPlayer.currentX - this.cameraPositionX)
-							/ ((this.cameraZoom - 500) / 15 + 16);
+							/ cameraFollowDivisor;
 					}
 				} else if (this.cameraPositionX - this.localPlayer.currentX < -500
 					|| this.cameraPositionX - this.localPlayer.currentX > 500
@@ -15852,6 +15853,12 @@ public final class mudclient implements Runnable {
 
 	private int getWorldScaledCameraZoom(int zoom) {
 		return zoom;
+	}
+
+	private int getCameraFollowSmoothingDivisor() {
+		int normalMaxCameraZoom = minCameraZoom + NORMAL_CAMERA_ZOOM_MAX * 2;
+		int followZoom = Math.min(this.cameraZoom, normalMaxCameraZoom);
+		return Math.max(1, (followZoom - 500) / 15 + 16);
 	}
 
 	private void applyGameplayFog(int scaledCameraZoom) {

@@ -35,6 +35,10 @@ final class RenderSurfaceSettings {
 		return mode.aspectLabel;
 	}
 
+	static String getDebugAspectLabel() {
+		return mode.width * 9 == mode.height * 16 ? "16:9" : "4:3";
+	}
+
 	static Mode cycleMode() {
 		Mode next = mode.next();
 		mode = next;

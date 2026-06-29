@@ -39,6 +39,7 @@ final class RendererDebugSettings {
 
 	static boolean toggleOverlay() {
 		overlayEnabled = !overlayEnabled;
+		RenderTelemetry.resetOpenGLFramePacing();
 		return overlayEnabled;
 	}
 
