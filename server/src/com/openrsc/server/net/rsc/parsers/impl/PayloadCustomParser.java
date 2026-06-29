@@ -823,8 +823,8 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 
 			case GAME_SETTINGS_CHANGED:
 				GameSettingStruct gs = new GameSettingStruct();
-				int setting = gs.index = packet.readByte();
-				int value = gs.value = packet.readByte();
+				int setting = gs.index = packet.readUnsignedByte();
+				int value = gs.value = packet.readUnsignedByte();
 				if (setting == 0) {
 					gs.cameraModeAuto = value;
 				} else if (setting == 2) {

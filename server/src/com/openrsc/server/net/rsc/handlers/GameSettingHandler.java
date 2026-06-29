@@ -9,6 +9,10 @@ import com.openrsc.server.net.rsc.struct.incoming.GameSettingStruct;
 
 public final class GameSettingHandler implements PayloadProcessor<GameSettingStruct, OpcodeIn> {
 
+	private static int clamp(final int value, final int min, final int max) {
+		return Math.max(min, Math.min(max, value));
+	}
+
 	public void process(GameSettingStruct payload, Player player) throws Exception {
 
 		final int idx = payload.index;
@@ -17,7 +21,7 @@ public final class GameSettingHandler implements PayloadProcessor<GameSettingStr
 			return;
 		}
 
-		final byte value = (byte) payload.value;
+		final int value = payload.value & 0xFF;
 
 		if (idx >= 4) {
 			if (idx == 4) {
@@ -47,7 +51,7 @@ public final class GameSettingHandler implements PayloadProcessor<GameSettingStr
 			} else if (idx == 22) {
 				player.getCache().set("setting_swipe_zoom_mode", value);
 			} else if (idx == 23) {
-				player.getCache().set("setting_last_zoom", value);
+				player.getCache().set("setting_last_zoom", clamp(value, 0, 255));
 			} else if (idx == 24) {
 				player.getCache().store("setting_batch_progressbar", value== 1);
 			} else if (idx == 25) {

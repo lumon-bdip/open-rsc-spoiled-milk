@@ -4650,7 +4650,7 @@ public final class Player extends Mob {
 
 	public int getLastZoom() {
 		if (getCache().hasKey("setting_last_zoom")) {
-			return getCache().getInt("setting_last_zoom");
+			return Math.max(0, Math.min(255, getCache().getInt("setting_last_zoom")));
 		}
 		return 125;
 	}
