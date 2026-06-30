@@ -23,6 +23,7 @@ import com.openrsc.server.plugins.authentic.skills.fishing.Fishing;
 import com.openrsc.server.plugins.authentic.skills.woodcutting.Woodcutting;
 import com.openrsc.server.plugins.triggers.CommandTrigger;
 import com.openrsc.server.util.MessageFilter;
+import com.openrsc.server.util.WorldSceneryEditFiles;
 import com.openrsc.server.util.rsc.AppearanceRetroConverter;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.MessageType;
@@ -31,11 +32,17 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 import static com.openrsc.server.plugins.Functions.*;
 
 public final class Development implements CommandTrigger {
 	private static final Logger LOGGER = LogManager.getLogger(Development.class);
+	private static final LinkedHashMap<String, WorldSceneryEditFiles.Edit> PENDING_SCENERY_EDITS =
+		new LinkedHashMap<String, WorldSceneryEditFiles.Edit>();
+	private static final HashMap<String, Integer> LAST_SCENERY_PLACEMENT_IDS =
+		new HashMap<String, Integer>();
 
 	public static String messagePrefix = null;
 	public static String badSyntaxPrefix = null;
@@ -71,11 +78,23 @@ public final class Development implements CommandTrigger {
 		else if (command.equalsIgnoreCase("createobject") || command.equalsIgnoreCase("cobject") || command.equalsIgnoreCase("addobject") || command.equalsIgnoreCase("aobject") || command.equalsIgnoreCase("createscenery") || command.equalsIgnoreCase("cscenery") || command.equalsIgnoreCase("addscenery") || command.equalsIgnoreCase("ascenery")) {
 			createObject(player, command, args);
 		}
+		else if (command.equalsIgnoreCase("r") || command.equalsIgnoreCase("repeatobject") || command.equalsIgnoreCase("repeatscenery")) {
+			repeatLastSceneryObject(player, command, args);
+		}
 		else if (command.equalsIgnoreCase("createwallobject") || command.equalsIgnoreCase("cwallobject") || command.equalsIgnoreCase("addwallobject") || command.equalsIgnoreCase("awallobject") || command.equalsIgnoreCase("createboundary") || command.equalsIgnoreCase("cboundary") || command.equalsIgnoreCase("addboundary") || command.equalsIgnoreCase("aboundary")) {
 			createWallObject(player, command, args);
 		}
 		else if (command.equalsIgnoreCase("rotateobject") || command.equalsIgnoreCase("rotatescenery")) {
 			rotateObject(player, command, args);
+		}
+		else if (command.equalsIgnoreCase("worldedits") || command.equalsIgnoreCase("listworldedits")) {
+			listWorldEdits(player);
+		}
+		else if (command.equalsIgnoreCase("saveworldedits")) {
+			saveWorldEdits(player);
+		}
+		else if (command.equalsIgnoreCase("clearworldedits") || command.equalsIgnoreCase("discardworldedits")) {
+			clearWorldEdits(player);
 		}
 		else if (command.equalsIgnoreCase("tile")) {
 			tileInformation(player);
@@ -597,7 +616,34 @@ public final class Development implements CommandTrigger {
 		final GameObject newObject = new GameObject(player.getWorld(), Point.location(x, y), id, 0, 0);
 
 		player.getWorld().registerGameObject(newObject);
+		queueWorldSceneryUpsert(player, newObject);
+		rememberLastSceneryPlacement(player, id);
 		player.message(messagePrefix + "Added scenery: " + newObject.getGameObjectDef().getName() + " with ID " + newObject.getID() + " at " + newObject.getLocation());
+	}
+
+	private void repeatLastSceneryObject(Player player, String command, String[] args) {
+		if (args.length != 0) {
+			player.message(badSyntaxPrefix + command.toUpperCase());
+			return;
+		}
+
+		Integer id;
+		synchronized (LAST_SCENERY_PLACEMENT_IDS) {
+			id = LAST_SCENERY_PLACEMENT_IDS.get(player.getUsername());
+		}
+
+		if (id == null) {
+			player.message(messagePrefix + "No scenery placement to repeat. Use ::addobject [id] first.");
+			return;
+		}
+
+		createObject(player, "addobject", new String[] { String.valueOf(id) });
+	}
+
+	private void rememberLastSceneryPlacement(Player player, int id) {
+		synchronized (LAST_SCENERY_PLACEMENT_IDS) {
+			LAST_SCENERY_PLACEMENT_IDS.put(player.getUsername(), id);
+		}
 	}
 
 	private void createWallObject(Player player, String command, String[] args) {
@@ -719,6 +765,7 @@ public final class Development implements CommandTrigger {
 
 		player.message(messagePrefix + "Removed scenery: " + object.getGameObjectDef().getName() + " with ID " + object.getID());
 		player.getWorld().unregisterGameObject(object);
+		queueWorldSceneryRemoval(player, object);
 	}
 
 	private void cycleScenery(Player player, String[] args) {
@@ -856,8 +903,107 @@ public final class Development implements CommandTrigger {
 
 		GameObject newObject = new GameObject(player.getWorld(), Point.location(x, y), object.getID(), direction, object.getType());
 		player.getWorld().registerGameObject(newObject);
+		queueWorldSceneryUpsert(player, newObject);
 
 		player.message(messagePrefix + "Rotated object: " + newObject.getGameObjectDef().getName() + " to rotation " + newObject.getDirection() + " with instance ID " + newObject.getID() + " at " + newObject.getLocation());
+	}
+
+	private void queueWorldSceneryUpsert(Player player, GameObject object) {
+		queueWorldSceneryEdit(player, WorldSceneryEditFiles.Edit.upsert(
+			object.getID(),
+			object.getX(),
+			object.getY(),
+			object.getDirection(),
+			object.getType()
+		));
+	}
+
+	private void queueWorldSceneryRemoval(Player player, GameObject object) {
+		queueWorldSceneryEdit(player, WorldSceneryEditFiles.Edit.remove(
+			object.getID(),
+			object.getX(),
+			object.getY(),
+			object.getDirection(),
+			object.getType()
+		));
+	}
+
+	private void queueWorldSceneryEdit(Player player, WorldSceneryEditFiles.Edit edit) {
+		if (edit.type != 0) {
+			player.message(messagePrefix + "World edit persistence currently supports scenery objects only.");
+			return;
+		}
+
+		int pendingCount;
+		synchronized (PENDING_SCENERY_EDITS) {
+			PENDING_SCENERY_EDITS.put(edit.key(), edit);
+			pendingCount = PENDING_SCENERY_EDITS.size();
+		}
+		player.message(messagePrefix + "Queued world edit. Pending edits: " + pendingCount + ". Use ::saveworldedits to persist.");
+	}
+
+	private void listWorldEdits(Player player) {
+		List<WorldSceneryEditFiles.Edit> edits;
+		synchronized (PENDING_SCENERY_EDITS) {
+			edits = new ArrayList<WorldSceneryEditFiles.Edit>(PENDING_SCENERY_EDITS.values());
+		}
+
+		if (edits.isEmpty()) {
+			player.message(messagePrefix + "No pending world edits.");
+			return;
+		}
+
+		player.message(messagePrefix + "Pending world edits: " + edits.size());
+		int shown = 0;
+		for (WorldSceneryEditFiles.Edit edit : edits) {
+			if (shown >= 8) {
+				player.message(messagePrefix + "...and " + (edits.size() - shown) + " more.");
+				return;
+			}
+			player.message(messagePrefix + edit.describe());
+			shown++;
+		}
+	}
+
+	private void saveWorldEdits(Player player) {
+		List<WorldSceneryEditFiles.Edit> edits;
+		synchronized (PENDING_SCENERY_EDITS) {
+			edits = new ArrayList<WorldSceneryEditFiles.Edit>(PENDING_SCENERY_EDITS.values());
+		}
+
+		if (edits.isEmpty()) {
+			player.message(messagePrefix + "No pending world edits to save.");
+			return;
+		}
+
+		try {
+			WorldSceneryEditFiles.SaveResult result = WorldSceneryEditFiles.save(
+				player.getWorld().getServer().getConfig().CONFIG_DIR,
+				edits
+			);
+			synchronized (PENDING_SCENERY_EDITS) {
+				for (WorldSceneryEditFiles.Edit edit : edits) {
+					PENDING_SCENERY_EDITS.remove(edit.key());
+				}
+			}
+			player.message(messagePrefix + "Saved " + result.editsApplied + " world edits.");
+			player.message(messagePrefix + "Scenery locs: " + result.sceneryLocsWritten
+				+ ", removals: " + result.removalsWritten + ".");
+			LOGGER.info(player.getUsername() + " saved " + result.editsApplied + " world scenery edits to "
+				+ result.sceneryLocsPath + " and " + result.removalsPath);
+		} catch (Exception e) {
+			LOGGER.error(e);
+			player.message(messagePrefix + "Failed to save world edits: " + e.getMessage());
+		}
+	}
+
+	private void clearWorldEdits(Player player) {
+		int count;
+		synchronized (PENDING_SCENERY_EDITS) {
+			count = PENDING_SCENERY_EDITS.size();
+			PENDING_SCENERY_EDITS.clear();
+		}
+		player.message(messagePrefix + "Cleared " + count + " pending world edits. Live objects were not reverted.");
 	}
 
 	private void tileInformation(Player player) {

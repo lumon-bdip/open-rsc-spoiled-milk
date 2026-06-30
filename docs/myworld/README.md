@@ -18,6 +18,7 @@ repository root [`README.md`](../../README.md).
 - [terrain-expansion-plan.md](terrain-expansion-plan.md): staged Heroes' Guild basement and northern Wilderness terrain expansion plan, including isolated testing and map safety requirements.
 - [renderer-and-shader-roadmap.md](renderer-and-shader-roadmap.md): AI-facing current state and forward roadmap for renderer-v2, shaders, remaster lighting, shadows, and big-swing optimization work.
 - [code-cleanup-and-modularization-plan.md](code-cleanup-and-modularization-plan.md): AI-facing cleanup roadmap for breaking up oversized renderer/client/server files and quarantining stale options.
+- [legacy-limits-audit.md](legacy-limits-audit.md): AI-facing audit of byte/short-era caps, fixed client arrays, renderer capture ceilings, and protocol boundaries that can become remaster bugs.
 - [renderer-v2-plan.md](renderer-v2-plan.md): active alpha-era client renderer rewrite plan, including the renderer ownership contract, remaster strategy, current OpenGL rollout baseline, legacy-derived terrain lighting, longer-term shader work, scaling, and rollout gates.
 - [remaster-lighting-and-shadow-plan.md](remaster-lighting-and-shadow-plan.md): focused forward plan for clean-slate directional remaster lighting, semantic shadow casters, indoor/outdoor classification, and clipping-aware terrain shadows.
 - [movement-pathing-release-plan.md](movement-pathing-release-plan.md): release-facing diagnosis and staged plan for walking smoothness, NPC roam batching, and proper obstacle pathfinding.
@@ -34,6 +35,7 @@ repository root [`README.md`](../../README.md).
 - [herblaw-potion-rework-plan.md](herblaw-potion-rework-plan.md): new square-one Herblaw and potion design plan, including stable-duration boosts and potion family grouping.
 - [migration-regression-audit.md](migration-regression-audit.md): resolved migration recovery record and guardrail notes.
 - [dev-admin-commands.md](dev-admin-commands.md): MyWorld development account roles and practical command reference.
+- [object-ids.md](object-ids.md): builder-facing scenery/object ID reference, starting with mineable ore, rock, and gem nodes.
 - [testing-quick-reference.md](testing-quick-reference.md): compact field-testing reference for commands, IDs, and targeted test fixtures.
 - [client-sprite-reference.md](client-sprite-reference.md): lookup notes for custom sprite references, authentic item icon offsets, and equipment palette exports.
 - This README: current repository shape, active paths, and archived reference locations.

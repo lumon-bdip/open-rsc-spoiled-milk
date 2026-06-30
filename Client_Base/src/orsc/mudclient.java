@@ -1393,6 +1393,20 @@ public final class mudclient implements Runnable {
 		ClientRuntimeLogger.logThrowable(context, throwable);
 		throwable.printStackTrace();
 		this.errorGameCrash();
+		this.threadState = -2;
+		this.clientBaseThread = null;
+		try {
+			this.closeConnection(false);
+		} catch (RuntimeException e) {
+			ClientRuntimeLogger.logThrowable("Failed to close connection after client loop failure", e);
+		}
+		try {
+			if (clientPort != null) {
+				clientPort.close();
+			}
+		} catch (RuntimeException e) {
+			ClientRuntimeLogger.logThrowable("Failed to close client port after client loop failure", e);
+		}
 	}
 
 	private void closeProgram() {

@@ -852,9 +852,9 @@ public final class DoSkillInterface {
 			skillDoing = "Smithing";
 			doSkillItems.add(new DoSkillItem(169, "1", "1 Tin ore & 1 copper ore"));
 			doSkillItems.add(new DoSkillItem(170, "15", "1 Iron ore"));
-			doSkillItems.add(new DoSkillItem(384, "20", "1 Silver ore"));
+			doSkillItems.add(new DoSkillItem(384, "20", "1 Silver nugget"));
 			doSkillItems.add(new DoSkillItem(171, "30", "2 Coal & 1 iron ore"));
-			doSkillItems.add(new DoSkillItem(172, "40", "1 Gold ore"));
+			doSkillItems.add(new DoSkillItem(172, "40", "1 Gold nugget"));
 			doSkillItems.add(new DoSkillItem(173, "50", "4 Coal & 1 mithril ore"));
 			doSkillItems.add(new DoSkillItem(174, "70", "6 Coal & 1 adamantite ore"));
 			doSkillItems.add(new DoSkillItem(408, "85", "8 Coal & 1 runite ore"));

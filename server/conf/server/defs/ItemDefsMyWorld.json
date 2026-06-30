@@ -22,7 +22,7 @@
     },
     {
       "id": 152,
-      "name": "Gold ore",
+      "name": "Gold nugget",
       "basePrice": 300
     },
     {
@@ -77,7 +77,7 @@
     },
     {
       "id": 383,
-      "name": "Silver ore"
+      "name": "Silver nugget"
     },
     {
       "id": 384,

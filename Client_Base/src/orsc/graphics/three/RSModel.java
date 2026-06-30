@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import orsc.MiscFunctions;
@@ -221,6 +222,94 @@ public final class RSModel {
 			throw GenUtil.makeThrowable(var4,
 				"ca.<init>(" + (models != null ? "{...}" : "null") + ',' + modelCount + ')');
 		}
+	}
+
+	void ensureCapacity(int minVertexCapacity, int minFaceCapacity) {
+		if (minVertexCapacity > this.vertexCount2) {
+			int vertexCapacity = growCapacity(this.vertexCount2, minVertexCapacity);
+			this.vertY = Arrays.copyOf(this.vertY, vertexCapacity);
+			this.vertLightOther = Arrays.copyOf(this.vertLightOther, vertexCapacity);
+			this.vertX = Arrays.copyOf(this.vertX, vertexCapacity);
+			this.vertZ = Arrays.copyOf(this.vertZ, vertexCapacity);
+			this.vertDiffuseLight = Arrays.copyOf(this.vertDiffuseLight, vertexCapacity);
+			if (this.vertexParam2 != null) {
+				this.vertexParam2 = Arrays.copyOf(this.vertexParam2, vertexCapacity);
+			}
+			if (this.vertYRot != null) {
+				this.vertYRot = Arrays.copyOf(this.vertYRot, vertexCapacity);
+			}
+			if (this.vertXRot != null) {
+				this.vertXRot = Arrays.copyOf(this.vertXRot, vertexCapacity);
+			}
+			if (this.vertZRot != null) {
+				this.vertZRot = Arrays.copyOf(this.vertZRot, vertexCapacity);
+			}
+			if (this.vertexParam6 != null) {
+				this.vertexParam6 = Arrays.copyOf(this.vertexParam6, vertexCapacity);
+			}
+			if (this.m_v) {
+				this.vertXTransform = this.vertX;
+				this.vertZTransform = this.vertZ;
+				this.vertYTransform = this.vertY;
+			} else {
+				this.vertXTransform = Arrays.copyOf(this.vertXTransform, vertexCapacity);
+				this.vertZTransform = Arrays.copyOf(this.vertZTransform, vertexCapacity);
+				this.vertYTransform = Arrays.copyOf(this.vertYTransform, vertexCapacity);
+			}
+			if (this.fishingSpotClarityBaseX != null) {
+				this.fishingSpotClarityBaseX = Arrays.copyOf(this.fishingSpotClarityBaseX, vertexCapacity);
+				this.fishingSpotClarityBaseY = Arrays.copyOf(this.fishingSpotClarityBaseY, vertexCapacity);
+				this.fishingSpotClarityBaseZ = Arrays.copyOf(this.fishingSpotClarityBaseZ, vertexCapacity);
+				this.fishingSpotClarityRippleGroup = Arrays.copyOf(this.fishingSpotClarityRippleGroup, vertexCapacity);
+			}
+			this.vertexCount2 = vertexCapacity;
+		}
+
+		if (minFaceCapacity > this.faceCount) {
+			int faceCapacity = growCapacity(this.faceCount, minFaceCapacity);
+			if (this.m_zb != null) {
+				this.m_zb = Arrays.copyOf(this.m_zb, faceCapacity);
+			}
+			if (this.facePickIndex != null) {
+				this.facePickIndex = Arrays.copyOf(this.facePickIndex, faceCapacity);
+			}
+			this.scenePolyNormalMagnitude = Arrays.copyOf(this.scenePolyNormalMagnitude, faceCapacity);
+			this.scenePolyNormalShift = Arrays.copyOf(this.scenePolyNormalShift, faceCapacity);
+			this.faceTextureBack = Arrays.copyOf(this.faceTextureBack, faceCapacity);
+			this.faceTextureFront = Arrays.copyOf(this.faceTextureFront, faceCapacity);
+			this.faceIndices = Arrays.copyOf(this.faceIndices, faceCapacity);
+			this.faceIndexCount = Arrays.copyOf(this.faceIndexCount, faceCapacity);
+			this.faceDiffuseLight = Arrays.copyOf(this.faceDiffuseLight, faceCapacity);
+			if (this.faceMaxX != null) {
+				this.faceMaxX = Arrays.copyOf(this.faceMaxX, faceCapacity);
+				this.faceMinY = Arrays.copyOf(this.faceMinY, faceCapacity);
+				this.faceMinZ = Arrays.copyOf(this.faceMinZ, faceCapacity);
+				this.faceMaxY = Arrays.copyOf(this.faceMaxY, faceCapacity);
+				this.faceMaxZ = Arrays.copyOf(this.faceMaxZ, faceCapacity);
+				this.faceMinX = Arrays.copyOf(this.faceMinX, faceCapacity);
+			}
+			if (this.faceNormY != null) {
+				this.faceNormY = Arrays.copyOf(this.faceNormY, faceCapacity);
+				this.faceNormZ = Arrays.copyOf(this.faceNormZ, faceCapacity);
+				this.faceNormX = Arrays.copyOf(this.faceNormX, faceCapacity);
+			}
+			if (this.faceParam1 != null) {
+				this.faceParam1 = Arrays.copyOf(this.faceParam1, faceCapacity);
+			}
+			this.faceCount = faceCapacity;
+		}
+	}
+
+	private static int growCapacity(int currentCapacity, int requiredCapacity) {
+		int grownCapacity = Math.max(1, currentCapacity);
+		while (grownCapacity < requiredCapacity) {
+			int increment = Math.max(128, grownCapacity / 2);
+			grownCapacity += increment;
+			if (grownCapacity < 0) {
+				return requiredCapacity;
+			}
+		}
+		return grownCapacity;
 	}
 
 	public int hideBackFacesMatching(int texture) {

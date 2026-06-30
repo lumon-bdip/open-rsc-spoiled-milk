@@ -12,6 +12,7 @@ import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.SystemUtil;
+import com.openrsc.server.util.WorldSceneryEditFiles;
 import com.openrsc.server.util.rsc.Formulae;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +22,7 @@ import org.json.JSONObject;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Set;
 
 import static org.apache.logging.log4j.util.Unbox.box;
 
@@ -72,6 +74,8 @@ public final class WorldPopulator {
 			loadGameObjLocs(getWorld().getServer().getConfig().CONFIG_DIR + authenticSceneryFile, LocType.Scenery);
 			loadCustomLocs(LocType.Boundary);
 			loadCustomLocs(LocType.Scenery);
+			applyMyWorldSceneryRemovals();
+			loadMyWorldSceneryLocs();
 			// SceneryObject objects[] = getWorld().getServer().getDatabase().getObjects();
 			// for (SceneryObject object : objects) {
 			for (GameObjectLoc loc : gameobjlocs) {
@@ -259,9 +263,6 @@ public final class WorldPopulator {
 						loadGameObjLocs(getWorld().getServer().getConfig().CONFIG_DIR + "/defs/locs/SceneryLocsWoodcuttingGuild.json", type);
 					}
 					loadGameObjLocs(getWorld().getServer().getConfig().CONFIG_DIR + "/defs/locs/SceneryLocsOther.json", type);
-					if (getWorld().getServer().getConfig().WANT_MYWORLD) {
-						loadOptionalGameObjLocs(getWorld().getServer().getConfig().CONFIG_DIR + "/defs/locs/MyWorldSceneryLocs.json", type);
-					}
 				}
 				return;
 			}
@@ -454,6 +455,38 @@ public final class WorldPopulator {
 		if (Files.exists(Paths.get(filename))) {
 			loadGameObjLocs(filename, type);
 		}
+	}
+
+	private void applyMyWorldSceneryRemovals() {
+		if (!getWorld().getServer().getConfig().WANT_MYWORLD) {
+			return;
+		}
+
+		try {
+			Set<String> removals = WorldSceneryEditFiles.readSceneryRemovalKeys(
+				WorldSceneryEditFiles.sceneryRemovalsPath(getWorld().getServer().getConfig().CONFIG_DIR)
+			);
+			if (removals.isEmpty()) {
+				return;
+			}
+
+			int before = gameobjlocs.size();
+			gameobjlocs.removeIf(loc -> loc.type == 0 && loc.location != null
+				&& removals.contains(WorldSceneryEditFiles.sceneryKey(loc.getX(), loc.getY())));
+			LOGGER.info("Applied " + (before - gameobjlocs.size()) + " MyWorld scenery removals.");
+		} catch (Exception e) {
+			LOGGER.error(e);
+		}
+	}
+
+	private void loadMyWorldSceneryLocs() {
+		if (!getWorld().getServer().getConfig().WANT_MYWORLD) {
+			return;
+		}
+		loadOptionalGameObjLocs(
+			WorldSceneryEditFiles.sceneryLocsPath(getWorld().getServer().getConfig().CONFIG_DIR).toString(),
+			LocType.Scenery
+		);
 	}
 
 	private void applyMyWorldNpcLocationCleanup() {

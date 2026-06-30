@@ -1290,10 +1290,10 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(150, "8", "Copper Ore"));
 			skillMenuEntries.add(new SkillMenuItem(266, "10", "Blurite Ore"));
 			skillMenuEntries.add(new SkillMenuItem(151, "15", "Iron Ore"));
-			skillMenuEntries.add(new SkillMenuItem(383, "20", "Silver Ore"));
+			skillMenuEntries.add(new SkillMenuItem(383, "20", "Silver Nugget"));
 			skillMenuEntries.add(new SkillMenuItem(155, "22", "Coal"));
 			skillMenuEntries.add(new SkillMenuItem(153, "38", "Mithril Ore"));
-			skillMenuEntries.add(new SkillMenuItem(152, "40", "Gold"));
+			skillMenuEntries.add(new SkillMenuItem(152, "40", "Gold Nugget"));
 			skillMenuEntries.add(new SkillMenuItem(889, "40", "Gem Rocks"));
 			skillMenuEntries.add(new SkillMenuItem(154, "54", "Adamantite Ore"));
 			skillMenuEntries.add(new SkillMenuItem(409, "70", "Runite Ore"));
@@ -1471,12 +1471,12 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(1955, "1", "Tin bar - 1 tin ore"));
 			skillMenuEntries.add(new SkillMenuItem(1956, "8", "Copper bar - 1 copper ore"));
 			skillMenuEntries.add(new SkillMenuItem(169, "15", "Bronze bar - 1 tin ore and 1 copper ore"));
-			skillMenuEntries.add(new SkillMenuItem(384, "20", "Silver bar - 1 silver ore"));
+			skillMenuEntries.add(new SkillMenuItem(384, "20", "Silver bar - 1 silver nugget"));
 			skillMenuEntries.add(new SkillMenuItem(170, "22", "Iron bar - failed smelts create pig iron"));
 			skillMenuEntries.add(new SkillMenuItem(2753, "22", "Pig Iron bar - recovered from failed iron"));
 			skillMenuEntries.add(new SkillMenuItem(171, "30", "Steel bar - 1 iron or pig iron and 1 coal"));
 			skillMenuEntries.add(new SkillMenuItem(173, "38", "Mithril bar - 1 mithril ore and 2 coal"));
-			skillMenuEntries.add(new SkillMenuItem(172, "40", "Gold bar - 1 gold ore"));
+			skillMenuEntries.add(new SkillMenuItem(172, "40", "Gold bar - 1 gold nugget"));
 			skillMenuEntries.add(new SkillMenuItem(1957, "46", "Titan steel bar - mithril, silver, and 3 coal"));
 			skillMenuEntries.add(new SkillMenuItem(174, "54", "Adamantite bar - 1 adamantite ore and 4 coal"));
 			skillMenuEntries.add(new SkillMenuItem(1958, "62", "2 Orichalcum bars - 1 mithril, 1 adamantite, and 5 coal"));

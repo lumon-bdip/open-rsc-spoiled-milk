@@ -9,6 +9,7 @@ import orsc.graphics.two.GraphicsController;
 import orsc.util.FastMath;
 import orsc.util.GenUtil;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 
 public final class Scene {
@@ -2627,6 +2628,7 @@ public final class Scene {
 
 	public final int drawSprite(int var1, int var2, int var3, int var4, int var5, int var6, int var7, byte var8) {
 		try {
+			this.ensureSpriteCapacity(this.m_n + 1);
 
 			this.m_gb[this.m_n] = var1;
 			this.m_Fb[this.m_n] = var4;
@@ -2638,8 +2640,14 @@ public final class Scene {
 			this.renderer3DCharacterTagged[this.m_n] = false;
 			int var9 = this.m_T.insertVertex2(false, var2, var4, var5);
 			int var10 = this.m_T.insertVertex2(false, var2, var4, var5 - var7);
+			if (var9 < 0 || var10 < 0) {
+				return -1;
+			}
 			int[] var11 = new int[]{var9, var10};
-			this.m_T.insertFace(2, var11, 0, 0, false);
+			int var13 = this.m_T.insertFace(2, var11, 0, 0, false);
+			if (var13 < 0) {
+				return -1;
+			}
 			this.m_T.facePickIndex[this.m_n] = var3;
 			this.m_T.m_zb[this.m_n++] = 0;
 			return this.m_n - 1;
@@ -2647,6 +2655,48 @@ public final class Scene {
 			throw GenUtil.makeThrowable(var12, "lb.HA(" + var1 + ',' + var2 + ',' + var3 + ',' + var4 + ',' + var5 + ','
 				+ var6 + ',' + var7 + ',' + 109 + ')');
 		}
+	}
+
+	private void ensureSpriteCapacity(int requiredCapacity) {
+		if (requiredCapacity <= this.m_gb.length) {
+			return;
+		}
+
+		int newCapacity = this.m_gb.length;
+		while (newCapacity < requiredCapacity) {
+			int increment = Math.max(128, newCapacity / 2);
+			newCapacity += increment;
+		}
+
+		this.m_ob = Arrays.copyOf(this.m_ob, newCapacity);
+		this.m_Eb = Arrays.copyOf(this.m_Eb, newCapacity);
+		this.m_Fb = Arrays.copyOf(this.m_Fb, newCapacity);
+		this.m_Ob = Arrays.copyOf(this.m_Ob, newCapacity);
+		this.m_Q = Arrays.copyOf(this.m_Q, newCapacity);
+		this.m_gb = Arrays.copyOf(this.m_gb, newCapacity);
+		this.m_a = Arrays.copyOf(this.m_a, newCapacity);
+		this.renderer3DCharacterTagged = Arrays.copyOf(this.renderer3DCharacterTagged, newCapacity);
+		this.renderer3DCharacterCombatDirection = Arrays.copyOf(this.renderer3DCharacterCombatDirection, newCapacity);
+		this.renderer3DCharacterActiveHitSplats = Arrays.copyOf(this.renderer3DCharacterActiveHitSplats, newCapacity);
+		this.renderer3DCharacterArrayIndex = Arrays.copyOf(this.renderer3DCharacterArrayIndex, newCapacity);
+		this.renderer3DCharacterServerIndex = Arrays.copyOf(this.renderer3DCharacterServerIndex, newCapacity);
+		this.renderer3DCharacterEntityId = Arrays.copyOf(this.renderer3DCharacterEntityId, newCapacity);
+		this.renderer3DCharacterVisualOffsetX = Arrays.copyOf(this.renderer3DCharacterVisualOffsetX, newCapacity);
+		this.renderer3DCharacterVisualOffsetZ = Arrays.copyOf(this.renderer3DCharacterVisualOffsetZ, newCapacity);
+		this.renderer3DCharacterCombatTimeout = Arrays.copyOf(this.renderer3DCharacterCombatTimeout, newCapacity);
+		this.renderer3DCharacterHealthCurrent = Arrays.copyOf(this.renderer3DCharacterHealthCurrent, newCapacity);
+		this.renderer3DCharacterHealthMax = Arrays.copyOf(this.renderer3DCharacterHealthMax, newCapacity);
+		this.renderer3DCharacterDamageTaken = Arrays.copyOf(this.renderer3DCharacterDamageTaken, newCapacity);
+		this.renderer3DCharacterAttackingNpcServerIndex =
+			Arrays.copyOf(this.renderer3DCharacterAttackingNpcServerIndex, newCapacity);
+		this.renderer3DCharacterAttackingPlayerServerIndex =
+			Arrays.copyOf(this.renderer3DCharacterAttackingPlayerServerIndex, newCapacity);
+		this.renderer3DCharacterCombatEffectType = Arrays.copyOf(this.renderer3DCharacterCombatEffectType, newCapacity);
+		this.renderer3DCharacterCombatEffectTime = Arrays.copyOf(this.renderer3DCharacterCombatEffectTime, newCapacity);
+		this.renderer3DCharacterKind = Arrays.copyOf(this.renderer3DCharacterKind, newCapacity);
+		this.renderer3DCharacterDisplayName = Arrays.copyOf(this.renderer3DCharacterDisplayName, newCapacity);
+		this.renderer3DCharacterDirection = Arrays.copyOf(this.renderer3DCharacterDirection, newCapacity);
+		this.m_T.ensureCapacity(newCapacity * 2, newCapacity);
 	}
 
 	public void tagCharacterSprite(

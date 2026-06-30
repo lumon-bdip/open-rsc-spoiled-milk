@@ -9,7 +9,13 @@ public final class RSRuntimeError extends RuntimeException {
 	public String message;
 
 	RSRuntimeError(Throwable error, String message) {
+		super(message, error);
 		this.error = error;
 		this.message = message;
+	}
+
+	@Override
+	public String getMessage() {
+		return this.message;
 	}
 }

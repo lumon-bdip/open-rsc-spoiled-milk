@@ -208,7 +208,7 @@ enum BankItemTag {
 
 	private static boolean isCraftingJewelry(String name, boolean gem) {
 		return isJewelryGemMaterial(name, gem)
-			|| equalsAny(name, "gold ore", "gold bar", "silver ore", "silver bar", "wool", "ball of wool")
+			|| equalsAny(name, "gold nugget", "gold bar", "silver nugget", "silver bar", "wool", "ball of wool")
 			|| isJewelryMould(name);
 	}
 
@@ -242,7 +242,7 @@ enum BankItemTag {
 	}
 
 	private static boolean isRawMiningMaterial(String name) {
-		return equalsAny(name, "stone", "silver", "gold", "coal", "limestone", "granite");
+		return equalsAny(name, "stone", "silver", "silver nugget", "gold", "gold nugget", "coal", "limestone", "granite");
 	}
 
 	private static boolean isWoodcuttingAxe(String name) {
