@@ -1542,7 +1542,7 @@ public class PacketHandler {
 		int localDirection = packetsIncoming.getUnsignedByte();
 		mc.applyCustomMovementUpdate(localX, localZ, localDirection);
 
-		int playerCount = packetsIncoming.getUnsignedByte();
+		int playerCount = packetsIncoming.getShort();
 		for (int i = 0; i < playerCount; i++) {
 			int serverIndex = packetsIncoming.getShort();
 			int x = packetsIncoming.getShort();
@@ -1551,7 +1551,7 @@ public class PacketHandler {
 			mc.applyCustomPlayerMovementUpdate(serverIndex, x, z, direction);
 		}
 
-		int npcCount = packetsIncoming.getUnsignedByte();
+		int npcCount = packetsIncoming.getShort();
 		for (int i = 0; i < npcCount; i++) {
 			int serverIndex = packetsIncoming.getShort();
 			int x = packetsIncoming.getShort();

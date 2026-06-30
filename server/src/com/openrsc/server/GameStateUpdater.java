@@ -39,6 +39,7 @@ import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacket;
 public final class GameStateUpdater {
 	private static final int CUSTOM_MOB_COORD_OFFSET_BITS = 8;
 	private static final int CUSTOM_CLIENT_REGION_REFRESH_RADIUS = 80;
+	private static final int CUSTOM_MOVEMENT_UPDATE_LIMIT = 0xFFFF;
 	private static final int LOCAL_NPC_LIMIT = 255;
 	private static final String NPC_DEATH_VISUAL_SENT_TICK_PREFIX = "npc_death_visual_sent_tick_";
 	private static final String WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE = "world_time_last_sync_millis";
@@ -207,7 +208,7 @@ public final class GameStateUpdater {
 		struct.localSprite = player.getSprite();
 
 		for (final Player movedPlayer : movedPlayers) {
-			if (struct.players.size() >= 255) {
+			if (struct.players.size() >= CUSTOM_MOVEMENT_UPDATE_LIMIT) {
 				break;
 			}
 			if (movedPlayer.equals(player) || !player.getLocalPlayers().contains(movedPlayer)) {
@@ -221,7 +222,7 @@ public final class GameStateUpdater {
 		}
 
 		for (final Npc movedNpc : movedNpcs) {
-			if (struct.npcs.size() >= 255) {
+			if (struct.npcs.size() >= CUSTOM_MOVEMENT_UPDATE_LIMIT) {
 				break;
 			}
 			if (!player.getLocalNpcs().contains(movedNpc)) {

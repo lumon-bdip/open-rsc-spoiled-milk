@@ -723,14 +723,14 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					builder.writeShort(movement.localX);
 					builder.writeShort(movement.localY);
 					builder.writeByte((byte) movement.localSprite);
-					builder.writeByte((byte) movement.players.size());
+					builder.writeShort(movement.players.size());
 					for (MovementUpdateStruct.MobMovement playerMovement : movement.players) {
 						builder.writeShort(playerMovement.serverIndex);
 						builder.writeShort(playerMovement.x);
 						builder.writeShort(playerMovement.y);
 						builder.writeByte((byte) playerMovement.sprite);
 					}
-					builder.writeByte((byte) movement.npcs.size());
+					builder.writeShort(movement.npcs.size());
 					for (MovementUpdateStruct.MobMovement npcMovement : movement.npcs) {
 						builder.writeShort(npcMovement.serverIndex);
 						builder.writeShort(npcMovement.x);
