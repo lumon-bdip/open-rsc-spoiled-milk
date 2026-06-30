@@ -170,6 +170,7 @@ final class LwjglBindings {
 	final int GL_TEXTURE_2D;
 	final int GL_TEXTURE0;
 	final int GL_TEXTURE1;
+	final int GL_TEXTURE2;
 	final int GL_TEXTURE_MIN_FILTER;
 	final int GL_TEXTURE_MAG_FILTER;
 	final int GL_TEXTURE_WRAP_S;
@@ -441,6 +442,7 @@ final class LwjglBindings {
 		GL_TEXTURE_2D = constant(gl11Class, "GL_TEXTURE_2D");
 		GL_TEXTURE0 = constant(gl13Class, "GL_TEXTURE0");
 		GL_TEXTURE1 = constant(gl13Class, "GL_TEXTURE1");
+		GL_TEXTURE2 = constant(gl13Class, "GL_TEXTURE2");
 		GL_TEXTURE_MIN_FILTER = constant(gl11Class, "GL_TEXTURE_MIN_FILTER");
 		GL_TEXTURE_MAG_FILTER = constant(gl11Class, "GL_TEXTURE_MAG_FILTER");
 		GL_TEXTURE_WRAP_S = constant(gl11Class, "GL_TEXTURE_WRAP_S");

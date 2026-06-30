@@ -144,6 +144,12 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private long remasterShadowMaskUploadedSignature;
 	private final RemasterShadowMaskBuilder remasterShadowMaskBuilder = new RemasterShadowMaskBuilder();
 	private RemasterTerrainShadowMask activeRemasterShadowMask;
+	private int remasterGlowMaskTextureId;
+	private int remasterGlowMaskTextureWidth;
+	private int remasterGlowMaskTextureHeight;
+	private long remasterGlowMaskUploadedSignature;
+	private final RemasterGlowMaskBuilder remasterGlowMaskBuilder = new RemasterGlowMaskBuilder();
+	private RemasterGlowMask activeRemasterGlowMask;
 	private RemasterShadowRoofCoverage cachedRemasterShadowRoofCoverage;
 	private long cachedRemasterShadowRoofCoverageSignature;
 	private boolean cachedRemasterShadowRoofCoverageKnown;
@@ -738,6 +744,22 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		activeRemasterShadowMask = null;
 	}
 
+	private boolean prepareRemasterGlowMask(Renderer3DFrame frame) throws Exception {
+		activeRemasterGlowMask = null;
+		Renderer3DWorldChunkFrame chunkFrame = frame == null ? null : frame.getWorldChunkFrame();
+		if (chunkFrame == null || chunkFrame.getChunkCount() <= 0) {
+			return false;
+		}
+		RemasterGlowMaskBuild glowBuild = remasterGlowMaskBuilder.build(chunkFrame);
+		if (glowBuild == null || glowBuild.mask == null) {
+			return false;
+		}
+		RemasterGlowMask glowMask = glowBuild.mask;
+		uploadRemasterGlowMask(glowMask);
+		activeRemasterGlowMask = glowMask;
+		return true;
+	}
+
 	private RemasterShadowRoofCoverage remasterShadowRoofCoverage(
 		Renderer3DWorldChunkFrame chunkFrame,
 		long worldSignature) {
@@ -834,6 +856,51 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				shadowMask.pixels());
 		}
 		remasterShadowMaskUploadedSignature = shadowMask.signature;
+	}
+
+	private void uploadRemasterGlowMask(RemasterGlowMask glowMask) throws Exception {
+		if (remasterGlowMaskTextureId == 0) {
+			remasterGlowMaskTextureId = gl.glGenTextures();
+			gl.glBindTexture(gl.GL_TEXTURE_2D, remasterGlowMaskTextureId);
+			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR);
+			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR);
+			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE);
+			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_CLAMP_TO_EDGE);
+		} else {
+			gl.glBindTexture(gl.GL_TEXTURE_2D, remasterGlowMaskTextureId);
+		}
+		if (remasterGlowMaskUploadedSignature == glowMask.signature
+			&& remasterGlowMaskTextureWidth == glowMask.width
+			&& remasterGlowMaskTextureHeight == glowMask.height) {
+			return;
+		}
+		if (remasterGlowMaskTextureWidth != glowMask.width
+			|| remasterGlowMaskTextureHeight != glowMask.height) {
+			gl.glTexImage2D(
+				gl.GL_TEXTURE_2D,
+				0,
+				gl.GL_RGBA,
+				glowMask.width,
+				glowMask.height,
+				0,
+				gl.GL_RGBA,
+				gl.GL_UNSIGNED_BYTE,
+				glowMask.pixels());
+			remasterGlowMaskTextureWidth = glowMask.width;
+			remasterGlowMaskTextureHeight = glowMask.height;
+		} else {
+			gl.glTexSubImage2D(
+				gl.GL_TEXTURE_2D,
+				0,
+				0,
+				0,
+				glowMask.width,
+				glowMask.height,
+				gl.GL_RGBA,
+				gl.GL_UNSIGNED_BYTE,
+				glowMask.pixels());
+		}
+		remasterGlowMaskUploadedSignature = glowMask.signature;
 	}
 
 
@@ -1464,6 +1531,11 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			remasterLightingShaderEnabled
 				&& RendererLightingSettings.getMode() == RendererLightingSettings.Mode.DIRECTIONAL;
 		boolean rawMaterialMode = rawMaterialShaderEnabled;
+		if (remasterLightingEnabled) {
+			prepareRemasterGlowMask(frame);
+		} else {
+			activeRemasterGlowMask = null;
+		}
 		residentChunkShader.useResidentChunk(
 			residentWorldToClipMatrix,
 			residentWorldViewMatrix,
@@ -1471,8 +1543,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			rawMaterialMode,
 			remasterLightingEnabled,
 			frame,
-			activeRemasterShadowMask);
+			activeRemasterShadowMask,
+			activeRemasterGlowMask);
 		bindPreparedRemasterShadowMask();
+		bindPreparedRemasterGlowMask();
 	}
 
 	private void bindResidentChunkShaderAttributes(boolean textureEnabled) throws Exception {
@@ -1506,6 +1580,15 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 		gl.glActiveTexture(gl.GL_TEXTURE1);
 		gl.glBindTexture(gl.GL_TEXTURE_2D, remasterShadowMaskTextureId);
+		gl.glActiveTexture(gl.GL_TEXTURE0);
+	}
+
+	private void bindPreparedRemasterGlowMask() throws Exception {
+		if (activeRemasterGlowMask == null || remasterGlowMaskTextureId == 0) {
+			return;
+		}
+		gl.glActiveTexture(gl.GL_TEXTURE2);
+		gl.glBindTexture(gl.GL_TEXTURE_2D, remasterGlowMaskTextureId);
 		gl.glActiveTexture(gl.GL_TEXTURE0);
 	}
 
@@ -2638,7 +2721,16 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			remasterShadowMaskTextureHeight = 0;
 			remasterShadowMaskUploadedSignature = 0L;
 		}
+		if (remasterGlowMaskTextureId != 0) {
+			gl.glDeleteTextures(remasterGlowMaskTextureId);
+			remasterGlowMaskTextureId = 0;
+			remasterGlowMaskTextureWidth = 0;
+			remasterGlowMaskTextureHeight = 0;
+			remasterGlowMaskUploadedSignature = 0L;
+		}
 		remasterShadowMaskBuilder.clear();
+		remasterGlowMaskBuilder.clear();
+		activeRemasterGlowMask = null;
 		cachedRemasterShadowRoofCoverage = null;
 		cachedRemasterShadowRoofCoverageSignature = 0L;
 		cachedRemasterShadowRoofCoverageKnown = false;

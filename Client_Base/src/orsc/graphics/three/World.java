@@ -50,6 +50,11 @@ public final class World {
 	private static final int WALL_MODEL_INPUT_CACHE_LIMIT = 24;
 	private static final int ROOF_MODEL_INPUT_CACHE_LIMIT = 24;
 	private static final int WORLD_MODEL_PRODUCT_CACHE_LIMIT = 48;
+	private static final int LAVA_GLOW_OVERLAY_ID = 11;
+	private static final int LAVA_GLOW_COLOR = 0xff5a18;
+	private static final int LAVA_GLOW_RADIUS = 384;
+	private static final int LAVA_GLOW_INTENSITY = 96;
+	private static final int LAVA_GLOW_NON_OVERWORLD_INTENSITY = 72;
 	private static final int SECTOR_PRELOAD_LOW_OFFSET = -ACTIVE_SECTION_ORIGIN_OFFSET - 1;
 	private static final int SECTOR_PRELOAD_HIGH_OFFSET = ACTIVE_SECTION_GRID - ACTIVE_SECTION_ORIGIN_OFFSET;
 	private final int[] colorToResource = new int[256];
@@ -869,6 +874,9 @@ public final class World {
 		int drawOriginX,
 		int drawOriginZ) {
 		for (TerrainTileFaceInput face : input.tileFaces) {
+			if (face.lavaGlowEmitter) {
+				addTerrainTileGlowEmitter(builder, input, face, drawOriginX, drawOriginZ);
+			}
 			addTerrainTileGpuFaces(builder, input, face, drawOriginX, drawOriginZ);
 		}
 
@@ -880,6 +888,28 @@ public final class World {
 				offsetCoords(drawOriginX, drawOriginZ, overlay.vertexCoords),
 				null);
 		}
+	}
+
+	private static void addTerrainTileGlowEmitter(
+		WorldGpuChunkMeshBuilder builder,
+		TerrainModelInput input,
+		TerrainTileFaceInput face,
+		int drawOriginX,
+		int drawOriginZ) {
+		int baseIndex = face.z + face.x * LOCAL_TILE_COUNT;
+		TerrainVertexInput southwest = input.vertices[baseIndex];
+		TerrainVertexInput southeast = input.vertices[baseIndex + LOCAL_TILE_COUNT];
+		TerrainVertexInput northwest = input.vertices[baseIndex + 1];
+		TerrainVertexInput northeast = input.vertices[baseIndex + LOCAL_TILE_COUNT + 1];
+		int centerY = (southwest.y + southeast.y + northwest.y + northeast.y) / 4;
+		builder.addGlowEmitter(
+			Renderer3DModelKind.TERRAIN,
+			drawOriginX + face.x * 128 + 64,
+			centerY,
+			drawOriginZ + face.z * 128 + 64,
+			LAVA_GLOW_RADIUS,
+			LAVA_GLOW_COLOR,
+			builder.plane == 0 ? LAVA_GLOW_INTENSITY : LAVA_GLOW_NON_OVERWORLD_INTENSITY);
 	}
 
 	private static void addTerrainTileGpuFaces(
@@ -1243,6 +1273,7 @@ public final class World {
 				boolean collisionObject = false;
 				int decorID = source.tileDecorationID(x, z);
 				boolean terrainVariationEligible = plane == 0 && decorID == 0;
+				boolean lavaGlowEmitter = decorID == LAVA_GLOW_OVERLAY_ID;
 				if (decorID > 0) {
 					int decorType = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getTileValue();
 					int decorType2 = source.tileType2(x, z);
@@ -1312,6 +1343,7 @@ public final class World {
 					slope,
 					source.pickableInvisibleOverlay(x, z),
 					terrainVariationEligible,
+					lavaGlowEmitter,
 					collisionFullBlock,
 					collisionObject);
 			}
@@ -3183,6 +3215,7 @@ public final class World {
 		private final Renderer3DModelKind[] triangleModelKinds;
 		private final int[] triangleTerrainVariationMasks;
 		private final Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasters;
+		private final Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitters;
 		private final long[] roofCoverageBits;
 		private final int roofCoverageAxis;
 		private final int roofCoveredTileCount;
@@ -3209,6 +3242,7 @@ public final class World {
 			Renderer3DModelKind[] triangleModelKinds,
 			int[] triangleTerrainVariationMasks,
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasters,
+			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitters,
 			long[] roofCoverageBits,
 			int roofCoverageAxis,
 			int roofCoveredTileCount,
@@ -3233,6 +3267,7 @@ public final class World {
 			this.triangleModelKinds = triangleModelKinds;
 			this.triangleTerrainVariationMasks = triangleTerrainVariationMasks;
 			this.shadowCasters = shadowCasters;
+			this.glowEmitters = glowEmitters;
 			this.roofCoverageBits = roofCoverageBits;
 			this.roofCoverageAxis = roofCoverageAxis;
 			this.roofCoveredTileCount = roofCoveredTileCount;
@@ -3264,6 +3299,7 @@ public final class World {
 				triangleFallbackColors,
 				triangleModelKinds,
 				shadowCasters,
+				glowEmitters,
 				triangleTerrainVariationMasks,
 				roofCoverageBits,
 				roofCoverageAxis,
@@ -3298,6 +3334,8 @@ public final class World {
 		private final List<Integer> triangleTerrainVariationMasks = new ArrayList<Integer>();
 		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
 			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
+		private final List<Renderer3DWorldChunkFrame.GlowEmitter> glowEmitters =
+			new ArrayList<Renderer3DWorldChunkFrame.GlowEmitter>();
 		private long[] roofCoverageBits = new long[0];
 		private int roofCoverageAxis;
 		private int roofCoveredTileCount;
@@ -3456,6 +3494,24 @@ public final class World {
 				true));
 		}
 
+		private void addGlowEmitter(
+			Renderer3DModelKind kind,
+			int centerX,
+			int centerY,
+			int centerZ,
+			int radius,
+			int color,
+			int intensity) {
+			glowEmitters.add(new Renderer3DWorldChunkFrame.GlowEmitter(
+				kind,
+				centerX,
+				centerY,
+				centerZ,
+				radius,
+				color,
+				intensity));
+		}
+
 		private int resourceToRgb(int resource) {
 			if (resource == Scene.TRANSPARENT) {
 				return 0;
@@ -3572,6 +3628,8 @@ public final class World {
 				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray =
 				shadowCasters.toArray(new Renderer3DWorldChunkFrame.ShadowCaster[shadowCasters.size()]);
+			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray =
+				glowEmitters.toArray(new Renderer3DWorldChunkFrame.GlowEmitter[glowEmitters.size()]);
 			long signature = signature(
 				vertexArray,
 				textureUArray,
@@ -3585,6 +3643,7 @@ public final class World {
 				terrainVariationMaskArray,
 				kindArray,
 				shadowCasterArray,
+				glowEmitterArray,
 				roofCoverageBits,
 				roofCoverageAxis,
 				roofCoveredTileCount);
@@ -3606,6 +3665,7 @@ public final class World {
 				kindArray,
 				terrainVariationMaskArray,
 				shadowCasterArray,
+				glowEmitterArray,
 				roofCoverageBits.clone(),
 				roofCoverageAxis,
 				roofCoveredTileCount,
@@ -3644,6 +3704,7 @@ public final class World {
 			int[] terrainVariationMaskArray,
 			Renderer3DModelKind[] kindArray,
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray,
+			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray,
 			long[] roofCoverageBits,
 			int roofCoverageAxis,
 			int roofCoveredTileCount) {
@@ -3697,6 +3758,15 @@ public final class World {
 				hash = mix(hash, caster.getWidth());
 				hash = mix(hash, caster.getOpacity());
 				hash = mix(hash, caster.isOutdoorOnly() ? 1 : 0);
+			}
+			for (Renderer3DWorldChunkFrame.GlowEmitter emitter : glowEmitterArray) {
+				hash = mix(hash, emitter.getModelKind().ordinal());
+				hash = mix(hash, emitter.getCenterX());
+				hash = mix(hash, emitter.getCenterY());
+				hash = mix(hash, emitter.getCenterZ());
+				hash = mix(hash, emitter.getRadius());
+				hash = mix(hash, emitter.getColor());
+				hash = mix(hash, emitter.getIntensity());
 			}
 			hash = mix(hash, roofCoverageAxis);
 			hash = mix(hash, roofCoveredTileCount);
@@ -3983,6 +4053,7 @@ public final class World {
 		private final int slope;
 		private final boolean pickableInvisibleOverlay;
 		private final boolean terrainVariationEligible;
+		private final boolean lavaGlowEmitter;
 		private final boolean collisionFullBlock;
 		private final boolean collisionObject;
 
@@ -3995,6 +4066,7 @@ public final class World {
 			int slope,
 			boolean pickableInvisibleOverlay,
 			boolean terrainVariationEligible,
+			boolean lavaGlowEmitter,
 			boolean collisionFullBlock,
 			boolean collisionObject) {
 			this.x = x;
@@ -4005,6 +4077,7 @@ public final class World {
 			this.slope = slope;
 			this.pickableInvisibleOverlay = pickableInvisibleOverlay;
 			this.terrainVariationEligible = terrainVariationEligible;
+			this.lavaGlowEmitter = lavaGlowEmitter;
 			this.collisionFullBlock = collisionFullBlock;
 			this.collisionObject = collisionObject;
 		}

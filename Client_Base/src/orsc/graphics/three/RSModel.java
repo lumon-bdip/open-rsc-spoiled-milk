@@ -31,6 +31,9 @@ public final class RSModel {
 	int[] faceTextureBack;
 	int[] faceTextureFront;
 	private Renderer3DModelKind renderer3DModelKind = Renderer3DModelKind.UNCLASSIFIED;
+	private int renderer3DGlowColor;
+	private int renderer3DGlowRadius;
+	private int renderer3DGlowIntensity;
 	private int pickBoundsScale = 1;
 	boolean m_db = false;
 	boolean m_dc = true;
@@ -237,6 +240,7 @@ public final class RSModel {
 		combined.m_cb = this.m_cb;
 		combined.m_hc = this.m_hc;
 		combined.renderer3DModelKind = this.renderer3DModelKind;
+		combined.copyRenderer3DGlowEmitterFrom(this);
 		combined.pickBoundsScale = this.pickBoundsScale;
 		return combined;
 	}
@@ -402,6 +406,40 @@ public final class RSModel {
 
 	public Renderer3DModelKind getRenderer3DModelKind() {
 		return renderer3DModelKind;
+	}
+
+	public void setRenderer3DGlowEmitter(int color, int radius, int intensity) {
+		this.renderer3DGlowColor = color & 0xffffff;
+		this.renderer3DGlowRadius = Math.max(1, radius);
+		this.renderer3DGlowIntensity = Math.max(0, Math.min(255, intensity));
+	}
+
+	public void clearRenderer3DGlowEmitter() {
+		this.renderer3DGlowColor = 0;
+		this.renderer3DGlowRadius = 0;
+		this.renderer3DGlowIntensity = 0;
+	}
+
+	public boolean hasRenderer3DGlowEmitter() {
+		return renderer3DGlowRadius > 0 && renderer3DGlowIntensity > 0;
+	}
+
+	public int getRenderer3DGlowColor() {
+		return renderer3DGlowColor;
+	}
+
+	public int getRenderer3DGlowRadius() {
+		return renderer3DGlowRadius;
+	}
+
+	public int getRenderer3DGlowIntensity() {
+		return renderer3DGlowIntensity;
+	}
+
+	private void copyRenderer3DGlowEmitterFrom(RSModel source) {
+		this.renderer3DGlowColor = source.renderer3DGlowColor;
+		this.renderer3DGlowRadius = source.renderer3DGlowRadius;
+		this.renderer3DGlowIntensity = source.renderer3DGlowIntensity;
 	}
 
 	public int getRenderer3DTransformVersion() {
@@ -806,6 +844,7 @@ public final class RSModel {
 			var3.m_cb = this.m_cb;
 			var3.m_hc = this.m_hc;
 			var3.renderer3DModelKind = this.renderer3DModelKind;
+			var3.copyRenderer3DGlowEmitterFrom(this);
 			var3.pickBoundsScale = this.pickBoundsScale;
 			return var3;
 		} catch (RuntimeException var4) {
@@ -1065,6 +1104,7 @@ public final class RSModel {
 
 				output[i] = new RSModel(outVertCount[i], outFaceCount[i], true, true, true, var8, true);
 				output[i].renderer3DModelKind = this.renderer3DModelKind;
+				output[i].copyRenderer3DGlowEmitterFrom(this);
 				output[i].diffuseParam2 = this.diffuseParam2;
 				output[i].diffuseParam1 = this.diffuseParam1;
 			}
@@ -1286,6 +1326,8 @@ public final class RSModel {
 		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
 		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
 			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
+		private final List<Renderer3DWorldChunkFrame.GlowEmitter> glowEmitters =
+			new ArrayList<Renderer3DWorldChunkFrame.GlowEmitter>();
 
 		private ObjectChunkMeshBuilder(
 			int plane,
@@ -1312,6 +1354,7 @@ public final class RSModel {
 				}
 				model.resetTransformCache(7972);
 				addModelShadowCaster(kind, model);
+				addModelGlowEmitter(kind, model);
 				for (int face = 0; face < model.faceHead; face++) {
 				int vertexCount = model.faceIndexCount[face];
 				if (vertexCount < 3) {
@@ -1518,6 +1561,40 @@ public final class RSModel {
 					maxZ));
 			}
 
+		private void addModelGlowEmitter(Renderer3DModelKind kind, RSModel model) {
+			if (!model.hasRenderer3DGlowEmitter() || model.vertHead <= 0) {
+				return;
+			}
+			int minX = Integer.MAX_VALUE;
+			int maxX = Integer.MIN_VALUE;
+			int minY = Integer.MAX_VALUE;
+			int maxY = Integer.MIN_VALUE;
+			int minZ = Integer.MAX_VALUE;
+			int maxZ = Integer.MIN_VALUE;
+			for (int vertex = 0; vertex < model.vertHead; vertex++) {
+				minX = Math.min(minX, model.vertXTransform[vertex]);
+				maxX = Math.max(maxX, model.vertXTransform[vertex]);
+				minY = Math.min(minY, model.vertYTransform[vertex]);
+				maxY = Math.max(maxY, model.vertYTransform[vertex]);
+				minZ = Math.min(minZ, model.vertZTransform[vertex]);
+				maxZ = Math.max(maxZ, model.vertZTransform[vertex]);
+			}
+			if (minX == Integer.MAX_VALUE || minY == Integer.MAX_VALUE || minZ == Integer.MAX_VALUE) {
+				return;
+			}
+			int spanX = maxX - minX;
+			int spanZ = maxZ - minZ;
+			int footprintRadius = Math.max(spanX, spanZ) / 2 + model.getRenderer3DGlowRadius();
+			glowEmitters.add(new Renderer3DWorldChunkFrame.GlowEmitter(
+				kind,
+				(minX + maxX) / 2,
+				(minY + maxY) / 2,
+				(minZ + maxZ) / 2,
+				Math.max(model.getRenderer3DGlowRadius(), footprintRadius),
+				model.getRenderer3DGlowColor(),
+				model.getRenderer3DGlowIntensity()));
+		}
+
 		private void addVertex(
 			int[] faceVertexCoords,
 			int[] faceVertexLights,
@@ -1621,6 +1698,8 @@ public final class RSModel {
 				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray =
 				shadowCasters.toArray(new Renderer3DWorldChunkFrame.ShadowCaster[shadowCasters.size()]);
+			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray =
+				glowEmitters.toArray(new Renderer3DWorldChunkFrame.GlowEmitter[glowEmitters.size()]);
 			long signature = signature(
 				vertexArray,
 				textureUArray,
@@ -1630,7 +1709,8 @@ public final class RSModel {
 				textureArray,
 				fallbackArray,
 				kindArray,
-				shadowCasterArray);
+				shadowCasterArray,
+				glowEmitterArray);
 			return new Renderer3DWorldChunkFrame.ChunkMesh(
 				plane,
 				centerSectionX,
@@ -1646,6 +1726,7 @@ public final class RSModel {
 				fallbackArray,
 				kindArray,
 				shadowCasterArray,
+				glowEmitterArray,
 				0,
 				0,
 				0,
@@ -1679,7 +1760,8 @@ public final class RSModel {
 			int[] textureArray,
 			int[] fallbackArray,
 			Renderer3DModelKind[] kindArray,
-			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray) {
+			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray,
+			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray) {
 			long hash = FNV_OFFSET_BASIS;
 			hash = mix(hash, plane);
 			hash = mix(hash, centerSectionX);
@@ -1722,6 +1804,15 @@ public final class RSModel {
 				hash = mix(hash, caster.getWidth());
 				hash = mix(hash, caster.getOpacity());
 				hash = mix(hash, caster.isOutdoorOnly() ? 1 : 0);
+			}
+			for (Renderer3DWorldChunkFrame.GlowEmitter emitter : glowEmitterArray) {
+				hash = mix(hash, emitter.getModelKind().ordinal());
+				hash = mix(hash, emitter.getCenterX());
+				hash = mix(hash, emitter.getCenterY());
+				hash = mix(hash, emitter.getCenterZ());
+				hash = mix(hash, emitter.getRadius());
+				hash = mix(hash, emitter.getColor());
+				hash = mix(hash, emitter.getIntensity());
 			}
 			return hash;
 		}

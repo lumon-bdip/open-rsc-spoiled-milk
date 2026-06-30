@@ -43,6 +43,10 @@ The current accepted player-facing renderer baseline is:
 - Terrain-receiver shadows are accepted for the current alpha remaster
   baseline. They are not final shadow technology, but tuning should pause here
   unless a specific regression appears.
+- First-pass emissive ambient glow exists for Remaster resident chunks. Lava
+  overlay `11` and known fire-like scenery emit a cached warm glow mask sampled
+  by the resident chunk shader. This is not a point-light or shadow-casting
+  system; it is a cheap visual layer for lava/fire warmth.
 - Remaster lighting is player-facing alpha functionality, not only a hidden
   debug proof. It is good enough for active testing, but still intentionally
   documented as incomplete shadow/material work.
@@ -124,6 +128,10 @@ they need to be.
 - Terrain shadow masks are applied in the resident chunk shader when that path
   is active. The old immediate-mode shadow overlay remains only as a fallback;
   normal remaster rendering should not pay for a second terrain pass.
+- Remaster glow masks are independent of directional shadows. They are cached
+  from resident chunk glow emitters, uploaded as a separate RGBA texture, and
+  sampled on texture unit 2 after base remaster lighting/brightness but before
+  day/night tone and fog.
 - Remaster brightness is shader-owned for resident chunks. Day/night/player
   brightness should not dirty static chunk buffers while directional remaster
   lighting is active.
@@ -200,6 +208,17 @@ Implemented or started:
   This is intentionally narrower than full tile blending; if exact map texture
   ids become necessary, add a terrain-material id attribute to resident terrain
   vertices instead of widening the RGB match blindly.
+- Emissive ambient glow has a shader-owned first pass. Terrain overlay `11`
+  creates lava glow emitters during terrain chunk construction on any visible
+  map plane; it is not suppressed by roof/interior shadow classification.
+  Non-overworld lava uses a lower emitter intensity because underground areas
+  receive less directional light and otherwise make the same additive glow read
+  too strong. Fire, fireplace, torch, skull torch, flame, furnace, cave furnace,
+  and lava forge scenery are tagged before resident object chunks are built.
+  The glow builder accumulates these emitters into a cached world-space RGB
+  mask, and the resident shader adds the sampled glow before tone/fog. Future
+  material work should make these emitters data-driven rather than keeping the
+  first-pass classifier in `mudclient`.
 
 Still incomplete:
 
@@ -216,6 +235,9 @@ Still incomplete:
   current OpenGL, and shader output for the same camera frame.
 - Shader polish controls such as saturation, contrast, fog response, slope
   emphasis, or tile blending are not ready for release use.
+- Glow is not yet bloom, a real point-light system, or a shadow caster. It is a
+  cheap emissive mask meant to validate lava/fire warmth before heavier
+  material-light work.
 
 ## Current Lighting And Shadow State
 
@@ -249,6 +271,7 @@ Implemented or started:
 - Terrain shadow movement is visible in Remaster lighting. It remains quantized
   and can look stepped during accelerated `::advtime` testing, which is
   acceptable for the current CPU mask but not final-quality shadow motion.
+- Lava and fire-like scenery can add warm ambient glow without casting shadows.
 
 Still incomplete:
 
@@ -263,6 +286,9 @@ Still incomplete:
 - The CPU-built 512x512 shadow mask is a proof. A GPU-side, incremental, or
   lower-cost path is the likely long-term direction when shadow work is
   intentionally reopened.
+- Emissive glow is first-pass and hand-classified. It should eventually come
+  from material/object metadata and may later feed bloom, particles, or real
+  localized lights if those become worth the cost.
 
 ## Biggest Remaining Swings
 
@@ -338,6 +364,10 @@ come from one of these areas unless a concrete shadow regression appears:
 - Water, fountains, fishing spots, and animated scenery polish: use the
   existing animated-object split to improve motion, transparency, and material
   response without dirtying static chunks.
+- Emissive materials and ambient glow: promote lava/fire glow from first-pass
+  heuristics into material metadata, then evaluate bloom-like filtering, heat
+  shimmer, ember particles, and localized light contribution without adding
+  point-light shadow complexity too early.
 - World-space projectiles, spell effects, and particles: move visual effects
   toward explicit world anchors, depth, batching, and optional remaster polish.
 - Sprite/entity rendering modernization: improve billboard anchoring, depth,

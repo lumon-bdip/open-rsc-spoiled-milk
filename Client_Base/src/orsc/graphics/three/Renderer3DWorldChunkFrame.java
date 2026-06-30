@@ -92,6 +92,7 @@ public final class Renderer3DWorldChunkFrame {
 		private final Renderer3DModelKind[] triangleModelKinds;
 		private final int[] triangleTerrainVariationMasks;
 		private final ShadowCaster[] shadowCasters;
+		private final GlowEmitter[] glowEmitters;
 		private final long[] roofCoverageBits;
 		private final int roofCoverageAxis;
 		private final int roofCoveredTileCount;
@@ -249,6 +250,52 @@ public final class Renderer3DWorldChunkFrame {
 			boolean objectChunk,
 			int chunkRole,
 			long signature) {
+			this(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				vertexCoords,
+				vertexTextureU,
+				vertexTextureV,
+				vertexLights,
+				indices,
+				triangleTextures,
+				triangleFallbackColors,
+				triangleModelKinds,
+				shadowCasters,
+				null,
+				terrainTriangles,
+				wallTriangles,
+				roofTriangles,
+				objectChunk,
+				chunkRole,
+				signature);
+		}
+
+		public ChunkMesh(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ,
+			int[] vertexCoords,
+			float[] vertexTextureU,
+			float[] vertexTextureV,
+			int[] vertexLights,
+			int[] indices,
+			int[] triangleTextures,
+			int[] triangleFallbackColors,
+			Renderer3DModelKind[] triangleModelKinds,
+			ShadowCaster[] shadowCasters,
+			GlowEmitter[] glowEmitters,
+			int terrainTriangles,
+			int wallTriangles,
+			int roofTriangles,
+			boolean objectChunk,
+			int chunkRole,
+			long signature) {
 			this.plane = plane;
 			this.centerSectionX = centerSectionX;
 			this.centerSectionY = centerSectionY;
@@ -276,6 +323,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.vertexNormalY = vertexNormals[1];
 			this.vertexNormalZ = vertexNormals[2];
 			this.shadowCasters = normalizeShadowCasters(shadowCasters);
+			this.glowEmitters = normalizeGlowEmitters(glowEmitters);
 			this.roofCoverageBits = new long[0];
 			this.roofCoverageAxis = 0;
 			this.roofCoveredTileCount = 0;
@@ -328,6 +376,64 @@ public final class Renderer3DWorldChunkFrame {
 				triangleModelKinds,
 				shadowCasters,
 				null,
+				null,
+				roofCoverageBits,
+				roofCoverageAxis,
+				roofCoveredTileCount,
+				terrainTriangles,
+				wallTriangles,
+				roofTriangles,
+				objectChunk,
+				objectChunk ? CHUNK_ROLE_STATIC_OBJECTS : CHUNK_ROLE_WORLD,
+				signature);
+		}
+
+		public ChunkMesh(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ,
+			int[] vertexCoords,
+			float[] vertexTextureU,
+			float[] vertexTextureV,
+			int[] vertexLights,
+			int[] vertexTerrainBlendColors,
+			int[] vertexTerrainBlendStrengths,
+			int[] indices,
+			int[] triangleTextures,
+			int[] triangleFallbackColors,
+			Renderer3DModelKind[] triangleModelKinds,
+			ShadowCaster[] shadowCasters,
+			GlowEmitter[] glowEmitters,
+			int[] triangleTerrainVariationMasks,
+			long[] roofCoverageBits,
+			int roofCoverageAxis,
+			int roofCoveredTileCount,
+			int terrainTriangles,
+			int wallTriangles,
+			int roofTriangles,
+			boolean objectChunk,
+			long signature) {
+			this(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				vertexCoords,
+				vertexTextureU,
+				vertexTextureV,
+				vertexLights,
+				vertexTerrainBlendColors,
+				vertexTerrainBlendStrengths,
+				indices,
+				triangleTextures,
+				triangleFallbackColors,
+				triangleModelKinds,
+				shadowCasters,
+				glowEmitters,
+				triangleTerrainVariationMasks,
 				roofCoverageBits,
 				roofCoverageAxis,
 				roofCoveredTileCount,
@@ -382,6 +488,7 @@ public final class Renderer3DWorldChunkFrame {
 				triangleFallbackColors,
 				triangleModelKinds,
 				shadowCasters,
+				null,
 				triangleTerrainVariationMasks,
 				roofCoverageBits,
 				roofCoverageAxis,
@@ -390,7 +497,6 @@ public final class Renderer3DWorldChunkFrame {
 				wallTriangles,
 				roofTriangles,
 				objectChunk,
-				objectChunk ? CHUNK_ROLE_STATIC_OBJECTS : CHUNK_ROLE_WORLD,
 				signature);
 		}
 
@@ -411,6 +517,64 @@ public final class Renderer3DWorldChunkFrame {
 			int[] triangleFallbackColors,
 			Renderer3DModelKind[] triangleModelKinds,
 			ShadowCaster[] shadowCasters,
+			int[] triangleTerrainVariationMasks,
+			long[] roofCoverageBits,
+			int roofCoverageAxis,
+			int roofCoveredTileCount,
+			int terrainTriangles,
+			int wallTriangles,
+			int roofTriangles,
+			boolean objectChunk,
+			int chunkRole,
+			long signature) {
+			this(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				vertexCoords,
+				vertexTextureU,
+				vertexTextureV,
+				vertexLights,
+				vertexTerrainBlendColors,
+				vertexTerrainBlendStrengths,
+				indices,
+				triangleTextures,
+				triangleFallbackColors,
+				triangleModelKinds,
+				shadowCasters,
+				null,
+				triangleTerrainVariationMasks,
+				roofCoverageBits,
+				roofCoverageAxis,
+				roofCoveredTileCount,
+				terrainTriangles,
+				wallTriangles,
+				roofTriangles,
+				objectChunk,
+				chunkRole,
+				signature);
+		}
+
+		public ChunkMesh(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ,
+			int[] vertexCoords,
+			float[] vertexTextureU,
+			float[] vertexTextureV,
+			int[] vertexLights,
+			int[] vertexTerrainBlendColors,
+			int[] vertexTerrainBlendStrengths,
+			int[] indices,
+			int[] triangleTextures,
+			int[] triangleFallbackColors,
+			Renderer3DModelKind[] triangleModelKinds,
+			ShadowCaster[] shadowCasters,
+			GlowEmitter[] glowEmitters,
 			int[] triangleTerrainVariationMasks,
 			long[] roofCoverageBits,
 			int roofCoverageAxis,
@@ -449,6 +613,7 @@ public final class Renderer3DWorldChunkFrame {
 			this.vertexNormalY = vertexNormals[1];
 			this.vertexNormalZ = vertexNormals[2];
 			this.shadowCasters = normalizeShadowCasters(shadowCasters);
+			this.glowEmitters = normalizeGlowEmitters(glowEmitters);
 			this.roofCoverageAxis = roofCoverageAxis <= 0 || roofCoverageBits == null ? 0 : roofCoverageAxis;
 			this.roofCoverageBits = this.roofCoverageAxis <= 0 ? new long[0] : roofCoverageBits.clone();
 			this.roofCoveredTileCount = Math.max(0, roofCoveredTileCount);
@@ -479,6 +644,10 @@ public final class Renderer3DWorldChunkFrame {
 
 		private static ShadowCaster[] normalizeShadowCasters(ShadowCaster[] shadowCasters) {
 			return shadowCasters == null ? new ShadowCaster[0] : shadowCasters.clone();
+		}
+
+		private static GlowEmitter[] normalizeGlowEmitters(GlowEmitter[] glowEmitters) {
+			return glowEmitters == null ? new GlowEmitter[0] : glowEmitters.clone();
 		}
 
 		private static int[] normalizeIntArray(int[] values, int count, int defaultValue) {
@@ -779,6 +948,14 @@ public final class Renderer3DWorldChunkFrame {
 			return shadowCasters[index];
 		}
 
+		public int getGlowEmitterCount() {
+			return glowEmitters.length;
+		}
+
+		public GlowEmitter getGlowEmitter(int index) {
+			return glowEmitters[index];
+		}
+
 		public long getSignature() {
 			return signature;
 		}
@@ -841,6 +1018,10 @@ public final class Renderer3DWorldChunkFrame {
 
 		public ShadowCaster[] copyShadowCasters() {
 			return shadowCasters.clone();
+		}
+
+		public GlowEmitter[] copyGlowEmitters() {
+			return glowEmitters.clone();
 		}
 
 		public int[] copyVertexCoords() {
@@ -1029,6 +1210,61 @@ public final class Renderer3DWorldChunkFrame {
 
 			public int getFootprintMaxZ() {
 				return footprintMaxZ;
-			}
 		}
 	}
+
+	public static final class GlowEmitter {
+		private final Renderer3DModelKind modelKind;
+		private final int centerX;
+		private final int centerY;
+		private final int centerZ;
+		private final int radius;
+		private final int color;
+		private final int intensity;
+
+		public GlowEmitter(
+			Renderer3DModelKind modelKind,
+			int centerX,
+			int centerY,
+			int centerZ,
+			int radius,
+			int color,
+			int intensity) {
+			this.modelKind = modelKind == null ? Renderer3DModelKind.UNCLASSIFIED : modelKind;
+			this.centerX = centerX;
+			this.centerY = centerY;
+			this.centerZ = centerZ;
+			this.radius = Math.max(1, radius);
+			this.color = color & 0xffffff;
+			this.intensity = Math.max(0, Math.min(255, intensity));
+		}
+
+		public Renderer3DModelKind getModelKind() {
+			return modelKind;
+		}
+
+		public int getCenterX() {
+			return centerX;
+		}
+
+		public int getCenterY() {
+			return centerY;
+		}
+
+		public int getCenterZ() {
+			return centerZ;
+		}
+
+		public int getRadius() {
+			return radius;
+		}
+
+		public int getColor() {
+			return color;
+		}
+
+		public int getIntensity() {
+			return intensity;
+		}
+	}
+}

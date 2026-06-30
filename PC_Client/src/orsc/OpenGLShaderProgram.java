@@ -152,8 +152,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		"#version 120\n"
 			+ "uniform sampler2D uTexture;\n"
 			+ "uniform sampler2D uShadowMask;\n"
+			+ "uniform sampler2D uGlowMask;\n"
 			+ "uniform int uTextureEnabled;\n"
 			+ "uniform int uShadowMaskEnabled;\n"
+			+ "uniform int uGlowMaskEnabled;\n"
 			+ "uniform int uRawMaterialMode;\n"
 			+ "uniform int uRemasterLightingEnabled;\n"
 			+ "uniform float uLightDirectionX;\n"
@@ -180,6 +182,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "uniform float uShadowMaskMinZ;\n"
 			+ "uniform float uShadowMaskInvSpanX;\n"
 			+ "uniform float uShadowMaskInvSpanZ;\n"
+			+ "uniform float uGlowMaskMinX;\n"
+			+ "uniform float uGlowMaskMinZ;\n"
+			+ "uniform float uGlowMaskInvSpanX;\n"
+			+ "uniform float uGlowMaskInvSpanZ;\n"
 			+ "varying vec2 vTexCoord;\n"
 			+ "varying vec2 vWorldXZ;\n"
 			+ "varying vec4 vMaterialColor;\n"
@@ -281,6 +287,17 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\t}\n"
 			+ "\treturn clamp(texture2D(uShadowMask, uv).a, 0.0, 0.70);\n"
 			+ "}\n"
+			+ "vec3 remasterGlowColor() {\n"
+			+ "\tif (uGlowMaskEnabled == 0) {\n"
+			+ "\t\treturn vec3(0.0);\n"
+			+ "\t}\n"
+			+ "\tvec2 uv = vec2((vWorldXZ.x - uGlowMaskMinX) * uGlowMaskInvSpanX,\n"
+			+ "\t\t(vWorldXZ.y - uGlowMaskMinZ) * uGlowMaskInvSpanZ);\n"
+			+ "\tif (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {\n"
+			+ "\t\treturn vec3(0.0);\n"
+			+ "\t}\n"
+			+ "\treturn texture2D(uGlowMask, uv).rgb;\n"
+			+ "}\n"
 			+ "void main() {\n"
 			+ "\tvec4 color;\n"
 			+ "\tif (uRawMaterialMode != 0) {\n"
@@ -300,6 +317,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\t\tcolor.rgb *= remasterClassicShadeFactor(diffuse) * remasterLocalReliefFactor();\n"
 			+ "\t\tcolor.rgb *= 1.0 - terrainShadowMaskAlpha();\n"
 			+ "\t\tcolor.rgb *= uBrightness;\n"
+			+ "\t\tcolor.rgb = clamp(color.rgb + remasterGlowColor(), 0.0, 1.0);\n"
 			+ "\t}\n"
 			+ "\tcolor.rgb = applyTone(color.rgb);\n"
 			+ "\tif (uFogEnabled != 0) {\n"
@@ -316,8 +334,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private final int worldViewMatrixUniformLocation;
 	private final int textureUniformLocation;
 	private final int shadowMaskUniformLocation;
+	private final int glowMaskUniformLocation;
 	private final int textureEnabledUniformLocation;
 	private final int shadowMaskEnabledUniformLocation;
+	private final int glowMaskEnabledUniformLocation;
 	private final int rawMaterialModeUniformLocation;
 	private final int remasterLightingEnabledUniformLocation;
 	private final int lightDirectionXUniformLocation;
@@ -343,6 +363,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private final int shadowMaskMinZUniformLocation;
 	private final int shadowMaskInvSpanXUniformLocation;
 	private final int shadowMaskInvSpanZUniformLocation;
+	private final int glowMaskMinXUniformLocation;
+	private final int glowMaskMinZUniformLocation;
+	private final int glowMaskInvSpanXUniformLocation;
+	private final int glowMaskInvSpanZUniformLocation;
 	private final int fogEnabledUniformLocation;
 	private final int fogStartUniformLocation;
 	private final int fogEndUniformLocation;
@@ -355,8 +379,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int worldViewMatrixUniformLocation,
 		int textureUniformLocation,
 		int shadowMaskUniformLocation,
+		int glowMaskUniformLocation,
 		int textureEnabledUniformLocation,
 		int shadowMaskEnabledUniformLocation,
+		int glowMaskEnabledUniformLocation,
 		int rawMaterialModeUniformLocation,
 		int remasterLightingEnabledUniformLocation,
 		int lightDirectionXUniformLocation,
@@ -382,6 +408,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int shadowMaskMinZUniformLocation,
 		int shadowMaskInvSpanXUniformLocation,
 		int shadowMaskInvSpanZUniformLocation,
+		int glowMaskMinXUniformLocation,
+		int glowMaskMinZUniformLocation,
+		int glowMaskInvSpanXUniformLocation,
+		int glowMaskInvSpanZUniformLocation,
 		int fogEnabledUniformLocation,
 		int fogStartUniformLocation,
 		int fogEndUniformLocation) {
@@ -391,8 +421,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		this.worldViewMatrixUniformLocation = worldViewMatrixUniformLocation;
 		this.textureUniformLocation = textureUniformLocation;
 		this.shadowMaskUniformLocation = shadowMaskUniformLocation;
+		this.glowMaskUniformLocation = glowMaskUniformLocation;
 		this.textureEnabledUniformLocation = textureEnabledUniformLocation;
 		this.shadowMaskEnabledUniformLocation = shadowMaskEnabledUniformLocation;
+		this.glowMaskEnabledUniformLocation = glowMaskEnabledUniformLocation;
 		this.rawMaterialModeUniformLocation = rawMaterialModeUniformLocation;
 		this.remasterLightingEnabledUniformLocation = remasterLightingEnabledUniformLocation;
 		this.lightDirectionXUniformLocation = lightDirectionXUniformLocation;
@@ -418,6 +450,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		this.shadowMaskMinZUniformLocation = shadowMaskMinZUniformLocation;
 		this.shadowMaskInvSpanXUniformLocation = shadowMaskInvSpanXUniformLocation;
 		this.shadowMaskInvSpanZUniformLocation = shadowMaskInvSpanZUniformLocation;
+		this.glowMaskMinXUniformLocation = glowMaskMinXUniformLocation;
+		this.glowMaskMinZUniformLocation = glowMaskMinZUniformLocation;
+		this.glowMaskInvSpanXUniformLocation = glowMaskInvSpanXUniformLocation;
+		this.glowMaskInvSpanZUniformLocation = glowMaskInvSpanZUniformLocation;
 		this.fogEnabledUniformLocation = fogEnabledUniformLocation;
 		this.fogStartUniformLocation = fogStartUniformLocation;
 		this.fogEndUniformLocation = fogEndUniformLocation;
@@ -451,7 +487,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					-1,
 					gl.glGetUniformLocation(program, "uTexture"),
 					-1,
+					-1,
 					gl.glGetUniformLocation(program, "uTextureEnabled"),
+					-1,
 					-1,
 					-1,
 					-1,
@@ -467,6 +505,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					gl.glGetUniformLocation(program, "uToneGreen"),
 					gl.glGetUniformLocation(program, "uToneBlue"),
 					gl.glGetUniformLocation(program, "uToneBlend"),
+					-1,
+					-1,
+					-1,
+					-1,
 					-1,
 					-1,
 					-1,
@@ -528,8 +570,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					gl.glGetUniformLocation(program, "uWorldViewMatrix"),
 					gl.glGetUniformLocation(program, "uTexture"),
 					gl.glGetUniformLocation(program, "uShadowMask"),
+					gl.glGetUniformLocation(program, "uGlowMask"),
 					gl.glGetUniformLocation(program, "uTextureEnabled"),
 					gl.glGetUniformLocation(program, "uShadowMaskEnabled"),
+					gl.glGetUniformLocation(program, "uGlowMaskEnabled"),
 					gl.glGetUniformLocation(program, "uRawMaterialMode"),
 					gl.glGetUniformLocation(program, "uRemasterLightingEnabled"),
 					gl.glGetUniformLocation(program, "uLightDirectionX"),
@@ -555,6 +599,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					gl.glGetUniformLocation(program, "uShadowMaskMinZ"),
 					gl.glGetUniformLocation(program, "uShadowMaskInvSpanX"),
 					gl.glGetUniformLocation(program, "uShadowMaskInvSpanZ"),
+					gl.glGetUniformLocation(program, "uGlowMaskMinX"),
+					gl.glGetUniformLocation(program, "uGlowMaskMinZ"),
+					gl.glGetUniformLocation(program, "uGlowMaskInvSpanX"),
+					gl.glGetUniformLocation(program, "uGlowMaskInvSpanZ"),
 					gl.glGetUniformLocation(program, "uFogEnabled"),
 					gl.glGetUniformLocation(program, "uFogStart"),
 					gl.glGetUniformLocation(program, "uFogEnd"));
@@ -605,6 +653,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		}
 		if (shadowMaskUniformLocation >= 0) {
 			gl.glUniform1i(shadowMaskUniformLocation, 1);
+		}
+		if (glowMaskUniformLocation >= 0) {
+			gl.glUniform1i(glowMaskUniformLocation, 2);
 		}
 		if (textureEnabledUniformLocation >= 0) {
 			gl.glUniform1i(textureEnabledUniformLocation, textureEnabled ? 1 : 0);
@@ -661,7 +712,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		boolean rawMaterialMode,
 		boolean remasterLightingEnabled,
 		Renderer3DFrame frame,
-		RemasterTerrainShadowMask shadowMask) throws Exception {
+		RemasterTerrainShadowMask shadowMask,
+		RemasterGlowMask glowMask) throws Exception {
 		if (worldViewMatrix == null) {
 			throw new IllegalArgumentException("resident chunk shader requires an explicit world-view matrix");
 		}
@@ -687,6 +739,22 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		}
 		if (shadowMaskInvSpanZUniformLocation >= 0) {
 			gl.glUniform1f(shadowMaskInvSpanZUniformLocation, shadowMaskEnabled ? shadowMask.invSpanZ : 0.0f);
+		}
+		boolean glowMaskEnabled = remasterLightingEnabled && glowMask != null;
+		if (glowMaskEnabledUniformLocation >= 0) {
+			gl.glUniform1i(glowMaskEnabledUniformLocation, glowMaskEnabled ? 1 : 0);
+		}
+		if (glowMaskMinXUniformLocation >= 0) {
+			gl.glUniform1f(glowMaskMinXUniformLocation, glowMaskEnabled ? glowMask.minX : 0.0f);
+		}
+		if (glowMaskMinZUniformLocation >= 0) {
+			gl.glUniform1f(glowMaskMinZUniformLocation, glowMaskEnabled ? glowMask.minZ : 0.0f);
+		}
+		if (glowMaskInvSpanXUniformLocation >= 0) {
+			gl.glUniform1f(glowMaskInvSpanXUniformLocation, glowMaskEnabled ? glowMask.invSpanX : 0.0f);
+		}
+		if (glowMaskInvSpanZUniformLocation >= 0) {
+			gl.glUniform1f(glowMaskInvSpanZUniformLocation, glowMaskEnabled ? glowMask.invSpanZ : 0.0f);
 		}
 		if (remasterLightingEnabledUniformLocation >= 0) {
 			gl.glUniform1i(remasterLightingEnabledUniformLocation, remasterLightingEnabled ? 1 : 0);

@@ -8,6 +8,7 @@ import com.openrsc.client.entityhandling.defs.NPCDef;
 import com.openrsc.client.entityhandling.defs.PrayerDef;
 import com.openrsc.client.entityhandling.defs.SpellDef;
 import com.openrsc.client.entityhandling.defs.SpriteDef;
+import com.openrsc.client.entityhandling.defs.GameObjectDef;
 import com.openrsc.client.entityhandling.defs.extras.AnimationDef;
 import com.openrsc.client.entityhandling.instances.GroundItem;
 import com.openrsc.client.entityhandling.instances.Item;
@@ -91,6 +92,13 @@ public final class mudclient implements Runnable {
 	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
 	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
 	private static final String FISHING_SPOT_MODEL_NAME = "fishing";
+	private static final int REMASTER_FIRE_GLOW_COLOR = 0xff661c;
+	private static final int REMASTER_TORCH_GLOW_RADIUS = 256;
+	private static final int REMASTER_TORCH_GLOW_INTENSITY = 132;
+	private static final int REMASTER_FIRE_GLOW_RADIUS = 320;
+	private static final int REMASTER_FIRE_GLOW_INTENSITY = 170;
+	private static final int REMASTER_FURNACE_GLOW_RADIUS = 384;
+	private static final int REMASTER_FURNACE_GLOW_INTENSITY = 130;
 	private static final long FISHING_SPOT_RIPPLE_FRAME_MILLIS = 70L;
 	private static final String MODERN_CLIENT_LOOP_PROPERTY = "spoiledmilk.modernClientLoop";
 	private static final String MODERN_CLIENT_LOOP_ENV = "SPOILED_MILK_MODERN_CLIENT_LOOP";
@@ -3609,7 +3617,64 @@ public final class mudclient implements Runnable {
 			builder = new ResidentObjectChunkInputBuilder(anchor, cellKey, cellX, cellZ, chunkRole);
 			builders.put(cellKey, builder);
 		}
+		applyRenderer3DGlowEmitter(kind, objectId, model);
 		builder.add(kind, instanceIndex, tileX, tileZ, objectId, direction, model);
+	}
+
+	private void applyRenderer3DGlowEmitter(Renderer3DModelKind kind, int objectId, RSModel model) {
+		if (model == null) {
+			return;
+		}
+		model.clearRenderer3DGlowEmitter();
+		if (kind != Renderer3DModelKind.GAME_OBJECT) {
+			return;
+		}
+		GameObjectDef def = EntityHandler.getObjectDef(objectId);
+		Renderer3DGlowSpec glowSpec = renderer3DGlowSpecFor(def);
+		if (glowSpec == null) {
+			return;
+		}
+		model.setRenderer3DGlowEmitter(
+			glowSpec.color,
+			glowSpec.radius,
+			glowSpec.intensity);
+	}
+
+	private Renderer3DGlowSpec renderer3DGlowSpecFor(GameObjectDef def) {
+		if (def == null) {
+			return null;
+		}
+		String modelName = lowerOrEmpty(def.getObjectModel());
+		String objectName = lowerOrEmpty(def.getName());
+		if (modelName.startsWith("torcha") || modelName.startsWith("skulltorcha")) {
+			return new Renderer3DGlowSpec(
+				REMASTER_FIRE_GLOW_COLOR,
+				REMASTER_TORCH_GLOW_RADIUS,
+				REMASTER_TORCH_GLOW_INTENSITY);
+		}
+		if (modelName.startsWith("firea")
+			|| modelName.startsWith("fireplacea")
+			|| modelName.startsWith("firespell")
+			|| objectName.equals("flames")) {
+			return new Renderer3DGlowSpec(
+				REMASTER_FIRE_GLOW_COLOR,
+				REMASTER_FIRE_GLOW_RADIUS,
+				REMASTER_FIRE_GLOW_INTENSITY);
+		}
+		if (modelName.equals("furnace")
+			|| modelName.equals("cave furnace")
+			|| objectName.contains("furnace")
+			|| objectName.contains("lava forge")) {
+			return new Renderer3DGlowSpec(
+				REMASTER_FIRE_GLOW_COLOR,
+				REMASTER_FURNACE_GLOW_RADIUS,
+				REMASTER_FURNACE_GLOW_INTENSITY);
+		}
+		return null;
+	}
+
+	private static String lowerOrEmpty(String value) {
+		return value == null ? "" : value.toLowerCase(Locale.ROOT);
 	}
 
 	private boolean isAnimatedResidentObjectChunkModel(Renderer3DModelKind kind, int objectId) {
@@ -3622,6 +3687,18 @@ public final class mudclient implements Runnable {
 		com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(objectId);
 		return def != null
 			&& ("portal".equals(def.getObjectModel()) || FISHING_SPOT_MODEL_NAME.equals(def.getObjectModel()));
+	}
+
+	private static final class Renderer3DGlowSpec {
+		private final int color;
+		private final int radius;
+		private final int intensity;
+
+		private Renderer3DGlowSpec(int color, int radius, int intensity) {
+			this.color = color;
+			this.radius = radius;
+			this.intensity = intensity;
+		}
 	}
 
 	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input) {

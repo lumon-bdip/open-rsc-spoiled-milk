@@ -25,6 +25,11 @@ remains the focused implementation ledger for remaster lighting and shadows.
   `1`, scenery/game-object blur radius `4`, scenery/game-object alpha scale
   `1.3`, contact alpha `0.5`, contact radius scale `0.05`, and contact blur
   radius `2`.
+- First-pass emissive ambient glow is active for the resident Remaster path.
+  Lava overlay `11` and known fire-like scenery add a cached warm RGB glow mask
+  in the shader. This is deliberately separate from directional shadows: it
+  does not cast shadows, does not change shadow masks, and should not be used as
+  a substitute for future point-light work.
 - Static resident object chunks are separated from animated object chunks.
   Animated scenery may still rebuild a small dynamic chunk, but it should not
   dirty surrounding static scenery. Expanded F6 should report
@@ -52,6 +57,8 @@ renderer:
 - Scenery and wall objects have subtle first-pass contact shadows at their
   bases so they remain visually grounded even when cast shadows are long or
   weak.
+- Emissive materials such as lava and fire can add local ambient color without
+  becoming shadow casters.
 - Walls and scenery respect indoor/outdoor classification.
 - Shadows respect clipping well enough that they do not obviously pass through
   solid walls or closed building boundaries.
@@ -440,6 +447,14 @@ Goal: turn the proof into a usable remaster option.
   before applying either directional or contact shadow channels. This restored
   roofless building interior shadow blocking while still allowing exterior
   boundary walls to cast outward.
+- [x] Add first-pass emissive ambient glow. Terrain overlay `11` contributes
+  lava glow emitters during world chunk construction; fire, fireplace, torch,
+  skull torch, flame, furnace, cave furnace, and lava forge scenery are tagged
+  before resident object chunks are built. `RemasterGlowMaskBuilder` accumulates
+  those emitters into a cached world-space RGB texture sampled by the resident
+  shader on texture unit 2 after base remaster lighting/brightness and before
+  day/night tone/fog. This is a visual warmth layer only; it does not cast
+  shadows.
 
 ## Next Refinement Options
 
@@ -485,6 +500,10 @@ default work queue:
   foliage, water, ore, scenery, sprites, projectiles, and effects as material
   families. This should come before heavy polish controls so Remaster lighting
   does not apply one generic response to every asset.
+- Emissive material metadata. Move lava/fire glow classification out of
+  `mudclient` heuristics and into explicit material/object metadata. After that,
+  test bloom-like glow filtering, fire/lava particles, and localized light
+  contribution separately from shadow casting.
 - Shadow receiver expansion. Terrain is the only accepted receiver. Receiving
   onto walls, scenery, sprites, players, or NPCs is later work after terrain
   shadows are cheaper and material ownership is cleaner.
