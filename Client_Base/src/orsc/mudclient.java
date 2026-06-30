@@ -87,6 +87,8 @@ public final class mudclient implements Runnable {
 	private static final int SCENE_PICK_MODEL_CAPACITY = 1000;
 	private static final int WALL_OBJECT_KEY_BASE = 20000;
 	private static final int GROUND_ITEM_PICK_INDEX_BASE = 20000;
+	private static final int GROUND_ITEM_INITIAL_CAPACITY = 5000;
+	private static final int CHARACTER_OVERLAY_INITIAL_CAPACITY = 150;
 	private static final int GROUND_ITEM_NAMEPLATE_LINE_HEIGHT = 12;
 	private static final int GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING = 6;
 	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
@@ -102,7 +104,7 @@ public final class mudclient implements Runnable {
 	private static final long FISHING_SPOT_RIPPLE_FRAME_MILLIS = 70L;
 	private static final String MODERN_CLIENT_LOOP_PROPERTY = "spoiledmilk.modernClientLoop";
 	private static final String MODERN_CLIENT_LOOP_ENV = "SPOILED_MILK_MODERN_CLIENT_LOOP";
-	private static final int GAME_OBJECT_INSTANCE_CAPACITY = WALL_OBJECT_KEY_BASE;
+	private static final int GAME_OBJECT_INSTANCE_INITIAL_CAPACITY = WALL_OBJECT_KEY_BASE;
 	private static final int WALL_OBJECT_INSTANCE_CAPACITY = 5000;
 	private static final int OPENGL_PRIMARY_TARGET_FPS = 60;
 	private static final int MODERN_LOOP_MAX_CATCH_UP_UPDATES = 5;
@@ -383,9 +385,9 @@ public final class mudclient implements Runnable {
 	private final int[] bankItemID = new int[500];
 	private final int[] bankItemSize = new int[500];
 	private final boolean cameraAutoAngleDebug = false;
-	private final int[] characterBubbleScale = new int[150];
-	private final int[] characterBubbleX = new int[150];
-	private final int[] characterBubbleY = new int[150];
+	private int[] characterBubbleScale = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
+	private int[] characterBubbleX = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
+	private int[] characterBubbleY = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private boolean actionProgressActive = false;
 	private int actionProgressItemId = -1;
 	private long actionProgressStartTime = 0L;
@@ -398,13 +400,13 @@ public final class mudclient implements Runnable {
 	private int activeGatheringFocusKind = GATHERING_FOCUS_NONE;
 	private int activeGatheringFocusItemId = -1;
 	private long gatheringFocusMenuHideAt = 0L;
-	private final int[] characterDialogHalfWidth = new int[150];
-	private final int[] characterDialogHeight = new int[150];
-	private final String[] characterDialogString = new String[150];
-	private final int[] characterDialogX = new int[150];
-	private final int[] characterDialogY = new int[150];
-	private final int[] characterHealthX = new int[150];
-	private final int[] characterHealthY = new int[150];
+	private int[] characterDialogHalfWidth = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
+	private int[] characterDialogHeight = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
+	private String[] characterDialogString = new String[CHARACTER_OVERLAY_INITIAL_CAPACITY];
+	private int[] characterDialogX = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
+	private int[] characterDialogY = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
+	private int[] characterHealthX = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
+	private int[] characterHealthY = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private final IdentityHashMap<Sprite, int[][]> combatSpriteVisibleBoundsCache = new IdentityHashMap<Sprite, int[][]>();
 	private final Item[] duelConfirm = new Item[8];
 	//private final int[] duelConfirmItemCount = new int[8];
@@ -414,42 +416,42 @@ public final class mudclient implements Runnable {
 	private final Item[] duelOpponent = new Item[8];
 	//private final int[] duelOpponentItemCount = new int[8];
 	private final Item[] duelOpponentConfirm = new Item[8];
-	private final boolean[] gameObjectInstance_Arg1 = new boolean[GAME_OBJECT_INSTANCE_CAPACITY];
-	private final int[] gameObjectInstanceDir = new int[GAME_OBJECT_INSTANCE_CAPACITY];
-	private final int[] gameObjectInstanceID = new int[GAME_OBJECT_INSTANCE_CAPACITY];
-	private final boolean[] gameObjectInstanceMaterialized = new boolean[GAME_OBJECT_INSTANCE_CAPACITY];
-	private final RSModel[] gameObjectInstanceModel = new RSModel[GAME_OBJECT_INSTANCE_CAPACITY];
-	private final int[] gameObjectInstanceX = new int[GAME_OBJECT_INSTANCE_CAPACITY];
+	private boolean[] gameObjectInstance_Arg1 = new boolean[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
+	private int[] gameObjectInstanceDir = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
+	private int[] gameObjectInstanceID = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
+	private boolean[] gameObjectInstanceMaterialized = new boolean[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
+	private RSModel[] gameObjectInstanceModel = new RSModel[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
+	private int[] gameObjectInstanceX = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
 	private static final int OBJECT_ANIMATION_TILE_RADIUS = 14;
-	private final int[] groundItemID = new int[5000];
-	private final int[] groundItemX = new int[5000];
-	private final int[] groundItemZ = new int[5000];
+	private int[] groundItemID = new int[GROUND_ITEM_INITIAL_CAPACITY];
+	private int[] groundItemX = new int[GROUND_ITEM_INITIAL_CAPACITY];
+	private int[] groundItemZ = new int[GROUND_ITEM_INITIAL_CAPACITY];
 	private final ArrayList<GroundItem> groundItems = new ArrayList<GroundItem>();
-	private final ArrayList<Integer> groundItemRenderOrder = new ArrayList<Integer>(5000);
+	private final ArrayList<Integer> groundItemRenderOrder = new ArrayList<Integer>(GROUND_ITEM_INITIAL_CAPACITY);
 	private final int[] groundItemRenderCountByTile = new int[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT];
-	private final int[] groundItemRenderStackIndex = new int[5000];
+	private int[] groundItemRenderStackIndex = new int[GROUND_ITEM_INITIAL_CAPACITY];
 	private final Item[] inventory = new Item[S_PLAYER_INVENTORY_SLOTS];
-	private final ORSCharacter[] knownPlayers = new ORSCharacter[500];
+	private ORSCharacter[] knownPlayers = new ORSCharacter[500];
 	private final String[] optionsMenuText = new String[20];
-	private final int[] groundItemHeight = new int[5000];
-	private final boolean[] groundItemNoted = new boolean[5000];
+	private int[] groundItemHeight = new int[GROUND_ITEM_INITIAL_CAPACITY];
+	private boolean[] groundItemNoted = new boolean[GROUND_ITEM_INITIAL_CAPACITY];
 	private final int character2Colour = 2;
 	private final RSModel[] modelCache = new RSModel[1000];
 	private final int[] newBankItems = new int[500];
 	private final int[] newBankItemsCount = new int[500];
-	private final ORSCharacter[] npcs = new ORSCharacter[500];
-	private final int[] npcVisualOffsetX = new int[500];
-	private final int[] npcVisualOffsetZ = new int[500];
-	private final ORSCharacter[] npcsCache = new ORSCharacter[500];
-	private final ORSCharacter[] npcsServer = new ORSCharacter[5000];
+	private ORSCharacter[] npcs = new ORSCharacter[500];
+	private int[] npcVisualOffsetX = new int[500];
+	private int[] npcVisualOffsetZ = new int[500];
+	private ORSCharacter[] npcsCache = new ORSCharacter[500];
+	private ORSCharacter[] npcsServer = new ORSCharacter[5000];
 	private final int[] pathX = new int[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT];
 	private final int[] pathZ = new int[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT];
 	private final int[] playerClothingColors = new int[]{0xFF0000, 16744448, 16769024, 10543104, '\ue000', '\u8000',
 		'\ua080', '\ub0ff', '\u80ff', 12528, 14680288, 3158064, 6307840, 8409088, 0xFFFFFF};
 	private final int[] playerHairColors = new int[]{16760880, 16752704, 8409136, 6307872, 3158064, 16736288,
 		16728064, 0xFFFFFF, '\uff00', '\uffff'};
-	private final ORSCharacter[] players = new ORSCharacter[500];
-	private final ORSCharacter[] playerServer = new ORSCharacter[4000];
+	private ORSCharacter[] players = new ORSCharacter[500];
+	private ORSCharacter[] playerServer = new ORSCharacter[4000];
 	private final int[] playerSkinColors = new int[]{
 		// original player skin colours
 		0xECDED0, 0xCCB366, 0xB38C40, 0x997326, 0x906020,
@@ -524,13 +526,13 @@ public final class mudclient implements Runnable {
 	private final Item[] tradeRecipient = new Item[14];
 	//private final int[] tradeRecipientItem = new int[14];
 	//private final int[] tradeRecipientItemCount = new int[14];
-	private final boolean[] wallObjectInstance_Arg1 = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
-	private final int[] wallObjectInstanceDir = new int[WALL_OBJECT_INSTANCE_CAPACITY];
-	private final int[] wallObjectInstanceID = new int[WALL_OBJECT_INSTANCE_CAPACITY];
-	private final boolean[] wallObjectInstanceMaterialized = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
-	private final RSModel[] wallObjectInstanceModel = new RSModel[WALL_OBJECT_INSTANCE_CAPACITY];
-	private final int[] wallObjectInstanceX = new int[WALL_OBJECT_INSTANCE_CAPACITY];
-	private final int[] wallObjectInstanceZ = new int[WALL_OBJECT_INSTANCE_CAPACITY];
+	private boolean[] wallObjectInstance_Arg1 = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
+	private int[] wallObjectInstanceDir = new int[WALL_OBJECT_INSTANCE_CAPACITY];
+	private int[] wallObjectInstanceID = new int[WALL_OBJECT_INSTANCE_CAPACITY];
+	private boolean[] wallObjectInstanceMaterialized = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
+	private RSModel[] wallObjectInstanceModel = new RSModel[WALL_OBJECT_INSTANCE_CAPACITY];
+	private int[] wallObjectInstanceX = new int[WALL_OBJECT_INSTANCE_CAPACITY];
+	private int[] wallObjectInstanceZ = new int[WALL_OBJECT_INSTANCE_CAPACITY];
 	//private final int[] inventoryItemEquipped = new int[S_PLAYER_INVENTORY_SLOTS];
 	//private final int[] inventoryItemID = new int[S_PLAYER_INVENTORY_SLOTS];
 	//private final int[] inventoryItemSize = new int[S_PLAYER_INVENTORY_SLOTS];
@@ -726,9 +728,9 @@ public final class mudclient implements Runnable {
 	private int cameraAutoMoveX = 0;
 	private int cameraAutoMoveZ = 0;
 	private int characterBubbleCount = 0;
-	private final int[] characterBubbleID = new int[150];
+	private int[] characterBubbleID = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private int characterDialogCount = 0;
-	private int[] characterHealthBar = new int[150];
+	private int[] characterHealthBar = new int[CHARACTER_OVERLAY_INITIAL_CAPACITY];
 	private int characterHealthCount = 0;
 	private String chatMessageTarget;
 	private int frameCounter = 0;
@@ -786,7 +788,7 @@ public final class mudclient implements Runnable {
 	private int currentDevotionLevel = 0;
 	private int gameHeight = 334;
 	private int gameObjectInstanceCount = 0;
-	private final int[] gameObjectInstanceZ = new int[GAME_OBJECT_INSTANCE_CAPACITY];
+	private int[] gameObjectInstanceZ = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
 	private int gameWidth = 512;
 	private int groundItemCount = 0;
 	private boolean inputX_Focused = true;
@@ -3051,6 +3053,11 @@ public final class mudclient implements Runnable {
 
 	public final ORSCharacter createNpc(int sprite, int type, int x, int y, int serverIndex) {
 		try {
+			if (serverIndex < 0) {
+				return null;
+			}
+			ensureNpcServerCapacity(serverIndex + 1);
+			ensureVisibleNpcCapacity(this.npcCount + 1);
 			if (null == this.npcsServer[serverIndex]) {
 				this.npcsServer[serverIndex] = new ORSCharacter();
 				this.npcsServer[serverIndex].serverIndex = serverIndex;
@@ -3131,6 +3138,11 @@ public final class mudclient implements Runnable {
 
 	public final ORSCharacter createPlayer(int zPosition, int serverIndex, int xPosition, int var4, ORSCharacterDirection direction) {
 		try {
+			if (serverIndex < 0) {
+				return null;
+			}
+			ensurePlayerServerCapacity(serverIndex + 1);
+			ensureVisiblePlayerCapacity(this.playerCount + 1);
 			if (null == this.playerServer[serverIndex]) {
 				this.playerServer[serverIndex] = new ORSCharacter();
 				this.playerServer[serverIndex].serverIndex = serverIndex;
@@ -3374,7 +3386,11 @@ public final class mudclient implements Runnable {
 	}
 
 	public void materializeGameObjectInstance(int index) {
-		if (index < 0 || index >= GAME_OBJECT_INSTANCE_CAPACITY || this.gameObjectInstanceMaterialized[index]) {
+		if (index < 0) {
+			return;
+		}
+		ensureGameObjectInstanceCapacity(index + 1);
+		if (this.gameObjectInstanceMaterialized[index]) {
 			return;
 		}
 		RSModel model = this.gameObjectInstanceModel[index];
@@ -3408,21 +3424,25 @@ public final class mudclient implements Runnable {
 		if (objectID == 74) {
 			model.translate2(0, -480, 0);
 		}
-		this.gameObjectInstanceMaterialized[index] = true;
+		this.setGameObjectInstanceMaterialized(index, true);
 	}
 
 	public void dematerializeGameObjectInstance(int index) {
-		if (index < 0 || index >= GAME_OBJECT_INSTANCE_CAPACITY || !this.gameObjectInstanceMaterialized[index]) {
+		if (index < 0 || index >= this.gameObjectInstanceMaterialized.length || !this.gameObjectInstanceMaterialized[index]) {
 			return;
 		}
 		this.scene.removeModel(this.gameObjectInstanceModel[index]);
 		this.world.removeGameObject_CollisonFlags(this.gameObjectInstanceID[index],
 			this.gameObjectInstanceX[index], this.gameObjectInstanceZ[index]);
-		this.gameObjectInstanceMaterialized[index] = false;
+		this.setGameObjectInstanceMaterialized(index, false);
 	}
 
 	public void materializeWallObjectInstance(int index) {
-		if (index < 0 || index >= WALL_OBJECT_INSTANCE_CAPACITY || this.wallObjectInstanceMaterialized[index]) {
+		if (index < 0) {
+			return;
+		}
+		ensureWallObjectInstanceCapacity(index + 1);
+		if (this.wallObjectInstanceMaterialized[index]) {
 			return;
 		}
 		int x = this.wallObjectInstanceX[index];
@@ -3437,11 +3457,11 @@ public final class mudclient implements Runnable {
 		this.setWallObjectInstanceModel(index, model);
 		this.scene.addModel(model);
 		this.world.applyWallToCollisionFlags(id, x, z, dir);
-		this.wallObjectInstanceMaterialized[index] = true;
+		this.setWallObjectInstanceMaterialized(index, true);
 	}
 
 	public void dematerializeWallObjectInstance(int index) {
-		if (index < 0 || index >= WALL_OBJECT_INSTANCE_CAPACITY || !this.wallObjectInstanceMaterialized[index]) {
+		if (index < 0 || index >= this.wallObjectInstanceMaterialized.length || !this.wallObjectInstanceMaterialized[index]) {
 			return;
 		}
 		this.scene.removeModel(this.wallObjectInstanceModel[index]);
@@ -8706,6 +8726,7 @@ public final class mudclient implements Runnable {
 			drawCombatEffectOverlay(npc, x, y, width1, height);
 
 			if (npc.messageTimeout > 0) {
+				ensureCharacterDialogCapacity(this.characterDialogCount + 1);
 				this.characterDialogHalfWidth[this.characterDialogCount] = this.getSurface().stringWidth(1, npc.message)
 					/ 2;
 				if (this.characterDialogHalfWidth[this.characterDialogCount] > 150) {
@@ -8734,6 +8755,7 @@ public final class mudclient implements Runnable {
 					var15 = x + getCombatScreenOffset(npc.direction, overlayMovement, 20);
 
 					var16 = npc.healthCurrent * 30 / npc.healthMax;
+					ensureCharacterHealthCapacity(this.characterHealthCount + 1);
 					this.characterHealthX[this.characterHealthCount] = width1 / 2 + var15;
 					this.characterHealthY[this.characterHealthCount] = y;
 					this.characterHealthBar[this.characterHealthCount++] = var16;
@@ -9005,6 +9027,7 @@ public final class mudclient implements Runnable {
 				}
 
 				if (player.messageTimeout > 0) {
+					ensureCharacterDialogCapacity(this.characterDialogCount + 1);
 					this.characterDialogHalfWidth[this.characterDialogCount] = this.getSurface().stringWidth(1,
 						player.message) / 2;
 					if (this.characterDialogHalfWidth[this.characterDialogCount] > 150) {
@@ -9035,6 +9058,7 @@ public final class mudclient implements Runnable {
 					}
 
 				if (player.bubbleTimeout > 0) {
+					ensureCharacterBubbleCapacity(this.characterBubbleCount + 1);
 					this.characterBubbleX[this.characterBubbleCount] = x + width / 2;
 					this.characterBubbleY[this.characterBubbleCount] = y;
 					this.characterBubbleScale[this.characterBubbleCount] = overlayMovement;
@@ -9049,6 +9073,7 @@ public final class mudclient implements Runnable {
 						int var14 = x + getCombatScreenOffset(player.direction, overlayMovement, 20);
 
 						int healthStep = player.healthCurrent * 30 / player.healthMax;
+						ensureCharacterHealthCapacity(this.characterHealthCount + 1);
 						this.characterHealthX[this.characterHealthCount] = width / 2 + var14;
 						this.characterHealthY[this.characterHealthCount] = y;
 						this.characterHealthBar[this.characterHealthCount++] = healthStep;
@@ -9890,7 +9915,7 @@ public final class mudclient implements Runnable {
 					int id;
 					if (this.scene.m_T != var8) {
 						// wall object right click menu
-						if (var8 != null && var8.key >= WALL_OBJECT_KEY_BASE) {
+						if (var8 != null && var8.getRenderer3DModelKind() == Renderer3DModelKind.WALL_OBJECT) {
 							var9 = var8.key - WALL_OBJECT_KEY_BASE;
 							if (var9 < 0 || var9 >= this.wallObjectInstanceCount) {
 								continue;
@@ -9945,7 +9970,7 @@ public final class mudclient implements Runnable {
 							}
 						}
 						// Game Object Right Click Menu
-						else if (null != var8 && var8.key >= 0) {
+						else if (null != var8 && var8.getRenderer3DModelKind() == Renderer3DModelKind.GAME_OBJECT) {
 							var9 = var8.key;
 							if (var9 >= this.gameObjectInstanceCount) {
 								continue;
@@ -21279,7 +21304,7 @@ public final class mudclient implements Runnable {
 							SocialLists.ignoreListArg0[i] = SocialLists.ignoreListArg0[i + 1];
 							SocialLists.ignoreList[i] = SocialLists.ignoreList[1 + i];
 							SocialLists.ignoreListArg1[i] = SocialLists.ignoreListArg1[i + 1];
-							SocialLists.ignoreListOld[i] = SocialLists.ignoreListOld[i];
+							SocialLists.ignoreListOld[i] = SocialLists.ignoreListOld[i + 1];
 						}
 
 						this.packetHandler.getClientStream().newPacket(241);
@@ -21468,23 +21493,13 @@ public final class mudclient implements Runnable {
 			this.setWallObjectInstanceCount(0);
 			this.playerCount = 0;
 
-			for (i = 0; i < 4000; ++i) {
-				this.playerServer[i] = null;
-			}
-
-			for (i = 0; i < 500; ++i) {
-				this.players[i] = null;
-			}
+			Arrays.fill(this.playerServer, null);
+			Arrays.fill(this.players, null);
 
 			this.npcCount = 0;
 
-			for (i = 0; i < 5000; ++i) {
-				this.npcsServer[i] = null;
-			}
-
-			for (i = 0; i < 500; ++i) {
-				this.npcs[i] = null;
-			}
+			Arrays.fill(this.npcsServer, null);
+			Arrays.fill(this.npcs, null);
 
 			for (i = 0; i < 50; ++i) {
 				this.prayerOn[i] = false;
@@ -22192,6 +22207,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setPlayerCount(int i) {
+		ensureVisiblePlayerCapacity(i);
 		this.playerCount = i;
 	}
 
@@ -22204,10 +22220,12 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setKnownPlayerCount(int i) {
+		ensureKnownPlayerCapacity(i);
 		this.knownPlayerCount = i;
 	}
 
 	public void setKnownPlayer(int i, ORSCharacter p) {
+		ensureKnownPlayerCapacity(i + 1);
 		this.knownPlayers[i] = p;
 	}
 
@@ -22462,7 +22480,133 @@ public final class mudclient implements Runnable {
 			&& direction <= ORSCharacterDirection.COMBAT_NORTH_EAST.rsDir;
 	}
 
+	private static int growEntityCapacity(int currentCapacity, int requiredCapacity) {
+		int capacity = Math.max(1, currentCapacity);
+		while (capacity < requiredCapacity) {
+			int increment = Math.max(128, capacity / 2);
+			capacity += increment;
+			if (capacity < 0) {
+				return requiredCapacity;
+			}
+		}
+		return capacity;
+	}
+
+	private void ensureVisiblePlayerCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.players.length) {
+			this.players = Arrays.copyOf(this.players, growEntityCapacity(this.players.length, requiredCapacity));
+		}
+	}
+
+	private void ensureKnownPlayerCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.knownPlayers.length) {
+			this.knownPlayers = Arrays.copyOf(this.knownPlayers, growEntityCapacity(this.knownPlayers.length, requiredCapacity));
+		}
+	}
+
+	private void ensurePlayerServerCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.playerServer.length) {
+			this.playerServer = Arrays.copyOf(this.playerServer, growEntityCapacity(this.playerServer.length, requiredCapacity));
+		}
+	}
+
+	private void ensureVisibleNpcCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.npcs.length) {
+			int capacity = growEntityCapacity(this.npcs.length, requiredCapacity);
+			this.npcs = Arrays.copyOf(this.npcs, capacity);
+			this.npcVisualOffsetX = Arrays.copyOf(this.npcVisualOffsetX, capacity);
+			this.npcVisualOffsetZ = Arrays.copyOf(this.npcVisualOffsetZ, capacity);
+		}
+	}
+
+	private void ensureNpcCacheCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.npcsCache.length) {
+			this.npcsCache = Arrays.copyOf(this.npcsCache, growEntityCapacity(this.npcsCache.length, requiredCapacity));
+		}
+	}
+
+	private void ensureNpcServerCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.npcsServer.length) {
+			this.npcsServer = Arrays.copyOf(this.npcsServer, growEntityCapacity(this.npcsServer.length, requiredCapacity));
+		}
+	}
+
+	private void ensureGameObjectInstanceCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.gameObjectInstanceModel.length) {
+			int capacity = growEntityCapacity(this.gameObjectInstanceModel.length, requiredCapacity);
+			this.gameObjectInstance_Arg1 = Arrays.copyOf(this.gameObjectInstance_Arg1, capacity);
+			this.gameObjectInstanceDir = Arrays.copyOf(this.gameObjectInstanceDir, capacity);
+			this.gameObjectInstanceID = Arrays.copyOf(this.gameObjectInstanceID, capacity);
+			this.gameObjectInstanceMaterialized = Arrays.copyOf(this.gameObjectInstanceMaterialized, capacity);
+			this.gameObjectInstanceModel = Arrays.copyOf(this.gameObjectInstanceModel, capacity);
+			this.gameObjectInstanceX = Arrays.copyOf(this.gameObjectInstanceX, capacity);
+			this.gameObjectInstanceZ = Arrays.copyOf(this.gameObjectInstanceZ, capacity);
+		}
+	}
+
+	private void ensureWallObjectInstanceCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.wallObjectInstanceModel.length) {
+			int capacity = growEntityCapacity(this.wallObjectInstanceModel.length, requiredCapacity);
+			this.wallObjectInstance_Arg1 = Arrays.copyOf(this.wallObjectInstance_Arg1, capacity);
+			this.wallObjectInstanceDir = Arrays.copyOf(this.wallObjectInstanceDir, capacity);
+			this.wallObjectInstanceID = Arrays.copyOf(this.wallObjectInstanceID, capacity);
+			this.wallObjectInstanceMaterialized = Arrays.copyOf(this.wallObjectInstanceMaterialized, capacity);
+			this.wallObjectInstanceModel = Arrays.copyOf(this.wallObjectInstanceModel, capacity);
+			this.wallObjectInstanceX = Arrays.copyOf(this.wallObjectInstanceX, capacity);
+			this.wallObjectInstanceZ = Arrays.copyOf(this.wallObjectInstanceZ, capacity);
+		}
+	}
+
+	private void ensureGroundItemCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.groundItemID.length) {
+			int capacity = growEntityCapacity(this.groundItemID.length, requiredCapacity);
+			this.groundItemID = Arrays.copyOf(this.groundItemID, capacity);
+			this.groundItemX = Arrays.copyOf(this.groundItemX, capacity);
+			this.groundItemZ = Arrays.copyOf(this.groundItemZ, capacity);
+			this.groundItemHeight = Arrays.copyOf(this.groundItemHeight, capacity);
+			this.groundItemNoted = Arrays.copyOf(this.groundItemNoted, capacity);
+			this.groundItemRenderStackIndex = Arrays.copyOf(this.groundItemRenderStackIndex, capacity);
+		}
+	}
+
+	private void ensureCharacterDialogCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.characterDialogString.length) {
+			int capacity = growEntityCapacity(this.characterDialogString.length, requiredCapacity);
+			this.characterDialogHalfWidth = Arrays.copyOf(this.characterDialogHalfWidth, capacity);
+			this.characterDialogHeight = Arrays.copyOf(this.characterDialogHeight, capacity);
+			this.characterDialogString = Arrays.copyOf(this.characterDialogString, capacity);
+			this.characterDialogX = Arrays.copyOf(this.characterDialogX, capacity);
+			this.characterDialogY = Arrays.copyOf(this.characterDialogY, capacity);
+		}
+	}
+
+	private void ensureCharacterBubbleCapacity(int requiredCapacity) {
+		if (requiredCapacity > this.characterBubbleID.length) {
+			int capacity = growEntityCapacity(this.characterBubbleID.length, requiredCapacity);
+			this.characterBubbleID = Arrays.copyOf(this.characterBubbleID, capacity);
+			this.characterBubbleScale = Arrays.copyOf(this.characterBubbleScale, capacity);
+			this.characterBubbleX = Arrays.copyOf(this.characterBubbleX, capacity);
+			this.characterBubbleY = Arrays.copyOf(this.characterBubbleY, capacity);
+		}
+	}
+
+	private void ensureCharacterHealthCapacity(int requiredCapacity) {
+		if (this.characterHealthBar == null) {
+			int capacity = Math.max(CHARACTER_OVERLAY_INITIAL_CAPACITY, requiredCapacity);
+			this.characterHealthBar = new int[capacity];
+			this.characterHealthX = Arrays.copyOf(this.characterHealthX, capacity);
+			this.characterHealthY = Arrays.copyOf(this.characterHealthY, capacity);
+		}
+		if (requiredCapacity > this.characterHealthBar.length) {
+			int capacity = growEntityCapacity(this.characterHealthBar.length, requiredCapacity);
+			this.characterHealthBar = Arrays.copyOf(this.characterHealthBar, capacity);
+			this.characterHealthX = Arrays.copyOf(this.characterHealthX, capacity);
+			this.characterHealthY = Arrays.copyOf(this.characterHealthY, capacity);
+		}
+	}
+
 	public void setPlayer(int i, ORSCharacter p) {
+		ensureVisiblePlayerCapacity(i + 1);
 		this.players[i] = p;
 	}
 
@@ -22503,6 +22647,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGameObjectInstanceCount(int i) {
+		ensureGameObjectInstanceCapacity(i);
 		for (int index = Math.max(0, i); index < this.gameObjectInstanceCount; index++) {
 			this.gameObjectInstanceMaterialized[index] = false;
 			this.gameObjectInstanceModel[index] = null;
@@ -22511,10 +22656,12 @@ public final class mudclient implements Runnable {
 	}
 
 	public boolean hasGameObjectInstanceCapacity() {
-		return this.gameObjectInstanceCount < GAME_OBJECT_INSTANCE_CAPACITY;
+		ensureGameObjectInstanceCapacity(this.gameObjectInstanceCount + 1);
+		return true;
 	}
 
 	public void setGameObjectInstanceX(int i, int n) {
+		ensureGameObjectInstanceCapacity(i + 1);
 		this.gameObjectInstanceX[i] = n;
 	}
 
@@ -22523,6 +22670,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGameObjectInstanceZ(int i, int n) {
+		ensureGameObjectInstanceCapacity(i + 1);
 		this.gameObjectInstanceZ[i] = n;
 	}
 
@@ -22531,6 +22679,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGameObjectInstanceModel(int i, RSModel m) {
+		ensureGameObjectInstanceCapacity(i + 1);
 		this.gameObjectInstanceModel[i] = m;
 		if (this.gameObjectInstanceModel[i] != null) {
 			this.gameObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
@@ -22547,10 +22696,12 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGameObjectInstanceMaterialized(int i, boolean materialized) {
+		ensureGameObjectInstanceCapacity(i + 1);
 		this.gameObjectInstanceMaterialized[i] = materialized;
 	}
 
 	public void setGameObjectInstanceID(int i, int n) {
+		ensureGameObjectInstanceCapacity(i + 1);
 		this.gameObjectInstanceID[i] = n;
 	}
 
@@ -22559,6 +22710,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGameObjectInstanceDir(int i, int n) {
+		ensureGameObjectInstanceCapacity(i + 1);
 		this.gameObjectInstanceDir[i] = n;
 	}
 
@@ -22571,6 +22723,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setWallObjectInstanceCount(int i) {
+		ensureWallObjectInstanceCapacity(i);
 		for (int index = Math.max(0, i); index < this.wallObjectInstanceCount; index++) {
 			this.wallObjectInstanceMaterialized[index] = false;
 			this.wallObjectInstanceModel[index] = null;
@@ -22579,10 +22732,12 @@ public final class mudclient implements Runnable {
 	}
 
 	public boolean hasWallObjectInstanceCapacity() {
-		return this.wallObjectInstanceCount < WALL_OBJECT_INSTANCE_CAPACITY;
+		ensureWallObjectInstanceCapacity(this.wallObjectInstanceCount + 1);
+		return true;
 	}
 
 	public void setWallObjectInstanceX(int i, int n) {
+		ensureWallObjectInstanceCapacity(i + 1);
 		this.wallObjectInstanceX[i] = n;
 	}
 
@@ -22591,6 +22746,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setWallObjectInstanceZ(int i, int n) {
+		ensureWallObjectInstanceCapacity(i + 1);
 		this.wallObjectInstanceZ[i] = n;
 	}
 
@@ -22599,6 +22755,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setWallObjectInstanceModel(int i, RSModel n) {
+		ensureWallObjectInstanceCapacity(i + 1);
 		this.wallObjectInstanceModel[i] = n;
 		if (this.wallObjectInstanceModel[i] != null) {
 			this.wallObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
@@ -22615,10 +22772,12 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setWallObjectInstanceMaterialized(int i, boolean materialized) {
+		ensureWallObjectInstanceCapacity(i + 1);
 		this.wallObjectInstanceMaterialized[i] = materialized;
 	}
 
 	public void setWallObjectInstanceDir(int i, int n) {
+		ensureWallObjectInstanceCapacity(i + 1);
 		this.wallObjectInstanceDir[i] = n;
 	}
 
@@ -22627,6 +22786,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setWallObjectInstanceID(int i, int n) {
+		ensureWallObjectInstanceCapacity(i + 1);
 		this.wallObjectInstanceID[i] = n;
 	}
 
@@ -22697,6 +22857,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setNpcCount(int i) {
+		ensureVisibleNpcCapacity(i);
 		this.npcCount = i;
 	}
 
@@ -22705,10 +22866,12 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setNpcCacheCount(int i) {
+		ensureNpcCacheCapacity(i);
 		this.npcCacheCount = i;
 	}
 
 	public void setNpcFromCache(int i, ORSCharacter n) {
+		ensureNpcCacheCapacity(i + 1);
 		this.npcsCache[i] = n;
 	}
 
@@ -22717,6 +22880,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setNpc(int i, ORSCharacter n) {
+		ensureVisibleNpcCapacity(i + 1);
 		this.npcs[i] = n;
 	}
 
@@ -22725,6 +22889,9 @@ public final class mudclient implements Runnable {
 	}
 
 	public ORSCharacter getNpcFromServer(int i) {
+		if (i < 0 || i >= this.npcsServer.length) {
+			return null;
+		}
 		return this.npcsServer[i];
 	}
 
@@ -22841,10 +23008,12 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGroundItemCount(int i) {
+		ensureGroundItemCapacity(i);
 		this.groundItemCount = i;
 	}
 
 	public void setGroundItemX(int i, int n) {
+		ensureGroundItemCapacity(i + 1);
 		this.groundItemX[i] = n;
 	}
 
@@ -22853,6 +23022,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGroundItemZ(int i, int n) {
+		ensureGroundItemCapacity(i + 1);
 		this.groundItemZ[i] = n;
 	}
 
@@ -22861,6 +23031,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGroundItemID(int i, int n) {
+		ensureGroundItemCapacity(i + 1);
 		this.groundItemID[i] = n;
 	}
 
@@ -22869,6 +23040,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGroundItemHeight(int i, int n) {
+		ensureGroundItemCapacity(i + 1);
 		this.groundItemHeight[i] = n;
 	}
 
@@ -22877,6 +23049,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setGroundItemNoted(int i, boolean n) {
+		ensureGroundItemCapacity(i + 1);
 		this.groundItemNoted[i] = n;
 	}
 
@@ -22885,6 +23058,9 @@ public final class mudclient implements Runnable {
 	}
 
 	public ORSCharacter getPlayerFromServer(int i) {
+		if (i < 0 || i >= this.playerServer.length) {
+			return null;
+		}
 		return this.playerServer[i];
 	}
 

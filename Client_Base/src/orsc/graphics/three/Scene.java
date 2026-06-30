@@ -15,14 +15,14 @@ import java.util.EnumSet;
 public final class Scene {
 	static final int TRANSPARENT = 12345678;
 	private static final int MIN_EXPANDED_PICK_PADDING_PIXELS = 14;
-	private final RSModel[] m_Ab;
+	private RSModel[] m_Ab;
 	private final int[] m_B = new int[40];
-	private final int m_db;
+	private int m_db;
 	private final int polyNormalScale;
 	private final int m_ib = 50;
 	private final int[][] m_Ib;
 	private final int[] m_J = new int[40];
-	private final int[] m_qb;
+	private int[] m_qb;
 	private final int[] m_Qb = new int[40];
 	private final int[] renderer3DClippedCameraX = new int[40];
 	private final int[] renderer3DClippedCameraY = new int[40];
@@ -1375,7 +1375,7 @@ public final class Scene {
 			}
 
 			if (var10 == 5960) {
-				if (this.m_K && this.m_cc < this.m_db) {
+				if (this.m_K) {
 					boolean withinPickBounds = false;
 					if (this.m_Wb >= this.m_Xb && this.m_Cb > this.m_Wb) {
 						var52 = this.m_x[this.m_Wb];
@@ -1402,9 +1402,7 @@ public final class Scene {
 					}
 					if (withinPickBounds && !var6.m_db
 						&& var6.m_zb[var2] == 0) {
-						this.m_Ab[this.m_cc] = var6;
-						this.m_qb[this.m_cc] = var2;
-						++this.m_cc;
+						this.addPickCandidate(var6, var2);
 					}
 				}
 
@@ -2406,14 +2404,63 @@ public final class Scene {
 			if (mod == null) {
 				return;
 			}
-			if (this.modelCount < this.m_u) {
-				this.m_jb[this.modelCount] = 0;
-				this.models[this.modelCount++] = mod;
-			}
+			this.ensureModelCapacity(this.modelCount + 1);
+			this.m_jb[this.modelCount] = 0;
+			this.models[this.modelCount++] = mod;
 
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "lb.NA(" + "null" + ',' + 118 + ')');
 		}
+	}
+
+	private void ensureModelCapacity(int requiredCapacity) {
+		if (requiredCapacity <= this.models.length) {
+			return;
+		}
+
+		int newCapacity = growSceneCapacity(this.models.length, requiredCapacity);
+		this.models = Arrays.copyOf(this.models, newCapacity);
+		this.m_jb = Arrays.copyOf(this.m_jb, newCapacity);
+		this.m_u = newCapacity;
+	}
+
+	private void ensurePolygonCapacity(int requiredCapacity) {
+		if (requiredCapacity <= this.polygons.length) {
+			return;
+		}
+
+		int oldCapacity = this.polygons.length;
+		int newCapacity = growSceneCapacity(oldCapacity, requiredCapacity);
+		this.polygons = Arrays.copyOf(this.polygons, newCapacity);
+		for (int i = oldCapacity; i < newCapacity; ++i) {
+			this.polygons[i] = new Polygon();
+		}
+	}
+
+	private void ensurePickCapacity(int requiredCapacity) {
+		if (requiredCapacity <= this.m_Ab.length) {
+			return;
+		}
+
+		int newCapacity = growSceneCapacity(this.m_Ab.length, requiredCapacity);
+		this.m_Ab = Arrays.copyOf(this.m_Ab, newCapacity);
+		this.m_qb = Arrays.copyOf(this.m_qb, newCapacity);
+		this.m_db = newCapacity;
+	}
+
+	private void addPickCandidate(RSModel model, int faceId) {
+		this.ensurePickCapacity(this.m_cc + 1);
+		this.m_Ab[this.m_cc] = model;
+		this.m_qb[this.m_cc] = faceId;
+		++this.m_cc;
+	}
+
+	private static int growSceneCapacity(int currentCapacity, int requiredCapacity) {
+		int newCapacity = Math.max(currentCapacity + Math.max(128, currentCapacity / 2), 1);
+		while (newCapacity < requiredCapacity) {
+			newCapacity += Math.max(128, newCapacity / 2);
+		}
+		return newCapacity;
 	}
 
 	public Renderer3DFrame getRenderer3DFrame() {
@@ -2797,6 +2844,7 @@ public final class Scene {
 			MiscFunctions.frustumMaxY += this.rot1024_off_x;
 			MiscFunctions.frustumMaxX += this.rot1024_off_z;
 			MiscFunctions.frustumMinY += this.rot1024_off_x;
+			this.ensureModelCapacity(this.modelCount + 1);
 			this.models[this.modelCount] = this.m_T;
 			this.m_T.m_Yb = 2;
 
@@ -2889,6 +2937,7 @@ public final class Scene {
 										forceLegacyWorldRaster)) {
 										continue;
 									}
+									this.ensurePolygonCapacity(this.m_zb + 1);
 									Polygon var27 = this.polygons[this.m_zb];
 									var27.model = var2;
 									var27.faceID = var3;
@@ -2982,6 +3031,7 @@ public final class Scene {
 						var15 = (this.m_Eb[var3] << this.rot1024_vp_src) / var13;
 						if (this.m_A >= var26 - var14 / 2 && -this.m_A <= var26 + var14 / 2
 							&& var12 - var15 <= this.m_wb && var12 >= -this.m_wb) {
+							this.ensurePolygonCapacity(this.m_zb + 1);
 							Polygon var16 = this.polygons[this.m_zb];
 							var16.faceID = var3;
 							var16.model = var2;
@@ -3050,13 +3100,11 @@ public final class Scene {
 						legacySceneDrawOrder++;
 						this.graphics.drawEntity(this.m_gb[var3], var20 + this.m_Zb, var21, var28, var17,
 							spriteScale, var19, spritePickIndex);
-						if (this.m_K && this.m_db > this.m_cc) {
+						if (this.m_K) {
 							var20 += (this.m_Q[var3] << this.rot1024_vp_src) / var15;
 							if (var21 <= this.m_Wb && var21 + var17 >= this.m_Wb && var20 <= this.m_j
 								&& this.m_j <= var20 + var28 && !var2.m_db && var2.m_zb[var3] == 0) {
-								this.m_Ab[this.m_cc] = var2;
-								this.m_qb[this.m_cc] = var3;
-								++this.m_cc;
+								this.addPickCandidate(var2, var3);
 							}
 						}
 					} else {

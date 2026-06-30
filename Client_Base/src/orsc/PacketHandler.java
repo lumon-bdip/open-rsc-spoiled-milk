@@ -35,8 +35,11 @@ public class PacketHandler {
 	private static final int CUSTOM_MOB_COORD_OFFSET_WRAP = 1 << CUSTOM_MOB_COORD_OFFSET_BITS;
 	private static final int PLAYER_COORD_ADD_ENTRY_BITS = 11 + CUSTOM_MOB_COORD_OFFSET_BITS + CUSTOM_MOB_COORD_OFFSET_BITS + 4;
 	private static final int NPC_COORD_ADD_ENTRY_BITS = 12 + CUSTOM_MOB_COORD_OFFSET_BITS + CUSTOM_MOB_COORD_OFFSET_BITS + 4 + 10;
+	private static final int AUTHENTIC_LOCAL_MOB_COUNT_BITS = 8;
+	private static final int CUSTOM_LOCAL_MOB_COUNT_BITS = 16;
+	private static final int INCOMING_PACKET_BUFFER_INITIAL_SIZE = 30000;
 
-	private final RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(30000);
+	private final RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
 	private Network_Socket clientStream;
 	private mudclient mc;
 
@@ -57,6 +60,11 @@ public class PacketHandler {
 			offset -= CUSTOM_MOB_COORD_OFFSET_WRAP;
 		}
 		return offset;
+	}
+
+	private int readLocalMobCount() {
+		return packetsIncoming.getBitMask(
+			Config.CLIENT_VERSION > 10000 ? CUSTOM_LOCAL_MOB_COUNT_BITS : AUTHENTIC_LOCAL_MOB_COUNT_BITS);
 	}
 
 	private static final Map<Integer, String> incomingOpcodeMap = new HashMap<Integer, String>() {{
@@ -941,6 +949,7 @@ public class PacketHandler {
 			return;
 		}
 
+		SocialLists.ensureFriendCapacity(SocialLists.friendListCount + 1);
 		SocialLists.friendList[SocialLists.friendListCount] = currentName;
 		SocialLists.friendListOld[SocialLists.friendListCount] = formerName;
 		SocialLists.friendListWorld[SocialLists.friendListCount] = world;
@@ -984,6 +993,7 @@ public class PacketHandler {
 			return;
 		}
 
+		SocialLists.ensureIgnoreCapacity(SocialLists.ignoreListCount + 1);
 		SocialLists.ignoreListArg0[SocialLists.ignoreListCount] = arg0;
 		SocialLists.ignoreList[SocialLists.ignoreListCount] = replace;
 		SocialLists.ignoreListArg1[SocialLists.ignoreListCount] = arg1;
@@ -992,7 +1002,8 @@ public class PacketHandler {
 	}
 
 	private void updateIgnoreList() {
-		SocialLists.ignoreListCount = packetsIncoming.getUnsignedByte();
+		SocialLists.ignoreListCount = packetsIncoming.getShort();
+		SocialLists.ensureIgnoreCapacity(SocialLists.ignoreListCount);
 
 		for (int var4 = 0; var4 < SocialLists.ignoreListCount; ++var4) {
 			SocialLists.ignoreListArg0[var4] = packetsIncoming.readString();
@@ -1479,7 +1490,7 @@ public class PacketHandler {
 			)
 		);
 
-		int dir = packetsIncoming.getBitMask(8);
+		int dir = readLocalMobCount();
 
 		for (int var9 = 0; dir > var9; ++var9) {
 			ORSCharacter playerToShow = mc.getKnownPlayer(var9 + 1);
@@ -1965,7 +1976,7 @@ public class PacketHandler {
 		}
 
 		packetsIncoming.startBitAccess();
-		int count = packetsIncoming.getBitMask(8);
+		int count = readLocalMobCount();
 		int tileSize = mc.getTileSize();
 
 		int waypointCurrentIndex, rsDir, waypointX, var12, i;

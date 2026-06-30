@@ -548,7 +548,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 				case SEND_IGNORE_LIST:
 					IgnoreListStruct il = (IgnoreListStruct) payload;
 					int ignoreSize = il.listSize;
-					builder.writeByte((byte) ignoreSize);
+					builder.writeShort(ignoreSize);
 					for (int i = 0; i < ignoreSize; i++) {
 						builder.writeString(il.name[i]);
 						builder.writeString(il.name[i]);

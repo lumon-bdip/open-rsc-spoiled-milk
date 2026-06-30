@@ -1,6 +1,7 @@
 package orsc.buffers;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import orsc.MiscFunctions;
 import orsc.util.GenUtil;
@@ -27,11 +28,27 @@ public class RSBuffer extends RSBuffer_Base {
 		}
 	}
 
+	public final void ensureCapacity(int requiredCapacity) {
+		if (requiredCapacity <= this.dataBuffer.length) {
+			return;
+		}
+		int capacity = Math.max(1, this.dataBuffer.length);
+		while (capacity < requiredCapacity) {
+			capacity += Math.max(1024, capacity / 2);
+			if (capacity < 0) {
+				capacity = requiredCapacity;
+				break;
+			}
+		}
+		this.dataBuffer = Arrays.copyOf(this.dataBuffer, capacity);
+	}
+
 	public final void putNullThenString(String str, int var2) {
 		try {
 
 			int var3 = str.indexOf(0);
 			if (var3 < 0) {
+				this.ensureCapacity(this.packetEnd + str.length() + 2);
 				this.dataBuffer[this.packetEnd++] = 0;
 				this.packetEnd += RSBufferUtils.putStringIntoBytes(str, 0, str.length(), this.dataBuffer,
 					this.packetEnd);
@@ -51,6 +68,7 @@ public class RSBuffer extends RSBuffer_Base {
 
 	public final void put24(int val) {
 		try {
+			this.ensureCapacity(this.packetEnd + 3);
 			this.dataBuffer[this.packetEnd++] = (byte) (val >> 16);
 
 			this.dataBuffer[this.packetEnd++] = (byte) (val >> 8);
@@ -86,6 +104,7 @@ public class RSBuffer extends RSBuffer_Base {
 
 	public void writeBytes(byte[] src, int count) {
 		try {
+			this.ensureCapacity(this.packetEnd + count);
 			for (int i = 0; i < count; ++i) {
 				this.dataBuffer[this.packetEnd++] = src[i];
 			}
@@ -98,6 +117,7 @@ public class RSBuffer extends RSBuffer_Base {
 
 	public final void putByte(int var1) {
 		try {
+			this.ensureCapacity(this.packetEnd + 1);
 			this.dataBuffer[this.packetEnd++] = (byte) var1;
 
 		} catch (RuntimeException var4) {
@@ -130,6 +150,7 @@ public class RSBuffer extends RSBuffer_Base {
 
 	public final void putShort(int val) {
 		try {
+			this.ensureCapacity(this.packetEnd + 2);
 
 			this.dataBuffer[this.packetEnd++] = (byte) (val >> 8);
 			this.dataBuffer[this.packetEnd++] = (byte) val;
@@ -249,6 +270,7 @@ public class RSBuffer extends RSBuffer_Base {
 
 	public final void putInt(int val) {
 		try {
+			this.ensureCapacity(this.packetEnd + 4);
 
 			this.dataBuffer[this.packetEnd++] = (byte) (val >> 24);
 			this.dataBuffer[this.packetEnd++] = (byte) (val >> 16);

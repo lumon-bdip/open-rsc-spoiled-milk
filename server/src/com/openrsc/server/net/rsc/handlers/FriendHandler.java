@@ -16,14 +16,25 @@ import com.openrsc.server.util.rsc.DataConversions;
 
 public final class FriendHandler implements PayloadProcessor<FriendStruct, OpcodeIn> {
 
-	private final int MAX_FRIENDS = 100;
-
-	private final int MEMBERS_MAX_FRIENDS = 200;
+	private static final int MAX_FRIENDS = 100;
+	private static final int MEMBERS_MAX_FRIENDS = 200;
+	private static final int CUSTOM_MAX_FRIENDS = 1000;
+	private static final int CUSTOM_MAX_IGNORES = 1000;
 
 	private int actualFriendListLimit(Player player) {
+		if (player.isUsingCustomClient()) {
+			return CUSTOM_MAX_FRIENDS;
+		}
 		int clientLimit = player.getClientLimitations().maxFriends;
 		int freeOrMembersLimit = player.getConfig().MEMBER_WORLD ? MEMBERS_MAX_FRIENDS : MAX_FRIENDS;
 		return Math.min(clientLimit, freeOrMembersLimit);
+	}
+
+	private int actualIgnoreListLimit(Player player) {
+		if (player.isUsingCustomClient()) {
+			return CUSTOM_MAX_IGNORES;
+		}
+		return player.getClientLimitations().maxIgnore;
 	}
 
 	public void process(FriendStruct payload, Player player) throws Exception {
@@ -31,7 +42,7 @@ public final class FriendHandler implements PayloadProcessor<FriendStruct, Opcod
 		long friendHash = DataConversions.usernameToHash(friendName);
 
 		int maxFriends = actualFriendListLimit(player);
-		int maxIgnore = player.getClientLimitations().maxIgnore;
+		int maxIgnore = actualIgnoreListLimit(player);
 
 		boolean friendIsGlobal = (friendName.equalsIgnoreCase("Global$") ||
 			(friendName.equalsIgnoreCase("Global") && !player.getConfig().CHAR_NAME_CAN_EQUAL_GLOBAL));
@@ -218,4 +229,3 @@ public final class FriendHandler implements PayloadProcessor<FriendStruct, Opcod
 		}
 	}
 }
-

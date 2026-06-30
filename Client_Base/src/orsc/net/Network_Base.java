@@ -7,7 +7,8 @@ import orsc.util.GenUtil;
 
 class Network_Base {
 
-	private final int writeBufferSize = 5000;
+	private static final int OUTGOING_PACKET_BUFFER_INITIAL_SIZE = 8192;
+	private static final int OUTGOING_PACKET_FLUSH_THRESHOLD = OUTGOING_PACKET_BUFFER_INITIAL_SIZE * 4 / 5;
 	public int m_d = 0;
 	public RSBuffer_Bits bufferBits;
 	String errorCode = "";
@@ -19,7 +20,7 @@ class Network_Base {
 
 	Network_Base() {
 		try {
-			this.bufferBits = new RSBuffer_Bits(this.writeBufferSize);
+			this.bufferBits = new RSBuffer_Bits(OUTGOING_PACKET_BUFFER_INITIAL_SIZE);
 			this.bufferBits.packetEnd = 3;
 		} catch (RuntimeException var2) {
 			throw GenUtil.makeThrowable(var2, "b.<init>()");
@@ -83,7 +84,7 @@ class Network_Base {
 		}
 	}
 
-	private int readIncomingPacket(byte[] data) {
+	private int readIncomingPacketPayload(RSBuffer_Bits data) {
 		try {
 			try {
 				++this.packetReadAttempts;
@@ -95,11 +96,12 @@ class Network_Base {
 				}
 
 				if (this.incomingPacketLength == 0 && this.available() >= 2) {
-					this.incomingPacketLength = ((short) ((read() & 0xff) << 8) | (short) (read() & 0xff));
+					this.incomingPacketLength = ((read() & 0xff) << 8) | (read() & 0xff);
 					incomingPacketLength -= 2;
 				}
 				if (this.incomingPacketLength > 0 && this.available() >= this.incomingPacketLength) {
-					this.read(data, this.incomingPacketLength);
+					data.ensureCapacity(this.incomingPacketLength);
+					this.read(data.dataBuffer, this.incomingPacketLength);
 					int packetLength = this.incomingPacketLength;
 					this.packetReadAttempts = 0;
 					this.incomingPacketLength = 0;
@@ -144,7 +146,7 @@ class Network_Base {
 	public final void newPacket(int opcode) {
 		try {
 			// (4/5) of write buffer is filled; flush
-			if (this.writeBufferSize * 4 / 5 < this.packetStart) {
+			if (OUTGOING_PACKET_FLUSH_THRESHOLD < this.packetStart) {
 				try {
 					this.flush(0, true);
 				} catch (IOException var4) {
@@ -163,7 +165,7 @@ class Network_Base {
 	public final int readIncomingPacket(RSBuffer_Bits data) {
 		try {
 			data.packetEnd = 0;
-			return this.readIncomingPacket(data.dataBuffer);
+			return this.readIncomingPacketPayload(data);
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "b.Q(" + "dummy" + ',' + "{...}" + ')');
 		}

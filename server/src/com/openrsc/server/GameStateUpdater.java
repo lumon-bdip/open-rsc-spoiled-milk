@@ -40,7 +40,10 @@ public final class GameStateUpdater {
 	private static final int CUSTOM_MOB_COORD_OFFSET_BITS = 8;
 	private static final int CUSTOM_CLIENT_REGION_REFRESH_RADIUS = 80;
 	private static final int CUSTOM_MOVEMENT_UPDATE_LIMIT = 0xFFFF;
-	private static final int LOCAL_NPC_LIMIT = 255;
+	private static final int AUTHENTIC_LOCAL_MOB_LIMIT = 255;
+	private static final int CUSTOM_LOCAL_MOB_LIMIT = 0xFFFF;
+	private static final int AUTHENTIC_LOCAL_MOB_COUNT_BITS = 8;
+	private static final int CUSTOM_LOCAL_MOB_COUNT_BITS = 16;
 	private static final String NPC_DEATH_VISUAL_SENT_TICK_PREFIX = "npc_death_visual_sent_tick_";
 	private static final String WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE = "world_time_last_sync_millis";
 	private static final long WORLD_TIME_SYNC_INTERVAL_MILLIS = 15000L;
@@ -290,6 +293,7 @@ public final class GameStateUpdater {
 	}
 
 	private static List<Npc> prioritizeVisibleNpcs(final Player player, final Collection<Npc> visibleNpcs) {
+		final int localNpcLimit = localMobLimit(player);
 		final HashSet<Npc> existingLocalNpcs = new HashSet<>(player.getLocalNpcs());
 		final ArrayList<Npc> prioritizedNpcs = new ArrayList<>(visibleNpcs.size());
 		for (final Npc npc : visibleNpcs) {
@@ -312,10 +316,18 @@ public final class GameStateUpdater {
 			}
 			return Integer.compare(left.getIndex(), right.getIndex());
 		});
-		if (prioritizedNpcs.size() > LOCAL_NPC_LIMIT) {
-			return prioritizedNpcs.subList(0, LOCAL_NPC_LIMIT);
+		if (prioritizedNpcs.size() > localNpcLimit) {
+			return prioritizedNpcs.subList(0, localNpcLimit);
 		}
 		return prioritizedNpcs;
+	}
+
+	private static int localMobLimit(final Player player) {
+		return player.isUsingCustomClient() ? CUSTOM_LOCAL_MOB_LIMIT : AUTHENTIC_LOCAL_MOB_LIMIT;
+	}
+
+	private static int localMobCountBits(final Player player) {
+		return player.isUsingCustomClient() ? CUSTOM_LOCAL_MOB_COUNT_BITS : AUTHENTIC_LOCAL_MOB_COUNT_BITS;
 	}
 
 	protected void updateNpcs(final Player playerToUpdate) {
@@ -377,7 +389,9 @@ public final class GameStateUpdater {
 			final int localNpcCount = playerToUpdate.getLocalNpcs().size();
 			final Collection<Npc> visibleNpcs = playerToUpdate.getViewArea().getNpcsInView();
 			final int visibleNpcCount = visibleNpcs.size();
-			List<Map.Entry<Integer, Integer>> mobsUpdate = new ArrayList<>(1 + (localNpcCount * 3) + (Math.min(255, visibleNpcCount) * 5));
+			final int localNpcLimit = localMobLimit(playerToUpdate);
+			List<Map.Entry<Integer, Integer>> mobsUpdate =
+				new ArrayList<>(1 + (localNpcCount * 3) + (Math.min(localNpcLimit, visibleNpcCount) * 5));
 			final boolean traceNpcPackets = playerToUpdate.getAttribute("debug_npc_trace", false);
 			final int traceRadius = playerToUpdate.getAttribute("debug_npc_trace_radius", 12);
 			final ArrayList<String> packetTraceSamples = traceNpcPackets ? new ArrayList<>(6) : null;
@@ -396,7 +410,7 @@ public final class GameStateUpdater {
 				? null
 				: new HashSet<>(prioritizedVisibleNpcs);
 
-			mobsUpdate.add(bit(playerToUpdate.getLocalNpcs().size(), 8));
+			mobsUpdate.add(bit(playerToUpdate.getLocalNpcs().size(), localMobCountBits(playerToUpdate)));
 			for (final Iterator<Npc> it$ = playerToUpdate.getLocalNpcs().iterator(); it$.hasNext(); ) {
 				Npc localNpc = it$.next();
 				final UpdateFlags updateFlags = localNpc.getUpdateFlags();
@@ -468,7 +482,7 @@ public final class GameStateUpdater {
 					// || (newNPC.isTeleporting() && !newNPC.inCombat()) // ??? Might be a bug. If they teleported this tick, and ended up within range, we want to refresh them for sure, right?
 					) {
 					continue;
-				} else if (playerToUpdate.getLocalNpcs().size() >= LOCAL_NPC_LIMIT) {
+				} else if (playerToUpdate.getLocalNpcs().size() >= localNpcLimit) {
 					break;
 				}
 
@@ -598,7 +612,9 @@ public final class GameStateUpdater {
 		} else {
 			final int localPlayerCount = playerToUpdate.getLocalPlayers().size();
 			final int visiblePlayerCount = visiblePlayers.size();
-			List<Map.Entry<Integer, Integer>> mobsUpdate = new ArrayList<>(4 + (localPlayerCount * 3) + (Math.min(255, visiblePlayerCount) * 5));
+			final int localPlayerLimit = localMobLimit(playerToUpdate);
+			List<Map.Entry<Integer, Integer>> mobsUpdate =
+				new ArrayList<>(4 + (localPlayerCount * 3) + (Math.min(localPlayerLimit, visiblePlayerCount) * 5));
 			final boolean forAuthentic = !playerToUpdate.isUsingCustomClient();
 			final int offsetBits = forAuthentic ? 5 : CUSTOM_MOB_COORD_OFFSET_BITS;
 
@@ -610,7 +626,7 @@ public final class GameStateUpdater {
 				mobsUpdate.add(bit(playerToUpdate.getY(), 13));
 			}
 			mobsUpdate.add(bit(playerToUpdate.getSprite(), 4));
-			mobsUpdate.add(bit(playerToUpdate.getLocalPlayers().size(), 8));
+			mobsUpdate.add(bit(playerToUpdate.getLocalPlayers().size(), localMobCountBits(playerToUpdate)));
 			if (playerToUpdate.loggedIn()) {
 				for (final Iterator<Player> it$ = playerToUpdate.getLocalPlayers().iterator(); it$.hasNext(); ) {
 					final Player otherPlayer = it$.next();
@@ -659,7 +675,7 @@ public final class GameStateUpdater {
 					}
 
 					playerToUpdate.getLocalPlayers().add(otherPlayer);
-					if (playerToUpdate.getLocalPlayers().size() >= 255) {
+					if (playerToUpdate.getLocalPlayers().size() >= localPlayerLimit) {
 						break;
 					}
 				}

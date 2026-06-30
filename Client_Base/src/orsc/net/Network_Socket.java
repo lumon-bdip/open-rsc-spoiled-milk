@@ -9,6 +9,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 public final class Network_Socket extends Network_Base implements Runnable {
+	private static final int WRITE_BUFFER_CAPACITY = 65536;
+	private static final int WRITE_BUFFER_SAFETY_MARGIN = 1024;
 	private final byte[] tmpRead = new byte[1];
 	private boolean closed = false;
 	private InputStream inStream;
@@ -182,7 +184,7 @@ public final class Network_Socket extends Network_Base implements Runnable {
 					}
 
 					if (this.writeBufRead > this.writeBufWrite) {
-						begin = 5000 - this.writeBufRead;
+						begin = WRITE_BUFFER_CAPACITY - this.writeBufRead;
 					} else {
 						begin = this.writeBufWrite - this.writeBufRead;
 					}
@@ -198,7 +200,7 @@ public final class Network_Socket extends Network_Base implements Runnable {
 						this.errorCode = "Twriter:" + var7;
 					}
 
-					this.writeBufRead = (this.writeBufRead + begin) % 5000;
+					this.writeBufRead = (this.writeBufRead + begin) % WRITE_BUFFER_CAPACITY;
 
 					try {
 						if (this.writeBufRead == this.writeBufWrite) {
@@ -221,14 +223,15 @@ public final class Network_Socket extends Network_Base implements Runnable {
 		try {
 			if (!this.closed) {
 				if (null == this.writeBuffer) {
-					this.writeBuffer = new byte[5000];
+					this.writeBuffer = new byte[WRITE_BUFFER_CAPACITY];
 				}
 
 				synchronized (this) {
 					for (int i = 0; i < count; ++i) {
 						this.writeBuffer[this.writeBufWrite] = data[offset + i];
-						this.writeBufWrite = (this.writeBufWrite + 1) % 5000;
-						if (this.writeBufWrite == (4900 + this.writeBufRead) % 5000) {
+						this.writeBufWrite = (this.writeBufWrite + 1) % WRITE_BUFFER_CAPACITY;
+						if (this.writeBufWrite == (WRITE_BUFFER_CAPACITY - WRITE_BUFFER_SAFETY_MARGIN + this.writeBufRead)
+							% WRITE_BUFFER_CAPACITY) {
 							throw new IOException("buffer overflow");
 						}
 					}

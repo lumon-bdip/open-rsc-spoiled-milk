@@ -1252,16 +1252,16 @@ public final class RSModel {
 				this.addRotation(23, 10, 30);
 			}
 
-			if (this.faceCount > this.faceHead) {
-				this.faceIndexCount[this.faceHead] = indexCount;
-				this.faceIndices[this.faceHead] = indices;
-				this.faceTextureFront[this.faceHead] = texFront;
-				this.faceTextureBack[this.faceHead] = texBack;
-				this.m_Yb = 1;
-				return this.faceHead++;
-			} else {
-				return -1;
+			this.ensureCapacity(this.vertexCount2, this.faceHead + 1);
+			this.faceIndexCount[this.faceHead] = indexCount;
+			this.faceIndices[this.faceHead] = indices;
+			this.faceTextureFront[this.faceHead] = texFront;
+			this.faceTextureBack[this.faceHead] = texBack;
+			if (this.faceParam1 != null && this.faceParam1[this.faceHead] == null) {
+				this.faceParam1[this.faceHead] = new int[]{this.faceHead};
 			}
+			this.m_Yb = 1;
+			return this.faceHead++;
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7, "ca.P(" + indexCount + ',' + (indices != null ? "{...}" : "null") + ','
 				+ texFront + ',' + texBack + ',' + var5 + ')');
@@ -1278,14 +1278,11 @@ public final class RSModel {
 				}
 			}
 
-			if (this.vertHead < this.vertexCount2) {
-				this.vertX[this.vertHead] = x;
-				this.vertY[this.vertHead] = y;
-				this.vertZ[this.vertHead] = z;
-				return this.vertHead++;
-			} else {
-				return -1;
-			}
+			this.ensureCapacity(this.vertHead + 1, this.faceCount);
+			this.vertX[this.vertHead] = x;
+			this.vertY[this.vertHead] = y;
+			this.vertZ[this.vertHead] = z;
+			return this.vertHead++;
 		} catch (RuntimeException var6) {
 			throw GenUtil.makeThrowable(var6, "ca.I(" + x + ',' + z + ',' + y + ',' + "dummy" + ')');
 		}
@@ -1294,14 +1291,11 @@ public final class RSModel {
 	final int insertVertex2(boolean var1, int z, int x, int y) {
 		try {
 
-			if (this.vertHead >= this.vertexCount2) {
-				return -1;
-			} else {
-				this.vertX[this.vertHead] = x;
-				this.vertY[this.vertHead] = y;
-				this.vertZ[this.vertHead] = z;
-				return this.vertHead++;
-			}
+			this.ensureCapacity(this.vertHead + 1, this.faceCount);
+			this.vertX[this.vertHead] = x;
+			this.vertY[this.vertHead] = y;
+			this.vertZ[this.vertHead] = z;
+			return this.vertHead++;
 		} catch (RuntimeException var6) {
 			throw GenUtil.makeThrowable(var6, "ca.S(" + false + ',' + z + ',' + x + ',' + y + ')');
 		}
@@ -1311,9 +1305,6 @@ public final class RSModel {
 		try {
 
 			this.faceHead -= deleteFaces;
-			if (var2 > -110) {
-				ModelFileManager.getModelFileIndex((String) null);
-			}
 
 			if (this.faceHead < 0) {
 				this.faceHead = 0;

@@ -5375,6 +5375,22 @@ public final class Player extends Mob {
 		return false;
 	}
 
+	public void ensureKnownPlayerCapacity(int requiredCapacity) {
+		if (requiredCapacity <= knownPlayerPids.length) {
+			return;
+		}
+		int capacity = Math.max(1, knownPlayerPids.length);
+		while (capacity < requiredCapacity) {
+			capacity += Math.max(128, capacity / 2);
+			if (capacity < 0) {
+				capacity = requiredCapacity;
+				break;
+			}
+		}
+		knownPlayerPids = Arrays.copyOf(knownPlayerPids, capacity);
+		knownPlayerAppearanceIds = Arrays.copyOf(knownPlayerAppearanceIds, capacity);
+	}
+
 	public boolean skipTutorial() {
 		if (getLocation().onTutorialIsland() && this.getWorld().getServer().getConfig().SHOW_TUTORIAL_SKIP_OPTION) {
 			if (inCombat()) {
