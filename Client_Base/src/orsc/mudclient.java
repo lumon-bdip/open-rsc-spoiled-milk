@@ -91,6 +91,7 @@ public final class mudclient implements Runnable {
 	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
 	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
 	private static final String FISHING_SPOT_MODEL_NAME = "fishing";
+	private static final long FISHING_SPOT_RIPPLE_FRAME_MILLIS = 70L;
 	private static final String MODERN_CLIENT_LOOP_PROPERTY = "spoiledmilk.modernClientLoop";
 	private static final String MODERN_CLIENT_LOOP_ENV = "SPOILED_MILK_MODERN_CLIENT_LOOP";
 	private static final int GAME_OBJECT_INSTANCE_CAPACITY = WALL_OBJECT_KEY_BASE;
@@ -1246,6 +1247,13 @@ public final class mudclient implements Runnable {
 	private static void saveRendererGeometrySettings() {
 		Properties props = loadClientSettings();
 		RendererGeometrySettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRendererTerrainVariationSettings() {
+		Properties props = loadClientSettings();
+		RendererTerrainVariationSettings.saveToClientSettings(props);
 
 		saveClientSettings(props);
 	}
@@ -3474,6 +3482,7 @@ public final class mudclient implements Runnable {
 			this.objectAnimationNumberClaw = (this.objectAnimationNumberClaw + 1) % 5;
 		}
 
+		int fishingSpotRippleFrame = (int) (System.currentTimeMillis() / FISHING_SPOT_RIPPLE_FRAME_MILLIS);
 		for (int index = 0; index < this.gameObjectInstanceCount; index++) {
 			int x = this.gameObjectInstanceX[index];
 			int z = this.gameObjectInstanceZ[index];
@@ -3490,6 +3499,11 @@ public final class mudclient implements Runnable {
 				continue;
 			}
 			com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(objectId);
+			if (def != null && FISHING_SPOT_MODEL_NAME.equals(def.getObjectModel())) {
+				int phaseOffset = Math.floorMod(x * 7 + z * 13, 24);
+				model.animateFishingSpotClarityOverlay(fishingSpotRippleFrame, phaseOffset);
+				continue;
+			}
 			if (def != null && "portal".equals(def.getObjectModel())) {
 				model.addRotation(0, 1, 0);
 			}
@@ -3606,7 +3620,8 @@ public final class mudclient implements Runnable {
 			return true;
 		}
 		com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(objectId);
-		return def != null && "portal".equals(def.getObjectModel());
+		return def != null
+			&& ("portal".equals(def.getObjectModel()) || FISHING_SPOT_MODEL_NAME.equals(def.getObjectModel()));
 	}
 
 	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input) {
@@ -12807,6 +12822,7 @@ public final class mudclient implements Runnable {
 			index = addSettingsRow(index, "@whi@Borderless - " + borderlessLabel, 63);
 			index = addSettingsRow(index, "@whi@Lighting - " + RendererLightingSettings.getMode().label, 61);
 			index = addSettingsRow(index, "@whi@Geometry - " + RendererGeometrySettings.getMode().label, 62);
+			index = addSettingsRow(index, "@whi@Terrain Variation - " + RendererTerrainVariationSettings.getMode().label, 64);
 			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
 			index = addSettingsRow(index, "@whi@Brightness - " + RendererBrightnessSettings.getMode().label, 58);
 			index = addSettingsSection(index, "Interface");
@@ -13295,6 +13311,9 @@ public final class mudclient implements Runnable {
 		}
 		if (isOpenGLPrimaryWindow && settingIndex == 63 && this.mouseButtonClick == 1) {
 			cycleOpenGLWindowMode();
+		}
+		if (isOpenGLPrimaryWindow && settingIndex == 64 && this.mouseButtonClick == 1) {
+			cycleOpenGLTerrainVariationMode();
 		}
 
 		// one or two mouse button(s) - byte index 1
@@ -14712,6 +14731,7 @@ public final class mudclient implements Runnable {
 			OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
 			RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);
 			RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
+			RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);
 			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
 			RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
 			RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);
@@ -14721,6 +14741,7 @@ public final class mudclient implements Runnable {
 			OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
 			RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);
 			RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
+			RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.ON);
 			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
 			RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
 			RendererToneSettings.setMode(RendererToneSettings.Mode.CYCLE);
@@ -14732,6 +14753,7 @@ public final class mudclient implements Runnable {
 		saveRendererFogSettings();
 		saveRendererLightingSettings();
 		saveRendererGeometrySettings();
+		saveRendererTerrainVariationSettings();
 		saveRendererToneSettings();
 		saveRendererProfileSettings();
 	}
@@ -14773,6 +14795,14 @@ public final class mudclient implements Runnable {
 		saveRendererGeometrySettings();
 		saveRendererProfileSettings();
 		System.out.println("[renderer-v2] OpenGL geometry: " + mode.id);
+	}
+
+	void cycleOpenGLTerrainVariationMode() {
+		RendererTerrainVariationSettings.Mode mode = RendererTerrainVariationSettings.cycleMode();
+		RendererProfileSettings.markCustom();
+		saveRendererTerrainVariationSettings();
+		saveRendererProfileSettings();
+		System.out.println("[renderer-v2] OpenGL terrain variation: " + mode.id);
 	}
 
 	private void fetchContainerSize() {

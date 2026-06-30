@@ -17,25 +17,43 @@ final class RemasterShadowMaskBuilder {
 	private static final String TEXTURE_SIZE_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_TEXTURE_SIZE";
 	private static final String BLUR_RADIUS_PROPERTY = "spoiledmilk.remasterShadowMaskBlurRadius";
 	private static final String BLUR_RADIUS_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_BLUR_RADIUS";
+	private static final String SCENERY_BLUR_RADIUS_PROPERTY = "spoiledmilk.remasterSceneryShadowBlurRadius";
+	private static final String SCENERY_BLUR_RADIUS_ENV = "SPOILED_MILK_REMASTER_SCENERY_SHADOW_BLUR_RADIUS";
+	private static final String SCENERY_ALPHA_SCALE_PROPERTY = "spoiledmilk.remasterSceneryShadowAlphaScale";
+	private static final String SCENERY_ALPHA_SCALE_ENV = "SPOILED_MILK_REMASTER_SCENERY_SHADOW_ALPHA_SCALE";
+	private static final String LENGTH_SCALE_PROPERTY = "spoiledmilk.remasterShadowLengthScale";
+	private static final String LENGTH_SCALE_ENV = "SPOILED_MILK_REMASTER_SHADOW_LENGTH_SCALE";
 	private static final String AZIMUTH_BUCKET_PROPERTY = "spoiledmilk.remasterShadowMaskAzimuthBucket";
 	private static final String AZIMUTH_BUCKET_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_AZIMUTH_BUCKET";
 	private static final String ELEVATION_BUCKET_PROPERTY = "spoiledmilk.remasterShadowMaskElevationBucket";
 	private static final String ELEVATION_BUCKET_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_ELEVATION_BUCKET";
 	private static final String CACHE_ENTRIES_PROPERTY = "spoiledmilk.remasterShadowMaskCacheEntries";
 	private static final String CACHE_ENTRIES_ENV = "SPOILED_MILK_REMASTER_SHADOW_MASK_CACHE_ENTRIES";
+	private static final String CONTACT_ALPHA_PROPERTY = "spoiledmilk.remasterContactShadowAlpha";
+	private static final String CONTACT_ALPHA_ENV = "SPOILED_MILK_REMASTER_CONTACT_SHADOW_ALPHA";
+	private static final String CONTACT_RADIUS_SCALE_PROPERTY = "spoiledmilk.remasterContactShadowRadiusScale";
+	private static final String CONTACT_RADIUS_SCALE_ENV = "SPOILED_MILK_REMASTER_CONTACT_SHADOW_RADIUS_SCALE";
+	private static final String CONTACT_BLUR_RADIUS_PROPERTY = "spoiledmilk.remasterContactShadowBlurRadius";
+	private static final String CONTACT_BLUR_RADIUS_ENV = "SPOILED_MILK_REMASTER_CONTACT_SHADOW_BLUR_RADIUS";
 
 	static final int REMASTER_SHADOW_MASK_GRID_SIZE = 512;
 	static final float REMASTER_SHADOW_MASK_BASE_ALPHA = 0.42f;
 	static final float REMASTER_SHADOW_MASK_MAX_ALPHA = 0.58f;
 	static final float REMASTER_SHADOW_MASK_MIN_LENGTH = 96.0f;
 	static final float REMASTER_SHADOW_MASK_MAX_LENGTH = 1792.0f;
+	static final float REMASTER_SHADOW_MASK_LENGTH_SCALE =
+		readFloat(LENGTH_SCALE_PROPERTY, LENGTH_SCALE_ENV, 0.5f, 0.1f, 2.0f);
 	static final float REMASTER_SHADOW_MASK_MIN_WIDTH = 24.0f;
 	static final float REMASTER_SHADOW_MASK_MIN_DRAW_ALPHA = 0.018f;
 	static final int REMASTER_SHADOW_MASK_TEXTURE_SIZE =
 		readInt(TEXTURE_SIZE_PROPERTY, TEXTURE_SIZE_ENV, 512, 256, 1024);
 	static final float REMASTER_SHADOW_MASK_TEXTURE_PADDING = 384.0f;
 	static final int REMASTER_SHADOW_MASK_BLUR_RADIUS =
-		readInt(BLUR_RADIUS_PROPERTY, BLUR_RADIUS_ENV, 4, 0, 12);
+		readInt(BLUR_RADIUS_PROPERTY, BLUR_RADIUS_ENV, 1, 0, 12);
+	static final int REMASTER_SHADOW_MASK_SCENERY_BLUR_RADIUS =
+		readInt(SCENERY_BLUR_RADIUS_PROPERTY, SCENERY_BLUR_RADIUS_ENV, 4, 0, 12);
+	static final float REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE =
+		readFloat(SCENERY_ALPHA_SCALE_PROPERTY, SCENERY_ALPHA_SCALE_ENV, 1.3f, 0.25f, 2.0f);
 	static final float REMASTER_SHADOW_MASK_AZIMUTH_BUCKET_DEGREES =
 		readFloat(AZIMUTH_BUCKET_PROPERTY, AZIMUTH_BUCKET_ENV, 12.0f, 1.0f, 45.0f);
 	static final float REMASTER_SHADOW_MASK_ELEVATION_BUCKET_DEGREES =
@@ -43,6 +61,16 @@ final class RemasterShadowMaskBuilder {
 	static final float REMASTER_SHADOW_MASK_CENTER_RETAIN = 0.82f;
 	static final float REMASTER_SHADOW_MASK_BLUR_BOOST = 1.18f;
 	static final float REMASTER_SHADOW_MASK_CLIP_START_OFFSET = 24.0f;
+	static final float REMASTER_SHADOW_MASK_CONTACT_ALPHA =
+		readFloat(CONTACT_ALPHA_PROPERTY, CONTACT_ALPHA_ENV, 0.5f, 0.0f, 0.95f);
+	static final float REMASTER_SHADOW_MASK_CONTACT_MIN_RADIUS = 4.0f;
+	static final float REMASTER_SHADOW_MASK_CONTACT_MAX_RADIUS = 132.0f;
+	static final float REMASTER_SHADOW_MASK_CONTACT_RADIUS_SCALE =
+		readFloat(CONTACT_RADIUS_SCALE_PROPERTY, CONTACT_RADIUS_SCALE_ENV, 0.05f, 0.02f, 6.0f);
+	static final int REMASTER_SHADOW_MASK_CONTACT_BLUR_RADIUS =
+		readInt(CONTACT_BLUR_RADIUS_PROPERTY, CONTACT_BLUR_RADIUS_ENV, 2, 0, 6);
+	static final float REMASTER_SHADOW_MASK_CONTACT_CENTER_RETAIN = 0.68f;
+	static final float REMASTER_SHADOW_MASK_CONTACT_BLUR_BOOST = 1.08f;
 	static final int REMASTER_SHADOW_MASK_CACHE_ENTRIES =
 		readInt(CACHE_ENTRIES_PROPERTY, CACHE_ENTRIES_ENV, 16, 1, 64);
 	static final boolean REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP = RemasterShadowClassifier.DIRECT_WALL_SEGMENT_CLIP;
@@ -81,6 +109,7 @@ final class RemasterShadowMaskBuilder {
 				lastBuild.mask,
 				lastBuild.stripCasterCount,
 				lastBuild.softSceneryCasterCount,
+				lastBuild.contactCasterCount,
 				true,
 				false,
 				"same-input");
@@ -105,6 +134,8 @@ final class RemasterShadowMaskBuilder {
 		int stripCasterCount = countRemasterShadowMaskCasters(casters, RemasterTerrainShadowCaster.STYLE_STRIP);
 		int softSceneryCasterCount =
 			countRemasterShadowMaskCasters(casters, RemasterTerrainShadowCaster.STYLE_SOFT_SCENERY);
+		int contactCasterCount =
+			countRemasterShadowMaskCasters(casters, RemasterTerrainShadowCaster.STYLE_CONTACT);
 		RemasterTerrainShadowMask mask = buildMaskTexture(roofCoverage, chunkFrame, casters, inputReason);
 		if (mask == null) {
 			rememberInput(
@@ -122,6 +153,7 @@ final class RemasterShadowMaskBuilder {
 				mask,
 				stripCasterCount,
 				softSceneryCasterCount,
+				contactCasterCount,
 				lastCacheHit,
 				lastRebuild,
 				lastBuildReason);
@@ -196,7 +228,11 @@ final class RemasterShadowMaskBuilder {
 		hash = mix(hash, signatureShadowCasterSize(caster.getHeight()));
 		hash = mix(hash, signatureShadowCasterSize(caster.getWidth()));
 		hash = mix(hash, caster.getOpacity());
-		return mix(hash, caster.isOutdoorOnly() ? 1 : 0);
+		hash = mix(hash, caster.isOutdoorOnly() ? 1 : 0);
+		hash = mix(hash, signatureShadowCasterWorld(caster.getFootprintMinX()));
+		hash = mix(hash, signatureShadowCasterWorld(caster.getFootprintMaxX()));
+		hash = mix(hash, signatureShadowCasterWorld(caster.getFootprintMinZ()));
+		return mix(hash, signatureShadowCasterWorld(caster.getFootprintMaxZ()));
 	}
 
 	private void rememberInput(
@@ -261,10 +297,20 @@ final class RemasterShadowMaskBuilder {
 		long hash = 0xcbf29ce484222325L;
 		hash = mix(hash, REMASTER_SHADOW_MASK_TEXTURE_SIZE);
 		hash = mix(hash, REMASTER_SHADOW_MASK_BLUR_RADIUS);
+		hash = mix(hash, REMASTER_SHADOW_MASK_SCENERY_BLUR_RADIUS);
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_TEXTURE_PADDING));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_LENGTH_SCALE));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CENTER_RETAIN));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_BLUR_BOOST));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CLIP_START_OFFSET));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_ALPHA));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_MIN_RADIUS));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_MAX_RADIUS));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_RADIUS_SCALE));
+		hash = mix(hash, REMASTER_SHADOW_MASK_CONTACT_BLUR_RADIUS);
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_CENTER_RETAIN));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_BLUR_BOOST));
 		hash = mix(hash, REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP ? 1 : 0);
 		return mix(hash, REMASTER_SHADOW_MASK_CACHE_ENTRIES);
 	}
@@ -292,27 +338,51 @@ final class RemasterShadowMaskBuilder {
 		lastBuildReason = "rebuilt:" + inputReason;
 		int width = REMASTER_SHADOW_MASK_TEXTURE_SIZE;
 		int height = REMASTER_SHADOW_MASK_TEXTURE_SIZE;
-		float[] sourceAlpha = new float[width * height];
+		float[] stripAlpha = new float[width * height];
+		float[] sceneryAlpha = new float[width * height];
+		float[] contactAlpha = new float[width * height];
 		float[] horizontalAlpha = new float[width * height];
-		float[] blurredAlpha = new float[width * height];
+		float[] stripBlurredAlpha = new float[width * height];
+		float[] sceneryBlurredAlpha = new float[width * height];
+		float[] contactBlurredAlpha = new float[width * height];
 		Map<Long, List<RemasterTerrainShadowCaster>> casterGrid =
 			buildRemasterTerrainShadowCasterGrid(casters);
 		for (int y = 0; y < height; y++) {
 			float z = bounds.zAt(y, height);
 			int row = y * width;
 			for (int x = 0; x < width; x++) {
-				sourceAlpha[row + x] =
-					remasterTerrainShadowMaskAlpha(roofCoverage, casterGrid, bounds.xAt(x, width), z);
+				remasterTerrainShadowMaskAlphas(
+					roofCoverage,
+					casterGrid,
+					bounds.xAt(x, width),
+					z,
+					stripAlpha,
+					sceneryAlpha,
+					contactAlpha,
+					row + x);
 			}
 		}
-		blurHorizontal(sourceAlpha, horizontalAlpha, width, height, REMASTER_SHADOW_MASK_BLUR_RADIUS);
-		blurVertical(horizontalAlpha, blurredAlpha, width, height, REMASTER_SHADOW_MASK_BLUR_RADIUS);
+		blurHorizontal(stripAlpha, horizontalAlpha, width, height, REMASTER_SHADOW_MASK_BLUR_RADIUS);
+		blurVertical(horizontalAlpha, stripBlurredAlpha, width, height, REMASTER_SHADOW_MASK_BLUR_RADIUS);
+		blurHorizontal(sceneryAlpha, horizontalAlpha, width, height, REMASTER_SHADOW_MASK_SCENERY_BLUR_RADIUS);
+		blurVertical(horizontalAlpha, sceneryBlurredAlpha, width, height, REMASTER_SHADOW_MASK_SCENERY_BLUR_RADIUS);
+		blurHorizontal(contactAlpha, horizontalAlpha, width, height, REMASTER_SHADOW_MASK_CONTACT_BLUR_RADIUS);
+		blurVertical(horizontalAlpha, contactBlurredAlpha, width, height, REMASTER_SHADOW_MASK_CONTACT_BLUR_RADIUS);
 		ByteBuffer pixels = ByteBuffer.allocateDirect(width * height * 4);
 		int visiblePixels = 0;
-		for (int index = 0; index < sourceAlpha.length; index++) {
-			float alpha = Math.max(
-				sourceAlpha[index] * REMASTER_SHADOW_MASK_CENTER_RETAIN,
-				blurredAlpha[index] * REMASTER_SHADOW_MASK_BLUR_BOOST);
+		for (int index = 0; index < stripAlpha.length; index++) {
+			float stripDirectionalAlpha = Math.max(
+				stripAlpha[index] * REMASTER_SHADOW_MASK_CENTER_RETAIN,
+				stripBlurredAlpha[index] * REMASTER_SHADOW_MASK_BLUR_BOOST);
+			float sceneryDirectionalAlpha = Math.max(
+				sceneryAlpha[index] * REMASTER_SHADOW_MASK_CENTER_RETAIN,
+				sceneryBlurredAlpha[index] * REMASTER_SHADOW_MASK_BLUR_BOOST)
+				* REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE;
+			float directionalAlpha = Math.max(stripDirectionalAlpha, sceneryDirectionalAlpha);
+			float diffusedContactAlpha = Math.max(
+				contactAlpha[index] * REMASTER_SHADOW_MASK_CONTACT_CENTER_RETAIN,
+				contactBlurredAlpha[index] * REMASTER_SHADOW_MASK_CONTACT_BLUR_BOOST);
+			float alpha = Math.max(directionalAlpha, diffusedContactAlpha);
 			alpha = clamp(alpha, 0.0f, REMASTER_SHADOW_MASK_MAX_ALPHA);
 			if (alpha > REMASTER_SHADOW_MASK_MIN_DRAW_ALPHA) {
 				visiblePixels++;
@@ -355,10 +425,20 @@ final class RemasterShadowMaskBuilder {
 		long hash = 0xcbf29ce484222325L;
 		hash = mix(hash, REMASTER_SHADOW_MASK_TEXTURE_SIZE);
 		hash = mix(hash, REMASTER_SHADOW_MASK_BLUR_RADIUS);
+		hash = mix(hash, REMASTER_SHADOW_MASK_SCENERY_BLUR_RADIUS);
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_TEXTURE_PADDING));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_LENGTH_SCALE));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CENTER_RETAIN));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_BLUR_BOOST));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CLIP_START_OFFSET));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_ALPHA));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_MIN_RADIUS));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_MAX_RADIUS));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_RADIUS_SCALE));
+		hash = mix(hash, REMASTER_SHADOW_MASK_CONTACT_BLUR_RADIUS);
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_CENTER_RETAIN));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CONTACT_BLUR_BOOST));
 		hash = mix(hash, REMASTER_SHADOW_MASK_DIRECT_WALL_SEGMENT_CLIP ? 1 : 0);
 		hash = mix(hash, signatureWorldFloat(bounds.minX));
 		hash = mix(hash, signatureWorldFloat(bounds.maxX));
@@ -379,25 +459,39 @@ final class RemasterShadowMaskBuilder {
 		return hash;
 	}
 
-	private float remasterTerrainShadowMaskAlpha(
+	private void remasterTerrainShadowMaskAlphas(
 		RemasterShadowRoofCoverage roofCoverage,
 		Map<Long, List<RemasterTerrainShadowCaster>> casterGrid,
 		float x,
-		float z) {
+		float z,
+		float[] stripAlpha,
+		float[] sceneryAlpha,
+		float[] contactAlpha,
+		int index) {
 		List<RemasterTerrainShadowCaster> casters =
 			casterGrid.get(remasterShadowMaskCellKey(remasterShadowMaskCell(x), remasterShadowMaskCell(z)));
 		if (casters == null || casters.isEmpty()) {
-			return 0.0f;
+			return;
 		}
-		float alpha = 0.0f;
+		float strip = 0.0f;
+		float scenery = 0.0f;
+		float contact = 0.0f;
 		for (RemasterTerrainShadowCaster caster : casters) {
 			float casterAlpha = caster.alphaAt(x, z);
 			if (casterAlpha <= 0.0f || caster.isBlockedBy(roofCoverage, x, z)) {
 				continue;
 			}
-			alpha = Math.max(alpha, casterAlpha);
+			if (caster.style == RemasterTerrainShadowCaster.STYLE_STRIP) {
+				strip = Math.max(strip, casterAlpha);
+			} else if (caster.style == RemasterTerrainShadowCaster.STYLE_SOFT_SCENERY) {
+				scenery = Math.max(scenery, casterAlpha);
+			} else if (caster.style == RemasterTerrainShadowCaster.STYLE_CONTACT) {
+				contact = Math.max(contact, casterAlpha);
+			}
 		}
-		return clamp(alpha, 0.0f, REMASTER_SHADOW_MASK_MAX_ALPHA);
+		stripAlpha[index] = clamp(strip, 0.0f, REMASTER_SHADOW_MASK_MAX_ALPHA);
+		sceneryAlpha[index] = clamp(scenery, 0.0f, REMASTER_SHADOW_MASK_MAX_ALPHA);
+		contactAlpha[index] = clamp(contact, 0.0f, REMASTER_SHADOW_MASK_MAX_ALPHA);
 	}
 
 	private static void blurHorizontal(float[] source, float[] target, int width, int height, int radius) {
@@ -462,6 +556,11 @@ final class RemasterShadowMaskBuilder {
 				RemasterTerrainShadowCaster projected = RemasterTerrainShadowCaster.from(caster, chunk.getPlane());
 				if (projected != null) {
 					casters.add(projected);
+				}
+				RemasterTerrainShadowCaster contact =
+					RemasterTerrainShadowCaster.contactFrom(caster, chunk.getPlane());
+				if (contact != null) {
+					casters.add(contact);
 				}
 			}
 		}
@@ -610,6 +709,7 @@ final class RemasterShadowMaskBuild {
 	final RemasterTerrainShadowMask mask;
 	final int stripCasterCount;
 	final int softSceneryCasterCount;
+	final int contactCasterCount;
 	final boolean cacheHit;
 	final boolean rebuild;
 	final String reason;
@@ -618,12 +718,14 @@ final class RemasterShadowMaskBuild {
 		RemasterTerrainShadowMask mask,
 		int stripCasterCount,
 		int softSceneryCasterCount,
+		int contactCasterCount,
 		boolean cacheHit,
 		boolean rebuild,
 		String reason) {
 		this.mask = mask;
 		this.stripCasterCount = stripCasterCount;
 		this.softSceneryCasterCount = softSceneryCasterCount;
+		this.contactCasterCount = contactCasterCount;
 		this.cacheHit = cacheHit;
 		this.rebuild = rebuild;
 		this.reason = reason == null ? "" : reason;
@@ -766,6 +868,7 @@ final class RemasterShadowMaskBounds {
 final class RemasterTerrainShadowCaster {
 	static final int STYLE_STRIP = 0;
 	static final int STYLE_SOFT_SCENERY = 1;
+	static final int STYLE_CONTACT = 2;
 
 	final int style;
 	final int plane;
@@ -783,6 +886,15 @@ final class RemasterTerrainShadowCaster {
 	final float directionX;
 	final float directionZ;
 	final float opacity;
+	final float sceneryFootprintHalfAlong;
+	final float sceneryFootprintHalfAcross;
+	final float contactCoreRadius;
+	final float contactBleedRadius;
+	final boolean contactUsesBounds;
+	final float contactMinX;
+	final float contactMaxX;
+	final float contactMinZ;
+	final float contactMaxZ;
 	final float minX;
 	final float maxX;
 	final float minZ;
@@ -800,6 +912,50 @@ final class RemasterTerrainShadowCaster {
 		float directionX,
 		float directionZ,
 		float opacity) {
+		this(
+				style,
+				plane,
+				baseX0,
+				baseZ0,
+				baseX1,
+				baseZ1,
+				length,
+				halfWidth,
+				directionX,
+				directionZ,
+				opacity,
+				0.0f,
+				0.0f,
+				0.0f,
+				0.0f,
+				false,
+				0.0f,
+				0.0f,
+				0.0f,
+				0.0f);
+	}
+
+	private RemasterTerrainShadowCaster(
+		int style,
+		int plane,
+		float baseX0,
+		float baseZ0,
+		float baseX1,
+		float baseZ1,
+		float length,
+		float halfWidth,
+		float directionX,
+		float directionZ,
+		float opacity,
+		float sceneryFootprintHalfAlong,
+		float sceneryFootprintHalfAcross,
+		float contactCoreRadius,
+		float contactBleedRadius,
+		boolean contactUsesBounds,
+		float contactMinX,
+		float contactMaxX,
+		float contactMinZ,
+		float contactMaxZ) {
 		float edgeDx = baseX1 - baseX0;
 		float edgeDz = baseZ1 - baseZ0;
 		float edgeLength = (float) Math.sqrt(edgeDx * edgeDx + edgeDz * edgeDz);
@@ -819,14 +975,37 @@ final class RemasterTerrainShadowCaster {
 		this.directionX = directionX;
 		this.directionZ = directionZ;
 		this.opacity = RemasterShadowMaskBuilder.clamp(opacity, 0.0f, 1.0f);
+		this.sceneryFootprintHalfAlong = Math.max(0.0f, sceneryFootprintHalfAlong);
+		this.sceneryFootprintHalfAcross = Math.max(0.0f, sceneryFootprintHalfAcross);
+		this.contactCoreRadius =
+			RemasterShadowMaskBuilder.clamp(contactCoreRadius, 0.0f, Math.max(0.0f, halfWidth));
+		this.contactBleedRadius = Math.max(0.0f, contactBleedRadius);
+		this.contactUsesBounds = contactUsesBounds;
+		this.contactMinX = Math.min(contactMinX, contactMaxX);
+		this.contactMaxX = Math.max(contactMinX, contactMaxX);
+		this.contactMinZ = Math.min(contactMinZ, contactMaxZ);
+		this.contactMaxZ = Math.max(contactMinZ, contactMaxZ);
 		float projectedX0 = baseX0 + directionX * length;
 		float projectedZ0 = baseZ0 + directionZ * length;
 		float projectedX1 = baseX1 + directionX * length;
 		float projectedZ1 = baseZ1 + directionZ * length;
-		this.minX = Math.min(Math.min(baseX0, baseX1), Math.min(projectedX0, projectedX1)) - halfWidth;
-		this.maxX = Math.max(Math.max(baseX0, baseX1), Math.max(projectedX0, projectedX1)) + halfWidth;
-		this.minZ = Math.min(Math.min(baseZ0, baseZ1), Math.min(projectedZ0, projectedZ1)) - halfWidth;
-		this.maxZ = Math.max(Math.max(baseZ0, baseZ1), Math.max(projectedZ0, projectedZ1)) + halfWidth;
+		if (style == STYLE_CONTACT && contactUsesBounds) {
+			this.minX = this.contactMinX - this.contactBleedRadius;
+			this.maxX = this.contactMaxX + this.contactBleedRadius;
+			this.minZ = this.contactMinZ - this.contactBleedRadius;
+			this.maxZ = this.contactMaxZ + this.contactBleedRadius;
+		} else if (style == STYLE_CONTACT) {
+			float contactReach = this.contactCoreRadius + this.contactBleedRadius;
+			this.minX = Math.min(baseX0, baseX1) - contactReach;
+			this.maxX = Math.max(baseX0, baseX1) + contactReach;
+			this.minZ = Math.min(baseZ0, baseZ1) - contactReach;
+			this.maxZ = Math.max(baseZ0, baseZ1) + contactReach;
+		} else {
+			this.minX = Math.min(Math.min(baseX0, baseX1), Math.min(projectedX0, projectedX1)) - halfWidth;
+			this.maxX = Math.max(Math.max(baseX0, baseX1), Math.max(projectedX0, projectedX1)) + halfWidth;
+			this.minZ = Math.min(Math.min(baseZ0, baseZ1), Math.min(projectedZ0, projectedZ1)) - halfWidth;
+			this.maxZ = Math.max(Math.max(baseZ0, baseZ1), Math.max(projectedZ0, projectedZ1)) + halfWidth;
+		}
 	}
 
 	static RemasterTerrainShadowCaster from(
@@ -847,10 +1026,16 @@ final class RemasterTerrainShadowCaster {
 		float shadowDirectionX = -lightX / horizontalLength;
 		float shadowDirectionZ = -lightZ / horizontalLength;
 		float height = Math.max(0.0f, source.getHeight());
-		float length = RemasterShadowMaskBuilder.clamp(
+		float rawLength = RemasterShadowMaskBuilder.clamp(
 			RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_MIN_LENGTH + height * (horizontalLength / lightY) * 2.0f,
 			RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_MIN_LENGTH,
 			RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_MAX_LENGTH);
+		float length = RemasterShadowMaskBuilder.clamp(
+			rawLength * RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_LENGTH_SCALE,
+			RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_MIN_LENGTH
+				* RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_LENGTH_SCALE,
+			RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_MAX_LENGTH
+				* RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_LENGTH_SCALE);
 		float width = Math.max(
 			source.getWidth(),
 			Math.max(
@@ -859,33 +1044,151 @@ final class RemasterTerrainShadowCaster {
 		Renderer3DModelKind kind = source.getModelKind();
 		int style = kind == Renderer3DModelKind.GAME_OBJECT ? STYLE_SOFT_SCENERY : STYLE_STRIP;
 		float halfWidth = remasterShadowHalfWidth(kind, width);
-		float baseX0 = source.getBaseX0();
-		float baseZ0 = source.getBaseZ0();
-		float baseX1 = source.getBaseX1();
-		float baseZ1 = source.getBaseZ1();
-		if (style == STYLE_SOFT_SCENERY) {
-			float centerX = (source.getBaseX0() + source.getBaseX1()) * 0.5f;
-			float centerZ = (source.getBaseZ0() + source.getBaseZ1()) * 0.5f;
-			float normalX = -shadowDirectionZ;
-			float normalZ = shadowDirectionX;
-			halfWidth = Math.max(36.0f, Math.min(132.0f, width * 0.30f));
-			baseX0 = centerX - normalX * halfWidth;
-			baseZ0 = centerZ - normalZ * halfWidth;
-			baseX1 = centerX + normalX * halfWidth;
-			baseZ1 = centerZ + normalZ * halfWidth;
+			float baseX0 = source.getBaseX0();
+			float baseZ0 = source.getBaseZ0();
+			float baseX1 = source.getBaseX1();
+			float baseZ1 = source.getBaseZ1();
+			float sceneryFootprintHalfAlong = 0.0f;
+			float sceneryFootprintHalfAcross = 0.0f;
+			if (style == STYLE_SOFT_SCENERY) {
+				float centerX = (source.getFootprintMinX() + source.getFootprintMaxX()) * 0.5f;
+				float centerZ = (source.getFootprintMinZ() + source.getFootprintMaxZ()) * 0.5f;
+				float footprintHalfX =
+					Math.max(0.0f, (source.getFootprintMaxX() - source.getFootprintMinX()) * 0.5f);
+				float footprintHalfZ =
+					Math.max(0.0f, (source.getFootprintMaxZ() - source.getFootprintMinZ()) * 0.5f);
+				if (footprintHalfX <= 0.0f || footprintHalfZ <= 0.0f) {
+					centerX = (source.getBaseX0() + source.getBaseX1()) * 0.5f;
+					centerZ = (source.getBaseZ0() + source.getBaseZ1()) * 0.5f;
+				}
+				float normalX = -shadowDirectionZ;
+				float normalZ = shadowDirectionX;
+				if (footprintHalfX > 0.0f && footprintHalfZ > 0.0f) {
+					sceneryFootprintHalfAlong =
+						Math.abs(footprintHalfX * shadowDirectionX) + Math.abs(footprintHalfZ * shadowDirectionZ);
+					sceneryFootprintHalfAcross =
+						Math.abs(footprintHalfX * normalX) + Math.abs(footprintHalfZ * normalZ);
+				}
+				float edgeSoftness = Math.max(24.0f, Math.min(96.0f, width * 0.12f));
+				halfWidth = Math.max(
+					36.0f,
+					Math.min(180.0f, Math.max(width * 0.30f, sceneryFootprintHalfAcross + edgeSoftness)));
+				float sourceHalfAcross = sceneryFootprintHalfAcross > 0.0f
+					? sceneryFootprintHalfAcross
+					: Math.max(36.0f, Math.min(132.0f, width * 0.30f));
+				baseX0 = centerX - normalX * sourceHalfAcross;
+				baseZ0 = centerZ - normalZ * sourceHalfAcross;
+				baseX1 = centerX + normalX * sourceHalfAcross;
+				baseZ1 = centerZ + normalZ * sourceHalfAcross;
+			}
+			return new RemasterTerrainShadowCaster(
+				style,
+				plane,
+				baseX0,
+				baseZ0,
+				baseX1,
+				baseZ1,
+				length,
+				halfWidth,
+				shadowDirectionX,
+				shadowDirectionZ,
+				source.getOpacity() / 255.0f,
+				sceneryFootprintHalfAlong,
+				sceneryFootprintHalfAcross,
+				0.0f,
+				0.0f,
+				false,
+				0.0f,
+				0.0f,
+				0.0f,
+				0.0f);
+		}
+
+	static RemasterTerrainShadowCaster contactFrom(
+		Renderer3DWorldChunkFrame.ShadowCaster source,
+		int plane) {
+		if (source == null || source.getHeight() <= 0) {
+			return null;
+		}
+		Renderer3DModelKind kind = source.getModelKind();
+		if (kind != Renderer3DModelKind.GAME_OBJECT
+			&& kind != Renderer3DModelKind.WALL
+			&& kind != Renderer3DModelKind.WALL_OBJECT) {
+			return null;
+		}
+		boolean wallKind = kind == Renderer3DModelKind.WALL || kind == Renderer3DModelKind.WALL_OBJECT;
+		float width = Math.max(
+			source.getWidth(),
+			Math.max(
+				Math.abs(source.getBaseX1() - source.getBaseX0()),
+				Math.abs(source.getBaseZ1() - source.getBaseZ0())));
+		float footprintRadius = RemasterShadowMaskBuilder.clamp(
+			width * (wallKind ? 0.06f : 0.18f),
+			wallKind ? 6.0f : 16.0f,
+			wallKind ? 28.0f : 72.0f);
+		float visibleBleedRadius = Math.max(width * 0.34f, source.getHeight() * 0.12f)
+			* RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_CONTACT_RADIUS_SCALE;
+		visibleBleedRadius = RemasterShadowMaskBuilder.clamp(
+			visibleBleedRadius,
+			RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_CONTACT_MIN_RADIUS,
+			RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_CONTACT_MAX_RADIUS
+				* Math.max(1.0f, RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_CONTACT_RADIUS_SCALE));
+		float opacity = wallKind
+			? source.getOpacity() / 255.0f * 0.72f
+			: source.getOpacity() / 255.0f;
+		if (kind == Renderer3DModelKind.GAME_OBJECT) {
+			float footprintMinX = source.getFootprintMinX();
+			float footprintMaxX = source.getFootprintMaxX();
+			float footprintMinZ = source.getFootprintMinZ();
+			float footprintMaxZ = source.getFootprintMaxZ();
+			if (footprintMaxX <= footprintMinX || footprintMaxZ <= footprintMinZ) {
+				return null;
+			}
+			float centerX = (footprintMinX + footprintMaxX) * 0.5f;
+			float centerZ = (footprintMinZ + footprintMaxZ) * 0.5f;
+			return new RemasterTerrainShadowCaster(
+				STYLE_CONTACT,
+				plane,
+					centerX,
+					centerZ,
+					centerX,
+					centerZ,
+					0.0f,
+					visibleBleedRadius,
+					1.0f,
+					0.0f,
+					opacity,
+					0.0f,
+					0.0f,
+					0.0f,
+					visibleBleedRadius,
+					true,
+					footprintMinX,
+					footprintMaxX,
+					footprintMinZ,
+					footprintMaxZ);
 		}
 		return new RemasterTerrainShadowCaster(
-			style,
+			STYLE_CONTACT,
 			plane,
-			baseX0,
-			baseZ0,
-			baseX1,
-			baseZ1,
-			length,
-			halfWidth,
-			shadowDirectionX,
-			shadowDirectionZ,
-			source.getOpacity() / 255.0f);
+				source.getBaseX0(),
+				source.getBaseZ0(),
+				source.getBaseX1(),
+				source.getBaseZ1(),
+				0.0f,
+				footprintRadius + visibleBleedRadius,
+				1.0f,
+				0.0f,
+				opacity,
+				0.0f,
+				0.0f,
+				footprintRadius,
+				visibleBleedRadius,
+				false,
+				0.0f,
+				0.0f,
+				0.0f,
+				0.0f);
 	}
 
 	private static float remasterShadowHalfWidth(Renderer3DModelKind kind, float width) {
@@ -899,6 +1202,9 @@ final class RemasterTerrainShadowCaster {
 	}
 
 	float alphaAt(float x, float z) {
+		if (style == STYLE_CONTACT) {
+			return alphaAtContact(x, z);
+		}
 		if (style == STYLE_SOFT_SCENERY) {
 			return alphaAtSoftScenery(x, z);
 		}
@@ -926,6 +1232,9 @@ final class RemasterTerrainShadowCaster {
 	}
 
 	private float alphaAtSoftScenery(float x, float z) {
+		if (sceneryFootprintHalfAlong > 0.0f && sceneryFootprintHalfAcross > 0.0f) {
+			return alphaAtFootprintScenery(x, z);
+		}
 		float dx = x - centerX;
 		float dz = z - centerZ;
 		float along = dx * directionX + dz * directionZ;
@@ -952,6 +1261,86 @@ final class RemasterTerrainShadowCaster {
 			* RemasterShadowMaskBuilder.clamp(shapedAlpha, 0.0f, 1.0f);
 	}
 
+	private float alphaAtFootprintScenery(float x, float z) {
+		float dx = x - centerX;
+		float dz = z - centerZ;
+		float along = dx * directionX + dz * directionZ;
+		float castDistance = along - sceneryFootprintHalfAlong;
+		float edgeSoftness = Math.max(
+			24.0f,
+			Math.min(104.0f, sceneryFootprintHalfAcross * 0.55f + sceneryFootprintHalfAlong * 0.18f));
+		if (along < -sceneryFootprintHalfAlong - edgeSoftness || castDistance > length) {
+			return 0.0f;
+		}
+		float across = Math.abs(dx * -directionZ + dz * directionX);
+		float positiveCastDistance = Math.max(0.0f, castDistance);
+		float spread = sceneryFootprintHalfAcross + Math.min(112.0f, positiveCastDistance * 0.08f);
+		float acrossDistance = Math.max(0.0f, across - spread);
+		float sideFade = 1.0f - smoothStep(0.0f, edgeSoftness, acrossDistance);
+		float frontFade = smoothStep(
+			-sceneryFootprintHalfAlong - edgeSoftness,
+			-sceneryFootprintHalfAlong + edgeSoftness,
+			along);
+		float farFade = smoothStep(0.0f, Math.max(96.0f, length * 0.34f), length - positiveCastDistance);
+		float centerWeight = 0.62f + 0.38f * (1.0f - smoothStep(0.0f, Math.max(1.0f, spread), across));
+		float shapedAlpha = frontFade * sideFade * farFade * centerWeight;
+		return RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_BASE_ALPHA
+			* opacity
+			* RemasterShadowMaskBuilder.clamp(shapedAlpha, 0.0f, 1.0f);
+	}
+
+	private float alphaAtContact(float x, float z) {
+		float visibleBleedRadius = Math.max(1.0f, contactBleedRadius);
+		float distanceFromFootprint = contactUsesBounds
+			? Math.max(0.0f, distanceToFootprintBounds(x, z))
+			: Math.max(0.0f, distanceToBaseSegment(x, z) - contactCoreRadius);
+		float core = 1.0f - smoothStep(0.0f, 1.0f, distanceFromFootprint / visibleBleedRadius);
+		return RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_CONTACT_ALPHA
+			* opacity
+			* RemasterShadowMaskBuilder.clamp(core, 0.0f, 1.0f);
+	}
+
+	private float distanceToFootprintBounds(float x, float z) {
+		float halfX = Math.max(0.0f, (contactMaxX - contactMinX) * 0.5f);
+		float halfZ = Math.max(0.0f, (contactMaxZ - contactMinZ) * 0.5f);
+		if (halfX <= 0.0001f || halfZ <= 0.0001f) {
+			float dx = x - ((contactMinX + contactMaxX) * 0.5f);
+			float dz = z - ((contactMinZ + contactMaxZ) * 0.5f);
+			return (float) Math.sqrt(dx * dx + dz * dz);
+		}
+		float radius = RemasterShadowMaskBuilder.clamp(
+			Math.min(halfX, halfZ) * 0.85f,
+			Math.min(halfX, halfZ) * 0.35f,
+			Math.min(halfX, halfZ));
+		float centerX = (contactMinX + contactMaxX) * 0.5f;
+		float centerZ = (contactMinZ + contactMaxZ) * 0.5f;
+		float qx = Math.abs(x - centerX) - Math.max(0.0f, halfX - radius);
+		float qz = Math.abs(z - centerZ) - Math.max(0.0f, halfZ - radius);
+		float outsideX = Math.max(qx, 0.0f);
+		float outsideZ = Math.max(qz, 0.0f);
+		float outsideDistance = (float) Math.sqrt(outsideX * outsideX + outsideZ * outsideZ);
+		float insideDistance = Math.min(Math.max(qx, qz), 0.0f);
+		return outsideDistance + insideDistance - radius;
+	}
+
+	private float distanceToBaseSegment(float x, float z) {
+		float segmentX = baseX1 - baseX0;
+		float segmentZ = baseZ1 - baseZ0;
+		float lengthSquared = segmentX * segmentX + segmentZ * segmentZ;
+		if (lengthSquared <= 0.0001f) {
+			float dx = x - centerX;
+			float dz = z - centerZ;
+			return (float) Math.sqrt(dx * dx + dz * dz);
+		}
+		float t = ((x - baseX0) * segmentX + (z - baseZ0) * segmentZ) / lengthSquared;
+		t = RemasterShadowMaskBuilder.clamp(t, 0.0f, 1.0f);
+		float closestX = baseX0 + segmentX * t;
+		float closestZ = baseZ0 + segmentZ * t;
+		float dx = x - closestX;
+		float dz = z - closestZ;
+		return (float) Math.sqrt(dx * dx + dz * dz);
+	}
+
 	private float alphaAtCenterFallback(float x, float z) {
 		float dx = x - centerX;
 		float dz = z - centerZ;
@@ -972,6 +1361,12 @@ final class RemasterTerrainShadowCaster {
 
 	boolean isBlockedBy(RemasterShadowRoofCoverage roofCoverage, float x, float z) {
 		if (roofCoverage == null) {
+			return false;
+		}
+		if (roofCoverage.classify(plane, Math.round(x), Math.round(z)) > 0) {
+			return true;
+		}
+		if (style == STYLE_CONTACT) {
 			return false;
 		}
 		float along = shadowAlongAt(x, z);
@@ -1023,6 +1418,15 @@ final class RemasterTerrainShadowCaster {
 		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureUnitFloat(directionX));
 		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureUnitFloat(directionZ));
 		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureUnitFloat(opacity));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(sceneryFootprintHalfAlong));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(sceneryFootprintHalfAcross));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(contactCoreRadius));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(contactBleedRadius));
+		hash = RemasterShadowMaskBuilder.mix(hash, contactUsesBounds ? 1 : 0);
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(contactMinX));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(contactMaxX));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(contactMinZ));
+		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(contactMaxZ));
 		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(minX));
 		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(maxX));
 		hash = RemasterShadowMaskBuilder.mix(hash, RemasterShadowMaskBuilder.signatureWorldFloat(minZ));

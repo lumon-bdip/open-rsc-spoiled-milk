@@ -84,10 +84,13 @@ public final class Renderer3DWorldChunkFrame {
 		private final int[] vertexNormalX;
 		private final int[] vertexNormalY;
 		private final int[] vertexNormalZ;
+		private final int[] vertexTerrainBlendColors;
+		private final int[] vertexTerrainBlendStrengths;
 		private final int[] indices;
 		private final int[] triangleTextures;
 		private final int[] triangleFallbackColors;
 		private final Renderer3DModelKind[] triangleModelKinds;
+		private final int[] triangleTerrainVariationMasks;
 		private final ShadowCaster[] shadowCasters;
 		private final long[] roofCoverageBits;
 		private final int roofCoverageAxis;
@@ -256,11 +259,14 @@ public final class Renderer3DWorldChunkFrame {
 			this.vertexTextureU = normalizeFloatArray(vertexTextureU, vertexCount, 0.0f);
 			this.vertexTextureV = normalizeFloatArray(vertexTextureV, vertexCount, 0.0f);
 			this.vertexLights = normalizeIntArray(vertexLights, vertexCount, 0);
+			this.vertexTerrainBlendColors = normalizeIntArray(null, vertexCount, 0);
+			this.vertexTerrainBlendStrengths = normalizeIntArray(null, vertexCount, 0);
 			this.indices = indices == null ? new int[0] : indices.clone();
 			this.triangleTextures = triangleTextures == null ? new int[0] : triangleTextures.clone();
 			this.triangleFallbackColors =
 				triangleFallbackColors == null ? new int[0] : triangleFallbackColors.clone();
 			this.triangleModelKinds = normalizeKinds(triangleModelKinds, this.triangleTextures.length);
+			this.triangleTerrainVariationMasks = normalizeIntArray(null, this.triangleTextures.length, 0);
 			int[][] vertexNormals = buildVertexNormals(
 				this.vertexCoords,
 				this.indices,
@@ -314,11 +320,14 @@ public final class Renderer3DWorldChunkFrame {
 				vertexTextureU,
 				vertexTextureV,
 				vertexLights,
+				null,
+				null,
 				indices,
 				triangleTextures,
 				triangleFallbackColors,
 				triangleModelKinds,
 				shadowCasters,
+				null,
 				roofCoverageBits,
 				roofCoverageAxis,
 				roofCoveredTileCount,
@@ -340,11 +349,69 @@ public final class Renderer3DWorldChunkFrame {
 			float[] vertexTextureU,
 			float[] vertexTextureV,
 			int[] vertexLights,
+			int[] vertexTerrainBlendColors,
+			int[] vertexTerrainBlendStrengths,
 			int[] indices,
 			int[] triangleTextures,
 			int[] triangleFallbackColors,
 			Renderer3DModelKind[] triangleModelKinds,
 			ShadowCaster[] shadowCasters,
+			int[] triangleTerrainVariationMasks,
+			long[] roofCoverageBits,
+			int roofCoverageAxis,
+			int roofCoveredTileCount,
+			int terrainTriangles,
+			int wallTriangles,
+			int roofTriangles,
+			boolean objectChunk,
+			long signature) {
+			this(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				vertexCoords,
+				vertexTextureU,
+				vertexTextureV,
+				vertexLights,
+				vertexTerrainBlendColors,
+				vertexTerrainBlendStrengths,
+				indices,
+				triangleTextures,
+				triangleFallbackColors,
+				triangleModelKinds,
+				shadowCasters,
+				triangleTerrainVariationMasks,
+				roofCoverageBits,
+				roofCoverageAxis,
+				roofCoveredTileCount,
+				terrainTriangles,
+				wallTriangles,
+				roofTriangles,
+				objectChunk,
+				objectChunk ? CHUNK_ROLE_STATIC_OBJECTS : CHUNK_ROLE_WORLD,
+				signature);
+		}
+
+		public ChunkMesh(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ,
+			int[] vertexCoords,
+			float[] vertexTextureU,
+			float[] vertexTextureV,
+			int[] vertexLights,
+			int[] vertexTerrainBlendColors,
+			int[] vertexTerrainBlendStrengths,
+			int[] indices,
+			int[] triangleTextures,
+			int[] triangleFallbackColors,
+			Renderer3DModelKind[] triangleModelKinds,
+			ShadowCaster[] shadowCasters,
+			int[] triangleTerrainVariationMasks,
 			long[] roofCoverageBits,
 			int roofCoverageAxis,
 			int roofCoveredTileCount,
@@ -364,11 +431,15 @@ public final class Renderer3DWorldChunkFrame {
 			this.vertexTextureU = normalizeFloatArray(vertexTextureU, vertexCount, 0.0f);
 			this.vertexTextureV = normalizeFloatArray(vertexTextureV, vertexCount, 0.0f);
 			this.vertexLights = normalizeIntArray(vertexLights, vertexCount, 0);
+			this.vertexTerrainBlendColors = normalizeIntArray(vertexTerrainBlendColors, vertexCount, 0);
+			this.vertexTerrainBlendStrengths = normalizeIntArray(vertexTerrainBlendStrengths, vertexCount, 0);
 			this.indices = indices == null ? new int[0] : indices.clone();
 			this.triangleTextures = triangleTextures == null ? new int[0] : triangleTextures.clone();
 			this.triangleFallbackColors =
 				triangleFallbackColors == null ? new int[0] : triangleFallbackColors.clone();
 			this.triangleModelKinds = normalizeKinds(triangleModelKinds, this.triangleTextures.length);
+			this.triangleTerrainVariationMasks =
+				normalizeIntArray(triangleTerrainVariationMasks, this.triangleTextures.length, 0);
 			int[][] vertexNormals = buildVertexNormals(
 				this.vertexCoords,
 				this.indices,
@@ -740,6 +811,14 @@ public final class Renderer3DWorldChunkFrame {
 			return vertexNormalZ[vertexIndex];
 		}
 
+		public int getVertexTerrainBlendColor(int vertexIndex) {
+			return vertexTerrainBlendColors[vertexIndex];
+		}
+
+		public int getVertexTerrainBlendStrength(int vertexIndex) {
+			return vertexTerrainBlendStrengths[vertexIndex];
+		}
+
 		public int getIndex(int indexOffset) {
 			return indices[indexOffset];
 		}
@@ -754,6 +833,10 @@ public final class Renderer3DWorldChunkFrame {
 
 		public Renderer3DModelKind getTriangleModelKind(int triangleIndex) {
 			return triangleModelKinds[triangleIndex];
+		}
+
+		public int getTriangleTerrainVariationMask(int triangleIndex) {
+			return triangleTerrainVariationMasks[triangleIndex];
 		}
 
 		public ShadowCaster[] copyShadowCasters() {
@@ -788,6 +871,14 @@ public final class Renderer3DWorldChunkFrame {
 			return vertexNormalZ.clone();
 		}
 
+		public int[] copyVertexTerrainBlendColors() {
+			return vertexTerrainBlendColors.clone();
+		}
+
+		public int[] copyVertexTerrainBlendStrengths() {
+			return vertexTerrainBlendStrengths.clone();
+		}
+
 		public int[] copyIndices() {
 			return indices.clone();
 		}
@@ -803,6 +894,10 @@ public final class Renderer3DWorldChunkFrame {
 		public Renderer3DModelKind[] copyTriangleModelKinds() {
 			return triangleModelKinds.clone();
 		}
+
+		public int[] copyTriangleTerrainVariationMasks() {
+			return triangleTerrainVariationMasks.clone();
+		}
 	}
 
 	public static final class ShadowCaster {
@@ -812,33 +907,73 @@ public final class Renderer3DWorldChunkFrame {
 		private final int baseZ0;
 		private final int baseX1;
 		private final int baseZ1;
-		private final int height;
-		private final int width;
-		private final int opacity;
-		private final boolean outdoorOnly;
+			private final int height;
+			private final int width;
+			private final int opacity;
+			private final boolean outdoorOnly;
+			private final int footprintMinX;
+			private final int footprintMaxX;
+			private final int footprintMinZ;
+			private final int footprintMaxZ;
 
-		public ShadowCaster(
-			Renderer3DModelKind modelKind,
+			public ShadowCaster(
+				Renderer3DModelKind modelKind,
 			int baseX0,
 			int baseY,
 			int baseZ0,
 			int baseX1,
 			int baseZ1,
-			int height,
-			int width,
-			int opacity,
-			boolean outdoorOnly) {
-			this.modelKind = modelKind == null ? Renderer3DModelKind.UNCLASSIFIED : modelKind;
-			this.baseX0 = baseX0;
-			this.baseY = baseY;
+				int height,
+				int width,
+				int opacity,
+				boolean outdoorOnly) {
+				this(
+					modelKind,
+					baseX0,
+					baseY,
+					baseZ0,
+					baseX1,
+					baseZ1,
+					height,
+					width,
+					opacity,
+					outdoorOnly,
+					Math.min(baseX0, baseX1),
+					Math.max(baseX0, baseX1),
+					Math.min(baseZ0, baseZ1),
+					Math.max(baseZ0, baseZ1));
+			}
+
+			public ShadowCaster(
+				Renderer3DModelKind modelKind,
+				int baseX0,
+				int baseY,
+				int baseZ0,
+				int baseX1,
+				int baseZ1,
+				int height,
+				int width,
+				int opacity,
+				boolean outdoorOnly,
+				int footprintMinX,
+				int footprintMaxX,
+				int footprintMinZ,
+				int footprintMaxZ) {
+				this.modelKind = modelKind == null ? Renderer3DModelKind.UNCLASSIFIED : modelKind;
+				this.baseX0 = baseX0;
+				this.baseY = baseY;
 			this.baseZ0 = baseZ0;
 			this.baseX1 = baseX1;
 			this.baseZ1 = baseZ1;
 			this.height = Math.max(0, height);
-			this.width = Math.max(0, width);
-			this.opacity = Math.max(0, Math.min(255, opacity));
-			this.outdoorOnly = outdoorOnly;
-		}
+				this.width = Math.max(0, width);
+				this.opacity = Math.max(0, Math.min(255, opacity));
+				this.outdoorOnly = outdoorOnly;
+				this.footprintMinX = Math.min(footprintMinX, footprintMaxX);
+				this.footprintMaxX = Math.max(footprintMinX, footprintMaxX);
+				this.footprintMinZ = Math.min(footprintMinZ, footprintMaxZ);
+				this.footprintMaxZ = Math.max(footprintMinZ, footprintMaxZ);
+			}
 
 		public Renderer3DModelKind getModelKind() {
 			return modelKind;
@@ -876,8 +1011,24 @@ public final class Renderer3DWorldChunkFrame {
 			return opacity;
 		}
 
-		public boolean isOutdoorOnly() {
-			return outdoorOnly;
+			public boolean isOutdoorOnly() {
+				return outdoorOnly;
+			}
+
+			public int getFootprintMinX() {
+				return footprintMinX;
+			}
+
+			public int getFootprintMaxX() {
+				return footprintMaxX;
+			}
+
+			public int getFootprintMinZ() {
+				return footprintMinZ;
+			}
+
+			public int getFootprintMaxZ() {
+				return footprintMaxZ;
+			}
 		}
 	}
-}

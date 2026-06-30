@@ -993,7 +993,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			telemetry.enabled
 				? "shadow mask size/pix " + telemetry.openGLRemasterShadowMaskSizeAverage
 					+ " | build/upload " + telemetry.openGLRemasterShadowMaskTimingAverageMs + "ms"
-					+ " | caster strip/soft " + telemetry.openGLRemasterShadowMaskCasterAverage
+					+ " | caster strip/soft/contact " + telemetry.openGLRemasterShadowMaskCasterAverage
 				: "",
 			telemetry.enabled
 				? "shadow mask cache hit/rebuild/up/skip " + telemetry.openGLRemasterShadowMaskCacheAverage

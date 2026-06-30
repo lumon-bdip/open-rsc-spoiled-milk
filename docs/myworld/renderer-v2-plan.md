@@ -1449,29 +1449,26 @@ they are not visual requirements for the baseline.
       scene range and OpenGL fog-light contribution through binary On/Off.
 - [x] Add first-pass remaster test controls for `Lighting` and `Geometry`.
       `Geometry` remains player-facing with Smooth, Faceted, and Wire. Lighting
-      proofs for Directional and Toon remain in code for runtime experiments,
-      but release/default clients force saved lighting back to Classic and hide
-      the lighting row because Classic currently has the best visual clarity.
-      Deeper dynamic lights, object light sources, and shadow ownership remain
-      future shader/material work.
-- [ ] Add a staged remaster shadow system for directional lighting.
+      now has an accepted player-facing Remaster alpha path: server-owned
+      day/night tone, directional terrain/wall/scenery lighting, and
+      terrain-receiver shadow masks. Classic remains available for the original
+      presentation, while Toon and other lighting proofs stay parked for later
+      experiments. Deeper dynamic lights, object light sources, object
+      receiving, and material-aware shadow ownership remain future work.
+- [x] Add a staged remaster shadow system for directional lighting.
   - Forward work should follow
         [`remaster-lighting-and-shadow-plan.md`](remaster-lighting-and-shadow-plan.md).
-        The accepted starting point is the raw-material resident chunk shader,
-        then movable directional light, semantic caster/receiver inventory,
-        indoor/outdoor filtering, and clipping-aware terrain shadows.
-  - [ ] Restart the next Directional lighting attempt from a clean slate. Do
-        not extend the parked proof by adding more light sources, caster
-        exceptions, or diagonal-wall tweaks on top of the current behavior.
-        First audit and remove or disable every remaster-side light source,
-        shadow caster, shadow mask, shadow payload, and shadow-causing fallback
-        that can influence Directional mode. Classic may keep its nostalgic
-        legacy directional shade bands, including occasional diagonal-wall odd
-        shadows, because Classic currently works visually for the original
-        look. Remaster lighting should be rebuilt for the OpenGL/resident-chunk
-        renderer from first principles, with an explicit movable light source
-        whose terrain, wall, and scenery shadows adjust predictably as the
-        source moves.
+        The current alpha result is accepted: movable directional light,
+        semantic caster/receiver inventory, indoor/outdoor filtering,
+        clipping-aware terrain-receiver shadows, first-pass contact shadows,
+        split wall/scenery blur, and server-owned day/night motion. Future
+        shadow work should be treated as a deliberate second pass, not the next
+        default visual task.
+  - [x] Restart the Directional lighting attempt from a clean slate. The active
+        Remaster path is built from resident chunk shader inputs, explicit
+        server-owned sun state, semantic shadow casters, terrain receivers, and
+        roofless-interior classification instead of extending Classic shade
+        bands or the parked overlay proof.
   - [x] Promote the accepted world-space terrain shadow mask into the normal
         Directional lighting path. `SPOILED_MILK_REMASTER_TERRAIN_SHADOW_MASK`
         can force it on/off for diagnostics, and the old
@@ -1525,7 +1522,8 @@ they are not visual requirements for the baseline.
         terrain shadow mask every frame. The mask builder now consumes coarse
         azimuth/elevation buckets for cache signatures and caster projection,
         keeping day/night shadow motion visible over time without repeating a
-        full 1024x1024 mask rebuild each frame.
+        full mask rebuild each frame. The accepted alpha mask defaults to
+        512x512.
   - [x] Narrow terrain shadow-mask cache invalidation to shadow-owned inputs.
         The cache key intentionally excludes broad resident chunk render
         signatures; those signatures can change for animation, rebuild, or
@@ -1547,6 +1545,16 @@ they are not visual requirements for the baseline.
         fill, and sunlight eligibility telemetry now suppress many interior
         shadow artifacts. Explicit area/material classification remains a
         later refinement.
+  - [x] Restore building interior shadow blocking after contact/scenery shadow
+        tuning. The mask now suppresses terrain receiver pixels classified as
+        interior before compositing directional or contact shadow channels, so
+        roofless building interiors stay clean while exterior boundary walls
+        still cast outward.
+  - [x] Accept current alpha shadow tuning and park further shadow work:
+        directional cast length scale `0.5`, wall/strip blur radius `1`,
+        scenery/game-object blur radius `4`, scenery/game-object alpha scale
+        `1.3`, contact alpha `0.5`, contact radius scale `0.05`, and contact
+        blur radius `2`.
   - [ ] Treat full shadow maps, per-pixel dynamic shadows, object-to-object
         shadow receiving, and point-light shadows as later remaster work after
         material/light ownership is cleaner.

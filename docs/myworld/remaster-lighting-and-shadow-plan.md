@@ -10,7 +10,27 @@ remains the focused implementation ledger for remaster lighting and shadows.
 
 ## Current Baseline
 
-- The clean visual starting point is the resident chunk raw-material shader:
+- The current player-facing Remaster alpha baseline uses the resident chunk
+  directional-light shader, server-owned day/night time, dawn/dusk/night tone
+  filters, and terrain-receiver shadow masks from semantic wall/scenery caster
+  data.
+- Terrain lighting shape and contrast are visually accepted for now. Terrain
+  shadows move with server time/light direction, but movement is quantized by
+  coarse light buckets and can look stepped during accelerated `::advtime`
+  tests.
+- The current terrain-receiver shadow pass is accepted for the alpha remaster
+  baseline. It is not a final full shadow engine, but it is visually good
+  enough to pause shadow work and move to other remaster visuals.
+- Accepted shadow defaults are: cast length scale `0.5`, wall/strip blur radius
+  `1`, scenery/game-object blur radius `4`, scenery/game-object alpha scale
+  `1.3`, contact alpha `0.5`, contact radius scale `0.05`, and contact blur
+  radius `2`.
+- Static resident object chunks are separated from animated object chunks.
+  Animated scenery may still rebuild a small dynamic chunk, but it should not
+  dirty surrounding static scenery. Expanded F6 should report
+  `animated-object-signature` when this expected dynamic update happens.
+- The clean inspection starting point remains the resident chunk raw-material
+  shader:
   `SPOILED_MILK_OPENGL_WORLD_CHUNKS_RAW_MATERIAL_SHADER=true` /
   `-Dspoiledmilk.openglWorldChunksRawMaterialShader=true`.
 - This mode draws resident chunks through GLSL while ignoring baked resident
@@ -29,11 +49,20 @@ renderer:
 - Terrain, walls, and scenery react visibly to the light direction.
 - Terrain, walls, and scenery can cast shadows.
 - Shadows move when the light direction moves.
+- Scenery and wall objects have subtle first-pass contact shadows at their
+  bases so they remain visually grounded even when cast shadows are long or
+  weak.
 - Walls and scenery respect indoor/outdoor classification.
 - Shadows respect clipping well enough that they do not obviously pass through
   solid walls or closed building boundaries.
+- Shadow receivers classified as interior are suppressed directly for the
+  terrain shadow mask. This applies to directional cast shadows and contact
+  shadows; ray-crossing is still used after that for outdoor receiver points
+  so boundary walls can cast outward without leaking inward.
 - Casting shadows onto scenery, walls, sprites, players, NPCs, and other
   objects is a later polish goal. Terrain receiving comes first.
+- Do not reopen shadow tuning unless a concrete regression appears or the next
+  intentional shadow swing is explicitly chosen.
 
 ## Hard Rules
 
@@ -92,7 +121,8 @@ Acceptance:
 - Rotating or changing the light direction visibly changes terrain, walls, and
   scenery.
 - The scene no longer looks like Classic shade bands.
-- No shadows are drawn yet.
+- No shadows are drawn yet during this phase; later phases now own the accepted
+  terrain-receiver shadow mask.
 - Visual errors are easy to classify as lighting-input problems, not shadow
   projection problems.
 
@@ -314,12 +344,11 @@ mode.
       signatures into this cache key, because animated or otherwise unrelated
       chunk state can force expensive 1024x1024 mask rebuilds even when the
       projected shadow set is unchanged.
-- [ ] Recheck terrain shadow movement after the renderer file-size refactor is
-      wrapped. Visual testing on `2026-06-29` suggests terrain shadows are not
-      moving with directional light/time changes, or the movement is too subtle
-      to notice in normal play. Nothing appears outwardly broken, so keep this
-      as the first shadow follow-up after the presenter/world-renderer split is
-      stable.
+- [x] Recheck terrain shadow movement after the renderer file-size refactor.
+      Later visual testing on `2026-06-29` confirmed directional shadow
+      movement is present and acceptable for the current alpha path. Remaining
+      quality work is not whether shadows move at all, but how to make that
+      movement smoother and cheaper than the current quantized CPU mask.
 - [x] Add dev-only server time controls: `::settime MMSS` immediately sets the
       server-owned cycle position, while `::advtime MMSS` advances the server
       clock at an accelerated visible rate so day/night color and shadow motion
@@ -369,15 +398,99 @@ mode.
 
 Goal: turn the proof into a usable remaster option.
 
-- [ ] Add softness controls or fixed soft edges only after hard-edged projection is
+- [x] Add fixed soft edges after hard-edged projection became visually
   correct.
 - [x] Add light debug presets only as development tools; production day/night
   should come from server-owned world time.
-- [ ] Add per-asset shadow overrides for bad scenery cases.
+- [ ] Add per-asset shadow overrides for bad scenery cases. Parked until
+  broad visual work has moved on; the current generic scenery shadows are
+  accepted for alpha.
+- [x] Add first-pass scenery contact shadows. These are small, soft,
+  base-anchored mask contributions that help scenery read as attached to the
+  ground. They do not rotate or stretch with the sun like directional shadows;
+  they behave more like ambient occlusion or grounding contrast. The first
+  version uses conservative footprint shadows derived from object bounds/model
+  kind, and expanded F6 reports them as the third value in
+  `caster strip/soft/contact`. Game objects use a thin soft halo around their
+  captured rounded footprint bounds; walls use a thin line-footprint contact.
+  The contact pass is combined after the directional-shadow blur so tiny
+  grounding halos do not get expanded by the long-shadow blur. It has its own
+  small diffusion radius so object-specific footprints read like soft grounding
+  shadows instead of hard outlines. The contact radius scale controls visible
+  outward bleed beyond the estimated footprint instead of total radius from the
+  object center. Developer-only diagnostics can exaggerate this pass with
+  `SPOILED_MILK_REMASTER_CONTACT_SHADOW_ALPHA`,
+  `SPOILED_MILK_REMASTER_CONTACT_SHADOW_RADIUS_SCALE`, and
+  `SPOILED_MILK_REMASTER_CONTACT_SHADOW_BLUR_RADIUS`; these are for visual
+  validation, not player-facing settings. The accepted first-tuned defaults are
+  alpha `0.5`, radius scale `0.05`, and contact blur radius `2`.
 - [x] Add a first player-facing Remaster lighting path after visual validation.
   The live version is still alpha quality: terrain lighting, day/night tones,
   and terrain-receiver shadows are usable, while full shadow/material polish is
   still future work.
+- [x] Split directional shadow blur by caster family. Wall/strip shadows use
+  `SPOILED_MILK_REMASTER_SHADOW_MASK_BLUR_RADIUS` and default to radius `1`;
+  scenery/game-object cast shadows use
+  `SPOILED_MILK_REMASTER_SCENERY_SHADOW_BLUR_RADIUS` and default to radius `4`.
+  This preserves crisp building shadows without making trees and irregular
+  scenery read as rectangular.
+- [x] Tune scenery/game-object cast-shadow darkness independently with
+  `SPOILED_MILK_REMASTER_SCENERY_SHADOW_ALPHA_SCALE`, defaulting to `1.3`.
+- [x] Suppress all terrain shadow-mask receiver pixels classified as interior
+  before applying either directional or contact shadow channels. This restored
+  roofless building interior shadow blocking while still allowing exterior
+  boundary walls to cast outward.
+
+## Next Refinement Options
+
+Shadow work is paused after the accepted alpha pass. These are the future
+directions to use only when intentionally returning to shadows, not the next
+default work queue:
+
+- GPU-side or incremental shadow masks. Move the CPU-built terrain mask toward
+  GPU generation, sparse caster-local updates, or another lower-cost path so
+  shadows can move more smoothly than the current bucketed cache permits.
+- Cached light-bucket interpolation. Keep the current CPU mask, but blend
+  between neighboring cached light buckets in the shader so normal day/night
+  motion appears smoother without rebuilding every frame.
+- Model-derived scenery silhouettes. Replace broad trunk/blob heuristics with
+  rough automatic shapes derived from existing object model data, such as
+  top-down footprints, convex hulls, or coarse alpha/silhouette masks. This is
+  the main path toward more interesting tree/scenery shadows without
+  hand-authoring every asset. The current active pass reuses captured object
+  footprint bounds to sweep scenery cast shadows along the directional light,
+  with fallback to the older soft trunk/blob heuristic when footprint data is
+  not usable. Directional cast-shadow reach can be tuned with
+  `SPOILED_MILK_REMASTER_SHADOW_LENGTH_SCALE`; this affects cast shadows only,
+  not contact shadows. Directional mask blur is now split by caster family:
+  wall/strip casters use `SPOILED_MILK_REMASTER_SHADOW_MASK_BLUR_RADIUS`, while
+  scenery/game-object cast shadows use
+  `SPOILED_MILK_REMASTER_SCENERY_SHADOW_BLUR_RADIUS`. This lets wall shadows
+  stay comparatively crisp while scenery shadows keep enough diffusion to hide
+  footprint-box artifacts. Scenery/game-object cast-shadow darkness is also
+  independently tunable through
+  `SPOILED_MILK_REMASTER_SCENERY_SHADOW_ALPHA_SCALE`, currently defaulting to a
+  slightly darker `1.3` scale after the split-blur pass made game-object
+  shadows read too light.
+- Scenery contact shadow refinement. The first cheap stable grounding shadow is
+  active under scenery, walls, and wall objects, independent of directional
+  cast-shadow length. It uses captured object footprint bounds plus a thin
+  outward bleed for game objects, and line-footprint contact for walls. Game
+  object corners are rounded by the contact distance function, then lightly
+  diffused in a contact-only pass so grounding shadows do not read as square or
+  hard-edged decals. Future refinement should replace this approximation with
+  better model-derived footprints only where specific scenery still looks
+  detached.
+- Material-aware lighting. Teach the shader about terrain, walls, roofs,
+  foliage, water, ore, scenery, sprites, projectiles, and effects as material
+  families. This should come before heavy polish controls so Remaster lighting
+  does not apply one generic response to every asset.
+- Shadow receiver expansion. Terrain is the only accepted receiver. Receiving
+  onto walls, scenery, sprites, players, or NPCs is later work after terrain
+  shadows are cheaper and material ownership is cleaner.
+- Deterministic terrain variation and tile-edge blending. Broad runs of
+  same-color terrain can still look flat. Low-amplitude shader variation or
+  optional tile-edge blending can be tested after shadow ownership is stable.
 
 ## Debug Tools Needed
 

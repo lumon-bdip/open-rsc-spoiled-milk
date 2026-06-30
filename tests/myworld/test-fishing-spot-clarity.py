@@ -53,8 +53,28 @@ def main() -> None:
     )
     require(
         model,
-        "addHorizontalQuad(model, -34, -38, 34, -38, 3, -3, cyan);",
-        "outer ripple geometry",
+        "markFishingSpotRippleVertices(model, addHorizontalQuad(model, -34, -38, 34, -38, 3, -3, cyan), 0);",
+        "animated outer ripple geometry",
+    )
+    require(
+        model,
+        "public boolean animateFishingSpotClarityOverlay(int animationFrame, int phaseOffset)",
+        "fishing spot ripple animation method",
+    )
+    require(
+        model,
+        "this.renderer3DTransformVersion++;",
+        "animated ripple chunk invalidation",
+    )
+    require(
+        client,
+        "model.animateFishingSpotClarityOverlay(fishingSpotRippleFrame, phaseOffset);",
+        "scenery animation hook for fishing ripples",
+    )
+    require(
+        client,
+        '("portal".equals(def.getObjectModel()) || FISHING_SPOT_MODEL_NAME.equals(def.getObjectModel()))',
+        "fishing spots marked as animated resident objects",
     )
     require(
         model,

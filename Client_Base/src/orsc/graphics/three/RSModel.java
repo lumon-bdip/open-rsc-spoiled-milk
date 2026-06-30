@@ -14,6 +14,9 @@ import orsc.util.GenUtil;
 public final class RSModel {
 	private static final long FNV_OFFSET_BASIS = 0xcbf29ce484222325L;
 	private static final long FNV_PRIME = 0x100000001b3L;
+	private static final int FISHING_SPOT_RIPPLE_PERIOD = 24;
+	private static final int FISHING_SPOT_RIPPLE_CENTER = 12;
+	private static final int FISHING_SPOT_RIPPLE_PHASE_STEP = 8;
 	private final int m_Vb = 12345678;
 	int[] faceDiffuseLight;
 	int faceHead;
@@ -91,6 +94,11 @@ public final class RSModel {
 	private int translateZ;
 	private int vertexCount2;
 	private int renderer3DTransformVersion;
+	private int fishingSpotClarityAnimationState = -1;
+	private int[] fishingSpotClarityBaseX;
+	private int[] fishingSpotClarityBaseY;
+	private int[] fishingSpotClarityBaseZ;
+	private int[] fishingSpotClarityRippleGroup;
 	private int[] vertXTransform;
 	private int[] vertY;
 	private int[] vertYTransform;
@@ -233,20 +241,51 @@ public final class RSModel {
 		return combined;
 	}
 
+	public boolean animateFishingSpotClarityOverlay(int animationFrame, int phaseOffset) {
+		if (this.fishingSpotClarityRippleGroup == null) {
+			return false;
+		}
+		int state = Math.floorMod(animationFrame + phaseOffset, FISHING_SPOT_RIPPLE_PERIOD);
+		if (state == this.fishingSpotClarityAnimationState) {
+			return false;
+		}
+		this.fishingSpotClarityAnimationState = state;
+		boolean changed = false;
+		for (int vertex = 0; vertex < this.vertHead; vertex++) {
+			int group = this.fishingSpotClarityRippleGroup[vertex];
+			if (group < 0) {
+				continue;
+			}
+			int localState = Math.floorMod(state + group * FISHING_SPOT_RIPPLE_PHASE_STEP,
+				FISHING_SPOT_RIPPLE_PERIOD);
+			int wave = FISHING_SPOT_RIPPLE_CENTER - Math.abs(FISHING_SPOT_RIPPLE_CENTER - localState);
+			int scale = 250 + wave * 4;
+			this.vertX[vertex] = this.fishingSpotClarityBaseX[vertex] * scale / 256;
+			this.vertZ[vertex] = this.fishingSpotClarityBaseZ[vertex] * scale / 256;
+			this.vertY[vertex] = this.fishingSpotClarityBaseY[vertex] - wave / 5;
+			changed = true;
+		}
+		if (changed) {
+			this.m_Yb = 1;
+			this.renderer3DTransformVersion++;
+		}
+		return changed;
+	}
+
 	private static RSModel createFishingSpotClarityOverlay() {
 		RSModel model = new RSModel(96, 40);
 		int white = GenUtil.colorToResource(245, 255, 255);
 		int cyan = GenUtil.colorToResource(112, 220, 255);
 		int blue = GenUtil.colorToResource(54, 155, 210);
 
-		addHorizontalQuad(model, -34, -38, 34, -38, 3, -3, cyan);
-		addHorizontalQuad(model, -34, 38, 34, 38, 3, -3, cyan);
-		addHorizontalQuad(model, -42, -28, -42, 28, 3, -3, blue);
-		addHorizontalQuad(model, 42, -28, 42, 28, 3, -3, blue);
-		addHorizontalQuad(model, -18, -21, 18, -21, 2, -5, white);
-		addHorizontalQuad(model, -18, 21, 18, 21, 2, -5, white);
-		addHorizontalQuad(model, -24, -12, -24, 12, 2, -5, cyan);
-		addHorizontalQuad(model, 24, -12, 24, 12, 2, -5, cyan);
+		markFishingSpotRippleVertices(model, addHorizontalQuad(model, -34, -38, 34, -38, 3, -3, cyan), 0);
+		markFishingSpotRippleVertices(model, addHorizontalQuad(model, -34, 38, 34, 38, 3, -3, cyan), 0);
+		markFishingSpotRippleVertices(model, addHorizontalQuad(model, -42, -28, -42, 28, 3, -3, blue), 0);
+		markFishingSpotRippleVertices(model, addHorizontalQuad(model, 42, -28, 42, 28, 3, -3, blue), 0);
+		markFishingSpotRippleVertices(model, addHorizontalQuad(model, -18, -21, 18, -21, 2, -5, white), 1);
+		markFishingSpotRippleVertices(model, addHorizontalQuad(model, -18, 21, 18, 21, 2, -5, white), 1);
+		markFishingSpotRippleVertices(model, addHorizontalQuad(model, -24, -12, -24, 12, 2, -5, cyan), 1);
+		markFishingSpotRippleVertices(model, addHorizontalQuad(model, 24, -12, 24, 12, 2, -5, cyan), 1);
 
 		addBubblePyramid(model, 0, 0, 8, -8, 15, white);
 		addBubblePyramid(model, -18, 12, 6, -7, 11, cyan);
@@ -257,8 +296,8 @@ public final class RSModel {
 		return model;
 	}
 
-	private static void addHorizontalQuad(RSModel model, int x1, int z1, int x2, int z2, int halfWidth, int y,
-										 int color) {
+	private static int[] addHorizontalQuad(RSModel model, int x1, int z1, int x2, int z2, int halfWidth, int y,
+										   int color) {
 		int[] vertices = new int[4];
 		if (x1 == x2) {
 			vertices[0] = model.insertVertex(x1 - halfWidth, y, z1);
@@ -272,6 +311,66 @@ public final class RSModel {
 			vertices[3] = model.insertVertex(x1, y, z1 + halfWidth);
 		}
 		addFaceLit(model, 4, vertices, color);
+		return vertices;
+	}
+
+	private static void markFishingSpotRippleVertices(RSModel model, int[] vertices, int group) {
+		for (int vertex : vertices) {
+			model.markFishingSpotRippleVertex(vertex, group);
+		}
+	}
+
+	private void markFishingSpotRippleVertex(int vertex, int group) {
+		if (vertex < 0 || vertex >= this.vertHead) {
+			return;
+		}
+		ensureFishingSpotClarityMetadata();
+		this.fishingSpotClarityBaseX[vertex] = this.vertX[vertex];
+		this.fishingSpotClarityBaseY[vertex] = this.vertY[vertex];
+		this.fishingSpotClarityBaseZ[vertex] = this.vertZ[vertex];
+		this.fishingSpotClarityRippleGroup[vertex] = group;
+	}
+
+	private void ensureFishingSpotClarityMetadata() {
+		if (this.fishingSpotClarityRippleGroup != null
+			&& this.fishingSpotClarityRippleGroup.length >= this.vertexCount2) {
+			return;
+		}
+		int length = Math.max(this.vertexCount2, this.vertHead);
+		int[] newBaseX = new int[length];
+		int[] newBaseY = new int[length];
+		int[] newBaseZ = new int[length];
+		int[] newGroups = new int[length];
+		for (int i = 0; i < newGroups.length; i++) {
+			newGroups[i] = -1;
+		}
+		if (this.fishingSpotClarityRippleGroup != null) {
+			System.arraycopy(this.fishingSpotClarityBaseX, 0, newBaseX, 0, this.fishingSpotClarityBaseX.length);
+			System.arraycopy(this.fishingSpotClarityBaseY, 0, newBaseY, 0, this.fishingSpotClarityBaseY.length);
+			System.arraycopy(this.fishingSpotClarityBaseZ, 0, newBaseZ, 0, this.fishingSpotClarityBaseZ.length);
+			System.arraycopy(this.fishingSpotClarityRippleGroup, 0, newGroups, 0,
+				this.fishingSpotClarityRippleGroup.length);
+		}
+		this.fishingSpotClarityBaseX = newBaseX;
+		this.fishingSpotClarityBaseY = newBaseY;
+		this.fishingSpotClarityBaseZ = newBaseZ;
+		this.fishingSpotClarityRippleGroup = newGroups;
+	}
+
+	private void copyFishingSpotClarityVertexMetadataFrom(RSModel source, int sourceVertex, int destVertex) {
+		if (source.fishingSpotClarityRippleGroup == null
+			|| sourceVertex < 0
+			|| sourceVertex >= source.fishingSpotClarityRippleGroup.length
+			|| destVertex < 0
+			|| destVertex >= this.vertHead
+			|| source.fishingSpotClarityRippleGroup[sourceVertex] < 0) {
+			return;
+		}
+		ensureFishingSpotClarityMetadata();
+		this.fishingSpotClarityBaseX[destVertex] = source.fishingSpotClarityBaseX[sourceVertex];
+		this.fishingSpotClarityBaseY[destVertex] = source.fishingSpotClarityBaseY[sourceVertex];
+		this.fishingSpotClarityBaseZ[destVertex] = source.fishingSpotClarityBaseZ[sourceVertex];
+		this.fishingSpotClarityRippleGroup[destVertex] = source.fishingSpotClarityRippleGroup[sourceVertex];
 	}
 
 	private static void addBubblePyramid(RSModel model, int x, int z, int radius, int baseY, int height, int color) {
@@ -500,6 +599,7 @@ public final class RSModel {
 					for (v = 0; model.faceIndexCount[f] > v; ++v) {
 						newIndices[v] = this.insertVertex(model.vertX[srcIndices[v]], model.vertY[srcIndices[v]],
 							model.vertZ[srcIndices[v]]);
+						this.copyFishingSpotClarityVertexMetadataFrom(model, srcIndices[v], newIndices[v]);
 					}
 
 					v = this.insertFace(model.faceIndexCount[f], newIndices, model.faceTextureFront[f],
@@ -1408,11 +1508,15 @@ public final class RSModel {
 				baseZ0,
 				baseX1,
 				baseZ1,
-				height,
-				width,
-				opacity,
-				true));
-		}
+					height,
+					width,
+					opacity,
+					true,
+					minX,
+					maxX,
+					minZ,
+					maxZ));
+			}
 
 		private void addVertex(
 			int[] faceVertexCoords,

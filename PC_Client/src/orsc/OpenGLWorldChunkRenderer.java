@@ -38,6 +38,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private static final int RAW_MATERIAL_COLOR_COMPONENT_COUNT = 3;
 	private static final int NORMAL_COMPONENT_COUNT = 3;
 	private static final int MODEL_KIND_COMPONENT_COUNT = 1;
+	private static final int TERRAIN_VARIATION_MASK_COMPONENT_COUNT = 1;
+	private static final int TERRAIN_BLEND_COLOR_COMPONENT_COUNT = 3;
+	private static final int TERRAIN_BLEND_STRENGTH_COMPONENT_COUNT = 1;
 	private static final int FLOATS_PER_VERTEX =
 		POSITION_COMPONENT_COUNT
 			+ COLOR_COMPONENT_COUNT
@@ -47,7 +50,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			+ BASE_LEGACY_LIGHT_COMPONENT_COUNT
 			+ RAW_MATERIAL_COLOR_COMPONENT_COUNT
 			+ NORMAL_COMPONENT_COUNT
-			+ MODEL_KIND_COMPONENT_COUNT;
+			+ MODEL_KIND_COMPONENT_COUNT
+			+ TERRAIN_VARIATION_MASK_COMPONENT_COUNT
+			+ TERRAIN_BLEND_COLOR_COMPONENT_COUNT
+			+ TERRAIN_BLEND_STRENGTH_COMPONENT_COUNT;
 	private static final int COLOR_OFFSET_BYTES = POSITION_COMPONENT_COUNT * 4;
 	private static final int TEXTURE_COORD_OFFSET_BYTES =
 		(POSITION_COMPONENT_COUNT + COLOR_COMPONENT_COUNT) * 4;
@@ -63,6 +69,12 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		RAW_MATERIAL_COLOR_OFFSET_BYTES + RAW_MATERIAL_COLOR_COMPONENT_COUNT * 4;
 	private static final int MODEL_KIND_OFFSET_BYTES =
 		NORMAL_OFFSET_BYTES + NORMAL_COMPONENT_COUNT * 4;
+	private static final int TERRAIN_VARIATION_MASK_OFFSET_BYTES =
+		MODEL_KIND_OFFSET_BYTES + MODEL_KIND_COMPONENT_COUNT * 4;
+	private static final int TERRAIN_BLEND_COLOR_OFFSET_BYTES =
+		TERRAIN_VARIATION_MASK_OFFSET_BYTES + TERRAIN_VARIATION_MASK_COMPONENT_COUNT * 4;
+	private static final int TERRAIN_BLEND_STRENGTH_OFFSET_BYTES =
+		TERRAIN_BLEND_COLOR_OFFSET_BYTES + TERRAIN_BLEND_COLOR_COMPONENT_COUNT * 4;
 	private static final int STRIDE_BYTES = FLOATS_PER_VERTEX * 4;
 	private static final String SPATIAL_BATCH_TILE_SIZE_PROPERTY =
 		"spoiledmilk.openglWorldChunksSpatialTileSize";
@@ -714,6 +726,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			remasterShadowMaskLastUploadSkip,
 			shadowBuild.stripCasterCount,
 			shadowBuild.softSceneryCasterCount,
+			shadowBuild.contactCasterCount,
 			shadowBuild.reason,
 			buildNanos,
 			uploadNanos);
@@ -1471,6 +1484,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			BASE_LEGACY_LIGHT_COMPONENT_COUNT,
 			NORMAL_COMPONENT_COUNT,
 			MODEL_KIND_COMPONENT_COUNT,
+			TERRAIN_VARIATION_MASK_COMPONENT_COUNT,
+			TERRAIN_BLEND_COLOR_COMPONENT_COUNT,
+			TERRAIN_BLEND_STRENGTH_COMPONENT_COUNT,
 			STRIDE_BYTES,
 			0L,
 			TEXTURE_COORD_OFFSET_BYTES,
@@ -1478,7 +1494,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			RAW_MATERIAL_COLOR_OFFSET_BYTES,
 			BASE_LEGACY_LIGHT_OFFSET_BYTES,
 			NORMAL_OFFSET_BYTES,
-			MODEL_KIND_OFFSET_BYTES);
+			MODEL_KIND_OFFSET_BYTES,
+			TERRAIN_VARIATION_MASK_OFFSET_BYTES,
+			TERRAIN_BLEND_COLOR_OFFSET_BYTES,
+			TERRAIN_BLEND_STRENGTH_OFFSET_BYTES);
 	}
 
 	private void bindPreparedRemasterShadowMask() throws Exception {
@@ -2172,6 +2191,14 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			? chunk.getTriangleModelKind(triangle)
 			: Renderer3DModelKind.UNCLASSIFIED;
 		vertexUploadBuffer.put((float) modelKind.ordinal());
+		vertexUploadBuffer.put(triangle >= 0 && triangle < chunk.getTriangleCount()
+			? (float) chunk.getTriangleTerrainVariationMask(triangle)
+			: 0.0f);
+		int terrainBlendColor = chunk.getVertexTerrainBlendColor(vertex);
+		vertexUploadBuffer.put(((terrainBlendColor >> 16) & 0xFF) / 255.0f);
+		vertexUploadBuffer.put(((terrainBlendColor >> 8) & 0xFF) / 255.0f);
+		vertexUploadBuffer.put((terrainBlendColor & 0xFF) / 255.0f);
+		vertexUploadBuffer.put(chunk.getVertexTerrainBlendStrength(vertex) / 255.0f);
 	}
 
 	private float[] buildBakedTerrainShadowMask(

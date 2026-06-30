@@ -18,6 +18,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private static final int BASE_LEGACY_LIGHT_ATTRIBUTE_LOCATION = 5;
 	private static final int NORMAL_ATTRIBUTE_LOCATION = 6;
 	private static final int MODEL_KIND_ATTRIBUTE_LOCATION = 7;
+	private static final int TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION = 8;
+	private static final int TERRAIN_BLEND_COLOR_ATTRIBUTE_LOCATION = 9;
+	private static final int TERRAIN_BLEND_STRENGTH_ATTRIBUTE_LOCATION = 10;
 	private static final String FIXED_PIPELINE_VERTEX_SHADER =
 		"#version 120\n"
 			+ "uniform mat4 uProjectionMatrix;\n"
@@ -116,6 +119,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "attribute float aBaseLegacyLight;\n"
 			+ "attribute vec3 aNormal;\n"
 			+ "attribute float aModelKind;\n"
+			+ "attribute float aTerrainVariationMask;\n"
+			+ "attribute vec3 aTerrainBlendColor;\n"
+			+ "attribute float aTerrainBlendStrength;\n"
 			+ "varying vec2 vTexCoord;\n"
 			+ "varying vec2 vWorldXZ;\n"
 			+ "varying vec4 vMaterialColor;\n"
@@ -123,6 +129,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "varying float vBaseLegacyLight;\n"
 			+ "varying vec3 vNormal;\n"
 			+ "varying float vModelKind;\n"
+			+ "varying float vTerrainVariationMask;\n"
+			+ "varying vec3 vTerrainBlendColor;\n"
+			+ "varying float vTerrainBlendStrength;\n"
 			+ "varying float vCameraDepth;\n"
 			+ "void main() {\n"
 			+ "\tvec4 worldPosition = vec4(aPosition, 1.0);\n"
@@ -134,6 +143,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\tvBaseLegacyLight = aBaseLegacyLight;\n"
 			+ "\tvNormal = aNormal;\n"
 			+ "\tvModelKind = aModelKind;\n"
+			+ "\tvTerrainVariationMask = aTerrainVariationMask;\n"
+			+ "\tvTerrainBlendColor = aTerrainBlendColor;\n"
+			+ "\tvTerrainBlendStrength = aTerrainBlendStrength;\n"
 			+ "\tvCameraDepth = (uWorldViewMatrix * worldPosition).z;\n"
 			+ "}\n";
 	private static final String RESIDENT_CHUNK_PARITY_FRAGMENT_SHADER =
@@ -158,6 +170,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "uniform float uToneBlend;\n"
 			+ "uniform float uBrightness;\n"
 			+ "uniform float uReliefStrength;\n"
+			+ "uniform int uTerrainVariationEnabled;\n"
+			+ "uniform float uTerrainVariationStrength;\n"
+			+ "uniform float uTerrainVariationTolerance;\n"
+			+ "uniform float uTerrainVariationTargetRed;\n"
+			+ "uniform float uTerrainVariationTargetGreen;\n"
+			+ "uniform float uTerrainVariationTargetBlue;\n"
 			+ "uniform float uShadowMaskMinX;\n"
 			+ "uniform float uShadowMaskMinZ;\n"
 			+ "uniform float uShadowMaskInvSpanX;\n"
@@ -169,6 +187,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "varying float vBaseLegacyLight;\n"
 			+ "varying vec3 vNormal;\n"
 			+ "varying float vModelKind;\n"
+			+ "varying float vTerrainVariationMask;\n"
+			+ "varying vec3 vTerrainBlendColor;\n"
+			+ "varying float vTerrainBlendStrength;\n"
 			+ "varying float vCameraDepth;\n"
 			+ "vec3 remasterNormal() {\n"
 			+ "\tfloat normalLengthSquared = dot(vNormal, vNormal);\n"
@@ -207,9 +228,47 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\tfloat reliefFactor = mix(detailCeiling, detailFloor, legacyDetail);\n"
 			+ "\treturn clamp(mix(1.0, reliefFactor, clamp(uReliefStrength, 0.0, 2.5)), 0.35, 1.25);\n"
 			+ "}\n"
+			+ "float terrainVariationHash(vec2 position) {\n"
+			+ "\treturn fract(sin(dot(position, vec2(127.1, 311.7))) * 43758.5453123);\n"
+			+ "}\n"
+			+ "float terrainVariationNoise(vec2 position) {\n"
+			+ "\tvec2 tile = floor(position);\n"
+			+ "\tvec2 fraction = fract(position);\n"
+			+ "\tfraction = fraction * fraction * (3.0 - 2.0 * fraction);\n"
+			+ "\tfloat a = terrainVariationHash(tile);\n"
+			+ "\tfloat b = terrainVariationHash(tile + vec2(1.0, 0.0));\n"
+			+ "\tfloat c = terrainVariationHash(tile + vec2(0.0, 1.0));\n"
+			+ "\tfloat d = terrainVariationHash(tile + vec2(1.0, 1.0));\n"
+			+ "\treturn mix(mix(a, b, fraction.x), mix(c, d, fraction.x), fraction.y);\n"
+			+ "}\n"
+			+ "vec3 applyTargetedTerrainVariation(vec3 color) {\n"
+			+ "\tif (uTerrainVariationEnabled == 0 || vTerrainVariationMask < 0.5 || uTextureEnabled != 0 || uRawMaterialMode != 0 || !(vModelKind > 0.5 && vModelKind < 1.5)) {\n"
+			+ "\t\treturn color;\n"
+			+ "\t}\n"
+			+ "\tvec3 target = vec3(uTerrainVariationTargetRed, uTerrainVariationTargetGreen, uTerrainVariationTargetBlue);\n"
+			+ "\tfloat match = 1.0 - smoothstep(uTerrainVariationTolerance, uTerrainVariationTolerance * 2.0, distance(vRawMaterialColor, target));\n"
+			+ "\tif (match <= 0.001) {\n"
+			+ "\t\treturn color;\n"
+			+ "\t}\n"
+			+ "\tvec2 terrainPoint = vWorldXZ / 128.0;\n"
+			+ "\tfloat shortDetail = terrainVariationNoise(terrainPoint * 1.35 + vec2(11.7, 3.2));\n"
+			+ "\tfloat midDetail = terrainVariationNoise(terrainPoint / 1.55);\n"
+			+ "\tfloat broadDrift = terrainVariationNoise(terrainPoint / 5.5);\n"
+			+ "\tfloat valueShift = ((shortDetail - 0.5) * 0.55 + (midDetail - 0.5) * 0.70 + (broadDrift - 0.5) * 0.20) * uTerrainVariationStrength * match;\n"
+			+ "\tfloat hueShift = (terrainVariationNoise((terrainPoint + vec2(19.1, 4.7)) / 2.75) - 0.5) * uTerrainVariationStrength * match;\n"
+			+ "\tvec3 varied = color * (1.0 + valueShift);\n"
+			+ "\tvaried += vec3(hueShift * 0.035, hueShift * 0.015, -hueShift * 0.020);\n"
+			+ "\treturn clamp(mix(color, varied, match), 0.0, 1.0);\n"
+			+ "}\n"
 			+ "vec3 applyTone(vec3 color) {\n"
 			+ "\tvec3 toned = clamp(color * vec3(uToneRed, uToneGreen, uToneBlue), 0.0, 1.0);\n"
 			+ "\treturn mix(color, toned, clamp(uToneBlend, 0.0, 1.0));\n"
+			+ "}\n"
+			+ "vec3 applyTerrainTransitionBlend(vec3 color) {\n"
+			+ "\tif (uTerrainVariationEnabled == 0 || vTerrainVariationMask < 0.5 || uTextureEnabled != 0 || uRawMaterialMode != 0 || !(vModelKind > 0.5 && vModelKind < 1.5)) {\n"
+			+ "\t\treturn color;\n"
+			+ "\t}\n"
+			+ "\treturn mix(color, vTerrainBlendColor, clamp(vTerrainBlendStrength, 0.0, 1.0));\n"
 			+ "}\n"
 			+ "float terrainShadowMaskAlpha() {\n"
 			+ "\tif (uShadowMaskEnabled == 0 || !(vModelKind > 0.5 && vModelKind < 1.5)) {\n"
@@ -236,6 +295,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\tif (uRemasterLightingEnabled != 0) {\n"
 			+ "\t\tvec3 lightDirection = normalize(vec3(uLightDirectionX, uLightDirectionY, uLightDirectionZ));\n"
 			+ "\t\tfloat diffuse = remasterDiffuse(lightDirection);\n"
+			+ "\t\tcolor.rgb = applyTerrainTransitionBlend(color.rgb);\n"
+			+ "\t\tcolor.rgb = applyTargetedTerrainVariation(color.rgb);\n"
 			+ "\t\tcolor.rgb *= remasterClassicShadeFactor(diffuse) * remasterLocalReliefFactor();\n"
 			+ "\t\tcolor.rgb *= 1.0 - terrainShadowMaskAlpha();\n"
 			+ "\t\tcolor.rgb *= uBrightness;\n"
@@ -272,6 +333,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private final int toneBlueUniformLocation;
 	private final int toneBlendUniformLocation;
 	private final int reliefStrengthUniformLocation;
+	private final int terrainVariationEnabledUniformLocation;
+	private final int terrainVariationStrengthUniformLocation;
+	private final int terrainVariationToleranceUniformLocation;
+	private final int terrainVariationTargetRedUniformLocation;
+	private final int terrainVariationTargetGreenUniformLocation;
+	private final int terrainVariationTargetBlueUniformLocation;
 	private final int shadowMaskMinXUniformLocation;
 	private final int shadowMaskMinZUniformLocation;
 	private final int shadowMaskInvSpanXUniformLocation;
@@ -305,6 +372,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int toneBlueUniformLocation,
 		int toneBlendUniformLocation,
 		int reliefStrengthUniformLocation,
+		int terrainVariationEnabledUniformLocation,
+		int terrainVariationStrengthUniformLocation,
+		int terrainVariationToleranceUniformLocation,
+		int terrainVariationTargetRedUniformLocation,
+		int terrainVariationTargetGreenUniformLocation,
+		int terrainVariationTargetBlueUniformLocation,
 		int shadowMaskMinXUniformLocation,
 		int shadowMaskMinZUniformLocation,
 		int shadowMaskInvSpanXUniformLocation,
@@ -335,6 +408,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		this.toneBlueUniformLocation = toneBlueUniformLocation;
 		this.toneBlendUniformLocation = toneBlendUniformLocation;
 		this.reliefStrengthUniformLocation = reliefStrengthUniformLocation;
+		this.terrainVariationEnabledUniformLocation = terrainVariationEnabledUniformLocation;
+		this.terrainVariationStrengthUniformLocation = terrainVariationStrengthUniformLocation;
+		this.terrainVariationToleranceUniformLocation = terrainVariationToleranceUniformLocation;
+		this.terrainVariationTargetRedUniformLocation = terrainVariationTargetRedUniformLocation;
+		this.terrainVariationTargetGreenUniformLocation = terrainVariationTargetGreenUniformLocation;
+		this.terrainVariationTargetBlueUniformLocation = terrainVariationTargetBlueUniformLocation;
 		this.shadowMaskMinXUniformLocation = shadowMaskMinXUniformLocation;
 		this.shadowMaskMinZUniformLocation = shadowMaskMinZUniformLocation;
 		this.shadowMaskInvSpanXUniformLocation = shadowMaskInvSpanXUniformLocation;
@@ -395,6 +474,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					-1,
 					-1,
 					-1,
+					-1,
+					-1,
+					-1,
+					-1,
+					-1,
+					-1,
 					-1);
 			program = 0;
 			return shaderProgram;
@@ -427,6 +512,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			gl.glBindAttribLocation(program, BASE_LEGACY_LIGHT_ATTRIBUTE_LOCATION, "aBaseLegacyLight");
 			gl.glBindAttribLocation(program, NORMAL_ATTRIBUTE_LOCATION, "aNormal");
 			gl.glBindAttribLocation(program, MODEL_KIND_ATTRIBUTE_LOCATION, "aModelKind");
+			gl.glBindAttribLocation(program, TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION, "aTerrainVariationMask");
+			gl.glBindAttribLocation(program, TERRAIN_BLEND_COLOR_ATTRIBUTE_LOCATION, "aTerrainBlendColor");
+			gl.glBindAttribLocation(program, TERRAIN_BLEND_STRENGTH_ATTRIBUTE_LOCATION, "aTerrainBlendStrength");
 			gl.glLinkProgram(program);
 			if (gl.glGetProgrami(program, gl.GL_LINK_STATUS) == 0) {
 				String log = gl.glGetProgramInfoLog(program);
@@ -457,6 +545,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					gl.glGetUniformLocation(program, "uToneBlue"),
 					gl.glGetUniformLocation(program, "uToneBlend"),
 					gl.glGetUniformLocation(program, "uReliefStrength"),
+					gl.glGetUniformLocation(program, "uTerrainVariationEnabled"),
+					gl.glGetUniformLocation(program, "uTerrainVariationStrength"),
+					gl.glGetUniformLocation(program, "uTerrainVariationTolerance"),
+					gl.glGetUniformLocation(program, "uTerrainVariationTargetRed"),
+					gl.glGetUniformLocation(program, "uTerrainVariationTargetGreen"),
+					gl.glGetUniformLocation(program, "uTerrainVariationTargetBlue"),
 					gl.glGetUniformLocation(program, "uShadowMaskMinX"),
 					gl.glGetUniformLocation(program, "uShadowMaskMinZ"),
 					gl.glGetUniformLocation(program, "uShadowMaskInvSpanX"),
@@ -539,6 +633,24 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		}
 		if (reliefStrengthUniformLocation >= 0) {
 			gl.glUniform1f(reliefStrengthUniformLocation, RendererReliefSettings.getStrength());
+		}
+		if (terrainVariationEnabledUniformLocation >= 0) {
+			gl.glUniform1i(terrainVariationEnabledUniformLocation, RendererTerrainVariationSettings.isEnabled() ? 1 : 0);
+		}
+		if (terrainVariationStrengthUniformLocation >= 0) {
+			gl.glUniform1f(terrainVariationStrengthUniformLocation, RendererTerrainVariationSettings.getStrength());
+		}
+		if (terrainVariationToleranceUniformLocation >= 0) {
+			gl.glUniform1f(terrainVariationToleranceUniformLocation, RendererTerrainVariationSettings.getTolerance());
+		}
+		if (terrainVariationTargetRedUniformLocation >= 0) {
+			gl.glUniform1f(terrainVariationTargetRedUniformLocation, RendererTerrainVariationSettings.getTargetRed());
+		}
+		if (terrainVariationTargetGreenUniformLocation >= 0) {
+			gl.glUniform1f(terrainVariationTargetGreenUniformLocation, RendererTerrainVariationSettings.getTargetGreen());
+		}
+		if (terrainVariationTargetBlueUniformLocation >= 0) {
+			gl.glUniform1f(terrainVariationTargetBlueUniformLocation, RendererTerrainVariationSettings.getTargetBlue());
 		}
 	}
 
@@ -624,6 +736,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int baseLegacyLightComponents,
 		int normalComponents,
 		int modelKindComponents,
+		int terrainVariationMaskComponents,
+		int terrainBlendColorComponents,
+		int terrainBlendStrengthComponents,
 		int strideBytes,
 		long positionOffsetBytes,
 		long textureCoordOffsetBytes,
@@ -631,7 +746,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		long rawMaterialColorOffsetBytes,
 		long baseLegacyLightOffsetBytes,
 		long normalOffsetBytes,
-		long modelKindOffsetBytes) throws Exception {
+		long modelKindOffsetBytes,
+		long terrainVariationMaskOffsetBytes,
+		long terrainBlendColorOffsetBytes,
+		long terrainBlendStrengthOffsetBytes) throws Exception {
 		gl.glDisableClientState(gl.GL_COLOR_ARRAY);
 		gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
 		gl.glEnableVertexAttribArray(POSITION_ATTRIBUTE_LOCATION);
@@ -641,6 +759,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		gl.glEnableVertexAttribArray(BASE_LEGACY_LIGHT_ATTRIBUTE_LOCATION);
 		gl.glEnableVertexAttribArray(NORMAL_ATTRIBUTE_LOCATION);
 		gl.glEnableVertexAttribArray(MODEL_KIND_ATTRIBUTE_LOCATION);
+		gl.glEnableVertexAttribArray(TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION);
+		gl.glEnableVertexAttribArray(TERRAIN_BLEND_COLOR_ATTRIBUTE_LOCATION);
+		gl.glEnableVertexAttribArray(TERRAIN_BLEND_STRENGTH_ATTRIBUTE_LOCATION);
 		gl.glVertexAttribPointer(
 			POSITION_ATTRIBUTE_LOCATION,
 			positionComponents,
@@ -690,6 +811,27 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			false,
 			strideBytes,
 			modelKindOffsetBytes);
+		gl.glVertexAttribPointer(
+			TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION,
+			terrainVariationMaskComponents,
+			gl.GL_FLOAT,
+			false,
+			strideBytes,
+			terrainVariationMaskOffsetBytes);
+		gl.glVertexAttribPointer(
+			TERRAIN_BLEND_COLOR_ATTRIBUTE_LOCATION,
+			terrainBlendColorComponents,
+			gl.GL_FLOAT,
+			false,
+			strideBytes,
+			terrainBlendColorOffsetBytes);
+		gl.glVertexAttribPointer(
+			TERRAIN_BLEND_STRENGTH_ATTRIBUTE_LOCATION,
+			terrainBlendStrengthComponents,
+			gl.GL_FLOAT,
+			false,
+			strideBytes,
+			terrainBlendStrengthOffsetBytes);
 	}
 
 	void bindWorldTextureAttributes(
@@ -786,6 +928,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	}
 
 	void unbindWorldTextureAttributes() throws Exception {
+		gl.glDisableVertexAttribArray(TERRAIN_BLEND_STRENGTH_ATTRIBUTE_LOCATION);
+		gl.glDisableVertexAttribArray(TERRAIN_BLEND_COLOR_ATTRIBUTE_LOCATION);
+		gl.glDisableVertexAttribArray(TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION);
 		gl.glDisableVertexAttribArray(MODEL_KIND_ATTRIBUTE_LOCATION);
 		gl.glDisableVertexAttribArray(NORMAL_ATTRIBUTE_LOCATION);
 		gl.glDisableVertexAttribArray(RAW_MATERIAL_COLOR_ATTRIBUTE_LOCATION);

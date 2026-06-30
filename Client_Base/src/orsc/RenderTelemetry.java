@@ -207,6 +207,7 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLRemasterShadowMaskUploadSkipStats = new CounterStats();
 	private static final CounterStats openGLRemasterShadowMaskStripCasterStats = new CounterStats();
 	private static final CounterStats openGLRemasterShadowMaskSoftSceneryCasterStats = new CounterStats();
+	private static final CounterStats openGLRemasterShadowMaskContactCasterStats = new CounterStats();
 	private static final CounterStats openGLResidentChunkReplacementRequestedStats = new CounterStats();
 	private static final CounterStats openGLResidentChunkReplacementActiveStats = new CounterStats();
 	private static final CounterStats openGLResidentChunkReplacementFallbackStats = new CounterStats();
@@ -643,6 +644,7 @@ public final class RenderTelemetry {
 		boolean uploadSkipped,
 		int stripCasters,
 		int softSceneryCasters,
+		int contactCasters,
 		String reason,
 		long buildNanos,
 		long uploadNanos) {
@@ -660,6 +662,7 @@ public final class RenderTelemetry {
 			openGLRemasterShadowMaskUploadSkipStats.record(uploadSkipped ? 1 : 0);
 			openGLRemasterShadowMaskStripCasterStats.record(stripCasters);
 			openGLRemasterShadowMaskSoftSceneryCasterStats.record(softSceneryCasters);
+			openGLRemasterShadowMaskContactCasterStats.record(contactCasters);
 			openGLRemasterShadowMaskReason =
 				reason == null || reason.trim().isEmpty() ? "unknown" : reason;
 			openGLRemasterShadowMaskBuildStats.record(buildNanos);
@@ -1176,7 +1179,8 @@ public final class RenderTelemetry {
 					+ "/" + formatCount(openGLRemasterShadowMaskUploadCountStats.average())
 					+ "/" + formatCount(openGLRemasterShadowMaskUploadSkipStats.average()),
 				formatCount(openGLRemasterShadowMaskStripCasterStats.average())
-					+ "/" + formatCount(openGLRemasterShadowMaskSoftSceneryCasterStats.average()),
+					+ "/" + formatCount(openGLRemasterShadowMaskSoftSceneryCasterStats.average())
+					+ "/" + formatCount(openGLRemasterShadowMaskContactCasterStats.average()),
 				openGLRemasterShadowMaskReason,
 				formatCount(openGLResidentChunkReplacementRequestedStats.average()),
 				formatCount(openGLResidentChunkReplacementActiveStats.average()),
@@ -1753,6 +1757,7 @@ public final class RenderTelemetry {
 			openGLRemasterShadowMaskUploadSkipStats,
 			openGLRemasterShadowMaskStripCasterStats,
 			openGLRemasterShadowMaskSoftSceneryCasterStats,
+			openGLRemasterShadowMaskContactCasterStats,
 			openGLResidentChunkReplacementRequestedStats,
 			openGLResidentChunkReplacementActiveStats,
 			openGLResidentChunkReplacementFallbackStats,

@@ -888,12 +888,13 @@ public final class World {
 		TerrainTileFaceInput face,
 		int drawOriginX,
 		int drawOriginZ) {
-		if (face.colorResource == face.res01 && face.slope == 0) {
-			if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
-				addTerrainQuadByVertexIndex(builder, input, Scene.TRANSPARENT, face.colorResource, drawOriginX, drawOriginZ,
-					face.z - (-(face.x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT),
-					face.z + face.x * LOCAL_TILE_COUNT,
-					1 + face.x * LOCAL_TILE_COUNT + face.z,
+			if (face.colorResource == face.res01 && face.slope == 0) {
+				if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
+					addTerrainQuadByVertexIndex(builder, input, Scene.TRANSPARENT, face.colorResource, drawOriginX, drawOriginZ,
+						face.terrainVariationEligible ? 1 : 0,
+						face.z - (-(face.x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT),
+						face.z + face.x * LOCAL_TILE_COUNT,
+						1 + face.x * LOCAL_TILE_COUNT + face.z,
 					face.z - (-(face.x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT) + 1);
 			}
 			return;
@@ -902,6 +903,7 @@ public final class World {
 		if (face.bridge00_11 == 0) {
 			if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
 				addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.colorResource, drawOriginX, drawOriginZ,
+					face.terrainVariationEligible ? 1 : 0,
 					LOCAL_TILE_COUNT + face.z + face.x * LOCAL_TILE_COUNT,
 					face.x * LOCAL_TILE_COUNT + face.z,
 					1 + face.z + face.x * LOCAL_TILE_COUNT);
@@ -909,6 +911,7 @@ public final class World {
 
 			if (face.res01 != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
 				addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.res01, drawOriginX, drawOriginZ,
+					face.terrainVariationEligible ? 1 : 0,
 					1 + face.x * LOCAL_TILE_COUNT + face.z,
 					LOCAL_TILE_COUNT + 1 + face.x * LOCAL_TILE_COUNT + face.z,
 					face.z + face.x * LOCAL_TILE_COUNT + LOCAL_TILE_COUNT);
@@ -918,6 +921,7 @@ public final class World {
 
 		if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
 			addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.colorResource, drawOriginX, drawOriginZ,
+				face.terrainVariationEligible ? 1 : 0,
 				1 + face.x * LOCAL_TILE_COUNT + face.z,
 				LOCAL_TILE_COUNT + face.x * LOCAL_TILE_COUNT + face.z + 1,
 				face.z + face.x * LOCAL_TILE_COUNT);
@@ -925,6 +929,7 @@ public final class World {
 
 		if (face.res01 != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
 			addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.res01, drawOriginX, drawOriginZ,
+				face.terrainVariationEligible ? 1 : 0,
 				face.x * LOCAL_TILE_COUNT + face.z + LOCAL_TILE_COUNT,
 				face.z + face.x * LOCAL_TILE_COUNT,
 				face.z - (-(face.x * LOCAL_TILE_COUNT) - (LOCAL_TILE_COUNT + 1)));
@@ -938,6 +943,7 @@ public final class World {
 		int fallbackColor,
 		int drawOriginX,
 		int drawOriginZ,
+		int terrainVariationMask,
 		int a,
 		int b,
 		int c,
@@ -956,7 +962,10 @@ public final class World {
 				drawOriginX + vc.x, vc.y, drawOriginZ + vc.z,
 				drawOriginX + vd.x, vd.y, drawOriginZ + vd.z
 			},
-			new int[] {va.light, vb.light, vc.light, vd.light});
+			new int[] {va.light, vb.light, vc.light, vd.light},
+			new int[] {va.terrainBlendColor, vb.terrainBlendColor, vc.terrainBlendColor, vd.terrainBlendColor},
+			new int[] {va.terrainBlendStrength, vb.terrainBlendStrength, vc.terrainBlendStrength, vd.terrainBlendStrength},
+			terrainVariationMask);
 	}
 
 	private static void addTerrainTriangleByVertexIndex(
@@ -966,6 +975,7 @@ public final class World {
 		int fallbackColor,
 		int drawOriginX,
 		int drawOriginZ,
+		int terrainVariationMask,
 		int a,
 		int b,
 		int c) {
@@ -981,7 +991,10 @@ public final class World {
 				drawOriginX + vb.x, vb.y, drawOriginZ + vb.z,
 				drawOriginX + vc.x, vc.y, drawOriginZ + vc.z
 			},
-			new int[] {va.light, vb.light, vc.light});
+			new int[] {va.light, vb.light, vc.light},
+			new int[] {va.terrainBlendColor, vb.terrainBlendColor, vc.terrainBlendColor},
+			new int[] {va.terrainBlendStrength, vb.terrainBlendStrength, vc.terrainBlendStrength},
+			terrainVariationMask);
 	}
 
 	private static void addWallGpuChunkMesh(
@@ -1050,7 +1063,13 @@ public final class World {
 		if (vertex == null || vertex.light == light) {
 			return false;
 		}
-		vertices[index] = new TerrainVertexInput(vertex.x, vertex.y, vertex.z, light);
+		vertices[index] = new TerrainVertexInput(
+			vertex.x,
+			vertex.y,
+			vertex.z,
+			light,
+			vertex.terrainBlendColor,
+			vertex.terrainBlendStrength);
 		return true;
 	}
 
@@ -1131,10 +1150,78 @@ public final class World {
 				}
 
 				int light = (int) (Math.random() * 10.0D) - 5;
-				vertices[z + x * LOCAL_TILE_COUNT] = new TerrainVertexInput(x * 128, y, z * 128, light);
+				TerrainVertexBlendInput blend = terrainVertexBlendInput(plane, source, x, z);
+				vertices[z + x * LOCAL_TILE_COUNT] =
+					new TerrainVertexInput(x * 128, y, z * 128, light, blend.color, blend.strength);
 			}
 		}
 		return vertices;
+	}
+
+	private TerrainVertexBlendInput terrainVertexBlendInput(
+		int plane,
+		TerrainModelInputSource source,
+		int vertexX,
+		int vertexZ) {
+		if (plane != 0) {
+			return TerrainVertexBlendInput.NONE;
+		}
+
+		int red = 0;
+		int green = 0;
+		int blue = 0;
+		int count = 0;
+		int firstColor = -1;
+		boolean varied = false;
+		for (int dx = -1; dx <= 0; dx++) {
+			for (int dz = -1; dz <= 0; dz++) {
+				int tileX = vertexX + dx;
+				int tileZ = vertexZ + dz;
+				if (tileX < 0 || tileZ < 0 || tileX >= LOCAL_FACE_TILE_COUNT || tileZ >= LOCAL_FACE_TILE_COUNT) {
+					continue;
+				}
+				if (source.tileDecorationID(tileX, tileZ) != 0) {
+					continue;
+				}
+				int color = terrainRgbForTile(source, tileX, tileZ);
+				if (firstColor < 0) {
+					firstColor = color;
+				} else if (firstColor != color) {
+					varied = true;
+				}
+				red += (color >> 16) & 0xff;
+				green += (color >> 8) & 0xff;
+				blue += color & 0xff;
+				count++;
+			}
+		}
+		if (count <= 0 || firstColor < 0) {
+			return TerrainVertexBlendInput.NONE;
+		}
+		if (!varied) {
+			return new TerrainVertexBlendInput(firstColor, 0);
+		}
+		int blendedColor = ((red / count) << 16) | ((green / count) << 8) | (blue / count);
+		return new TerrainVertexBlendInput(blendedColor, 255);
+	}
+
+	private int terrainRgbForTile(TerrainModelInputSource source, int tileX, int tileZ) {
+		return resourceToRgb(this.colorToResource[source.terrainColour(tileX, tileZ)]) & 0xffffff;
+	}
+
+	private static int resourceToRgb(int resource) {
+		if (resource == Scene.TRANSPARENT) {
+			return 0;
+		}
+		if (resource >= 0) {
+			return resource;
+		}
+
+		int encoded = -(resource + 1);
+		int red = (encoded & 0x7C00) >> 10;
+		int green = (encoded & 0x3E0) >> 5;
+		int blue = encoded & 0x1F;
+		return (red << 19) + (green << 11) + (blue << 3);
 	}
 
 	private TerrainTileFaceInput[] collectTerrainTileFaceInputs(int plane, TerrainModelInputSource source) {
@@ -1154,8 +1241,9 @@ public final class World {
 				byte bridge00_11 = 0;
 				boolean collisionFullBlock = false;
 				boolean collisionObject = false;
-				if (source.tileDecorationID(x, z) > 0) {
-					int decorID = source.tileDecorationID(x, z);
+				int decorID = source.tileDecorationID(x, z);
+				boolean terrainVariationEligible = plane == 0 && decorID == 0;
+				if (decorID > 0) {
 					int decorType = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getTileValue();
 					int decorType2 = source.tileType2(x, z);
 					colorResource = res01 = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getColour();
@@ -1223,6 +1311,7 @@ public final class World {
 					colorResource,
 					slope,
 					source.pickableInvisibleOverlay(x, z),
+					terrainVariationEligible,
 					collisionFullBlock,
 					collisionObject);
 			}
@@ -3086,10 +3175,13 @@ public final class World {
 		private final float[] vertexTextureU;
 		private final float[] vertexTextureV;
 		private final int[] vertexLights;
+		private final int[] vertexTerrainBlendColors;
+		private final int[] vertexTerrainBlendStrengths;
 		private final int[] indices;
 		private final int[] triangleTextures;
 		private final int[] triangleFallbackColors;
 		private final Renderer3DModelKind[] triangleModelKinds;
+		private final int[] triangleTerrainVariationMasks;
 		private final Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasters;
 		private final long[] roofCoverageBits;
 		private final int roofCoverageAxis;
@@ -3109,10 +3201,13 @@ public final class World {
 			float[] vertexTextureU,
 			float[] vertexTextureV,
 			int[] vertexLights,
+			int[] vertexTerrainBlendColors,
+			int[] vertexTerrainBlendStrengths,
 			int[] indices,
 			int[] triangleTextures,
 			int[] triangleFallbackColors,
 			Renderer3DModelKind[] triangleModelKinds,
+			int[] triangleTerrainVariationMasks,
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasters,
 			long[] roofCoverageBits,
 			int roofCoverageAxis,
@@ -3130,10 +3225,13 @@ public final class World {
 			this.vertexTextureU = vertexTextureU;
 			this.vertexTextureV = vertexTextureV;
 			this.vertexLights = vertexLights;
+			this.vertexTerrainBlendColors = vertexTerrainBlendColors;
+			this.vertexTerrainBlendStrengths = vertexTerrainBlendStrengths;
 			this.indices = indices;
 			this.triangleTextures = triangleTextures;
 			this.triangleFallbackColors = triangleFallbackColors;
 			this.triangleModelKinds = triangleModelKinds;
+			this.triangleTerrainVariationMasks = triangleTerrainVariationMasks;
 			this.shadowCasters = shadowCasters;
 			this.roofCoverageBits = roofCoverageBits;
 			this.roofCoverageAxis = roofCoverageAxis;
@@ -3159,11 +3257,14 @@ public final class World {
 				vertexTextureU,
 				vertexTextureV,
 				vertexLights,
+				vertexTerrainBlendColors,
+				vertexTerrainBlendStrengths,
 				indices,
 				triangleTextures,
 				triangleFallbackColors,
 				triangleModelKinds,
 				shadowCasters,
+				triangleTerrainVariationMasks,
 				roofCoverageBits,
 				roofCoverageAxis,
 				roofCoveredTileCount,
@@ -3188,10 +3289,13 @@ public final class World {
 		private final List<Float> vertexTextureU = new ArrayList<Float>();
 		private final List<Float> vertexTextureV = new ArrayList<Float>();
 		private final List<Integer> vertexLights = new ArrayList<Integer>();
+		private final List<Integer> vertexTerrainBlendColors = new ArrayList<Integer>();
+		private final List<Integer> vertexTerrainBlendStrengths = new ArrayList<Integer>();
 		private final List<Integer> indices = new ArrayList<Integer>();
 		private final List<Integer> triangleTextures = new ArrayList<Integer>();
 		private final List<Integer> triangleFallbackColors = new ArrayList<Integer>();
 		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
+		private final List<Integer> triangleTerrainVariationMasks = new ArrayList<Integer>();
 		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
 			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
 		private long[] roofCoverageBits = new long[0];
@@ -3226,6 +3330,18 @@ public final class World {
 			int fallbackColor,
 			int[] faceVertexCoords,
 			int[] faceVertexLights) {
+			addFace(kind, texture, fallbackColor, faceVertexCoords, faceVertexLights, null, null, 0);
+		}
+
+		private void addFace(
+			Renderer3DModelKind kind,
+			int texture,
+			int fallbackColor,
+			int[] faceVertexCoords,
+			int[] faceVertexLights,
+			int[] faceVertexTerrainBlendColors,
+			int[] faceVertexTerrainBlendStrengths,
+			int terrainVariationMask) {
 			int vertexCount = faceVertexCoords == null ? 0 : faceVertexCoords.length / 3;
 			if (vertexCount < 3) {
 				return;
@@ -3242,8 +3358,11 @@ public final class World {
 					fallbackColor,
 					faceVertexCoords,
 					faceVertexLights,
+					faceVertexTerrainBlendColors,
+					faceVertexTerrainBlendStrengths,
 					textureU,
 					textureV,
+					terrainVariationMask,
 					0,
 					vertex,
 					vertex + 1);
@@ -3256,21 +3375,25 @@ public final class World {
 			int fallbackColor,
 			int[] faceVertexCoords,
 			int[] faceVertexLights,
+			int[] faceVertexTerrainBlendColors,
+			int[] faceVertexTerrainBlendStrengths,
 			float[] textureU,
 			float[] textureV,
+			int terrainVariationMask,
 			int a,
 			int b,
 			int c) {
 			int baseVertex = vertexCoords.size() / 3;
-			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, a);
-			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, b);
-			addVertex(faceVertexCoords, faceVertexLights, textureU, textureV, c);
+			addVertex(faceVertexCoords, faceVertexLights, faceVertexTerrainBlendColors, faceVertexTerrainBlendStrengths, textureU, textureV, a);
+			addVertex(faceVertexCoords, faceVertexLights, faceVertexTerrainBlendColors, faceVertexTerrainBlendStrengths, textureU, textureV, b);
+			addVertex(faceVertexCoords, faceVertexLights, faceVertexTerrainBlendColors, faceVertexTerrainBlendStrengths, textureU, textureV, c);
 			indices.add(Integer.valueOf(baseVertex));
 			indices.add(Integer.valueOf(baseVertex + 1));
 			indices.add(Integer.valueOf(baseVertex + 2));
 			triangleTextures.add(Integer.valueOf(texture));
 			triangleFallbackColors.add(Integer.valueOf(resolveFallbackColor(texture, fallbackColor)));
 			triangleModelKinds.add(kind);
+			triangleTerrainVariationMasks.add(Integer.valueOf(terrainVariationMask));
 			if (kind == Renderer3DModelKind.TERRAIN) {
 				terrainTriangles++;
 			} else if (kind == Renderer3DModelKind.WALL) {
@@ -3351,6 +3474,8 @@ public final class World {
 		private void addVertex(
 			int[] faceVertexCoords,
 			int[] faceVertexLights,
+			int[] faceVertexTerrainBlendColors,
+			int[] faceVertexTerrainBlendStrengths,
 			float[] textureU,
 			float[] textureV,
 			int vertex) {
@@ -3364,12 +3489,26 @@ public final class World {
 			vertexTextureU.add(Float.valueOf(textureU[vertex]));
 			vertexTextureV.add(Float.valueOf(textureV[vertex]));
 			vertexLights.add(Integer.valueOf(vertexLight(faceVertexLights, vertex)));
+			vertexTerrainBlendColors.add(Integer.valueOf(vertexTerrainBlendColor(faceVertexTerrainBlendColors, vertex)));
+			vertexTerrainBlendStrengths.add(Integer.valueOf(vertexTerrainBlendStrength(faceVertexTerrainBlendStrengths, vertex)));
 		}
 
 		private int vertexLight(int[] faceVertexLights, int vertex) {
 			return faceVertexLights == null || vertex < 0 || vertex >= faceVertexLights.length
 				? 0
 				: faceVertexLights[vertex];
+		}
+
+		private int vertexTerrainBlendColor(int[] faceVertexTerrainBlendColors, int vertex) {
+			return faceVertexTerrainBlendColors == null || vertex < 0 || vertex >= faceVertexTerrainBlendColors.length
+				? 0
+				: faceVertexTerrainBlendColors[vertex];
+		}
+
+		private int vertexTerrainBlendStrength(int[] faceVertexTerrainBlendStrengths, int vertex) {
+			return faceVertexTerrainBlendStrengths == null || vertex < 0 || vertex >= faceVertexTerrainBlendStrengths.length
+				? 0
+				: faceVertexTerrainBlendStrengths[vertex];
 		}
 
 		private void populateTextureCoordinates(
@@ -3423,9 +3562,12 @@ public final class World {
 			float[] textureUArray = toFloatArray(vertexTextureU);
 			float[] textureVArray = toFloatArray(vertexTextureV);
 			int[] lightArray = toIntArray(vertexLights);
+			int[] terrainBlendColorArray = toIntArray(vertexTerrainBlendColors);
+			int[] terrainBlendStrengthArray = toIntArray(vertexTerrainBlendStrengths);
 			int[] indexArray = toIntArray(indices);
 			int[] textureArray = toIntArray(triangleTextures);
 			int[] fallbackArray = toIntArray(triangleFallbackColors);
+			int[] terrainVariationMaskArray = toIntArray(triangleTerrainVariationMasks);
 			Renderer3DModelKind[] kindArray =
 				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray =
@@ -3435,9 +3577,12 @@ public final class World {
 				textureUArray,
 				textureVArray,
 				lightArray,
+				terrainBlendColorArray,
+				terrainBlendStrengthArray,
 				indexArray,
 				textureArray,
 				fallbackArray,
+				terrainVariationMaskArray,
 				kindArray,
 				shadowCasterArray,
 				roofCoverageBits,
@@ -3453,10 +3598,13 @@ public final class World {
 				textureUArray,
 				textureVArray,
 				lightArray,
+				terrainBlendColorArray,
+				terrainBlendStrengthArray,
 				indexArray,
 				textureArray,
 				fallbackArray,
 				kindArray,
+				terrainVariationMaskArray,
 				shadowCasterArray,
 				roofCoverageBits.clone(),
 				roofCoverageAxis,
@@ -3488,9 +3636,12 @@ public final class World {
 			float[] textureUArray,
 			float[] textureVArray,
 			int[] lightArray,
+			int[] terrainBlendColorArray,
+			int[] terrainBlendStrengthArray,
 			int[] indexArray,
 			int[] textureArray,
 			int[] fallbackArray,
+			int[] terrainVariationMaskArray,
 			Renderer3DModelKind[] kindArray,
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray,
 			long[] roofCoverageBits,
@@ -3514,6 +3665,12 @@ public final class World {
 			for (int value : lightArray) {
 				hash = mix(hash, value);
 			}
+			for (int value : terrainBlendColorArray) {
+				hash = mix(hash, value);
+			}
+			for (int value : terrainBlendStrengthArray) {
+				hash = mix(hash, value);
+			}
 			for (int value : indexArray) {
 				hash = mix(hash, value);
 			}
@@ -3521,6 +3678,9 @@ public final class World {
 				hash = mix(hash, value);
 			}
 			for (int value : fallbackArray) {
+				hash = mix(hash, value);
+			}
+			for (int value : terrainVariationMaskArray) {
 				hash = mix(hash, value);
 			}
 			for (Renderer3DModelKind kind : kindArray) {
@@ -3783,12 +3943,34 @@ public final class World {
 		private final int y;
 		private final int z;
 		private final int light;
+		private final int terrainBlendColor;
+		private final int terrainBlendStrength;
 
-		private TerrainVertexInput(int x, int y, int z, int light) {
+		private TerrainVertexInput(
+			int x,
+			int y,
+			int z,
+			int light,
+			int terrainBlendColor,
+			int terrainBlendStrength) {
 			this.x = x;
 			this.y = y;
 			this.z = z;
 			this.light = light;
+			this.terrainBlendColor = terrainBlendColor;
+			this.terrainBlendStrength = terrainBlendStrength;
+		}
+	}
+
+	private static final class TerrainVertexBlendInput {
+		private static final TerrainVertexBlendInput NONE = new TerrainVertexBlendInput(0, 0);
+
+		private final int color;
+		private final int strength;
+
+		private TerrainVertexBlendInput(int color, int strength) {
+			this.color = color;
+			this.strength = strength;
 		}
 	}
 
@@ -3800,6 +3982,7 @@ public final class World {
 		private final int colorResource;
 		private final int slope;
 		private final boolean pickableInvisibleOverlay;
+		private final boolean terrainVariationEligible;
 		private final boolean collisionFullBlock;
 		private final boolean collisionObject;
 
@@ -3811,6 +3994,7 @@ public final class World {
 			int colorResource,
 			int slope,
 			boolean pickableInvisibleOverlay,
+			boolean terrainVariationEligible,
 			boolean collisionFullBlock,
 			boolean collisionObject) {
 			this.x = x;
@@ -3820,6 +4004,7 @@ public final class World {
 			this.colorResource = colorResource;
 			this.slope = slope;
 			this.pickableInvisibleOverlay = pickableInvisibleOverlay;
+			this.terrainVariationEligible = terrainVariationEligible;
 			this.collisionFullBlock = collisionFullBlock;
 			this.collisionObject = collisionObject;
 		}

@@ -40,6 +40,12 @@ The current accepted player-facing renderer baseline is:
 - Strengthened dawn/dusk/night tone filters driven by server time.
 - Terrain shadow mask/decal proof promoted into the normal directional
   lighting path.
+- Terrain-receiver shadows are accepted for the current alpha remaster
+  baseline. They are not final shadow technology, but tuning should pause here
+  unless a specific regression appears.
+- Remaster lighting is player-facing alpha functionality, not only a hidden
+  debug proof. It is good enough for active testing, but still intentionally
+  documented as incomplete shadow/material work.
 - F6 debug HUD with simple and expanded modes.
 
 The renderer has reached playable alpha quality in many areas. The remaining
@@ -110,6 +116,9 @@ they need to be.
   CPU mask rebuilds during normal play. Runtime overrides remain available:
   `spoiledmilk.remasterShadowMaskTextureSize`,
   `spoiledmilk.remasterShadowMaskBlurRadius`,
+  `spoiledmilk.remasterSceneryShadowBlurRadius`,
+  `spoiledmilk.remasterShadowLengthScale`,
+  `spoiledmilk.remasterSceneryShadowAlphaScale`,
   `spoiledmilk.remasterShadowMaskAzimuthBucket`, and
   `spoiledmilk.remasterShadowMaskElevationBucket`.
 - Terrain shadow masks are applied in the resident chunk shader when that path
@@ -168,14 +177,38 @@ Implemented or started:
 - Terrain normals are smoothed enough for the current remaster terrain lighting
   target.
 - Tone filters are shader uniforms and are driven by server-owned world time.
+- Targeted terrain material variation has a shader-owned proof. Resident world
+  chunk build tags only base terrain faces whose overlay id is `0`; overlays
+  `1+` remain authored hard lines and do not receive the variation pass even if
+  they share a similar color. The chunk builder also computes a vertex-level
+  transition color from neighboring overlay-`0` terrain faces; when adjacent
+  base terrain textures differ, the resident shader interpolates toward that
+  transition color before lighting. This gives authored terrain gradients, such
+  as tan texture ids `106`/`120` near `309,494`-`309,495`, a softer edge without
+  bleeding into roads, floors, water, or cliffs. The shader then applies smooth
+  world-space variation to matching untextured terrain material RGB. The current
+  procedural tuning favors short/mid-range organic variation and keeps broad
+  drift light so the pass does not collapse large fields into a new uniform
+  color. It defaults to the grass color `#109000` seen from base terrain texture
+  id `70` at test tile `304,504`.
+  Runtime test knobs are
+  `SPOILED_MILK_TERRAIN_VARIATION_ENABLED`,
+  `SPOILED_MILK_TERRAIN_VARIATION_TARGET_RGB`,
+  `SPOILED_MILK_TERRAIN_VARIATION_STRENGTH`, and
+  `SPOILED_MILK_TERRAIN_VARIATION_TOLERANCE`. The player-facing Graphics row
+  is `Terrain Variation`, which toggles the pass on/off for visual A/B testing.
+  This is intentionally narrower than full tile blending; if exact map texture
+  ids become necessary, add a terrain-material id attribute to resident terrain
+  vertices instead of widening the RGB match blindly.
 
 Still incomplete:
 
 - Fixed-function/OpenGL color-array behavior still exists in important bridge
   paths.
-- Some visual state, especially player brightness, is still baked into resident
-  chunk or mesh signatures. Automatic day/night presentation must not animate
-  baked brightness until brightness is fully shader-owned.
+- Some fallback and bridge paths still bake visual state into CPU products.
+  The accepted Remaster resident-chunk path keeps automatic tone/brightness
+  presentation shader-owned, and these presentation-only changes must not dirty
+  resident chunk buffers.
 - Material behavior is not yet fully data-driven. Terrain, water, roofs, walls,
   foliage, ore, scenery, sprites, and effects still need explicit material
   metadata before polish shaders can be trusted.
@@ -200,10 +233,22 @@ Implemented or started:
   indoor/outdoor data.
 - Terrain receives shadows from semantic wall/scenery caster proofs.
 - Wall-boundary clipping exists for the world-space shadow mask.
+- Terrain receivers classified as interior are suppressed before directional
+  and contact shadow channels are composited. This keeps roofless building
+  interiors clean while exterior boundary walls can still cast outward.
+- Directional shadow blur is split by caster family. Wall/strip shadows default
+  to blur radius `1`; scenery/game-object shadows default to blur radius `4`.
+- Directional cast-shadow length defaults to scale `0.5`, and scenery/game
+  object shadow darkness defaults to scale `1.3`.
+- Contact shadows ground scenery, walls, and wall objects with accepted defaults
+  of alpha `0.5`, radius scale `0.05`, and blur radius `2`.
 - Terrain shadow masks are quantized by light buckets so normal day/night
   motion does not rebuild the mask every frame.
 - Unchanged shadow frames reuse prior roof coverage, caster inventory, and mask
   results from signatures instead of walking the full shadow path every frame.
+- Terrain shadow movement is visible in Remaster lighting. It remains quantized
+  and can look stepped during accelerated `::advtime` testing, which is
+  acceptable for the current CPU mask but not final-quality shadow motion.
 
 Still incomplete:
 
@@ -212,14 +257,12 @@ Still incomplete:
   triangular artifacts.
 - Scenery shadows use broad heuristics, not per-asset shadow metadata.
 - Shadows do not yet receive onto objects, walls, sprites, players, or NPCs.
-- Terrain shadows currently appear static, or their movement is too subtle,
-  when directional light/time changes. Treat this as the first shadow follow-up
-  after the current renderer refactor is wrapped.
 - Shadow movement is visibly stepped during `::advtime` because mask rebuilds
   are bucketed. This is acceptable for normal play but not a final high-quality
   shadow solution.
-- The CPU-built 1024x1024 shadow mask is a proof. A GPU-side, incremental, or
-  lower-cost path is the likely long-term direction.
+- The CPU-built 512x512 shadow mask is a proof. A GPU-side, incremental, or
+  lower-cost path is the likely long-term direction when shadow work is
+  intentionally reopened.
 
 ## Biggest Remaining Swings
 
@@ -230,26 +273,25 @@ Still incomplete:
    resident chunk geometry unless the setting actually changes geometry. This
    is the best next swing for making future lighting and polish predictable.
 
-2. GPU-side or incremental shadows
+2. Material-aware visual polish
 
-   Replace or supplement the CPU-built terrain shadow mask with a cheaper
-   approach. Candidate paths include a GPU mask/decal, sparse caster-local
-   updates, lower-resolution masks with better filtering, or interpolation
-   between cached masks. Keep semantic casters and indoor/outdoor classification
-   as the data source.
+   Add explicit material families and shader-owned polish for terrain, water,
+   foliage, ore, roofs, walls, scenery, sprites, projectiles, and effects. This
+   is the best next visual-improvement direction now that shadows are accepted
+   for alpha.
 
-3. True world streaming ownership
+3. World-space entity and sprite renderer
+
+   Move NPCs, players, ground items, projectiles, and effects away from
+   screen-space legacy command replay and into world-space sprite/billboard
+   submissions with explicit depth anchors, alpha rules, and batching.
+
+4. True world streaming ownership
 
    Turn the current section-window caches and resident chunk products into an
    explicit world-stream manager. It should own decode, model-input products,
    GPU upload, predictive preload, dirty flags, roof inclusion, and ready-state
    telemetry. This is the biggest path toward stable high draw distance.
-
-4. World-space entity and sprite renderer
-
-   Move NPCs, players, ground items, projectiles, and effects away from
-   screen-space legacy command replay and into world-space sprite/billboard
-   submissions with explicit depth anchors, alpha rules, and batching.
 
 5. Visibility and quality settings that really cull work
 
@@ -270,6 +312,38 @@ Still incomplete:
    data contracts, not permanent compatibility masks around old software
    renderer behavior.
 
+8. GPU-side or incremental shadows
+
+   Parked for now. When shadow work is intentionally reopened, replace or
+   supplement the CPU-built terrain shadow mask with a cheaper approach.
+   Candidate paths include a GPU mask/decal, sparse caster-local updates,
+   lower-resolution masks with better filtering, or interpolation between
+   cached masks. Keep semantic casters and indoor/outdoor classification as the
+   data source.
+
+## Next Non-Shadow Visual Targets
+
+Shadows are accepted for the current alpha pass. The next visual work should
+come from one of these areas unless a concrete shadow regression appears:
+
+- Material families and polish uniforms: make terrain, water, foliage, ore,
+  walls, roofs, scenery, sprites, projectiles, and effects respond through
+  explicit shader/material data instead of one generic lighting path.
+- Terrain variation and tile-edge blending: reduce flat broad fields and hard
+  grass/dirt transitions without changing original assets or map data. The
+  current first pass is targeted RGB variation for one terrain color at a time;
+  future work can promote this into material families, exact texture-id
+  selection, biome-style noise, and edge blending between unlike neighboring
+  tile materials.
+- Water, fountains, fishing spots, and animated scenery polish: use the
+  existing animated-object split to improve motion, transparency, and material
+  response without dirtying static chunks.
+- World-space projectiles, spell effects, and particles: move visual effects
+  toward explicit world anchors, depth, batching, and optional remaster polish.
+- Sprite/entity rendering modernization: improve billboard anchoring, depth,
+  alpha handling, and batching for NPCs, players, ground items, and combat
+  effects.
+
 ## Long-Term Shader Goals
 
 - More interesting scenery shadows without hand-authoring every object. The
@@ -278,7 +352,35 @@ Still incomplete:
   approaches include projected model footprints, coarse top-down silhouette
   masks, convex hulls around visible/caster vertices, object bounding volumes,
   or material/model-kind heuristics that produce line/blob/canopy primitives
-  without per-object code.
+  without per-object code. The current active pass starts this by sweeping
+  captured game-object footprint bounds along the directional light for scenery
+  cast shadows, while retaining the older soft heuristic as fallback. The
+  current cast-shadow reach scale is tunable through
+  `SPOILED_MILK_REMASTER_SHADOW_LENGTH_SCALE`, which does not affect contact
+  shadows. Directional cast-shadow blur is split by caster family:
+  wall/strip shadows use `SPOILED_MILK_REMASTER_SHADOW_MASK_BLUR_RADIUS`, while
+  scenery/game-object shadows use
+  `SPOILED_MILK_REMASTER_SCENERY_SHADOW_BLUR_RADIUS`. The intent is crisp
+  walls without forcing sharpened rectangular silhouettes onto scenery.
+  Scenery/game-object cast-shadow darkness is separately tunable with
+  `SPOILED_MILK_REMASTER_SCENERY_SHADOW_ALPHA_SCALE`, currently defaulting to a
+  slightly darker `1.3` scale.
+- Scenery contact shadows. A first pass adds subtle, short-radius, soft
+  footprint shadows at the base of scenery, walls, and wall objects to ground
+  them against terrain. Game objects use captured rounded footprint bounds plus
+  thin outward bleed; walls use line-footprint contact. This pass is combined
+  after the directional-shadow blur so small contact halos do not get widened
+  by the long-shadow blur. It has a separate tiny diffusion pass so object
+  footprints read like soft grounding rather than hard outlines. Developer
+  diagnostics can temporarily exaggerate alpha/radius/blur through
+  `SPOILED_MILK_REMASTER_CONTACT_SHADOW_ALPHA`,
+  `SPOILED_MILK_REMASTER_CONTACT_SHADOW_RADIUS_SCALE`, and
+  `SPOILED_MILK_REMASTER_CONTACT_SHADOW_BLUR_RADIUS` when validating whether
+  game objects are receiving this pass. The radius scale controls outward bleed
+  beyond the estimated footprint, not total radius from object center. Future
+  work can refine the shape beyond conservative footprint bounds. The accepted
+  first-tuned defaults are alpha `0.5`, radius scale `0.05`, and contact blur
+  radius `2`.
 - Smoother shadow movement across terrain. The current terrain shadow mask uses
   quantized light buckets so normal play is affordable, but fast-forwarded time
   exposes stepped movement. Future options include GPU-side projected masks,
@@ -332,10 +434,11 @@ Still incomplete:
   the visible frame.
 - Shader path: enough exists to prove direction, but material ownership and
   fixed-function retirement remain large wins.
-- Terrain/scenery shadows: visually promising, but currently the most proof-like
-  remaster system. It needs the static/subtle terrain-shadow movement issue
-  rechecked, better metadata, cheaper rebuilds, and cleaner diagonal/interior
-  handling before treating it as final.
+- Terrain/scenery shadows: accepted for the current alpha baseline and parked.
+  The system is still proof-like internally, but current visuals are good
+  enough. Future work should focus on smoother motion, better scenery/wall
+  metadata, cheaper rebuilds, and broader receivers only after a deliberate
+  decision to reopen shadows.
 - Entity sprites: visually much better than earlier alpha work, but still an
   important modernization target because sprites are central to Classic.
 - Quality settings: presets exist, but settings do not yet consistently reduce
@@ -351,23 +454,23 @@ Still incomplete:
 
 ## Recommended Near-Term Order
 
-1. Lock the day/night color and shadow presentation if current visual testing is
-   accepted.
-2. Stop time-of-day and other presentation-only settings from invalidating or
-   rebuilding resident chunks. Static resident object chunks should also remain
-   reusable when nearby animated scenery changes.
-3. Continue shader ownership cleanup: brightness, fog, tone, and material terms
-   should become uniforms or material data rather than baked geometry state.
-4. Smoke-test the refactor branch, migrate it back to the main worktree, and
-   clean the worktree so optimization work starts from a stable baseline.
-5. Validate the coarser default resident chunk spatial culling in dense areas.
-   Compare F6 drawn/culled batch counts, draw calls, texture binds, triangle
-   counts, process CPU, and FPS with fog on/off and multiple camera rotations.
-   If it holds visually and improves or stabilizes frame time, use it as the
-   bridge toward quality-aware world-stream culling.
-6. Decide whether the next shadow swing is GPU/incremental masks or whether
-   shadows should pause while renderer ownership and streaming mature.
-7. Add benchmark/capture routes before another large optimization pass.
+1. Treat day/night color, Remaster directional lighting, terrain-receiver
+   shadows, and the static/animated object chunk split as the current accepted
+   alpha baseline.
+2. Start non-shadow visual improvements with material-aware shader polish:
+   terrain, water, foliage, ore, walls, roofs, scenery, sprites, projectiles,
+   and effects should get explicit material families instead of one generic
+   response.
+3. Test terrain variation and tile-edge blending for broad flat areas and hard
+   grass/dirt transitions.
+4. Move world-space sprites/entities/effects farther away from legacy command replay
+   and toward explicit depth anchors, batching, and culling.
+5. Turn quality settings into real work culling: entity distance, draw distance,
+   roof visibility, sprite/effect distance, and weak-hardware presets should
+   reduce built/submitted/drawn work.
+6. Add benchmark/capture routes before another large optimization pass so dense
+   scenes and zoomed-out movement can be compared without relying only on manual
+   F6 screenshots.
 
 ## Open Long-Term Questions
 
