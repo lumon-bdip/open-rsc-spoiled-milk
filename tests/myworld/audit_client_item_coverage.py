@@ -128,7 +128,8 @@ def external_png_refs(source: str) -> set[str]:
 
 
 def external_png_exists(asset_name: str) -> bool:
-    file_name = asset_name if asset_name.endswith(".png") else f"{asset_name}.png"
+    base_name = asset_name.split("@", 1)[0]
+    file_name = base_name if base_name.endswith(".png") else f"{base_name}.png"
     return any((base / file_name).is_file() for base in EXTERNAL_ITEM_SPRITE_DIRS)
 
 

@@ -44,6 +44,7 @@ python3 ./tests/myworld/test-dragon-slayer-start-shortcut.py
 python3 ./tests/myworld/test-quest-choice-audit.py
 python3 ./tests/myworld/test-quest-rollout-audit.py
 python3 ./tests/myworld/test-heroes-guild-stairs.py
+python3 ./tests/myworld/test-lost-city-market-tax-waiver.py
 python3 ./tests/myworld/test-magecraft-data.py
 python3 ./tests/myworld/test-production-ui.py
 python3 ./tests/myworld/test-production-behavior.py

@@ -5697,7 +5697,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3235, new ItemDef("Fire sword", "A sword imbued with fire", "", 40000, -1, "external-png:fire-sword-icon", false, true, 16, 0, true, false, true, 3235));
 		setCustomItemDefinition(3236, new ItemDef("Ice sword", "A sword imbued with ice", "", 40000, -1, "external-png:ice-sword-icon", false, true, 16, 0, true, false, true, 3236));
 		setCustomItemDefinition(3237, new ItemDef("Earth sword", "A sword imbued with earth", "", 40000, -1, "external-png:earth-sword-icon", false, true, 16, 0, true, false, true, 3237));
-		setCustomItemDefinition(3238, new ItemDef("Zombie eye", "A dead eye from a zombie", "", 3, -1, "external-png:zombie-eye", false, false, 0, 0, false, false, true, 3238));
+		setCustomItemDefinition(3238, new ItemDef("Zombie eye", "A dead eye from a zombie", "", 3, -1, "external-png:zombie-eye@11x11", false, false, 0, 0, false, false, true, 3238));
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},

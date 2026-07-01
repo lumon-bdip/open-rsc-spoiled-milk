@@ -169,8 +169,8 @@ def main() -> None:
 	client_defs = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
 	require('setCustomItemDefinition(3238, new ItemDef("Zombie eye"' in client_defs,
 		"Client should define Zombie eye")
-	require('"external-png:zombie-eye"' in client_defs,
-		"Zombie eye should use its recolored external sprite")
+	require('"external-png:zombie-eye@11x11"' in client_defs,
+		"Zombie eye should render its recolored external sprite at Eye-of-newt-sized scale")
 	require(ZOMBIE_EYE_SPRITE.is_file(), "Zombie eye sprite asset should exist")
 	sprite_colors = png_visible_colors(ZOMBIE_EYE_SPRITE)
 	require((114, 218, 58) in sprite_colors or (184, 255, 96) in sprite_colors,

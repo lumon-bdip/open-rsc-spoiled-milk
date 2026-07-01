@@ -8,6 +8,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.custom.misc.WoodcuttingGuild;
+import com.openrsc.server.plugins.authentic.npcs.lostcity.LostCityMarketAccess;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.MessageType;
 
@@ -810,63 +811,16 @@ public class DoorAction {
 				break;
 
 			case DOOR_LOST_CITY_MARKETPLACE: // Lost City Market Door (117, 3539), (116, 3537) NPC: 221
+				if (LostCityMarketAccess.hasDiamondTaxWaiver(player)) {
+					doDoor(obj, player);
+					break;
+				}
 				if (player.getLocation().getX() == 115 || player.getLocation().getY() == 3539) {
-					Npc n = player.getWorld().getNpc(NpcId.DOORMAN.id(), 105, 116, 3536, 3547);
-					if (n != null) {
-						npcsay(player, n,
-							"You cannot go through this door without paying the trading tax");
-						say(player, n, "What do I need to pay?");
-						npcsay(player, n, "One diamond");
-						int m = multi(player, n, false, //do not send over
-							"Okay", "A diamond, are you crazy?",
-							"I haven't brought my diamonds with me");
-						if (m == 0) {
-							say(player, n, "Okay");
-							if (!player.getCarriedItems().hasCatalogID(ItemId.DIAMOND.id(), Optional.of(false))) {
-								say(player, n,
-									"I haven't brought my diamonds with me");
-							} else {
-								player.message("You give the doorman a diamond");
-								player.getCarriedItems().remove(new Item(ItemId.DIAMOND.id()));
-								doDoor(obj, player);
-							}
-						} else if (m == 1) {
-							say(player, n, "A diamond?", "are you crazy?");
-							npcsay(player, n, "Nope those are the rules");
-						} else if (m == 2) {
-							say(player, n, "I haven't brought my diamonds with me");
-						}
-					}
+					handleLostCityMarketTax(obj, player, 105, 116, 3536, 3547);
 					break;
 				}
 				if (player.getLocation().getX() == 116 || player.getLocation().getY() == 3538) {
-					Npc n = player.getWorld().getNpc(NpcId.DOORMAN.id(), 117, 125, 3531, 3538);
-
-					if (n != null) {
-						npcsay(player, n,
-							"You cannot go through this door without paying the trading tax");
-						say(player, n, "What do I need to pay?");
-						npcsay(player, n, "One diamond");
-						int m = multi(player, n, false, //do not send over
-							"Okay", "A diamond, are you crazy?",
-							"I haven't brought my diamonds with me");
-						if (m == 0) {
-							say(player, n, "Okay");
-							if (!player.getCarriedItems().hasCatalogID(ItemId.DIAMOND.id(), Optional.of(false))) {
-								say(player, n,
-									"I haven't brought my diamonds with me");
-							} else {
-								player.message("You give the doorman a diamond");
-								player.getCarriedItems().remove(new Item(ItemId.DIAMOND.id()));
-								doDoor(obj, player);
-							}
-						} else if (m == 1) {
-							say(player, n, "A diamond?", "are you crazy?");
-							npcsay(player, n, "Nope those are the rules");
-						} else if (m == 2) {
-							say(player, n, "I haven't brought my diamonds with me");
-						}
-					}
+					handleLostCityMarketTax(obj, player, 117, 125, 3531, 3538);
 				}
 				break;
 
@@ -1459,6 +1413,35 @@ public class DoorAction {
 			// Unwield so they cannot be stationary with it
 			player.unwieldMembersItems();
 		}*/
+	}
+
+	private void handleLostCityMarketTax(final GameObject obj, final Player player,
+										 final int x1, final int x2, final int y1, final int y2) {
+		Npc n = player.getWorld().getNpc(NpcId.DOORMAN.id(), x1, x2, y1, y2);
+		if (n == null) {
+			return;
+		}
+		npcsay(player, n, "You cannot go through this door without paying the trading tax");
+		say(player, n, "What do I need to pay?");
+		npcsay(player, n, "One diamond");
+		int m = multi(player, n, false, //do not send over
+			"Okay", "A diamond, are you crazy?",
+			"I haven't brought my diamonds with me");
+		if (m == 0) {
+			say(player, n, "Okay");
+			if (!player.getCarriedItems().hasCatalogID(ItemId.DIAMOND.id(), Optional.of(false))) {
+				say(player, n, "I haven't brought my diamonds with me");
+			} else {
+				player.message("You give the doorman a diamond");
+				player.getCarriedItems().remove(new Item(ItemId.DIAMOND.id()));
+				doDoor(obj, player);
+			}
+		} else if (m == 1) {
+			say(player, n, "A diamond?", "are you crazy?");
+			npcsay(player, n, "Nope those are the rules");
+		} else if (m == 2) {
+			say(player, n, "I haven't brought my diamonds with me");
+		}
 	}
 
 	// replaces but does not notify the player of the action
