@@ -7529,6 +7529,10 @@ public class EntityHandler {
 			animations.add(new AnimationDef("hood", "equipment", 0, 0, true, false, 0)); // 1034 - Hood
 			animations.add(new AnimationDef("firesword", "equipment", 0, 0, true, false, 0)); // 1035 - Fire sword
 			animations.add(new AnimationDef("icesword", "equipment", 0, 0, true, false, 0)); // 1036 - Ice sword
+			animations.add(new AnimationDef("fplatemailtop", "equipment", 0xB7C9D9, 0, true, false, 0)); // 1037 - Tin female plate top
+			animations.add(new AnimationDef("fplatemailtop", "equipment", 0xC86A2B, 0, true, false, 0)); // 1038 - Copper female plate top
+			animations.add(new AnimationDef("fplatemailtop", "equipment", 0x8EA6BB, 0, true, false, 0)); // 1039 - Titan Steel female plate top
+			animations.add(new AnimationDef("fplatemailtop", "equipment", 0x5A3F7D, 0, true, false, 0)); // 1040 - Orichalcum female plate top
 		}
 	}
 

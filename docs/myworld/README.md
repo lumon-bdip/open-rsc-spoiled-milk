@@ -17,6 +17,7 @@ repository root [`README.md`](../../README.md).
 - [pvm-population-and-cluster-plan.md](pvm-population-and-cluster-plan.md): implemented pre-release PvM population passes and remaining expansion decisions.
 - [terrain-expansion-plan.md](terrain-expansion-plan.md): staged Heroes' Guild basement and northern Wilderness terrain expansion plan, including isolated testing and map safety requirements.
 - [renderer-and-shader-roadmap.md](renderer-and-shader-roadmap.md): AI-facing current state and forward roadmap for renderer-v2, shaders, remaster lighting, shadows, and big-swing optimization work.
+- [ogg-audio-support-plan.md](ogg-audio-support-plan.md): staged plan for adding OGG Vorbis sound-effect support while keeping WAV fallback and release packaging safe.
 - [code-cleanup-and-modularization-plan.md](code-cleanup-and-modularization-plan.md): AI-facing cleanup roadmap for breaking up oversized renderer/client/server files and quarantining stale options.
 - [legacy-limits-audit.md](legacy-limits-audit.md): AI-facing audit of byte/short-era caps, fixed client arrays, renderer capture ceilings, and protocol boundaries that can become remaster bugs.
 - [renderer-v2-plan.md](renderer-v2-plan.md): active alpha-era client renderer rewrite plan, including the renderer ownership contract, remaster strategy, current OpenGL rollout baseline, legacy-derived terrain lighting, longer-term shader work, scaling, and rollout gates.

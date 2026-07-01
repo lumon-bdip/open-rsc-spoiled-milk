@@ -4147,38 +4147,51 @@ public final class Player extends Mob {
 	}
 
 	private int resolveBodyAppearance(int indexPosition, int appearanceId) {
-		if (indexPosition != AppearanceId.SLOT_BODY || !usesFemaleBodySprite()) {
+		if (!isBodyAppearanceSlot(indexPosition) || !usesFemaleBodySprite()) {
 			return appearanceId;
 		}
 
-		switch (appearanceId) {
-			case 28:
-				return 55;
-			case 29:
-				return 56;
-			case 30:
-				return 57;
-			case 31:
-				return 58;
-			case 32:
-				return 59;
-			case 33:
-				return 61;
-			case 34:
-				return 60;
-			case 35:
-				return 157;
-			case 296:
-				return 299;
-			case 319:
-				return 535;
-			case 322:
-				return 536;
-			case 325:
-				return 537;
+		switch (AppearanceId.getById(appearanceId)) {
+			case BRONZE_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_BRONZE_PLATE_MAIL_TOP.id();
+			case IRON_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_IRON_PLATE_MAIL_TOP.id();
+			case STEEL_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_STEEL_PLATE_MAIL_TOP.id();
+			case MITHRIL_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_MITHRIL_PLATE_MAIL_TOP.id();
+			case ADAMANTITE_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_ADAMANTITE_PLATE_MAIL_TOP.id();
+			case BLACK_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_BLACK_PLATE_MAIL_TOP.id();
+			case RUNE_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_RUNE_PLATE_MAIL_TOP.id();
+			case WHITE_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_WHITE_PLATE_MAIL_TOP.id();
+			case DRAGON_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_DRAGON_PLATE_MAIL_TOP.id();
+			case IRONMAN_PLATEBODY:
+				return AppearanceId.FEMALE_IRONMAN_PLATE_TOP.id();
+			case ULTIMATE_IRONMAN_PLATEBODY:
+				return AppearanceId.FEMALE_ULTIMATE_IRONMAN_PLATE_TOP.id();
+			case HARDCORE_IRONMAN_PLATEBODY:
+				return AppearanceId.FEMALE_HARDCORE_IRONMAN_PLATE_TOP.id();
+			case TIN_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_TIN_PLATE_MAIL_TOP.id();
+			case COPPER_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_COPPER_PLATE_MAIL_TOP.id();
+			case TITAN_STEEL_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_TITAN_STEEL_PLATE_MAIL_TOP.id();
+			case ORICHALCUM_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_ORICHALCUM_PLATE_MAIL_TOP.id();
 			default:
 				return appearanceId;
 		}
+	}
+
+	private boolean isBodyAppearanceSlot(int indexPosition) {
+		return indexPosition == AppearanceId.SLOT_SHIRT
+			|| indexPosition == AppearanceId.SLOT_BODY;
 	}
 
 	private boolean usesFemaleBodySprite() {

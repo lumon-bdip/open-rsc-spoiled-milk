@@ -62,6 +62,11 @@ def main() -> None:
     )
     require(
         summoning,
+        "SUMMON_CROWDED_ASSIST_RANGE = 2",
+        "Summons should have a tight crowded-combat assist fallback range",
+    )
+    require(
+        summoning,
         "private static Mob getOwnerActiveAttackTarget",
         "Summon assist should still support owner-initiated ranged, thrown, magic, and melee attacks",
     )
@@ -85,6 +90,11 @@ def main() -> None:
         "return owner.getTrackedDamage(attacker) > 0 || owner.getTrackedBlockedDamage(attacker) > 0;",
         "private static boolean ownerHasRecentSummonAssistEngagement",
         "owner.hasRecentSummonAssistEngagement(target, SUMMON_ASSIST_ENGAGEMENT_COOLDOWN_MS)",
+        "private static boolean ownerIsEngagedForSummonAssist",
+        "public static boolean canSummonUseCrowdedAssistReach",
+        "moveSummonTowardAssistTarget(summon, target);",
+        "summon.walkAdjacentToEntity(target);",
+        "if (!summon.inCombat() && !summon.withinRange(owner, FOLLOW_RADIUS))",
         "private static Mob getSummonCurrentAssistTarget",
         "final Mob currentTarget = getSummonCurrentAssistTarget(summon);",
         "&& ownerHasRecentSummonAssistEngagement(owner, currentTarget)",
@@ -161,6 +171,16 @@ def main() -> None:
             "Summoning.recordOwnerCombatSummonDamage",
             f"{label} owner damage should refresh summon assist engagement",
         )
+    require(
+        pvm_melee,
+        "boolean crowdedSummonAssistReach = Summoning.canSummonUseCrowdedAssistReach(attackerMob, targetMob);",
+        "Summon melee should allow tight crowded assist reach when pathing cannot claim an adjacent tile",
+    )
+    require(
+        pvm_melee,
+        "attackerMob.isNpc() && !Summoning.isSummon(attackerMob) && targetOutsideNpcLeash",
+        "Summons should not use normal NPC spawn leash while assisting their owner",
+    )
     for snippet in (
         "summonAssistEngagementAt",
         "recordSummonAssistEngagement(mob);",

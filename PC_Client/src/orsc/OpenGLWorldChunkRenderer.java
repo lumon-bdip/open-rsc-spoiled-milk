@@ -98,6 +98,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	static final int SPATIAL_BATCH_DISABLED = -1;
 	private static final float FRUSTUM_BATCH_CULL_SCREEN_PADDING = 128.0f;
 	private static final float FOG_BATCH_CULL_PADDING = 0.0f;
+	private static final float FOG_VISUAL_END_FRACTION = 0.88f;
 	private static final float WALL_DEPTH_PRIORITY_FACTOR = -1.0f;
 	private static final float WALL_DEPTH_PRIORITY_UNITS = -1.0f;
 	private static final float SHADOW_PROOF_DIRECTION_X = 0.78f;
@@ -1981,9 +1982,16 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 		gl.glFogi(gl.GL_FOG_MODE, gl.GL_LINEAR);
 		gl.glFogf(gl.GL_FOG_START, frame.getFogStartDistance());
-		gl.glFogf(gl.GL_FOG_END, frame.getFogDistance());
+		gl.glFogf(gl.GL_FOG_END, visualFogEnd(frame));
 		gl.glFogfv(gl.GL_FOG_COLOR, fogColorBuffer);
 		gl.glEnable(gl.GL_FOG);
+	}
+
+	private float visualFogEnd(Renderer3DFrame frame) {
+		float fogStart = frame.getFogStartDistance();
+		float fogEnd = frame.getFogDistance();
+		float fogRange = Math.max(1.0f, fogEnd - fogStart);
+		return fogStart + fogRange * FOG_VISUAL_END_FRACTION;
 	}
 
 	private float[] projectionMatrix(Renderer3DFrame frame) {

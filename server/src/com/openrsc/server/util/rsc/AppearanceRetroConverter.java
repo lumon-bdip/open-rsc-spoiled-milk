@@ -70,6 +70,7 @@ public class AppearanceRetroConverter {
 		put(AppearanceId.FEMALE_ADAMANTITE_PLATE_MAIL_TOP.id(), AppearanceId38.ADAMANTITE_PLATE_MAIL_BODY.id()); //substitute
 		put(AppearanceId.FEMALE_RUNE_PLATE_MAIL_TOP.id(), AppearanceId38.ADAMANTITE_PLATE_MAIL_BODY.id()); // substitute & downgrade
 		put(AppearanceId.FEMALE_BLACK_PLATE_MAIL_TOP.id(), AppearanceId38.BLACK_PLATE_MAIL_BODY.id()); //substitute
+		put(AppearanceId.FEMALE_WHITE_PLATE_MAIL_TOP.id(), AppearanceId38.WHITE_PLATE_MAIL_BODY.id()); //substitute
 		put(AppearanceId.WHITE_APRON_2.id(), AppearanceId38.WHITE_APRON_2.id());
 		put(AppearanceId.RED_CAPE.id(), AppearanceId38.RED_CAPE.id());
 		put(AppearanceId.BLACK_CAPE.id(), AppearanceId38.BLACK_CAPE.id());

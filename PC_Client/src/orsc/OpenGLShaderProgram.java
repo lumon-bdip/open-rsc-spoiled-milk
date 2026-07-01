@@ -270,6 +270,16 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\tvec3 toned = clamp(color * vec3(uToneRed, uToneGreen, uToneBlue), 0.0, 1.0);\n"
 			+ "\treturn mix(color, toned, clamp(uToneBlend, 0.0, 1.0));\n"
 			+ "}\n"
+			+ "float distanceFogAmount() {\n"
+			+ "\tif (uFogEnabled == 0) {\n"
+			+ "\t\treturn 0.0;\n"
+			+ "\t}\n"
+			+ "\tfloat fogRange = max(1.0, uFogEnd - uFogStart);\n"
+			+ "\tfloat visualRange = max(1.0, fogRange * 0.88);\n"
+			+ "\tfloat distanceIntoFog = max(0.0, vCameraDepth - uFogStart);\n"
+			+ "\tfloat fogT = clamp(distanceIntoFog / visualRange, 0.0, 1.0);\n"
+			+ "\treturn smoothstep(0.0, 1.0, fogT);\n"
+			+ "}\n"
 			+ "vec3 applyTerrainTransitionBlend(vec3 color) {\n"
 			+ "\tif (uTerrainVariationEnabled == 0 || vTerrainVariationMask < 0.5 || uTextureEnabled != 0 || uRawMaterialMode != 0 || !(vModelKind > 0.5 && vModelKind < 1.5)) {\n"
 			+ "\t\treturn color;\n"
@@ -321,9 +331,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\t}\n"
 			+ "\tcolor.rgb = applyTone(color.rgb);\n"
 			+ "\tif (uFogEnabled != 0) {\n"
-			+ "\t\tfloat fogRange = max(1.0, uFogEnd - uFogStart);\n"
-			+ "\t\tfloat fogFactor = clamp((uFogEnd - vCameraDepth) / fogRange, 0.0, 1.0);\n"
-			+ "\t\tcolor.rgb = mix(vec3(0.0, 0.0, 0.0), color.rgb, fogFactor);\n"
+			+ "\t\tcolor.rgb = mix(color.rgb, vec3(0.0, 0.0, 0.0), distanceFogAmount());\n"
 			+ "\t}\n"
 			+ "\tgl_FragColor = color;\n"
 			+ "}\n";
@@ -776,7 +784,6 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		}
 		boolean fogEnabled =
 			!rawMaterialMode
-				&& !remasterLightingEnabled
 				&& frame != null
 				&& RendererFogSettings.getMode() != RendererFogSettings.Mode.OFF;
 		if (fogEnabledUniformLocation >= 0) {

@@ -115,13 +115,14 @@ public class PvmMeleeEvent extends GameTickEvent {
 			&& attackerMob.getY() == targetMob.getY();
 		boolean adjacent = !sameTile && PathValidation.checkAdjacentDistance(attackerMob.getWorld(),
 			attackerMob.getX(), attackerMob.getY(), targetMob.getX(), targetMob.getY(), true, false);
-		if (!attackerMob.withinRange(targetMob, 1) || !adjacent) {
+		boolean crowdedSummonAssistReach = Summoning.canSummonUseCrowdedAssistReach(attackerMob, targetMob);
+		if ((!attackerMob.withinRange(targetMob, 1) || !adjacent) && !crowdedSummonAssistReach) {
 			// Don't force player to walk back if they're hostile and trying to run away
 			if (attackerMob.isPlayer() && attackerMob.isHostile() && !attackerMob.finishedPath()) {
 				setDelayTicks(1);
 				return;
 			}
-			if (attackerMob.isNpc() && targetOutsideNpcLeash((Npc) attackerMob, targetMob)) {
+			if (attackerMob.isNpc() && !Summoning.isSummon(attackerMob) && targetOutsideNpcLeash((Npc) attackerMob, targetMob)) {
 				Npc attackerNpc = (Npc) attackerMob;
 				if (attackerMob.getConfig().WANT_IMPROVED_PATHFINDING) {
 					Point origin = new Point(attackerNpc.getLoc().startX(), attackerNpc.getLoc().startY());

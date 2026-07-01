@@ -90,6 +90,7 @@ public final class Summoning {
 	private static final int CATCH_UP_DISTANCE = 6;
 	private static final int SUMMON_PROJECTILE_RANGE = 5;
 	private static final int SUMMON_ASSIST_TARGET_RANGE = 15;
+	private static final int SUMMON_CROWDED_ASSIST_RANGE = 2;
 	private static final long SUMMON_ASSIST_ENGAGEMENT_COOLDOWN_MS = 8000L;
 	private static final int SUMMON_ATTACK_DELAY_TICKS = 3;
 	private static final int UTILITY_RAT_NPC_ID = 241;
@@ -545,8 +546,37 @@ public final class Summoning {
 		return !isSummon(attacker) || target == null || !target.isPlayer();
 	}
 
+	public static boolean canSummonUseCrowdedAssistReach(final Mob attacker, final Mob target) {
+		if (!isSummon(attacker) || target == null || !target.isNpc() || target.isRemoved()
+			|| target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return false;
+		}
+		final Npc summon = (Npc) attacker;
+		final Player owner = getSummonOwner(summon);
+		if (owner == null || owner.isRemoved() || !owner.loggedIn()) {
+			return false;
+		}
+		if (!isValidSummonAssistTarget(owner, summon, target) || !ownerIsEngagedForSummonAssist(owner, target)) {
+			return false;
+		}
+		return summon.withinRange(target, SUMMON_CROWDED_ASSIST_RANGE)
+			|| (summon.withinRange(owner, FOLLOW_RADIUS + 1)
+				&& owner.withinRange(target, SUMMON_CROWDED_ASSIST_RANGE));
+	}
+
 	public static boolean isArmorSummon(final Npc npc) {
 		return isSummon(npc) && SOURCE_ARMOR.equals(npc.getAttribute(SUMMON_SOURCE_KEY, ""));
+	}
+
+	private static Player getSummonOwner(final Npc summon) {
+		if (!isSummon(summon)) {
+			return null;
+		}
+		final long ownerHash = summon.getAttribute(SUMMON_OWNER_KEY, -1L);
+		if (ownerHash <= 0L) {
+			return null;
+		}
+		return summon.getWorld().getPlayer(ownerHash);
 	}
 
 	public static int getSummonCurrentHits(final Npc summon) {
@@ -1291,7 +1321,7 @@ public final class Summoning {
 		if (summon.getPvmMeleeEvent() != null && summon.getPvmMeleeEvent().isRunning() && summon.getPvmMeleeEvent().getTarget() == target) {
 			return;
 		}
-		if (!summon.withinRange(owner, FOLLOW_RADIUS)) {
+		if (!summon.inCombat() && !summon.withinRange(owner, FOLLOW_RADIUS)) {
 			Point destination = adjacentTo(owner);
 			summon.teleport(destination.getX(), destination.getY());
 		}
@@ -1402,6 +1432,12 @@ public final class Summoning {
 			&& owner.hasRecentSummonAssistEngagement(target, SUMMON_ASSIST_ENGAGEMENT_COOLDOWN_MS);
 	}
 
+	private static boolean ownerIsEngagedForSummonAssist(final Player owner, final Mob target) {
+		return ownerIsActivelyAttacking(owner, target)
+			|| mobIsAttackingOwner(target, owner)
+			|| (owner.getOpponent() == target && ownerHasRecentSummonAssistEngagement(owner, target));
+	}
+
 	private static Mob getOwnerActiveAttackTarget(final Player owner) {
 		final PvmMeleeEvent meleeEvent = owner.getPvmMeleeEvent();
 		if (meleeEvent != null && meleeEvent.isRunning()) {
@@ -1435,9 +1471,12 @@ public final class Summoning {
 
 		final int distance = Math.max(Math.abs(summon.getX() - target.getX()), Math.abs(summon.getY() - target.getY()));
 		if (distance > SUMMON_PROJECTILE_RANGE) {
+			moveSummonTowardAssistTarget(summon, target);
 			return !ATTACK_STYLE_MELEE_MAGIC.equals(style);
 		}
-		if (!PathValidation.checkPath(summon.getWorld(), summon.getLocation(), target.getLocation())) {
+		if (!PathValidation.checkPath(summon.getWorld(), summon.getLocation(), target.getLocation())
+			&& !canSummonUseCrowdedAssistReach(summon, target)) {
+			moveSummonTowardAssistTarget(summon, target);
 			return !ATTACK_STYLE_MELEE_MAGIC.equals(style);
 		}
 		final long currentTick = summon.getWorld().getServer().getCurrentTick();
@@ -1465,6 +1504,13 @@ public final class Summoning {
 				0, 0, 0, 0, projectileType, 0, !batLeechAttack)
 		);
 		return true;
+	}
+
+	private static void moveSummonTowardAssistTarget(final Npc summon, final Mob target) {
+		summon.setOpponent(target);
+		summon.setLastOpponent(target);
+		summon.face(target);
+		summon.walkAdjacentToEntity(target);
 	}
 
 	private static String getSummonAttackStyle(final Npc summon) {
