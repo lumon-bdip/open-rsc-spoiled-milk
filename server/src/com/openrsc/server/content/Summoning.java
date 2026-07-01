@@ -328,7 +328,7 @@ public final class Summoning {
 
 	private static boolean hasSummonCosts(final Player owner, final SummonProfile profile) {
 		for (Map.Entry<Integer, Integer> entry : profile.costs.entrySet()) {
-			final int requiredAmount = getPotentialSummonCostAmount(owner, entry.getKey(), entry.getValue());
+			final int requiredAmount = entry.getValue();
 			if (owner.getCarriedItems().getInventory().countId(entry.getKey(), Optional.of(false)) < requiredAmount) {
 				return false;
 			}
@@ -363,13 +363,6 @@ public final class Summoning {
 			}
 		}
 		ActionSender.sendInventory(owner);
-	}
-
-	private static int getPotentialSummonCostAmount(final Player owner, final int itemId, final int amount) {
-		if (!EnchantingItemEffects.isAltarRune(itemId)) {
-			return amount;
-		}
-		return getRunePreservationChance(owner, itemId) >= 1.0D ? 0 : amount;
 	}
 
 	private static int getRequiredSummonCostAmount(final Player owner, final int itemId, final int amount) {
@@ -1685,6 +1678,9 @@ public final class Summoning {
 	}
 
 	private static boolean consumeLifeRunes(final Player owner, final int amount) {
+		if (owner.getCarriedItems().getInventory().countId(ItemId.LIFE_RUNE.id(), Optional.of(false)) < amount) {
+			return false;
+		}
 		if (shouldPreserveRuneCost(owner, ItemId.LIFE_RUNE.id())) {
 			return true;
 		}

@@ -16,7 +16,11 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.ByteArrayInputStream;
+import java.lang.management.BufferPoolMXBean;
+import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryUsage;
 
 import static orsc.Config.S_ZOOM_VIEW_TOGGLE;
 
@@ -32,6 +36,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		readBoolean(DIRECT_FRAMEBUFFER_PROPERTY, DIRECT_FRAMEBUFFER_ENV);
 	private static final int MESSAGE_WHEEL_SCROLL_AREA_HEIGHT = 75;
 	private static final CpuUsageSampler CPU_USAGE_SAMPLER = new CpuUsageSampler();
+	private static final MemoryUsageSampler MEMORY_USAGE_SAMPLER = new MemoryUsageSampler();
 	public static int globalLoadingPercent = 0;
 	public static String globalLoadingState = "";
 	private static mudclient mudclient;
@@ -144,6 +149,132 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 			int rounded = (int) Math.round(Math.min(value, 9999.9D));
 			return Integer.toString(rounded) + "%";
+		}
+	}
+
+	private static final class MemoryUsageSampler {
+		private static final long SAMPLE_INTERVAL_NANOS = 500_000_000L;
+
+		private final MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+		private final java.util.List<BufferPoolMXBean> bufferPoolBeans =
+			ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class);
+		private final java.util.List<GarbageCollectorMXBean> garbageCollectorBeans =
+			ManagementFactory.getGarbageCollectorMXBeans();
+		private long lastSampleNanos;
+		private long lastCollectionCount;
+		private long lastCollectionTimeMillis;
+		private MemoryUsageSnapshot lastSnapshot;
+
+		private synchronized MemoryUsageSnapshot sample() {
+			long now = System.nanoTime();
+			if (lastSnapshot != null && now - lastSampleNanos < SAMPLE_INTERVAL_NANOS) {
+				return lastSnapshot;
+			}
+
+			MemoryUsage heap = memoryBean.getHeapMemoryUsage();
+			MemoryUsage nonHeap = memoryBean.getNonHeapMemoryUsage();
+			BufferPoolUsage direct = bufferPoolUsage("direct");
+			BufferPoolUsage mapped = bufferPoolUsage("mapped");
+			long collectionCount = totalCollectionCount();
+			long collectionTimeMillis = totalCollectionTimeMillis();
+			long recentCollectionCount = lastSnapshot == null || collectionCount < lastCollectionCount
+				? 0L
+				: collectionCount - lastCollectionCount;
+			long recentCollectionTimeMillis = lastSnapshot == null || collectionTimeMillis < lastCollectionTimeMillis
+				? 0L
+				: collectionTimeMillis - lastCollectionTimeMillis;
+
+			lastCollectionCount = collectionCount;
+			lastCollectionTimeMillis = collectionTimeMillis;
+			lastSampleNanos = now;
+			lastSnapshot = new MemoryUsageSnapshot(
+				"memory heap u/c/max " + formatMemoryUsage(heap)
+					+ " | nonheap u/c/max " + formatMemoryUsage(nonHeap),
+				"memory direct u/cap/count " + direct.summary()
+					+ " | mapped " + mapped.summary()
+					+ " | gc total/recent " + collectionCount + "/" + collectionTimeMillis
+					+ "ms " + recentCollectionCount + "/" + recentCollectionTimeMillis + "ms");
+			return lastSnapshot;
+		}
+
+		private BufferPoolUsage bufferPoolUsage(String name) {
+			for (BufferPoolMXBean bean : bufferPoolBeans) {
+				if (bean != null && name.equalsIgnoreCase(bean.getName())) {
+					return new BufferPoolUsage(bean.getMemoryUsed(), bean.getTotalCapacity(), bean.getCount());
+				}
+			}
+			return BufferPoolUsage.UNKNOWN;
+		}
+
+		private long totalCollectionCount() {
+			long total = 0L;
+			for (GarbageCollectorMXBean bean : garbageCollectorBeans) {
+				long count = bean == null ? -1L : bean.getCollectionCount();
+				if (count >= 0L) {
+					total += count;
+				}
+			}
+			return total;
+		}
+
+		private long totalCollectionTimeMillis() {
+			long total = 0L;
+			for (GarbageCollectorMXBean bean : garbageCollectorBeans) {
+				long time = bean == null ? -1L : bean.getCollectionTime();
+				if (time >= 0L) {
+					total += time;
+				}
+			}
+			return total;
+		}
+
+		private static String formatMemoryUsage(MemoryUsage usage) {
+			if (usage == null) {
+				return "n/a";
+			}
+			return formatMegabytes(usage.getUsed())
+				+ "/" + formatMegabytes(usage.getCommitted())
+				+ "/" + formatMegabytes(usage.getMax());
+		}
+
+		private static String formatMegabytes(long bytes) {
+			if (bytes < 0L) {
+				return "n/a";
+			}
+			if (bytes >= 1024L * 1024L * 1024L) {
+				return String.format("%.2fg", bytes / (1024.0D * 1024.0D * 1024.0D));
+			}
+			return String.format("%.1fm", bytes / (1024.0D * 1024.0D));
+		}
+	}
+
+	private static final class BufferPoolUsage {
+		static final BufferPoolUsage UNKNOWN = new BufferPoolUsage(-1L, -1L, -1L);
+
+		private final long memoryUsedBytes;
+		private final long totalCapacityBytes;
+		private final long count;
+
+		private BufferPoolUsage(long memoryUsedBytes, long totalCapacityBytes, long count) {
+			this.memoryUsedBytes = memoryUsedBytes;
+			this.totalCapacityBytes = totalCapacityBytes;
+			this.count = count;
+		}
+
+		private String summary() {
+			return MemoryUsageSampler.formatMegabytes(memoryUsedBytes)
+				+ "/" + MemoryUsageSampler.formatMegabytes(totalCapacityBytes)
+				+ "/" + (count < 0L ? "n/a" : Long.toString(count));
+		}
+	}
+
+	private static final class MemoryUsageSnapshot {
+		private final String heapLine;
+		private final String bufferAndGcLine;
+
+		private MemoryUsageSnapshot(String heapLine, String bufferAndGcLine) {
+			this.heapLine = heapLine;
+			this.bufferAndGcLine = bufferAndGcLine;
 		}
 	}
 
@@ -892,6 +1023,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	private String[] overlayLines(BufferedImage frameImage, RenderTelemetry.Snapshot telemetry) {
 		boolean openGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
 		String cpuUsage = CPU_USAGE_SAMPLER.sampleProcessCpuPercent();
+		MemoryUsageSnapshot memoryUsage = MEMORY_USAGE_SAMPLER.sample();
 		String displayedFps = openGLPrimaryWindow
 			? RenderTelemetry.observedOpenGLFps(mudclient.getCurrentFPS())
 			: String.valueOf(mudclient.getCurrentFPS());
@@ -931,6 +1063,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			"Renderer v2 Perf HUD",
 			rendererLine,
 			graphicsLine,
+			memoryUsage.heapLine,
+			memoryUsage.bufferAndGcLine,
 			remasterLightLine,
 			telemetry.enabled
 				? "frame avg/max " + telemetry.frameAverageMs + "/" + telemetry.frameMaxMs

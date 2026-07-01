@@ -3,8 +3,11 @@ package com.openrsc.server.constants;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.content.BadLuckMitigation;
 import com.openrsc.server.content.DropTable;
+import com.openrsc.server.model.container.Item;
+import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.model.world.World;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -19,6 +22,7 @@ public class NpcDrops {
 	private final HashSet<Integer> bigBoneNpcs;
 	private final HashSet<Integer> dragonNpcs;
 	private final HashSet<Integer> ashesNpcs;
+	private final HashMap<Integer, ArrayList<HiddenUniqueDrop>> hiddenUniqueDrops;
 
 	private DropTable herbDropTable;
 	private DropTable rareDropTable;
@@ -26,7 +30,6 @@ public class NpcDrops {
 	private DropTable ultraRareDropTable;
 	private DropTable kbdTableCustom;
 	private DropTable runeDropTable;
-	private DropTable dragonDropTable;
 	private DropTable arrowsRunesDropTable;
 
 	private BadLuckMitigation badLuckMitigation;
@@ -41,6 +44,7 @@ public class NpcDrops {
 		this.bigBoneNpcs = new HashSet<>();
 		this.dragonNpcs = new HashSet<>();
 		this.ashesNpcs = new HashSet<>();
+		this.hiddenUniqueDrops = new HashMap<>();
 	}
 
 	public void load() {
@@ -52,12 +56,12 @@ public class NpcDrops {
 
 		if(config.WANT_OPENPK_POINTS) {
 			createRuneDropTable();
-			createDragonDropTable();
 			createArrowsRunesDropTable();
 		}
 
 		createBoneDrops();
 		createMobDrops();
+		createHiddenUniqueDrops();
 
 		if (config.WANT_CUSTOM_QUESTS) {
 			// TODO: Find a better config for this.
@@ -79,6 +83,7 @@ public class NpcDrops {
 		bigBoneNpcs.clear();
 		dragonNpcs.clear();
 		ashesNpcs.clear();
+		hiddenUniqueDrops.clear();
 
 		herbDropTable = null;
 		rareDropTable = null;
@@ -127,6 +132,110 @@ public class NpcDrops {
 		return world;
 	}
 
+	public ArrayList<Item> rollHiddenUniqueDrops(final int npcId, final double contributionScale) {
+		final ArrayList<HiddenUniqueDrop> drops = hiddenUniqueDrops.get(npcId);
+		final ArrayList<Item> items = new ArrayList<>();
+		if (drops == null || drops.isEmpty()) {
+			return items;
+		}
+
+		final double scaledContribution = clampContributionScale(contributionScale);
+		for (HiddenUniqueDrop drop : drops) {
+			if (drop.roll(scaledContribution)) {
+				items.add(new Item(drop.itemId, drop.amount, drop.noted));
+			}
+		}
+		return items;
+	}
+
+	private void createHiddenUniqueDrops() {
+		// Keep hidden chase drops out of the normal 128-weight NPC tables.
+		addHiddenUniqueDrop(NpcId.FIRE_GIANT.id(), ItemId.FIRE_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.RED_DRAGON.id(), ItemId.FIRE_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.ICE_GIANT.id(), ItemId.ICE_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.BLUE_DRAGON.id(), ItemId.ICE_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.MOSS_GIANT.id(), ItemId.EARTH_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.MOSS_GIANT2.id(), ItemId.EARTH_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.DRAGON.id(), ItemId.EARTH_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.FIRE_WARRIOR.id(), ItemId.FIRE_SWORD.id(), 1, HiddenUniqueRarity.MYTHIC_UNIQUE);
+		addHiddenUniqueDrop(NpcId.ICE_WARRIOR.id(), ItemId.ICE_SWORD.id(), 1, HiddenUniqueRarity.MYTHIC_UNIQUE);
+		addHiddenUniqueDrop(NpcId.EARTH_WARRIOR.id(), ItemId.EARTH_SWORD.id(), 1, HiddenUniqueRarity.MYTHIC_UNIQUE);
+
+		addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.DRAGON_MEDIUM_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.LARGE_DRAGON_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
+		if (config.WANT_OPENPK_POINTS) {
+			addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
+			addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
+		}
+	}
+
+	private void addHiddenUniqueDrop(final int npcId, final int itemId, final int amount, final HiddenUniqueRarity rarity) {
+		addHiddenUniqueDrop(npcId, itemId, amount, 1, rarity.denominator, false);
+	}
+
+	private void addHiddenUniqueDrop(final int npcId, final int itemId, final int amount, final int numerator, final int denominator) {
+		addHiddenUniqueDrop(npcId, itemId, amount, numerator, denominator, false);
+	}
+
+	private void addHiddenUniqueDrop(final int npcId, final int itemId, final int amount, final int numerator, final int denominator, final boolean noted) {
+		if (amount <= 0) {
+			throw new IllegalArgumentException("Hidden unique drop amount must be positive");
+		}
+		if (numerator <= 0 || denominator <= 0 || numerator > denominator) {
+			throw new IllegalArgumentException("Hidden unique drop odds must satisfy 0 < numerator <= denominator");
+		}
+
+		ArrayList<HiddenUniqueDrop> drops = hiddenUniqueDrops.get(npcId);
+		if (drops == null) {
+			drops = new ArrayList<>();
+			hiddenUniqueDrops.put(npcId, drops);
+		}
+		drops.add(new HiddenUniqueDrop(itemId, amount, numerator, denominator, noted));
+	}
+
+	private static double clampContributionScale(final double contributionScale) {
+		return Math.max(0.05D, Math.min(1.0D, contributionScale));
+	}
+
+	public enum HiddenUniqueRarity {
+		HIDDEN(512),
+		RARE_UNIQUE(1024),
+		VERY_RARE_UNIQUE(2048),
+		ULTRA_RARE_UNIQUE(4096),
+		MYTHIC_UNIQUE(8192);
+
+		private final int denominator;
+
+		HiddenUniqueRarity(final int denominator) {
+			this.denominator = denominator;
+		}
+
+		public int denominator() {
+			return denominator;
+		}
+	}
+
+	private static final class HiddenUniqueDrop {
+		private final int itemId;
+		private final int amount;
+		private final int numerator;
+		private final int denominator;
+		private final boolean noted;
+
+		private HiddenUniqueDrop(final int itemId, final int amount, final int numerator, final int denominator, final boolean noted) {
+			this.itemId = itemId;
+			this.amount = amount;
+			this.numerator = numerator;
+			this.denominator = denominator;
+			this.noted = noted;
+		}
+
+		private boolean roll(final double contributionScale) {
+			final double chance = (numerator / (double) denominator) * contributionScale;
+			return chance > 0.0D && DataConversions.getRandom().nextDouble() < chance;
+		}
+	}
+
     private void createRuneDropTable() {
         runeDropTable = new DropTable("Rune Drop Table");
         runeDropTable.addItemDrop(ItemId.RUNE_LONG_SWORD.id(), 1, 20);
@@ -141,12 +250,6 @@ public class NpcDrops {
         runeDropTable.addItemDrop(ItemId.RUNE_MACE.id(), 1, 6);
         runeDropTable.addEmptyDrop(128 - runeDropTable.getTotalWeight());
     }
-
-	private void createDragonDropTable() {
-		dragonDropTable = new DropTable("Dragon Drop Table");
-		dragonDropTable.addItemDrop(ItemId.DRAGON_SQUARE_SHIELD.id(), 1, 8);
-		dragonDropTable.addEmptyDrop(128 - dragonDropTable.getTotalWeight()); // empty = 120
-	}
 
 	private void createArrowsRunesDropTable() {
 		arrowsRunesDropTable = new DropTable("Arrows & Runes Drop Table");
@@ -238,8 +341,6 @@ public class NpcDrops {
 		blackDemonUltraRareDropTable.addItemDrop(ItemId.RUNE_KITE_SHIELD.id(), 1, 1);
 		blackDemonUltraRareDropTable.addItemDrop(ItemId.RUNE_SCIMITAR.id(), 1, 2);
 		blackDemonUltraRareDropTable.addItemDrop(ItemId.DRAGONSTONE.id(), 1, 2);
-		blackDemonUltraRareDropTable.addItemDrop(ItemId.DRAGON_MEDIUM_HELMET.id(), 1, 1);
-		blackDemonUltraRareDropTable.addItemDrop(ItemId.LARGE_DRAGON_HELMET.id(), 1, 1);
 		blackDemonUltraRareDropTable.addItemDrop(ItemId.TOOTH_KEY_HALF.id(), 1, 19);
 		blackDemonUltraRareDropTable.addItemDrop(ItemId.LOOP_KEY_HALF.id(), 1, 20);
 		blackDemonUltraRareDropTable.addTableDrop(megaRareDropTable, 15);
@@ -562,7 +663,7 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.COPPER_KITE_SHIELD.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.COSMIC_RUNE.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.TIN_ORE.id(), 1, 1);
-		currentNpcDrops.addItemDrop(ItemId.EYE_OF_NEWT.id(), 1, 1);
+		currentNpcDrops.addItemDrop(ItemId.ZOMBIE_EYE.id(), 1, 4);
 		currentNpcDrops.addItemDrop(ItemId.FIRE_RUNE.id(), 5, 1);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.ZOMBIE_LVL24_GEN.id(), currentNpcDrops);
@@ -643,6 +744,7 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.COPPER_LONG_SWORD.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.COPPER_AXE.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.NATURE_RUNE.id(), 4, 1);
+		currentNpcDrops.addItemDrop(ItemId.ZOMBIE_EYE.id(), 1, 4);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.ZOMBIE_LVL19.id(), currentNpcDrops);
 
@@ -867,6 +969,7 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.IRON_SCIMITAR.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.BRONZE_CHAIN_MAIL_BODY.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.COSMIC_RUNE.id(), 1, 1);
+		currentNpcDrops.addItemDrop(ItemId.ZOMBIE_EYE.id(), 1, 4);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.ZOMBIE_LVL32.id(), currentNpcDrops);
 
@@ -1030,7 +1133,6 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.SPINACH_ROLL.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.BRASS_NECKLACE.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.COAL.id(), 1, 1);
-		currentNpcDrops.addItemDrop(ItemId.EARTH_SWORD.id(), 1, 1);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.MOSS_GIANT.id(), currentNpcDrops);
 		this.npcDrops.put(NpcId.MOSS_GIANT2.id(), currentNpcDrops);
@@ -1094,7 +1196,6 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.BLOOD_RUNE.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.DEATH_RUNE.id(), 2, 1);
 		currentNpcDrops.addItemDrop(ItemId.WATER_RUNE.id(), 8, 1);
-		currentNpcDrops.addItemDrop(ItemId.ICE_SWORD.id(), 1, 1);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.ICE_GIANT.id(), currentNpcDrops);
 
@@ -1243,7 +1344,6 @@ public class NpcDrops {
 		this.npcDrops.put(NpcId.CHAOS_DWARF.id(), currentNpcDrops);
 
 		currentNpcDrops = new DropTable("Green Dragon (196)");
-		currentNpcDrops.addItemDrop(ItemId.EARTH_SWORD.id(), 1, 2);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.DRAGON.id(), currentNpcDrops);
 
@@ -1315,7 +1415,6 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.TITAN_STEEL_AXE.id(), 1, 3);
 		currentNpcDrops.addItemDrop(ItemId.TITAN_STEEL_BATTLE_AXE.id(), 1, 3);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 16, 3);
-		currentNpcDrops.addItemDrop(ItemId.FIRE_SWORD.id(), 1, 2);
 		currentNpcDrops.addItemDrop(ItemId.CHOCOLATE_CAKE.id(), 1, 2);
 		currentNpcDrops.addItemDrop(ItemId.CHOCOLATE_CAKE.id(), 2, 1);
 		currentNpcDrops.addItemDrop(ItemId.ADAMANTITE_BAR.id(), 1, 3);
@@ -1346,7 +1445,6 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.TITAN_STEEL_BATTLE_AXE.id(), 1, 3);
 		currentNpcDrops.addItemDrop(ItemId.LAW_RUNE.id(), config.WANT_OPENPK_POINTS ? 15 : 2, 3);
 		currentNpcDrops.addItemDrop(ItemId.ADAMANTITE_ORE.id(), 1, 3);
-		currentNpcDrops.addItemDrop(ItemId.ICE_SWORD.id(), 1, 2);
 		currentNpcDrops.addItemDrop(ItemId.BASS.id(), 2, 1);
 		currentNpcDrops.addItemDrop(ItemId.BASS.id(), 1, 2);
 		currentNpcDrops.addItemDrop(ItemId.TITAN_STEEL_SPEAR.id(), 1, 2);
@@ -1369,6 +1467,7 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.BRONZE_LONG_SWORD.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.IRON_AXE.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.NATURE_RUNE.id(), 4, 1);
+		currentNpcDrops.addItemDrop(ItemId.ZOMBIE_EYE.id(), 1, 4);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.ZOMBIE_ENTRANA.id(), currentNpcDrops);
 
@@ -1511,7 +1610,6 @@ public class NpcDrops {
 		currentNpcDrops = new DropTable("Black Dragon (291)");
 		if(config.WANT_OPENPK_POINTS) {
 			currentNpcDrops.addTableDrop(runeDropTable, 10);
-			currentNpcDrops.addTableDrop(dragonDropTable, 5);
 			currentNpcDrops.addTableDrop(arrowsRunesDropTable, 10);
 			currentNpcDrops.addItemDrop(ItemId.COINS.id(), 196, 15);
 		} else {
@@ -1617,7 +1715,6 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.LOBSTER.id(), 2, 2);
 		currentNpcDrops.addItemDrop(ItemId.LOBSTER.id(), 1, 2);
 		currentNpcDrops.addItemDrop(ItemId.RUNE_SCIMITAR.id(), 1, 1);
-		currentNpcDrops.addItemDrop(ItemId.FIRE_SWORD.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.FIRE_RUNE.id(), 25, 1);
 		currentNpcDrops.addItemDrop(ItemId.LAW_RUNE.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 50, 1);
@@ -1693,7 +1790,6 @@ public class NpcDrops {
 		currentNpcDrops = new DropTable("King Black Dragon (477)");
 		if(config.WANT_OPENPK_POINTS) {
 			currentNpcDrops.addTableDrop(runeDropTable, 20);
-			currentNpcDrops.addTableDrop(dragonDropTable, 10);
 			currentNpcDrops.addTableDrop(arrowsRunesDropTable, 15);
 		} else {
 			currentNpcDrops.addTableDrop(rareDropTable, 2);
@@ -1926,7 +2022,6 @@ public class NpcDrops {
 			dropTable.removeAllItemDrops(itemId);
 		}
 		if (runeDropTable != null) runeDropTable.removeAllItemDrops(itemId);
-		if (dragonDropTable != null) dragonDropTable.removeAllItemDrops(itemId);
 		if (rareDropTable != null) rareDropTable.removeAllItemDrops(itemId);
 		if (ultraRareDropTable != null) ultraRareDropTable.removeAllItemDrops(itemId);
 	}
@@ -2049,6 +2144,9 @@ public class NpcDrops {
 		addGuaranteedDrop(NpcId.OGRE_GENERAL.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
 
 		addGuaranteedDrop(NpcId.BABY_BLUE_DRAGON.id(), ItemId.BABY_DRAGON_HIDE.id(), "Baby Dragon hide");
+		DropTable babyBlueDragonDrops = this.npcDrops.get(NpcId.BABY_BLUE_DRAGON.id());
+		babyBlueDragonDrops.addItemDrop(ItemId.BLUE_DRAGON_SCALE.id(), 1, 4);
+		babyBlueDragonDrops.addEmptyDrop(128 - babyBlueDragonDrops.getTotalWeight());
 		addGuaranteedDrop(NpcId.LESSER_DEMON.id(), ItemId.DEMON_HIDE.id(), "Demon hide");
 		addGuaranteedDrop(NpcId.LESSER_DEMON_WMAZEKEY.id(), ItemId.DEMON_HIDE.id(), "Demon hide");
 		addGuaranteedDrop(NpcId.GREATER_DEMON.id(), ItemId.DEMON_HIDE.id(), "Demon hide");

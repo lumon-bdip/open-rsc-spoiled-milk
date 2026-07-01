@@ -38,7 +38,7 @@ def main() -> None:
     )
     require(
         summoning,
-        "if (shouldPreserveRuneCost(owner, ItemId.LIFE_RUNE.id())) {\n\t\t\treturn true;\n\t\t}",
+        "if (owner.getCarriedItems().getInventory().countId(ItemId.LIFE_RUNE.id(), Optional.of(false)) < amount) {\n\t\t\treturn false;\n\t\t}\n\t\tif (shouldPreserveRuneCost(owner, ItemId.LIFE_RUNE.id())) {\n\t\t\treturn true;\n\t\t}",
         "life rune preservation should not award support upkeep XP",
     )
     require(

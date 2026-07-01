@@ -149,18 +149,18 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		Item equippedStaff = getEquippedStaff(player);
 
 		for (Entry<Integer, Integer> e : spell.getRunesRequired()) {
+			int availableRunes = player.getCarriedItems().getInventory().countId(e.getKey());
+			if (availableRunes < e.getValue()) {
+				player.setSuspiciousPlayer(true, "player not all reagents for spell");
+				magicDebug(player, "runes_missing spell=" + spell.getName() + " rune=" + e.getKey()
+					+ " need=" + e.getValue() + " have=" + availableRunes);
+				player.message("You don't have all the reagents you need for this spell");
+				throw new SpellFailureException("Player does not have all the reagents you need for this spell");
+			}
 			int amountToConsume = e.getValue();
 			double preservationChance = getRuneNegationChance(player, equippedStaff, e.getKey());
 			if (preservationChance > 0.0D && DataConversions.getRandom().nextDouble() < preservationChance) {
 				amountToConsume = 0;
-			}
-			int availableRunes = player.getCarriedItems().getInventory().countId(e.getKey());
-			if (availableRunes < amountToConsume) {
-				player.setSuspiciousPlayer(true, "player not all reagents for spell");
-				magicDebug(player, "runes_missing spell=" + spell.getName() + " rune=" + e.getKey()
-					+ " need=" + amountToConsume + " have=" + availableRunes);
-				player.message("You don't have all the reagents you need for this spell");
-				throw new SpellFailureException("Player does not have all the reagents you need for this spell");
 			}
 			if (amountToConsume > 0) {
 				runesToConsume.add(new AbstractMap.SimpleEntry<>(e.getKey(), amountToConsume));
@@ -199,11 +199,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	public static boolean hasRequiredRunesForAutoCast(Player player, SpellDef spell) {
-		Item equippedStaff = getEquippedStaff(player);
 		for (Entry<Integer, Integer> e : spell.getRunesRequired()) {
-			double preservationChance = getRuneNegationChance(player, equippedStaff, e.getKey());
-			int amountToConsume = preservationChance >= 1.0D ? 0 : e.getValue();
-			if (amountToConsume > 0 && player.getCarriedItems().getInventory().countId(e.getKey()) < amountToConsume) {
+			if (player.getCarriedItems().getInventory().countId(e.getKey()) < e.getValue()) {
 				return false;
 			}
 		}

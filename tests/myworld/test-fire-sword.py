@@ -19,6 +19,11 @@ def require_text(text: str, snippet: str, label: str) -> None:
         fail(f"{label} missing expected snippet: {snippet}")
 
 
+def forbid_text(text: str, snippet: str, label: str) -> None:
+    if snippet in text:
+        fail(f"{label} still contains retired snippet: {snippet}")
+
+
 def png_size(path: Path) -> tuple[int, int]:
     if not path.exists():
         fail(f"Missing PNG asset: {path}")
@@ -45,6 +50,14 @@ def require_entry(entries: list[dict], entry_id: int, label: str) -> dict:
 
 def require_drop(block: str, item_name: str, weight: int, label: str) -> None:
     require_text(block, f"ItemId.{item_name}.id(), 1, {weight}", label)
+
+
+def require_hidden_unique(drops: str, npc_name: str, item_name: str, rarity: str, label: str) -> None:
+    require_text(
+        drops,
+        f"addHiddenUniqueDrop(NpcId.{npc_name}.id(), ItemId.{item_name}.id(), 1, HiddenUniqueRarity.{rarity});",
+        label,
+    )
 
 
 def require_sword_assets(asset_name: str, display_name: str, icon_size: tuple[int, int], requires_equipment: bool = True) -> None:
@@ -123,7 +136,7 @@ def main() -> None:
     require_text(item_id_text, "FIRE_SWORD(3235)", "ItemId enum")
     require_text(item_id_text, "ICE_SWORD(3236)", "ItemId enum")
     require_text(item_id_text, "EARTH_SWORD(3237)", "ItemId enum")
-    require_text(item_id_text, "maxCustom = 3238", "ItemId maxCustom")
+    require_text(item_id_text, "maxCustom = 3239", "ItemId maxCustom")
 
     custom_items = load_json(ROOT / "server/conf/server/defs/ItemDefsCustom.json", "items")
     myworld_items = load_json(ROOT / "server/conf/server/defs/ItemDefsMyWorld.json", "items")
@@ -172,12 +185,22 @@ def main() -> None:
         fail("Moss Giant drop block not found")
     if green_dragon is None:
         fail("Green Dragon drop block not found")
-    require_drop(fire_giant.group(0), "FIRE_SWORD", 1, "Fire Giant Fire sword drop")
-    require_drop(red_dragon.group(0), "FIRE_SWORD", 2, "Red Dragon Fire sword drop")
-    require_drop(ice_giant.group(0), "ICE_SWORD", 1, "Ice Giant Ice sword drop")
-    require_drop(blue_dragon.group(0), "ICE_SWORD", 2, "Blue Dragon Ice sword drop")
-    require_drop(moss_giant.group(0), "EARTH_SWORD", 1, "Moss Giant Earth sword drop")
-    require_drop(green_dragon.group(0), "EARTH_SWORD", 2, "Green Dragon Earth sword drop")
+    forbid_text(fire_giant.group(0), "FIRE_SWORD", "Fire Giant normal drop table")
+    forbid_text(red_dragon.group(0), "FIRE_SWORD", "Red Dragon normal drop table")
+    forbid_text(ice_giant.group(0), "ICE_SWORD", "Ice Giant normal drop table")
+    forbid_text(blue_dragon.group(0), "ICE_SWORD", "Blue Dragon normal drop table")
+    forbid_text(moss_giant.group(0), "EARTH_SWORD", "Moss Giant normal drop table")
+    forbid_text(green_dragon.group(0), "EARTH_SWORD", "Green Dragon normal drop table")
+    require_hidden_unique(drops, "FIRE_GIANT", "FIRE_SWORD", "ULTRA_RARE_UNIQUE", "Fire Giant Fire sword hidden unique")
+    require_hidden_unique(drops, "RED_DRAGON", "FIRE_SWORD", "ULTRA_RARE_UNIQUE", "Red Dragon Fire sword hidden unique")
+    require_hidden_unique(drops, "ICE_GIANT", "ICE_SWORD", "ULTRA_RARE_UNIQUE", "Ice Giant Ice sword hidden unique")
+    require_hidden_unique(drops, "BLUE_DRAGON", "ICE_SWORD", "ULTRA_RARE_UNIQUE", "Blue Dragon Ice sword hidden unique")
+    require_hidden_unique(drops, "MOSS_GIANT", "EARTH_SWORD", "ULTRA_RARE_UNIQUE", "Moss Giant Earth sword hidden unique")
+    require_hidden_unique(drops, "MOSS_GIANT2", "EARTH_SWORD", "ULTRA_RARE_UNIQUE", "Moss Giant alternate Earth sword hidden unique")
+    require_hidden_unique(drops, "DRAGON", "EARTH_SWORD", "ULTRA_RARE_UNIQUE", "Green Dragon Earth sword hidden unique")
+    require_hidden_unique(drops, "FIRE_WARRIOR", "FIRE_SWORD", "MYTHIC_UNIQUE", "Fire Warrior Fire sword hidden unique")
+    require_hidden_unique(drops, "ICE_WARRIOR", "ICE_SWORD", "MYTHIC_UNIQUE", "Ice Warrior Ice sword hidden unique")
+    require_hidden_unique(drops, "EARTH_WARRIOR", "EARTH_SWORD", "MYTHIC_UNIQUE", "Earth Warrior Earth sword hidden unique")
 
     combat_formula = (ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java").read_text(encoding="utf-8")
     require_text(combat_formula, "applyFireSwordElementalBonus", "Fire sword combat hook")

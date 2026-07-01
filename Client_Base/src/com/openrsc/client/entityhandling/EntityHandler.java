@@ -1863,7 +1863,7 @@ public class EntityHandler {
 		} else {
 			sprites = new int[]{6, 1, 2, -1, -1, 77, 76, 81, -1, -1, -1, -1};
 		}
-		npcs.add(new NPCDef("Wizard Frumscone", "A confused looking wizard", "", 20, 15, 3, 10, false, sprites, 1, 255, 255, 15523536, 145, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Wizard Frumscone", "A confused looking wizard", "Give zombie eyes", "Give scales", 20, 15, 3, 10, false, sprites, 1, 255, 255, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{135, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("target practice zombie", "The living dead", "", 23, 28, 24, 23, true, sprites, 0, 0, 0, 0, 174, 259, 12, 12, 5, i++));
 		sprites = new int[]{6, 1, 2, 122, -1, -1, 83, 87, -1, -1, -1, -1};
@@ -5697,6 +5697,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3235, new ItemDef("Fire sword", "A sword imbued with fire", "", 40000, -1, "external-png:fire-sword-icon", false, true, 16, 0, true, false, true, 3235));
 		setCustomItemDefinition(3236, new ItemDef("Ice sword", "A sword imbued with ice", "", 40000, -1, "external-png:ice-sword-icon", false, true, 16, 0, true, false, true, 3236));
 		setCustomItemDefinition(3237, new ItemDef("Earth sword", "A sword imbued with earth", "", 40000, -1, "external-png:earth-sword-icon", false, true, 16, 0, true, false, true, 3237));
+		setCustomItemDefinition(3238, new ItemDef("Zombie eye", "A dead eye from a zombie", "", 3, -1, "external-png:zombie-eye", false, false, 0, 0, false, false, true, 3238));
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},

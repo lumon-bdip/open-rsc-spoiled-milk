@@ -127,6 +127,29 @@ def ensure_spell_runtime_cost_path() -> None:
         "getRuneNegationChance(player, equippedStaff, e.getKey())" in source,
         "Spell rune costs should use cloth/staff rune preservation",
     )
+    rune_check_start = source.index("public static Set<Entry<Integer, Integer>> checkSpellRunes")
+    rune_check_end = source.index("public static boolean isAutoCastableSpell")
+    rune_check_body = source[rune_check_start:rune_check_end]
+    require(
+        "availableRunes < e.getValue()" in rune_check_body,
+        "Spell rune checks should require the full rune cost before preservation is rolled",
+    )
+    require(
+        rune_check_body.index("availableRunes < e.getValue()")
+        < rune_check_body.index("getRuneNegationChance(player, equippedStaff, e.getKey())"),
+        "Spell rune preservation should be rolled only after rune availability is confirmed",
+    )
+    auto_cast_start = source.index("public static boolean hasRequiredRunesForAutoCast")
+    auto_cast_end = source.index("public static void queueAutoCastCombatSpell")
+    auto_cast_body = source[auto_cast_start:auto_cast_end]
+    require(
+        "countId(e.getKey()) < e.getValue()" in auto_cast_body,
+        "Auto-cast availability should require the full rune cost",
+    )
+    require(
+        "preservationChance >= 1.0D ? 0 : e.getValue()" not in auto_cast_body,
+        "Auto-cast availability should not waive rune requirements for 100 percent preservation",
+    )
     require(
         "player.getCarriedItems().remove(new Item(r.getKey(), r.getValue()))" in source,
         "Spell rune costs should be removed from the consume set",

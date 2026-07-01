@@ -13,6 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 NPC = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "Npc.java"
+NPC_DROPS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "constants" / "NpcDrops.java"
 NPC_BEHAVIOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcBehavior.java"
 NPC_ATTACK_STYLE_PROFILE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcAttackStyleProfile.java"
 GROUND_ITEM = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "GroundItem.java"
@@ -182,6 +183,8 @@ def main() -> None:
     )
     require_contains(NPC, "ArrayList<Item> items = personalDrop ? drops.rollPersonalLoot(owner, contributionScale) : drops.rollItem(owner);")
     require_contains(NPC, "groundItem.setAttribute(\"personalNpcDrop\", true);")
+    require_contains(NPC, "dropHiddenUniqueItems(owner, contributionScale, personalDrop);")
+    require_contains(NPC, "rollHiddenUniqueDrops(this.getID(), contributionScale)")
 
     require_regex(
         GROUND_ITEM,
@@ -198,6 +201,18 @@ def main() -> None:
     require_contains(DROP_TABLE, "drop.table.isRare() && (suppressRareTables || !passesContributionGate(contributionScale))")
     require_contains(DROP_TABLE, "scaleRareNormalDrops && isRareNormalDrop(drop) && !passesContributionGate(contributionScale)")
     require_contains(DROP_TABLE, "private static final double MINIMUM_RARE_CONTRIBUTION_SCALE = 0.05D;")
+    require_contains(NPC_DROPS, "private final HashMap<Integer, ArrayList<HiddenUniqueDrop>> hiddenUniqueDrops;")
+    require_contains(NPC_DROPS, "createHiddenUniqueDrops();")
+    require_contains(NPC_DROPS, "private void createHiddenUniqueDrops()")
+    require_contains(NPC_DROPS, "private void addHiddenUniqueDrop(final int npcId, final int itemId, final int amount, final HiddenUniqueRarity rarity)")
+    require_contains(NPC_DROPS, "public ArrayList<Item> rollHiddenUniqueDrops(final int npcId, final double contributionScale)")
+    require_contains(NPC_DROPS, "return Math.max(0.05D, Math.min(1.0D, contributionScale));")
+    require_contains(NPC_DROPS, "final double chance = (numerator / (double) denominator) * contributionScale;")
+    require_contains(NPC_DROPS, "HIDDEN(512)")
+    require_contains(NPC_DROPS, "RARE_UNIQUE(1024)")
+    require_contains(NPC_DROPS, "VERY_RARE_UNIQUE(2048)")
+    require_contains(NPC_DROPS, "ULTRA_RARE_UNIQUE(4096)")
+    require_contains(NPC_DROPS, "MYTHIC_UNIQUE(8192)")
 
     print("PASS: combat runtime invariants validated")
 

@@ -76,6 +76,8 @@ python3 ./tests/myworld/test-balance-fixtures.py
 python3 ./tests/myworld/test-agility-pouches.py
 python3 ./tests/myworld/test-armor-power-penalties.py
 python3 ./tests/myworld/test-demon-ash-prayer-source.py
+python3 ./tests/myworld/test-baby-blue-dragon-drops.py
+python3 ./tests/myworld/test-zombie-eye-drops.py
 python3 ./tests/myworld/test-drop-redistribution.py
 python3 ./tests/myworld/test-paladin-dark-warrior-drop-balance.py
 python3 ./tests/myworld/test-god-knight-drops-and-pvm-population.py
@@ -100,6 +102,8 @@ python3 ./tests/myworld/test-geode-mining-transition.py
 python3 ./tests/myworld/test-repeating-action-progress.py
 python3 ./tests/myworld/test-npc-defense-profiles.py
 python3 ./tests/myworld/test-npc-visual-fixes.py
+python3 ./tests/myworld/test-wizard-frumscone-cage.py
+python3 ./tests/myworld/test-wizard-frumscone-trades.py
 python3 ./tests/myworld/test-npc-processing-cleanup.py
 python3 ./tests/myworld/test-poison-balance.py
 python3 ./tests/myworld/test-poison-model.py

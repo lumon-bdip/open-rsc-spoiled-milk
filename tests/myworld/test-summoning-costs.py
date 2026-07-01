@@ -142,6 +142,20 @@ def main() -> int:
     for check in upkeep_checks:
         if check not in summoning:
             fail(f"Support summon upkeep escalation is missing: {check}")
+    if "getPotentialSummonCostAmount" in summoning:
+        fail("Summoning availability checks should not waive rune requirements before consumption")
+    has_costs_start = summoning.index("private static boolean hasSummonCosts")
+    has_costs_end = summoning.index("private static void awardSummoningExperience")
+    has_costs_body = summoning[has_costs_start:has_costs_end]
+    if "final int requiredAmount = entry.getValue();" not in has_costs_body:
+        fail("Summoning should require the full recipe cost before rune preservation is rolled")
+    upkeep_start = summoning.index("private static boolean consumeLifeRunes")
+    upkeep_end = summoning.index("private static boolean hasBlackUnicorn")
+    upkeep_body = summoning[upkeep_start:upkeep_end]
+    if "countId(ItemId.LIFE_RUNE.id(), Optional.of(false)) < amount" not in upkeep_body:
+        fail("Support upkeep should require life runes before preservation is rolled")
+    if upkeep_body.index("countId(ItemId.LIFE_RUNE.id(), Optional.of(false)) < amount") > upkeep_body.index("shouldPreserveRuneCost(owner, ItemId.LIFE_RUNE.id())"):
+        fail("Support upkeep must check life rune availability before preservation")
     if "Support upkeep rises every 3 minutes active" not in guide:
         fail("Summoning skill guide should explain support upkeep escalation")
     if "Upkeep recovers 1 step per minute inactive" not in guide:

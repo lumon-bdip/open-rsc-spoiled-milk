@@ -64,27 +64,16 @@ def main() -> None:
     forbid(shared_ultra, "DRAGON_MEDIUM_HELMET", "Shared ultra rare table should not drop dragon medium helm")
     forbid(shared_ultra, "LARGE_DRAGON_HELMET", "Shared ultra rare table should not drop dragon full helm")
 
+    forbid(drops, "dragonDropTable", "Retired OpenPK dragon drop table should stay removed")
+
     black_demon_ultra = between(
         drops,
         "private DropTable createBlackDemonUltraRareDropTable() {",
         "\n\tprivate void createBoneDrops()",
         "black demon ultra rare drop table",
     )
-    require(
-        black_demon_ultra,
-        "blackDemonUltraRareDropTable.addItemDrop(ItemId.DRAGON_MEDIUM_HELMET.id(), 1, 1);",
-        "Black Demon ultra rare table should drop dragon medium helm",
-    )
-    require(
-        black_demon_ultra,
-        "blackDemonUltraRareDropTable.addItemDrop(ItemId.LARGE_DRAGON_HELMET.id(), 1, 1);",
-        "Black Demon ultra rare table should drop dragon full helm",
-    )
-    require(
-        black_demon_ultra,
-        "blackDemonUltraRareDropTable.addItemDrop(ItemId.COINS.id(), 3000, 24);",
-        "Black Demon ultra rare table should keep total weight at 128 after adding dragon full helm",
-    )
+    forbid(black_demon_ultra, "DRAGON_MEDIUM_HELMET", "Black Demon ultra rare table should not directly drop dragon medium helm")
+    forbid(black_demon_ultra, "LARGE_DRAGON_HELMET", "Black Demon ultra rare table should not directly drop dragon full helm")
 
     black_demon = between(
         drops,
@@ -114,6 +103,33 @@ def main() -> None:
         "custom KBD rare drop table",
     )
     forbid(kbd_custom, "DRAGON_2_HANDED_SWORD", "KBD custom rare table should not drop dragon weapons")
+
+    hidden_unique = between(
+        drops,
+        "private void createHiddenUniqueDrops()",
+        "\n\tprivate void addHiddenUniqueDrop(final int npcId, final int itemId, final int amount, final HiddenUniqueRarity rarity)",
+        "hidden unique drop registry",
+    )
+    require(
+        hidden_unique,
+        "addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.DRAGON_MEDIUM_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
+        "Black Demon should drop dragon medium helm through the hidden unique layer",
+    )
+    require(
+        hidden_unique,
+        "addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.LARGE_DRAGON_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
+        "Black Demon should drop dragon full helm through the hidden unique layer",
+    )
+    require(
+        hidden_unique,
+        "addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
+        "Black Dragon should drop dragon square shield through the hidden unique layer",
+    )
+    require(
+        hidden_unique,
+        "addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
+        "King Black Dragon should drop dragon square shield through the hidden unique layer",
+    )
 
     print("PASS: dragon NPC drop sources validated")
 

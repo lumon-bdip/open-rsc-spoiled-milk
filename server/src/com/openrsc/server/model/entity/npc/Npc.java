@@ -756,6 +756,7 @@ public class Npc extends Mob {
 				calculateCustomKingBlackDragonDrop(owner, contributionScale, personalDrop); // Custom KDB Specific RDT
 			}
 		}
+		dropHiddenUniqueItems(owner, contributionScale, personalDrop);
 
 		/* 2. Drop bones (or nothing). */
 		int bones = getBonesDrop();
@@ -820,6 +821,24 @@ public class Npc extends Mob {
 						dropStandardItem(item, owner, personalDrop);
 					}
 				}
+			}
+		}
+	}
+
+	private void dropHiddenUniqueItems(final Player owner, final double contributionScale, final boolean personalDrop) {
+		final ArrayList<Item> items = getWorld().getNpcDrops().rollHiddenUniqueDrops(this.getID(), contributionScale);
+		for (Item item : items) {
+			if (item == null || !worldAllowsDrop(item)) {
+				continue;
+			}
+			if (Summoning.tryAutoBuryDrop(owner, item.getCatalogId(), item.getAmount())) {
+				continue;
+			}
+
+			if (getWorld().getServer().getEntityHandler().getItemDef(item.getCatalogId()).isStackable()) {
+				dropStackItem(item.getCatalogId(), item.getAmount(), owner, personalDrop);
+			} else {
+				dropStandardItem(item, owner, personalDrop);
 			}
 		}
 	}
