@@ -649,7 +649,7 @@ public class NpcDrops {
 		this.npcDrops.put(NpcId.SKELETON_LVL21.id(), currentNpcDrops);
 		this.npcDrops.put(NpcId.SKELETON_MAGE.id(), currentNpcDrops);
 
-		currentNpcDrops = new DropTable("Zombie Level 24 (41, 359, 516)");
+		currentNpcDrops = new DropTable("Zombie Level 24 (41, 359)");
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 18, 21);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 10, 10);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 26, 8);
@@ -668,6 +668,33 @@ public class NpcDrops {
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.ZOMBIE_LVL24_GEN.id(), currentNpcDrops);
 		this.npcDrops.put(NpcId.ZOMBIE_INVOKED.id(), currentNpcDrops);
+
+		currentNpcDrops = new DropTable("Target Practice Zombie (516)");
+		// Common drops
+		currentNpcDrops.addItemDrop(ItemId.FIRE_RUNE.id(), 2, 8);
+		currentNpcDrops.addItemDrop(ItemId.WATER_RUNE.id(), 2, 8);
+		currentNpcDrops.addItemDrop(ItemId.AIR_RUNE.id(), 2, 8);
+		currentNpcDrops.addItemDrop(ItemId.EARTH_RUNE.id(), 2, 8);
+		currentNpcDrops.addItemDrop(ItemId.MIND_RUNE.id(), 1, 8);
+		currentNpcDrops.addItemDrop(ItemId.BODY_RUNE.id(), 1, 8);
+		// Uncommon drops
+		currentNpcDrops.addItemDrop(ItemId.FIRE_RUNE.id(), 4, 4);
+		currentNpcDrops.addItemDrop(ItemId.WATER_RUNE.id(), 4, 4);
+		currentNpcDrops.addItemDrop(ItemId.AIR_RUNE.id(), 4, 4);
+		currentNpcDrops.addItemDrop(ItemId.EARTH_RUNE.id(), 4, 4);
+		currentNpcDrops.addItemDrop(ItemId.MIND_RUNE.id(), 2, 4);
+		currentNpcDrops.addItemDrop(ItemId.BODY_RUNE.id(), 2, 4);
+		currentNpcDrops.addItemDrop(ItemId.COSMIC_RUNE.id(), 1, 4);
+		currentNpcDrops.addItemDrop(ItemId.NATURE_RUNE.id(), 1, 4);
+		currentNpcDrops.addItemDrop(ItemId.CHAOS_RUNE.id(), 1, 4);
+		currentNpcDrops.addItemDrop(ItemId.LAW_RUNE.id(), 2, 4);
+		currentNpcDrops.addItemDrop(ItemId.ZOMBIE_EYE.id(), 1, 4);
+		// Rare drops
+		currentNpcDrops.addItemDrop(ItemId.CHAOS_RUNE.id(), 2, 1);
+		currentNpcDrops.addItemDrop(ItemId.COSMIC_RUNE.id(), 2, 1);
+		currentNpcDrops.addItemDrop(ItemId.NATURE_RUNE.id(), 2, 1);
+		currentNpcDrops.addItemDrop(ItemId.LAW_RUNE.id(), 2, 1);
+		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.TARGET_PRACTICE_ZOMBIE.id(), currentNpcDrops);
 
 		currentNpcDrops = new DropTable("Skeleton Level 31 (45, 179, 195)");

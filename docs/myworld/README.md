@@ -37,6 +37,7 @@ repository root [`README.md`](../../README.md).
 - [migration-regression-audit.md](migration-regression-audit.md): resolved migration recovery record and guardrail notes.
 - [dev-admin-commands.md](dev-admin-commands.md): MyWorld development account roles and practical command reference.
 - [object-ids.md](object-ids.md): builder-facing scenery/object ID reference, starting with mineable ore, rock, and gem nodes.
+- [enemy-ids.md](enemy-ids.md): builder-facing enemy NPC placement commands and attackable-only NPC ID reference.
 - [testing-quick-reference.md](testing-quick-reference.md): compact field-testing reference for commands, IDs, and targeted test fixtures.
 - [client-sprite-reference.md](client-sprite-reference.md): lookup notes for custom sprite references, authentic item icon offsets, and equipment palette exports.
 - This README: current repository shape, active paths, and archived reference locations.

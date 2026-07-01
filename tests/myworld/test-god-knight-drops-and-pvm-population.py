@@ -45,6 +45,12 @@ def is_karamja_volcano_fire_warrior_overlay(loc: dict) -> bool:
     return int(loc["id"]) == 843 and 417 <= x <= 424 and 3544 <= y <= 3550
 
 
+def is_frumscone_training_cage_overlay(loc: dict) -> bool:
+    x = int(loc["start"]["X"])
+    y = int(loc["start"]["Y"])
+    return int(loc["id"]) in (203, 516) and 600 <= x <= 624 and 3578 <= y <= 3591
+
+
 def require_valid_drop_budget(drops: str, table_name: str) -> None:
     start = drops.find(f'new DropTable("{table_name}")')
     require(start >= 0, f"Missing drop table: {table_name}")
@@ -156,9 +162,17 @@ def main() -> None:
         fire_warrior_starts == {(418, 3546), (420, 3547), (422, 3548), (424, 3546)},
         "Karamja Fire warrior starts should be clustered around 420,3547",
     )
+    training_cage_spawns = [loc for loc in overlay if is_frumscone_training_cage_overlay(loc)]
+    training_cage_counts = Counter(loc["id"] for loc in training_cage_spawns)
+    require(
+        training_cage_counts == {516: 2, 203: 4},
+        f"Frumscone training cage overlay should have 2 target-practice zombies and 4 baby blue dragons: {dict(training_cage_counts)}",
+    )
     population_overlay = [
         loc for loc in overlay
-        if not is_rangers_guild_overlay(loc) and not is_karamja_volcano_fire_warrior_overlay(loc)
+        if not is_rangers_guild_overlay(loc)
+        and not is_karamja_volcano_fire_warrior_overlay(loc)
+        and not is_frumscone_training_cage_overlay(loc)
     ]
     counts = Counter(loc["id"] for loc in population_overlay)
     expected_counts = {

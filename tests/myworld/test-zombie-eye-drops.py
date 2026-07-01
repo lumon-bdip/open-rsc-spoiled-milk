@@ -42,6 +42,57 @@ def require_drop_table(drops: str, table_name: str) -> None:
 		f"{table_name} should have an uncommon Zombie eye drop")
 
 
+def require_target_practice_zombie_table(drops: str) -> None:
+	match = re.search(
+		r'currentNpcDrops = new DropTable\("Target Practice Zombie \(516\)"\);'
+		r"(?P<body>.*?)"
+		r"currentNpcDrops\.addEmptyDrop\(128 - currentNpcDrops\.getTotalWeight\(\)\);",
+		drops,
+		re.S,
+	)
+	require(match is not None, "Missing target-practice zombie drop table")
+	body = match.group("body")
+
+	for banned in (
+		"ItemId.COINS",
+		"ItemId.BRONZE_MACE",
+		"ItemId.BRONZE_DAGGER",
+		"ItemId.CROSSBOW",
+		"ItemId.TINDERBOX",
+		"ItemId.COPPER_KITE_SHIELD",
+		"ItemId.TIN_ORE",
+		"ItemId.EYE_OF_NEWT",
+	):
+		require(banned not in body, f"Target-practice zombies should not drop {banned}")
+
+	for item in ("FIRE_RUNE", "WATER_RUNE", "AIR_RUNE", "EARTH_RUNE"):
+		require(f"currentNpcDrops.addItemDrop(ItemId.{item}.id(), 2, 8);" in body,
+			f"Target-practice zombies should commonly drop 2 {item}")
+		require(f"currentNpcDrops.addItemDrop(ItemId.{item}.id(), 4, 4);" in body,
+			f"Target-practice zombies should uncommonly drop 4 {item}")
+
+	for item in ("MIND_RUNE", "BODY_RUNE"):
+		require(f"currentNpcDrops.addItemDrop(ItemId.{item}.id(), 1, 8);" in body,
+			f"Target-practice zombies should commonly drop 1 {item}")
+		require(f"currentNpcDrops.addItemDrop(ItemId.{item}.id(), 2, 4);" in body,
+			f"Target-practice zombies should uncommonly drop 2 {item}")
+
+	for item in ("COSMIC_RUNE", "NATURE_RUNE", "CHAOS_RUNE"):
+		require(f"currentNpcDrops.addItemDrop(ItemId.{item}.id(), 1, 4);" in body,
+			f"Target-practice zombies should uncommonly drop 1 {item}")
+		require(f"currentNpcDrops.addItemDrop(ItemId.{item}.id(), 2, 1);" in body,
+			f"Target-practice zombies should rarely drop 2 {item}")
+
+	require("currentNpcDrops.addItemDrop(ItemId.LAW_RUNE.id(), 2, 4);" in body,
+		"Target-practice zombies should uncommonly drop 2 LAW_RUNE")
+	require("currentNpcDrops.addItemDrop(ItemId.LAW_RUNE.id(), 2, 1);" in body,
+		"Target-practice zombies should rarely drop 2 LAW_RUNE")
+	require("currentNpcDrops.addItemDrop(ItemId.ZOMBIE_EYE.id(), 1, 4);" in body,
+		"Target-practice zombies should keep the uncommon Zombie eye drop")
+	require("this.npcDrops.put(NpcId.TARGET_PRACTICE_ZOMBIE.id(), currentNpcDrops);" in drops,
+		"Target-practice zombies should use their dedicated drop table")
+
+
 def png_visible_colors(path: Path) -> set[tuple[int, int, int]]:
 	data = path.read_bytes()
 	require(data[:8] == b"\x89PNG\r\n\x1a\n", "Zombie eye sprite should be a PNG")
@@ -129,19 +180,18 @@ def main() -> None:
 
 	drops = NPC_DROPS.read_text(encoding="utf-8")
 	for table_name in (
-		"Zombie Level 24 (41, 359, 516)",
+		"Zombie Level 24 (41, 359)",
 		"Zombie Level 19 (52)",
 		"Zombie Level 32 (68)",
 		"Zombie (Entrana) (214)",
 	):
 		require_drop_table(drops, table_name)
+	require_target_practice_zombie_table(drops)
 
 	require("this.npcDrops.put(NpcId.ZOMBIE_WMAZEKEY.id(), currentNpcDrops);" in drops,
 		"Maze zombie should keep inheriting the Level 32 zombie drops")
 	require("this.npcDrops.put(NpcId.ZOMBIE_INVOKED.id(), currentNpcDrops);" in drops,
 		"Invoked zombie should keep inheriting the Level 24 zombie drops")
-	require("this.npcDrops.put(NpcId.TARGET_PRACTICE_ZOMBIE.id(), currentNpcDrops);" in drops,
-		"Target-practice zombie should keep inheriting the Level 24 zombie drops")
 
 	print("PASS: Zombie eye drops validated")
 

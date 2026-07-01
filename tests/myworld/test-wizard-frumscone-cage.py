@@ -13,12 +13,12 @@ WIZARD_FRUMSCONE = 515
 TARGET_PRACTICE_ZOMBIE = 516
 TRAINING_CAGE_DOOR = 150
 
-CAGE_MIN = {"X": 604, "Y": 3583}
-CAGE_MAX = {"X": 610, "Y": 3588}
+CAGE_MIN = {"X": 604, "Y": 3584}
+CAGE_MAX = {"X": 609, "Y": 3588}
 EXPECTED_ZOMBIE_STARTS = {
-	(607, 3583),
-	(610, 3583),
 	(605, 3584),
+	(607, 3584),
+	(608, 3584),
 	(606, 3585),
 	(609, 3585),
 	(607, 3586),
@@ -65,6 +65,8 @@ def main() -> None:
 	]
 	require({point_tuple(loc["start"]) for loc in zombies} == EXPECTED_ZOMBIE_STARTS,
 		"Target practice zombie starts should be the eight caged positions")
+	require(len(zombies) == len(EXPECTED_ZOMBIE_STARTS),
+		"Target practice zombies should not have extra starts on the cage edge")
 	for zombie in zombies:
 		require(zombie["min"] == CAGE_MIN and zombie["max"] == CAGE_MAX,
 			f"Target practice zombie at {point_tuple(zombie['start'])} should stay inside the cage")

@@ -37,8 +37,7 @@ def main() -> None:
 		"Wizard Frumscone right-click command matching should be case-insensitive")
 
 	for line in (
-		'"Do you like my magic zombies"',
-		'"...and baby dragons..."',
+		'"Do you like my magic zombies and baby blue dragons"',
 		'"If you bring me blue dragon scales or zombie eyes"',
 		"\"I'll trade each zombie eye for 2 stone\"",
 		'"And each blue dragon scale for 3 stone"',
@@ -61,6 +60,10 @@ def main() -> None:
 		"Wizard Frumscone should award rune stone to inventory first")
 	require("dropStoneOverflow(player, droppedStone);" in plugin,
 		"Wizard Frumscone should drop stone overflow")
+	require("\"Thank you, here's \" + stoneCount + \" stone in return\"" in plugin,
+		"Wizard Frumscone should use the smoother trade completion response")
+	require('"I traded those for "' not in plugin,
+		"Wizard Frumscone should not use the old clunky trade response")
 	require(re.search(
 		r"new GroundItem\(player\.getWorld\(\), ItemId\.RUNE_STONE\.id\(\), "
 		r"player\.getX\(\), player\.getY\(\), 1, player\)",

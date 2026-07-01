@@ -14,13 +14,18 @@ These are dev-only commands for building scenery in-game and turning the result 
 - `::worldedits`: lists pending scenery edits that have not been written to disk yet.
 - `::saveworldedits`: writes pending edits to `MyWorldSceneryLocs.json` and `MyWorldSceneryRemovals.json`.
 - `::clearworldedits`: discards the pending save queue without reverting the live world.
+- `::cnpc <id> <radius>`: spawns a respawning NPC on your current tile and queues that spawn for saving.
+- `::cnpc <id> <radius> <x> <y>`: spawns a respawning NPC at explicit coordinates and queues that spawn for saving.
+- `::rpc <npc_instance_id>`: removes a live NPC and queues its spawn point for persistent removal.
 - `::coords`: prints your current coordinates.
 - `::tile`: prints tile traversal/debug data for your current tile.
 - `::cyclescenery`: cycles scenery IDs on your tile for visual browsing. Use carefully; it mutates the live tile while cycling.
 
 Notes:
 - This workflow currently persists scenery objects, which covers ore rocks and most placeable game objects.
+- The same save workflow now persists NPC spawn points in `MyWorldNpcLocs.json`; NPC removals are written to `MyWorldNpcRemovals.json`.
 - For quick area building, use `::addobject <id>` once, move to the next tile, then use `::r`.
+- For enemies, use a radius that matches how far the NPC should wander from its spawn tile. A radius of `0` pins it to the tile.
 - To replace existing scenery, use `::removeobject` first, then `::addobject <id>`. The last pending edit for a tile is what gets saved.
 - Boundary/wall-object placement commands still exist, but they are not saved by `::saveworldedits` yet.
 - `::clearworldedits` only clears the queued file changes. Restarting the server is the clean way to undo unsaved live edits.

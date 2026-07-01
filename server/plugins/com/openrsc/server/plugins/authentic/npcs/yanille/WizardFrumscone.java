@@ -44,8 +44,7 @@ public class WizardFrumscone implements TalkNpcTrigger, OpNpcTrigger {
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
 		if (n.getID() == NpcId.WIZARD_FRUMSCONE.id()) {
-			npcsay(player, n, "Do you like my magic zombies",
-				"...and baby dragons...",
+			npcsay(player, n, "Do you like my magic zombies and baby blue dragons",
 				"Feel free to kill them",
 				"Theres plenty more where these came from",
 				"If you bring me blue dragon scales or zombie eyes",
@@ -144,10 +143,10 @@ public class WizardFrumscone implements TalkNpcTrigger, OpNpcTrigger {
 		dropStoneOverflow(player, droppedStone);
 
 		if (droppedStone > 0) {
-			npcsay(player, n, "I traded those for " + stoneCount + " stone",
+			npcsay(player, n, "Thank you, here's " + stoneCount + " stone in return",
 				"Some of it fell to the ground because you had no room");
 		} else {
-			npcsay(player, n, "I traded those for " + stoneCount + " stone");
+			npcsay(player, n, "Thank you, here's " + stoneCount + " stone in return");
 		}
 	}
 

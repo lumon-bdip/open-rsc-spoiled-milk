@@ -34,6 +34,7 @@ python3 ./tests/myworld/test-charged-item-bank-preservation.py
 python3 ./tests/myworld/test-auto-attack-hud.py
 python3 ./tests/myworld/test-source-cleanup.py
 python3 ./tests/myworld/test-world-start.py
+python3 ./tests/myworld/test-world-npc-edit-persistence.py
 python3 ./tests/myworld/test-fatigue-sleep-removal.py
 python3 ./tests/myworld/test-gathering-rework-plan.py
 python3 ./tests/myworld/test-resource-seed-placement.py

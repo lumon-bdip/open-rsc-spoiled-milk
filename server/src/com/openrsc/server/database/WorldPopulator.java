@@ -12,6 +12,7 @@ import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.SystemUtil;
+import com.openrsc.server.util.WorldNpcEditFiles;
 import com.openrsc.server.util.WorldSceneryEditFiles;
 import com.openrsc.server.util.rsc.Formulae;
 import org.apache.logging.log4j.LogManager;
@@ -102,6 +103,7 @@ public final class WorldPopulator {
 			loadNpcLocs(getWorld().getServer().getConfig().CONFIG_DIR + authenticMobFile);
 			loadCustomLocs(LocType.NPC);
 			applyMyWorldNpcLocationCleanup();
+			applyMyWorldNpcRemovals();
 			// NpcLocation[] npcLocations = getWorld().getServer().getDatabase().getNpcLocs();
 			// for (NpcLocation npcLocation : npcLocations) {
 			for (NPCLoc loc : npclocs) {
@@ -507,6 +509,25 @@ public final class WorldPopulator {
 		}
 		npclocs.clear();
 		npclocs.addAll(filteredLocs);
+	}
+
+	private void applyMyWorldNpcRemovals() {
+		if (!getWorld().getServer().getConfig().WANT_MYWORLD) {
+			return;
+		}
+		try {
+			Set<String> removals = WorldNpcEditFiles.readNpcRemovalKeys(
+				WorldNpcEditFiles.npcRemovalsPath(getWorld().getServer().getConfig().CONFIG_DIR)
+			);
+			if (removals.isEmpty()) {
+				return;
+			}
+			int before = npclocs.size();
+			npclocs.removeIf(loc -> removals.contains(WorldNpcEditFiles.npcKey(loc)));
+			LOGGER.info("Applied {} MyWorld NPC removals.", before - npclocs.size());
+		} catch (Exception e) {
+			LOGGER.error(e);
+		}
 	}
 
 	private boolean keepBankerNpcLoc(NPCLoc loc, ArrayList<int[]> bankerClusters) {

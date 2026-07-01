@@ -103,6 +103,7 @@ def parse_itemdef_ids(source: str) -> set[int]:
         "addLawAmuletLine",
         "addLawBankingRingLine",
         "addCosmicAmuletLine",
+        "addChaosWeavingAmuletLine",
         "addDeathAmuletLine",
         "addSoulRenewalAmuletLine",
         "addSoulNecklaceLine",

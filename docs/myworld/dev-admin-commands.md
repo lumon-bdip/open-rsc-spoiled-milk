@@ -208,6 +208,9 @@ NPCs:
 - `::rnpc`
 - `::rpc`
 
+In MyWorld development, `::cnpc <npc_id> <radius> [x] [y]` creates a live respawning NPC and queues the spawn for `::saveworldedits`.
+`::rpc <npc_instance_id>` removes a live NPC and queues that spawn point for removal. Saved NPC spawns go to `MyWorldNpcLocs.json`; removals go to `MyWorldNpcRemovals.json`.
+
 Scenery and boundaries:
 
 - `::createobject [object_id]`

@@ -3689,6 +3689,67 @@ public final class Scene {
 		return m_Wb;
 	}
 
+	public int[] projectScreenToGroundTile(int screenX, int screenY, int tileSize, int groundY) {
+		if (tileSize <= 0) {
+			return null;
+		}
+
+		double scale = 1 << this.rot1024_vp_src;
+		double rayX = (screenX - this.m_Zb) / scale;
+		double rayY = (screenY - this.m_Nb) / scale;
+		double rayZ = 1.0D;
+
+		double[] ray = rotateCameraRay(rayX, rayY, rayZ, 1024 - this.cameraProjX & 1023, Axis.X);
+		ray = rotateCameraRay(ray[0], ray[1], ray[2], 1024 - this.cameraProjY & 1023, Axis.Y);
+		ray = rotateCameraRay(ray[0], ray[1], ray[2], 1024 - this.cameraProjZ & 1023, Axis.Z);
+		rayX = ray[0];
+		rayY = ray[1];
+		rayZ = ray[2];
+
+		if (Math.abs(rayY) < 0.000001D) {
+			return null;
+		}
+
+		double t = (groundY - this.rot1024_off_y) / rayY;
+		if (t <= 0.0D) {
+			return null;
+		}
+
+		int tileX = Math.floorDiv((int) Math.floor(this.rot1024_off_x + rayX * t), tileSize);
+		int tileZ = Math.floorDiv((int) Math.floor(this.rot1024_off_z + rayZ * t), tileSize);
+		return new int[] {tileX, tileZ};
+	}
+
+	private enum Axis {
+		X,
+		Y,
+		Z
+	}
+
+	private static double[] rotateCameraRay(double x, double y, double z, int angle, Axis axis) {
+		if (angle == 0) {
+			return new double[] {x, y, z};
+		}
+
+		double sin = FastMath.trigTable_1024[angle] / 32768.0D;
+		double cos = FastMath.trigTable_1024[1024 + angle] / 32768.0D;
+		double tmp;
+		if (axis == Axis.X) {
+			tmp = y * cos - sin * z;
+			z = sin * y + cos * z;
+			y = tmp;
+		} else if (axis == Axis.Y) {
+			tmp = cos * x + z * sin;
+			z = cos * z - x * sin;
+			x = tmp;
+		} else {
+			tmp = y * sin + cos * x;
+			y = y * cos - x * sin;
+			x = tmp;
+		}
+		return new double[] {x, y, z};
+	}
+
 	public final void setMidpoints(int var1, boolean var2, int var3, int var4, int var5, int var6, int var7) {
 		try {
 			this.rot1024_vp_src = var6;

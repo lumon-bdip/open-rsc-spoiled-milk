@@ -10248,9 +10248,23 @@ public final class mudclient implements Runnable {
 							this.world.faceTileZ[var2]);
 					}
 				}
-			}
+				} else if (this.devClickTeleportMode && canUseClickTeleport()
+					&& this.selectedSpell < 0 && this.selectedItemInventoryIndex < 0) {
+					int[] fallbackTile = this.scene.projectScreenToGroundTile(
+						this.mouseX,
+						this.mouseY,
+						this.tileSize,
+						getClickTeleportGroundPlaneY());
+					if (fallbackTile != null) {
+						this.menuVisible = true;
+						this.m_rf = this.midRegionBaseX + fallbackTile[0];
+						this.m_Cg = this.midRegionBaseZ + fallbackTile[1];
+						this.menuCommon.addCharacterItem_WithID(fallbackTile[0], "",
+							MenuItemAction.LANDSCAPE_WALK_HERE, "Teleport here", fallbackTile[1]);
+					}
+				}
 
-		} catch (RuntimeException var16) {
+			} catch (RuntimeException var16) {
 			throw GenUtil.makeThrowable(var16, "client.TA(" + var1 + ')');
 		}
 	}
@@ -21627,6 +21641,13 @@ public final class mudclient implements Runnable {
 		} else {
 			this.showMessage(false, null, "Usage: ::clickteleport [on/off]", MessageType.GAME, 0, null);
 		}
+	}
+
+	private int getClickTeleportGroundPlaneY() {
+		if (this.localPlayer == null || this.world == null) {
+			return 0;
+		}
+		return -this.world.getElevation(this.localPlayer.currentX, this.localPlayer.currentZ);
 	}
 
 	private void sendBlinkToTile(int tileX, int tileZ) {

@@ -10,6 +10,7 @@ import com.openrsc.server.content.Summoning;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
 import com.openrsc.server.external.ObjectWoodcuttingDef;
+import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -23,6 +24,7 @@ import com.openrsc.server.plugins.authentic.skills.fishing.Fishing;
 import com.openrsc.server.plugins.authentic.skills.woodcutting.Woodcutting;
 import com.openrsc.server.plugins.triggers.CommandTrigger;
 import com.openrsc.server.util.MessageFilter;
+import com.openrsc.server.util.WorldNpcEditFiles;
 import com.openrsc.server.util.WorldSceneryEditFiles;
 import com.openrsc.server.util.rsc.AppearanceRetroConverter;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -41,6 +43,8 @@ public final class Development implements CommandTrigger {
 	private static final Logger LOGGER = LogManager.getLogger(Development.class);
 	private static final LinkedHashMap<String, WorldSceneryEditFiles.Edit> PENDING_SCENERY_EDITS =
 		new LinkedHashMap<String, WorldSceneryEditFiles.Edit>();
+	private static final LinkedHashMap<String, WorldNpcEditFiles.Edit> PENDING_NPC_EDITS =
+		new LinkedHashMap<String, WorldNpcEditFiles.Edit>();
 	private static final HashMap<String, Integer> LAST_SCENERY_PLACEMENT_IDS =
 		new HashMap<String, Integer>();
 
@@ -501,6 +505,10 @@ public final class Development implements CommandTrigger {
 			player.message(badSyntaxPrefix + command.toUpperCase() + " [id] [radius] (x) (y)");
 			return;
 		}
+		if (radius < 0) {
+			player.message(messagePrefix + "NPC radius must be 0 or greater.");
+			return;
+		}
 
 		int x = -1;
 		int y = -1;
@@ -534,6 +542,7 @@ public final class Development implements CommandTrigger {
 
 		player.getWorld().registerNpc(n);
 		n.setShouldRespawn(true);
+		queueWorldNpcUpsert(player, n.getLoc());
 		player.message(messagePrefix + "Added NPC: " + n.getDef().getName() + " at " + npcLoc + " with radius " + radius);
 	}
 
@@ -560,6 +569,7 @@ public final class Development implements CommandTrigger {
 		}
 
 		player.message(messagePrefix + "Removed NPC: " + npc.getDef().getName() + " with instance ID " + id);
+		queueWorldNpcRemoval(player, npc.getLoc());
 		player.getWorld().unregisterNpc(npc);
 	}
 
@@ -928,6 +938,24 @@ public final class Development implements CommandTrigger {
 		));
 	}
 
+	private void queueWorldNpcUpsert(Player player, NPCLoc loc) {
+		queueWorldNpcEdit(player, WorldNpcEditFiles.Edit.upsert(loc));
+	}
+
+	private void queueWorldNpcRemoval(Player player, NPCLoc loc) {
+		queueWorldNpcEdit(player, WorldNpcEditFiles.Edit.remove(loc));
+	}
+
+	private void queueWorldNpcEdit(Player player, WorldNpcEditFiles.Edit edit) {
+		int pendingCount;
+		synchronized (PENDING_NPC_EDITS) {
+			PENDING_NPC_EDITS.put(edit.key(), edit);
+			pendingCount = PENDING_NPC_EDITS.size();
+		}
+		player.message(messagePrefix + "Queued NPC world edit. Pending NPC edits: " + pendingCount
+			+ ". Use ::saveworldedits to persist.");
+	}
+
 	private void queueWorldSceneryEdit(Player player, WorldSceneryEditFiles.Edit edit) {
 		if (edit.type != 0) {
 			player.message(messagePrefix + "World edit persistence currently supports scenery objects only.");
@@ -944,20 +972,33 @@ public final class Development implements CommandTrigger {
 
 	private void listWorldEdits(Player player) {
 		List<WorldSceneryEditFiles.Edit> edits;
+		List<WorldNpcEditFiles.Edit> npcEdits;
 		synchronized (PENDING_SCENERY_EDITS) {
 			edits = new ArrayList<WorldSceneryEditFiles.Edit>(PENDING_SCENERY_EDITS.values());
 		}
+		synchronized (PENDING_NPC_EDITS) {
+			npcEdits = new ArrayList<WorldNpcEditFiles.Edit>(PENDING_NPC_EDITS.values());
+		}
 
-		if (edits.isEmpty()) {
+		if (edits.isEmpty() && npcEdits.isEmpty()) {
 			player.message(messagePrefix + "No pending world edits.");
 			return;
 		}
 
-		player.message(messagePrefix + "Pending world edits: " + edits.size());
+		player.message(messagePrefix + "Pending world edits: scenery " + edits.size()
+			+ ", NPCs " + npcEdits.size() + ".");
 		int shown = 0;
 		for (WorldSceneryEditFiles.Edit edit : edits) {
 			if (shown >= 8) {
-				player.message(messagePrefix + "...and " + (edits.size() - shown) + " more.");
+				player.message(messagePrefix + "...and " + (edits.size() + npcEdits.size() - shown) + " more.");
+				return;
+			}
+			player.message(messagePrefix + edit.describe());
+			shown++;
+		}
+		for (WorldNpcEditFiles.Edit edit : npcEdits) {
+			if (shown >= 8) {
+				player.message(messagePrefix + "...and " + (edits.size() + npcEdits.size() - shown) + " more.");
 				return;
 			}
 			player.message(messagePrefix + edit.describe());
@@ -967,30 +1008,54 @@ public final class Development implements CommandTrigger {
 
 	private void saveWorldEdits(Player player) {
 		List<WorldSceneryEditFiles.Edit> edits;
+		List<WorldNpcEditFiles.Edit> npcEdits;
 		synchronized (PENDING_SCENERY_EDITS) {
 			edits = new ArrayList<WorldSceneryEditFiles.Edit>(PENDING_SCENERY_EDITS.values());
 		}
+		synchronized (PENDING_NPC_EDITS) {
+			npcEdits = new ArrayList<WorldNpcEditFiles.Edit>(PENDING_NPC_EDITS.values());
+		}
 
-		if (edits.isEmpty()) {
+		if (edits.isEmpty() && npcEdits.isEmpty()) {
 			player.message(messagePrefix + "No pending world edits to save.");
 			return;
 		}
 
 		try {
-			WorldSceneryEditFiles.SaveResult result = WorldSceneryEditFiles.save(
-				player.getWorld().getServer().getConfig().CONFIG_DIR,
-				edits
-			);
-			synchronized (PENDING_SCENERY_EDITS) {
-				for (WorldSceneryEditFiles.Edit edit : edits) {
-					PENDING_SCENERY_EDITS.remove(edit.key());
+			WorldSceneryEditFiles.SaveResult sceneryResult = null;
+			WorldNpcEditFiles.SaveResult npcResult = null;
+			String configDir = player.getWorld().getServer().getConfig().CONFIG_DIR;
+			if (!edits.isEmpty()) {
+				sceneryResult = WorldSceneryEditFiles.save(configDir, edits);
+				synchronized (PENDING_SCENERY_EDITS) {
+					for (WorldSceneryEditFiles.Edit edit : edits) {
+						PENDING_SCENERY_EDITS.remove(edit.key());
+					}
 				}
 			}
-			player.message(messagePrefix + "Saved " + result.editsApplied + " world edits.");
-			player.message(messagePrefix + "Scenery locs: " + result.sceneryLocsWritten
-				+ ", removals: " + result.removalsWritten + ".");
-			LOGGER.info(player.getUsername() + " saved " + result.editsApplied + " world scenery edits to "
-				+ result.sceneryLocsPath + " and " + result.removalsPath);
+			if (!npcEdits.isEmpty()) {
+				npcResult = WorldNpcEditFiles.save(configDir, npcEdits);
+				synchronized (PENDING_NPC_EDITS) {
+					for (WorldNpcEditFiles.Edit edit : npcEdits) {
+						PENDING_NPC_EDITS.remove(edit.key());
+					}
+				}
+			}
+			int saved = (sceneryResult == null ? 0 : sceneryResult.editsApplied)
+				+ (npcResult == null ? 0 : npcResult.editsApplied);
+			player.message(messagePrefix + "Saved " + saved + " world edits.");
+			if (sceneryResult != null) {
+				player.message(messagePrefix + "Scenery locs: " + sceneryResult.sceneryLocsWritten
+					+ ", removals: " + sceneryResult.removalsWritten + ".");
+				LOGGER.info(player.getUsername() + " saved " + sceneryResult.editsApplied + " world scenery edits to "
+					+ sceneryResult.sceneryLocsPath + " and " + sceneryResult.removalsPath);
+			}
+			if (npcResult != null) {
+				player.message(messagePrefix + "NPC locs: " + npcResult.npcLocsWritten
+					+ ", removals: " + npcResult.removalsWritten + ".");
+				LOGGER.info(player.getUsername() + " saved " + npcResult.editsApplied + " world NPC edits to "
+					+ npcResult.npcLocsPath + " and " + npcResult.removalsPath);
+			}
 		} catch (Exception e) {
 			LOGGER.error(e);
 			player.message(messagePrefix + "Failed to save world edits: " + e.getMessage());
@@ -999,11 +1064,17 @@ public final class Development implements CommandTrigger {
 
 	private void clearWorldEdits(Player player) {
 		int count;
+		int npcCount;
 		synchronized (PENDING_SCENERY_EDITS) {
 			count = PENDING_SCENERY_EDITS.size();
 			PENDING_SCENERY_EDITS.clear();
 		}
-		player.message(messagePrefix + "Cleared " + count + " pending world edits. Live objects were not reverted.");
+		synchronized (PENDING_NPC_EDITS) {
+			npcCount = PENDING_NPC_EDITS.size();
+			PENDING_NPC_EDITS.clear();
+		}
+		player.message(messagePrefix + "Cleared " + (count + npcCount)
+			+ " pending world edits. Live entities were not reverted.");
 	}
 
 	private void tileInformation(Player player) {

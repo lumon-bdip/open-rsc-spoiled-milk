@@ -10,6 +10,7 @@ PAYLOAD_235_GENERATOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" /
 PAYLOAD_CUSTOM_GENERATOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "generators" / "impl" / "PayloadCustomGenerator.java"
 PAYLOAD_VALIDATOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "PayloadValidator.java"
 GAME_STATE_UPDATER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "GameStateUpdater.java"
+PACKET_HANDLER = ROOT / "Client_Base" / "src" / "orsc" / "PacketHandler.java"
 
 
 def fail(message: str) -> None:
@@ -37,10 +38,12 @@ def main() -> None:
     require(PAYLOAD_CUSTOM_GENERATOR, "builder.writeShort(movement.localX);", "custom movement local X encoding")
     require(PAYLOAD_CUSTOM_GENERATOR, "builder.writeShort(movement.localY);", "custom movement local Y encoding")
     require(PAYLOAD_CUSTOM_GENERATOR, "builder.writeByte((byte) movement.localSprite);", "custom movement local sprite encoding")
-    require(PAYLOAD_CUSTOM_GENERATOR, "builder.writeByte((byte) movement.players.size());", "custom movement player count encoding")
-    require(PAYLOAD_CUSTOM_GENERATOR, "builder.writeByte((byte) movement.npcs.size());", "custom movement NPC count encoding")
+    require(PAYLOAD_CUSTOM_GENERATOR, "builder.writeShort(movement.players.size());", "custom movement player count encoding")
+    require(PAYLOAD_CUSTOM_GENERATOR, "builder.writeShort(movement.npcs.size());", "custom movement NPC count encoding")
     require(PAYLOAD_CUSTOM_GENERATOR, "builder.writeShort(playerMovement.serverIndex);", "custom movement player index encoding")
     require(PAYLOAD_CUSTOM_GENERATOR, "builder.writeShort(npcMovement.serverIndex);", "custom movement NPC index encoding")
+    require(PACKET_HANDLER, "int playerCount = packetsIncoming.getShort();", "custom movement player count decoding")
+    require(PACKET_HANDLER, "int npcCount = packetsIncoming.getShort();", "custom movement NPC count decoding")
 
     require(MOBS_UPDATE_STRUCT, "public static final class BitUpdate implements Map.Entry<Integer, Integer>", "retro bit update entry contract")
     require(MOBS_UPDATE_STRUCT, "throw new UnsupportedOperationException(\"BitUpdate is immutable\")", "retro bit update immutability")
