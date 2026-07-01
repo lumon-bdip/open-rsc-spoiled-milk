@@ -132,6 +132,7 @@ public class Skills {
 		levels[skill] = level;
 		exps[skill] = exp;
 		sendUpdate(skill);
+		syncPrayerStateAndAllocation(skill, false);
 	}
 
 	public void setLevel(int skill, int level, boolean sendUpdate, boolean fromRestoreEvent) {
@@ -149,13 +150,10 @@ public class Skills {
 		if (sendUpdate) {
 			sendUpdate(skill);
 		}
-		if (skill != Skill.PRAYER.id()
-			&& skill != Skill.HITS.id()
-			&& !fromRestoreEvent) {
+		if (skill == Skill.PRAYER.id() && mob.isPlayer()) {
+			syncPrayerStateAndAllocation(skill, !fromRestoreEvent);
+		} else if (skill != Skill.HITS.id() && !fromRestoreEvent) {
 			mob.tryResyncStatEvent();
-		} else if (skill == Skill.PRAYER.id()
-			&& mob.isPlayer()) {
-			((Player)mob).setPrayerStatePoints(level * 120);
 		}
 	}
 
@@ -261,6 +259,11 @@ public class Skills {
 
 		if (update)
 			sendUpdate(skill);
+		if (skill == Skill.PRAYER.id() && mob.isPlayer()) {
+			syncPrayerStateAndAllocation(skill, true);
+		} else if (skill != Skill.HITS.id()) {
+			mob.tryResyncStatEvent();
+		}
 	}
 
 	public int getLevel(int skill) {
@@ -369,6 +372,20 @@ public class Skills {
 			getMob().getUpdateFlags().setAppearanceChanged(true);
 		}
 
+	}
+
+	private void syncPrayerStateAndAllocation(final int skill, final boolean resyncRestoration) {
+		if (skill != Skill.PRAYER.id() || !mob.isPlayer()) {
+			return;
+		}
+		final Player player = (Player) mob;
+		player.setPrayerStatePoints(levels[skill] * 120);
+		if (player.getConfig().WANT_MYWORLD) {
+			player.getPrayers().deactivateOverflowingPrayers();
+			if (resyncRestoration) {
+				mob.tryResyncStatEvent();
+			}
+		}
 	}
 
 	public void reduceExperience(int skill, int exp) {

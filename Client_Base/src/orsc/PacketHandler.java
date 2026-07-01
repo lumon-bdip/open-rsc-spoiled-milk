@@ -67,6 +67,11 @@ public class PacketHandler {
 			Config.CLIENT_VERSION > 10000 ? CUSTOM_LOCAL_MOB_COUNT_BITS : AUTHENTIC_LOCAL_MOB_COUNT_BITS);
 	}
 
+	private int readSignedShort() {
+		int value = packetsIncoming.getShort();
+		return value > Short.MAX_VALUE ? value - 0x10000 : value;
+	}
+
 	private static final Map<Integer, String> incomingOpcodeMap = new HashMap<Integer, String>() {{
 		put(4, "CLOSE_CONNECTION_NOTIFY");
 		put(5, "QUEST_STATUS");
@@ -381,7 +386,7 @@ public class PacketHandler {
 
 			else if (opcode == 139) mc.setPrayerBook(packetsIncoming.getUnsignedByte());
 
-			else if (opcode == 145) mc.setCurrentDevotionLevel(packetsIncoming.getShort());
+			else if (opcode == 145) mc.setCurrentDevotionLevel(readSignedShort());
 
 				// Trade Accept or Decline (Self)
 			else if (opcode == 15) tradeSelfDecision();

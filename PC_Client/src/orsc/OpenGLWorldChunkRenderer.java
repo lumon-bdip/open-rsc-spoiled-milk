@@ -1835,8 +1835,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return RendererGeometrySettings.getMode().ordinal();
 	}
 
-	private boolean shouldUseSpatialMaterialBatches() {
-		return spatialCullEnabled;
+	private boolean shouldUseSpatialMaterialBatches(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		return spatialCullEnabled && (chunk == null || !chunk.isObjectChunk());
 	}
 
 	static int spatialBatchTileSize() {
@@ -2092,14 +2092,15 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		copyChunkVertices(chunk, frame, vertexCount, atlasTextureCoordinates, shadowProofCasters);
 		copyChunkIndices(chunk, indexCount);
 		WorldChunkMaterialBatch[] materialBatches =
-			copyMaterialIndices(chunk, indexCount, replacementCompositeDrawOnly, shouldUseSpatialMaterialBatches());
+			copyMaterialIndices(chunk, indexCount, replacementCompositeDrawOnly, shouldUseSpatialMaterialBatches(chunk));
+		int bufferUsage = chunkBufferUsage(chunk);
 
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.vertexBufferId);
-		gl.glBufferData(gl.GL_ARRAY_BUFFER, vertexUploadBuffer, gl.GL_STATIC_DRAW);
+		gl.glBufferData(gl.GL_ARRAY_BUFFER, vertexUploadBuffer, bufferUsage);
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, buffer.indexBufferId);
-		gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, indexUploadBuffer, gl.GL_STATIC_DRAW);
+		gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, indexUploadBuffer, bufferUsage);
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, buffer.materialIndexBufferId);
-		gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, materialIndexUploadBuffer, gl.GL_STATIC_DRAW);
+		gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, materialIndexUploadBuffer, bufferUsage);
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
 
@@ -2115,6 +2116,13 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		buffer.replacementCompositeDrawOnly = replacementCompositeDrawOnly;
 		buffer.materialBatches = materialBatches;
 		buffer.shadowProofSignature = shadowProofSignature;
+	}
+
+	private int chunkBufferUsage(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		return chunk != null
+			&& chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
+			? gl.GL_STREAM_DRAW
+			: gl.GL_STATIC_DRAW;
 	}
 
 	private WorldChunkMaterialBatch[] copyMaterialIndices(

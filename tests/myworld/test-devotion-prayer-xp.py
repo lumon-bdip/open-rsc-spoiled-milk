@@ -36,8 +36,18 @@ def main() -> None:
             "blessing devotion requirements should be resource cost * 50")
     require("getDevotionRequirementForResourceCost" in devotion,
             "devotion resource-cost requirement helper should exist")
-    require("getBlessingPrayerXp" in devotion and "100 + devotionLevel" in devotion,
+    require("getBlessingPrayerXp" in devotion and "100.0D + devotionLevel" in devotion,
             "blessing Prayer XP should scale by 1% per devotion")
+    require("clampOfferings((long) previousOfferings + offeringGain + blackUnicornOfferingGain)" in devotion,
+            "offering gains should clamp after long arithmetic")
+    require("clampOfferings((long) previousOfferings + ((long) devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL))" in devotion,
+            "devotion-level adjustments should not overflow before clamping")
+    require("clampOfferings((long) previousOfferings + offerings)" in devotion,
+            "offering adjustments should not overflow before clamping")
+    require("clampPositiveInt((long) resourceCost * DEVOTION_REQUIREMENT_PER_RESOURCE)" in devotion,
+            "resource-cost devotion requirements should not overflow before clamping")
+    require("scaledXp >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) Math.ceil(scaledXp)" in devotion,
+            "blessing Prayer XP should saturate instead of overflowing")
     require("getDevotionLevelFromOfferings(previousOfferings)" in devotion,
             "devotion bonus should be based on completed prior offering tiers")
     require("OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP" in devotion,
@@ -66,11 +76,16 @@ def main() -> None:
             "Prayer skill guide should explain devotion XP scaling")
     require('drawString("Devotion: " + this.currentDevotionLevel' in client,
             "Prayer skill tooltip should show current devotion")
-    require("opcode == 145" in packet_handler and "setCurrentDevotionLevel" in packet_handler,
-            "client should accept devotion updates from the server")
+    require("private int readSignedShort()" in packet_handler
+            and "value > Short.MAX_VALUE ? value - 0x10000 : value" in packet_handler,
+            "client should have a signed short reader for devotion")
+    require("opcode == 145" in packet_handler and "setCurrentDevotionLevel(readSignedShort())" in packet_handler,
+            "client should accept signed devotion updates from the server")
     require("sendDevotion(Player player)" in action_sender, "server should send devotion updates")
     require("put(OpcodeOut.SEND_DEVOTION, 145)" in custom_generator,
             "devotion packet should have a custom client opcode")
+    require("builder.writeShort(devotion.devotionLevel)" in custom_generator,
+            "server should send devotion as a signed short-sized value")
 
     print("PASS: devotion Prayer XP scaling is wired to bone and ash offerings")
 

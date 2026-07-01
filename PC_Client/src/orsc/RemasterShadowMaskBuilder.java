@@ -188,24 +188,27 @@ final class RemasterShadowMaskBuilder {
 			return mix(hash, 0);
 		}
 		hash = mix(hash, chunkFrame.getChunkCount());
-		hash = mix(hash, chunkFrame.getTotalTriangleCount());
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+			boolean objectChunk = chunk.isObjectChunk();
 			hash = mix(hash, chunk.getPlane());
 			hash = mix(hash, chunk.getCenterSectionX());
 			hash = mix(hash, chunk.getCenterSectionY());
 			hash = mix(hash, chunk.getOriginWorldX());
 			hash = mix(hash, chunk.getOriginWorldZ());
-			hash = mix(hash, chunk.isObjectChunk() ? 1 : 0);
+			hash = mix(hash, objectChunk ? 1 : 0);
+			hash = mix(hash, chunk.getChunkRole());
+			hash = mix(hash, chunk.getShadowCasterCount());
+			if (objectChunk) {
+				continue;
+			}
+			hash = mix(hash, chunk.getTriangleCount());
 			hash = mix(hash, chunk.getTerrainTriangles());
 			hash = mix(hash, chunk.getWallTriangles());
 			hash = mix(hash, chunk.getRoofTriangles());
 			hash = mix(hash, chunk.hasRoofCoverageData() ? 1 : 0);
 			hash = mix(hash, chunk.getRoofCoveredTileCount());
-			if (!chunk.isObjectChunk()) {
-				hash = mix(hash, (int) chunk.getSignature());
-				hash = mix(hash, (int) (chunk.getSignature() >>> 32));
-			}
-			hash = mix(hash, chunk.getShadowCasterCount());
+			hash = mix(hash, (int) chunk.getSignature());
+			hash = mix(hash, (int) (chunk.getSignature() >>> 32));
 			for (int index = 0; index < chunk.getShadowCasterCount(); index++) {
 				hash = mixShadowRelevantCaster(hash, chunk.getShadowCaster(index));
 			}

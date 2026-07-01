@@ -54,8 +54,8 @@ def main():
     require("removeDevotionLevels" in devotion and "adjustDevotionLevels" in devotion
             and "removeDevotionOfferings" in devotion and "adjustDevotionOfferings" in devotion,
             "devotion should support clamped negative adjustments")
-    require("clamp(previousOfferings + (devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL), MIN_OFFERINGS, MAX_OFFERINGS)" in devotion,
-            "devotion adjustments should clamp between negative and positive caps")
+    require("clampOfferings((long) previousOfferings + ((long) devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL))" in devotion,
+            "devotion adjustments should clamp between negative and positive caps without overflowing")
     require("SYMBOL_DEVOTION_OFFERING_CHANGE = Devotion.OFFERINGS_PER_DEVOTION_LEVEL / 2" in plugin,
             "symbol destruction should use a half-devotion offering-point swing")
     require("DEVOTION_OFFERINGS_PER_RESOURCE = Devotion.OFFERINGS_PER_DEVOTION_LEVEL * DEVOTION_CHANGE_PER_RESOURCE" in plugin,

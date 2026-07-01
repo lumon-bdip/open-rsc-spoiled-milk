@@ -58,7 +58,9 @@ public class StatRestorationEvent extends GameTickEvent {
 
 		// Add new skills to the restoration cycle
 		for (int skillIndex = 0; skillIndex < numberSkills; skillIndex++) {
-			if (skillIndex == Skill.PRAYER.id() && !getOwner().getConfig().LACKS_PRAYERS) {
+			if (skillIndex == Skill.PRAYER.id()
+				&& !getOwner().getConfig().LACKS_PRAYERS
+				&& !getOwner().getConfig().WANT_MYWORLD) {
 				continue;
 			}
 			checkAndStartRestoration(skillIndex);

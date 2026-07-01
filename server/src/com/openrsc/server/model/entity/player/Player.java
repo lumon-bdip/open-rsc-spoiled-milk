@@ -2634,7 +2634,10 @@ public final class Player extends Mob {
 	}
 
 	public int getPrayerAllocationPoints() {
-		return getSkills().getMaxStat(Skill.PRAYER.id())
+		final int prayerLevelPoints = getConfig().WANT_MYWORLD
+			? getSkills().getLevel(Skill.PRAYER.id())
+			: getSkills().getMaxStat(Skill.PRAYER.id());
+		return Math.max(prayerLevelPoints, 0)
 			+ Math.max(getCarriedItems().getEquipment().getPrayer() + Summoning.getPrayerBonus(this) - 1, 0);
 	}
 

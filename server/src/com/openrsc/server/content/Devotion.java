@@ -58,7 +58,7 @@ public final class Devotion {
 		final int bonusXp = Math.max(0, Math.min(previousDevotion, MAX_DEVOTION_LEVEL));
 		final int offeringGain = getOfferingDevotionGain(player, godLine);
 		final int blackUnicornOfferingGain = blackUnicornBonus ? getEveryOtherOfferingBonus(player, godLine, BLACK_UNICORN_BONUS_SUFFIX) : 0;
-		final int newOfferings = clamp(previousOfferings + offeringGain + blackUnicornOfferingGain, MIN_OFFERINGS, MAX_OFFERINGS);
+		final int newOfferings = clampOfferings((long) previousOfferings + offeringGain + blackUnicornOfferingGain);
 		player.getCache().set(cacheKey, newOfferings);
 		ActionSender.sendDevotion(player);
 		ActionSender.sendEquipmentStats(player);
@@ -79,7 +79,7 @@ public final class Devotion {
 		}
 		final String cacheKey = getOfferingCacheKey(godLine);
 		final int offerings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
-		return clamp(offerings, MIN_OFFERINGS, MAX_OFFERINGS);
+		return clampOfferings(offerings);
 	}
 
 	public static int getDevotionLevel(final Player player, final PrayerCatalog.GodLine godLine) {
@@ -127,7 +127,7 @@ public final class Devotion {
 		}
 		final String cacheKey = getOfferingCacheKey(godLine);
 		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
-		player.getCache().set(cacheKey, clamp(previousOfferings + (devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL), MIN_OFFERINGS, MAX_OFFERINGS));
+		player.getCache().set(cacheKey, clampOfferings((long) previousOfferings + ((long) devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL)));
 		ActionSender.sendDevotion(player);
 		ActionSender.sendEquipmentStats(player);
 	}
@@ -138,13 +138,13 @@ public final class Devotion {
 		}
 		final String cacheKey = getOfferingCacheKey(godLine);
 		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
-		player.getCache().set(cacheKey, clamp(previousOfferings + offerings, MIN_OFFERINGS, MAX_OFFERINGS));
+		player.getCache().set(cacheKey, clampOfferings((long) previousOfferings + offerings));
 		ActionSender.sendDevotion(player);
 		ActionSender.sendEquipmentStats(player);
 	}
 
 	public static int getDevotionRequirementForResourceCost(final int resourceCost) {
-		return resourceCost > 0 ? resourceCost * DEVOTION_REQUIREMENT_PER_RESOURCE : 0;
+		return resourceCost > 0 ? clampPositiveInt((long) resourceCost * DEVOTION_REQUIREMENT_PER_RESOURCE) : 0;
 	}
 
 	public static int getBlessingPrayerXp(final Player player, final PrayerCatalog.GodLine godLine, final int basePrayerXp) {
@@ -152,7 +152,11 @@ public final class Devotion {
 			return 0;
 		}
 		final int devotionLevel = getDevotionLevel(player, godLine);
-		return (int) Math.ceil(basePrayerXp * (100 + devotionLevel) / 100.0D);
+		final double scaledXp = basePrayerXp * ((100.0D + devotionLevel) / 100.0D);
+		if (scaledXp <= 0.0D) {
+			return 0;
+		}
+		return scaledXp >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) Math.ceil(scaledXp);
 	}
 
 	public static int getDevotionGrowthBonus(final Player player, final PrayerCatalog.GodLine godLine, final int maxGrowthBonus) {
@@ -204,7 +208,7 @@ public final class Devotion {
 	}
 
 	private static int getDevotionLevelFromOfferings(final int offerings) {
-		return clamp(offerings / OFFERINGS_PER_DEVOTION_LEVEL, MIN_DEVOTION_LEVEL, MAX_DEVOTION_LEVEL);
+		return clampDevotionLevel(offerings / OFFERINGS_PER_DEVOTION_LEVEL);
 	}
 
 	private static String getOfferingCacheKey(final PrayerCatalog.GodLine godLine) {
@@ -218,7 +222,15 @@ public final class Devotion {
 		return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
 	}
 
-	private static int clamp(final int value, final int min, final int max) {
-		return Math.max(min, Math.min(max, value));
+	private static int clampOfferings(final long offerings) {
+		return (int) Math.max(MIN_OFFERINGS, Math.min(MAX_OFFERINGS, offerings));
+	}
+
+	private static int clampDevotionLevel(final long devotionLevel) {
+		return (int) Math.max(MIN_DEVOTION_LEVEL, Math.min(MAX_DEVOTION_LEVEL, devotionLevel));
+	}
+
+	private static int clampPositiveInt(final long value) {
+		return (int) Math.max(0, Math.min(Integer.MAX_VALUE, value));
 	}
 }

@@ -17,7 +17,7 @@ def main() -> None:
 
     require(devotion, "MIN_DEVOTION_LEVEL = -1000", "devotion should support a -1000 floor")
     require(devotion, "MIN_OFFERINGS = MIN_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL", "negative devotion offering floor")
-    require(devotion, "clamp(offerings / OFFERINGS_PER_DEVOTION_LEVEL, MIN_DEVOTION_LEVEL, MAX_DEVOTION_LEVEL)", "signed devotion clamp")
+    require(devotion, "clampDevotionLevel(offerings / OFFERINGS_PER_DEVOTION_LEVEL)", "signed devotion clamp")
 
     require(behavior, "final boolean devotionAggro = !naturalAggro && isGodFollower();", "devotion should add aggro without replacing natural aggro")
     require(behavior, "Devotion.getDevotionLevel(player, followerGod)", "follower aggro should read devotion to that god")

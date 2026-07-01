@@ -8,8 +8,10 @@ PRAYERS = ROOT / "server/src/com/openrsc/server/model/entity/player/Prayers.java
 DOC = ROOT / "docs/myworld/work-items.md"
 PRAYER_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/PrayerHandler.java"
 PRAYER_DRAIN = ROOT / "server/src/com/openrsc/server/event/rsc/impl/PrayerDrainEvent.java"
+STAT_RESTORATION = ROOT / "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java"
 COMBAT_FORMULA = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+SKILLS = ROOT / "server/src/com/openrsc/server/model/Skills.java"
 OBJECT_DEFS = ROOT / "server/conf/server/defs/GameObjectDef.xml"
 SCENERY = ROOT / "server/conf/server/defs/locs/SceneryLocs.json"
 BLESSING = ROOT / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/prayer/BlessedStaffs.java"
@@ -44,8 +46,10 @@ def main():
     doc = read(DOC)
     prayer_handler = read(PRAYER_HANDLER)
     prayer_drain = read(PRAYER_DRAIN)
+    stat_restoration = read(STAT_RESTORATION)
     combat_formula = read(COMBAT_FORMULA)
     player = read(PLAYER)
+    skills = read(SKILLS)
     object_defs = read(OBJECT_DEFS)
     scenery = read(SCENERY)
     blessing = read(BLESSING)
@@ -135,9 +139,16 @@ def main():
             "Prayer state should expose skilling XP modifiers")
     require("prayerSkillingBonusPercent" in player and "skillXP = (int) Math.ceil(skillXP * (100.0D + prayerSkillingBonusPercent) / 100.0D)" in player,
             "Player XP gains should apply active skilling prayer bonuses")
-    require("return getSkills().getMaxStat(Skill.PRAYER.id())" in player
+    require("getConfig().WANT_MYWORLD\n\t\t\t? getSkills().getLevel(Skill.PRAYER.id())\n\t\t\t: getSkills().getMaxStat(Skill.PRAYER.id())" in player
             and "Math.max(getCarriedItems().getEquipment().getPrayer() + Summoning.getPrayerBonus(this) - 1, 0)" in player,
-            "Prayer gear should add directly to prayer allocation capacity while worn")
+            "MyWorld prayer allocation should use current Prayer points plus worn Prayer gear")
+    require("player.getPrayers().deactivateOverflowingPrayers();" in skills,
+            "Prayer drains should deactivate active prayers that no longer fit current points")
+    require("} else if (skill != Skill.HITS.id()) {\n\t\t\tmob.tryResyncStatEvent();\n\t\t}" in skills,
+            "Subtract-style temporary stat drains should use the normal restoration timer")
+    require("skillIndex == Skill.PRAYER.id()" in stat_restoration
+            and "!getOwner().getConfig().WANT_MYWORLD" in stat_restoration,
+            "MyWorld Prayer should naturally restore with other temporary stat drains")
     require("48 prayers" in doc, "Prayer rework doc must call out the 48-prayer catalog")
     require("16-slot current-book UI" in doc, "Prayer rework doc must call out current-book UI wiring")
     require("server XP multiplier" in doc, "Prayer rework doc must track server XP multiplier replacement")
