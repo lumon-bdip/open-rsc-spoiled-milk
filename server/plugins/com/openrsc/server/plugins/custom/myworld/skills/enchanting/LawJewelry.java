@@ -63,7 +63,7 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 		LAW(ItemId.LAW_RUNE.id(), 408, 534),
 		DEATH(ItemId.DEATH_RUNE.id(), 150, 212),
 		BLOOD(ItemId.BLOOD_RUNE.id(), 246, 102),
-		SOUL(ItemId.SOUL_RUNE.id(), 987, 176),
+		SOUL(ItemId.SOUL_RUNE.id(), 610, 3599),
 		LIFE(ItemId.LIFE_RUNE.id(), 282, 694);
 
 		private final int runeItemId;

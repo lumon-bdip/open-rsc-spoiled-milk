@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.shared;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
@@ -378,6 +379,9 @@ public final class EntranaRestrictions {
 	};
 
 	public static boolean itemIsBlocked(Player player, Item item) {
+		if (EnchantingItemEffects.isLawAltarAllowedItem(item.getCatalogId())) {
+			return false;
+		}
 		if (DataConversions.inArray(blockedCustomEquipment, item.getCatalogId())) {
 			return true;
 		}

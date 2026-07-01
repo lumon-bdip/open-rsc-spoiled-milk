@@ -331,7 +331,7 @@ public final class mudclient implements Runnable {
 	};
 	private static final int[][] ALTAR_TILES = new int[][] {
 		{306, 593}, {147, 684}, {62, 464}, {50, 633}, {297, 438}, {259, 503}, {104, 3556},
-		{232, 375}, {392, 804}, {409, 534}, {392, 3540}, {247, 102}, {988, 176}, {283, 694}
+		{232, 375}, {392, 804}, {409, 534}, {392, 3540}, {247, 102}, {611, 3599}, {283, 694}
 	};
 	private static final int[][][] ALTAR_OBELISK_TILES = new int[][][] {
 		{{304, 596}, {309, 596}, {309, 591}, {304, 591}},
@@ -346,7 +346,7 @@ public final class mudclient implements Runnable {
 		{{407, 537}, {412, 537}, {412, 532}, {407, 532}},
 		{{390, 3543}, {395, 3543}, {395, 3538}, {390, 3538}},
 		{{245, 105}, {250, 105}, {250, 100}, {245, 100}},
-		{{986, 179}, {991, 179}, {991, 174}, {986, 174}},
+		{{609, 3602}, {614, 3602}, {614, 3597}, {609, 3597}},
 		{{281, 697}, {286, 697}, {286, 692}, {281, 692}}
 	};
 	static final int spriteLogo = 3150;
@@ -22979,7 +22979,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getPrayerAllocationPoints() {
-		int prayerLevel = this.playerStatBase.length > 5 ? this.playerStatBase[5] : 0;
+		int prayerLevel = this.playerStatCurrent.length > 5 ? this.playerStatCurrent[5] : 0;
 		int equipmentPrayer = this.playerStatEquipment.length > 4 ? this.playerStatEquipment[4] : 1;
 		return prayerLevel + Math.max(equipmentPrayer - 1, 0);
 	}

@@ -610,6 +610,24 @@ public final class EnchantingItemEffects {
 		return isLawRing(itemId) || isLawBankingNecklace(itemId);
 	}
 
+	public static boolean isLawAltarAllowedItem(final int itemId) {
+		return isLawAltarEnchantingInput(itemId) || isLawAltarProduct(itemId);
+	}
+
+	public static boolean isLawAltarEnchantingInput(final int itemId) {
+		return isAmuletBase(itemId)
+			|| isNecklaceBase(itemId)
+			|| isRingBase(itemId)
+			|| isBaseStaff(itemId)
+			|| isBaseWoolRobePiece(itemId);
+	}
+
+	public static boolean isLawAltarProduct(final int itemId) {
+		return getLawItemMaxCharges(itemId) > 0
+			|| contains(LAW_STAFFS, itemId)
+			|| getAltarIdForWoolRobeItem(itemId) == LAW_ALTAR;
+	}
+
 	public static int getAmuletProduct(final int altarId, final int baseAmuletId) {
 		final int[] productLine = getAmuletProductLine(altarId);
 		final int tierIndex = getTierIndexForBaseAmulet(baseAmuletId);

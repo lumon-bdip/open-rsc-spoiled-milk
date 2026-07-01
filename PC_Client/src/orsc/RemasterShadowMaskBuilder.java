@@ -55,9 +55,9 @@ final class RemasterShadowMaskBuilder {
 	static final float REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE =
 		readFloat(SCENERY_ALPHA_SCALE_PROPERTY, SCENERY_ALPHA_SCALE_ENV, 1.3f, 0.25f, 2.0f);
 	static final float REMASTER_SHADOW_MASK_AZIMUTH_BUCKET_DEGREES =
-		readFloat(AZIMUTH_BUCKET_PROPERTY, AZIMUTH_BUCKET_ENV, 12.0f, 1.0f, 45.0f);
+		readFloat(AZIMUTH_BUCKET_PROPERTY, AZIMUTH_BUCKET_ENV, 3.0f, 1.0f, 45.0f);
 	static final float REMASTER_SHADOW_MASK_ELEVATION_BUCKET_DEGREES =
-		readFloat(ELEVATION_BUCKET_PROPERTY, ELEVATION_BUCKET_ENV, 6.0f, 1.0f, 30.0f);
+		readFloat(ELEVATION_BUCKET_PROPERTY, ELEVATION_BUCKET_ENV, 2.0f, 1.0f, 30.0f);
 	static final float REMASTER_SHADOW_MASK_CENTER_RETAIN = 0.82f;
 	static final float REMASTER_SHADOW_MASK_BLUR_BOOST = 1.18f;
 	static final float REMASTER_SHADOW_MASK_CLIP_START_OFFSET = 24.0f;
@@ -93,8 +93,10 @@ final class RemasterShadowMaskBuilder {
 		Renderer3DWorldChunkFrame chunkFrame,
 		RemasterShadowRoofCoverage roofCoverage,
 		long worldSignature) {
-		float lightAzimuthDegrees = remasterShadowMaskLightAzimuthDegrees();
-		float lightElevationDegrees = remasterShadowMaskLightElevationDegrees();
+		RendererRemasterLightSettings.LightAngles lightAngles =
+			RendererRemasterLightSettings.getShadowMaskLightAngles();
+		float lightAzimuthDegrees = remasterShadowMaskLightAzimuthDegrees(lightAngles);
+		float lightElevationDegrees = remasterShadowMaskLightElevationDegrees(lightAngles);
 		long settingsSignature = remasterTerrainShadowSettingsSignature();
 		long inputSignature = remasterTerrainShadowInputSignature(
 			worldSignature,
@@ -119,7 +121,11 @@ final class RemasterShadowMaskBuilder {
 			lightAzimuthDegrees,
 			lightElevationDegrees,
 			settingsSignature);
-		List<RemasterTerrainShadowCaster> casters = buildRemasterTerrainShadowCasters(chunkFrame, roofCoverage);
+		List<RemasterTerrainShadowCaster> casters = buildRemasterTerrainShadowCasters(
+			chunkFrame,
+			roofCoverage,
+			lightAzimuthDegrees,
+			lightElevationDegrees);
 		if (casters.isEmpty()) {
 			rememberInput(
 				inputSignature,
@@ -544,7 +550,9 @@ final class RemasterShadowMaskBuilder {
 
 	private List<RemasterTerrainShadowCaster> buildRemasterTerrainShadowCasters(
 		Renderer3DWorldChunkFrame chunkFrame,
-		RemasterShadowRoofCoverage roofCoverage) {
+		RemasterShadowRoofCoverage roofCoverage,
+		float lightAzimuthDegrees,
+		float lightElevationDegrees) {
 		List<RemasterTerrainShadowCaster> casters = new ArrayList<RemasterTerrainShadowCaster>();
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
 			int casterCount = chunk.getShadowCasterCount();
@@ -556,7 +564,11 @@ final class RemasterShadowMaskBuilder {
 				if (RemasterShadowClassifier.roofClassificationForCaster(roofCoverage, chunk, caster) != 0) {
 					continue;
 				}
-				RemasterTerrainShadowCaster projected = RemasterTerrainShadowCaster.from(caster, chunk.getPlane());
+				RemasterTerrainShadowCaster projected = RemasterTerrainShadowCaster.from(
+					caster,
+					chunk.getPlane(),
+					lightAzimuthDegrees,
+					lightElevationDegrees);
 				if (projected != null) {
 					casters.add(projected);
 				}
@@ -613,15 +625,23 @@ final class RemasterShadowMaskBuilder {
 	}
 
 	static float remasterShadowMaskLightAzimuthDegrees() {
-		return quantize(
-			RendererRemasterLightSettings.getAzimuthDegrees(),
-			REMASTER_SHADOW_MASK_AZIMUTH_BUCKET_DEGREES);
+		return remasterShadowMaskLightAzimuthDegrees(RendererRemasterLightSettings.getShadowMaskLightAngles());
 	}
 
 	static float remasterShadowMaskLightElevationDegrees() {
+		return remasterShadowMaskLightElevationDegrees(RendererRemasterLightSettings.getShadowMaskLightAngles());
+	}
+
+	private static float remasterShadowMaskLightAzimuthDegrees(
+		RendererRemasterLightSettings.LightAngles lightAngles) {
+		return quantize(lightAngles.azimuthDegrees, REMASTER_SHADOW_MASK_AZIMUTH_BUCKET_DEGREES);
+	}
+
+	private static float remasterShadowMaskLightElevationDegrees(
+		RendererRemasterLightSettings.LightAngles lightAngles) {
 		return clamp(
 			quantize(
-				RendererRemasterLightSettings.getElevationDegrees(),
+				lightAngles.elevationDegrees,
 				REMASTER_SHADOW_MASK_ELEVATION_BUCKET_DEGREES),
 			5.0f,
 			85.0f);
@@ -1013,12 +1033,14 @@ final class RemasterTerrainShadowCaster {
 
 	static RemasterTerrainShadowCaster from(
 		Renderer3DWorldChunkFrame.ShadowCaster source,
-		int plane) {
+		int plane,
+		float lightAzimuthDegrees,
+		float lightElevationDegrees) {
 		if (source == null || source.getHeight() <= 0) {
 			return null;
 		}
-		double azimuth = Math.toRadians(RemasterShadowMaskBuilder.remasterShadowMaskLightAzimuthDegrees());
-		double elevation = Math.toRadians(RemasterShadowMaskBuilder.remasterShadowMaskLightElevationDegrees());
+		double azimuth = Math.toRadians(lightAzimuthDegrees);
+		double elevation = Math.toRadians(lightElevationDegrees);
 		float lightX = (float) (Math.cos(elevation) * Math.cos(azimuth));
 		float lightY = Math.max(0.12f, Math.abs((float) Math.sin(elevation)));
 		float lightZ = (float) (Math.cos(elevation) * Math.sin(azimuth));

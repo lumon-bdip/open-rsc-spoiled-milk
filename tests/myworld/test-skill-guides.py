@@ -118,7 +118,7 @@ def main() -> None:
     require(guide, 'addAltarGuide(33, 1, "Air Rune", "306,593");', "air altar coordinate guide")
     require(guide, 'addAltarGuide(37, 1, "Life Rune", "283,694");', "life altar coordinate guide")
     require(guide, 'addAltarGuide(46, 30, "Cosmic Rune", "104,3556");', "cosmic altar coordinate guide")
-    require(guide, 'addAltarGuide(825, 62, "Soul Rune", "988,176");', "soul altar coordinate guide")
+    require(guide, 'addAltarGuide(825, 62, "Soul Rune", "611,3599");', "soul altar coordinate guide")
     require(guide, 'addAltarGuide(619, 70, "Blood Rune", "247,102");', "blood altar coordinate guide")
 
     require(guide, 'addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, 3198, "Potion of Brawn", "limpwurt root");', "brawn potion family guide")

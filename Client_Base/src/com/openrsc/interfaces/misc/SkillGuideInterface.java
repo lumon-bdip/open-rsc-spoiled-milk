@@ -1142,7 +1142,7 @@ public final class SkillGuideInterface {
 		addAltarGuide(40, 38, "Nature Rune", "392,804");
 		addAltarGuide(42, 46, "Law Rune", "409,534");
 		addAltarGuide(38, 54, "Death Rune", "395,3541");
-		addAltarGuide(825, 62, "Soul Rune", "988,176");
+		addAltarGuide(825, 62, "Soul Rune", "611,3599");
 		addAltarGuide(619, 70, "Blood Rune", "247,102");
 	}
 
