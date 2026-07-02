@@ -5767,7 +5767,6 @@ public final class Player extends Mob {
 
 		if (getTotalLevel() < getConfig().GLOBAL_MESSAGE_TOTAL_LEVEL_REQ && !isPlayerMod()) {
 			message("You can only send a message to global chat if you have at least " + getConfig().GLOBAL_MESSAGE_TOTAL_LEVEL_REQ + " total level.");
-			message("Type @gre@::globalchat@whi@ or @gre@::gc@whi@ for more information.");
 			return false;
 		}
 
@@ -5779,12 +5778,6 @@ public final class Player extends Mob {
 		if (isBabyModeFiltered()) {
 			message("Sorry, but someone we banned for breaking our rules is actively throwing a tantrum right now.");
 			message("New accounts are not allowed to speak until they've reached " + getConfig().BABY_MODE_LEVEL_THRESHOLD + " total level during this time.");
-			return false;
-		}
-
-		if (getConfig().WANT_GLOBAL_RULES_AGREEMENT && !getCache().hasKey("accepted_global_rules") && !isPlayerMod()) {
-			message("@cya@You must agree to the global chat rules before using global chat");
-			message("@cya@Use the ::globalrules command to view them.");
 			return false;
 		}
 

@@ -365,7 +365,11 @@ public class MySqlGameDatabase extends JDBCDatabase {
 			statement.setString(2, salt);
 			statement.setString(3, username);
 
-			statement.executeUpdate();
+			final int updatedRows = statement.executeUpdate();
+			if (updatedRows != 1) {
+				throw new GameDatabaseException(MySqlGameDatabase.class,
+					"Expected to copy password to exactly one account for username " + username + ", updated " + updatedRows);
+			}
 		} catch (final SQLException ex) {
 			throw new GameDatabaseException(MySqlGameDatabase.class, ex.getMessage());
 		}

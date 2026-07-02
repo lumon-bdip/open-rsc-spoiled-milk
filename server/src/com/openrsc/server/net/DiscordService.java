@@ -5,8 +5,10 @@ import com.openrsc.server.constants.Constants;
 import com.openrsc.server.content.market.MarketItem;
 import com.openrsc.server.database.GameDatabaseException;
 import com.openrsc.server.database.impl.mysql.queries.logging.GameReport;
+import com.openrsc.server.database.impl.mysql.queries.logging.SecurityChangeLog;
 import com.openrsc.server.database.struct.DiscordWatchlist;
 import com.openrsc.server.database.struct.PlayerExperience;
+import com.openrsc.server.database.struct.PlayerLoginData;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.external.SkillDef;
 import com.openrsc.server.model.entity.player.Group;
@@ -15,6 +17,7 @@ import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.MessageFilterType;
 import com.openrsc.server.util.ServerAwareThreadFactory;
 import com.openrsc.server.util.rsc.MessageType;
+import com.openrsc.server.util.rsc.DataConversions;
 import com.vdurmont.emoji.EmojiParser;
 import net.dv8tion.jda.api.AccountType;
 import net.dv8tion.jda.api.JDA;
@@ -37,17 +40,26 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class DiscordService implements Runnable{
 	private static final int WATCHLIST_MAX_SIZE = 10;
+	private static final long PASSWORD_RESET_CONFIRMATION_MILLIS = TimeUnit.MINUTES.toMillis(10);
+	private static final long PASSWORD_RESET_COOLDOWN_MILLIS = TimeUnit.HOURS.toMillis(24);
+	private static final int TEMPORARY_PASSWORD_LENGTH = 14;
+	private static final String TEMPORARY_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+	private static final SecureRandom PASSWORD_RANDOM = new SecureRandom();
+
 	private ScheduledExecutorService scheduledExecutor;
 
 	private final Queue<String> staffCommandRequests = new ConcurrentLinkedQueue<String>();
@@ -57,6 +69,8 @@ public class DiscordService implements Runnable{
 	private final Queue<DiscordEmbed> reportAbuseRequests = new ConcurrentLinkedQueue<DiscordEmbed>();
 	private final Queue<DiscordEmbed> naughtyWordsRequests = new ConcurrentLinkedQueue<DiscordEmbed>();
 	private final Queue<DiscordEmbed> downtimeReports = new ConcurrentLinkedQueue<DiscordEmbed>();
+	private final ConcurrentMap<Long, Long> pendingPasswordResetByDiscordId = new ConcurrentHashMap<Long, Long>();
+	private final ConcurrentMap<Long, Long> lastPasswordResetByDiscordId = new ConcurrentHashMap<Long, Long>();
 
 	private static final Logger LOGGER = LogManager.getLogger();
 	private long monitoringLastUpdate = 0;
@@ -117,14 +131,14 @@ public class DiscordService implements Runnable{
 		final MessageChannel channel = event.getChannel();
 		final Message message = event.getMessage();
 		if (!event.getAuthor().isBot()) {
-			final String[] args = message.getContentRaw().split(" ");
+			final String[] args = message.getContentRaw().trim().split("\\s+");
 			String reply = "";
 			if (event.getChannelType() == ChannelType.PRIVATE) {
 				if (message.getContentRaw().startsWith("!help"))
 				{
 					reply = "To see the commands that are available, type !commands. Some commands require you to pair your discord account to your openrsc account. To do this, type ::pair in game to get your pairing token, then return to this DM and type !pair TOKEN";
 				} else if (message.getContentRaw().startsWith("!commands")) {
-					reply = "!auctions\n!stats\n!watch\n!pair\n!help";
+					reply = "!auctions\n!stats\n!watch\n!pair\n!resetpassword\n!help";
 				} else if (message.getContentRaw().startsWith("!pair")) {
 					if (args.length != 2) {
 						reply = "Usage: !pair TOKEN";
@@ -154,6 +168,8 @@ public class DiscordService implements Runnable{
 							a.printStackTrace();
 						}
 					}
+				} else if (args.length > 0 && args[0].equalsIgnoreCase("!resetpassword")) {
+					reply = handlePasswordResetCommand(message.getAuthor(), args);
 				} else if (message.getContentRaw().startsWith("!auctions")) {
 					final ArrayList<MarketItem> auctionList = (ArrayList<MarketItem>)this.server.getWorld().getMarket().getAuctionItems().clone();
 					final Iterator<MarketItem> e = auctionList.iterator();
@@ -345,6 +361,97 @@ public class DiscordService implements Runnable{
 				channel.sendMessage(reply).queue();
 			}
 		}
+	}
+
+	private String handlePasswordResetCommand(final User user, final String[] args) {
+		if (args.length > 2) {
+			return "Usage: !resetpassword";
+		}
+
+		final long discordId = user.getIdLong();
+		final int playerId = discordToDBId(discordId);
+		if (playerId == 0) {
+			return "You have not paired an account yet. Log in to the game, type ::pair, then DM me !pair TOKEN.";
+		}
+
+		final String username = dbIdToUsername(playerId);
+		if (username.isEmpty()) {
+			return "[Error 1591] Please contact an administrator.";
+		}
+
+		final long now = System.currentTimeMillis();
+		final Long lastReset = lastPasswordResetByDiscordId.get(discordId);
+		if (lastReset != null && now - lastReset < PASSWORD_RESET_COOLDOWN_MILLIS) {
+			final long hoursLeft = ((PASSWORD_RESET_COOLDOWN_MILLIS - (now - lastReset)) + TimeUnit.HOURS.toMillis(1) - 1)
+				/ TimeUnit.HOURS.toMillis(1);
+			return "Password reset is on cooldown for this Discord account. Try again in about " + hoursLeft + " hour(s).";
+		}
+
+		if (args.length == 1) {
+			pendingPasswordResetByDiscordId.put(discordId, now + PASSWORD_RESET_CONFIRMATION_MILLIS);
+			return "This will reset the game password for `" + username + "` and DM you a temporary password. "
+				+ "If you want to continue, type `!resetpassword confirm` within 10 minutes.";
+		}
+
+		if (!args[1].equalsIgnoreCase("confirm")) {
+			return "Usage: !resetpassword";
+		}
+
+		final Long confirmationExpires = pendingPasswordResetByDiscordId.get(discordId);
+		if (confirmationExpires == null || confirmationExpires < now) {
+			pendingPasswordResetByDiscordId.put(discordId, now + PASSWORD_RESET_CONFIRMATION_MILLIS);
+			return "Confirmation expired or was not started. Type `!resetpassword` first, then `!resetpassword confirm` within 10 minutes.";
+		}
+
+		return resetPairedAccountPassword(discordId, playerId, username, now);
+	}
+
+	private String resetPairedAccountPassword(final long discordId, final int playerId, final String username, final long now) {
+		try {
+			if (getServer().getWorld().getPlayerID(playerId) != null) {
+				return "Please log `" + username + "` out of the game before resetting the password.";
+			}
+
+			final PlayerLoginData playerData = getServer().getDatabase().getPlayerLoginData(username);
+			if (playerData == null || playerData.id != playerId) {
+				return "[Error 1592] Please contact an administrator.";
+			}
+
+			final String temporaryPassword = generateTemporaryPassword();
+			final String newDBPass = DataConversions.hashPassword(temporaryPassword, playerData.salt);
+			getServer().getDatabase().saveNewPassword(playerId, newDBPass);
+
+			String earlierPw;
+			try {
+				earlierPw = getServer().getDatabase().getPreviousPassword(playerId);
+			} catch (Exception e) {
+				earlierPw = "";
+			}
+			getServer().getDatabase().savePreviousPasswords(playerId, playerData.password, earlierPw);
+
+			getServer().getGameLogger().addQuery(new SecurityChangeLog(getServer(), playerId, "Discord:" + discordId,
+				SecurityChangeLog.ChangeEvent.PASSWORD_CHANGE,
+				"(@Discord reset) From: " + playerData.password + ", To: " + newDBPass));
+
+			pendingPasswordResetByDiscordId.remove(discordId);
+			lastPasswordResetByDiscordId.put(discordId, now);
+
+			LOGGER.info("Discord password reset completed for player ID {} by Discord ID {}", playerId, discordId);
+			return "Password reset for `" + username + "`.\n"
+				+ "Temporary password: `" + temporaryPassword + "`\n"
+				+ "Log in with that password and change it in game right away.";
+		} catch (Exception e) {
+			LOGGER.catching(e);
+			return "Password reset failed. Please contact an administrator.";
+		}
+	}
+
+	private String generateTemporaryPassword() {
+		final StringBuilder password = new StringBuilder(TEMPORARY_PASSWORD_LENGTH);
+		for (int index = 0; index < TEMPORARY_PASSWORD_LENGTH; index++) {
+			password.append(TEMPORARY_PASSWORD_CHARS.charAt(PASSWORD_RANDOM.nextInt(TEMPORARY_PASSWORD_CHARS.length())));
+		}
+		return password.toString();
 	}
 
 	public void sendMessage(final String message) {
@@ -654,7 +761,7 @@ public class DiscordService implements Runnable{
 
 	public int discordToDBId(final long discord) {
 		try {
-			getServer().getDatabase().playerIdFromDiscordId(discord);
+			return getServer().getDatabase().playerIdFromDiscordId(discord);
 		} catch (GameDatabaseException a) {
 			a.printStackTrace();
 		}

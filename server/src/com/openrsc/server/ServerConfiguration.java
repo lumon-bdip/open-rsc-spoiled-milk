@@ -196,6 +196,9 @@ public class ServerConfiguration {
 	public String DISCORD_NAUGHTY_WORDS_WEBHOOK_URL;
 	public boolean WANT_DISCORD_GENERAL_LOGGING;
 	public String DISCORD_GENERAL_WEBHOOK_URL;
+	public boolean WANT_DISCORD_ITEM_SHOWCASE;
+	public String DISCORD_ITEM_SHOWCASE_WEBHOOK_URL;
+	public int DISCORD_ITEM_SHOWCASE_COOLDOWN_SECONDS;
 	public boolean WANT_DISCORD_BOT;
 	public long CROSS_CHAT_CHANNEL;
 	public boolean MONITOR_ONLINE;
@@ -686,6 +689,10 @@ public class ServerConfiguration {
 		DISCORD_REPORT_ABUSE_WEBHOOK_URL = tryReadString("discord_report_abuse_webhook_url").orElse("null");
 		DISCORD_NAUGHTY_WORDS_WEBHOOK_URL = tryReadString("discord_naughty_words_webhook_url").orElse("null");
 		DISCORD_GENERAL_WEBHOOK_URL = tryReadString("discord_general_webhook_url").orElse("null");
+		DISCORD_ITEM_SHOWCASE_WEBHOOK_URL = readStringEnvFirst(
+			"SPOILED_MILK_DISCORD_SHOWCASE_WEBHOOK",
+			"discord_item_showcase_webhook_url",
+			"null");
 		CROSS_CHAT_CHANNEL = tryReadInt("cross_chat_channel").orElse(0);
 		WANT_DISCORD_AUCTION_UPDATES = tryReadBool("want_discord_auction_updates").orElse(false)
 			&& !DISCORD_AUCTION_WEBHOOK_URL.equals("null");
@@ -699,6 +706,15 @@ public class ServerConfiguration {
 			&& !DISCORD_NAUGHTY_WORDS_WEBHOOK_URL.equals("null");
 		WANT_DISCORD_GENERAL_LOGGING = tryReadBool("want_discord_general_logging").orElse(false)
 			&& !DISCORD_GENERAL_WEBHOOK_URL.equals("null");
+		WANT_DISCORD_ITEM_SHOWCASE = readBoolEnvFirst(
+			"SPOILED_MILK_DISCORD_SHOWCASE_ENABLED",
+			"want_discord_item_showcase",
+			hasConfiguredWebhook(DISCORD_ITEM_SHOWCASE_WEBHOOK_URL))
+			&& hasConfiguredWebhook(DISCORD_ITEM_SHOWCASE_WEBHOOK_URL);
+		DISCORD_ITEM_SHOWCASE_COOLDOWN_SECONDS = readIntEnvFirst(
+			"SPOILED_MILK_DISCORD_SHOWCASE_COOLDOWN_SECONDS",
+			"discord_item_showcase_cooldown_seconds",
+			60);
 		WANT_DISCORD_BOT = tryReadBool("want_discord_bot").orElse(false)
 			&& CROSS_CHAT_CHANNEL != 0;
 
@@ -867,6 +883,40 @@ public class ServerConfiguration {
 		}
 		LOGGER.info("Key: \"" + key + "\" does not exist in the provided conf file. Using default.");
 		return Optional.empty();
+	}
+
+	private String readStringEnvFirst(String envKey, String configKey, String defaultValue) {
+		String envValue = System.getenv(envKey);
+		if (envValue != null && !envValue.trim().isEmpty()) {
+			return envValue.trim();
+		}
+		return tryReadString(configKey).orElse(defaultValue);
+	}
+
+	private boolean readBoolEnvFirst(String envKey, String configKey, boolean defaultValue) {
+		String envValue = System.getenv(envKey);
+		if (envValue != null && !envValue.trim().isEmpty()) {
+			return Boolean.parseBoolean(envValue.trim());
+		}
+		return tryReadBool(configKey).orElse(defaultValue);
+	}
+
+	private int readIntEnvFirst(String envKey, String configKey, int defaultValue) {
+		String envValue = System.getenv(envKey);
+		if (envValue != null && !envValue.trim().isEmpty()) {
+			try {
+				return Integer.parseInt(envValue.trim());
+			} catch (NumberFormatException nfe) {
+				LOGGER.warn("Invalid integer in environment variable {}. Using configured/default value.", envKey);
+			}
+		}
+		return tryReadInt(configKey).orElse(defaultValue);
+	}
+
+	private boolean hasConfiguredWebhook(String webhookUrl) {
+		return webhookUrl != null
+			&& !webhookUrl.trim().isEmpty()
+			&& !webhookUrl.equals("null");
 	}
 
 	private void readGlobalRules(final String fileName) {

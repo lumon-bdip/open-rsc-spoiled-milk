@@ -2,15 +2,12 @@ package com.openrsc.server.model.entity;
 
 import com.openrsc.server.constants.IronmanMode;
 import com.openrsc.server.constants.ItemId;
-import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
-
-import java.util.Objects;
 
 public class GroundItem extends Entity {
 	/**
@@ -98,25 +95,10 @@ public class GroundItem extends Entity {
 			return player.getUsernameHash() == ownerUsernameHash;
 		}
 
-		if (player.getParty() != null) {
-			for (Player p2 : getWorld().getPlayers()) {
-				if (Objects.requireNonNull(player.getParty()).getPlayers().size() > 1 && player.getParty() != null && player.getParty() == p2.getParty()) {
-					PartyPlayer p3 = p2.getParty().getLeader();
-					if (p3.getShareLoot() > 0) {
-						return true;
-					}
-				}
-			}
-		}
-
-		// If the player is an ironman,
-		if (player.getIronMan() != IronmanMode.None.id()) {
-			// This attribute should only be there if the loot pile was dropped by someone that was killed by a mob
-			long killedByMobOwner = getAttribute("killedByMob", -1L);
-			if (killedByMobOwner != -1L) {
-				// Can only pick it up if it's their own loot pile
-				return killedByMobOwner == player.getUsernameHash();
-			}
+		// This attribute marks a player death pile created when a mob killed the player.
+		long killedByMobOwner = getAttribute("killedByMob", -1L);
+		if (killedByMobOwner != -1L) {
+			return killedByMobOwner == player.getUsernameHash();
 		}
 
 		return player.getUsernameHash() == ownerUsernameHash || ownerUsernameHash == 0;

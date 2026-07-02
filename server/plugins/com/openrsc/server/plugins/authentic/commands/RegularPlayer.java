@@ -16,6 +16,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.snapshot.Chatlog;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.plugins.custom.DiscordItemShowcase;
 import com.openrsc.server.plugins.custom.minigames.CombatOdyssey;
 import com.openrsc.server.plugins.triggers.CommandTrigger;
 import com.openrsc.server.util.MessageFilter;
@@ -87,8 +88,6 @@ public final class RegularPlayer implements CommandTrigger {
 			player.getParty().removePlayer(player.getUsername());
 		} else if (command.equalsIgnoreCase("joinclan")) {
 			sendClanRequest(player, args);
-		} else if (command.equalsIgnoreCase("shareloot")) {
-			toggleLootShare(player);
 		} else if (command.equalsIgnoreCase("shareexp")) {
 			toggleExperienceShare(player);
 		} else if (command.equalsIgnoreCase("onlinelist")) {
@@ -101,6 +100,8 @@ public final class RegularPlayer implements CommandTrigger {
 			player.message(messagePrefix + " the current time/date is:@gre@ " + new java.util.Date().toString());
 		} else if (config().NPC_KILL_LIST && (command.equalsIgnoreCase("kills") || command.equalsIgnoreCase("kc"))) {
 			queryKillList(player, command, args);
+		} else if (command.equalsIgnoreCase("showitem") || command.equalsIgnoreCase("showoff")) {
+			DiscordItemShowcase.showItem(player, args);
 		} else if (command.equalsIgnoreCase("pair")) {
 			pairDiscordID(player);
 		} else if (command.equalsIgnoreCase("d")) {
@@ -167,13 +168,6 @@ public final class RegularPlayer implements CommandTrigger {
 			setGlobalOutput(player, MessageType.QUEST);
 		} else if (command.equalsIgnoreCase("globalprivate") || command.equalsIgnoreCase("gp")) {
 			setGlobalOutput(player, MessageType.PRIVATE_RECIEVE);
-		} else if (command.equalsIgnoreCase("globalrules")) {
-			displayGlobalRules(player);
-		} else if (command.equalsIgnoreCase("i_have_read_and_agree_to_the_global_chat_rules")
-			|| command.equalsIgnoreCase("i_have_read_and_agreed_to_the_global_chat_rules")
-			|| command.equalsIgnoreCase("ihavereadandagreetotheglobalchatrules")
-			|| command.equalsIgnoreCase("ihavereadandagreedtotheglobalchatrules")) {
-			acceptGlobalChatRules(player);
 		} else if (command.equalsIgnoreCase("minigamelog")) {
 			queryMinigameLog(player, args);
 		} else if (command.equalsIgnoreCase("togglenpckcmessages")) {
@@ -184,57 +178,6 @@ public final class RegularPlayer implements CommandTrigger {
 			bankPinOptOut(player);
 		} else if (command.equalsIgnoreCase("rename")) {
 			renameSelf(player, args);
-		} else if (command.equalsIgnoreCase("globalchat") || command.equalsIgnoreCase("gc")) {
-			globalChatInfo(player);
-		}
-	}
-
-	private void globalChatInfo(Player player) {
-		if (!config().WANT_GLOBAL_CHAT && !config().WANT_GLOBAL_FRIEND) {
-			player.message("Global chat is disabled on this world.");
-			return;
-		}
-
-		StringBuilder globalChatInfo = new StringBuilder();
-		globalChatInfo.append("@yel@Global Chat %");
-		globalChatInfo.append("@whi@Global Chat allows anyone participating to broadcast a message to everyone else on the server. % %");
-		if (config().WANT_GLOBAL_FRIEND) {
-			globalChatInfo.append("@whi@It is possible to opt-out of this feature by removing the @cya@Global@whi@ friend from your friends list, and to opt back in by adding @cya@Global@whi@ to your friends list. % %");
-		}
-		if (config().GLOBAL_MESSAGE_READING_TOTAL_LEVEL_REQ > 0) {
-			globalChatInfo.append("@whi@To read global chat, players must reach a skill total of at least " + config().GLOBAL_MESSAGE_READING_TOTAL_LEVEL_REQ + ". ");
-		}
-		if (config().GLOBAL_MESSAGE_TOTAL_LEVEL_REQ > 0) {
-			globalChatInfo.append("@whi@To send a message to global chat, players must reach a skill total of at least " + config().GLOBAL_MESSAGE_TOTAL_LEVEL_REQ + ". ");
-		}
-		if (config().GLOBAL_MESSAGE_READING_TOTAL_LEVEL_REQ > 0 || config().GLOBAL_MESSAGE_TOTAL_LEVEL_REQ > 0) {
-			globalChatInfo.append("@whi@Your skill total is currently " + player.getTotalLevel() + ", ");
-			if (player.getTotalLevel() >= config().GLOBAL_MESSAGE_TOTAL_LEVEL_REQ) {
-				globalChatInfo.append("so you meet the requirements to both send & receive messages.");
-			} else if (player.getTotalLevel() >= config().GLOBAL_MESSAGE_READING_TOTAL_LEVEL_REQ) {
-				globalChatInfo.append("so you can @yel@see@whi@ global chat messages, but can't yet @yel@send@whi@ them.");
-			} else {
-				globalChatInfo.append("so you aren't yet able to participate in global chat.");
-			}
-			globalChatInfo.append(" % %");
-		}
-		globalChatInfo.append("@whi@If you are muted, ");
-		if (player.isMuted() || player.isGlobalMuted()) {
-			globalChatInfo.append("@red@(which you @dre@are@red@)@whi@");
-		}
-		globalChatInfo.append("you will no longer be able to participate in global chat.");
-		if (config().WANT_GLOBAL_RULES_AGREEMENT) {
-			globalChatInfo.append(" Make sure to read the rules by typing @cya@::globalrules@whi@ at any time. % %");
-		}
-		globalChatInfo.append("Also, it is possible to change where global chat messages appear with the @cya@::gq@whi@ or @cya@::gp@whi@ commands. % %");
-		globalChatInfo.append("You can send a global chat message by sending a private message to @cya@Global$@whi@ or by typing @cya@::g@whi@ with your message.");
-
-		if (player.getClientLimitations().supportsMessageBox) {
-			ActionSender.sendBox(player, globalChatInfo.toString(), true);
-		} else {
-			for (String info : globalChatInfo.toString().split(" %")) {
-				noMessageBoxPrintLine(player, info);
-			}
 		}
 	}
 
@@ -312,46 +255,6 @@ public final class RegularPlayer implements CommandTrigger {
 			} else {
 				player.getCache().store("npc_kc_messages", true);
 				player.message(config().MESSAGE_PREFIX + "You have turned @gre@on @whi@NPC kill count messages");
-			}
-		}
-	}
-
-	private void acceptGlobalChatRules(Player player) {
-		if (!config().WANT_GLOBAL_CHAT && !config().WANT_GLOBAL_FRIEND) return;
-		if (!config().WANT_GLOBAL_RULES_AGREEMENT) return;
-		if (player.getCache().hasKey("accepted_global_rules")) {
-			player.message(messagePrefix + "You have already agreed to the global chat rules");
-			if (config().WANT_GLOBAL_FRIEND) {
-				player.message("You can use ::g or the Global$ friend to speak in global chat");
-			} else {
-				player.message("You can use ::g to speak in global chat");
-			}
-			player.message("If you wish to view the global chat rules again, you can use the @cya@::globalrules @whi@command");
-		} else {
-			player.getCache().store("accepted_global_rules", true);
-			player.playerServerMessage(MessageType.QUEST, "Thank you for agreeing to the Global chat rules!");
-			if (config().WANT_GLOBAL_FRIEND) {
-				player.message("You can now use ::g or the Global$ friend to speak in global chat");
-			} else {
-				player.message("You can now use ::g to speak in global chat");
-			}
-		}
-	}
-
-	private void displayGlobalRules(Player player) {
-		if (!config().WANT_GLOBAL_CHAT && !config().WANT_GLOBAL_FRIEND) return;
-		if (!config().WANT_GLOBAL_RULES_AGREEMENT) return;
-
-		if (player.getClientLimitations().supportsMessageBox) {
-			StringBuilder rulesBuilder = new StringBuilder();
-			for (String rule : config().GLOBAL_RULES) {
-				rulesBuilder.append(rule);
-				rulesBuilder.append(" %");
-			}
-			ActionSender.sendBox(player, rulesBuilder.toString(), true);
-		} else {
-			for (String rule : config().GLOBAL_RULES) {
-				noMessageBoxPrintLine(player, rule);
 			}
 		}
 	}
@@ -775,23 +678,6 @@ public final class RegularPlayer implements CommandTrigger {
 				ClanInvite.createClanJoinRequest(player.getWorld().getClanManager().getClan(clanToJoin), player);
 			} else {
 				player.message(messagePrefix + "This clan is not accepting join requests");
-			}
-		}
-	}
-
-	private void toggleLootShare(Player player) {
-		if (player.getParty().getPlayer(player.getUsername()).getRank().equals(PartyRank.LEADER)) {
-			for (PartyPlayer m : player.getParty().getPlayers()) {
-				if (m.getShareLoot() > 0) {
-					m.setShareLoot(0);
-					m.getPlayerReference().message("@whi@[@blu@Party@whi@] - @whi@Loot Sharing has been @red@Disabled");
-					ActionSender.sendParty(m.getPlayerReference());
-				} else {
-					m.setShareLoot(1);
-					ActionSender.sendParty(m.getPlayerReference());
-					m.getPlayerReference().message("@whi@[@blu@Party@whi@] - @whi@Loot Sharing has been @gre@Enabled");
-
-				}
 			}
 		}
 	}
@@ -1371,6 +1257,7 @@ public final class RegularPlayer implements CommandTrigger {
 		"@whi@::wilderness - shows the wilderness activity %",
 		"@whi@::event - to enter an ongoing server event %",
 		"@whi@::kills - shows kill counts of npcs %",
+		"@whi@::showitem <item> - show off an owned item in Discord %",
 		"@whi@::qoloptout - opts you out of Quality of Life features %",
 		"@whi@::certoptout - opts you out of the traditional 'cert' system %"
 	};
@@ -1389,6 +1276,7 @@ public final class RegularPlayer implements CommandTrigger {
 		"@whi@::gang - shows if you are 'Phoenix' or 'Black arm' gang %",
 		"@whi@::event - to enter an ongoing server event %",
 		"@whi@::kills - shows kill counts of npcs %",
+		"@whi@::showitem <item> - show off an owned item in Discord %",
 		"@whi@::qoloptout - opts you out of Quality of Life features %",
 		"@whi@::certoptout - opts you out of the traditional 'cert' system %"
 	};

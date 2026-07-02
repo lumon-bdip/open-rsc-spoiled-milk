@@ -55,6 +55,17 @@ myworld_require_java_17_for_zgc() {
   (( java_major_version >= 17 )) || myworld_fail "run-server-zgc.sh requires Java 17+; found Java $java_major_version"
 }
 
+myworld_load_local_env() {
+  local env_file="${MYWORLD_LOCAL_ENV_FILE:-$ROOT_DIR/server/local.env}"
+
+  if [[ -f "$env_file" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$env_file"
+    set +a
+  fi
+}
+
 myworld_resolve_generator_mode() {
   local mode="check"
 

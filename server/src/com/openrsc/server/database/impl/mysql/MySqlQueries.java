@@ -91,7 +91,7 @@ public class MySqlQueries {
 		playerCurExp = playerCurExp + "FROM `" + PREFIX + "curstats` WHERE `playerID`=?";
 		playerMaxExp = playerMaxExp + "FROM `" + PREFIX + "maxstats` WHERE `playerID`=?";
 
-		copyPassword = "UPDATE `" + PREFIX + "players` SET `pass` = ?, `salt` = ? WHERE `username` = ?";
+		copyPassword = "UPDATE `" + PREFIX + "players` SET `pass` = ?, `salt` = ? WHERE LOWER(`username`) = LOWER(?)";
 		createPlayer = "INSERT INTO `" + PREFIX + "players` (`username`, `email`, `pass`, `creation_date`, `creation_ip`) VALUES (?, ?, ?, ?, ?)";
 		recentlyRegistered = "SELECT count(*) AS count FROM `" + PREFIX + "players` WHERE `creation_ip`=?" +
 			" AND `creation_date` > ?";
@@ -223,8 +223,8 @@ public class MySqlQueries {
 		updateMute = "UPDATE `" + PREFIX + "player_cache` SET `value` = ? WHERE `key` = ? AND `playerID` = ?";
 		updatePlayerLocation = "UPDATE `" + PREFIX + "players` SET `x` = ?, `y` = ? WHERE `id` = ?";
 
-		discordIdToPlayerId = "SELECT `playerID` FROM `" + PREFIX + "player_cache` WHERE `value` = ?";
-		playerIdFromPairToken = "SELECT `playerID` FROM `" + PREFIX + "player_cache` WHERE `value` = ?";
+		discordIdToPlayerId = "SELECT `playerID` FROM `" + PREFIX + "player_cache` WHERE `key`='discordID' AND `value` = ?";
+		playerIdFromPairToken = "SELECT `playerID` FROM `" + PREFIX + "player_cache` WHERE `key`='pair_token' AND `value` = ?";
 		pairDiscord = "INSERT INTO `" + PREFIX + "player_cache`(`playerID`, `type`, `key`, `value`) VALUES(?, ?, ?, ?)";
 		deleteTokenFromCache = "DELETE FROM `" + PREFIX + "player_cache` WHERE `playerID`=? AND `key`='pair_token'";
 		watchlist = "SELECT `value` FROM `" + PREFIX + "player_cache` WHERE`key`='watchlist_?'";

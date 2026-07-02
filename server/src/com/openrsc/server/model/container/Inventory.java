@@ -532,9 +532,8 @@ public class Inventory {
 			if (mob == null || mob.isNpc()) {
 				final GroundItem groundItem = new GroundItem(player.getWorld(), item.getCatalogId(), player.getX(),
 					player.getY(), item.getAmount(), null, item.getNoted());
-				player.getWorld().registerItem(groundItem, player.getConfig().GAME_TICK * 1000);
-
 				groundItem.setAttribute("killedByMob", player.getUsernameHash());
+				player.getWorld().registerItem(groundItem, player.getConfig().GAME_TICK * 1000);
 
 				continue;
 			}
