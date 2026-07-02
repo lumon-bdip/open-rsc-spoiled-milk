@@ -38,6 +38,8 @@ public class Npc extends Mob {
 	private static final double DEFAULT_MELEE_DEFENSE_MULTIPLIER = 1.0D;
 	private static final double DEFAULT_RANGED_DEFENSE_MULTIPLIER = 0.5D;
 	private static final double DEFAULT_MAGIC_DEFENSE_MULTIPLIER = 0.5D;
+	private static final double GROUP_COMBAT_XP_STEP = 0.1D;
+	private static final double GROUP_COMBAT_XP_MAX_MULTIPLIER = 2.0D;
 
 	/**
 	 * The asynchronous logger.
@@ -1083,10 +1085,11 @@ public class Npc extends Mob {
 	 * Distributes kill XP by each player's damage share and returns top damage for kill credit.
 	 */
 	private Pair<UUID, Long> handleXpDistribution(final Mob attacker) {
-		final int totalCombatXP = Formulae.combatExperience(this);
+		final ArrayList<UUID> damageDealerIds = getAllDamageDealerIds();
+		final int totalCombatXP = getGroupCombatExperience(damageDealerIds);
 		Pair<UUID, Long> topDamageDealer = getTopDamageDealer(attacker);
 
-		for (UUID id : getAllDamageDealerIds()) {
+		for (UUID id : damageDealerIds) {
 			Player player = getWorld().getPlayerByUUID(id);
 			if (player == null) {
 				continue;
@@ -1103,6 +1106,30 @@ public class Npc extends Mob {
 		}
 
 		return topDamageDealer;
+	}
+
+	private int getGroupCombatExperience(final ArrayList<UUID> damageDealerIds) {
+		final int baseCombatXP = Formulae.combatExperience(this);
+		final int contributorCount = getOnlineCombatContributorCount(damageDealerIds);
+		if (contributorCount < 2) {
+			return baseCombatXP;
+		}
+
+		final double multiplier = Math.min(
+			GROUP_COMBAT_XP_MAX_MULTIPLIER,
+			1.0D + GROUP_COMBAT_XP_STEP * contributorCount
+		);
+		return (int) (baseCombatXP * multiplier);
+	}
+
+	private int getOnlineCombatContributorCount(final ArrayList<UUID> damageDealerIds) {
+		int contributorCount = 0;
+		for (UUID id : damageDealerIds) {
+			if (getWorld().getPlayerByUUID(id) != null) {
+				contributorCount++;
+			}
+		}
+		return contributorCount;
 	}
 
 	private ArrayList<UUID> getAllDamageDealerIds() {
