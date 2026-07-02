@@ -397,6 +397,16 @@ mode.
       dusk fades to `Cool Night`, `Cool Night` fades into `Deep Blue`, and the
       end of night fades back to `Cool Night` before dawn. Color interpolation
       uses an eased curve so phase handoffs do not flash black or visibly gap.
+- [x] Add a lightweight sky presentation tied to the same day/night state. The
+      OpenGL world viewport clears to pale blue for day, orange for dawn, amber
+      for dusk, and dark blue for night before terrain/walls/scenery render.
+      The current sky pass uses a cheap strongly pitch-shifted sky-to-fog
+      gradient, camera/time-rotated soft distant cloud blobs, and white/yellow
+      night stars with a slight glow. Clouds/stars move with the same pitch
+      field as the gradient, but are sampled from a taller repeated virtual sky
+      so the player looks into more sky instead of losing detail at tilt limits.
+      Distance fog blends world pixels toward a matching day/night fog color
+      instead of black and starts feathering well before the draw cutoff.
 - [x] Keep gameplay ownership separate from renderer settings. Settings may
       control visual richness later, but they should not decide whether world
       time exists.

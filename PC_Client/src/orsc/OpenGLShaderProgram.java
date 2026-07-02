@@ -166,6 +166,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "uniform int uFogEnabled;\n"
 			+ "uniform float uFogStart;\n"
 			+ "uniform float uFogEnd;\n"
+			+ "uniform float uFogRed;\n"
+			+ "uniform float uFogGreen;\n"
+			+ "uniform float uFogBlue;\n"
 			+ "uniform float uToneRed;\n"
 			+ "uniform float uToneGreen;\n"
 			+ "uniform float uToneBlue;\n"
@@ -275,8 +278,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\t\treturn 0.0;\n"
 			+ "\t}\n"
 			+ "\tfloat fogRange = max(1.0, uFogEnd - uFogStart);\n"
-			+ "\tfloat visualRange = max(1.0, fogRange * 0.88);\n"
-			+ "\tfloat distanceIntoFog = max(0.0, vCameraDepth - uFogStart);\n"
+			+ "\tfloat fogStart = max(0.0, uFogStart - fogRange * 0.42);\n"
+			+ "\tfloat visualRange = max(1.0, (uFogEnd - fogStart) * 0.96);\n"
+			+ "\tfloat distanceIntoFog = max(0.0, vCameraDepth - fogStart);\n"
 			+ "\tfloat fogT = clamp(distanceIntoFog / visualRange, 0.0, 1.0);\n"
 			+ "\treturn smoothstep(0.0, 1.0, fogT);\n"
 			+ "}\n"
@@ -331,7 +335,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\t}\n"
 			+ "\tcolor.rgb = applyTone(color.rgb);\n"
 			+ "\tif (uFogEnabled != 0) {\n"
-			+ "\t\tcolor.rgb = mix(color.rgb, vec3(0.0, 0.0, 0.0), distanceFogAmount());\n"
+			+ "\t\tcolor.rgb = mix(color.rgb, vec3(uFogRed, uFogGreen, uFogBlue), distanceFogAmount());\n"
 			+ "\t}\n"
 			+ "\tgl_FragColor = color;\n"
 			+ "}\n";
@@ -378,6 +382,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private final int fogEnabledUniformLocation;
 	private final int fogStartUniformLocation;
 	private final int fogEndUniformLocation;
+	private final int fogRedUniformLocation;
+	private final int fogGreenUniformLocation;
+	private final int fogBlueUniformLocation;
 	private boolean closed;
 
 	private OpenGLShaderProgram(
@@ -422,7 +429,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int glowMaskInvSpanZUniformLocation,
 		int fogEnabledUniformLocation,
 		int fogStartUniformLocation,
-		int fogEndUniformLocation) {
+		int fogEndUniformLocation,
+		int fogRedUniformLocation,
+		int fogGreenUniformLocation,
+		int fogBlueUniformLocation) {
 		this.gl = gl;
 		this.programId = programId;
 		this.projectionMatrixUniformLocation = projectionMatrixUniformLocation;
@@ -465,6 +475,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		this.fogEnabledUniformLocation = fogEnabledUniformLocation;
 		this.fogStartUniformLocation = fogStartUniformLocation;
 		this.fogEndUniformLocation = fogEndUniformLocation;
+		this.fogRedUniformLocation = fogRedUniformLocation;
+		this.fogGreenUniformLocation = fogGreenUniformLocation;
+		this.fogBlueUniformLocation = fogBlueUniformLocation;
 	}
 
 	static OpenGLShaderProgram createProjectedWorld(LwjglBindings gl) throws Exception {
@@ -513,6 +526,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					gl.glGetUniformLocation(program, "uToneGreen"),
 					gl.glGetUniformLocation(program, "uToneBlue"),
 					gl.glGetUniformLocation(program, "uToneBlend"),
+					-1,
+					-1,
+					-1,
 					-1,
 					-1,
 					-1,
@@ -613,7 +629,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					gl.glGetUniformLocation(program, "uGlowMaskInvSpanZ"),
 					gl.glGetUniformLocation(program, "uFogEnabled"),
 					gl.glGetUniformLocation(program, "uFogStart"),
-					gl.glGetUniformLocation(program, "uFogEnd"));
+					gl.glGetUniformLocation(program, "uFogEnd"),
+					gl.glGetUniformLocation(program, "uFogRed"),
+					gl.glGetUniformLocation(program, "uFogGreen"),
+					gl.glGetUniformLocation(program, "uFogBlue"));
 			program = 0;
 			return shaderProgram;
 		} finally {
@@ -794,6 +813,16 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		}
 		if (fogEndUniformLocation >= 0) {
 			gl.glUniform1f(fogEndUniformLocation, fogEnabled ? frame.getFogDistance() : 1.0f);
+		}
+		RendererDayNightCycle.Presentation presentation = RendererDayNightCycle.currentPresentation();
+		if (fogRedUniformLocation >= 0) {
+			gl.glUniform1f(fogRedUniformLocation, presentation.fogRed);
+		}
+		if (fogGreenUniformLocation >= 0) {
+			gl.glUniform1f(fogGreenUniformLocation, presentation.fogGreen);
+		}
+		if (fogBlueUniformLocation >= 0) {
+			gl.glUniform1f(fogBlueUniformLocation, presentation.fogBlue);
 		}
 	}
 

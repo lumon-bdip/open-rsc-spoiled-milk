@@ -18,6 +18,8 @@ public final class RSModel {
 	private static final int FISHING_SPOT_RIPPLE_PERIOD = 24;
 	private static final int FISHING_SPOT_RIPPLE_CENTER = 12;
 	private static final int FISHING_SPOT_RIPPLE_PHASE_STEP = 8;
+	private static final int RENDERER_3D_OBJECT_SHADOW_MAX_FOOTPRINT = 1024;
+	private static final int RENDERER_3D_WALL_OBJECT_SHADOW_MAX_FOOTPRINT = 512;
 	private final int m_Vb = 12345678;
 	int[] faceDiffuseLight;
 	int faceHead;
@@ -1605,6 +1607,9 @@ public final class RSModel {
 			if (height <= 0 || (spanX <= 0 && spanZ <= 0)) {
 				return;
 			}
+			if (!isPlausibleModelShadowCaster(kind, spanX, spanZ)) {
+				return;
+			}
 			int centerX = (minX + maxX) / 2;
 			int centerZ = (minZ + maxZ) / 2;
 			int baseX0;
@@ -1640,6 +1645,13 @@ public final class RSModel {
 					minZ,
 					maxZ));
 			}
+
+		private boolean isPlausibleModelShadowCaster(Renderer3DModelKind kind, int spanX, int spanZ) {
+			int maxSpan = kind == Renderer3DModelKind.WALL_OBJECT
+				? RENDERER_3D_WALL_OBJECT_SHADOW_MAX_FOOTPRINT
+				: RENDERER_3D_OBJECT_SHADOW_MAX_FOOTPRINT;
+			return spanX <= maxSpan && spanZ <= maxSpan;
+		}
 
 		private void addModelGlowEmitter(Renderer3DModelKind kind, RSModel model) {
 			if (!model.hasRenderer3DGlowEmitter() || model.vertHead <= 0) {

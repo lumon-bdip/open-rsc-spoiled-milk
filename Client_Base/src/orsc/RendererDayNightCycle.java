@@ -7,6 +7,13 @@ final class RendererDayNightCycle {
 	private static volatile int syncedCyclePositionMillis = -1;
 	private static volatile int syncedRateMultiplier = 1;
 	private static volatile long syncedAtClientMillis = 0L;
+	private static final SkyColor SKY_DAY = new SkyColor(0.62f, 0.78f, 0.95f);
+	private static final SkyColor SKY_DAWN = new SkyColor(1.0f, 0.50f, 0.20f);
+	private static final SkyColor SKY_DUSK = new SkyColor(0.90f, 0.55f, 0.26f);
+	private static final SkyColor SKY_COOL_NIGHT = new SkyColor(0.12f, 0.18f, 0.38f);
+	private static final SkyColor SKY_DEEP_NIGHT = new SkyColor(0.03f, 0.06f, 0.20f);
+	private static final SkyColor SKY_FOG_WHITE = new SkyColor(1.0f, 1.0f, 1.0f);
+	private static final float SKY_FOG_WHITE_BLEND = 0.35f;
 
 	private RendererDayNightCycle() {
 	}
@@ -47,7 +54,8 @@ final class RendererDayNightCycle {
 			return new Presentation(
 				applyTransitionDim(morningTone(t), t),
 				savedBrightness,
-				"dawn");
+				"dawn",
+				morningSky(t));
 		}
 		if (cycleMillis < dayEndMillis) {
 			return Presentation.fromMode(RendererToneSettings.Mode.DAY, savedBrightness, "day");
@@ -57,7 +65,8 @@ final class RendererDayNightCycle {
 			return new Presentation(
 				applyTransitionDim(eveningTone(t), t),
 				savedBrightness,
-				"dusk");
+				"dusk",
+				eveningSky(t));
 		}
 		if (cycleMillis < nightCoolInEndMillis) {
 			float t = fraction(cycleMillis, duskEndMillis, nightCoolInEndMillis);
@@ -67,7 +76,8 @@ final class RendererDayNightCycle {
 					RendererToneSettings.Mode.DEEP_BLUE,
 					smoothstep(t)),
 				savedBrightness,
-				"night-cool-deep");
+				"night-cool-deep",
+				SkyColor.mix(SKY_COOL_NIGHT, SKY_DEEP_NIGHT, smoothstep(t)));
 		}
 		if (cycleMillis < nightDeepEndMillis) {
 			return Presentation.fromMode(RendererToneSettings.Mode.DEEP_BLUE, savedBrightness, "night-deep");
@@ -78,7 +88,11 @@ final class RendererDayNightCycle {
 				RendererToneSettings.Mode.COOL_NIGHT,
 				smoothstep(fraction(cycleMillis, nightDeepEndMillis, cycle.cycleMillis))),
 			savedBrightness,
-			"night-deep-cool");
+			"night-deep-cool",
+			SkyColor.mix(
+				SKY_DEEP_NIGHT,
+				SKY_COOL_NIGHT,
+				smoothstep(fraction(cycleMillis, nightDeepEndMillis, cycle.cycleMillis))));
 	}
 
 	static float currentBrightnessMultiplier() {
@@ -192,6 +206,16 @@ final class RendererDayNightCycle {
 		return RendererToneSettings.Mode.SUNRISE_AMBER.toneValues();
 	}
 
+	private static SkyColor morningSky(float t) {
+		if (t < 0.2f) {
+			return SkyColor.mix(SKY_COOL_NIGHT, SKY_DAWN, smoothstep(t / 0.2f));
+		}
+		if (t > 0.8f) {
+			return SkyColor.mix(SKY_DAWN, SKY_DAY, smoothstep((t - 0.8f) / 0.2f));
+		}
+		return SKY_DAWN;
+	}
+
 	private static RendererToneSettings.ToneValues eveningTone(float t) {
 		if (t < 0.2f) {
 			return mix(
@@ -206,6 +230,16 @@ final class RendererDayNightCycle {
 				smoothstep((t - 0.8f) / 0.2f));
 		}
 		return RendererToneSettings.Mode.ROSE_DUSK.toneValues();
+	}
+
+	private static SkyColor eveningSky(float t) {
+		if (t < 0.2f) {
+			return SkyColor.mix(SKY_DAY, SKY_DUSK, smoothstep(t / 0.2f));
+		}
+		if (t > 0.8f) {
+			return SkyColor.mix(SKY_DUSK, SKY_COOL_NIGHT, smoothstep((t - 0.8f) / 0.2f));
+		}
+		return SKY_DUSK;
 	}
 
 	private static RendererToneSettings.ToneValues mix(
@@ -244,17 +278,38 @@ final class RendererDayNightCycle {
 		final float blueMultiplier;
 		final float toneBlend;
 		final float brightnessMultiplier;
+		final float skyRed;
+		final float skyGreen;
+		final float skyBlue;
+		final float fogRed;
+		final float fogGreen;
+		final float fogBlue;
 		final String debugLabel;
 
 		Presentation(
 			RendererToneSettings.ToneValues toneValues,
 			float brightnessMultiplier,
 			String debugLabel) {
+			this(toneValues, brightnessMultiplier, debugLabel, skyColorForToneMode(RendererToneSettings.Mode.DAY));
+		}
+
+		Presentation(
+			RendererToneSettings.ToneValues toneValues,
+			float brightnessMultiplier,
+			String debugLabel,
+			SkyColor skyColor) {
 			this.redMultiplier = toneValues.redMultiplier;
 			this.greenMultiplier = toneValues.greenMultiplier;
 			this.blueMultiplier = toneValues.blueMultiplier;
 			this.toneBlend = toneValues.blend;
 			this.brightnessMultiplier = brightnessMultiplier;
+			this.skyRed = skyColor.red;
+			this.skyGreen = skyColor.green;
+			this.skyBlue = skyColor.blue;
+			SkyColor fogColor = SkyColor.mix(skyColor, SKY_FOG_WHITE, SKY_FOG_WHITE_BLEND);
+			this.fogRed = fogColor.red;
+			this.fogGreen = fogColor.green;
+			this.fogBlue = fogColor.blue;
 			this.debugLabel = debugLabel;
 		}
 
@@ -262,7 +317,42 @@ final class RendererDayNightCycle {
 			RendererToneSettings.Mode mode,
 			float brightnessMultiplier,
 			String debugLabel) {
-			return new Presentation(mode.toneValues(), brightnessMultiplier, debugLabel);
+			return new Presentation(mode.toneValues(), brightnessMultiplier, debugLabel, skyColorForToneMode(mode));
+		}
+	}
+
+	private static SkyColor skyColorForToneMode(RendererToneSettings.Mode mode) {
+		if (mode == RendererToneSettings.Mode.SUNRISE_AMBER || mode == RendererToneSettings.Mode.DAWN_GOLD) {
+			return SKY_DAWN;
+		}
+		if (mode == RendererToneSettings.Mode.ROSE_DUSK) {
+			return SKY_DUSK;
+		}
+		if (mode == RendererToneSettings.Mode.COOL_NIGHT) {
+			return SKY_COOL_NIGHT;
+		}
+		if (mode == RendererToneSettings.Mode.DEEP_BLUE) {
+			return SKY_DEEP_NIGHT;
+		}
+		return SKY_DAY;
+	}
+
+	private static final class SkyColor {
+		final float red;
+		final float green;
+		final float blue;
+
+		SkyColor(float red, float green, float blue) {
+			this.red = red;
+			this.green = green;
+			this.blue = blue;
+		}
+
+		static SkyColor mix(SkyColor from, SkyColor to, float t) {
+			return new SkyColor(
+				lerp(from.red, to.red, t),
+				lerp(from.green, to.green, t),
+				lerp(from.blue, to.blue, t));
 		}
 	}
 

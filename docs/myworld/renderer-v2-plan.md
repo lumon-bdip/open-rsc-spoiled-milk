@@ -798,15 +798,17 @@ The legacy Interface `Fog` on/off row has been retired. Its server-backed byte
 is still accepted for protocol compatibility, but it no longer alters camera
 fog generation or the rendered frame; `Graphics > Fog` is the sole
 player-facing fog control.
-The selected font cycles the OpenGL-primary body-font candidates for readability
-testing: legacy `h12b.jf`, `h11p.jf`, `h12p.jf`, `h13b.jf`, and `h14b.jf`.
+OpenGL-primary body-font remapping remains a hidden compatibility path for old
+runtime/client settings. It is no longer exposed in the release-facing options
+menu after the generated-font readability experiment was retired.
 The F6 debug overlay uses a separate 13pt monospaced font so the telemetry is
 more readable at 1280x720 and fullscreen desktop presentation without making
 the main UI overflow. `F6`
 still toggles the renderer debug overlay for development, but release/default
 clients no longer expose quick function-key toggles for window mode,
-aspect ratio, font, scaling mode, or scale size. Those settings must be changed
-through the options menu or explicit runtime launch configuration. The legacy
+aspect ratio, font, scaling mode, or scale size. Font remapping is hidden
+compatibility-only; other supported settings must be changed through the
+options menu or explicit runtime launch configuration. The legacy
 software-presenter scaling controls and integer/bilinear/bicubic labels remain
 available only outside OpenGL-primary fallback presentation.
 
@@ -889,6 +891,10 @@ they are not visual requirements for the baseline.
 - [x] Lock OpenGL-primary presentation to automatic aspect-fit bars so
       resolution changes alter the source framebuffer instead of exposing
       stretch/scaler choices to players.
+- [x] Add scale-aware OpenGL presentation smoothing: exact integer viewport
+      scales stay nearest-neighbor crisp, while fractional window scales blend
+      in linear filtering with strength based on distance from the nearest
+      integer scale.
 - [x] Remap OpenGL mouse coordinates through the actual drawn viewport instead
       of the whole window surface.
 - [x] Add in-game options and `F8` cycling for actual render-surface size
@@ -2232,9 +2238,8 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
       existing click IDs or settings persistence.
 - [x] Collapse the OpenGL-primary player-facing render options to
       `Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`, `Fog`,
-      `Brightness`, and `Font`, with the rendering rows under `Graphics` and
-      the font under `Interface`. The manual `Tone` row was retired after
-      server-owned day/night time landed.
+      `Brightness`, with the rendering rows under `Graphics`. The manual
+      `Tone` row and release-facing font row were retired.
 - [x] Remove release/default quick function-key toggles except `F6` renderer
       debug overlay. Resolution, font, scaling, and window-mode changes should
       go through options or explicit runtime launch configuration.

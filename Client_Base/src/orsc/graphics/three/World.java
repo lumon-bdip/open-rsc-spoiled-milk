@@ -28,6 +28,8 @@ import java.util.zip.ZipFile;
 
 
 public final class World {
+	private static final int RENDERER_3D_WALL_SHADOW_MAX_FOOTPRINT = 512;
+
 	public static final int SECTION_SIZE = 48;
 	public static final int ACTIVE_SECTION_GRID = 3;
 	public static final int LOCAL_TILE_COUNT = SECTION_SIZE * ACTIVE_SECTION_GRID;
@@ -3481,6 +3483,9 @@ public final class World {
 			int firstCoord = bestA * 3;
 			int secondCoord = bestB * 3;
 			int width = Math.max(1, (int) Math.sqrt(bestDistance));
+			if (width > RENDERER_3D_WALL_SHADOW_MAX_FOOTPRINT) {
+				return;
+			}
 			shadowCasters.add(new Renderer3DWorldChunkFrame.ShadowCaster(
 				kind,
 				faceVertexCoords[firstCoord],

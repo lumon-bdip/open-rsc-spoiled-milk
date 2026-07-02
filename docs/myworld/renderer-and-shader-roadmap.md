@@ -248,6 +248,18 @@ Implemented or started:
 - Remaster lighting converts server cycle time into sun azimuth, sun elevation,
   shadow direction, and shadow length.
 - Dawn, dusk, cool night, and deep blue presentation tones are active.
+- The OpenGL world viewport now clears to a simple day/night sky color before
+  world rendering: pale blue day, orange dawn, amber dusk, and dark blue night.
+  The current pass is a lightweight procedural backdrop, not a full geometric
+  skybox: it draws a strongly pitch-shifted vertical sky-to-fog gradient,
+  camera/time-rotated soft distant cloud blobs, and a white/yellow star layer
+  with a slight glow that fades in during night. Clouds/stars move with the same
+  pitch field as the gradient, but are sampled from a taller repeated virtual
+  sky so the player looks into more sky instead of losing detail at tilt limits.
+- Distance fog now blends resident world pixels toward the same day/night fog
+  presentation color instead of black, so the horizon reads as haze in front of
+  the sky backdrop. The fog ramp starts well before the draw cutoff so vertical
+  walls and fences enter haze more gradually.
 - Dawn/dusk dimming is applied through tone RGB uniforms rather than animating
   the baked brightness multiplier.
 - Semantic caster and receiver inventory exists for resident chunks.

@@ -38,7 +38,6 @@ import orsc.graphics.three.Scene;
 import orsc.graphics.three.World;
 import orsc.graphics.two.Fonts;
 import orsc.graphics.two.MudClientGraphics;
-import orsc.graphics.two.RendererFontSettings;
 import orsc.graphics.two.SpriteArchive.Subspace;
 import orsc.graphics.two.SpriteArchive.Unpacker;
 import orsc.graphics.two.SpriteArchive.Workspace;
@@ -1223,13 +1222,6 @@ public final class mudclient implements Runnable {
 	private static void saveRendererProfileSettings() {
 		Properties props = loadClientSettings();
 		RendererProfileSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
-	private static void saveRendererFontSettings() {
-		Properties props = loadClientSettings();
-		RendererFontSettings.saveToClientSettings(props);
 
 		saveClientSettings(props);
 	}
@@ -6722,16 +6714,17 @@ public final class mudclient implements Runnable {
 					this.updateSceneryAnimations();
 					this.queuedProjectileEffectCount = 0;
 					this.queuedCombatEffectCount = 0;
-						long sceneRenderStart = RenderTelemetry.now();
-						this.scene.endScene(-113);
-						RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
-						Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
-						if (renderer3DFrame != null) {
-							renderer3DFrame.setWorldChunkFrame(
-								this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame()));
-							Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
-							Renderer3DMeshFrame meshFrame = renderer3DFrame.getMeshFrame();
-							RenderTelemetry.recordWorldGeometryFrame(
+					this.ensureGameplayRendererWorldChunkFrame();
+					long sceneRenderStart = RenderTelemetry.now();
+					this.scene.endScene(-113);
+					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
+					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
+					if (renderer3DFrame != null) {
+						renderer3DFrame.setWorldChunkFrame(
+							this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame()));
+						Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
+						Renderer3DMeshFrame meshFrame = renderer3DFrame.getMeshFrame();
+						RenderTelemetry.recordWorldGeometryFrame(
 								renderer3DFrame.getSourceModelCount(),
 								renderer3DFrame.getWorldFaceCount(),
 								renderer3DFrame.getSpriteAnchorCount(),
@@ -12972,7 +12965,6 @@ public final class mudclient implements Runnable {
 			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
 			index = addSettingsRow(index, "@whi@Brightness - " + RendererBrightnessSettings.getMode().label, 58);
 			index = addSettingsSection(index, "Interface");
-			index = addSettingsRow(index, "@whi@Font - " + RendererFontSettings.getMode().label, 57);
 		}
 
 		if (!isOpenGLPrimaryWindow) {
@@ -13436,9 +13428,6 @@ public final class mudclient implements Runnable {
 
 		if (settingIndex == 56 && this.mouseButtonClick == 1) {
 			cycleRenderSurfaceMode();
-		}
-		if (isOpenGLPrimaryWindow && settingIndex == 57 && this.mouseButtonClick == 1) {
-			cycleOpenGLUiFontMode();
 		}
 		if (isOpenGLPrimaryWindow && settingIndex == 58 && this.mouseButtonClick == 1) {
 			cycleOpenGLBrightnessMode();
@@ -14859,12 +14848,6 @@ public final class mudclient implements Runnable {
 		saveRendererProfileSettings();
 	}
 
-	void cycleOpenGLUiFontMode() {
-		RendererFontSettings.Mode mode = RendererFontSettings.cycleMode();
-		saveRendererFontSettings();
-		System.out.println("[renderer-v2] OpenGL UI font: " + mode.id);
-	}
-
 	void cycleOpenGLRendererProfileMode() {
 		RendererProfileSettings.Mode mode = RendererProfileSettings.cycleMode();
 		applyOpenGLRendererProfileMode(mode);
@@ -15864,7 +15847,7 @@ public final class mudclient implements Runnable {
 						}
 					} else if (this.pageDown) {
 						if (RendererExperimentalSettings.isCameraTiltEnabled()) {
-							adjustCameraPitch(4);
+							adjustCameraPitch(-4);
 						} else {
 							currentChat++;
 							if (currentChat >= messages.size()) {
@@ -15877,7 +15860,7 @@ public final class mudclient implements Runnable {
 						}
 					} else if (this.pageUp) {
 						if (RendererExperimentalSettings.isCameraTiltEnabled()) {
-							adjustCameraPitch(-4);
+							adjustCameraPitch(4);
 						} else {
 							currentChat--;
 							if (currentChat < 0) {
@@ -18363,7 +18346,9 @@ public final class mudclient implements Runnable {
 				if (!hardAreaLoad && this.hasCompletedInitialRegionLoad) {
 					this.world.preloadSections(wantX, wantZ, this.requestedPlane);
 				}
-				if (this.lastHeightOffset == this.requestedPlane && this.currentRegionMinX < wantX
+				if (this.hasCompletedInitialRegionLoad
+					&& this.lastHeightOffset == this.requestedPlane
+					&& this.currentRegionMinX < wantX
 					&& this.currentRegionMaxX > wantX && this.currentRegionMinZ < wantZ
 					&& wantZ < this.currentRegionMaxZ) {
 					this.world.playerAlive = true;
@@ -25794,6 +25779,21 @@ public final class mudclient implements Runnable {
 		this.world.loadSections(shiftedWorldX, shiftedWorldZ, this.requestedPlane);
 		this.rematerializeLoadedTerrainSceneryAfterWorldReload();
 		this.world.playerAlive = true;
+	}
+
+	private void ensureGameplayRendererWorldChunkFrame() {
+		if (this.world == null || this.scene == null) {
+			return;
+		}
+		Renderer3DWorldChunkFrame worldChunkFrame = this.world.getRenderer3DWorldChunkFrame();
+		if (worldChunkFrame != null && worldChunkFrame.getChunkCount() > 0) {
+			return;
+		}
+
+		this.scene.forceLegacyWorldRasterOnce();
+		if (this.hasCompletedInitialRegionLoad && this.localPlayer != null) {
+			this.reloadCurrentRegionForRoofVisibility();
+		}
 	}
 
 	public void setOptionHideUndergroundFlicker(boolean b) {

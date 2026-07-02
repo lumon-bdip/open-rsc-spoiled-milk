@@ -33,16 +33,6 @@ public final class RendererFontSettings {
 		return font;
 	}
 
-	public static Mode getMode() {
-		return mode;
-	}
-
-	public static Mode cycleMode() {
-		Mode next = mode.next();
-		mode = next;
-		return next;
-	}
-
 	public static void loadFromClientSettings(Properties props) {
 		if (runtimeUiFontOverride || props == null) {
 			return;
@@ -50,12 +40,6 @@ public final class RendererFontSettings {
 		String configuredMode = props.getProperty(UI_FONT_PROPERTY_KEY);
 		if (configuredMode != null && !configuredMode.trim().isEmpty()) {
 			mode = Mode.from(configuredMode);
-		}
-	}
-
-	public static void saveToClientSettings(Properties props) {
-		if (props != null) {
-			props.setProperty(UI_FONT_PROPERTY_KEY, mode.id);
 		}
 	}
 
@@ -85,25 +69,18 @@ public final class RendererFontSettings {
 	}
 
 	public enum Mode {
-		LEGACY("legacy", "@yel@Legacy h12b", -1),
-		H11P("h11p", "@gre@h11p Tooltip", BANK_TOOLTIP_FONT),
-		H12P("h12p", "@gre@h12p Regular", 2),
-		H13B("h13b", "@ora@h13b Bold", 3),
-		H14B("h14b", "@ora@h14b Large", 4);
+		LEGACY("legacy", -1),
+		H11P("h11p", BANK_TOOLTIP_FONT),
+		H12P("h12p", 2),
+		H13B("h13b", 3),
+		H14B("h14b", 4);
 
 		public final String id;
-		public final String label;
 		private final int fontIndex;
 
-		Mode(String id, String label, int fontIndex) {
+		Mode(String id, int fontIndex) {
 			this.id = id;
-			this.label = label;
 			this.fontIndex = fontIndex;
-		}
-
-		Mode next() {
-			Mode[] modes = values();
-			return modes[(ordinal() + 1) % modes.length];
 		}
 
 		static Mode from(String value) {

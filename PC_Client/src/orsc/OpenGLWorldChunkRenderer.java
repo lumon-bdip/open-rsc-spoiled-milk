@@ -1978,20 +1978,34 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			fogColorBuffer = ByteBuffer.allocateDirect(4 * 4)
 				.order(ByteOrder.nativeOrder())
 				.asFloatBuffer();
-			fogColorBuffer.put(0.0f).put(0.0f).put(0.0f).put(1.0f).flip();
 		}
+		RendererDayNightCycle.Presentation presentation = RendererDayNightCycle.currentPresentation();
+		fogColorBuffer.clear();
+		fogColorBuffer
+			.put(presentation.fogRed)
+			.put(presentation.fogGreen)
+			.put(presentation.fogBlue)
+			.put(1.0f)
+			.flip();
 		gl.glFogi(gl.GL_FOG_MODE, gl.GL_LINEAR);
-		gl.glFogf(gl.GL_FOG_START, frame.getFogStartDistance());
+		gl.glFogf(gl.GL_FOG_START, visualFogStart(frame));
 		gl.glFogf(gl.GL_FOG_END, visualFogEnd(frame));
 		gl.glFogfv(gl.GL_FOG_COLOR, fogColorBuffer);
 		gl.glEnable(gl.GL_FOG);
 	}
 
-	private float visualFogEnd(Renderer3DFrame frame) {
+	private float visualFogStart(Renderer3DFrame frame) {
 		float fogStart = frame.getFogStartDistance();
 		float fogEnd = frame.getFogDistance();
 		float fogRange = Math.max(1.0f, fogEnd - fogStart);
-		return fogStart + fogRange * FOG_VISUAL_END_FRACTION;
+		return Math.max(0.0f, fogStart - fogRange * 0.42f);
+	}
+
+	private float visualFogEnd(Renderer3DFrame frame) {
+		float fogEnd = frame.getFogDistance();
+		float visualFogStart = visualFogStart(frame);
+		float fogRange = Math.max(1.0f, fogEnd - visualFogStart);
+		return visualFogStart + fogRange * FOG_VISUAL_END_FRACTION;
 	}
 
 	private float[] projectionMatrix(Renderer3DFrame frame) {
@@ -2720,12 +2734,23 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		return evictedChunks;
 	}
 
+	void clearResidentWorldSession() throws Exception {
+		if (closed) {
+			return;
+		}
+		clearResidentResources();
+	}
+
 	@Override
 	public void close() throws Exception {
 		if (closed) {
 			return;
 		}
 		closed = true;
+		clearResidentResources();
+	}
+
+	private void clearResidentResources() throws Exception {
 		for (WorldChunkBuffer buffer : residentChunks.values()) {
 			buffer.close(gl);
 		}

@@ -1404,16 +1404,16 @@ public final class SkillGuideInterface {
 			addAmmoMouldGuide("Orichalcum", 62, 2192, 2037, 2042, 2046, 2029, 3216);
 			addAmmoMouldGuide("Rune", 70, 2194, 674, 646, 1070, 1080, 3217);
 		} else if (curTab == 5) {
-			addWoodcraftGuide("Basic", 10, 1, 277, 5, 276, 8, 60, 9, 100, 1);
-			addWoodcraftGuide("Pine", 15, 8, 2116, 12, 2115, 15, 59, 16, 2131, 8);
-			addWoodcraftGuide("Oak", 20, 15, 659, 19, 658, 22, 2169, 23, 1764, 15);
-			addWoodcraftGuide("Willow", 25, 22, 661, 26, 660, 29, 2170, 30, 1769, 22);
-			addWoodcraftGuide("Palm", 30, 30, 2120, 33, 2119, 36, 2171, 37, 2136, 30);
-			addWoodcraftGuide("Maple", 35, 38, 663, 40, 662, 43, 2172, 44, 1774, 38);
-			addWoodcraftGuide("Yew", 40, 46, 665, 47, 664, 50, 2173, 51, 1779, 46);
-			addWoodcraftGuide("Ebony", 45, 54, 2124, 54, 2123, 57, 2174, 58, 2141, 54);
-			addWoodcraftGuide("Magic", 50, 62, 667, 61, 666, 64, 2175, 65, 1784, 62);
-			addWoodcraftGuide("Blood", 55, 70, 2128, 67, 2127, 70, 2176, 72, 2146, 70);
+			addWoodcraftGuide("Basic", 10, 1, 277, 5, 276, 8, 60, 9, 100, 1, 377, 1);
+			addWoodcraftGuide("Pine", 15, 8, 2116, 12, 2115, 15, 59, 16, 2131, 8, 2682, 8);
+			addWoodcraftGuide("Oak", 20, 15, 659, 19, 658, 22, 2169, 23, 1764, 15, 2683, 15);
+			addWoodcraftGuide("Willow", 25, 22, 661, 26, 660, 29, 2170, 30, 1769, 22, 2684, 22);
+			addWoodcraftGuide("Palm", 30, 30, 2120, 33, 2119, 36, 2171, 37, 2136, 30, 2685, 30);
+			addWoodcraftGuide("Maple", 35, 38, 663, 40, 662, 43, 2172, 44, 1774, 38, 2686, 38);
+			addWoodcraftGuide("Yew", 40, 46, 665, 47, 664, 50, 2173, 51, 1779, 46, 2687, 46);
+			addWoodcraftGuide("Ebony", 45, 54, 2124, 54, 2123, 57, 2174, 58, 2141, 54, 2688, 54);
+			addWoodcraftGuide("Magic", 50, 62, 667, 61, 666, 64, 2175, 65, 1784, 62, 2689, 62);
+			addWoodcraftGuide("Blood", 55, 70, 2128, 67, 2127, 70, 2176, 72, 2146, 70, 2690, 70);
 		} else if (curTab == 6) {
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor has set effects if all five pieces are worn"));
 			skillMenuEntries.add(new SkillMenuItem(1839, "", "Leather armor mimics the defenses of its creature"));
@@ -1458,9 +1458,10 @@ public final class SkillGuideInterface {
 
 	private void addWoodcraftGuide(String name, int shaftAmount, int shaftLevel, int shortbowId, int shortbowLevel,
 								   int longbowId, int longbowLevel, int crossbowId, int crossbowLevel,
-								   int staffId, int staffLevel) {
+								   int staffId, int staffLevel, int fishingRodId, int fishingRodLevel) {
 		skillMenuEntries.add(new SkillMenuItem(280, String.valueOf(shaftLevel), name + " arrow shafts - 1 log makes " + shaftAmount));
 		skillMenuEntries.add(new SkillMenuItem(staffId, String.valueOf(staffLevel), name + " staff"));
+		skillMenuEntries.add(new SkillMenuItem(fishingRodId, String.valueOf(fishingRodLevel), EntityHandler.getItemDef(fishingRodId).name));
 		skillMenuEntries.add(new SkillMenuItem(shortbowId, String.valueOf(shortbowLevel), "Unstrung " + name.toLowerCase() + " shortbow"));
 		skillMenuEntries.add(new SkillMenuItem(longbowId, String.valueOf(longbowLevel), "Unstrung " + name.toLowerCase() + " longbow"));
 		skillMenuEntries.add(new SkillMenuItem(crossbowId, String.valueOf(crossbowLevel), name + " crossbow"));

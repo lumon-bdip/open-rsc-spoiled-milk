@@ -1,8 +1,7 @@
-# Limited Alpha Release Checklist
+# Player Release Checklist
 
-The first GitHub download is published as the prerelease tag
-`v0.1.0-alpha.1`. The release assets are created locally and uploaded
-manually.
+GitHub release assets are created locally and uploaded manually. Replace
+`RELEASE_VERSION` below with the tag being published, for example `v0.2.6`.
 
 ## Publication Gates
 
@@ -25,6 +24,8 @@ manually.
   `localhost`.
 - Commit and push the exact source revision being packaged, including any
   validated pre-release gameplay fixes.
+- Draft the Discord release announcement and release notes using
+  [../community/DISCORD-POST-TEMPLATES.md](../community/DISCORD-POST-TEMPLATES.md).
 
 ## Build Assets
 
@@ -36,7 +37,7 @@ From the packaged revision:
 ./scripts/download-windows-jre.sh
 ./scripts/run-hosted-server.sh
 ./scripts/package-player-release.sh \
-  --version v0.1.0-alpha.1 \
+  --version RELEASE_VERSION \
   --host YOUR_PUBLIC_HOST_OR_IP \
   --port 43605 \
   --windows-jre output/runtimes/temurin-17-windows-x64-jre \
@@ -48,10 +49,10 @@ machine running `scripts/run-hosted-server.sh`. Do not upload packages built
 with a placeholder host.
 
 The packager writes ignored artifacts under
-`output/releases/v0.1.0-alpha.1/`:
+`output/releases/RELEASE_VERSION/`:
 
-- `spoiled-milk-v0.1.0-alpha.1-java.zip`
-- `spoiled-milk-v0.1.0-alpha.1-windows-x64.zip`
+- `spoiled-milk-RELEASE_VERSION-java.zip`
+- `spoiled-milk-RELEASE_VERSION-windows-x64.zip`
 - `SHA256SUMS.txt`
 
 The client jar embeds runtime PNG assets under `myworld-assets/`; player
@@ -72,7 +73,7 @@ verification still requires a Windows machine or a tester.
 3. Launch the Windows archive on Windows and the Java archive with Java 17+,
    then connect to the hosted candidate server.
 4. Verify account creation, login, logout, and reconnect before publication.
-5. Create GitHub release `v0.1.0-alpha.1` as a prerelease and upload the two
+5. Create GitHub release `RELEASE_VERSION` and upload the two
    zip files and `SHA256SUMS.txt`.
 6. Download the uploaded files again and run:
 
@@ -80,5 +81,11 @@ verification still requires a Windows machine or a tester.
 sha256sum -c SHA256SUMS.txt
 ```
 
-7. Link invited testers to the GitHub prerelease and
+7. Link invited testers to the GitHub release and
    [PLAYER-DOWNLOADS.md](PLAYER-DOWNLOADS.md).
+8. Post the short Discord notice in `#announcements`.
+9. Post the longer Discord notes in `#release-notes`.
+10. Update `#known-issues` if the release adds or resolves notable known
+    problems.
+11. Watch `#installation-help` and `#bug-reports` after publication for update
+    failures, launch problems, and regressions.

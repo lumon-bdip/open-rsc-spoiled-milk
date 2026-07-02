@@ -5,7 +5,6 @@ import orsc.graphics.Renderer2DFrame;
 import orsc.graphics.Renderer2DSettings;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.two.Fonts;
-import orsc.graphics.two.RendererFontSettings;
 import orsc.multiclient.ClientPort;
 import orsc.util.GenUtil;
 

@@ -4692,15 +4692,15 @@ public class EntityHandler {
 		addCustomWoodStaffDefinitions("Ebony", "ebony", 2141, 2142, 2143, 2144, 2145, 3750, 26250, 0x333333);
 		addCustomWoodStaffDefinitions("Blood", "blood-wood", 2146, 2147, 2148, 2149, 2150, 7500, 52500, 0xCC2222);
 
-		addFishingRodDefinition("Pine Fishing Rod", "A fishing rod shaped from pine logs.", 2682, 25, 0xCCAA33, 0xAC6F51);
-		addFishingRodDefinition("Oak Fishing Rod", "A fishing rod shaped from oak logs.", 2683, 50, 0xB97A57, 0xAC6F51);
-		addFishingRodDefinition("Willow Fishing Rod", "A fishing rod shaped from willow logs.", 2684, 100, 0x7D9B5A, 0x886B29);
-		addFishingRodDefinition("Palm Fishing Rod", "A fishing rod shaped from palm logs.", 2685, 180, 0xC78C4A, 0x8B5B31);
-		addFishingRodDefinition("Maple Fishing Rod", "A fishing rod shaped from maple logs.", 2686, 300, 0xA0522D, 0x8B5B31);
-		addFishingRodDefinition("Yew Fishing Rod", "A fishing rod shaped from yew logs.", 2687, 500, 0x6B4F2A, 0x9D5300);
-		addFishingRodDefinition("Ebony Fishing Rod", "A fishing rod shaped from ebony logs.", 2688, 850, 0x333333, 0x6B4A2D);
-		addFishingRodDefinition("Magic Fishing Rod", "A fishing rod shaped from magic logs.", 2689, 1400, 0x4B2E83, 0x000000);
-		addFishingRodDefinition("Blood Fishing Rod", "A fishing rod shaped from blood logs.", 2690, 2200, 0xCC2222, 0x5A0F0F);
+		addFishingRodDefinition("Pine Fishing Rod", "A fishing rod shaped from pine logs.", 2682, 80, 0xCCAA33, 0xAC6F51);
+		addFishingRodDefinition("Oak Fishing Rod", "A fishing rod shaped from oak logs.", 2683, 180, 0xB97A57, 0xAC6F51);
+		addFishingRodDefinition("Willow Fishing Rod", "A fishing rod shaped from willow logs.", 2684, 420, 0x7D9B5A, 0x886B29);
+		addFishingRodDefinition("Palm Fishing Rod", "A fishing rod shaped from palm logs.", 2685, 900, 0xC78C4A, 0x8B5B31);
+		addFishingRodDefinition("Maple Fishing Rod", "A fishing rod shaped from maple logs.", 2686, 1800, 0xA0522D, 0x8B5B31);
+		addFishingRodDefinition("Yew Fishing Rod", "A fishing rod shaped from yew logs.", 2687, 3200, 0x6B4F2A, 0x9D5300);
+		addFishingRodDefinition("Ebony Fishing Rod", "A fishing rod shaped from ebony logs.", 2688, 5500, 0x333333, 0x6B4A2D);
+		addFishingRodDefinition("Magic Fishing Rod", "A fishing rod shaped from magic logs.", 2689, 9000, 0x4B2E83, 0x000000);
+		addFishingRodDefinition("Blood Fishing Rod", "A fishing rod shaped from blood logs.", 2690, 15000, 0xCC2222, 0x5A0F0F);
 
 		setCustomItemDefinition(2177, new ItemDef("Bolt mould", "Use with bars to cast bolts", "", 5, -1, "external-png:bolt-mould", false, false, 0, 0, false, false, true, 2177));
 		setCustomItemDefinition(2204, new ItemDef("Dart mould", "Use with bars to cast dart tips", "", 5, -1, "external-png:dart-mould", false, false, 0, 0, false, false, true, 2204));

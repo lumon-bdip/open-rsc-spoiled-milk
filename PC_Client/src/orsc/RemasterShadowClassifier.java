@@ -12,6 +12,9 @@ import java.util.Map;
 
 final class RemasterShadowClassifier {
 	static final boolean DIRECT_WALL_SEGMENT_CLIP = false;
+	private static final int MAX_WORLD_WALL_SHADOW_SPAN = 512;
+	private static final int MAX_WALL_OBJECT_SHADOW_SPAN = 512;
+	private static final int MAX_GAME_OBJECT_SHADOW_SPAN = 1024;
 
 	static RemasterShadowInventory inspectInventory(
 		Renderer3DWorldChunkFrame worldChunkFrame) {
@@ -112,7 +115,33 @@ final class RemasterShadowClassifier {
 	}
 
 	static boolean isEligibleCaster(Renderer3DWorldChunkFrame.ShadowCaster caster) {
-		return caster != null && caster.getHeight() > 0 && caster.getOpacity() > 0;
+		return caster != null
+			&& caster.getHeight() > 0
+			&& caster.getOpacity() > 0
+			&& hasPlausibleShadowSpan(caster);
+	}
+
+	private static boolean hasPlausibleShadowSpan(Renderer3DWorldChunkFrame.ShadowCaster caster) {
+		Renderer3DModelKind kind = caster.getModelKind();
+		int maxSpan;
+		if (kind == Renderer3DModelKind.GAME_OBJECT) {
+			maxSpan = MAX_GAME_OBJECT_SHADOW_SPAN;
+		} else if (kind == Renderer3DModelKind.WALL_OBJECT) {
+			maxSpan = MAX_WALL_OBJECT_SHADOW_SPAN;
+		} else if (kind == Renderer3DModelKind.WALL) {
+			maxSpan = MAX_WORLD_WALL_SHADOW_SPAN;
+		} else {
+			return false;
+		}
+		int footprintSpanX = Math.max(0, caster.getFootprintMaxX() - caster.getFootprintMinX());
+		int footprintSpanZ = Math.max(0, caster.getFootprintMaxZ() - caster.getFootprintMinZ());
+		int baseSpanX = Math.abs(caster.getBaseX1() - caster.getBaseX0());
+		int baseSpanZ = Math.abs(caster.getBaseZ1() - caster.getBaseZ0());
+		return caster.getWidth() <= maxSpan
+			&& footprintSpanX <= maxSpan
+			&& footprintSpanZ <= maxSpan
+			&& baseSpanX <= maxSpan
+			&& baseSpanZ <= maxSpan;
 	}
 
 	static boolean isClippingCandidate(Renderer3DWorldChunkFrame.ShadowCaster caster) {

@@ -96,7 +96,7 @@ def main() -> None:
     )
     require(
         presenter,
-        "boolean replayOpenGLWorldUi = shouldUseOpenGLWorldReplacementComposite(frame);",
+        "boolean replayOpenGLWorldUi = worldReplacementComposite;",
         "OpenGL world UI replay requires active replacement world frame",
     )
     require(

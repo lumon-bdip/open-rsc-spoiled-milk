@@ -47,11 +47,11 @@ def main() -> None:
     require(font_settings, "private static final int BANK_TOOLTIP_FONT = 0;", "bank tooltip font policy constant")
     require(font_settings, "private static final int LEGACY_BODY_FONT = 1;", "legacy body font policy constant")
     require(font_settings, '"SPOILED_MILK_OPENGL_UI_FONT"', "OpenGL UI font runtime override")
-    require(font_settings, 'LEGACY("legacy", "@yel@Legacy h12b", -1)', "legacy font mode")
-    require(font_settings, 'H11P("h11p", "@gre@h11p Tooltip", BANK_TOOLTIP_FONT)', "h11p font mode")
-    require(font_settings, 'H12P("h12p", "@gre@h12p Regular", 2)', "h12p font mode")
-    require(font_settings, 'H13B("h13b", "@ora@h13b Bold", 3)', "h13b font mode")
-    require(font_settings, 'H14B("h14b", "@ora@h14b Large", 4)', "h14b font mode")
+    require(font_settings, 'LEGACY("legacy", -1)', "legacy font mode")
+    require(font_settings, 'H11P("h11p", BANK_TOOLTIP_FONT)', "h11p font mode")
+    require(font_settings, 'H12P("h12p", 2)', "h12p font mode")
+    require(font_settings, 'H13B("h13b", 3)', "h13b font mode")
+    require(font_settings, 'H14B("h14b", 4)', "h14b font mode")
     forbid(font_settings, 'H16B("h16b"', "oversized UI font mode")
     forbid(font_settings, 'H20B("h20b"', "oversized UI font mode")
     forbid(font_settings, 'H24B("h24b"', "oversized UI font mode")
@@ -60,22 +60,18 @@ def main() -> None:
         '"h16b".equals(normalized) || "h20b".equals(normalized) || "h24b".equals(normalized)',
         "retired oversized UI font fallback",
     )
-    require(
-        font_settings,
-        "public static Mode cycleMode()",
-        "runtime OpenGL UI font cycle",
-    )
+    forbid(font_settings, "public static Mode cycleMode()", "player-facing OpenGL UI font cycle")
+    forbid(font_settings, "public static Mode getMode()", "player-facing OpenGL UI font getter")
     require(
         font_settings,
         "if (font == LEGACY_BODY_FONT) {\n\t\t\treturn currentMode.fontIndex;",
         "OpenGL-primary body text remaps to selected font",
     )
-    require(font_settings, "props.setProperty(UI_FONT_PROPERTY_KEY, mode.id);", "UI font setting persistence")
     require(openrsc, "RendererFontSettings.loadFromClientSettings(props);", "UI font setting loaded")
-    require(mudclient, "RendererFontSettings.saveToClientSettings(props);", "UI font setting saved")
-    require(mudclient, "void cycleOpenGLUiFontMode()", "mudclient UI font cycle method")
-    require(mudclient, '"@whi@Font - " + RendererFontSettings.getMode().label', "General options UI font row")
-    require(mudclient, "if (isOpenGLPrimaryWindow && settingIndex == 57 && this.mouseButtonClick == 1)", "General options UI font click handler")
+    forbid(mudclient, "RendererFontSettings.saveToClientSettings(props);", "UI font setting saved")
+    forbid(mudclient, "void cycleOpenGLUiFontMode()", "mudclient UI font cycle method")
+    forbid(mudclient, '"@whi@Font - " + RendererFontSettings.getMode().label', "General options UI font row")
+    forbid(mudclient, "if (isOpenGLPrimaryWindow && settingIndex == 57 && this.mouseButtonClick == 1)", "General options UI font click handler")
     forbid(applet, "mudclient.cycleOpenGLUiFontMode();", "F9 OpenGL-primary UI font hotkey")
     require(applet, 'new Font("Monospaced", Font.PLAIN, 13)', "debug overlay font size")
     require(graphics, "font = RendererFontSettings.displayFont(font);", "font policy applied")
@@ -91,7 +87,7 @@ def main() -> None:
     )
     require(
         plan,
-        "cycles the OpenGL-primary body-font candidates",
+        "OpenGL-primary body-font remapping remains a hidden compatibility path",
         "renderer plan documents OpenGL font option",
     )
     require(
@@ -100,7 +96,7 @@ def main() -> None:
         "renderer plan documents debug overlay font size",
     )
 
-    print("PASS: renderer-v2 OpenGL-primary font policy is selectable from General options")
+    print("PASS: renderer-v2 OpenGL-primary font policy is hidden compatibility-only")
 
 
 if __name__ == "__main__":

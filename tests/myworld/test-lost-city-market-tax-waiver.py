@@ -61,6 +61,12 @@ def main() -> None:
         "LostCityMarketAccess.waiveDiamondTax(player)",
         "Fairy Queen should persist the waiver after payment",
     )
+    if 'say(player, n, "The diamond trading tax is annoying"' in fairy:
+        fail("Fairy Queen should not manually repeat the selected tax complaint option")
+    if 'say(player, n, "That\'s a deal"' in fairy:
+        fail("Fairy Queen should not manually repeat the selected deal option")
+    if 'say(player, n, "That\'s even more absurd!"' in fairy:
+        fail("Fairy Queen should not manually repeat the selected refusal option")
     require(
         door,
         "if (LostCityMarketAccess.hasDiamondTaxWaiver(player))",

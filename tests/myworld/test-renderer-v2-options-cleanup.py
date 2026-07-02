@@ -147,7 +147,7 @@ def main() -> None:
         '"@whi@Renderer - " + RendererProfileSettings.getMode().label',
         "player-facing OpenGL renderer profile row",
     )
-    require(
+    forbid(
         mudclient,
         '"@whi@Font - " + RendererFontSettings.getMode().label',
         "player-facing OpenGL UI font row",

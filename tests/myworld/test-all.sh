@@ -90,6 +90,7 @@ python3 ./tests/myworld/test-ground-item-stack-amounts.py
 python3 ./tests/myworld/test-ground-item-identity.py
 python3 ./tests/myworld/test-ground-item-rendering.py
 python3 ./tests/myworld/test-scene-entity-lifecycle.py
+python3 ./tests/myworld/test-renderer-relog-resident-world.py
 python3 ./tests/myworld/test-herblaw-cleanup.py
 python3 ./tests/myworld/test-herblaw-remap.py
 python3 ./tests/myworld/test-burnt-food-ashes.py
@@ -120,6 +121,7 @@ python3 ./tests/myworld/test-ore-crusher.py
 python3 ./tests/myworld/test-guide-text-polish.py
 python3 ./tests/myworld/test-skill-guide-info-pass.py
 python3 ./tests/myworld/test-skill-guides.py
+python3 ./tests/myworld/test-thieving-guide-runtime.py
 python3 ./tests/myworld/test-summoning-animation-effect.py
 python3 ./tests/myworld/test-summoning-costs.py
 python3 ./tests/myworld/test-summoning-display-names.py

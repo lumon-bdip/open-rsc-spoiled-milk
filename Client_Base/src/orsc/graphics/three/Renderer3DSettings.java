@@ -84,11 +84,11 @@ public final class Renderer3DSettings {
 		return VISIBLE_WORLD_ENABLED;
 	}
 
-	static boolean canSkipLegacyWorldRaster() {
+	public static boolean canSkipLegacyWorldRaster() {
 		return SKIP_LEGACY_WORLD_RASTER_ENABLED;
 	}
 
-	static boolean canSkipProjectedWorldCapture() {
+	public static boolean canSkipProjectedWorldCapture() {
 		return RESIDENT_CHUNK_TRUSTED_REPLACEMENT_ENABLED;
 	}
 

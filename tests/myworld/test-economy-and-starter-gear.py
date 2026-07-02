@@ -110,7 +110,7 @@ def main() -> None:
     client_price_pairs = {
         (int(item_id), int(price))
         for item_id, price in re.findall(
-            r"new ItemOverride\((\d+), [^,\n]+, [^,\n]+, (-?\d+),",
+            r"new ItemOverride\((\d+), [^\n]*?, (-?\d+),\s*-?\d+,\s*-?\d+\)",
             client_item_overrides,
         )
         if int(price) >= 0

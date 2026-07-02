@@ -79,10 +79,10 @@ def main() -> None:
         'index = addSettingsSection(index, "Experimental");',
         "experimental options section",
     )
-    require(
+    forbid(
         client,
-        'index = addSettingsSection(index, "Interface");\n\t\t\tindex = addSettingsRow(index, "@whi@Font - " + RendererFontSettings.getMode().label, 57);\n\t\t\tindex = addSettingsRow(index, "@whi@Camera tilt - "',
-        "camera tilt option moved into Interface section",
+        '"@whi@Font - " + RendererFontSettings.getMode().label',
+        "retired OpenGL UI font option",
     )
     require(
         client,
@@ -146,12 +146,12 @@ def main() -> None:
     )
     require(
         client,
-        "if (RendererExperimentalSettings.isCameraTiltEnabled()) {\n\t\t\t\t\t\t\tadjustCameraPitch(4);",
+        "if (RendererExperimentalSettings.isCameraTiltEnabled()) {\n\t\t\t\t\t\t\tadjustCameraPitch(-4);",
         "Page Down camera tilt control",
     )
     require(
         client,
-        "if (RendererExperimentalSettings.isCameraTiltEnabled()) {\n\t\t\t\t\t\t\tadjustCameraPitch(-4);",
+        "if (RendererExperimentalSettings.isCameraTiltEnabled()) {\n\t\t\t\t\t\t\tadjustCameraPitch(4);",
         "Page Up camera tilt control",
     )
     require(

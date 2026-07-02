@@ -9,6 +9,7 @@ import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.Renderer3DDepthFrame;
 import orsc.graphics.three.Renderer3DMeshFrame;
 import orsc.graphics.three.Renderer3DModelKind;
+import orsc.graphics.three.Renderer3DSettings;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
 
 import java.awt.AlphaComposite;
@@ -235,6 +236,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	static final String FRAME_CAPTURE_DIR_PROPERTY = "spoiledmilk.openglFrameCaptureDir";
 	static final String FRAME_CAPTURE_DIR_ENV = "SPOILED_MILK_OPENGL_FRAME_CAPTURE_DIR";
 	private static final int FRAME_CAPTURE_BURST_FRAMES = 12;
+	private static final int RESIDENT_WORLD_SESSION_CLEAR_FRAME_THRESHOLD = 8;
 	private static final int UNIT_QUAD_VERTEX_COUNT = 4;
 	private static final int UNIT_QUAD_INDEX_COUNT = 6;
 	private static final int UNIT_QUAD_FLOATS_PER_VERTEX = 4;
@@ -244,6 +246,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		UNIT_QUAD_POSITION_COMPONENTS * 4;
 	private static final int UNIT_QUAD_STRIDE_BYTES =
 		UNIT_QUAD_FLOATS_PER_VERTEX * 4;
+	private static final double INTEGER_SCALE_EPSILON = 0.01d;
+	private static final float MAX_FRACTIONAL_SCALE_SMOOTHING_ALPHA = 0.85f;
 
 	private final Object frameLock = new Object();
 	private final String title;
@@ -289,6 +293,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private int currentTargetHeight = INITIAL_HEIGHT;
 	private Viewport currentDrawViewport = new Viewport(0, 0, INITIAL_WIDTH, INITIAL_HEIGHT);
 	private Viewport currentFramebufferViewport = new Viewport(0, 0, INITIAL_WIDTH, INITIAL_HEIGHT);
+	private float currentPresentationSmoothingAlpha;
 	private int legacySceneSpriteRestoreCommands;
 	private int legacySceneSpriteRestoreFallbacks;
 	private int legacySceneSpriteRestoreFallbackPixels;
@@ -332,6 +337,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private FloatBuffer cameraToClipMatrixBuffer;
 	int worldSpriteDepthDrawCommands;
 	int worldSpriteDepthTextureBatches;
+	private boolean previousFrameHadResidentWorldChunks;
+	private int residentWorldMissingFrameCount;
 
 	OpenGLFramePresenter(String title, boolean inputEnabled, boolean primaryWindow) {
 		this.title = title;
@@ -825,10 +832,24 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		currentFramebufferViewport = framebufferViewport;
 		currentTargetWidth = windowViewport.width;
 		currentTargetHeight = windowViewport.height;
+		currentPresentationSmoothingAlpha =
+			computePresentationSmoothingAlpha(framebufferViewport, frame.sourceWidth, frame.sourceHeight);
 
 		long uploadStart = RenderTelemetry.now();
 		uploadTexture(frame);
 		long uploadNanos = RenderTelemetry.elapsedSince(uploadStart);
+		boolean frameHasResidentWorldChunks = hasResidentWorldChunkFrame(frame);
+		if (frameHasResidentWorldChunks) {
+			residentWorldMissingFrameCount = 0;
+			previousFrameHadResidentWorldChunks = true;
+		} else if (previousFrameHadResidentWorldChunks) {
+			residentWorldMissingFrameCount++;
+			if (residentWorldMissingFrameCount >= RESIDENT_WORLD_SESSION_CLEAR_FRAME_THRESHOLD) {
+				clearResidentWorldChunkSession();
+				previousFrameHadResidentWorldChunks = false;
+				residentWorldMissingFrameCount = 0;
+			}
+		}
 		boolean worldReplacementComposite = shouldUseOpenGLWorldReplacementComposite(frame);
 		OpenGLFrameCapture frameCapture = beginFrameCaptureIfRequested(frame, worldReplacementComposite);
 		activeFrameCapture = frameCapture;
@@ -836,8 +857,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		long baseStart = RenderTelemetry.now();
 		phaseCaptureNanos = 0L;
 		prepareBaseFramebufferPass();
-		gl.glViewport(0, 0, framebufferViewportWidth, framebufferViewportHeight);
-		gl.glClear(gl.GL_COLOR_BUFFER_BIT);
+		clearFrameBackground(frame, framebufferViewport);
 		gl.glViewport(
 			framebufferViewport.x,
 			framebufferViewport.y,
@@ -865,7 +885,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 
 		long spriteOverlayStart = RenderTelemetry.now();
 		phaseCaptureNanos = 0L;
-		runOpenGLPass(() -> drawSpriteOverlay(frame));
+		runOpenGLPass(() -> drawSpriteOverlay(frame, worldReplacementComposite));
 		long spriteOverlayNanos = Math.max(0L, RenderTelemetry.elapsedSince(spriteOverlayStart) - phaseCaptureNanos);
 		captureLayer(frameCapture, "05-sprite-overlay");
 
@@ -1006,10 +1026,33 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			|| frame.renderer3DFrame == null) {
 			return false;
 		}
-		return WORLD_REPLACEMENT_COMPOSITE && frame.renderer3DFrame.getMeshFrame() != null;
+		Renderer3DMeshFrame meshFrame = frame.renderer3DFrame.getMeshFrame();
+		return WORLD_REPLACEMENT_COMPOSITE
+			&& !Renderer3DSettings.canSkipProjectedWorldCapture()
+			&& meshFrame != null
+			&& meshFrame.getTriangleCount() > 0;
 	}
 
 	private boolean shouldUseResidentChunkReplacementComposite(Frame frame) {
+		if (!isResidentChunkReplacementRequested(frame)
+			|| !WORLD_CHUNKS_TRUSTED_REPLACEMENT) {
+			return false;
+		}
+		if (Renderer3DSettings.canSkipLegacyWorldRaster()
+			&& Renderer3DSettings.canSkipProjectedWorldCapture()) {
+			return true;
+		}
+		if (worldChunkRenderer == null) {
+			return false;
+		}
+		Renderer3DWorldChunkFrame worldChunkFrame = frame.renderer3DFrame.getWorldChunkFrame();
+		return worldChunkRenderer.inspectDrawableResidentStaticWorld(
+			frame.renderer3DFrame,
+			worldChunkFrame,
+			WORLD_CHUNKS_TEXTURED_VISIBLE).canReplace;
+	}
+
+	private boolean isResidentChunkReplacementRequested(Frame frame) {
 		if (!Renderer2DSettings.canReplayUiOverOpenGLWorld()
 			|| !hasScenePhaseCommands(frame)
 			|| frame.renderer3DFrame == null) {
@@ -1020,6 +1063,20 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			&& (!WORLD_CHUNKS_RESIDENT_OBJECTS || frame.renderer3DFrame.getDepthFrame() != null)
 			&& worldChunkFrame != null
 			&& worldChunkFrame.getChunkCount() > 0;
+	}
+
+	private boolean hasResidentWorldChunkFrame(Frame frame) {
+		if (frame == null || frame.renderer3DFrame == null) {
+			return false;
+		}
+		Renderer3DWorldChunkFrame worldChunkFrame = frame.renderer3DFrame.getWorldChunkFrame();
+		return worldChunkFrame != null && worldChunkFrame.getChunkCount() > 0;
+	}
+
+	private void clearResidentWorldChunkSession() throws Exception {
+		if (worldChunkRenderer != null) {
+			worldChunkRenderer.clearResidentWorldSession();
+		}
 	}
 
 	private boolean hasScenePhaseCommands(Frame frame) {
@@ -1044,6 +1101,291 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	}
 
+	private void clearFrameBackground(Frame frame, Viewport viewport) throws Exception {
+		gl.glDisable(gl.GL_SCISSOR_TEST);
+		gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		gl.glClear(gl.GL_COLOR_BUFFER_BIT);
+
+		RendererDayNightCycle.Presentation presentation = RendererDayNightCycle.currentPresentation();
+		gl.glEnable(gl.GL_SCISSOR_TEST);
+		gl.glScissor(viewport.x, viewport.y, viewport.width, viewport.height);
+		gl.glViewport(viewport.x, viewport.y, viewport.width, viewport.height);
+		drawSkyBackdrop(frame, presentation);
+		gl.glDisable(gl.GL_SCISSOR_TEST);
+	}
+
+	private void drawSkyBackdrop(Frame frame, RendererDayNightCycle.Presentation presentation) throws Exception {
+		useUnitProjection();
+		gl.glDisable(gl.GL_DEPTH_TEST);
+		gl.glDisable(gl.GL_TEXTURE_2D);
+		gl.glDisable(gl.GL_BLEND);
+
+		float pitchOffset = skyPitchOffset(frame);
+		drawSkyGradient(presentation, pitchOffset);
+		float skyBrightness = clamp01((presentation.skyRed + presentation.skyGreen + presentation.skyBlue) / 3.0f);
+		float skyRotation = skyRotationOffset(frame);
+		float cloudAlpha = 0.055f + skyBrightness * 0.095f;
+		float cloudRed = mix(presentation.fogRed, 1.0f, 0.34f);
+		float cloudGreen = mix(presentation.fogGreen, 1.0f, 0.34f);
+		float cloudBlue = mix(presentation.fogBlue, 1.0f, 0.34f);
+		gl.glEnable(gl.GL_BLEND);
+		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+		drawSkyCloudGroup(0.18f, skyRotation, pitchOffset, 0.18f, 0.19f, cloudRed, cloudGreen, cloudBlue, cloudAlpha);
+		drawSkyCloudGroup(0.62f, skyRotation, pitchOffset, 0.29f, 0.15f, cloudRed, cloudGreen, cloudBlue, cloudAlpha * 0.70f);
+		drawSkyCloudGroup(0.88f, skyRotation, pitchOffset, 0.41f, 0.13f, cloudRed, cloudGreen, cloudBlue, cloudAlpha * 0.48f);
+		drawSkyCloudGroup(0.42f, skyRotation * 0.92f, pitchOffset, -0.04f, 0.12f, cloudRed, cloudGreen, cloudBlue, cloudAlpha * 0.42f);
+		drawSkyStars(skyRotation, pitchOffset, clamp01((0.42f - skyBrightness) / 0.30f));
+		gl.glDisable(gl.GL_BLEND);
+		gl.glEnable(gl.GL_TEXTURE_2D);
+		gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	}
+
+	private void drawSkyGradient(RendererDayNightCycle.Presentation presentation, float pitchOffset) throws Exception {
+		float topRed = clamp01(presentation.skyRed * 0.82f);
+		float topGreen = clamp01(presentation.skyGreen * 0.86f);
+		float topBlue = clamp01(presentation.skyBlue * 1.05f);
+		float horizonRed = mix(presentation.skyRed, presentation.fogRed, 0.78f);
+		float horizonGreen = mix(presentation.skyGreen, presentation.fogGreen, 0.78f);
+		float horizonBlue = mix(presentation.skyBlue, presentation.fogBlue, 0.78f);
+		float topY = -0.42f + pitchOffset;
+		float horizonY = 1.12f + pitchOffset;
+		drawUnitSolidQuad(0.0f, -1.0f, 1.0f, topY, topRed, topGreen, topBlue, 1.0f);
+		drawUnitGradientQuad(
+			0.0f,
+			topY,
+			1.0f,
+			horizonY,
+			topRed,
+			topGreen,
+			topBlue,
+			horizonRed,
+			horizonGreen,
+			horizonBlue);
+		drawUnitSolidQuad(0.0f, horizonY, 1.0f, 2.0f, horizonRed, horizonGreen, horizonBlue, 1.0f);
+	}
+
+	private void drawUnitGradientQuad(
+		float x0,
+		float y0,
+		float x1,
+		float y1,
+		float topRed,
+		float topGreen,
+		float topBlue,
+		float bottomRed,
+		float bottomGreen,
+		float bottomBlue) throws Exception {
+		gl.glBegin(gl.GL_QUADS);
+		gl.glColor4f(topRed, topGreen, topBlue, 1.0f);
+		gl.glVertex3f(x0, y0, 0.0f);
+		gl.glVertex3f(x1, y0, 0.0f);
+		gl.glColor4f(bottomRed, bottomGreen, bottomBlue, 1.0f);
+		gl.glVertex3f(x1, y1, 0.0f);
+		gl.glVertex3f(x0, y1, 0.0f);
+		gl.glEnd();
+	}
+
+	private float skyRotationOffset(Frame frame) {
+		float cameraYaw = 0.0f;
+		if (frame != null && frame.renderer3DFrame != null) {
+			cameraYaw = wrap01(frame.renderer3DFrame.getCameraRotationY() / 1024.0f);
+		}
+		return wrap01(cameraYaw + RendererDayNightCycle.currentCycleFraction() * 0.18f);
+	}
+
+	private float skyPitchOffset(Frame frame) {
+		if (frame == null || frame.renderer3DFrame == null) {
+			return 0.0f;
+		}
+		float pitch = frame.renderer3DFrame.getCameraRotationX() & 1023;
+		float normalizedPitch = (pitch - 912.0f) / 255.0f;
+		return clamp(normalizedPitch, -0.75f, 0.75f) * 1.05f;
+	}
+
+	private void drawSkyCloudGroup(
+		float baseX,
+		float rotation,
+		float pitchOffset,
+		float y,
+		float scale,
+		float red,
+		float green,
+		float blue,
+		float alpha) throws Exception {
+		float x = wrap01(baseX + rotation);
+		float cloudY = y + pitchOffset;
+		for (int repeat = -1; repeat <= 1; repeat++) {
+			float shiftedX = x + repeat;
+			for (int verticalRepeat = -1; verticalRepeat <= 1; verticalRepeat++) {
+				float shiftedY = cloudY + verticalRepeat;
+				if (shiftedY < -0.45f || shiftedY > 1.45f) {
+					continue;
+				}
+				drawSoftSkyEllipse(shiftedX - scale * 0.62f, shiftedY + scale * 0.10f, scale * 0.78f, scale * 0.25f, red, green, blue, alpha * 0.45f);
+				drawSoftSkyEllipse(shiftedX, shiftedY + scale * 0.12f, scale * 1.05f, scale * 0.34f, red, green, blue, alpha * 0.74f);
+				drawSoftSkyEllipse(shiftedX + scale * 0.66f, shiftedY + scale * 0.09f, scale * 0.72f, scale * 0.24f, red, green, blue, alpha * 0.48f);
+				drawSoftSkyEllipse(shiftedX - scale * 0.26f, shiftedY - scale * 0.12f, scale * 0.46f, scale * 0.20f, red, green, blue, alpha * 0.54f);
+				drawSoftSkyEllipse(shiftedX + scale * 0.22f, shiftedY - scale * 0.17f, scale * 0.52f, scale * 0.22f, red, green, blue, alpha * 0.62f);
+			}
+		}
+	}
+
+	private void drawSoftSkyEllipse(
+		float centerX,
+		float centerY,
+		float radiusX,
+		float radiusY,
+		float red,
+		float green,
+		float blue,
+		float alpha) throws Exception {
+		int strips = 17;
+		for (int strip = 0; strip < strips; strip++) {
+			float position = (strip + 0.5f) / strips * 2.0f - 1.0f;
+			float widthFactor = (float) Math.sqrt(Math.max(0.0f, 1.0f - position * position));
+			float edgeFade = 1.0f - Math.abs(position);
+			float stripAlpha = alpha * edgeFade * edgeFade;
+			float y0 = centerY + position * radiusY - radiusY / strips;
+			float y1 = centerY + position * radiusY + radiusY / strips;
+			drawUnitSolidQuad(
+				centerX - radiusX * widthFactor,
+				y0,
+				centerX + radiusX * widthFactor,
+				y1,
+				red,
+				green,
+				blue,
+				stripAlpha);
+		}
+	}
+
+	private void drawSkyStars(float rotation, float pitchOffset, float alpha) throws Exception {
+		if (alpha <= 0.01f) {
+			return;
+		}
+		drawSkyStar(0.08f, 0.11f, rotation, pitchOffset, 0.0021f, 1.0f, 0.86f, 0.18f, alpha * 0.72f);
+		drawSkyStar(0.17f, 0.32f, rotation, pitchOffset, 0.0016f, 0.92f, 0.96f, 1.0f, alpha * 0.54f);
+		drawSkyStar(0.25f, 0.19f, rotation, pitchOffset, 0.0019f, 1.0f, 0.92f, 0.30f, alpha * 0.74f);
+		drawSkyStar(0.34f, 0.40f, rotation, pitchOffset, 0.0014f, 1.0f, 0.80f, 0.12f, alpha * 0.52f);
+		drawSkyStar(0.46f, 0.14f, rotation, pitchOffset, 0.0022f, 0.96f, 0.98f, 1.0f, alpha * 0.70f);
+		drawSkyStar(0.56f, 0.27f, rotation, pitchOffset, 0.0015f, 1.0f, 0.88f, 0.20f, alpha * 0.58f);
+		drawSkyStar(0.66f, 0.08f, rotation, pitchOffset, 0.0018f, 0.93f, 0.97f, 1.0f, alpha * 0.58f);
+		drawSkyStar(0.78f, 0.35f, rotation, pitchOffset, 0.0020f, 1.0f, 0.82f, 0.14f, alpha * 0.68f);
+		drawSkyStar(0.89f, 0.18f, rotation, pitchOffset, 0.0015f, 0.97f, 0.98f, 1.0f, alpha * 0.48f);
+		drawSkyStar(0.96f, 0.43f, rotation, pitchOffset, 0.0018f, 1.0f, 0.86f, 0.22f, alpha * 0.60f);
+		drawSkyStar(0.12f, -0.08f, rotation, pitchOffset, 0.0015f, 1.0f, 0.78f, 0.10f, alpha * 0.46f);
+		drawSkyStar(0.39f, -0.03f, rotation, pitchOffset, 0.0017f, 1.0f, 0.84f, 0.16f, alpha * 0.56f);
+		drawSkyStar(0.53f, 0.49f, rotation, pitchOffset, 0.0014f, 1.0f, 0.78f, 0.10f, alpha * 0.44f);
+		drawSkyStar(0.72f, -0.12f, rotation, pitchOffset, 0.0019f, 1.0f, 0.82f, 0.14f, alpha * 0.62f);
+		drawSkyStar(0.84f, 0.04f, rotation, pitchOffset, 0.0015f, 1.0f, 0.80f, 0.12f, alpha * 0.50f);
+		drawSkyStar(0.03f, 0.28f, rotation, pitchOffset, 0.0014f, 1.0f, 0.82f, 0.12f, alpha * 0.52f);
+		drawSkyStar(0.14f, 0.49f, rotation, pitchOffset, 0.0017f, 0.95f, 0.98f, 1.0f, alpha * 0.48f);
+		drawSkyStar(0.21f, 0.04f, rotation, pitchOffset, 0.0013f, 1.0f, 0.76f, 0.08f, alpha * 0.44f);
+		drawSkyStar(0.29f, 0.55f, rotation, pitchOffset, 0.0016f, 1.0f, 0.86f, 0.18f, alpha * 0.54f);
+		drawSkyStar(0.41f, 0.25f, rotation, pitchOffset, 0.0015f, 0.94f, 0.97f, 1.0f, alpha * 0.50f);
+		drawSkyStar(0.49f, 0.36f, rotation, pitchOffset, 0.0018f, 1.0f, 0.80f, 0.12f, alpha * 0.66f);
+		drawSkyStar(0.59f, 0.02f, rotation, pitchOffset, 0.0014f, 1.0f, 0.78f, 0.10f, alpha * 0.48f);
+		drawSkyStar(0.64f, 0.48f, rotation, pitchOffset, 0.0015f, 1.0f, 0.84f, 0.18f, alpha * 0.52f);
+		drawSkyStar(0.71f, 0.22f, rotation, pitchOffset, 0.0016f, 0.94f, 0.98f, 1.0f, alpha * 0.50f);
+		drawSkyStar(0.81f, 0.53f, rotation, pitchOffset, 0.0017f, 1.0f, 0.80f, 0.12f, alpha * 0.58f);
+		drawSkyStar(0.92f, 0.30f, rotation, pitchOffset, 0.0015f, 1.0f, 0.76f, 0.08f, alpha * 0.54f);
+		drawSkyStar(0.98f, 0.07f, rotation, pitchOffset, 0.0013f, 0.96f, 0.98f, 1.0f, alpha * 0.42f);
+		drawSkyStar(0.31f, -0.16f, rotation, pitchOffset, 0.0016f, 1.0f, 0.82f, 0.14f, alpha * 0.48f);
+		drawSkyStar(0.61f, -0.07f, rotation, pitchOffset, 0.0015f, 1.0f, 0.78f, 0.08f, alpha * 0.46f);
+		drawSkyStar(0.74f, 0.60f, rotation, pitchOffset, 0.0014f, 1.0f, 0.84f, 0.16f, alpha * 0.42f);
+	}
+
+	private void drawSkyStar(
+		float baseX,
+		float y,
+		float rotation,
+		float pitchOffset,
+		float size,
+		float red,
+		float green,
+		float blue,
+		float alpha) throws Exception {
+		float x = wrap01(baseX + rotation * 1.35f);
+		float starY = y + pitchOffset;
+		for (int repeat = -1; repeat <= 1; repeat++) {
+			float shiftedX = x + repeat;
+			for (int verticalRepeat = -1; verticalRepeat <= 1; verticalRepeat++) {
+				float shiftedY = starY + verticalRepeat;
+				if (shiftedY < -0.08f || shiftedY > 1.08f) {
+					continue;
+				}
+				drawUnitSolidQuad(
+					shiftedX - size * 3.2f,
+					shiftedY - size * 3.2f,
+					shiftedX + size * 3.2f,
+					shiftedY + size * 3.2f,
+					red,
+					green,
+					blue,
+					alpha * 0.08f);
+				drawUnitSolidQuad(
+					shiftedX - size * 1.9f,
+					shiftedY - size * 1.9f,
+					shiftedX + size * 1.9f,
+					shiftedY + size * 1.9f,
+					red,
+					green,
+					blue,
+					alpha * 0.16f);
+				drawUnitSolidQuad(
+					shiftedX - size,
+					shiftedY - size,
+					shiftedX + size,
+					shiftedY + size,
+					red,
+					green,
+					blue,
+					alpha * 1.15f);
+			}
+		}
+	}
+
+	private void drawUnitSolidQuad(
+		float x0,
+		float y0,
+		float x1,
+		float y1,
+		float red,
+		float green,
+		float blue,
+		float alpha) throws Exception {
+		gl.glColor4f(red, green, blue, clamp01(alpha));
+		gl.glBegin(gl.GL_QUADS);
+		gl.glVertex3f(x0, y0, 0.0f);
+		gl.glVertex3f(x1, y0, 0.0f);
+		gl.glVertex3f(x1, y1, 0.0f);
+		gl.glVertex3f(x0, y1, 0.0f);
+		gl.glEnd();
+	}
+
+	private static float mix(float from, float to, float amount) {
+		return from + (to - from) * clamp01(amount);
+	}
+
+	private static float wrap01(float value) {
+		float wrapped = value - (float) Math.floor(value);
+		return wrapped < 0.0f ? wrapped + 1.0f : wrapped;
+	}
+
+	private static float clamp(float value, float min, float max) {
+		return Math.max(min, Math.min(max, value));
+	}
+
+	private static float clamp01(float value) {
+		if (value <= 0.0f) {
+			return 0.0f;
+		}
+		if (value >= 1.0f) {
+			return 1.0f;
+		}
+		return value;
+	}
+
 	private void runOpenGLPass(OpenGLPassAction action) throws Exception {
 		gl.glPushAttrib(gl.GL_ALL_ATTRIB_BITS);
 		gl.glPushClientAttrib(gl.GL_CLIENT_ALL_ATTRIB_BITS);
@@ -1056,13 +1398,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void uploadTexture(Frame frame) throws Exception {
-		OpenGLPresentationSettings.ScaleMode currentScaleMode = currentScaleMode();
-		int filter = frame.linearFiltering && currentScaleMode != OpenGLPresentationSettings.ScaleMode.INTEGER_FIT
-			? gl.GL_LINEAR
-			: gl.GL_NEAREST;
 		gl.glBindTexture(gl.GL_TEXTURE_2D, textureId);
-		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, filter);
-		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, filter);
+		applyTextureFilter(gl.GL_NEAREST);
 
 		if (textureWidth != frame.sourceWidth || textureHeight != frame.sourceHeight) {
 			gl.glTexImage2D(
@@ -1100,7 +1437,26 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		useUnitProjection();
 
+		applyTextureFilter(gl.GL_NEAREST);
 		drawUnitTexturedQuad();
+		if (currentPresentationSmoothingAlpha > 0.0f) {
+			gl.glEnable(gl.GL_BLEND);
+			gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+			applyTextureFilter(gl.GL_LINEAR);
+			gl.glColor4f(1.0f, 1.0f, 1.0f, currentPresentationSmoothingAlpha);
+			drawUnitTexturedQuad();
+			gl.glDisable(gl.GL_BLEND);
+			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+	}
+
+	private void applyCurrentPresentationTextureFilter() throws Exception {
+		applyTextureFilter(currentPresentationSmoothingAlpha > 0.0f ? gl.GL_LINEAR : gl.GL_NEAREST);
+	}
+
+	private void applyTextureFilter(int filter) throws Exception {
+		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, filter);
+		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, filter);
 	}
 
 	private void drawWorldMesh(Frame frame, boolean worldReplacementComposite) throws Exception {
@@ -1137,16 +1493,24 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			shadowInventory.sunlightEligibleCasters,
 			shadowInventory.sunlightSuppressedRoofedCasters,
 			shadowInventory.sunlightSuppressedUnknownCasters);
-		boolean canDrawProjectedMesh = WORLD_MESH_ENABLED && worldMeshRenderer != null && renderer3DMeshFrame != null;
+		boolean canDrawProjectedMesh =
+			WORLD_MESH_ENABLED
+				&& worldMeshRenderer != null
+				&& renderer3DMeshFrame != null
+				&& renderer3DMeshFrame.getTriangleCount() > 0;
 		boolean canDrawProjectedStaticFallback =
-			canDrawProjectedMesh && (WORLD_MESH_VISIBLE || WORLD_MESH_TEXTURED_VISIBLE);
+			canDrawProjectedMesh
+				&& !Renderer3DSettings.canSkipProjectedWorldCapture()
+				&& (WORLD_MESH_VISIBLE || WORLD_MESH_TEXTURED_VISIBLE);
 		if (WORLD_MESH_ENABLED && worldChunkRenderer != null) {
 			long chunkUploadPhaseStart = RenderTelemetry.now();
+			boolean budgetResidentChunkUploads =
+				canDrawProjectedStaticFallback && !Renderer3DSettings.canSkipLegacyWorldRaster();
 			OpenGLWorldChunkUploadStats chunkUploadStats = worldChunkRenderer.upload(
 				frame.renderer3DFrame,
 				worldChunkFrame,
 				WORLD_CHUNKS_TEXTURED_VISIBLE,
-				canDrawProjectedStaticFallback);
+				budgetResidentChunkUploads);
 			chunkUploadPhaseNanos = RenderTelemetry.elapsedSince(chunkUploadPhaseStart);
 			RenderTelemetry.recordOpenGLWorldChunkUpload(
 				chunkUploadStats.requestedChunks,
@@ -1159,7 +1523,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				chunkUploadStats.budgetLimitNanos);
 		}
 		boolean requestedResidentChunkReplacementComposite =
-			worldReplacementComposite && shouldUseResidentChunkReplacementComposite(frame);
+			isResidentChunkReplacementRequested(frame);
 		ResidentChunkReadiness residentChunkReadiness =
 			requestedResidentChunkReplacementComposite && worldChunkRenderer != null
 				? worldChunkRenderer.inspectDrawableResidentStaticWorld(
@@ -1169,16 +1533,19 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				: ResidentChunkReadiness.notRequested(
 					requestedResidentChunkReplacementComposite ? "no-chunk-renderer" : "not-requested");
 		boolean residentChunkReplacementComposite =
+			worldReplacementComposite
+				&& requestedResidentChunkReplacementComposite
+				&& WORLD_CHUNKS_TRUSTED_REPLACEMENT
+				&& residentChunkReadiness.canReplace;
+		boolean residentChunksReadyThisFrame =
 			requestedResidentChunkReplacementComposite
 				&& WORLD_CHUNKS_TRUSTED_REPLACEMENT
 				&& residentChunkReadiness.canReplace;
-		String residentReplacementReason =
-			requestedResidentChunkReplacementComposite
-				&& !residentChunkReplacementComposite
-				&& residentChunkReadiness.canReplace
-				&& !WORLD_CHUNKS_TRUSTED_REPLACEMENT
-					? "not-trusted"
-					: residentChunkReadiness.reason;
+		String residentReplacementReason = residentReplacementReason(
+			worldReplacementComposite,
+			requestedResidentChunkReplacementComposite,
+			residentChunkReplacementComposite,
+			residentChunkReadiness);
 		RenderTelemetry.recordOpenGLResidentChunkReplacement(
 			requestedResidentChunkReplacementComposite,
 			residentChunkReplacementComposite,
@@ -1193,7 +1560,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		// RENDERER-V2 OWNER: resident chunks are the preferred static-world path.
 		// Projected mesh drawing below remains only as fallback/diagnostic bridge.
 		boolean drawProjectedMeshVisible =
-			!residentChunkReplacementComposite && (WORLD_MESH_VISIBLE || WORLD_MESH_TEXTURED_VISIBLE);
+			!residentChunkReplacementComposite
+				&& !residentChunksReadyThisFrame
+				&& (WORLD_MESH_VISIBLE || WORLD_MESH_TEXTURED_VISIBLE);
 		// LEGACY BRIDGE: projected object mesh covers scenery/wall objects only
 		// while resident object chunks are unavailable or disabled.
 		boolean drawProjectedObjectMeshVisible =
@@ -1215,9 +1584,15 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			worldMeshRenderer.uploadAndMaybeDraw(renderer3DMeshFrame, false, false, null);
 			projectedMeshPhaseNanos += RenderTelemetry.elapsedSince(projectedMeshPhaseStart);
 		}
+		boolean drawResidentChunkFallback =
+			!worldReplacementComposite
+				&& (!canDrawProjectedStaticFallback || residentChunksReadyThisFrame);
 		boolean drawResidentChunkDiagnostic =
 			(WORLD_CHUNKS_VISIBLE || WORLD_CHUNKS_FILLED_VISIBLE || WORLD_CHUNKS_TEXTURED_VISIBLE)
-				&& (!WORLD_CHUNKS_REPLACEMENT_COMPOSITE || residentChunkReplacementComposite);
+				&& (!WORLD_CHUNKS_REPLACEMENT_COMPOSITE
+					|| residentChunkReplacementComposite
+					|| residentChunksReadyThisFrame
+					|| drawResidentChunkFallback);
 		if (shouldDrawRemasterTerrainShadowMask()
 			&& drawResidentChunkDiagnostic
 			&& worldChunkRenderer != null
@@ -1282,6 +1657,26 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			chunkUploadPhaseNanos,
 			projectedMeshPhaseNanos,
 			chunkDrawPhaseNanos);
+	}
+
+	private String residentReplacementReason(
+		boolean worldReplacementComposite,
+		boolean requestedResidentChunkReplacementComposite,
+		boolean residentChunkReplacementComposite,
+		ResidentChunkReadiness residentChunkReadiness) {
+		if (requestedResidentChunkReplacementComposite
+			&& !residentChunkReplacementComposite
+			&& residentChunkReadiness.canReplace
+			&& !worldReplacementComposite) {
+			return "base-active-this-frame";
+		}
+		if (requestedResidentChunkReplacementComposite
+			&& !residentChunkReplacementComposite
+			&& residentChunkReadiness.canReplace
+			&& !WORLD_CHUNKS_TRUSTED_REPLACEMENT) {
+			return "not-trusted";
+		}
+		return residentChunkReadiness.reason;
 	}
 
 
@@ -1381,6 +1776,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float rightU = command.isMirrorX() ? u0 : u1;
 
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
+		applyCurrentPresentationTextureFilter();
 		useWorldToneColor(alpha);
 		drawScreenQuad(
 			topX0,
@@ -1410,9 +1806,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			alpha);
 	}
 
-	private void drawSpriteOverlay(Frame frame) throws Exception {
+	private void drawSpriteOverlay(Frame frame, boolean worldReplacementComposite) throws Exception {
 		Renderer2DFrame renderer2DFrame = frame.renderer2DFrame;
-		boolean replayOpenGLWorldUi = shouldUseOpenGLWorldReplacementComposite(frame);
+		boolean replayOpenGLWorldUi = worldReplacementComposite;
 		if ((!Renderer2DSettings.isOpenGLSpriteOverlayEnabled() && !replayOpenGLWorldUi)
 			|| renderer2DFrame == null) {
 			return;
@@ -2028,6 +2424,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			command.getClipBottom());
 		try {
 			gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
+			applyCurrentPresentationTextureFilter();
 			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			drawScreenQuad(
 				command.getX0(),
@@ -2098,6 +2495,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float rightU = command.isMirrorX() ? u0 : u1;
 
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
+		applyCurrentPresentationTextureFilter();
 		gl.glColor4f(1.0f, 1.0f, 1.0f, alpha);
 		drawScreenQuad(
 			topX0,
@@ -2135,8 +2533,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			float y1 = glyph.getY() + glyph.getHeight();
 
 			gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST);
-			gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST);
+			applyCurrentPresentationTextureFilter();
 			gl.glColor4f(red, green, blue, 1.0f);
 			drawScreenTexturedQuad(
 				x0,
@@ -2181,8 +2578,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		prepareOverlayTexturedReplayState();
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST);
-		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST);
+		applyCurrentPresentationTextureFilter();
 		gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		float x0 = 6.0f;
 		float y0 = 6.0f;
@@ -3311,6 +3707,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float bottomX1 = bottomX0 + command.getWidth();
 
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
+		applyCurrentPresentationTextureFilter();
 		gl.glColor4f(1.0f, 1.0f, 1.0f, alpha);
 		drawScreenQuad(
 			topX0,
@@ -4130,6 +4527,25 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			default:
 				return computeAspectViewport(surfaceWidth, surfaceHeight, sourceWidth / (double) sourceHeight);
 		}
+	}
+
+	private static float computePresentationSmoothingAlpha(Viewport viewport, int sourceWidth, int sourceHeight) {
+		double scaleX = viewport.width / (double) Math.max(1, sourceWidth);
+		double scaleY = viewport.height / (double) Math.max(1, sourceHeight);
+		double scaleError = Math.max(integerScaleError(scaleX), integerScaleError(scaleY));
+		if (scaleError <= INTEGER_SCALE_EPSILON) {
+			return 0.0f;
+		}
+		double normalizedError = Math.min(1.0d, scaleError / 0.5d);
+		return (float) (normalizedError * MAX_FRACTIONAL_SCALE_SMOOTHING_ALPHA);
+	}
+
+	private static double integerScaleError(double scale) {
+		if (scale <= 0.0d) {
+			return 1.0d;
+		}
+		double nearestIntegerScale = Math.max(1.0d, Math.rint(scale));
+		return Math.min(1.0d, Math.abs(scale - nearestIntegerScale));
 	}
 
 	private static Viewport computeAspectViewport(int surfaceWidth, int surfaceHeight, double aspectRatio) {
