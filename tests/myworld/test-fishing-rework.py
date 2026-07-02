@@ -14,8 +14,11 @@ ENTITY_HANDLER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.ja
 FORMULAE = ROOT / "server/src/com/openrsc/server/util/rsc/Formulae.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 CLIENT_ITEM_OVERRIDES = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/MyWorldItemOverrides.java"
+CLIENT_MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 ITEM_DEFS_MYWORLD = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 ITEM_DEFS_CUSTOM = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
+ACTION_SENDER = ROOT / "server/src/com/openrsc/server/net/rsc/ActionSender.java"
+PAYLOAD_CUSTOM_GENERATOR = ROOT / "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java"
 INV_USE_ON_ITEM = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/InvUseOnItem.java"
 GERRANT = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/portsarim/GerrantsFishingGear.java"
 FISHING_GUILD = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/hemenster/FishingGuildShop.java"
@@ -264,6 +267,29 @@ def require_fishing_shops_updated() -> None:
 			fail(f"Quest-area legacy Fishing ground supply missing: {snippet}")
 
 
+def require_shop_price_display_uses_current_rod_prices() -> None:
+	client_shop_text = CLIENT_MUDCLIENT.read_text(encoding="utf-8")
+	action_sender_text = ACTION_SENDER.read_text(encoding="utf-8")
+	payload_custom_text = PAYLOAD_CUSTOM_GENERATOR.read_text(encoding="utf-8")
+
+	require_snippets(CLIENT_MUDCLIENT, (
+		"int cost = GenUtil.computeItemCost(EntityHandler.getItemDef(id).getBasePrice(),",
+		"EntityHandler.getItemDef(id).getName() + \": buy for \" + cost + \"gp each\"",
+		"int sellCost = GenUtil.computeItemCost(EntityHandler.getItemDef(id).getBasePrice(),",
+	), "Client shop price display")
+	require_snippets(ACTION_SENDER, (
+		"struct.baseAmount[idx] = shop.getStock(item.getCatalogId());",
+	), "Server shop stock baseline packet")
+	require_snippets(PAYLOAD_CUSTOM_GENERATOR, (
+		"builder.writeShort(s.baseAmount[i]);",
+	), "Custom client shop packet")
+
+	if "struct.price[idx]" in action_sender_text and "builder.writeShort(s.price[i]);" in payload_custom_text:
+		fail("Custom shop packet should not send stale explicit shop prices for MyWorld rod display")
+	if "getBasePrice()" not in client_shop_text:
+		fail("Client shop price display no longer uses client item base prices")
+
+
 def require_quest_exceptions_documented() -> None:
     require_snippets(DRAGON_SLAYER, ("ItemId.LOBSTER_POT.id()",), "Dragon Slayer fishing legacy exception")
     require_snippets(FISHING_CONTEST, (
@@ -297,6 +323,7 @@ def main() -> None:
     require_legacy_tool_guard()
     require_key_half_special_rewards()
     require_fishing_shops_updated()
+    require_shop_price_display_uses_current_rod_prices()
     require_quest_exceptions_documented()
     print("PASS: fishing rod-tier implementation guardrails validated")
 

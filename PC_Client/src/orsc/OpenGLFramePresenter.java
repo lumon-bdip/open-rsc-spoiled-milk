@@ -1134,7 +1134,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		drawSkyCloudGroup(0.62f, skyRotation, pitchOffset, 0.29f, 0.15f, cloudRed, cloudGreen, cloudBlue, cloudAlpha * 0.70f);
 		drawSkyCloudGroup(0.88f, skyRotation, pitchOffset, 0.41f, 0.13f, cloudRed, cloudGreen, cloudBlue, cloudAlpha * 0.48f);
 		drawSkyCloudGroup(0.42f, skyRotation * 0.92f, pitchOffset, -0.04f, 0.12f, cloudRed, cloudGreen, cloudBlue, cloudAlpha * 0.42f);
-		drawSkyStars(skyRotation, pitchOffset, clamp01((0.42f - skyBrightness) / 0.30f));
 		gl.glDisable(gl.GL_BLEND);
 		gl.glEnable(gl.GL_TEXTURE_2D);
 		gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
