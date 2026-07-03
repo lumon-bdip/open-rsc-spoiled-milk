@@ -1130,18 +1130,29 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		if (worldChunkFrame == null) {
 			return false;
 		}
+		Renderer3DWorldChunkFrame.ChunkMesh primaryWorldChunk = findPrimaryWorldChunk(worldChunkFrame);
+		return primaryWorldChunk != null && isUndergroundPrimaryWorldChunk(primaryWorldChunk);
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh findPrimaryWorldChunk(Renderer3DWorldChunkFrame worldChunkFrame) {
+		Renderer3DWorldChunkFrame.ChunkMesh firstWorldChunk = null;
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : worldChunkFrame.getChunks()) {
 			if (chunk.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD) {
 				continue;
 			}
-			if (isUndergroundChunk(chunk)) {
-				return true;
+			if (firstWorldChunk == null) {
+				firstWorldChunk = chunk;
+			}
+			// Overworld frames intentionally include upper-plane support chunks; the active
+			// terrain chunk is the reliable sky/underground owner.
+			if (chunk.getTerrainTriangles() > 0) {
+				return chunk;
 			}
 		}
-		return false;
+		return firstWorldChunk;
 	}
 
-	private boolean isUndergroundChunk(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+	private boolean isUndergroundPrimaryWorldChunk(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
 		return chunk.getPlane() != 0
 			|| worldUnitToTile(chunk.getOriginWorldZ()) >= UNDERGROUND_WORLD_TILE_Z_THRESHOLD;
 	}

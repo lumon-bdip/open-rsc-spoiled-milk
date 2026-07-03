@@ -508,13 +508,23 @@ def main() -> None:
     )
     require(
         presenter,
+        "Renderer3DWorldChunkFrame.ChunkMesh primaryWorldChunk = findPrimaryWorldChunk(worldChunkFrame);",
+        "OpenGL skybox underground check uses one primary world chunk",
+    )
+    require(
+        presenter,
+        "chunk.getTerrainTriangles() > 0",
+        "OpenGL skybox primary chunk prefers active terrain chunk",
+    )
+    require(
+        presenter,
         "worldUnitToTile(chunk.getOriginWorldZ()) >= UNDERGROUND_WORLD_TILE_Z_THRESHOLD",
         "OpenGL skybox underground check uses world-Z dungeon band",
     )
     require(
         presenter,
-        "chunk.getPlane() != 0",
-        "OpenGL skybox underground check uses non-surface planes",
+        "isUndergroundPrimaryWorldChunk(Renderer3DWorldChunkFrame.ChunkMesh chunk)",
+        "OpenGL skybox underground check only treats primary non-surface chunks as underground",
     )
     require(
         presenter,
