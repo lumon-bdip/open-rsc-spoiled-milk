@@ -42,7 +42,7 @@ Approximate line counts from the July 3, 2026 structure-refactor branch:
 | `Client_Base/src/orsc/mudclient.java` | 25,988 | Owns gameplay UI, renderer settings UI, region loading, scene instance arrays, movement smoothing, combat effects, projectiles, asset import, and many renderer bridge calls. |
 | `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,676 | Mixes definition storage, accessors, MyWorld overrides, generated item/style data, prayers, spells, sprites, and compatibility fallbacks. |
 | `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,908 | Central server entity state; likely too broad for continued gameplay feature growth. |
-| `PC_Client/src/orsc/OpenGLFramePresenter.java` | 4,544 | Still owns OpenGL lifecycle, input callback dispatch, window mode, frame pass orchestration, viewport presentation, and remaining composite glue. Major shader, shadow, texture, capture, and world renderer extractions have already landed. |
+| `PC_Client/src/orsc/OpenGLFramePresenter.java` | 4,148 | Still owns OpenGL lifecycle, window mode, frame pass orchestration, viewport presentation, and remaining composite glue. Major shader, shadow, texture, capture, world renderer, and input bridge extractions have already landed. |
 | `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,289 | Legacy 2D drawing plus OpenGL capture/replay instrumentation, sprite scaling, text plotting, and sprite archive loading. |
 | `Client_Base/src/orsc/graphics/three/World.java` | 4,131 | Client terrain, wall, roof, minimap, collision, sector loading, CPU product caching, and renderer chunk export are mixed. |
 | `Client_Base/src/orsc/graphics/three/Scene.java` | 3,789 | Legacy scene sorting/raster flow and renderer-v2 frame export live together. |
@@ -138,8 +138,10 @@ extraction noisier.
   - Move GLFW key/mouse/scroll/char callbacks and AWT event posting.
   - Expected risk: medium. Needs text input, backspace repeat, mouse wheel zoom,
     chat scroll, and focus tests.
-  - Status: started. `OpenGLKeyBindings.java` now owns the GLFW-to-AWT key map
-    and `KeyBinding` data class.
+  - Status: done. `OpenGLInputBridge.java` owns callback install/free,
+    mouse/key state, AWT event posting, and frame-capture hotkey delegation.
+    `OpenGLKeyBindings.java` owns the GLFW-to-AWT key map and `KeyBinding`
+    data class.
 
 - `OpenGLWindowController.java`
   - Move borderless/windowed creation, monitor mode, viewport resize, close
@@ -165,19 +167,17 @@ Completed in the current renderer split:
 7. Extracted `OpenGLWorldChunkRenderer`.
 8. Extracted world mesh, world sprite, glow mask, texture cache, and material
    helper classes.
-9. Started input extraction with `OpenGLKeyBindings`.
+9. Extracted `OpenGLInputBridge` and `OpenGLKeyBindings`.
 
 Next sequence:
 
-1. Finish `OpenGLInputBridge` by moving GLFW callback install, mouse/key state,
-   coordinate mapping, and AWT event posting behind a delegate.
-2. Extract `OpenGLViewportPresenter` for viewport fitting, integer-scale text
+1. Extract `OpenGLViewportPresenter` for viewport fitting, integer-scale text
    smoothing, framebuffer presentation, and aspect-fit bars.
-3. Extract `OpenGLWindowController` for borderless/windowed creation, monitor
+2. Extract `OpenGLWindowController` for borderless/windowed creation, monitor
    placement, resize, and close handling.
-4. Reassess remaining `OpenGLFramePresenter` responsibilities before touching
+3. Reassess remaining `OpenGLFramePresenter` responsibilities before touching
    sprite composite glue.
-5. Extract remaining sprite composite code only after input/window/viewport
+4. Extract remaining sprite composite code only after input/window/viewport
    behavior has been validated.
 
 Each step should compile before moving to the next. For visual-risk steps, run
