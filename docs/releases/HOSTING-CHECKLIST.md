@@ -29,8 +29,8 @@ same port to `scripts/package-player-release.sh`.
 1. Configure the host firewall and router port forwarding for TCP `43605` only.
    Do not forward the websocket port unless a selected client explicitly needs it.
 2. Start the hosted server with `./scripts/run-hosted-server.sh` or
-   `make run-hosted-server`. This creates `spoiled_milk_alpha.db` from the seed
-   database only if the live database does not already exist.
+   `make run-hosted-server`. The command refuses to run unless the checkout is
+   clean `main` at the published `spoiled-milk/main` commit.
 3. Do not use `scripts/start-fresh.sh` for hosted play; that command recreates
    local development state.
 4. Start a configured release client, register a test account, log out, restart
@@ -45,3 +45,12 @@ same port to `scripts/package-player-release.sh`.
 3. Keep the published client endpoint and hosted server port synchronized.
 4. Record the git revision used for each hosted alpha build and each attached
    player download.
+
+## Hosted Launch Safety
+
+The public hosted server must run from a dedicated clean `main` worktree, not
+from a feature, bugfix, refactor, or dirty development checkout.
+
+Use `./scripts/run-hosted-server.sh --dev-unsafe` only for private local
+testing. It bypasses the branch/dirty-worktree checks and must not be used for
+the public server.

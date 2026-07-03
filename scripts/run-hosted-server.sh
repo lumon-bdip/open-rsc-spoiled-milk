@@ -7,7 +7,31 @@ source "$SCRIPT_ROOT/scripts/lib/myworld-common.sh"
 
 myworld_load_local_env
 
-GENERATOR_MODE="$(myworld_resolve_generator_mode "$@")"
+HOSTED_LAUNCH_MODE="live"
+GENERATOR_ARGS=()
+
+while (($#)); do
+  case "$1" in
+    --dev-unsafe)
+      HOSTED_LAUNCH_MODE="dev-unsafe"
+      ;;
+    --sync-generated)
+      GENERATOR_ARGS+=("$1")
+      ;;
+    *)
+      myworld_fail "Unknown option: $1"
+      ;;
+  esac
+  shift
+done
+
+if [[ "$HOSTED_LAUNCH_MODE" == "live" ]]; then
+  myworld_require_safe_hosted_launch
+else
+  printf 'WARN: Hosted launch safety bypassed with --dev-unsafe. Do not use this for the public server.\n' >&2
+fi
+
+GENERATOR_MODE="$(myworld_resolve_generator_mode "${GENERATOR_ARGS[@]}")"
 
 myworld_prepare_generated_artifacts "$GENERATOR_MODE"
 

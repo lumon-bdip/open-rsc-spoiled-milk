@@ -84,6 +84,47 @@ myworld_resolve_generator_mode() {
   printf '%s\n' "$mode"
 }
 
+myworld_git_commit() {
+  git -C "$ROOT_DIR" rev-parse HEAD 2>/dev/null || true
+}
+
+myworld_git_branch() {
+  git -C "$ROOT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || true
+}
+
+myworld_git_main_commit() {
+  local remote_ref
+
+  for remote_ref in spoiled-milk/main origin/main; do
+    if git -C "$ROOT_DIR" rev-parse --verify --quiet "$remote_ref^{commit}" >/dev/null; then
+      git -C "$ROOT_DIR" rev-parse "$remote_ref^{commit}"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+myworld_require_safe_hosted_launch() {
+  local branch dirty_status head_commit main_commit
+
+  git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+    || myworld_fail "Hosted server must be started from a git worktree. Use --dev-unsafe only for private local testing."
+
+  branch="$(myworld_git_branch)"
+  [[ "$branch" == "main" ]] || myworld_fail "Refusing hosted server launch from branch '$branch'. Public hosted server must run from clean main. Use a dev server or --dev-unsafe only for private testing."
+
+  dirty_status="$(git -C "$ROOT_DIR" status --porcelain --untracked-files=no)"
+  [[ -z "$dirty_status" ]] || myworld_fail "Refusing hosted server launch from a dirty worktree. Commit, stash, or use a clean live-main worktree first."
+
+  head_commit="$(myworld_git_commit)"
+  main_commit="$(myworld_git_main_commit || true)"
+  [[ -n "$main_commit" ]] || myworld_fail "Unable to resolve spoiled-milk/main or origin/main. Fetch first, then start the hosted server."
+  [[ "$head_commit" == "$main_commit" ]] || myworld_fail "Refusing hosted server launch from commit $head_commit; expected published main $main_commit."
+
+  printf 'Hosted launch safety: clean main at %s\n' "$head_commit" >&2
+}
+
 myworld_prepare_generated_artifacts() {
   local mode="${1:-check}"
   local -a command=(python3 "$MYWORLD_GENERATOR_RUNNER")
