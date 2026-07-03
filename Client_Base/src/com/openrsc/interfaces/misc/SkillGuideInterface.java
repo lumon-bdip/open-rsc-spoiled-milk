@@ -450,7 +450,6 @@ public final class SkillGuideInterface {
 		}
 		if (mc.getSkillGuideChosen().equals("Hits")) {
 			boolean harvesting = Config.S_WANT_HARVESTING && Config.S_WANT_CUSTOM_SPRITES;
-			boolean runecraft = Config.S_WANT_RUNECRAFT && Config.S_WANT_CUSTOM_SPRITES;
 			boolean customSprites = Config.S_WANT_CUSTOM_SPRITES;
 			if (curTab == 0) { // Fish
 				skillMenuEntries.add(new SkillMenuItem(350, "", "Shrimp - Heals 3"));
@@ -550,7 +549,6 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(142, "", "Wine - Heals 11"));
 				skillMenuEntries.add(new SkillMenuItem(737, "", "Poison Chalice - ???"));
 			} else if (curTab == 6) { // Other
-				if (runecraft) skillMenuEntries.add(new SkillMenuItem(1410, "", "Low quality fish oil - 50% chance to heal 1"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1459, "", "Sweetened Slices - Heals 1 or 2"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1460, "", "Sweetened Chunks - Heals 1 or 2"));
 				skillMenuEntries.add(new SkillMenuItem(319, "", "Cheese - Heals 2"));

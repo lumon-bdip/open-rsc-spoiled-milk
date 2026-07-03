@@ -25,7 +25,6 @@ public class ItemActionHandler implements PayloadProcessor<ItemCommandStruct, Op
 		}
 		return item.isEdible(player.getWorld())
 			|| item.getCatalogId() == ItemId.ROTTEN_APPLES.id()
-			|| item.getCatalogId() == ItemId.FISH_OIL.id()
 			|| item.getCatalogId() == ItemId.SWEETENED_SLICES.id()
 			|| item.getCatalogId() == ItemId.SWEETENED_CHUNKS.id();
 	}

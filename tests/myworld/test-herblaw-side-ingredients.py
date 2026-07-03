@@ -14,6 +14,8 @@ COOKING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/coo
 NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
 CLIENT_ITEMS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 SKILL_GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
+EATING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/Eating.java"
+ITEM_ACTION_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/ItemActionHandler.java"
 
 
 def fail(message: str) -> None:
@@ -73,6 +75,7 @@ def main() -> None:
 		require(item["name"] == name, f"Custom item {item_id} should be named {name}")
 		if item_id in {1410, 3240, 3241, 3242, 3243, 3244}:
 			require(item["isStackable"] == 1, f"{name} should be stackable")
+			require(item.get("command", "") == "", f"{name} should not expose an inventory command")
 		else:
 			require(item["isNoteable"] == 1, f"{name} should be noteable")
 
@@ -126,6 +129,15 @@ def main() -> None:
 
 	client_items = CLIENT_ITEMS.read_text(encoding="utf-8")
 	for snippet in (
+		'new ItemDef("Low quality fish oil", "A low quality potion ingredient rendered from fish", "", 1, -1, "items:587"',
+		'new ItemDef("Fair quality fish oil", "A fair quality potion ingredient rendered from fish", "", 2, -1, "items:587"',
+		'new ItemDef("Good quality fish oil", "A good quality potion ingredient rendered from fish", "", 3, -1, "items:587"',
+		'new ItemDef("Fine quality fish oil", "A fine quality potion ingredient rendered from fish", "", 4, -1, "items:587"',
+		'new ItemDef("High quality fish oil", "A high quality potion ingredient rendered from fish", "", 5, -1, "items:587"',
+		'new ItemDef("Superior quality fish oil", "A superior quality potion ingredient rendered from fish", "", 6, -1, "items:587"',
+	):
+		require_text(client_items, snippet, "fish oil should not expose Eat in client definitions")
+	for snippet in (
 		'new ItemDef("Spider eye", "A potion ingredient from a spider", "", 12, 116, "items:116"',
 		'new ItemDef("Bat eye", "A potion ingredient from a bat", "", 20, 116, "items:116"',
 		'new ItemDef("Baby dragon\'s eye", "A potion ingredient from a baby dragon", "", 36, 116, "items:116"',
@@ -134,9 +146,17 @@ def main() -> None:
 		require_text(client_items, snippet, "new eyes should reuse masked Eye-of-newt visuals")
 	require_text(client_items, 'new ItemDef("Superior quality fish oil"', "client should define superior fish oil")
 
+	eating = EATING.read_text(encoding="utf-8")
+	forbid_text(eating, "isFishOil(item.getCatalogId())", "Eating plugin should not route fish oil as food")
+	forbid_text(eating, "You eat the fish oil", "Eating plugin should not consume fish oil")
+	action_handler = ITEM_ACTION_HANDLER.read_text(encoding="utf-8")
+	forbid_text(action_handler, "ItemId.FISH_OIL.id()", "Fish oil should not be treated as a combat consumable")
+
 	guide = SKILL_GUIDE.read_text(encoding="utf-8")
 	require_text(guide, '"eye of newt", "spider eye", "zombie eye", "bat eye", "baby dragon\'s eye", "demon eye"', "guide should show insight tier order")
+	require_text(guide, '"10 low quality fish oil", "10 fair quality fish oil", "10 good quality fish oil"', "guide should show low oil tiers")
 	require_text(guide, '"10 fine quality fish oil", "10 high quality fish oil", "10 superior quality fish oil"', "guide should show high oil tiers")
+	forbid_text(guide, "Low quality fish oil - 50% chance to heal 1", "fish oil should not be listed as food")
 
 	print("PASS: Herblaw side ingredient expansion validated")
 

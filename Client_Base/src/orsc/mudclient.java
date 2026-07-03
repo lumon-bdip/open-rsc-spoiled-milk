@@ -370,8 +370,8 @@ public final class mudclient implements Runnable {
 	public final int[] bankItemOnTab = new int[500];
 	public final int[] equipIconXLocations = new int[]{98, 98, 98, 153, 43, 43, 98, 98, 43, 153, 153};
 	public final int[] equipIconYLocations = new int[]{5, 85, 125, 85, 85, 165, 165, 45, 45, 45, 165};
-	public final String[] equipmentStatNames = new String[]{"Range Def", "Magic Def", "Melee Def", "Melee Pow",
-		"Prayer", "Ranged Pow", "Magic Pow"};
+	public final String[] equipmentStatNames = new String[]{"Rng. Def", "Mag. Def", "Mel. Def", "Mel. Pow",
+		"Prayer", "Rng. Pow", "Mag. Pow"};
 	public final int[] playerStatEquipment = new int[7];
 	private final int[] mouseClickX = new int[8192];
 	private final int[] mouseClickY = new int[8192];
