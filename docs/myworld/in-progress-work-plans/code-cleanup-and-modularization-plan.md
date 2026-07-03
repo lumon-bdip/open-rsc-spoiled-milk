@@ -35,28 +35,28 @@ Cleanup should favor structural moves that unlock future renderer work:
 
 ## Current Hotspots
 
-Approximate line counts from the June 29, 2026 review:
+Approximate line counts from the July 3, 2026 structure-refactor branch:
 
 | File | Lines | Why It Matters |
 | --- | ---: | --- |
-| `Client_Base/src/orsc/mudclient.java` | 25,586 | Owns gameplay UI, renderer settings UI, region loading, scene instance arrays, movement smoothing, combat effects, projectiles, asset import, and many renderer bridge calls. |
-| `PC_Client/src/orsc/OpenGLFramePresenter.java` | 16,192 | The largest active renderer file. It owns OpenGL lifecycle, input bridge, window mode, frame presentation, shader source/compile, world chunk rendering, sprite composite, shadow masks, frame capture, texture cache support, and LWJGL reflection bindings. |
-| `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,659 | Mixes definition storage, accessors, MyWorld overrides, generated item/style data, prayers, spells, sprites, and compatibility fallbacks. |
-| `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,883 | Central server entity state; likely too broad for continued gameplay feature growth. |
+| `Client_Base/src/orsc/mudclient.java` | 25,988 | Owns gameplay UI, renderer settings UI, region loading, scene instance arrays, movement smoothing, combat effects, projectiles, asset import, and many renderer bridge calls. |
+| `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,676 | Mixes definition storage, accessors, MyWorld overrides, generated item/style data, prayers, spells, sprites, and compatibility fallbacks. |
+| `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,908 | Central server entity state; likely too broad for continued gameplay feature growth. |
+| `PC_Client/src/orsc/OpenGLFramePresenter.java` | 4,544 | Still owns OpenGL lifecycle, input callback dispatch, window mode, frame pass orchestration, viewport presentation, and remaining composite glue. Major shader, shadow, texture, capture, and world renderer extractions have already landed. |
 | `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,289 | Legacy 2D drawing plus OpenGL capture/replay instrumentation, sprite scaling, text plotting, and sprite archive loading. |
-| `Client_Base/src/orsc/graphics/three/World.java` | 3,844 | Client terrain, wall, roof, minimap, collision, sector loading, CPU product caching, and renderer chunk export are mixed. |
-| `Client_Base/src/orsc/graphics/three/Scene.java` | 3,630 | Legacy scene sorting/raster flow and renderer-v2 frame export live together. |
-| `Client_Base/src/orsc/PacketHandler.java` | 3,173 | Packet parsing plus config propagation and client state mutation. |
-| `Client_Base/src/orsc/RenderTelemetry.java` | 2,408 | Many unrelated counters and reports in one static sink. Useful, but hard to extend safely. |
+| `Client_Base/src/orsc/graphics/three/World.java` | 4,131 | Client terrain, wall, roof, minimap, collision, sector loading, CPU product caching, and renderer chunk export are mixed. |
+| `Client_Base/src/orsc/graphics/three/Scene.java` | 3,789 | Legacy scene sorting/raster flow and renderer-v2 frame export live together. |
+| `Client_Base/src/orsc/PacketHandler.java` | 3,189 | Packet parsing plus config propagation and client state mutation. |
+| `Client_Base/src/orsc/RenderTelemetry.java` | 2,559 | Many unrelated counters and reports in one static sink. Useful, but hard to extend safely. |
 | `server/src/com/openrsc/server/model/container/Equipment.java` | 3,718 | Equipment behavior and item-effect hooks continue growing. |
-| `server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java` | 2,787 | Spell routing, special effects, and combat interactions are likely separable. |
+| `server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java` | 2,784 | Spell routing, special effects, and combat interactions are likely separable. |
 | `server/src/com/openrsc/server/net/rsc/ActionSender.java` | 2,707 | Outgoing protocol building and gameplay-specific sender helpers are mixed. |
-| `server/src/com/openrsc/server/content/Summoning.java` | 1,814 | All Summoning profiles, runtime behavior, utility commands, combat, and scaling are in one utility class. |
-| `server/src/com/openrsc/server/content/EnchantingItemEffects.java` | 1,810 | Jewelry, robe, staff, altar, charge, and tier-effect logic are accumulating in one class. |
+| `server/src/com/openrsc/server/content/Summoning.java` | 1,856 | All Summoning profiles, runtime behavior, utility commands, combat, and scaling are in one utility class. |
+| `server/src/com/openrsc/server/content/EnchantingItemEffects.java` | 1,828 | Jewelry, robe, staff, altar, charge, and tier-effect logic are accumulating in one class. |
 
 ## Priority Order
 
-1. Split `OpenGLFramePresenter.java`.
+1. Finish splitting `OpenGLFramePresenter.java`.
 2. Split renderer-facing parts of `mudclient.java`.
 3. Quarantine and remove stale scaling/resolution/player-option paths.
 4. Split `World.java` product builders and client sector caches.
@@ -83,6 +83,7 @@ extraction noisier.
   - This is a near-mechanical extraction from the bottom of
     `OpenGLFramePresenter.java`.
   - Expected risk: low if moved unchanged.
+  - Status: done.
 
 - `OpenGLShaderProgram.java`
   - Move shader compilation, uniform binding, attribute binding, and inline
@@ -91,6 +92,7 @@ extraction noisier.
     shader work does not require editing a Java string wall.
   - Expected risk: medium because shader uniforms/attributes are tightly coupled
     to vertex layouts.
+  - Status: done.
 
 - `OpenGLWorldChunkRenderer.java`
   - Move resident chunk upload, draw, batch culling, material passes, buffer
@@ -98,6 +100,7 @@ extraction noisier.
   - This class is currently the most important renderer runtime path.
   - Expected risk: medium-high. Extract after `LwjglBindings` and
     `OpenGLShaderProgram`.
+  - Status: done.
 
 - `RemasterShadowMaskBuilder.java`
   - Move terrain shadow mask rasterization, blur, cache signature, light-angle
@@ -105,6 +108,7 @@ extraction noisier.
   - Keep pure data/math separated from GL upload so it can later be tested
     without a window.
   - Expected risk: medium. This is visually sensitive but has clear boundaries.
+  - Status: done.
 
 - `RemasterShadowClassifier.java`
   - Move roof coverage, indoor flood fill, wall blocker crossing, and caster
@@ -112,23 +116,30 @@ extraction noisier.
   - This should become the source of truth for "outdoor sunlight eligible"
     terrain and casters.
   - Expected risk: medium. Needs visual validation around roofless interiors.
+  - Status: done.
 
 - `OpenGLWorldSpriteComposite.java`
   - Move world sprite matching, anchor lookup, legacy scene sprite restore, and
     sprite/world occlusion ordering.
   - Expected risk: high. This area caused invisible sprites and layering bugs,
     so extract only after the GL foundation classes are stable.
+  - Status: partially done through `OpenGLWorldSpriteDrawController` and
+    `OpenGLWorldSpriteRenderer`; keep remaining sprite composite glue in the
+    presenter until the input/window/viewport split is stable.
 
 - `OpenGLFrameCapture.java`
   - Move frame capture directory writing, layer export, static-world TSV output,
     shader parity output, and capture burst bookkeeping.
   - Keep disabled by default for release builds.
   - Expected risk: low-medium.
+  - Status: done.
 
 - `OpenGLInputBridge.java`
   - Move GLFW key/mouse/scroll/char callbacks and AWT event posting.
   - Expected risk: medium. Needs text input, backspace repeat, mouse wheel zoom,
     chat scroll, and focus tests.
+  - Status: started. `OpenGLKeyBindings.java` now owns the GLFW-to-AWT key map
+    and `KeyBinding` data class.
 
 - `OpenGLWindowController.java`
   - Move borderless/windowed creation, monitor mode, viewport resize, close
@@ -143,15 +154,31 @@ extraction noisier.
 
 ### Extraction Sequence
 
-1. Extract `LwjglBindings`.
-2. Extract `OpenGLShaderProgram`.
-3. Extract plain data holders that do not touch GL state.
-4. Extract `RemasterShadowClassifier`.
-5. Extract `RemasterShadowMaskBuilder`.
-6. Extract `OpenGLFrameCapture`.
-7. Extract `OpenGLWorldChunkRenderer`.
-8. Extract input/window/presentation helpers.
-9. Extract sprite composite last.
+Completed in the current renderer split:
+
+1. Extracted `LwjglBindings`.
+2. Extracted `OpenGLShaderProgram`.
+3. Extracted several plain renderer data holders and texture helpers.
+4. Extracted `RemasterShadowClassifier`.
+5. Extracted `RemasterShadowMaskBuilder`.
+6. Extracted `OpenGLFrameCapture`.
+7. Extracted `OpenGLWorldChunkRenderer`.
+8. Extracted world mesh, world sprite, glow mask, texture cache, and material
+   helper classes.
+9. Started input extraction with `OpenGLKeyBindings`.
+
+Next sequence:
+
+1. Finish `OpenGLInputBridge` by moving GLFW callback install, mouse/key state,
+   coordinate mapping, and AWT event posting behind a delegate.
+2. Extract `OpenGLViewportPresenter` for viewport fitting, integer-scale text
+   smoothing, framebuffer presentation, and aspect-fit bars.
+3. Extract `OpenGLWindowController` for borderless/windowed creation, monitor
+   placement, resize, and close handling.
+4. Reassess remaining `OpenGLFramePresenter` responsibilities before touching
+   sprite composite glue.
+5. Extract remaining sprite composite code only after input/window/viewport
+   behavior has been validated.
 
 Each step should compile before moving to the next. For visual-risk steps, run
 the client and validate at least:
