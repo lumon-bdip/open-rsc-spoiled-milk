@@ -68,6 +68,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   staged OGG Vorbis support plan with WAV fallback safety.
 - [prayer-devotion-equipment-plan.md](in-progress-work-plans/prayer-devotion-equipment-plan.md):
   prayer-devotion equipment direction, blessing rules, and god-tool retirement.
+- [project-structure-refactor-plan.md](in-progress-work-plans/project-structure-refactor-plan.md):
+  safe worktree workflow and target folder/package ownership map for the
+  repository restructure.
 - [remaster-lighting-and-shadow-plan.md](in-progress-work-plans/remaster-lighting-and-shadow-plan.md):
   detailed implementation ledger for clean-slate Remaster lighting and shadows.
 - [renderer-and-shader-roadmap.md](in-progress-work-plans/renderer-and-shader-roadmap.md):

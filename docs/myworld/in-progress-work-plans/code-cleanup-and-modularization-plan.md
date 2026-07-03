@@ -12,6 +12,11 @@ systems. The goal is not cleanup for its own sake. The goal is to make large
 renderer swings easier, safer, and less likely to accidentally revive old
 software-renderer assumptions.
 
+For the repository-level folder/package direction and safe worktree workflow,
+use
+[`project-structure-refactor-plan.md`](project-structure-refactor-plan.md)
+before moving files.
+
 ## Cleanup Rule
 
 This project is in alpha and large under-the-hood changes are acceptable.
