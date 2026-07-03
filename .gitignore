@@ -131,7 +131,7 @@ spoiled-milk-client.log
 Android_Client/import-summary.txt
 Android_Client/.idea/
 
-.github/
+# GitHub issue and pull request templates are tracked for collaboration.
 
 PC_Launcher/OpenRSC.jar
 PC_Launcher/Cache/

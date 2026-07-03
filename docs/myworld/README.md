@@ -7,21 +7,30 @@ and player-facing feature summary live in the repository root
 
 ## Folder Rules
 
+- [`proposed-work-plans/`](proposed-work-plans/): owner-reviewed plans that
+  may become official work, but are not active yet.
 - [`in-progress-work-plans/`](in-progress-work-plans/): active plans, current
   roadmaps, and work that still drives implementation decisions.
 - [`completed-work-plans/`](completed-work-plans/): implemented plans and
   closed migration records that are still useful as source-of-truth history.
+- [`parked-work-plans/`](parked-work-plans/): valid plans that are not being
+  pursued right now.
+- [`rejected-work-plans/`](rejected-work-plans/): plans intentionally not
+  pursued, kept when the reasoning is useful.
 - [`rough-drafts/`](rough-drafts/): deferred ideas, early designs, and notes
   that should not be treated as committed implementation direction yet.
 - [`info/`](info/): stable references, command lists, audits, IDs, and
   implementation facts that are not themselves active work plans.
 - [`screenshots/`](screenshots/): documentation and README image assets.
+- [`templates/`](templates/): reusable plan templates.
 
 Keep this README as the top-level index. New markdown files should normally go
 into one of the category folders, not directly into `docs/myworld/`.
 
 ## Start Here
 
+- [Contributor guides](../contributor-guides/README.md): owner and contributor
+  workflow, branch rules, pull requests, submissions, and AI-assisted work.
 - [Renderer and shader roadmap](in-progress-work-plans/renderer-and-shader-roadmap.md):
   current AI-facing source of truth for renderer-v2, remaster lighting, shadows,
   shader work, and major optimization direction.
@@ -36,6 +45,8 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 ## In Progress Work Plans
 
+- [bug-fixes-and-small-updates.md](in-progress-work-plans/bug-fixes-and-small-updates.md):
+  ongoing maintenance queue for focused small fixes and quick updates.
 - [chat-and-dialogue-channel-plan.md](in-progress-work-plans/chat-and-dialogue-channel-plan.md):
   chat tab/channel cleanup and dialogue privacy/concurrency path.
 - [code-cleanup-and-modularization-plan.md](in-progress-work-plans/code-cleanup-and-modularization-plan.md):

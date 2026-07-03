@@ -1,0 +1,10 @@
+# Copy this file to .github/CODEOWNERS when ready.
+# Replace @your-github-username with the project owner's GitHub username.
+
+* @your-github-username
+
+server/** @your-github-username
+Client_Base/** @your-github-username
+docs/myworld/** @your-github-username
+submissions/** @your-github-username
+.github/** @your-github-username

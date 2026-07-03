@@ -19,6 +19,12 @@ know AI-assisted projects are contentious, so I would rather say that plainly.
 The new art assets were made by real people: some were commissioned or
 purchased, some were sourced from free repositories, and a few were made by me.
 
+## Contributing And Project Workflow
+
+Spoiled Milk is owner-directed. If you want to submit code, ideas, artwork, or
+AI-assisted work, start with [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[contributor guides](docs/contributor-guides/README.md).
+
 ## Fewer Words, More Pictures
 
 A lot has changed or been added, and not all of it can be shown well in
