@@ -3,7 +3,7 @@
 This is the active design and implementation record for moving Fishing from
 legacy tool-specific spots to MyWorld's tiered rod and location-pool model.
 
-Use [fishing-spot-map.md](fishing-spot-map.md) as the coordinate source of truth for current live fishing spots.
+Use [fishing-spot-map.md](../info/fishing-spot-map.md) as the coordinate source of truth for current live fishing spots.
 
 ## Goals
 
@@ -77,7 +77,7 @@ Implemented:
     `A little loot`, `Plenty of loot`, and `Lots of loot`
   - legacy generic `Boots` are removed from the MyWorld side table
   - leather/carapace boots and gloves use the shared resource-side-reward
-    gating model from [resource-seed-plan.md](resource-seed-plan.md):
+    gating model from [resource-seed-plan.md](../in-progress-work-plans/resource-seed-plan.md):
     normal weights at or below equipped rod tier, half weight at `+1`, and
     quarter weight at `+2`
 
@@ -155,7 +155,7 @@ The side-reward focus option controls the proc chance. Legacy generic `Boots`
 are not part of the MyWorld fishing table.
 
 Side-reward tier gating should match
-[resource-seed-plan.md](resource-seed-plan.md):
+[resource-seed-plan.md](../in-progress-work-plans/resource-seed-plan.md):
 
 - rewards at or below equipped rod tier use normal weights
 - rewards `1` tier above equipped rod tier use half weight

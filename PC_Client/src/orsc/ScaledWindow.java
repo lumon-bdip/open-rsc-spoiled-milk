@@ -796,12 +796,8 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	}
 
 	private static Object getInterpolationHint() {
-		if (mudclient.scalingType == ScalingAlgorithm.BILINEAR_INTERPOLATION) {
-			return RenderingHints.VALUE_INTERPOLATION_BILINEAR;
-		} else if (mudclient.scalingType == ScalingAlgorithm.BICUBIC_INTERPOLATION) {
-			return RenderingHints.VALUE_INTERPOLATION_BICUBIC;
-		}
-
+		// Frame scaling must stay pixel-crisp. Font smoothing is owned by
+		// renderer-v2 glyph replay so sprites, terrain, and UI art do not blur.
 		return RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
 	}
 

@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
-PLAN = ROOT / "docs/myworld/renderer-v2-plan.md"
+PLAN = ROOT / "docs/myworld/in-progress-work-plans/renderer-v2-plan.md"
 
 
 def require(text: str, needle: str, message: str) -> None:

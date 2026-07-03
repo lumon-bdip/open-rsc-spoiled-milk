@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEVELOPMENT = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
 POPULATOR = ROOT / "server/src/com/openrsc/server/database/WorldPopulator.java"
 NPC_EDIT_FILES = ROOT / "server/src/com/openrsc/server/util/WorldNpcEditFiles.java"
-DOCS = ROOT / "docs/myworld/object-ids.md"
+DOCS = ROOT / "docs/myworld/info/object-ids.md"
 
 
 def fail(message: str) -> None:

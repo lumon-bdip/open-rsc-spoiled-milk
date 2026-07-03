@@ -15,7 +15,7 @@ GOD_KNIGHTS = (
     / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/prayer/GodKnightEquipment.java"
 )
 EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
-PLAN = ROOT / "docs/myworld/altar-enchantment-and-conversion-plan.md"
+PLAN = ROOT / "docs/myworld/completed-work-plans/altar-enchantment-and-conversion-plan.md"
 
 
 def fail(message: str) -> None:

@@ -416,6 +416,21 @@ public final class SkillGuideInterface {
 				addMeleeTierGuide("Orichalcum spear", 62, 2210);
 				addMeleeTierGuide("Rune spear", 70, 1092);
 			} else if (curTab == 7) {
+				addMeleeTierGuide("Tin scythe", 1, 3181);
+				addMeleeTierGuide("Copper scythe", 8, 3182);
+				addMeleeTierGuide("Bronze scythe", 15, 3183);
+				addMeleeTierGuide("Iron scythe", 22, 3184);
+				addMeleeTierGuide("Steel scythe", 30, 3185);
+				addMeleeTierGuide("Mithril scythe", 38, 3186);
+				addMeleeTierGuide("Titan steel scythe", 46, 3187);
+				addMeleeTierGuide("Adamantite scythe", 54, 3188);
+				addMeleeTierGuide("Orichalcum scythe", 62, 3189);
+				addMeleeTierGuide("Rune scythe", 70, 3190);
+			} else if (curTab == 8) {
+				skillMenuEntries.add(new SkillMenuEntry("", "Scythes cannot be used with a shield"));
+				skillMenuEntries.add(new SkillMenuEntry("", "2-handers cannot be equipped with a shield"));
+				skillMenuEntries.add(new SkillMenuEntry("", "Scythes hit an area around the player"));
+				skillMenuEntries.add(new SkillMenuEntry("", "Maces give prayer point bonuses"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
 					addSkillCapeGuide(1374, "Melee");
 				}

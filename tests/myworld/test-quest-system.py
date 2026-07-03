@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ACTIONSENDER = (
     ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "ActionSender.java"
 )
-QUEST_AUDIT = ROOT / "docs" / "myworld" / "work-items.md"
+QUEST_AUDIT = ROOT / "docs" / "myworld" / "in-progress-work-plans" / "work-items.md"
 
 
 def fail(message: str) -> NoReturn:

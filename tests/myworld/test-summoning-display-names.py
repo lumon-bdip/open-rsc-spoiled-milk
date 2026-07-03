@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
-PLAN = ROOT / "docs/myworld/summoning-plan.md"
+PLAN = ROOT / "docs/myworld/in-progress-work-plans/summoning-plan.md"
 SUMMON_ICON_DIR = ROOT / "dev/myworld/assets/sprites/UI/summon"
 
 SUMMON_NAMES = [

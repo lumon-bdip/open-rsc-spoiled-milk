@@ -12,7 +12,7 @@ def require(text: str, needle: str, label: str) -> None:
 
 
 def main() -> None:
-    path = ROOT / "docs" / "myworld" / "work-items.md"
+    path = ROOT / "docs" / "myworld" / "in-progress-work-plans" / "work-items.md"
     text = path.read_text()
 
     require(text, "## Full Quest Shortcut Matrix", "full matrix heading")

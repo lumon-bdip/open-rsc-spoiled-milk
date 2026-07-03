@@ -11,9 +11,15 @@ SETTINGS = ROOT / "Client_Base/src/orsc/graphics/Renderer2DSettings.java"
 TELEMETRY = ROOT / "Client_Base/src/orsc/RenderTelemetry.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
+COMPOSITE_SCENE_BUILDER = ROOT / "PC_Client/src/orsc/OpenGLCompositeSceneBuilder.java"
+GLYPH_TEXTURE_CACHE = ROOT / "PC_Client/src/orsc/OpenGLGlyphTextureCache.java"
+SPRITE_TEXTURE_CACHE = ROOT / "PC_Client/src/orsc/OpenGLSpriteTextureCache.java"
+WORLD_SPRITE_DRAW_CONTROLLER = ROOT / "PC_Client/src/orsc/OpenGLWorldSpriteDrawController.java"
+WORLD_SPRITE_RENDERER = ROOT / "PC_Client/src/orsc/OpenGLWorldSpriteRenderer.java"
+SPRITE_TEXTURE_BUILDER = ROOT / "PC_Client/src/orsc/OpenGLSpriteTextureBuilder.java"
 SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
-PLAN = ROOT / "docs/myworld/renderer-v2-plan.md"
+PLAN = ROOT / "docs/myworld/in-progress-work-plans/renderer-v2-plan.md"
 
 
 def require(text: str, needle: str, label: str) -> None:
@@ -35,6 +41,21 @@ def main() -> None:
     telemetry = TELEMETRY.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
     presenter = PRESENTER.read_text(encoding="utf-8")
+    composite_scene_builder = COMPOSITE_SCENE_BUILDER.read_text(encoding="utf-8")
+    glyph_texture_cache = GLYPH_TEXTURE_CACHE.read_text(encoding="utf-8")
+    sprite_texture_cache = SPRITE_TEXTURE_CACHE.read_text(encoding="utf-8")
+    world_sprite_draw_controller = WORLD_SPRITE_DRAW_CONTROLLER.read_text(encoding="utf-8")
+    world_sprite_renderer = WORLD_SPRITE_RENDERER.read_text(encoding="utf-8")
+    sprite_texture_builder = SPRITE_TEXTURE_BUILDER.read_text(encoding="utf-8")
+    presenter = (
+        presenter
+        + "\n" + composite_scene_builder
+        + "\n" + glyph_texture_cache
+        + "\n" + sprite_texture_cache
+        + "\n" + world_sprite_draw_controller
+        + "\n" + world_sprite_renderer
+        + "\n" + sprite_texture_builder
+    )
     scaled_window = SCALED_WINDOW.read_text(encoding="utf-8")
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
     plan = PLAN.read_text(encoding="utf-8")
@@ -201,8 +222,8 @@ def main() -> None:
         "OpenGL replacement composite submits world sprites through the typed world sprite path",
     )
     require(
-        presenter,
-        "depthDiagnosticTexture = buildDepthVisibleEntitySpriteTexture(\n"
+        world_sprite_draw_controller,
+        "depthDiagnosticTexture = delegate.buildDepthVisibleEntitySpriteTexture(\n"
         "\t\t\t\tframe,\n"
         "\t\t\t\tcommand,\n"
         "\t\t\t\tworldSpriteCommand.anchor,\n"
@@ -211,18 +232,18 @@ def main() -> None:
         "OpenGL replacement composite retains software depth diagnostics during GPU migration",
     )
     require(
-        presenter,
-        "worldSpriteCommand.anchor != null && activeFrameCapture != null",
+        world_sprite_draw_controller,
+        "worldSpriteCommand.anchor != null && delegate.hasActiveFrameCapture()",
         "software sprite depth masking runs only for capture",
     )
     require(
-        presenter,
-        "DynamicTextureData textureData = buildDirectSpriteTexture(command);",
+        world_sprite_draw_controller,
+        "DynamicTextureData textureData = OpenGLSpriteTextureBuilder.buildDirectSpriteTexture(command);",
         "OpenGL depth-owned sprites use exact command-sized source sampling by default",
     )
     require(
         presenter,
-        "drawOpenGLCompositeCharacterSpriteLayers(frame, worldSpriteCommand.anchor, characterLayerCommands)",
+        "drawCharacterSpriteLayers(frame, worldSpriteCommand.anchor, characterLayerCommands)",
         "OpenGL character sprites composite same-anchor clothing layers before depth draw",
     )
     require(
@@ -232,7 +253,7 @@ def main() -> None:
     )
     require(
         presenter,
-        "drawOpenGLCompositeDepthOwnedWorldSpriteTextureData(\n\t\t\t\tframe,\n\t\t\t\tworldSpriteCommand,\n\t\t\t\ttextureData,",
+        "drawDepthOwnedWorldSpriteTextureData(\n\t\t\t\tframe,\n\t\t\t\tworldSpriteCommand,\n\t\t\t\ttextureData,",
         "OpenGL replacement composite submits anchored sprites to GPU depth",
     )
     require(
@@ -242,22 +263,22 @@ def main() -> None:
     )
     require(
         presenter,
-        "putCameraSpaceSpriteQuadVertex(\n\t\t\trenderer3DFrame",
+        "private void putVertex(\n\t\tRenderer3DFrame frame",
         "OpenGL depth-owned sprites back-project exact command rectangles",
     )
     require(
         presenter,
-        "drawCameraSpaceWorldSpriteQuad(",
+        "private void drawQuad(",
         "OpenGL depth-owned sprites submit stable command-sized quads through a reusable helper",
     )
     require(
         presenter,
-        "gl.glBufferData(gl.GL_ARRAY_BUFFER, worldSpriteQuadUploadBuffer, gl.GL_STREAM_DRAW);",
+        "gl.glBufferData(gl.GL_ARRAY_BUFFER, uploadBuffer, gl.GL_STREAM_DRAW);",
         "OpenGL depth-owned sprite quads use a streamed VBO instead of immediate-mode submission",
     )
     require(
         presenter,
-        "WORLD_SPRITE_QUAD_INDEX_COUNT",
+        "QUAD_INDEX_COUNT",
         "OpenGL depth-owned sprite quads use indexed triangle submission",
     )
     require(
@@ -434,6 +455,66 @@ def main() -> None:
         presenter,
         "prepareOverlayTexturedReplayState();\n\t\tfor (Renderer2DFrame.TextCommand.GlyphCommand glyph : command.getGlyphs())",
         "OpenGL text replay owns transparent overlay state",
+    )
+    require(
+        presenter,
+        "private void applyPixelTextureFilter() throws Exception",
+        "OpenGL pixel texture filter helper",
+    )
+    require(
+        presenter,
+        "private void applyTextTextureFilter() throws Exception",
+        "OpenGL text texture filter helper",
+    )
+    require(
+        presenter,
+        "applyTextureFilter(currentTextSmoothingAlpha > 0.0f ? gl.GL_LINEAR : gl.GL_NEAREST);",
+        "fractional scale smoothing is scoped to text filtering",
+    )
+    require(
+        presenter,
+        "gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());\n\t\t\tapplyTextTextureFilter();",
+        "OpenGL glyph replay is the only fractional-scale filtering path",
+    )
+    forbid(
+        presenter,
+        "currentPresentationSmoothingAlpha",
+        "presentation-scoped smoothing state",
+    )
+    forbid(
+        presenter,
+        "gl.glColor4f(1.0f, 1.0f, 1.0f, currentTextSmoothingAlpha);",
+        "whole-frame smoothing overlay",
+    )
+    require(
+        scaled_window,
+        "Frame scaling must stay pixel-crisp.",
+        "Swing fallback keeps frame scaling nearest-neighbor",
+    )
+    require(
+        presenter,
+        "private static final int UNDERGROUND_WORLD_TILE_Z_THRESHOLD = 3000;",
+        "OpenGL skybox underground coordinate threshold",
+    )
+    require(
+        presenter,
+        "if (shouldDrawSkyBackdrop(frame)) {\n\t\t\tdrawSkyBackdrop(frame, presentation);\n\t\t}",
+        "OpenGL skybox skips underground frames",
+    )
+    require(
+        presenter,
+        "chunk.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD",
+        "OpenGL skybox underground check ignores object-only chunks",
+    )
+    require(
+        presenter,
+        "worldUnitToTile(chunk.getOriginWorldZ()) >= UNDERGROUND_WORLD_TILE_Z_THRESHOLD",
+        "OpenGL skybox underground check uses world-Z dungeon band",
+    )
+    require(
+        presenter,
+        "return Math.floorDiv(worldUnit, TILE_SIZE);",
+        "OpenGL skybox underground check converts scene units to tiles",
     )
     require(
         presenter,
@@ -734,7 +815,7 @@ def main() -> None:
     )
     require(
         presenter,
-        "private static final class OpenGLGlyphTextureCache",
+        "final class OpenGLGlyphTextureCache",
         "OpenGL glyph atlas cache",
     )
     require(
@@ -768,18 +849,18 @@ def main() -> None:
         "performance overlay sprite capture/replay line",
     )
     require(
-        applet,
-        "overlay phases scene/world/ui ",
-        "performance overlay phase summary line",
+        telemetry,
+        "[renderer-v2 telemetry] sprite phases avg: scene=",
+        "renderer telemetry sprite phase summary line",
+    )
+    require(
+        telemetry,
+        "legacySceneSpriteRestoreCommandAverage",
+        "telemetry legacy scene sprite restore summary",
     )
     require(
         applet,
-        "legacy sprites cmds/fallback/pixels ",
-        "performance overlay legacy scene sprite restore line",
-    )
-    require(
-        applet,
-        "gl phases b/w/ws/o/db/s ",
+        "recent gl phases b/w/ws/o/db/s ",
         "performance overlay OpenGL phase timing line",
     )
     require(
@@ -794,7 +875,7 @@ def main() -> None:
     )
     require(
         applet,
-        "scene phases rot/cull/depth/draw/mesh ",
+        "world split chunk/proj/chdraw ",
         "performance overlay scene phase timing line",
     )
     require(

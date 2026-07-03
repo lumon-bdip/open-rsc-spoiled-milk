@@ -26,7 +26,7 @@ RUNTIME_DEFAULTS = ROOT / "PC_Client/src/orsc/RendererRuntimeDefaults.java"
 SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 OPENGL_PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
 OPENGL_WORLD_CHUNK_RENDERER = ROOT / "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java"
-PLAN = ROOT / "docs/myworld/renderer-v2-plan.md"
+PLAN = ROOT / "docs/myworld/in-progress-work-plans/renderer-v2-plan.md"
 
 
 def require(text: str, needle: str, label: str) -> None:

@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BASE_ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefs.json"
 CUSTOM_ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsCustom.json"
+MYWORLD_ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsMyWorld.json"
 GUIDE_PATH = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "interfaces" / "misc" / "SkillGuideInterface.java"
 
 
@@ -26,6 +27,8 @@ EXPECTED_REQUIREMENTS = {
     2017: 46, 2019: 46, 2020: 46, 2021: 46, 2022: 46, 2024: 46, 2025: 46,
     2028: 62, 2030: 62, 2031: 62, 2032: 62, 2033: 62, 2035: 62, 2036: 62,
     2207: 1, 2208: 8, 2209: 46, 2210: 62, 2211: 1, 2212: 8, 2213: 46, 2214: 62,
+    3181: 1, 3182: 8, 3183: 15, 3184: 22, 3185: 30, 3186: 38,
+    3187: 46, 3188: 54, 3189: 62, 3190: 70,
     593: 80, 1346: 80, 1447: 80, 2752: 80,
 }
 
@@ -51,6 +54,13 @@ def load_items(path: Path, key: str) -> list[dict]:
 def main() -> None:
     items_by_id = {entry["id"]: entry for entry in load_items(BASE_ITEMS_PATH, "item")}
     items_by_id.update({entry["id"]: entry for entry in load_items(CUSTOM_ITEMS_PATH, "items")})
+    for entry in load_items(MYWORLD_ITEMS_PATH, "items"):
+        item_id = entry["id"]
+        if item_id < 3181 or item_id > 3190:
+            continue
+        merged_entry = dict(items_by_id.get(item_id, {}))
+        merged_entry.update(entry)
+        items_by_id[item_id] = merged_entry
 
     for item_id, expected_level in sorted(EXPECTED_REQUIREMENTS.items()):
         entry = items_by_id.get(item_id)

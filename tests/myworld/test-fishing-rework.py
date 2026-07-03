@@ -28,8 +28,8 @@ DRAGON_SLAYER = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/ques
 FISHING_CONTEST = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/quests/members/FishingContest.java"
 NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
 GROUND_ITEMS_CUSTOM_QUEST = ROOT / "server/conf/server/defs/locs/GroundItemsCustomQuest.json"
-WORK_ITEMS = ROOT / "docs/myworld/work-items.md"
-FISHING_PLAN = ROOT / "docs/myworld/fishing-rework-plan.md"
+WORK_ITEMS = ROOT / "docs/myworld/in-progress-work-plans/work-items.md"
+FISHING_PLAN = ROOT / "docs/myworld/completed-work-plans/fishing-rework-plan.md"
 
 
 ROD_IDS = (

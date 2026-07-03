@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 NPC_BEHAVIOR = ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java"
 NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
-DOC = ROOT / "docs/myworld/movement-pathing-release-plan.md"
+DOC = ROOT / "docs/myworld/in-progress-work-plans/movement-pathing-release-plan.md"
 DOC_INDEX = ROOT / "docs/myworld/README.md"
 
 

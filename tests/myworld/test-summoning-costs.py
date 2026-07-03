@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
-PLAN = ROOT / "docs/myworld/summoning-plan.md"
+PLAN = ROOT / "docs/myworld/in-progress-work-plans/summoning-plan.md"
 
 
 def fail(message: str) -> None:

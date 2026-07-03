@@ -14,7 +14,7 @@ BRIGHTNESS_SETTINGS = ROOT / "Client_Base/src/orsc/RendererBrightnessSettings.ja
 FOG_SETTINGS = ROOT / "Client_Base/src/orsc/RendererFogSettings.java"
 LIGHTING_SETTINGS = ROOT / "Client_Base/src/orsc/RendererLightingSettings.java"
 GEOMETRY_SETTINGS = ROOT / "Client_Base/src/orsc/RendererGeometrySettings.java"
-PLAN = ROOT / "docs/myworld/renderer-v2-plan.md"
+PLAN = ROOT / "docs/myworld/in-progress-work-plans/renderer-v2-plan.md"
 
 
 def fail(message: str) -> None:

@@ -1962,21 +1962,24 @@ public class Crafting implements UseInvTrigger,
 			crafting.batchGlassBlowing(player, glass, result, recipe.reqLvl, recipe.exp, recipe.resultGen);
 			return true;
 		}
+		if (crafting.isFurnaceMetalCategory(inputId)) {
+			ProductionRecipe productionRecipe = session.getRecipeByItemId(itemId);
+			int[] ingredientIds = productionRecipe == null ? new int[0] : productionRecipe.getIngredientItemIds();
+			int barId = ingredientIds.length > 0 ? ingredientIds[0] : -1;
+			if (!crafting.isModernMetalBar(barId)) {
+				player.message("Nothing interesting happens");
+				return false;
+			}
+			RangedMouldRecipe recipe = crafting.getRangedMouldRecipeForCategory(barId, inputId);
+			if (recipe == null || recipe.resultId != itemId) {
+				player.message("Nothing interesting happens");
+				return false;
+			}
+			return crafting.beginRangedMouldProduction(player, barId, recipe, quantity);
+		}
 		if (crafting.isModernMetalBar(inputId)) {
 			RangedMouldRecipe recipe = crafting.getRangedMouldRecipeByItemId(inputId, itemId);
-			if (recipe == null || !crafting.canStartRangedMouldRecipe(player, inputId, recipe)) {
-				return false;
-			}
-			int available = player.getCarriedItems().getInventory().countId(inputId, Optional.of(false));
-			int makeCount = Math.min(quantity, available);
-			if (makeCount < 1) {
-				player.message("You need more materials to make that");
-				return false;
-			}
-			Item bar = new Item(inputId);
-			startbatch(player, makeCount);
-			crafting.batchRangedMouldCasting(player, bar, recipe);
-			return true;
+			return crafting.beginRangedMouldProduction(player, inputId, recipe, quantity);
 		}
 
 		if (inputId == ItemId.COW_HIDE.id() && itemId == ItemId.BROWN_APRON.id()) {
@@ -2034,15 +2037,10 @@ public class Crafting implements UseInvTrigger,
 		} else if (categoryId == Smelting.FURNACE_CATEGORY_GUTHIX_SYMBOLS) {
 			session = createSilverJewelryProductionSession(player, 2);
 		} else if (isFurnaceMetalCategory(categoryId)) {
-			session = createFurnaceMetalSelectionSession(player, categoryId);
-			if (session != null) {
-				player.setAttribute("furnace_metal_category", categoryId);
-				player.setAttribute("production_session", session);
-				player.setAttribute("production_starter", (ProductionStarter) Crafting::beginFurnaceMetalSelectionFromInterface);
-				ActionSender.showProductionInterface(player, session);
-				return true;
+			session = createRangedMouldCategoryProductionSession(player, categoryId);
+			if (session == null) {
+				return false;
 			}
-			return false;
 		} else {
 			player.message("Nothing interesting happens");
 			return false;
@@ -2059,31 +2057,6 @@ public class Crafting implements UseInvTrigger,
 		player.setAttribute("production_session", session);
 		player.setAttribute("production_starter", (ProductionStarter) Crafting::beginProductionFromInterface);
 		ActionSender.showProductionInterface(player, session);
-		return true;
-	}
-
-	public static boolean beginFurnaceMetalSelectionFromInterface(Player player, ProductionSession session, int itemId, int quantity) {
-		if (session == null || !session.isType(ProductionSession.TYPE_FURNACE_MATERIAL)) {
-			return false;
-		}
-		Crafting crafting = new Crafting();
-		if (!crafting.isModernMetalBar(itemId)) {
-			player.message("Nothing interesting happens");
-			return false;
-		}
-		int categoryId = player.getAttribute("furnace_metal_category", -1);
-		ProductionSession craftingSession = crafting.createRangedMouldProductionSession(player, itemId, categoryId);
-		if (craftingSession == null) {
-			player.message("Nothing interesting happens");
-			return false;
-		}
-		if (!craftingSession.hasAnyCraftableRecipe()) {
-			player.message("You are not skilled enough or lack the needed materials");
-			return false;
-		}
-		player.setAttribute("production_session", craftingSession);
-		player.setAttribute("production_starter", (ProductionStarter) Crafting::beginProductionFromInterface);
-		ActionSender.showProductionInterface(player, craftingSession);
 		return true;
 	}
 
@@ -2358,6 +2331,29 @@ public class Crafting implements UseInvTrigger,
 		return new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose ranged weapon parts to cast", barId, recipes);
 	}
 
+	private ProductionSession createRangedMouldCategoryProductionSession(Player player, int categoryId) {
+		int mouldId = getFurnaceCategoryMouldId(categoryId);
+		if (mouldId < 0 || !hasRangedMould(player, mouldId)) {
+			player.message("You need the correct mould to make this");
+			return null;
+		}
+		List<ProductionRecipe> recipes = new ArrayList<>();
+		int level = player.getSkills().getLevel(Skill.CRAFTING.id());
+		for (int barId : MODERN_CASTING_BARS) {
+			RangedMouldRecipe recipe = getRangedMouldRecipeForCategory(barId, categoryId);
+			if (recipe == null || recipe.resultId <= 0
+				|| MathUtil.maxUnsigned(player.getConfig().RESTRICT_ITEM_ID, recipe.resultId) != player.getConfig().RESTRICT_ITEM_ID) {
+				continue;
+			}
+			int barCount = player.getCarriedItems().getInventory().countId(barId, Optional.of(false));
+			recipes.add(new ProductionRecipe(recipe.resultId, recipe.reqLvl, 1, recipe.amount,
+				level >= recipe.reqLvl, barCount >= 1 && hasRangedMould(player, recipe.mouldId),
+				new int[]{barId, recipe.mouldId}, new int[]{-1, -1}, new int[]{1, 1}));
+		}
+		return recipes.isEmpty() ? null
+			: new ProductionSession(ProductionSession.TYPE_CRAFTING, getFurnaceCategoryProductionTitle(categoryId), categoryId, recipes);
+	}
+
 	private List<RangedMouldRecipe> getAvailableRangedMouldRecipes(Player player, int barId) {
 		return getAvailableRangedMouldRecipes(player, barId, -1);
 	}
@@ -2382,26 +2378,39 @@ public class Crafting implements UseInvTrigger,
 		return recipes;
 	}
 
-	private ProductionSession createFurnaceMetalSelectionSession(Player player, int categoryId) {
-		int mouldId = getFurnaceCategoryMouldId(categoryId);
-		if (mouldId < 0 || !hasRangedMould(player, mouldId)) {
-			player.message("You need the correct mould to make this");
-			return null;
+	private String getFurnaceCategoryProductionTitle(int categoryId) {
+		if (categoryId == Smelting.FURNACE_CATEGORY_BOLTS) {
+			return "Choose bolts to cast";
 		}
-		List<ProductionRecipe> recipes = new ArrayList<>();
-		int level = player.getSkills().getLevel(Skill.CRAFTING.id());
-		for (int barId : MODERN_CASTING_BARS) {
-			RangedMouldRecipe recipe = getRangedMouldRecipeForCategory(barId, categoryId);
-			if (recipe == null) {
-				continue;
-			}
-			int barCount = player.getCarriedItems().getInventory().countId(barId, Optional.of(false));
-			recipes.add(new ProductionRecipe(barId, recipe.reqLvl, 1, 1,
-				level >= recipe.reqLvl, barCount >= 1,
-				new int[]{barId}, new int[]{-1}, new int[]{1}));
+		if (categoryId == Smelting.FURNACE_CATEGORY_ARROWHEADS) {
+			return "Choose arrow heads to cast";
 		}
-		return recipes.isEmpty() ? null
-			: new ProductionSession(ProductionSession.TYPE_FURNACE_MATERIAL, "Choose a metal to cast", -1, recipes);
+		if (categoryId == Smelting.FURNACE_CATEGORY_DARTS) {
+			return "Choose dart tips to cast";
+		}
+		if (categoryId == Smelting.FURNACE_CATEGORY_THROWING_KNIVES) {
+			return "Choose throwing knives to cast";
+		}
+		if (categoryId == Smelting.FURNACE_CATEGORY_SHURIKEN) {
+			return "Choose shuriken to cast";
+		}
+		return "Choose ranged weapon parts to cast";
+	}
+
+	private boolean beginRangedMouldProduction(Player player, int barId, RangedMouldRecipe recipe, int quantity) {
+		if (recipe == null || !canStartRangedMouldRecipe(player, barId, recipe)) {
+			return false;
+		}
+		int available = player.getCarriedItems().getInventory().countId(barId, Optional.of(false));
+		int makeCount = Math.min(quantity, available);
+		if (makeCount < 1) {
+			player.message("You need more materials to make that");
+			return false;
+		}
+		Item bar = new Item(barId);
+		startbatch(player, makeCount);
+		batchRangedMouldCasting(player, bar, recipe);
+		return true;
 	}
 
 	private int getFurnaceCategoryMouldId(int categoryId) {

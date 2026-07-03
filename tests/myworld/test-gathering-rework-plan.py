@@ -26,7 +26,7 @@ PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 ITEM_IDS = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
 ITEM_DEFS_CUSTOM = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 ITEM_DEFS_MYWORLD = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
-GATHERING_PLAN = ROOT / "docs/myworld/work-items.md"
+GATHERING_PLAN = ROOT / "docs/myworld/in-progress-work-plans/work-items.md"
 
 MAINLINE_ORE_LEVELS = {
     202: 1,   # tin

@@ -210,11 +210,12 @@ public class NpcBehavior {
 
 					if (!player.withinRange(npc, aggroRadius)) continue;
 
-					// Player is a new target AND can't aggro.
-					if (!canAggro(player, now)) {
+					final boolean devotionAggroTriggered = devotionAggro && shouldDevotionAggroPlayer(player);
+					if (devotionAggro && !devotionAggroTriggered) {
 						continue;
 					}
-					if (devotionAggro && !shouldDevotionAggroPlayer(player)) {
+					// Player is a new target AND can't aggro.
+					if (!canAggro(player, now, devotionAggroTriggered)) {
 						continue;
 					}
 
@@ -630,6 +631,10 @@ public class NpcBehavior {
 
 	// We return false if the player cannot be aggro'd.
 	private boolean canAggro(final Mob target, final long now) {
+		return canAggro(target, now, false);
+	}
+
+	private boolean canAggro(final Mob target, final long now, final boolean forceAggressive) {
 		if (!Summoning.canSummonAttack(npc, target)) {
 			return false;
 		}
@@ -648,7 +653,7 @@ public class NpcBehavior {
 		boolean targetCombatTimeoutExceeded = target.isPlayer() && npc.getConfig().WANT_MYWORLD
 			|| checkCombatTimer(now, target.getCombatTimer(), numTicks);
 
-		boolean isAggressive = aggressiveCheck(target);
+		boolean isAggressive = forceAggressive || aggressiveCheck(target);
 
 		boolean impervious = isPlayer
 			&& (((Player) target).isInvulnerableTo(npc) || ((Player) target).isInvisibleTo(npc));

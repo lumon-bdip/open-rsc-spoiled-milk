@@ -69,7 +69,7 @@ final class Frame {
 		int sourceHeight = image.getHeight();
 		int targetWidth = Math.max(1, Math.round(sourceWidth * scalar));
 		int targetHeight = Math.max(1, Math.round(sourceHeight * scalar));
-		boolean linearFiltering = scalingAlgorithm != ScaledWindow.ScalingAlgorithm.INTEGER_SCALING;
+		boolean linearFiltering = false;
 		int byteCount = sourceWidth * sourceHeight * 4;
 		FrameBuffer frameBuffer = frameBufferPool.acquire(byteCount);
 

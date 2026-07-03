@@ -25275,6 +25275,7 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Maces");
 			skillGuideChosenTabs.add("Spears");
 			if (Config.S_WANT_CUSTOM_SPRITES) {
+				skillGuideChosenTabs.add("Scythes");
 				skillGuideChosenTabs.add("Info");
 			}
 		} else if (skillGuideChosen.equalsIgnoreCase("Strength")) {

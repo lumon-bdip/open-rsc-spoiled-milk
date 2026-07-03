@@ -1,46 +1,126 @@
 # MyWorld Docs
 
-This folder keeps only the active MyWorld documentation surface.
-The public project overview and player-facing feature summary now live in the
-repository root [`README.md`](../../README.md).
+This folder is the navigation surface for Spoiled Milk planning, implemented
+work records, rough drafts, and stable references. The public project overview
+and player-facing feature summary live in the repository root
+[`README.md`](../../README.md).
 
-## Active Docs
+## Folder Rules
 
-- [roadmap.md](roadmap.md): alpha milestone and version progression from minor terrain work through the beta-readiness checkpoint.
-- [work-items.md](work-items.md): current work list, grouped by small, medium, and large scope.
-- [change-history.md](change-history.md): consolidated record of major changes made so far.
-- [combat-equipment-spec.md](combat-equipment-spec.md): source of truth for armor budgets, set traits, poison, and debuff stacking rules.
-- [altar-enchantment-and-conversion-plan.md](altar-enchantment-and-conversion-plan.md): implemented rune-altar enchanting costs, two-part Enchanting gates, and steel-only god knight conversion.
-- [god-knight-equipment-audit.md](god-knight-equipment-audit.md): implementation record and remaining tuning decisions for god-aligned knight equipment sources.
-- [prayer-devotion-equipment-plan.md](prayer-devotion-equipment-plan.md): next prayer-devotion equipment plan, including blessing requirements, XP rules, scaling, and god-tool retirement.
-- [new-ideas-and-issues.md](new-ideas-and-issues.md): lightweight intake list for ideas and newly spotted issues before they become scoped work.
-- [pvm-population-and-cluster-plan.md](pvm-population-and-cluster-plan.md): implemented pre-release PvM population passes and remaining expansion decisions.
-- [terrain-expansion-plan.md](terrain-expansion-plan.md): staged Heroes' Guild basement and northern Wilderness terrain expansion plan, including isolated testing and map safety requirements.
-- [renderer-and-shader-roadmap.md](renderer-and-shader-roadmap.md): AI-facing current state and forward roadmap for renderer-v2, shaders, remaster lighting, shadows, and big-swing optimization work.
-- [ogg-audio-support-plan.md](ogg-audio-support-plan.md): staged plan for adding OGG Vorbis sound-effect support while keeping WAV fallback and release packaging safe.
-- [code-cleanup-and-modularization-plan.md](code-cleanup-and-modularization-plan.md): AI-facing cleanup roadmap for breaking up oversized renderer/client/server files and quarantining stale options.
-- [legacy-limits-audit.md](legacy-limits-audit.md): AI-facing audit of byte/short-era caps, fixed client arrays, renderer capture ceilings, and protocol boundaries that can become remaster bugs.
-- [renderer-v2-plan.md](renderer-v2-plan.md): active alpha-era client renderer rewrite plan, including the renderer ownership contract, remaster strategy, current OpenGL rollout baseline, legacy-derived terrain lighting, longer-term shader work, scaling, and rollout gates.
-- [remaster-lighting-and-shadow-plan.md](remaster-lighting-and-shadow-plan.md): focused forward plan for clean-slate directional remaster lighting, semantic shadow casters, indoor/outdoor classification, and clipping-aware terrain shadows.
-- [movement-pathing-release-plan.md](movement-pathing-release-plan.md): release-facing diagnosis and staged plan for walking smoothness, NPC roam batching, and proper obstacle pathfinding.
-- [pvm-npc-cluster-audit.md](pvm-npc-cluster-audit.md): hostile-NPC proximity audit, including the Wilderness-focused population view.
-- [dual-element-spells.md](dual-element-spells.md): current dual-element Magic spell implementation and live effect identities.
-- [jewelry-and-retired-robe-effects.md](jewelry-and-retired-robe-effects.md): source of truth for current jewelry effects and robe effects retired from cloth armor.
-- [enchanted-robe-effects-plan.md](enchanted-robe-effects-plan.md): running design notes for future enchanted robe effects and tier scaling.
-- [compatibility-only-content.md](compatibility-only-content.md): ledger for dormant item families, quest exceptions, and retired systems kept for compatibility.
-- [summoning-plan.md](summoning-plan.md): current Summoning implementation source of truth and tuning notes.
-- [fishing-spot-map.md](fishing-spot-map.md): current fishing spot cluster map and source coordinate list.
-- [fishing-rework-plan.md](fishing-rework-plan.md): current rod-tier and location-pool Fishing implementation record.
-- [resource-seed-plan.md](resource-seed-plan.md): implemented rare side-reward seed framework for Woodcutting and Harvesting.
-- [geode-and-gathering-spirit-plan.md](geode-and-gathering-spirit-plan.md): planned Mining geode rewards, gem seed retirement, key-half tree, and rare gathering-spirit NPC concepts.
-- [herblaw-potion-rework-plan.md](herblaw-potion-rework-plan.md): new square-one Herblaw and potion design plan, including stable-duration boosts and potion family grouping.
-- [migration-regression-audit.md](migration-regression-audit.md): resolved migration recovery record and guardrail notes.
-- [dev-admin-commands.md](dev-admin-commands.md): MyWorld development account roles and practical command reference.
-- [object-ids.md](object-ids.md): builder-facing scenery/object ID reference, starting with mineable ore, rock, and gem nodes.
-- [enemy-ids.md](enemy-ids.md): builder-facing enemy NPC placement commands and attackable-only NPC ID reference.
-- [testing-quick-reference.md](testing-quick-reference.md): compact field-testing reference for commands, IDs, and targeted test fixtures.
-- [client-sprite-reference.md](client-sprite-reference.md): lookup notes for custom sprite references, authentic item icon offsets, and equipment palette exports.
-- This README: current repository shape, active paths, and archived reference locations.
+- [`in-progress-work-plans/`](in-progress-work-plans/): active plans, current
+  roadmaps, and work that still drives implementation decisions.
+- [`completed-work-plans/`](completed-work-plans/): implemented plans and
+  closed migration records that are still useful as source-of-truth history.
+- [`rough-drafts/`](rough-drafts/): deferred ideas, early designs, and notes
+  that should not be treated as committed implementation direction yet.
+- [`info/`](info/): stable references, command lists, audits, IDs, and
+  implementation facts that are not themselves active work plans.
+- [`screenshots/`](screenshots/): documentation and README image assets.
+
+Keep this README as the top-level index. New markdown files should normally go
+into one of the category folders, not directly into `docs/myworld/`.
+
+## Start Here
+
+- [Renderer and shader roadmap](in-progress-work-plans/renderer-and-shader-roadmap.md):
+  current AI-facing source of truth for renderer-v2, remaster lighting, shadows,
+  shader work, and major optimization direction.
+- [Roadmap](in-progress-work-plans/roadmap.md): high-level alpha milestone and
+  version progression.
+- [Work items](in-progress-work-plans/work-items.md): active work list and
+  implemented-state summary.
+- [Change history](info/change-history.md): consolidated record of major
+  completed project changes.
+- [Testing quick reference](info/testing-quick-reference.md): compact field
+  testing commands, IDs, and targeted fixture notes.
+
+## In Progress Work Plans
+
+- [chat-and-dialogue-channel-plan.md](in-progress-work-plans/chat-and-dialogue-channel-plan.md):
+  chat tab/channel cleanup and dialogue privacy/concurrency path.
+- [code-cleanup-and-modularization-plan.md](in-progress-work-plans/code-cleanup-and-modularization-plan.md):
+  codebase cleanup roadmap for oversized files, stale options, and renderer
+  ownership boundaries.
+- [legacy-limits-audit.md](in-progress-work-plans/legacy-limits-audit.md):
+  byte/short-era cap audit and modernization recommendations.
+- [movement-pathing-release-plan.md](in-progress-work-plans/movement-pathing-release-plan.md):
+  movement smoothness, NPC roaming, and pathfinding follow-up plan.
+- [ogg-audio-support-plan.md](in-progress-work-plans/ogg-audio-support-plan.md):
+  staged OGG Vorbis support plan with WAV fallback safety.
+- [prayer-devotion-equipment-plan.md](in-progress-work-plans/prayer-devotion-equipment-plan.md):
+  prayer-devotion equipment direction, blessing rules, and god-tool retirement.
+- [remaster-lighting-and-shadow-plan.md](in-progress-work-plans/remaster-lighting-and-shadow-plan.md):
+  detailed implementation ledger for clean-slate Remaster lighting and shadows.
+- [renderer-and-shader-roadmap.md](in-progress-work-plans/renderer-and-shader-roadmap.md):
+  combined current renderer/shader status and next big-swing roadmap.
+- [renderer-v2-plan.md](in-progress-work-plans/renderer-v2-plan.md):
+  detailed renderer-v2 implementation ledger and historical checklist.
+- [resource-seed-plan.md](in-progress-work-plans/resource-seed-plan.md):
+  rare resource seed framework and remaining seed-system direction.
+- [roadmap.md](in-progress-work-plans/roadmap.md):
+  alpha milestone roadmap and release progression.
+- [summoning-plan.md](in-progress-work-plans/summoning-plan.md):
+  current Summoning implementation source of truth and tuning notes.
+- [terrain-expansion-plan.md](in-progress-work-plans/terrain-expansion-plan.md):
+  staged terrain expansion process and map-editor workflow.
+- [work-items.md](in-progress-work-plans/work-items.md):
+  current implementation queue and completed-state rollup.
+
+## Completed Work Plans
+
+- [altar-enchantment-and-conversion-plan.md](completed-work-plans/altar-enchantment-and-conversion-plan.md):
+  implemented rune-altar enchanting, item-tier gates, and god knight conversion.
+- [aoe-scythe-weapon-plan.md](completed-work-plans/aoe-scythe-weapon-plan.md):
+  implemented melee scythe line and NPC-only adjacent cleave behavior.
+- [entrana-safety-deposit-box-plan.md](completed-work-plans/entrana-safety-deposit-box-plan.md):
+  implemented Entrana restriction helper and Safety Deposit Box flow.
+- [fishing-rework-plan.md](completed-work-plans/fishing-rework-plan.md):
+  implemented rod-tier and location-pool Fishing rework record.
+- [geode-and-gathering-spirit-plan.md](completed-work-plans/geode-and-gathering-spirit-plan.md):
+  implemented geode and key-half tree work with deferred spirit notes.
+- [migration-regression-audit.md](completed-work-plans/migration-regression-audit.md):
+  completed migration recovery record and guardrail notes.
+- [pvm-population-and-cluster-plan.md](completed-work-plans/pvm-population-and-cluster-plan.md):
+  implemented pre-release PvM population passes and remaining expansion notes.
+- [archive/](completed-work-plans/archive/):
+  older historical plans, completed tasklists, migration notes, and audits.
+
+## Rough Drafts
+
+- [bank-tag-filter-plan.md](rough-drafts/bank-tag-filter-plan.md):
+  deferred bank tag/filter quality-of-life idea.
+- [enchanted-robe-effects-plan.md](rough-drafts/enchanted-robe-effects-plan.md):
+  exploratory altar-bound robe effect notes and tier scaling ideas.
+- [herblaw-potion-rework-plan.md](rough-drafts/herblaw-potion-rework-plan.md):
+  square-one Herblaw and potion redesign draft.
+
+## Info
+
+- [change-history.md](info/change-history.md): consolidated major-change record.
+- [client-sprite-reference.md](info/client-sprite-reference.md): custom sprite
+  reference, authentic item icon offsets, and equipment palette export notes.
+- [combat-equipment-spec.md](info/combat-equipment-spec.md): combat stat,
+  armor budget, poison, and debuff stacking rules.
+- [compatibility-only-content.md](info/compatibility-only-content.md): dormant
+  item families, quest exceptions, and retired systems kept for compatibility.
+- [dev-admin-commands.md](info/dev-admin-commands.md): development account roles
+  and practical command reference.
+- [dual-element-spells.md](info/dual-element-spells.md): current dual-element
+  spell implementation and effect identities.
+- [enemy-ids.md](info/enemy-ids.md): builder-facing attackable NPC ID reference.
+- [fishing-spot-map.md](info/fishing-spot-map.md): live fishing spot coordinate
+  source list.
+- [god-knight-equipment-audit.md](info/god-knight-equipment-audit.md): god
+  knight equipment source and tuning record.
+- [jewelry-and-retired-robe-effects.md](info/jewelry-and-retired-robe-effects.md):
+  current jewelry effects and robe effects retired from cloth armor.
+- [new-ideas-and-issues.md](info/new-ideas-and-issues.md): intake list for
+  ideas and regressions before they become scoped work.
+- [object-ids.md](info/object-ids.md): builder-facing scenery/object ID reference.
+- [pvm-npc-cluster-audit.md](info/pvm-npc-cluster-audit.md): hostile-NPC
+  proximity audit and Wilderness population view.
+- [testing-quick-reference.md](info/testing-quick-reference.md): compact test
+  and field-validation reference.
 
 ## Current Repository Shape
 
@@ -56,19 +136,23 @@ Active MyWorld workflow:
 - `server/connections.conf`: required shared connection config.
 - `server/inc/sqlite/myworld_seed.db`: canonical local SQLite seed.
 - `server/inc/sqlite/myworld_dev.db`: local dev database state.
-- `server/plugins/com/openrsc/server/plugins/custom/myworld/`: preferred namespace for MyWorld-owned runtime content.
+- `server/plugins/com/openrsc/server/plugins/custom/myworld/`: preferred
+  namespace for MyWorld-owned runtime content.
 
 Compatibility areas:
 
 - `dev/myworld/`: compatibility wrappers for older local commands. Its
   `assets/` subtree remains the active visual asset source loaded by the
   client. New tools, tests, and planning docs should not be added there.
-- Broad inherited server/client packages can still be changed when needed, but new MyWorld-specific handlers should prefer `custom/myworld`.
+- Broad inherited server/client packages can still be changed when needed, but
+  new MyWorld-specific handlers should prefer `custom/myworld`.
 
 Archived reference:
 
-- `docs/myworld/archive/`: old MyWorld planning docs and detailed audits.
-- `docs/inherited-openrsc/`: inherited OpenRSC/Cabbage docs, launchers, configs, SQLite seeds, and Make recipes.
+- `docs/myworld/completed-work-plans/archive/`: old MyWorld planning docs and
+  detailed audits.
+- `docs/inherited-openrsc/`: inherited OpenRSC/Cabbage docs, launchers,
+  configs, SQLite seeds, and Make recipes.
 
 ## Validation
 

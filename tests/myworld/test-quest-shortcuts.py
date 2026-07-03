@@ -284,7 +284,7 @@ def main() -> None:
         if re.search(pattern, text):
             raise AssertionError(f"{rel} repeats the shortcut player line before {method}")
 
-    audit = read("docs/myworld/work-items.md")
+    audit = read("docs/myworld/in-progress-work-plans/work-items.md")
     require(audit, "MyWorld per-quest shortcut rollout", "quest audit rollout section")
     require(audit, "I've already done this quest", "quest audit shortcut text")
     require(audit, "`Gertrude's Cat`", "quest audit gertrudes cat rollout")

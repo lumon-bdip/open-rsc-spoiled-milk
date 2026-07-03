@@ -24,6 +24,12 @@ def main() -> None:
     require(behavior, "if (devotionLevel >= 0)", "non-negative devotion should not add follower aggro")
     require(behavior, "Math.min(1000, Math.abs(devotionLevel))", "negative devotion should scale to 1000")
     require(behavior, "DataConversions.getRandom().nextInt(1000) < hostilityChance", "-1000 devotion should guarantee aggro")
+    require(behavior, "final boolean devotionAggroTriggered = devotionAggro && shouldDevotionAggroPlayer(player)",
+            "devotion aggro chance should be evaluated before the generic aggro gate")
+    require(behavior, "canAggro(player, now, devotionAggroTriggered)",
+            "devotion-triggered aggro should be allowed through the generic aggro gate")
+    require(behavior, "forceAggressive || aggressiveCheck(target)",
+            "devotion aggro should not require the NPC definition to already be aggressive")
     require(behavior, "return PrayerCatalog.GodLine.SARADOMIN;", "Saradomin follower mapping")
     require(behavior, "return PrayerCatalog.GodLine.ZAMORAK;", "Zamorak follower mapping")
     require(behavior, "return PrayerCatalog.GodLine.GUTHIX;", "Guthix follower mapping")

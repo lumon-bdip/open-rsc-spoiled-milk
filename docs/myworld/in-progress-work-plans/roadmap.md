@@ -11,9 +11,10 @@ The numbered limited-alpha release sequence ended with
 
 Current version progression:
 
-- The current release line is `v0.1.x`; normal updates advance the patch
-  version from the latest published tag.
-- After `v0.1.9`, the next release is `v0.2.0`.
+- The current release line is `v0.2.x`; normal updates advance the patch
+  version from the latest published tag. The latest release checked during this
+  doc cleanup was `v0.2.9`.
+- The `v0.1.x` line has already advanced through the `v0.2.0` minor milestone.
 - Patch versions are used for fixes, balancing, polish, and incremental work
   within the current milestone.
 - The minor version advances when a major alpha milestone is completed.
@@ -27,8 +28,8 @@ whether the project is ready to enter beta.
 ### Versioning Transition
 
 The packager, updater scripts, release tests, fixtures, and artifact naming now
-support the `v0.1.x` sequence. GitHub updates use normal releases so the
-auto-updater can resolve the latest published tag.
+support the normal semantic-version release sequence. GitHub updates use normal
+releases so the auto-updater can resolve the latest published tag.
 
 ## Current Phase: Stabilization And Minor Terrain
 
@@ -45,7 +46,7 @@ Current priorities:
 - Keep the existing Heroes' Guild basement expansion stable while terrain
   editing practices are refined.
 
-This phase is expected to use the remaining `v0.1.x` releases. Its completion
+This phase is continuing through the `v0.2.x` patch releases. Its completion
 should coincide with the next minor-version milestone.
 
 General terrain workflow and Wilderness requirements are maintained in

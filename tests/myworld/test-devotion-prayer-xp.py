@@ -50,6 +50,10 @@ def main() -> None:
             "blessing Prayer XP should saturate instead of overflowing")
     require("getDevotionLevelFromOfferings(previousOfferings)" in devotion,
             "devotion bonus should be based on completed prior offering tiers")
+    require("if (newDevotion > previousDevotion)" in devotion and "sendDevotionIncreaseMessage" in devotion,
+            "devotion increase messages should trigger even while recovering from negative devotion")
+    require("recovers. Current devotion:" in devotion and "recovers to neutral" in devotion,
+            "negative and neutral devotion recovery should have clear messages")
     require("OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP" in devotion,
             "devotion levels should use the same 10-offering cadence as bonus XP")
     require("getDevotionLevel" in devotion, "devotion levels should be readable per god")

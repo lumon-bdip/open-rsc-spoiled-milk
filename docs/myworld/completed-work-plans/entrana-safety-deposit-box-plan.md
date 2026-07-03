@@ -1,5 +1,9 @@
 # Entrana Safety Deposit Box Plan
 
+Status: implemented. The live pass includes shared `EntranaRestrictions`, monk
+restriction reuse, Safety Deposit Box object `1326`, placement at `266,660`,
+persistent per-player cache snapshots, and guarded deposit/withdraw behavior.
+
 ## Goal
 
 Add a per-player Safety Deposit Box near the Port Sarim Entrana ship at `266,660`.

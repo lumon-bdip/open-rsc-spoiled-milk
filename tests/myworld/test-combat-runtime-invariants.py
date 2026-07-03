@@ -169,7 +169,8 @@ def main() -> None:
     require_contains(NPC, "playerCombatLevel < bestCombatLevel")
 
     require_contains(NPC, "private Pair<UUID, Long> handleXpDistribution(final Mob attacker)")
-    require_contains(NPC, "for (UUID id : getAllDamageDealerIds())")
+    require_contains(NPC, "final ArrayList<UUID> damageDealerIds = getAllDamageDealerIds();")
+    require_contains(NPC, "for (UUID id : damageDealerIds)")
     require_contains(NPC, "awardDamageShareXp(")
     require_contains(NPC, "getDamageShareXp(totalCombatXP, damage)")
     require_contains(NPC, "getDamageShareXp(totalCombatXP * 4, damage)")

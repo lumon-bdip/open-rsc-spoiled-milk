@@ -1,5 +1,10 @@
 # AoE Scythe Weapon Plan
 
+Status: implemented. The live first pass includes the tin-through-rune scythe
+line, god-knight scythe variants, smithing access, skill-guide coverage,
+server-side PvM adjacent NPC cleave, summon/player exclusion, and follow-up
+delay scaling for extra targets.
+
 ## Goal
 
 Add a main-line melee scythe family from tin through rune. These scythes are

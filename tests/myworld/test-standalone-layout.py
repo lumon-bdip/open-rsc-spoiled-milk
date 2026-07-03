@@ -183,54 +183,70 @@ def test_generated_tools_and_outputs_do_not_live_in_dev_myworld() -> None:
 
 
 def test_myworld_docs_are_consolidated() -> None:
-    active_docs = sorted(path.name for path in (ROOT / "docs" / "myworld").glob("*.md"))
-    expected_docs = [
-        "README.md",
-        "altar-enchantment-and-conversion-plan.md",
-        "aoe-scythe-weapon-plan.md",
-        "bank-tag-filter-plan.md",
-        "change-history.md",
-        "chat-and-dialogue-channel-plan.md",
-        "client-sprite-reference.md",
-        "code-cleanup-and-modularization-plan.md",
-        "combat-equipment-spec.md",
-        "compatibility-only-content.md",
-        "dev-admin-commands.md",
-        "dual-element-spells.md",
-        "enchanted-robe-effects-plan.md",
-        "enemy-ids.md",
-        "entrana-safety-deposit-box-plan.md",
-        "fishing-rework-plan.md",
-        "fishing-spot-map.md",
-        "geode-and-gathering-spirit-plan.md",
-        "god-knight-equipment-audit.md",
-        "herblaw-potion-rework-plan.md",
-        "jewelry-and-retired-robe-effects.md",
-        "legacy-limits-audit.md",
-        "migration-regression-audit.md",
-        "movement-pathing-release-plan.md",
-        "new-ideas-and-issues.md",
-        "object-ids.md",
-        "ogg-audio-support-plan.md",
-        "prayer-devotion-equipment-plan.md",
-        "pvm-npc-cluster-audit.md",
-        "pvm-population-and-cluster-plan.md",
-        "remaster-lighting-and-shadow-plan.md",
-        "renderer-and-shader-roadmap.md",
-        "renderer-v2-plan.md",
-        "resource-seed-plan.md",
-        "roadmap.md",
-        "summoning-plan.md",
-        "terrain-expansion-plan.md",
-        "testing-quick-reference.md",
-        "work-items.md",
-    ]
-    if active_docs != expected_docs:
-        fail(f"Active docs/myworld markdown files must be {expected_docs}, got {active_docs}")
+    docs_root = ROOT / "docs" / "myworld"
+    root_docs = sorted(path.name for path in docs_root.glob("*.md"))
+    if root_docs != ["README.md"]:
+        fail(f"docs/myworld root should only keep README.md, got {root_docs}")
 
-    archive_dir = ROOT / "docs" / "myworld" / "archive"
+    expected_by_category = {
+        "in-progress-work-plans": [
+            "chat-and-dialogue-channel-plan.md",
+            "code-cleanup-and-modularization-plan.md",
+            "legacy-limits-audit.md",
+            "movement-pathing-release-plan.md",
+            "ogg-audio-support-plan.md",
+            "prayer-devotion-equipment-plan.md",
+            "remaster-lighting-and-shadow-plan.md",
+            "renderer-and-shader-roadmap.md",
+            "renderer-v2-plan.md",
+            "resource-seed-plan.md",
+            "roadmap.md",
+            "summoning-plan.md",
+            "terrain-expansion-plan.md",
+            "work-items.md",
+        ],
+        "completed-work-plans": [
+            "altar-enchantment-and-conversion-plan.md",
+            "aoe-scythe-weapon-plan.md",
+            "entrana-safety-deposit-box-plan.md",
+            "fishing-rework-plan.md",
+            "geode-and-gathering-spirit-plan.md",
+            "migration-regression-audit.md",
+            "pvm-population-and-cluster-plan.md",
+        ],
+        "rough-drafts": [
+            "bank-tag-filter-plan.md",
+            "enchanted-robe-effects-plan.md",
+            "herblaw-potion-rework-plan.md",
+        ],
+        "info": [
+            "change-history.md",
+            "client-sprite-reference.md",
+            "combat-equipment-spec.md",
+            "compatibility-only-content.md",
+            "dev-admin-commands.md",
+            "dual-element-spells.md",
+            "enemy-ids.md",
+            "fishing-spot-map.md",
+            "god-knight-equipment-audit.md",
+            "jewelry-and-retired-robe-effects.md",
+            "new-ideas-and-issues.md",
+            "object-ids.md",
+            "pvm-npc-cluster-audit.md",
+            "testing-quick-reference.md",
+        ],
+    }
+    for category, expected_docs in expected_by_category.items():
+        category_dir = docs_root / category
+        if not category_dir.is_dir():
+            fail(f"docs/myworld/{category} must exist")
+        active_docs = sorted(path.name for path in category_dir.glob("*.md"))
+        if active_docs != expected_docs:
+            fail(f"docs/myworld/{category} markdown files must be {expected_docs}, got {active_docs}")
+
+    archive_dir = docs_root / "completed-work-plans" / "archive"
     if not archive_dir.is_dir():
-        fail("docs/myworld/archive must keep the detailed historical docs")
+        fail("docs/myworld/completed-work-plans/archive must keep the detailed historical docs")
 
     for name in [
         "prayer-rework.md",

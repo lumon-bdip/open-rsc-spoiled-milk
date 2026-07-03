@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "custom" / "myworld" / "skills" / "prayer" / "DestroyOpposingBlessedObject.java"
 DEVOTION = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "Devotion.java"
-PLAN = ROOT / "docs" / "myworld" / "prayer-devotion-equipment-plan.md"
+PLAN = ROOT / "docs" / "myworld" / "in-progress-work-plans" / "prayer-devotion-equipment-plan.md"
 
 
 def require(condition, message):

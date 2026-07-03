@@ -10,7 +10,7 @@ CUSTOM_BANK = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/CustomBankInte
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 OPENRSC = ROOT / "PC_Client/src/orsc/OpenRSC.java"
-PLAN = ROOT / "docs/myworld/renderer-v2-plan.md"
+PLAN = ROOT / "docs/myworld/in-progress-work-plans/renderer-v2-plan.md"
 
 
 def fail(message: str) -> None:

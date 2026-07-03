@@ -1,6 +1,6 @@
 # MyWorld Change History
 
-This is the consolidated record of major MyWorld changes made so far. Detailed legacy planning notes live in `docs/myworld/archive/`.
+This is the consolidated record of major MyWorld changes made so far. Detailed legacy planning notes live in `docs/myworld/completed-work-plans/archive/`.
 
 ## Repository Migration
 
@@ -132,7 +132,7 @@ This is the consolidated record of major MyWorld changes made so far. Detailed l
   - `resource-seed-plan.md`
   - `dev-admin-commands.md`
   - `testing-quick-reference.md`
-- Detailed historical plans and audits were archived under `docs/myworld/archive/`.
+- Detailed historical plans and audits were archived under `docs/myworld/completed-work-plans/archive/`.
 - A focused `summoning-plan.md` now tracks the first real summon-system build
   instead of leaving summon-backed armor concepts as loose notes.
 

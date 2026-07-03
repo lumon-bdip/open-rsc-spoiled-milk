@@ -5,7 +5,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "server/src/com/openrsc/server/model/entity/player/PrayerCatalog.java"
 PRAYERS = ROOT / "server/src/com/openrsc/server/model/entity/player/Prayers.java"
-DOC = ROOT / "docs/myworld/work-items.md"
+DOC = ROOT / "docs/myworld/in-progress-work-plans/work-items.md"
 PRAYER_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/PrayerHandler.java"
 PRAYER_DRAIN = ROOT / "server/src/com/openrsc/server/event/rsc/impl/PrayerDrainEvent.java"
 STAT_RESTORATION = ROOT / "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java"

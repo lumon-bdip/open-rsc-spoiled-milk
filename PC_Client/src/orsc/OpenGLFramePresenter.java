@@ -246,6 +246,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		UNIT_QUAD_POSITION_COMPONENTS * 4;
 	private static final int UNIT_QUAD_STRIDE_BYTES =
 		UNIT_QUAD_FLOATS_PER_VERTEX * 4;
+	private static final int TILE_SIZE = 128;
+	private static final int UNDERGROUND_WORLD_TILE_Z_THRESHOLD = 3000;
 	private static final double INTEGER_SCALE_EPSILON = 0.01d;
 	private static final float MAX_FRACTIONAL_SCALE_SMOOTHING_ALPHA = 0.85f;
 
@@ -293,7 +295,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private int currentTargetHeight = INITIAL_HEIGHT;
 	private Viewport currentDrawViewport = new Viewport(0, 0, INITIAL_WIDTH, INITIAL_HEIGHT);
 	private Viewport currentFramebufferViewport = new Viewport(0, 0, INITIAL_WIDTH, INITIAL_HEIGHT);
-	private float currentPresentationSmoothingAlpha;
+	private float currentTextSmoothingAlpha;
 	private int legacySceneSpriteRestoreCommands;
 	private int legacySceneSpriteRestoreFallbacks;
 	private int legacySceneSpriteRestoreFallbackPixels;
@@ -832,8 +834,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		currentFramebufferViewport = framebufferViewport;
 		currentTargetWidth = windowViewport.width;
 		currentTargetHeight = windowViewport.height;
-		currentPresentationSmoothingAlpha =
-			computePresentationSmoothingAlpha(framebufferViewport, frame.sourceWidth, frame.sourceHeight);
+		currentTextSmoothingAlpha =
+			computeTextSmoothingAlpha(framebufferViewport, frame.sourceWidth, frame.sourceHeight);
 
 		long uploadStart = RenderTelemetry.now();
 		uploadTexture(frame);
@@ -1110,8 +1112,37 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glEnable(gl.GL_SCISSOR_TEST);
 		gl.glScissor(viewport.x, viewport.y, viewport.width, viewport.height);
 		gl.glViewport(viewport.x, viewport.y, viewport.width, viewport.height);
-		drawSkyBackdrop(frame, presentation);
+		if (shouldDrawSkyBackdrop(frame)) {
+			drawSkyBackdrop(frame, presentation);
+		}
 		gl.glDisable(gl.GL_SCISSOR_TEST);
+	}
+
+	private boolean shouldDrawSkyBackdrop(Frame frame) {
+		return !isUndergroundFrame(frame);
+	}
+
+	private boolean isUndergroundFrame(Frame frame) {
+		if (frame == null || frame.renderer3DFrame == null) {
+			return false;
+		}
+		Renderer3DWorldChunkFrame worldChunkFrame = frame.renderer3DFrame.getWorldChunkFrame();
+		if (worldChunkFrame == null) {
+			return false;
+		}
+		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : worldChunkFrame.getChunks()) {
+			if (chunk.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD) {
+				continue;
+			}
+			if (worldUnitToTile(chunk.getOriginWorldZ()) >= UNDERGROUND_WORLD_TILE_Z_THRESHOLD) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static int worldUnitToTile(int worldUnit) {
+		return Math.floorDiv(worldUnit, TILE_SIZE);
 	}
 
 	private void drawSkyBackdrop(Frame frame, RendererDayNightCycle.Presentation presentation) throws Exception {
@@ -1436,21 +1467,16 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		useUnitProjection();
 
-		applyTextureFilter(gl.GL_NEAREST);
+		applyPixelTextureFilter();
 		drawUnitTexturedQuad();
-		if (currentPresentationSmoothingAlpha > 0.0f) {
-			gl.glEnable(gl.GL_BLEND);
-			gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
-			applyTextureFilter(gl.GL_LINEAR);
-			gl.glColor4f(1.0f, 1.0f, 1.0f, currentPresentationSmoothingAlpha);
-			drawUnitTexturedQuad();
-			gl.glDisable(gl.GL_BLEND);
-			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		}
 	}
 
-	private void applyCurrentPresentationTextureFilter() throws Exception {
-		applyTextureFilter(currentPresentationSmoothingAlpha > 0.0f ? gl.GL_LINEAR : gl.GL_NEAREST);
+	private void applyPixelTextureFilter() throws Exception {
+		applyTextureFilter(gl.GL_NEAREST);
+	}
+
+	private void applyTextTextureFilter() throws Exception {
+		applyTextureFilter(currentTextSmoothingAlpha > 0.0f ? gl.GL_LINEAR : gl.GL_NEAREST);
 	}
 
 	private void applyTextureFilter(int filter) throws Exception {
@@ -1775,7 +1801,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float rightU = command.isMirrorX() ? u0 : u1;
 
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-		applyCurrentPresentationTextureFilter();
+		applyPixelTextureFilter();
 		useWorldToneColor(alpha);
 		drawScreenQuad(
 			topX0,
@@ -2423,7 +2449,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			command.getClipBottom());
 		try {
 			gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-			applyCurrentPresentationTextureFilter();
+			applyPixelTextureFilter();
 			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			drawScreenQuad(
 				command.getX0(),
@@ -2494,7 +2520,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float rightU = command.isMirrorX() ? u0 : u1;
 
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-		applyCurrentPresentationTextureFilter();
+		applyPixelTextureFilter();
 		gl.glColor4f(1.0f, 1.0f, 1.0f, alpha);
 		drawScreenQuad(
 			topX0,
@@ -2532,7 +2558,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			float y1 = glyph.getY() + glyph.getHeight();
 
 			gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-			applyCurrentPresentationTextureFilter();
+			applyTextTextureFilter();
 			gl.glColor4f(red, green, blue, 1.0f);
 			drawScreenTexturedQuad(
 				x0,
@@ -2577,7 +2603,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		prepareOverlayTexturedReplayState();
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-		applyCurrentPresentationTextureFilter();
+		applyPixelTextureFilter();
 		gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		float x0 = 6.0f;
 		float y0 = 6.0f;
@@ -3706,7 +3732,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		float bottomX1 = bottomX0 + command.getWidth();
 
 		gl.glBindTexture(gl.GL_TEXTURE_2D, region.getTextureId());
-		applyCurrentPresentationTextureFilter();
+		applyPixelTextureFilter();
 		gl.glColor4f(1.0f, 1.0f, 1.0f, alpha);
 		drawScreenQuad(
 			topX0,
@@ -4528,7 +4554,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 	}
 
-	private static float computePresentationSmoothingAlpha(Viewport viewport, int sourceWidth, int sourceHeight) {
+	private static float computeTextSmoothingAlpha(Viewport viewport, int sourceWidth, int sourceHeight) {
 		double scaleX = viewport.width / (double) Math.max(1, sourceWidth);
 		double scaleY = viewport.height / (double) Math.max(1, sourceHeight);
 		double scaleError = Math.max(integerScaleError(scaleX), integerScaleError(scaleY));

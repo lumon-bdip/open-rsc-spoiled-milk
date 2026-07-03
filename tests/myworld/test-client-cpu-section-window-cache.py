@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
 WORLD_STREAM_MANAGER = ROOT / "Client_Base/src/orsc/graphics/three/WorldStreamManager.java"
-PLAN = ROOT / "docs/myworld/renderer-v2-plan.md"
+PLAN = ROOT / "docs/myworld/in-progress-work-plans/renderer-v2-plan.md"
 
 
 def require(text: str, needle: str, message: str) -> None:

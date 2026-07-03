@@ -64,11 +64,8 @@ public final class Devotion {
 		ActionSender.sendEquipmentStats(player);
 
 		final int newDevotion = getDevotionLevelFromOfferings(newOfferings);
-		if (newDevotion > previousDevotion && newDevotion > 0) {
-			player.playerServerMessage(
-				MessageType.QUEST,
-				"Your devotion to " + formatGodLine(godLine) + " grows. Future offerings grant +" + newDevotion + " Prayer XP."
-			);
+		if (newDevotion > previousDevotion) {
+			sendDevotionIncreaseMessage(player, godLine, newDevotion);
 		}
 		return bonusXp * 4;
 	}
@@ -220,6 +217,27 @@ public final class Devotion {
 		final PrayerCatalog.GodLine safeGodLine = godLine == null ? PrayerCatalog.getDefaultGodLine() : godLine;
 		final String lower = safeGodLine.name().toLowerCase();
 		return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
+	}
+
+	private static void sendDevotionIncreaseMessage(final Player player, final PrayerCatalog.GodLine godLine, final int newDevotion) {
+		if (newDevotion > 0) {
+			player.playerServerMessage(
+				MessageType.QUEST,
+				"Your devotion to " + formatGodLine(godLine) + " grows. Future offerings grant +" + newDevotion + " Prayer XP."
+			);
+			return;
+		}
+		if (newDevotion == 0) {
+			player.playerServerMessage(
+				MessageType.QUEST,
+				"Your devotion to " + formatGodLine(godLine) + " recovers to neutral."
+			);
+			return;
+		}
+		player.playerServerMessage(
+			MessageType.QUEST,
+			"Your devotion to " + formatGodLine(godLine) + " recovers. Current devotion: " + newDevotion + "."
+		);
 	}
 
 	private static int clampOfferings(final long offerings) {

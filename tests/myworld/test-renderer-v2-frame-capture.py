@@ -4,8 +4,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
+FRAME_CAPTURE = ROOT / "PC_Client/src/orsc/OpenGLFrameCapture.java"
 DEPTH_FRAME = ROOT / "Client_Base/src/orsc/graphics/three/Renderer3DDepthFrame.java"
-PLAN = ROOT / "docs/myworld/renderer-v2-plan.md"
+PLAN = ROOT / "docs/myworld/in-progress-work-plans/renderer-v2-plan.md"
 
 
 def require(text: str, needle: str, label: str) -> None:
@@ -20,6 +21,8 @@ def forbid(text: str, needle: str, label: str) -> None:
 
 def main() -> None:
     presenter = PRESENTER.read_text(encoding="utf-8")
+    frame_capture = FRAME_CAPTURE.read_text(encoding="utf-8")
+    presenter = presenter + "\n" + frame_capture
     depth_frame = DEPTH_FRAME.read_text(encoding="utf-8")
     plan = PLAN.read_text(encoding="utf-8")
 
@@ -69,22 +72,22 @@ def main() -> None:
         "final framebuffer layer capture",
     )
     require(
-        presenter,
+        frame_capture,
         "writeImage(\"00-legacy-source.png\", imageFromFrame(frame));",
         "legacy software source capture",
     )
     require(
-        presenter,
+        frame_capture,
         'new PrintWriter(new File(directory, "sprite-commands.tsv"))',
         "sprite command metadata capture",
     )
     require(
-        presenter,
+        frame_capture,
         'new PrintWriter(new File(directory, "world-sprite-commands.tsv"))',
         "typed world sprite command metadata capture",
     )
     require(
-        presenter,
+        frame_capture,
         'new PrintWriter(new File(directory, "scene-commands.tsv"))',
         "composite scene command metadata capture",
     )

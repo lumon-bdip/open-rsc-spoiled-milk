@@ -15,8 +15,8 @@ NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
 NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
 BONES_PLUGIN = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/misc/Bones.java"
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
-WORK_ITEMS = ROOT / "docs/myworld/work-items.md"
-SUMMONING_PLAN = ROOT / "docs/myworld/summoning-plan.md"
+WORK_ITEMS = ROOT / "docs/myworld/in-progress-work-plans/work-items.md"
+SUMMONING_PLAN = ROOT / "docs/myworld/in-progress-work-plans/summoning-plan.md"
 
 
 def require(condition: bool, message: str, failures: list[str]) -> None:

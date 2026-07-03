@@ -8,7 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
-WORK_ITEMS = ROOT / "docs/myworld/work-items.md"
+WORK_ITEMS = ROOT / "docs/myworld/in-progress-work-plans/work-items.md"
 
 
 def fail(message: str) -> None:
