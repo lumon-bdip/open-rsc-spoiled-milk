@@ -22,7 +22,6 @@ public class Eating implements OpInvTrigger {
 	public boolean blockOpInv(Player player, Integer invIndex, Item item, String command) {
 		return item.isEdible(player.getWorld())
 			|| item.getCatalogId() == ItemId.ROTTEN_APPLES.id()
-			|| isFishOil(item.getCatalogId())
 			|| item.getCatalogId() == ItemId.SWEETENED_SLICES.id()
 			|| item.getCatalogId() == ItemId.SWEETENED_CHUNKS.id();
 	}
@@ -239,33 +238,6 @@ public class Eating implements OpInvTrigger {
 
 			addFoodResult(player, id);
 
-		} else if (isFishOil(item.getCatalogId())) {
-			int id = item.getCatalogId();
-			if (player.getCarriedItems().remove(new Item(id, 1)) == -1) return;
-			ActionSender.sendSound(player, "eat");
-			boolean sendUpdate = player.getClientLimitations().supportsSkillUpdate;
-
-			player.playerServerMessage(MessageType.QUEST, "You eat the fish oil");
-
-			// Heal
-			if (player.getSkills().getLevel(Skill.HITS.id()) < player.getSkills().getMaxStat(Skill.HITS.id())) {
-				// See if it heals
-				if (DataConversions.random(1, 2) == 1) {
-					int hpBefore = player.getSkills().getLevel(Skill.HITS.id());
-					int newHp = hpBefore + 1;
-					if (newHp > player.getSkills().getMaxStat(Skill.HITS.id())) {
-						newHp = player.getSkills().getMaxStat(Skill.HITS.id());
-					}
-					player.getSkills().setLevel(Skill.HITS.id(), newHp, sendUpdate);
-					addHealHitSplat(player, hpBefore, newHp);
-					if (!sendUpdate) {
-						player.getSkills().sendUpdateAll();
-					}
-					player.playerServerMessage(MessageType.QUEST, "It heals some health");
-				} else {
-					player.playerServerMessage(MessageType.QUEST, "You don't feel a difference");
-				}
-			}
 		} else if (item.getCatalogId() == ItemId.SWEETENED_SLICES.id() || item.getCatalogId() == ItemId.SWEETENED_CHUNKS.id()) {
 			int id = item.getCatalogId();
 			if (player.getCarriedItems().remove(new Item(id, 1)) == -1) return;
@@ -496,14 +468,4 @@ public class Eating implements OpInvTrigger {
 		}
 	}
 
-	private boolean isFishOil(final int itemId) {
-		return DataConversions.inArray(new int[] {
-			ItemId.FISH_OIL.id(),
-			ItemId.FAIR_QUALITY_FISH_OIL.id(),
-			ItemId.GOOD_QUALITY_FISH_OIL.id(),
-			ItemId.FINE_QUALITY_FISH_OIL.id(),
-			ItemId.HIGH_QUALITY_FISH_OIL.id(),
-			ItemId.SUPERIOR_QUALITY_FISH_OIL.id()
-		}, itemId);
-	}
 }
