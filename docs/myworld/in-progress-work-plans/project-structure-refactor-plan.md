@@ -10,6 +10,24 @@ Use this plan together with
 The cleanup plan lists oversized files and extraction targets. This file defines
 the workspace safety rules and the intended ownership layout.
 
+## Current Refactor Scope
+
+The active refactor is the project/workflow safety refactor created after branch
+and launch confusion put the live server at risk. Do not confuse this with the
+older renderer-size refactor.
+
+Current priority order:
+
+1. Make the public hosted server launch path mechanically safe.
+2. Make local/dev/refactor server launches impossible to mistake for live.
+3. Separate live, feature, bugfix, and structural work by physical worktree.
+4. Restructure folders/packages only after the server workflow is protected.
+5. Return to renderer or gameplay cleanup only when the live-server path is
+   clear, documented, and verified.
+
+Renderer cleanup remains a later structure target because the renderer is still
+large and important, but it is not the reason this refactor exists.
+
 ## Safety Contract
 
 The live hosted server must never depend on the active development worktree.
@@ -159,9 +177,22 @@ tests
 ### Phase 0: Guardrails Before Moving Code
 
 - Confirm hosted server launch safety exists and refuses unsafe worktrees.
+- Ensure `run-hosted-server.sh` can only run the public server from the clean
+  live-main worktree.
+- Ensure local/dev server commands do not silently look like the hosted server.
+- Add a status command or checklist that reports running server PID, worktree,
+  branch, commit, config file, database, and port.
+- Add loud labels to startup output so `Spoiled Milk LIVE/HOSTED` and private
+  dev servers are visually distinct.
+- Keep dev/refactor server ports and database names obvious. A local server
+  should never trick a tester into thinking they are logging into the live
+  alpha database.
 - Add/update docs before moving files.
 - Record the current source roots and compatibility exceptions.
 - Do not restructure while the public server is running from a dirty branch.
+
+No package moves or renderer extractions should happen until these launch
+guardrails are in place.
 
 ### Phase 1: Behavior-Preserving Extractions
 
@@ -240,6 +271,24 @@ and hosted-server checks:
 
 ## Visual And Runtime Checkpoints
 
+Before any hosted restart:
+
+- `git status --short --branch` in the live worktree shows clean `main`
+- live worktree commit matches published `spoiled-milk/main`
+- startup output says it is using `myworld-host.conf`
+- startup output says it connected to `spoiled_milk_alpha.db`
+- public port `43605` belongs to the hosted server process
+- no feature, bugfix, or refactor worktree has a server process bound to the
+  public player port
+
+Before any dev/refactor launch:
+
+- startup output says private/dev/refactor explicitly
+- the database name is not `spoiled_milk_alpha.db`
+- the server is stopped after testing unless the user explicitly asks to keep it
+  running
+- the final status message says which server, if any, is still running
+
 After each renderer-facing extraction:
 
 - login screen graphic appears correctly
@@ -266,6 +315,8 @@ After each server-facing extraction:
 
 Stop and reassess before continuing if any of these happen:
 
+- there is any uncertainty about which server, database, branch, or worktree is
+  active
 - hosted server would need to run from the refactor branch
 - a moved file requires unrelated gameplay changes to compile
 - a compatibility system looks unused but has not been checked against scripts,
