@@ -310,11 +310,12 @@ public class ObjectCooking implements UseLocTrigger {
 	}
 
 	private void giveFishOilFromRawFish(Player player, Item item) {
-		if (!isRawFish(item)) {
+		final int fishTier = getRawFishTier(item);
+		if (fishTier <= 0) {
 			return;
 		}
 
-		Item oil = new Item(ItemId.FISH_OIL.id());
+		Item oil = new Item(getFishOilIdForFishTier(fishTier));
 		if (player.getCarriedItems().getInventory().canHold(oil)) {
 			player.getCarriedItems().getInventory().add(oil);
 		} else {
@@ -322,27 +323,87 @@ public class ObjectCooking implements UseLocTrigger {
 		}
 	}
 
-	private boolean isRawFish(Item item) {
-		return DataConversions.inArray(new int[]{
-			ItemId.RAW_SHRIMP.id(),
-			ItemId.RAW_ANCHOVIES.id(),
-			ItemId.RAW_SARDINE.id(),
-			ItemId.RAW_HERRING.id(),
-			ItemId.RAW_MACKEREL.id(),
-			ItemId.RAW_GIANT_CARP.id(),
-			ItemId.RAW_TROUT.id(),
-			ItemId.RAW_COD.id(),
-			ItemId.RAW_PIKE.id(),
-			ItemId.RAW_SALMON.id(),
-			ItemId.RAW_TUNA.id(),
-			ItemId.RAW_LOBSTER.id(),
-			ItemId.RAW_BASS.id(),
-			ItemId.RAW_SWORDFISH.id(),
-			ItemId.RAW_LAVA_EEL.id(),
-			ItemId.RAW_SHARK.id(),
-			ItemId.RAW_SEA_TURTLE.id(),
-			ItemId.RAW_MANTA_RAY.id()
-		}, item.getCatalogId());
+	private int getRawFishTier(final Item item) {
+		switch (item.getCatalogId()) {
+			case 349: // RAW_SHRIMP
+			case 354: // RAW_SARDINE
+				return 1;
+			case 361: // RAW_HERRING
+				return 2;
+			case 351: // RAW_ANCHOVIES
+			case 552: // RAW_MACKEREL
+				return 3;
+			case 358: // RAW_TROUT
+			case 550: // RAW_COD
+				return 4;
+			case 356: // RAW_SALMON
+			case 363: // RAW_PIKE
+			case 717: // RAW_GIANT_CARP
+				return 5;
+			case 366: // RAW_TUNA
+				return 6;
+			case 372: // RAW_LOBSTER
+				return 7;
+			case 369: // RAW_SWORDFISH
+			case 554: // RAW_BASS
+				return 8;
+			case 591: // RAW_LAVA_EEL
+				return 9;
+			case 545: // RAW_SHARK
+			case 1190: // RAW_MANTA_RAY
+			case 1192: // RAW_SEA_TURTLE
+				return 10;
+			default:
+				return 0;
+		}
+	}
+
+	private int getFishOilIdForFishTier(final int fishTier) {
+		switch (rollFishOilTier(fishTier)) {
+			case 1:
+				return ItemId.FISH_OIL.id();
+			case 2:
+				return ItemId.FAIR_QUALITY_FISH_OIL.id();
+			case 3:
+				return ItemId.GOOD_QUALITY_FISH_OIL.id();
+			case 4:
+				return ItemId.FINE_QUALITY_FISH_OIL.id();
+			case 5:
+				return ItemId.HIGH_QUALITY_FISH_OIL.id();
+			case 6:
+			default:
+				return ItemId.SUPERIOR_QUALITY_FISH_OIL.id();
+		}
+	}
+
+	private int rollFishOilTier(final int fishTier) {
+		switch (fishTier) {
+			case 1:
+				return weightedOilTier(1, 1, 1, 2);
+			case 2:
+				return weightedOilTier(1, 2, 2);
+			case 3:
+				return weightedOilTier(1, 2, 2, 3);
+			case 4:
+				return weightedOilTier(2, 2, 3, 3);
+			case 5:
+				return weightedOilTier(2, 3, 3, 4);
+			case 6:
+				return weightedOilTier(3, 3, 4, 4);
+			case 7:
+				return weightedOilTier(3, 4, 4, 5);
+			case 8:
+				return weightedOilTier(4, 4, 5, 5);
+			case 9:
+				return weightedOilTier(4, 5, 5, 6);
+			case 10:
+			default:
+				return weightedOilTier(5, 6, 6, 6);
+		}
+	}
+
+	private int weightedOilTier(final int... tiers) {
+		return tiers[DataConversions.random(0, tiers.length - 1)];
 	}
 
 	private boolean isOvenFood(Item item) {

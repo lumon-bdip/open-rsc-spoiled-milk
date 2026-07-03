@@ -28,6 +28,8 @@ public class CombatFormula {
 	public static final int ELEMENTAL_SWORD_FIRE_DEBUFF_PERCENT = 6;
 	public static final int ELEMENTAL_SWORD_WATER_DEBUFF_PERCENT = 10;
 	public static final int ELEMENTAL_SWORD_EARTH_DEBUFF_PERCENT = 6;
+	public static final int DEMON_PITCHFORK_HELL_BLAZE_PROC_CHANCE_PERCENT = 10;
+	public static final int DEMON_PITCHFORK_HELL_BLAZE_MAX_HIT = 12;
 
 	/**
 	 * Logger instance
@@ -303,6 +305,19 @@ public class CombatFormula {
 			default:
 				break;
 		}
+	}
+
+	public static boolean rollDemonPitchforkHellBlazeProc(final Mob source) {
+		if (!(source instanceof Player)) {
+			return false;
+		}
+		final Player player = (Player) source;
+		return player.getCarriedItems().getEquipment().hasEquipped(DEMON_PITCHFORK.id())
+			&& DataConversions.getRandom().nextDouble() < (DEMON_PITCHFORK_HELL_BLAZE_PROC_CHANCE_PERCENT / 100.0D);
+	}
+
+	public static int rollDemonPitchforkHellBlazeDamage() {
+		return DataConversions.random(0, DEMON_PITCHFORK_HELL_BLAZE_MAX_HIT);
 	}
 
 	public static boolean usesDragonMeleeBreathWeapon(final Mob source) {

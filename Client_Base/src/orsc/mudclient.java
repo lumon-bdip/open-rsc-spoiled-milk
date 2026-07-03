@@ -18994,8 +18994,10 @@ public final class mudclient implements Runnable {
 
 	private void loadExternalEquipmentSprites() {
 		loadExternalMainHandEquipmentSprite("fishingpole", getExternalEquipmentNumberedFolder("fishing-pole"));
+		loadExternalMainHandEquipmentSprite("shears", getExternalEquipmentNumberedFolder("shears"));
 		loadExternalCombatMainHandEquipmentSprite("firesword", getExternalEquipmentNumberedFolder("fire-sword"));
 		loadExternalCombatMainHandEquipmentSprite("icesword", getExternalEquipmentNumberedFolder("ice-sword"));
+		loadExternalCombatMainHandEquipmentSprite("demonpitchfork", getExternalEquipmentNumberedFolder("demon-pitchfork"));
 		loadExternalNeckEquipmentSprite("guthsymbol", getExternalEquipmentNumberedFolder("guthix-symbol"));
 		loadExternalLayeredEquipmentSprite("gauntlets", getExternalEquipmentNumberedFolder("gauntlets"),
 			orsc.graphics.two.SpriteArchive.Frame.LAYER.GLOVES, GLOVE_EQUIPMENT_OFFSET_X, GLOVE_EQUIPMENT_OFFSET_Y, GLOVE_EQUIPMENT_BOUND_WIDTH);

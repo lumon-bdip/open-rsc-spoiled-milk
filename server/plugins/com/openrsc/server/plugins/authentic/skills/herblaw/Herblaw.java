@@ -482,7 +482,18 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 	}
 
 	private int getRequiredSecondaries(final int secondaryId) {
-		return secondaryId == ItemId.FISH_OIL.id() ? 10 : 1;
+		return isFishOil(secondaryId) ? 10 : 1;
+	}
+
+	private boolean isFishOil(final int itemId) {
+		return DataConversions.inArray(new int[] {
+			ItemId.FISH_OIL.id(),
+			ItemId.FAIR_QUALITY_FISH_OIL.id(),
+			ItemId.GOOD_QUALITY_FISH_OIL.id(),
+			ItemId.FINE_QUALITY_FISH_OIL.id(),
+			ItemId.HIGH_QUALITY_FISH_OIL.id(),
+			ItemId.SUPERIOR_QUALITY_FISH_OIL.id()
+		}, itemId);
 	}
 
 	private void batchPotionSecondary(Player player, Item unfinished, Item second, ItemHerbSecond def,

@@ -2462,12 +2462,22 @@ public enum ItemId {
 	FIRE_SWORD(3235),
 	ICE_SWORD(3236),
 	EARTH_SWORD(3237),
-	ZOMBIE_EYE(3238);
+	ZOMBIE_EYE(3238),
+	DEMON_PITCHFORK(3239),
+	FAIR_QUALITY_FISH_OIL(3240),
+	GOOD_QUALITY_FISH_OIL(3241),
+	FINE_QUALITY_FISH_OIL(3242),
+	HIGH_QUALITY_FISH_OIL(3243),
+	SUPERIOR_QUALITY_FISH_OIL(3244),
+	SPIDER_EYE(3245),
+	BAT_EYE(3246),
+	BABY_DRAGON_EYE(3247),
+	DEMON_EYE(3248);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3239;
+	public static final int maxCustom = 3249;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

@@ -33,7 +33,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	public static final int FURNACE = SceneryId.FURNACE.id();
 	public static final int LAVA_FORGE = SceneryId.LAVA_FORGE.id();
 	private static final int SMELTING_ACTION_DELAY_TICKS = 3;
-	private static final int DRAGON_SMELTING_LEVEL = 90;
+	private static final int DRAGON_SMELTING_LEVEL = 80;
 	private static final int DRAGON_METAL_CHAIN_OUTPUT = 50;
 	private static final int RAW_DRAGON_METAL_XP = 1000;
 	public static final int FURNACE_CATEGORY_BARS = ItemId.BRONZE_BAR.id();

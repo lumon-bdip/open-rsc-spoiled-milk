@@ -873,6 +873,22 @@
       "basePrice": 40000
     },
     {
+      "id": 3239,
+      "name": "Demon pitchfork",
+      "description": "A pitchfork wreathed in hell's blaze",
+      "meleeOffense": 60,
+      "weaponSpeed": 3,
+      "requiredLevel": 54,
+      "requiredSkillID": 0,
+      "isWearable": 1,
+      "appearanceID": 1042,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "weaponAimBonus": 31,
+      "weaponPowerBonus": 31,
+      "basePrice": 40000
+    },
+    {
       "id": 606,
       "meleeOffense": 48,
       "weaponSpeed": 3

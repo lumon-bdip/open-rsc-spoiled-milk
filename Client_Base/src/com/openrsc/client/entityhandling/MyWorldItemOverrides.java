@@ -161,6 +161,7 @@ final class MyWorldItemOverrides {
 		new ItemOverride(3235, "Fire sword", null, 40000, -1, -1),
 		new ItemOverride(3236, "Ice sword", null, 40000, -1, -1),
 		new ItemOverride(3237, "Earth sword", null, 40000, -1, -1),
+		new ItemOverride(3239, "Demon pitchfork", "A pitchfork wreathed in hell's blaze", 40000, 1, 16),
 		new ItemOverride(1346, null, null, 360000, -1, -1),
 		new ItemOverride(1447, null, null, 140000, -1, -1),
 		new ItemOverride(2752, null, null, 280000, -1, -1),

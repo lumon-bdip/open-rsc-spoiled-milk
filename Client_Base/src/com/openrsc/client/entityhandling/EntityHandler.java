@@ -4101,7 +4101,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Enfeebled law talisman", "A mysterious power emanates from the talisman...", "Locate", 0, -1, "items:582", false, false, 0, 0, false, true, false, 1407));
 		addItemDefinition(new ItemDef("Enfeebled death talisman", "A mysterious power emanates from the talisman...", "Locate", 0, -1, "items:583", false, false, 0, 0, false, true, false, 1408));
 		addItemDefinition(new ItemDef("Enfeebled blood talisman", "A mysterious power emanates from the talisman...", "Locate", 0, -1, "items:584", false, false, 0, 0, false, true, false, 1409));
-		addItemDefinition(new ItemDef("Fish oil", "Good for my heart", "Eat", 1, -1, "items:587", true, false, 0, 0, false, false, false, 1410));
+		addItemDefinition(new ItemDef("Low quality fish oil", "A low quality potion ingredient rendered from fish", "Eat", 1, -1, "items:587", true, false, 0, 0x6D7F9A, false, false, false, 1410));
 		addItemDefinition(new ItemDef("Potion of Insight v3", "3 doses of potion of insight v3", "Drink", 200, -1, "items:48", false, false, 0, 7547378, true, false, true, 1411));
 		addItemDefinition(new ItemDef("Potion of Insight v3", "2 doses of potion of insight v3", "Drink", 150, -1, "items:436", false, false, 0, 7547378, true, false, true, 1412));
 		addItemDefinition(new ItemDef("Potion of Insight v3", "1 dose of potion of insight v3", "Drink", 100, -1, "items:437", false, false, 0, 7547378, true, false, true, 1413));
@@ -5698,6 +5698,16 @@ public class EntityHandler {
 		setCustomItemDefinition(3236, new ItemDef("Ice sword", "A sword imbued with ice", "", 40000, -1, "external-png:ice-sword-icon", false, true, 16, 0, true, false, true, 3236));
 		setCustomItemDefinition(3237, new ItemDef("Earth sword", "A sword imbued with earth", "", 40000, -1, "external-png:earth-sword-icon", false, true, 16, 0, true, false, true, 3237));
 		setCustomItemDefinition(3238, new ItemDef("Zombie eye", "A dead eye from a zombie", "", 3, -1, "external-png:zombie-eye@11x11", false, false, 0, 0, false, false, true, 3238));
+		setCustomItemDefinition(3239, new ItemDef("Demon pitchfork", "A pitchfork wreathed in hell's blaze", "", 40000, -1, "external-png:demon-pitchfork-icon", false, true, 16, 0, true, false, true, 3239));
+		setCustomItemDefinition(3240, new ItemDef("Fair quality fish oil", "A fair quality potion ingredient rendered from fish", "Eat", 2, -1, "items:587", true, false, 0, 0x7EA06D, false, false, false, 3240));
+		setCustomItemDefinition(3241, new ItemDef("Good quality fish oil", "A good quality potion ingredient rendered from fish", "Eat", 3, -1, "items:587", true, false, 0, 0xA89B4F, false, false, false, 3241));
+		setCustomItemDefinition(3242, new ItemDef("Fine quality fish oil", "A fine quality potion ingredient rendered from fish", "Eat", 4, -1, "items:587", true, false, 0, 0xB86D4A, false, false, false, 3242));
+		setCustomItemDefinition(3243, new ItemDef("High quality fish oil", "A high quality potion ingredient rendered from fish", "Eat", 5, -1, "items:587", true, false, 0, 0x8167B5, false, false, false, 3243));
+		setCustomItemDefinition(3244, new ItemDef("Superior quality fish oil", "A superior quality potion ingredient rendered from fish", "Eat", 6, -1, "items:587", true, false, 0, 0x48A6B8, false, false, false, 3244));
+		setCustomItemDefinition(3245, new ItemDef("Spider eye", "A potion ingredient from a spider", "", 12, 116, "items:116", false, false, 0, 0x5B2D86, false, false, true, 3245));
+		setCustomItemDefinition(3246, new ItemDef("Bat eye", "A potion ingredient from a bat", "", 20, 116, "items:116", false, false, 0, 0x2E375F, false, false, true, 3246));
+		setCustomItemDefinition(3247, new ItemDef("Baby dragon's eye", "A potion ingredient from a baby dragon", "", 36, 116, "items:116", false, false, 0, 0x4D78B8, false, false, true, 3247));
+		setCustomItemDefinition(3248, new ItemDef("Demon eye", "A potion ingredient from a demon", "", 60, 116, "items:116", false, false, 0, 0xC13A2F, false, false, true, 3248));
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -7534,6 +7544,8 @@ public class EntityHandler {
 			animations.add(new AnimationDef("fplatemailtop", "equipment", 0xC86A2B, 0, true, false, 0)); // 1038 - Copper female plate top
 			animations.add(new AnimationDef("fplatemailtop", "equipment", 0x8EA6BB, 0, true, false, 0)); // 1039 - Titan Steel female plate top
 			animations.add(new AnimationDef("fplatemailtop", "equipment", 0x5A3F7D, 0, true, false, 0)); // 1040 - Orichalcum female plate top
+			animations.add(new AnimationDef("shears", "equipment", 0, 0, true, false, 0)); // 1041 - Universal shears
+			animations.add(new AnimationDef("demonpitchfork", "equipment", 0, 0, true, false, 0)); // 1042 - Demon pitchfork
 		}
 	}
 

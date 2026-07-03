@@ -1,6 +1,7 @@
 package com.openrsc.server.external;
 
 import com.openrsc.server.Server;
+import com.openrsc.server.constants.AppearanceId;
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
@@ -62,8 +63,22 @@ public final class EntityHandler {
 		+ (15 * 10)
 		+ (MYWORLD_RUNE_CLOTH_COLOR_COUNT * 2)
 		+ MYWORLD_WOOL_ACCESSORY_APPEARANCE_COUNT;
+	private static final int MYWORLD_SHEARS_APPEARANCE_ID = AppearanceId.SHEARS.id();
+	private static final int DEMON_PITCHFORK_APPEARANCE_ID = AppearanceId.DEMON_PITCHFORK.id();
 	private static final int[] MYWORLD_STAFF_BASE_IDS = {
 		100, 2131, 1764, 1769, 2136, 1774, 1779, 2141, 1784, 2146
+	};
+	private static final int[] MYWORLD_SHEARS_IDS = {
+		ItemId.SHEARS.id(),
+		ItemId.COPPER_SHEARS.id(),
+		ItemId.BRONZE_SHEARS.id(),
+		ItemId.IRON_SHEARS.id(),
+		ItemId.STEEL_SHEARS.id(),
+		ItemId.MITHRIL_SHEARS.id(),
+		ItemId.TITAN_STEEL_SHEARS.id(),
+		ItemId.ADAMANTITE_SHEARS.id(),
+		ItemId.ORICHALCUM_SHEARS.id(),
+		ItemId.RUNE_SHEARS.id()
 	};
 	private static final int[] MYWORLD_PICKAXE_IDS = {
 		ItemId.TIN_PICKAXE.id(),
@@ -944,6 +959,8 @@ public final class EntityHandler {
 
 				applyMyWorldStaffAppearanceOverrides();
 				applyMyWorldPickaxeAppearanceOverrides();
+				applyMyWorldShearsAppearanceOverrides();
+				setItemAppearance(ItemId.DEMON_PITCHFORK.id(), DEMON_PITCHFORK_APPEARANCE_ID);
 			} else {
 				items.get(ItemId.FISHING_ROD.id()).setAppearanceId(123);
 				items.get(ItemId.PINE_FISHING_ROD.id()).setAppearanceId(123);
@@ -962,6 +979,12 @@ public final class EntityHandler {
 	private void applyMyWorldPickaxeAppearanceOverrides() {
 		for (int i = 0; i < MYWORLD_PICKAXE_IDS.length; i++) {
 			setItemAppearance(MYWORLD_PICKAXE_IDS[i], MYWORLD_PICKAXE_APPEARANCE_START + i);
+		}
+	}
+
+	private void applyMyWorldShearsAppearanceOverrides() {
+		for (int shearsId : MYWORLD_SHEARS_IDS) {
+			setItemAppearance(shearsId, MYWORLD_SHEARS_APPEARANCE_ID);
 		}
 	}
 

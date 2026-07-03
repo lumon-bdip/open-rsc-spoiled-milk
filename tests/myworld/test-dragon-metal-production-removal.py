@@ -66,6 +66,7 @@ def main() -> None:
     )
 
     require(smelting, "LAVA_FORGE = SceneryId.LAVA_FORGE.id()", "Raw dragon metal should use the lava forge")
+    require(smelting, "DRAGON_SMELTING_LEVEL = 80", "Raw dragon metal should require 80 smithing")
     require(smelting, "RAW_DRAGON_METAL.id()", "Smelting should consume raw dragon metal")
     require(smelting, "DRAGON_BAR.id()", "Raw dragon metal should smelt into dragon bars")
     require(smelting, "DRAGON_METAL_CHAIN.id()", "Raw dragon metal should work directly into chains")
@@ -96,12 +97,12 @@ def main() -> None:
     )
     require(
         guide,
-        "Dragon bar - 1 raw dragon metal at the lava forge",
+        'new SkillMenuItem(1365, "80", "Dragon bar - 1 raw dragon metal at the lava forge")',
         "Smithing guide should explain raw dragon metal bars",
     )
     require(
         guide,
-        "Dragon metal chains - 1 raw dragon metal at the lava forge",
+        'new SkillMenuItem(1367, "80", "Dragon metal chains - 1 raw dragon metal at the lava forge")',
         "Smithing guide should explain raw dragon metal chains",
     )
 

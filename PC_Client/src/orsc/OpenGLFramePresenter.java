@@ -1134,11 +1134,16 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			if (chunk.getChunkRole() != Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD) {
 				continue;
 			}
-			if (worldUnitToTile(chunk.getOriginWorldZ()) >= UNDERGROUND_WORLD_TILE_Z_THRESHOLD) {
+			if (isUndergroundChunk(chunk)) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	private boolean isUndergroundChunk(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		return chunk.getPlane() != 0
+			|| worldUnitToTile(chunk.getOriginWorldZ()) >= UNDERGROUND_WORLD_TILE_Z_THRESHOLD;
 	}
 
 	private static int worldUnitToTile(int worldUnit) {

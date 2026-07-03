@@ -161,6 +161,11 @@ public class NpcDrops {
 		addHiddenUniqueDrop(NpcId.ICE_WARRIOR.id(), ItemId.ICE_SWORD.id(), 1, HiddenUniqueRarity.MYTHIC_UNIQUE);
 		addHiddenUniqueDrop(NpcId.EARTH_WARRIOR.id(), ItemId.EARTH_SWORD.id(), 1, HiddenUniqueRarity.MYTHIC_UNIQUE);
 
+		addHiddenUniqueDrop(NpcId.BALROG.id(), ItemId.DEMON_PITCHFORK.id(), 1, HiddenUniqueRarity.HIDDEN);
+		addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.DEMON_PITCHFORK.id(), 1, HiddenUniqueRarity.RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.GREATER_DEMON.id(), ItemId.DEMON_PITCHFORK.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.LESSER_DEMON.id(), ItemId.DEMON_PITCHFORK.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
+
 		addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.DRAGON_MEDIUM_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
 		addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.LARGE_DRAGON_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
 		if (config.WANT_OPENPK_POINTS) {
@@ -2134,6 +2139,15 @@ public class NpcDrops {
 		addGuaranteedDrop(NpcId.SHADOW_SPIDER.id(), ItemId.MAGIC_SPIDER_CARAPACE.id(), "Shadow Spider hide");
 		addGuaranteedDrop(NpcId.POISON_SPIDER.id(), ItemId.MAGIC_SPIDER_CARAPACE.id(), "Poison Spider hide");
 		addGuaranteedDrop(NpcId.ICE_SPIDER.id(), ItemId.MAGIC_SPIDER_CARAPACE.id(), "Ice Spider hide");
+		addNormalDrop(NpcId.GIANT_SPIDER_LVL8.id(), ItemId.SPIDER_EYE.id(), 1, 1, "Giant Spider Level 8 eye");
+		addNormalDrop(NpcId.GIANT_SPIDER_LVL31.id(), ItemId.SPIDER_EYE.id(), 1, 2, "Giant Spider Level 31 eye");
+		addNormalDrop(NpcId.DUNGEON_SPIDER.id(), ItemId.SPIDER_EYE.id(), 1, 2, "Dungeon Spider eye");
+		addNormalDrop(NpcId.BLESSED_SPIDER.id(), ItemId.SPIDER_EYE.id(), 1, 4, "Blessed Spider eye");
+		addNormalDrop(NpcId.DEADLY_RED_SPIDER.id(), ItemId.SPIDER_EYE.id(), 1, 4, "Deadly Red Spider eye");
+		addNormalDrop(NpcId.JUNGLE_SPIDER.id(), ItemId.SPIDER_EYE.id(), 1, 4, "Jungle Spider eye");
+		addNormalDrop(NpcId.SHADOW_SPIDER.id(), ItemId.SPIDER_EYE.id(), 1, 4, "Shadow Spider eye");
+		addNormalDrop(NpcId.POISON_SPIDER.id(), ItemId.SPIDER_EYE.id(), 1, 4, "Poison Spider eye");
+		addNormalDrop(NpcId.ICE_SPIDER.id(), ItemId.SPIDER_EYE.id(), 1, 4, "Ice Spider eye");
 
 		addGuaranteedDrop(NpcId.SCORPION.id(), ItemId.SCORPION_CARAPACE.id(), "Scorpion carapace");
 		addGuaranteedDrop(NpcId.KING_SCORPION.id(), ItemId.SCORPION_CARAPACE.id(), "King Scorpion carapace");
@@ -2173,17 +2187,38 @@ public class NpcDrops {
 		addGuaranteedDrop(NpcId.BABY_BLUE_DRAGON.id(), ItemId.BABY_DRAGON_HIDE.id(), "Baby Dragon hide");
 		DropTable babyBlueDragonDrops = this.npcDrops.get(NpcId.BABY_BLUE_DRAGON.id());
 		babyBlueDragonDrops.addItemDrop(ItemId.BLUE_DRAGON_SCALE.id(), 1, 4);
+		babyBlueDragonDrops.addItemDrop(ItemId.BABY_DRAGON_EYE.id(), 1, 4);
 		babyBlueDragonDrops.addEmptyDrop(128 - babyBlueDragonDrops.getTotalWeight());
 		addGuaranteedDrop(NpcId.LESSER_DEMON.id(), ItemId.DEMON_HIDE.id(), "Demon hide");
 		addGuaranteedDrop(NpcId.LESSER_DEMON_WMAZEKEY.id(), ItemId.DEMON_HIDE.id(), "Demon hide");
 		addGuaranteedDrop(NpcId.GREATER_DEMON.id(), ItemId.DEMON_HIDE.id(), "Demon hide");
+		addNormalDrop(NpcId.LESSER_DEMON.id(), ItemId.DEMON_EYE.id(), 1, 1, "Lesser Demon eye");
+		addNormalDrop(NpcId.LESSER_DEMON_WMAZEKEY.id(), ItemId.DEMON_EYE.id(), 1, 1, "Lesser Demon maze eye");
+		addNormalDrop(NpcId.GREATER_DEMON.id(), ItemId.DEMON_EYE.id(), 1, 2, "Greater Demon eye");
 		addGuaranteedDrop(NpcId.BLUE_DRAGON.id(), ItemId.BLUE_DRAGON_HIDE.id(), "Blue Dragon hide");
 		addGuaranteedDrop(NpcId.DRAGON.id(), ItemId.DRAGON_HIDE.id(), "Green Dragon hide");
 		addGuaranteedDrop(NpcId.RED_DRAGON.id(), ItemId.RED_DRAGON_HIDE.id(), "Red Dragon hide");
 		addGuaranteedDrop(NpcId.BLACK_DEMON.id(), ItemId.BLACK_DEMON_HIDE.id(), "Black Demon hide");
 		addGuaranteedDrop(NpcId.BLACK_DEMON_GRANDTREE.id(), ItemId.BLACK_DEMON_HIDE.id(), "Black Demon hide");
+		addNormalDrop(NpcId.BLACK_DEMON.id(), ItemId.DEMON_EYE.id(), 1, 4, "Black Demon eye");
+		addNormalDrop(NpcId.BLACK_DEMON_GRANDTREE.id(), ItemId.DEMON_EYE.id(), 1, 4, "Black Demon Grand Tree eye");
 		addGuaranteedDrop(NpcId.BLACK_DRAGON.id(), ItemId.BLACK_DRAGON_HIDE.id(), "Black Dragon hide");
 		addGuaranteedDrop(NpcId.BALROG.id(), ItemId.BALROG_HIDE.id(), "Balrog hide");
 		addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.KING_BLACK_DRAGON_HIDE.id(), "King Black Dragon hide");
+		addNormalDrop(NpcId.GIANT_BAT.id(), ItemId.BAT_EYE.id(), 1, 4, "Giant bat eye");
+	}
+
+	private void addNormalDrop(int npcId, int itemId, int amount, int weight, String description) {
+		DropTable dropTable = this.npcDrops.get(npcId);
+		if (dropTable == null) {
+			dropTable = new DropTable(description);
+			this.npcDrops.put(npcId, dropTable);
+		}
+		if (!dropTable.hasItemDrop(itemId, amount, weight, false)) {
+			dropTable.addItemDrop(itemId, amount, weight);
+		}
+		if (dropTable.getTotalWeight() < 128) {
+			dropTable.addEmptyDrop(128 - dropTable.getTotalWeight());
+		}
 	}
 }

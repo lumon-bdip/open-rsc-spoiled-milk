@@ -513,6 +513,11 @@ def main() -> None:
     )
     require(
         presenter,
+        "chunk.getPlane() != 0",
+        "OpenGL skybox underground check uses non-surface planes",
+    )
+    require(
+        presenter,
         "return Math.floorDiv(worldUnit, TILE_SIZE);",
         "OpenGL skybox underground check converts scene units to tiles",
     )

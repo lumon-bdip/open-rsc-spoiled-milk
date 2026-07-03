@@ -120,7 +120,7 @@ def require_sword_item(
 
 def main() -> None:
     require_sword_assets("fire-sword", "Fire sword", (48, 28))
-    require_sword_assets("ice-sword", "Ice sword", (45, 29))
+    require_sword_assets("ice-sword", "Ice sword", (42, 29))
     require_sword_assets("earth-sword", "Earth sword", (46, 26), requires_equipment=False)
     if png_size(ROOT / "dev/myworld/assets/animations/On Enemy/fire-sword/fire-sword1.png") != (32, 32):
         fail("Fire sword proc frame 1 must be a 32x32 On Enemy frame")
@@ -136,7 +136,7 @@ def main() -> None:
     require_text(item_id_text, "FIRE_SWORD(3235)", "ItemId enum")
     require_text(item_id_text, "ICE_SWORD(3236)", "ItemId enum")
     require_text(item_id_text, "EARTH_SWORD(3237)", "ItemId enum")
-    require_text(item_id_text, "maxCustom = 3239", "ItemId maxCustom")
+    require_text(item_id_text, "maxCustom = 3249", "ItemId maxCustom")
 
     custom_items = load_json(ROOT / "server/conf/server/defs/ItemDefsCustom.json", "items")
     myworld_items = load_json(ROOT / "server/conf/server/defs/ItemDefsMyWorld.json", "items")

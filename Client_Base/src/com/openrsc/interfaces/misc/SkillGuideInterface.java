@@ -550,7 +550,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(142, "", "Wine - Heals 11"));
 				skillMenuEntries.add(new SkillMenuItem(737, "", "Poison Chalice - ???"));
 			} else if (curTab == 6) { // Other
-				if (runecraft) skillMenuEntries.add(new SkillMenuItem(1410, "", "Fish oil - 50% chance to heal 1"));
+				if (runecraft) skillMenuEntries.add(new SkillMenuItem(1410, "", "Low quality fish oil - 50% chance to heal 1"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1459, "", "Sweetened Slices - Heals 1 or 2"));
 				if (harvesting) skillMenuEntries.add(new SkillMenuItem(1460, "", "Sweetened Chunks - Heals 1 or 2"));
 				skillMenuEntries.add(new SkillMenuItem(319, "", "Cheese - Heals 2"));
@@ -790,8 +790,11 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(934, "70", EntityHandler.getItemDef(934).name));
 			} else if (curTab == 1) {
 				addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, 3198, "Potion of Brawn", "limpwurt root");
-				addHerblawPotionFamilyGuide(489, 492, 495, 498, 566, 3201, "Potion of Deftness", "10 fish oil");
-				addHerblawPotionFamilyGuide(569, 963, 1411, 1414, 1468, 3204, "Potion of Insight", "eye of newt");
+				addHerblawPotionFamilyGuide(489, 492, 495, 498, 566, 3201, "Potion of Deftness",
+					new String[] {"10 low quality fish oil", "10 fair quality fish oil", "10 good quality fish oil",
+						"10 fine quality fish oil", "10 high quality fish oil", "10 superior quality fish oil"});
+				addHerblawPotionFamilyGuide(569, 963, 1411, 1414, 1468, 3204, "Potion of Insight",
+					new String[] {"eye of newt", "spider eye", "zombie eye", "bat eye", "baby dragon's eye", "demon eye"});
 				skillMenuEntries.add(new SkillMenuItem(1474, "8", "Antidote - Marrentill & red spiders' eggs"));
 				skillMenuEntries.add(new SkillMenuItem(1176, "10", "Explosive compound - Nitro & nitrate & charcoal & a. root"));
 				skillMenuEntries.add(new SkillMenuItem(1053, "18", "Ogre potion - Guam leaf, jangerberries, ground bat bones"));
@@ -1359,8 +1362,8 @@ public final class SkillGuideInterface {
 			addLeatherGuide(1934, "54", "Red dragon hide armor");
 			addLeatherGuide(1939, "54", "Black demon hide armor");
 			addLeatherGuide(1944, "62", "Black dragon hide armor");
-			addLeatherGuide(1949, "62", "Balrog hide armor");
-			addLeatherGuide(1954, "70", "King black dragon hide armor");
+			addLeatherGuide(1949, "70", "Balrog hide armor");
+			addLeatherGuide(1954, "80", "King black dragon hide armor");
 		} else if (curTab == 1) {
 			skillMenuEntries.add(new SkillMenuItem(2050, "1", "Wool hat - 1 ball of wool"));
 			skillMenuEntries.add(new SkillMenuItem(2051, "1", "Wool robe top - 4 balls of wool"));
@@ -1454,12 +1457,18 @@ public final class SkillGuideInterface {
 
 	private void addHerblawPotionFamilyGuide(int tier1Id, int tier2Id, int tier3Id, int tier4Id, int tier5Id, int tier6Id,
 											 String potionName, String secondary) {
-		skillMenuEntries.add(new SkillMenuItem(tier1Id, "3", potionName + " v1 - Guam leaf & " + secondary));
-		skillMenuEntries.add(new SkillMenuItem(tier2Id, "12", potionName + " v2 - Tarromin & " + secondary));
-		skillMenuEntries.add(new SkillMenuItem(tier3Id, "30", potionName + " v3 - Ranarr weed & " + secondary));
-		skillMenuEntries.add(new SkillMenuItem(tier4Id, "50", potionName + " v4 - Avantoe & " + secondary));
-		skillMenuEntries.add(new SkillMenuItem(tier5Id, "66", potionName + " v5 - Cadantine & " + secondary));
-		skillMenuEntries.add(new SkillMenuItem(tier6Id, "78", potionName + " v6 - Torstol & " + secondary));
+		addHerblawPotionFamilyGuide(tier1Id, tier2Id, tier3Id, tier4Id, tier5Id, tier6Id, potionName,
+			new String[] {secondary, secondary, secondary, secondary, secondary, secondary});
+	}
+
+	private void addHerblawPotionFamilyGuide(int tier1Id, int tier2Id, int tier3Id, int tier4Id, int tier5Id, int tier6Id,
+											 String potionName, String[] secondaries) {
+		skillMenuEntries.add(new SkillMenuItem(tier1Id, "3", potionName + " v1 - Guam leaf & " + secondaries[0]));
+		skillMenuEntries.add(new SkillMenuItem(tier2Id, "12", potionName + " v2 - Tarromin & " + secondaries[1]));
+		skillMenuEntries.add(new SkillMenuItem(tier3Id, "30", potionName + " v3 - Ranarr weed & " + secondaries[2]));
+		skillMenuEntries.add(new SkillMenuItem(tier4Id, "50", potionName + " v4 - Avantoe & " + secondaries[3]));
+		skillMenuEntries.add(new SkillMenuItem(tier5Id, "66", potionName + " v5 - Cadantine & " + secondaries[4]));
+		skillMenuEntries.add(new SkillMenuItem(tier6Id, "78", potionName + " v6 - Torstol & " + secondaries[5]));
 	}
 
 	private void addAmmoMouldGuide(String name, int baseLevel, int boltsId, int arrowheadsId, int arrowId, int dartsId, int knivesId, int shurikenId) {
@@ -1497,8 +1506,8 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(174, "54", "Adamantite bar - 1 adamantite ore and 4 coal"));
 			skillMenuEntries.add(new SkillMenuItem(1958, "62", "2 Orichalcum bars - 1 mithril, 1 adamantite, and 5 coal"));
 			skillMenuEntries.add(new SkillMenuItem(408, "70", "Runite bar - 1 runite ore and 6 coal"));
-			skillMenuEntries.add(new SkillMenuItem(1365, "90", "Dragon bar - 1 raw dragon metal at the lava forge"));
-			skillMenuEntries.add(new SkillMenuItem(1367, "90", "Dragon metal chains - 1 raw dragon metal at the lava forge"));
+			skillMenuEntries.add(new SkillMenuItem(1365, "80", "Dragon bar - 1 raw dragon metal at the lava forge"));
+			skillMenuEntries.add(new SkillMenuItem(1367, "80", "Dragon metal chains - 1 raw dragon metal at the lava forge"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1383, "Smithing");
 			}

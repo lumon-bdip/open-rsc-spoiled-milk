@@ -193,6 +193,7 @@ public class CombatEvent extends GameTickEvent {
 			if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				applyDragonWeaponBreathDamage(hitter, target);
 				applyElementalSwordProc(hitter, target);
+				applyDemonPitchforkHellBlazeProc(hitter, target, damage);
 			}
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
@@ -741,6 +742,20 @@ public class CombatEvent extends GameTickEvent {
 		final int procDamage = CombatFormula.rollElementalSwordProcDamage(hitter);
 		if (procDamage > 0) {
 			inflictAuxiliaryTrueDamage(hitter, target, procDamage);
+		}
+	}
+
+	private void applyDemonPitchforkHellBlazeProc(final Mob hitter, final Mob target, final int damage) {
+		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		if (!CombatFormula.rollDemonPitchforkHellBlazeProc(hitter)) {
+			return;
+		}
+		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.HELLS_BLAZE));
+		final int procDamage = CombatFormula.rollDemonPitchforkHellBlazeDamage();
+		if (procDamage > 0) {
+			inflictAuxiliaryMagicDamage(hitter, target, procDamage);
 		}
 	}
 

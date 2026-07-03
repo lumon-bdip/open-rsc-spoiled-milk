@@ -49,35 +49,35 @@
 		<exp>100</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>1410</secondID>
+		<secondID>3240</secondID>
 		<unfinishedID>456</unfinishedID>
 		<potionID>492</potionID>
 		<requiredLvl>12</requiredLvl>
 		<exp>150</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>1410</secondID>
+		<secondID>3241</secondID>
 		<unfinishedID>458</unfinishedID>
 		<potionID>495</potionID>
 		<requiredLvl>30</requiredLvl>
 		<exp>250</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>1410</secondID>
+		<secondID>3242</secondID>
 		<unfinishedID>460</unfinishedID>
 		<potionID>498</potionID>
 		<requiredLvl>50</requiredLvl>
 		<exp>350</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>1410</secondID>
+		<secondID>3243</secondID>
 		<unfinishedID>462</unfinishedID>
 		<potionID>566</potionID>
 		<requiredLvl>66</requiredLvl>
 		<exp>450</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>1410</secondID>
+		<secondID>3244</secondID>
 		<unfinishedID>935</unfinishedID>
 		<potionID>3201</potionID>
 		<requiredLvl>78</requiredLvl>
@@ -91,35 +91,35 @@
 		<exp>100</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>270</secondID>
+		<secondID>3245</secondID>
 		<unfinishedID>456</unfinishedID>
 		<potionID>963</potionID>
 		<requiredLvl>12</requiredLvl>
 		<exp>150</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>270</secondID>
+		<secondID>3238</secondID>
 		<unfinishedID>458</unfinishedID>
 		<potionID>1411</potionID>
 		<requiredLvl>30</requiredLvl>
 		<exp>250</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>270</secondID>
+		<secondID>3246</secondID>
 		<unfinishedID>460</unfinishedID>
 		<potionID>1414</potionID>
 		<requiredLvl>50</requiredLvl>
 		<exp>350</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>270</secondID>
+		<secondID>3247</secondID>
 		<unfinishedID>462</unfinishedID>
 		<potionID>1468</potionID>
 		<requiredLvl>66</requiredLvl>
 		<exp>450</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>270</secondID>
+		<secondID>3248</secondID>
 		<unfinishedID>935</unfinishedID>
 		<potionID>3204</potionID>
 		<requiredLvl>78</requiredLvl>

@@ -132,8 +132,9 @@ def main() -> None:
     require(guide, 'addAltarGuide(619, 70, "Blood Rune", "247,102");', "blood altar coordinate guide")
 
     require(guide, 'addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, 3198, "Potion of Brawn", "limpwurt root");', "brawn potion family guide")
-    require(guide, 'addHerblawPotionFamilyGuide(489, 492, 495, 498, 566, 3201, "Potion of Deftness", "10 fish oil");', "deftness potion family guide")
-    require(guide, 'addHerblawPotionFamilyGuide(569, 963, 1411, 1414, 1468, 3204, "Potion of Insight", "eye of newt");', "insight potion family guide")
+    require(guide, 'new String[] {"10 low quality fish oil", "10 fair quality fish oil", "10 good quality fish oil",', "deftness potion family guide")
+    require(guide, '"10 fine quality fish oil", "10 high quality fish oil", "10 superior quality fish oil"}', "deftness high-tier potion family guide")
+    require(guide, 'new String[] {"eye of newt", "spider eye", "zombie eye", "bat eye", "baby dragon\'s eye", "demon eye"}', "insight potion family guide")
     require(guide, 'new SkillMenuItem(1471, "22", "Stat restore - Harralander & ground unicorn horn")', "stat restore guide")
     require(guide, 'new SkillMenuItem(1474, "8", "Antidote - Marrentill & red spiders\' eggs")', "antidote guide")
     require(guide, 'new SkillMenuItem(572, "23", "Weapon poison - Harralander & ground blue dragon scale")', "weapon poison guide")

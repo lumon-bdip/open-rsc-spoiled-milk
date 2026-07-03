@@ -162,6 +162,47 @@ Apply the same naming pattern across all wood tiers.
 Blessed staves require devotion using the same resource-cost rule and grant
 Prayer XP equal to their staff production XP equivalent.
 
+## God Relic Devotion Rewards
+
+The Mage Arena god capes and god staves are moving out of Mage Arena-centered
+reward logic and into devotion-based god relic rewards. This section is a
+summary of the broader
+[`god-relic-reward-plan.md`](god-relic-reward-plan.md), which expands this
+from god staves alone into the full god relic reward system.
+
+Reward rule:
+
+- The player must be worshipping/aligned with the matching god.
+- The player must have Prayer level `80`.
+- The player must have at least `800` devotion with that god.
+- The player prays at the matching god altar.
+- The altar opens god dialogue where the player can request a holy relic.
+- The god awards one random unclaimed relic from the matching god's relic pool.
+- Claiming a relic removes `400` devotion from that god.
+
+Relic pools include:
+
+- god cape
+- god staff
+- god mace
+- god paladin shield
+- god crossbow
+
+This should be a reward claim, not part of the Mage Arena reward flow. Duplicate
+relic claims are not allowed; replacement/reclaim behavior is still open.
+
+Late-game extension:
+
+- God excommunication lets a player permanently dedicate themselves to one god
+  by destroying another god's relic at their chosen god's altar.
+- The player is permanently alignment-locked to the chosen god, jumps to `1000`
+  devotion, gains a `2000` devotion cap, loses all other-god relics, and gains
+  remaining chosen-god relics.
+- The excommunicated god is permanently locked at `-1000` devotion, while the
+  untouched god is permanently locked at `0`.
+- Full rules and open decisions are tracked in
+  [`god-relic-reward-plan.md`](god-relic-reward-plan.md).
+
 ## Devotion-Based Scaling
 
 Blessed weapons and armor scale with devotion.

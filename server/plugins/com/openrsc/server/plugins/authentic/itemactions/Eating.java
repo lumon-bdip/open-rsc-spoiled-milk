@@ -22,7 +22,7 @@ public class Eating implements OpInvTrigger {
 	public boolean blockOpInv(Player player, Integer invIndex, Item item, String command) {
 		return item.isEdible(player.getWorld())
 			|| item.getCatalogId() == ItemId.ROTTEN_APPLES.id()
-			|| item.getCatalogId() == ItemId.FISH_OIL.id()
+			|| isFishOil(item.getCatalogId())
 			|| item.getCatalogId() == ItemId.SWEETENED_SLICES.id()
 			|| item.getCatalogId() == ItemId.SWEETENED_CHUNKS.id();
 	}
@@ -239,7 +239,7 @@ public class Eating implements OpInvTrigger {
 
 			addFoodResult(player, id);
 
-		} else if (item.getCatalogId() == ItemId.FISH_OIL.id()) {
+		} else if (isFishOil(item.getCatalogId())) {
 			int id = item.getCatalogId();
 			if (player.getCarriedItems().remove(new Item(id, 1)) == -1) return;
 			ActionSender.sendSound(player, "eat");
@@ -494,5 +494,16 @@ public class Eating implements OpInvTrigger {
 			default:
 				return 0;
 		}
+	}
+
+	private boolean isFishOil(final int itemId) {
+		return DataConversions.inArray(new int[] {
+			ItemId.FISH_OIL.id(),
+			ItemId.FAIR_QUALITY_FISH_OIL.id(),
+			ItemId.GOOD_QUALITY_FISH_OIL.id(),
+			ItemId.FINE_QUALITY_FISH_OIL.id(),
+			ItemId.HIGH_QUALITY_FISH_OIL.id(),
+			ItemId.SUPERIOR_QUALITY_FISH_OIL.id()
+		}, itemId);
 	}
 }

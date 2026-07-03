@@ -41,6 +41,11 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [code-cleanup-and-modularization-plan.md](in-progress-work-plans/code-cleanup-and-modularization-plan.md):
   codebase cleanup roadmap for oversized files, stale options, and renderer
   ownership boundaries.
+- [god-relic-reward-plan.md](in-progress-work-plans/god-relic-reward-plan.md):
+  prayer/devotion god relic rewards, relic pools, and Mage Arena separation.
+- [herblaw-side-ingredient-expansion-plan.md](in-progress-work-plans/herblaw-side-ingredient-expansion-plan.md):
+  tiered Herblaw secondary ingredients for fish oils, creature eyes, and
+  harvested Brawn ingredients.
 - [legacy-limits-audit.md](in-progress-work-plans/legacy-limits-audit.md):
   byte/short-era cap audit and modernization recommendations.
 - [movement-pathing-release-plan.md](in-progress-work-plans/movement-pathing-release-plan.md):
@@ -63,6 +68,8 @@ into one of the category folders, not directly into `docs/myworld/`.
   current Summoning implementation source of truth and tuning notes.
 - [terrain-expansion-plan.md](in-progress-work-plans/terrain-expansion-plan.md):
   staged terrain expansion process and map-editor workflow.
+- [tier-11-magic-gear-plan.md](in-progress-work-plans/tier-11-magic-gear-plan.md):
+  tier-11 god staff and combination staff direction.
 - [work-items.md](in-progress-work-plans/work-items.md):
   current implementation queue and completed-state rollup.
 

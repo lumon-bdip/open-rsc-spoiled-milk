@@ -1743,11 +1743,11 @@ public class Crafting implements UseInvTrigger,
 					ItemId.BLACK_DRAGON_COIF.id(), ItemId.BLACK_DRAGON_GLOVES.id(), ItemId.BLACK_DRAGON_BOOTS.id(),
 					ItemId.BLACK_DRAGON_CHAPS.id(), ItemId.BLACK_DRAGON_CUIRASS.id());
 			case BALROG_LEATHER:
-				return new HideArmorRecipe(materialId, "Balrog hide", 9, 62,
+				return new HideArmorRecipe(materialId, "Balrog hide", 10, 70,
 					ItemId.BALROG_COIF.id(), ItemId.BALROG_GLOVES.id(), ItemId.BALROG_BOOTS.id(),
 					ItemId.BALROG_CHAPS.id(), ItemId.BALROG_CUIRASS.id());
 			case KING_BLACK_DRAGON_LEATHER:
-				return new HideArmorRecipe(materialId, "King black dragon hide", 10, 70,
+				return new HideArmorRecipe(materialId, "King black dragon hide", 11, 80,
 					ItemId.KING_BLACK_DRAGON_COIF.id(), ItemId.KING_BLACK_DRAGON_GLOVES.id(), ItemId.KING_BLACK_DRAGON_BOOTS.id(),
 					ItemId.KING_BLACK_DRAGON_CHAPS.id(), ItemId.KING_BLACK_DRAGON_CUIRASS.id());
 			default:
@@ -1788,6 +1788,8 @@ public class Crafting implements UseInvTrigger,
 				return 62;
 			case 10:
 				return 70;
+			case 11:
+				return 80;
 			default:
 				return 1;
 		}

@@ -686,11 +686,11 @@ public final class AuctionHouse {
 			} else if (selectedFilter == 7) { // Herblaw
 				commandFilter = new String[]{"identify"};
 				nameFilter = new String[]{"unfinished", "vial", "weed", "ground", "root", "wine of",
-					"dragonfruit", "coconut"};
+					"dragonfruit", "coconut", "fish oil"};
 				exactNameFilter = new String[]{"guam Leaf", "marrentill", "tarromin", "harralander", "irit leaf",
 					"avantoe", "kwuarm", "cadantine", "torstol", "pestle and mortar", "eye of newt", "jangerberries",
-					"red spiders eggs", "white berries", "snape grass", "blue dragon scale", "fish oil",
-					"unicorn horn", "grapes"};
+					"red spiders eggs", "white berries", "snape grass", "blue dragon scale", "spider eye",
+					"zombie eye", "bat eye", "baby dragon's eye", "demon eye", "unicorn horn", "grapes"};
 			} else if (selectedFilter == 8) { // Rare
 				nameFilter = new String[]{"halloween", "christmas", "bunny", "party", "easter", "scythe", "cracker",
 					"santa's", "mask", "antlers"};
