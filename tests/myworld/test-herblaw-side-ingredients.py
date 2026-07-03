@@ -154,7 +154,9 @@ def main() -> None:
 
 	guide = SKILL_GUIDE.read_text(encoding="utf-8")
 	require_text(guide, '"eye of newt", "spider eye", "zombie eye", "bat eye", "baby dragon\'s eye", "demon eye"', "guide should show insight tier order")
+	require_text(guide, '"10 low quality fish oil", "10 fair quality fish oil", "10 good quality fish oil"', "guide should show low oil tiers")
 	require_text(guide, '"10 fine quality fish oil", "10 high quality fish oil", "10 superior quality fish oil"', "guide should show high oil tiers")
+	forbid_text(guide, "Low quality fish oil - 50% chance to heal 1", "fish oil should not be listed as food")
 
 	print("PASS: Herblaw side ingredient expansion validated")
 
