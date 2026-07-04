@@ -217,10 +217,14 @@ For local development:
 
 ```bash
 ./scripts/build-client.sh
-./scripts/run-client.sh
 ./scripts/build-server.sh
 ./scripts/run-server.sh
+./scripts/run-dev-client.sh
 ```
+
+`run-server.sh` starts a private local server on port `43615`. The public
+hosted alpha uses `run-hosted-server.sh` from the dedicated live worktree.
+Check what is running with `./scripts/live-status.sh`.
 
 Current development notes are indexed in
 [`docs/myworld/README.md`](docs/myworld/README.md).

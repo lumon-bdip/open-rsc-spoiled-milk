@@ -9,6 +9,7 @@ myworld_load_local_env
 
 HOSTED_LAUNCH_MODE="live"
 GENERATOR_ARGS=()
+SERVER_CONF="myworld-host"
 
 while (($#)); do
   case "$1" in
@@ -33,6 +34,9 @@ fi
 
 GENERATOR_MODE="$(myworld_resolve_generator_mode "${GENERATOR_ARGS[@]}")"
 
+myworld_require_hosted_conf "$SERVER_CONF"
+myworld_require_port_free "$(myworld_conf_value "$SERVER_CONF" server_port)"
+myworld_print_server_launch_banner "LIVE SPOILED MILK HOSTED ALPHA" "$SERVER_CONF"
 myworld_prepare_generated_artifacts "$GENERATOR_MODE"
 
 HOSTED_DB_PATH="$ROOT_DIR/server/inc/sqlite/spoiled_milk_alpha.db"
@@ -44,4 +48,5 @@ if [[ ! -f "$HOSTED_DB_PATH" ]]; then
   exit 1
 fi
 
-myworld_ant_server compile-and-run -DconfFile=myworld-host
+myworld_write_launch_marker "LIVE SPOILED MILK HOSTED ALPHA" "$SERVER_CONF"
+myworld_ant_server compile-and-run -DconfFile="$SERVER_CONF"
