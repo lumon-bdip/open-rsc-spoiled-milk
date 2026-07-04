@@ -259,7 +259,7 @@ def ensure_source_support(items: dict[int, dict]) -> None:
     ):
         if snippet in mage_arena_text:
             fail(f"MageArena.java should not explicitly allow standard elemental staff: {snippet}")
-    if "EnchantingItemEffects.isEnchantedStaff(item.getCatalogId())" not in mage_arena_text:
+    if "EnchantingItemEffects.isEnchantedStaff(itemId)" not in mage_arena_text:
         fail("MageArena.java should allow the current altar-attuned staff line")
     for snippet in (
         "public void curePoison()",

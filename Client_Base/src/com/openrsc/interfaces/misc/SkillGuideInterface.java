@@ -589,6 +589,9 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(1218, "70", "Staff of Saradomin"));
 				skillMenuEntries.add(new SkillMenuItem(1216, "70", "Staff of Zamorak"));
 				skillMenuEntries.add(new SkillMenuItem(1217, "70", "Staff of Guthix"));
+				skillMenuEntries.add(new SkillMenuItem(3249, "80", "Staff of Elements"));
+				skillMenuEntries.add(new SkillMenuItem(3250, "80", "Staff of Power"));
+				skillMenuEntries.add(new SkillMenuItem(3251, "80", "Staff of Enlightenment"));
 				addSkillCapeGuide(1382, "Magic");
 			} else if (curTab == 2) {
 				skillMenuEntries.add(new SkillMenuItem(185, "", "Magic Guild can be entered at level 66"));

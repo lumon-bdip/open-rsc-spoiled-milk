@@ -12672,9 +12672,9 @@
     <objectModel>rocks1</objectModel>
   </GameObjectDef>
   <GameObjectDef>
-    <name>Saradomin stone</name>
-    <description>A faith stone</description>
-    <command1>chant to</command1>
+    <name>Elemental Stone</name>
+    <description>A stone humming with elemental magic</description>
+    <command1>claim from</command1>
     <command2>Examine</command2>
     <type>1</type>
     <width>1</width>
@@ -12683,9 +12683,9 @@
     <objectModel>saradominstone</objectModel>
   </GameObjectDef>
   <GameObjectDef>
-    <name>Guthix stone</name>
-    <description>A faith stone</description>
-    <command1>chant to</command1>
+    <name>Power Stone</name>
+    <description>A stone humming with battle magic</description>
+    <command1>claim from</command1>
     <command2>Examine</command2>
     <type>1</type>
     <width>1</width>
@@ -12694,9 +12694,9 @@
     <objectModel>guthixstone</objectModel>
   </GameObjectDef>
   <GameObjectDef>
-    <name>Zamorak stone</name>
-    <description>A faith stone</description>
-    <command1>chant to</command1>
+    <name>Enlightenment Stone</name>
+    <description>A stone humming with cosmic magic</description>
+    <command1>claim from</command1>
     <command2>Examine</command2>
     <type>1</type>
     <width>1</width>

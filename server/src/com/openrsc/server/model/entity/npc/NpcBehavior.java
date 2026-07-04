@@ -513,9 +513,14 @@ public class NpcBehavior {
 			NpcMagicElement magicElement = profile.getMagicElement(npc);
 			int damage = CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc));
 			int impactEffectType = profile.getMagicImpactEffect(npc, magicElement);
+			int startleProcChancePercent = profile.getMagicStartleProcChancePercent(npc, magicElement);
+			int acidPoisonPower = profile.getMagicAcidPoisonPower(npc, magicElement);
+			int fireDefenseDebuffPercent = profile.getMagicFireDefenseDebuffPercent(npc, magicElement);
+			int splinterProcChancePercent = profile.getMagicSplinterProcChancePercent(npc, magicElement);
 			npc.setKillType(KillType.MAGIC);
 			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(npc.getWorld(), npc, target, damage,
-				1, true, 0, 0, 0, 0, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement));
+				1, true, 0, 0, 0, fireDefenseDebuffPercent, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement,
+				startleProcChancePercent, acidPoisonPower, 0, splinterProcChancePercent));
 			return true;
 		}
 

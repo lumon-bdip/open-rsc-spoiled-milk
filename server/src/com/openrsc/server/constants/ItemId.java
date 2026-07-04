@@ -2472,12 +2472,15 @@ public enum ItemId {
 	SPIDER_EYE(3245),
 	BAT_EYE(3246),
 	BABY_DRAGON_EYE(3247),
-	DEMON_EYE(3248);
+	DEMON_EYE(3248),
+	STAFF_OF_ELEMENTS(3249),
+	STAFF_OF_POWER(3250),
+	STAFF_OF_ENLIGHTENMENT(3251);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3249;
+	public static final int maxCustom = 3252;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

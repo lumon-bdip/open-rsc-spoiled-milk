@@ -160,6 +160,16 @@ public final class EnchantingItemEffects {
 	private static final int[] LIFE_STAFFS = {
 		ItemId.LIFE_STAFF.id(), ItemId.LIFE_PINE_STAFF.id(), ItemId.LIFE_OAK_STAFF.id(), ItemId.LIFE_WILLOW_STAFF.id(), ItemId.LIFE_PALM_STAFF.id(), ItemId.LIFE_MAPLE_STAFF.id(), ItemId.LIFE_YEW_STAFF.id(), ItemId.LIFE_EBONY_STAFF.id(), ItemId.LIFE_MAGIC_STAFF.id(), ItemId.LIFE_BLOOD_STAFF.id()
 	};
+	private static final int[] STAFF_OF_ELEMENTS_RUNES = {
+		ItemId.AIR_RUNE.id(), ItemId.WATER_RUNE.id(), ItemId.EARTH_RUNE.id(), ItemId.FIRE_RUNE.id()
+	};
+	private static final int[] STAFF_OF_POWER_RUNES = {
+		ItemId.MIND_RUNE.id(), ItemId.CHAOS_RUNE.id(), ItemId.DEATH_RUNE.id(), ItemId.BLOOD_RUNE.id()
+	};
+	private static final int[] STAFF_OF_ENLIGHTENMENT_RUNES = {
+		ItemId.BODY_RUNE.id(), ItemId.COSMIC_RUNE.id(), ItemId.NATURE_RUNE.id(), ItemId.LAW_RUNE.id(),
+		ItemId.SOUL_RUNE.id(), ItemId.LIFE_RUNE.id()
+	};
 	private static final String[] WOOL_ROBE_TIER_NAMES = {
 		"Beginner's",
 		"Novice",
@@ -1804,8 +1814,24 @@ public final class EnchantingItemEffects {
 	}
 
 	public static boolean isStaffForRune(final int itemId, final int runeId) {
+		if (isCombinationStaffForRune(itemId, runeId)) {
+			return true;
+		}
 		final TieredLine line = getTieredLineForItem(itemId, STANDARD_STAFF_LINES);
 		return line != null && getRuneForAltar(line.altarId) == runeId;
+	}
+
+	private static boolean isCombinationStaffForRune(final int itemId, final int runeId) {
+		if (itemId == ItemId.STAFF_OF_ELEMENTS.id()) {
+			return contains(STAFF_OF_ELEMENTS_RUNES, runeId);
+		}
+		if (itemId == ItemId.STAFF_OF_POWER.id()) {
+			return contains(STAFF_OF_POWER_RUNES, runeId);
+		}
+		if (itemId == ItemId.STAFF_OF_ENLIGHTENMENT.id()) {
+			return contains(STAFF_OF_ENLIGHTENMENT_RUNES, runeId);
+		}
+		return false;
 	}
 
 	private static int getAltarIndex(final int altarId) {

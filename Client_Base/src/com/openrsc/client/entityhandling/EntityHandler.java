@@ -5708,6 +5708,9 @@ public class EntityHandler {
 		setCustomItemDefinition(3246, new ItemDef("Bat eye", "A potion ingredient from a bat", "", 20, 116, "items:116", false, false, 0, 0x2E375F, false, false, true, 3246));
 		setCustomItemDefinition(3247, new ItemDef("Baby dragon's eye", "A potion ingredient from a baby dragon", "", 36, 116, "items:116", false, false, 0, 0x4D78B8, false, false, true, 3247));
 		setCustomItemDefinition(3248, new ItemDef("Demon eye", "A potion ingredient from a demon", "", 60, 116, "items:116", false, false, 0, 0xC13A2F, false, false, true, 3248));
+		setCustomItemDefinition(3249, new ItemDef("Staff of Elements", "A tier 11 staff attuned to air, water, earth and fire runes", "", 120000, 123, "items:123", false, true, 16, 0xE9A33C, true, true, true, 3249));
+		setCustomItemDefinition(3250, new ItemDef("Staff of Power", "A tier 11 staff attuned to mind, chaos, death and blood runes", "", 120000, 123, "items:123", false, true, 16, 0x8A4FD7, true, true, true, 3250));
+		setCustomItemDefinition(3251, new ItemDef("Staff of Enlightenment", "A tier 11 staff attuned to body, cosmic, nature, law, soul and life runes", "", 120000, 123, "items:123", false, true, 16, 0x56C7B2, true, true, true, 3251));
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -9420,9 +9423,9 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("cupboard", "The cupboard is shut", "open", "Examine", 1, 1, 2, 0, "cupboard", i++));
 		objects.add(new GameObjectDef("sacks", "Yep they're sacks", "search", "Examine", 1, 1, 1, 0, "sacks", i++));//1150
 		objects.add(new GameObjectDef("Rock", "A rocky outcrop", "WalkTo", "Search", 1, 1, 1, 0, "rocks1", i++));
-		objects.add(new GameObjectDef("Saradomin stone", "A faith stone", "chant to", "Examine", 1, 1, 1, 0, "saradominstone", i++));
-		objects.add(new GameObjectDef("Guthix stone", "A faith stone", "chant to", "Examine", 1, 1, 1, 0, "guthixstone", i++));
-		objects.add(new GameObjectDef("Zamorak stone", "A faith stone", "chant to", "Examine", 1, 1, 1, 0, "zamorakstone", i++));
+		objects.add(new GameObjectDef("Elemental Stone", "A stone humming with elemental magic", "claim from", "Examine", 1, 1, 1, 0, "saradominstone", i++));
+		objects.add(new GameObjectDef("Power Stone", "A stone humming with battle magic", "claim from", "Examine", 1, 1, 1, 0, "guthixstone", i++));
+		objects.add(new GameObjectDef("Enlightenment Stone", "A stone humming with cosmic magic", "claim from", "Examine", 1, 1, 1, 0, "zamorakstone", i++));
 		objects.add(new GameObjectDef("Magical pool", "A cosmic portal", "step into", "Examine", 1, 2, 2, 0, "rockpool", i++));
 		objects.add(new GameObjectDef("Wooden Beam", "Some sort of support - perhaps used with ropes to lower people over the hole", "WalkTo", "Search", 0, 1, 1, 0, "Scaffoldsupport", i++));
 		objects.add(new GameObjectDef("Rope down into darkness", "A scarey downwards trip into possible doom.", "WalkTo", "Use", 0, 1, 1, 0, "ScaffoldsupportRope", i++));

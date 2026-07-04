@@ -30773,7 +30773,7 @@
       },{
         "id": 789,
         "name": "Battle mage",
-        "description": "He kills in the name of guthix",
+        "description": "A battle mage trained in elemental combat",
         "command": "",
         "command2": "",
         "attack": 0,
@@ -30812,7 +30812,7 @@
       },{
         "id": 790,
         "name": "Battle mage",
-        "description": "He kills in the name of zamarok",
+        "description": "A battle mage trained in elemental combat",
         "command": "",
         "command2": "",
         "attack": 0,
@@ -30851,7 +30851,7 @@
       },{
         "id": 791,
         "name": "Battle mage",
-        "description": "He kills in the name of Saradomin",
+        "description": "A battle mage trained in elemental combat",
         "command": "",
         "command2": "",
         "attack": 0,

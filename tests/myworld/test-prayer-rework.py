@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "server/src/com/openrsc/server/model/entity/player/PrayerCatalog.java"
 PRAYERS = ROOT / "server/src/com/openrsc/server/model/entity/player/Prayers.java"
 DOC = ROOT / "docs/myworld/in-progress-work-plans/work-items.md"
+GOD_RELIC_PLAN = ROOT / "docs/myworld/in-progress-work-plans/god-relic-reward-plan.md"
 PRAYER_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/PrayerHandler.java"
 PRAYER_DRAIN = ROOT / "server/src/com/openrsc/server/event/rsc/impl/PrayerDrainEvent.java"
 STAT_RESTORATION = ROOT / "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java"
@@ -44,6 +45,7 @@ def main():
     catalog = read(CATALOG)
     prayers = read(PRAYERS)
     doc = read(DOC)
+    god_relic_plan = read(GOD_RELIC_PLAN)
     prayer_handler = read(PRAYER_HANDLER)
     prayer_drain = read(PRAYER_DRAIN)
     stat_restoration = read(STAT_RESTORATION)
@@ -170,12 +172,10 @@ def main():
             "Blessed staff altar interaction should be devotion-gated")
     require("Devotion.getBlessingPrayerXp(player, godLine, getStaffCraftingXp(item.getCatalogId()))" in blessing,
             "Blessed staff altar interaction should grant scaled Prayer XP")
-    require("awardGodCape(player, ItemId.SARADOMIN_CAPE.id());" in mage_arena
-            and "awardGodCape(player, ItemId.GUTHIX_CAPE.id());" in mage_arena
-            and "awardGodCape(player, ItemId.ZAMORAK_CAPE.id());" in mage_arena,
-            "Mage Arena should now award the god capes instead of hiding them")
-    require("The sacred cape is hidden for now." not in mage_arena,
-            "Mage Arena should no longer hide sacred cape rewards")
+    require("awardGodCape(" not in mage_arena,
+            "Mage Arena should no longer award god capes")
+    require("god capes should no longer be Mage Arena rewards" in god_relic_plan,
+            "God relic plan should own future god cape rewards")
     require('currentNpcDrops = new DropTable("Priest (9)");' in npc_drops
             and "ItemId.PRIEST_ROBE.id()" in npc_drops
             and "ItemId.PRIEST_GOWN.id()" in npc_drops,

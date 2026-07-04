@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.impl.combat;
 
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
@@ -41,6 +42,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private static final int CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3;
 	private static final int CHAOS_CHAIN_LIGHTNING_RADIUS = 4;
+	private static final double KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE = 0.10D;
+	private static final int FIRE_CLAW_FIRE_DEFENSE_DEBUFF_PERCENT = 6;
 	private static final int[] SCYTHE_IDS = {
 		ItemId.TIN_SCYTHE.id(), ItemId.COPPER_SCYTHE.id(), ItemId.BRONZE_SCYTHE.id(),
 		ItemId.IRON_SCYTHE.id(), ItemId.STEEL_SCYTHE.id(), ItemId.MITHRIL_SCYTHE.id(),
@@ -90,12 +93,22 @@ public class PvmMeleeEvent extends GameTickEvent {
 		return targetMob;
 	}
 
+	private boolean isNpcMeleeDisabled() {
+		return attackerMob.isNpc() && ((Npc) attackerMob).getID() == NpcId.KOLODION_HUMAN.id();
+	}
+
 	@Override
 	public void run() {
 		if (!combatCanContinue()) {
 			attackerMob.setLastCombatState(CombatState.ERROR);
 			targetMob.setLastCombatState(CombatState.ERROR);
 			resetCombat();
+			return;
+		}
+
+		if (isNpcMeleeDisabled()) {
+			attackerMob.faceCombat(targetMob);
+			setDelayTicks(3);
 			return;
 		}
 
@@ -161,6 +174,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			applyDragonWeaponBreathDamage(attackerMob, targetMob);
 			applyElementalSwordProc(attackerMob, targetMob);
 			applyDemonPitchforkHellBlazeProc(attackerMob, targetMob, damage);
+			applyNpcMeleeSpecialProc(attackerMob, targetMob, damage);
 		}
 		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
@@ -545,6 +559,19 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (procDamage > 0) {
 			inflictAuxiliaryMagicDamage(hitter, target, procDamage);
 		}
+	}
+
+	private void applyNpcMeleeSpecialProc(final Mob hitter, final Mob target, final int damage) {
+		if (!hitter.isNpc() || damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		final Npc npc = (Npc) hitter;
+		if (npc.getID() != NpcId.KOLODION_DEMON.id()
+			|| DataConversions.getRandom().nextDouble() >= KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE) {
+			return;
+		}
+		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.FIRE_CLAW));
+		target.applyFireDefenseDebuff(FIRE_CLAW_FIRE_DEFENSE_DEBUFF_PERCENT);
 	}
 
 	private int applyScytheNpcCleave(final Player player, final Npc primaryTarget) {

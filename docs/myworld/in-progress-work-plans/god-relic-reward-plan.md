@@ -278,36 +278,39 @@ Relevant direction from that plan:
 
 - god staves should no longer be Mage Arena rewards
 - god-staff acquisition moves to devotion altar relic rewards
+- god capes should no longer be Mage Arena rewards
 - Mage Arena should instead focus on high-end non-god Magic staves:
   - Staff of Elements
   - Staff of Power
   - Staff of Enlightenment
-- Mage Arena likely needs an overhaul because its existing mechanics were built
-  around god choice, god capes, god staves, god-spell training, and Charge
+- Mage Arena now sends players to the chamber after the Kolodion fight to claim
+  one combination staff from the Elemental, Power, or Enlightenment stone, then
+  lets the Chamber Guardian sell the remaining combination staves.
+- Mage Arena stones no longer award god capes or set god-choice state.
 
-God capes also become part of the relic reward pool here. That means the Mage
-Arena overhaul must decide whether the current god-cape reward flow is removed,
-migrated, or kept only as a compatibility path for existing characters.
+God capes also become part of the relic reward pool here. Their future handling
+should be implemented through Prayer/devotion altar rewards rather than
+restoring the old Mage Arena god-stone reward flow.
 
 ## God Spell And Charge Follow-Up
 
-God-staff spell casting is currently tied to Mage Arena mechanics. Before the
-relic system is implemented, audit:
+God-staff spell casting was tied to Mage Arena mechanics. The old Mage Arena
+cast-count training and outside-arena unlock checks have been removed. Before
+the relic system is implemented, audit:
 
-- god-spell cast-count training in Mage Arena
-- outside-arena god-spell unlock checks
 - matching god-staff requirements for god spells
 - Charge spell behavior
-- Chamber Guardian god-staff reward/shop behavior
-- Mage Arena god choice and sacred-stone flow
-- old god-cape reward handling
+- whether god spell access should require the matching relic staff, devotion,
+  altar dialogue, or another god-aligned unlock
+- reclaim rules for god staves and capes once relic rewards exist
 
 Target direction:
 
 - god relic acquisition comes from Prayer/devotion altar content
 - Mage Arena no longer exists primarily to award god equipment
-- god spell access should either become devotion/relic driven or remain a
-  separate spell-training system that does not control relic rewards
+- god spell access should either become devotion/relic driven or require the
+  matching god staff directly. It should not return to Mage Arena cast-count
+  training.
 
 ## Open Decisions
 

@@ -46,7 +46,7 @@ def main() -> None:
 	client_entity_handler = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
 	client_mudclient = CLIENT_MUDCLIENT.read_text(encoding="utf-8")
 
-	for name in ("NONE", "AIR", "WATER", "EARTH", "FIRE"):
+	for name in ("NONE", "AIR", "WATER", "EARTH", "FIRE", "THUNDER", "WOOD"):
 		require(element, name, f"NPC magic element {name}")
 
 	require(profile, "if (isDragon(npc)) {\n\t\t\treturn MELEE_MAGIC;\n\t\t}", "Dragons should mix elemental magic into melee profile")
@@ -135,7 +135,9 @@ def main() -> None:
 	require(behavior, "NpcMagicElement magicElement = profile.getMagicElement(npc);", "NPC behavior should choose one element per cast")
 	require(behavior, "profile.getMagicProjectileVisual(npc, magicElement)", "NPC projectile visual should match selected element")
 	require(behavior, "profile.getMagicImpactEffect(npc, magicElement)", "NPC impact effect should match selected element")
-	require(behavior, "true, magicElement));", "NPC projectile should carry selected element")
+	require(behavior, "int fireDefenseDebuffPercent = profile.getMagicFireDefenseDebuffPercent(npc, magicElement);", "NPC projectile should carry selected fire debuff")
+	require(behavior, "0, 0, 0, fireDefenseDebuffPercent, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement,", "NPC projectile fire debuff should match selected element")
+	require(behavior, "true, magicElement,\n\t\t\t\tstartleProcChancePercent, acidPoisonPower, 0, splinterProcChancePercent));", "NPC projectile should carry selected element")
 
 	require(projectile, "protected NpcMagicElement magicElement = NpcMagicElement.NONE;", "Projectile should default to untyped magic")
 	require(projectile, "applyRobeDamageMitigation(damage, magicElement)", "Projectile damage should pass element to robe resistance")
