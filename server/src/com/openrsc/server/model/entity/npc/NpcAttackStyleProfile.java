@@ -10,10 +10,32 @@ public enum NpcAttackStyleProfile {
 	PURE_RANGED,
 	PURE_MAGIC,
 	MELEE_RANGED,
+	MELEE_FREQUENT_MAGIC,
 	MELEE_MAGIC,
 	MELEE_RARE_MAGIC;
 
 	private static final int DEFAULT_PROJECTILE_RANGE = 5;
+	private static final int FIRE_PILLAR_FIRE_DEFENSE_DEBUFF_PERCENT = 12;
+
+	private static boolean isKolodionIntroForm(final Npc npc) {
+		return npc != null && npc.getID() == NpcId.KOLODION_HUMAN.id();
+	}
+
+	private static boolean isKolodionOgreForm(final Npc npc) {
+		return npc != null && npc.getID() == NpcId.KOLODION_OGRE.id();
+	}
+
+	private static boolean isKolodionSpiderForm(final Npc npc) {
+		return npc != null && npc.getID() == NpcId.KOLODION_SPIDER.id();
+	}
+
+	private static boolean isKolodionSoulessForm(final Npc npc) {
+		return npc != null && npc.getID() == NpcId.KOLODION_SOULESS.id();
+	}
+
+	private static boolean isKolodionDemonForm(final Npc npc) {
+		return npc != null && npc.getID() == NpcId.KOLODION_DEMON.id();
+	}
 
 	public boolean isProjectilePrimary() {
 		return this == PURE_RANGED || this == PURE_MAGIC;
@@ -24,7 +46,7 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public boolean usesMagicProjectiles() {
-		return this == PURE_MAGIC || this == MELEE_MAGIC || this == MELEE_RARE_MAGIC;
+		return this == PURE_MAGIC || this == MELEE_FREQUENT_MAGIC || this == MELEE_MAGIC || this == MELEE_RARE_MAGIC;
 	}
 
 	public int getProjectileRange() {
@@ -46,6 +68,8 @@ public enum NpcAttackStyleProfile {
 			case MELEE_RANGED:
 			case MELEE_MAGIC:
 				return DataConversions.getRandom().nextInt(100) < 65;
+			case MELEE_FREQUENT_MAGIC:
+				return DataConversions.getRandom().nextInt(100) < 85;
 			case MELEE_RARE_MAGIC:
 				return DataConversions.getRandom().nextInt(100) < 10;
 			default:
@@ -93,6 +117,18 @@ public enum NpcAttackStyleProfile {
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return Projectile.MAGIC;
 		}
+		if (isKolodionIntroForm(npc)) {
+			return getKolodionIntroProjectile(element);
+		}
+		if (isKolodionSpiderForm(npc)) {
+			return Projectile.ACID_DROP;
+		}
+		if (isKolodionSoulessForm(npc)) {
+			return Projectile.MAGIC;
+		}
+		if (isKolodionDemonForm(npc)) {
+			return Projectile.MAGIC;
+		}
 		final String name = npc.getDef().getName().toLowerCase();
 		if (npc.getID() == NpcId.BLUE_DRAGON.id()) {
 			return Projectile.BLUE_DRAGON_MAGIC;
@@ -130,6 +166,21 @@ public enum NpcAttackStyleProfile {
 		final String name = npc == null || npc.getDef() == null || npc.getDef().getName() == null
 			? ""
 			: npc.getDef().getName().toLowerCase();
+		if (isKolodionIntroForm(npc)) {
+			return CombatEffect.NONE;
+		}
+		if (isKolodionOgreForm(npc)) {
+			return getKolodionOgreImpactEffect(element);
+		}
+		if (isKolodionSpiderForm(npc)) {
+			return CombatEffect.ACID_GUSH;
+		}
+		if (isKolodionSoulessForm(npc)) {
+			return getKolodionSoulessImpactEffect(element);
+		}
+		if (isKolodionDemonForm(npc)) {
+			return CombatEffect.FIRE_PILLAR;
+		}
 		final int enemySpecificEffect = CombatEffect.enemyMagicAttackEffect(name);
 		if (enemySpecificEffect != CombatEffect.NONE) {
 			return enemySpecificEffect;
@@ -172,6 +223,45 @@ public enum NpcAttackStyleProfile {
 				return CombatEffect.FIRE_CLAW;
 			default:
 				return CombatEffect.NONE;
+		}
+	}
+
+	private static int getKolodionOgreImpactEffect(final NpcMagicElement element) {
+		switch (element) {
+			case AIR:
+				return CombatEffect.WIND_BEAM;
+			case EARTH:
+				return CombatEffect.EARTH_BURST;
+			default:
+				return CombatEffect.NONE;
+		}
+	}
+
+	private static int getKolodionSoulessImpactEffect(final NpcMagicElement element) {
+		switch (element) {
+			case AIR:
+				return CombatEffect.TORNADO;
+			case THUNDER:
+				return CombatEffect.THUNDER_STRIKE;
+			case WOOD:
+				return CombatEffect.BATTERING_RAM;
+			default:
+				return CombatEffect.NONE;
+		}
+	}
+
+	private static int getKolodionIntroProjectile(final NpcMagicElement element) {
+		switch (element) {
+			case AIR:
+				return Projectile.WIND_ARROW;
+			case WATER:
+				return Projectile.WATER_BALL;
+			case EARTH:
+				return Projectile.ROCK_THROW;
+			case FIRE:
+				return Projectile.FIREBALL;
+			default:
+				return Projectile.MAGIC;
 		}
 	}
 
@@ -272,11 +362,54 @@ public enum NpcAttackStyleProfile {
 		return Math.max(1, Math.max(npc.getDef().getAtt(), npc.getDef().getStr()));
 	}
 
+	public int getMagicAcidPoisonPower(final Npc npc, final NpcMagicElement element) {
+		if (isKolodionSpiderForm(npc)) {
+			return 40;
+		}
+		return 0;
+	}
+
+	public int getMagicStartleProcChancePercent(final Npc npc, final NpcMagicElement element) {
+		if (isKolodionSoulessForm(npc) && element == NpcMagicElement.THUNDER) {
+			return 25;
+		}
+		return 0;
+	}
+
+	public int getMagicSplinterProcChancePercent(final Npc npc, final NpcMagicElement element) {
+		if (isKolodionSoulessForm(npc) && element == NpcMagicElement.WOOD) {
+			return 25;
+		}
+		return 0;
+	}
+
+	public int getMagicFireDefenseDebuffPercent(final Npc npc, final NpcMagicElement element) {
+		if (isKolodionDemonForm(npc) && element == NpcMagicElement.FIRE) {
+			return FIRE_PILLAR_FIRE_DEFENSE_DEBUFF_PERCENT;
+		}
+		return 0;
+	}
+
 	public NpcMagicElement getMagicElement(final Npc npc) {
 		if (!usesMagicProjectiles() || npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return NpcMagicElement.NONE;
 		}
 		final String name = npc.getDef().getName().toLowerCase();
+		if (isKolodionIntroForm(npc)) {
+			return randomElement(NpcMagicElement.AIR, NpcMagicElement.WATER, NpcMagicElement.EARTH, NpcMagicElement.FIRE);
+		}
+		if (isKolodionOgreForm(npc)) {
+			return randomElement(NpcMagicElement.AIR, NpcMagicElement.EARTH);
+		}
+		if (isKolodionSpiderForm(npc)) {
+			return NpcMagicElement.NONE;
+		}
+		if (isKolodionSoulessForm(npc)) {
+			return randomElement(NpcMagicElement.AIR, NpcMagicElement.THUNDER, NpcMagicElement.WOOD);
+		}
+		if (isKolodionDemonForm(npc)) {
+			return NpcMagicElement.FIRE;
+		}
 		if (isHolyMagicNpcName(name)
 			|| "lucien".equals(name)
 			|| "salarin the twisted".equals(name)
@@ -364,6 +497,21 @@ public enum NpcAttackStyleProfile {
 			return MELEE;
 		}
 
+		if (isKolodionIntroForm(npc)) {
+			return PURE_MAGIC;
+		}
+		if (isKolodionOgreForm(npc)) {
+			return MELEE_FREQUENT_MAGIC;
+		}
+		if (isKolodionSpiderForm(npc)) {
+			return MELEE_FREQUENT_MAGIC;
+		}
+		if (isKolodionSoulessForm(npc)) {
+			return MELEE_FREQUENT_MAGIC;
+		}
+		if (isKolodionDemonForm(npc)) {
+			return MELEE_RARE_MAGIC;
+		}
 		final String name = npc.getDef().getName().toLowerCase();
 		if (isDragon(npc)) {
 			return MELEE_MAGIC;

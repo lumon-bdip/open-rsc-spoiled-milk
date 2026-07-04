@@ -3,22 +3,18 @@ package com.openrsc.server.plugins.authentic.minigames.mage_arena;
 import com.openrsc.server.constants.*;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.event.DelayedEvent;
-import com.openrsc.server.event.rsc.impl.ObjectRemover;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
-import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.MiniGameInterface;
 import com.openrsc.server.plugins.RuneScript;
 import com.openrsc.server.plugins.triggers.*;
-import com.openrsc.server.util.rsc.DataConversions;
 
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -26,10 +22,15 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrigger, OpLocTrigger, TakeObjTrigger, SpellNpcTrigger, AttackNpcTrigger, PlayerDeathTrigger {
 
-	public static final int SARADOMIN_STONE = 1152;
-	public static final int GUTHIX_STONE = 1153;
-	public static final int ZAMORAK_STONE = 1154;
-	private static final String MAGE_ARENA_GOD_CHOICE_CACHE = "mage_arena_god_choice";
+	public static final int ELEMENTAL_STONE = 1152;
+	public static final int POWER_STONE = 1153;
+	public static final int ENLIGHTENMENT_STONE = 1154;
+	private static final String MAGE_ARENA_STAFF_REWARD_CACHE = "mage_arena_staff_reward";
+	private static final int[] MAGE_ARENA_REWARD_STAFFS = {
+		ItemId.STAFF_OF_ELEMENTS.id(),
+		ItemId.STAFF_OF_POWER.id(),
+		ItemId.STAFF_OF_ENLIGHTENMENT.id()
+	};
 
 	@Override
 	public int getMiniGameId() {
@@ -72,8 +73,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 				}
 				teleport(player, 229, 130);
 				delay();
-				setCurrentLevel(player, Skill.ATTACK.id(), 0);
-				setCurrentLevel(player, Skill.STRENGTH.id(), 0);
+				clampMageArenaCombatStats(player);
 				spawnKolodion(player, player.getCache().getInt("kolodion_stage"), true);
 
 			} else if (stage == 2) {
@@ -81,7 +81,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 				npcsay(player, n, "hello  young mage.. you're a tough one you");
 				say(player, n, "what now?");
 				npcsay(player, n, "step into the magic pool, it will take you to the chamber",
-					"there you must decide which god you'll represent in the arena");
+					"there you must decide what type of mage you want to be");
 				say(player, n, "ok .. thanks kolodion");
 				npcsay(player, n, "that's what i'm here for");
 			} else if (stage >= 3) {
@@ -90,35 +90,16 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 				say(player, n, "it's not bad, i've seen worse");
 				int menu = multi(player, n,
 					"i think i've had enough for now",
-					"how can i use my new spells outside of the arena?");
+					"what is the arena for now?");
 				if (menu == 0) {
 					npcsay(player, n, "shame , you're a good battle mage",
 						"hope to see you soon");
 				} else if (menu == 1) {
-					npcsay(player, n, "experience my friend, experience",
-						"once you've used the spell enough times in the arena...",
-						"...you'll be able to use them in the rest of runescape");
+					npcsay(player, n, "this arena is a proving ground for high magic",
+						"the old relics are no longer mine to hand out",
+						"but battle mages may still return here for challenge and rewards");
 					say(player, n, "good stuff");
-					npcsay(player, n, "not so good for the citizens, they won't stand a chance");
-					say(player, n, "how am i doing so far?");
-					if (player.getCache().hasKey("Saradomin strike_casts") && player.getCache().getInt("Saradomin strike_casts") >= 100) {
-						npcsay(player, n, "you're fully trained to use the strike spell anywhere");
-					} else {
-						npcsay(player, n, "you still need to train with the strike spell...",
-							"...inside the arena before you can use it outside");
-					}
-					if (player.getCache().hasKey("Claws of Guthix_casts") && player.getCache().getInt("Claws of Guthix_casts") >= 100) {
-						npcsay(player, n, "you're fully trained to use the claw spell anywhere");
-					} else {
-						npcsay(player, n, "you still need to train with the claw spell...",
-							"...inside the arena before you can use it outside");
-					}
-					if (player.getCache().hasKey("Flames of Zamorak_casts") && player.getCache().getInt("Flames of Zamorak_casts") >= 100) {
-						npcsay(player, n, "you're fully trained to use the void spell anywhere");
-					} else {
-						npcsay(player, n, "you still need to train with the void spell...",
-							"...inside the arena before you can use it outside");
-					}
+					npcsay(player, n, "bring your strongest magic when you return");
 				}
 			}
 		} else {
@@ -199,8 +180,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 				}
 				teleport(player, 229, 130);
 				delay();
-				setCurrentLevel(player, Skill.ATTACK.id(), 0);
-				setCurrentLevel(player, Skill.STRENGTH.id(), 0);
+				clampMageArenaCombatStats(player);
 
 				// first time
 				spawnKolodion(player, NpcId.KOLODION_HUMAN.id(), false);
@@ -210,90 +190,14 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 		}
 	}
 
-	public void learnSpellEvent(Player player) {
-		DelayedEvent mageArena = player.getAttribute("mageArenaEvent", null);
-		DelayedEvent mageArenaEvent = new DelayedEvent(player.getWorld(), player, config().GAME_TICK * 3, "Mage Arena Learn Spell Event") {
-			@Override
-			public void run() {
-				boolean recentMaged = getOwner().getAttribute("maged_kolodion", false);
-				/* Player logged out. */
-				if (!getOwner().isLoggedIn() || getOwner().isRemoved()) {
-					stop();
-					return;
-				}
-				if (!getOwner().getLocation().inMageArena()) {
-					stop();
-					return;
-				}
-				if (getOwner().inCombat()) {
-					return;
-				}
-				if (!recentMaged) {
-					return;
-				}
-				if (random(0, 1) == 1) {
-					getOwner().setAttribute("maged_kolodion", false);
-					return;
-				}
-				boolean sendUpdate = getOwner().getClientLimitations().supportsSkillUpdate;
-				if (getOwner().getSkills().getLevel(Skill.ATTACK.id()) > 0 || getOwner().getSkills().getLevel(Skill.STRENGTH.id()) > 0) {
-					getOwner().getSkills().setLevel(Skill.ATTACK.id(), 0, sendUpdate);
-					getOwner().getSkills().setLevel(Skill.STRENGTH.id(), 0, sendUpdate);
-					if (!sendUpdate) {
-						getOwner().getSkills().sendUpdateAll();
-					}
-				}
-				Npc Guthix = ifnearvisnpc(player, NpcId.BATTLE_MAGE_GUTHIX.id(), 2);
-				Npc Zamorak = ifnearvisnpc(player, NpcId.BATTLE_MAGE_ZAMORAK.id(), 2);
-				Npc Saradomin = ifnearvisnpc(player, NpcId.BATTLE_MAGE_SARADOMIN.id(), 2);
-				String[] randomMessage = {"@yel@zamorak mage: feel the wrath of zamarok", "@yel@Saradomin mage: feel the wrath of Saradomin", "@yel@guthix mage: feel the wrath of guthix"};
-				getOwner().setAttribute("maged_kolodion", false);
-				if (Guthix != null && Guthix.withinRange(getOwner(), 1)) {
-					godSpellObject(getOwner(), Spells.CLAWS_OF_GUTHIX);
-					player.message(randomMessage[2]);
-					if (getCurrentLevel(getOwner(), Skill.HITS.id()) < 20) {
-						getOwner().damage(2);
-					} else {
-						getOwner().damage((int)Math.ceil(getCurrentLevel(getOwner(), Skill.HITS.id()) * 0.08));
-					}
-				} else if (Zamorak != null && Zamorak.withinRange(getOwner(), 1)) {
-					godSpellObject(getOwner(), Spells.FLAMES_OF_ZAMORAK);
-					player.message(randomMessage[0]);
-					if (getCurrentLevel(getOwner(), Skill.HITS.id()) < 20) {
-						getOwner().damage(2);
-					} else {
-						getOwner().damage((int)Math.ceil(getCurrentLevel(getOwner(), Skill.HITS.id()) * 0.08));
-					}
-				} else if (Saradomin != null && Saradomin.withinRange(getOwner(), 1)) {
-					godSpellObject(getOwner(), Spells.SARADOMIN_STRIKE);
-					player.message(randomMessage[1]);
-					if (getCurrentLevel(getOwner(), Skill.HITS.id()) < 20) {
-						getOwner().damage(2);
-					} else {
-						getOwner().damage((int)Math.ceil(getCurrentLevel(getOwner(), Skill.HITS.id()) * 0.08));
-					}
-				}
-			}
-		};
-		if (mageArena != null) {
-			if (mageArena.shouldRemove()) {
-				player.setAttribute("mageArenaEvent", mageArenaEvent);
-				player.getWorld().getServer().getGameEventHandler().add(mageArenaEvent);
-			}
-		} else {
-			player.setAttribute("mageArenaEvent", mageArenaEvent);
-			player.getWorld().getServer().getGameEventHandler().add(mageArenaEvent);
-		}
-	}
-
 	private void startKolodionEvent(Player player) {
 		DelayedEvent kolE = player.getAttribute("kolodionEvent", null);
 		DelayedEvent kolodionEvent = new DelayedEvent(player.getWorld(), player, config().GAME_TICK, "Mage Arena Kolodion Event") {
 			@Override
 			public void run() {
 				Npc npc = getOwner().getAttribute("spawned_kolodion");
-				boolean recentMaged = getOwner().getAttribute("maged_kolodion", false);
 				if (npc == null) {
+					stop();
 					return;
 				}
 				/* Player logged out. */
@@ -313,77 +217,10 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 					stop();
 					return;
 				}
-				if (getOwner().inCombat()) {
-					return;
-				}
 				if (!npc.withinRange(getOwner(), 8)) {
 					return;
 				}
-				if ((random(1, 100) != 1 && !recentMaged)) {
-					return;
-				}
-				if (random(0, 1) == 1 && recentMaged) {
-					// just message
-					getOwner().message(DataConversions.getRandom().nextBoolean()
-						? "@yel@kolodion: die you foolish mortal" : "@yel@kolodion: the bigger the better");
-
-					getOwner().setAttribute("maged_kolodion", false);
-					return;
-				}
-				int transformStage = 0;
-				switch(NpcId.getById(npc.getID())) {
-					case KOLODION:
-					case KOLODION_OGRE:
-						transformStage = 0;
-						break;
-					case KOLODION_SPIDER:
-						transformStage = 1;
-						break;
-					case KOLODION_SOULESS:
-						transformStage = 2;
-						break;
-					case KOLODION_DEMON:
-						transformStage = 3;
-						break;
-				}
-				boolean allElems = transformStage >= 2;
-				int spell_type = random(0, 1 + (allElems ? 1 : 0));
-				switch (spell_type) {
-					case 0: //claws of guthix
-						godSpellObject(getOwner(), Spells.CLAWS_OF_GUTHIX);
-						break;
-					case 1: //saradomin strike
-						godSpellObject(getOwner(), Spells.SARADOMIN_STRIKE);
-						break;
-					case 2: //flames of zamorak
-						godSpellObject(getOwner(), Spells.FLAMES_OF_ZAMORAK);
-						break;
-				}
-				// how many lvls needed for +1 dmg (min 16, max 25)
-				int reciprocalSlope = (int) Math.floor(1.0 / (0.06 - (0.01 / 48.0) * getMaxLevel(getOwner(), Skill.HITS.id())));
-				// what is the lvl "shift" per new transformation to calculate dmg
-				int shiftPerPhase = (int) Math.round((0.004 * getMaxLevel(getOwner(), Skill.HITS.id()) + 0.4) * reciprocalSlope);
-				ArrayList<String[]> messages = new ArrayList<String[]>() {
-					{
-						add(new String[]{"@yel@kolodion: roooaar", "claws grab you from below"});
-						add(new String[]{"@yel@kolodion: aaarrgghhh", "@yel@kolodion: feel the power of the elements", "you are hit by a lightning bolt"});
-						add(new String[]{"@yel@kolodion: feel the power of the elements mortal", "you burst into flames"});
-					}
-				};
-				if (transformStage == 3 && spell_type == 2 && DataConversions.getRandom().nextBoolean()) {
-					// replace message of flames of zamorak
-					messages.set(2, new String[]{"@yel@kolodion: burn fool ....burn", "you burst into flames"});
-				}
-				getOwner().setAttribute("maged_kolodion", false);
-				// mes throwing currently error here
-				//mes(messages.get(spell_type));
-				// temporary below
-				for(String message : messages.get(spell_type)) {
-					getOwner().message(message);
-					delay(2);
-				}
-				delay(3);
-				getOwner().damage((int) Math.ceil(Math.max(getCurrentLevel(getOwner(), Skill.HITS.id()) + (transformStage - 1.0) * shiftPerPhase, 0) / reciprocalSlope) + 1);
+				clampMageArenaCombatStats(getOwner());
 			}
 		};
 		if (kolE != null) {
@@ -404,23 +241,76 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 
 	// kolodion from new attempt
 	public void spawnKolodion(Player player, int id, boolean isContinue) {
-		player.setAttribute("spawned_kolodion", addnpc(id, 227, 130, (int)TimeUnit.SECONDS.toMillis(516), player));
+		Npc kolodion = addnpc(id, 227, 130, (int)TimeUnit.SECONDS.toMillis(516), player);
+		player.setAttribute("spawned_kolodion", kolodion);
 		if (!isContinue) {
 			player.getCache().set("kolodion_stage", id);
-			player.message("kolodion blasts you " + ((id == NpcId.KOLODION_HUMAN.id() || id == NpcId.KOLODION_OGRE.id()) ? "with his staff" : "again"));
-			player.damage(random(7, 15));
+			if (isIntroductoryKolodionForm(kolodion)) {
+				player.message("kolodion raises his staff and begins casting elemental magic");
+			} else if (isKolodionOgreForm(kolodion)) {
+				player.message("kolodion grows larger and channels earth and air magic");
+			} else if (isKolodionSpiderForm(kolodion)) {
+				player.message("kolodion skitters forward as acid gathers around its fangs");
+			} else if (isKolodionSoulessForm(kolodion)) {
+				player.message("kolodion's form twists into a forest spirit of violent magic");
+			} else if (isKolodionDemonForm(kolodion)) {
+				player.message("kolodion erupts into a demon and lashes out with burning claws");
+			} else {
+				player.message("kolodion blasts you " + (id == NpcId.KOLODION_OGRE.id() ? "with his staff" : "again"));
+				player.damage(random(7, 15));
+			}
 			ActionSender.sendTeleBubble(player, player.getX(), player.getY(), true);
 		}
 		startKolodionEvent(player);
 	}
 
-	private int[] staves = {
-		ItemId.STAFF.id(),
-		ItemId.MAGIC_STAFF.id(),
-		ItemId.STAFF_OF_SARADOMIN.id(),
-		ItemId.STAFF_OF_ZAMORAK.id(),
-		ItemId.STAFF_OF_GUTHIX.id()
-	};
+	private boolean isIntroductoryKolodionForm(final Npc npc) {
+		return npc != null && npc.getID() == NpcId.KOLODION_HUMAN.id();
+	}
+
+	private boolean isKolodionOgreForm(final Npc npc) {
+		return npc != null && npc.getID() == NpcId.KOLODION_OGRE.id();
+	}
+
+	private boolean isKolodionSpiderForm(final Npc npc) {
+		return npc != null && npc.getID() == NpcId.KOLODION_SPIDER.id();
+	}
+
+	private boolean isKolodionSoulessForm(final Npc npc) {
+		return npc != null && npc.getID() == NpcId.KOLODION_SOULESS.id();
+	}
+
+	private boolean isKolodionDemonForm(final Npc npc) {
+		return npc != null && npc.getID() == NpcId.KOLODION_DEMON.id();
+	}
+
+	private static int getOwnedMageArenaCombinationStaffId(final Player player) {
+		for (int staffId : MAGE_ARENA_REWARD_STAFFS) {
+			if (player.getCarriedItems().hasCatalogID(staffId, Optional.empty()) || player.getBank().hasItemId(staffId)) {
+				return staffId;
+			}
+		}
+		return -1;
+	}
+
+	private static boolean awardMageArenaStaff(final Player player, final int staffId) {
+		final Item staff = new Item(staffId);
+		if (!canReceive(player, staff)) {
+			player.message("Your client could not receive this staff.");
+			return false;
+		}
+		if (player.getCarriedItems().getInventory().canHold(staff)
+			&& player.getCarriedItems().getInventory().add(staff)) {
+			player.message("Kolodion gives you a " + staff.getDef(player.getWorld()).getName() + ".");
+			return true;
+		}
+		if (player.getBank().canHold(staff) && player.getBank().add(staff, false)) {
+			player.message("Kolodion places your " + staff.getDef(player.getWorld()).getName() + " in the bank.");
+			return true;
+		}
+		player.message("You need inventory or bank space to receive the staff.");
+		return false;
+	}
 
 	private final int[] statBoostingPotions = {
 		ItemId.FULL_ATTACK_POTION.id(),
@@ -444,24 +334,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 	private boolean isNotAllowed(Player player, Item item) {
 		ItemDefinition def = item.getDef(player.getWorld());
 		if (def.isWieldable()) {
-			// allow anything in necklace and cape slot
-			if (def.getWieldPosition() == Equipment.EquipmentSlot.SLOT_NECK.getIndex()
-				|| def.getWieldPosition() == Equipment.EquipmentSlot.SLOT_CAPE.getIndex()) return false;
-			// if is one of the allowed staves, then it's good
-			if (inArray(item.getCatalogId(), staves) || EnchantingItemEffects.isEnchantedStaff(item.getCatalogId())) return false;
-			// disallow any other weapon
-			if (def.getWieldPosition() == Equipment.EquipmentSlot.SLOT_MAINHAND.getIndex()
-				|| def.getWieldPosition() == Equipment.EquipmentSlot.SLOT_OFFHAND.getIndex()) return true;
-			// allow "low-tier" magic / prayer related equipment, with low melee bonus
-			// per rs2 guides seems higher tier would not have been permitted
-			if (((def.getMagicBonus() > 0 && def.getMagicBonus() <= 10)
-				|| (def.getPrayerBonus() > 0 && def.getPrayerBonus() <= 10)) && def.getMeleeBonus() <= 5) return false;
-			// allow "very basic" armour, per rs2 guides seems leather boots and gloves
-			// were ok in apr 2004
-			if ((def.getArmourBonus() <= 2 && def.getWeaponPowerBonus() == 0 && def.getWeaponAimBonus() == 0)
-				|| (item.getCatalogId() == ItemId.ICE_GLOVES.id())) return false;
-			// disallow any other wearable
-			return true;
+			return !isAllowedMageArenaGear(player, item);
 		} else {
 			// non wearables are ok
 			// Unless we're on Cabbage
@@ -471,6 +344,56 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 			}
 		}
 		return false;
+	}
+
+	private boolean isAllowedMageArenaGear(Player player, Item item) {
+		final int itemId = item.getCatalogId();
+		final ItemDefinition def = item.getDef(player.getWorld());
+		final int slot = def.getWieldPosition();
+		if (slot == Equipment.EquipmentSlot.SLOT_NECK.getIndex()
+			|| slot == Equipment.EquipmentSlot.SLOT_RING.getIndex()
+			|| slot == Equipment.EquipmentSlot.SLOT_CAPE.getIndex()) {
+			return true;
+		}
+		return isAllowedMageArenaStaff(itemId) || isAllowedMageArenaRobePiece(itemId);
+	}
+
+	private boolean isAllowedMageArenaStaff(final int itemId) {
+		return EnchantingItemEffects.isBaseStaff(itemId)
+			|| EnchantingItemEffects.isEnchantedStaff(itemId)
+			|| isTierElevenStaff(itemId);
+	}
+
+	private boolean isTierElevenStaff(final int itemId) {
+		return itemId == ItemId.STAFF_OF_SARADOMIN.id()
+			|| itemId == ItemId.STAFF_OF_ZAMORAK.id()
+			|| itemId == ItemId.STAFF_OF_GUTHIX.id()
+			|| itemId == ItemId.STAFF_OF_ELEMENTS.id()
+			|| itemId == ItemId.STAFF_OF_POWER.id()
+			|| itemId == ItemId.STAFF_OF_ENLIGHTENMENT.id();
+	}
+
+	private boolean isAllowedMageArenaRobePiece(final int itemId) {
+		return EnchantingItemEffects.isBaseWoolRobePiece(itemId)
+			|| EnchantingItemEffects.isEnchantedWoolRobePiece(itemId);
+	}
+
+	private void clampMageArenaCombatStats(final Player player) {
+		final boolean sendUpdate = player.getClientLimitations().supportsSkillUpdate;
+		boolean changed = setCurrentLevelIfPresent(player, Skill.MELEE.id(), 0, sendUpdate);
+		changed |= setCurrentLevelIfPresent(player, Skill.RANGED.id(), 0, sendUpdate);
+		changed |= setCurrentLevelIfPresent(player, Skill.STRENGTH.id(), 0, sendUpdate);
+		if (changed && !sendUpdate) {
+			player.getSkills().sendUpdateAll();
+		}
+	}
+
+	private boolean setCurrentLevelIfPresent(final Player player, final int skill, final int level, final boolean sendUpdate) {
+		if (skill < 0 || player.getSkills().getLevel(skill) == level) {
+			return false;
+		}
+		player.getSkills().setLevel(skill, level, sendUpdate);
+		return true;
 	}
 
 	private void cantGoMessage(Player player) {
@@ -571,20 +494,11 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 				player.teleport(446, 3370);
 				Npc kolodion = ifnearvisnpc(player, NpcId.KOLODION.id(), 8);
 				if (kolodion == null) {
-					player.message("kolodion is currently busy");
+					player.message("kolodion is currently busy, but his reward waits for you");
 				} else {
-					say(player, kolodion, "what now kolodion? how can i learn some of those spells?");
-					npcsay(player, kolodion, "these spells are gifts from the gods", "first you must choose which god...",
-						"...you will represent in the mage arena");
-					say(player, kolodion, "cool");
-					npcsay(player, kolodion, "step into the magic pool, it will carry you to the chamber");
-					say(player, kolodion, "the chamber?");
-
-					npcsay(player, kolodion, "there you must decide your loyalty");
-					say(player, kolodion, "ok kolodion , thanks for the battle");
-					npcsay(player, kolodion, "remember young mage, you must use the spells...",
-						"...many times in the arena before you can use them outside");
-					say(player, kolodion, "no problem");
+					say(player, kolodion, "what now kolodion?");
+					npcsay(player, kolodion, "you have earned a true battle mage staff",
+						"step into the magic pool and choose the stone that matches your path");
 				}
 				player.getCache().set("mage_arena", 2);
 				player.getCache().remove("kolodion_stage");
@@ -619,46 +533,20 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 		return false;
 	}
 
-	public void godSpellObject(Mob affectedMob, Spells spellEnum) {
-		switch (spellEnum) {
-			case CLAWS_OF_GUTHIX:
-				GameObject guthix = new GameObject(affectedMob.getWorld(), affectedMob.getLocation(), 1142, 0, 0);
-				affectedMob.getWorld().registerGameObject(guthix);
-				affectedMob.getWorld().getServer().getGameEventHandler().add(new ObjectRemover(affectedMob.getWorld(), guthix, 2));
-				break;
-			case SARADOMIN_STRIKE:
-				GameObject sara = new GameObject(affectedMob.getWorld(), affectedMob.getLocation(), 1031, 0, 0);
-				affectedMob.getWorld().registerGameObject(sara);
-				affectedMob.getWorld().getServer().getGameEventHandler().add(new ObjectRemover(affectedMob.getWorld(), sara, 2));
-				break;
-			case FLAMES_OF_ZAMORAK:
-				GameObject zammy = new GameObject(affectedMob.getWorld(), affectedMob.getLocation(), 1036, 0, 0);
-				affectedMob.getWorld().registerGameObject(zammy);
-				affectedMob.getWorld().getServer().getGameEventHandler().add(new ObjectRemover(affectedMob.getWorld(), zammy, 2));
-				break;
-			case CHARGE:
-				GameObject charge = new GameObject(affectedMob.getWorld(), affectedMob.getLocation(), 1147, 0, 0);
-				affectedMob.getWorld().registerGameObject(charge);
-				affectedMob.getWorld().getServer().getGameEventHandler().add(new ObjectRemover(affectedMob.getWorld(), charge, 2));
-				break;
-		}
-	}
-
 	@Override
 	public boolean blockOpLoc(Player player, GameObject obj, String command) {
 		return obj.getID() == 1019 || obj.getID() == 1020 || obj.getID() == 1027
-			|| obj.getID() == SARADOMIN_STONE || obj.getID() == GUTHIX_STONE || obj.getID() == ZAMORAK_STONE;
+			|| isMageArenaStaffStone(obj.getID());
 	}
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
-		boolean firstTimeEnchant = false;
 		if (obj.getID() == 1019 || obj.getID() == 1020) {
 			player.message("you open the gate ...");
 			player.message("... and walk through");
 			doGate(player, obj);
 			if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") == 4) {
-				learnSpellEvent(player);
+				clampMageArenaCombatStats(player);
 			}
 		} else if (obj.getID() == 1027) {
 			if (player.getY() >= 120) {
@@ -673,6 +561,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 					mes("the barrier is checking your person for weapons");
 					delay(3);
 					if (!cantGo(player)) {
+						clampMageArenaCombatStats(player);
 						teleport(player, 228, 120);
 					} else {
 						cantGoMessage(player);
@@ -681,135 +570,74 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 					player.message("you cannot enter without the permission of kolodion");
 				}
 			}
-		} else if (obj.getID() == SARADOMIN_STONE) {
-			if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") >= 3) {
-				mes("you kneel and chant to saradomin");
-				delay(3);
-				if (!alreadyChoseGod(player, ItemId.SARADOMIN_CAPE.id())) {
-					mes("you feel a rush of energy charge through your veins");
-					delay(3);
-					mes("...the blessing settles on you");
-					delay(3);
-					awardGodCape(player, ItemId.SARADOMIN_CAPE.id());
-					setChosenGod(player, ItemId.SARADOMIN_CAPE.id());
-				} else {
-					mes("but there is no response");
-					delay(3);
-				}
-			}
-			// first time
-			else if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") == 2) {
-				mes("you kneel and begin to chant to saradomin");
-				delay(3);
-				mes("you feel a rush of energy charge through your veins");
-				delay(3);
-				ActionSender.sendTeleBubble(player, player.getX(), player.getY(), true);
-				awardGodCape(player, ItemId.SARADOMIN_CAPE.id());
-				setChosenGod(player, ItemId.SARADOMIN_CAPE.id());
-				player.getCache().set("mage_arena", 3);
-				firstTimeEnchant = true;
-			}
-		} else if (obj.getID() == GUTHIX_STONE) {
-			if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") >= 3) {
-				mes("you kneel and chant to guthix");
-				delay(3);
-				if (!alreadyChoseGod(player, ItemId.GUTHIX_CAPE.id())) {
-					mes("you feel a rush of energy charge through your veins");
-					delay(3);
-					mes("...the blessing settles on you");
-					delay(3);
-					awardGodCape(player, ItemId.GUTHIX_CAPE.id());
-					setChosenGod(player, ItemId.GUTHIX_CAPE.id());
-				} else {
-					mes("but there is no response");
-					delay(3);
-				}
-			}
-			// first time
-			else if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") == 2) {
-				mes("you kneel and begin to chant to guthix");
-				delay(3);
-				mes("you feel a rush of energy charge through your veins");
-				delay(3);
-				ActionSender.sendTeleBubble(player, player.getX(), player.getY(), true);
-				awardGodCape(player, ItemId.GUTHIX_CAPE.id());
-				setChosenGod(player, ItemId.GUTHIX_CAPE.id());
-				player.getCache().set("mage_arena", 3);
-				firstTimeEnchant = true;
-			}
-		} else if (obj.getID() == ZAMORAK_STONE) {
-			if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") >= 3) {
-				mes("you kneel and chant to zamorak");
-				delay(3);
-				if (!alreadyChoseGod(player, ItemId.ZAMORAK_CAPE.id())) {
-					mes("you feel a rush of energy charge through your veins");
-					delay(3);
-					mes("...the blessing settles on you");
-					delay(3);
-					awardGodCape(player, ItemId.ZAMORAK_CAPE.id());
-					setChosenGod(player, ItemId.ZAMORAK_CAPE.id());
-				} else {
-					mes("but there is no response");
-					delay(3);
-				}
-			}
-			// first time
-			else if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") == 2) {
-				mes("you kneel and begin to chant to zamorak");
-				delay(3);
-				mes("you feel a rush of energy charge through your veins");
-				delay(3);
-				ActionSender.sendTeleBubble(player, player.getX(), player.getY(), true);
-				awardGodCape(player, ItemId.ZAMORAK_CAPE.id());
-				setChosenGod(player, ItemId.ZAMORAK_CAPE.id());
-				player.getCache().set("mage_arena", 3);
-				firstTimeEnchant = true;
-			}
-		}
-
-		if (firstTimeEnchant) {
-			player.sendMiniGameComplete(this.getMiniGameId(), Optional.empty());
+		} else if (isMageArenaStaffStone(obj.getID())) {
+			claimMageArenaStoneStaff(player, obj.getID());
 		}
 	}
 
-	private boolean alreadyHasCape(Player player) {
-		boolean isCarryingCape = player.getCarriedItems().hasCatalogID(ItemId.ZAMORAK_CAPE.id(), Optional.empty())
-			|| player.getCarriedItems().hasCatalogID(ItemId.SARADOMIN_CAPE.id(), Optional.empty())
-			|| player.getCarriedItems().hasCatalogID(ItemId.GUTHIX_CAPE.id(), Optional.empty());
-
-		boolean hasBankedCape = player.getBank().hasItemId(ItemId.ZAMORAK_CAPE.id())
-			|| player.getBank().hasItemId(ItemId.SARADOMIN_CAPE.id())
-			|| player.getBank().hasItemId(ItemId.GUTHIX_CAPE.id());
-
-		return isCarryingCape || hasBankedCape;
+	private boolean isMageArenaStaffStone(final int objectId) {
+		return objectId == ELEMENTAL_STONE || objectId == POWER_STONE || objectId == ENLIGHTENMENT_STONE;
 	}
 
-	private void awardGodCape(final Player player, final int capeId) {
-		final Item cape = new Item(capeId);
-		if (canReceive(player, cape)) {
-			give(player, capeId, 1);
-			mes("you receive a sacred cape");
+	private void claimMageArenaStoneStaff(final Player player, final int objectId) {
+		if (!player.getCache().hasKey("mage_arena") || player.getCache().getInt("mage_arena") < 2) {
+			mes("the stone is silent");
+			delay(3);
+			mes("you are not ready to choose a mage path");
 			delay(3);
 			return;
 		}
-		if (player.getBank().canHold(cape) && player.getBank().add(cape, false)) {
-			player.message("Your sacred cape is placed in the bank.");
+		if (player.getCache().getInt("mage_arena") >= 4) {
+			mes("you have already chosen your mage path");
+			delay(3);
+			mes("the chamber guardian can sell you the other staves");
+			delay(3);
 			return;
 		}
-		player.message("You have no room for the sacred cape.");
+
+		final int existingStaffId = getOwnedMageArenaCombinationStaffId(player);
+		if (existingStaffId > -1) {
+			player.getCache().set("mage_arena", 4);
+			player.getCache().set(MAGE_ARENA_STAFF_REWARD_CACHE, existingStaffId);
+			player.getCache().remove("kolodion_stage");
+			player.message("You have already claimed a Mage Arena staff.");
+			player.sendMiniGameComplete(this.getMiniGameId(), Optional.empty());
+			return;
+		}
+
+		final int staffId = getMageArenaStaffForStone(objectId);
+		final String pathName = getMageArenaStonePathName(objectId);
+		mes("you place your hands on the " + pathName + " stone");
+		delay(3);
+		mes("you feel the path of " + pathName.toLowerCase() + " magic open before you");
+		delay(3);
+		if (!awardMageArenaStaff(player, staffId)) {
+			return;
+		}
+		player.getCache().set("mage_arena", 4);
+		player.getCache().set(MAGE_ARENA_STAFF_REWARD_CACHE, staffId);
+		player.getCache().remove("kolodion_stage");
+		player.sendMiniGameComplete(this.getMiniGameId(), Optional.empty());
 	}
 
-	private void setChosenGod(final Player player, final int capeId) {
-		player.getCache().set(MAGE_ARENA_GOD_CHOICE_CACHE, capeId);
+	private int getMageArenaStaffForStone(final int objectId) {
+		if (objectId == ELEMENTAL_STONE) {
+			return ItemId.STAFF_OF_ELEMENTS.id();
+		}
+		if (objectId == POWER_STONE) {
+			return ItemId.STAFF_OF_POWER.id();
+		}
+		return ItemId.STAFF_OF_ENLIGHTENMENT.id();
 	}
 
-	public static int getChosenGodCapeId(final Player player) {
-		return player.getCache().hasKey(MAGE_ARENA_GOD_CHOICE_CACHE)
-			? player.getCache().getInt(MAGE_ARENA_GOD_CHOICE_CACHE) : -1;
-	}
-
-	private boolean alreadyChoseGod(final Player player, final int capeId) {
-		return getChosenGodCapeId(player) == capeId || alreadyHasCape(player);
+	private String getMageArenaStonePathName(final int objectId) {
+		if (objectId == ELEMENTAL_STONE) {
+			return "Elemental";
+		}
+		if (objectId == POWER_STONE) {
+			return "Power";
+		}
+		return "Enlightenment";
 	}
 
 	@Override
@@ -825,8 +653,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 			} else {
 				// Cabbage only
 				if (config().WANT_COMBAT_ODYSSEY) {
-					setCurrentLevel(player, Skill.ATTACK.id(), 0);
-					setCurrentLevel(player, Skill.STRENGTH.id(), 0);
+					clampMageArenaCombatStats(player);
 					RuneScript.npcattack();
 				}
 			}

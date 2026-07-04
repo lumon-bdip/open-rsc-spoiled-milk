@@ -480,19 +480,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		return 0;
 	}
 
-	private static String getGodSpellCastCacheKey(final Spells spellEnum, final SpellDef spell) {
-		if (isGuthixGodSpell(spellEnum)) {
-			return "Claws of Guthix_casts";
-		}
-		if (isSaradominGodSpell(spellEnum)) {
-			return "Saradomin strike_casts";
-		}
-		if (isZamorakGodSpell(spellEnum)) {
-			return "Flames of Zamorak_casts";
-		}
-		return spell.getName() + "_casts";
-	}
-
 	private static boolean isGuthixGodSpell(final Spells spellEnum) {
 		return spellEnum == Spells.CLAWS_OF_GUTHIX || spellEnum == Spells.CLAW_OF_GUTHIX;
 	}
@@ -1256,18 +1243,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						+ World.membersWildMax);
 				return;
 			}*/
-				if (!player.getLocation().inMageArena()) {
-					if ((!player.getCache().hasKey("Flames of Zamorak_casts") && !player.getCache().hasKey("Saradomin strike_casts") && !player.getCache().hasKey("Claws of Guthix_casts"))
-						||
-						((player.getCache().hasKey("Saradomin strike_casts") && player.getCache().getInt("Saradomin strike_casts") < 100))
-						||
-						((player.getCache().hasKey("Flames of Zamorak_casts") && player.getCache().getInt("Flames of Zamorak_casts") < 100))
-						||
-						((player.getCache().hasKey("Claws of Guthix_casts") && player.getCache().getInt("Claws of Guthix_casts") < 100))) {
-						player.message("this spell can only be used in the mage arena");
-						return;
-					}
-				}
 				if (player.getViewArea().getGameObject(player.getLocation()) != null) {
 					player.message("You can't charge power here, please move to a different area");
 					return;
@@ -1893,11 +1868,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 								getPlayer().getSkills().setLevel(Skill.RANGED.id(), newLevel);
 							}
 						}
-					} else if (inArray(n.getID(), NpcId.KOLODION_HUMAN.id(), NpcId.KOLODION_OGRE.id(), NpcId.KOLODION_SPIDER.id(),
-						NpcId.KOLODION_SOULESS.id(), NpcId.KOLODION_DEMON.id(), NpcId.BATTLE_MAGE_GUTHIX.id(),
-						NpcId.BATTLE_MAGE_ZAMORAK.id(), NpcId.BATTLE_MAGE_SARADOMIN.id()) && getPlayer().getLocation().inMageArena()) {
-						setChasing = false;
-						getPlayer().setAttribute("maged_kolodion", true);
 					}
 					if (spellEnum == Spells.FEAR) {
 						setChasing = false;
@@ -2085,8 +2055,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							getPlayer().message("you need to complete underground pass quest to cast this spell");
 							return;
 						}
-						if (!getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_IBAN.id())) {
-							getPlayer().message("you need the staff of iban to cast this spell");
+						if (!hasIbanBlastStaffEquipped(player)) {
+							getPlayer().message("you need the staff of iban or staff of power to cast this spell");
 							return;
 						}
 						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
@@ -2135,33 +2105,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							}
 						}
 
-						if (!getPlayer().getLocation().inMageArena()) {
-							final String godSpellCastCacheKey = getGodSpellCastCacheKey(spellEnum, spell);
-							if ((!getPlayer().getCache().hasKey(godSpellCastCacheKey))
-								|| (getPlayer().getCache().hasKey(godSpellCastCacheKey)
-								&& getPlayer().getCache().getInt(godSpellCastCacheKey) < 100)) {
-								getPlayer().message("this spell can only be used in the mage arena");
-								getPlayer().message("You must learn this spell first, you need "
-									+ (getPlayer().getCache().hasKey(godSpellCastCacheKey)
-									? (100 - getPlayer().getCache().getInt(godSpellCastCacheKey)) : "100")
-									+ " more casts in the mage arena");
-								return;
-							}
-						}
 						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
 							return;
-						}
-						if (getPlayer().getLocation().inMageArena()) {
-							final String godSpellCastCacheKey = getGodSpellCastCacheKey(spellEnum, spell);
-							if (getPlayer().getCache().hasKey(godSpellCastCacheKey)) {
-								int casts = getPlayer().getCache().getInt(godSpellCastCacheKey);
-								getPlayer().getCache().set(godSpellCastCacheKey, casts + 1);
-								if (casts == 99) {
-									getPlayer().message("Well done .. you can now use the " + spell.getName() + " outside the arena");
-								}
-							} else {
-								getPlayer().getCache().set(godSpellCastCacheKey, 1);
-							}
 						}
 
 						boolean giveExp = true;
@@ -2429,6 +2374,11 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			final int damage = CombatFormula.calculateMagicDamage(caster, npc, secondaryMax, getSpellDamageCapPercent(Spells.IBAN_BLAST));
 			applyGodSpellSecondaryDamage(caster, npc, damage);
 		}
+	}
+
+	private boolean hasIbanBlastStaffEquipped(final Player player) {
+		return player.getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_IBAN.id())
+			|| player.getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_POWER.id());
 	}
 
 	private boolean isValidIbanBlastAreaTarget(final Mob primaryTarget, final Mob possibleTarget) {

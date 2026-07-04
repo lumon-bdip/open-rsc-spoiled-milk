@@ -956,15 +956,12 @@ public final class Admins implements CommandTrigger {
 		}
 
 		targetPlayer.updateQuestStage(Quests.UNDERGROUND_PASS, Quests.QUEST_STAGE_COMPLETED);
-		targetPlayer.getCache().set("Saradomin strike_casts", 100);
-		targetPlayer.getCache().set("Flames of Zamorak_casts", 100);
-		targetPlayer.getCache().set("Void of Zamorak_casts", 100);
-		targetPlayer.getCache().set("Claws of Guthix_casts", 100);
 
 		if (targetPlayer.getUsernameHash() != player.getUsernameHash() && !player.isInvisibleTo(targetPlayer)) {
-			targetPlayer.message(messagePrefix + "An admin unlocked your special spell requirements.");
+			targetPlayer.message(messagePrefix + "An admin unlocked your Iban Blast quest requirement.");
 		}
-		player.message(messagePrefix + "Unlocked Iban Blast and god spell requirements for " + targetPlayer.getUsername() + ".");
+		player.message(messagePrefix + "Unlocked Iban Blast's quest requirement for " + targetPlayer.getUsername() + ".");
+		player.message(messagePrefix + "God spells no longer use Mage Arena cast-count unlocks.");
 		player.message(messagePrefix + "Use ::runes for spell runes; staffs and magic level are still handled separately.");
 	}
 

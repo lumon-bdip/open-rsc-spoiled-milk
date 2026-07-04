@@ -88,6 +88,17 @@ public class ProjectileEvent extends SingleTickEvent {
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing,
 						   int windAccuracyDebuffPercent, int waterMaxHitDebuffPercent, int earthAttackSpeedDebuffPercent,
 						   int fireDefenseDebuffPercent, int projectileType, int impactEffectType, boolean showProjectile,
+						   NpcMagicElement magicElement, int startleProcChancePercent, int acidPoisonPower,
+						   int frostbiteProcChancePercent, int splinterProcChancePercent) {
+		this(world, caster, opponent, damage, type, setChasing, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
+			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, projectileType, impactEffectType, showProjectile,
+			startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent);
+		this.magicElement = magicElement == null ? NpcMagicElement.NONE : magicElement;
+	}
+
+	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing,
+						   int windAccuracyDebuffPercent, int waterMaxHitDebuffPercent, int earthAttackSpeedDebuffPercent,
+						   int fireDefenseDebuffPercent, int projectileType, int impactEffectType, boolean showProjectile,
 						   int startleProcChancePercent, int acidPoisonPower, int frostbiteProcChancePercent,
 						   int splinterProcChancePercent) {
 		this(world, caster, opponent, damage, type, setChasing, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
