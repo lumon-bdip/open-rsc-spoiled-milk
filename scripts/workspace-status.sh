@@ -15,14 +15,21 @@ printf '  Commit: %s\n' "$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null
 printf '\n'
 
 printf 'Live hosted server:\n'
-if [[ -x "$ROOT_DIR/scripts/live-status.sh" ]]; then
+live_root="${MYWORLD_LIVE_ROOT:-/tmp/spoiled-milk-live-main}"
+if [[ -x "$live_root/scripts/live-status.sh" ]]; then
+  if (cd "$live_root" && ./scripts/live-status.sh); then
+    true
+  else
+    printf 'WARN: live-status reported a problem or no live server.\n'
+  fi
+elif [[ -x "$ROOT_DIR/scripts/live-status.sh" ]]; then
   if "$ROOT_DIR/scripts/live-status.sh"; then
     true
   else
     printf 'WARN: live-status reported a problem or no live server.\n'
   fi
 else
-  printf 'WARN: scripts/live-status.sh is not executable.\n'
+  printf 'WARN: live-status script is not executable under %s or %s\n' "$live_root" "$ROOT_DIR"
 fi
 printf '\n'
 
