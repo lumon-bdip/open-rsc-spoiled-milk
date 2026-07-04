@@ -16,4 +16,4 @@ myworld_print_server_launch_banner "PRIVATE SPOILED MILK DEV SERVER - NOT PUBLIC
 myworld_prepare_generated_artifacts "$GENERATOR_MODE"
 myworld_require_java_17_for_zgc
 myworld_write_launch_marker "PRIVATE SPOILED MILK DEV SERVER - NOT PUBLIC HOSTED ALPHA" "$SERVER_CONF"
-myworld_ant_server runserverzgc -DconfFile="$SERVER_CONF"
+myworld_ant_server runserverzgc -DconfFile=myworld

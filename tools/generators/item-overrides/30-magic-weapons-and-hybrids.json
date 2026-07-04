@@ -370,6 +370,24 @@
       "requiredLevel": 70
     },
     {
+      "id": 3249,
+      "magicOffense": 64,
+      "requiredSkillID": 6,
+      "requiredLevel": 80
+    },
+    {
+      "id": 3250,
+      "magicOffense": 64,
+      "requiredSkillID": 6,
+      "requiredLevel": 80
+    },
+    {
+      "id": 3251,
+      "magicOffense": 64,
+      "requiredSkillID": 6,
+      "requiredLevel": 80
+    },
+    {
       "id": 1213,
       "requiredSkillID": 5,
       "requiredLevel": 70

@@ -977,9 +977,11 @@
     },
     {
       "id": 759,
+      "attack": 38,
+      "defense": 88,
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.3,
-      "magicDefenseMultiplier": 0.2
+      "magicDefenseMultiplier": 1.0
     },
     {
       "id": 775,

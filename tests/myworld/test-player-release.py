@@ -387,6 +387,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         "myworld-assets/sprites/equipment/fishing-pole/numbered/00.png",
         "myworld-assets/sprites/items/inventory-ground/bolt.png",
         "myworld-assets/sprites/items/inventory-ground/dragon-hatchet.png",
+        "myworld-assets/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png",
         "myworld-assets/sprites/items/inventory-ground/weapons/earth-sword-icon.png",
         "myworld-assets/sprites/items/inventory-ground/weapons/fire-sword-icon.png",
         "myworld-assets/sprites/items/inventory-ground/weapons/ice-sword-icon.png",
@@ -430,6 +431,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
     allowed_item_asset_names = {
         "myworld-assets/sprites/items/inventory-ground/bolt.png",
         "myworld-assets/sprites/items/inventory-ground/dragon-hatchet.png",
+        "myworld-assets/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png",
         "myworld-assets/sprites/items/inventory-ground/weapons/earth-sword-icon.png",
         "myworld-assets/sprites/items/inventory-ground/weapons/fire-sword-icon.png",
         "myworld-assets/sprites/items/inventory-ground/weapons/ice-sword-icon.png",
@@ -475,6 +477,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
     allowed_item_sprite_paths = {
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/bolt.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/dragon-hatchet.png",
+        ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/demon-pitchfork-icon.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/earth-sword-icon.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/fire-sword-icon.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons/ice-sword-icon.png",

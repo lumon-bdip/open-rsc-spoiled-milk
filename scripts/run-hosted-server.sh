@@ -49,4 +49,4 @@ if [[ ! -f "$HOSTED_DB_PATH" ]]; then
 fi
 
 myworld_write_launch_marker "LIVE SPOILED MILK HOSTED ALPHA" "$SERVER_CONF"
-myworld_ant_server compile-and-run -DconfFile="$SERVER_CONF"
+myworld_ant_server compile-and-run -DconfFile=myworld-host

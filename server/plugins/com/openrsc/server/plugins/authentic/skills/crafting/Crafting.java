@@ -2350,7 +2350,7 @@ public class Crafting implements UseInvTrigger,
 			int barCount = player.getCarriedItems().getInventory().countId(barId, Optional.of(false));
 			recipes.add(new ProductionRecipe(recipe.resultId, recipe.reqLvl, 1, recipe.amount,
 				level >= recipe.reqLvl, barCount >= 1 && hasRangedMould(player, recipe.mouldId),
-				new int[]{barId, recipe.mouldId}, new int[]{-1, -1}, new int[]{1, 1}));
+				new int[]{barId}, new int[]{-1}, new int[]{1}));
 		}
 		return recipes.isEmpty() ? null
 			: new ProductionSession(ProductionSession.TYPE_CRAFTING, getFurnaceCategoryProductionTitle(categoryId), categoryId, recipes);
@@ -2410,8 +2410,9 @@ public class Crafting implements UseInvTrigger,
 			return false;
 		}
 		Item bar = new Item(barId);
+		Crafting crafting = this;
 		startbatch(player, makeCount);
-		batchRangedMouldCasting(player, bar, recipe);
+		crafting.batchRangedMouldCasting(player, bar, recipe);
 		return true;
 	}
 

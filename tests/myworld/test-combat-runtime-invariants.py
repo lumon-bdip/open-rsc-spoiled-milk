@@ -108,7 +108,7 @@ def main() -> None:
     require_contains(NPC_ATTACK_STYLE_PROFILE, "DataConversions.getRandom().nextInt(100) < 10")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_RANGED || this == PURE_MAGIC;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_RANGED || this == MELEE_RANGED;")
-    require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_MAGIC || this == MELEE_MAGIC || this == MELEE_RARE_MAGIC;")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_MAGIC || this == MELEE_FREQUENT_MAGIC || this == MELEE_MAGIC || this == MELEE_RARE_MAGIC;")
 
     require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(distance)")
     require_contains(NPC_BEHAVIOR, "else if (npc.inCombat())")
@@ -118,7 +118,7 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "PathValidation.checkPath(npc.getWorld(), npc.getLocation(), target.getLocation(), true)")
     require_contains(NPC_BEHAVIOR, "profile.getRangedProjectileVisual(npc)")
     require_contains(NPC_BEHAVIOR, "profile.getMagicProjectileVisual(npc, magicElement)")
-    require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, 0, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement")
+    require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, fireDefenseDebuffPercent, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.HOLY_MAGIC;")
 
     require_contains(RANGE_UTILS, "public static final int PLAYER_COMBAT_RANGE_BONUS = 2;")

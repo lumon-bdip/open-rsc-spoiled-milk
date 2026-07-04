@@ -21,6 +21,9 @@ ALLOWED_NPC_FIELDS = {
     "id",
     "name",
     "description",
+    "hits",
+    "attack",
+    "defense",
     "strength",
     "hairColour",
     "topColour",
@@ -96,7 +99,7 @@ def describe_npc_entry(entry: dict[str, Any]) -> str:
         field in entry for field in ("hairColour", "topColour", "bottomColour", "skinColour")
     ):
         return "identity"
-    if "strength" in entry:
+    if any(field in entry for field in ("hits", "attack", "defense", "strength")):
         return "strength"
 
     if not any(

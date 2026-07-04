@@ -190,8 +190,11 @@ def test_myworld_docs_are_consolidated() -> None:
 
     expected_by_category = {
         "in-progress-work-plans": [
+            "bug-fixes-and-small-updates.md",
             "chat-and-dialogue-channel-plan.md",
             "code-cleanup-and-modularization-plan.md",
+            "god-relic-reward-plan.md",
+            "herblaw-side-ingredient-expansion-plan.md",
             "legacy-limits-audit.md",
             "movement-pathing-release-plan.md",
             "ogg-audio-support-plan.md",
@@ -203,6 +206,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "roadmap.md",
             "summoning-plan.md",
             "terrain-expansion-plan.md",
+            "tier-11-magic-gear-plan.md",
             "work-items.md",
         ],
         "completed-work-plans": [

@@ -387,6 +387,7 @@
     },
     {
       "id": 713,
+      "hits": 30,
       "meleeDefenseMultiplier": 0.3,
       "rangedDefenseMultiplier": 0.2,
       "magicDefenseMultiplier": 1.0
