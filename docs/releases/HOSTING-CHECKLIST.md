@@ -28,12 +28,15 @@ same port to `scripts/package-player-release.sh`.
 
 1. Configure the host firewall and router port forwarding for TCP `43605` only.
    Do not forward the websocket port unless a selected client explicitly needs it.
-2. Start the hosted server with `./scripts/run-hosted-server.sh` or
-   `make run-hosted-server`. The command refuses to run unless the checkout is
-   clean `main` at the published `spoiled-milk/main` commit.
-3. Do not use `scripts/start-fresh.sh` for hosted play; that command recreates
+1. Run `./scripts/live-status.sh` and confirm no unsafe process owns public
+   port `43605`.
+1. Start the hosted server from `/tmp/spoiled-milk-live-main` with
+   `./scripts/run-hosted-server.sh`. The command refuses to run unless the
+   checkout is the configured live worktree, clean `main`, and at the published
+   `spoiled-milk/main` commit.
+1. Do not use `scripts/start-fresh.sh` for hosted play; that command recreates
    local development state.
-4. Start a configured release client, register a test account, log out, restart
+1. Start a configured release client, register a test account, log out, restart
    the server, and confirm the account and character progress persist.
 
 ## Routine Operation
@@ -50,6 +53,36 @@ same port to `scripts/package-player-release.sh`.
 
 The public hosted server must run from a dedicated clean `main` worktree, not
 from a feature, bugfix, refactor, or dirty development checkout.
+
+Approved live worktree:
+
+```text
+/tmp/spoiled-milk-live-main
+```
+
+Routine safety commands:
+
+```bash
+./scripts/live-status.sh
+./scripts/run-hosted-server.sh
+./scripts/stop-hosted-server.sh
+./scripts/stop-hosted-server.sh --yes
+```
+
+The status command reports the process ID, worktree, branch, commit, config,
+database, port, and launch marker. A server started before the safety refactor
+may report a missing marker until the next controlled restart.
+
+The public port is only fully safe when it reports:
+
+```text
+Verdict:  OK LIVE HOSTED SERVER
+Config:   myworld-host.conf
+DB:       spoiled_milk_alpha
+```
+
+Private development uses `server/myworld.conf`, the `myworld_dev` database, and
+port `43615`. It must never bind public player port `43605`.
 
 Use `./scripts/run-hosted-server.sh --dev-unsafe` only for private local
 testing. It bypasses the branch/dirty-worktree checks and must not be used for

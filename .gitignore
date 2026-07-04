@@ -154,6 +154,7 @@ Portable_Windows/HeidiSQL_11.1_64_Portable/Backups/
 server/conf/server/data/sleepwords/
 
 *.pid
+server/run/
 
 Client_Base/Cache/discord_inuse.txt
 
