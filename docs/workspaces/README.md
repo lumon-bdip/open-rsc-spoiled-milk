@@ -7,6 +7,7 @@ checkout.
 Create a workspace with:
 
 ```bash
+./scripts/create-ai-workspace.sh major-work
 ./scripts/create-ai-workspace.sh plan-work
 ./scripts/create-ai-workspace.sh small-tweaks
 ./scripts/create-ai-workspace.sh odds-and-ends
@@ -33,6 +34,8 @@ Check all worktrees and the live server with:
 
 ## Workspace Types
 
+- `major-work`: large features, reworks, refactors, and other implementation
+  branches expected to take multiple commits or testing passes.
 - `plan-work`: documentation, planning, audits, and design notes.
 - `small-tweaks`: focused bug fixes or tiny gameplay/content adjustments.
 - `odds-and-ends`: assets, cleanup, data review, and other low-risk follow-up

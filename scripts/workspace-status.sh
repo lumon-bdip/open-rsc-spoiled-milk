@@ -39,7 +39,7 @@ printf '\n'
 
 printf 'Named AI workspace targets:\n'
 parent_dir="${WORKSPACE_PARENT:-$HOME}"
-for workspace in plan-work small-tweaks odds-and-ends; do
+for workspace in major-work plan-work small-tweaks odds-and-ends; do
   target_dir="$parent_dir/Core-Framework-$workspace"
   if [[ -d "$target_dir/.git" || -f "$target_dir/.git" ]]; then
     branch="$(git -C "$target_dir" rev-parse --abbrev-ref HEAD 2>/dev/null || printf 'unknown')"

@@ -9,7 +9,7 @@ base_ref="${2:-}"
 
 usage() {
   cat <<'USAGE'
-Usage: ./scripts/create-ai-workspace.sh <plan-work|small-tweaks|odds-and-ends> [base-ref]
+Usage: ./scripts/create-ai-workspace.sh <major-work|plan-work|small-tweaks|odds-and-ends> [base-ref]
 
 Creates a sibling Git worktree for one AI/contributor work stream.
 
@@ -25,7 +25,7 @@ if [[ -z "$workspace" || "$workspace" == "-h" || "$workspace" == "--help" ]]; th
 fi
 
 case "$workspace" in
-  plan-work|small-tweaks|odds-and-ends)
+  major-work|plan-work|small-tweaks|odds-and-ends)
     ;;
   *)
     printf 'FAIL: unknown workspace: %s\n\n' "$workspace" >&2
