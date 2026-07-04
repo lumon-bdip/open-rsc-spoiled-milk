@@ -36,7 +36,7 @@ print_pid_status() {
   printf '  Port:     %s\n' "$port"
   printf '  Worktree: %s\n' "${root:-unknown}"
   printf '  Branch:   %s\n' "${branch:-unknown}"
-  printf '  Commit:   %s\n' "${commit:-unknown}"
+  printf '  Worktree commit: %s\n' "${commit:-unknown}"
   printf '  Config:   %s\n' "${conf:-unknown}"
   printf '  DB:       %s\n' "${db_name:-unknown}"
   printf '  Server:   %s\n' "${server_name:-unknown}"
@@ -56,9 +56,11 @@ print_pid_status() {
     source "$marker_path"
     printf '  Launch:   %s\n' "${marker_label:-unknown}"
     printf '  Started:  %s\n' "${marker_started_at:-unknown}"
-    printf '  Marker:   %s %s %s %s\n' "${marker_branch:-unknown}" "${marker_commit:-unknown}" "${marker_config:-unknown}" "${marker_db:-unknown}"
+    printf '  Launch commit: %s\n' "${marker_commit:-unknown}"
+    printf '  Marker:   %s %s %s\n' "${marker_branch:-unknown}" "${marker_config:-unknown}" "${marker_db:-unknown}"
   else
     printf '  Launch:   missing marker; server was likely started before launch markers existed\n'
+    printf '  Launch commit: unknown without a marker\n'
   fi
 
   if [[ -z "$root" || -z "$conf" ]]; then
