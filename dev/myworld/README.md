@@ -156,14 +156,14 @@ For fork-specific work, prefer the dedicated namespace:
 Architecture overview:
 
 - `../../docs/myworld/README.md`
-- `../../docs/myworld/archive/architecture-map.md`
-- `../../docs/myworld/archive/standalone-extraction-plan.md`
+- `../../docs/myworld/completed-work-plans/archive/architecture-map.md`
+- `../../docs/myworld/completed-work-plans/archive/standalone-extraction-plan.md`
 
 ## Notes
 
 - This setup intentionally does not modify the stock `cabbage` database.
 - The reset script clones `server/inc/sqlite/myworld_seed.db` into `server/inc/sqlite/myworld_dev.db`.
-- The compile and run scripts use the repo-bundled Ant launcher in `Portable_Windows/apache-ant-1.10.5/bin/ant`.
+- The compile and run scripts use the repo-bundled Ant launcher in `tools/vendor/apache-ant-1.10.5/bin/ant`.
 - `build`, `run`, `smoke`, `test`, and `doctor` now validate generated artifacts in `--check` mode by default and do not rewrite them as a side effect.
 - After editing `tools/generators/item-overrides` or `tools/generators/npc-overrides`, explicitly sync the committed generated defs with `make generators` or `make sync-generated` before compiling or running.
 - `myworld.conf` keeps the Cabbage feature set but changes the world identity, ports, and dev-only operational settings.

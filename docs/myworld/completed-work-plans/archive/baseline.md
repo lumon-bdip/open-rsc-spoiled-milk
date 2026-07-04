@@ -22,7 +22,7 @@ It is derived from `RSC Cabbage`, but it is not intended to modify the stock
 
 ## Operational choices
 
-- Keep inherited non-MyWorld SQLite seeds archived under `docs/inherited-openrsc/sqlite-seeds/` as reference data
+- Keep inherited non-MyWorld SQLite seeds archived under `legacy/docs/inherited-openrsc/sqlite-seeds/` as reference data
 - Reset local dev state by cloning the MyWorld seed database
 - Use separate ports from stock Cabbage
 - Keep MyWorld scoped to PvM rather than carrying duel / wilderness PvP

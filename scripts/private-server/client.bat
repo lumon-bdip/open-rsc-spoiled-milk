@@ -2,8 +2,8 @@
 setlocal
 
 set "SCRIPT_DIR=%~dp0"
-for %%I in ("%SCRIPT_DIR%..") do set "ROOT_DIR=%%~fI"
-set "ANT_HOME=%ROOT_DIR%\Portable_Windows\apache-ant-1.10.5"
+for %%I in ("%SCRIPT_DIR%..\..") do set "ROOT_DIR=%%~fI"
+set "ANT_HOME=%ROOT_DIR%\tools\vendor\apache-ant-1.10.5"
 set "ANT_BIN=%ANT_HOME%\bin\ant.bat"
 
 echo Spoiled Milk local client

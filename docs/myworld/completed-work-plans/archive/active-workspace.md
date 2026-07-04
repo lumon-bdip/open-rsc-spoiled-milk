@@ -29,12 +29,12 @@ This file defines the current active workspace while the standalone migration is
 
 ## Archived Inherited Areas
 
-- `docs/inherited-openrsc/`: upstream OpenRSC/Cabbage reference material.
-- `docs/inherited-openrsc/legacy-launchers/`: old root launch and deployment scripts.
-- `docs/inherited-openrsc/legacy-server-launchers/`: old server-local launcher wrappers.
-- `docs/inherited-openrsc/legacy-Makefile`: inherited OpenRSC/Cabbage Make recipes kept for reference.
-- `docs/inherited-openrsc/server-configs/`: inherited non-MyWorld server config presets.
-- `docs/inherited-openrsc/sqlite-seeds/`: inherited non-MyWorld SQLite seeds.
+- `legacy/docs/inherited-openrsc/`: upstream OpenRSC/Cabbage reference material.
+- `legacy/docs/inherited-openrsc/legacy-launchers/`: old root launch and deployment scripts.
+- `legacy/docs/inherited-openrsc/legacy-server-launchers/`: old server-local launcher wrappers.
+- `legacy/docs/inherited-openrsc/legacy-Makefile`: inherited OpenRSC/Cabbage Make recipes kept for reference.
+- `legacy/docs/inherited-openrsc/server-configs/`: inherited non-MyWorld server config presets.
+- `legacy/docs/inherited-openrsc/sqlite-seeds/`: inherited non-MyWorld SQLite seeds.
 
 Archived files are not active MyWorld workflow files. Do not update them for normal gameplay/content work unless preserving historical reference is the task.
 

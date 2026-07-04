@@ -140,15 +140,18 @@ def test_active_server_configs_are_myworld_only() -> None:
         "uranium.conf",
     ]
     for name in archived_configs:
-        if not (ROOT / "docs" / "inherited-openrsc" / "server-configs" / name).exists():
+        if not (ROOT / "legacy" / "docs" / "inherited-openrsc" / "server-configs" / name).exists():
             fail(f"Archived inherited server config is missing: {name}")
 
 
 def test_active_sqlite_seeds_are_myworld_only() -> None:
     active_sqlite = sorted(path.name for path in (ROOT / "server" / "inc" / "sqlite").glob("*.db"))
-    expected_sqlite = ["myworld_dev.db", "myworld_seed.db", "spoiled_milk_alpha.db"]
-    if active_sqlite != expected_sqlite:
-        fail(f"Active server/inc/sqlite/*.db files must be {expected_sqlite}, got {active_sqlite}")
+    allowed_sqlite = ["myworld_dev.db", "myworld_seed.db", "spoiled_milk_alpha.db"]
+    unexpected_sqlite = [name for name in active_sqlite if name not in allowed_sqlite]
+    if unexpected_sqlite:
+        fail(f"Active server/inc/sqlite/*.db files must be MyWorld-only, got unexpected files {unexpected_sqlite}")
+    if "myworld_seed.db" not in active_sqlite:
+        fail("Active server/inc/sqlite/ is missing committed MyWorld seed database: myworld_seed.db")
 
     archived_seeds = [
         "2001scape.db",
@@ -160,7 +163,7 @@ def test_active_sqlite_seeds_are_myworld_only() -> None:
         "uranium.db",
     ]
     for name in archived_seeds:
-        if not (ROOT / "docs" / "inherited-openrsc" / "sqlite-seeds" / name).exists():
+        if not (ROOT / "legacy" / "docs" / "inherited-openrsc" / "sqlite-seeds" / name).exists():
             fail(f"Archived inherited SQLite seed is missing: {name}")
 
 
@@ -264,9 +267,11 @@ def test_myworld_docs_are_consolidated() -> None:
 
 
 def test_inherited_root_files_are_archived() -> None:
+    require_contains(ROOT / "CONTRIBUTING.md", "Contributing to Spoiled Milk")
+    require_contains(ROOT / "CONTRIBUTING.md", "docs/contributor-guides/README.md")
+
     root_doc_names = [
         "Commands.md",
-        "CONTRIBUTING.md",
         "Linux Getting Started Guide.md",
         "MacOS Getting Started Guide.md",
         "Raspberry Pi Getting Started Guide .md",
@@ -276,10 +281,10 @@ def test_inherited_root_files_are_archived() -> None:
     for name in root_doc_names:
         if (ROOT / name).exists():
             fail(f"Inherited guide should stay archived, not at repo root: {name}")
-        if not (ROOT / "docs" / "inherited-openrsc" / name).exists():
+        if not (ROOT / "legacy" / "docs" / "inherited-openrsc" / name).exists():
             fail(f"Archived inherited guide is missing: {name}")
 
-    require_contains(ROOT / "docs" / "inherited-openrsc" / "README.md", "current MyWorld setup")
+    require_contains(ROOT / "legacy" / "docs" / "inherited-openrsc" / "README.md", "current MyWorld setup")
 
     root_launcher_names = [
         "Start-Linux.sh",
@@ -289,7 +294,7 @@ def test_inherited_root_files_are_archived() -> None:
     for name in root_launcher_names:
         if (ROOT / name).exists():
             fail(f"Inherited launcher should stay archived, not at repo root: {name}")
-        if not (ROOT / "docs" / "inherited-openrsc" / "legacy-launchers" / name).exists():
+        if not (ROOT / "legacy" / "docs" / "inherited-openrsc" / "legacy-launchers" / name).exists():
             fail(f"Archived inherited launcher is missing: {name}")
 
     server_launcher_names = [
@@ -299,7 +304,7 @@ def test_inherited_root_files_are_archived() -> None:
     for name in server_launcher_names:
         if (ROOT / "server" / name).exists():
             fail(f"Inherited server launcher should stay archived, not under server/: {name}")
-        if not (ROOT / "docs" / "inherited-openrsc" / "legacy-server-launchers" / name).exists():
+        if not (ROOT / "legacy" / "docs" / "inherited-openrsc" / "legacy-server-launchers" / name).exists():
             fail(f"Archived inherited server launcher is missing: {name}")
 
 

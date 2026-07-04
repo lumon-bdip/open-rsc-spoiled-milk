@@ -229,6 +229,14 @@ Check what is running with `./scripts/live-status.sh`.
 Current development notes are indexed in
 [`docs/myworld/README.md`](docs/myworld/README.md).
 
+Project workspace and hosting references:
+
+- [`docs/workspaces/`](docs/workspaces/): safe multi-worktree setup for
+  AI/contributor sessions.
+- [`docs/hosting/`](docs/hosting/): current private-server hosting notes.
+- [`legacy/`](legacy/): archived inherited material that is not part of the
+  current build, release, or hosted-server workflow.
+
 ## Credits
 
 New visual assets use the following source breakdown:

@@ -16,7 +16,7 @@ The standard release connects to a public server that anyone is welcome to join.
    - If you do not use Git, use GitHub's green `Code` button, choose
      `Download ZIP`, then extract the ZIP somewhere easy to find.
    - Do not run the files from inside the ZIP. Extract it first.
-3. Open the `Private Server Hosting` folder.
+3. Open the `scripts/private-server` folder.
 4. Run the server file for your system.
 5. Wait for the server window to finish building and say it is running.
 6. Run the client file for your system.
@@ -46,13 +46,13 @@ The slightly more cumbersome way is to open the Terminal app, drag the `.sh` int
 Enter. If dragging does not work, type this from the repo folder:
 
 ```text
-sh "Private Server Hosting/server.sh"
+sh "scripts/private-server/server.sh"
 ```
 
 For the client:
 
 ```text
-sh "Private Server Hosting/client.sh"
+sh "scripts/private-server/client.sh"
 ```
 
 ## Playing With Friends On The Same Network

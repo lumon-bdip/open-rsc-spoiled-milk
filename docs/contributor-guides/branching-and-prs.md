@@ -30,6 +30,10 @@ A branch should usually answer one question:
 
 Avoid mixing unrelated gameplay, artwork, formatting, and cleanup changes.
 
+When multiple AI sessions or contributors need to work at once, use separate
+Git worktrees instead of switching branches inside one folder. The standard
+workspace setup is documented in [`../workspaces/README.md`](../workspaces/README.md).
+
 ## Small Fixes
 
 Small bugs and minor updates can be tracked in:

@@ -7,7 +7,7 @@ if [[ ! -f "$ROOT_DIR/server/build.xml" || ! -d "$ROOT_DIR/scripts" ]]; then
   printf 'WARN: Ignoring invalid ROOT_DIR=%s; using %s\n' "$ROOT_DIR" "$MYWORLD_INFERRED_ROOT" >&2
   ROOT_DIR="$MYWORLD_INFERRED_ROOT"
 fi
-ANT_HOME="${ANT_HOME:-$ROOT_DIR/Portable_Windows/apache-ant-1.10.5}"
+ANT_HOME="${ANT_HOME:-$ROOT_DIR/tools/vendor/apache-ant-1.10.5}"
 ANT_BIN="${ANT_BIN:-$ANT_HOME/bin/ant}"
 MYWORLD_GENERATOR_RUNNER="$ROOT_DIR/tools/generators/run-generators.py"
 MYWORLD_LIVE_ROOT="${MYWORLD_LIVE_ROOT:-/tmp/spoiled-milk-live-main}"

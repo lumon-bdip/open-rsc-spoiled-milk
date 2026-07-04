@@ -31,6 +31,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 - [Contributor guides](../contributor-guides/README.md): owner and contributor
   workflow, branch rules, pull requests, submissions, and AI-assisted work.
+- [AI workspaces](../workspaces/README.md): separate worktree setup for
+  multiple AI/contributor sessions.
+- [Hosting docs](../hosting/README.md): current private-server hosting notes.
 - [Renderer and shader roadmap](in-progress-work-plans/renderer-and-shader-roadmap.md):
   current AI-facing source of truth for renderer-v2, remaster lighting, shadows,
   shader work, and major optimization direction.
@@ -148,7 +151,11 @@ Active MyWorld workflow:
 - `scripts/`: current build, check, run, reset, test, and benchmark wrappers.
 - `tools/generators/`: authored generated-data sources and generator code.
 - `tools/benchmarks/`: current benchmark helpers.
+- `tools/vendor/apache-ant-1.10.5/`: repo-bundled Ant launcher used by the
+  current script wrappers.
 - `tests/myworld/`: current MyWorld validation suite.
+- `docs/hosting/`: private-server hosting documentation.
+- `docs/workspaces/`: AI/contributor worktree setup and workspace scopes.
 - `docs/releases/`: player packaging, hosted-alpha, and publication checklists.
 - `server/myworld.conf`: active local server config.
 - `server/connections.conf`: required shared connection config.
@@ -167,9 +174,12 @@ Compatibility areas:
 
 Archived reference:
 
+- `legacy/`: single root archive for unmaintained inherited clients, old
+  Windows portable tooling, old CI/database helpers, IDE metadata, and stray
+  root artifacts.
 - `docs/myworld/completed-work-plans/archive/`: old MyWorld planning docs and
   detailed audits.
-- `docs/inherited-openrsc/`: inherited OpenRSC/Cabbage docs, launchers,
+- `legacy/docs/inherited-openrsc/`: inherited OpenRSC/Cabbage docs, launchers,
   configs, SQLite seeds, and Make recipes.
 
 ## Validation

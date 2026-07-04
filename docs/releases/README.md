@@ -10,4 +10,4 @@ Release and publication documentation for Spoiled Milk:
 
 Player releases are client packages for the hosted Spoiled Milk world. They are
 not downloadable private server bundles, and they do not use the inherited
-`PC_Launcher`.
+`legacy/clients/PC_Launcher`.

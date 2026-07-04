@@ -19,6 +19,8 @@ people are added to the project.
   submitted without automatically changing the game.
 - [AI-assisted workflow](ai-assisted-workflow.md): rules for contributors using
   AI tools.
+- [AI workspaces](../workspaces/README.md): separate worktree setup for running
+  multiple AI/contributor sessions without mixing branches.
 - [GitHub owner setup](github-owner-setup.md): recommended GitHub settings for
   protecting the project.
 

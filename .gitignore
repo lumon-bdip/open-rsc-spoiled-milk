@@ -94,6 +94,8 @@ tmp/
 __pycache__/
 *.class
 .codex
+.env
+AI_WORKSPACE.md
 
 # Local Eclipse/Buildship project metadata.
 Android_Client/.project

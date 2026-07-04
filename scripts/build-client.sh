@@ -7,7 +7,7 @@ if [[ ! -f "$ROOT_DIR/Client_Base/build.xml" || ! -d "$ROOT_DIR/scripts" ]]; the
   printf 'WARN: Ignoring invalid ROOT_DIR=%s; using %s\n' "$ROOT_DIR" "$SCRIPT_ROOT" >&2
   ROOT_DIR="$SCRIPT_ROOT"
 fi
-ANT_HOME="${ANT_HOME:-$ROOT_DIR/Portable_Windows/apache-ant-1.10.5}"
+ANT_HOME="${ANT_HOME:-$ROOT_DIR/tools/vendor/apache-ant-1.10.5}"
 ANT_BIN="${ANT_BIN:-$ANT_HOME/bin/ant}"
 
 if [[ ! -f "$ANT_BIN" ]]; then

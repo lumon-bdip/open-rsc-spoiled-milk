@@ -37,7 +37,7 @@ help:
 		'  make layout-check      # MyWorld plugin namespace regression check' \
 		'  make boundary-check    # MyWorld import boundary regression check' \
 		'' \
-		'Legacy OpenRSC/Cabbage Make recipes are archived at docs/inherited-openrsc/legacy-Makefile.'
+		'Legacy OpenRSC/Cabbage Make recipes are archived at legacy/docs/inherited-openrsc/legacy-Makefile.'
 
 build-client:
 	./scripts/build-client.sh
@@ -139,7 +139,7 @@ run-client:
 compile: build-server build-client
 
 combined-install:
-	@printf '%s\n' 'Legacy Deployment_Scripts have been archived under docs/inherited-openrsc/legacy-launchers/. Use make check, make build-server, and make run for MyWorld.'
+	@printf '%s\n' 'Legacy Deployment_Scripts have been archived under legacy/docs/inherited-openrsc/legacy-launchers/. Use make check, make build-server, and make run for MyWorld.'
 
 get-updates:
-	@printf '%s\n' 'Legacy Deployment_Scripts have been archived under docs/inherited-openrsc/legacy-launchers/. Use git pull plus the root MyWorld targets.'
+	@printf '%s\n' 'Legacy Deployment_Scripts have been archived under legacy/docs/inherited-openrsc/legacy-launchers/. Use git pull plus the root MyWorld targets.'

@@ -249,4 +249,4 @@ Inspection helpers:
 
 ## Existing Full Reference
 
-The inherited OpenRSC command reference is preserved at `docs/inherited-openrsc/Commands.md`. That file is broader and older; this MyWorld reference is the practical list for the current dev account.
+The inherited OpenRSC command reference is preserved at `legacy/docs/inherited-openrsc/Commands.md`. That file is broader and older; this MyWorld reference is the practical list for the current dev account.

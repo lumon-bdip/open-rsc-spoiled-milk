@@ -114,7 +114,7 @@ Success criteria:
 - MyWorld generators live under `tools/generators`.
 - MyWorld benchmark helpers live under `tools/benchmarks`.
 - MyWorld validation lives under `tests/myworld`.
-- Inherited docs, launchers, configs, seeds, and Make recipes are archived under `docs/inherited-openrsc/`.
+- Inherited docs, launchers, configs, seeds, and Make recipes are archived under `legacy/docs/inherited-openrsc/`.
 - The active workspace boundary is documented in `docs/myworld/active-workspace.md`.
 - `test-standalone-layout.py` guards the current standalone layout.
 

@@ -13,7 +13,7 @@ This is the consolidated record of major MyWorld changes made so far. Detailed l
   `dev/myworld/assets/` as the active client visual-asset source.
 - Added `server/inc/sqlite/myworld_seed.db` as the canonical local seed.
 - Made `server/myworld.conf` the direct Ant default and Java no-argument fallback.
-- Archived inherited OpenRSC/Cabbage docs, launchers, server configs, SQLite seeds, and Make recipes under `docs/inherited-openrsc/`.
+- Archived inherited OpenRSC/Cabbage docs, launchers, server configs, SQLite seeds, and Make recipes under `legacy/docs/inherited-openrsc/`.
 - Reduced active server configs to `server/myworld.conf` and `server/connections.conf`.
 - Reduced active SQLite databases to `myworld_seed.db` and local `myworld_dev.db`.
 - Added `test-standalone-layout.py` to guard the standalone shape.

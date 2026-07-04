@@ -4,15 +4,15 @@ This repo still contains inherited OpenRSC/Cabbage files while the standalone ex
 
 ## Server Configs
 
-Archived under `docs/inherited-openrsc/server-configs/`:
+Archived under `legacy/docs/inherited-openrsc/server-configs/`:
 
-- `docs/inherited-openrsc/server-configs/2001scape.conf`
-- `docs/inherited-openrsc/server-configs/default.conf`
-- `docs/inherited-openrsc/server-configs/openpk.conf`
-- `docs/inherited-openrsc/server-configs/preservation.conf`
-- `docs/inherited-openrsc/server-configs/rsccabbage.conf`
-- `docs/inherited-openrsc/server-configs/rsccoleslaw.conf`
-- `docs/inherited-openrsc/server-configs/uranium.conf`
+- `legacy/docs/inherited-openrsc/server-configs/2001scape.conf`
+- `legacy/docs/inherited-openrsc/server-configs/default.conf`
+- `legacy/docs/inherited-openrsc/server-configs/openpk.conf`
+- `legacy/docs/inherited-openrsc/server-configs/preservation.conf`
+- `legacy/docs/inherited-openrsc/server-configs/rsccabbage.conf`
+- `legacy/docs/inherited-openrsc/server-configs/rsccoleslaw.conf`
+- `legacy/docs/inherited-openrsc/server-configs/uranium.conf`
 
 Keep:
 
@@ -21,15 +21,15 @@ Keep:
 
 ## Root Legacy Docs
 
-Archived under `docs/inherited-openrsc/`:
+Archived under `legacy/docs/inherited-openrsc/`:
 
-- `docs/inherited-openrsc/Linux Getting Started Guide.md`
-- `docs/inherited-openrsc/MacOS Getting Started Guide.md`
-- `docs/inherited-openrsc/Windows Getting Started Guide.md`
-- `docs/inherited-openrsc/Raspberry Pi Getting Started Guide .md`
-- `docs/inherited-openrsc/Commands.md`
-- `docs/inherited-openrsc/CONTRIBUTING.md`
-- `docs/inherited-openrsc/SECURITY.md`
+- `legacy/docs/inherited-openrsc/Linux Getting Started Guide.md`
+- `legacy/docs/inherited-openrsc/MacOS Getting Started Guide.md`
+- `legacy/docs/inherited-openrsc/Windows Getting Started Guide.md`
+- `legacy/docs/inherited-openrsc/Raspberry Pi Getting Started Guide .md`
+- `legacy/docs/inherited-openrsc/Commands.md`
+- `legacy/docs/inherited-openrsc/CONTRIBUTING.md`
+- `legacy/docs/inherited-openrsc/SECURITY.md`
 
 Keep or rewrite:
 
@@ -46,13 +46,13 @@ The PC client currently still uses `Client_Base/` and `PC_Client/`, so those are
 
 ## Deployment Scripts
 
-Archived under `docs/inherited-openrsc/`:
+Archived under `legacy/docs/inherited-openrsc/`:
 
-- `docs/inherited-openrsc/legacy-launchers/Deployment_Scripts/`
-- `docs/inherited-openrsc/legacy-launchers/Start-Linux.sh`
-- `docs/inherited-openrsc/legacy-launchers/Start-Windows.cmd`
-- `docs/inherited-openrsc/legacy-server-launchers/ant_launcher.sh`
-- `docs/inherited-openrsc/legacy-server-launchers/run_server.sh`
+- `legacy/docs/inherited-openrsc/legacy-launchers/Deployment_Scripts/`
+- `legacy/docs/inherited-openrsc/legacy-launchers/Start-Linux.sh`
+- `legacy/docs/inherited-openrsc/legacy-launchers/Start-Windows.cmd`
+- `legacy/docs/inherited-openrsc/legacy-server-launchers/ant_launcher.sh`
+- `legacy/docs/inherited-openrsc/legacy-server-launchers/run_server.sh`
 
 Keep active:
 
@@ -67,15 +67,15 @@ Keep:
 - `server/inc/sqlite/myworld_seed.db`
 - `server/inc/sqlite/myworld_dev.db` as local dev state, not a canonical seed
 
-Archived under `docs/inherited-openrsc/sqlite-seeds/`:
+Archived under `legacy/docs/inherited-openrsc/sqlite-seeds/`:
 
-- `docs/inherited-openrsc/sqlite-seeds/2001scape.db`
-- `docs/inherited-openrsc/sqlite-seeds/cabbage.db`
-- `docs/inherited-openrsc/sqlite-seeds/coleslaw.db`
-- `docs/inherited-openrsc/sqlite-seeds/openpk.db`
-- `docs/inherited-openrsc/sqlite-seeds/openrsc.db`
-- `docs/inherited-openrsc/sqlite-seeds/preservation.db`
-- `docs/inherited-openrsc/sqlite-seeds/uranium.db`
+- `legacy/docs/inherited-openrsc/sqlite-seeds/2001scape.db`
+- `legacy/docs/inherited-openrsc/sqlite-seeds/cabbage.db`
+- `legacy/docs/inherited-openrsc/sqlite-seeds/coleslaw.db`
+- `legacy/docs/inherited-openrsc/sqlite-seeds/openpk.db`
+- `legacy/docs/inherited-openrsc/sqlite-seeds/openrsc.db`
+- `legacy/docs/inherited-openrsc/sqlite-seeds/preservation.db`
+- `legacy/docs/inherited-openrsc/sqlite-seeds/uranium.db`
 
 ## Next Safe Action
 
