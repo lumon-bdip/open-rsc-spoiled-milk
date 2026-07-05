@@ -11,6 +11,7 @@ SERVER = ROOT / "server"
 MYWORLD_CONF = SERVER / "myworld.conf"
 NPC = SERVER / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "Npc.java"
 SPELL_HANDLER = SERVER / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "SpellHandler.java"
+DUEL_HANDLER = SERVER / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "PlayerDuelHandler.java"
 ATTACK_PLAYER = SERVER / "plugins" / "com" / "openrsc" / "server" / "plugins" / "shared" / "AttackPlayer.java"
 PK_BOT = SERVER / "plugins" / "com" / "openrsc" / "server" / "plugins" / "custom" / "npcs" / "PkBot.java"
 
@@ -91,6 +92,12 @@ def main() -> None:
     require_config_false("want_pk_bots")
     require_config_false("want_openpk_presets")
     require_contains(ATTACK_PLAYER, "if (!player.getConfig().WANT_PVP)")
+    require_contains(DUEL_HANDLER, "dueling is currently inactive until pvp with aoe rules is properly tested")
+    require_regex(
+        DUEL_HANDLER,
+        r"if \(!duelingEnabled\(\)\) \{\s*disableDueling\(player\);\s*return;\s*\}",
+        "dueling stays hard-disabled until PvP AoE rules are tested",
+    )
     require_contains(PK_BOT, "if (!player.getLocation().inWilderness())")
 
     validate_no_external_drop_items_calls()
