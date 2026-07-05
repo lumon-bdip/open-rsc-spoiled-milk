@@ -5,6 +5,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcDrops;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.external.ObjectFishDef;
@@ -16,6 +17,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -117,6 +119,9 @@ public final class Development implements CommandTrigger {
 		}
 		else if (command.equalsIgnoreCase("advtime")) {
 			advanceWorldTime(player, command, args);
+		}
+		else if (command.equalsIgnoreCase("devotion")) {
+			setDevotion(player, command, args);
 		}
 		else if (command.equalsIgnoreCase("error")) {
 			// used to verify logging of errors/stdout
@@ -260,6 +265,54 @@ public final class Development implements CommandTrigger {
 
 	private String twoDigits(int value) {
 		return value < 10 ? "0" + value : Integer.toString(value);
+	}
+
+	private void setDevotion(Player player, String command, String[] args) {
+		if (args.length != 1 && args.length != 2) {
+			player.message(badSyntaxPrefix + command.toUpperCase() + " [value] OR ::" + command + " [player] [value]");
+			return;
+		}
+
+		Player targetPlayer = player;
+		String valueText = args[0];
+		if (args.length == 2) {
+			targetPlayer = player.getWorld().getPlayer(DataConversions.usernameToHash(args[0]));
+			valueText = args[1];
+			if (targetPlayer == null) {
+				player.message(messagePrefix + "Invalid name or player is not online");
+				return;
+			}
+		}
+
+		final int devotionLevel;
+		try {
+			devotionLevel = Integer.parseInt(valueText);
+		} catch (NumberFormatException ex) {
+			player.message(badSyntaxPrefix + command.toUpperCase() + " [value] OR ::" + command + " [player] [value]");
+			return;
+		}
+
+		if (devotionLevel < Devotion.MIN_DEVOTION_LEVEL || devotionLevel > Devotion.MAX_DEVOTION_LEVEL) {
+			player.message(badSyntaxPrefix + command.toUpperCase() + " devotion must be between "
+				+ Devotion.MIN_DEVOTION_LEVEL + " and " + Devotion.MAX_DEVOTION_LEVEL);
+			return;
+		}
+
+		final PrayerCatalog.GodLine godLine = targetPlayer.getPrayerBook();
+		Devotion.setDevotionLevel(targetPlayer, godLine, devotionLevel);
+		final int updatedDevotion = Devotion.getDevotionLevel(targetPlayer, godLine);
+		player.message(messagePrefix + targetPlayer.getUsername() + "'s " + formatGodLine(godLine)
+			+ " devotion set to " + updatedDevotion + ".");
+		if (targetPlayer != player) {
+			targetPlayer.message(messagePrefix + "Your " + formatGodLine(godLine)
+				+ " devotion was set to " + updatedDevotion + ".");
+		}
+	}
+
+	private String formatGodLine(PrayerCatalog.GodLine godLine) {
+		final PrayerCatalog.GodLine safeGodLine = godLine == null ? PrayerCatalog.getDefaultGodLine() : godLine;
+		final String lower = safeGodLine.name().toLowerCase();
+		return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
 	}
 
 	private void forceNearbyNpcAggro(Player player, String command, String[] args) {
