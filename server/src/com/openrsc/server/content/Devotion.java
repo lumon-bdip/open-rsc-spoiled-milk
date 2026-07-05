@@ -90,6 +90,17 @@ public final class Devotion {
 		return getDevotionLevel(player, player.getPrayerBook());
 	}
 
+	public static void setDevotionLevel(final Player player, final PrayerCatalog.GodLine godLine, final int devotionLevel) {
+		if (player == null || godLine == null || !player.getConfig().WANT_MYWORLD) {
+			return;
+		}
+		final int clampedDevotionLevel = clampDevotionLevel(devotionLevel);
+		player.getCache().set(getOfferingCacheKey(godLine), clampedDevotionLevel * OFFERINGS_PER_DEVOTION_LEVEL);
+		ActionSender.sendDevotion(player);
+		ActionSender.sendEquipmentStats(player);
+		player.getPrayers().deactivateOverflowingPrayers();
+	}
+
 	public static void addDevotionLevels(final Player player, final PrayerCatalog.GodLine godLine, final int devotionLevels) {
 		if (player == null || godLine == null || devotionLevels <= 0 || !player.getConfig().WANT_MYWORLD) {
 			return;
