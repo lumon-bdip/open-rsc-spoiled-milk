@@ -99,20 +99,26 @@ def main():
             "Server prayer catalog should reserve the special-prayer slot")
     require('new boolean[PrayerCatalog.PRAYERS_PER_BOOK]' in prayers,
             "Server prayer state should track the current 16-slot god line")
-    require('"Divine Grace"' in catalog and '"Divine Retribution"' in catalog,
+    require('"Saving Grace"' in catalog and '"Divine Grace"' not in catalog and '"Divine Retribution"' in catalog,
             "Prayer catalog should include the Saradomin and Zamorak special prayers")
     require('"Corrosive Aura"' in catalog and "GodLine.GUTHIX" in catalog,
             "Prayer catalog should include the Guthix special prayer")
     require("Prayers.DIVINE_GRACE" in divine_grace and "PrayerCatalog.GodLine.SARADOMIN" in divine_grace,
-            "Divine Grace should be gated to Saradomin's special slot")
+            "Saving Grace should be gated to Saradomin's special slot")
+    require("ItemId.SARADOMIN_MACE.id()" in divine_grace,
+            "Saving Grace should require the Saradomin mace")
     require("new CombatEffect(attacker, CombatEffect.DIVINE_GRACE)" in divine_grace,
-            "Divine Grace proc should display its on-player combat effect")
+            "Saving Grace proc should display its on-player combat effect")
     require("Prayers.DIVINE_RETRIBUTION" in divine_retribution and "PrayerCatalog.GodLine.ZAMORAK" in divine_retribution,
             "Divine Retribution should be gated to Zamorak's special slot")
+    require("ItemId.ZAMORAK_MACE.id()" in divine_retribution,
+            "Divine Retribution should require the Zamorak mace")
     require("new CombatEffect(attacker, CombatEffect.DIVINE_RETRIBUTION)" in divine_retribution,
             "Divine Retribution proc should display its on-enemy combat effect")
     require("Prayers.CORROSIVE_AURA" in corrosive_aura and "PrayerCatalog.GodLine.GUTHIX" in corrosive_aura,
             "Corrosive Aura should be gated to Guthix's special slot")
+    require("ItemId.GUTHIX_MACE.id()" in corrosive_aura,
+            "Corrosive Aura should require the Guthix mace")
     require("MIN_POISON_POWER = 10" in corrosive_aura and "MAX_POISON_POWER = 50" in corrosive_aura
             and "MAX_POWER_HEALTH_FRACTION = 0.30D" in corrosive_aura,
             "Corrosive Aura poison stacks should scale from 10 to 50 below 30% HP")
@@ -124,6 +130,12 @@ def main():
         require("CorrosiveAura.apply(" in source, f"Corrosive Aura should run from {label} successful player damage")
     require("prayers.canActivate(prayerID)" in prayer_handler,
             "Prayer activation should use allocation capacity checks")
+    require("getActivationBlockMessage(prayerID)" in prayer_handler
+            and "getRequiredSpecialPrayerMace" in prayers
+            and "getActivationPointCost" in prayers
+            and "getRequiredGodCape" in prayers
+            and "deactivateUnavailableEquipmentPrayers" in prayers,
+            "Special prayers should be blocked by mace and discounted by the matching god cape")
     require("getReqLevel" not in prayer_handler and "Return to a church to recharge" not in prayer_handler,
             "Prayer activation should not use legacy level/drain gating")
     require("player.getConfig().WANT_MYWORLD" in prayer_drain and "stop();" in prayer_drain,

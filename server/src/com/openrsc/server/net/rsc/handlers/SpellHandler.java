@@ -2083,15 +2083,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					case FLAMES_OF_ZAMORAK:
 					case ZAMORAKS_APOCOLYPSE:
 						if (!getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_GUTHIX.id()) && isGuthixGodSpell(spellEnum)) {
-							getPlayer().message("you must weild the staff of guthix to cast this spell");
+							getPlayer().message("You lack the necessary holy artifact");
 							return;
 						}
 						if (!getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_SARADOMIN.id()) && isSaradominGodSpell(spellEnum)) {
-							getPlayer().message("you must weild the staff of saradomin to cast this spell");
+							getPlayer().message("You lack the necessary holy artifact");
 							return;
 						}
 						if (!getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_ZAMORAK.id()) && isZamorakGodSpell(spellEnum)) {
-							getPlayer().message("you must weild the staff of zamorak to cast this spell");
+							getPlayer().message("You lack the necessary holy artifact");
 							return;
 						}
 

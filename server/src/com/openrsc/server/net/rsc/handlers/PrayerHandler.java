@@ -36,9 +36,10 @@ public class PrayerHandler implements PayloadProcessor<PrayerStruct, OpcodeIn> {
 				return;
 			}
 			if (!prayers.canActivate(prayerID)) {
-				final PrayerCatalog.PrayerDefinition definition = PrayerCatalog.getDefinition(player.getPrayerBook(), prayerID);
-				final int pointCost = definition != null ? definition.getPointCost() : 0;
-				player.message("You need " + pointCost + " free prayer points to activate this prayer");
+				final String blockMessage = prayers.getActivationBlockMessage(prayerID);
+				if (blockMessage != null) {
+					player.message(blockMessage);
+				}
 				return;
 			}
 			prayers.setPrayer(prayerID, true);

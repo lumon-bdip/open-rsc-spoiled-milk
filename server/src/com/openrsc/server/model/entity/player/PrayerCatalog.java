@@ -184,7 +184,7 @@ public final class PrayerCatalog {
 			GodLine.SARADOMIN,
 			PrayerKind.SPECIAL,
 			1,
-			"Divine Grace",
+			"Saving Grace",
 			60,
 			0,
 			null,
