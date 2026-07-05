@@ -16,6 +16,7 @@ NPC = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity
 NPC_DROPS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "constants" / "NpcDrops.java"
 NPC_BEHAVIOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcBehavior.java"
 NPC_ATTACK_STYLE_PROFILE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcAttackStyleProfile.java"
+COMBAT_FORMULA = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "CombatFormula.java"
 GROUND_ITEM = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "GroundItem.java"
 DROP_TABLE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "DropTable.java"
 ATTACK_HANDLER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "AttackHandler.java"
@@ -26,6 +27,8 @@ THROWING_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event
 MAGIC_COMBAT_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "MagicCombatEvent.java"
 WALK_TO_MOB_ACTION = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "action" / "WalkToMobAction.java"
 CLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
+MYWORLD_CONF = ROOT / "server" / "myworld.conf"
+MYWORLD_HOST_CONF = ROOT / "server" / "myworld-host.conf"
 
 
 def fail(message: str) -> None:
@@ -120,6 +123,18 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "profile.getMagicProjectileVisual(npc, magicElement)")
     require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, fireDefenseDebuffPercent, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.HOLY_MAGIC;")
+
+    require_contains(COMBAT_FORMULA, "applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getMeleeDefense()))")
+    require_contains(COMBAT_FORMULA, "applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getRangedDefense()))")
+    require_contains(COMBAT_FORMULA, "int defenseMax = defenseToMitigation(victim.getMagicDefense());")
+    require_contains(NPC_BEHAVIOR, "CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false)")
+    require_contains(NPC_BEHAVIOR, "CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc))")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1, Math.max(npc.getDef().getAtt(), npc.getDef().getStr()));")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1.0D, getMagicOffense(npc) / 12.0D);")
+    require_contains(NPC, "return NpcAttackStyleProfile.forNpc(this).getMagicOffense(this);")
+    require_contains(NPC, "return applyFireDefenseDebuffToValue(defense);")
+    require_contains(MYWORLD_CONF, "osrs_combat_ranged: false")
+    require_contains(MYWORLD_HOST_CONF, "osrs_combat_ranged: false")
 
     require_contains(RANGE_UTILS, "public static final int PLAYER_COMBAT_RANGE_BONUS = 2;")
     require_contains(RANGE_UTILS, "return Math.max(1, attackRadius - PLAYER_POSITIONING_RANGE_REDUCTION);")

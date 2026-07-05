@@ -188,6 +188,59 @@ a strong warning that explains:
 Implementation should use a deliberate confirmation step rather than a single
 dialogue click.
 
+### Excommunication God-Communication Event
+
+Excommunication should reuse the same broad "god communication" idea introduced
+by relic attainment, but with much heavier presentation. The relic flow is a
+reward audience with the player's god. Excommunication is a hostile divine
+judgement from the god being rejected.
+
+This is a good candidate for the first RuneScape Classic remaster sequence that
+intentionally uses camera and lighting as part of gameplay presentation.
+
+Target sequence:
+
+- freeze or heavily restrict player movement while the event plays
+- swing the camera around until it faces the player
+- tilt the camera down toward an eye-level composition
+- zoom in on the player
+- dim the scene to low brightness
+- optionally suppress or soften ordinary UI distractions while dialogue is
+  active
+- present special god text treatment for the excommunicated god
+- play that god's monologue warning the player about the horrible consequence
+  they should expect for their decision
+- restore the player's previous camera, zoom, brightness, and UI state after
+  the sequence completes
+
+The god monologues are owner-authored content. AI should not invent final
+speech text unless explicitly asked. Implementation can add placeholders or
+wire the event system, but the final Saradomin, Zamorak, and Guthix speeches
+should come from the project owner.
+
+Presentation goals:
+
+- make the choice feel permanent and weighty
+- make the rejected god feel personally aware of the player's betrayal
+- use the new renderer's camera, zoom, tilt, lighting, and text capabilities
+  without changing the underlying RuneScape Classic world style
+- keep the sequence deterministic and recoverable if the client disconnects
+  mid-event
+
+Technical notes:
+
+- The server should own the permanent excommunication state change.
+- The client can own the cinematic presentation once the server starts the
+  confirmed event.
+- The state change should not depend on the client successfully finishing the
+  visuals; if a disconnect happens after confirmation, the account state still
+  needs to resolve safely.
+- If possible, apply the permanent account changes at a clear commit point
+  after the warning confirmation but before or during the cinematic, then make
+  the cinematic a presentation of the already-confirmed decision.
+- Any camera override must preserve and restore the player's prior camera
+  preferences.
+
 ### Permanent Consequences
 
 After confirmation:
@@ -334,3 +387,7 @@ Target direction:
   prerequisite.
 - How the devotion UI should display permanently locked gods and the increased
   devotion cap.
+- Final owner-written Saradomin, Zamorak, and Guthix excommunication
+  monologues.
+- Exact camera timing, text styling, and lighting values for the
+  excommunication god-communication cinematic.
