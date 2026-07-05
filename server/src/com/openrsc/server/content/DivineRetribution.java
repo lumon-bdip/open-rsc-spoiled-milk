@@ -1,5 +1,6 @@
 package com.openrsc.server.content;
 
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -49,6 +50,7 @@ public final class DivineRetribution {
 			&& incomingDamage > 0
 			&& attacker.getSkills().getLevel(Skill.HITS.id()) > 0
 			&& defender.getPrayerBook() == PrayerCatalog.GodLine.ZAMORAK
+			&& defender.getCarriedItems().getEquipment().hasEquipped(ItemId.ZAMORAK_MACE.id())
 			&& defender.getPrayers().isPrayerActivated(Prayers.DIVINE_RETRIBUTION);
 	}
 

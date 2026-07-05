@@ -110,7 +110,6 @@ public class CombatFormula {
 			GUTHIX_CAPE.id()
 		};
 
-		//Authentically, players only receive Charge benefit if they have a god cape equipped.
 		boolean hasCapeEquipped = false;
 		for (int capeId : godCapes) {
 			if (source.getCarriedItems().getEquipment().hasEquipped(capeId)) {
@@ -118,11 +117,10 @@ public class CombatFormula {
 				break;
 			}
 		}
-		boolean hasChargeBenefit = source.isCharged() && hasCapeEquipped;
 		if (advancedSpell) {
-			return hasChargeBenefit ? 32 : 24;
+			return hasCapeEquipped ? 32 : 24;
 		}
-		return hasChargeBenefit ? 25 : 18;
+		return hasCapeEquipped ? 25 : 18;
 	}
 
 	public static int calculateGodSpellDamage(final Player source, final Mob victim) {

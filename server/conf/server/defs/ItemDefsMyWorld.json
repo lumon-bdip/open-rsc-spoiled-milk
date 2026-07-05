@@ -1653,6 +1653,57 @@
       "requiredSkillID": 0
     },
     {
+      "id": 3252,
+      "name": "Saradomin mace",
+      "description": "A tier 11 mace blessed by Saradomin",
+      "meleeOffense": 72,
+      "weaponSpeed": 3,
+      "requiredLevel": 80,
+      "requiredSkillID": 0,
+      "isWearable": 1,
+      "appearanceID": 1043,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "prayerBonus": 11,
+      "weaponAimBonus": 60,
+      "weaponPowerBonus": 60,
+      "basePrice": 120000
+    },
+    {
+      "id": 3253,
+      "name": "Zamorak mace",
+      "description": "A tier 11 mace blessed by Zamorak",
+      "meleeOffense": 72,
+      "weaponSpeed": 3,
+      "requiredLevel": 80,
+      "requiredSkillID": 0,
+      "isWearable": 1,
+      "appearanceID": 1044,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "prayerBonus": 11,
+      "weaponAimBonus": 60,
+      "weaponPowerBonus": 60,
+      "basePrice": 120000
+    },
+    {
+      "id": 3254,
+      "name": "Guthix mace",
+      "description": "A tier 11 mace blessed by Guthix",
+      "meleeOffense": 72,
+      "weaponSpeed": 3,
+      "requiredLevel": 80,
+      "requiredSkillID": 0,
+      "isWearable": 1,
+      "appearanceID": 1045,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "prayerBonus": 11,
+      "weaponAimBonus": 60,
+      "weaponPowerBonus": 60,
+      "basePrice": 120000
+    },
+    {
       "id": 2151,
       "meleeOffense": 9,
       "weaponSpeed": 5,
@@ -3180,19 +3231,19 @@
       "id": 1216,
       "magicOffense": 56,
       "requiredSkillID": 6,
-      "requiredLevel": 70
+      "requiredLevel": 80
     },
     {
       "id": 1217,
       "magicOffense": 56,
       "requiredSkillID": 6,
-      "requiredLevel": 70
+      "requiredLevel": 80
     },
     {
       "id": 1218,
       "magicOffense": 56,
       "requiredSkillID": 6,
-      "requiredLevel": 70
+      "requiredLevel": 80
     },
     {
       "id": 3249,
@@ -3215,17 +3266,32 @@
     {
       "id": 1213,
       "requiredSkillID": 5,
-      "requiredLevel": 70
+      "requiredLevel": 80,
+      "armourBonus": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "magicBonus": 0,
+      "prayerBonus": 10
     },
     {
       "id": 1214,
       "requiredSkillID": 5,
-      "requiredLevel": 70
+      "requiredLevel": 80,
+      "armourBonus": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "magicBonus": 0,
+      "prayerBonus": 10
     },
     {
       "id": 1215,
       "requiredSkillID": 5,
-      "requiredLevel": 70
+      "requiredLevel": 80,
+      "armourBonus": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "magicBonus": 0,
+      "prayerBonus": 10
     },
     {
       "id": 725,

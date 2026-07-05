@@ -57,7 +57,7 @@ def main() -> None:
     require(guide, 'addPrayerLine("Magic Power", "5 tiers of magic damage bonuses");', "saradomin prayer summary")
     require(guide, 'addPrayerLine("Smithing Favor", "5 tiers of smithing XP bonuses");', "zamorak prayer summary")
     require(guide, 'addPrayerLine("Crafting Favor", "5 tiers of crafting XP bonuses");', "guthix prayer summary")
-    require(guide, 'new SkillMenuItem(1214, "70", "Saradomin Cape - requires Saradomin worship")', "saradomin gear prayer guide")
+    require(guide, 'new SkillMenuItem(1214, "80", "Saradomin Cape - requires Saradomin worship")', "saradomin gear prayer guide")
     require(guide, 'new SkillMenuItem(2237, "70", "Blood staff blessed by Zamorak - requires Prayer and Magic")', "blessed blood staff prayer guide")
     require(guide, 'new SkillMenuItem(3152, "", "Saradomin blessed staves use the same tiers")', "saradomin blessed staff prayer guide")
     require(guide, 'new SkillMenuItem(3162, "", "Guthix blessed staves use the same tiers")', "guthix blessed staff prayer guide")

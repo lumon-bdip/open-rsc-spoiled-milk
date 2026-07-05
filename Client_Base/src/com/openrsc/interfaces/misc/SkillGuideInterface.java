@@ -586,9 +586,9 @@ public final class SkillGuideInterface {
 			} else if (curTab == 1) {
 				addEnchantedStaffTierGuide();
 				skillMenuEntries.add(new SkillMenuItem(1000, "50", "Staff of Iban"));
-				skillMenuEntries.add(new SkillMenuItem(1218, "70", "Staff of Saradomin"));
-				skillMenuEntries.add(new SkillMenuItem(1216, "70", "Staff of Zamorak"));
-				skillMenuEntries.add(new SkillMenuItem(1217, "70", "Staff of Guthix"));
+				skillMenuEntries.add(new SkillMenuItem(1218, "80", "Staff of Saradomin"));
+				skillMenuEntries.add(new SkillMenuItem(1216, "80", "Staff of Zamorak"));
+				skillMenuEntries.add(new SkillMenuItem(1217, "80", "Staff of Guthix"));
 				skillMenuEntries.add(new SkillMenuItem(3249, "80", "Staff of Elements"));
 				skillMenuEntries.add(new SkillMenuItem(3250, "80", "Staff of Power"));
 				skillMenuEntries.add(new SkillMenuItem(3251, "80", "Staff of Enlightenment"));
@@ -1244,12 +1244,12 @@ public final class SkillGuideInterface {
 			addPrayerLine("Magic Protection", "5 tiers of magic damage reduction");
 			addPrayerLine("Crafting Favor", "5 tiers of crafting XP bonuses");
 		} else if (curTab == 3) {
-			skillMenuEntries.add(new SkillMenuItem(1214, "70", "Saradomin Cape - requires Saradomin worship"));
-			skillMenuEntries.add(new SkillMenuItem(1218, "70", "Staff of Saradomin - requires Saradomin worship"));
-			skillMenuEntries.add(new SkillMenuItem(1213, "70", "Zamorak Cape - requires Zamorak worship"));
-			skillMenuEntries.add(new SkillMenuItem(1216, "70", "Staff of Zamorak - requires Zamorak worship"));
-			skillMenuEntries.add(new SkillMenuItem(1215, "70", "Guthix Cape - requires Guthix worship"));
-			skillMenuEntries.add(new SkillMenuItem(1217, "70", "Staff of Guthix - requires Guthix worship"));
+			skillMenuEntries.add(new SkillMenuItem(1214, "80", "Saradomin Cape - requires Saradomin worship"));
+			skillMenuEntries.add(new SkillMenuItem(1218, "80", "Staff of Saradomin - requires Saradomin worship"));
+			skillMenuEntries.add(new SkillMenuItem(1213, "80", "Zamorak Cape - requires Zamorak worship"));
+			skillMenuEntries.add(new SkillMenuItem(1216, "80", "Staff of Zamorak - requires Zamorak worship"));
+			skillMenuEntries.add(new SkillMenuItem(1215, "80", "Guthix Cape - requires Guthix worship"));
+			skillMenuEntries.add(new SkillMenuItem(1217, "80", "Staff of Guthix - requires Guthix worship"));
 			skillMenuEntries.add(new SkillMenuItem(1218, "", "God gear gives prayer points and empowers god spells"));
 			skillMenuEntries.add(new SkillMenuItem(2228, "1", "Staff blessed by Zamorak - requires Prayer and Magic"));
 			skillMenuEntries.add(new SkillMenuItem(2229, "8", "Pine staff blessed by Zamorak - requires Prayer and Magic"));

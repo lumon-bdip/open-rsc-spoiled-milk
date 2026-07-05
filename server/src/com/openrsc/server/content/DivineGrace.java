@@ -1,5 +1,6 @@
 package com.openrsc.server.content;
 
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
@@ -43,6 +44,7 @@ public final class DivineGrace {
 			&& damageDealt > 0
 			&& attacker.getSkills().getLevel(Skill.HITS.id()) > 0
 			&& attacker.getPrayerBook() == PrayerCatalog.GodLine.SARADOMIN
+			&& attacker.getCarriedItems().getEquipment().hasEquipped(ItemId.SARADOMIN_MACE.id())
 			&& attacker.getPrayers().isPrayerActivated(Prayers.DIVINE_GRACE);
 	}
 

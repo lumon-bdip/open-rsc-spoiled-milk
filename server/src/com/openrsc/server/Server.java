@@ -968,23 +968,30 @@ public class Server implements Runnable {
 							}
 						}
 
+						final boolean traceNpcMovement = shouldTraceNpcMovement(world);
+						final long npcMovementTraceNow = traceNpcMovement ? System.currentTimeMillis() : 0L;
 						final ArrayList<Npc> movedNpcs = new ArrayList<>();
 						world.getNpcs().forEachLive(npc -> {
 							final int oldX = npc.getX();
 							final int oldY = npc.getY();
-							final long now = System.currentTimeMillis();
-							final long lastMoveLoop = npc.getAttribute("debug_npc_last_move_loop", 0L);
-							final int pathSizeBefore = npc.getWalkingQueue().path == null ? -1 : npc.getWalkingQueue().path.size();
+							final long lastMoveLoop = traceNpcMovement ? npc.getAttribute("debug_npc_last_move_loop", 0L) : 0L;
+							final int pathSizeBefore = traceNpcMovement
+								? (npc.getWalkingQueue().path == null ? -1 : npc.getWalkingQueue().path.size())
+								: -1;
 							npc.updateMovementOnly();
 							if (npc.getX() != oldX || npc.getY() != oldY) {
 								movedNpcs.add(npc);
-								npc.setAttribute("debug_npc_last_move_delta_ms", lastMoveLoop <= 0 ? -1L : now - lastMoveLoop);
-								npc.setAttribute("debug_npc_last_move_from", oldX + "," + oldY);
-								npc.setAttribute("debug_npc_last_move_path_before", pathSizeBefore);
-								npc.setAttribute("debug_npc_last_move_path_after",
-									npc.getWalkingQueue().path == null ? -1 : npc.getWalkingQueue().path.size());
+								if (traceNpcMovement) {
+									npc.setAttribute("debug_npc_last_move_delta_ms", lastMoveLoop <= 0 ? -1L : npcMovementTraceNow - lastMoveLoop);
+									npc.setAttribute("debug_npc_last_move_from", oldX + "," + oldY);
+									npc.setAttribute("debug_npc_last_move_path_before", pathSizeBefore);
+									npc.setAttribute("debug_npc_last_move_path_after",
+										npc.getWalkingQueue().path == null ? -1 : npc.getWalkingQueue().path.size());
+								}
 							}
-							npc.setAttribute("debug_npc_last_move_loop", now);
+							if (traceNpcMovement) {
+								npc.setAttribute("debug_npc_last_move_loop", npcMovementTraceNow);
+							}
 						});
 
 						if (!movedPlayers.isEmpty() || !movedNpcs.isEmpty()) {
@@ -1029,6 +1036,16 @@ public class Server implements Runnable {
 				LOGGER.error("Exception in Server run()", t);
 			}
 		}
+	}
+
+	private boolean shouldTraceNpcMovement(final World world) {
+		for (final Player p : world.getPlayers()) {
+			if (p.getAttribute("debug_npc_trace", false)
+				&& p.getAttribute("debug_npc_trace_budget", 0) > 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private String describeNpcMovementTrace(final Npc npc) {

@@ -1,5 +1,6 @@
 package com.openrsc.server.content;
 
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
@@ -31,6 +32,7 @@ public final class CorrosiveAura {
 			&& incomingDamage > 0
 			&& attacker.getSkills().getLevel(Skill.HITS.id()) > 0
 			&& defender.getPrayerBook() == PrayerCatalog.GodLine.GUTHIX
+			&& defender.getCarriedItems().getEquipment().hasEquipped(ItemId.GUTHIX_MACE.id())
 			&& defender.getPrayers().isPrayerActivated(Prayers.CORROSIVE_AURA);
 	}
 

@@ -65,6 +65,9 @@ public final class EntityHandler {
 		+ MYWORLD_WOOL_ACCESSORY_APPEARANCE_COUNT;
 	private static final int MYWORLD_SHEARS_APPEARANCE_ID = AppearanceId.SHEARS.id();
 	private static final int DEMON_PITCHFORK_APPEARANCE_ID = AppearanceId.DEMON_PITCHFORK.id();
+	private static final int SARADOMIN_MACE_APPEARANCE_ID = AppearanceId.SARADOMIN_MACE.id();
+	private static final int ZAMORAK_MACE_APPEARANCE_ID = AppearanceId.ZAMORAK_MACE.id();
+	private static final int GUTHIX_MACE_APPEARANCE_ID = AppearanceId.GUTHIX_MACE.id();
 	private static final int[] MYWORLD_STAFF_BASE_IDS = {
 		100, 2131, 1764, 1769, 2136, 1774, 1779, 2141, 1784, 2146
 	};
@@ -961,6 +964,9 @@ public final class EntityHandler {
 				applyMyWorldPickaxeAppearanceOverrides();
 				applyMyWorldShearsAppearanceOverrides();
 				setItemAppearance(ItemId.DEMON_PITCHFORK.id(), DEMON_PITCHFORK_APPEARANCE_ID);
+				setItemAppearance(ItemId.SARADOMIN_MACE.id(), SARADOMIN_MACE_APPEARANCE_ID);
+				setItemAppearance(ItemId.ZAMORAK_MACE.id(), ZAMORAK_MACE_APPEARANCE_ID);
+				setItemAppearance(ItemId.GUTHIX_MACE.id(), GUTHIX_MACE_APPEARANCE_ID);
 			} else {
 				items.get(ItemId.FISHING_ROD.id()).setAppearanceId(123);
 				items.get(ItemId.PINE_FISHING_ROD.id()).setAppearanceId(123);

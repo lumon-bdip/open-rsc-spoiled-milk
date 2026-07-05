@@ -48,7 +48,7 @@ def main() -> None:
 		"BAT_EYE(3246)",
 		"BABY_DRAGON_EYE(3247)",
 		"DEMON_EYE(3248)",
-		"public static final int maxCustom = 3252;",
+		"public static final int maxCustom = 3255;",
 	):
 		require_text(item_id_text, snippet, "ItemId should define Herblaw side ingredient")
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import re
 import sys
+import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import NoReturn
@@ -27,6 +28,9 @@ ALTARS_PATH = (
 ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsCustom.json"
 RUNECRAFT_LOCS_PATH = (
     ROOT / "server" / "conf" / "server" / "defs" / "locs" / "SceneryLocsRunecraft.json"
+)
+SCENERY_OTHER_LOCS_PATH = (
+    ROOT / "server" / "conf" / "server" / "defs" / "locs" / "SceneryLocsOther.json"
 )
 
 EXPECTED_ALTARS = {
@@ -192,6 +196,16 @@ def ensure_stone_and_talismans_are_retired() -> None:
     for snippet in ('"id": 98', '"X": 114', '"Y": 700'):
         if snippet not in loc_text:
             fail(f"Runecraft stone source missing Varrock stone placement: {snippet}")
+
+    other_locs = json.loads(SCENERY_OTHER_LOCS_PATH.read_text(encoding="utf-8"))
+    stale_portals = [
+        entry
+        for entry in other_locs["sceneries"]
+        if entry["id"] == 1236
+        and entry["pos"] == {"X": 373, "Y": 3352}
+    ]
+    if stale_portals:
+        fail("Legacy overworld rune-stone portal remains at 373,3352")
 
 
 def main() -> None:

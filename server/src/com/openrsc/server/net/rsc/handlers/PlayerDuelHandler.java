@@ -22,12 +22,23 @@ import com.openrsc.server.util.rsc.MessageType;
 import java.util.Optional;
 
 public class PlayerDuelHandler implements PayloadProcessor<PlayerDuelStruct, OpcodeIn> {
+	private static final String DUELING_INACTIVE_MESSAGE = "dueling is currently inactive until pvp with aoe rules is properly tested";
 
 	private boolean busy(Player player) {
 		return player.inCombat() || player.isBusy() || player.isRanging() || player.accessingBank() || player.getTrade().isTradeActive();
 	}
 
 	public void process(PlayerDuelStruct payload, Player player) throws Exception {
+		OpcodeIn opcode = payload.getOpcode();
+
+		if (opcode == null)
+			return;
+
+		if (!duelingEnabled()) {
+			disableDueling(player);
+			return;
+		}
+
 		if (!player.getConfig().WANT_PVP) {
 			player.message(player.getConfig().WANT_MYWORLD
 				? "Duels are disabled on this PvM-only world"
@@ -75,11 +86,6 @@ public class PlayerDuelHandler implements PayloadProcessor<PlayerDuelStruct, Opc
 			unsetOptions(affectedPlayer);
 			return;
 		}
-
-		OpcodeIn opcode = payload.getOpcode();
-
-		if (opcode == null)
-			return;
 
 		switch (opcode) {
 			case PLAYER_DUEL:
@@ -469,5 +475,16 @@ public class PlayerDuelHandler implements PayloadProcessor<PlayerDuelStruct, Opc
 			return;
 		}
 		player.getDuel().resetAll();
+	}
+
+	private boolean duelingEnabled() {
+		return false;
+	}
+
+	private void disableDueling(Player player) {
+		Player affectedPlayer = player.getDuel().getDuelRecipient();
+		player.message(DUELING_INACTIVE_MESSAGE);
+		unsetOptions(player);
+		unsetOptions(affectedPlayer);
 	}
 }

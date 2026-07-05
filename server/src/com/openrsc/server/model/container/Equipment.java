@@ -25,6 +25,7 @@ public class Equipment {
 	private static final Logger LOGGER = LogManager.getLogger();
 	public static final int SLOT_COUNT = 14;
 	private static final int ARMOR_POWER_PENALTY_PER_MAJOR_SLOT = 8;
+	private static final int GOD_MACE_PRAYER_REQUIREMENT = 80;
 	private final Item[] list = new Item[SLOT_COUNT];
 	private final Player player;
 
@@ -559,6 +560,8 @@ public class Equipment {
 			ActionSender.sendInventory(player);
 		}
 		Summoning.syncArmorSummon(player);
+		player.getPrayers().deactivateUnavailableEquipmentPrayers();
+		player.getPrayers().deactivateOverflowingPrayers();
 		return true;
 	}
 
@@ -647,6 +650,8 @@ public class Equipment {
 			player.getUpdateFlags().setAppearanceChanged(true);
 		}
 		Summoning.syncArmorSummon(player);
+		player.getPrayers().deactivateUnavailableEquipmentPrayers();
+		player.getPrayers().deactivateOverflowingPrayers();
 		return true;
 	}
 
@@ -1174,6 +1179,8 @@ public class Equipment {
 			player.message("You attempt to put it on...");
 			player.message("It scalds the flesh! Metaphorically, of course.");
 			return false;
+		} else if (!meetsGodMaceRequirements(item.getCatalogId())) {
+			return false;
 		} else if (item.getCatalogId() == ItemId.STAFF_OF_GUTHIX.id() && (hasEquipped(ItemId.ZAMORAK_CAPE.id()) || hasEquipped(ItemId.SARADOMIN_CAPE.id()))) { // try to wear guthix staff
 			player.message("you may not wield this staff while wearing a cape of another god");
 			return false;
@@ -1314,13 +1321,16 @@ public class Equipment {
 	}
 
 	private PrayerCatalog.GodLine getRequiredGodLine(final int itemId) {
-		if (itemId == ItemId.SARADOMIN_CAPE.id() || itemId == ItemId.STAFF_OF_SARADOMIN.id()) {
+		if (itemId == ItemId.SARADOMIN_CAPE.id() || itemId == ItemId.STAFF_OF_SARADOMIN.id()
+			|| itemId == ItemId.SARADOMIN_MACE.id()) {
 			return PrayerCatalog.GodLine.SARADOMIN;
 		}
-		if (itemId == ItemId.ZAMORAK_CAPE.id() || itemId == ItemId.STAFF_OF_ZAMORAK.id()) {
+		if (itemId == ItemId.ZAMORAK_CAPE.id() || itemId == ItemId.STAFF_OF_ZAMORAK.id()
+			|| itemId == ItemId.ZAMORAK_MACE.id()) {
 			return PrayerCatalog.GodLine.ZAMORAK;
 		}
-		if (itemId == ItemId.GUTHIX_CAPE.id() || itemId == ItemId.STAFF_OF_GUTHIX.id()) {
+		if (itemId == ItemId.GUTHIX_CAPE.id() || itemId == ItemId.STAFF_OF_GUTHIX.id()
+			|| itemId == ItemId.GUTHIX_MACE.id()) {
 			return PrayerCatalog.GodLine.GUTHIX;
 		}
 		if (itemId == ItemId.HOLY_SYMBOL_OF_SARADOMIN.id()) {
@@ -1360,6 +1370,24 @@ public class Equipment {
 			return PrayerCatalog.GodLine.GUTHIX;
 		}
 		return null;
+	}
+
+	private boolean meetsGodMaceRequirements(final int itemId) {
+		if (!isGodMace(itemId)) {
+			return true;
+		}
+		if (player.getSkills().getMaxStat(Skill.PRAYER.id()) < GOD_MACE_PRAYER_REQUIREMENT) {
+			player.message("You are not a high enough level to use this item");
+			player.message("You need to have a Prayer level of " + GOD_MACE_PRAYER_REQUIREMENT);
+			return false;
+		}
+		return true;
+	}
+
+	private boolean isGodMace(final int itemId) {
+		return itemId == ItemId.SARADOMIN_MACE.id()
+			|| itemId == ItemId.ZAMORAK_MACE.id()
+			|| itemId == ItemId.GUTHIX_MACE.id();
 	}
 
 	private boolean isWhiteKnightEquipment(final int itemId) {

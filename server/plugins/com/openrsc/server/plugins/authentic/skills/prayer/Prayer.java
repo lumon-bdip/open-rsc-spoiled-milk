@@ -1,5 +1,6 @@
 package com.openrsc.server.plugins.authentic.skills.prayer;
 
+import com.openrsc.server.content.GodArtifacts;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
@@ -21,9 +22,13 @@ public class Prayer implements OpLocTrigger {
 			if (godLine == null) {
 				player.playerServerMessage(MessageType.QUEST, "This altar does not answer your prayers");
 			} else {
+				final PrayerCatalog.GodLine currentGodLine = player.getPrayerBook();
 				player.setPrayerBook(godLine);
 				player.playerServerMessage(MessageType.QUEST, "You align your prayers with " + formatGodLine(godLine));
 				player.playSound("recharge");
+				if (currentGodLine == godLine) {
+					GodArtifacts.offerIfEligible(player, godLine);
+				}
 			}
 		}
 		// chaos altar in Yanille dungeon is a trapdoor

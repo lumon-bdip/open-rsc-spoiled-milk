@@ -23,9 +23,9 @@ def main():
     myworld_items = load_items("server/conf/server/defs/ItemDefsMyWorld.json", "items")
 
     expected_prayer = {
-        1213: 5,  # Zamorak Cape
-        1214: 5,  # Saradomin Cape
-        1215: 5,  # Guthix Cape
+        1213: 10, # Zamorak Cape
+        1214: 10, # Saradomin Cape
+        1215: 10, # Guthix Cape
         59: 1,    # Phoenix Crossbow
         60: 1,    # Crossbow
         0: 4,     # Iron Mace
@@ -89,8 +89,11 @@ def main():
         597: 0,   # Charged Dragonstone Amulet legacy holdover should not grant prayer
     }
 
-    all_items = {item["id"]: item for item in base_items}
+    all_items = {item["id"]: dict(item) for item in base_items}
     all_items.update({item["id"]: item for item in custom_items})
+    for item in myworld_items:
+        if item["id"] in (1213, 1214, 1215):
+            all_items.setdefault(item["id"], {}).update(item)
     for item_id, prayer in expected_prayer.items():
         assert all_items[item_id]["prayerBonus"] == prayer, (
             f"{all_items[item_id]['name']} should give {prayer} prayer bonus"
@@ -221,12 +224,12 @@ def main():
         assert item["prayerBonus"] == prayer
 
     expected_god_capes = {
-        1213: ("Zamorak Cape", 0, 5),
-        1214: ("Saradomin Cape", 0, 5),
-        1215: ("Guthix Cape", 0, 5),
+        1213: ("Zamorak Cape", 0, 10),
+        1214: ("Saradomin Cape", 0, 10),
+        1215: ("Guthix Cape", 0, 10),
     }
     for item_id, (name, magic, prayer) in expected_god_capes.items():
-        item = by_id(base_items, item_id)
+        item = all_items[item_id]
         assert item["name"] == name
         assert item["magicBonus"] == magic
         assert item["prayerBonus"] == prayer

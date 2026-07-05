@@ -2475,12 +2475,15 @@ public enum ItemId {
 	DEMON_EYE(3248),
 	STAFF_OF_ELEMENTS(3249),
 	STAFF_OF_POWER(3250),
-	STAFF_OF_ENLIGHTENMENT(3251);
+	STAFF_OF_ENLIGHTENMENT(3251),
+	SARADOMIN_MACE(3252),
+	ZAMORAK_MACE(3253),
+	GUTHIX_MACE(3254);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3252;
+	public static final int maxCustom = 3255;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

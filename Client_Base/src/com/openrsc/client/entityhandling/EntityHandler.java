@@ -314,7 +314,7 @@ public class EntityHandler {
 		addPrayerDefinition(22, "Enchanting Favor", "Enchanting XP +20%.");
 		addPrayerDefinition(46, "Strong Enchanting Favor", "Enchanting XP +25%.");
 		addPrayerDefinition(80, "Greater Enchanting Favor", "Enchanting XP +30%.");
-		addPrayerDefinition(60, "Divine Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");
+		addPrayerDefinition(60, "Saving Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");
 	}
 
 	private static void loadZamorakPrayerDefinitions() {
@@ -5711,6 +5711,9 @@ public class EntityHandler {
 		setCustomItemDefinition(3249, new ItemDef("Staff of Elements", "A tier 11 staff attuned to air, water, earth and fire runes", "", 120000, 123, "items:123", false, true, 16, 0xE9A33C, true, true, true, 3249));
 		setCustomItemDefinition(3250, new ItemDef("Staff of Power", "A tier 11 staff attuned to mind, chaos, death and blood runes", "", 120000, 123, "items:123", false, true, 16, 0x8A4FD7, true, true, true, 3250));
 		setCustomItemDefinition(3251, new ItemDef("Staff of Enlightenment", "A tier 11 staff attuned to body, cosmic, nature, law, soul and life runes", "", 120000, 123, "items:123", false, true, 16, 0x56C7B2, true, true, true, 3251));
+		setCustomItemDefinition(3252, new ItemDef("Saradomin mace", "A tier 11 mace blessed by Saradomin", "", 120000, -1, "external-png:saradomin-mace-icon", false, true, 16, 0, true, false, true, 3252));
+		setCustomItemDefinition(3253, new ItemDef("Zamorak mace", "A tier 11 mace blessed by Zamorak", "", 120000, -1, "external-png:zamorak-mace-icon", false, true, 16, 0, true, false, true, 3253));
+		setCustomItemDefinition(3254, new ItemDef("Guthix mace", "A tier 11 mace blessed by Guthix", "", 120000, -1, "external-png:guthix-mace-icon", false, true, 16, 0, true, false, true, 3254));
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -7549,6 +7552,9 @@ public class EntityHandler {
 			animations.add(new AnimationDef("fplatemailtop", "equipment", 0x5A3F7D, 0, true, false, 0)); // 1040 - Orichalcum female plate top
 			animations.add(new AnimationDef("shears", "equipment", 0, 0, true, false, 0)); // 1041 - Universal shears
 			animations.add(new AnimationDef("demonpitchfork", "equipment", 0, 0, true, false, 0)); // 1042 - Demon pitchfork
+			animations.add(new AnimationDef("mace", "equipment", 0xFFD84A, 0, true, false, 0)); // 1043 - Saradomin mace
+			animations.add(new AnimationDef("mace", "equipment", 0x8A2BE2, 0, true, false, 0)); // 1044 - Zamorak mace
+			animations.add(new AnimationDef("mace", "equipment", 0xC2A678, 0, true, false, 0)); // 1045 - Guthix mace
 		}
 	}
 
