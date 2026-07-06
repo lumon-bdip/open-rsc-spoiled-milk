@@ -147,7 +147,10 @@ def main() -> None:
             "giveOrBank(player, ItemId.GOLD_BAR.id(), 2);",
             "giveOrBank(player, ItemId.DIAMOND.id(), 2);",
         ],
-        "completePlagueCity": ["ensureUtilityItem(player, ItemId.MAGIC_SCROLL.id(), 1);"],
+        "completePlagueCity": [
+            'player.getCache().store("ardougne_scroll", true);',
+            "ensureUtilityItem(player, ItemId.MAGIC_SCROLL.id(), 1);",
+        ],
         "completeSeaSlug": ["ensureUtilityItem(player, ItemId.QUEST_OYSTER_PEARLS.id(), 1);"],
         "completeWatchtower": [
             "ensureUtilityItem(player, ItemId.SPELL_SCROLL.id(), 1);",

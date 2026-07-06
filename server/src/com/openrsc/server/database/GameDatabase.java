@@ -404,7 +404,22 @@ public abstract class GameDatabase {
 	}
 
 	public PlayerFriend getProperUsernameCapitalization(final String username) throws GameDatabaseException {
-		return queryGetProperUsernameCapitalization(username);
+		final String canonicalUsername = canonicalizeUsernameForLookup(username);
+		if (canonicalUsername.isEmpty()) {
+			return null;
+		}
+		return queryGetProperUsernameCapitalization(canonicalUsername);
+	}
+
+	private String canonicalizeUsernameForLookup(final String username) {
+		if (username == null) {
+			return "";
+		}
+		final long usernameHash = DataConversions.usernameToHash(username);
+		if (usernameHash <= 0L) {
+			return "";
+		}
+		return DataConversions.hashToUsername(usernameHash);
 	}
 
 	public int playerIdFromUsername(final String username) throws GameDatabaseException {

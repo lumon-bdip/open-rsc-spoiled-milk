@@ -187,6 +187,7 @@ public final class MyWorldQuestShortcuts {
 			"then I'll make good on the reward right now.");
 		completeQuestWithStandardReward(player, Quest.PLAGUE_CITY,
 			"Well done you have completed the plague city quest");
+		player.getCache().store("ardougne_scroll", true);
 		ensureUtilityItem(player, ItemId.MAGIC_SCROLL.id(), 1);
 		player.message("This story is to be continued");
 	}
