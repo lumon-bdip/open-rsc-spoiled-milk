@@ -48,6 +48,9 @@ public final class GameStateUpdater {
 	private static final int CLIENT_LOCAL_ACTIVE_SECTION_GRID = 3;
 	private static final int CLIENT_LOCAL_ACTIVE_SECTION_ORIGIN_OFFSET = CLIENT_LOCAL_ACTIVE_SECTION_GRID / 2;
 	private static final int CLIENT_LOCAL_TILE_COUNT = CLIENT_LOCAL_SECTION_SIZE * CLIENT_LOCAL_ACTIVE_SECTION_GRID;
+	private static final int CLIENT_LOCAL_PLANE_WIDTH = 2304;
+	private static final int CLIENT_LOCAL_PLANE_HEIGHT = 1776;
+	private static final int CLIENT_LOCAL_REGION_RELOAD_RADIUS = 32;
 	private static final int CUSTOM_CLIENT_REGION_REFRESH_RADIUS = 80;
 	private static final int CUSTOM_MOVEMENT_UPDATE_LIMIT = 0xFFFF;
 	private static final int AUTHENTIC_LOCAL_MOB_LIMIT = 255;
@@ -69,6 +72,8 @@ public final class GameStateUpdater {
 	private static final String SCENE_BASELINE_SUMMARY_ATTRIBUTE = "scene_baseline_summary";
 	private static final String STATIC_SCENE_SCAN_KEY_ATTRIBUTE = "static_scene_scan_key";
 	private static final String WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE = "world_time_last_sync_millis";
+	private static final String CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE = "custom_movement_client_mid_x";
+	private static final String CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE = "custom_movement_client_mid_y";
 	private static final long WORLD_TIME_SYNC_INTERVAL_MILLIS = 15000L;
 	private static final long WORLD_TIME_FAST_SYNC_INTERVAL_MILLIS = 250L;
 
@@ -713,6 +718,7 @@ public final class GameStateUpdater {
 		if (!player.isUsingCustomClient()) {
 			return false;
 		}
+		updateCustomMovementClientRegion(player);
 
 		MovementUpdateStruct struct = new MovementUpdateStruct();
 		struct.localX = player.getX();
@@ -765,6 +771,7 @@ public final class GameStateUpdater {
 		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT) {
 			return false;
 		}
+		updateCustomMovementClientRegion(player);
 
 		MovementSnapshotStruct struct = new MovementSnapshotStruct();
 		struct.protocolVersion = MOVEMENT_SNAPSHOT_PROTOCOL_VERSION;
@@ -824,18 +831,71 @@ public final class GameStateUpdater {
 		if (!viewer.isUsingCustomClient()) {
 			return true;
 		}
-		final Point midpointRegion = viewer.getAttribute("midpointRegion");
-		if (midpointRegion == null) {
-			return true;
-		}
-		final int baseX = midpointRegion.getX()
-			- (CLIENT_LOCAL_ACTIVE_SECTION_ORIGIN_OFFSET * CLIENT_LOCAL_SECTION_SIZE);
-		final int baseY = midpointRegion.getY()
-			- (CLIENT_LOCAL_ACTIVE_SECTION_ORIGIN_OFFSET * CLIENT_LOCAL_SECTION_SIZE);
+		final int baseX = currentClientLocalBaseX(viewer);
+		final int baseY = currentClientLocalBaseY(viewer);
 		return worldX >= baseX
 			&& worldY >= baseY
 			&& worldX < baseX + CLIENT_LOCAL_TILE_COUNT
 			&& worldY < baseY + CLIENT_LOCAL_TILE_COUNT;
+	}
+
+	private static void updateCustomMovementClientRegion(final Player viewer) {
+		if (!viewer.isUsingCustomClient()) {
+			return;
+		}
+		Integer midpointX = viewer.getAttribute(CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE, null);
+		Integer midpointY = viewer.getAttribute(CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE, null);
+		if (midpointX == null || midpointY == null) {
+			final Point midpointRegion = viewer.getAttribute("midpointRegion", null);
+			if (midpointRegion != null) {
+				midpointX = midpointRegion.getX();
+				midpointY = midpointRegion.getY();
+			} else {
+				midpointX = clientLocalMidpointForTile(viewer.getX(), CLIENT_LOCAL_PLANE_WIDTH);
+				midpointY = clientLocalMidpointForTile(viewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT);
+			}
+		}
+		if (viewer.getX() <= midpointX - CLIENT_LOCAL_REGION_RELOAD_RADIUS
+			|| viewer.getX() >= midpointX + CLIENT_LOCAL_REGION_RELOAD_RADIUS
+			|| viewer.getY() <= midpointY - CLIENT_LOCAL_REGION_RELOAD_RADIUS
+			|| viewer.getY() >= midpointY + CLIENT_LOCAL_REGION_RELOAD_RADIUS) {
+			midpointX = clientLocalMidpointForTile(viewer.getX(), CLIENT_LOCAL_PLANE_WIDTH);
+			midpointY = clientLocalMidpointForTile(viewer.getY(), CLIENT_LOCAL_PLANE_HEIGHT);
+		}
+		viewer.setAttribute(CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE, midpointX);
+		viewer.setAttribute(CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE, midpointY);
+	}
+
+	private static int currentClientLocalBaseX(final Player viewer) {
+		return currentClientLocalMidpoint(viewer, CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE, CLIENT_LOCAL_PLANE_WIDTH)
+			- (CLIENT_LOCAL_ACTIVE_SECTION_ORIGIN_OFFSET * CLIENT_LOCAL_SECTION_SIZE);
+	}
+
+	private static int currentClientLocalBaseY(final Player viewer) {
+		return currentClientLocalMidpoint(viewer, CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE, CLIENT_LOCAL_PLANE_HEIGHT)
+			- (CLIENT_LOCAL_ACTIVE_SECTION_ORIGIN_OFFSET * CLIENT_LOCAL_SECTION_SIZE);
+	}
+
+	private static int currentClientLocalMidpoint(
+		final Player viewer,
+		final String attribute,
+		final int planeOffset
+	) {
+		final Integer midpoint = viewer.getAttribute(attribute, null);
+		if (midpoint != null) {
+			return midpoint;
+		}
+		updateCustomMovementClientRegion(viewer);
+		final Integer updatedMidpoint = viewer.getAttribute(attribute, null);
+		return updatedMidpoint == null
+			? clientLocalMidpointForTile(planeOffset == CLIENT_LOCAL_PLANE_WIDTH ? viewer.getX() : viewer.getY(), planeOffset)
+			: updatedMidpoint;
+	}
+
+	private static int clientLocalMidpointForTile(final int worldTile, final int planeOffset) {
+		final int section = (worldTile + planeOffset + (CLIENT_LOCAL_SECTION_SIZE / 2))
+			/ CLIENT_LOCAL_SECTION_SIZE;
+		return (section * CLIENT_LOCAL_SECTION_SIZE) - planeOffset;
 	}
 
 	private int safeNPCIndex(final Player player, final int npcIndex) {

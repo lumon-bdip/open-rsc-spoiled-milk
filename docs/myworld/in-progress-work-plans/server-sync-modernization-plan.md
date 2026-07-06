@@ -462,12 +462,29 @@ Current branch progress:
   filters custom movement records for both opcode `141` and opcode `146` to the
   viewer's client-local tile window. A busy-area retest held `wire ok` and
   `move cache ok`.
-- [x] Added a snapshot-driven client-side staging path for movement records
-  while keeping legacy/custom movement authoritative. Opcode `146` now feeds a
-  separate staged local/player/NPC target set, expanded F6 folds the staged
-  target status into `move cache`, and the rendered movement state is still
-  driven only by the existing custom movement path. This gives us a safe
-  future replacement lane without changing live movement behavior yet.
+- [x] Public opt-in movement snapshot testing found the same class of issue
+  during client region shifts: `wire ok` with one stale NPC in `move cache`.
+  The server-side window filter originally used a static client-local window,
+  then briefly recalculated from the viewer's current tile each packet. Neither
+  matched the client exactly because the client keeps its loaded region until
+  crossing the 32-tile reload boundary. The movement filter now tracks the
+  custom client's live loaded-region midpoint with that same boundary rule, so
+  opcode `141` and `146` cannot include movement targets the client would
+  silently reject as out of local bounds.
+- [x] Added a snapshot-driven client-side staging path for movement records.
+  Opcode `146` now feeds a separate staged local/player/NPC target set,
+  expanded F6 folds the staged target status into `move cache`, and the packet
+  consumes the same absolute movement targets as opcode `141` when the
+  default-off movement snapshot flag is enabled. This is intentionally
+  idempotent: if opcode `141` already applied the target, opcode `146` does not
+  add a duplicate waypoint; if the normal NPC cache path overwrote a movement
+  target or packet timing left the visible cache stale, opcode `146` repairs it
+  before diagnostics compare the visible cache.
+- [x] Added client visible-cache repair for the snapshot/custom movement
+  consumer. Local testing showed `wire ok` with NPC cache samples where the
+  visible `npcs[]` object disagreed with the `npcsServer[serverIndex]` slot.
+  Custom movement now repairs both the indexed server-cache object and the
+  currently rendered visible object when they drift apart.
 - [x] Completed a default-off hardening smoke test after the staged movement
   lane. Server/client builds passed, sync guard tests passed, checked-in config
   kept all new sync flags off, and a private default-off client/server run
@@ -476,8 +493,8 @@ Current branch progress:
 - [ ] Next movement milestone: run longer local movement captures with staged
   targets enabled across walking, camera rotation, teleport/region changes,
   combat, and dense NPC areas. If `wire ok`, `move cache ok`, and `stage ok`
-  hold under those cases, the next code step is an opt-in staged-consumer path
-  that can animate from the snapshot state while falling back to the current
+  hold under those cases, the next code step is promoting the snapshot consumer
+  from repair/backstop to the primary movement lane while falling back to the current
   custom movement path.
 - [ ] Next custom-scene milestone: validate parity in local captures across
   login, movement, teleport/region changes, and object mutations, then decide

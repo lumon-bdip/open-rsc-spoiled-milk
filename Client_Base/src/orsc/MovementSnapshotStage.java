@@ -102,8 +102,11 @@ final class MovementSnapshotStage {
 		boolean directionMismatch = character.animationNext != target.direction;
 		if (positionMismatch || directionMismatch) {
 			result.mismatches++;
-			result.setFirstMismatch(target, category,
-				targetWorldX + "," + targetWorldZ + ":" + character.animationNext);
+			String actual = targetWorldX + "," + targetWorldZ + ":" + character.animationNext;
+			if (category == 2) {
+				actual += " | " + mc.describeCustomNpcMovementDebug(target.serverIndex);
+			}
+			result.setFirstMismatch(target, category, actual);
 		}
 	}
 

@@ -1634,6 +1634,7 @@ public class PacketHandler {
 			snapshotFingerprint = new MovementPacketFingerprint(localX, localZ, localDirection);
 			stageFrame = new MovementSnapshotStage.Frame(protocolVersion, serverTick, sequence);
 			stageFrame.setLocal(localX, localZ, localDirection);
+			mc.applyCustomMovementUpdate(localX, localZ, localDirection);
 			parity.checkLocal(mc, localX, localZ, localDirection);
 			playerCount = packetsIncoming.getShort();
 			for (int i = 0; i < playerCount && packetsIncoming.packetEnd + 7 <= length; i++) {
@@ -1643,6 +1644,7 @@ public class PacketHandler {
 				int direction = packetsIncoming.getUnsignedByte();
 				snapshotFingerprint.addPlayer(serverIndex, x, z, direction);
 				stageFrame.addPlayer(serverIndex, x, z, direction);
+				mc.applyCustomPlayerMovementUpdate(serverIndex, x, z, direction);
 				parity.checkPlayer(mc, serverIndex, x, z, direction);
 				recordsRead++;
 			}
@@ -1655,6 +1657,7 @@ public class PacketHandler {
 					int direction = packetsIncoming.getUnsignedByte();
 					snapshotFingerprint.addNpc(serverIndex, x, z, direction);
 					stageFrame.addNpc(serverIndex, x, z, direction);
+					mc.applyCustomNpcMovementUpdate(serverIndex, x, z, direction);
 					parity.checkNpc(mc, serverIndex, x, z, direction);
 					recordsRead++;
 				}
@@ -1872,6 +1875,9 @@ public class PacketHandler {
 				firstMismatch = type + "#" + serverIndex
 					+ " e " + worldX + "," + worldZ + ":" + direction
 					+ " a " + targetWorldX + "," + targetWorldZ + ":" + character.animationNext;
+				if (category == 2) {
+					firstMismatch += " | " + mc.describeCustomNpcMovementDebug(serverIndex);
+				}
 			}
 		}
 
@@ -1897,6 +1903,9 @@ public class PacketHandler {
 	}
 
 	private static final class MovementSnapshotDebugState {
+		private static final int RECENT_MOVE_CACHE_LOG_LIMIT = 5;
+		private static final String MOVE_CACHE_LOG_PREFIX = "MOVEMENT_CACHE_RECENT";
+
 		private int protocolVersion = 0;
 		private int serverTick = 0;
 		private int sequence = 0;
@@ -1932,6 +1941,10 @@ public class PacketHandler {
 		private String stageMismatchSample = "";
 		private long stageLastPacketMillis = 0L;
 		private long lastPacketMillis = 0L;
+		private final String[] recentMoveCacheLines = new String[RECENT_MOVE_CACHE_LOG_LIMIT];
+		private int recentMoveCacheNext = 0;
+		private int recentMoveCacheCount = 0;
+		private int lastLoggedMismatchSequence = Integer.MIN_VALUE;
 
 		private void recordPacket(
 			int protocolVersion,
@@ -1983,34 +1996,22 @@ public class PacketHandler {
 			this.stageMismatchSample = stageResult.firstMismatch;
 			this.stageLastPacketMillis = stageResult.lastPacketMillis;
 			this.lastPacketMillis = System.currentTimeMillis();
+			rememberMoveCacheLine(buildRecentMoveCacheLine(this.lastPacketMillis));
+			if ((parity.mismatches() > 0 || stageResult.mismatches > 0)
+				&& this.lastLoggedMismatchSequence != sequence) {
+				this.lastLoggedMismatchSequence = sequence;
+				logRecentMoveCacheLines();
+			}
 		}
 
 		private String[] summaryLines() {
 			if (packets <= 0) {
 				return new String[] { "move snap waiting", "move cache waiting" };
 			}
-			int cacheIssues = parityMissingLocal + parityMissingPlayers + parityMissingNpcs
-				+ localPositionMismatches + playerPositionMismatches + npcPositionMismatches
-				+ localDirectionMismatches + playerDirectionMismatches + npcDirectionMismatches;
-			String wireSummary = !wireHasReference
-				? "wire wait u" + wireMovementUpdates
-				: (wireMatched ? "wire ok" : "wire bad total " + wireTotalMismatches);
-			String cacheSummary = cacheIssues == 0
-				? "cache ok c" + cacheChecked
-				: "cache bad c" + cacheChecked
-					+ " miss " + parityMissingLocal + "/" + parityMissingPlayers + "/" + parityMissingNpcs
-					+ " pos " + localPositionMismatches + "/" + playerPositionMismatches + "/" + npcPositionMismatches
-					+ " dir " + localDirectionMismatches + "/" + playerDirectionMismatches + "/" + npcDirectionMismatches
-					+ " total " + parityTotalMismatches
-					+ (cacheMismatchSample.length() == 0 ? "" : " | " + cacheMismatchSample);
-			String stageSummary = !stageReady
-				? "stage wait"
-				: "stage " + (stageCurrentMismatches == 0 ? "ok" : "bad")
-					+ " c" + stageChecked
-					+ " p/n " + stagePlayers + "/" + stageNpcs
-					+ (stageCurrentMismatches == 0 ? "" : " total " + stageCurrentMismatches + "/" + stageTotalMismatches)
-					+ " age " + (System.currentTimeMillis() - stageLastPacketMillis) + "ms"
-					+ (stageMismatchSample.length() == 0 ? "" : " | " + stageMismatchSample);
+			long now = System.currentTimeMillis();
+			String wireSummary = buildWireSummary();
+			String cacheSummary = buildCacheSummary();
+			String stageSummary = buildStageSummary(now);
 			return new String[] {
 				"move snap v" + protocolVersion
 				+ " tick/seq " + serverTick + "/" + sequence
@@ -2021,6 +2022,79 @@ public class PacketHandler {
 				+ " | age " + (System.currentTimeMillis() - lastPacketMillis) + "ms",
 				"move cache " + cacheSummary + " | " + stageSummary
 			};
+		}
+
+		private int currentCacheIssues() {
+			return parityMissingLocal + parityMissingPlayers + parityMissingNpcs
+				+ localPositionMismatches + playerPositionMismatches + npcPositionMismatches
+				+ localDirectionMismatches + playerDirectionMismatches + npcDirectionMismatches;
+		}
+
+		private String buildWireSummary() {
+			return !wireHasReference
+				? "wire wait u" + wireMovementUpdates
+				: (wireMatched ? "wire ok" : "wire bad total " + wireTotalMismatches);
+		}
+
+		private String buildCacheSummary() {
+			int cacheIssues = currentCacheIssues();
+			if (cacheIssues == 0) {
+				return "cache ok c" + cacheChecked;
+			}
+			return "cache bad c" + cacheChecked
+				+ " miss " + parityMissingLocal + "/" + parityMissingPlayers + "/" + parityMissingNpcs
+				+ " pos " + localPositionMismatches + "/" + playerPositionMismatches + "/" + npcPositionMismatches
+				+ " dir " + localDirectionMismatches + "/" + playerDirectionMismatches + "/" + npcDirectionMismatches
+				+ " total " + parityTotalMismatches
+				+ (cacheMismatchSample.length() == 0 ? "" : " | " + cacheMismatchSample);
+		}
+
+		private String buildStageSummary(long now) {
+			if (!stageReady) {
+				return "stage wait";
+			}
+			return "stage " + (stageCurrentMismatches == 0 ? "ok" : "bad")
+				+ " c" + stageChecked
+				+ " p/n " + stagePlayers + "/" + stageNpcs
+				+ (stageCurrentMismatches == 0 ? "" : " total " + stageCurrentMismatches + "/" + stageTotalMismatches)
+				+ " age " + (now - stageLastPacketMillis) + "ms"
+				+ (stageMismatchSample.length() == 0 ? "" : " | " + stageMismatchSample);
+		}
+
+		private String buildRecentMoveCacheLine(long now) {
+			return "seq " + sequence
+				+ " tick " + serverTick
+				+ " local " + localX + "," + localZ + ":" + localDirection
+				+ " p/n " + playerCount + "/" + npcCount
+				+ " packets/records " + packets + "/" + records
+				+ " | " + buildWireSummary()
+				+ " | " + buildCacheSummary()
+				+ " | " + buildStageSummary(now);
+		}
+
+		private void rememberMoveCacheLine(String line) {
+			recentMoveCacheLines[recentMoveCacheNext] = line;
+			recentMoveCacheNext = (recentMoveCacheNext + 1) % RECENT_MOVE_CACHE_LOG_LIMIT;
+			if (recentMoveCacheCount < RECENT_MOVE_CACHE_LOG_LIMIT) {
+				recentMoveCacheCount++;
+			}
+		}
+
+		private void logRecentMoveCacheLines() {
+			logMoveCacheLine(MOVE_CACHE_LOG_PREFIX
+				+ " latest mismatch; last " + recentMoveCacheCount + " move cache snapshots:");
+			for (int i = 0; i < recentMoveCacheCount; i++) {
+				int index = recentMoveCacheNext - recentMoveCacheCount + i;
+				if (index < 0) {
+					index += RECENT_MOVE_CACHE_LOG_LIMIT;
+				}
+				logMoveCacheLine(MOVE_CACHE_LOG_PREFIX + " " + recentMoveCacheLines[index]);
+			}
+		}
+
+		private void logMoveCacheLine(String line) {
+			System.out.println(line);
+			ClientRuntimeLogger.log(line);
 		}
 	}
 
@@ -3209,6 +3283,7 @@ public class PacketHandler {
 				}
 			}
 
+			mc.reconcileCustomNpcMovementTarget(npc);
 			mc.setNpc(mc.getNpcCount(), npc);
 			mc.setNpcCount(mc.getNpcCount() + 1);
 		}

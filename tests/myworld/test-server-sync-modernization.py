@@ -77,6 +77,10 @@ def main() -> None:
         ROOT
         / "Client_Base/src/orsc/PacketHandler.java"
     ).read_text(encoding="utf-8")
+    client_mudclient = (
+        ROOT
+        / "Client_Base/src/orsc/mudclient.java"
+    ).read_text(encoding="utf-8")
     movement_snapshot_stage = (
         ROOT
         / "Client_Base/src/orsc/MovementSnapshotStage.java"
@@ -620,6 +624,30 @@ def main() -> None:
         "if (!isWithinClientLocalTileWindow(player, movedNpc.getX(), movedNpc.getY()))",
     ):
         require(snippet in updater, f"movement snapshot sender missing: {snippet}")
+    movement_window_block = extract_between(
+        updater,
+        "private static boolean isWithinClientLocalTileWindow",
+        "private int safeNPCIndex",
+    )
+    movement_window_filter_block = extract_between(
+        updater,
+        "private static boolean isWithinClientLocalTileWindow",
+        "private static void updateCustomMovementClientRegion",
+    )
+    require(
+        "currentClientLocalBaseX(viewer)" in movement_window_block
+        and "currentClientLocalBaseY(viewer)" in movement_window_block
+        and "updateCustomMovementClientRegion" in updater
+        and "CLIENT_LOCAL_REGION_RELOAD_RADIUS" in updater
+        and "CUSTOM_MOVEMENT_CLIENT_MID_X_ATTRIBUTE" in updater
+        and "CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE" in updater,
+        "custom movement local window must track the client's live loaded-region base",
+    )
+    require(
+        "clientLocalMidpointForTile(viewer.getX(), CLIENT_LOCAL_PLANE_WIDTH)"
+        not in movement_window_filter_block,
+        "custom movement local window must not recalculate directly from the viewer's current tile per record",
+    )
     scene_baseline_block = extract_between(
         updater,
         "private void sendSceneBaselineIfEnabled",
@@ -729,8 +757,11 @@ def main() -> None:
         "movementPacketDebugState.compareSnapshot(snapshotFingerprint)",
         "private final MovementSnapshotStage movementSnapshotStage = new MovementSnapshotStage();",
         "MovementSnapshotStage.Frame stageFrame = null;",
+        "mc.applyCustomMovementUpdate(localX, localZ, localDirection);",
         "stageFrame.addPlayer(serverIndex, x, z, direction);",
         "stageFrame.addNpc(serverIndex, x, z, direction);",
+        "mc.applyCustomPlayerMovementUpdate(serverIndex, x, z, direction);",
+        "mc.applyCustomNpcMovementUpdate(serverIndex, x, z, direction);",
         "movementSnapshotStage.replaceFromSnapshot(stageFrame, mc)",
         "private static final class MovementSnapshotParity",
         "parity.checkLocal(mc, localX, localZ, localDirection);",
@@ -740,15 +771,35 @@ def main() -> None:
         "public String getMovementSnapshotDebugSummaryLine()",
         "public String[] getMovementSnapshotDebugSummaryLines()",
         "movementSnapshotDebugState.recordPacket(",
+        "RECENT_MOVE_CACHE_LOG_LIMIT = 5",
+        "MOVE_CACHE_LOG_PREFIX = \"MOVEMENT_CACHE_RECENT\"",
+        "rememberMoveCacheLine(buildRecentMoveCacheLine",
+        "logRecentMoveCacheLines()",
         "\"wire ok\"",
         "\"cache ok c\" + cacheChecked",
         "\"stage \" + (stageCurrentMismatches == 0 ? \"ok\" : \"bad\")",
     ):
         require(snippet in client_packet_handler, f"client movement snapshot diagnostic missing: {snippet}")
     for snippet in (
+        "private ORSCharacter findVisibleNpcByServerIndex(int serverIndex)",
+        "private ORSCharacter findVisiblePlayerByServerIndex(int serverIndex)",
+        "if (visiblePlayer != null && visiblePlayer != player)",
+        "for (int i = 0; i < this.npcCount; i++)",
+        "reconcileCustomNpcMovementTarget(visibleNpc)",
+        "customNpcMovementTargetValid",
+        "CUSTOM_NPC_MOVEMENT_TARGET_TTL_MILLIS",
+        "rememberCustomNpcMovementTarget(serverIndex, worldX, worldZ, direction)",
+        "public void reconcileCustomNpcMovementTarget(ORSCharacter npc)",
+        "public String describeCustomNpcMovementDebug(int serverIndex)",
+        "customNpcMovementTargetResult",
+        "Arrays.copyOf(this.customNpcMovementTargetValid, capacity)",
+    ):
+        require(snippet in client_mudclient, f"custom movement visible-cache repair missing: {snippet}")
+    for snippet in (
         "final class MovementSnapshotStage",
         "Result replaceFromSnapshot(Frame frame, mudclient mc)",
         "private Result compareToVisibleCache(mudclient mc)",
+        "mc.describeCustomNpcMovementDebug(target.serverIndex)",
         "static final class Frame",
         "static final class Result",
     ):

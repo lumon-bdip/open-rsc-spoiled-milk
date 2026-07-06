@@ -444,6 +444,13 @@ public final class mudclient implements Runnable {
 	private int[] npcVisualOffsetZ = new int[500];
 	private ORSCharacter[] npcsCache = new ORSCharacter[500];
 	private ORSCharacter[] npcsServer = new ORSCharacter[5000];
+	private int[] customNpcMovementTargetWorldX = new int[5000];
+	private int[] customNpcMovementTargetWorldZ = new int[5000];
+	private int[] customNpcMovementTargetDirection = new int[5000];
+	private long[] customNpcMovementTargetMillis = new long[5000];
+	private boolean[] customNpcMovementTargetValid = new boolean[5000];
+	private String[] customNpcMovementTargetResult = new String[5000];
+	private static final long CUSTOM_NPC_MOVEMENT_TARGET_TTL_MILLIS = 2000L;
 	private final int[] pathX = new int[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT];
 	private final int[] pathZ = new int[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT];
 	private final int[] playerClothingColors = new int[]{0xFF0000, 16744448, 16769024, 10543104, '\ue000', '\u8000',
@@ -3091,6 +3098,7 @@ public final class mudclient implements Runnable {
 				character.waypointsZ[0] = character.currentZ = y;
 			}
 
+			reconcileCustomNpcMovementTarget(character);
 			this.npcs[this.npcCount++] = character;
 			return character;
 		} catch (RuntimeException var10) {
@@ -21517,6 +21525,8 @@ public final class mudclient implements Runnable {
 
 			Arrays.fill(this.npcsServer, null);
 			Arrays.fill(this.npcs, null);
+			Arrays.fill(this.customNpcMovementTargetValid, false);
+			Arrays.fill(this.customNpcMovementTargetResult, null);
 
 			for (i = 0; i < 50; ++i) {
 				this.prayerOn[i] = false;
@@ -22459,30 +22469,156 @@ public final class mudclient implements Runnable {
 	}
 
 	public void applyCustomPlayerMovementUpdate(int serverIndex, int worldX, int worldZ, int direction) {
-		if (serverIndex < 0 || serverIndex >= this.playerServer.length) {
+		if (serverIndex < 0) {
 			return;
 		}
+		ensurePlayerServerCapacity(serverIndex + 1);
 		ORSCharacter player = this.playerServer[serverIndex];
-		if (player == null) {
+		ORSCharacter visiblePlayer = findVisiblePlayerByServerIndex(serverIndex);
+		if (player == null && visiblePlayer != null) {
+			this.playerServer[serverIndex] = visiblePlayer;
+			player = visiblePlayer;
+		}
+		if (player == null && visiblePlayer == null) {
 			return;
 		}
 		appendCustomMovementWaypoint(player, worldX - this.midRegionBaseX, worldZ - this.midRegionBaseZ, direction);
+		if (visiblePlayer != null && visiblePlayer != player) {
+			appendCustomMovementWaypoint(visiblePlayer, worldX - this.midRegionBaseX, worldZ - this.midRegionBaseZ, direction);
+		}
 	}
 
 	public void applyCustomNpcMovementUpdate(int serverIndex, int worldX, int worldZ, int direction) {
-		if (serverIndex < 0 || serverIndex >= this.npcsServer.length) {
+		if (serverIndex < 0) {
 			return;
 		}
+		ensureNpcServerCapacity(serverIndex + 1);
+		rememberCustomNpcMovementTarget(serverIndex, worldX, worldZ, direction);
 		ORSCharacter npc = this.npcsServer[serverIndex];
-		if (npc == null) {
+		boolean appliedVisibleNpc = false;
+		if (npc != null) {
+			reconcileCustomNpcMovementTarget(npc);
+		}
+		for (int i = 0; i < this.npcCount; i++) {
+			ORSCharacter visibleNpc = this.npcs[i];
+			if (visibleNpc == null || visibleNpc.serverIndex != serverIndex) {
+				continue;
+			}
+			if (npc == null) {
+				this.npcsServer[serverIndex] = visibleNpc;
+				npc = visibleNpc;
+			}
+			reconcileCustomNpcMovementTarget(visibleNpc);
+			appliedVisibleNpc = true;
+		}
+		if (npc == null && !appliedVisibleNpc) {
 			return;
 		}
-		appendCustomMovementWaypoint(npc, worldX - this.midRegionBaseX, worldZ - this.midRegionBaseZ, direction);
 	}
 
-	private void appendCustomMovementWaypoint(ORSCharacter character, int localTileX, int localTileZ, int direction) {
-		if (character == null || !World.isLocalTile(localTileX, localTileZ) || !isValidCustomMovementDirection(direction)) {
+	public void reconcileCustomNpcMovementTarget(ORSCharacter npc) {
+		if (npc == null || npc.serverIndex < 0 || npc.serverIndex >= this.customNpcMovementTargetValid.length) {
 			return;
+		}
+		int serverIndex = npc.serverIndex;
+		if (!this.customNpcMovementTargetValid[serverIndex]) {
+			return;
+		}
+		long age = System.currentTimeMillis() - this.customNpcMovementTargetMillis[serverIndex];
+		if (age > CUSTOM_NPC_MOVEMENT_TARGET_TTL_MILLIS) {
+			this.customNpcMovementTargetValid[serverIndex] = false;
+			return;
+		}
+		int localTileX = this.customNpcMovementTargetWorldX[serverIndex] - this.midRegionBaseX;
+		int localTileZ = this.customNpcMovementTargetWorldZ[serverIndex] - this.midRegionBaseZ;
+		boolean applied = appendCustomMovementWaypoint(
+			npc,
+			localTileX,
+			localTileZ,
+			this.customNpcMovementTargetDirection[serverIndex]);
+		this.customNpcMovementTargetResult[serverIndex] = (applied ? "applied" : "rejected")
+			+ " local " + localTileX + "," + localTileZ
+			+ " base " + this.midRegionBaseX + "," + this.midRegionBaseZ
+			+ " dir " + this.customNpcMovementTargetDirection[serverIndex]
+			+ " obj " + System.identityHashCode(npc);
+	}
+
+	private void rememberCustomNpcMovementTarget(int serverIndex, int worldX, int worldZ, int direction) {
+		ensureNpcServerCapacity(serverIndex + 1);
+		this.customNpcMovementTargetWorldX[serverIndex] = worldX;
+		this.customNpcMovementTargetWorldZ[serverIndex] = worldZ;
+		this.customNpcMovementTargetDirection[serverIndex] = direction;
+		this.customNpcMovementTargetMillis[serverIndex] = System.currentTimeMillis();
+		this.customNpcMovementTargetValid[serverIndex] = true;
+		this.customNpcMovementTargetResult[serverIndex] = "stored";
+	}
+
+	public String describeCustomNpcMovementDebug(int serverIndex) {
+		if (serverIndex < 0 || serverIndex >= this.customNpcMovementTargetValid.length) {
+			return "custom target out-of-range";
+		}
+		int visibleCount = 0;
+		String firstVisible = "none";
+		for (int i = 0; i < this.npcCount; i++) {
+			ORSCharacter npc = this.npcs[i];
+			if (npc == null || npc.serverIndex != serverIndex) {
+				continue;
+			}
+			visibleCount++;
+			if ("none".equals(firstVisible)) {
+				int waypointIndex = npc.waypointIndexCurrent;
+				int worldX = this.midRegionBaseX + ((npc.waypointsX[waypointIndex] - 64) / Math.max(1, this.tileSize));
+				int worldZ = this.midRegionBaseZ + ((npc.waypointsZ[waypointIndex] - 64) / Math.max(1, this.tileSize));
+				firstVisible = worldX + "," + worldZ + ":" + npc.animationNext
+					+ " obj " + System.identityHashCode(npc)
+					+ " cur/next " + npc.waypointIndexCurrent + "/" + npc.waypointIndexNext;
+			}
+		}
+		String serverObject = "none";
+		ORSCharacter serverNpc = this.npcsServer[serverIndex];
+		if (serverNpc != null) {
+			int waypointIndex = serverNpc.waypointIndexCurrent;
+			int worldX = this.midRegionBaseX + ((serverNpc.waypointsX[waypointIndex] - 64) / Math.max(1, this.tileSize));
+			int worldZ = this.midRegionBaseZ + ((serverNpc.waypointsZ[waypointIndex] - 64) / Math.max(1, this.tileSize));
+			serverObject = worldX + "," + worldZ + ":" + serverNpc.animationNext
+				+ " obj " + System.identityHashCode(serverNpc)
+				+ " cur/next " + serverNpc.waypointIndexCurrent + "/" + serverNpc.waypointIndexNext;
+		}
+		return "custom "
+			+ (this.customNpcMovementTargetValid[serverIndex] ? "valid" : "invalid")
+			+ " target " + this.customNpcMovementTargetWorldX[serverIndex]
+			+ "," + this.customNpcMovementTargetWorldZ[serverIndex]
+			+ ":" + this.customNpcMovementTargetDirection[serverIndex]
+			+ " result " + (this.customNpcMovementTargetResult[serverIndex] == null
+				? "none"
+				: this.customNpcMovementTargetResult[serverIndex])
+			+ " visible " + visibleCount + " first " + firstVisible
+			+ " server " + serverObject;
+	}
+
+	private ORSCharacter findVisiblePlayerByServerIndex(int serverIndex) {
+		for (int i = 0; i < this.playerCount; i++) {
+			ORSCharacter player = this.players[i];
+			if (player != null && player.serverIndex == serverIndex) {
+				return player;
+			}
+		}
+		return null;
+	}
+
+	private ORSCharacter findVisibleNpcByServerIndex(int serverIndex) {
+		for (int i = 0; i < this.npcCount; i++) {
+			ORSCharacter npc = this.npcs[i];
+			if (npc != null && npc.serverIndex == serverIndex) {
+				return npc;
+			}
+		}
+		return null;
+	}
+
+	private boolean appendCustomMovementWaypoint(ORSCharacter character, int localTileX, int localTileZ, int direction) {
+		if (character == null || !World.isLocalTile(localTileX, localTileZ) || !isValidCustomMovementDirection(direction)) {
+			return false;
 		}
 		int pixelX = localTileX * this.tileSize + 64;
 		int pixelZ = localTileZ * this.tileSize + 64;
@@ -22497,6 +22633,7 @@ public final class mudclient implements Runnable {
 			character.waypointsX[waypointIdx] = pixelX;
 			character.waypointsZ[waypointIdx] = pixelZ;
 		}
+		return true;
 	}
 
 	private boolean isValidCustomMovementDirection(int direction) {
@@ -22551,7 +22688,14 @@ public final class mudclient implements Runnable {
 
 	private void ensureNpcServerCapacity(int requiredCapacity) {
 		if (requiredCapacity > this.npcsServer.length) {
-			this.npcsServer = Arrays.copyOf(this.npcsServer, growEntityCapacity(this.npcsServer.length, requiredCapacity));
+			int capacity = growEntityCapacity(this.npcsServer.length, requiredCapacity);
+			this.npcsServer = Arrays.copyOf(this.npcsServer, capacity);
+			this.customNpcMovementTargetWorldX = Arrays.copyOf(this.customNpcMovementTargetWorldX, capacity);
+			this.customNpcMovementTargetWorldZ = Arrays.copyOf(this.customNpcMovementTargetWorldZ, capacity);
+			this.customNpcMovementTargetDirection = Arrays.copyOf(this.customNpcMovementTargetDirection, capacity);
+			this.customNpcMovementTargetMillis = Arrays.copyOf(this.customNpcMovementTargetMillis, capacity);
+			this.customNpcMovementTargetValid = Arrays.copyOf(this.customNpcMovementTargetValid, capacity);
+			this.customNpcMovementTargetResult = Arrays.copyOf(this.customNpcMovementTargetResult, capacity);
 		}
 	}
 
