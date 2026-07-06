@@ -108,16 +108,8 @@ public final class RegularPlayer implements CommandTrigger {
 			sendMessageDiscord(player, args);
 		} else if (command.equalsIgnoreCase("commands")) {
 			queryCommands(player, 0);
-		} else if (command.equalsIgnoreCase("b") && config().RIGHT_CLICK_BANK) {
-			if (!player.getQolOptOut()) {
-				if (player.getLocation().isInBank(config().BASED_MAP_DATA)) {
-					player.getBank().quickFeature(null, player, false);
-				} else {
-					player.playerServerMessage(MessageType.QUEST, "You are not inside a bank.");
-				}
-			} else {
-				player.playerServerMessage(MessageType.QUEST, "Quick banking is a QoL feature which you are opted out of.");
-			}
+		} else if (command.equalsIgnoreCase("b") || command.equalsIgnoreCase("bank")) {
+			openBankFromCommand(player);
 		} else if (command.equalsIgnoreCase("qoloptout")) {
 			handleQOLOptOut(player);
 		} else if (command.equalsIgnoreCase("qoloptoutconfirm")) {
@@ -158,6 +150,8 @@ public final class RegularPlayer implements CommandTrigger {
 			getLanguage(command, player, args);
 		} else if (command.equalsIgnoreCase("togglereceipts")) {
 			toggleReceipts(player);
+		} else if (command.equalsIgnoreCase("wilderness") && !player.isMod()) {
+			queryWildernessState(player);
 		} else if (command.equalsIgnoreCase("getpidlesscatching") || command.equalsIgnoreCase("tellpidlesscatching") || command.equalsIgnoreCase("pidless")) {
 			tellPidlessCatching(player);
 		} else if (command.equalsIgnoreCase("maxplayersperip") || command.equalsIgnoreCase("mppi")) {
@@ -528,6 +522,45 @@ public final class RegularPlayer implements CommandTrigger {
 		player.teleport(player.getWorld().EVENT_X, player.getWorld().EVENT_Y);
 	}
 
+	private void openBankFromCommand(Player player) {
+		if (player.getQolOptOut()) {
+			player.playerServerMessage(MessageType.QUEST, "Quick banking is a QoL feature which you are opted out of.");
+			return;
+		}
+		if (!player.getLocation().isInBank(config().BASED_MAP_DATA)) {
+			player.playerServerMessage(MessageType.QUEST, "You are not inside a bank.");
+			return;
+		}
+		player.getBank().quickFeature(null, player, false);
+	}
+
+	private void queryWildernessState(Player player) {
+		int totalPlayersInWilderness = 0;
+		int playersInF2pWild = 0;
+		int playersInP2pWild = 0;
+		int edgeDungeon = 0;
+		for (Player p : player.getWorld().getPlayers()) {
+			if (p.getLocation().inWilderness()) {
+				totalPlayersInWilderness++;
+			}
+			if (p.getLocation().inFreeWild() && !p.getLocation().inBounds(195, 3206, 234, 3258)) {
+				playersInF2pWild++;
+			}
+			if (p.getLocation().wildernessLevel() >= 48 && p.getLocation().wildernessLevel() <= 56) {
+				playersInP2pWild++;
+			}
+			if (p.getLocation().inBounds(195, 3206, 234, 3258)) {
+				edgeDungeon++;
+			}
+		}
+
+		ActionSender.sendBox(player, "There are currently @red@" + totalPlayersInWilderness + " @whi@player" + (totalPlayersInWilderness == 1 ? "" : "s") + " in wilderness % %"
+				+ "F2P wilderness(Wild Lvl. 1-48) : @dre@" + playersInF2pWild + "@whi@ player" + (playersInF2pWild == 1 ? "" : "s") + " %"
+				+ "P2P wilderness(Wild Lvl. 48-56) : @dre@" + playersInP2pWild + "@whi@ player" + (playersInP2pWild == 1 ? "" : "s") + " %"
+				+ "Edge dungeon wilderness(Wild Lvl. 1-9) : @dre@" + edgeDungeon + "@whi@ player" + (edgeDungeon == 1 ? "" : "s") + " %"
+			, false);
+	}
+
 	private void sendMessageGlobal(Player player, String command, String[] args) {
 		if (!config().WANT_GLOBAL_CHAT && !config().WANT_GLOBAL_FRIEND) return;
 
@@ -775,7 +808,7 @@ public final class RegularPlayer implements CommandTrigger {
 			qolExplanation.append("@yel@When opted out of QoL the following applies:%");
 
 			int disablableCount = 0;
-			if (config().RIGHT_CLICK_BANK) {
+			if (quickBankingIsAvailable()) {
 				++disablableCount;
 				qolExplanation.append(String.format("@lre@%d) @whi@Accessing the bank more quickly is disabled.%%", disablableCount));
 			}
@@ -832,12 +865,16 @@ public final class RegularPlayer implements CommandTrigger {
 		}
 	}
 	private boolean serverHasQOLEnabled() {
-		return config().RIGHT_CLICK_BANK
+		return quickBankingIsAvailable()
 			|| config().RIGHT_CLICK_TRADE
 			|| config().WANT_BANK_NOTES
 			|| config().FASTER_YOHNUS
 			|| config().WANT_APOTHECARY_QOL
 			|| config().WANT_BETTER_JEWELRY_CRAFTING;
+	}
+
+	private boolean quickBankingIsAvailable() {
+		return config().RIGHT_CLICK_BANK || config().PLAYER_COMMANDS;
 	}
 
 	private void confirmCertOptOut(Player player) {
@@ -1258,6 +1295,7 @@ public final class RegularPlayer implements CommandTrigger {
 		"@whi@::event - to enter an ongoing server event %",
 		"@whi@::kills - shows kill counts of npcs %",
 		"@whi@::showitem <item> - show off an owned item in Discord %",
+		"@whi@::b or ::bank - open bank while standing in a bank area %",
 		"@whi@::qoloptout - opts you out of Quality of Life features %",
 		"@whi@::certoptout - opts you out of the traditional 'cert' system %"
 	};
@@ -1277,6 +1315,7 @@ public final class RegularPlayer implements CommandTrigger {
 		"@whi@::event - to enter an ongoing server event %",
 		"@whi@::kills - shows kill counts of npcs %",
 		"@whi@::showitem <item> - show off an owned item in Discord %",
+		"@whi@::b or ::bank - open bank while standing in a bank area %",
 		"@whi@::qoloptout - opts you out of Quality of Life features %",
 		"@whi@::certoptout - opts you out of the traditional 'cert' system %"
 	};

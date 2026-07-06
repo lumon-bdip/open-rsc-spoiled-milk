@@ -54,6 +54,7 @@ public final class CommandHandler implements PayloadProcessor<CommandStruct, Opc
 				"d",
 				"commands",
 				"b",
+				"bank",
 				"qoloptout",
 				"qoloptoutconfirm",
 				"certoptout",
@@ -116,7 +117,8 @@ public final class CommandHandler implements PayloadProcessor<CommandStruct, Opc
 				"uptime",
 				"enable_protocol_extensions",
 				"kc",
-				"kills"
+				"kills",
+				"wilderness"
 			};
 			if (player.isPlayerMod() && !Arrays.asList(ignoredCommands).contains(cmd.toLowerCase())) {
 				player.getWorld().getServer().getDiscordService().staffCommandLog(player, "::" + cmd + " " + String.join(" ", args));
