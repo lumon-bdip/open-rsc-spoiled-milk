@@ -91,7 +91,7 @@ public class NpcBehavior {
 	public void tick(final boolean hasPlayers) {
 		final long now = System.currentTimeMillis();
 		final Server server = npc.getWorld().getServer();
-		if (!server.isFoundationBenchmarkEnabled()) {
+		if (!server.isFoundationBenchmarkDeepNpcProfilingEnabled()) {
 			if (state == State.ROAM) {
 				handleRoam(now, hasPlayers);
 			} else if (state == State.AGGRO) {
@@ -189,8 +189,12 @@ public class NpcBehavior {
 		if (Summoning.isSummon(npc)) {
 			return false;
 		}
+		if (!hasPlayers) {
+			return false;
+		}
+
 		// Check if NPC will aggro
-		if (hasPlayers && checkCombatTimer(now, npc.getCombatTimer(), 5 * tickFactor)) {
+		if (checkCombatTimer(now, npc.getCombatTimer(), 5 * tickFactor)) {
 			Player preferredThreatTarget = npc.getPreferredThreatTarget();
 			if (preferredThreatTarget != null && canAggro(preferredThreatTarget, now)) {
 				setChasing(preferredThreatTarget);

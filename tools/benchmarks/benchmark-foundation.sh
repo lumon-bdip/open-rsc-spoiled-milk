@@ -12,6 +12,7 @@ SUMMARY_FILE="$ARTIFACT_DIR/foundation-benchmark-$STAMP.txt"
 BENCHMARK_TICKS="${MYWORLD_BENCHMARK_TICKS:-120}"
 BENCHMARK_WARMUP_TICKS="${MYWORLD_BENCHMARK_WARMUP_TICKS:-10}"
 BENCHMARK_SYNTHETIC_PLAYERS="${MYWORLD_BENCHMARK_SYNTHETIC_PLAYERS:-0}"
+BENCHMARK_EXTRA_JVM_ARGS="${MYWORLD_BENCHMARK_EXTRA_JVM_ARGS:-}"
 
 mkdir -p "$LOG_DIR" "$ARTIFACT_DIR"
 
@@ -24,7 +25,7 @@ myworld_ant_build compile_plugins
 set +e
 myworld_ant_server runserver \
   -DconfFile=myworld \
-  "-DbenchmarkJvmArgs=-Dopenrsc.benchmarkTicks=$BENCHMARK_TICKS -Dopenrsc.benchmarkWarmupTicks=$BENCHMARK_WARMUP_TICKS -Dopenrsc.benchmarkSyntheticPlayers=$BENCHMARK_SYNTHETIC_PLAYERS" \
+  "-DbenchmarkJvmArgs=-Dopenrsc.benchmarkTicks=$BENCHMARK_TICKS -Dopenrsc.benchmarkWarmupTicks=$BENCHMARK_WARMUP_TICKS -Dopenrsc.benchmarkSyntheticPlayers=$BENCHMARK_SYNTHETIC_PLAYERS $BENCHMARK_EXTRA_JVM_ARGS" \
   >"$LOG_FILE" 2>&1
 status=$?
 set -e

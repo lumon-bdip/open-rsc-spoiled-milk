@@ -3655,16 +3655,19 @@ public final class Player extends Mob {
 					for (final Packet outgoing : outgoingPackets) {
 						final long packetTime = getWorld().getServer().bench(
 							() -> {
-								channel.writeAndFlush(outgoing);
+								channel.write(outgoing);
 							}
 						);
 						getWorld().getServer().addOutgoingPacketDuration(outgoing.getID(), packetTime);
 						getWorld().getServer().incrementOutgoingPacketCount(outgoing.getID());
+						getWorld().getServer().addOutgoingPacketBytes(outgoing.getID(), outgoing.getLength());
+					}
+					if (!outgoingPackets.isEmpty()) {
+						channel.flush();
 					}
 				} catch (final Exception e) {
 					LOGGER.error("Unable to process outgoing packets for player with username: {}", username, e);
 				}
-				//channel.flush();
 				outgoingPackets.clear();
 			}
 		});

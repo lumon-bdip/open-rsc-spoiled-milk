@@ -20,6 +20,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.entity.update.*;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.region.VisibilitySnapshot;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.net.rsc.struct.outgoing.*;
@@ -88,17 +89,93 @@ public final class GameStateUpdater {
 	}
 
 	private void sendNormalUpdatePackets(final Player player) {
-		final Collection<GameObject> visibleGameObjects = player.getViewArea().getGameObjectsInView();
-		final Collection<GroundItem> visibleGroundItems = player.getViewArea().getItemsInView();
-		recordUpdatePlayers(() -> updatePlayers(player));
+		final VisibilitySnapshot packetVisibility = buildPacketVisibilitySnapshot(player);
+		final Collection<Player> visiblePlayers = packetVisibility.getPlayers();
+		final Collection<Npc> visibleNpcs = packetVisibility.getNpcs();
+		final Collection<GameObject> visibleSceneryObjects = packetVisibility.getSceneryObjects();
+		final Collection<GameObject> visibleWallObjects = packetVisibility.getWallObjects();
+		final Collection<GroundItem> visibleGroundItems = packetVisibility.getGroundItems();
+		recordVisibilityShadowSnapshot(player, packetVisibility);
+
+		recordUpdatePlayers(() -> updatePlayers(player, visiblePlayers));
 		recordUpdatePlayerAppearances(() -> updatePlayerAppearances(player));
-		recordUpdateNpcs(() -> updateNpcs(player));
+		recordUpdateNpcs(() -> updateNpcs(player, visibleNpcs));
 		recordUpdateNpcAppearances(() -> updateNpcAppearances(player));
-		recordUpdateGameObjects(() -> updateGameObjects(player, visibleGameObjects));
-		recordUpdateWallObjects(() -> updateWallObjects(player, visibleGameObjects));
+		recordUpdateGameObjects(() -> updateGameObjects(player, visibleSceneryObjects));
+		recordUpdateWallObjects(() -> updateWallObjects(player, visibleWallObjects));
 		recordUpdateGroundItems(() -> updateGroundItems(player, visibleGroundItems));
 		recordUpdateTimeouts(() -> updateTimeouts(player));
 		sendWorldTimeIfNeeded(player);
+	}
+
+	private VisibilitySnapshot buildPacketVisibilitySnapshot(final Player player) {
+		final long visibilitySnapshotStart = System.nanoTime();
+		final VisibilitySnapshot packetVisibility = useVisibilitySnapshotInput(player)
+			? getServer().getWorld().getRegionManager().buildVisibilitySnapshot(player)
+			: buildLegacyVisibilitySnapshot(player);
+		recordVisibilitySnapshotMetrics(packetVisibility, System.nanoTime() - visibilitySnapshotStart);
+		return packetVisibility;
+	}
+
+	private VisibilitySnapshot buildLegacyVisibilitySnapshot(final Player player) {
+		return new VisibilitySnapshot(
+			player.getViewArea().getPlayersInView(),
+			player.getViewArea().getNpcsInView(),
+			player.getViewArea().getGameObjectsInView(),
+			player.getViewArea().getItemsInView(),
+			0,
+			0);
+	}
+
+	private boolean useVisibilitySnapshotInput(final Player player) {
+		return player.isUsingCustomClient() && getServer().getConfig().WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT;
+	}
+
+	private void recordVisibilitySnapshotMetrics(final VisibilitySnapshot packetVisibility, final long duration) {
+		getServer().addVisibilitySnapshotMetrics(
+			packetVisibility.getPlayers().size(),
+			packetVisibility.getNpcs().size(),
+			packetVisibility.getSceneryCount(),
+			packetVisibility.getWallObjectCount(),
+			packetVisibility.getGroundItems().size(),
+			duration);
+	}
+
+	private void recordVisibilityShadowSnapshot(final Player player, final VisibilitySnapshot packetVisibility) {
+		if (!getServer().getConfig().WANT_SYNC_VISIBILITY_SHADOW) {
+			return;
+		}
+
+		final long start = System.nanoTime();
+		final VisibilitySnapshot comparisonSnapshot = useVisibilitySnapshotInput(player)
+			? buildLegacyVisibilitySnapshot(player)
+			: getServer().getWorld().getRegionManager().buildVisibilitySnapshot(player);
+		final boolean playersMatch = sameIdentityCollection(packetVisibility.getPlayers(), comparisonSnapshot.getPlayers());
+		final boolean npcsMatch = sameIdentityCollection(packetVisibility.getNpcs(), comparisonSnapshot.getNpcs());
+		final boolean gameObjectsMatch = sameIdentityCollection(packetVisibility.getGameObjects(), comparisonSnapshot.getGameObjects());
+		final boolean groundItemsMatch = sameIdentityCollection(packetVisibility.getGroundItems(), comparisonSnapshot.getGroundItems());
+		getServer().addVisibilityShadowMetrics(
+			System.nanoTime() - start,
+			playersMatch,
+			npcsMatch,
+			gameObjectsMatch,
+			groundItemsMatch,
+			Math.max(packetVisibility.getMobRegionCount(), comparisonSnapshot.getMobRegionCount()),
+			Math.max(packetVisibility.getObjectRegionCount(), comparisonSnapshot.getObjectRegionCount()));
+	}
+
+	private boolean sameIdentityCollection(final Collection<?> first, final Collection<?> second) {
+		if (first.size() != second.size()) {
+			return false;
+		}
+		final Set<Object> secondIdentities = Collections.newSetFromMap(new IdentityHashMap<>());
+		secondIdentities.addAll(second);
+		for (final Object item : first) {
+			if (!secondIdentities.contains(item)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private void sendWorldTimeIfNeeded(final Player player) {
@@ -330,7 +407,7 @@ public final class GameStateUpdater {
 		return player.isUsingCustomClient() ? CUSTOM_LOCAL_MOB_COUNT_BITS : AUTHENTIC_LOCAL_MOB_COUNT_BITS;
 	}
 
-	protected void updateNpcs(final Player playerToUpdate) {
+	protected void updateNpcs(final Player playerToUpdate, final Collection<Npc> visibleNpcs) {
 		MobsUpdateStruct struct = new MobsUpdateStruct();
 		ClearMobsStruct clearStruct = new ClearMobsStruct();
 		boolean isRetroClient = playerToUpdate.isUsing38CompatibleClient() || playerToUpdate.isUsing39CompatibleClient();
@@ -361,7 +438,7 @@ public final class GameStateUpdater {
 				}
 			}
 			clearStruct.indices = clearIdx;
-			for (final Npc newNPC : playerToUpdate.getViewArea().getNpcsInView()) {
+			for (final Npc newNPC : visibleNpcs) {
 				if (playerToUpdate.getLocalNpcs().contains(newNPC) || newNPC.isRemoved() || newNPC.isRespawning()
 					|| newNPC.getID() == NpcId.NED_BOAT.id() && !playerToUpdate.getCache().hasKey("ned_hired")
 					|| !newNPC.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(newNPC) || (newNPC.isTeleporting() && !newNPC.inCombat())) {
@@ -387,7 +464,6 @@ public final class GameStateUpdater {
 			struct.mobsUpdate = mobsUpdate;
 		} else {
 			final int localNpcCount = playerToUpdate.getLocalNpcs().size();
-			final Collection<Npc> visibleNpcs = playerToUpdate.getViewArea().getNpcsInView();
 			final int visibleNpcCount = visibleNpcs.size();
 			final int localNpcLimit = localMobLimit(playerToUpdate);
 			List<Map.Entry<Integer, Integer>> mobsUpdate =
@@ -514,7 +590,7 @@ public final class GameStateUpdater {
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_NPC_COORDS, struct, playerToUpdate);
 	}
 
-	protected void updatePlayers(final Player playerToUpdate) {
+	protected void updatePlayers(final Player playerToUpdate, final Collection<Player> visiblePlayers) {
 		MobsUpdateStruct struct = new MobsUpdateStruct();
 		ClearMobsStruct clearStruct = new ClearMobsStruct();
 
@@ -533,8 +609,6 @@ public final class GameStateUpdater {
 
 		boolean isRetroClient = playerToUpdate.isUsing38CompatibleClient() || playerToUpdate.isUsing39CompatibleClient();
 		boolean usesKnownPlayers = playerToUpdate.getClientVersion() >= 61 && playerToUpdate.getClientVersion() <= 204;
-		final Collection<Player> visiblePlayers = playerToUpdate.getViewArea().getPlayersInView();
-
 		if (isRetroClient) {
 			// TODO: check impl
 			List<Object> mobsUpdate = new ArrayList<>();
@@ -1187,7 +1261,7 @@ public final class GameStateUpdater {
 						updatesMain.add((short) playerNeedingAppearanceUpdate.getIndex());
 						updatesMain.add((byte) 5);
 						if (player.isUsing233CompatibleClient()) {
-							updatesMain.add((short) player.getAppearanceID());
+							updatesMain.add((short) playerNeedingAppearanceUpdate.getAppearanceID());
 							updatesMain.add(playerNeedingAppearanceUpdate.getUsername());
 
 							// TODO: just send username twice if this packet can be chunked up better later
@@ -1199,7 +1273,7 @@ public final class GameStateUpdater {
 								updatesMain.add(playerNeedingAppearanceUpdate.getUsername().substring(0, 1));
 							}
 						} else if (appearanceUpdateWithUsernameHash) {
-							updatesMain.add((short) player.getAppearanceID());
+							updatesMain.add((short) playerNeedingAppearanceUpdate.getAppearanceID());
 							updatesMain.add(playerNeedingAppearanceUpdate.getUsernameHash());
 						} else if (player.isUsingCustomClient()) {
 							updatesMain.add(playerNeedingAppearanceUpdate.getUsername());
@@ -1411,11 +1485,11 @@ public final class GameStateUpdater {
 		}
 	}
 
-	protected void updateGameObjects(final Player playerToUpdate, final Collection<GameObject> visibleGameObjects) {
+	protected void updateGameObjects(final Player playerToUpdate, final Collection<GameObject> visibleSceneryObjects) {
 		boolean changed = false;
 
 		GameObjectsUpdateStruct struct = new GameObjectsUpdateStruct();
-		List<GameObjectLoc> objectLocs = new ArrayList<>(playerToUpdate.getLocalGameObjects().size() + visibleGameObjects.size());
+		List<GameObjectLoc> objectLocs = new ArrayList<>(playerToUpdate.getLocalGameObjects().size() + visibleSceneryObjects.size());
 
 		for (final Iterator<GameObject> it$ = playerToUpdate.getLocalGameObjects().iterator(); it$.hasNext(); ) {
 			final GameObject o = it$.next();
@@ -1431,10 +1505,10 @@ public final class GameStateUpdater {
 		}
 
 		// Add scenery
-		for (final GameObject newObject : visibleGameObjects) {
+		for (final GameObject newObject : visibleSceneryObjects) {
 			boolean skipAdd = newObject.isRemoved() ||
 				newObject.isInvisibleTo(playerToUpdate) ||
-				newObject.getType() != 0 || // not a wallObject
+				newObject.getType() != 0 ||
 				playerToUpdate.getLocalGameObjects().contains(newObject);
 			if (!playerToUpdate.isUsingCustomClient()) {
 				// Honestly don't think this does anything because the scenery isn't iterated over in the view anyway
@@ -1523,11 +1597,11 @@ public final class GameStateUpdater {
 		}
 	}
 
-	protected void updateWallObjects(final Player playerToUpdate, final Collection<GameObject> visibleGameObjects) {
+	protected void updateWallObjects(final Player playerToUpdate, final Collection<GameObject> visibleWallObjects) {
 		boolean changed = false;
 
 		GameObjectsUpdateStruct struct = new GameObjectsUpdateStruct();
-		List<GameObjectLoc> objectLocs = new ArrayList<>(playerToUpdate.getLocalWallObjects().size() + visibleGameObjects.size());
+		List<GameObjectLoc> objectLocs = new ArrayList<>(playerToUpdate.getLocalWallObjects().size() + visibleWallObjects.size());
 
 		// remove all boundaries that need to be removed
 		for (final Iterator<GameObject> it$ = playerToUpdate.getLocalWallObjects().iterator(); it$.hasNext(); ) {
@@ -1584,7 +1658,7 @@ public final class GameStateUpdater {
 		}
 
 		// add all new boundaries to be added
-		for (final GameObject newObject : visibleGameObjects) {
+		for (final GameObject newObject : visibleWallObjects) {
 			if (!playerToUpdate.withinObjectGridRange(newObject) || newObject.isRemoved()
 				|| newObject.isInvisibleTo(playerToUpdate) || newObject.getType() != 1
 				|| playerToUpdate.getLocalWallObjects().contains(newObject)) {
@@ -1649,11 +1723,15 @@ public final class GameStateUpdater {
 			final boolean shouldUpdatePosition = !getServer().getConfig().WANT_CUSTOM_WALK_SPEED;
 			final EntityList<Npc> npcs = getServer().getWorld().getNpcs();
 			final boolean hasPlayers = getServer().getWorld().getPlayers().size() > 0;
-			if (!getServer().isFoundationBenchmarkEnabled()) {
+			if (!getServer().isFoundationBenchmarkNpcProfilingEnabled()) {
 				npcs.forEachLive(n -> {
 					try {
 						if (n.isUnregistering()) {
 							getServer().getWorld().unregisterNpc(n);
+							return;
+						}
+						if (shouldThrottleIdleNpc(n)) {
+							getServer().incrementLastNpcIdleThrottleSkipped();
 							return;
 						}
 
@@ -1680,6 +1758,10 @@ public final class GameStateUpdater {
 						unregisterDuration[0] += getServer().bench(() -> getServer().getWorld().unregisterNpc(n));
 						return;
 					}
+					if (shouldThrottleIdleNpc(n)) {
+						getServer().incrementLastNpcIdleThrottleSkipped();
+						return;
+					}
 
 					// NPC behavior stays on the game tick. Custom walking only changes movement cadence.
 					behaviorDuration[0] += getServer().bench(() -> n.updateBehavior(hasPlayers));
@@ -1696,6 +1778,31 @@ public final class GameStateUpdater {
 			getServer().incrementLastProcessNpcBehaviorDuration(behaviorDuration[0]);
 			getServer().incrementLastProcessNpcMovementDuration(movementDuration[0]);
 		});
+	}
+
+	private boolean shouldThrottleIdleNpc(final Npc npc) {
+		if (!getServer().getConfig().WANT_NPC_IDLE_TICK_THROTTLE) {
+			return false;
+		}
+		if (isActiveNpc(npc)) {
+			return false;
+		}
+
+		final int interval = Math.max(1, getServer().getConfig().NPC_IDLE_TICK_THROTTLE_INTERVAL);
+		return Math.floorMod(getServer().getCurrentTick() + npc.getIndex(), interval) != 0;
+	}
+
+	private boolean isActiveNpc(final Npc npc) {
+		return npc.isRemoved()
+			|| npc.isRespawning()
+			|| npc.isBusy()
+			|| npc.isUnregistering()
+			|| npc.inCombat()
+			|| npc.isHostile()
+			|| npc.isFollowing()
+			|| !npc.finishedPath()
+			|| npc.getInteractingPlayer() != null
+			|| npc.getPlayerWantsNpc();
 	}
 
 	/**

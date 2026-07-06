@@ -129,6 +129,7 @@ public class Server implements Runnable {
 	private long lastProcessNpcUnregisterDuration = 0;
 	private long lastProcessNpcBehaviorDuration = 0;
 	private long lastProcessNpcMovementDuration = 0;
+	private long lastNpcIdleThrottleSkipped = 0;
 	private long lastNpcBehaviorRoamDuration = 0;
 	private long lastNpcBehaviorAggroDuration = 0;
 	private long lastNpcBehaviorCombatDuration = 0;
@@ -149,6 +150,38 @@ public class Server implements Runnable {
 	private long lastUpdateGroundItemsDuration = 0;
 	private long lastUpdateTimeoutsDuration = 0;
 	private long lastUpdateAppearanceKeepaliveDuration = 0;
+	private long lastVisibilitySnapshotDuration = 0;
+	private long lastVisibilitySnapshotSamples = 0;
+	private long lastVisiblePlayersTotal = 0;
+	private long lastVisibleNpcsTotal = 0;
+	private long lastVisibleSceneryTotal = 0;
+	private long lastVisibleWallObjectsTotal = 0;
+	private long lastVisibleGroundItemsTotal = 0;
+	private int lastVisiblePlayersMax = 0;
+	private int lastVisibleNpcsMax = 0;
+	private int lastVisibleSceneryMax = 0;
+	private int lastVisibleWallObjectsMax = 0;
+	private int lastVisibleGroundItemsMax = 0;
+	private long lastVisibilityRegionCacheRequests = 0;
+	private long lastVisibilityRegionCacheHits = 0;
+	private long lastVisibilityRegionCacheMisses = 0;
+	private long lastVisibilityObjectCacheRequests = 0;
+	private long lastVisibilityObjectCacheHits = 0;
+	private long lastVisibilityObjectCacheMisses = 0;
+	private long lastVisibilityObjectCacheClears = 0;
+	private long lastVisibilityObjectCacheEntriesCleared = 0;
+	private long lastVisibilityObjectSnapshotCacheRequests = 0;
+	private long lastVisibilityObjectSnapshotCacheHits = 0;
+	private long lastVisibilityObjectSnapshotCacheMisses = 0;
+	private long lastVisibilityShadowDuration = 0;
+	private long lastVisibilityShadowSamples = 0;
+	private long lastVisibilityShadowMismatchSamples = 0;
+	private long lastVisibilityShadowPlayerMismatches = 0;
+	private long lastVisibilityShadowNpcMismatches = 0;
+	private long lastVisibilityShadowGameObjectMismatches = 0;
+	private long lastVisibilityShadowGroundItemMismatches = 0;
+	private int lastVisibilityShadowMobRegionsMax = 0;
+	private int lastVisibilityShadowObjectRegionsMax = 0;
 	private long lastDoCleanupDuration = 0;
 	private long lastExecuteWalkToActionsDuration = 0;
 
@@ -159,6 +192,8 @@ public class Server implements Runnable {
 	private final Map<Integer, Integer> incomingCountPerPacketOpcode = new HashMap<>();
 	private final Map<Integer, Long> outgoingTimePerPacketOpcode = new HashMap<>();
 	private final Map<Integer, Integer> outgoingCountPerPacketOpcode = new HashMap<>();
+	private final Map<Integer, Long> outgoingPayloadBytesPerPacketOpcode = new HashMap<>();
+	private long lastOutgoingPayloadBytes = 0;
 	private int privateMessagesSent = 0;
 	private final AtomicLong playerSaveRequestCount = new AtomicLong();
 	private final AtomicLong playerSaveLogoutRequestCount = new AtomicLong();
@@ -172,6 +207,8 @@ public class Server implements Runnable {
 	private final int benchmarkTargetTicks;
 	private final int benchmarkWarmupTicks;
 	private final int benchmarkSyntheticPlayers;
+	private final boolean benchmarkNpcProfiling;
+	private final boolean benchmarkDeepNpcProfiling;
 	private long benchmarkSamples = 0;
 	private long benchmarkTickTotal = 0;
 	private long benchmarkTickMax = 0;
@@ -182,6 +219,7 @@ public class Server implements Runnable {
 	private long benchmarkProcessNpcUnregisterTotal = 0;
 	private long benchmarkProcessNpcBehaviorTotal = 0;
 	private long benchmarkProcessNpcMovementTotal = 0;
+	private long benchmarkNpcIdleThrottleSkipped = 0;
 	private long benchmarkNpcBehaviorRoamTotal = 0;
 	private long benchmarkNpcBehaviorAggroTotal = 0;
 	private long benchmarkNpcBehaviorCombatTotal = 0;
@@ -202,10 +240,43 @@ public class Server implements Runnable {
 	private long benchmarkUpdateGroundItemsTotal = 0;
 	private long benchmarkUpdateTimeoutsTotal = 0;
 	private long benchmarkUpdateAppearanceKeepaliveTotal = 0;
+	private long benchmarkVisibilitySnapshotTotal = 0;
+	private long benchmarkVisibilitySnapshotSamples = 0;
+	private long benchmarkVisiblePlayersTotal = 0;
+	private long benchmarkVisibleNpcsTotal = 0;
+	private long benchmarkVisibleSceneryTotal = 0;
+	private long benchmarkVisibleWallObjectsTotal = 0;
+	private long benchmarkVisibleGroundItemsTotal = 0;
+	private int benchmarkVisiblePlayersMax = 0;
+	private int benchmarkVisibleNpcsMax = 0;
+	private int benchmarkVisibleSceneryMax = 0;
+	private int benchmarkVisibleWallObjectsMax = 0;
+	private int benchmarkVisibleGroundItemsMax = 0;
+	private long benchmarkVisibilityRegionCacheRequests = 0;
+	private long benchmarkVisibilityRegionCacheHits = 0;
+	private long benchmarkVisibilityRegionCacheMisses = 0;
+	private long benchmarkVisibilityObjectCacheRequests = 0;
+	private long benchmarkVisibilityObjectCacheHits = 0;
+	private long benchmarkVisibilityObjectCacheMisses = 0;
+	private long benchmarkVisibilityObjectCacheClears = 0;
+	private long benchmarkVisibilityObjectCacheEntriesCleared = 0;
+	private long benchmarkVisibilityObjectSnapshotCacheRequests = 0;
+	private long benchmarkVisibilityObjectSnapshotCacheHits = 0;
+	private long benchmarkVisibilityObjectSnapshotCacheMisses = 0;
+	private long benchmarkVisibilityShadowTotal = 0;
+	private long benchmarkVisibilityShadowSamples = 0;
+	private long benchmarkVisibilityShadowMismatchSamples = 0;
+	private long benchmarkVisibilityShadowPlayerMismatches = 0;
+	private long benchmarkVisibilityShadowNpcMismatches = 0;
+	private long benchmarkVisibilityShadowGameObjectMismatches = 0;
+	private long benchmarkVisibilityShadowGroundItemMismatches = 0;
+	private int benchmarkVisibilityShadowMobRegionsMax = 0;
+	private int benchmarkVisibilityShadowObjectRegionsMax = 0;
 	private long benchmarkCleanupTotal = 0;
 	private long benchmarkWalkToActionsTotal = 0;
 	private long benchmarkIncomingPacketsTotal = 0;
 	private long benchmarkOutgoingPacketsTotal = 0;
+	private long benchmarkOutgoingPayloadBytesTotal = 0;
 	private int benchmarkMaxPlayers = 0;
 	private int benchmarkMaxNpcs = 0;
 	private int benchmarkMaxEvents = 0;
@@ -396,6 +467,8 @@ public class Server implements Runnable {
 		benchmarkTargetTicks = getIntegerSystemProperty("openrsc.benchmarkTicks", 0);
 		benchmarkWarmupTicks = getIntegerSystemProperty("openrsc.benchmarkWarmupTicks", 5);
 		benchmarkSyntheticPlayers = getIntegerSystemProperty("openrsc.benchmarkSyntheticPlayers", 0);
+		benchmarkNpcProfiling = getBooleanSystemProperty("openrsc.benchmarkNpcProfiling", true);
+		benchmarkDeepNpcProfiling = getBooleanSystemProperty("openrsc.benchmarkDeepNpcProfiling", true);
 	}
 
 	private static int getIntegerSystemProperty(final String key, final int defaultValue) {
@@ -409,6 +482,14 @@ public class Server implements Runnable {
 			LOGGER.warn("Ignoring invalid integer system property {}={}", key, configuredValue);
 			return defaultValue;
 		}
+	}
+
+	private static boolean getBooleanSystemProperty(final String key, final boolean defaultValue) {
+		final String configuredValue = System.getProperty(key);
+		if (configuredValue == null || configuredValue.trim().isEmpty()) {
+			return defaultValue;
+		}
+		return Boolean.parseBoolean(configuredValue.trim());
 	}
 
 	private void initializeBenchmarkSyntheticPlayers() {
@@ -836,6 +917,7 @@ public class Server implements Runnable {
 				incomingCountPerPacketOpcode.clear();
 				outgoingTimePerPacketOpcode.clear();
 				outgoingCountPerPacketOpcode.clear();
+				outgoingPayloadBytesPerPacketOpcode.clear();
 
 				// Don't remove this server from the active servers list if we are just restarting.
 				if (!isRestarting()) {
@@ -861,6 +943,14 @@ public class Server implements Runnable {
 
 	public boolean isFoundationBenchmarkEnabled() {
 		return benchmarkTargetTicks > 0;
+	}
+
+	public boolean isFoundationBenchmarkNpcProfilingEnabled() {
+		return isFoundationBenchmarkEnabled() && benchmarkNpcProfiling;
+	}
+
+	public boolean isFoundationBenchmarkDeepNpcProfilingEnabled() {
+		return isFoundationBenchmarkNpcProfilingEnabled() && benchmarkDeepNpcProfiling;
 	}
 
 	@Override
@@ -952,6 +1042,7 @@ public class Server implements Runnable {
 					incomingCountPerPacketOpcode.clear();
 					outgoingTimePerPacketOpcode.clear();
 					outgoingCountPerPacketOpcode.clear();
+					outgoingPayloadBytesPerPacketOpcode.clear();
 
 					//LOGGER.info("Tick " + getCurrentTick() + " processed.");
 				} else {
@@ -1285,6 +1376,7 @@ public class Server implements Runnable {
 		benchmarkProcessNpcUnregisterTotal += getLastProcessNpcUnregisterDuration();
 		benchmarkProcessNpcBehaviorTotal += getLastProcessNpcBehaviorDuration();
 		benchmarkProcessNpcMovementTotal += getLastProcessNpcMovementDuration();
+		benchmarkNpcIdleThrottleSkipped += getLastNpcIdleThrottleSkipped();
 		benchmarkNpcBehaviorRoamTotal += getLastNpcBehaviorRoamDuration();
 		benchmarkNpcBehaviorAggroTotal += getLastNpcBehaviorAggroDuration();
 		benchmarkNpcBehaviorCombatTotal += getLastNpcBehaviorCombatDuration();
@@ -1300,15 +1392,48 @@ public class Server implements Runnable {
 		benchmarkUpdatePlayerAppearancesTotal += getLastUpdatePlayerAppearancesDuration();
 		benchmarkUpdateNpcsTotal += getLastUpdateNpcsDuration();
 		benchmarkUpdateNpcAppearancesTotal += getLastUpdateNpcAppearancesDuration();
-			benchmarkUpdateGameObjectsTotal += getLastUpdateGameObjectsDuration();
-			benchmarkUpdateWallObjectsTotal += getLastUpdateWallObjectsDuration();
-			benchmarkUpdateGroundItemsTotal += getLastUpdateGroundItemsDuration();
-			benchmarkUpdateTimeoutsTotal += getLastUpdateTimeoutsDuration();
+		benchmarkUpdateGameObjectsTotal += getLastUpdateGameObjectsDuration();
+		benchmarkUpdateWallObjectsTotal += getLastUpdateWallObjectsDuration();
+		benchmarkUpdateGroundItemsTotal += getLastUpdateGroundItemsDuration();
+		benchmarkUpdateTimeoutsTotal += getLastUpdateTimeoutsDuration();
 		benchmarkUpdateAppearanceKeepaliveTotal += getLastUpdateAppearanceKeepaliveDuration();
+		benchmarkVisibilitySnapshotTotal += getLastVisibilitySnapshotDuration();
+		benchmarkVisibilitySnapshotSamples += getLastVisibilitySnapshotSamples();
+		benchmarkVisiblePlayersTotal += getLastVisiblePlayersTotal();
+		benchmarkVisibleNpcsTotal += getLastVisibleNpcsTotal();
+		benchmarkVisibleSceneryTotal += getLastVisibleSceneryTotal();
+		benchmarkVisibleWallObjectsTotal += getLastVisibleWallObjectsTotal();
+		benchmarkVisibleGroundItemsTotal += getLastVisibleGroundItemsTotal();
+		benchmarkVisiblePlayersMax = Math.max(benchmarkVisiblePlayersMax, getLastVisiblePlayersMax());
+		benchmarkVisibleNpcsMax = Math.max(benchmarkVisibleNpcsMax, getLastVisibleNpcsMax());
+		benchmarkVisibleSceneryMax = Math.max(benchmarkVisibleSceneryMax, getLastVisibleSceneryMax());
+		benchmarkVisibleWallObjectsMax = Math.max(benchmarkVisibleWallObjectsMax, getLastVisibleWallObjectsMax());
+		benchmarkVisibleGroundItemsMax = Math.max(benchmarkVisibleGroundItemsMax, getLastVisibleGroundItemsMax());
+		benchmarkVisibilityRegionCacheRequests += getLastVisibilityRegionCacheRequests();
+		benchmarkVisibilityRegionCacheHits += getLastVisibilityRegionCacheHits();
+		benchmarkVisibilityRegionCacheMisses += getLastVisibilityRegionCacheMisses();
+		benchmarkVisibilityObjectCacheRequests += getLastVisibilityObjectCacheRequests();
+		benchmarkVisibilityObjectCacheHits += getLastVisibilityObjectCacheHits();
+		benchmarkVisibilityObjectCacheMisses += getLastVisibilityObjectCacheMisses();
+		benchmarkVisibilityObjectCacheClears += getLastVisibilityObjectCacheClears();
+		benchmarkVisibilityObjectCacheEntriesCleared += getLastVisibilityObjectCacheEntriesCleared();
+		benchmarkVisibilityObjectSnapshotCacheRequests += getLastVisibilityObjectSnapshotCacheRequests();
+		benchmarkVisibilityObjectSnapshotCacheHits += getLastVisibilityObjectSnapshotCacheHits();
+		benchmarkVisibilityObjectSnapshotCacheMisses += getLastVisibilityObjectSnapshotCacheMisses();
+		benchmarkVisibilityShadowTotal += getLastVisibilityShadowDuration();
+		benchmarkVisibilityShadowSamples += getLastVisibilityShadowSamples();
+		benchmarkVisibilityShadowMismatchSamples += getLastVisibilityShadowMismatchSamples();
+		benchmarkVisibilityShadowPlayerMismatches += getLastVisibilityShadowPlayerMismatches();
+		benchmarkVisibilityShadowNpcMismatches += getLastVisibilityShadowNpcMismatches();
+		benchmarkVisibilityShadowGameObjectMismatches += getLastVisibilityShadowGameObjectMismatches();
+		benchmarkVisibilityShadowGroundItemMismatches += getLastVisibilityShadowGroundItemMismatches();
+		benchmarkVisibilityShadowMobRegionsMax = Math.max(benchmarkVisibilityShadowMobRegionsMax, getLastVisibilityShadowMobRegionsMax());
+		benchmarkVisibilityShadowObjectRegionsMax = Math.max(benchmarkVisibilityShadowObjectRegionsMax, getLastVisibilityShadowObjectRegionsMax());
 		benchmarkCleanupTotal += getLastDoCleanupDuration();
 		benchmarkWalkToActionsTotal += getLastExecuteWalkToActionsDuration();
 		benchmarkIncomingPacketsTotal += getLastIncomingPacketsDuration();
 		benchmarkOutgoingPacketsTotal += getLastOutgoingPacketsDuration();
+		benchmarkOutgoingPayloadBytesTotal += getLastOutgoingPayloadBytes();
 		benchmarkMaxPlayers = Math.max(benchmarkMaxPlayers, getWorld().getPlayers().size());
 		benchmarkMaxNpcs = Math.max(benchmarkMaxNpcs, getWorld().getNpcs().size());
 		benchmarkMaxEvents = Math.max(benchmarkMaxEvents, getGameEventHandler().getEvents().size());
@@ -1321,22 +1446,58 @@ public class Server implements Runnable {
 
 	private String buildBenchmarkSummary() {
 		final long samples = Math.max(1, benchmarkSamples);
+		final long visibilitySamples = Math.max(1, benchmarkVisibilitySnapshotSamples);
 		return "FOUNDATION_BENCHMARK "
 			+ "samples=" + benchmarkSamples
 			+ " warmupTicks=" + benchmarkWarmupTicks
 			+ " syntheticPlayers=" + benchmarkSyntheticPlayers
+			+ " npcProfiling=" + benchmarkNpcProfiling
+			+ " deepNpcProfiling=" + benchmarkDeepNpcProfiling
 			+ " avgTickMs=" + nanosToMillis(benchmarkTickTotal / samples)
 			+ " maxTickMs=" + nanosToMillis(benchmarkTickMax)
 			+ " avgEventsMs=" + nanosToMillis(benchmarkEventsTotal / samples)
 			+ " avgWorldUpdateMs=" + nanosToMillis(benchmarkWorldUpdateTotal / samples)
 			+ " avgProcessPlayersMs=" + nanosToMillis(benchmarkProcessPlayersTotal / samples)
 			+ " avgProcessNpcsMs=" + nanosToMillis(benchmarkProcessNpcsTotal / samples)
+			+ " npcIdleThrottleSkipped=" + benchmarkNpcIdleThrottleSkipped
 			+ " avgMessageQueuesMs=" + nanosToMillis(benchmarkMessageQueuesTotal / samples)
 			+ " avgUpdateClientsMs=" + nanosToMillis(benchmarkUpdateClientsTotal / samples)
 			+ " avgCleanupMs=" + nanosToMillis(benchmarkCleanupTotal / samples)
 			+ " avgWalkToActionsMs=" + nanosToMillis(benchmarkWalkToActionsTotal / samples)
 			+ " avgIncomingPacketsMs=" + nanosToMillis(benchmarkIncomingPacketsTotal / samples)
 			+ " avgOutgoingPacketsMs=" + nanosToMillis(benchmarkOutgoingPacketsTotal / samples)
+			+ " avgOutgoingPayloadBytes=" + (benchmarkOutgoingPayloadBytesTotal / samples)
+			+ " avgVisibilitySnapshotMs=" + nanosToMillis(benchmarkVisibilitySnapshotTotal / samples)
+			+ " avgVisiblePlayers=" + (benchmarkVisiblePlayersTotal / visibilitySamples)
+			+ " avgVisibleNpcs=" + (benchmarkVisibleNpcsTotal / visibilitySamples)
+			+ " avgVisibleScenery=" + (benchmarkVisibleSceneryTotal / visibilitySamples)
+			+ " avgVisibleWallObjects=" + (benchmarkVisibleWallObjectsTotal / visibilitySamples)
+			+ " avgVisibleGroundItems=" + (benchmarkVisibleGroundItemsTotal / visibilitySamples)
+			+ " maxVisiblePlayers=" + benchmarkVisiblePlayersMax
+			+ " maxVisibleNpcs=" + benchmarkVisibleNpcsMax
+			+ " maxVisibleScenery=" + benchmarkVisibleSceneryMax
+			+ " maxVisibleWallObjects=" + benchmarkVisibleWallObjectsMax
+			+ " maxVisibleGroundItems=" + benchmarkVisibleGroundItemsMax
+			+ " visibilityRegionCacheRequests=" + benchmarkVisibilityRegionCacheRequests
+			+ " visibilityRegionCacheHits=" + benchmarkVisibilityRegionCacheHits
+			+ " visibilityRegionCacheMisses=" + benchmarkVisibilityRegionCacheMisses
+			+ " visibilityObjectCacheRequests=" + benchmarkVisibilityObjectCacheRequests
+			+ " visibilityObjectCacheHits=" + benchmarkVisibilityObjectCacheHits
+			+ " visibilityObjectCacheMisses=" + benchmarkVisibilityObjectCacheMisses
+			+ " visibilityObjectCacheClears=" + benchmarkVisibilityObjectCacheClears
+			+ " visibilityObjectCacheEntriesCleared=" + benchmarkVisibilityObjectCacheEntriesCleared
+			+ " visibilityObjectSnapshotCacheRequests=" + benchmarkVisibilityObjectSnapshotCacheRequests
+			+ " visibilityObjectSnapshotCacheHits=" + benchmarkVisibilityObjectSnapshotCacheHits
+			+ " visibilityObjectSnapshotCacheMisses=" + benchmarkVisibilityObjectSnapshotCacheMisses
+			+ " avgVisibilityShadowMs=" + nanosToMillis(benchmarkVisibilityShadowTotal / samples)
+			+ " visibilityShadowSamples=" + benchmarkVisibilityShadowSamples
+			+ " visibilityShadowMismatches=" + benchmarkVisibilityShadowMismatchSamples
+			+ " visibilityShadowPlayerMismatches=" + benchmarkVisibilityShadowPlayerMismatches
+			+ " visibilityShadowNpcMismatches=" + benchmarkVisibilityShadowNpcMismatches
+			+ " visibilityShadowGameObjectMismatches=" + benchmarkVisibilityShadowGameObjectMismatches
+			+ " visibilityShadowGroundItemMismatches=" + benchmarkVisibilityShadowGroundItemMismatches
+			+ " maxVisibilityShadowMobRegions=" + benchmarkVisibilityShadowMobRegionsMax
+			+ " maxVisibilityShadowObjectRegions=" + benchmarkVisibilityShadowObjectRegionsMax
 			+ " saveRequests=" + getPlayerSaveRequestCount()
 			+ " saveLogoutRequests=" + getPlayerSaveLogoutRequestCount()
 			+ " avgTickMsPrecise=" + nanosToMillisPrecise(benchmarkTickTotal / samples)
@@ -1348,6 +1509,7 @@ public class Server implements Runnable {
 			+ " avgProcessNpcUnregisterMsPrecise=" + nanosToMillisPrecise(benchmarkProcessNpcUnregisterTotal / samples)
 			+ " avgProcessNpcBehaviorMsPrecise=" + nanosToMillisPrecise(benchmarkProcessNpcBehaviorTotal / samples)
 			+ " avgProcessNpcMovementMsPrecise=" + nanosToMillisPrecise(benchmarkProcessNpcMovementTotal / samples)
+			+ " avgNpcIdleThrottleSkipped=" + (benchmarkNpcIdleThrottleSkipped / samples)
 			+ " avgNpcBehaviorRoamMsPrecise=" + nanosToMillisPrecise(benchmarkNpcBehaviorRoamTotal / samples)
 			+ " avgNpcBehaviorAggroMsPrecise=" + nanosToMillisPrecise(benchmarkNpcBehaviorAggroTotal / samples)
 			+ " avgNpcBehaviorCombatMsPrecise=" + nanosToMillisPrecise(benchmarkNpcBehaviorCombatTotal / samples)
@@ -1363,10 +1525,10 @@ public class Server implements Runnable {
 			+ " avgUpdatePlayerAppearancesMsPrecise=" + nanosToMillisPrecise(benchmarkUpdatePlayerAppearancesTotal / samples)
 			+ " avgUpdateNpcsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateNpcsTotal / samples)
 			+ " avgUpdateNpcAppearancesMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateNpcAppearancesTotal / samples)
-				+ " avgUpdateGameObjectsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateGameObjectsTotal / samples)
-				+ " avgUpdateWallObjectsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateWallObjectsTotal / samples)
-				+ " avgUpdateGroundItemsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateGroundItemsTotal / samples)
-				+ " avgUpdateTimeoutsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateTimeoutsTotal / samples)
+			+ " avgUpdateGameObjectsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateGameObjectsTotal / samples)
+			+ " avgUpdateWallObjectsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateWallObjectsTotal / samples)
+			+ " avgUpdateGroundItemsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateGroundItemsTotal / samples)
+			+ " avgUpdateTimeoutsMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateTimeoutsTotal / samples)
 			+ " avgUpdateAppearanceKeepaliveMsPrecise=" + nanosToMillisPrecise(benchmarkUpdateAppearanceKeepaliveTotal / samples)
 			+ " avgCleanupMsPrecise=" + nanosToMillisPrecise(benchmarkCleanupTotal / samples)
 			+ " avgWalkToActionsMsPrecise=" + nanosToMillisPrecise(benchmarkWalkToActionsTotal / samples)
@@ -1616,6 +1778,10 @@ public class Server implements Runnable {
 		return lastProcessNpcMovementDuration;
 	}
 
+	public long getLastNpcIdleThrottleSkipped() {
+		return lastNpcIdleThrottleSkipped;
+	}
+
 	public long getLastNpcBehaviorRoamDuration() {
 		return lastNpcBehaviorRoamDuration;
 	}
@@ -1694,6 +1860,134 @@ public class Server implements Runnable {
 
 	public long getLastUpdateAppearanceKeepaliveDuration() {
 		return lastUpdateAppearanceKeepaliveDuration;
+	}
+
+	public long getLastVisibilitySnapshotDuration() {
+		return lastVisibilitySnapshotDuration;
+	}
+
+	public long getLastVisibilitySnapshotSamples() {
+		return lastVisibilitySnapshotSamples;
+	}
+
+	public long getLastVisiblePlayersTotal() {
+		return lastVisiblePlayersTotal;
+	}
+
+	public long getLastVisibleNpcsTotal() {
+		return lastVisibleNpcsTotal;
+	}
+
+	public long getLastVisibleSceneryTotal() {
+		return lastVisibleSceneryTotal;
+	}
+
+	public long getLastVisibleWallObjectsTotal() {
+		return lastVisibleWallObjectsTotal;
+	}
+
+	public long getLastVisibleGroundItemsTotal() {
+		return lastVisibleGroundItemsTotal;
+	}
+
+	public int getLastVisiblePlayersMax() {
+		return lastVisiblePlayersMax;
+	}
+
+	public int getLastVisibleNpcsMax() {
+		return lastVisibleNpcsMax;
+	}
+
+	public int getLastVisibleSceneryMax() {
+		return lastVisibleSceneryMax;
+	}
+
+	public int getLastVisibleWallObjectsMax() {
+		return lastVisibleWallObjectsMax;
+	}
+
+	public int getLastVisibleGroundItemsMax() {
+		return lastVisibleGroundItemsMax;
+	}
+
+	public long getLastVisibilityRegionCacheRequests() {
+		return lastVisibilityRegionCacheRequests;
+	}
+
+	public long getLastVisibilityRegionCacheHits() {
+		return lastVisibilityRegionCacheHits;
+	}
+
+	public long getLastVisibilityRegionCacheMisses() {
+		return lastVisibilityRegionCacheMisses;
+	}
+
+	public long getLastVisibilityObjectCacheRequests() {
+		return lastVisibilityObjectCacheRequests;
+	}
+
+	public long getLastVisibilityObjectCacheHits() {
+		return lastVisibilityObjectCacheHits;
+	}
+
+	public long getLastVisibilityObjectCacheMisses() {
+		return lastVisibilityObjectCacheMisses;
+	}
+
+	public long getLastVisibilityObjectCacheClears() {
+		return lastVisibilityObjectCacheClears;
+	}
+
+	public long getLastVisibilityObjectCacheEntriesCleared() {
+		return lastVisibilityObjectCacheEntriesCleared;
+	}
+
+	public long getLastVisibilityObjectSnapshotCacheRequests() {
+		return lastVisibilityObjectSnapshotCacheRequests;
+	}
+
+	public long getLastVisibilityObjectSnapshotCacheHits() {
+		return lastVisibilityObjectSnapshotCacheHits;
+	}
+
+	public long getLastVisibilityObjectSnapshotCacheMisses() {
+		return lastVisibilityObjectSnapshotCacheMisses;
+	}
+
+	public long getLastVisibilityShadowDuration() {
+		return lastVisibilityShadowDuration;
+	}
+
+	public long getLastVisibilityShadowSamples() {
+		return lastVisibilityShadowSamples;
+	}
+
+	public long getLastVisibilityShadowMismatchSamples() {
+		return lastVisibilityShadowMismatchSamples;
+	}
+
+	public long getLastVisibilityShadowPlayerMismatches() {
+		return lastVisibilityShadowPlayerMismatches;
+	}
+
+	public long getLastVisibilityShadowNpcMismatches() {
+		return lastVisibilityShadowNpcMismatches;
+	}
+
+	public long getLastVisibilityShadowGameObjectMismatches() {
+		return lastVisibilityShadowGameObjectMismatches;
+	}
+
+	public long getLastVisibilityShadowGroundItemMismatches() {
+		return lastVisibilityShadowGroundItemMismatches;
+	}
+
+	public int getLastVisibilityShadowMobRegionsMax() {
+		return lastVisibilityShadowMobRegionsMax;
+	}
+
+	public int getLastVisibilityShadowObjectRegionsMax() {
+		return lastVisibilityShadowObjectRegionsMax;
 	}
 
 	public long getLastDoCleanupDuration() {
@@ -1798,6 +2092,14 @@ public class Server implements Runnable {
 		return outgoingCountPerPacketOpcode;
 	}
 
+	public Map<Integer, Long> getOutgoingPayloadBytesPerPacketOpcode() {
+		return outgoingPayloadBytesPerPacketOpcode;
+	}
+
+	public long getLastOutgoingPayloadBytes() {
+		return lastOutgoingPayloadBytes;
+	}
+
 	public void addIncomingPacketDuration(final int packetOpcode, final long additionalTime) {
 		if (!incomingTimePerPacketOpcode.containsKey(packetOpcode)) {
 			incomingTimePerPacketOpcode.put(packetOpcode, 0L);
@@ -1824,6 +2126,15 @@ public class Server implements Runnable {
 			outgoingCountPerPacketOpcode.put(packetOpcode, 0);
 		}
 		outgoingCountPerPacketOpcode.put(packetOpcode, outgoingCountPerPacketOpcode.get(packetOpcode) + 1);
+	}
+
+	public void addOutgoingPacketBytes(final int packetOpcode, final long additionalBytes) {
+		if (!outgoingPayloadBytesPerPacketOpcode.containsKey(packetOpcode)) {
+			outgoingPayloadBytesPerPacketOpcode.put(packetOpcode, 0L);
+		}
+		outgoingPayloadBytesPerPacketOpcode.put(packetOpcode,
+			outgoingPayloadBytesPerPacketOpcode.get(packetOpcode) + additionalBytes);
+		lastOutgoingPayloadBytes += additionalBytes;
 	}
 
 	public synchronized long getMaxItemID() {
@@ -1872,6 +2183,10 @@ public class Server implements Runnable {
 
 	public synchronized void incrementLastProcessNpcMovementDuration(final long duration) {
 		this.lastProcessNpcMovementDuration += duration;
+	}
+
+	public synchronized void incrementLastNpcIdleThrottleSkipped() {
+		this.lastNpcIdleThrottleSkipped++;
 	}
 
 	public synchronized void incrementLastNpcBehaviorRoamDuration(final long duration) {
@@ -1954,6 +2269,90 @@ public class Server implements Runnable {
 		this.lastUpdateAppearanceKeepaliveDuration += duration;
 	}
 
+	public synchronized void addVisibilitySnapshotMetrics(
+		final int visiblePlayers,
+		final int visibleNpcs,
+		final int visibleScenery,
+		final int visibleWallObjects,
+		final int visibleGroundItems,
+		final long duration) {
+		this.lastVisibilitySnapshotDuration += duration;
+		this.lastVisibilitySnapshotSamples++;
+		this.lastVisiblePlayersTotal += visiblePlayers;
+		this.lastVisibleNpcsTotal += visibleNpcs;
+		this.lastVisibleSceneryTotal += visibleScenery;
+		this.lastVisibleWallObjectsTotal += visibleWallObjects;
+		this.lastVisibleGroundItemsTotal += visibleGroundItems;
+		this.lastVisiblePlayersMax = Math.max(this.lastVisiblePlayersMax, visiblePlayers);
+		this.lastVisibleNpcsMax = Math.max(this.lastVisibleNpcsMax, visibleNpcs);
+		this.lastVisibleSceneryMax = Math.max(this.lastVisibleSceneryMax, visibleScenery);
+		this.lastVisibleWallObjectsMax = Math.max(this.lastVisibleWallObjectsMax, visibleWallObjects);
+		this.lastVisibleGroundItemsMax = Math.max(this.lastVisibleGroundItemsMax, visibleGroundItems);
+	}
+
+	public synchronized void recordVisibilityRegionCacheAccess(final boolean hit) {
+		this.lastVisibilityRegionCacheRequests++;
+		if (hit) {
+			this.lastVisibilityRegionCacheHits++;
+		} else {
+			this.lastVisibilityRegionCacheMisses++;
+		}
+	}
+
+	public synchronized void recordVisibilityObjectCacheAccess(final boolean hit) {
+		this.lastVisibilityObjectCacheRequests++;
+		if (hit) {
+			this.lastVisibilityObjectCacheHits++;
+		} else {
+			this.lastVisibilityObjectCacheMisses++;
+		}
+	}
+
+	public synchronized void recordVisibilityObjectSnapshotCacheAccess(final boolean hit) {
+		this.lastVisibilityObjectSnapshotCacheRequests++;
+		if (hit) {
+			this.lastVisibilityObjectSnapshotCacheHits++;
+		} else {
+			this.lastVisibilityObjectSnapshotCacheMisses++;
+		}
+	}
+
+	public synchronized void recordVisibilityObjectCacheClear(final int entriesCleared) {
+		if (entriesCleared > 0) {
+			this.lastVisibilityObjectCacheClears++;
+			this.lastVisibilityObjectCacheEntriesCleared += entriesCleared;
+		}
+	}
+
+	public synchronized void addVisibilityShadowMetrics(
+		final long duration,
+		final boolean playersMatch,
+		final boolean npcsMatch,
+		final boolean gameObjectsMatch,
+		final boolean groundItemsMatch,
+		final int mobRegionCount,
+		final int objectRegionCount) {
+		this.lastVisibilityShadowDuration += duration;
+		this.lastVisibilityShadowSamples++;
+		if (!playersMatch || !npcsMatch || !gameObjectsMatch || !groundItemsMatch) {
+			this.lastVisibilityShadowMismatchSamples++;
+		}
+		if (!playersMatch) {
+			this.lastVisibilityShadowPlayerMismatches++;
+		}
+		if (!npcsMatch) {
+			this.lastVisibilityShadowNpcMismatches++;
+		}
+		if (!gameObjectsMatch) {
+			this.lastVisibilityShadowGameObjectMismatches++;
+		}
+		if (!groundItemsMatch) {
+			this.lastVisibilityShadowGroundItemMismatches++;
+		}
+		this.lastVisibilityShadowMobRegionsMax = Math.max(this.lastVisibilityShadowMobRegionsMax, mobRegionCount);
+		this.lastVisibilityShadowObjectRegionsMax = Math.max(this.lastVisibilityShadowObjectRegionsMax, objectRegionCount);
+	}
+
 	public synchronized void incrementLastDoCleanupDuration(final long duration) {
 		this.lastDoCleanupDuration += duration;
 	}
@@ -1972,6 +2371,7 @@ public class Server implements Runnable {
 		this.lastProcessNpcUnregisterDuration = 0;
 		this.lastProcessNpcBehaviorDuration = 0;
 		this.lastProcessNpcMovementDuration = 0;
+		this.lastNpcIdleThrottleSkipped = 0;
 		this.lastNpcBehaviorRoamDuration = 0;
 		this.lastNpcBehaviorAggroDuration = 0;
 		this.lastNpcBehaviorCombatDuration = 0;
@@ -1987,13 +2387,46 @@ public class Server implements Runnable {
 		this.lastUpdatePlayerAppearancesDuration = 0;
 		this.lastUpdateNpcsDuration = 0;
 		this.lastUpdateNpcAppearancesDuration = 0;
-			this.lastUpdateGameObjectsDuration = 0;
-			this.lastUpdateWallObjectsDuration = 0;
-			this.lastUpdateGroundItemsDuration = 0;
-			this.lastUpdateTimeoutsDuration = 0;
+		this.lastUpdateGameObjectsDuration = 0;
+		this.lastUpdateWallObjectsDuration = 0;
+		this.lastUpdateGroundItemsDuration = 0;
+		this.lastUpdateTimeoutsDuration = 0;
 		this.lastUpdateAppearanceKeepaliveDuration = 0;
+		this.lastVisibilitySnapshotDuration = 0;
+		this.lastVisibilitySnapshotSamples = 0;
+		this.lastVisiblePlayersTotal = 0;
+		this.lastVisibleNpcsTotal = 0;
+		this.lastVisibleSceneryTotal = 0;
+		this.lastVisibleWallObjectsTotal = 0;
+		this.lastVisibleGroundItemsTotal = 0;
+		this.lastVisiblePlayersMax = 0;
+		this.lastVisibleNpcsMax = 0;
+		this.lastVisibleSceneryMax = 0;
+		this.lastVisibleWallObjectsMax = 0;
+		this.lastVisibleGroundItemsMax = 0;
+		this.lastVisibilityRegionCacheRequests = 0;
+		this.lastVisibilityRegionCacheHits = 0;
+		this.lastVisibilityRegionCacheMisses = 0;
+		this.lastVisibilityObjectCacheRequests = 0;
+		this.lastVisibilityObjectCacheHits = 0;
+		this.lastVisibilityObjectCacheMisses = 0;
+		this.lastVisibilityObjectCacheClears = 0;
+		this.lastVisibilityObjectCacheEntriesCleared = 0;
+		this.lastVisibilityObjectSnapshotCacheRequests = 0;
+		this.lastVisibilityObjectSnapshotCacheHits = 0;
+		this.lastVisibilityObjectSnapshotCacheMisses = 0;
+		this.lastVisibilityShadowDuration = 0;
+		this.lastVisibilityShadowSamples = 0;
+		this.lastVisibilityShadowMismatchSamples = 0;
+		this.lastVisibilityShadowPlayerMismatches = 0;
+		this.lastVisibilityShadowNpcMismatches = 0;
+		this.lastVisibilityShadowGameObjectMismatches = 0;
+		this.lastVisibilityShadowGroundItemMismatches = 0;
+		this.lastVisibilityShadowMobRegionsMax = 0;
+		this.lastVisibilityShadowObjectRegionsMax = 0;
 		this.lastDoCleanupDuration = 0;
 		this.lastExecuteWalkToActionsDuration = 0;
+		this.lastOutgoingPayloadBytes = 0;
 	}
 
 	public void refreshWebsocketSSLContext(Player player) throws Exception {

@@ -82,6 +82,10 @@ public class ServerConfiguration {
 	public boolean WANT_PCAP_LOGGING;
 	public boolean WANT_THREADING__BREAK_PID_PRIORITY;
 	public boolean WANT_FORCE_GC_ON_PROFILING;
+	public boolean WANT_SYNC_VISIBILITY_SHADOW;
+	public boolean WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT;
+	public boolean WANT_NPC_IDLE_TICK_THROTTLE;
+	public int NPC_IDLE_TICK_THROTTLE_INTERVAL;
 	public boolean BREAK_NPC_LOCATION_CACHE;
 	public boolean IS_LOCALHOST_RESTRICTED;
 
@@ -449,6 +453,26 @@ public class ServerConfiguration {
 		WANT_PCAP_LOGGING = tryReadBool("want_pcap_logging").orElse(false);
 		WANT_THREADING__BREAK_PID_PRIORITY = tryReadBool("want_threading__break_pid_priority").orElse(false);
 		WANT_FORCE_GC_ON_PROFILING = tryReadBool("want_force_gc_on_profiling").orElse(false);
+		WANT_SYNC_VISIBILITY_SHADOW = readBoolSystemEnvConfig(
+			"openrsc.syncVisibilityShadow",
+			"OPENRSC_SYNC_VISIBILITY_SHADOW",
+			"want_sync_visibility_shadow",
+			false);
+		WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT = readBoolSystemEnvConfig(
+			"openrsc.syncVisibilitySnapshotInput",
+			"OPENRSC_SYNC_VISIBILITY_SNAPSHOT_INPUT",
+			"want_sync_visibility_snapshot_input",
+			false);
+		WANT_NPC_IDLE_TICK_THROTTLE = readBoolSystemEnvConfig(
+			"openrsc.npcIdleTickThrottle",
+			"OPENRSC_NPC_IDLE_TICK_THROTTLE",
+			"want_npc_idle_tick_throttle",
+			false);
+		NPC_IDLE_TICK_THROTTLE_INTERVAL = Math.max(1, readIntSystemEnvConfig(
+			"openrsc.npcIdleTickThrottleInterval",
+			"OPENRSC_NPC_IDLE_TICK_THROTTLE_INTERVAL",
+			"npc_idle_tick_throttle_interval",
+			4));
 		BREAK_NPC_LOCATION_CACHE = tryReadBool("break_npc_location_cache").orElse(false);
 		WORLD_NUMBER = tryReadInt("world_number").orElse(1);
 		PLAYER_LEVEL_LIMIT = tryReadInt("player_level_limit").orElse(99);
@@ -899,6 +923,26 @@ public class ServerConfiguration {
 			return Boolean.parseBoolean(envValue.trim());
 		}
 		return tryReadBool(configKey).orElse(defaultValue);
+	}
+
+	private boolean readBoolSystemEnvConfig(String systemKey, String envKey, String configKey, boolean defaultValue) {
+		String systemValue = System.getProperty(systemKey);
+		if (systemValue != null && !systemValue.trim().isEmpty()) {
+			return Boolean.parseBoolean(systemValue.trim());
+		}
+		return readBoolEnvFirst(envKey, configKey, defaultValue);
+	}
+
+	private int readIntSystemEnvConfig(String systemKey, String envKey, String configKey, int defaultValue) {
+		String systemValue = System.getProperty(systemKey);
+		if (systemValue != null && !systemValue.trim().isEmpty()) {
+			try {
+				return Integer.parseInt(systemValue.trim());
+			} catch (NumberFormatException nfe) {
+				LOGGER.warn("Invalid integer in system property {}. Using configured/default value.", systemKey);
+			}
+		}
+		return readIntEnvFirst(envKey, configKey, defaultValue);
 	}
 
 	private int readIntEnvFirst(String envKey, String configKey, int defaultValue) {

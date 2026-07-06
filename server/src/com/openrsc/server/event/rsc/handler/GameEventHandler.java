@@ -240,6 +240,66 @@ public class GameEventHandler {
 					.append(incomingTime / 1000).append("us").append(" : ")
 					.append(incomingCount).append(newLine);
 			}
+			s.append("========================").append(newLine);
+			s.append("=== Outgoing Packets ===").append(newLine);
+			s.append("========================").append(newLine);
+			for (Map.Entry<Integer, Integer> entry : getServer().getOutgoingCountPerPacketOpcode().entrySet()) {
+				final int outgoingPacketId = entry.getKey();
+				final int outgoingCount = entry.getValue();
+				final long outgoingTime = getServer().getOutgoingTimePerPacketOpcode().get(outgoingPacketId);
+				final long outgoingPayloadBytes = getServer().getOutgoingPayloadBytesPerPacketOpcode()
+					.getOrDefault(outgoingPacketId, 0L);
+				s.append("Packet ID: ").append(outgoingPacketId).append(" : ")
+					.append(outgoingTime / 1000000).append("ms").append(" : ")
+					.append(outgoingTime / 1000).append("us").append(" : ")
+					.append(outgoingCount).append(" : ")
+					.append(outgoingPayloadBytes).append(" payload bytes").append(newLine);
+			}
+			final long visibilitySamples = Math.max(1L, getServer().getLastVisibilitySnapshotSamples());
+			s.append("========================").append(newLine);
+			s.append("=== Visibility Snapshot ===").append(newLine);
+			s.append("========================").append(newLine);
+			s.append("Time: ")
+				.append(getServer().getLastVisibilitySnapshotDuration() / 1000000).append("ms").append(" : ")
+				.append(getServer().getLastVisibilitySnapshotDuration() / 1000).append("us").append(newLine);
+			s.append("Average visible: players=")
+				.append(getServer().getLastVisiblePlayersTotal() / visibilitySamples)
+				.append(", npcs=").append(getServer().getLastVisibleNpcsTotal() / visibilitySamples)
+				.append(", scenery=").append(getServer().getLastVisibleSceneryTotal() / visibilitySamples)
+				.append(", walls=").append(getServer().getLastVisibleWallObjectsTotal() / visibilitySamples)
+				.append(", groundItems=").append(getServer().getLastVisibleGroundItemsTotal() / visibilitySamples)
+				.append(newLine);
+			s.append("Max visible: players=")
+				.append(getServer().getLastVisiblePlayersMax())
+				.append(", npcs=").append(getServer().getLastVisibleNpcsMax())
+				.append(", scenery=").append(getServer().getLastVisibleSceneryMax())
+				.append(", walls=").append(getServer().getLastVisibleWallObjectsMax())
+				.append(", groundItems=").append(getServer().getLastVisibleGroundItemsMax())
+				.append(newLine);
+			s.append("Cache: region requests=")
+				.append(getServer().getLastVisibilityRegionCacheRequests())
+				.append(", hits=").append(getServer().getLastVisibilityRegionCacheHits())
+				.append(", misses=").append(getServer().getLastVisibilityRegionCacheMisses())
+				.append("; object requests=").append(getServer().getLastVisibilityObjectCacheRequests())
+				.append(", hits=").append(getServer().getLastVisibilityObjectCacheHits())
+				.append(", misses=").append(getServer().getLastVisibilityObjectCacheMisses())
+				.append(", clears=").append(getServer().getLastVisibilityObjectCacheClears())
+				.append(", entriesCleared=").append(getServer().getLastVisibilityObjectCacheEntriesCleared())
+				.append("; objectSnapshot requests=").append(getServer().getLastVisibilityObjectSnapshotCacheRequests())
+				.append(", hits=").append(getServer().getLastVisibilityObjectSnapshotCacheHits())
+				.append(", misses=").append(getServer().getLastVisibilityObjectSnapshotCacheMisses())
+				.append(newLine);
+			s.append("Shadow snapshot: time=")
+				.append(getServer().getLastVisibilityShadowDuration() / 1000000).append("ms")
+				.append(", samples=").append(getServer().getLastVisibilityShadowSamples())
+				.append(", mismatches=").append(getServer().getLastVisibilityShadowMismatchSamples())
+				.append(", players=").append(getServer().getLastVisibilityShadowPlayerMismatches())
+				.append(", npcs=").append(getServer().getLastVisibilityShadowNpcMismatches())
+				.append(", objects=").append(getServer().getLastVisibilityShadowGameObjectMismatches())
+				.append(", groundItems=").append(getServer().getLastVisibilityShadowGroundItemMismatches())
+				.append(", maxMobRegions=").append(getServer().getLastVisibilityShadowMobRegionsMax())
+				.append(", maxObjectRegions=").append(getServer().getLastVisibilityShadowObjectRegionsMax())
+				.append(newLine);
 		}
 
 		final boolean forcedGc = getServer().getConfig().WANT_FORCE_GC_ON_PROFILING;
@@ -252,8 +312,9 @@ public class GameEventHandler {
 		final String memoryMode = forcedGc ? " after forced GC" : " live";
 
 		final String returnString = (
-			"Tick: " + getServer().getConfig().GAME_TICK + "ms, Server: " + (getServer().getLastTickDuration() / 1000000) + "ms " + (getServer().getLastIncomingPacketsDuration() / 1000000) + "ms " + (getServer().getLastEventsDuration() / 1000000) + "ms " + (getServer().getLastOutgoingPacketsDuration() / 1000000) + "ms" + newLine +
+				"Tick: " + getServer().getConfig().GAME_TICK + "ms, Server: " + (getServer().getLastTickDuration() / 1000000) + "ms " + (getServer().getLastIncomingPacketsDuration() / 1000000) + "ms " + (getServer().getLastEventsDuration() / 1000000) + "ms " + (getServer().getLastOutgoingPacketsDuration() / 1000000) + "ms" + newLine +
 				"Game Updater: " + (getServer().getLastWorldUpdateDuration() / 1000000) + "ms " + (getServer().getLastProcessPlayersDuration() / 1000000) + "ms " + (getServer().getLastProcessNpcsDuration() / 1000000) + "ms " + (getServer().getLastProcessMessageQueuesDuration() / 1000000) + "ms " + (getServer().getLastUpdateClientsDuration() / 1000000) + "ms " + (getServer().getLastDoCleanupDuration() / 1000000) + "ms " + (getServer().getLastExecuteWalkToActionsDuration() / 1000000) + "ms " + newLine +
+				"NPC idle throttle skipped: " + getServer().getLastNpcIdleThrottleSkipped() + newLine +
 				"Events: " + countAllEvents + ", NPCs: " + getServer().getWorld().getNpcs().size() + ", Players: " + getServer().getWorld().getPlayers().size() + ", Shops: " + getServer().getWorld().getShops().size() + newLine +
 				"Threads: " + Thread.activeCount() + ", Memory" + memoryMode + ": Total: " + totalMemory + ", Free: " + freeMemory + ", Used: " + usedMemory + newLine +
 				/*"Player Atk Map: " + getWorld().getPlayersUnderAttack().size() + ", NPC Atk Map: " + getWorld().getNpcsUnderAttack().size() + ", Quests: " + getWorld().getQuests().size() + ", Mini Games: " + getWorld().getMiniGames().size() + newLine +*/
