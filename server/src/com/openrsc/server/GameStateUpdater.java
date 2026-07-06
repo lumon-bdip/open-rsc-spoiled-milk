@@ -20,6 +20,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.entity.update.*;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.region.VisibilitySnapshot;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.net.rsc.struct.outgoing.*;
@@ -37,14 +38,36 @@ import static com.openrsc.server.net.rsc.ActionSender.isRetroClient;
 import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacket;
 
 public final class GameStateUpdater {
+	private enum VisibilitySnapshotMode {
+		LEGACY,
+		SNAPSHOT
+	}
+
 	private static final int CUSTOM_MOB_COORD_OFFSET_BITS = 8;
+	private static final int CLIENT_LOCAL_SECTION_SIZE = 48;
+	private static final int CLIENT_LOCAL_ACTIVE_SECTION_GRID = 3;
+	private static final int CLIENT_LOCAL_ACTIVE_SECTION_ORIGIN_OFFSET = CLIENT_LOCAL_ACTIVE_SECTION_GRID / 2;
+	private static final int CLIENT_LOCAL_TILE_COUNT = CLIENT_LOCAL_SECTION_SIZE * CLIENT_LOCAL_ACTIVE_SECTION_GRID;
 	private static final int CUSTOM_CLIENT_REGION_REFRESH_RADIUS = 80;
 	private static final int CUSTOM_MOVEMENT_UPDATE_LIMIT = 0xFFFF;
 	private static final int AUTHENTIC_LOCAL_MOB_LIMIT = 255;
 	private static final int CUSTOM_LOCAL_MOB_LIMIT = 0xFFFF;
 	private static final int AUTHENTIC_LOCAL_MOB_COUNT_BITS = 8;
 	private static final int CUSTOM_LOCAL_MOB_COUNT_BITS = 16;
+	private static final int MOVEMENT_SNAPSHOT_PROTOCOL_VERSION = 1;
+	private static final int MOVEMENT_SNAPSHOT_FIXED_PAYLOAD_BYTES = 18;
+	private static final int MOVEMENT_SNAPSHOT_MOB_RECORD_BYTES = 7;
+	private static final int SCENE_BASELINE_PROTOCOL_VERSION = 5;
+	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
+	private static final int SCENE_BASELINE_PAGE_BURST_LIMIT = 4;
+	private static final int SCENE_BASELINE_FIXED_PAYLOAD_BYTES = 48;
+	private static final int SCENE_BASELINE_OBJECT_RECORD_BYTES = 8;
+	private static final int SCENE_BASELINE_PAGE_NONE = 0;
+	private static final int SCENE_BASELINE_PAGE_SCENERY = 1;
+	private static final int SCENE_BASELINE_PAGE_WALLS = 2;
 	private static final String NPC_DEATH_VISUAL_SENT_TICK_PREFIX = "npc_death_visual_sent_tick_";
+	private static final String SCENE_BASELINE_SUMMARY_ATTRIBUTE = "scene_baseline_summary";
+	private static final String STATIC_SCENE_SCAN_KEY_ATTRIBUTE = "static_scene_scan_key";
 	private static final String WORLD_TIME_LAST_SYNC_MILLIS_ATTRIBUTE = "world_time_last_sync_millis";
 	private static final long WORLD_TIME_SYNC_INTERVAL_MILLIS = 15000L;
 	private static final long WORLD_TIME_FAST_SYNC_INTERVAL_MILLIS = 250L;
@@ -55,6 +78,10 @@ public final class GameStateUpdater {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	private final Server server;
+	private final Map<Long, CachedVisibilitySnapshot> visibilityTickSnapshotCache = new HashMap<>();
+	private long visibilityTickSnapshotCacheTick = Long.MIN_VALUE;
+	private int movementSnapshotSequence = 0;
+
 	public final Server getServer() {
 		return server;
 	}
@@ -70,16 +97,20 @@ public final class GameStateUpdater {
 	}
 
 	public void sendUpdatePackets(final Player player) {
+		sendUpdatePackets(player, false);
+	}
+
+	private void sendUpdatePackets(final Player player, final boolean allowTickSnapshotCache) {
 		// TODO: Should be private
 		try {
 			if (player.isUsing233CompatibleClient()) {
 				if (player.isChangingAppearance()) {
 					recordUpdateAppearanceKeepalive(() -> sendAppearanceKeepalive(player));
 				} else {
-					sendNormalUpdatePackets(player);
+					sendNormalUpdatePackets(player, allowTickSnapshotCache);
 				}
 			} else {
-				sendNormalUpdatePackets(player);
+				sendNormalUpdatePackets(player, allowTickSnapshotCache);
 			}
 		} catch (final Exception e) {
 			LOGGER.error("Exception during GameStateUpdater sendUpdatePackets", e);
@@ -87,18 +118,496 @@ public final class GameStateUpdater {
 		}
 	}
 
-	private void sendNormalUpdatePackets(final Player player) {
-		final Collection<GameObject> visibleGameObjects = player.getViewArea().getGameObjectsInView();
-		final Collection<GroundItem> visibleGroundItems = player.getViewArea().getItemsInView();
-		recordUpdatePlayers(() -> updatePlayers(player));
+	private void sendNormalUpdatePackets(final Player player, final boolean allowTickSnapshotCache) {
+		final VisibilitySnapshot packetVisibility = buildPacketVisibilitySnapshot(player, allowTickSnapshotCache);
+		final Collection<Player> visiblePlayers = packetVisibility.getPlayers();
+		final Collection<Npc> visibleNpcs = packetVisibility.getNpcs();
+		final Collection<GameObject> visibleSceneryObjects = packetVisibility.getSceneryObjects();
+		final Collection<GameObject> visibleWallObjects = packetVisibility.getWallObjects();
+		final Collection<GroundItem> visibleGroundItems = packetVisibility.getGroundItems();
+		recordVisibilityShadowSnapshot(player, packetVisibility, allowTickSnapshotCache);
+
+		recordUpdatePlayers(() -> updatePlayers(player, visiblePlayers));
 		recordUpdatePlayerAppearances(() -> updatePlayerAppearances(player));
-		recordUpdateNpcs(() -> updateNpcs(player));
+		recordUpdateNpcs(() -> updateNpcs(player, visibleNpcs));
 		recordUpdateNpcAppearances(() -> updateNpcAppearances(player));
-		recordUpdateGameObjects(() -> updateGameObjects(player, visibleGameObjects));
-		recordUpdateWallObjects(() -> updateWallObjects(player, visibleGameObjects));
-		recordUpdateGroundItems(() -> updateGroundItems(player, visibleGroundItems));
+		final boolean[] sceneryChanged = new boolean[1];
+		final boolean[] wallsChanged = new boolean[1];
+		final boolean[] groundItemsChanged = new boolean[1];
+		final boolean skipStaticSceneScan = canSkipStaticSceneScan(player, packetVisibility);
+		if (skipStaticSceneScan) {
+			recordUpdateGameObjects(() -> {});
+			recordUpdateWallObjects(() -> {});
+		} else {
+			recordUpdateGameObjects(() -> sceneryChanged[0] = updateGameObjects(player, visibleSceneryObjects));
+			recordUpdateWallObjects(() -> wallsChanged[0] = updateWallObjects(player, visibleWallObjects));
+			storeStaticSceneScanKey(player, packetVisibility);
+		}
+		recordUpdateGroundItems(() -> groundItemsChanged[0] = updateGroundItems(player, visibleGroundItems));
+		sendSceneBaselineIfEnabled(player, sceneryChanged[0], wallsChanged[0], groundItemsChanged[0]);
 		recordUpdateTimeouts(() -> updateTimeouts(player));
 		sendWorldTimeIfNeeded(player);
+	}
+
+	private VisibilitySnapshot buildPacketVisibilitySnapshot(final Player player, final boolean allowTickSnapshotCache) {
+		return buildVisibilitySnapshot(
+			player,
+			useVisibilitySnapshotInput(player) ? VisibilitySnapshotMode.SNAPSHOT : VisibilitySnapshotMode.LEGACY,
+			allowTickSnapshotCache,
+			true);
+	}
+
+	private VisibilitySnapshot buildVisibilitySnapshot(
+		final Player player,
+		final VisibilitySnapshotMode mode,
+		final boolean allowTickSnapshotCache,
+		final boolean recordPacketMetrics) {
+		if (allowTickSnapshotCache && getServer().getConfig().WANT_SYNC_VISIBILITY_TICK_CACHE) {
+			return buildTickCachedVisibilitySnapshot(player, mode, recordPacketMetrics);
+		}
+
+		final long visibilitySnapshotStart = System.nanoTime();
+		final VisibilitySnapshot snapshot = buildUncachedVisibilitySnapshot(player, mode);
+		if (recordPacketMetrics) {
+			recordVisibilitySnapshotMetrics(snapshot, System.nanoTime() - visibilitySnapshotStart);
+		}
+		return snapshot;
+	}
+
+	private VisibilitySnapshot buildTickCachedVisibilitySnapshot(
+		final Player player,
+		final VisibilitySnapshotMode mode,
+		final boolean recordPacketMetrics) {
+		final long currentTick = getServer().getCurrentTick();
+		if (visibilityTickSnapshotCacheTick != currentTick) {
+			visibilityTickSnapshotCache.clear();
+			visibilityTickSnapshotCacheTick = currentTick;
+		}
+
+		final long cacheKey = visibilityTickSnapshotCacheKey(player, mode);
+		final CachedVisibilitySnapshot cached = visibilityTickSnapshotCache.get(cacheKey);
+		if (cached != null && cached.matches(player, mode, currentTick)) {
+			getServer().recordVisibilityTickSnapshotCacheAccess(true);
+			if (recordPacketMetrics) {
+				recordVisibilitySnapshotMetrics(cached.snapshot, 0L);
+			}
+			return cached.snapshot;
+		}
+
+		getServer().recordVisibilityTickSnapshotCacheAccess(false);
+		final long visibilitySnapshotStart = System.nanoTime();
+		final VisibilitySnapshot snapshot = buildUncachedVisibilitySnapshot(player, mode);
+		if (recordPacketMetrics) {
+			recordVisibilitySnapshotMetrics(snapshot, System.nanoTime() - visibilitySnapshotStart);
+		}
+		visibilityTickSnapshotCache.put(cacheKey, new CachedVisibilitySnapshot(player, mode, currentTick, snapshot));
+		return snapshot;
+	}
+
+	private long visibilityTickSnapshotCacheKey(final Player player, final VisibilitySnapshotMode mode) {
+		return (((long)player.getIndex()) << 2) | mode.ordinal();
+	}
+
+	private VisibilitySnapshot buildUncachedVisibilitySnapshot(final Player player, final VisibilitySnapshotMode mode) {
+		return mode == VisibilitySnapshotMode.SNAPSHOT
+			? getServer().getWorld().getRegionManager().buildVisibilitySnapshot(player)
+			: buildLegacyVisibilitySnapshot(player);
+	}
+
+	private VisibilitySnapshot buildLegacyVisibilitySnapshot(final Player player) {
+		return new VisibilitySnapshot(
+			player.getViewArea().getPlayersInView(),
+			player.getViewArea().getNpcsInView(),
+			player.getViewArea().getGameObjectsInView(),
+			player.getViewArea().getItemsInView(),
+			0,
+			0);
+	}
+
+	private boolean useVisibilitySnapshotInput(final Player player) {
+		return player.isUsingCustomClient() && getServer().getConfig().WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT;
+	}
+
+	private boolean canSkipStaticSceneScan(final Player player, final VisibilitySnapshot packetVisibility) {
+		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_SCENE_BASELINE) {
+			return false;
+		}
+		final SceneBaselineSummary summary = player.getAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE);
+		if (summary == null || !summary.hasSentCompleteStaticBaseline()) {
+			return false;
+		}
+		final long scanKey = staticSceneScanKey(player, packetVisibility);
+		if (scanKey == 0L) {
+			return false;
+		}
+		final Long previousScanKey = player.getAttribute(STATIC_SCENE_SCAN_KEY_ATTRIBUTE);
+		return previousScanKey != null && previousScanKey.longValue() == scanKey;
+	}
+
+	private void storeStaticSceneScanKey(final Player player, final VisibilitySnapshot packetVisibility) {
+		final long scanKey = staticSceneScanKey(player, packetVisibility);
+		if (scanKey != 0L) {
+			player.setAttribute(STATIC_SCENE_SCAN_KEY_ATTRIBUTE, scanKey);
+		}
+	}
+
+	private long staticSceneScanKey(final Player player, final VisibilitySnapshot packetVisibility) {
+		if (packetVisibility.getObjectSnapshotVersion() <= 0L) {
+			return 0L;
+		}
+		long hash = packetVisibility.getObjectSnapshotKey();
+		hash = hash * 31 + packetVisibility.getObjectSnapshotVersion();
+		hash = hash * 31 + player.getX();
+		hash = hash * 31 + player.getY();
+		hash = hash * 31 + getServer().getConfig().OBJECT_VIEW_DISTANCE;
+		return hash == 0L ? 1L : hash;
+	}
+
+	private void sendSceneBaselineIfEnabled(
+		final Player player,
+		final boolean sceneryChanged,
+		final boolean wallsChanged,
+		final boolean groundItemsChanged) {
+		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_SCENE_BASELINE) {
+			return;
+		}
+
+		final SceneBaselineSummary previous = player.getAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE);
+		final SceneBaselineSummary current = buildSceneBaselineSummary(
+			player, previous, sceneryChanged, wallsChanged, groundItemsChanged);
+		int sentPages = 0;
+		while (sentPages < SCENE_BASELINE_PAGE_BURST_LIMIT) {
+			final SceneBaselinePage page = buildNextSceneBaselinePage(player, current);
+			if (page.isEmpty()) {
+				break;
+			}
+
+			sendSceneBaselinePacket(player, current, page);
+			sentPages++;
+		}
+
+		if (sentPages == 0 && previous != null && current.sameStaticPayload(previous)) {
+			return;
+		}
+
+		if (sentPages == 0) {
+			sendSceneBaselinePacket(player, current, SceneBaselinePage.empty());
+		}
+
+		player.setAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE, current);
+	}
+
+	private void sendSceneBaselinePacket(
+		final Player player,
+		final SceneBaselineSummary current,
+		final SceneBaselinePage page) {
+		final SceneBaselineStruct baseline = current.toStruct();
+		page.applyTo(baseline);
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENE_BASELINE, baseline, player);
+		getServer().addSceneBaselineMetrics(page.recordCount(), page.payloadBytes());
+	}
+
+	private SceneBaselineSummary buildSceneBaselineSummary(
+		final Player player,
+		final SceneBaselineSummary previous,
+		final boolean sceneryChanged,
+		final boolean wallsChanged,
+		final boolean groundItemsChanged) {
+		final SceneBaselineSummary summary = new SceneBaselineSummary();
+		summary.protocolVersion = SCENE_BASELINE_PROTOCOL_VERSION;
+		summary.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
+		summary.localX = player.getX();
+		summary.localY = player.getY();
+		summary.scenery = player.getLocalGameObjects().size();
+		summary.walls = player.getLocalWallObjects().size();
+		summary.groundItems = player.getLocalGroundItems().size();
+		summary.objectViewDistance = getServer().getConfig().OBJECT_VIEW_DISTANCE;
+		summary.sceneryHash = previous != null && !sceneryChanged && previous.scenery == summary.scenery
+			? previous.sceneryHash
+			: summarizeSceneGameObjects(player.getLocalGameObjects());
+		summary.wallsHash = previous != null && !wallsChanged && previous.walls == summary.walls
+			? previous.wallsHash
+			: summarizeSceneGameObjects(player.getLocalWallObjects());
+		summary.groundItemsHash = previous != null && !groundItemsChanged && previous.groundItems == summary.groundItems
+			? previous.groundItemsHash
+			: summarizeSceneGroundItems(player.getLocalGroundItems());
+		summary.sceneryPageCursor = previous != null
+			&& previous.scenery == summary.scenery
+			&& previous.sceneryHash == summary.sceneryHash
+			? previous.sceneryPageCursor
+			: 0;
+		summary.wallsPageCursor = previous != null
+			&& previous.walls == summary.walls
+			&& previous.wallsHash == summary.wallsHash
+			? previous.wallsPageCursor
+			: 0;
+		return summary;
+	}
+
+	private SceneBaselinePage buildNextSceneBaselinePage(final Player player, final SceneBaselineSummary summary) {
+		final int sceneryPageTotal = pageTotal(player.getLocalGameObjects().size());
+		if (summary.sceneryPageCursor < sceneryPageTotal) {
+			final int pageIndex = summary.sceneryPageCursor++;
+			return buildSceneBaselineObjectPage(
+				SCENE_BASELINE_PAGE_SCENERY,
+				pageIndex,
+				sceneryPageTotal,
+				player.getLocalGameObjects());
+		}
+
+		final int wallPageTotal = pageTotal(player.getLocalWallObjects().size());
+		if (summary.wallsPageCursor < wallPageTotal) {
+			final int pageIndex = summary.wallsPageCursor++;
+			return buildSceneBaselineObjectPage(
+				SCENE_BASELINE_PAGE_WALLS,
+				pageIndex,
+				wallPageTotal,
+				player.getLocalWallObjects());
+		}
+
+		return SceneBaselinePage.empty();
+	}
+
+	private int pageTotal(final int recordCount) {
+		return (recordCount + SCENE_BASELINE_PAGE_SIZE - 1) / SCENE_BASELINE_PAGE_SIZE;
+	}
+
+	private SceneBaselinePage buildSceneBaselineObjectPage(
+		final int category,
+		final int pageIndex,
+		final int pageTotal,
+		final Collection<GameObject> gameObjects) {
+		final SceneBaselinePage page = new SceneBaselinePage(category, pageIndex, pageTotal);
+		final int start = pageIndex * SCENE_BASELINE_PAGE_SIZE;
+		final int end = start + SCENE_BASELINE_PAGE_SIZE;
+		int index = 0;
+		for (final GameObject gameObject : gameObjects) {
+			if (index >= end) {
+				break;
+			}
+			if (index >= start) {
+				page.objectRecords.add(new SceneBaselineStruct.ObjectRecord(
+					gameObject.getID(),
+					gameObject.getX(),
+					gameObject.getY(),
+					gameObject.getDirection(),
+					gameObject.getType()));
+			}
+			index++;
+		}
+		return page;
+	}
+
+	private int summarizeSceneGameObjects(final Collection<GameObject> gameObjects) {
+		int summary = 0;
+		for (final GameObject gameObject : gameObjects) {
+			summary = addSceneIdentity(summary, sceneIdentity(
+				gameObject.getID(),
+				(gameObject.getType() << 8) | (gameObject.getDirection() & 0xFF),
+				gameObject.getX(),
+				gameObject.getY(),
+				gameObject.getLoc().getId()));
+		}
+		return summary;
+	}
+
+	private int summarizeSceneGroundItems(final Collection<GroundItem> groundItems) {
+		int summary = 0;
+		for (final GroundItem groundItem : groundItems) {
+			final long ownerHash = groundItem.getOwnerUsernameHash();
+			summary = addSceneIdentity(summary, sceneIdentity(
+				groundItem.getID(),
+				groundItem.getAmount(),
+				groundItem.getX(),
+				groundItem.getY(),
+				(groundItem.getNoted() ? 1 : 0) ^ (int)(ownerHash ^ (ownerHash >>> 32))));
+		}
+		return summary;
+	}
+
+	private int sceneIdentity(final int a, final int b, final int c, final int d, final int e) {
+		int hash = 0x811C9DC5;
+		hash = mixSceneIdentity(hash, a);
+		hash = mixSceneIdentity(hash, b);
+		hash = mixSceneIdentity(hash, c);
+		hash = mixSceneIdentity(hash, d);
+		hash = mixSceneIdentity(hash, e);
+		return hash;
+	}
+
+	private int mixSceneIdentity(final int hash, final int value) {
+		return (hash ^ value) * 0x01000193;
+	}
+
+	private int addSceneIdentity(final int summary, final int identity) {
+		return summary + identity + Integer.rotateLeft(identity, 16);
+	}
+
+	private static final class SceneBaselineSummary {
+		private int protocolVersion;
+		private int serverTick;
+		private int localX;
+		private int localY;
+		private int scenery;
+		private int walls;
+		private int groundItems;
+		private int objectViewDistance;
+		private int sceneryHash;
+		private int wallsHash;
+		private int groundItemsHash;
+		private int sceneryPageCursor;
+		private int wallsPageCursor;
+
+		private boolean sameStaticPayload(final SceneBaselineSummary other) {
+			return protocolVersion == other.protocolVersion
+				&& scenery == other.scenery
+				&& walls == other.walls
+				&& groundItems == other.groundItems
+				&& objectViewDistance == other.objectViewDistance
+				&& sceneryHash == other.sceneryHash
+				&& wallsHash == other.wallsHash
+				&& groundItemsHash == other.groundItemsHash;
+		}
+
+		private boolean hasSentCompleteStaticBaseline() {
+			return sceneryPageCursor >= pageTotalFor(scenery)
+				&& wallsPageCursor >= pageTotalFor(walls);
+		}
+
+		private static int pageTotalFor(final int recordCount) {
+			return (recordCount + SCENE_BASELINE_PAGE_SIZE - 1) / SCENE_BASELINE_PAGE_SIZE;
+		}
+
+		private SceneBaselineStruct toStruct() {
+			final SceneBaselineStruct struct = new SceneBaselineStruct();
+			struct.protocolVersion = protocolVersion;
+			struct.serverTick = serverTick;
+			struct.localX = localX;
+			struct.localY = localY;
+			struct.scenery = scenery;
+			struct.walls = walls;
+			struct.groundItems = groundItems;
+			struct.objectViewDistance = objectViewDistance;
+			struct.sceneryHash = sceneryHash;
+			struct.wallsHash = wallsHash;
+			struct.groundItemsHash = groundItemsHash;
+			return struct;
+		}
+	}
+
+	private static final class SceneBaselinePage {
+		private final int category;
+		private final int pageIndex;
+		private final int pageTotal;
+		private final List<SceneBaselineStruct.ObjectRecord> objectRecords = new ArrayList<>();
+
+		private SceneBaselinePage(final int category, final int pageIndex, final int pageTotal) {
+			this.category = category;
+			this.pageIndex = pageIndex;
+			this.pageTotal = pageTotal;
+		}
+
+		private static SceneBaselinePage empty() {
+			return new SceneBaselinePage(SCENE_BASELINE_PAGE_NONE, 0, 0);
+		}
+
+		private boolean isEmpty() {
+			return category == SCENE_BASELINE_PAGE_NONE;
+		}
+
+		private int recordCount() {
+			return objectRecords.size();
+		}
+
+		private int payloadBytes() {
+			return SCENE_BASELINE_FIXED_PAYLOAD_BYTES + recordCount() * SCENE_BASELINE_OBJECT_RECORD_BYTES;
+		}
+
+		private void applyTo(final SceneBaselineStruct struct) {
+			struct.pageCategory = category;
+			struct.pageIndex = pageIndex;
+			struct.pageTotal = pageTotal;
+			struct.objectRecords.addAll(objectRecords);
+		}
+	}
+
+	private void recordVisibilitySnapshotMetrics(final VisibilitySnapshot packetVisibility, final long duration) {
+		getServer().addVisibilitySnapshotMetrics(
+			packetVisibility.getPlayers().size(),
+			packetVisibility.getNpcs().size(),
+			packetVisibility.getSceneryCount(),
+			packetVisibility.getWallObjectCount(),
+			packetVisibility.getGroundItems().size(),
+			duration);
+	}
+
+	private void recordVisibilityShadowSnapshot(
+		final Player player,
+		final VisibilitySnapshot packetVisibility,
+		final boolean allowTickSnapshotCache) {
+		if (!getServer().getConfig().WANT_SYNC_VISIBILITY_SHADOW) {
+			return;
+		}
+
+		final long start = System.nanoTime();
+		final VisibilitySnapshot comparisonSnapshot = buildVisibilitySnapshot(
+			player,
+			useVisibilitySnapshotInput(player) ? VisibilitySnapshotMode.LEGACY : VisibilitySnapshotMode.SNAPSHOT,
+			allowTickSnapshotCache,
+			false);
+		final boolean playersMatch = sameIdentityCollection(packetVisibility.getPlayers(), comparisonSnapshot.getPlayers());
+		final boolean npcsMatch = sameIdentityCollection(packetVisibility.getNpcs(), comparisonSnapshot.getNpcs());
+		final boolean gameObjectsMatch = sameIdentityCollection(packetVisibility.getGameObjects(), comparisonSnapshot.getGameObjects());
+		final boolean groundItemsMatch = sameIdentityCollection(packetVisibility.getGroundItems(), comparisonSnapshot.getGroundItems());
+		getServer().addVisibilityShadowMetrics(
+			System.nanoTime() - start,
+			playersMatch,
+			npcsMatch,
+			gameObjectsMatch,
+			groundItemsMatch,
+			Math.max(packetVisibility.getMobRegionCount(), comparisonSnapshot.getMobRegionCount()),
+			Math.max(packetVisibility.getObjectRegionCount(), comparisonSnapshot.getObjectRegionCount()));
+	}
+
+	private boolean sameIdentityCollection(final Collection<?> first, final Collection<?> second) {
+		if (first.size() != second.size()) {
+			return false;
+		}
+		final Set<Object> secondIdentities = Collections.newSetFromMap(new IdentityHashMap<>());
+		secondIdentities.addAll(second);
+		for (final Object item : first) {
+			if (!secondIdentities.contains(item)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static final class CachedVisibilitySnapshot {
+		private final int x;
+		private final int y;
+		private final long tick;
+		private final VisibilitySnapshotMode mode;
+		private final VisibilitySnapshot snapshot;
+
+		private CachedVisibilitySnapshot(
+			final Player player,
+			final VisibilitySnapshotMode mode,
+			final long tick,
+			final VisibilitySnapshot snapshot) {
+			this.x = player.getX();
+			this.y = player.getY();
+			this.tick = tick;
+			this.mode = mode;
+			this.snapshot = snapshot;
+		}
+
+		private boolean matches(final Player player, final VisibilitySnapshotMode mode, final long tick) {
+			return this.tick == tick
+				&& this.mode == mode
+				&& this.x == player.getX()
+				&& this.y == player.getY();
+		}
 	}
 
 	private void sendWorldTimeIfNeeded(final Player player) {
@@ -220,6 +729,9 @@ public final class GameStateUpdater {
 			if (!movedPlayer.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedPlayer)) {
 				continue;
 			}
+			if (!isWithinClientLocalTileWindow(player, movedPlayer.getX(), movedPlayer.getY())) {
+				continue;
+			}
 			struct.players.add(new MovementUpdateStruct.MobMovement(
 				movedPlayer.getIndex(), movedPlayer.getX(), movedPlayer.getY(), movedPlayer.getSprite()));
 		}
@@ -234,6 +746,9 @@ public final class GameStateUpdater {
 			if (!movedNpc.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedNpc)) {
 				continue;
 			}
+			if (!isWithinClientLocalTileWindow(player, movedNpc.getX(), movedNpc.getY())) {
+				continue;
+			}
 			struct.npcs.add(new MovementUpdateStruct.MobMovement(
 				movedNpc.getIndex(), movedNpc.getX(), movedNpc.getY(), movedNpc.getSprite()));
 		}
@@ -244,6 +759,83 @@ public final class GameStateUpdater {
 
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_MOVEMENT_UPDATE, struct, player);
 		return true;
+	}
+
+	public boolean sendMovementSnapshotPacket(final Player player, final List<Player> movedPlayers, final List<Npc> movedNpcs) {
+		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_MOVEMENT_SNAPSHOT) {
+			return false;
+		}
+
+		MovementSnapshotStruct struct = new MovementSnapshotStruct();
+		struct.protocolVersion = MOVEMENT_SNAPSHOT_PROTOCOL_VERSION;
+		struct.serverTick = (int)(getServer().getCurrentTick() & 0x7FFFFFFF);
+		struct.sequence = ++movementSnapshotSequence;
+		struct.localX = player.getX();
+		struct.localY = player.getY();
+		struct.localSprite = player.getSprite();
+
+		for (final Player movedPlayer : movedPlayers) {
+			if (struct.players.size() >= CUSTOM_MOVEMENT_UPDATE_LIMIT) {
+				break;
+			}
+			if (movedPlayer.equals(player) || !player.getLocalPlayers().contains(movedPlayer)) {
+				continue;
+			}
+			if (!movedPlayer.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedPlayer)) {
+				continue;
+			}
+			if (!isWithinClientLocalTileWindow(player, movedPlayer.getX(), movedPlayer.getY())) {
+				continue;
+			}
+			struct.players.add(new MovementSnapshotStruct.MobMovement(
+				movedPlayer.getIndex(), movedPlayer.getX(), movedPlayer.getY(), movedPlayer.getSprite()));
+		}
+
+		for (final Npc movedNpc : movedNpcs) {
+			if (struct.npcs.size() >= CUSTOM_MOVEMENT_UPDATE_LIMIT) {
+				break;
+			}
+			if (!player.getLocalNpcs().contains(movedNpc)) {
+				continue;
+			}
+			if (!movedNpc.withinAuthenticRangeAdditionally(player) || !player.withinRange(movedNpc)) {
+				continue;
+			}
+			if (!isWithinClientLocalTileWindow(player, movedNpc.getX(), movedNpc.getY())) {
+				continue;
+			}
+			struct.npcs.add(new MovementSnapshotStruct.MobMovement(
+				movedNpc.getIndex(), movedNpc.getX(), movedNpc.getY(), movedNpc.getSprite()));
+		}
+
+		if (!movedPlayers.contains(player) && struct.players.isEmpty() && struct.npcs.isEmpty()) {
+			return false;
+		}
+
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_MOVEMENT_SNAPSHOT, struct, player);
+		getServer().addMovementSnapshotMetrics(
+			1 + struct.players.size() + struct.npcs.size(),
+			MOVEMENT_SNAPSHOT_FIXED_PAYLOAD_BYTES
+				+ ((struct.players.size() + struct.npcs.size()) * MOVEMENT_SNAPSHOT_MOB_RECORD_BYTES));
+		return true;
+	}
+
+	private static boolean isWithinClientLocalTileWindow(final Player viewer, final int worldX, final int worldY) {
+		if (!viewer.isUsingCustomClient()) {
+			return true;
+		}
+		final Point midpointRegion = viewer.getAttribute("midpointRegion");
+		if (midpointRegion == null) {
+			return true;
+		}
+		final int baseX = midpointRegion.getX()
+			- (CLIENT_LOCAL_ACTIVE_SECTION_ORIGIN_OFFSET * CLIENT_LOCAL_SECTION_SIZE);
+		final int baseY = midpointRegion.getY()
+			- (CLIENT_LOCAL_ACTIVE_SECTION_ORIGIN_OFFSET * CLIENT_LOCAL_SECTION_SIZE);
+		return worldX >= baseX
+			&& worldY >= baseY
+			&& worldX < baseX + CLIENT_LOCAL_TILE_COUNT
+			&& worldY < baseY + CLIENT_LOCAL_TILE_COUNT;
 	}
 
 	private int safeNPCIndex(final Player player, final int npcIndex) {
@@ -330,7 +922,7 @@ public final class GameStateUpdater {
 		return player.isUsingCustomClient() ? CUSTOM_LOCAL_MOB_COUNT_BITS : AUTHENTIC_LOCAL_MOB_COUNT_BITS;
 	}
 
-	protected void updateNpcs(final Player playerToUpdate) {
+	protected void updateNpcs(final Player playerToUpdate, final Collection<Npc> visibleNpcs) {
 		MobsUpdateStruct struct = new MobsUpdateStruct();
 		ClearMobsStruct clearStruct = new ClearMobsStruct();
 		boolean isRetroClient = playerToUpdate.isUsing38CompatibleClient() || playerToUpdate.isUsing39CompatibleClient();
@@ -361,7 +953,7 @@ public final class GameStateUpdater {
 				}
 			}
 			clearStruct.indices = clearIdx;
-			for (final Npc newNPC : playerToUpdate.getViewArea().getNpcsInView()) {
+			for (final Npc newNPC : visibleNpcs) {
 				if (playerToUpdate.getLocalNpcs().contains(newNPC) || newNPC.isRemoved() || newNPC.isRespawning()
 					|| newNPC.getID() == NpcId.NED_BOAT.id() && !playerToUpdate.getCache().hasKey("ned_hired")
 					|| !newNPC.withinAuthenticRangeAdditionally(playerToUpdate) || !playerToUpdate.withinRange(newNPC) || (newNPC.isTeleporting() && !newNPC.inCombat())) {
@@ -387,7 +979,6 @@ public final class GameStateUpdater {
 			struct.mobsUpdate = mobsUpdate;
 		} else {
 			final int localNpcCount = playerToUpdate.getLocalNpcs().size();
-			final Collection<Npc> visibleNpcs = playerToUpdate.getViewArea().getNpcsInView();
 			final int visibleNpcCount = visibleNpcs.size();
 			final int localNpcLimit = localMobLimit(playerToUpdate);
 			List<Map.Entry<Integer, Integer>> mobsUpdate =
@@ -514,7 +1105,7 @@ public final class GameStateUpdater {
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_NPC_COORDS, struct, playerToUpdate);
 	}
 
-	protected void updatePlayers(final Player playerToUpdate) {
+	protected void updatePlayers(final Player playerToUpdate, final Collection<Player> visiblePlayers) {
 		MobsUpdateStruct struct = new MobsUpdateStruct();
 		ClearMobsStruct clearStruct = new ClearMobsStruct();
 
@@ -533,8 +1124,6 @@ public final class GameStateUpdater {
 
 		boolean isRetroClient = playerToUpdate.isUsing38CompatibleClient() || playerToUpdate.isUsing39CompatibleClient();
 		boolean usesKnownPlayers = playerToUpdate.getClientVersion() >= 61 && playerToUpdate.getClientVersion() <= 204;
-		final Collection<Player> visiblePlayers = playerToUpdate.getViewArea().getPlayersInView();
-
 		if (isRetroClient) {
 			// TODO: check impl
 			List<Object> mobsUpdate = new ArrayList<>();
@@ -1187,7 +1776,7 @@ public final class GameStateUpdater {
 						updatesMain.add((short) playerNeedingAppearanceUpdate.getIndex());
 						updatesMain.add((byte) 5);
 						if (player.isUsing233CompatibleClient()) {
-							updatesMain.add((short) player.getAppearanceID());
+							updatesMain.add((short) playerNeedingAppearanceUpdate.getAppearanceID());
 							updatesMain.add(playerNeedingAppearanceUpdate.getUsername());
 
 							// TODO: just send username twice if this packet can be chunked up better later
@@ -1199,7 +1788,7 @@ public final class GameStateUpdater {
 								updatesMain.add(playerNeedingAppearanceUpdate.getUsername().substring(0, 1));
 							}
 						} else if (appearanceUpdateWithUsernameHash) {
-							updatesMain.add((short) player.getAppearanceID());
+							updatesMain.add((short) playerNeedingAppearanceUpdate.getAppearanceID());
 							updatesMain.add(playerNeedingAppearanceUpdate.getUsernameHash());
 						} else if (player.isUsingCustomClient()) {
 							updatesMain.add(playerNeedingAppearanceUpdate.getUsername());
@@ -1411,11 +2000,11 @@ public final class GameStateUpdater {
 		}
 	}
 
-	protected void updateGameObjects(final Player playerToUpdate, final Collection<GameObject> visibleGameObjects) {
+	protected boolean updateGameObjects(final Player playerToUpdate, final Collection<GameObject> visibleSceneryObjects) {
 		boolean changed = false;
 
 		GameObjectsUpdateStruct struct = new GameObjectsUpdateStruct();
-		List<GameObjectLoc> objectLocs = new ArrayList<>(playerToUpdate.getLocalGameObjects().size() + visibleGameObjects.size());
+		List<GameObjectLoc> objectLocs = new ArrayList<>(playerToUpdate.getLocalGameObjects().size() + visibleSceneryObjects.size());
 
 		for (final Iterator<GameObject> it$ = playerToUpdate.getLocalGameObjects().iterator(); it$.hasNext(); ) {
 			final GameObject o = it$.next();
@@ -1431,10 +2020,10 @@ public final class GameStateUpdater {
 		}
 
 		// Add scenery
-		for (final GameObject newObject : visibleGameObjects) {
+		for (final GameObject newObject : visibleSceneryObjects) {
 			boolean skipAdd = newObject.isRemoved() ||
 				newObject.isInvisibleTo(playerToUpdate) ||
-				newObject.getType() != 0 || // not a wallObject
+				newObject.getType() != 0 ||
 				playerToUpdate.getLocalGameObjects().contains(newObject);
 			if (!playerToUpdate.isUsingCustomClient()) {
 				// Honestly don't think this does anything because the scenery isn't iterated over in the view anyway
@@ -1461,8 +2050,13 @@ public final class GameStateUpdater {
 		}
 		struct.objects = objectLocs;
 		if (changed) {
-			tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENERY_HANDLER, struct, playerToUpdate);
+			if (shouldSendLegacyStaticScenePackets(playerToUpdate)) {
+				tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENERY_HANDLER, struct, playerToUpdate);
+			} else {
+				getServer().addSuppressedLegacyStaticSceneMetrics(false, objectLocs.size());
+			}
 		}
+		return changed;
 	}
 
 	// Rocks should not have their appearances changed prior to client 157 which introduced fatigue & mining improvements
@@ -1479,7 +2073,7 @@ public final class GameStateUpdater {
 		return curId;
 	}
 
-	protected void updateGroundItems(final Player playerToUpdate, final Collection<GroundItem> visibleGroundItems) {
+	protected boolean updateGroundItems(final Player playerToUpdate, final Collection<GroundItem> visibleGroundItems) {
 		boolean changed = false;
 
 		GroundItemsUpdateStruct struct = new GroundItemsUpdateStruct();
@@ -1521,13 +2115,14 @@ public final class GameStateUpdater {
 		if (changed) {
 			tryFinalizeAndSendPacket(OpcodeOut.SEND_GROUND_ITEM_HANDLER, struct, playerToUpdate);
 		}
+		return changed;
 	}
 
-	protected void updateWallObjects(final Player playerToUpdate, final Collection<GameObject> visibleGameObjects) {
+	protected boolean updateWallObjects(final Player playerToUpdate, final Collection<GameObject> visibleWallObjects) {
 		boolean changed = false;
 
 		GameObjectsUpdateStruct struct = new GameObjectsUpdateStruct();
-		List<GameObjectLoc> objectLocs = new ArrayList<>(playerToUpdate.getLocalWallObjects().size() + visibleGameObjects.size());
+		List<GameObjectLoc> objectLocs = new ArrayList<>(playerToUpdate.getLocalWallObjects().size() + visibleWallObjects.size());
 
 		// remove all boundaries that need to be removed
 		for (final Iterator<GameObject> it$ = playerToUpdate.getLocalWallObjects().iterator(); it$.hasNext(); ) {
@@ -1584,7 +2179,7 @@ public final class GameStateUpdater {
 		}
 
 		// add all new boundaries to be added
-		for (final GameObject newObject : visibleGameObjects) {
+		for (final GameObject newObject : visibleWallObjects) {
 			if (!playerToUpdate.withinObjectGridRange(newObject) || newObject.isRemoved()
 				|| newObject.isInvisibleTo(playerToUpdate) || newObject.getType() != 1
 				|| playerToUpdate.getLocalWallObjects().contains(newObject)) {
@@ -1602,8 +2197,21 @@ public final class GameStateUpdater {
 		}
 		struct.objects = objectLocs;
 		if (changed) {
-			tryFinalizeAndSendPacket(OpcodeOut.SEND_BOUNDARY_HANDLER, struct, playerToUpdate);
+			if (shouldSendLegacyStaticScenePackets(playerToUpdate)) {
+				tryFinalizeAndSendPacket(OpcodeOut.SEND_BOUNDARY_HANDLER, struct, playerToUpdate);
+			} else {
+				getServer().addSuppressedLegacyStaticSceneMetrics(true, objectLocs.size());
+			}
 		}
+		return changed;
+	}
+
+	private boolean shouldSendLegacyStaticScenePackets(final Player player) {
+		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_SCENE_BASELINE) {
+			return true;
+		}
+		final SceneBaselineSummary summary = player.getAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE);
+		return summary == null || !summary.hasSentCompleteStaticBaseline();
 	}
 
 	protected void sendAppearanceKeepalive(final Player player) {
@@ -1622,7 +2230,7 @@ public final class GameStateUpdater {
 
 	public final long updateClient(final Player player) {
 		return getServer().bench(() -> {
-			sendUpdatePackets(player);
+			sendUpdatePackets(player, true);
 		});
 	}
 
@@ -1649,11 +2257,15 @@ public final class GameStateUpdater {
 			final boolean shouldUpdatePosition = !getServer().getConfig().WANT_CUSTOM_WALK_SPEED;
 			final EntityList<Npc> npcs = getServer().getWorld().getNpcs();
 			final boolean hasPlayers = getServer().getWorld().getPlayers().size() > 0;
-			if (!getServer().isFoundationBenchmarkEnabled()) {
+			if (!getServer().isFoundationBenchmarkNpcProfilingEnabled()) {
 				npcs.forEachLive(n -> {
 					try {
 						if (n.isUnregistering()) {
 							getServer().getWorld().unregisterNpc(n);
+							return;
+						}
+						if (shouldThrottleIdleNpc(n)) {
+							getServer().incrementLastNpcIdleThrottleSkipped();
 							return;
 						}
 
@@ -1680,6 +2292,10 @@ public final class GameStateUpdater {
 						unregisterDuration[0] += getServer().bench(() -> getServer().getWorld().unregisterNpc(n));
 						return;
 					}
+					if (shouldThrottleIdleNpc(n)) {
+						getServer().incrementLastNpcIdleThrottleSkipped();
+						return;
+					}
 
 					// NPC behavior stays on the game tick. Custom walking only changes movement cadence.
 					behaviorDuration[0] += getServer().bench(() -> n.updateBehavior(hasPlayers));
@@ -1696,6 +2312,31 @@ public final class GameStateUpdater {
 			getServer().incrementLastProcessNpcBehaviorDuration(behaviorDuration[0]);
 			getServer().incrementLastProcessNpcMovementDuration(movementDuration[0]);
 		});
+	}
+
+	private boolean shouldThrottleIdleNpc(final Npc npc) {
+		if (!getServer().getConfig().WANT_NPC_IDLE_TICK_THROTTLE) {
+			return false;
+		}
+		if (isActiveNpc(npc)) {
+			return false;
+		}
+
+		final int interval = Math.max(1, getServer().getConfig().NPC_IDLE_TICK_THROTTLE_INTERVAL);
+		return Math.floorMod(getServer().getCurrentTick() + npc.getIndex(), interval) != 0;
+	}
+
+	private boolean isActiveNpc(final Npc npc) {
+		return npc.isRemoved()
+			|| npc.isRespawning()
+			|| npc.isBusy()
+			|| npc.isUnregistering()
+			|| npc.inCombat()
+			|| npc.isHostile()
+			|| npc.isFollowing()
+			|| !npc.finishedPath()
+			|| npc.getInteractingPlayer() != null
+			|| npc.getPlayerWantsNpc();
 	}
 
 	/**

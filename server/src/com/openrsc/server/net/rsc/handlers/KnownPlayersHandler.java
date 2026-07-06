@@ -11,7 +11,7 @@ public class KnownPlayersHandler implements PayloadProcessor<KnownPlayersStruct,
 		player.ensureKnownPlayerCapacity(payload.playerCount);
 		player.knownPlayersCount = payload.playerCount;
 		for (int i = 0; i < payload.playerCount; i++) {
-			player.knownPlayerPids[i] = payload.playerServerAppearanceId[i];
+			player.knownPlayerPids[i] = payload.playerServerIndex[i];
 			player.knownPlayerAppearanceIds[i] = payload.playerServerAppearanceId[i];
 		}
 	}

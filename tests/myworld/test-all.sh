@@ -61,6 +61,7 @@ python3 ./tests/myworld/test-bot-suspicion-report.py
 python3 ./tests/myworld/test-hosted-alpha-config.py
 python3 ./tests/myworld/test-player-release.py
 python3 ./tests/myworld/test-foundation-optimization-guards.py
+python3 ./tests/myworld/test-server-sync-modernization.py
 python3 ./tests/myworld/test-client-region-load-performance.py
 python3 ./tests/myworld/test-path-queue-regressions.py
 python3 ./tests/myworld/test-packet-shape-guards.py

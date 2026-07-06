@@ -18,6 +18,7 @@ import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
+import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -188,6 +189,12 @@ public final class Development implements CommandTrigger {
 		else if (command.equalsIgnoreCase("aggroall") || command.equalsIgnoreCase("aggronear") || command.equalsIgnoreCase("forceaggro")) {
 			forceNearbyNpcAggro(player, command, args);
 		}
+		else if (command.equalsIgnoreCase("nearbynpcs") || command.equalsIgnoreCase("npcsnear") || command.equalsIgnoreCase("npcnear")) {
+			listNearbyNpcs(player, command, args);
+		}
+		else if (command.equalsIgnoreCase("killnearnpcs") || command.equalsIgnoreCase("killnearcombat") || command.equalsIgnoreCase("killcombatnear")) {
+			killNearbyCombatNpcs(player, command, args);
+		}
 	}
 
 	private void setWorldTime(Player player, String command, String[] args) {
@@ -316,19 +323,9 @@ public final class Development implements CommandTrigger {
 	}
 
 	private void forceNearbyNpcAggro(Player player, String command, String[] args) {
-		int radius = 8;
-		if (args.length >= 1) {
-			try {
-				radius = Integer.parseInt(args[0]);
-			} catch (NumberFormatException ex) {
-				player.message(badSyntaxPrefix + command.toUpperCase() + " (radius)");
-				return;
-			}
-		}
-		if (radius < 1) {
-			radius = 1;
-		} else if (radius > 20) {
-			radius = 20;
+		int radius = parseNearbyNpcRadius(player, command, args);
+		if (radius < 0) {
+			return;
 		}
 
 		int forced = 0;
@@ -353,6 +350,119 @@ public final class Development implements CommandTrigger {
 		if (skipped > 0) {
 			player.message("Skipped " + skipped + " NPCs that were out of range or not valid attackers.");
 		}
+	}
+
+	private void listNearbyNpcs(Player player, String command, String[] args) {
+		int radius = parseNearbyNpcRadius(player, command, args);
+		if (radius < 0) {
+			return;
+		}
+
+		int listed = 0;
+		int total = 0;
+		for (Npc npc : player.getViewArea().getNpcsInView()) {
+			if (!isNearbyNpcCandidate(player, npc, radius)) {
+				continue;
+			}
+			total++;
+			if (listed >= 12) {
+				continue;
+			}
+			player.message(formatNearbyNpcLine(player, npc));
+			listed++;
+		}
+
+		if (total == 0) {
+			player.message(messagePrefix + "No NPCs found within " + radius + " tiles.");
+		} else if (total > listed) {
+			player.message(messagePrefix + "Listed " + listed + " of " + total + " nearby NPCs.");
+		} else {
+			player.message(messagePrefix + "Listed " + listed + " nearby NPCs.");
+		}
+	}
+
+	private void killNearbyCombatNpcs(Player player, String command, String[] args) {
+		int radius = parseNearbyNpcRadius(player, command, args);
+		if (radius < 0) {
+			return;
+		}
+
+		int killed = 0;
+		int skipped = 0;
+		for (Npc npc : player.getViewArea().getNpcsInView()) {
+			if (!isNearbyCombatNpcCandidate(player, npc, radius)) {
+				skipped++;
+				continue;
+			}
+			int damage = Math.max(1, npc.getSkills().getLevel(Skill.HITS.id()));
+			npc.addCombatDamage(player, Math.max(damage, npc.getDef().getHits()));
+			npc.getUpdateFlags().setDamage(new Damage(npc, damage));
+			npc.getSkills().setLevel(Skill.HITS.id(), 0);
+			if (npc.killed) {
+				npc.killed = false;
+			}
+			npc.killedBy(player);
+			killed++;
+		}
+
+		player.message(messagePrefix + "Killed " + killed + " nearby combat NPCs within " + radius + " tiles.");
+		if (skipped > 0) {
+			player.message(messagePrefix + "Skipped " + skipped + " NPCs that were out of range or not valid combat NPCs.");
+		}
+	}
+
+	private int parseNearbyNpcRadius(Player player, String command, String[] args) {
+		int radius = 8;
+		if (args.length >= 1) {
+			try {
+				radius = Integer.parseInt(args[0]);
+			} catch (NumberFormatException ex) {
+				player.message(badSyntaxPrefix + command.toUpperCase() + " (radius)");
+				return -1;
+			}
+		}
+		if (radius < 1) {
+			return 1;
+		}
+		return Math.min(radius, 20);
+	}
+
+	private boolean isNearbyNpcCandidate(Player player, Npc npc, int radius) {
+		return npc != null
+			&& !npc.isRemoved()
+			&& player.withinRange(npc, radius);
+	}
+
+	private boolean isNearbyCombatNpcCandidate(Player player, Npc npc, int radius) {
+		return isNearbyNpcCandidate(player, npc, radius)
+			&& !npc.isRespawning()
+			&& npc.getDef() != null
+			&& npc.getDef().isAttackable()
+			&& !Summoning.isSummon(npc)
+			&& npc.getSkills().getLevel(Skill.HITS.id()) > 0;
+	}
+
+	private String formatNearbyNpcLine(Player player, Npc npc) {
+		String npcName = npc.getDef() == null ? "unknown" : npc.getDef().getName();
+		String state = npc.isRespawning()
+			? "respawning"
+			: npc.inCombat()
+				? "combat"
+				: npc.getDef() != null && npc.getDef().isAggressive()
+					? "aggressive"
+					: "idle";
+		String combat = npc.getDef() != null && npc.getDef().isAttackable() ? "combat" : "noncombat";
+		int distance = Math.max(Math.abs(player.getX() - npc.getX()), Math.abs(player.getY() - npc.getY()));
+		int hits = npc.getDef() == null ? 0 : npc.getDef().getHits();
+		return messagePrefix
+			+ "#" + npc.getIndex()
+			+ " id=" + npc.getID()
+			+ " " + npcName
+			+ " hp=" + npc.getSkills().getLevel(Skill.HITS.id()) + "/" + hits
+			+ " " + combat
+			+ " " + state
+			+ " d=" + distance
+			+ " @ " + npc.getX() + "," + npc.getY();
 	}
 
 	private void filterTest(Player player, String command, String[] args, boolean production) {

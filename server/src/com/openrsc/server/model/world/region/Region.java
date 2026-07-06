@@ -136,6 +136,7 @@ public class Region {
 			npcs.remove(location, entity);
 		} else if (entity instanceof GameObject) {
 			objects.remove(location, entity);
+			regionManager.invalidateVisibleObjectWindowCache(this);
 		} else if (entity instanceof GroundItem) {
 			items.remove(location, entity);
 		}
@@ -154,6 +155,7 @@ public class Region {
 				break;
 			case GAME_OBJECT:
 				objects.put(entity.getLocation(), (GameObject) entity);
+				regionManager.invalidateVisibleObjectWindowCache(this);
 				break;
 			case GROUND_ITEM:
 				items.put(entity.getLocation(), (GroundItem) entity);
@@ -289,7 +291,7 @@ public class Region {
 		}
 		if(obj instanceof Region) {
 			Region other = (Region) obj;
-			return other.regionX == regionX && other.regionY == other.getRegionY();
+			return other.regionX == regionX && other.regionY == regionY;
 		}
 		return false;
 	}
