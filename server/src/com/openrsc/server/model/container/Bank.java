@@ -741,7 +741,7 @@ public class Bank {
 			if (auction) {
 				player.getWorld().getMarket().addPlayerCollectItemsTask(player);
 			} else {
-				if (player.getConfig().BATCH_PROGRESSION && player.getBatchProgressBar()) {
+				if (player.getConfig().BATCH_PROGRESSION && player.hasActiveBatch()) {
 					player.message("Please finish what you're doing to access your bank.");
 					return;
 				}

@@ -4,6 +4,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REGULAR = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/RegularPlayer.java"
 COMMAND_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/CommandHandler.java"
+BANK = ROOT / "server/src/com/openrsc/server/model/container/Bank.java"
+PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 DOC = ROOT / "docs/community/player-commands-and-shortcuts.md"
 
 
@@ -24,6 +26,8 @@ def forbid(text: str, needle: str, description: str) -> None:
 def main() -> None:
     regular = REGULAR.read_text(encoding="utf-8")
     command_handler = COMMAND_HANDLER.read_text(encoding="utf-8")
+    bank = BANK.read_text(encoding="utf-8")
+    player = PLAYER.read_text(encoding="utf-8")
     doc = DOC.read_text(encoding="utf-8")
 
     require(regular, 'command.equalsIgnoreCase("b") || command.equalsIgnoreCase("bank")', "bank command aliases")
@@ -38,6 +42,10 @@ def main() -> None:
     require(regular, '::b or ::bank - open bank while standing in a bank area', "bank command help")
     require(regular, "private boolean quickBankingIsAvailable()", "quick banking QoL availability helper")
     require(regular, "return config().RIGHT_CLICK_BANK || config().PLAYER_COMMANDS;", "quick banking QoL sources")
+    require(bank, "player.getConfig().BATCH_PROGRESSION && player.hasActiveBatch()", "quick bank active-batch guard")
+    forbid(bank, "player.getConfig().BATCH_PROGRESSION && player.getBatchProgressBar()", "quick bank progress-display preference guard")
+    require(player, "public boolean hasActiveBatch()", "player active-batch helper")
+    require(player, "return batch != null && !batch.isComplete();", "player active-batch semantics")
 
     require(command_handler, '"bank",', "bank command staff-log exclusion")
     require(command_handler, '"wilderness"', "wilderness command staff-log exclusion")

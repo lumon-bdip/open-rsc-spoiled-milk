@@ -73,7 +73,7 @@ def main():
 
     require(
         processors,
-        "player.getBatch() != null && ACTION_OPCODES.contains(payload.getOpcode())",
+        "player.hasActiveBatch() && ACTION_OPCODES.contains(payload.getOpcode())",
         "Gameplay input must interrupt active repeating actions",
     )
     require(player, "if (batch != null) {", "Plugin interruption must stop the active batch")

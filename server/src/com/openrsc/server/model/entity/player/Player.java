@@ -1394,6 +1394,10 @@ public final class Player extends Mob {
 		return batch;
 	}
 
+	public boolean hasActiveBatch() {
+		return batch != null && !batch.isComplete();
+	}
+
 	public void setBatch(final Batch batch) {
 		this.batch = batch;
 	}

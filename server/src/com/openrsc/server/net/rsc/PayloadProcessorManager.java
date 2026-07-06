@@ -227,7 +227,7 @@ public class PayloadProcessorManager {
 				}
 				if (method != null) {
 					checkIfShouldCancelMenu(player, payload.getOpcode());
-					if (player != null && player.getBatch() != null && ACTION_OPCODES.contains(payload.getOpcode())) {
+					if (player != null && player.hasActiveBatch() && ACTION_OPCODES.contains(payload.getOpcode())) {
 						player.interruptPlugins();
 					}
 					method.invoke(processor, payload, player); //processor.process(payload, player);
