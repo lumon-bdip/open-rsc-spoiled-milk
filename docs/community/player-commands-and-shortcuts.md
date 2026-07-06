@@ -40,7 +40,7 @@
 
 ## Convenience
 
-- `::b` - Open the bank while standing in a bank area.
+- `::b` or `::bank` - Open the bank while standing in a bank area.
 - `::togglereceipts` - Toggle shop/trade receipt messages.
 - `::togglenpckcmessages` - Toggle NPC kill count messages.
 - `::toggleblockchat` - Toggle public chat blocking.
