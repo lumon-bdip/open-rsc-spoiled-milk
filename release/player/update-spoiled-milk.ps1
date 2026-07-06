@@ -3,7 +3,8 @@ $ErrorActionPreference = "Stop"
 $Repo = "An-actual-duck/open-rsc-spoiled-milk"
 $CurrentVersion = "@VERSION@"
 $PackageKind = "@PACKAGE_KIND@"
-$GameDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$PayloadDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$InstallDir = Split-Path -Parent $PayloadDir
 $ApiUrl = "https://api.github.com/repos/$Repo/releases"
 
 Write-Host "Checking for Spoiled Milk updates..."
@@ -49,7 +50,7 @@ if (-not $asset) {
     throw "Latest version $latestVersion does not include $assetName."
 }
 
-$updateDir = Join-Path $GameDir "updates"
+$updateDir = Join-Path $PayloadDir "updates"
 $archive = Join-Path $updateDir $assetName
 $extractDir = Join-Path $updateDir "extracted"
 New-Item -ItemType Directory -Force -Path $updateDir | Out-Null
@@ -67,7 +68,19 @@ if (-not (Test-Path $packageRoot)) {
     throw "Downloaded package did not contain expected folder: $packageRoot"
 }
 
-Copy-Item -Path (Join-Path $packageRoot "*") -Destination $GameDir -Recurse -Force
+Copy-Item -Path (Join-Path $packageRoot "*") -Destination $InstallDir -Recurse -Force
+$legacyFiles = @(
+    "Spoiled_Milk_Client.jar",
+    "update-spoiled-milk.sh",
+    "update-spoiled-milk.ps1",
+    "Update Spoiled Milk.cmd",
+    "ASSET-SOURCES.txt",
+    "VERSION.txt",
+    "LICENSE"
+) | ForEach-Object { Join-Path $InstallDir $_ }
+$legacyDirs = @("Cache", "runtime", "updates") | ForEach-Object { Join-Path $InstallDir $_ }
+Remove-Item -Force -ErrorAction SilentlyContinue -Path $legacyFiles
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue -Path $legacyDirs
 Remove-Item -Recurse -Force $extractDir
 
 Write-Host "Updated Spoiled Milk from $CurrentVersion to $latestVersion."

@@ -206,41 +206,51 @@ JAVA_NAME="spoiled-milk-$VERSION-java"
 WINDOWS_NAME="spoiled-milk-$VERSION-windows-x64"
 JAVA_DIR="$STAGING_DIR/$JAVA_NAME"
 WINDOWS_DIR="$STAGING_DIR/$WINDOWS_NAME"
+PAYLOAD_SUBDIR="game-files"
+JAVA_PAYLOAD_DIR="$JAVA_DIR/$PAYLOAD_SUBDIR"
+WINDOWS_PAYLOAD_DIR="$WINDOWS_DIR/$PAYLOAD_SUBDIR"
 
 rm -rf "$OUTPUT_DIR"
-mkdir -p "$JAVA_DIR/Cache" "$WINDOWS_DIR/Cache" "$OUTPUT_DIR"
+mkdir -p "$JAVA_PAYLOAD_DIR/Cache" "$WINDOWS_PAYLOAD_DIR/Cache" "$OUTPUT_DIR"
 
-stage_client_files() {
-  local destination="$1"
+stage_payload_files() {
+	local destination="$1"
 
-  cp "$CLIENT_JAR" "$destination/Spoiled_Milk_Client.jar"
-  cp -R "$CLIENT_CACHE/audio" "$destination/Cache/audio"
-  cp -R "$CLIENT_CACHE/video" "$destination/Cache/video"
-  cp "$CLIENT_CACHE/config.txt" "$destination/Cache/config.txt"
+	cp "$CLIENT_JAR" "$destination/Spoiled_Milk_Client.jar"
+	cp -R "$CLIENT_CACHE/audio" "$destination/Cache/audio"
+	cp -R "$CLIENT_CACHE/video" "$destination/Cache/video"
+	cp "$CLIENT_CACHE/config.txt" "$destination/Cache/config.txt"
   printf '%s\n' "$HOST" > "$destination/Cache/ip.txt"
-  printf '%s\n' "$PORT" > "$destination/Cache/port.txt"
-  cp "$ROOT_DIR/LICENSE" "$destination/LICENSE"
-  cp "$PACKAGE_ASSETS/ASSET-SOURCES.txt" "$destination/ASSET-SOURCES.txt"
-  sed "s/@VERSION@/$VERSION/g" "$PACKAGE_ASSETS/PLAYER-README.txt" > "$destination/README.txt"
-  printf '%s\n' "$VERSION" > "$destination/VERSION.txt"
+	printf '%s\n' "$PORT" > "$destination/Cache/port.txt"
+	cp "$ROOT_DIR/LICENSE" "$destination/LICENSE"
+	cp "$PACKAGE_ASSETS/ASSET-SOURCES.txt" "$destination/ASSET-SOURCES.txt"
+	printf '%s\n' "$VERSION" > "$destination/VERSION.txt"
 }
 
-stage_client_files "$JAVA_DIR"
-stage_client_files "$WINDOWS_DIR"
+stage_root_files() {
+	local destination="$1"
+
+	sed "s/@VERSION@/$VERSION/g" "$PACKAGE_ASSETS/PLAYER-README.txt" > "$destination/README.txt"
+}
+
+stage_payload_files "$JAVA_PAYLOAD_DIR"
+stage_payload_files "$WINDOWS_PAYLOAD_DIR"
+stage_root_files "$JAVA_DIR"
+stage_root_files "$WINDOWS_DIR"
 
 cp "$PACKAGE_ASSETS/play-spoiled-milk.sh" "$JAVA_DIR/play-spoiled-milk.sh"
 cp "$PACKAGE_ASSETS/Play Spoiled Milk.cmd" "$JAVA_DIR/Play Spoiled Milk.cmd"
-sed "s/@VERSION@/$VERSION/g" "$PACKAGE_ASSETS/update-spoiled-milk.sh" > "$JAVA_DIR/update-spoiled-milk.sh"
-sed "s/@VERSION@/$VERSION/g; s/@PACKAGE_KIND@/java/g" "$PACKAGE_ASSETS/update-spoiled-milk.ps1" > "$JAVA_DIR/update-spoiled-milk.ps1"
-cp "$PACKAGE_ASSETS/Update Spoiled Milk.cmd" "$JAVA_DIR/Update Spoiled Milk.cmd"
+sed "s/@VERSION@/$VERSION/g" "$PACKAGE_ASSETS/update-spoiled-milk.sh" > "$JAVA_PAYLOAD_DIR/update-spoiled-milk.sh"
+sed "s/@VERSION@/$VERSION/g; s/@PACKAGE_KIND@/java/g" "$PACKAGE_ASSETS/update-spoiled-milk.ps1" > "$JAVA_PAYLOAD_DIR/update-spoiled-milk.ps1"
+cp "$PACKAGE_ASSETS/Update Spoiled Milk.cmd" "$JAVA_PAYLOAD_DIR/Update Spoiled Milk.cmd"
 chmod +x "$JAVA_DIR/play-spoiled-milk.sh"
-chmod +x "$JAVA_DIR/update-spoiled-milk.sh"
+chmod +x "$JAVA_PAYLOAD_DIR/update-spoiled-milk.sh"
 
 cp "$PACKAGE_ASSETS/Play Spoiled Milk Windows.cmd" "$WINDOWS_DIR/Play Spoiled Milk.cmd"
-sed "s/@VERSION@/$VERSION/g; s/@PACKAGE_KIND@/windows-x64/g" "$PACKAGE_ASSETS/update-spoiled-milk.ps1" > "$WINDOWS_DIR/update-spoiled-milk.ps1"
-cp "$PACKAGE_ASSETS/Update Spoiled Milk.cmd" "$WINDOWS_DIR/Update Spoiled Milk.cmd"
-mkdir -p "$WINDOWS_DIR/runtime"
-cp -R "$WINDOWS_JRE"/. "$WINDOWS_DIR/runtime/"
+sed "s/@VERSION@/$VERSION/g; s/@PACKAGE_KIND@/windows-x64/g" "$PACKAGE_ASSETS/update-spoiled-milk.ps1" > "$WINDOWS_PAYLOAD_DIR/update-spoiled-milk.ps1"
+cp "$PACKAGE_ASSETS/Update Spoiled Milk.cmd" "$WINDOWS_PAYLOAD_DIR/Update Spoiled Milk.cmd"
+mkdir -p "$WINDOWS_PAYLOAD_DIR/runtime"
+cp -R "$WINDOWS_JRE"/. "$WINDOWS_PAYLOAD_DIR/runtime/"
 
 (
   cd "$STAGING_DIR"

@@ -158,23 +158,47 @@ def test_packaged_archives_are_clean_and_configured() -> None:
         ]:
             with zipfile.ZipFile(archive) as package:
                 names = set(package.namelist())
+                expected_root_entries = {
+                    "README.txt",
+                    "Play Spoiled Milk.cmd",
+                    "game-files",
+                }
+                if archive == generic:
+                    expected_root_entries.add("play-spoiled-milk.sh")
+                root_entries = {
+                    member[len(package_name) + 1:].split("/", 1)[0]
+                    for member in names
+                    if member.startswith(f"{package_name}/") and member != f"{package_name}/"
+                }
+                if root_entries != expected_root_entries:
+                    fail(f"{archive.name} root entries should stay launcher-focused; got {sorted(root_entries)}")
                 required = {
-                    f"{package_name}/Spoiled_Milk_Client.jar",
-                    f"{package_name}/Cache/ip.txt",
-                    f"{package_name}/Cache/port.txt",
-                    f"{package_name}/Cache/audio/audio.dat",
-                    f"{package_name}/Cache/video/video.dat",
-                    f"{package_name}/LICENSE",
+                    f"{package_name}/game-files/Spoiled_Milk_Client.jar",
+                    f"{package_name}/game-files/Cache/ip.txt",
+                    f"{package_name}/game-files/Cache/port.txt",
+                    f"{package_name}/game-files/Cache/audio/audio.dat",
+                    f"{package_name}/game-files/Cache/video/video.dat",
+                    f"{package_name}/game-files/LICENSE",
                     f"{package_name}/README.txt",
-                    f"{package_name}/ASSET-SOURCES.txt",
-                    f"{package_name}/VERSION.txt",
+                    f"{package_name}/game-files/ASSET-SOURCES.txt",
+                    f"{package_name}/game-files/VERSION.txt",
                     f"{package_name}/Play Spoiled Milk.cmd",
-                    f"{package_name}/Update Spoiled Milk.cmd",
-                    f"{package_name}/update-spoiled-milk.ps1",
+                    f"{package_name}/game-files/Update Spoiled Milk.cmd",
+                    f"{package_name}/game-files/update-spoiled-milk.ps1",
                 }
                 missing = required - names
                 if missing:
                     fail(f"{archive.name} is missing {sorted(missing)}")
+                for root_forbidden in [
+                    "Spoiled_Milk_Client.jar",
+                    "Cache/ip.txt",
+                    "Update Spoiled Milk.cmd",
+                    "update-spoiled-milk.ps1",
+                    "ASSET-SOURCES.txt",
+                    "VERSION.txt",
+                ]:
+                    if f"{package_name}/{root_forbidden}" in names:
+                        fail(f"{archive.name} should keep {root_forbidden} inside game-files/")
 
                 forbidden_fragments = [
                     "uid.dat",
@@ -188,30 +212,47 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     if any(fragment in member for fragment in forbidden_fragments):
                         fail(f"{archive.name} contains local or non-player material: {member}")
 
-                if package.read(f"{package_name}/Cache/ip.txt").decode() != "alpha.example.test\n":
+                if package.read(f"{package_name}/game-files/Cache/ip.txt").decode() != "alpha.example.test\n":
                     fail(f"{archive.name} does not carry the requested endpoint host")
-                if package.read(f"{package_name}/Cache/port.txt").decode() != "43605\n":
+                if package.read(f"{package_name}/game-files/Cache/port.txt").decode() != "43605\n":
                     fail(f"{archive.name} does not carry the requested endpoint port")
-                if package.read(f"{package_name}/VERSION.txt").decode() != f"{VERSION}\n":
+                if package.read(f"{package_name}/game-files/VERSION.txt").decode() != f"{VERSION}\n":
                     fail(f"{archive.name} does not carry the packaged version stamp")
+                readme = package.read(f"{package_name}/README.txt").decode()
+                for snippet in [
+                    "Launch with play-spoiled-milk.sh on Linux or macOS.",
+                    "Launch with Play Spoiled Milk.cmd on Windows.",
+                    "automatically check for updates",
+                ]:
+                    if snippet not in readme:
+                        fail(f"{archive.name} README should explain launch/update flow: {snippet!r}")
                 launcher = package.read(f"{package_name}/Play Spoiled Milk.cmd").decode()
                 for snippet in [
-                    'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-spoiled-milk.ps1"',
+                    'if exist "%~dp0game-files\\Spoiled_Milk_Client.jar"',
+                    'if exist "%~dp0Spoiled_Milk_Client.jar" del /q',
+                    'if exist "%~dp0Cache" rmdir /s /q',
+                    'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0game-files\\update-spoiled-milk.ps1"',
                     "if errorlevel 1 pause & exit /b 1",
+                    'cd /d "%~dp0game-files"',
                     "Spoiled_Milk_Client.jar",
                     *CLIENT_JVM_MEMORY_FLAGS,
                     *RENDERER_V2_FLAGS,
                 ]:
                     if snippet not in launcher:
                         fail(f"{archive.name} launcher must update synchronously before launch: {snippet!r}")
-                updater = package.read(f"{package_name}/update-spoiled-milk.ps1").decode()
+                updater = package.read(f"{package_name}/game-files/update-spoiled-milk.ps1").decode()
                 expected_kind = "windows-x64" if archive == windows else "java"
                 for snippet in [
                     f'$CurrentVersion = "{VERSION}"',
                     f'$PackageKind = "{expected_kind}"',
+                    "$PayloadDir = Split-Path -Parent $MyInvocation.MyCommand.Path",
+                    "$InstallDir = Split-Path -Parent $PayloadDir",
                     "Invoke-RestMethod -Uri $ApiUrl",
                     "Invoke-WebRequest -Uri $asset.browser_download_url",
                     "Expand-Archive -Path $archive",
+                    "Copy-Item -Path (Join-Path $packageRoot \"*\") -Destination $InstallDir",
+                    "$legacyFiles = @(",
+                    "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue -Path $legacyDirs",
                 ]:
                     if snippet not in updater:
                         fail(f"{archive.name} updater is missing {snippet!r}")
@@ -219,32 +260,39 @@ def test_packaged_archives_are_clean_and_configured() -> None:
         with zipfile.ZipFile(generic) as package:
             if f"spoiled-milk-{VERSION}-java/play-spoiled-milk.sh" not in package.namelist():
                 fail("generic Java package must contain its shell launcher")
-            if f"spoiled-milk-{VERSION}-java/update-spoiled-milk.sh" not in package.namelist():
-                fail("generic Java package must contain its shell updater")
+            if f"spoiled-milk-{VERSION}-java/game-files/update-spoiled-milk.sh" not in package.namelist():
+                fail("generic Java package must contain its shell updater inside game-files")
             shell_launcher = package.read(f"spoiled-milk-{VERSION}-java/play-spoiled-milk.sh").decode()
             for snippet in [
+                'GAME_DIR="$ROOT_DIR/game-files"',
+                'rm -rf "$ROOT_DIR/Cache" "$ROOT_DIR/runtime" "$ROOT_DIR/updates"',
                 'if ! sh "$GAME_DIR/update-spoiled-milk.sh"; then',
                 "Update check failed; launching installed Spoiled Milk client.",
                 '"$GAME_DIR/update-spoiled-milk.sh"',
-                '-jar "$GAME_DIR/Spoiled_Milk_Client.jar"',
+                'cd "$GAME_DIR"',
+                '-jar "Spoiled_Milk_Client.jar"',
                 *CLIENT_JVM_MEMORY_FLAGS,
                 *RENDERER_V2_FLAGS,
             ]:
                 if snippet not in shell_launcher:
                     fail(f"generic Java shell launcher must tolerate update failure before launch: {snippet!r}")
-            shell_updater = package.read(f"spoiled-milk-{VERSION}-java/update-spoiled-milk.sh").decode()
+            shell_updater = package.read(f"spoiled-milk-{VERSION}-java/game-files/update-spoiled-milk.sh").decode()
             for snippet in [
                 f'CURRENT_VERSION="{VERSION}"',
                 'PACKAGE_KIND="java"',
+                'PAYLOAD_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"',
+                'INSTALL_DIR="$(CDPATH= cd -- "$PAYLOAD_DIR/.." && pwd)"',
                 "curl -fsSL \"$API_URL\"",
                 "unzip -q \"$archive\"",
+                'cp -R "$package_root/." "$INSTALL_DIR/"',
+                'rm -rf "$INSTALL_DIR/Cache" "$INSTALL_DIR/runtime" "$INSTALL_DIR/updates"',
             ]:
                 if snippet not in shell_updater:
                     fail(f"generic Java shell updater is missing {snippet!r}")
         with zipfile.ZipFile(windows) as package:
-            if f"spoiled-milk-{VERSION}-windows-x64/runtime/bin/java.exe" not in package.namelist():
+            if f"spoiled-milk-{VERSION}-windows-x64/game-files/runtime/bin/java.exe" not in package.namelist():
                 fail("Windows package must contain its bundled runtime")
-            if f"spoiled-milk-{VERSION}-windows-x64/update-spoiled-milk.sh" in package.namelist():
+            if f"spoiled-milk-{VERSION}-windows-x64/game-files/update-spoiled-milk.sh" in package.namelist():
                 fail("Windows package should use the PowerShell updater, not the POSIX shell updater")
 
         with tempfile.TemporaryDirectory(prefix="spoiled-launch-test-") as launch_temp:
@@ -252,7 +300,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
             with zipfile.ZipFile(generic) as package:
                 package.extractall(launch_root)
             game_dir = launch_root / f"spoiled-milk-{VERSION}-java"
-            write(game_dir / "update-spoiled-milk.sh", "#!/usr/bin/env sh\nexit 42\n")
+            write(game_dir / "game-files" / "update-spoiled-milk.sh", "#!/usr/bin/env sh\nexit 42\n")
             fake_bin = launch_root / "bin"
             write(fake_bin / "java", "#!/usr/bin/env sh\nprintf 'java reached %s\\n' \"$*\"\n")
             os.chmod(fake_bin / "java", 0o755)

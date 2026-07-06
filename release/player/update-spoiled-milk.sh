@@ -4,7 +4,8 @@ set -eu
 REPO="An-actual-duck/open-rsc-spoiled-milk"
 CURRENT_VERSION="@VERSION@"
 PACKAGE_KIND="java"
-GAME_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+PAYLOAD_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+INSTALL_DIR="$(CDPATH= cd -- "$PAYLOAD_DIR/.." && pwd)"
 API_URL="https://api.github.com/repos/$REPO/releases"
 
 need_command() {
@@ -45,7 +46,7 @@ download_url="https://github.com/$REPO/releases/download/$latest_version/$asset_
 printf '%s\n' "$release_json" | grep "\"name\"[[:space:]]*:[[:space:]]*\"$asset_name\"" >/dev/null \
   || { printf 'Latest version %s does not include %s.\n' "$latest_version" "$asset_name" >&2; exit 1; }
 
-update_dir="$GAME_DIR/updates"
+update_dir="$PAYLOAD_DIR/updates"
 archive="$update_dir/$asset_name"
 extract_dir="$update_dir/extracted"
 mkdir -p "$update_dir"
@@ -63,7 +64,16 @@ if [ ! -d "$package_root" ]; then
   exit 1
 fi
 
-cp -R "$package_root/." "$GAME_DIR/"
+cp -R "$package_root/." "$INSTALL_DIR/"
+rm -f \
+  "$INSTALL_DIR/Spoiled_Milk_Client.jar" \
+  "$INSTALL_DIR/update-spoiled-milk.sh" \
+  "$INSTALL_DIR/update-spoiled-milk.ps1" \
+  "$INSTALL_DIR/Update Spoiled Milk.cmd" \
+  "$INSTALL_DIR/ASSET-SOURCES.txt" \
+  "$INSTALL_DIR/VERSION.txt" \
+  "$INSTALL_DIR/LICENSE"
+rm -rf "$INSTALL_DIR/Cache" "$INSTALL_DIR/runtime" "$INSTALL_DIR/updates"
 rm -rf "$extract_dir"
 
 printf 'Updated Spoiled Milk from %s to %s.\n' "$CURRENT_VERSION" "$latest_version"

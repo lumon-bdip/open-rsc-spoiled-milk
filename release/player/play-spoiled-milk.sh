@@ -1,7 +1,20 @@
 #!/usr/bin/env sh
 set -eu
 
-GAME_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+GAME_DIR="$ROOT_DIR/game-files"
+
+if [ -f "$GAME_DIR/Spoiled_Milk_Client.jar" ]; then
+  rm -f \
+    "$ROOT_DIR/Spoiled_Milk_Client.jar" \
+    "$ROOT_DIR/update-spoiled-milk.sh" \
+    "$ROOT_DIR/update-spoiled-milk.ps1" \
+    "$ROOT_DIR/Update Spoiled Milk.cmd" \
+    "$ROOT_DIR/ASSET-SOURCES.txt" \
+    "$ROOT_DIR/VERSION.txt" \
+    "$ROOT_DIR/LICENSE"
+  rm -rf "$ROOT_DIR/Cache" "$ROOT_DIR/runtime" "$ROOT_DIR/updates"
+fi
 
 if [ -f "$GAME_DIR/update-spoiled-milk.sh" ]; then
   if ! sh "$GAME_DIR/update-spoiled-milk.sh"; then
@@ -9,6 +22,7 @@ if [ -f "$GAME_DIR/update-spoiled-milk.sh" ]; then
   fi
 fi
 
+cd "$GAME_DIR"
 exec java \
   -Xms512m \
   -Xmx2g \
@@ -34,4 +48,4 @@ exec java \
   -Dspoiledmilk.openglWorldSpritesVisible=true \
   -Dspoiledmilk.skipLegacyWorldRaster=true \
   -Dspoiledmilk.modernClientLoop=true \
-  -jar "$GAME_DIR/Spoiled_Milk_Client.jar"
+  -jar "Spoiled_Milk_Client.jar"
