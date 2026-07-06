@@ -18,6 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class RegionManager {
 	private final ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, Region>> regions;
@@ -26,6 +27,7 @@ public class RegionManager {
 	private final ConcurrentHashMap<Long, Set<Long>> visibleObjectWindowKeysByRegion;
 	private final ConcurrentHashMap<Long, VisibleObjectSnapshot> visibleObjectSnapshotCache;
 	private final ConcurrentHashMap<Long, Set<Long>> visibleObjectSnapshotKeysByRegion;
+	private final AtomicLong visibleObjectSnapshotSequence;
 
 	private final World world;
 
@@ -37,6 +39,7 @@ public class RegionManager {
 		this.visibleObjectWindowKeysByRegion = new ConcurrentHashMap<>();
 		this.visibleObjectSnapshotCache = new ConcurrentHashMap<>();
 		this.visibleObjectSnapshotKeysByRegion = new ConcurrentHashMap<>();
+		this.visibleObjectSnapshotSequence = new AtomicLong();
 	}
 
 	public void load() {
@@ -176,7 +179,9 @@ public class RegionManager {
 			visibleObjects.wallObjects,
 			localItems,
 			mobRegions.size(),
-			objectRegions.size());
+			objectRegions.size(),
+			visibleObjects.cacheKey,
+			visibleObjects.version);
 	}
 
 	public void invalidateVisibleObjectWindowCache() {
@@ -229,7 +234,7 @@ public class RegionManager {
 			return cached;
 		}
 
-		final VisibleObjectSnapshot built = buildVisibleObjectSnapshot(location, objectRegions);
+		final VisibleObjectSnapshot built = buildVisibleObjectSnapshot(cacheKey, location, objectRegions);
 		final VisibleObjectSnapshot previous = visibleObjectSnapshotCache.putIfAbsent(cacheKey, built);
 		getWorld().getServer().recordVisibilityObjectSnapshotCacheAccess(previous != null);
 		if (previous == null) {
@@ -238,7 +243,10 @@ public class RegionManager {
 		return previous == null ? built : previous;
 	}
 
-	private VisibleObjectSnapshot buildVisibleObjectSnapshot(final Point location, final List<Region> objectRegions) {
+	private VisibleObjectSnapshot buildVisibleObjectSnapshot(
+		final long cacheKey,
+		final Point location,
+		final List<Region> objectRegions) {
 		final LinkedHashSet<GameObject> localObjects = new LinkedHashSet<>();
 		final ArrayList<GameObject> localSceneryObjects = new ArrayList<>();
 		final ArrayList<GameObject> localWallObjects = new ArrayList<>();
@@ -256,6 +264,8 @@ public class RegionManager {
 		}
 
 		return new VisibleObjectSnapshot(
+			cacheKey,
+			visibleObjectSnapshotSequence.incrementAndGet(),
 			Collections.unmodifiableSet(localObjects),
 			Collections.unmodifiableList(localSceneryObjects),
 			Collections.unmodifiableList(localWallObjects));
@@ -390,14 +400,20 @@ public class RegionManager {
 	}
 
 	private static final class VisibleObjectSnapshot {
+		private final long cacheKey;
+		private final long version;
 		private final Collection<GameObject> gameObjects;
 		private final Collection<GameObject> sceneryObjects;
 		private final Collection<GameObject> wallObjects;
 
 		private VisibleObjectSnapshot(
+			final long cacheKey,
+			final long version,
 			final Collection<GameObject> gameObjects,
 			final Collection<GameObject> sceneryObjects,
 			final Collection<GameObject> wallObjects) {
+			this.cacheKey = cacheKey;
+			this.version = version;
 			this.gameObjects = gameObjects;
 			this.sceneryObjects = sceneryObjects;
 			this.wallObjects = wallObjects;

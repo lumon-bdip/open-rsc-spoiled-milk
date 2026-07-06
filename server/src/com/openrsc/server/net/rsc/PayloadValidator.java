@@ -68,6 +68,8 @@ public class PayloadValidator {
 		put(OpcodeOut.SEND_STATUS_PROGRESS_BAR, ProgressBarStruct.class); // custom
 		put(OpcodeOut.SEND_MOVEMENT_UPDATE, MovementUpdateStruct.class); // custom
 		put(OpcodeOut.SEND_WORLD_TIME, WorldTimeStruct.class); // custom
+		put(OpcodeOut.SEND_SCENE_BASELINE, SceneBaselineStruct.class); // custom
+		put(OpcodeOut.SEND_MOVEMENT_SNAPSHOT, MovementSnapshotStruct.class); // custom
 		put(OpcodeOut.SEND_PRAYER_BOOK, PrayerBookStruct.class); // custom
 		put(OpcodeOut.SEND_DEVOTION, DevotionStruct.class); // custom
 		put(OpcodeOut.SEND_PRODUCTION_INTERFACE, ProductionInterfaceStruct.class); // custom

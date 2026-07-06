@@ -39,7 +39,6 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	public static int globalLoadingPercent = 0;
 	public static String globalLoadingState = "";
 	private static mudclient mudclient;
-	static PacketHandler packetHandler;
 	private final boolean m_hb = false;
 	protected int resizeWidth;
 	protected int resizeHeight;
@@ -1049,6 +1048,13 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			+ " | cell " + OpenGLWorldChunkRenderer.spatialBatchTileSize() + "t"
 			+ " | fog draw " + RendererFogSettings.getMode().drawDistanceTiles + "t";
 		String remasterLightLine = "remaster light " + RendererRemasterLightSettings.debugSummary();
+		PacketHandler activePacketHandler = mudclient == null ? null : mudclient.packetHandler;
+		String[] sceneBaselineLines = activePacketHandler == null
+			? new String[] { "sceneBase unavailable", "", "" }
+			: activePacketHandler.getSceneBaselineDebugSummaryLines();
+		String[] movementSnapshotLines = activePacketHandler == null
+			? new String[] { "move snap unavailable", "move cache unavailable" }
+			: activePacketHandler.getMovementSnapshotDebugSummaryLines();
 		if (RendererDebugSettings.getMode() == RendererDebugSettings.Mode.SIMPLE) {
 			return new String[] {
 				"Renderer v2 Perf HUD",
@@ -1140,6 +1146,11 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			telemetry.enabled
 				? "entity vis c/d/cull " + telemetry.openGLWorldEntityVisibilityAverage
 				: "",
+			sceneBaselineLines[0],
+			sceneBaselineLines[1],
+			sceneBaselineLines[2],
+			movementSnapshotLines[0],
+			movementSnapshotLines[1],
 			telemetry.enabled
 				? "sprite cap/static/vis " + telemetry.spriteOverlayCapturedAverage
 					+ "/" + telemetry.spriteOverlayStaticReplayAverage

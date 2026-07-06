@@ -84,6 +84,9 @@ public class ServerConfiguration {
 	public boolean WANT_FORCE_GC_ON_PROFILING;
 	public boolean WANT_SYNC_VISIBILITY_SHADOW;
 	public boolean WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT;
+	public boolean WANT_SYNC_VISIBILITY_TICK_CACHE;
+	public boolean WANT_SYNC_SCENE_BASELINE;
+	public boolean WANT_SYNC_MOVEMENT_SNAPSHOT;
 	public boolean WANT_NPC_IDLE_TICK_THROTTLE;
 	public int NPC_IDLE_TICK_THROTTLE_INTERVAL;
 	public boolean BREAK_NPC_LOCATION_CACHE;
@@ -462,6 +465,21 @@ public class ServerConfiguration {
 			"openrsc.syncVisibilitySnapshotInput",
 			"OPENRSC_SYNC_VISIBILITY_SNAPSHOT_INPUT",
 			"want_sync_visibility_snapshot_input",
+			false);
+		WANT_SYNC_VISIBILITY_TICK_CACHE = readBoolSystemEnvConfig(
+			"openrsc.syncVisibilityTickCache",
+			"OPENRSC_SYNC_VISIBILITY_TICK_CACHE",
+			"want_sync_visibility_tick_cache",
+			false);
+		WANT_SYNC_SCENE_BASELINE = readBoolSystemEnvConfig(
+			"openrsc.syncSceneBaseline",
+			"OPENRSC_SYNC_SCENE_BASELINE",
+			"want_sync_scene_baseline",
+			false);
+		WANT_SYNC_MOVEMENT_SNAPSHOT = readBoolSystemEnvConfig(
+			"openrsc.syncMovementSnapshot",
+			"OPENRSC_SYNC_MOVEMENT_SNAPSHOT",
+			"want_sync_movement_snapshot",
 			false);
 		WANT_NPC_IDLE_TICK_THROTTLE = readBoolSystemEnvConfig(
 			"openrsc.npcIdleTickThrottle",

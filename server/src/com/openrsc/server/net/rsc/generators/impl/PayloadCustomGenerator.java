@@ -79,6 +79,8 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_ONLINE_LIST, 136); // custom
 		put(OpcodeOut.SEND_MOVEMENT_UPDATE, 141); // custom
 		put(OpcodeOut.SEND_WORLD_TIME, 142); // custom
+		put(OpcodeOut.SEND_SCENE_BASELINE, 143); // custom
+		put(OpcodeOut.SEND_MOVEMENT_SNAPSHOT, 146); // custom
 		put(OpcodeOut.SEND_DEVOTION, 145); // custom
 		put(OpcodeOut.SEND_PRODUCTION_INTERFACE, 138); // custom
 		put(OpcodeOut.SEND_PRAYER_BOOK, 139); // custom
@@ -739,11 +741,65 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					}
 					break;
 
+				case SEND_MOVEMENT_SNAPSHOT:
+					MovementSnapshotStruct movementSnapshot = (MovementSnapshotStruct) payload;
+					builder.writeByte((byte) movementSnapshot.protocolVersion);
+					builder.writeInt(movementSnapshot.serverTick);
+					builder.writeInt(movementSnapshot.sequence);
+					builder.writeShort(movementSnapshot.localX);
+					builder.writeShort(movementSnapshot.localY);
+					builder.writeByte((byte) movementSnapshot.localSprite);
+					builder.writeShort(movementSnapshot.players.size());
+					for (MovementSnapshotStruct.MobMovement playerMovement : movementSnapshot.players) {
+						builder.writeShort(playerMovement.serverIndex);
+						builder.writeShort(playerMovement.x);
+						builder.writeShort(playerMovement.y);
+						builder.writeByte((byte) playerMovement.sprite);
+					}
+					builder.writeShort(movementSnapshot.npcs.size());
+					for (MovementSnapshotStruct.MobMovement npcMovement : movementSnapshot.npcs) {
+						builder.writeShort(npcMovement.serverIndex);
+						builder.writeShort(npcMovement.x);
+						builder.writeShort(npcMovement.y);
+						builder.writeByte((byte) npcMovement.sprite);
+					}
+					break;
+
 				case SEND_WORLD_TIME:
 					WorldTimeStruct worldTime = (WorldTimeStruct) payload;
 					builder.writeInt(worldTime.cycleMillis);
 					builder.writeInt(worldTime.currentCycleMillis);
 					builder.writeInt(worldTime.rateMultiplier);
+					break;
+
+				case SEND_SCENE_BASELINE:
+					SceneBaselineStruct baseline = (SceneBaselineStruct) payload;
+					builder.writeByte((byte) baseline.protocolVersion);
+					builder.writeInt(baseline.serverTick);
+					builder.writeShort(baseline.localX);
+					builder.writeShort(baseline.localY);
+					builder.writeShort(baseline.players);
+					builder.writeShort(baseline.npcs);
+					builder.writeShort(baseline.scenery);
+					builder.writeShort(baseline.walls);
+					builder.writeShort(baseline.groundItems);
+					builder.writeShort(baseline.objectViewDistance);
+					builder.writeInt(baseline.playersHash);
+					builder.writeInt(baseline.npcsHash);
+					builder.writeInt(baseline.sceneryHash);
+					builder.writeInt(baseline.wallsHash);
+					builder.writeInt(baseline.groundItemsHash);
+					builder.writeByte((byte) baseline.pageCategory);
+					builder.writeShort(baseline.pageIndex);
+					builder.writeShort(baseline.pageTotal);
+					builder.writeShort(baseline.objectRecords.size());
+					for (SceneBaselineStruct.ObjectRecord objectRecord : baseline.objectRecords) {
+						builder.writeShort(objectRecord.id);
+						builder.writeShort(objectRecord.x);
+						builder.writeShort(objectRecord.y);
+						builder.writeByte((byte) objectRecord.direction);
+						builder.writeByte((byte) objectRecord.type);
+					}
 					break;
 
 				case SEND_PRAYER_BOOK:

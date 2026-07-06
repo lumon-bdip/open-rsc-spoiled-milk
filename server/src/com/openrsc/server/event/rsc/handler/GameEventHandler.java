@@ -288,6 +288,9 @@ public class GameEventHandler {
 				.append("; objectSnapshot requests=").append(getServer().getLastVisibilityObjectSnapshotCacheRequests())
 				.append(", hits=").append(getServer().getLastVisibilityObjectSnapshotCacheHits())
 				.append(", misses=").append(getServer().getLastVisibilityObjectSnapshotCacheMisses())
+				.append("; tickSnapshot requests=").append(getServer().getLastVisibilityTickSnapshotCacheRequests())
+				.append(", hits=").append(getServer().getLastVisibilityTickSnapshotCacheHits())
+				.append(", misses=").append(getServer().getLastVisibilityTickSnapshotCacheMisses())
 				.append(newLine);
 			s.append("Shadow snapshot: time=")
 				.append(getServer().getLastVisibilityShadowDuration() / 1000000).append("ms")
