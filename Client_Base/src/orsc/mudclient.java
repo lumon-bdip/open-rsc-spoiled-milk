@@ -3876,19 +3876,21 @@ public final class mudclient implements Runnable {
 	}
 
 	public boolean hasLoadedTerrainForGameObject(int xTile, int zTile, int objectID, int dir) {
+		GameObjectDef objectDef = EntityHandler.getObjectDef(objectID);
 		int xSize;
 		int zSize;
 		if (dir == 0 || dir == 4) {
-			xSize = EntityHandler.getObjectDef(objectID).getWidth();
-			zSize = EntityHandler.getObjectDef(objectID).getHeight();
+			xSize = objectDef.getWidth();
+			zSize = objectDef.getHeight();
 		} else {
-			xSize = EntityHandler.getObjectDef(objectID).getHeight();
-			zSize = EntityHandler.getObjectDef(objectID).getWidth();
+			xSize = objectDef.getHeight();
+			zSize = objectDef.getWidth();
 		}
 
-		int xWorld = (xTile * 2 + xSize) * this.tileSize / 2;
-		int zWorld = (zTile * 2 + zSize) * this.tileSize / 2;
-		return hasLoadedTerrainForWorldPoint(xWorld, zWorld);
+		int farXTile = xTile + Math.max(0, xSize);
+		int farZTile = zTile + Math.max(0, zSize);
+		return hasLoadedTerrainForWorldPoint(xTile * this.tileSize, zTile * this.tileSize)
+			&& hasLoadedTerrainForWorldPoint(farXTile * this.tileSize, farZTile * this.tileSize);
 	}
 
 	private boolean hasLoadedTerrainForWallObject(int x, int y, int dir) {

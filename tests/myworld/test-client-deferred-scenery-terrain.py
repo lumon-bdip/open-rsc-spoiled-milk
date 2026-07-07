@@ -23,12 +23,16 @@ def main() -> None:
     require("private boolean hasLoadedTerrainForWorldPoint(int xWorld, int zWorld)" in client
             and "return World.isLocalFaceTile(xTile, zTile);" in client,
             "Terrain checks should match the elevation interpolation window")
-    require("private final boolean[] gameObjectInstanceMaterialized" in client
-            and "private final boolean[] wallObjectInstanceMaterialized" in client,
+    require("private boolean[] gameObjectInstanceMaterialized" in client
+            and "private boolean[] wallObjectInstanceMaterialized" in client,
             "Deferred scenery should track explicit scene materialization state")
     require("public void materializeGameObjectInstance(int index)" in client
             and "if (!hasLoadedTerrainForGameObject(xTile, zTile, objectID, dir)) {\n\t\t\treturn;\n\t\t}" in client,
             "Scenery materialization should be gated on loaded terrain")
+    require("int farXTile = xTile + Math.max(0, xSize);" in client
+            and "int farZTile = zTile + Math.max(0, zSize);" in client
+            and "hasLoadedTerrainForWorldPoint(xTile * this.tileSize, zTile * this.tileSize)\n\t\t\t&& hasLoadedTerrainForWorldPoint(farXTile * this.tileSize, farZTile * this.tileSize)" in client,
+            "Scenery terrain checks should require the full footprint, not just the center point")
     require("public void materializeWallObjectInstance(int index)" in client
             and "if (!hasLoadedTerrainForWallObject(x, z, dir)) {\n\t\t\treturn;\n\t\t}" in client,
             "Boundary materialization should be gated before wall geometry is built")
@@ -45,13 +49,16 @@ def main() -> None:
     store_record = "mc.setGameObjectInstanceModel(instanceIndex, m);"
     materialize_record = "mc.materializeGameObjectInstance(instanceIndex);"
     capacity_guard = "if (!mc.hasGameObjectInstanceCapacity()) {\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\t}"
+    capacity_guard_index = packet_handler.index(capacity_guard)
+    store_record_index = packet_handler.index(store_record, capacity_guard_index)
+    materialize_record_index = packet_handler.index(materialize_record, store_record_index)
     require("private static final int WALL_OBJECT_KEY_BASE = 20000;" in client
-            and "private static final int GAME_OBJECT_INSTANCE_CAPACITY = WALL_OBJECT_KEY_BASE;" in client,
+            and "private static final int GAME_OBJECT_INSTANCE_INITIAL_CAPACITY = WALL_OBJECT_KEY_BASE;" in client,
             "Scenery capacity should grow past the old 5000 limit without colliding with wall pick keys")
     require("private static final int WALL_OBJECT_INSTANCE_CAPACITY = 5000;" in client,
             "Boundary capacity should grow past the old 500 limit")
-    require("new boolean[GAME_OBJECT_INSTANCE_CAPACITY]" in client
-            and "new RSModel[GAME_OBJECT_INSTANCE_CAPACITY]" in client,
+    require("new boolean[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY]" in client
+            and "new RSModel[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY]" in client,
             "Scenery instance arrays should use the expanded named capacity")
     require("new boolean[WALL_OBJECT_INSTANCE_CAPACITY]" in client
             and "new RSModel[WALL_OBJECT_INSTANCE_CAPACITY]" in client,
@@ -63,13 +70,13 @@ def main() -> None:
             "Scenery append packets should be ignored instead of overflowing local arrays")
     require("if (!mc.hasWallObjectInstanceCapacity()) {\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\t}" in packet_handler,
             "Boundary append packets should be ignored instead of overflowing local arrays")
-    require("var8.key >= WALL_OBJECT_KEY_BASE" in client
+    require("var8.getRenderer3DModelKind() == Renderer3DModelKind.WALL_OBJECT" in client
             and "var8.key - WALL_OBJECT_KEY_BASE" in client
             and "this.wallObjectInstanceModel[i].key = i + WALL_OBJECT_KEY_BASE;" in client,
             "Boundary pick-key encoding should move with the expanded scenery capacity")
-    require(packet_handler.index(capacity_guard) < packet_handler.index(store_record),
+    require(capacity_guard_index < store_record_index,
             "Scenery capacity should be checked before storing a new instance")
-    require(packet_handler.index(store_record) < packet_handler.index(materialize_record),
+    require(store_record_index < materialize_record_index,
             "Scenery should be stored before terrain-ready materialization is retried")
     require("mc.setGameObjectInstanceMaterialized(instanceIndex, false);" in packet_handler,
             "New scenery packets should start as deferred materialization candidates")
