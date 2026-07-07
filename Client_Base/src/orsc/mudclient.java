@@ -1198,7 +1198,7 @@ public final class mudclient implements Runnable {
 		saveClientSettings(props);
 	}
 
-	private static void saveOpenGLWindowSettings() {
+	static void saveOpenGLWindowSettings() {
 		Properties props = loadClientSettings();
 		OpenGLWindowSettings.saveToClientSettings(props);
 

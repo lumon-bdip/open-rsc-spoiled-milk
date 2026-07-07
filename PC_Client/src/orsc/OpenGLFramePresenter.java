@@ -313,11 +313,12 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	final List<LegacyEntitySpriteDepthEvaluation> legacyEntitySpriteDepthEvaluations =
 		new ArrayList<LegacyEntitySpriteDepthEvaluation>();
 	private OpenGLWindowSettings.Mode appliedWindowMode;
-	private int windowedX = 80;
-	private int windowedY = 80;
-	private int windowedWidth = INITIAL_WIDTH;
-	private int windowedHeight = INITIAL_HEIGHT;
-	private boolean hasWindowedBounds;
+	private int windowedX = OpenGLWindowSettings.getWindowedX();
+	private int windowedY = OpenGLWindowSettings.getWindowedY();
+	private int windowedWidth = OpenGLWindowSettings.getWindowedWidth();
+	private int windowedHeight = OpenGLWindowSettings.getWindowedHeight();
+	private boolean hasWindowedBounds = OpenGLWindowSettings.hasWindowedBounds();
+	private boolean windowedBoundsDirty;
 	private boolean appliedInitialWindowSize;
 	private int lastMouseX = -1;
 	private int lastMouseY = -1;
@@ -535,9 +536,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glfwDefaultWindowHints();
 		gl.glfwWindowHint(gl.GLFW_VISIBLE, gl.GLFW_FALSE);
 		gl.glfwWindowHint(gl.GLFW_RESIZABLE, gl.GLFW_TRUE);
-		if (OpenGLWindowSettings.getMode() == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN) {
-			gl.glfwWindowHint(gl.GLFW_DECORATED, gl.GLFW_FALSE);
-		}
+		gl.glfwWindowHint(gl.GLFW_DECORATED, gl.GLFW_TRUE);
 
 		window = gl.glfwCreateWindow(width, height, title, 0L, 0L);
 		if (window == 0L) {
@@ -552,8 +551,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		logOpenGLDevice();
 		gl.glfwSwapInterval(OPENGL_VSYNC_ENABLED ? 1 : 0);
 		log("OpenGL vsync: " + (OPENGL_VSYNC_ENABLED ? "enabled" : "disabled") + ".");
-		gl.glfwShowWindow(window);
 		syncWindowMode(width, height);
+		gl.glfwShowWindow(window);
 
 		textureId = gl.glGenTextures();
 		gl.glBindTexture(gl.GL_TEXTURE_2D, textureId);
@@ -710,7 +709,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void enterBorderlessFullscreen() throws Exception {
-		saveWindowedBounds();
+		captureWindowedBounds(true);
 		MonitorMode monitorMode = gl.getPrimaryMonitorMode();
 		gl.glfwSetWindowAttrib(window, gl.GLFW_DECORATED, gl.GLFW_FALSE);
 		gl.glfwSetWindowPos(window, monitorMode.x, monitorMode.y);
@@ -749,11 +748,13 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		windowedWidth = windowWidth;
 		windowedHeight = windowHeight;
 		hasWindowedBounds = true;
+		recordWindowedBounds(windowedX, windowedY, windowedWidth, windowedHeight);
+		persistWindowedBoundsIfDirty();
 		log("OpenGL window mode: windowed " + windowWidth + "x" + windowHeight + ".");
 	}
 
-	private void saveWindowedBounds() throws Exception {
-		if (appliedWindowMode == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN) {
+	private void captureWindowedBounds(boolean persist) throws Exception {
+		if (gl == null || window == 0L || appliedWindowMode != OpenGLWindowSettings.Mode.WINDOWED) {
 			return;
 		}
 
@@ -767,11 +768,29 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		if (isEffectivelyFullscreen(width[0], height[0], monitorMode)) {
 			return;
 		}
-		windowedX = x[0];
-		windowedY = y[0];
-		windowedWidth = Math.max(1, width[0]);
-		windowedHeight = Math.max(1, height[0]);
+		recordWindowedBounds(x[0], y[0], Math.max(1, width[0]), Math.max(1, height[0]));
+		if (persist) {
+			persistWindowedBoundsIfDirty();
+		}
+	}
+
+	private void recordWindowedBounds(int x, int y, int width, int height) {
+		windowedX = x;
+		windowedY = y;
+		windowedWidth = Math.max(1, width);
+		windowedHeight = Math.max(1, height);
 		hasWindowedBounds = true;
+		if (OpenGLWindowSettings.setWindowedBounds(windowedX, windowedY, windowedWidth, windowedHeight)) {
+			windowedBoundsDirty = true;
+		}
+	}
+
+	private void persistWindowedBoundsIfDirty() {
+		if (!windowedBoundsDirty) {
+			return;
+		}
+		mudclient.saveOpenGLWindowSettings();
+		windowedBoundsDirty = false;
 	}
 
 	private boolean isEffectivelyFullscreen(int width, int height, MonitorMode monitorMode) {
@@ -805,11 +824,12 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		syncWindowMode(frame.targetWidth, frame.targetHeight);
 
 		if (appliedWindowMode == OpenGLWindowSettings.Mode.WINDOWED
-			&& (!primaryWindow || !appliedInitialWindowSize)
+			&& !primaryWindow
 			&& (frame.targetWidth != windowWidth || frame.targetHeight != windowHeight)) {
 			gl.glfwSetWindowSize(window, frame.targetWidth, frame.targetHeight);
 			windowWidth = frame.targetWidth;
 			windowHeight = frame.targetHeight;
+			recordWindowedBounds(windowedX, windowedY, windowWidth, windowHeight);
 		}
 		appliedInitialWindowSize = true;
 
@@ -824,6 +844,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glfwGetWindowSize(window, actualWindowWidth, actualWindowHeight);
 		int actualWindowViewportWidth = Math.max(1, actualWindowWidth[0]);
 		int actualWindowViewportHeight = Math.max(1, actualWindowHeight[0]);
+		windowWidth = actualWindowViewportWidth;
+		windowHeight = actualWindowViewportHeight;
+		captureWindowedBounds(false);
 
 		OpenGLPresentationSettings.ScaleMode currentScaleMode = currentScaleMode();
 		Viewport framebufferViewport =
@@ -4347,6 +4370,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private void cleanup(boolean glfwInitialized) {
 		boolean userClosedWindow = !closed && primaryWindow;
 		releaseInputState();
+		try {
+			captureWindowedBounds(false);
+			persistWindowedBoundsIfDirty();
+		} catch (Throwable ignored) {
+		}
 		try {
 			if (gl != null && window != 0L) {
 				if (spriteTextureCache != null) {
