@@ -928,9 +928,9 @@ def main() -> None:
         "scene baseline packet must remain default-off in checked-in server configs",
     )
     require(
-        "want_sync_movement_snapshot: false" in myworld_conf
-        and "want_sync_movement_snapshot: false" in myworld_host_conf,
-        "movement snapshot packet must remain default-off in checked-in server configs",
+        "want_sync_movement_snapshot: true" in myworld_conf
+        and "want_sync_movement_snapshot: true" in myworld_host_conf,
+        "movement snapshot packet should remain enabled in checked-in server configs",
     )
     for snippet in (
         "visibilityTickSnapshotCacheRequests=",
