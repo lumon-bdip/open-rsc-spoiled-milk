@@ -76,6 +76,8 @@ public final class GameStateUpdater {
 	private static final String CUSTOM_MOVEMENT_CLIENT_MID_Y_ATTRIBUTE = "custom_movement_client_mid_y";
 	private static final long WORLD_TIME_SYNC_INTERVAL_MILLIS = 15000L;
 	private static final long WORLD_TIME_FAST_SYNC_INTERVAL_MILLIS = 250L;
+	private static final int RECENT_VISIBILITY_SHADOW_LOG_LIMIT = 5;
+	private static final String VISIBILITY_SHADOW_LOG_PREFIX = "VISIBILITY_SHADOW_RECENT";
 
 	/**
 	 * The asynchronous logger.
@@ -86,6 +88,10 @@ public final class GameStateUpdater {
 	private final Map<Long, CachedVisibilitySnapshot> visibilityTickSnapshotCache = new HashMap<>();
 	private long visibilityTickSnapshotCacheTick = Long.MIN_VALUE;
 	private int movementSnapshotSequence = 0;
+	private final String[] recentVisibilityShadowLines = new String[RECENT_VISIBILITY_SHADOW_LOG_LIMIT];
+	private int recentVisibilityShadowNext = 0;
+	private int recentVisibilityShadowCount = 0;
+	private int lastLoggedVisibilityShadowSignature = 0;
 
 	public final Server getServer() {
 		return server;
@@ -140,12 +146,15 @@ public final class GameStateUpdater {
 		final boolean[] wallsChanged = new boolean[1];
 		final boolean[] groundItemsChanged = new boolean[1];
 		final boolean skipStaticSceneScan = canSkipStaticSceneScan(player, packetVisibility);
+		final boolean sendLegacyStaticScenePackets = shouldSendLegacyStaticScenePackets(player, skipStaticSceneScan);
 		if (skipStaticSceneScan) {
 			recordUpdateGameObjects(() -> {});
 			recordUpdateWallObjects(() -> {});
 		} else {
-			recordUpdateGameObjects(() -> sceneryChanged[0] = updateGameObjects(player, visibleSceneryObjects));
-			recordUpdateWallObjects(() -> wallsChanged[0] = updateWallObjects(player, visibleWallObjects));
+			recordUpdateGameObjects(() -> sceneryChanged[0] = updateGameObjects(
+				player, visibleSceneryObjects, sendLegacyStaticScenePackets));
+			recordUpdateWallObjects(() -> wallsChanged[0] = updateWallObjects(
+				player, visibleWallObjects, sendLegacyStaticScenePackets));
 			storeStaticSceneScanKey(player, packetVisibility);
 		}
 		recordUpdateGroundItems(() -> groundItemsChanged[0] = updateGroundItems(player, visibleGroundItems));
@@ -564,6 +573,16 @@ public final class GameStateUpdater {
 		final boolean npcsMatch = sameIdentityCollection(packetVisibility.getNpcs(), comparisonSnapshot.getNpcs());
 		final boolean gameObjectsMatch = sameIdentityCollection(packetVisibility.getGameObjects(), comparisonSnapshot.getGameObjects());
 		final boolean groundItemsMatch = sameIdentityCollection(packetVisibility.getGroundItems(), comparisonSnapshot.getGroundItems());
+		recordVisibilityShadowDiagnostics(
+			player,
+			packetVisibility,
+			comparisonSnapshot,
+			useVisibilitySnapshotInput(player),
+			allowTickSnapshotCache,
+			playersMatch,
+			npcsMatch,
+			gameObjectsMatch,
+			groundItemsMatch);
 		getServer().addVisibilityShadowMetrics(
 			System.nanoTime() - start,
 			playersMatch,
@@ -572,6 +591,128 @@ public final class GameStateUpdater {
 			groundItemsMatch,
 			Math.max(packetVisibility.getMobRegionCount(), comparisonSnapshot.getMobRegionCount()),
 			Math.max(packetVisibility.getObjectRegionCount(), comparisonSnapshot.getObjectRegionCount()));
+	}
+
+	private void recordVisibilityShadowDiagnostics(
+		final Player player,
+		final VisibilitySnapshot packetVisibility,
+		final VisibilitySnapshot comparisonSnapshot,
+		final boolean snapshotInput,
+		final boolean allowTickSnapshotCache,
+		final boolean playersMatch,
+		final boolean npcsMatch,
+		final boolean gameObjectsMatch,
+		final boolean groundItemsMatch) {
+		final String line = buildVisibilityShadowLine(
+			player,
+			packetVisibility,
+			comparisonSnapshot,
+			snapshotInput,
+			allowTickSnapshotCache,
+			playersMatch,
+			npcsMatch,
+			gameObjectsMatch,
+			groundItemsMatch);
+		rememberVisibilityShadowLine(line);
+		if (playersMatch && npcsMatch && gameObjectsMatch && groundItemsMatch) {
+			return;
+		}
+
+		final int issueSignature = visibilityShadowIssueSignature(
+			packetVisibility,
+			comparisonSnapshot,
+			snapshotInput,
+			allowTickSnapshotCache,
+			playersMatch,
+			npcsMatch,
+			gameObjectsMatch,
+			groundItemsMatch);
+		if (issueSignature != lastLoggedVisibilityShadowSignature) {
+			lastLoggedVisibilityShadowSignature = issueSignature;
+			logRecentVisibilityShadowLines();
+		}
+	}
+
+	private String buildVisibilityShadowLine(
+		final Player player,
+		final VisibilitySnapshot packetVisibility,
+		final VisibilitySnapshot comparisonSnapshot,
+		final boolean snapshotInput,
+		final boolean allowTickSnapshotCache,
+		final boolean playersMatch,
+		final boolean npcsMatch,
+		final boolean gameObjectsMatch,
+		final boolean groundItemsMatch) {
+		return "tick " + getServer().getCurrentTick()
+			+ " player " + player.getUsername() + "#" + player.getIndex()
+			+ " pos " + player.getX() + "," + player.getY()
+			+ " packetMode " + (snapshotInput ? "snapshot" : "legacy")
+			+ " compareMode " + (snapshotInput ? "legacy" : "snapshot")
+			+ " tickCache " + allowTickSnapshotCache
+			+ " packet p/n/o/g " + visibilityCounts(packetVisibility)
+			+ " compare p/n/o/g " + visibilityCounts(comparisonSnapshot)
+			+ " match p/n/o/g " + boolFlag(playersMatch) + "/" + boolFlag(npcsMatch)
+				+ "/" + boolFlag(gameObjectsMatch) + "/" + boolFlag(groundItemsMatch)
+			+ " regions mob/object "
+				+ packetVisibility.getMobRegionCount() + "/" + comparisonSnapshot.getMobRegionCount()
+				+ "/" + packetVisibility.getObjectRegionCount() + "/" + comparisonSnapshot.getObjectRegionCount();
+	}
+
+	private String visibilityCounts(final VisibilitySnapshot snapshot) {
+		return snapshot.getPlayers().size()
+			+ "/" + snapshot.getNpcs().size()
+			+ "/" + snapshot.getGameObjects().size()
+			+ "/" + snapshot.getGroundItems().size();
+	}
+
+	private String boolFlag(final boolean value) {
+		return value ? "ok" : "bad";
+	}
+
+	private int visibilityShadowIssueSignature(
+		final VisibilitySnapshot packetVisibility,
+		final VisibilitySnapshot comparisonSnapshot,
+		final boolean snapshotInput,
+		final boolean allowTickSnapshotCache,
+		final boolean playersMatch,
+		final boolean npcsMatch,
+		final boolean gameObjectsMatch,
+		final boolean groundItemsMatch) {
+		int hash = snapshotInput ? 1 : 0;
+		hash = hash * 31 + (allowTickSnapshotCache ? 1 : 0);
+		hash = hash * 31 + (playersMatch ? 1 : 0);
+		hash = hash * 31 + (npcsMatch ? 1 : 0);
+		hash = hash * 31 + (gameObjectsMatch ? 1 : 0);
+		hash = hash * 31 + (groundItemsMatch ? 1 : 0);
+		hash = hash * 31 + packetVisibility.getPlayers().size();
+		hash = hash * 31 + comparisonSnapshot.getPlayers().size();
+		hash = hash * 31 + packetVisibility.getNpcs().size();
+		hash = hash * 31 + comparisonSnapshot.getNpcs().size();
+		hash = hash * 31 + packetVisibility.getGameObjects().size();
+		hash = hash * 31 + comparisonSnapshot.getGameObjects().size();
+		hash = hash * 31 + packetVisibility.getGroundItems().size();
+		hash = hash * 31 + comparisonSnapshot.getGroundItems().size();
+		return hash;
+	}
+
+	private void rememberVisibilityShadowLine(final String line) {
+		recentVisibilityShadowLines[recentVisibilityShadowNext] = line;
+		recentVisibilityShadowNext = (recentVisibilityShadowNext + 1) % RECENT_VISIBILITY_SHADOW_LOG_LIMIT;
+		if (recentVisibilityShadowCount < RECENT_VISIBILITY_SHADOW_LOG_LIMIT) {
+			recentVisibilityShadowCount++;
+		}
+	}
+
+	private void logRecentVisibilityShadowLines() {
+		LOGGER.warn("{} latest mismatch; last {} visibility shadow snapshots:",
+			VISIBILITY_SHADOW_LOG_PREFIX, recentVisibilityShadowCount);
+		for (int i = 0; i < recentVisibilityShadowCount; i++) {
+			int index = recentVisibilityShadowNext - recentVisibilityShadowCount + i;
+			if (index < 0) {
+				index += RECENT_VISIBILITY_SHADOW_LOG_LIMIT;
+			}
+			LOGGER.warn("{} {}", VISIBILITY_SHADOW_LOG_PREFIX, recentVisibilityShadowLines[index]);
+		}
 	}
 
 	private boolean sameIdentityCollection(final Collection<?> first, final Collection<?> second) {
@@ -2060,7 +2201,10 @@ public final class GameStateUpdater {
 		}
 	}
 
-	protected boolean updateGameObjects(final Player playerToUpdate, final Collection<GameObject> visibleSceneryObjects) {
+	protected boolean updateGameObjects(
+		final Player playerToUpdate,
+		final Collection<GameObject> visibleSceneryObjects,
+		final boolean sendLegacyStaticScenePackets) {
 		boolean changed = false;
 
 		GameObjectsUpdateStruct struct = new GameObjectsUpdateStruct();
@@ -2110,7 +2254,7 @@ public final class GameStateUpdater {
 		}
 		struct.objects = objectLocs;
 		if (changed) {
-			if (shouldSendLegacyStaticScenePackets(playerToUpdate)) {
+			if (sendLegacyStaticScenePackets) {
 				tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENERY_HANDLER, struct, playerToUpdate);
 			} else {
 				getServer().addSuppressedLegacyStaticSceneMetrics(false, objectLocs.size());
@@ -2178,7 +2322,10 @@ public final class GameStateUpdater {
 		return changed;
 	}
 
-	protected boolean updateWallObjects(final Player playerToUpdate, final Collection<GameObject> visibleWallObjects) {
+	protected boolean updateWallObjects(
+		final Player playerToUpdate,
+		final Collection<GameObject> visibleWallObjects,
+		final boolean sendLegacyStaticScenePackets) {
 		boolean changed = false;
 
 		GameObjectsUpdateStruct struct = new GameObjectsUpdateStruct();
@@ -2257,7 +2404,7 @@ public final class GameStateUpdater {
 		}
 		struct.objects = objectLocs;
 		if (changed) {
-			if (shouldSendLegacyStaticScenePackets(playerToUpdate)) {
+			if (sendLegacyStaticScenePackets) {
 				tryFinalizeAndSendPacket(OpcodeOut.SEND_BOUNDARY_HANDLER, struct, playerToUpdate);
 			} else {
 				getServer().addSuppressedLegacyStaticSceneMetrics(true, objectLocs.size());
@@ -2266,12 +2413,11 @@ public final class GameStateUpdater {
 		return changed;
 	}
 
-	private boolean shouldSendLegacyStaticScenePackets(final Player player) {
+	private boolean shouldSendLegacyStaticScenePackets(final Player player, final boolean staticSceneScanSkipped) {
 		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_SCENE_BASELINE) {
 			return true;
 		}
-		final SceneBaselineSummary summary = player.getAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE);
-		return summary == null || !summary.hasSentCompleteStaticBaseline();
+		return !staticSceneScanSkipped;
 	}
 
 	protected void sendAppearanceKeepalive(final Player player) {
