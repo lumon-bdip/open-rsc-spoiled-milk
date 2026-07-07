@@ -25,6 +25,7 @@ ALLOWED_KILLED_BY_FILES = {
     "server/src/com/openrsc/server/model/entity/player/Player.java",
     "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
     "server/plugins/com/openrsc/server/plugins/authentic/commands/Admins.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java",
     "server/plugins/com/openrsc/server/plugins/authentic/quests/members/SheepHerder.java",
     "server/plugins/com/openrsc/server/plugins/custom/misc/ResetCrystal.java",
 }
