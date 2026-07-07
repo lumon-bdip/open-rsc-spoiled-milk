@@ -500,6 +500,17 @@ Current branch progress:
   login, movement, teleport/region changes, and object mutations, then decide
   whether the renderer should consume the stored baseline as a diagnostic
   source first or as an opt-in replacement path.
+- [x] Added scene-sync recent-sample logging that mirrors the movement cache
+  diagnostic flow. When scene baseline diagnostics see a stale baseline,
+  duplicate page, incomplete reset, or stored-vs-legacy parity issue, the
+  client writes the last five compact scene sync samples to stdout and the
+  client runtime log with `SCENE_SYNC_RECENT`. This should make scene-baseline
+  issues easier to capture when F6 flickers too quickly to screenshot.
+- [x] Added server-side visibility-shadow recent-sample logging. When the
+  legacy and snapshot visibility paths disagree under
+  `want_sync_visibility_shadow`, the server writes the last five compact
+  player/tick/count samples with `VISIBILITY_SHADOW_RECENT`, including packet
+  mode, comparison mode, per-category counts, match buckets, and region counts.
 
 1. Add sync telemetry before changing behavior.
    - Track bytes sent by opcode.

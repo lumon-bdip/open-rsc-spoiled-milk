@@ -2177,6 +2177,7 @@ public class PacketHandler {
 			pageRecords);
 		sceneBaselineDebugState.pruneLegacyListsOutsideSyncRange(mc);
 		applyCompleteSceneBaselineToLegacyLists();
+		sceneBaselineDebugState.recordSceneDiagnostics(mc);
 		packetsIncoming.packetEnd = length;
 	}
 
@@ -2275,6 +2276,8 @@ public class PacketHandler {
 		private static final int PAGE_SCENERY = 1;
 		private static final int PAGE_WALLS = 2;
 		private static final long PARITY_REFRESH_MILLIS = 500L;
+		private static final int RECENT_SCENE_SYNC_LOG_LIMIT = 5;
+		private static final String SCENE_SYNC_LOG_PREFIX = "SCENE_SYNC_RECENT";
 
 		private final Map<Integer, boolean[]> receivedPageIndexes = new HashMap<Integer, boolean[]>();
 		private final Map<Integer, Integer> expectedPages = new HashMap<Integer, Integer>();
@@ -2309,6 +2312,10 @@ public class PacketHandler {
 		private int legacyPrunedScenery = 0;
 		private int legacyPrunedWalls = 0;
 		private int appliedLegacyBaselines = 0;
+		private final String[] recentSceneSyncLines = new String[RECENT_SCENE_SYNC_LOG_LIMIT];
+		private int recentSceneSyncNext = 0;
+		private int recentSceneSyncCount = 0;
+		private int lastLoggedSceneIssueSignature = 0;
 
 		private void recordPacket(
 			int protocolVersion,
@@ -2550,6 +2557,74 @@ public class PacketHandler {
 					+ " | applied " + appliedLegacyBaselines,
 				parityLine(mc)
 			};
+		}
+
+		private void recordSceneDiagnostics(mudclient mc) {
+			String parity = parityLine(mc);
+			String line = buildRecentSceneSyncLine(parity);
+			rememberSceneSyncLine(line);
+			int issueSignature = sceneIssueSignature(parity);
+			if (issueSignature != 0 && issueSignature != lastLoggedSceneIssueSignature) {
+				lastLoggedSceneIssueSignature = issueSignature;
+				logRecentSceneSyncLines();
+			}
+		}
+
+		private String buildRecentSceneSyncLine(String parity) {
+			return "v" + protocolVersion
+				+ " tick " + serverTick
+				+ " origin " + localX + "," + localY
+				+ " state " + baselineState()
+				+ " static " + scenery + "/" + walls + "/" + groundItems
+				+ " stored " + storedSceneryRecords.size() + "/" + storedWallRecords.size()
+				+ " pages " + pages + "/" + expectedStaticPages()
+				+ " records " + records
+				+ " scenery " + compactPageSummary(PAGE_SCENERY)
+				+ " walls " + compactPageSummary(PAGE_WALLS)
+				+ " reset/done " + incompleteSceneResets + "/" + completedBaselines
+				+ " pruned " + legacyPrunedScenery + "/" + legacyPrunedWalls
+				+ " applied " + appliedLegacyBaselines
+				+ " | " + parity;
+		}
+
+		private int sceneIssueSignature(String parity) {
+			int issueSignature = 0;
+			if ("stale".equals(baselineState())) {
+				issueSignature = issueSignature * 31 + 1;
+			}
+			if (duplicatePageTotal() > 0) {
+				issueSignature = issueSignature * 31 + duplicatePageTotal();
+			}
+			if (parity.indexOf("scene sync match ok") < 0
+				&& parity.indexOf("scene sync match waiting") < 0) {
+				issueSignature = issueSignature * 31 + parity.hashCode();
+			}
+			return issueSignature;
+		}
+
+		private void rememberSceneSyncLine(String line) {
+			recentSceneSyncLines[recentSceneSyncNext] = line;
+			recentSceneSyncNext = (recentSceneSyncNext + 1) % RECENT_SCENE_SYNC_LOG_LIMIT;
+			if (recentSceneSyncCount < RECENT_SCENE_SYNC_LOG_LIMIT) {
+				recentSceneSyncCount++;
+			}
+		}
+
+		private void logRecentSceneSyncLines() {
+			logSceneSyncLine(SCENE_SYNC_LOG_PREFIX
+				+ " latest issue; last " + recentSceneSyncCount + " scene sync snapshots:");
+			for (int i = 0; i < recentSceneSyncCount; i++) {
+				int index = recentSceneSyncNext - recentSceneSyncCount + i;
+				if (index < 0) {
+					index += RECENT_SCENE_SYNC_LOG_LIMIT;
+				}
+				logSceneSyncLine(SCENE_SYNC_LOG_PREFIX + " " + recentSceneSyncLines[index]);
+			}
+		}
+
+		private void logSceneSyncLine(String line) {
+			System.out.println(line);
+			ClientRuntimeLogger.log(line);
 		}
 
 		private void pruneLegacyListsOutsideSyncRange(mudclient mc) {
