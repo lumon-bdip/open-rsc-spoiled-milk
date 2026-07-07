@@ -146,12 +146,15 @@ public final class GameStateUpdater {
 		final boolean[] wallsChanged = new boolean[1];
 		final boolean[] groundItemsChanged = new boolean[1];
 		final boolean skipStaticSceneScan = canSkipStaticSceneScan(player, packetVisibility);
+		final boolean sendLegacyStaticScenePackets = shouldSendLegacyStaticScenePackets(player, skipStaticSceneScan);
 		if (skipStaticSceneScan) {
 			recordUpdateGameObjects(() -> {});
 			recordUpdateWallObjects(() -> {});
 		} else {
-			recordUpdateGameObjects(() -> sceneryChanged[0] = updateGameObjects(player, visibleSceneryObjects));
-			recordUpdateWallObjects(() -> wallsChanged[0] = updateWallObjects(player, visibleWallObjects));
+			recordUpdateGameObjects(() -> sceneryChanged[0] = updateGameObjects(
+				player, visibleSceneryObjects, sendLegacyStaticScenePackets));
+			recordUpdateWallObjects(() -> wallsChanged[0] = updateWallObjects(
+				player, visibleWallObjects, sendLegacyStaticScenePackets));
 			storeStaticSceneScanKey(player, packetVisibility);
 		}
 		recordUpdateGroundItems(() -> groundItemsChanged[0] = updateGroundItems(player, visibleGroundItems));
@@ -2198,7 +2201,10 @@ public final class GameStateUpdater {
 		}
 	}
 
-	protected boolean updateGameObjects(final Player playerToUpdate, final Collection<GameObject> visibleSceneryObjects) {
+	protected boolean updateGameObjects(
+		final Player playerToUpdate,
+		final Collection<GameObject> visibleSceneryObjects,
+		final boolean sendLegacyStaticScenePackets) {
 		boolean changed = false;
 
 		GameObjectsUpdateStruct struct = new GameObjectsUpdateStruct();
@@ -2248,7 +2254,7 @@ public final class GameStateUpdater {
 		}
 		struct.objects = objectLocs;
 		if (changed) {
-			if (shouldSendLegacyStaticScenePackets(playerToUpdate)) {
+			if (sendLegacyStaticScenePackets) {
 				tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENERY_HANDLER, struct, playerToUpdate);
 			} else {
 				getServer().addSuppressedLegacyStaticSceneMetrics(false, objectLocs.size());
@@ -2316,7 +2322,10 @@ public final class GameStateUpdater {
 		return changed;
 	}
 
-	protected boolean updateWallObjects(final Player playerToUpdate, final Collection<GameObject> visibleWallObjects) {
+	protected boolean updateWallObjects(
+		final Player playerToUpdate,
+		final Collection<GameObject> visibleWallObjects,
+		final boolean sendLegacyStaticScenePackets) {
 		boolean changed = false;
 
 		GameObjectsUpdateStruct struct = new GameObjectsUpdateStruct();
@@ -2395,7 +2404,7 @@ public final class GameStateUpdater {
 		}
 		struct.objects = objectLocs;
 		if (changed) {
-			if (shouldSendLegacyStaticScenePackets(playerToUpdate)) {
+			if (sendLegacyStaticScenePackets) {
 				tryFinalizeAndSendPacket(OpcodeOut.SEND_BOUNDARY_HANDLER, struct, playerToUpdate);
 			} else {
 				getServer().addSuppressedLegacyStaticSceneMetrics(true, objectLocs.size());
@@ -2404,12 +2413,11 @@ public final class GameStateUpdater {
 		return changed;
 	}
 
-	private boolean shouldSendLegacyStaticScenePackets(final Player player) {
+	private boolean shouldSendLegacyStaticScenePackets(final Player player, final boolean staticSceneScanSkipped) {
 		if (!player.isUsingCustomClient() || !getServer().getConfig().WANT_SYNC_SCENE_BASELINE) {
 			return true;
 		}
-		final SceneBaselineSummary summary = player.getAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE);
-		return summary == null || !summary.hasSentCompleteStaticBaseline();
+		return !staticSceneScanSkipped;
 	}
 
 	protected void sendAppearanceKeepalive(final Player player) {

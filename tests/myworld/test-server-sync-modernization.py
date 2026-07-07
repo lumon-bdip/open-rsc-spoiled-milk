@@ -157,9 +157,10 @@ def main() -> None:
     )
     require(
         "final boolean skipStaticSceneScan = canSkipStaticSceneScan(player, packetVisibility);" in normal_update_block
+        and "final boolean sendLegacyStaticScenePackets = shouldSendLegacyStaticScenePackets(player, skipStaticSceneScan);" in normal_update_block
         and "if (skipStaticSceneScan)" in normal_update_block
         and "storeStaticSceneScanKey(player, packetVisibility);" in normal_update_block,
-        "normal update should be able to skip unchanged static scene scans after baseline takeover",
+        "normal update should skip only unchanged static scene scans after baseline takeover",
     )
     require(
         "recordUpdatePlayers(() -> updatePlayers(player, visiblePlayers));" in normal_update_block,
@@ -170,11 +171,13 @@ def main() -> None:
         "NPC update should use the prefetched visible NPC collection",
     )
     require(
-        "recordUpdateGameObjects(() -> sceneryChanged[0] = updateGameObjects(player, visibleSceneryObjects));" in normal_update_block,
+        "recordUpdateGameObjects(() -> sceneryChanged[0] = updateGameObjects(" in normal_update_block
+        and "player, visibleSceneryObjects, sendLegacyStaticScenePackets));" in normal_update_block,
         "scenery update should use the prefetched scenery collection and expose its change flag",
     )
     require(
-        "recordUpdateWallObjects(() -> wallsChanged[0] = updateWallObjects(player, visibleWallObjects));" in normal_update_block,
+        "recordUpdateWallObjects(() -> wallsChanged[0] = updateWallObjects(" in normal_update_block
+        and "player, visibleWallObjects, sendLegacyStaticScenePackets));" in normal_update_block,
         "wall update should use the prefetched wall collection and expose its change flag",
     )
 
@@ -709,8 +712,8 @@ def main() -> None:
         "objectViewDistance == other.objectViewDistance",
         "private boolean hasSentCompleteStaticBaseline()",
         "private static int pageTotalFor(final int recordCount)",
-        "private boolean shouldSendLegacyStaticScenePackets(final Player player)",
-        "summary == null || !summary.hasSentCompleteStaticBaseline()",
+        "private boolean shouldSendLegacyStaticScenePackets(final Player player, final boolean staticSceneScanSkipped)",
+        "return !staticSceneScanSkipped;",
         "getServer().addSuppressedLegacyStaticSceneMetrics(false, objectLocs.size());",
         "getServer().addSuppressedLegacyStaticSceneMetrics(true, objectLocs.size());",
         "private static final class SceneBaselinePage",

@@ -511,6 +511,16 @@ Current branch progress:
   `want_sync_visibility_shadow`, the server writes the last five compact
   player/tick/count samples with `VISIBILITY_SHADOW_RECENT`, including packet
   mode, comparison mode, per-category counts, match buckets, and region counts.
+- [x] Local object-mutation testing covered drop/take, NPC combat/kill,
+  woodcutting, mining, and gate open/close without new scene-sync, visibility,
+  or movement diagnostic warnings.
+- [x] Teleport-heavy testing exposed a short scenery delay: the previous
+  completed scene baseline could suppress legacy static-scene packets before
+  the new teleported baseline had finished paging in. The server now suppresses
+  legacy static scenery only when the current static-scene scan is actually
+  reusable/skipped; any current scan caused by teleport, region movement, or
+  object mutation sends immediate legacy deltas while the custom baseline
+  refreshes in the background.
 
 1. Add sync telemetry before changing behavior.
    - Track bytes sent by opcode.
