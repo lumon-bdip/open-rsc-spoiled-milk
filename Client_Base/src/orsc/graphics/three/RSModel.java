@@ -325,6 +325,53 @@ public final class RSModel {
 		return replaced;
 	}
 
+	public int hideFacesUsingVerticesOutsideLocalBounds(int maxAbsX, int maxAbsY, int maxAbsZ) {
+		boolean[] outlierVertices = new boolean[this.vertHead];
+		for (int vertex = 0; vertex < this.vertHead; vertex++) {
+			outlierVertices[vertex] =
+				Math.abs(this.vertX[vertex]) > maxAbsX
+					|| Math.abs(this.vertY[vertex]) > maxAbsY
+					|| Math.abs(this.vertZ[vertex]) > maxAbsZ;
+		}
+
+		int replaced = 0;
+		for (int face = 0; face < this.faceHead; face++) {
+			if (!faceUsesOutlierVertex(face, outlierVertices)) {
+				continue;
+			}
+			if (this.faceTextureFront[face] != this.m_Vb || this.faceTextureBack[face] != this.m_Vb) {
+				replaced++;
+			}
+			this.faceTextureFront[face] = this.m_Vb;
+			this.faceTextureBack[face] = this.m_Vb;
+		}
+
+		if (replaced > 0) {
+			for (int vertex = 0; vertex < outlierVertices.length; vertex++) {
+				if (outlierVertices[vertex]) {
+					this.vertX[vertex] = 0;
+					this.vertY[vertex] = 0;
+					this.vertZ[vertex] = 0;
+				}
+			}
+			this.m_Yb = 1;
+			this.renderer3DTransformVersion++;
+		}
+		return replaced;
+	}
+
+	private boolean faceUsesOutlierVertex(int face, boolean[] outlierVertices) {
+		int[] indices = this.faceIndices[face];
+		int indexCount = this.faceIndexCount[face];
+		for (int index = 0; index < indexCount; index++) {
+			int vertex = indices[index];
+			if (vertex >= 0 && vertex < outlierVertices.length && outlierVertices[vertex]) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public RSModel withFishingSpotClarityOverlay() {
 		RSModel overlay = createFishingSpotClarityOverlay();
 		RSModel combined = new RSModel(new RSModel[] {this, overlay}, 2);
@@ -585,6 +632,74 @@ public final class RSModel {
 
 	public int getPickBoundsScale() {
 		return pickBoundsScale;
+	}
+
+	public String debugTransformedBoundsSummary(int faceIndex) {
+		this.resetTransformCache(7972);
+		int minX = Integer.MAX_VALUE;
+		int maxX = Integer.MIN_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxY = Integer.MIN_VALUE;
+		int minZ = Integer.MAX_VALUE;
+		int maxZ = Integer.MIN_VALUE;
+		for (int vertex = 0; vertex < this.vertHead; vertex++) {
+			minX = Math.min(minX, this.vertXTransform[vertex]);
+			maxX = Math.max(maxX, this.vertXTransform[vertex]);
+			minY = Math.min(minY, this.vertYTransform[vertex]);
+			maxY = Math.max(maxY, this.vertYTransform[vertex]);
+			minZ = Math.min(minZ, this.vertZTransform[vertex]);
+			maxZ = Math.max(maxZ, this.vertZTransform[vertex]);
+		}
+		StringBuilder builder = new StringBuilder();
+		builder.append("verts=").append(this.vertHead)
+			.append(" faces=").append(this.faceHead)
+			.append(" bounds=")
+			.append(minX).append("..").append(maxX).append(',')
+			.append(minY).append("..").append(maxY).append(',')
+			.append(minZ).append("..").append(maxZ);
+		if (faceIndex >= 0 && faceIndex < this.faceHead) {
+			appendDebugFaceBounds(builder, faceIndex);
+		}
+		return builder.toString();
+	}
+
+	private void appendDebugFaceBounds(StringBuilder builder, int faceIndex) {
+		int vertexCount = this.faceIndexCount[faceIndex];
+		int[] indices = this.faceIndices[faceIndex];
+		if (vertexCount <= 0 || indices == null) {
+			builder.append(" face=").append(faceIndex).append(":empty");
+			return;
+		}
+		int minX = Integer.MAX_VALUE;
+		int maxX = Integer.MIN_VALUE;
+		int minY = Integer.MAX_VALUE;
+		int maxY = Integer.MIN_VALUE;
+		int minZ = Integer.MAX_VALUE;
+		int maxZ = Integer.MIN_VALUE;
+		builder.append(" face=").append(faceIndex).append(" vertices=");
+		for (int vertex = 0; vertex < vertexCount; vertex++) {
+			int modelVertex = indices[vertex];
+			if (modelVertex < 0 || modelVertex >= this.vertHead) {
+				continue;
+			}
+			if (vertex > 0) {
+				builder.append(';');
+			}
+			int x = this.vertXTransform[modelVertex];
+			int y = this.vertYTransform[modelVertex];
+			int z = this.vertZTransform[modelVertex];
+			builder.append(modelVertex).append(':').append(x).append(',').append(y).append(',').append(z);
+			minX = Math.min(minX, x);
+			maxX = Math.max(maxX, x);
+			minY = Math.min(minY, y);
+			maxY = Math.max(maxY, y);
+			minZ = Math.min(minZ, z);
+			maxZ = Math.max(maxZ, z);
+		}
+		builder.append(" faceBounds=")
+			.append(minX).append("..").append(maxX).append(',')
+			.append(minY).append("..").append(maxY).append(',')
+			.append(minZ).append("..").append(maxZ);
 	}
 
 	private RSModel(RSModel[] var1, int var2, boolean var3, boolean var4, boolean noDiffuseCompute, boolean var6) {

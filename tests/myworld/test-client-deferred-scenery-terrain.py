@@ -5,6 +5,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+RSMODEL = ROOT / "Client_Base/src/orsc/graphics/three/RSModel.java"
+SCENE_OBJECT_DEBUG = ROOT / "Client_Base/src/orsc/SceneObjectDebugSettings.java"
 
 
 def require(condition: bool, message: str) -> None:
@@ -15,6 +17,8 @@ def require(condition: bool, message: str) -> None:
 def main() -> None:
     packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")
+    rsmodel = RSMODEL.read_text(encoding="utf-8")
+    scene_object_debug = SCENE_OBJECT_DEBUG.read_text(encoding="utf-8")
 
     require("public boolean hasLoadedTerrainForGameObject(int xTile, int zTile, int objectID, int dir)" in client,
             "Client should expose a terrain-availability check for scenery")
@@ -27,14 +31,14 @@ def main() -> None:
             and "private boolean[] wallObjectInstanceMaterialized" in client,
             "Deferred scenery should track explicit scene materialization state")
     require("public void materializeGameObjectInstance(int index)" in client
-            and "if (!hasLoadedTerrainForGameObject(xTile, zTile, objectID, dir)) {\n\t\t\treturn;\n\t\t}" in client,
+            and "if (!hasLoadedTerrainForGameObject(xTile, zTile, objectID, dir)) {\n\t\t\tdebugSceneGameObjectEvent(\"defer-terrain\", index, \"\");\n\t\t\treturn;\n\t\t}" in client,
             "Scenery materialization should be gated on loaded terrain")
     require("int farXTile = xTile + Math.max(0, xSize);" in client
             and "int farZTile = zTile + Math.max(0, zSize);" in client
             and "hasLoadedTerrainForWorldPoint(xTile * this.tileSize, zTile * this.tileSize)\n\t\t\t&& hasLoadedTerrainForWorldPoint(farXTile * this.tileSize, farZTile * this.tileSize)" in client,
             "Scenery terrain checks should require the full footprint, not just the center point")
     require("public void materializeWallObjectInstance(int index)" in client
-            and "if (!hasLoadedTerrainForWallObject(x, z, dir)) {\n\t\t\treturn;\n\t\t}" in client,
+            and "if (!hasLoadedTerrainForWallObject(x, z, dir)) {\n\t\t\tdebugSceneWallObjectEvent(\"defer-terrain\", index, \"\");\n\t\t\treturn;\n\t\t}" in client,
             "Boundary materialization should be gated before wall geometry is built")
     require("private void materializeLoadedTerrainScenery()" in client
             and "this.materializeLoadedTerrainScenery();" in client,
@@ -45,6 +49,28 @@ def main() -> None:
     require("this.wallObjectInstanceModel[i] = null;" in client
             and "this.getWorld().registerObjectDir(\n\t\t\t\t\tthis.wallObjectInstanceX[i]," in client,
             "Roof-only world reloads should rebuild wall object models and object directions")
+    require("for (int i = 0; i < this.gameObjectInstanceCount; i++) {\n\t\t\tthis.dematerializeGameObjectInstance(i);" in client
+            and "this.dematerializeWallObjectInstance(i);\n\t\t\tthis.wallObjectInstanceModel[i] = null;" in client
+            and "this.clearResidentObjectChunkCache();\n\t\tthis.materializeLoadedTerrainScenery();" in client,
+            "Roof-only world reloads should remove old scene models before rebuilding scenery")
+    require("this.dematerializeGameObjectInstance(i);\n\t\t\t\t\t}\n\t\t\t\t\tfor (int i = 0; this.wallObjectInstanceCount > i; ++i) {\n\t\t\t\t\t\tthis.dematerializeWallObjectInstance(i);\n\t\t\t\t\t}\n\t\t\t\t\tthis.clearResidentObjectChunkCache();\n\t\t\t\t\tthis.world.loadSections" in client,
+            "Region shifts should detach existing scenery before loading the next terrain window")
+    require("this.clearResidentObjectChunkCache();\n\t\t\t\t\tthis.materializeLoadedTerrainScenery();" in client,
+            "Region shifts should clear resident object chunks before rebuilding scenery")
+    require("debugSceneGameObjectHover(var9, var8, var7);" in client
+            and "debugResidentObjectChunkBuild(\"resident-chunk-build\", input, objectChunk);" in client,
+            "Scene object diagnostics should trace hover and resident chunk rebuilds")
+    require("spoiledmilk.sceneObjectDebug" in scene_object_debug
+            and "SPOILED_MILK_SCENE_OBJECT_DEBUG" in scene_object_debug
+            and "spoiledmilk.sceneObjectDebugFilter" in scene_object_debug,
+            "Scene object diagnostics should be hidden behind runtime flags")
+    require("private static final String WATCHTOWER_MODEL_NAME = \"watchtower\";" in client
+            and "model.hideFacesUsingVerticesOutsideLocalBounds(" in client,
+            "The legacy watchtower model should discard outlier geometry during model load")
+    require("public int hideFacesUsingVerticesOutsideLocalBounds(int maxAbsX, int maxAbsY, int maxAbsZ)" in rsmodel
+            and "this.faceTextureFront[face] = this.m_Vb;" in rsmodel
+            and "this.vertX[vertex] = 0;" in rsmodel,
+            "Model outlier cleanup should hide bad faces and collapse orphan outlier vertices")
 
     store_record = "mc.setGameObjectInstanceModel(instanceIndex, m);"
     materialize_record = "mc.materializeGameObjectInstance(instanceIndex);"

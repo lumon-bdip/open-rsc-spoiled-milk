@@ -9,6 +9,7 @@ import com.openrsc.client.entityhandling.defs.PrayerDef;
 import com.openrsc.client.entityhandling.defs.SpellDef;
 import com.openrsc.client.entityhandling.defs.SpriteDef;
 import com.openrsc.client.entityhandling.defs.GameObjectDef;
+import com.openrsc.client.entityhandling.defs.DoorDef;
 import com.openrsc.client.entityhandling.defs.extras.AnimationDef;
 import com.openrsc.client.entityhandling.instances.GroundItem;
 import com.openrsc.client.entityhandling.instances.Item;
@@ -88,11 +89,14 @@ public final class mudclient implements Runnable {
 	private static final int GROUND_ITEM_PICK_INDEX_BASE = 20000;
 	private static final int GROUND_ITEM_INITIAL_CAPACITY = 5000;
 	private static final int CHARACTER_OVERLAY_INITIAL_CAPACITY = 150;
+	private static final long SCENE_OBJECT_DEBUG_HOVER_THROTTLE_MILLIS = 1000L;
 	private static final int GROUND_ITEM_NAMEPLATE_LINE_HEIGHT = 12;
 	private static final int GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING = 6;
 	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
 	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
 	private static final String FISHING_SPOT_MODEL_NAME = "fishing";
+	private static final String WATCHTOWER_MODEL_NAME = "watchtower";
+	private static final int WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE = 2048;
 	private static final int REMASTER_FIRE_GLOW_COLOR = 0xff661c;
 	private static final int REMASTER_TORCH_GLOW_RADIUS = 256;
 	private static final int REMASTER_TORCH_GLOW_INTENSITY = 132;
@@ -422,6 +426,8 @@ public final class mudclient implements Runnable {
 	private boolean[] gameObjectInstanceMaterialized = new boolean[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
 	private RSModel[] gameObjectInstanceModel = new RSModel[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
 	private int[] gameObjectInstanceX = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
+	private int sceneObjectDebugLastHoverSignature = 0;
+	private long sceneObjectDebugLastHoverMillis = 0L;
 	private static final int OBJECT_ANIMATION_TILE_RADIUS = 14;
 	private int[] groundItemID = new int[GROUND_ITEM_INITIAL_CAPACITY];
 	private int[] groundItemX = new int[GROUND_ITEM_INITIAL_CAPACITY];
@@ -3403,6 +3409,7 @@ public final class mudclient implements Runnable {
 		int objectID = this.gameObjectInstanceID[index];
 		int dir = this.gameObjectInstanceDir[index];
 		if (!hasLoadedTerrainForGameObject(xTile, zTile, objectID, dir)) {
+			debugSceneGameObjectEvent("defer-terrain", index, "");
 			return;
 		}
 
@@ -3426,12 +3433,14 @@ public final class mudclient implements Runnable {
 			model.translate2(0, -480, 0);
 		}
 		this.setGameObjectInstanceMaterialized(index, true);
+		debugSceneGameObjectEvent("materialize", index, "");
 	}
 
 	public void dematerializeGameObjectInstance(int index) {
 		if (index < 0 || index >= this.gameObjectInstanceMaterialized.length || !this.gameObjectInstanceMaterialized[index]) {
 			return;
 		}
+		debugSceneGameObjectEvent("dematerialize", index, "");
 		this.scene.removeModel(this.gameObjectInstanceModel[index]);
 		this.world.removeGameObject_CollisonFlags(this.gameObjectInstanceID[index],
 			this.gameObjectInstanceX[index], this.gameObjectInstanceZ[index]);
@@ -3451,6 +3460,7 @@ public final class mudclient implements Runnable {
 		int id = this.wallObjectInstanceID[index];
 		int dir = this.wallObjectInstanceDir[index];
 		if (!hasLoadedTerrainForWallObject(x, z, dir)) {
+			debugSceneWallObjectEvent("defer-terrain", index, "");
 			return;
 		}
 
@@ -3459,12 +3469,14 @@ public final class mudclient implements Runnable {
 		this.scene.addModel(model);
 		this.world.applyWallToCollisionFlags(id, x, z, dir);
 		this.setWallObjectInstanceMaterialized(index, true);
+		debugSceneWallObjectEvent("materialize", index, "");
 	}
 
 	public void dematerializeWallObjectInstance(int index) {
 		if (index < 0 || index >= this.wallObjectInstanceMaterialized.length || !this.wallObjectInstanceMaterialized[index]) {
 			return;
 		}
+		debugSceneWallObjectEvent("dematerialize", index, "");
 		this.scene.removeModel(this.wallObjectInstanceModel[index]);
 		this.world.removeWallObject_CollisionFlags(true,
 			this.wallObjectInstanceDir[index],
@@ -3485,7 +3497,7 @@ public final class mudclient implements Runnable {
 
 	private void rematerializeLoadedTerrainSceneryAfterWorldReload() {
 		for (int i = 0; i < this.gameObjectInstanceCount; i++) {
-			this.gameObjectInstanceMaterialized[i] = false;
+			this.dematerializeGameObjectInstance(i);
 			try {
 				this.getWorld().registerObjectDir(
 					this.gameObjectInstanceX[i],
@@ -3497,7 +3509,7 @@ public final class mudclient implements Runnable {
 			}
 		}
 		for (int i = 0; i < this.wallObjectInstanceCount; i++) {
-			this.wallObjectInstanceMaterialized[i] = false;
+			this.dematerializeWallObjectInstance(i);
 			this.wallObjectInstanceModel[i] = null;
 			try {
 				this.getWorld().registerObjectDir(
@@ -3509,6 +3521,7 @@ public final class mudclient implements Runnable {
 				ex.printStackTrace();
 			}
 		}
+		this.clearResidentObjectChunkCache();
 		this.materializeLoadedTerrainScenery();
 	}
 
@@ -3579,9 +3592,11 @@ public final class mudclient implements Runnable {
 			} else {
 				objectChunk = buildResidentObjectChunkMesh(input);
 				if (objectChunk == null || objectChunk.getTriangleCount() <= 0) {
+					debugResidentObjectChunkBuild("resident-chunk-empty", input, objectChunk);
 					this.cachedResidentObjectChunks.remove(input.cellKey);
 					continue;
 				}
+				debugResidentObjectChunkBuild("resident-chunk-build", input, objectChunk);
 				this.cachedResidentObjectChunks.put(
 					input.cellKey,
 					new ResidentObjectChunkCacheEntry(input.cacheKey, objectChunk));
@@ -3654,7 +3669,19 @@ public final class mudclient implements Runnable {
 			builders.put(cellKey, builder);
 		}
 		applyRenderer3DGlowEmitter(kind, objectId, model);
-		builder.add(kind, instanceIndex, tileX, tileZ, objectId, direction, model);
+		boolean debugMatched = shouldDebugResidentObjectChunkModel(kind, tileX, tileZ, objectId);
+		builder.add(
+			kind,
+			instanceIndex,
+			tileX,
+			tileZ,
+			objectId,
+			direction,
+			model,
+			debugMatched,
+			debugMatched
+				? debugSceneObjectChunkSummary(kind, instanceIndex, tileX, tileZ, objectId, direction, model)
+				: "");
 	}
 
 	private static int residentObjectChunkTileSize(int chunkRole) {
@@ -3759,6 +3786,230 @@ public final class mudclient implements Runnable {
 		this.cachedResidentObjectChunks.clear();
 	}
 
+	private int getDebugPlayerWorldTileX() {
+		if (this.localPlayer != null) {
+			return this.midRegionBaseX + this.localPlayer.currentX / this.tileSize;
+		}
+		return this.midRegionBaseX + this.playerLocalX;
+	}
+
+	private int getDebugPlayerWorldTileZ() {
+		if (this.localPlayer != null) {
+			return this.midRegionBaseZ + this.localPlayer.currentZ / this.tileSize;
+		}
+		return this.midRegionBaseZ + this.playerLocalZ;
+	}
+
+	private boolean shouldDebugSceneGameObject(int objectId, int worldTileX, int worldTileZ) {
+		GameObjectDef def = EntityHandler.getObjectDef(objectId);
+		String name = def == null ? "" : def.getName();
+		String modelName = def == null ? "" : def.getObjectModel();
+		return SceneObjectDebugSettings.matches(objectId, name, modelName)
+			&& SceneObjectDebugSettings.withinRadius(
+				getDebugPlayerWorldTileX(),
+				getDebugPlayerWorldTileZ(),
+				worldTileX,
+				worldTileZ);
+	}
+
+	private boolean shouldDebugSceneWallObject(int objectId, int worldTileX, int worldTileZ) {
+		DoorDef def = EntityHandler.getDoorDef(objectId);
+		String name = def == null ? "" : def.getName();
+		return SceneObjectDebugSettings.matches(objectId, name, "")
+			&& SceneObjectDebugSettings.withinRadius(
+				getDebugPlayerWorldTileX(),
+				getDebugPlayerWorldTileZ(),
+				worldTileX,
+				worldTileZ);
+	}
+
+	private void debugSceneGameObjectEvent(String event, int index, String detail) {
+		if (!SceneObjectDebugSettings.isEnabled()
+			|| index < 0
+			|| index >= this.gameObjectInstanceCount) {
+			return;
+		}
+		int localX = this.gameObjectInstanceX[index];
+		int localZ = this.gameObjectInstanceZ[index];
+		int worldX = this.midRegionBaseX + localX;
+		int worldZ = this.midRegionBaseZ + localZ;
+		int objectId = this.gameObjectInstanceID[index];
+		if (!shouldDebugSceneGameObject(objectId, worldX, worldZ)) {
+			return;
+		}
+
+		GameObjectDef def = EntityHandler.getObjectDef(objectId);
+		String name = def == null ? "" : def.getName();
+		String modelName = def == null ? "" : def.getObjectModel();
+		int dir = this.gameObjectInstanceDir[index];
+		int xSize = 0;
+		int zSize = 0;
+		if (def != null) {
+			if (dir == 0 || dir == 4) {
+				xSize = def.getWidth();
+				zSize = def.getHeight();
+			} else {
+				xSize = def.getHeight();
+				zSize = def.getWidth();
+			}
+		}
+		boolean terrainReady = hasLoadedTerrainForGameObject(localX, localZ, objectId, dir);
+		RSModel model = this.gameObjectInstanceModel[index];
+		String modelDetail = model == null
+			? "model=null"
+			: "modelKey=" + model.key + " transform=" + model.getRenderer3DTransformVersion();
+		System.out.println("[scene-object-debug] " + event
+			+ " game index=" + index
+			+ " id=" + objectId
+			+ " name='" + name + "'"
+			+ " model='" + modelName + "'"
+			+ " local=" + localX + "," + localZ
+			+ " world=" + worldX + "," + worldZ
+			+ " dir=" + dir
+			+ " size=" + xSize + "x" + zSize
+			+ " materialized=" + this.gameObjectInstanceMaterialized[index]
+			+ " terrainReady=" + terrainReady
+			+ " " + modelDetail
+			+ " player=" + getDebugPlayerWorldTileX() + "," + getDebugPlayerWorldTileZ()
+			+ " mid=" + this.midRegionBaseX + "," + this.midRegionBaseZ
+			+ " count=" + this.gameObjectInstanceCount
+			+ (detail == null || detail.isEmpty() ? "" : " " + detail));
+	}
+
+	private void debugSceneWallObjectEvent(String event, int index, String detail) {
+		if (!SceneObjectDebugSettings.isEnabled()
+			|| index < 0
+			|| index >= this.wallObjectInstanceCount) {
+			return;
+		}
+		int localX = this.wallObjectInstanceX[index];
+		int localZ = this.wallObjectInstanceZ[index];
+		int worldX = this.midRegionBaseX + localX;
+		int worldZ = this.midRegionBaseZ + localZ;
+		int objectId = this.wallObjectInstanceID[index];
+		if (!shouldDebugSceneWallObject(objectId, worldX, worldZ)) {
+			return;
+		}
+
+		DoorDef def = EntityHandler.getDoorDef(objectId);
+		String name = def == null ? "" : def.getName();
+		int dir = this.wallObjectInstanceDir[index];
+		boolean terrainReady = hasLoadedTerrainForWallObject(localX, localZ, dir);
+		RSModel model = this.wallObjectInstanceModel[index];
+		String modelDetail = model == null
+			? "model=null"
+			: "modelKey=" + model.key + " transform=" + model.getRenderer3DTransformVersion();
+		System.out.println("[scene-object-debug] " + event
+			+ " wall index=" + index
+			+ " id=" + objectId
+			+ " name='" + name + "'"
+			+ " local=" + localX + "," + localZ
+			+ " world=" + worldX + "," + worldZ
+			+ " dir=" + dir
+			+ " materialized=" + this.wallObjectInstanceMaterialized[index]
+			+ " terrainReady=" + terrainReady
+			+ " " + modelDetail
+			+ " player=" + getDebugPlayerWorldTileX() + "," + getDebugPlayerWorldTileZ()
+			+ " mid=" + this.midRegionBaseX + "," + this.midRegionBaseZ
+			+ " count=" + this.wallObjectInstanceCount
+			+ (detail == null || detail.isEmpty() ? "" : " " + detail));
+	}
+
+	private void debugSceneGameObjectHover(int index, RSModel model, int faceIndex) {
+		if (!SceneObjectDebugSettings.isEnabled()
+			|| index < 0
+			|| index >= this.gameObjectInstanceCount) {
+			return;
+		}
+		int objectId = this.gameObjectInstanceID[index];
+		int worldX = this.midRegionBaseX + this.gameObjectInstanceX[index];
+		int worldZ = this.midRegionBaseZ + this.gameObjectInstanceZ[index];
+		if (!shouldDebugSceneGameObject(objectId, worldX, worldZ)) {
+			return;
+		}
+		int facePick = model != null
+			&& model.facePickIndex != null
+			&& faceIndex >= 0
+			&& faceIndex < model.facePickIndex.length
+			? model.facePickIndex[faceIndex]
+			: -1;
+		int signature = (((index * 31 + objectId) * 31 + worldX) * 31 + worldZ) * 31 + facePick;
+		long now = System.currentTimeMillis();
+		if (signature == this.sceneObjectDebugLastHoverSignature
+			&& now - this.sceneObjectDebugLastHoverMillis < SCENE_OBJECT_DEBUG_HOVER_THROTTLE_MILLIS) {
+			return;
+		}
+		this.sceneObjectDebugLastHoverSignature = signature;
+		this.sceneObjectDebugLastHoverMillis = now;
+		debugSceneGameObjectEvent("hover", index,
+			"faceIndex=" + faceIndex
+				+ " facePick=" + facePick
+				+ " " + (model == null ? "bounds=unavailable" : model.debugTransformedBoundsSummary(faceIndex))
+				+ " debug=" + SceneObjectDebugSettings.description());
+	}
+
+	private String debugSceneObjectChunkSummary(
+		Renderer3DModelKind kind,
+		int instanceIndex,
+		int tileX,
+		int tileZ,
+		int objectId,
+		int direction,
+		RSModel model) {
+		if (kind == Renderer3DModelKind.GAME_OBJECT) {
+			GameObjectDef def = EntityHandler.getObjectDef(objectId);
+			return "game index=" + instanceIndex
+				+ " id=" + objectId
+				+ " name='" + (def == null ? "" : def.getName()) + "'"
+				+ " model='" + (def == null ? "" : def.getObjectModel()) + "'"
+				+ " world=" + (this.midRegionBaseX + tileX) + "," + (this.midRegionBaseZ + tileZ)
+				+ " local=" + tileX + "," + tileZ
+				+ " dir=" + direction
+				+ " modelKey=" + (model == null ? -1 : model.key)
+				+ " " + (model == null ? "bounds=unavailable" : model.debugTransformedBoundsSummary(0));
+		}
+		DoorDef def = EntityHandler.getDoorDef(objectId);
+		return "wall index=" + instanceIndex
+			+ " id=" + objectId
+			+ " name='" + (def == null ? "" : def.getName()) + "'"
+			+ " world=" + (this.midRegionBaseX + tileX) + "," + (this.midRegionBaseZ + tileZ)
+			+ " local=" + tileX + "," + tileZ
+			+ " dir=" + direction
+			+ " modelKey=" + (model == null ? -1 : model.key)
+			+ " " + (model == null ? "bounds=unavailable" : model.debugTransformedBoundsSummary(0));
+	}
+
+	private boolean shouldDebugResidentObjectChunkModel(
+		Renderer3DModelKind kind,
+		int tileX,
+		int tileZ,
+		int objectId) {
+		int worldX = this.midRegionBaseX + tileX;
+		int worldZ = this.midRegionBaseZ + tileZ;
+		if (kind == Renderer3DModelKind.GAME_OBJECT) {
+			return shouldDebugSceneGameObject(objectId, worldX, worldZ);
+		}
+		return shouldDebugSceneWallObject(objectId, worldX, worldZ);
+	}
+
+	private void debugResidentObjectChunkBuild(String event, ResidentObjectChunkInput input, Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		if (!SceneObjectDebugSettings.isEnabled()
+			|| input == null
+			|| input.debugMatchedModelCount <= 0) {
+			return;
+		}
+		System.out.println("[scene-object-debug] " + event
+			+ " resident-cell=" + input.cellKey
+			+ " cell=" + input.cellX + "," + input.cellZ
+			+ " role=" + input.chunkRole
+			+ " models=" + input.modelCount
+			+ " matched=" + input.debugMatchedModelCount
+			+ " origin=" + (input.anchor.getOriginWorldX() + input.cellX * input.cellTileSize * this.tileSize)
+				+ "," + (input.anchor.getOriginWorldZ() + input.cellZ * input.cellTileSize * this.tileSize)
+			+ " triangles=" + (chunk == null ? 0 : chunk.getTriangleCount())
+			+ " first=" + input.debugFirstModelSummary);
+	}
+
 	private static long mixResidentObjectChunkCacheKey(long hash, int value) {
 		hash ^= value & 0xffffffffL;
 		return hash * RESIDENT_OBJECT_CHUNK_FNV_PRIME;
@@ -3774,6 +4025,8 @@ public final class mudclient implements Runnable {
 		private final RSModel[] models;
 		private final int modelCount;
 		private final long cacheKey;
+		private final int debugMatchedModelCount;
+		private final String debugFirstModelSummary;
 
 		private ResidentObjectChunkInput(
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
@@ -3784,7 +4037,9 @@ public final class mudclient implements Runnable {
 			int chunkRole,
 			RSModel[] models,
 			int modelCount,
-			long cacheKey) {
+			long cacheKey,
+			int debugMatchedModelCount,
+			String debugFirstModelSummary) {
 			this.anchor = anchor;
 			this.cellKey = cellKey;
 			this.cellX = cellX;
@@ -3794,6 +4049,8 @@ public final class mudclient implements Runnable {
 			this.models = models;
 			this.modelCount = modelCount;
 			this.cacheKey = cacheKey;
+			this.debugMatchedModelCount = debugMatchedModelCount;
+			this.debugFirstModelSummary = debugFirstModelSummary;
 		}
 	}
 
@@ -3806,6 +4063,8 @@ public final class mudclient implements Runnable {
 		private final int chunkRole;
 		private final List<RSModel> models = new ArrayList<RSModel>();
 		private long cacheKey;
+		private int debugMatchedModelCount;
+		private String debugFirstModelSummary = "";
 
 		private ResidentObjectChunkInputBuilder(
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
@@ -3836,8 +4095,16 @@ public final class mudclient implements Runnable {
 			int tileZ,
 			int objectId,
 			int direction,
-			RSModel model) {
+			RSModel model,
+			boolean debugMatched,
+			String debugSummary) {
 			this.models.add(model);
+			if (debugMatched) {
+				this.debugMatchedModelCount++;
+				if (this.debugFirstModelSummary.isEmpty()) {
+					this.debugFirstModelSummary = debugSummary == null ? "" : debugSummary;
+				}
+			}
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, kind.ordinal());
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, instanceIndex);
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, tileX);
@@ -3861,7 +4128,9 @@ public final class mudclient implements Runnable {
 				this.chunkRole,
 				modelArray,
 				modelArray.length,
-				finalCacheKey);
+				finalCacheKey,
+				this.debugMatchedModelCount,
+				this.debugFirstModelSummary);
 		}
 	}
 
@@ -3877,6 +4146,9 @@ public final class mudclient implements Runnable {
 
 	public boolean hasLoadedTerrainForGameObject(int xTile, int zTile, int objectID, int dir) {
 		GameObjectDef objectDef = EntityHandler.getObjectDef(objectID);
+		if (objectDef == null) {
+			return false;
+		}
 		int xSize;
 		int zSize;
 		if (dir == 0 || dir == 4) {
@@ -9995,6 +10267,7 @@ public final class mudclient implements Runnable {
 								continue;
 							}
 							id = this.gameObjectInstanceID[var9];
+							debugSceneGameObjectHover(var9, var8, var7);
 							if (!this.gameObjectInstance_Arg1[var9]) {
 								if (this.selectedSpell < 0) {
 									if (this.selectedItemInventoryIndex >= 0) {
@@ -18291,6 +18564,12 @@ public final class mudclient implements Runnable {
 		if (TIN_ROCK_MODEL_NAME.equals(modelName)) {
 			model.hideBackFacesMatching(TIN_ROCK_LEGACY_RED_BACK_FACE);
 		}
+		if (WATCHTOWER_MODEL_NAME.equals(modelName)) {
+			model.hideFacesUsingVerticesOutsideLocalBounds(
+				WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE,
+				WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE,
+				WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE);
+		}
 		if (FISHING_SPOT_MODEL_NAME.equals(modelName)) {
 			return model.withFishingSpotClarityOverlay();
 		}
@@ -18383,6 +18662,13 @@ public final class mudclient implements Runnable {
 					this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE - 32;
 					this.midRegionBaseZ = World.sectionToLocalBaseTile(midRegionZ);
 					this.currentRegionMinX = midRegionX * World.SECTION_SIZE - 32;
+					for (int i = 0; this.gameObjectInstanceCount > i; ++i) {
+						this.dematerializeGameObjectInstance(i);
+					}
+					for (int i = 0; this.wallObjectInstanceCount > i; ++i) {
+						this.dematerializeWallObjectInstance(i);
+					}
+					this.clearResidentObjectChunkCache();
 					this.world.loadSections(wantX, wantZ, this.lastHeightOffset);
 					this.midRegionBaseZ -= this.worldOffsetZ;
 					this.midRegionBaseX -= this.worldOffsetX;
@@ -18399,7 +18685,6 @@ public final class mudclient implements Runnable {
 						this.gameObjectInstanceZ[i] -= baseDZ;
 						int xTile = this.gameObjectInstanceX[i];
 						int zTile = this.gameObjectInstanceZ[i];
-						this.gameObjectInstanceMaterialized[i] = false;
 
 						try {
 							int dir = this.gameObjectInstanceDir[i];
@@ -18417,7 +18702,6 @@ public final class mudclient implements Runnable {
 						int xTile = this.wallObjectInstanceX[i];
 						int zTile = this.wallObjectInstanceZ[i];
 						int dir = this.wallObjectInstanceDir[i];
-						this.wallObjectInstanceMaterialized[i] = false;
 						this.wallObjectInstanceModel[i] = null;
 
 						try {
@@ -18427,6 +18711,7 @@ public final class mudclient implements Runnable {
 							var20.printStackTrace();
 						}
 					}
+					this.clearResidentObjectChunkCache();
 					this.materializeLoadedTerrainScenery();
 
 					if (hardAreaLoad || heightOffsetChanged) {
