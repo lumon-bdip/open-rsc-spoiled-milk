@@ -202,6 +202,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "movement-pathing-release-plan.md",
             "ogg-audio-support-plan.md",
             "prayer-devotion-equipment-plan.md",
+            "project-structure-refactor-plan.md",
             "remaster-lighting-and-shadow-plan.md",
             "renderer-and-shader-roadmap.md",
             "renderer-v2-plan.md",
