@@ -2479,12 +2479,17 @@ public enum ItemId {
 	SARADOMIN_MACE(3252),
 	ZAMORAK_MACE(3253),
 	GUTHIX_MACE(3254),
-	DRAGON_SULFUR(3255);
+	DRAGON_SULFUR(3255),
+	FERN_LEAF(3256),
+	MUSHROOM(3257),
+	FUNGUS(3258),
+	RED_FLOWER(3259),
+	BLUE_FLOWER(3260);
 
 	private int itemId;
 
 	public static final int maxAuthentic = 1289;
-	public static final int maxCustom = 3256;
+	public static final int maxCustom = 3261;
 
 	private static final Map<Integer, ItemId> byId = new HashMap<Integer, ItemId>();
 	private static final Map<String, ItemId> byName = new HashMap<String, ItemId>();

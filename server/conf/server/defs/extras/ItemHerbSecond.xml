@@ -1,20 +1,20 @@
 <ItemHerbSecond-array>
 	<ItemHerbSecond>
-		<secondID>220</secondID>
+		<secondID>3256</secondID>
 		<unfinishedID>454</unfinishedID>
 		<potionID>474</potionID>
 		<requiredLvl>3</requiredLvl>
 		<exp>100</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>220</secondID>
+		<secondID>3257</secondID>
 		<unfinishedID>456</unfinishedID>
 		<potionID>477</potionID>
 		<requiredLvl>12</requiredLvl>
 		<exp>150</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>220</secondID>
+		<secondID>3258</secondID>
 		<unfinishedID>458</unfinishedID>
 		<potionID>480</potionID>
 		<requiredLvl>30</requiredLvl>
@@ -28,14 +28,14 @@
 		<exp>350</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>220</secondID>
+		<secondID>3259</secondID>
 		<unfinishedID>462</unfinishedID>
 		<potionID>486</potionID>
 		<requiredLvl>66</requiredLvl>
 		<exp>450</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
-		<secondID>220</secondID>
+		<secondID>3260</secondID>
 		<unfinishedID>935</unfinishedID>
 		<potionID>3198</potionID>
 		<requiredLvl>78</requiredLvl>

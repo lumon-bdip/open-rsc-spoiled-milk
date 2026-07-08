@@ -5697,7 +5697,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3235, new ItemDef("Fire sword", "A sword imbued with fire", "", 40000, -1, "external-png:fire-sword-icon", false, true, 16, 0, true, false, true, 3235));
 		setCustomItemDefinition(3236, new ItemDef("Ice sword", "A sword imbued with ice", "", 40000, -1, "external-png:ice-sword-icon", false, true, 16, 0, true, false, true, 3236));
 		setCustomItemDefinition(3237, new ItemDef("Earth sword", "A sword imbued with earth", "", 40000, -1, "external-png:earth-sword-icon", false, true, 16, 0, true, false, true, 3237));
-		setCustomItemDefinition(3238, new ItemDef("Zombie eye", "A dead eye from a zombie", "", 3, -1, "external-png:zombie-eye@11x11", false, false, 0, 0, false, false, true, 3238));
+		setCustomItemDefinition(3238, new ItemDef("Zombie eye", "A dead eye from a zombie used as a potion ingredient", "", 3, -1, "external-png:zombie-eye@11x11", false, false, 0, 0, false, false, true, 3238));
 		setCustomItemDefinition(3239, new ItemDef("Demon pitchfork", "A pitchfork wreathed in hell's blaze", "", 40000, -1, "external-png:demon-pitchfork-icon", false, true, 16, 0, true, false, true, 3239));
 		setCustomItemDefinition(3240, new ItemDef("Fair quality fish oil", "A fair quality potion ingredient rendered from fish", "", 2, -1, "items:587", true, false, 0, 0x7EA06D, false, false, false, 3240));
 		setCustomItemDefinition(3241, new ItemDef("Good quality fish oil", "A good quality potion ingredient rendered from fish", "", 3, -1, "items:587", true, false, 0, 0xA89B4F, false, false, false, 3241));
@@ -5715,6 +5715,11 @@ public class EntityHandler {
 		setCustomItemDefinition(3253, new ItemDef("Zamorak mace", "A tier 11 mace blessed by Zamorak", "", 120000, -1, "external-png:zamorak-mace-icon", false, true, 16, 0, true, false, true, 3253));
 		setCustomItemDefinition(3254, new ItemDef("Guthix mace", "A tier 11 mace blessed by Guthix", "", 120000, -1, "external-png:guthix-mace-icon", false, true, 16, 0, true, false, true, 3254));
 		setCustomItemDefinition(3255, new ItemDef("Dragon sulfur", "A volatile sulfurous ore used for high-tier alloys", "", 12000, 23, "items:23", false, false, 0, 0xF05A1A, false, false, true, 3255));
+		setCustomItemDefinition(3256, new ItemDef("Fern leaf", "A leafy potion ingredient harvested from ferns", "", 4, -1, "external-png:fern-leaf@17x19", false, false, 0, 0, false, false, true, 3256));
+		setCustomItemDefinition(3257, new ItemDef("Mushroom", "A mushroom used as a potion ingredient", "", 8, -1, "external-png:mushroom@18x18", false, false, 0, 0, false, false, true, 3257));
+		setCustomItemDefinition(3258, new ItemDef("Fungus", "A fungus used as a potion ingredient", "", 14, -1, "external-png:fungus@14x18", false, false, 0, 0, false, false, true, 3258));
+		setCustomItemDefinition(3259, new ItemDef("Red flower", "A red flower used as a potion ingredient", "", 24, -1, "external-png:red-flower@15x18", false, false, 0, 0, false, false, true, 3259));
+		setCustomItemDefinition(3260, new ItemDef("Blue flower", "A blue flower used as a potion ingredient", "", 40, -1, "external-png:blue-flower@15x18", false, false, 0, 0, false, false, true, 3260));
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -8314,11 +8319,11 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Target", "Coming soon archery practice", "Practice", "Examine", 1, 1, 1, 0, "target", i++));
 		objects.add(new GameObjectDef("PalmTree", "A nice palm tree", "Chop", "Examine", 1, 1, 1, 0, "palm2", i++));
 		objects.add(new GameObjectDef("PalmTree", "A shady palm tree", "Chop", "Examine", 1, 1, 1, 0, "palm", i++));
-		objects.add(new GameObjectDef("Fern", "A leafy plant", "WalkTo", "Examine", 0, 1, 1, 0, "fern", i++));//34
+		objects.add(new GameObjectDef("Fern", "A leafy plant", "Harvest", "Examine", 0, 1, 1, 0, "fern", i++));//34
 		objects.add(new GameObjectDef("Cactus", "It looks very spikey", "WalkTo", "Examine", 1, 1, 1, 0, "cactus", i++));
 		objects.add(new GameObjectDef("Bullrushes", "I wonder why it's called a bullrush", "WalkTo", "Examine", 0, 1, 1, 0, "bullrushes", i++));
-		objects.add(new GameObjectDef("Flower", "Ooh thats pretty", "WalkTo", "Examine", 0, 1, 1, 0, "flower", i++));
-		objects.add(new GameObjectDef("Mushroom", "I think it's a poisonous one", "WalkTo", "Examine", 0, 1, 1, 0, "mushroom", i++));
+		objects.add(new GameObjectDef("Flower", "Ooh thats pretty", "Harvest", "Examine", 0, 1, 1, 0, "flower", i++));
+		objects.add(new GameObjectDef("Mushroom", "I think it's a poisonous one", "Harvest", "Examine", 0, 1, 1, 0, "mushroom", i++));
 		objects.add(new GameObjectDef("Coffin", "This coffin is closed", "Open", "Examine", 1, 2, 2, 0, "coffin", i++));
 		objects.add(new GameObjectDef("Coffin", "This coffin is open", "Search", "Close", 1, 2, 2, 0, "coffin2", i++));//40
 		objects.add(new GameObjectDef("stairs", "These lead upstairs", "Go up", "Examine", 1, 2, 3, 0, "woodenstairs", i++));
@@ -8485,7 +8490,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Coffin", "This coffin is closed", "Open", "Examine", 1, 2, 2, 0, "coffin", i++));
 		objects.add(new GameObjectDef("Coffin", "This coffin is open", "Search", "Close", 1, 2, 2, 0, "coffin2", i++));
 		objects.add(new GameObjectDef("Smashed table", "This table has seen better days", "WalkTo", "Examine", 1, 1, 1, 0, "smashedtable", i++));
-		objects.add(new GameObjectDef("Fungus", "A creepy looking fungus", "WalkTo", "Examine", 0, 1, 1, 0, "nastyfungus", i++));
+		objects.add(new GameObjectDef("Fungus", "A creepy looking fungus", "Harvest", "Examine", 0, 1, 1, 0, "nastyfungus", i++));
 		objects.add(new GameObjectDef("Smashed chair", "This chair is broken", "WalkTo", "Examine", 1, 1, 1, 0, "smashedchair", i++));
 		objects.add(new GameObjectDef("Broken pillar", "The remains of a pillar", "WalkTo", "Examine", 1, 1, 1, 0, "brokenpillar", i++));
 		objects.add(new GameObjectDef("Fallen tree", "A fallen tree", "WalkTo", "Examine", 1, 3, 2, 0, "fallentree", i++));
@@ -8565,7 +8570,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("fountain of heros", "Use a dragonstone gem here to increase it's abilties", "WalkTo", "Examine", 1, 2, 2, 0, "fountain", i++));
 		objects.add(new GameObjectDef("bush", "A leafy bush", "WalkTo", "Examine", 1, 1, 1, 0, "bush1", i++));
 		objects.add(new GameObjectDef("hedge", "A carefully trimmed hedge", "WalkTo", "Examine", 1, 1, 1, 0, "bush2", i++));
-		objects.add(new GameObjectDef("flower", "A nice colourful flower", "WalkTo", "Examine", 1, 1, 1, 0, "blueflower", i++));
+		objects.add(new GameObjectDef("flower", "A nice colourful flower", "Harvest", "Examine", 1, 1, 1, 0, "blueflower", i++));
 		objects.add(new GameObjectDef("plant", "Hmm leafy", "WalkTo", "Examine", 1, 1, 1, 0, "smallfern", i++));
 		objects.add(new GameObjectDef("Giant crystal", "How unusual a crystal with a wizard trapped in it", "WalkTo", "Examine", 1, 3, 3, 0, "giantcrystal", i++));
 		objects.add(new GameObjectDef("sign", "The dead man's chest", "WalkTo", "Examine", 0, 1, 1, 0, "shopsign", i++));
@@ -8680,13 +8685,13 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("wall", "A damaged wall", "climb", "Examine", 1, 3, 1, 0, "khazardwall", i++));
 		objects.add(new GameObjectDef("tree", "An exotic looking tree", "WalkTo", "Examine", 1, 1, 1, 0, "jungle tree 2", i++));
 		objects.add(new GameObjectDef("tree", "An exotic looking tree", "WalkTo", "Examine", 1, 1, 1, 0, "jungle tree 1", i++));
-		objects.add(new GameObjectDef("Fern", "An exotic leafy plant", "WalkTo", "Examine", 0, 1, 1, 0, "jungle fern textured", i++));
-		objects.add(new GameObjectDef("Fern", "An exotic leafy plant", "WalkTo", "Examine", 0, 1, 1, 0, "jungle fern textured 2", i++));
-		objects.add(new GameObjectDef("Fern", "An exotic leafy plant", "WalkTo", "Examine", 0, 1, 1, 0, "jungle fern textured 3", i++));
-		objects.add(new GameObjectDef("Fern", "An exotic leafy plant", "WalkTo", "Examine", 0, 1, 1, 0, "jungle fern textured 4", i++));
+		objects.add(new GameObjectDef("Fern", "An exotic leafy plant", "Harvest", "Examine", 0, 1, 1, 0, "jungle fern textured", i++));
+		objects.add(new GameObjectDef("Fern", "An exotic leafy plant", "Harvest", "Examine", 0, 1, 1, 0, "jungle fern textured 2", i++));
+		objects.add(new GameObjectDef("Fern", "An exotic leafy plant", "Harvest", "Examine", 0, 1, 1, 0, "jungle fern textured 3", i++));
+		objects.add(new GameObjectDef("Fern", "An exotic leafy plant", "Harvest", "Examine", 0, 1, 1, 0, "jungle fern textured 4", i++));
 		objects.add(new GameObjectDef("fly trap", "A small carnivourous plant", "approach", "Search", 0, 1, 1, 0, "jungle fly trap", i++));
-		objects.add(new GameObjectDef("Fern", "An exotic leafy plant", "WalkTo", "Examine", 0, 1, 1, 0, "jungle fern", i++));
-		objects.add(new GameObjectDef("Fern", "An exotic spikey plant", "WalkTo", "Examine", 0, 1, 1, 0, "jungle spikey fern", i++));
+		objects.add(new GameObjectDef("Fern", "An exotic leafy plant", "Harvest", "Examine", 0, 1, 1, 0, "jungle fern", i++));
+		objects.add(new GameObjectDef("Fern", "An exotic spikey plant", "Harvest", "Examine", 0, 1, 1, 0, "jungle spikey fern", i++));
 		objects.add(new GameObjectDef("plant", "What an unusual plant", "WalkTo", "Examine", 0, 1, 1, 0, "jungle strange plant", i++));
 		objects.add(new GameObjectDef("plant", "An odd looking plant", "WalkTo", "Examine", 1, 1, 1, 0, "jungle strange plant 2", i++));
 		objects.add(new GameObjectDef("plant", "some nice jungle foliage", "WalkTo", "Examine", 1, 1, 1, 0, "jungle medium size plant", i++));

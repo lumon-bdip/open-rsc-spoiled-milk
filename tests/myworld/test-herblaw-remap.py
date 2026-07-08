@@ -41,12 +41,12 @@ def main() -> None:
     }
 
     expected_recipes = {
-        (454, 220): 474,
-        (456, 220): 477,
-        (458, 220): 480,
+        (454, 3256): 474,
+        (456, 3257): 477,
+        (458, 3258): 480,
         (460, 220): 483,
-        (462, 220): 486,
-        (935, 220): 3198,
+        (462, 3259): 486,
+        (935, 3260): 3198,
         (454, 1410): 489,
         (456, 3240): 492,
         (458, 3241): 495,
@@ -108,6 +108,11 @@ def main() -> None:
         3246: "Bat eye",
         3247: "Baby dragon's eye",
         3248: "Demon eye",
+        3256: "Fern leaf",
+        3257: "Mushroom",
+        3258: "Fungus",
+        3259: "Red flower",
+        3260: "Blue flower",
     }
     for item_id, expected_name in expected_names.items():
         defs = custom_defs if item_id >= 1400 else item_defs

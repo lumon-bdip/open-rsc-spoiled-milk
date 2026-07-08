@@ -135,7 +135,7 @@ public final class Harvesting implements OpLocTrigger {
 			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_TORSTOL.id(), 78, 960)),
 		SEAWEED(1280, new ItemLevelXPTrio(ItemId.SEAWEED.id(), 23, 84),
 			new ItemLevelXPTrio(ItemId.EDIBLE_SEAWEED.id(), 23, 84)),
-		LIMPWURTROOT(1281, new ItemLevelXPTrio(ItemId.LIMPWURT_ROOT.id(), 40, 144)),
+		LIMPWURTROOT(1281, new ItemLevelXPTrio(ItemId.LIMPWURT_ROOT.id(), 38, 144)),
 		SNAPEGRASS(1273, new ItemLevelXPTrio(ItemId.SNAPE_GRASS.id(), 58, 328));
 
 		private int objId;

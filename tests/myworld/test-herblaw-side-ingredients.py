@@ -48,7 +48,12 @@ def main() -> None:
 		"BAT_EYE(3246)",
 		"BABY_DRAGON_EYE(3247)",
 		"DEMON_EYE(3248)",
-		"public static final int maxCustom = 3256;",
+		"FERN_LEAF(3256)",
+		"MUSHROOM(3257)",
+		"FUNGUS(3258)",
+		"RED_FLOWER(3259)",
+		"BLUE_FLOWER(3260)",
+		"public static final int maxCustom = 3261;",
 	):
 		require_text(item_id_text, snippet, "ItemId should define Herblaw side ingredient")
 
@@ -68,6 +73,11 @@ def main() -> None:
 		3246: "Bat eye",
 		3247: "Baby dragon's eye",
 		3248: "Demon eye",
+		3256: "Fern leaf",
+		3257: "Mushroom",
+		3258: "Fungus",
+		3259: "Red flower",
+		3260: "Blue flower",
 	}
 	for item_id, name in expected_names.items():
 		item = custom_items.get(item_id)
@@ -78,12 +88,19 @@ def main() -> None:
 			require(item.get("command", "") == "", f"{name} should not expose an inventory command")
 		else:
 			require(item["isNoteable"] == 1, f"{name} should be noteable")
+			require("potion ingredient" in item["description"].lower(), f"{name} should classify as Herblaw")
 
 	recipes = {
 		(int(node.findtext("unfinishedID")), int(node.findtext("secondID"))): int(node.findtext("potionID"))
 		for node in ET.parse(ITEM_HERB_SECOND).getroot().findall("ItemHerbSecond")
 	}
 	expected_recipes = {
+		(454, 3256): 474,
+		(456, 3257): 477,
+		(458, 3258): 480,
+		(460, 220): 483,
+		(462, 3259): 486,
+		(935, 3260): 3198,
 		(454, 1410): 489,
 		(456, 3240): 492,
 		(458, 3241): 495,
@@ -144,6 +161,14 @@ def main() -> None:
 		'new ItemDef("Demon eye", "A potion ingredient from a demon", "", 60, 116, "items:116"',
 	):
 		require_text(client_items, snippet, "new eyes should reuse masked Eye-of-newt visuals")
+	for snippet in (
+		'new ItemDef("Fern leaf", "A leafy potion ingredient harvested from ferns", "", 4, -1, "external-png:fern-leaf@17x19"',
+		'new ItemDef("Mushroom", "A mushroom used as a potion ingredient", "", 8, -1, "external-png:mushroom@18x18"',
+		'new ItemDef("Fungus", "A fungus used as a potion ingredient", "", 14, -1, "external-png:fungus@14x18"',
+		'new ItemDef("Red flower", "A red flower used as a potion ingredient", "", 24, -1, "external-png:red-flower@15x18"',
+		'new ItemDef("Blue flower", "A blue flower used as a potion ingredient", "", 40, -1, "external-png:blue-flower@15x18"',
+	):
+		require_text(client_items, snippet, "Brawn ingredients should use imported PNG visuals")
 	require_text(client_items, 'new ItemDef("Superior quality fish oil"', "client should define superior fish oil")
 
 	eating = EATING.read_text(encoding="utf-8")
@@ -153,6 +178,7 @@ def main() -> None:
 	forbid_text(action_handler, "ItemId.FISH_OIL.id()", "Fish oil should not be treated as a combat consumable")
 
 	guide = SKILL_GUIDE.read_text(encoding="utf-8")
+	require_text(guide, '"fern leaf", "mushroom", "fungus", "limpwurt root", "red flower", "blue flower"', "guide should show Brawn tier order")
 	require_text(guide, '"eye of newt", "spider eye", "zombie eye", "bat eye", "baby dragon\'s eye", "demon eye"', "guide should show insight tier order")
 	require_text(guide, '"10 low quality fish oil", "10 fair quality fish oil", "10 good quality fish oil"', "guide should show low oil tiers")
 	require_text(guide, '"10 fine quality fish oil", "10 high quality fish oil", "10 superior quality fish oil"', "guide should show high oil tiers")

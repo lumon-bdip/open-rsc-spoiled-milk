@@ -376,7 +376,7 @@
   <GameObjectDef>
     <name>Fern</name>
     <description>A leafy plant</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>0</type>
     <width>1</width>
@@ -409,7 +409,7 @@
   <GameObjectDef>
     <name>Flower</name>
     <description>Ooh thats pretty</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>0</type>
     <width>1</width>
@@ -420,7 +420,7 @@
   <GameObjectDef>
     <name>Mushroom</name>
     <description>I think it's a poisonous one</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>0</type>
     <width>1</width>
@@ -2257,7 +2257,7 @@
   <GameObjectDef>
     <name>Fungus</name>
     <description>A creepy looking fungus</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>0</type>
     <width>1</width>
@@ -3137,7 +3137,7 @@
   <GameObjectDef>
     <name>flower</name>
     <description>A nice colourful flower</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>1</type>
     <width>1</width>
@@ -4358,7 +4358,7 @@
   <GameObjectDef>
     <name>Fern</name>
     <description>An exotic leafy plant</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>0</type>
     <width>1</width>
@@ -4369,7 +4369,7 @@
   <GameObjectDef>
     <name>Fern</name>
     <description>An exotic leafy plant</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>0</type>
     <width>1</width>
@@ -4380,7 +4380,7 @@
   <GameObjectDef>
     <name>Fern</name>
     <description>An exotic leafy plant</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>0</type>
     <width>1</width>
@@ -4391,7 +4391,7 @@
   <GameObjectDef>
     <name>Fern</name>
     <description>An exotic leafy plant</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>0</type>
     <width>1</width>
@@ -4413,7 +4413,7 @@
   <GameObjectDef>
     <name>Fern</name>
     <description>An exotic leafy plant</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>0</type>
     <width>1</width>
@@ -4424,7 +4424,7 @@
   <GameObjectDef>
     <name>Fern</name>
     <description>An exotic spikey plant</description>
-    <command1>WalkTo</command1>
+    <command1>Harvest</command1>
     <command2>Examine</command2>
     <type>0</type>
     <width>1</width>
