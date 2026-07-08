@@ -3672,6 +3672,7 @@ public final class mudclient implements Runnable {
 			builder = new ResidentObjectChunkInputBuilder(anchor, cellKey, cellX, cellZ, chunkRole, cellTileSize);
 			builders.put(cellKey, builder);
 		}
+		applyGameObjectVisualOverrides(objectId, model);
 		applyRenderer3DGlowEmitter(kind, objectId, model);
 		boolean debugMatched = shouldDebugResidentObjectChunkModel(kind, tileX, tileZ, objectId);
 		builder.add(
@@ -23158,6 +23159,7 @@ public final class mudclient implements Runnable {
 			this.gameObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
 			this.gameObjectInstanceModel[i].key = i;
 		}
+		applyGameObjectInstanceVisualOverrides(i);
 	}
 
 	public RSModel getGameObjectInstanceModel(int i) {
@@ -23180,12 +23182,15 @@ public final class mudclient implements Runnable {
 	}
 
 	private void applyGameObjectInstanceVisualOverrides(int i) {
-		RSModel model = this.gameObjectInstanceModel[i];
+		applyGameObjectVisualOverrides(this.gameObjectInstanceID[i], this.gameObjectInstanceModel[i]);
+	}
+
+	private void applyGameObjectVisualOverrides(int objectId, RSModel model) {
 		if (model == null) {
 			return;
 		}
 
-		if (this.gameObjectInstanceID[i] == DRAGON_SULFUR_ROCK_OBJECT_ID) {
+		if (objectId == DRAGON_SULFUR_ROCK_OBJECT_ID) {
 			model.tintVisibleFaces(DRAGON_SULFUR_ROCK_COLOR_RESOURCE);
 		}
 	}

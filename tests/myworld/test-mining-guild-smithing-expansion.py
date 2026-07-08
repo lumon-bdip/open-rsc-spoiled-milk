@@ -93,6 +93,15 @@ def main() -> None:
         and "int tintVisibleFaces(int materialResource)" in rs_model,
         "Client should tint only the cloned Dragon sulfur rock model instance",
     )
+    require(
+        "applyGameObjectInstanceVisualOverrides(i);" in client_mudclient
+        and "private void applyGameObjectVisualOverrides(int objectId, RSModel model)" in client_mudclient,
+        "Client should apply Dragon sulfur visual overrides after object model assignment, not only after object ID assignment",
+    )
+    require(
+        "applyGameObjectVisualOverrides(objectId, model);\n\t\tapplyRenderer3DGlowEmitter(kind, objectId, model);" in client_mudclient,
+        "Resident object chunks should normalize Dragon sulfur visuals before exporting distant scenery geometry",
+    )
     sulfur_mining_entry = """<entry>
 \t\t<int>1328</int><!-- Dragon sulfur -->
 \t\t<ObjectMiningDef>
