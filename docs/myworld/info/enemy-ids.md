@@ -304,7 +304,7 @@ Combat levels `51-90`. Use these IDs with `::cnpc <id> <radius>`.
 
 ## Elite And Boss Enemies
 
-Combat levels `91-999`. Use these IDs with `::cnpc <id> <radius>`.
+Combat levels `91-999`. Use these IDs with `::spawnnpc <id> <radius>`.
 
 | ID | Name | Level | HP | Aggro | Members | Respawn |
 | ---: | --- | ---: | ---: | --- | --- | ---: |
@@ -333,6 +333,7 @@ Combat levels `91-999`. Use these IDs with `::cnpc <id> <radius>`.
 | 568 | Black Demon | 175 | 160 | Yes | Yes | 30 |
 | 291 | Black Dragon | 200 | 190 | Yes | Yes | 73 |
 | 477 | King Black Dragon | 245 | 240 | Yes | Yes | 75 |
+| 844 | Elder Green Dragon | 275 | 280 | Yes | Yes | 75 |
 
 ## Placement Guidance
 

@@ -199,6 +199,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "god-relic-reward-plan.md",
             "herblaw-side-ingredient-expansion-plan.md",
             "legacy-limits-audit.md",
+            "mining-guild-and-smithing-expansion-plan.md",
             "movement-pathing-release-plan.md",
             "ogg-audio-support-plan.md",
             "prayer-devotion-equipment-plan.md",

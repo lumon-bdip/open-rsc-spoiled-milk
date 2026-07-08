@@ -2389,8 +2389,8 @@ public final class Player extends Mob {
 		return getCarriedItems().getEquipment().hasFullBlackDragonSet();
 	}
 
-	public boolean hasFullKingBlackDragonSet() {
-		return getCarriedItems().getEquipment().hasFullKingBlackDragonSet();
+	public boolean hasFullElderGreenDragonSet() {
+		return getCarriedItems().getEquipment().hasFullElderGreenDragonSet();
 	}
 
 	public boolean hasFullFireGiantSet() {

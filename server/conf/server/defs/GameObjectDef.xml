@@ -14606,4 +14606,15 @@
     <groundItemVar>0</groundItemVar>
     <objectModel>pumpkinwhite</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Dragon sulfur rock</name>
+    <description>A volatile sulfur-stained rock</description>
+    <command1>Mine</command1>
+    <command2>Prospect</command2>
+    <type>1</type>
+    <width>1</width>
+    <height>1</height>
+    <groundItemVar>0</groundItemVar>
+    <objectModel>copperrock1</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>

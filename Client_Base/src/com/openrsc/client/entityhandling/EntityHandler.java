@@ -4389,8 +4389,8 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Black dragon leather", "Processed black dragon hide", "", 60, 69, "items:69", false, false, 0, 0x1f2530, false, false, true, 1830));
 		addItemDefinition(new ItemDef("Balrog hide", "A lava-dark infernal hide", "", 36, 69, "items:69", false, false, 0, 0x44312a, false, false, true, 1831));
 		addItemDefinition(new ItemDef("Balrog leather", "Processed balrog hide", "", 72, 69, "items:69", false, false, 0, 0x35241f, false, false, true, 1832));
-		addItemDefinition(new ItemDef("King black dragon hide", "A legendary dark dragon hide", "", 40, 69, "items:69", false, false, 0, 0x20252a, false, false, true, 1833));
-		addItemDefinition(new ItemDef("King black dragon leather", "Processed king black dragon hide", "", 80, 69, "items:69", false, false, 0, 0x171b20, false, false, true, 1834));
+		addItemDefinition(new ItemDef("Elder green dragon hide", "A legendary elder green dragon hide", "", 40, 69, "items:69", false, false, 0, 0x20252a, false, false, true, 1833));
+		addItemDefinition(new ItemDef("Elder green dragon leather", "Processed elder green dragon hide", "", 80, 69, "items:69", false, false, 0, 0x171b20, false, false, true, 1834));
 		addItemDefinition(new ItemDef("Cow-hide coif", "A simple coif made from cow hide", "", 8, 5, "items:5", false, true, 32, 0x7a5a38, false, false, true, 1835));
 		addItemDefinition(new ItemDef("Cow-hide gloves", "Gloves worked from cow hide", "", 12, 17, "items:17", false, true, 256, 0x7a5a38, false, false, true, 1836));
 		addItemDefinition(new ItemDef("Cow-hide boots", "Boots worked from cow hide", "", 12, 223, "items:223", false, true, 512, 0x7a5a38, false, false, true, 1837));
@@ -4506,11 +4506,11 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Balrog-hide boots", "A boots made from balrog hide", "", 144, 223, "items:223", false, true, 512, 0x35241f, false, false, true, 1947));
 		addItemDefinition(new ItemDef("Balrog-hide chaps", "A chaps made from balrog hide", "", 216, 590, "items:590", false, true, 128, 0x35241f, false, false, true, 1948));
 		addItemDefinition(new ItemDef("Balrog-hide cuirass", "A cuirass made from balrog hide", "", 288, 7, "items:7", false, true, 64, 0x35241f, false, false, true, 1949));
-		addItemDefinition(new ItemDef("King-black-dragon-hide coif", "A coif made from king black dragon hide", "", 80, 5, "items:5", false, true, 32, 0x171b20, false, false, true, 1950));
-		addItemDefinition(new ItemDef("King-black-dragon-hide gloves", "A gloves made from king black dragon hide", "", 160, 17, "items:17", false, true, 256, 0x171b20, false, false, true, 1951));
-		addItemDefinition(new ItemDef("King-black-dragon-hide boots", "A boots made from king black dragon hide", "", 160, 223, "items:223", false, true, 512, 0x171b20, false, false, true, 1952));
-		addItemDefinition(new ItemDef("King-black-dragon-hide chaps", "A chaps made from king black dragon hide", "", 240, 590, "items:590", false, true, 128, 0x171b20, false, false, true, 1953));
-		addItemDefinition(new ItemDef("King-black-dragon-hide cuirass", "A cuirass made from king black dragon hide", "", 320, 7, "items:7", false, true, 64, 0x171b20, false, false, true, 1954));
+		addItemDefinition(new ItemDef("Elder-green-dragon-hide coif", "A coif made from elder green dragon hide", "", 80, 5, "items:5", false, true, 32, 0x171b20, false, false, true, 1950));
+		addItemDefinition(new ItemDef("Elder-green-dragon-hide gloves", "A gloves made from elder green dragon hide", "", 160, 17, "items:17", false, true, 256, 0x171b20, false, false, true, 1951));
+		addItemDefinition(new ItemDef("Elder-green-dragon-hide boots", "A boots made from elder green dragon hide", "", 160, 223, "items:223", false, true, 512, 0x171b20, false, false, true, 1952));
+		addItemDefinition(new ItemDef("Elder-green-dragon-hide chaps", "A chaps made from elder green dragon hide", "", 240, 590, "items:590", false, true, 128, 0x171b20, false, false, true, 1953));
+		addItemDefinition(new ItemDef("Elder-green-dragon-hide cuirass", "A cuirass made from elder green dragon hide", "", 320, 7, "items:7", false, true, 64, 0x171b20, false, false, true, 1954));
 		applyMyWorldLeatherArmorDescriptions();
 		addItemDefinition(new ItemDef("Tin bar", "A soft light metal bar", "", 3, 79, "items:79", false, false, 0, 0xb7c9d9, false, false, true, 1955));
 		addItemDefinition(new ItemDef("Copper bar", "A bright orange metal bar", "", 4, 79, "items:79", false, false, 0, 0xc86a2b, false, false, true, 1956));
@@ -5714,6 +5714,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3252, new ItemDef("Saradomin mace", "A tier 11 mace blessed by Saradomin", "", 120000, -1, "external-png:saradomin-mace-icon", false, true, 16, 0, true, false, true, 3252));
 		setCustomItemDefinition(3253, new ItemDef("Zamorak mace", "A tier 11 mace blessed by Zamorak", "", 120000, -1, "external-png:zamorak-mace-icon", false, true, 16, 0, true, false, true, 3253));
 		setCustomItemDefinition(3254, new ItemDef("Guthix mace", "A tier 11 mace blessed by Guthix", "", 120000, -1, "external-png:guthix-mace-icon", false, true, 16, 0, true, false, true, 3254));
+		setCustomItemDefinition(3255, new ItemDef("Dragon sulfur", "A volatile sulfurous ore used for high-tier alloys", "", 12000, 23, "items:23", false, false, 0, 0xF05A1A, false, false, true, 3255));
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -6377,7 +6378,7 @@ public class EntityHandler {
 		setLeatherSetDescription(1935, 1939, "Full black-demon-hide set: 20% chance for infernal fire, max hit 12.");
 		setLeatherSetDescription(1940, 1944, "Full black-dragon-hide set: 20% chance for dragon breath, max hit 30.");
 		setLeatherSetDescription(1945, 1949, "Full balrog-hide set: 20% chance for infernal fire, max hit 18.");
-		setLeatherSetDescription(1950, 1954, "Full king-black-dragon-hide set: 60% chance for dragon breath, max hit 40.");
+		setLeatherSetDescription(1950, 1954, "Full elder-green-dragon-hide set: 60% chance for dragon breath, max hit 40.");
 	}
 
 	private static void setLeatherSetDescription(int firstItemId, int lastItemId, String description) {
@@ -6484,6 +6485,12 @@ public class EntityHandler {
 			62, 64, 62, 58, true,
 			new int[]{7, 1, 36, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			16750950, 15634560, 15634560, 16752469, 150, 250, 6, 6, 5, 843
+		));
+		setCustomNpcDefinition(844, new NPCDef(
+			"Elder Green Dragon", "A towering ancient green dragon", "",
+			275, 250, 280, 265, true,
+			new int[]{144, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 0, 0, 0, 904, 652, 10, 7, 70, 844
 		));
 	}
 
@@ -7303,7 +7310,7 @@ public class EntityHandler {
 			animations.add(new AnimationDef("mediumhelm", "equipment", 0x24191b, 0, true, false, 0));//603 black-demon-hide
 			animations.add(new AnimationDef("mediumhelm", "equipment", 0x1f2530, 0, true, false, 0));//604 black-dragon-hide
 			animations.add(new AnimationDef("mediumhelm", "equipment", 0x35241f, 0, true, false, 0));//605 balrog-hide
-			animations.add(new AnimationDef("mediumhelm", "equipment", 0x171b20, 0, true, false, 0));//606 king-black-dragon-hide
+			animations.add(new AnimationDef("mediumhelm", "equipment", 0x171b20, 0, true, false, 0));//606 elder-green-dragon-hide
 			animations.add(new AnimationDef("chainmail", "equipment", 0x5d6570, 0, true, false, 0));//607 wolf-hide
 			animations.add(new AnimationDef("chainmail", "equipment", 0x55271f, 0, true, false, 0));//608 spider-carapace
 			animations.add(new AnimationDef("chainmail", "equipment", 0x7e6e59, 0, true, false, 0));//609 giant-hide
@@ -7321,7 +7328,7 @@ public class EntityHandler {
 			animations.add(new AnimationDef("chainmail", "equipment", 0x24191b, 0, true, false, 0));//621 black-demon-hide
 			animations.add(new AnimationDef("chainmail", "equipment", 0x1f2530, 0, true, false, 0));//622 black-dragon-hide
 			animations.add(new AnimationDef("chainmail", "equipment", 0x35241f, 0, true, false, 0));//623 balrog-hide
-			animations.add(new AnimationDef("chainmail", "equipment", 0x171b20, 0, true, false, 0));//624 king-black-dragon-hide
+			animations.add(new AnimationDef("chainmail", "equipment", 0x171b20, 0, true, false, 0));//624 elder-green-dragon-hide
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x5d6570, 0, true, false, 0));//625 wolf-hide
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x55271f, 0, true, false, 0));//626 spider-carapace
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x7e6e59, 0, true, false, 0));//627 giant-hide
@@ -7339,7 +7346,7 @@ public class EntityHandler {
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x24191b, 0, true, false, 0));//639 black-demon-hide
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x1f2530, 0, true, false, 0));//640 black-dragon-hide
 			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x35241f, 0, true, false, 0));//641 balrog-hide
-			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x171b20, 0, true, false, 0));//642 king-black-dragon-hide
+			animations.add(new AnimationDef("chainmaillegs", "equipment", 0x171b20, 0, true, false, 0));//642 elder-green-dragon-hide
 			animations.add(new AnimationDef("hidegloves", "equipment", 0x5d6570, 0, true, false, 0));//643 wolf-hide
 			animations.add(new AnimationDef("hidegloves", "equipment", 0x55271f, 0, true, false, 0));//644 spider-carapace
 			animations.add(new AnimationDef("hidegloves", "equipment", 0x7e6e59, 0, true, false, 0));//645 giant-hide
@@ -7357,7 +7364,7 @@ public class EntityHandler {
 			animations.add(new AnimationDef("hidegloves", "equipment", 0x24191b, 0, true, false, 0));//657 black-demon-hide
 			animations.add(new AnimationDef("hidegloves", "equipment", 0x1f2530, 0, true, false, 0));//658 black-dragon-hide
 			animations.add(new AnimationDef("hidegloves", "equipment", 0x35241f, 0, true, false, 0));//659 balrog-hide
-			animations.add(new AnimationDef("hidegloves", "equipment", 0x171b20, 0, true, false, 0));//660 king-black-dragon-hide
+			animations.add(new AnimationDef("hidegloves", "equipment", 0x171b20, 0, true, false, 0));//660 elder-green-dragon-hide
 			animations.add(new AnimationDef("hideboots", "equipment", 0x5d6570, 0, true, false, 0));//661 wolf-hide
 			animations.add(new AnimationDef("hideboots", "equipment", 0x55271f, 0, true, false, 0));//662 spider-carapace
 			animations.add(new AnimationDef("hideboots", "equipment", 0x7e6e59, 0, true, false, 0));//663 giant-hide
@@ -7375,7 +7382,7 @@ public class EntityHandler {
 			animations.add(new AnimationDef("hideboots", "equipment", 0x24191b, 0, true, false, 0));//675 black-demon-hide
 			animations.add(new AnimationDef("hideboots", "equipment", 0x1f2530, 0, true, false, 0));//676 black-dragon-hide
 			animations.add(new AnimationDef("hideboots", "equipment", 0x35241f, 0, true, false, 0));//677 balrog-hide
-			animations.add(new AnimationDef("hideboots", "equipment", 0x171b20, 0, true, false, 0));//678 king-black-dragon-hide
+			animations.add(new AnimationDef("hideboots", "equipment", 0x171b20, 0, true, false, 0));//678 elder-green-dragon-hide
 			animations.add(new AnimationDef("greaves", "equipment", 16737817, 0, true, false, 0));//679 bronze greaves
 			animations.add(new AnimationDef("greaves", "equipment", 15654365, 0, true, false, 0));//680 iron greaves
 			animations.add(new AnimationDef("greaves", "equipment", 15658734, 0, true, false, 0));//681 steel greaves
@@ -9623,6 +9630,8 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Ore crusher", "A machine for crushing ore to find gems", "WalkTo", "Examine", 1, 2, 2, 0, "madmachine", ++i)); //1324
 		objects.add(new GameObjectDef("Cosmic sparkles", "Tiny motes of light drift through the void", "WalkTo", "Examine", 0, 2, 2, 0, "myworld_cosmic_sparkles1", ++i)); //1325
 		objects.add(new GameObjectDef("Safety Deposit Box", "A secure box for items barred from Entrana", "Deposit", "Withdraw", 1, 1, 1, 0, "ChestClosed", ++i)); //1326
+		objects.add(new GameObjectDef("Pumpkin", "A ripe event pumpkin ready for harvest", "Harvest", "Examine", 0, 1, 1, 0, "pumpkinwhite", ++i)); //1327
+		objects.add(new GameObjectDef("Dragon sulfur rock", "A volatile sulfur-stained rock", "Mine", "Prospect", 1, 1, 1, 0, "copperrock1", ++i)); //1328
 	}
 
 	public static void load(boolean loadMembers) {

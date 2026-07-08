@@ -228,14 +228,14 @@ HIDE_LINES = [
         "outputs": ["BALROG_COIF", "BALROG_GLOVES", "BALROG_BOOTS", "BALROG_CHAPS", "BALROG_CUIRASS"],
     },
     {
-        "material": "KING_BLACK_DRAGON_LEATHER",
-        "tanned": "KING_BLACK_DRAGON_LEATHER",
+        "material": "ELDER_GREEN_DRAGON_LEATHER",
+        "tanned": "ELDER_GREEN_DRAGON_LEATHER",
         "outputs": [
-            "KING_BLACK_DRAGON_COIF",
-            "KING_BLACK_DRAGON_GLOVES",
-            "KING_BLACK_DRAGON_BOOTS",
-            "KING_BLACK_DRAGON_CHAPS",
-            "KING_BLACK_DRAGON_CUIRASS",
+            "ELDER_GREEN_DRAGON_COIF",
+            "ELDER_GREEN_DRAGON_GLOVES",
+            "ELDER_GREEN_DRAGON_BOOTS",
+            "ELDER_GREEN_DRAGON_CHAPS",
+            "ELDER_GREEN_DRAGON_CUIRASS",
         ],
     },
 ]
@@ -273,7 +273,7 @@ def main() -> None:
 
     crafting_level_snippets = (
         'new HideArmorRecipe(materialId, "Balrog hide", 10, 70,',
-        'new HideArmorRecipe(materialId, "King black dragon hide", 11, 80,',
+        'new HideArmorRecipe(materialId, "Elder green dragon hide", 11, 80,',
         "case 11:\n\t\t\t\treturn 80;",
     )
     for snippet in crafting_level_snippets:
@@ -282,7 +282,7 @@ def main() -> None:
 
     guide_level_snippets = (
         'addLeatherGuide(1949, "70", "Balrog hide armor");',
-        'addLeatherGuide(1954, "80", "King black dragon hide armor");',
+        'addLeatherGuide(1954, "80", "Elder green dragon hide armor");',
     )
     for snippet in guide_level_snippets:
         if snippet not in skill_guide_text:

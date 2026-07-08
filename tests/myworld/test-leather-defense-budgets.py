@@ -33,7 +33,7 @@ FAMILY_NPC = {
     "black demon": 290,
     "black dragon": 291,
     "balrog": 809,
-    "king black dragon": 477,
+    "elder green dragon": 844,
 }
 
 FAMILY_BASE_ID = {
@@ -60,7 +60,7 @@ FAMILY_BASE_ID = {
     "black demon": 1935,
     "black dragon": 1940,
     "balrog": 1945,
-    "king black dragon": 1950,
+    "elder green dragon": 1950,
 }
 
 FAMILY_TIER = {
@@ -87,7 +87,7 @@ FAMILY_TIER = {
     "black demon": 8,
     "black dragon": 9,
     "balrog": 9,
-    "king black dragon": 10,
+    "elder green dragon": 10,
 }
 
 SLOTS = [

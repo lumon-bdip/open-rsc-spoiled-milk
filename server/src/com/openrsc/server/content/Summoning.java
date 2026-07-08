@@ -594,6 +594,22 @@ public final class Summoning {
 			&& KIND_IMP.equals(summon.getAttribute(SUMMON_KIND_KEY, ""));
 	}
 
+	public static boolean scareAwayImpForElderGreenDragon(final Player player, final Npc attacker) {
+		if (player == null || attacker == null || attacker.getID() != NpcId.ELDER_GREEN_DRAGON.id()) {
+			return false;
+		}
+		final Npc summon = player.getAttribute(MANUAL_SUMMON_KEY, null);
+		if (summon == null
+			|| summon.isRemoved()
+			|| !isOwnedSummon(player, summon)
+			|| !KIND_IMP.equals(summon.getAttribute(SUMMON_KIND_KEY, ""))) {
+			return false;
+		}
+		player.message("@red@Your imp flees from the Elder Green Dragon.");
+		finishManualSummon(player, summon, true);
+		return true;
+	}
+
 	private static boolean hasLootGoblin(final Player player) {
 		final Npc summon = player.getAttribute(MANUAL_SUMMON_KEY, null);
 		return summon != null

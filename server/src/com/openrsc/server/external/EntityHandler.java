@@ -41,6 +41,7 @@ public final class EntityHandler {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private static final Set<String> MYWORLD_NPC_OVERRIDE_FIELDS = new HashSet<>(Arrays.asList(
 		"id", "name", "description", "attack", "strength", "hits", "defense", "ranged",
+		"meleeOffense", "rangedOffense", "magicOffense",
 		"meleeDefense", "rangedDefense", "magicDefense",
 		"meleeDefenseMultiplier", "rangedDefenseMultiplier", "magicDefenseMultiplier",
 		"meleeDefenseDivisor", "rangedDefenseDivisor", "magicDefenseDivisor",
@@ -340,6 +341,9 @@ public final class EntityHandler {
 					def.hits = npc.getInt("hits");
 					def.defense = npc.getInt("defense");
 					def.ranged = npc.getBoolean("ranged") ? 1 : 0;
+					def.meleeOffense = npc.has("meleeOffense") ? npc.getInt("meleeOffense") : 0;
+					def.rangedOffense = npc.has("rangedOffense") ? npc.getInt("rangedOffense") : 0;
+					def.magicOffense = npc.has("magicOffense") ? npc.getInt("magicOffense") : 0;
 					def.meleeDefense = npc.has("meleeDefense") ? npc.getInt("meleeDefense") : 0;
 					def.rangedDefense = npc.has("rangedDefense") ? npc.getInt("rangedDefense") : 0;
 					def.magicDefense = npc.has("magicDefense") ? npc.getInt("magicDefense") : 0;
@@ -393,6 +397,12 @@ public final class EntityHandler {
 						.hits((int)ifZeroReserve(npc.getInt("hits")))
 						.defense((int)ifZeroReserve(npc.getInt("defense")))
 						.ranged(npc.getBoolean("ranged") ? 1 : 0)
+						.meleeOffense(npc.has("meleeOffense") ? (int)ifZeroReserve(npc.getInt("meleeOffense")) : 0)
+						.rangedOffense(npc.has("rangedOffense") ? (int)ifZeroReserve(npc.getInt("rangedOffense")) : 0)
+						.magicOffense(npc.has("magicOffense") ? (int)ifZeroReserve(npc.getInt("magicOffense")) : 0)
+						.meleeDefense(npc.has("meleeDefense") ? (int)ifZeroReserve(npc.getInt("meleeDefense")) : 0)
+						.rangedDefense(npc.has("rangedDefense") ? (int)ifZeroReserve(npc.getInt("rangedDefense")) : 0)
+						.magicDefense(npc.has("magicDefense") ? (int)ifZeroReserve(npc.getInt("magicDefense")) : 0)
 						.meleeDefenseMultiplier(npc.has("meleeDefenseMultiplier") ? npc.getDouble("meleeDefenseMultiplier") : -1.0D)
 						.rangedDefenseMultiplier(npc.has("rangedDefenseMultiplier") ? npc.getDouble("rangedDefenseMultiplier") : -1.0D)
 						.magicDefenseMultiplier(npc.has("magicDefenseMultiplier") ? npc.getDouble("magicDefenseMultiplier") : -1.0D)
@@ -461,6 +471,9 @@ public final class EntityHandler {
 				if (npc.has("hits")) staged.hits = (int) ifZeroReserve(npc.getInt("hits"));
 				if (npc.has("defense")) staged.defense = (int) ifZeroReserve(npc.getInt("defense"));
 				if (npc.has("ranged")) staged.ranged = npc.getBoolean("ranged") ? 1 : 0;
+				if (npc.has("meleeOffense")) staged.meleeOffense = (int) ifZeroReserve(npc.getInt("meleeOffense"));
+				if (npc.has("rangedOffense")) staged.rangedOffense = (int) ifZeroReserve(npc.getInt("rangedOffense"));
+				if (npc.has("magicOffense")) staged.magicOffense = (int) ifZeroReserve(npc.getInt("magicOffense"));
 				if (npc.has("meleeDefense")) staged.meleeDefense = (int) ifZeroReserve(npc.getInt("meleeDefense"));
 				if (npc.has("rangedDefense")) staged.rangedDefense = (int) ifZeroReserve(npc.getInt("rangedDefense"));
 				if (npc.has("magicDefense")) staged.magicDefense = (int) ifZeroReserve(npc.getInt("magicDefense"));

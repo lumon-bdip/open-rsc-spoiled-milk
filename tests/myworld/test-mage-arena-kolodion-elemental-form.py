@@ -163,7 +163,7 @@ def main() -> int:
 	)
 
 	require_contains(profile, "return Math.max(1, Math.max(npc.getDef().getAtt(), npc.getDef().getStr()));", "NPC magic offense source")
-	require_contains(profile, "return Math.max(1.0D, getMagicOffense(npc) / 12.0D);", "NPC magic spell power source")
+	require_contains(profile, "return Math.max(1.0D, npc.getMagicOffense() / 12.0D);", "NPC magic spell power source")
 	require_regex(profile, r"case \"lesser demon\":(?:(?!return [A-Z_]+;).)*return MELEE_MAGIC;", "Lesser demon attack style")
 	require_regex(profile, r"case \"lesser demon\":(?:(?!return NpcMagicElement\.[A-Z_]+;).)*return NpcMagicElement\.FIRE;", "Lesser demon element")
 

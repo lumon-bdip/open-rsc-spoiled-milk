@@ -341,7 +341,7 @@ public class CombatEvent extends GameTickEvent {
 		final int poisonWeaponId = weapon == null ? -1 : weapon.getCatalogId();
 		final int weaponMaxPower = PoisonPower.getWeaponMaxPoisonPower(poisonWeaponId);
 		final int styleArmorMaxPower = player.getMeleePoisonArmorMaxPower();
-		final int breathArmorMaxPower = player.hasFullBlackDragonSet() ? 30 : (player.hasFullKingBlackDragonSet() ? 40 : 0);
+		final int breathArmorMaxPower = player.hasFullBlackDragonSet() ? 30 : (player.hasFullElderGreenDragonSet() ? 40 : 0);
 		final int armorMaxPower = styleArmorMaxPower + breathArmorMaxPower;
 		final int totalMaxPower = weaponMaxPower + armorMaxPower;
 		if (totalMaxPower <= 0) {
@@ -358,9 +358,9 @@ public class CombatEvent extends GameTickEvent {
 		if (player.hasFullBlackDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, 15);
 			player.setAttribute("dragon_breath_armor_proc", "black");
-		} else if (player.hasFullKingBlackDragonSet() && DataConversions.getRandom().nextDouble() < 0.60D) {
+		} else if (player.hasFullElderGreenDragonSet() && DataConversions.getRandom().nextDouble() < 0.60D) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, 20);
-			player.setAttribute("dragon_breath_armor_proc", "kbd");
+			player.setAttribute("dragon_breath_armor_proc", "elder_green");
 		}
 		if (appliedPoisonPower <= 0) {
 			return;
@@ -673,7 +673,7 @@ public class CombatEvent extends GameTickEvent {
 			target.applyDragonFireDefenseDebuff(6);
 		}
 		if ("black".equals(player.getAttribute("dragon_breath_armor_proc", ""))
-			|| "kbd".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
+			|| "elder_green".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
 			player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.DRAGON_BREATH));
 		}
 		if (player.hasFullBlackDragonSet() && "black".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
@@ -682,7 +682,7 @@ public class CombatEvent extends GameTickEvent {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
 			}
 		}
-		if (player.hasFullKingBlackDragonSet() && "kbd".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
+		if (player.hasFullElderGreenDragonSet() && "elder_green".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);

@@ -94,6 +94,8 @@ public final class mudclient implements Runnable {
 	private static final int GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING = 6;
 	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
 	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
+	private static final int DRAGON_SULFUR_ROCK_OBJECT_ID = 1328;
+	private static final int DRAGON_SULFUR_ROCK_COLOR_RESOURCE = GenUtil.colorToResource(255, 112, 16);
 	private static final String FISHING_SPOT_MODEL_NAME = "fishing";
 	private static final String WATCHTOWER_MODEL_NAME = "watchtower";
 	private static final int WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE = 2048;
@@ -197,13 +199,15 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_FIRE_SWORD = 59;
 	public static final int COMBAT_EFFECT_ICE_SWORD = 60;
 	public static final int COMBAT_EFFECT_EARTH_SWORD = 61;
+	public static final int COMBAT_EFFECT_ELDER_DRAGON_FIRESHOT = 62;
+	public static final int COMBAT_EFFECT_ELDER_DRAGON_BURN = 63;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
 	public static final int COMBAT_EFFECT_WATER_ERUPTION = COMBAT_EFFECT_HURRICANE;
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 61;
+	public static final int COMBAT_EFFECT_COUNT = 63;
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_TICKS = 40;
@@ -1018,7 +1022,7 @@ public final class mudclient implements Runnable {
 		"battle-mage-air", "battle-mage-earth", "battle-mage-water", "battle-mage-fire",
 		"green-dragon-magic", "fire-dragon-magic", "otherworldly-being-magic", "paladin-magic",
 		"fire-kin-magic", "ice-kin-magic", "earth-kin-magic", "dragon-weapon-breath",
-		"fire-sword", "ice-sword", "earth-sword"
+		"fire-sword", "ice-sword", "earth-sword", "elder-dragon-fireshot", "elder-dragon-burn"
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final Sprite[][] projectileEffectMirrorSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
@@ -19796,6 +19800,12 @@ public final class mudclient implements Runnable {
 		if ("dragon-weapon-breath".equals(effectName)) {
 			return "dragon-breath";
 		}
+		if ("elder-dragon-fireshot".equals(effectName)) {
+			return "fire-dragon-magic";
+		}
+		if ("elder-dragon-burn".equals(effectName)) {
+			return "hells-blaze";
+		}
 		return effectName;
 	}
 
@@ -20358,6 +20368,14 @@ public final class mudclient implements Runnable {
 		if ("fire-dragon-magic".equals(animationName)) {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "fire-dragon-magic.png"),
 				targetFrames, maxTargetSize, 32, 1, 32, 0);
+		}
+		if ("elder-dragon-fireshot".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "elder-dragon-fireshot.png"),
+				targetFrames, maxTargetSize, 13, 1, 13, 0);
+		}
+		if ("elder-dragon-burn".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "elder-dragon-burn.png"),
+				targetFrames, maxTargetSize, 16, 1, 16, 0);
 		}
 		if ("otherworldly-being-magic".equals(animationName)) {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "otherworldly-being-magic.png"),
@@ -23158,6 +23176,18 @@ public final class mudclient implements Runnable {
 	public void setGameObjectInstanceID(int i, int n) {
 		ensureGameObjectInstanceCapacity(i + 1);
 		this.gameObjectInstanceID[i] = n;
+		applyGameObjectInstanceVisualOverrides(i);
+	}
+
+	private void applyGameObjectInstanceVisualOverrides(int i) {
+		RSModel model = this.gameObjectInstanceModel[i];
+		if (model == null) {
+			return;
+		}
+
+		if (this.gameObjectInstanceID[i] == DRAGON_SULFUR_ROCK_OBJECT_ID) {
+			model.tintVisibleFaces(DRAGON_SULFUR_ROCK_COLOR_RESOURCE);
+		}
 	}
 
 	public int getGameObjectInstanceID(int i) {

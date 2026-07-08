@@ -34,6 +34,13 @@ def between(text: str, start: str, end: str, message: str) -> str:
 
 def main() -> None:
     drops = NPC_DROPS.read_text(encoding="utf-8")
+    elder_green_dragon = between(
+        drops,
+        "private void createElderGreenDragonDropTable() {",
+        "\n\tprivate void addNormalDrop",
+        "elder green dragon drop table",
+    )
+    drops_without_elder_green_dragon = drops.replace(elder_green_dragon, "")
 
     for item in (
         "DRAGON_SWORD",
@@ -50,9 +57,9 @@ def main() -> None:
         "POISON_DRAGON_BOLTS",
     ):
         forbid(
-            drops,
+            drops_without_elder_green_dragon,
             f"addItemDrop(ItemId.{item}.id()",
-            f"{item} should not be an NPC item drop",
+            f"{item} should not be an NPC item drop outside Elder Green Dragon",
         )
 
     shared_ultra = between(
@@ -130,6 +137,84 @@ def main() -> None:
         "addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
         "King Black Dragon should drop dragon square shield through the hidden unique layer",
     )
+    require(
+        drops,
+        'addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.BLACK_DRAGON_HIDE.id(), "King Black Dragon black dragon hide");',
+        "King Black Dragon should now use black dragon hide as its guaranteed hide drop",
+    )
+    require(
+        drops,
+        'addGuaranteedDrop(NpcId.ELDER_GREEN_DRAGON.id(), ItemId.ELDER_GREEN_DRAGON_HIDE.id(), "Elder Green Dragon hide");',
+        "Elder Green Dragon should own the former special hide drop",
+    )
+    require(
+        drops,
+        "this.dragonNpcs.add(NpcId.ELDER_GREEN_DRAGON.id());",
+        "Elder Green Dragon should be in the dragon-bone list",
+    )
+    for needle, message in (
+        ("commonDrops.addItemDrop(ItemId.CHAOS_RUNE.id(), 200, 1);", "Elder Green Dragon common drops should include 200 chaos runes"),
+        ("commonDrops.addItemDrop(ItemId.DEATH_RUNE.id(), 50, 1);", "Elder Green Dragon common drops should include 50 death runes"),
+        ("commonDrops.addItemDrop(ItemId.MITHRIL_ARROWS.id(), 200, 1);", "Elder Green Dragon common drops should include mithril arrows"),
+        ("commonDrops.addItemDrop(ItemId.MITHRIL_BOLTS.id(), 200, 1);", "Elder Green Dragon common drops should include mithril bolts"),
+        ("commonDrops.addItemDrop(ItemId.MITHRIL_THROWING_DART.id(), 200, 1);", "Elder Green Dragon common drops should include mithril darts"),
+        ("commonDrops.addItemDrop(ItemId.MITHRIL_THROWING_KNIFE.id(), 200, 1);", "Elder Green Dragon common drops should include mithril knives"),
+        ("commonDrops.addItemDrop(ItemId.MITHRIL_SHURIKEN.id(), 200, 1);", "Elder Green Dragon common drops should include mithril shuriken"),
+        ("commonDrops.addItemDrop(ItemId.EBONY_LONGBOW.id(), 1, 1);", "Elder Green Dragon common drops should include an ebony bow"),
+        ("commonDrops.addItemDrop(ItemId.EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include an ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.MIND_EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include mind ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.BODY_EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include body ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.COSMIC_EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include cosmic ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.CHAOS_EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include chaos ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.NATURE_EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include nature ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.LAW_EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include law ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.DEATH_EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include death ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.BLOOD_RUNE_EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include blood rune ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.SOUL_EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include soul ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.LIFE_EBONY_STAFF.id(), 1, 1);", "Elder Green Dragon common drops should include life ebony staff"),
+        ("commonDrops.addItemDrop(ItemId.ORICHALCUM_2_HANDED_SWORD.id(), 1, 1);", "Elder Green Dragon common drops should include orichalcum two hander"),
+        ("commonDrops.addItemDrop(ItemId.ORICHALCUM_PLATE_MAIL_BODY.id(), 1, 1);", "Elder Green Dragon common drops should include orichalcum platemail"),
+        ("commonDrops.addItemDrop(ItemId.MEDIUM_RUNE_HELMET.id(), 1, 1);", "Elder Green Dragon common drops should include medium rune helmet"),
+        ("commonDrops.addItemDrop(ItemId.LARGE_RUNE_HELMET.id(), 1, 1);", "Elder Green Dragon common drops should include large rune helmet"),
+        ("uncommonDrops.addItemDrop(ItemId.RUNITE_GREAVES.id(), 1, 1);", "Elder Green Dragon uncommon drops should include rune greaves"),
+        ("uncommonDrops.addItemDrop(ItemId.RUNITE_GAUNTLETS.id(), 1, 1);", "Elder Green Dragon uncommon drops should include rune gauntlets"),
+        ("uncommonDrops.addItemDrop(ItemId.RUNE_PLATE_MAIL_LEGS.id(), 1, 1);", "Elder Green Dragon uncommon drops should include rune platelegs"),
+        ("uncommonDrops.addItemDrop(ItemId.DEATH_RUNE.id(), 100, 1);", "Elder Green Dragon uncommon drops should include 100 death runes"),
+        ("uncommonDrops.addItemDrop(ItemId.BLOOD_RUNE.id(), 40, 1);", "Elder Green Dragon uncommon drops should include 40 blood runes"),
+        ("uncommonDrops.addItemDrop(ItemId.TITAN_STEEL_ARROWS.id(), 100, 1);", "Elder Green Dragon uncommon drops should include titan steel arrows"),
+        ("uncommonDrops.addItemDrop(ItemId.TITAN_STEEL_BOLTS.id(), 100, 1);", "Elder Green Dragon uncommon drops should include titan steel bolts"),
+        ("uncommonDrops.addItemDrop(ItemId.TITAN_STEEL_THROWING_DART.id(), 100, 1);", "Elder Green Dragon uncommon drops should include titan steel darts"),
+        ("uncommonDrops.addItemDrop(ItemId.TITAN_STEEL_THROWING_KNIFE.id(), 100, 1);", "Elder Green Dragon uncommon drops should include titan steel knives"),
+        ("uncommonDrops.addItemDrop(ItemId.TITAN_STEEL_SHURIKEN.id(), 100, 1);", "Elder Green Dragon uncommon drops should include titan steel shuriken"),
+        ("uncommonDrops.addItemDrop(ItemId.BLOOD_LONGBOW.id(), 1, 1);", "Elder Green Dragon uncommon drops should include a blood bow"),
+        ("uncommonDrops.addItemDrop(ItemId.DEATH_BLOOD_STAFF.id(), 1, 1);", "Elder Green Dragon uncommon drops should include a blood staff enchanted at the death altar"),
+        ("DropTable rareDrops = new DropTable(\"Elder Green Dragon rare drops\", true);", "Elder Green Dragon rare drops should be contribution-gated"),
+        ("rareDrops.addItemDrop(ItemId.BLOOD_RUNE.id(), 100, 1);", "Elder Green Dragon rare drops should include 100 blood runes"),
+        ("rareDrops.addItemDrop(ItemId.DEATH_RUNE.id(), 400, 1);", "Elder Green Dragon rare drops should include 400 death runes"),
+        ("rareDrops.addItemDrop(ItemId.LAW_RUNE.id(), 200, 1);", "Elder Green Dragon rare drops should include 200 law runes"),
+        ("rareDrops.addItemDrop(ItemId.RUNE_ARROWS.id(), 200, 1);", "Elder Green Dragon rare drops should include rune arrows"),
+        ("rareDrops.addItemDrop(ItemId.RUNE_BOLTS.id(), 200, 1);", "Elder Green Dragon rare drops should include rune bolts"),
+        ("rareDrops.addItemDrop(ItemId.RUNE_THROWING_DART.id(), 200, 1);", "Elder Green Dragon rare drops should include rune darts"),
+        ("rareDrops.addItemDrop(ItemId.RUNE_THROWING_KNIFE.id(), 200, 1);", "Elder Green Dragon rare drops should include rune knives"),
+        ("rareDrops.addItemDrop(ItemId.RUNE_SHURIKEN.id(), 200, 1);", "Elder Green Dragon rare drops should include rune shuriken"),
+        ("rareDrops.addItemDrop(ItemId.RUNE_PLATE_MAIL_BODY.id(), 1, 1);", "Elder Green Dragon rare drops should include rune platemail"),
+        ("rareDrops.addItemDrop(ItemId.DRAGON_SWORD.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon sword"),
+        ("rareDrops.addItemDrop(ItemId.DRAGON_AXE.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon axe"),
+        ("rareDrops.addItemDrop(ItemId.DRAGON_2_HANDED_SWORD.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon two hander"),
+        ("rareDrops.addItemDrop(ItemId.DRAGON_DAGGER.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon dagger"),
+        ("rareDrops.addItemDrop(ItemId.POISONED_DRAGON_DAGGER.id(), 1, 1);", "Elder Green Dragon rare drops should include poisoned dragon dagger"),
+        ("rareDrops.addItemDrop(ItemId.DRAGON_BATTLE_AXE.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon battle axe"),
+        ("rareDrops.addItemDrop(ItemId.DRAGON_CROSSBOW.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon crossbow"),
+        ("rareDrops.addItemDrop(ItemId.DRAGON_LONGBOW.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon longbow"),
+        ("rareDrops.addItemDrop(ItemId.DRAGON_ARROWS.id(), 200, 1);", "Elder Green Dragon rare drops should include dragon arrows"),
+        ("rareDrops.addItemDrop(ItemId.POISON_DRAGON_ARROWS.id(), 200, 1);", "Elder Green Dragon rare drops should include poison dragon arrows"),
+        ("rareDrops.addItemDrop(ItemId.DRAGON_BOLTS.id(), 200, 1);", "Elder Green Dragon rare drops should include dragon bolts"),
+        ("rareDrops.addItemDrop(ItemId.POISON_DRAGON_BOLTS.id(), 200, 1);", "Elder Green Dragon rare drops should include poison dragon bolts"),
+        ("elderGreenDragonDrops.addTableDrop(commonDrops, 96);", "Elder Green Dragon common bucket should use 96 weight"),
+        ("elderGreenDragonDrops.addTableDrop(uncommonDrops, 24);", "Elder Green Dragon uncommon bucket should use 24 weight"),
+        ("elderGreenDragonDrops.addTableDrop(rareDrops, 8);", "Elder Green Dragon rare bucket should use 8 weight"),
+    ):
+        require(elder_green_dragon, needle, message)
 
     print("PASS: dragon NPC drop sources validated")
 

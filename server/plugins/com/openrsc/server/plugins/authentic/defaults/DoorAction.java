@@ -18,9 +18,18 @@ import static com.openrsc.server.plugins.Functions.*;
 
 
 public class DoorAction {
+	private static final int MINING_GUILD_ELITE_DOOR_ID = BoundaryId.DOOR_COOKING_GUILD.id();
+	private static final int MINING_GUILD_ELITE_DOOR_X = 268;
+	private static final int MINING_GUILD_ELITE_DOOR_Y = 3401;
+	private static final int MINING_GUILD_ELITE_DOOR_DIRECTION = 0;
+	private static final int MINING_GUILD_ELITE_MINING_LEVEL = 90;
 
 	public boolean blockWallObjectAction(final GameObject obj,
 										 final Integer click, final Player player) {
+
+		if (isMiningGuildEliteDoor(obj)) {
+			return true;
+		}
 
 		if (obj.getDoorDef().name.toLowerCase().contains("door")
 			|| obj.getDoorDef().name.equalsIgnoreCase("door")
@@ -63,6 +72,11 @@ public class DoorAction {
 
 	public void onWallObjectAction(final GameObject obj, final Integer click,
 								   final Player player) {
+
+		if (isMiningGuildEliteDoor(obj)) {
+			handleMiningGuildEliteDoor(obj, player);
+			return;
+		}
 
 		// Door's lock needs to be picked, or needs a key.
 		if (blockInvUseOnWallObject(obj, null, player)) {
@@ -1462,5 +1476,35 @@ public class DoorAction {
 		}
 		owner.playSound(open ? "opendoor" : "closedoor");
 		owner.getWorld().replaceGameObject(obj, new GameObject(obj.getWorld(), obj.getLocation(), newID, obj.getDirection(), obj.getType()));
+	}
+
+	private boolean isMiningGuildEliteDoor(GameObject obj) {
+		return obj.getID() == MINING_GUILD_ELITE_DOOR_ID
+			&& obj.getX() == MINING_GUILD_ELITE_DOOR_X
+			&& obj.getY() == MINING_GUILD_ELITE_DOOR_Y
+			&& obj.getDirection() == MINING_GUILD_ELITE_DOOR_DIRECTION;
+	}
+
+	private void handleMiningGuildEliteDoor(GameObject obj, Player player) {
+		if (isEnteringMiningGuildEliteArea(player)
+			&& getCurrentLevel(player, Skill.MINING.id()) < MINING_GUILD_ELITE_MINING_LEVEL) {
+			Npc nurmof = player.getWorld().getNpc(NpcId.NURMOF.id(), 268, 275, 3394, 3402);
+			if (nurmof != null) {
+				npcsay(player, nurmof,
+					"Woah, hold your horses.",
+					"You're a part of the mining guild, sure.",
+					"But that area is still off limits except for the ultra elite miners.",
+					"It's dangerous down there.");
+			}
+			delay();
+			player.message("You need level 90 Mining to proceed further.");
+			return;
+		}
+
+		doDoor(obj, player);
+	}
+
+	private boolean isEnteringMiningGuildEliteArea(Player player) {
+		return player.getY() < MINING_GUILD_ELITE_DOOR_Y;
 	}
 }

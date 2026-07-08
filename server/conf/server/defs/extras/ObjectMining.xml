@@ -240,6 +240,16 @@
 		</ObjectMiningDef>
 	</entry>
 	<entry>
+		<int>1328</int><!-- Dragon sulfur -->
+		<ObjectMiningDef>
+			<requiredLvl>90</requiredLvl>
+			<oreId>3255</oreId>
+			<exp>650</exp>
+			<depletion>89</depletion>
+			<respawnTime>420</respawnTime>
+		</ObjectMiningDef>
+	</entry>
+	<entry>
 		<int>496</int><!-- Tutorial Island Tin -->
 		<ObjectMiningDef>
 			<requiredLvl>1</requiredLvl>

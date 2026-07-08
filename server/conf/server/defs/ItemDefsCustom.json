@@ -13365,8 +13365,8 @@
     },
     {
       "id": 1833,
-      "name": "King black dragon hide",
-      "description": "A legendary dark dragon hide",
+      "name": "Elder green dragon hide",
+      "description": "A legendary elder green dragon hide",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -13388,8 +13388,8 @@
     },
     {
       "id": 1834,
-      "name": "King black dragon leather",
-      "description": "Processed king black dragon hide",
+      "name": "Elder green dragon leather",
+      "description": "Processed elder green dragon hide",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16056,8 +16056,8 @@
     },
     {
       "id": 1950,
-      "name": "King-black-dragon-hide coif",
-      "description": "Coif made from king black dragon leather. When wearing 5 matching King Black Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
+      "name": "Elder-green-dragon-hide coif",
+      "description": "Coif made from elder green dragon leather. When wearing 5 matching Elder Green Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16079,8 +16079,8 @@
     },
     {
       "id": 1951,
-      "name": "King-black-dragon-hide gloves",
-      "description": "Gloves made from king black dragon leather. When wearing 5 matching King Black Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
+      "name": "Elder-green-dragon-hide gloves",
+      "description": "Gloves made from elder green dragon leather. When wearing 5 matching Elder Green Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16102,8 +16102,8 @@
     },
     {
       "id": 1952,
-      "name": "King-black-dragon-hide boots",
-      "description": "Boots made from king black dragon leather. When wearing 5 matching King Black Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
+      "name": "Elder-green-dragon-hide boots",
+      "description": "Boots made from elder green dragon leather. When wearing 5 matching Elder Green Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16125,8 +16125,8 @@
     },
     {
       "id": 1953,
-      "name": "King-black-dragon-hide chaps",
-      "description": "Chaps made from king black dragon leather. When wearing 5 matching King Black Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
+      "name": "Elder-green-dragon-hide chaps",
+      "description": "Chaps made from elder green dragon leather. When wearing 5 matching Elder Green Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16148,8 +16148,8 @@
     },
     {
       "id": 1954,
-      "name": "King-black-dragon-hide cuirass",
-      "description": "Cuirass made from king black dragon leather. When wearing 5 matching King Black Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
+      "name": "Elder-green-dragon-hide cuirass",
+      "description": "Cuirass made from elder green dragon leather. When wearing 5 matching Elder Green Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -45614,6 +45614,29 @@
       "isNoteable": 1,
       "meleeOffense": 72,
       "weaponSpeed": 3
+    },
+    {
+      "id": 3255,
+      "name": "Dragon sulfur",
+      "description": "A volatile sulfurous ore used for high-tier alloys",
+      "command": "",
+      "isFemaleOnly": 0,
+      "isMembersOnly": 1,
+      "isStackable": 0,
+      "isUntradable": 0,
+      "isWearable": 0,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": -1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "armourBonus": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "magicBonus": 0,
+      "prayerBonus": 0,
+      "basePrice": 12000,
+      "isNoteable": 1
     }
   ]
 }
