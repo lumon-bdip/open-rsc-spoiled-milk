@@ -137,6 +137,32 @@ def main() -> None:
     )
     require(
         summoning,
+        "public static boolean scareAwayImpForElderGreenDragon",
+        "Elder Green Dragon should have a scoped Mischief Imp scare-away helper",
+    )
+    require(
+        summoning,
+        "attacker.getID() != NpcId.ELDER_GREEN_DRAGON.id()",
+        "Mischief Imp scare-away should only apply to Elder Green Dragon",
+    )
+    require(
+        summoning,
+        "@red@Your imp flees from the Elder Green Dragon.",
+        "Elder Green Dragon imp scare-away should message the player",
+    )
+    npc_behavior = (ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java").read_text(encoding="utf-8")
+    require(
+        npc_behavior,
+        "&& !Summoning.scareAwayImpForElderGreenDragon((Player) target, npc)",
+        "Active Elder Green Dragon aggro should dismiss Mischief Imp instead of dropping target",
+    )
+    require(
+        npc_behavior,
+        "protectedByImp && Summoning.scareAwayImpForElderGreenDragon((Player) target, npc)",
+        "Elder Green Dragon aggro scans should dismiss Mischief Imp and continue targeting",
+    )
+    require(
+        summoning,
         "public static void recordOwnerCombatSummonDamage",
         "Owner damage should refresh summon assist engagement",
     )
@@ -151,7 +177,7 @@ def main() -> None:
         "Projectile summons should retain last opponent while firing",
     )
     require(
-        (ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java").read_text(encoding="utf-8"),
+        npc_behavior,
         "if (Summoning.isSummon(npc))",
         "Summons should not use vanilla random roaming; summon runtime keeps them near the owner",
     )

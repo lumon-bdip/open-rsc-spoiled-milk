@@ -805,7 +805,7 @@ def ensure_phase_one_content_cleanup() -> None:
         "ItemId.UNICORN_HIDE_CUIRASS.id()",
         "ItemId.BEAR_HIDE_CUIRASS.id()",
         "ItemId.DRAGON_CUIRASS.id()",
-        "ItemId.KING_BLACK_DRAGON_CUIRASS.id()",
+        "ItemId.ELDER_GREEN_DRAGON_CUIRASS.id()",
     )
     for snippet in required_entrana_hide_armour_snippets:
         if snippet not in entrana_restrictions_text:

@@ -42,7 +42,7 @@ public final class TanningRack implements OpLocTrigger, UseLocTrigger {
 		new MaterialProcess(ItemId.BLACK_DEMON_HIDE.id(), ItemId.BLACK_DEMON_LEATHER.id(), 8, 45),
 		new MaterialProcess(ItemId.BLACK_DRAGON_HIDE.id(), ItemId.BLACK_DRAGON_LEATHER.id(), 9, 50),
 		new MaterialProcess(ItemId.BALROG_HIDE.id(), ItemId.BALROG_LEATHER.id(), 9, 50),
-		new MaterialProcess(ItemId.KING_BLACK_DRAGON_HIDE.id(), ItemId.KING_BLACK_DRAGON_LEATHER.id(), 10, 55)
+		new MaterialProcess(ItemId.ELDER_GREEN_DRAGON_HIDE.id(), ItemId.ELDER_GREEN_DRAGON_LEATHER.id(), 10, 55)
 	};
 
 	@Override

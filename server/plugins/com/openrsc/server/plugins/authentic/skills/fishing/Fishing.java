@@ -186,8 +186,8 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 		new FishingSpecialReward(ItemId.BLACK_DRAGON_BOOTS.id(), 9, 2),
 		new FishingSpecialReward(ItemId.BALROG_GLOVES.id(), 9, 2),
 		new FishingSpecialReward(ItemId.BALROG_BOOTS.id(), 9, 2),
-		new FishingSpecialReward(ItemId.KING_BLACK_DRAGON_GLOVES.id(), 10, 1),
-		new FishingSpecialReward(ItemId.KING_BLACK_DRAGON_BOOTS.id(), 10, 1)
+		new FishingSpecialReward(ItemId.ELDER_GREEN_DRAGON_GLOVES.id(), 10, 1),
+		new FishingSpecialReward(ItemId.ELDER_GREEN_DRAGON_BOOTS.id(), 10, 1)
 	};
 
 	private static final FishingSpecialReward[] MYWORLD_FISHING_KEY_HALF_SPECIAL_REWARDS = {

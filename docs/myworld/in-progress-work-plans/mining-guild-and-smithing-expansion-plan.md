@@ -81,8 +81,7 @@ This plan does not yet define:
   whether dragon-rune bars combine runite, dragon metal, and the new ore
   directly.
 - Full rebalance of every legacy NPC into explicit modern combat stats.
-- Final Elder Green Dragon drop table beyond the hide/leather migration and
-  any required starter loot.
+- Final Elder Green Dragon drop table tuning after live combat/drop testing.
 
 Do not implement final item IDs or balance values until those decisions are
 confirmed.
@@ -212,6 +211,9 @@ Current direction:
 - Give it real melee, ranged, and magic combat values instead of deriving all
   special attacks from attack or strength.
 - Give it real melee, ranged, and magic defenses.
+- Keep normal dragonfire behavior, then layer Elder Green Dragon-only boss
+  attacks on top: a ranged fireball AOE, a non-stacking burn debuff, and a
+  melee sweep around the dragon.
 - Add a special interaction where the Elder Green Dragon scares away a player's
   Mischief Imp summon.
 - Move the current special King Black Dragon hide/leather/armor identity onto
@@ -233,6 +235,35 @@ King Black Dragon currently has:
 Elder Green Dragon should be balanced against that profile, but its final
 numbers should be set after the NPC combat stat expansion is in place.
 
+Initial Elder Green Dragon combat profile:
+
+- Combat level `275`.
+- Attack `275`.
+- Strength `250`.
+- Hits `280`.
+- Defense `265`.
+- Explicit offense values of melee `250`, ranged `235`, and magic `270`.
+- Explicit defense values of melee `265`, ranged `210`, and magic `265`.
+
+This keeps it clearly above King Black Dragon without making it a completely
+separate power class. The ranged value is defined now even though the current
+dragon attack profile is melee plus magic, so future mixed attacks can use the
+same player-style power/defense contract without another definition migration.
+
+Elder Green Dragon special attacks:
+
+- Normal dragonfire still applies through existing dragon combat scripts.
+- Fireshot is a large-radius player-only AOE that uses the `fireball`
+  projectile and the `elder-dragon-fireshot` on-player effect.
+- Burn is a large-radius player-only AOE that uses the `fireball` projectile
+  and the `elder-dragon-burn` on-player effect. It behaves like a short debuff:
+  it does not stack, can be reapplied to refresh its duration, and deals
+  alternate/yellow hitsplats for `1-3` damage over roughly `5` seconds.
+- Melee sweep is its own melee special attack, not a rider on every melee hit.
+  When selected, it replaces the normal single-target melee attack and can hit
+  player targets within a `2` tile radius. The sweep should not hit NPCs or
+  summons.
+
 ## NPC Combat Structure Direction
 
 NPC defense is already partly modernized. NPC definitions support explicit
@@ -240,7 +271,7 @@ NPC defense is already partly modernized. NPC definitions support explicit
 server derives them from legacy `defense` using per-style multipliers or
 divisors.
 
-NPC offense is still shortcut-based:
+NPC offense was previously shortcut-based:
 
 - Melee offense uses `strength`.
 - Ranged offense for projectile-capable NPCs derives from
@@ -249,8 +280,8 @@ NPC offense is still shortcut-based:
 - The legacy `ranged` field is effectively only a boolean and should not be
   treated as a modern ranged power value.
 
-The next combat-structure step is to add explicit NPC offense fields while
-keeping legacy fallback behavior:
+NPC definitions now support explicit player-style power fields while keeping
+legacy fallback behavior:
 
 - `meleeOffense`, optional; falls back to `strength`.
 - `rangedOffense`, optional; falls back to the existing attack/strength
@@ -258,10 +289,13 @@ keeping legacy fallback behavior:
 - `magicOffense`, optional; falls back to the existing attack/strength shortcut
   when an NPC profile uses magic projectiles.
 
-This lets old NPCs keep their current behavior while new NPCs, starting with
-Elder Green Dragon, can be built with intentional combat stats. It also gives
-future content a cleaner definition format and avoids stacking more special
-cases into `NpcAttackStyleProfile`.
+Together with `meleeDefense`, `rangedDefense`, and `magicDefense`, this gives
+new NPCs the same broad combat contract as players: a typed power value rolls
+against the matching typed defense value. Old NPCs keep their current behavior
+through fallback derivation, while new NPCs, starting with Elder Green Dragon,
+can be built with intentional combat stats. It also gives future content a
+cleaner definition format and avoids stacking more special cases into
+`NpcAttackStyleProfile`.
 
 Follow-up combat cleanup to evaluate:
 
@@ -293,18 +327,22 @@ Follow-up combat cleanup to evaluate:
 - [ ] Add purified rune equipment recipes.
 - [ ] Add dragon-rune equipment recipes.
 - [ ] Add equipment stats, requirements, prices, and examine text.
-- [ ] Rename prototype `Elder Dragon` to `Elder Green Dragon`.
-- [ ] Add explicit NPC offense fields for modern melee, ranged, and magic
+- [x] Rename prototype `Elder Dragon` to `Elder Green Dragon`.
+- [x] Add explicit NPC offense fields for modern melee, ranged, and magic
       power with legacy fallbacks.
-- [ ] Update NPC definition loading, patching, and override tests for explicit
+- [x] Update NPC definition loading, patching, and override tests for explicit
       offense fields.
-- [ ] Set Elder Green Dragon's final combat stats after the explicit offense
+- [x] Set Elder Green Dragon's final combat stats after the explicit offense
       fields exist.
+- [x] Add Elder Green Dragon-only fireshot AOE, burn debuff AOE, and melee
+      sweep hooks.
 - [ ] Place Elder Green Dragon spawns near the Dragon sulfur rocks.
-- [ ] Add Elder Green Dragon Mischief Imp scare-away behavior.
-- [ ] Move special King Black Dragon hide/leather/armor naming, colors,
+- [x] Add Elder Green Dragon Mischief Imp scare-away behavior.
+- [x] Move special King Black Dragon hide/leather/armor naming, colors,
       examines, and source drops to Elder Green Dragon.
-- [ ] Change King Black Dragon's guaranteed hide drop to black dragon hide.
+- [x] Change King Black Dragon's guaranteed hide drop to black dragon hide.
+- [x] Add the first Elder Green Dragon normal loot table with common,
+      uncommon, and rare buckets.
 - [ ] Update smithing and mining skill guides.
 - [x] Update `docs/myworld/info/object-ids.md` with new ore rock IDs.
 - [ ] Update release notes when the content is player-facing.
@@ -322,14 +360,20 @@ Follow-up combat cleanup to evaluate:
 - [ ] Verify equipment stats and requirements in worn item UI.
 - [ ] Verify Elder Green Dragon attack behavior uses intended melee/ranged/magic
       power values.
+- [ ] Verify Elder Green Dragon fireshot, burn, and melee sweep only hit
+      players and do not hit NPCs or summons.
+- [ ] Verify Elder Green Dragon burn does not stack and can be refreshed by a
+      later burn application.
 - [ ] Verify Elder Green Dragon defense behavior uses intended
       melee/ranged/magic defense values.
-- [ ] Verify Mischief Imp is dismissed or scared away by Elder Green Dragon and
+- [x] Verify Mischief Imp is dismissed or scared away by Elder Green Dragon and
       that other summons are unaffected unless explicitly intended.
-- [ ] Verify King Black Dragon drops black dragon hide after the migration.
-- [ ] Verify Elder Green Dragon drops the renamed special hide.
-- [ ] Verify former King Black Dragon hide/leather/armor item IDs retain player
+- [x] Verify King Black Dragon drops black dragon hide after the migration.
+- [x] Verify Elder Green Dragon drops the renamed special hide.
+- [x] Verify former King Black Dragon hide/leather/armor item IDs retain player
       data while showing the new Elder Green Dragon identity.
+- [ ] Verify Elder Green Dragon normal loot rolls from the intended common,
+      uncommon, and rare buckets.
 - [ ] Verify guide text reflects the final recipes and levels.
 - [ ] Run item-definition, production, guide, and plugin reference tests.
 - [ ] Manually test the area in-client for camera, clickability, and map
@@ -347,8 +391,17 @@ Follow-up combat cleanup to evaluate:
   relying on attack/strength shortcuts for ranged and magic power.
 - Existing legacy NPCs should keep fallback stat derivation until deliberately
   rebalanced.
-- Elder Green Dragon should inherit the special hide/leather/armor identity
+- Elder Green Dragon inherits the special hide/leather/armor identity
   currently attached to King Black Dragon.
+- Elder Green Dragon's first normal loot table uses `96/24/8` weights for
+  common, uncommon, and rare buckets. The rare bucket is a true rare nested
+  table so private-loot damage contribution can scale access to that bucket.
+- Elder Green Dragon common drops include the base ebony staff plus every
+  non-element altar ebony staff variant: mind, body, cosmic, chaos, nature,
+  law, death, blood rune, soul, and life.
+- Elder Green Dragon uncommon drops include a blood bow and a blood staff
+  enchanted at the Death altar. Its rare bucket is the intended normal-table
+  source for the current dragon weapon set.
 
 ## Open Questions
 
@@ -367,8 +420,8 @@ Follow-up combat cleanup to evaluate:
 - How rare should the new ore be compared with runite?
 - Should the new Mining Guild section include any enemies, hazards, or only
   high-level resource access?
-- What exact Elder Green Dragon combat level, hitpoints, and per-style combat
-  stats feel right once explicit NPC offense fields exist?
+- Do the initial Elder Green Dragon stats need adjustment after live combat
+  testing?
 - Should Elder Green Dragon use melee plus magic only like current dragons, or
   should it also gain a distinct ranged-style attack?
 - Should NPC attack style become a definition field as part of this pass, or

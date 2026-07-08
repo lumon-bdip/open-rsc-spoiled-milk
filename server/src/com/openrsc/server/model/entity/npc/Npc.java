@@ -551,11 +551,19 @@ public class Npc extends Mob {
 
 	@Override
 	public int getMeleeOffense() {
+		int explicitOffense = getDef().getMeleeOffense();
+		if (explicitOffense > 0) {
+			return explicitOffense;
+		}
 		return getDef().getStr();
 	}
 
 	@Override
 	public int getRangedOffense() {
+		int explicitOffense = getDef().getRangedOffense();
+		if (explicitOffense > 0) {
+			return explicitOffense;
+		}
 		int profileOffense = NpcAttackStyleProfile.forNpc(this).getRangedOffense(this);
 		if (profileOffense > 0) {
 			return profileOffense;
@@ -565,6 +573,10 @@ public class Npc extends Mob {
 
 	@Override
 	public int getMagicOffense() {
+		int explicitOffense = getDef().getMagicOffense();
+		if (explicitOffense > 0) {
+			return explicitOffense;
+		}
 		return NpcAttackStyleProfile.forNpc(this).getMagicOffense(this);
 	}
 

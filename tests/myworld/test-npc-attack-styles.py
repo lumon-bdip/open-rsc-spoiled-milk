@@ -173,8 +173,11 @@ def main() -> None:
     require_contains(NPC_ATTACK_STYLE_PROFILE, "DataConversions.getRandom().nextInt(100) < 10")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "MELEE_RARE_MAGIC")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "Math.max(1, Math.max(npc.getDef().getAtt(), npc.getDef().getStr()))")
-    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1.0D, getMagicOffense(npc) / 12.0D);")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1.0D, npc.getMagicOffense() / 12.0D);")
 
+    require_contains(NPC, "int explicitOffense = getDef().getMeleeOffense();")
+    require_contains(NPC, "int explicitOffense = getDef().getRangedOffense();")
+    require_contains(NPC, "int explicitOffense = getDef().getMagicOffense();")
     require_contains(NPC, "NpcAttackStyleProfile.forNpc(this).getRangedOffense(this)")
     require_contains(NPC, "return getDef().getRanged();")
     require_contains(NPC, "return NpcAttackStyleProfile.forNpc(this).getMagicOffense(this);")

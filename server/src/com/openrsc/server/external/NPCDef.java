@@ -34,6 +34,9 @@ public class NPCDef extends EntityDef {
 	 */
 	public int defense;
 	public int ranged;
+	public int meleeOffense;
+	public int rangedOffense;
+	public int magicOffense;
 	public int meleeDefense;
 	public int rangedDefense;
 	public int magicDefense;
@@ -108,6 +111,9 @@ public class NPCDef extends EntityDef {
 		this.hits = builder.hits;
 			this.defense = builder.defense;
 			this.ranged = builder.ranged;
+			this.meleeOffense = builder.meleeOffense;
+			this.rangedOffense = builder.rangedOffense;
+			this.magicOffense = builder.magicOffense;
 			this.meleeDefense = builder.meleeDefense;
 			this.rangedDefense = builder.rangedDefense;
 			this.magicDefense = builder.magicDefense;
@@ -138,6 +144,9 @@ public class NPCDef extends EntityDef {
 		this.command2 = source.command2;
 		this.defense = source.defense;
 		this.ranged = source.ranged;
+		this.meleeOffense = source.meleeOffense;
+		this.rangedOffense = source.rangedOffense;
+		this.magicOffense = source.magicOffense;
 		this.meleeDefense = source.meleeDefense;
 		this.rangedDefense = source.rangedDefense;
 		this.magicDefense = source.magicDefense;
@@ -207,6 +216,15 @@ public class NPCDef extends EntityDef {
 	}
 	public int getRanged() {
 		return ranged;
+	}
+	public int getMeleeOffense() {
+		return meleeOffense;
+	}
+	public int getRangedOffense() {
+		return rangedOffense;
+	}
+	public int getMagicOffense() {
+		return magicOffense;
 	}
 	public int getMeleeDefense() {
 		return meleeDefense;
@@ -300,6 +318,9 @@ public class NPCDef extends EntityDef {
 		private int hits;
 			private int defense;
 			private int ranged;
+			private int meleeOffense;
+			private int rangedOffense;
+			private int magicOffense;
 			private int meleeDefense;
 			private int rangedDefense;
 			private int magicDefense;
@@ -352,6 +373,21 @@ public class NPCDef extends EntityDef {
 
 			public NPCDef.NPCDefinitionBuilder ranged(int ranged) {
 				this.ranged = ranged;
+				return this;
+			}
+
+			public NPCDef.NPCDefinitionBuilder meleeOffense(int meleeOffense) {
+				this.meleeOffense = meleeOffense;
+				return this;
+			}
+
+			public NPCDef.NPCDefinitionBuilder rangedOffense(int rangedOffense) {
+				this.rangedOffense = rangedOffense;
+				return this;
+			}
+
+			public NPCDef.NPCDefinitionBuilder magicOffense(int magicOffense) {
+				this.magicOffense = magicOffense;
 				return this;
 			}
 

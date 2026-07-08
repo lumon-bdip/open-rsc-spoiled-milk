@@ -10,6 +10,7 @@ ENTITY_HANDLER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "exter
 
 NPC_FIELDS = {
     "id", "name", "description", "attack", "strength", "hits", "defense", "ranged",
+    "meleeOffense", "rangedOffense", "magicOffense",
     "meleeDefense", "rangedDefense", "magicDefense", "meleeDefenseMultiplier",
     "rangedDefenseMultiplier", "magicDefenseMultiplier", "meleeDefenseDivisor",
     "rangedDefenseDivisor", "magicDefenseDivisor", "combatlvl", "hairColour",
@@ -76,6 +77,10 @@ def main() -> None:
     source = ENTITY_HANDLER.read_text(encoding="utf-8")
     require(source, "ArrayList<NPCDef> stagedNpcs = new ArrayList<>(npcs);", "staged NPC catalog")
     require(source, "npcs = stagedNpcs;", "atomic NPC catalog swap")
+    require(source, '"meleeOffense", "rangedOffense", "magicOffense"', "NPC power override whitelist")
+    require(source, 'if (npc.has("meleeOffense")) staged.meleeOffense', "NPC melee power override")
+    require(source, 'if (npc.has("rangedOffense")) staged.rangedOffense', "NPC ranged power override")
+    require(source, 'if (npc.has("magicOffense")) staged.magicOffense', "NPC magic power override")
     require(source, "ArrayList<ItemDefinition> stagedItems = new ArrayList<>(items);", "staged item catalog")
     require(source, "items = stagedItems;", "atomic item catalog swap")
     require(source, 'throw new IllegalArgumentException("Duplicate npc override id "', "duplicate NPC rejection")

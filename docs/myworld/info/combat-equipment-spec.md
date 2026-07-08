@@ -685,7 +685,7 @@ Leather and carapace armor use full-set bonuses tied to the source creature.
   - deals fire magic damage up to max hit `18`
   - applies fire debuff tier `4`
 
-- `King Black Dragon` -> `True Dragon's Breath`
+- `Elder Green Dragon` -> `True Dragon's Breath`
   - proc-based
   - `60%` chance per attack
   - dragon breath attack

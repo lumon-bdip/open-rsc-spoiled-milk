@@ -17,6 +17,9 @@ NPC_DROPS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "constants"
 NPC_BEHAVIOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcBehavior.java"
 NPC_ATTACK_STYLE_PROFILE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcAttackStyleProfile.java"
 COMBAT_FORMULA = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "CombatFormula.java"
+PVM_MELEE_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "PvmMeleeEvent.java"
+PROJECTILE_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ProjectileEvent.java"
+ELDER_GREEN_DRAGON_SPECIALS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "ElderGreenDragonSpecialAttacks.java"
 GROUND_ITEM = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "GroundItem.java"
 DROP_TABLE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "DropTable.java"
 ATTACK_HANDLER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "AttackHandler.java"
@@ -130,7 +133,10 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false)")
     require_contains(NPC_BEHAVIOR, "CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc))")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1, Math.max(npc.getDef().getAtt(), npc.getDef().getStr()));")
-    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1.0D, getMagicOffense(npc) / 12.0D);")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1.0D, npc.getMagicOffense() / 12.0D);")
+    require_contains(NPC, "int explicitOffense = getDef().getMeleeOffense();")
+    require_contains(NPC, "int explicitOffense = getDef().getRangedOffense();")
+    require_contains(NPC, "int explicitOffense = getDef().getMagicOffense();")
     require_contains(NPC, "return NpcAttackStyleProfile.forNpc(this).getMagicOffense(this);")
     require_contains(NPC, "return applyFireDefenseDebuffToValue(defense);")
     require_contains(MYWORLD_CONF, "osrs_combat_ranged: false")
@@ -229,6 +235,31 @@ def main() -> None:
     require_contains(NPC_DROPS, "VERY_RARE_UNIQUE(2048)")
     require_contains(NPC_DROPS, "ULTRA_RARE_UNIQUE(4096)")
     require_contains(NPC_DROPS, "MYTHIC_UNIQUE(8192)")
+
+    require_contains(PVM_MELEE_EVENT, "ElderGreenDragonSpecialAttacks.applyMeleeSweep")
+    require_contains(PVM_MELEE_EVENT, "ElderGreenDragonSpecialAttacks.shouldUseMeleeSweep")
+    require_order(
+        PVM_MELEE_EVENT,
+        "ElderGreenDragonSpecialAttacks.shouldUseMeleeSweep(attackerMob, targetMob, attackSuppressed)",
+        "inflictDamage(attackerMob, targetMob, damage)",
+    )
+    require_contains(PROJECTILE_EVENT, "ElderGreenDragonSpecialAttacks.maybeApplyProjectileAoe")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "public static final int AOE_RADIUS = 6;")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "public static final int MELEE_SWEEP_RADIUS = 2;")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "public static final int BURN_DURATION_MILLIS = 5000;")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "public static final int BURN_DAMAGE_MIN = 1;")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "public static final int BURN_DAMAGE_MAX = 3;")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "private static final int MELEE_SWEEP_PROC_PERCENT = 25;")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "((Npc) mob).getID() == NpcId.ELDER_GREEN_DRAGON.id()")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "public static boolean shouldUseMeleeSweep")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "new Projectile(dragon, player, Projectile.FIREBALL)")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "CombatEffect.ELDER_DRAGON_FIRESHOT")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "CombatEffect.ELDER_DRAGON_BURN")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "DamageStyle.BURN")
+    require_contains(ELDER_GREEN_DRAGON_SPECIALS, "HitSplat.TYPE_ARMOR_PROC")
+    require_contains(CLIENT, "COMBAT_EFFECT_ELDER_DRAGON_FIRESHOT = 62")
+    require_contains(CLIENT, "COMBAT_EFFECT_ELDER_DRAGON_BURN = 63")
+    require_contains(CLIENT, '"elder-dragon-fireshot", "elder-dragon-burn"')
 
     print("PASS: combat runtime invariants validated")
 

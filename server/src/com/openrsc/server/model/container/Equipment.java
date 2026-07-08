@@ -273,12 +273,12 @@ public class Equipment {
 		ItemId.BLACK_DRAGON_CHAPS.id(),
 		ItemId.BLACK_DRAGON_CUIRASS.id()
 	};
-	private static final int[] kingBlackDragonSetIds = {
-		ItemId.KING_BLACK_DRAGON_COIF.id(),
-		ItemId.KING_BLACK_DRAGON_GLOVES.id(),
-		ItemId.KING_BLACK_DRAGON_BOOTS.id(),
-		ItemId.KING_BLACK_DRAGON_CHAPS.id(),
-		ItemId.KING_BLACK_DRAGON_CUIRASS.id()
+	private static final int[] elderGreenDragonSetIds = {
+		ItemId.ELDER_GREEN_DRAGON_COIF.id(),
+		ItemId.ELDER_GREEN_DRAGON_GLOVES.id(),
+		ItemId.ELDER_GREEN_DRAGON_BOOTS.id(),
+		ItemId.ELDER_GREEN_DRAGON_CHAPS.id(),
+		ItemId.ELDER_GREEN_DRAGON_CUIRASS.id()
 	};
 	private static final int[] fireGiantSetIds = {
 		ItemId.FIRE_GIANT_COIF.id(),
@@ -2149,8 +2149,8 @@ public class Equipment {
 		return hasFullSet(blackDragonSetIds);
 	}
 
-	public boolean hasFullKingBlackDragonSet() {
-		return hasFullSet(kingBlackDragonSetIds);
+	public boolean hasFullElderGreenDragonSet() {
+		return hasFullSet(elderGreenDragonSetIds);
 	}
 
 	public int getMeleeOffense() {

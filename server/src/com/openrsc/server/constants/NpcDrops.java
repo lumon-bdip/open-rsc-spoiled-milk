@@ -487,6 +487,7 @@ public class NpcDrops {
 		this.dragonNpcs.add(NpcId.BLUE_DRAGON.id());
 		this.dragonNpcs.add(NpcId.BLACK_DRAGON.id());
 		this.dragonNpcs.add(NpcId.KING_BLACK_DRAGON.id());
+		this.dragonNpcs.add(NpcId.ELDER_GREEN_DRAGON.id());
 	}
 
 	private void generateNpcDrops() {
@@ -2204,8 +2205,87 @@ public class NpcDrops {
 		addNormalDrop(NpcId.BLACK_DEMON_GRANDTREE.id(), ItemId.DEMON_EYE.id(), 1, 4, "Black Demon Grand Tree eye");
 		addGuaranteedDrop(NpcId.BLACK_DRAGON.id(), ItemId.BLACK_DRAGON_HIDE.id(), "Black Dragon hide");
 		addGuaranteedDrop(NpcId.BALROG.id(), ItemId.BALROG_HIDE.id(), "Balrog hide");
-		addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.KING_BLACK_DRAGON_HIDE.id(), "King Black Dragon hide");
+		addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.BLACK_DRAGON_HIDE.id(), "King Black Dragon black dragon hide");
+		addGuaranteedDrop(NpcId.ELDER_GREEN_DRAGON.id(), ItemId.ELDER_GREEN_DRAGON_HIDE.id(), "Elder Green Dragon hide");
+		createElderGreenDragonDropTable();
 		addNormalDrop(NpcId.GIANT_BAT.id(), ItemId.BAT_EYE.id(), 1, 4, "Giant bat eye");
+	}
+
+	private void createElderGreenDragonDropTable() {
+		DropTable elderGreenDragonDrops = this.npcDrops.get(NpcId.ELDER_GREEN_DRAGON.id());
+		if (elderGreenDragonDrops == null) {
+			elderGreenDragonDrops = new DropTable("Elder Green Dragon (844)");
+			this.npcDrops.put(NpcId.ELDER_GREEN_DRAGON.id(), elderGreenDragonDrops);
+		}
+		if (elderGreenDragonDrops.getTotalWeight() > 0) {
+			return;
+		}
+
+		DropTable commonDrops = new DropTable("Elder Green Dragon common drops");
+		commonDrops.addItemDrop(ItemId.CHAOS_RUNE.id(), 200, 1);
+		commonDrops.addItemDrop(ItemId.DEATH_RUNE.id(), 50, 1);
+		commonDrops.addItemDrop(ItemId.MITHRIL_ARROWS.id(), 200, 1);
+		commonDrops.addItemDrop(ItemId.MITHRIL_BOLTS.id(), 200, 1);
+		commonDrops.addItemDrop(ItemId.MITHRIL_THROWING_DART.id(), 200, 1);
+		commonDrops.addItemDrop(ItemId.MITHRIL_THROWING_KNIFE.id(), 200, 1);
+		commonDrops.addItemDrop(ItemId.MITHRIL_SHURIKEN.id(), 200, 1);
+		commonDrops.addItemDrop(ItemId.EBONY_LONGBOW.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.MIND_EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.BODY_EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.COSMIC_EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.CHAOS_EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.NATURE_EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.LAW_EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.DEATH_EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.BLOOD_RUNE_EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.SOUL_EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.LIFE_EBONY_STAFF.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.ORICHALCUM_2_HANDED_SWORD.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.ORICHALCUM_PLATE_MAIL_BODY.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.MEDIUM_RUNE_HELMET.id(), 1, 1);
+		commonDrops.addItemDrop(ItemId.LARGE_RUNE_HELMET.id(), 1, 1);
+
+		DropTable uncommonDrops = new DropTable("Elder Green Dragon uncommon drops");
+		uncommonDrops.addItemDrop(ItemId.RUNITE_GREAVES.id(), 1, 1);
+		uncommonDrops.addItemDrop(ItemId.RUNITE_GAUNTLETS.id(), 1, 1);
+		uncommonDrops.addItemDrop(ItemId.RUNE_PLATE_MAIL_LEGS.id(), 1, 1);
+		uncommonDrops.addItemDrop(ItemId.DEATH_RUNE.id(), 100, 1);
+		uncommonDrops.addItemDrop(ItemId.BLOOD_RUNE.id(), 40, 1);
+		uncommonDrops.addItemDrop(ItemId.TITAN_STEEL_ARROWS.id(), 100, 1);
+		uncommonDrops.addItemDrop(ItemId.TITAN_STEEL_BOLTS.id(), 100, 1);
+		uncommonDrops.addItemDrop(ItemId.TITAN_STEEL_THROWING_DART.id(), 100, 1);
+		uncommonDrops.addItemDrop(ItemId.TITAN_STEEL_THROWING_KNIFE.id(), 100, 1);
+		uncommonDrops.addItemDrop(ItemId.TITAN_STEEL_SHURIKEN.id(), 100, 1);
+		uncommonDrops.addItemDrop(ItemId.BLOOD_LONGBOW.id(), 1, 1);
+		uncommonDrops.addItemDrop(ItemId.DEATH_BLOOD_STAFF.id(), 1, 1);
+
+		DropTable rareDrops = new DropTable("Elder Green Dragon rare drops", true);
+		rareDrops.addItemDrop(ItemId.BLOOD_RUNE.id(), 100, 1);
+		rareDrops.addItemDrop(ItemId.DEATH_RUNE.id(), 400, 1);
+		rareDrops.addItemDrop(ItemId.LAW_RUNE.id(), 200, 1);
+		rareDrops.addItemDrop(ItemId.RUNE_ARROWS.id(), 200, 1);
+		rareDrops.addItemDrop(ItemId.RUNE_BOLTS.id(), 200, 1);
+		rareDrops.addItemDrop(ItemId.RUNE_THROWING_DART.id(), 200, 1);
+		rareDrops.addItemDrop(ItemId.RUNE_THROWING_KNIFE.id(), 200, 1);
+		rareDrops.addItemDrop(ItemId.RUNE_SHURIKEN.id(), 200, 1);
+		rareDrops.addItemDrop(ItemId.RUNE_PLATE_MAIL_BODY.id(), 1, 1);
+		rareDrops.addItemDrop(ItemId.DRAGON_SWORD.id(), 1, 1);
+		rareDrops.addItemDrop(ItemId.DRAGON_AXE.id(), 1, 1);
+		rareDrops.addItemDrop(ItemId.DRAGON_2_HANDED_SWORD.id(), 1, 1);
+		rareDrops.addItemDrop(ItemId.DRAGON_DAGGER.id(), 1, 1);
+		rareDrops.addItemDrop(ItemId.POISONED_DRAGON_DAGGER.id(), 1, 1);
+		rareDrops.addItemDrop(ItemId.DRAGON_BATTLE_AXE.id(), 1, 1);
+		rareDrops.addItemDrop(ItemId.DRAGON_CROSSBOW.id(), 1, 1);
+		rareDrops.addItemDrop(ItemId.DRAGON_LONGBOW.id(), 1, 1);
+		rareDrops.addItemDrop(ItemId.DRAGON_ARROWS.id(), 200, 1);
+		rareDrops.addItemDrop(ItemId.POISON_DRAGON_ARROWS.id(), 200, 1);
+		rareDrops.addItemDrop(ItemId.DRAGON_BOLTS.id(), 200, 1);
+		rareDrops.addItemDrop(ItemId.POISON_DRAGON_BOLTS.id(), 200, 1);
+
+		elderGreenDragonDrops.addTableDrop(commonDrops, 96);
+		elderGreenDragonDrops.addTableDrop(uncommonDrops, 24);
+		elderGreenDragonDrops.addTableDrop(rareDrops, 8);
 	}
 
 	private void addNormalDrop(int npcId, int itemId, int amount, int weight, String description) {

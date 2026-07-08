@@ -108,7 +108,7 @@ public final class EntranaRestrictions {
 		ItemId.BLACK_DEMON_CUIRASS.id(),
 		ItemId.BLACK_DRAGON_CUIRASS.id(),
 		ItemId.BALROG_CUIRASS.id(),
-		ItemId.KING_BLACK_DRAGON_CUIRASS.id(),
+		ItemId.ELDER_GREEN_DRAGON_CUIRASS.id(),
 
 		// Cross Bows
 		ItemId.PHOENIX_CROSSBOW.id(),

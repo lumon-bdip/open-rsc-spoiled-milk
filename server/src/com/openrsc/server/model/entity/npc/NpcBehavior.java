@@ -362,7 +362,9 @@ public class NpcBehavior {
 			return;
 		}
 
-		if (target.isPlayer() && Summoning.hasImpProtection((Player) target)) {
+		if (target.isPlayer()
+			&& Summoning.hasImpProtection((Player) target)
+			&& !Summoning.scareAwayImpForElderGreenDragon((Player) target, npc)) {
 			npc.setLastOpponent(null);
 			npc.clearHostility();
 			setRoaming();
@@ -667,6 +669,9 @@ public class NpcBehavior {
 		boolean impervious = isPlayer
 			&& (((Player) target).isInvulnerableTo(npc) || ((Player) target).isInvisibleTo(npc));
 		boolean protectedByImp = isPlayer && Summoning.hasImpProtection((Player) target);
+		if (protectedByImp && Summoning.scareAwayImpForElderGreenDragon((Player) target, npc)) {
+			protectedByImp = false;
+		}
 
 		return isAggressive
 			&& !impervious

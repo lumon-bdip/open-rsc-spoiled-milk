@@ -113,15 +113,18 @@ def main() -> None:
 
     custom_npcs = (ROOT / "server/conf/server/defs/NpcDefsCustom.json").read_text(encoding="utf-8")
     npc_ids = (ROOT / "server/src/com/openrsc/server/constants/NpcId.java").read_text(encoding="utf-8")
-    require("ELDER_DRAGON(844)" in npc_ids, "NpcId should reserve Elder Dragon")
-    require('"id": 844' in custom_npcs and '"name": "Elder Dragon"' in custom_npcs, "Server should define Elder Dragon")
-    require('"sprites1": 144' in custom_npcs and '"camera1": 904' in custom_npcs and '"camera2": 652' in custom_npcs, "Server Elder Dragon should reuse doubled green dragon visuals")
+    require("ELDER_GREEN_DRAGON(844)" in npc_ids, "NpcId should reserve Elder Green Dragon")
+    require('"id": 844' in custom_npcs and '"name": "Elder Green Dragon"' in custom_npcs, "Server should define Elder Green Dragon")
+    require('"meleeOffense": 250' in custom_npcs and '"rangedOffense": 235' in custom_npcs and '"magicOffense": 270' in custom_npcs, "Server Elder Green Dragon should use explicit offense stats")
+    require('"meleeDefense": 265' in custom_npcs and '"rangedDefense": 210' in custom_npcs and '"magicDefense": 265' in custom_npcs, "Server Elder Green Dragon should use explicit defense stats")
+    require('"sprites1": 144' in custom_npcs and '"camera1": 904' in custom_npcs and '"camera2": 652' in custom_npcs, "Server Elder Green Dragon should reuse doubled green dragon visuals")
     require(
         'setCustomNpcDefinition(844, new NPCDef(' in client_defs
-        and '"Elder Dragon", "A towering ancient green dragon", ""' in client_defs
+        and '"Elder Green Dragon", "A towering ancient green dragon", ""' in client_defs
+        and '275, 250, 280, 265, true' in client_defs
         and 'new int[]{144, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}' in client_defs
         and '904, 652, 10, 7, 70, 844' in client_defs,
-        "Client should define Elder Dragon as a doubled green dragon prototype",
+        "Client should define Elder Green Dragon as a doubled green dragon boss",
     )
 
     print("PASS: Mining Guild/Smithing expansion seed item validated")

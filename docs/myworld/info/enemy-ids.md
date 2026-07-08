@@ -319,7 +319,6 @@ Combat levels `91-999`. Use these IDs with `::spawnnpc <id> <radius>`.
 | 202 | Blue Dragon | 105 | 105 | Yes | Yes | 73 |
 | 344 | Fire Giant | 109 | 111 | Yes | Yes | 73 |
 | 196 | Earth Dragon | 110 | 110 | Yes | No | 75 |
-| 844 | Elder Dragon | 110 | 110 | Yes | Yes | 75 |
 | 294 | Hellhound | 114 | 116 | Yes | Yes | 75 |
 | 663 | San Tojalon | 120 | 120 | Yes | Yes | 53 |
 | 315 | Chronozon | 121 | 60 | Yes | No | 75 |
@@ -334,6 +333,7 @@ Combat levels `91-999`. Use these IDs with `::spawnnpc <id> <radius>`.
 | 568 | Black Demon | 175 | 160 | Yes | Yes | 30 |
 | 291 | Black Dragon | 200 | 190 | Yes | Yes | 73 |
 | 477 | King Black Dragon | 245 | 240 | Yes | Yes | 75 |
+| 844 | Elder Green Dragon | 275 | 280 | Yes | Yes | 75 |
 
 ## Placement Guidance
 

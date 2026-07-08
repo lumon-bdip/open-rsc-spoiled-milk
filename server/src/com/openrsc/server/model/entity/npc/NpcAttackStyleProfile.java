@@ -78,7 +78,7 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public double getMagicSpellPower(final Npc npc) {
-		return Math.max(1.0D, getMagicOffense(npc) / 12.0D);
+		return Math.max(1.0D, npc.getMagicOffense() / 12.0D);
 	}
 
 	public int getRangedOffense(final Npc npc) {

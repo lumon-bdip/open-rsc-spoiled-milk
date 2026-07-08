@@ -1746,10 +1746,10 @@ public class Crafting implements UseInvTrigger,
 				return new HideArmorRecipe(materialId, "Balrog hide", 10, 70,
 					ItemId.BALROG_COIF.id(), ItemId.BALROG_GLOVES.id(), ItemId.BALROG_BOOTS.id(),
 					ItemId.BALROG_CHAPS.id(), ItemId.BALROG_CUIRASS.id());
-			case KING_BLACK_DRAGON_LEATHER:
-				return new HideArmorRecipe(materialId, "King black dragon hide", 11, 80,
-					ItemId.KING_BLACK_DRAGON_COIF.id(), ItemId.KING_BLACK_DRAGON_GLOVES.id(), ItemId.KING_BLACK_DRAGON_BOOTS.id(),
-					ItemId.KING_BLACK_DRAGON_CHAPS.id(), ItemId.KING_BLACK_DRAGON_CUIRASS.id());
+			case ELDER_GREEN_DRAGON_LEATHER:
+				return new HideArmorRecipe(materialId, "Elder green dragon hide", 11, 80,
+					ItemId.ELDER_GREEN_DRAGON_COIF.id(), ItemId.ELDER_GREEN_DRAGON_GLOVES.id(), ItemId.ELDER_GREEN_DRAGON_BOOTS.id(),
+					ItemId.ELDER_GREEN_DRAGON_CHAPS.id(), ItemId.ELDER_GREEN_DRAGON_CUIRASS.id());
 			default:
 				return null;
 		}
