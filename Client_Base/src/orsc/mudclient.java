@@ -20250,6 +20250,9 @@ public final class mudclient implements Runnable {
 			if ("Crafting Favor".equalsIgnoreCase(baseName)) {
 				return "crafting-xp";
 			}
+			if ("Saving Grace".equalsIgnoreCase(baseName)) {
+				return "divine-grace";
+			}
 			return getDisplayNameAssetName(baseName);
 		}
 

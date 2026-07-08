@@ -63,6 +63,9 @@ def main():
     for asset_name in ["enchanting-xp", "smithing-xp", "crafting-xp"]:
         require(f'return "{asset_name}";' in mudclient,
                 f"Prayer icon loader should map the {asset_name} favor family")
+    require('"Saving Grace".equalsIgnoreCase(baseName)' in mudclient
+            and 'return "divine-grace";' in mudclient,
+            "Prayer icon loader should keep Saving Grace mapped to the divine-grace asset")
     require("Drain rate:" not in mudclient[mudclient.find("// 1 is prayer list"):mudclient.find("if (var1)")],
             "Prayer UI should no longer present drain rate text")
     require("Your prayer ability is not high enough for this prayer" not in mudclient[
