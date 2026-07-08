@@ -94,6 +94,8 @@ public final class mudclient implements Runnable {
 	private static final int GROUND_ITEM_NAMEPLATE_VERTICAL_PADDING = 6;
 	private static final String TIN_ROCK_MODEL_NAME = "tinrock1";
 	private static final int TIN_ROCK_LEGACY_RED_BACK_FACE = -15361;
+	private static final int DRAGON_SULFUR_ROCK_OBJECT_ID = 1328;
+	private static final int DRAGON_SULFUR_ROCK_COLOR_RESOURCE = GenUtil.colorToResource(255, 112, 16);
 	private static final String FISHING_SPOT_MODEL_NAME = "fishing";
 	private static final String WATCHTOWER_MODEL_NAME = "watchtower";
 	private static final int WATCHTOWER_LEGACY_OUTLIER_MODEL_COORDINATE = 2048;
@@ -23158,6 +23160,18 @@ public final class mudclient implements Runnable {
 	public void setGameObjectInstanceID(int i, int n) {
 		ensureGameObjectInstanceCapacity(i + 1);
 		this.gameObjectInstanceID[i] = n;
+		applyGameObjectInstanceVisualOverrides(i);
+	}
+
+	private void applyGameObjectInstanceVisualOverrides(int i) {
+		RSModel model = this.gameObjectInstanceModel[i];
+		if (model == null) {
+			return;
+		}
+
+		if (this.gameObjectInstanceID[i] == DRAGON_SULFUR_ROCK_OBJECT_ID) {
+			model.tintVisibleFaces(DRAGON_SULFUR_ROCK_COLOR_RESOURCE);
+		}
 	}
 
 	public int getGameObjectInstanceID(int i) {

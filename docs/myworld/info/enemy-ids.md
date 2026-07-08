@@ -304,7 +304,7 @@ Combat levels `51-90`. Use these IDs with `::cnpc <id> <radius>`.
 
 ## Elite And Boss Enemies
 
-Combat levels `91-999`. Use these IDs with `::cnpc <id> <radius>`.
+Combat levels `91-999`. Use these IDs with `::spawnnpc <id> <radius>`.
 
 | ID | Name | Level | HP | Aggro | Members | Respawn |
 | ---: | --- | ---: | ---: | --- | --- | ---: |
@@ -319,6 +319,7 @@ Combat levels `91-999`. Use these IDs with `::cnpc <id> <radius>`.
 | 202 | Blue Dragon | 105 | 105 | Yes | Yes | 73 |
 | 344 | Fire Giant | 109 | 111 | Yes | Yes | 73 |
 | 196 | Earth Dragon | 110 | 110 | Yes | No | 75 |
+| 844 | Elder Dragon | 110 | 110 | Yes | Yes | 75 |
 | 294 | Hellhound | 114 | 116 | Yes | Yes | 75 |
 | 663 | San Tojalon | 120 | 120 | Yes | Yes | 53 |
 | 315 | Chronozon | 121 | 60 | Yes | No | 75 |

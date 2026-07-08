@@ -105,6 +105,8 @@ python3 ./tests/myworld/test-leather-set-bonuses.py
 python3 ./tests/myworld/test-magic-weapon-scaling.py
 python3 ./tests/myworld/test-metal-defense-budgets.py
 python3 ./tests/myworld/test-mining-focus-and-tier11.py
+python3 ./tests/myworld/test-mining-guild-smithing-expansion.py
+python3 ./tests/myworld/test-mining-guild-elite-gate.py
 python3 ./tests/myworld/test-geode-mining-transition.py
 python3 ./tests/myworld/test-repeating-action-progress.py
 python3 ./tests/myworld/test-npc-defense-profiles.py

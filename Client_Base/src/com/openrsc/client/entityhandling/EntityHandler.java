@@ -5714,6 +5714,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3252, new ItemDef("Saradomin mace", "A tier 11 mace blessed by Saradomin", "", 120000, -1, "external-png:saradomin-mace-icon", false, true, 16, 0, true, false, true, 3252));
 		setCustomItemDefinition(3253, new ItemDef("Zamorak mace", "A tier 11 mace blessed by Zamorak", "", 120000, -1, "external-png:zamorak-mace-icon", false, true, 16, 0, true, false, true, 3253));
 		setCustomItemDefinition(3254, new ItemDef("Guthix mace", "A tier 11 mace blessed by Guthix", "", 120000, -1, "external-png:guthix-mace-icon", false, true, 16, 0, true, false, true, 3254));
+		setCustomItemDefinition(3255, new ItemDef("Dragon sulfur", "A volatile sulfurous ore used for high-tier alloys", "", 12000, 23, "items:23", false, false, 0, 0xF05A1A, false, false, true, 3255));
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -6484,6 +6485,12 @@ public class EntityHandler {
 			62, 64, 62, 58, true,
 			new int[]{7, 1, 36, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			16750950, 15634560, 15634560, 16752469, 150, 250, 6, 6, 5, 843
+		));
+		setCustomNpcDefinition(844, new NPCDef(
+			"Elder Dragon", "A towering ancient green dragon", "",
+			110, 98, 110, 110, true,
+			new int[]{144, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 0, 0, 0, 904, 652, 10, 7, 70, 844
 		));
 	}
 
@@ -9623,6 +9630,8 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Ore crusher", "A machine for crushing ore to find gems", "WalkTo", "Examine", 1, 2, 2, 0, "madmachine", ++i)); //1324
 		objects.add(new GameObjectDef("Cosmic sparkles", "Tiny motes of light drift through the void", "WalkTo", "Examine", 0, 2, 2, 0, "myworld_cosmic_sparkles1", ++i)); //1325
 		objects.add(new GameObjectDef("Safety Deposit Box", "A secure box for items barred from Entrana", "Deposit", "Withdraw", 1, 1, 1, 0, "ChestClosed", ++i)); //1326
+		objects.add(new GameObjectDef("Pumpkin", "A ripe event pumpkin ready for harvest", "Harvest", "Examine", 0, 1, 1, 0, "pumpkinwhite", ++i)); //1327
+		objects.add(new GameObjectDef("Dragon sulfur rock", "A volatile sulfur-stained rock", "Mine", "Prospect", 1, 1, 1, 0, "copperrock1", ++i)); //1328
 	}
 
 	public static void load(boolean loadMembers) {

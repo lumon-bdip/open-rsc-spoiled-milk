@@ -325,6 +325,30 @@ public final class RSModel {
 		return replaced;
 	}
 
+	public int tintVisibleFaces(int materialResource) {
+		int replaced = 0;
+		for (int face = 0; face < this.faceHead; face++) {
+			if (isVisibleMaterial(this.faceTextureFront[face]) && this.faceTextureFront[face] != materialResource) {
+				this.faceTextureFront[face] = materialResource;
+				replaced++;
+			}
+			if (isVisibleMaterial(this.faceTextureBack[face]) && this.faceTextureBack[face] != materialResource) {
+				this.faceTextureBack[face] = materialResource;
+				replaced++;
+			}
+		}
+
+		if (replaced > 0) {
+			this.m_Yb = 1;
+			this.renderer3DTransformVersion++;
+		}
+		return replaced;
+	}
+
+	private boolean isVisibleMaterial(int material) {
+		return material != this.m_Vb && material != Scene.TRANSPARENT;
+	}
+
 	public int hideFacesUsingVerticesOutsideLocalBounds(int maxAbsX, int maxAbsY, int maxAbsZ) {
 		boolean[] outlierVertices = new boolean[this.vertHead];
 		for (int vertex = 0; vertex < this.vertHead; vertex++) {

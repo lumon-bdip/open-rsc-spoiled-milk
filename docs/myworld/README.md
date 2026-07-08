@@ -62,6 +62,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   harvested Brawn ingredients.
 - [legacy-limits-audit.md](in-progress-work-plans/legacy-limits-audit.md):
   byte/short-era cap audit and modernization recommendations.
+- [mining-guild-and-smithing-expansion-plan.md](in-progress-work-plans/mining-guild-and-smithing-expansion-plan.md):
+  Mining Guild expansion with a level-90-style gated area, `Dragon sulfur`,
+  purified rune, and dragon-rune Smithing progression.
 - [movement-pathing-release-plan.md](in-progress-work-plans/movement-pathing-release-plan.md):
   movement smoothness, NPC roaming, and pathfinding follow-up plan.
 - [ogg-audio-support-plan.md](in-progress-work-plans/ogg-audio-support-plan.md):
