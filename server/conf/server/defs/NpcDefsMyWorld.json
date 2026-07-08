@@ -150,6 +150,12 @@
       "magicDefenseMultiplier": 1.0
     },
     {
+      "id": 844,
+      "meleeDefenseMultiplier": 1.0,
+      "rangedDefenseMultiplier": 1.0,
+      "magicDefenseMultiplier": 1.0
+    },
+    {
       "id": 5,
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.1,
