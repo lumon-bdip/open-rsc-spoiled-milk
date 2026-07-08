@@ -120,16 +120,22 @@ def main() -> None:
     require(
         "model.tintVisibleFaces(DRAGON_SULFUR_ROCK_COLOR_RESOURCE)" in client_mudclient
         and "int tintVisibleFaces(int materialResource)" in rs_model,
-        "Client should tint only the cloned Dragon sulfur rock model instance",
+        "Client should tint Dragon sulfur rock model instances through the object model preparation path",
     )
     require(
-        "applyGameObjectInstanceVisualOverrides(i);" in client_mudclient
-        and "private void applyGameObjectVisualOverrides(int objectId, RSModel model)" in client_mudclient,
-        "Client should apply Dragon sulfur visual overrides after object model assignment, not only after object ID assignment",
+        "this.gameObjectInstanceModel[i] = prepareGameObjectInstanceModel(this.gameObjectInstanceID[i], m);" in client_mudclient
+        and "private RSModel prepareGameObjectInstanceModel(int objectId, RSModel model)" in client_mudclient,
+        "Client should prepare Dragon sulfur visuals only when assigning an object model",
     )
     require(
-        "applyGameObjectVisualOverrides(objectId, model);\n\t\tapplyRenderer3DGlowEmitter(kind, objectId, model);" in client_mudclient,
-        "Resident object chunks should normalize Dragon sulfur visuals before exporting distant scenery geometry",
+        "private void applyGameObjectInstanceVisualOverrides" not in client_mudclient
+        and "private void applyGameObjectVisualOverrides" not in client_mudclient,
+        "Client should not recolor whatever stale model is present while setting object ids",
+    )
+    require(
+        "applyGameObjectVisualOverrides(objectId, model);" not in client_mudclient
+        and "applyRenderer3DGlowEmitter(kind, objectId, model);" in client_mudclient,
+        "Resident object chunks should not recolor live object models during export",
     )
     require_game_object_compaction_copies_id_before_model(packet_handler)
     sulfur_mining_entry = """<entry>
@@ -149,17 +155,18 @@ def main() -> None:
         in object_ids_doc,
         "Object ID docs should list the Dragon sulfur rock placement ID",
     )
-    runite_loc = next(
-        (
-            loc for loc in custom_scenery_locs
-            if loc["pos"] == {"X": 246, "Y": 3416}
-        ),
-        None,
-    )
-    require(
-        runite_loc is not None and runite_loc["id"] == 210,
-        "Mining Guild rock at 246,3416 should remain runite and must not be saved as Dragon sulfur",
-    )
+    for runite_pos in ({"X": 246, "Y": 3416}, {"X": 263, "Y": 3393}):
+        runite_loc = next(
+            (
+                loc for loc in custom_scenery_locs
+                if loc["pos"] == runite_pos
+            ),
+            None,
+        )
+        require(
+            runite_loc is not None and runite_loc["id"] == 210,
+            f"Mining Guild rock at {runite_pos['X']},{runite_pos['Y']} should remain runite and must not be saved as Dragon sulfur",
+        )
 
     custom_npcs = (ROOT / "server/conf/server/defs/NpcDefsCustom.json").read_text(encoding="utf-8")
     npc_ids = (ROOT / "server/src/com/openrsc/server/constants/NpcId.java").read_text(encoding="utf-8")
