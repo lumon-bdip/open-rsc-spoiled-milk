@@ -51,6 +51,12 @@ def is_frumscone_training_cage_overlay(loc: dict) -> bool:
     return int(loc["id"]) in (203, 516) and 600 <= x <= 624 and 3578 <= y <= 3591
 
 
+def is_elite_mining_guild_dragon_overlay(loc: dict) -> bool:
+    x = int(loc["start"]["X"])
+    y = int(loc["start"]["Y"])
+    return int(loc["id"]) in (196, 844) and 248 <= x <= 280 and 3416 <= y <= 3444
+
+
 def require_valid_drop_budget(drops: str, table_name: str) -> None:
     start = drops.find(f'new DropTable("{table_name}")')
     require(start >= 0, f"Missing drop table: {table_name}")
@@ -168,11 +174,32 @@ def main() -> None:
         training_cage_counts == {516: 2, 203: 4},
         f"Frumscone training cage overlay should have 2 target-practice zombies and 4 baby blue dragons: {dict(training_cage_counts)}",
     )
+    mining_guild_dragon_spawns = [loc for loc in overlay if is_elite_mining_guild_dragon_overlay(loc)]
+    mining_guild_dragon_counts = Counter(loc["id"] for loc in mining_guild_dragon_spawns)
+    require(
+        mining_guild_dragon_counts == {844: 1, 196: 4},
+        f"Elite Mining Guild overlay should have 1 Elder Green Dragon and 4 Green Dragons: {dict(mining_guild_dragon_counts)}",
+    )
+    mining_guild_dragon_starts = {
+        (int(loc["id"]), int(loc["start"]["X"]), int(loc["start"]["Y"]))
+        for loc in mining_guild_dragon_spawns
+    }
+    require(
+        mining_guild_dragon_starts == {
+            (844, 263, 3430),
+            (196, 259, 3431),
+            (196, 269, 3428),
+            (196, 254, 3427),
+            (196, 274, 3422),
+        },
+        "Elite Mining Guild dragon starts should guard the dragon sulfur field",
+    )
     population_overlay = [
         loc for loc in overlay
         if not is_rangers_guild_overlay(loc)
         and not is_karamja_volcano_fire_warrior_overlay(loc)
         and not is_frumscone_training_cage_overlay(loc)
+        and not is_elite_mining_guild_dragon_overlay(loc)
     ]
     counts = Counter(loc["id"] for loc in population_overlay)
     expected_counts = {
