@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.production.ProductionRecipe;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
@@ -38,7 +39,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		ItemId.TIN_BAR.id(), ItemId.COPPER_BAR.id(), ItemId.BRONZE_BAR.id(),
 		ItemId.IRON_BAR.id(), ItemId.STEEL_BAR.id(), ItemId.MITHRIL_BAR.id(),
 		ItemId.TITAN_STEEL_BAR.id(), ItemId.ADAMANTITE_BAR.id(),
-		ItemId.ORICHALCUM_BAR.id(), ItemId.RUNITE_BAR.id()
+		ItemId.ORICHALCUM_BAR.id(), ItemId.RUNITE_BAR.id(),
+		MyWorldItemId.PURIFIED_RUNE_BAR
 	};
 
 	@Override
@@ -1029,7 +1031,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	 * Gets the smithing exp for the given amount of the right bars
 	 */
 	public int getSmithingExp(int barID, int barCount) {
-		int[] exps = {25, 40, 50, 100, 150, 200, 240, 250, 300, 350};
+		int[] exps = {25, 40, 50, 100, 150, 200, 240, 250, 300, 350, 500};
 		int type = getBarType(barID);
 		if (type < 0) {
 			return 0;
@@ -1041,7 +1043,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	 * Gets the min level required to smith a bar
 	 */
 	public int minSmithingLevel(int barID) {
-		int[] levels = {1, 8, 15, 22, 30, 38, 46, 54, 62, 70};
+		int[] levels = {1, 8, 15, 22, 30, 38, 46, 54, 62, 70, 90};
 		int type = getBarType(barID);
 		if (type < 0) {
 			return -1;
@@ -1053,6 +1055,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	 * Gets the type of bar we have
 	 */
 	public int getBarType(int barID) {
+		if (barID == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return 10;
+		}
 		switch (ItemId.getById(barID)) {
 			case TIN_BAR:
 				return 0;
@@ -1086,10 +1091,14 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		return id == ItemId.TIN_BAR || id == ItemId.COPPER_BAR || id == ItemId.BRONZE_BAR
 			|| id == ItemId.IRON_BAR || id == ItemId.STEEL_BAR || id == ItemId.MITHRIL_BAR
 			|| id == ItemId.TITAN_STEEL_BAR || id == ItemId.ADAMANTITE_BAR
-			|| id == ItemId.ORICHALCUM_BAR || id == ItemId.RUNITE_BAR;
+			|| id == ItemId.ORICHALCUM_BAR || id == ItemId.RUNITE_BAR
+			|| barId == MyWorldItemId.PURIFIED_RUNE_BAR;
 	}
 
 	private int getMetalTier(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return 12;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return 1;
@@ -1117,11 +1126,14 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernMetalBaseLevel(int tier) {
-		int[] levels = {0, 1, 8, 15, 22, 30, 38, 46, 54, 62, 70};
+		int[] levels = {0, 1, 8, 15, 22, 30, 38, 46, 54, 62, 70, 80, 90};
 		return levels[tier];
 	}
 
 	private int getModernHelmetId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_HELMET;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_LARGE_HELMET.id();
@@ -1149,6 +1161,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernGauntletId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_GAUNTLETS;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_GAUNTLETS.id();
@@ -1176,6 +1191,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernGreavesId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_GREAVES;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_GREAVES.id();
@@ -1203,6 +1221,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernShieldId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_SQUARE_SHIELD;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_SQUARE_SHIELD.id();
@@ -1230,6 +1251,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernPaladinShieldId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_PALADIN_SHIELD;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_KITE_SHIELD.id();
@@ -1257,6 +1281,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernLegsId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_PLATE_MAIL_LEGS;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_PLATE_MAIL_LEGS.id();
@@ -1284,6 +1311,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernBodyId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_PLATE_MAIL_BODY;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_PLATE_MAIL_BODY.id();
@@ -1446,6 +1476,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernDaggerId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_DAGGER;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_DAGGER.id();
@@ -1500,6 +1533,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernShortSwordId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_SHORT_SWORD;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_SHORT_SWORD.id();
@@ -1527,6 +1563,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernLongSwordId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_LONG_SWORD;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_LONG_SWORD.id();
@@ -1554,6 +1593,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernScimitarId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_SCIMITAR;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_SCIMITAR.id();
@@ -1581,6 +1623,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernTwoHandedSwordId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_2_HANDED_SWORD;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_2_HANDED_SWORD.id();
@@ -1608,6 +1653,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernAxeId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_HATCHET;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_AXE.id();
@@ -1635,6 +1683,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernBattleAxeId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_BATTLE_AXE;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_BATTLE_AXE.id();
@@ -1662,6 +1713,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernScytheId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_SCYTHE;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_SCYTHE.id();
@@ -1689,6 +1743,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernPickaxeId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_PICKAXE;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_PICKAXE.id();
@@ -1716,6 +1773,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernShearsId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_SHEARS;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.SHEARS.id();
@@ -1743,6 +1803,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernMaceId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_MACE;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_MACE.id();
@@ -1770,6 +1833,9 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	}
 
 	private int getModernSpearId(int barId) {
+		if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {
+			return MyWorldItemId.EXALTED_RUNE_SPEAR;
+		}
 		switch (ItemId.getById(barId)) {
 			case TIN_BAR:
 				return ItemId.TIN_SPEAR.id();

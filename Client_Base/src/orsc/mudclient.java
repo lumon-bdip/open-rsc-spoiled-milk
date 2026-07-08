@@ -201,13 +201,14 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_EARTH_SWORD = 61;
 	public static final int COMBAT_EFFECT_ELDER_DRAGON_FIRESHOT = 62;
 	public static final int COMBAT_EFFECT_ELDER_DRAGON_BURN = 63;
+	public static final int COMBAT_EFFECT_TRUE_DEFENSE = 64;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
 	public static final int COMBAT_EFFECT_WATER_ERUPTION = COMBAT_EFFECT_HURRICANE;
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 63;
+	public static final int COMBAT_EFFECT_COUNT = 64;
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_TICKS = 40;
@@ -1022,7 +1023,8 @@ public final class mudclient implements Runnable {
 		"battle-mage-air", "battle-mage-earth", "battle-mage-water", "battle-mage-fire",
 		"green-dragon-magic", "fire-dragon-magic", "otherworldly-being-magic", "paladin-magic",
 		"fire-kin-magic", "ice-kin-magic", "earth-kin-magic", "dragon-weapon-breath",
-		"fire-sword", "ice-sword", "earth-sword", "elder-dragon-fireshot", "elder-dragon-burn"
+		"fire-sword", "ice-sword", "earth-sword", "elder-dragon-fireshot", "elder-dragon-burn",
+		"true-defense"
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final Sprite[][] projectileEffectMirrorSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
@@ -1501,8 +1503,6 @@ public final class mudclient implements Runnable {
 	@Override
 	public final void run() {
 		try {
-
-
 			try {
 				if (this.gameState == 1) {
 					for (this.gameState = 2; !clientPort.isDisplayable() && this.threadState >= 0; GenUtil
@@ -1526,7 +1526,6 @@ public final class mudclient implements Runnable {
 					}
 
 					if (!this.loadLogo()) {
-
 						if (this.threadState != -2) {
 							this.closeProgram();
 						}
@@ -1864,11 +1863,12 @@ public final class mudclient implements Runnable {
 		this.clientBaseThread = new Thread(this, "Spoiled Milk Client Loop");
 		this.clientBaseThread.setUncaughtExceptionHandler((thread, throwable) ->
 			ClientRuntimeLogger.logThrowable("Uncaught exception in " + thread.getName(), throwable));
+		this.clientBaseThread.setDaemon(false);
+		gameState = 1;
 		this.clientBaseThread.start();
 		if (!isAndroid()) {
 			this.clientBaseThread.setPriority(1);
 		}
-		gameState = 1;
 	}
 
 	public World getWorld() {
@@ -19142,7 +19142,8 @@ public final class mudclient implements Runnable {
 		}
 		if (effectType == COMBAT_EFFECT_DIVINE_GRACE
 			|| effectType == COMBAT_EFFECT_DIVINE_RETRIBUTION
-			|| effectType == COMBAT_EFFECT_CORROSIVE_AURA) {
+			|| effectType == COMBAT_EFFECT_CORROSIVE_AURA
+			|| effectType == COMBAT_EFFECT_TRUE_DEFENSE) {
 			return 280;
 		}
 		return 224;
@@ -19170,7 +19171,8 @@ public final class mudclient implements Runnable {
 		}
 		if (effectType == COMBAT_EFFECT_DIVINE_GRACE
 			|| effectType == COMBAT_EFFECT_DIVINE_RETRIBUTION
-			|| effectType == COMBAT_EFFECT_CORROSIVE_AURA) {
+			|| effectType == COMBAT_EFFECT_CORROSIVE_AURA
+			|| effectType == COMBAT_EFFECT_TRUE_DEFENSE) {
 			return Math.max(1, (baseSize * 5) / 4);
 		}
 		return baseSize;
@@ -20429,6 +20431,10 @@ public final class mudclient implements Runnable {
 		if ("corrosive-aura".equals(animationName)) {
 			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "corrosive-aura.png"),
 				targetFrames, maxTargetSize, 16, 1, 16, 0);
+		}
+		if ("true-defense".equals(animationName)) {
+			return appendExternalAnimationGridSheetFrames(new File(sourceFolder, "true-defense.png"),
+				targetFrames, maxTargetSize, 22, 1, 22, 0);
 		}
 		return -1;
 	}

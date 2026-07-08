@@ -6,6 +6,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineRetribution;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.TrueDefense;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.SingleTickEvent;
@@ -164,6 +165,9 @@ public final class ElderGreenDragonSpecialAttacks {
 		damage = Summoning.applySummonOutgoingDamage(dragon, damage);
 		damage = applyPlayerMitigation(dragon, player, damage, style);
 		damage = Math.max(0, damage);
+		if (isPrimaryDamageStyle(style)) {
+			damage = TrueDefense.apply(player, damage);
+		}
 
 		final int lastHits = player.getLevel(Skill.HITS.id());
 		player.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
@@ -216,6 +220,10 @@ public final class ElderGreenDragonSpecialAttacks {
 			}
 		}
 		return Summoning.applySummonDamageAbsorption(player, dragon, damage);
+	}
+
+	private static boolean isPrimaryDamageStyle(final DamageStyle style) {
+		return style == DamageStyle.MELEE || style == DamageStyle.RANGED || style == DamageStyle.MAGIC;
 	}
 
 	private enum DamageStyle {

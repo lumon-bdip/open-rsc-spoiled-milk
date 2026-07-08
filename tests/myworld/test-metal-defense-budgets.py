@@ -67,6 +67,7 @@ def main() -> None:
         (111, 8, "Large Adamantite Helmet"),
         (1977, 9, "Orichalcum helmet"),
         (112, 10, "Large Rune Helmet"),
+        (3274, 12, "Exalted Rune Helmet"),
     ]
     square_shields = [
         (2224, 1, "Tin Square Shield"),
@@ -79,6 +80,7 @@ def main() -> None:
         (127, 8, "Adamantite Square Shield"),
         (2227, 9, "Orichalcum Square Shield"),
         (403, 10, "Rune Square Shield"),
+        (3277, 12, "Exalted Rune Square Shield"),
     ]
     kite_shields = [
         (1962, 1, "Tin Paladin Shield"),
@@ -91,6 +93,7 @@ def main() -> None:
         (131, 8, "Adamantite Paladin Shield"),
         (1980, 9, "Orichalcum Paladin Shield"),
         (404, 10, "Rune Paladin Shield"),
+        (3278, 12, "Exalted Rune Paladin Shield"),
     ]
     plate_bodies = [
         (1964, 1, "Tin plate mail body"),
@@ -103,6 +106,7 @@ def main() -> None:
         (120, 8, "Adamantite Plate Mail Body"),
         (1982, 9, "Orichalcum plate mail body"),
         (401, 10, "Rune Plate Mail Body"),
+        (3280, 12, "Exalted Rune Plate Mail Body"),
     ]
     plate_legs = [
         (1963, 1, "Tin plate mail legs"),
@@ -115,6 +119,7 @@ def main() -> None:
         (123, 8, "Adamantite Plate Mail Legs"),
         (1981, 9, "Orichalcum plate mail legs"),
         (402, 10, "Rune Plate Mail Legs"),
+        (3279, 12, "Exalted Rune Plate Mail Legs"),
     ]
     plated_skirts = [
         (214, 3, "Bronze Plated Skirt"),

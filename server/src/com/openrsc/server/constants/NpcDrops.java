@@ -3,6 +3,7 @@ package com.openrsc.server.constants;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.content.BadLuckMitigation;
 import com.openrsc.server.content.DropTable;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.model.world.World;
@@ -172,6 +173,7 @@ public class NpcDrops {
 			addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
 			addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
 		}
+		addHiddenUniqueDrop(NpcId.ELDER_GREEN_DRAGON.id(), MyWorldItemId.EXALTED_RUNE_HELMET, 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
 	}
 
 	private void addHiddenUniqueDrop(final int npcId, final int itemId, final int amount, final HiddenUniqueRarity rarity) {

@@ -163,8 +163,7 @@ The new ore should behave like coal in the recipe structure:
 
 Likely recipe shapes to evaluate:
 
-- `Runite ore + Dragon sulfur -> Purified rune bar`
-- `Runite bar + Dragon sulfur -> Purified rune bar`
+- `Runite bar + 14 Dragon sulfur -> Purified Rune Bar`
 - `Dragon metal + Runite bar + Dragon sulfur -> Dragon rune bar`
 - `Dragon metal + Purified rune bar + Dragon sulfur -> Dragon rune bar`
 
@@ -317,11 +316,12 @@ Follow-up combat cleanup to evaluate:
 - [x] Confirm final ore name.
 - [x] Add initial `Dragon sulfur` resource item using the ash item sprite with
       an orange/red mask.
-- [ ] Confirm purified rune tier name.
+- [x] Confirm purified rune tier name as `Purified Rune Bar` and `Exalted Rune`
+      equipment.
 - [ ] Confirm dragon-rune tier name.
-- [ ] Confirm bar recipes and whether dragon-rune requires purified rune as an
-      intermediate.
-- [ ] Add ore and bar item definitions.
+- [x] Confirm purified rune bar recipe: `1 rune bar` and `14 dragon sulfur`.
+- [ ] Confirm whether dragon-rune requires purified rune as an intermediate.
+- [x] Add ore and purified rune bar item definitions.
 - [x] Add rock scenery definitions and object IDs.
 - [ ] Add depleted-rock behavior if a new rock model or object type is needed.
 - [x] Add Mining Guild terrain expansion.
@@ -330,10 +330,10 @@ Follow-up combat cleanup to evaluate:
       preserving the clickable boundary door at `268,3401`.
 - [ ] Place new ore rocks only inside the new gated area.
 - [x] Add Mining requirements, XP, respawn timing, and depletion rules.
-- [ ] Add Smithing bar recipes.
-- [ ] Add purified rune equipment recipes.
+- [x] Add purified rune Smithing bar recipe.
+- [x] Add purified rune equipment recipes.
 - [ ] Add dragon-rune equipment recipes.
-- [ ] Add equipment stats, requirements, prices, and examine text.
+- [x] Add Exalted Rune equipment stats, requirements, prices, and examine text.
 - [x] Rename prototype `Elder Dragon` to `Elder Green Dragon`.
 - [x] Add explicit NPC offense fields for modern melee, ranged, and magic
       power with legacy fallbacks.

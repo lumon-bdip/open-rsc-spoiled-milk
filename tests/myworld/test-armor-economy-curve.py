@@ -22,6 +22,7 @@ METAL_BODY_VALUES = {
     9: 65000,
     10: 100000,
     11: 160000,
+    12: 260000,
 }
 TIER_11_VALUES = {
     593: 120000,   # dragon sword
@@ -162,6 +163,7 @@ def main() -> None:
         120: 8,
         1982: 9,
         401: 10,
+        3280: 12,
     }
     for item_id, tier in plate_bodies.items():
         require_price(items, item_id, METAL_BODY_VALUES[tier], f"tier {tier} plate body")
@@ -185,6 +187,7 @@ def main() -> None:
         174: 8,
         1958: 9,
         408: 10,
+        3261: 12,
     }
     for bar_id, tier in metal_bar_ids.items():
         bar_price = math.ceil(METAL_BODY_VALUES[tier] * 0.15)
@@ -198,6 +201,7 @@ def main() -> None:
         1995: 1, 62: 3, 28: 4, 63: 5, 2017: 7, 65: 8, 2028: 9, 396: 10,
         1997: 1, 66: 3, 1: 4, 67: 5, 2019: 7, 69: 8, 2030: 9, 397: 10,
         2001: 1, 87: 3, 12: 4, 88: 5, 2023: 7, 204: 8, 2034: 9, 405: 10,
+        3262: 12, 3263: 12, 3267: 12, 3268: 12, 3271: 12, 3272: 12, 3273: 12,
     }
     for item_id, tier in one_bar_weapons.items():
         require_price(items, item_id, weapon_value(tier, 1), f"tier {tier} one-bar weapon")
@@ -205,6 +209,7 @@ def main() -> None:
     two_bar_weapons = {
         1998: 1, 70: 3, 71: 4, 72: 5, 2020: 7, 74: 8, 2031: 9, 75: 10,
         1999: 1, 82: 3, 83: 4, 84: 5, 2021: 7, 86: 8, 2032: 9, 398: 10,
+        3264: 12, 3265: 12,
     }
     for item_id, tier in two_bar_weapons.items():
         require_price(items, item_id, weapon_value(tier, 2), f"tier {tier} two-bar weapon")
@@ -212,6 +217,7 @@ def main() -> None:
     three_bar_weapons = {
         2000: 1, 76: 3, 77: 4, 78: 5, 2022: 7, 80: 8, 2033: 9, 81: 10,
         2002: 1, 205: 3, 89: 4, 90: 5, 2024: 7, 92: 8, 2035: 9, 93: 10,
+        3266: 12, 3269: 12,
     }
     for item_id, tier in three_bar_weapons.items():
         require_price(items, item_id, weapon_value(tier, 3), f"tier {tier} three-bar weapon")

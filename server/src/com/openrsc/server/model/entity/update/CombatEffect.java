@@ -67,6 +67,7 @@ public class CombatEffect {
 	public static final int EARTH_SWORD = 61;
 	public static final int ELDER_DRAGON_FIRESHOT = 62;
 	public static final int ELDER_DRAGON_BURN = 63;
+	public static final int TRUE_DEFENSE = 64;
 
 	public static final int HELLFIRE = HELLS_FIRE;
 	public static final int WIND_SLASH = AIR_SLASH;

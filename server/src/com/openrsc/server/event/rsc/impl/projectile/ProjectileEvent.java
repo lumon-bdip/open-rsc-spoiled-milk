@@ -9,6 +9,7 @@ import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.TrueDefense;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
@@ -364,12 +365,17 @@ public class ProjectileEvent extends SingleTickEvent {
 			}
 		}
 		damage = applyFrostbiteReflection(caster, opponent, damage);
+		final int damageBeforeTrueDefense = damage;
+		if (opponent.isPlayer() && isPrimaryProjectileAttackType()) {
+			damage = TrueDefense.apply((Player) opponent, damage);
+		}
+		final boolean trueDefenseBlocked = damageBeforeTrueDefense > 0 && damage == 0;
 		int lastHits = opponent.getLevel(Skill.HITS.id());
 		opponent.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
 		final int damageDealt = Math.min(damage, lastHits);
 		opponent.getUpdateFlags().setDamage(new Damage(opponent, damage));
-				opponent.getUpdateFlags().addHitSplat(new HitSplat(opponent, Summoning.getSummonDamageHitSplatType(caster), damage));
-		if (impactEffectType > 0) {
+		opponent.getUpdateFlags().addHitSplat(new HitSplat(opponent, Summoning.getSummonDamageHitSplatType(caster), damage));
+		if (impactEffectType > 0 && !trueDefenseBlocked) {
 			opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, impactEffectType));
 		}
 
@@ -843,7 +849,13 @@ public class ProjectileEvent extends SingleTickEvent {
 			}
 			int splashDamage = splashTarget.applyRobeDamageMitigation(baseSplashDamage, magicElement);
 			splashDamage = splashTarget.applyPotionMagicDamageReduction(splashDamage);
+			final int splashDamageBeforeTrueDefense = splashDamage;
+			splashDamage = TrueDefense.apply(splashTarget, splashDamage);
+			final boolean trueDefenseBlocked = splashDamageBeforeTrueDefense > 0 && splashDamage == 0;
 			if (splashDamage <= 0) {
+				if (trueDefenseBlocked) {
+					ActionSender.sendStat(splashTarget, Skill.HITS.id());
+				}
 				continue;
 			}
 			final int lastHits = splashTarget.getLevel(Skill.HITS.id());
@@ -851,7 +863,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			final int damageDealt = Math.min(splashDamage, lastHits);
 			splashTarget.getUpdateFlags().setDamage(new Damage(splashTarget, splashDamage));
 			splashTarget.getUpdateFlags().addHitSplat(new HitSplat(splashTarget, HitSplat.TYPE_ARMOR_PROC, splashDamage));
-			if (impactEffectType > 0) {
+			if (impactEffectType > 0 && !trueDefenseBlocked) {
 				splashTarget.getUpdateFlags().setCombatEffect(new CombatEffect(splashTarget, impactEffectType));
 			}
 			splashTarget.updateDamageAndBlockedDamageTracking(balrog, damageDealt, 0);
@@ -936,6 +948,10 @@ public class ProjectileEvent extends SingleTickEvent {
 		} else {
 			opponent.killedBy(caster);
 		}
+	}
+
+	private boolean isPrimaryProjectileAttackType() {
+		return type == 1 || type == 2 || type == 4 || type == 5;
 	}
 
 	public void setCanceled(boolean b) {

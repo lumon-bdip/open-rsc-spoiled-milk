@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.content.production.ProductionRecipe;
 import com.openrsc.server.content.production.ProductionSession;
@@ -54,7 +55,8 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		ItemId.TIN_ORE.id(), ItemId.COPPER_ORE.id(), ItemId.IRON_ORE.id(),
 		ItemId.PIG_IRON_BAR.id(), ItemId.COAL.id(), ItemId.MITHRIL_ORE.id(),
 		ItemId.ADAMANTITE_ORE.id(), ItemId.RUNITE_ORE.id(), ItemId.SILVER.id(),
-		ItemId.GOLD.id(), ItemId.GOLD_FAMILYCREST.id()
+		ItemId.GOLD.id(), ItemId.GOLD_FAMILYCREST.id(), ItemId.RUNITE_BAR.id(),
+		ItemId.DRAGON_SULFUR.id()
 	};
 
 	private static final SmeltRecipe[] RECIPES = {
@@ -77,7 +79,9 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			ingredient(ItemId.MITHRIL_ORE.id(), 1), ingredient(ItemId.ADAMANTITE_ORE.id(), 1),
 			ingredient(ItemId.COAL.id(), 5)),
 		new SmeltRecipe(ItemId.RUNITE_BAR.id(), 70, 200, 1,
-			ingredient(ItemId.RUNITE_ORE.id(), 1), ingredient(ItemId.COAL.id(), 6))
+			ingredient(ItemId.RUNITE_ORE.id(), 1), ingredient(ItemId.COAL.id(), 6)),
+		new SmeltRecipe(MyWorldItemId.PURIFIED_RUNE_BAR, 90, 500, 1,
+			ingredient(ItemId.RUNITE_BAR.id(), 1), ingredient(ItemId.DRAGON_SULFUR.id(), 14))
 	};
 
 	@Override
@@ -245,7 +249,10 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	}
 
 	private boolean shouldOpenSmeltingChoice(int itemId) {
-		return itemId == ItemId.TIN_ORE.id() || itemId == ItemId.COPPER_ORE.id();
+		return itemId == ItemId.TIN_ORE.id()
+			|| itemId == ItemId.COPPER_ORE.id()
+			|| itemId == ItemId.RUNITE_BAR.id()
+			|| itemId == ItemId.DRAGON_SULFUR.id();
 	}
 
 	private ProductionSession createFurnaceCategorySession(Player player) {

@@ -3905,7 +3905,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void cleanup(boolean glfwInitialized) {
-		boolean userClosedWindow = !closed && primaryWindow;
+		boolean userClosedWindow = glfwInitialized && window != 0L && !closed && primaryWindow;
 		releaseInputState();
 		try {
 			captureWindowedBounds(false);

@@ -2401,6 +2401,10 @@ public final class Player extends Mob {
 		return getCarriedItems().getEquipment().hasFullHellhoundSet();
 	}
 
+	public int getExaltedRuneTrueDefensePieces() {
+		return getCarriedItems().getEquipment().getExaltedRuneTrueDefensePieces();
+	}
+
 	public double getLeatherSetAttackSpeedMultiplier() {
 		return 1.0D;
 	}
@@ -4194,6 +4198,8 @@ public final class Player extends Mob {
 				return AppearanceId.FEMALE_TITAN_STEEL_PLATE_MAIL_TOP.id();
 			case ORICHALCUM_PLATE_MAIL_BODY:
 				return AppearanceId.FEMALE_ORICHALCUM_PLATE_MAIL_TOP.id();
+			case EXALTED_RUNE_PLATE_MAIL_BODY:
+				return AppearanceId.FEMALE_EXALTED_RUNE_PLATE_MAIL_TOP.id();
 			default:
 				return appearanceId;
 		}

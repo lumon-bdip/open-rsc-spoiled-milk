@@ -107,6 +107,7 @@ def main() -> int:
         ("COPPER_PLATE_MAIL_BODY", "FEMALE_COPPER_PLATE_MAIL_TOP", "copper plate"),
         ("TITAN_STEEL_PLATE_MAIL_BODY", "FEMALE_TITAN_STEEL_PLATE_MAIL_TOP", "titan steel plate"),
         ("ORICHALCUM_PLATE_MAIL_BODY", "FEMALE_ORICHALCUM_PLATE_MAIL_TOP", "orichalcum plate"),
+        ("EXALTED_RUNE_PLATE_MAIL_BODY", "FEMALE_EXALTED_RUNE_PLATE_MAIL_TOP", "exalted rune plate"),
     ]
     for male_appearance, female_appearance, label in custom_plate_mappings:
         require_mapping(resolver, male_appearance, female_appearance, label)
@@ -122,6 +123,8 @@ def main() -> int:
     require(appearances, "FEMALE_COPPER_PLATE_MAIL_TOP(1038, BODY)", "Copper female plate top appearance should be named")
     require(appearances, "FEMALE_TITAN_STEEL_PLATE_MAIL_TOP(1039, BODY)", "Titan steel female plate top appearance should be named")
     require(appearances, "FEMALE_ORICHALCUM_PLATE_MAIL_TOP(1040, BODY)", "Orichalcum female plate top appearance should be named")
+    require(appearances, "EXALTED_RUNE_PLATE_MAIL_BODY(1059, BODY)", "Exalted Rune platebody appearance should be named")
+    require(appearances, "FEMALE_EXALTED_RUNE_PLATE_MAIL_TOP(1060, BODY)", "Exalted Rune female plate top appearance should be named")
     require(
         entity_handler,
         'new AnimationDef("fplatemailtop", "equipment", 0xB7C9D9, 0, true, false, 0)); // 1037 - Tin female plate top',
@@ -142,6 +145,11 @@ def main() -> int:
         'new AnimationDef("fplatemailtop", "equipment", 0x5A3F7D, 0, true, false, 0)); // 1040 - Orichalcum female plate top',
         "Orichalcum female plate top should have a client fplatemailtop animation",
     )
+    require(
+        entity_handler,
+        'new AnimationDef("fplatemailtop", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1060 - Exalted Rune female plate top',
+        "Exalted Rune female plate top should have a client fplatemailtop animation",
+    )
 
     require(equipment, "ItemId.DRAGON_PLATE_MAIL_BODY.id()", "Dragon platebody should stay in the body normalization bucket")
     require(equipment, "ItemId.DRAGON_PLATE_MAIL_TOP.id()", "Dragon plate top should normalize into the body item")
@@ -159,6 +167,7 @@ def main() -> int:
     require_item_appearance(items, 1970, 691, "Copper plate mail body")
     require_item_appearance(items, 1976, 692, "Titan steel plate mail body")
     require_item_appearance(items, 1982, 693, "Orichalcum plate mail body")
+    require_item_appearance(items, 3280, 1059, "Exalted Rune plate mail body")
 
     print("PASS: unified platebodies resolve to female top visuals for female bodies")
     return 0
