@@ -12,7 +12,7 @@
 	<entry>
 		<int>183</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>37</requiredLvl>
+			<requiredLvl>30</requiredLvl>
 			<prodId>249</prodId>
 			<exp>88</exp>
 			<exhaust>3</exhaust>
@@ -32,7 +32,7 @@
 	<entry>
 		<int>313</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>19</requiredLvl>
+			<requiredLvl>15</requiredLvl>
 			<prodId>675</prodId>
 			<exp>40</exp>
 			<exhaust>1</exhaust>
@@ -42,7 +42,7 @@
 	<entry>
 		<int>430</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>55</requiredLvl>
+			<requiredLvl>54</requiredLvl>
 			<prodId>861</prodId>
 			<exp>176</exp>
 			<exhaust>5</exhaust>
@@ -52,7 +52,7 @@
 	<entry>
 		<int>1243</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>19</requiredLvl>
+			<requiredLvl>15</requiredLvl>
 			<prodId>855</prodId>
 			<exp>40</exp>
 			<exhaust>1</exhaust>
@@ -62,7 +62,7 @@
 	<entry>
 		<int>1244</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>25</requiredLvl>
+			<requiredLvl>22</requiredLvl>
 			<prodId>863</prodId>
 			<exp>56</exp>
 			<exhaust>1</exhaust>
@@ -72,7 +72,7 @@
 	<entry>
 		<int>1245</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>31</requiredLvl>
+			<requiredLvl>30</requiredLvl>
 			<prodId>1348</prodId>
 			<exp>72</exp>
 			<exhaust>2</exhaust>
@@ -82,7 +82,7 @@
 	<entry>
 		<int>1246</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>43</requiredLvl>
+			<requiredLvl>38</requiredLvl>
 			<prodId>857</prodId>
 			<exp>112</exp>
 			<exhaust>4</exhaust>
@@ -92,7 +92,7 @@
 	<entry>
 		<int>1247</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>58</requiredLvl>
+			<requiredLvl>54</requiredLvl>
 			<prodId>1349</prodId>
 			<exp>144</exp>
 			<exhaust>4</exhaust>
@@ -102,7 +102,7 @@
 	<entry>
 		<int>1248</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>37</requiredLvl>
+			<requiredLvl>30</requiredLvl>
 			<prodId>249</prodId>
 			<exp>88</exp>
 			<exhaust>3</exhaust>
@@ -112,7 +112,7 @@
 	<entry>
 		<int>1249</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>67</requiredLvl>
+			<requiredLvl>62</requiredLvl>
 			<prodId>1351</prodId>
 			<exp>336</exp>
 			<exhaust>7</exhaust>
@@ -122,7 +122,7 @@
 	<entry>
 		<int>1250</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>61</requiredLvl>
+			<requiredLvl>54</requiredLvl>
 			<prodId>1350</prodId>
 			<exp>216</exp>
 			<exhaust>6</exhaust>
@@ -132,7 +132,7 @@
 	<entry>
 		<int>1251</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>55</requiredLvl>
+			<requiredLvl>54</requiredLvl>
 			<prodId>861</prodId>
 			<exp>176</exp>
 			<exhaust>5</exhaust>
@@ -142,7 +142,7 @@
 	<entry>
 		<int>1256</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>13</requiredLvl>
+			<requiredLvl>8</requiredLvl>
 			<prodId>236</prodId>
 			<exp>40</exp>
 			<exhaust>2</exhaust>
@@ -152,7 +152,7 @@
 	<entry>
 		<int>1257</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>28</requiredLvl>
+			<requiredLvl>22</requiredLvl>
 			<prodId>55</prodId>
 			<exp>56</exp>
 			<exhaust>3</exhaust>
@@ -162,7 +162,7 @@
 	<entry>
 		<int>1258</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>40</requiredLvl>
+			<requiredLvl>38</requiredLvl>
 			<prodId>765</prodId>
 			<exp>96</exp>
 			<exhaust>5</exhaust>
@@ -172,7 +172,7 @@
 	<entry>
 		<int>1259</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>49</requiredLvl>
+			<requiredLvl>46</requiredLvl>
 			<prodId>936</prodId>
 			<exp>152</exp>
 			<exhaust>7</exhaust>
@@ -182,7 +182,7 @@
 	<entry>
 		<int>1260</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>64</requiredLvl>
+			<requiredLvl>62</requiredLvl>
 			<prodId>471</prodId>
 			<exp>232</exp>
 			<exhaust>11</exhaust>
@@ -202,7 +202,7 @@
 	<entry>
 		<int>1266</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>4</requiredLvl>
+			<requiredLvl>1</requiredLvl>
 			<prodId>241</prodId>
 			<exp>88</exp>
 			<exhaust>4</exhaust>
@@ -212,7 +212,7 @@
 	<entry>
 		<int>1267</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>10</requiredLvl>
+			<requiredLvl>8</requiredLvl>
 			<prodId>218</prodId>
 			<exp>104</exp>
 			<exhaust>6</exhaust>
@@ -222,7 +222,7 @@
 	<entry>
 		<int>1268</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>16</requiredLvl>
+			<requiredLvl>15</requiredLvl>
 			<prodId>320</prodId>
 			<exp>112</exp>
 			<exhaust>8</exhaust>
@@ -242,7 +242,7 @@
 	<entry>
 		<int>1262</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>7</requiredLvl>
+			<requiredLvl>1</requiredLvl>
 			<prodId>18</prodId>
 			<exp>96</exp>
 			<exhaust>12</exhaust>
@@ -252,7 +252,7 @@
 	<entry>
 		<int>1263</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>34</requiredLvl>
+			<requiredLvl>30</requiredLvl>
 			<prodId>1352</prodId>
 			<exp>208</exp>
 			<exhaust>12</exhaust>
@@ -262,7 +262,7 @@
 	<entry>
 		<int>1264</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>47</requiredLvl>
+			<requiredLvl>46</requiredLvl>
 			<prodId>1354</prodId>
 			<exp>296</exp>
 			<exhaust>16</exhaust>
@@ -272,7 +272,7 @@
 	<entry>
 		<int>1282</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>52</requiredLvl>
+			<requiredLvl>46</requiredLvl>
 			<prodId>1456</prodId>
 			<exp>180</exp>
 			<exhaust>5</exhaust>
@@ -282,7 +282,7 @@
 	<entry>
 		<int>1283</int>
 		<ObjectHarvestingDef>
-			<requiredLvl>40</requiredLvl>
+			<requiredLvl>38</requiredLvl>
 			<prodId>143</prodId>
 			<exp>160</exp>
 			<exhaust>18</exhaust>

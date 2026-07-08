@@ -122,21 +122,21 @@ public final class Harvesting implements OpLocTrigger {
 	}
 
 	enum HerbsProduce {
-		HERB(1274, new ItemLevelXPTrio(ItemId.UNIDENTIFIED_GUAM_LEAF.id(), 5, 50),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_MARRENTILL.id(),12, 60),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_TARROMIN.id(), 19, 72),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_HARRALANDER.id(), 26, 96),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_RANARR_WEED.id(), 33, 122),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_IRIT_LEAF.id(), 40, 194),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_AVANTOE.id(), 47, 246),
+		HERB(1274, new ItemLevelXPTrio(ItemId.UNIDENTIFIED_GUAM_LEAF.id(), 1, 50),
+			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_MARRENTILL.id(), 8, 60),
+			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_TARROMIN.id(), 15, 72),
+			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_HARRALANDER.id(), 22, 96),
+			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_RANARR_WEED.id(), 30, 122),
+			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_IRIT_LEAF.id(), 38, 194),
+			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_AVANTOE.id(), 46, 246),
 			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_KWUARM.id(), 54, 312),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_CADANTINE.id(), 61, 480),
+			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_CADANTINE.id(), 54, 480),
 			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_DWARF_WEED.id(), 70, 768),
-			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_TORSTOL.id(), 78, 960)),
-		SEAWEED(1280, new ItemLevelXPTrio(ItemId.SEAWEED.id(), 23, 84),
-			new ItemLevelXPTrio(ItemId.EDIBLE_SEAWEED.id(), 23, 84)),
-		LIMPWURTROOT(1281, new ItemLevelXPTrio(ItemId.LIMPWURT_ROOT.id(), 40, 144)),
-		SNAPEGRASS(1273, new ItemLevelXPTrio(ItemId.SNAPE_GRASS.id(), 58, 328));
+			new ItemLevelXPTrio(ItemId.UNIDENTIFIED_TORSTOL.id(), 70, 960)),
+		SEAWEED(1280, new ItemLevelXPTrio(ItemId.SEAWEED.id(), 22, 84),
+			new ItemLevelXPTrio(ItemId.EDIBLE_SEAWEED.id(), 22, 84)),
+		LIMPWURTROOT(1281, new ItemLevelXPTrio(ItemId.LIMPWURT_ROOT.id(), 38, 144)),
+		SNAPEGRASS(1273, new ItemLevelXPTrio(ItemId.SNAPE_GRASS.id(), 54, 328));
 
 		private int objId;
 		private ArrayList<ItemLevelXPTrio> produceTable;

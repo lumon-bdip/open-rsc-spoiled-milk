@@ -682,9 +682,9 @@ public class Herblaw implements OpInvTrigger, UseInvTrigger {
 		}
 		if (unfinishedPotID == ItemId.UNFINISHED_OGRE_POTION.id() && ingredientID == ItemId.GROUND_BAT_BONES.id()
 			|| unfinishedPotID == ItemId.GROUND_BAT_BONES.id() && ingredientID == ItemId.UNFINISHED_OGRE_POTION.id()) {
-			if (player.getSkills().getLevel(Skill.HERBLAW.id()) < 14) {
+			if (player.getSkills().getLevel(Skill.HERBLAW.id()) < 18) {
 				player.playerServerMessage(MessageType.QUEST,
-					"You need to have a herblaw level of 14 or over to mix this liquid");
+					"You need to have a herblaw level of 18 or over to mix this liquid");
 				return false;
 			}
 			if (player.getQuestStage(Quests.DRUIDIC_RITUAL) != -1) {
