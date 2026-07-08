@@ -36,11 +36,10 @@ public class DwarfRescue implements TalkNpcTrigger, OpInvTrigger {
 				+ "4 Dragon bars% "
 				+ "500,000 coins% %"
 				+ "Dragon plate mail legs:% %"
-				+ "3 Dragon bars% "
-				+ "500,000 coins% %"
+				+ "Complete Combat Odyssey through the Legends Guild% %"
 				+ "Raw dragon metal can be smelted at the lava forge into bars or chains% "
 				+ "Chipped dragon scales are crafted(req 90, chisel) from King Black Dragon scales% %"
-				+ "Once all items are prepared, seek out Wayne in Falador", true);
+				+ "Once Wayne's armour materials are prepared, seek him out in Falador", true);
 		}
 	}
 

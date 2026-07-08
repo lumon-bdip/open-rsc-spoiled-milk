@@ -23,7 +23,6 @@ public final class WaynesChains extends AbstractShop {
 	private static final int SCALE_MAIL_BODY_SCALE_COST = 150;
 	private static final int SCALE_MAIL_LEGS_SCALE_COST = 100;
 	private static final int PLATEBODY_BAR_COST = 4;
-	private static final int PLATELEGS_BAR_COST = 3;
 
 	@Override
 	public boolean blockTalkNpc(final Player player, final Npc n) {
@@ -106,7 +105,6 @@ public final class WaynesChains extends AbstractShop {
 			"Dragon scale mail body",
 			"Dragon scale mail legs",
 			"Dragon plate mail body",
-			"Dragon plate mail legs",
 			"Never mind");
 		if (option == 0) {
 			handleDragonScaleMail(player, n, ItemId.DRAGON_SCALE_MAIL.id(),
@@ -121,10 +119,6 @@ public final class WaynesChains extends AbstractShop {
 				"Can you make me a dragon plate mail body",
 				"a dragon plate mail body", PLATEBODY_BAR_COST);
 		} else if (option == 3) {
-			handleDragonPlateArmour(player, n, ItemId.DRAGON_PLATE_MAIL_LEGS.id(),
-				"Can you make me dragon plate mail legs",
-				"dragon plate mail legs", PLATELEGS_BAR_COST);
-		} else if (option == 4) {
 			say(player, n, "Never mind");
 		}
 	}

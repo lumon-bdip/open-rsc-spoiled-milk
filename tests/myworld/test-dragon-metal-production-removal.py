@@ -11,6 +11,7 @@ SKILL_GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInte
 INV_ACTION = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/InvAction.java"
 DWARF_RESCUE = ROOT / "server/plugins/com/openrsc/server/plugins/custom/minigames/DwarfRescue.java"
 WAYNE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/falador/WaynesChains.java"
+COMBAT_ODYSSEY = ROOT / "server/plugins/com/openrsc/server/plugins/custom/minigames/CombatOdyssey.java"
 
 
 def fail(message: str) -> NoReturn:
@@ -35,6 +36,7 @@ def main() -> None:
     inv_action = INV_ACTION.read_text(encoding="utf-8")
     dwarf_rescue = DWARF_RESCUE.read_text(encoding="utf-8")
     wayne = WAYNE.read_text(encoding="utf-8")
+    combat_odyssey = COMBAT_ODYSSEY.read_text(encoding="utf-8")
 
     forbid(smithing, "LAVA_ANVIL", "Dragon bar smithing should not be handled at the lava anvil")
     forbid(smithing, "DRAGON_METAL_CHAIN.id()", "Dragon metal chain should not have a smithing recipe")
@@ -120,12 +122,27 @@ def main() -> None:
         require(note_text, "Dragon scale mail legs", "Dwarf smithy notes should list dragon scale mail legs")
         require(note_text, "100 Chipped Dragon Scales", "Scale legs should cost 50 fewer chipped scales than body")
         require(note_text, "Dragon plate mail legs", "Dwarf smithy notes should list dragon plate mail legs")
-        require(note_text, "3 Dragon bars", "Plate legs should cost 1 fewer dragon bar than body")
+        require(
+            note_text,
+            "Complete Combat Odyssey through the Legends Guild",
+            "Dwarf smithy notes should point dragon plate legs at Combat Odyssey",
+        )
 
     require(wayne, "ItemId.DRAGON_SCALE_MAIL_LEGS.id()", "Wayne should craft dragon scale mail legs")
     require(wayne, "SCALE_MAIL_LEGS_SCALE_COST = 100", "Wayne scale legs should cost 100 chipped scales")
-    require(wayne, "ItemId.DRAGON_PLATE_MAIL_LEGS.id()", "Wayne should craft dragon plate mail legs")
-    require(wayne, "PLATELEGS_BAR_COST = 3", "Wayne plate legs should cost 3 dragon bars")
+    forbid(wayne, "ItemId.DRAGON_PLATE_MAIL_LEGS.id()", "Wayne should not craft dragon plate mail legs")
+    forbid(wayne, "PLATELEGS_BAR_COST", "Wayne should not retain a plate legs bar cost")
+
+    require(
+        combat_odyssey,
+        "ItemId.DRAGON_PLATE_MAIL_LEGS.id()",
+        "Combat Odyssey should remain the dragon plate legs route",
+    )
+    forbid(
+        combat_odyssey,
+        "Dragon Plated Skirt",
+        "Combat Odyssey should not offer the retired dragon skirt reward",
+    )
 
 
 if __name__ == "__main__":
