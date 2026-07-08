@@ -25849,6 +25849,7 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Fruits");
 			skillGuideChosenTabs.add("Bushes");
 			skillGuideChosenTabs.add("Herbs");
+			skillGuideChosenTabs.add("Brawn");
 			skillGuideChosenTabs.add("Shears");
 			if (S_WANT_CUSTOM_SPRITES) {
 				skillGuideChosenTabs.add("Info");

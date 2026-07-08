@@ -790,7 +790,8 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(453, "64", EntityHandler.getItemDef(453).name));
 				skillMenuEntries.add(new SkillMenuItem(934, "70", EntityHandler.getItemDef(934).name));
 			} else if (curTab == 1) {
-				addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, 3198, "Potion of Brawn", "limpwurt root");
+				addHerblawPotionFamilyGuide(474, 477, 480, 483, 486, 3198, "Potion of Brawn",
+					new String[] {"fern leaf", "mushroom", "fungus", "limpwurt root", "red flower", "blue flower"});
 				addHerblawPotionFamilyGuide(489, 492, 495, 498, 566, 3201, "Potion of Deftness",
 					new String[] {"10 low quality fish oil", "10 fair quality fish oil", "10 good quality fish oil",
 						"10 fine quality fish oil", "10 high quality fish oil", "10 superior quality fish oil"});
@@ -991,6 +992,13 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(443, "70", "Dwarf Weed chance - T10 shears"));
 				skillMenuEntries.add(new SkillMenuItem(933, "70", "Torstol rare chance - T10 shears"));
 			} else if (curTab == 4) {
+				skillMenuEntries.add(new SkillMenuItem(3256, "1", "Fern leaf - T1 shears"));
+				skillMenuEntries.add(new SkillMenuItem(3257, "8", "Mushroom - T2 shears"));
+				skillMenuEntries.add(new SkillMenuItem(3258, "30", "Fungus - T5 shears"));
+				skillMenuEntries.add(new SkillMenuItem(220, "38", "Limpwurt Root - T6 shears"));
+				skillMenuEntries.add(new SkillMenuItem(3259, "54", "Red flower - T8 shears"));
+				skillMenuEntries.add(new SkillMenuItem(3260, "70", "Blue flower - T10 shears"));
+			} else if (curTab == 5) {
 				skillMenuEntries.add(new SkillMenuItem(144, "1", "Tin shears - T1, equipped tool"));
 				skillMenuEntries.add(new SkillMenuItem(2215, "8", "Copper shears - T2, equipped tool"));
 				skillMenuEntries.add(new SkillMenuItem(2216, "15", "Bronze shears - T3, equipped tool"));
@@ -1001,7 +1009,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(2221, "54", "Adamantite shears - T8, equipped tool"));
 				skillMenuEntries.add(new SkillMenuItem(2222, "62", "Orichalcum shears - T9, equipped tool"));
 				skillMenuEntries.add(new SkillMenuItem(2223, "70", "Rune shears - T10, equipped tool"));
-			} else if (curTab == 5) {
+			} else if (curTab == 6) {
 				if (Config.S_WANT_CUSTOM_SPRITES) {
 					addSkillCapeGuide(1526, "Harvesting");
 				}
