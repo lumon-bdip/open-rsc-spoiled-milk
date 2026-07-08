@@ -29,9 +29,15 @@ def sector_tile(path: Path, sector: str, tile_id: int) -> tuple[int, int, int, i
 def main() -> None:
     server_tile = sector_tile(SERVER_LANDSCAPE, "h3x53y48", 1385)
     client_tile = sector_tile(CLIENT_LANDSCAPE, "h3x53y48", 1385)
-    expected_tile = (60, 180, 0, 0, 43, 0, 0)
-    require(server_tile == expected_tile, f"Server elite gate tile 1385 should be {expected_tile}, got {server_tile}")
-    require(client_tile == expected_tile, f"Client elite gate tile 1385 should be {expected_tile}, got {client_tile}")
+    expected_tile = (60, 180, 0, 0, 0, 0, 0)
+    require(
+        server_tile == expected_tile,
+        f"Server elite gate tile 1385 should keep the protruding landscape wall clear: expected {expected_tile}, got {server_tile}",
+    )
+    require(
+        client_tile == expected_tile,
+        f"Client elite gate tile 1385 should keep the protruding landscape wall clear: expected {expected_tile}, got {client_tile}",
+    )
 
     boundaries = json.loads(BOUNDARY_LOCS.read_text(encoding="utf-8"))["boundaries"]
     require(

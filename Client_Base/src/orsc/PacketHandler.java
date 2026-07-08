@@ -2663,11 +2663,11 @@ public class PacketHandler {
 				}
 
 				if (writeIndex != readIndex) {
-					mc.setGameObjectInstanceModel(writeIndex, mc.getGameObjectInstanceModel(readIndex));
 					mc.setGameObjectInstanceX(writeIndex, mc.getGameObjectInstanceX(readIndex));
 					mc.setGameObjectInstanceZ(writeIndex, mc.getGameObjectInstanceZ(readIndex));
 					mc.setGameObjectInstanceID(writeIndex, mc.getGameObjectInstanceID(readIndex));
 					mc.setGameObjectInstanceDir(writeIndex, mc.getGameObjectInstanceDir(readIndex));
+					mc.setGameObjectInstanceModel(writeIndex, mc.getGameObjectInstanceModel(readIndex));
 					mc.setGameObjectInstanceMaterialized(writeIndex, mc.isGameObjectInstanceMaterialized(readIndex));
 				}
 				writeIndex++;
@@ -2928,11 +2928,11 @@ public class PacketHandler {
 						mc.dematerializeGameObjectInstance(i);
 					} else {
 						if (count != i) {
-							mc.setGameObjectInstanceModel(count, mc.getGameObjectInstanceModel(i));
 							mc.setGameObjectInstanceX(count, mc.getGameObjectInstanceX(i));
 							mc.setGameObjectInstanceZ(count, mc.getGameObjectInstanceZ(i));
 							mc.setGameObjectInstanceID(count, mc.getGameObjectInstanceID(i));
 							mc.setGameObjectInstanceDir(count, mc.getGameObjectInstanceDir(i));
+							mc.setGameObjectInstanceModel(count, mc.getGameObjectInstanceModel(i));
 							mc.setGameObjectInstanceMaterialized(count, mc.isGameObjectInstanceMaterialized(i));
 						}
 
@@ -2977,11 +2977,11 @@ public class PacketHandler {
 						mc.dematerializeGameObjectInstance(localIndex);
 					} else {
 						if (localIndex != id) {
-							mc.setGameObjectInstanceModel(id, mc.getGameObjectInstanceModel(localIndex));
 							mc.setGameObjectInstanceX(id, mc.getGameObjectInstanceX(localIndex));
 							mc.setGameObjectInstanceZ(id, mc.getGameObjectInstanceZ(localIndex));
 							mc.setGameObjectInstanceID(id, mc.getGameObjectInstanceID(localIndex));
 							mc.setGameObjectInstanceDir(id, mc.getGameObjectInstanceDir(localIndex));
+							mc.setGameObjectInstanceModel(id, mc.getGameObjectInstanceModel(localIndex));
 							mc.setGameObjectInstanceMaterialized(id, mc.isGameObjectInstanceMaterialized(localIndex));
 						}
 						++id;
@@ -3572,11 +3572,11 @@ public class PacketHandler {
 					mc.dematerializeGameObjectInstance(oldIndex);
 				} else {
 					if (oldIndex != newIndex) {
-						mc.setGameObjectInstanceModel(newIndex, mc.getGameObjectInstanceModel(oldIndex));
 						mc.setGameObjectInstanceX(newIndex, mc.getGameObjectInstanceX(oldIndex));
 						mc.setGameObjectInstanceZ(newIndex, mc.getGameObjectInstanceZ(oldIndex));
 						mc.setGameObjectInstanceID(newIndex, mc.getGameObjectInstanceID(oldIndex));
 						mc.setGameObjectInstanceDir(newIndex, mc.getGameObjectInstanceDir(oldIndex));
+						mc.setGameObjectInstanceModel(newIndex, mc.getGameObjectInstanceModel(oldIndex));
 						mc.setGameObjectInstanceMaterialized(newIndex, mc.isGameObjectInstanceMaterialized(oldIndex));
 					}
 

@@ -196,6 +196,11 @@ The gated area should include enough rocks to be worth visiting, but scarcity
 should remain part of the tier identity. It should not feel like ordinary coal
 or mithril density.
 
+The elite gate at `268,3401` is intentionally owned by the explicit boundary
+loc entry, not by an embedded landscape wall byte. The sector tile
+`h3x53y48:1385` should keep its wall fields clear so the old east-wall stub
+does not protrude beside the custom door after map-editor imports.
+
 ## Elder Green Dragon Direction
 
 The Elder Green Dragon is the first new NPC being created specifically for this
@@ -321,6 +326,8 @@ Follow-up combat cleanup to evaluate:
 - [ ] Add depleted-rock behavior if a new rock model or object type is needed.
 - [x] Add Mining Guild terrain expansion.
 - [x] Add Mining Guild level-gate interaction.
+- [x] Keep the elite gate's protruding landscape east-wall stub clear while
+      preserving the clickable boundary door at `268,3401`.
 - [ ] Place new ore rocks only inside the new gated area.
 - [x] Add Mining requirements, XP, respawn timing, and depletion rules.
 - [ ] Add Smithing bar recipes.

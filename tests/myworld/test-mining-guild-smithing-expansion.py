@@ -2,6 +2,7 @@
 """Validate the Mining Guild/Smithing expansion seed item and plan wiring."""
 
 import json
+import re
 from pathlib import Path
 
 
@@ -17,6 +18,30 @@ def load_items(path: Path) -> dict[int, dict]:
     return {int(entry["id"]): entry for entry in json.loads(path.read_text(encoding="utf-8"))["items"]}
 
 
+def require_game_object_compaction_copies_id_before_model(packet_handler: str) -> None:
+    lines = packet_handler.splitlines()
+    model_copy = re.compile(
+        r"mc\.setGameObjectInstanceModel\(([^,]+),\s*mc\.getGameObjectInstanceModel\(([^)]+)\)\);"
+    )
+
+    for line_number, line in enumerate(lines, start=1):
+        match = model_copy.search(line)
+        if not match:
+            continue
+
+        destination = match.group(1).strip()
+        source = match.group(2).strip()
+        expected_id_copy = (
+            f"mc.setGameObjectInstanceID({destination}, mc.getGameObjectInstanceID({source}));"
+        )
+        previous_lines = [candidate.strip() for candidate in lines[max(0, line_number - 6):line_number - 1]]
+        require(
+            expected_id_copy in previous_lines,
+            "Game-object compaction should copy object id before model so stale Dragon sulfur tint cannot leak "
+            f"into other rock models near line {line_number}",
+        )
+
+
 def main() -> None:
     plan = ROOT / "docs/myworld/in-progress-work-plans/mining-guild-and-smithing-expansion-plan.md"
     item_id = (ROOT / "server/src/com/openrsc/server/constants/ItemId.java").read_text(encoding="utf-8")
@@ -26,9 +51,13 @@ def main() -> None:
     retro_object_mining = (ROOT / "server/conf/server/defs/extras/retro/ObjectMining.xml").read_text(encoding="utf-8")
     client_defs = (ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java").read_text(encoding="utf-8")
     client_mudclient = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text(encoding="utf-8")
+    packet_handler = (ROOT / "Client_Base/src/orsc/PacketHandler.java").read_text(encoding="utf-8")
     rs_model = (ROOT / "Client_Base/src/orsc/graphics/three/RSModel.java").read_text(encoding="utf-8")
     custom_items = load_items(ROOT / "server/conf/server/defs/ItemDefsCustom.json")
     object_ids_doc = (ROOT / "docs/myworld/info/object-ids.md").read_text(encoding="utf-8")
+    custom_scenery_locs = json.loads(
+        (ROOT / "server/conf/server/defs/locs/MyWorldSceneryLocs.json").read_text(encoding="utf-8")
+    )["sceneries"]
 
     plan_text = plan.read_text(encoding="utf-8")
     require("Status: in progress" in plan_text, "Mining Guild expansion plan should be in progress")
@@ -102,6 +131,7 @@ def main() -> None:
         "applyGameObjectVisualOverrides(objectId, model);\n\t\tapplyRenderer3DGlowEmitter(kind, objectId, model);" in client_mudclient,
         "Resident object chunks should normalize Dragon sulfur visuals before exporting distant scenery geometry",
     )
+    require_game_object_compaction_copies_id_before_model(packet_handler)
     sulfur_mining_entry = """<entry>
 \t\t<int>1328</int><!-- Dragon sulfur -->
 \t\t<ObjectMiningDef>
@@ -118,6 +148,17 @@ def main() -> None:
         "| Dragon sulfur | 1328 | `ROCK_DRAGON_SULFUR` | `copperrock1` | 3255 `Dragon sulfur` | 90 | 650 | 420 |"
         in object_ids_doc,
         "Object ID docs should list the Dragon sulfur rock placement ID",
+    )
+    runite_loc = next(
+        (
+            loc for loc in custom_scenery_locs
+            if loc["pos"] == {"X": 246, "Y": 3416}
+        ),
+        None,
+    )
+    require(
+        runite_loc is not None and runite_loc["id"] == 210,
+        "Mining Guild rock at 246,3416 should remain runite and must not be saved as Dragon sulfur",
     )
 
     custom_npcs = (ROOT / "server/conf/server/defs/NpcDefsCustom.json").read_text(encoding="utf-8")
