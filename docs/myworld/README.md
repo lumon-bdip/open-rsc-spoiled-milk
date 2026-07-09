@@ -60,9 +60,13 @@ into one of the category folders, not directly into `docs/myworld/`.
   metal drops, and purified rune forge relocation.
 - [god-relic-reward-plan.md](in-progress-work-plans/god-relic-reward-plan.md):
   prayer/devotion god relic rewards, relic pools, and Mage Arena separation.
+- [herblaw-brawn-harvestable-ingredients-plan.md](in-progress-work-plans/herblaw-brawn-harvestable-ingredients-plan.md):
+  implemented Brawn harvestable ingredient pass awaiting manual field testing.
 - [herblaw-side-ingredient-expansion-plan.md](in-progress-work-plans/herblaw-side-ingredient-expansion-plan.md):
   tiered Herblaw secondary ingredients for fish oils, creature eyes, and
   harvested Brawn ingredients.
+- [how-to-acquire-dragon-armor.md](in-progress-work-plans/how-to-acquire-dragon-armor.md):
+  audit of live and planned acquisition routes for each dragon armor piece.
 - [legacy-limits-audit.md](in-progress-work-plans/legacy-limits-audit.md):
   byte/short-era cap audit and modernization recommendations.
 - [mining-guild-and-smithing-expansion-plan.md](in-progress-work-plans/mining-guild-and-smithing-expansion-plan.md):

@@ -7,4 +7,7 @@ This folder holds current hosting documentation for Spoiled Milk.
 
 Public hosted-alpha operation is handled by the guarded scripts in `scripts/`,
 especially `scripts/run-hosted-server.sh`, `scripts/stop-hosted-server.sh`, and
-`scripts/live-status.sh`.
+`scripts/live-status.sh`. Use `scripts/deploy-live-main.sh` from the manager
+checkout only after the public server is stopped; deployment refuses to change
+tracked files beneath a running JVM. Persistent live data belongs under
+`~/.local/share/spoiled-milk/live`, outside Git worktrees.

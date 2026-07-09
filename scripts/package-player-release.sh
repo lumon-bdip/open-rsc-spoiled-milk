@@ -10,6 +10,7 @@ PORT=""
 WINDOWS_JRE=""
 ASSETS_CLEARED=false
 SKIP_BUILD=false
+SOURCE_COMMIT=""
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -86,10 +87,67 @@ esac
   || fail "Port must be between 1 and 65535"
 [[ "$ASSETS_CLEARED" == true ]] \
   || fail "Confirm redistribution terms for packaged third-party visual assets before packaging with --assets-cleared"
+if [[ "$SKIP_BUILD" == true && "${SPOILED_MILK_RELEASE_TEST_MODE:-}" != 1 ]]; then
+  fail "--skip-build is restricted to packaging regression tests; manager releases must build the client"
+fi
 
-for command_name in jar zip sha256sum; do
+for command_name in git jar zip sha256sum; do
   command -v "$command_name" >/dev/null 2>&1 || fail "Missing dependency: $command_name"
 done
+
+require_release_git_state() {
+  local expected_commit="${1:-}"
+  local git_dir
+  local current_branch
+  local current_commit
+  local worktree_status
+  local spoiled_milk_main_commit
+  local operation_entry
+  local operation_marker
+  local operation_name
+
+  git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+    || fail "Release packaging must run from the manager Git worktree"
+  git_dir="$(git -C "$ROOT_DIR" rev-parse --absolute-git-dir)"
+
+  for operation_entry in \
+    "MERGE_HEAD:merge" \
+    "CHERRY_PICK_HEAD:cherry-pick" \
+    "REVERT_HEAD:revert" \
+    "REBASE_HEAD:rebase" \
+    "rebase-apply:rebase or am" \
+    "rebase-merge:rebase" \
+    "sequencer:sequenced cherry-pick or revert" \
+    "BISECT_LOG:bisect"; do
+    operation_marker="${operation_entry%%:*}"
+    operation_name="${operation_entry#*:}"
+    [[ ! -e "$git_dir/$operation_marker" ]] \
+      || fail "Release packaging is blocked by an in-progress Git $operation_name operation"
+  done
+
+  current_branch="$(git -C "$ROOT_DIR" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+  [[ "$current_branch" == "main" ]] \
+    || fail "Release packaging must run from manager branch main; found ${current_branch:-detached HEAD}"
+
+  worktree_status="$(git -C "$ROOT_DIR" status --porcelain --untracked-files=all)"
+  [[ -z "$worktree_status" ]] \
+    || fail "Release packaging requires a clean manager main worktree; commit or remove pending files first"
+
+  current_commit="$(git -C "$ROOT_DIR" rev-parse --verify 'HEAD^{commit}')"
+  if [[ -n "$expected_commit" && "$current_commit" != "$expected_commit" ]]; then
+    fail "Release source changed during packaging (expected $expected_commit, found $current_commit)"
+  fi
+  if [[ -z "$SOURCE_COMMIT" ]]; then
+    SOURCE_COMMIT="$current_commit"
+  fi
+  spoiled_milk_main_commit="$(git -C "$ROOT_DIR" rev-parse --verify 'refs/remotes/spoiled-milk/main^{commit}' 2>/dev/null || true)"
+  [[ -n "$spoiled_milk_main_commit" ]] \
+    || fail "Missing spoiled-milk/main; fetch the spoiled-milk remote before packaging"
+  [[ "$SOURCE_COMMIT" == "$spoiled_milk_main_commit" ]] \
+    || fail "Release packaging requires HEAD to match spoiled-milk/main (HEAD $SOURCE_COMMIT, spoiled-milk/main $spoiled_milk_main_commit)"
+}
+
+require_release_git_state
 
 [[ -d "$WINDOWS_JRE" ]] || fail "Windows JRE directory does not exist: $WINDOWS_JRE"
 [[ -f "$WINDOWS_JRE/bin/java.exe" ]] || fail "Windows JRE must contain bin/java.exe"
@@ -111,6 +169,10 @@ fi
 if [[ "$SKIP_BUILD" != true ]]; then
   "$ROOT_DIR/scripts/build-client.sh"
 fi
+
+# A build or concurrent session must not change the source snapshot after its
+# provenance commit was captured.
+require_release_git_state "$SOURCE_COMMIT"
 
 CLIENT_JAR="$ROOT_DIR/Client_Base/Open_RSC_Client.jar"
 CLIENT_CACHE="$ROOT_DIR/Client_Base/Cache"
@@ -225,6 +287,7 @@ stage_payload_files() {
 	cp "$ROOT_DIR/LICENSE" "$destination/LICENSE"
 	cp "$PACKAGE_ASSETS/ASSET-SOURCES.txt" "$destination/ASSET-SOURCES.txt"
 	printf '%s\n' "$VERSION" > "$destination/VERSION.txt"
+	printf '%s\n' "$SOURCE_COMMIT" > "$destination/SOURCE-COMMIT.txt"
 }
 
 stage_root_files() {
@@ -251,6 +314,10 @@ sed "s/@VERSION@/$VERSION/g; s/@PACKAGE_KIND@/windows-x64/g" "$PACKAGE_ASSETS/up
 cp "$PACKAGE_ASSETS/Update Spoiled Milk.cmd" "$WINDOWS_PAYLOAD_DIR/Update Spoiled Milk.cmd"
 mkdir -p "$WINDOWS_PAYLOAD_DIR/runtime"
 cp -R "$WINDOWS_JRE"/. "$WINDOWS_PAYLOAD_DIR/runtime/"
+
+# Recheck immediately before archive creation so SOURCE-COMMIT.txt cannot
+# describe a different or dirty source tree.
+require_release_git_state "$SOURCE_COMMIT"
 
 (
   cd "$STAGING_DIR"

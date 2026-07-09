@@ -59,7 +59,9 @@ python3 ./tests/myworld/test-standalone-layout.py
 python3 ./tests/myworld/test-generator-scripts.py
 python3 ./tests/myworld/test-entrypoints.py
 python3 ./tests/myworld/test-bot-suspicion-report.py
+python3 ./tests/myworld/test-ai-workspace-workflow.py
 python3 ./tests/myworld/test-hosted-alpha-config.py
+python3 ./tests/myworld/test-hosted-server-safety.py
 python3 ./tests/myworld/test-player-release.py
 python3 ./tests/myworld/test-foundation-optimization-guards.py
 python3 ./tests/myworld/test-server-sync-modernization.py

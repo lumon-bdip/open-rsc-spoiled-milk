@@ -2,7 +2,7 @@
 
 Status: audit
 Owner: An-actual-duck
-Branch: workspace/major-work
+Branch: no active branch; assign the next checklist item to a fresh topic branch in a neutral AI slot
 
 ## Purpose
 

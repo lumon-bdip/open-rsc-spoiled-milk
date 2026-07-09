@@ -1,42 +1,95 @@
 # AI Workspaces
 
-Use separate Git worktrees when multiple AI sessions or contributors are
-working at the same time. Do not run multiple unrelated tasks from the same
-checkout.
+Spoiled Milk separates stable folders from temporary task branches. A folder
+is an AI seat; it is not a category of work.
 
-Create a workspace with:
-
-```bash
-./scripts/create-ai-workspace.sh major-work
-./scripts/create-ai-workspace.sh plan-work
-./scripts/create-ai-workspace.sh small-tweaks
-./scripts/create-ai-workspace.sh odds-and-ends
+```text
+/home/justin/Core-Framework          manager AI; main only
+/home/justin/Core-Framework-ai-1     neutral worker slot
+/home/justin/Core-Framework-ai-2     neutral worker slot
+/home/justin/Core-Framework-ai-3     neutral worker slot
+/tmp/spoiled-milk-live-main          detached published live snapshot
 ```
 
-Check all worktrees and the live server with:
+Three workers plus the manager match the usual four concurrent AI sessions.
+Use fewer slots if fewer sessions are needed.
+
+## First-Time Setup
+
+From the manager checkout:
 
 ```bash
-./scripts/workspace-status.sh
+./scripts/ai-workspace.sh init 3
+./scripts/ai-workspace.sh status
 ```
 
-## Safety Rules
+Idle workers remain detached at a commit already contained in published
+`main`; the folder may lag harmlessly while idle. Starting a task always
+creates its topic branch from the current fetched published `main`:
 
-- The public hosted server runs from `/tmp/spoiled-milk-live-main`.
-- Do not launch the public hosted server from feature, bugfix, cleanup, or AI
-  workspaces.
-- Use `./scripts/run-server.sh` for a private dev server.
-- Use `./scripts/run-client.sh --dev` for a client pointed at the private dev
-  server.
-- Keep one task per branch. If a task changes direction, make a new branch
-  instead of stacking unrelated work.
-- Before merging or releasing, verify generated files and build scripts from a
-  clean current checkout.
+```bash
+./scripts/ai-workspace.sh start ai-1 fix/prayer-display
+```
 
-## Workspace Types
+Open `/home/justin/Core-Framework-ai-1` in that worker AI session. The branch
+describes the work; `ai-1` only identifies the seat.
 
-- `major-work`: large features, reworks, refactors, and other implementation
-  branches expected to take multiple commits or testing passes.
-- `plan-work`: documentation, planning, audits, and design notes.
-- `small-tweaks`: focused bug fixes or tiny gameplay/content adjustments.
-- `odds-and-ends`: assets, cleanup, data review, and other low-risk follow-up
-  work that does not fit an active feature branch.
+## Normal Work Cycle
+
+The worker saves progress durably:
+
+```bash
+./scripts/ai-workspace.sh checkpoint -m "Checkpoint prayer display"
+./scripts/ai-workspace.sh handoff -m "Finish prayer display"
+```
+
+Both commands commit project changes, including untracked files, and push the
+topic branch to `spoiled-milk`. Handoff also records the exact pushed commit as
+READY. Any later edit or commit invalidates that handoff.
+
+Before committing, the workflow lists staged paths and blob sizes. Likely
+secrets and oversized files are left staged in a local `QUARANTINED` state,
+never silently pushed.
+
+The manager collects the result:
+
+```bash
+./scripts/ai-manager.sh status
+./scripts/ai-manager.sh merge fix/prayer-display
+./scripts/test.sh
+git push spoiled-milk main
+./scripts/ai-workspace.sh recycle ai-1
+```
+
+Recycling is permitted only after the exact worker tip is contained in both
+local and published `main`. It deletes the merged local and remote topic branch
+and returns the slot to detached IDLE state. Use `--keep-remote` only for a
+deliberate long-lived remote record.
+
+## When A Session Leaves A Mess
+
+Do not delete, reset, clean, or stash the slot. From the manager checkout run:
+
+```bash
+./scripts/ai-manager.sh status
+./scripts/ai-manager.sh rescue ai-2 -m "Rescue abandoned ai-2 work"
+```
+
+Rescue creates a timestamped `rescue/ai-2/...` branch when necessary, commits
+tracked and untracked project files, and pushes the branch. The mess becomes a
+normal reviewable branch instead of hidden local state.
+
+## Safety Properties
+
+- Only the manager owns `main`.
+- Workers cannot begin on dirty or occupied slots.
+- Checkpoints are commits backed up on the remote, not stashes.
+- READY refers to one immutable commit, not a vague branch name.
+- Merge and recycle refuse unpublished or uncontained work.
+- The live server uses a detached published commit, so advancing `main` cannot
+  alter files underneath a running server.
+- Live databases and backups live under
+  `~/.local/share/spoiled-milk/live`, outside every worktree.
+
+See [ai-slot.md](ai-slot.md), [manager.md](manager.md), and
+[live-deployment.md](live-deployment.md) for role-specific instructions.

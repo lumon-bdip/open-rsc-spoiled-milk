@@ -17,7 +17,7 @@ Start from `main`:
 
 ```bash
 git switch main
-git pull
+git pull --ff-only spoiled-milk main
 ```
 
 Create a focused branch:
@@ -33,11 +33,28 @@ git status
 git diff
 git add .
 git commit -m "Fix prayer point display"
-git push -u origin fix/prayer-ui-points
+git push -u spoiled-milk fix/prayer-ui-points
 ```
 
 Open a pull request into `main`. Even when working alone, this gives you a clean
 place to review the change before it becomes official.
+
+## Multiple AI Sessions
+
+Keep `/home/justin/Core-Framework` on `main` as the manager checkout and put
+implementation in neutral worker slots:
+
+```bash
+./scripts/ai-workspace.sh init 3
+./scripts/ai-workspace.sh start ai-1 fix/prayer-ui-points
+./scripts/ai-manager.sh status
+```
+
+Workers checkpoint and push their own topic branches, then create an exact
+handoff. The manager reviews and merges those handoffs, runs final tests,
+publishes `main`, and recycles the slot. If a session disappears, the manager
+rescues its tracked and untracked files before cleanup. See
+[`../workspaces/README.md`](../workspaces/README.md).
 
 ## Plan Statuses
 
@@ -75,8 +92,9 @@ Use the ongoing maintenance queue for small fixes:
 docs/myworld/in-progress-work-plans/bug-fixes-and-small-updates.md
 ```
 
-Do not use one permanent bug-fix branch. Keep the document permanent and create
-short-lived branches for individual fixes:
+Do not use one permanent bug-fix workspace or branch. Keep the document
+permanent and create short-lived branches for individual fixes in any free AI
+slot:
 
 ```text
 fix/prayer-tab-points

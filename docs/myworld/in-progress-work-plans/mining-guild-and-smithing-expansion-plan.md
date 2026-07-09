@@ -2,7 +2,7 @@
 
 Status: in progress
 Owner: Justin
-Branch: `plan/mining-guild-smithing-expansion`
+Branch: no active branch; assign the next checklist item to a fresh topic branch in a neutral AI slot
 Related submissions:
 Related issues or PRs:
 

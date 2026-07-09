@@ -2,7 +2,7 @@
 
 Status: in-progress design
 Owner: An-actual-duck
-Branch: workspace/major-work
+Branch: no active branch; assign the next checklist item to a fresh topic branch in a neutral AI slot
 Related docs:
 - `docs/myworld/rough-drafts/slayer-guild-rough-draft-plan.md`
 - `docs/myworld/in-progress-work-plans/how-to-acquire-dragon-armor.md`

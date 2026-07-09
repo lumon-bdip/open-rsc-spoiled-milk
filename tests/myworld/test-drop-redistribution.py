@@ -118,7 +118,7 @@ def main() -> None:
     for snippet in retired_snippets[4:]:
         require(text, snippet, "NpcDrops.java")
 
-    require(text, "if (!dropTable.hasItemDrop(itemId, 1, 0, false))", "NpcDrops.java")
+    require(text, "if (!dropTable.hasItemDrop(itemId, amount, 0, false))", "NpcDrops.java")
     require(drop_table_text, "public boolean hasItemDrop(int itemId, int amount, int weight, boolean noted)", "DropTable.java")
 
     print("PASS: low-level NPC drop redistribution validated")

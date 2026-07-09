@@ -76,7 +76,7 @@ download-windows-jre:
 
 package-player-release:
 	@test "$(ASSETS_CLEARED)" = "1" || (printf '%s\n' 'Set ASSETS_CLEARED=1 only after confirming packaged art redistribution terms.' >&2; exit 1)
-	./scripts/package-player-release.sh --version "$(RELEASE_VERSION)" --host "$(HOST)" --port "$(PORT)" --windows-jre "$(WINDOWS_JRE)" --assets-cleared
+	./scripts/ai-manager.sh release --version "$(RELEASE_VERSION)" --host "$(HOST)" --port "$(PORT)" --windows-jre "$(WINDOWS_JRE)" --assets-cleared
 
 generators:
 	$(PYTHON) ./tools/generators/run-generators.py

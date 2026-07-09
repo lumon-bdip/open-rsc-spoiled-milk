@@ -15,7 +15,8 @@ Read these guides before submitting work:
 
 ## Core Rules
 
-- Do not push directly to `main`.
+- Contributors do not push directly to `main`; the project manager publishes
+  reviewed and tested integrations.
 - Use a topic branch for each focused change.
 - Open a pull request into `main`.
 - Keep gameplay changes tied to a plan doc unless the change is a small bug fix.

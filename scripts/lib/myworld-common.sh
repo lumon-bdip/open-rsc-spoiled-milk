@@ -10,7 +10,19 @@ fi
 ANT_HOME="${ANT_HOME:-$ROOT_DIR/tools/vendor/apache-ant-1.10.5}"
 ANT_BIN="${ANT_BIN:-$ANT_HOME/bin/ant}"
 MYWORLD_GENERATOR_RUNNER="$ROOT_DIR/tools/generators/run-generators.py"
-MYWORLD_LIVE_ROOT="${MYWORLD_LIVE_ROOT:-/tmp/spoiled-milk-live-main}"
+# The public server path is an identity boundary, not a convenience setting.
+# Keeping it fixed prevents an inherited environment variable from blessing a
+# development checkout as the live server. The declaration guard keeps this
+# shared library safe to source more than once in an interactive shell.
+if [[ "$(declare -p MYWORLD_LIVE_ROOT 2>/dev/null || true)" != declare\ -r* ]]; then
+  MYWORLD_LIVE_ROOT="/tmp/spoiled-milk-live-main"
+  readonly MYWORLD_LIVE_ROOT
+fi
+MYWORLD_LIVE_DB_ROOT="${MYWORLD_LIVE_DB_ROOT:-${HOME}/.local/share/spoiled-milk/live}"
+if [[ "$(declare -p MYWORLD_LIVE_DB_NAME 2>/dev/null || true)" != declare\ -r* ]]; then
+  MYWORLD_LIVE_DB_NAME="spoiled_milk_alpha.db"
+  readonly MYWORLD_LIVE_DB_NAME
+fi
 MYWORLD_PUBLIC_PORT="${MYWORLD_PUBLIC_PORT:-43605}"
 MYWORLD_DEV_PORT="${MYWORLD_DEV_PORT:-43615}"
 
@@ -96,16 +108,64 @@ myworld_git_branch() {
 }
 
 myworld_git_main_commit() {
-  local remote_ref
+  myworld_git_published_main_commit "$ROOT_DIR"
+}
 
-  for remote_ref in spoiled-milk/main origin/main; do
-    if git -C "$ROOT_DIR" rev-parse --verify --quiet "$remote_ref^{commit}" >/dev/null; then
-      git -C "$ROOT_DIR" rev-parse "$remote_ref^{commit}"
-      return 0
-    fi
-  done
+myworld_git_published_main_commit() {
+  local root="${1:-$ROOT_DIR}"
 
-  return 1
+  git -C "$root" rev-parse --verify --quiet 'spoiled-milk/main^{commit}'
+}
+
+myworld_git_commit_publication_state() {
+  local root="$1"
+  local commit="$2"
+  local main_commit
+
+  main_commit="$(myworld_git_published_main_commit "$root" 2>/dev/null || true)"
+  if [[ -z "$main_commit" ]] || ! git -C "$root" rev-parse --verify --quiet "$commit^{commit}" >/dev/null; then
+    printf 'unknown\n'
+  elif [[ "$commit" == "$main_commit" ]]; then
+    printf 'current\n'
+  elif git -C "$root" merge-base --is-ancestor "$commit" "$main_commit" 2>/dev/null; then
+    printf 'previous\n'
+  else
+    printf 'unpublished\n'
+  fi
+}
+
+myworld_git_dirty_status() {
+  local root="${1:-$ROOT_DIR}"
+
+  git -C "$root" status --porcelain --untracked-files=all
+}
+
+myworld_live_database_path() {
+  local root="${1:-$ROOT_DIR}"
+
+  printf '%s/server/inc/sqlite/%s\n' "$root" "$MYWORLD_LIVE_DB_NAME"
+}
+
+myworld_external_live_database_path() {
+  printf '%s/%s\n' "$MYWORLD_LIVE_DB_ROOT" "$MYWORLD_LIVE_DB_NAME"
+}
+
+myworld_require_live_database_link() {
+  local root="${1:-$ROOT_DIR}"
+  local checkout_db external_db checkout_real external_real
+
+  checkout_db="$(myworld_live_database_path "$root")"
+  external_db="$(myworld_external_live_database_path)"
+
+  [[ -f "$external_db" ]] \
+    || myworld_fail "External live database is missing: $external_db"
+  [[ -L "$checkout_db" ]] \
+    || myworld_fail "Live database path must be a symlink to the external database: $checkout_db"
+
+  checkout_real="$(readlink -f "$checkout_db" 2>/dev/null || true)"
+  external_real="$(readlink -f "$external_db" 2>/dev/null || true)"
+  [[ -n "$checkout_real" && "$checkout_real" == "$external_real" ]] \
+    || myworld_fail "Live database link points to '$checkout_real'; expected '$external_real'."
 }
 
 myworld_realpath() {
@@ -196,6 +256,48 @@ myworld_process_args() {
   ps -p "$pid" -o args= 2>/dev/null || true
 }
 
+myworld_server_pids_for_root() {
+  local root="$1"
+  local root_real pid args
+
+  root_real="$(myworld_realpath "$root" 2>/dev/null || printf '%s\n' "$root")"
+  while read -r pid args; do
+    [[ "$pid" =~ ^[0-9]+$ ]] || continue
+    [[ "$args" == *"$root_real/server/core.jar"* ]] || continue
+    printf '%s\n' "$pid"
+  done < <(ps -eo pid=,args= 2>/dev/null)
+}
+
+myworld_process_database_targets() {
+  local pid="$1"
+  local fd target
+
+  for fd in "/proc/$pid/fd/"*; do
+    [[ -e "$fd" || -L "$fd" ]] || continue
+    target="$(readlink "$fd" 2>/dev/null || true)"
+    [[ "$target" == *"/$MYWORLD_LIVE_DB_NAME" || "$target" == *"/$MYWORLD_LIVE_DB_NAME (deleted)" ]] \
+      || continue
+    printf '%s\n' "$target"
+  done
+}
+
+myworld_process_uses_only_external_live_database() {
+  local pid="$1"
+  local expected targets target count=0
+
+  expected="$(readlink -f "$(myworld_external_live_database_path)" 2>/dev/null || true)"
+  [[ -n "$expected" ]] || return 1
+  targets="$(myworld_process_database_targets "$pid")"
+  [[ -n "$targets" ]] || return 1
+
+  while IFS= read -r target; do
+    [[ -n "$target" ]] || continue
+    count=$((count + 1))
+    [[ "$target" == "$expected" ]] || return 1
+  done <<<"$targets"
+  ((count > 0))
+}
+
 myworld_server_root_for_pid() {
   local pid="$1"
   local args root
@@ -259,7 +361,9 @@ myworld_launch_marker_path() {
 myworld_write_launch_marker() {
   local label="$1"
   local conf_name="$2"
+  local safety_attestation="${3:-unverified}"
   local marker_path marker_dir root_real branch commit db_name server_name bind_address server_port ws_port
+  local database_path database_real
 
   marker_path="$(myworld_launch_marker_path "$conf_name")"
   marker_dir="$(dirname "$marker_path")"
@@ -273,6 +377,8 @@ myworld_write_launch_marker() {
   bind_address="$(myworld_conf_value "$conf_name" server_bind_address)"
   server_port="$(myworld_conf_value "$conf_name" server_port)"
   ws_port="$(myworld_conf_value "$conf_name" ws_server_port)"
+  database_path="$ROOT_DIR/server/inc/sqlite/${db_name}.db"
+  database_real="$(readlink -f "$database_path" 2>/dev/null || true)"
 
   {
     printf 'marker_label=%q\n' "$label"
@@ -281,6 +387,8 @@ myworld_write_launch_marker() {
     printf 'marker_commit=%q\n' "$commit"
     printf 'marker_config=%q\n' "$(basename "$(myworld_conf_path "$conf_name")")"
     printf 'marker_db=%q\n' "$db_name"
+    printf 'marker_db_path=%q\n' "$database_real"
+    printf 'marker_safety=%q\n' "$safety_attestation"
     printf 'marker_server=%q\n' "$server_name"
     printf 'marker_bind=%q\n' "$bind_address"
     printf 'marker_port=%q\n' "$server_port"
@@ -319,7 +427,7 @@ myworld_require_safe_hosted_launch() {
   local branch dirty_status head_commit main_commit root_real live_root_real
 
   git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
-    || myworld_fail "Hosted server must be started from a git worktree. Use --dev-unsafe only for private local testing."
+    || myworld_fail "Hosted server must be started from the fixed live git worktree."
 
   root_real="$(myworld_realpath "$ROOT_DIR" 2>/dev/null || true)"
   live_root_real="$(myworld_realpath "$MYWORLD_LIVE_ROOT" 2>/dev/null || true)"
@@ -328,17 +436,17 @@ myworld_require_safe_hosted_launch() {
     || myworld_fail "Refusing hosted server launch from '$root_real'. Public hosted server must run from '$live_root_real'."
 
   branch="$(myworld_git_branch)"
-  [[ "$branch" == "main" ]] || myworld_fail "Refusing hosted server launch from branch '$branch'. Public hosted server must run from clean main. Use a dev server or --dev-unsafe only for private testing."
+  [[ "$branch" == "HEAD" ]] || myworld_fail "Refusing hosted server launch from attached branch '$branch'. The public live checkout must use detached HEAD. Run scripts/deploy-live-main.sh first."
 
-  dirty_status="$(git -C "$ROOT_DIR" status --porcelain --untracked-files=no)"
-  [[ -z "$dirty_status" ]] || myworld_fail "Refusing hosted server launch from a dirty worktree. Commit, stash, or use a clean live-main worktree first."
+  dirty_status="$(myworld_git_dirty_status "$ROOT_DIR")"
+  [[ -z "$dirty_status" ]] || myworld_fail "Refusing hosted server launch from a dirty worktree, including untracked files. Clean the fixed live checkout with scripts/deploy-live-main.sh first."
 
   head_commit="$(myworld_git_commit)"
   main_commit="$(myworld_git_main_commit || true)"
-  [[ -n "$main_commit" ]] || myworld_fail "Unable to resolve spoiled-milk/main or origin/main. Fetch first, then start the hosted server."
+  [[ -n "$main_commit" ]] || myworld_fail "Unable to resolve spoiled-milk/main. Publish or fetch it before starting the hosted server."
   [[ "$head_commit" == "$main_commit" ]] || myworld_fail "Refusing hosted server launch from commit $head_commit; expected published main $main_commit."
 
-  printf 'Hosted launch safety: clean main at %s\n' "$head_commit" >&2
+  printf 'Hosted launch safety: clean detached published main at %s\n' "$head_commit" >&2
 }
 
 myworld_prepare_generated_artifacts() {

@@ -7,6 +7,7 @@ they submit.
 
 Before asking an AI tool to change the project, give it the relevant docs:
 
+- `AGENTS.md`
 - `README.md`
 - `CONTRIBUTING.md`
 - `docs/myworld/README.md`
@@ -17,13 +18,19 @@ For code changes, also ask the AI to inspect existing patterns before editing.
 
 ## Rules For AI-Assisted Work
 
-- Use a branch. Do not let AI work directly on `main`.
+- Use a neutral AI slot with a focused topic branch. Do not let a worker AI
+  work directly on `main`.
+- Checkpoint and push work before ending or abandoning a session; do not use a
+  stash as the handoff mechanism.
 - Keep the task focused.
 - Tell the AI not to revert unrelated changes.
 - Ask the AI to summarize what files it changed.
 - Ask the AI to run relevant tests where possible.
 - Review the diff yourself before opening a pull request.
 - Mention AI assistance in the pull request.
+
+For owner-directed concurrent sessions, use the checkpoint, handoff, rescue,
+and merge workflow in [`../workspaces/README.md`](../workspaces/README.md).
 
 ## Good AI Prompt Shape
 

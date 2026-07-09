@@ -225,7 +225,7 @@ For local development:
 ```
 
 `run-server.sh` starts a private local server on port `43615`. The public
-hosted alpha uses `run-hosted-server.sh` from the dedicated live worktree.
+hosted alpha uses a detached published commit in the dedicated live worktree.
 Check what is running with `./scripts/live-status.sh`.
 
 Current development notes are indexed in
@@ -233,8 +233,8 @@ Current development notes are indexed in
 
 Project workspace and hosting references:
 
-- [`docs/workspaces/`](docs/workspaces/): safe multi-worktree setup for
-  AI/contributor sessions.
+- [`docs/workspaces/`](docs/workspaces/): manager plus neutral AI worker slots,
+  durable handoffs, rescue, and safe multi-session integration.
 - [`docs/hosting/`](docs/hosting/): current private-server hosting notes.
 - [`legacy/`](legacy/): archived inherited material that is not part of the
   current build, release, or hosted-server workflow.

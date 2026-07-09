@@ -55,7 +55,23 @@ def write(path: Path, contents: str) -> None:
     path.write_text(contents, encoding="utf-8")
 
 
-def make_fixture(fixture: Path, java_version: str = "17.0.13") -> Path:
+def git(repo: Path, *args: str) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        fail(f"git {' '.join(args)} failed in release fixture:\n{result.stdout}{result.stderr}")
+    return result.stdout.strip()
+
+
+def make_fixture(
+    fixture: Path,
+    java_version: str = "17.0.13",
+    build_script: str = "#!/usr/bin/env bash\nset -euo pipefail\n",
+) -> Path:
     client_jar = fixture / "Client_Base" / "Open_RSC_Client.jar"
     client_jar.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(client_jar, "w") as jar:
@@ -76,12 +92,32 @@ def make_fixture(fixture: Path, java_version: str = "17.0.13") -> Path:
     write(runtime / "release", f'JAVA_VERSION="{java_version}"\n')
     write(runtime / "NOTICE", "runtime notice")
     write(runtime / "legal" / "java.base" / "LICENSE", "runtime license")
+    write(fixture / ".gitignore", "output/\n")
+    write(fixture / "scripts" / "build-client.sh", build_script)
+    os.chmod(fixture / "scripts" / "build-client.sh", 0o755)
+
+    git(fixture, "init", "--initial-branch=main")
+    git(fixture, "config", "user.name", "Release Test")
+    git(fixture, "config", "user.email", "release-test@example.invalid")
+    git(fixture, "add", "--all")
+    git(fixture, "commit", "-m", "Create release fixture")
+    git(fixture, "remote", "add", "spoiled-milk", "https://example.invalid/spoiled-milk.git")
+    git(fixture, "update-ref", "refs/remotes/spoiled-milk/main", "HEAD")
     return runtime
 
 
-def run_packager(fixture: Path, runtime: Path, *extra: str) -> subprocess.CompletedProcess[str]:
+def run_packager(
+    fixture: Path,
+    runtime: Path,
+    *extra: str,
+    skip_build: bool = True,
+    test_mode: bool = True,
+) -> subprocess.CompletedProcess[str]:
     env = dict(os.environ)
     env["ROOT_DIR"] = str(fixture)
+    if test_mode:
+        env["SPOILED_MILK_RELEASE_TEST_MODE"] = "1"
+    options = ["--skip-build"] if skip_build else []
     return subprocess.run(
         [
             "bash",
@@ -94,7 +130,7 @@ def run_packager(fixture: Path, runtime: Path, *extra: str) -> subprocess.Comple
             "43605",
             "--windows-jre",
             str(runtime),
-            "--skip-build",
+            *options,
             *extra,
         ],
         cwd=ROOT,
@@ -110,6 +146,7 @@ def test_packager_rejects_localhost_player_endpoint() -> None:
         runtime = make_fixture(fixture)
         env = dict(os.environ)
         env["ROOT_DIR"] = str(fixture)
+        env["SPOILED_MILK_RELEASE_TEST_MODE"] = "1"
         result = subprocess.run(
             [
                 "bash",
@@ -143,6 +180,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
         result = run_packager(fixture, runtime, "--assets-cleared")
         if result.returncode != 0:
             fail(f"release packager failed:\n{result.stdout}{result.stderr}")
+        source_commit = git(fixture, "rev-parse", "HEAD")
 
         output = fixture / "output" / "releases" / VERSION
         generic = output / f"spoiled-milk-{VERSION}-java.zip"
@@ -182,6 +220,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     f"{package_name}/README.txt",
                     f"{package_name}/game-files/ASSET-SOURCES.txt",
                     f"{package_name}/game-files/VERSION.txt",
+                    f"{package_name}/game-files/SOURCE-COMMIT.txt",
                     f"{package_name}/Play Spoiled Milk.cmd",
                     f"{package_name}/game-files/Update Spoiled Milk.cmd",
                     f"{package_name}/game-files/update-spoiled-milk.ps1",
@@ -196,6 +235,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     "update-spoiled-milk.ps1",
                     "ASSET-SOURCES.txt",
                     "VERSION.txt",
+                    "SOURCE-COMMIT.txt",
                 ]:
                     if f"{package_name}/{root_forbidden}" in names:
                         fail(f"{archive.name} should keep {root_forbidden} inside game-files/")
@@ -218,6 +258,8 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     fail(f"{archive.name} does not carry the requested endpoint port")
                 if package.read(f"{package_name}/game-files/VERSION.txt").decode() != f"{VERSION}\n":
                     fail(f"{archive.name} does not carry the packaged version stamp")
+                if package.read(f"{package_name}/game-files/SOURCE-COMMIT.txt").decode() != f"{source_commit}\n":
+                    fail(f"{archive.name} does not carry the exact packaged source commit")
                 readme = package.read(f"{package_name}/README.txt").decode()
                 for snippet in [
                     "Launch with play-spoiled-milk.sh on Linux or macOS.",
@@ -334,6 +376,15 @@ def test_release_gates_are_enforced() -> None:
         fail("Make packaging target must require explicit asset redistribution acknowledgement")
     if "download-windows-jre" not in makefile:
         fail("Makefile must expose the Windows JRE download helper")
+    if "./scripts/ai-manager.sh release" not in makefile:
+        fail("Make packaging target must use the manager roundup gate")
+
+    with tempfile.TemporaryDirectory(prefix="spoiled-release-skip-gate-") as temp_dir:
+        fixture = Path(temp_dir)
+        runtime = make_fixture(fixture)
+        result = run_packager(fixture, runtime, "--assets-cleared", test_mode=False)
+        if result.returncode == 0 or "restricted to packaging regression tests" not in result.stderr:
+            fail("packager must reject --skip-build outside an explicit test capability")
 
     with tempfile.TemporaryDirectory(prefix="spoiled-release-gates-") as temp_dir:
         fixture = Path(temp_dir)
@@ -348,6 +399,52 @@ def test_release_gates_are_enforced() -> None:
         result = run_packager(fixture, runtime, "--assets-cleared")
         if result.returncode == 0 or "Java 17+" not in result.stderr:
             fail("packager must reject the obsolete Java 8 Windows runtime")
+
+    with tempfile.TemporaryDirectory(prefix="spoiled-release-dirty-") as temp_dir:
+        fixture = Path(temp_dir)
+        runtime = make_fixture(fixture)
+        write(fixture / "uncommitted-release-note.txt", "not committed\n")
+        result = run_packager(fixture, runtime, "--assets-cleared")
+        if result.returncode == 0 or "clean manager main worktree" not in result.stderr:
+            fail("packager must reject dirty manager-main state")
+
+    with tempfile.TemporaryDirectory(prefix="spoiled-release-branch-") as temp_dir:
+        fixture = Path(temp_dir)
+        runtime = make_fixture(fixture)
+        git(fixture, "switch", "-c", "ai-workspace-01")
+        result = run_packager(fixture, runtime, "--assets-cleared")
+        if result.returncode == 0 or "manager branch main" not in result.stderr:
+            fail("packager must reject an AI workspace branch")
+
+    with tempfile.TemporaryDirectory(prefix="spoiled-release-operation-") as temp_dir:
+        fixture = Path(temp_dir)
+        runtime = make_fixture(fixture)
+        write(fixture / ".git" / "MERGE_HEAD", f"{git(fixture, 'rev-parse', 'HEAD')}\n")
+        result = run_packager(fixture, runtime, "--assets-cleared")
+        if result.returncode == 0 or "in-progress Git merge operation" not in result.stderr:
+            fail("packager must reject an in-progress Git operation")
+
+    with tempfile.TemporaryDirectory(prefix="spoiled-release-head-") as temp_dir:
+        fixture = Path(temp_dir)
+        runtime = make_fixture(fixture)
+        git(fixture, "commit", "--allow-empty", "-m", "Unpushed release candidate")
+        result = run_packager(fixture, runtime, "--assets-cleared")
+        if result.returncode == 0 or "HEAD to match spoiled-milk/main" not in result.stderr:
+            fail("packager must reject a source revision that is not spoiled-milk/main")
+
+    with tempfile.TemporaryDirectory(prefix="spoiled-release-build-mutation-") as temp_dir:
+        fixture = Path(temp_dir)
+        runtime = make_fixture(
+            fixture,
+            build_script=(
+                "#!/usr/bin/env bash\n"
+                "set -euo pipefail\n"
+                "printf 'build mutation\\n' >> \"$ROOT_DIR/LICENSE\"\n"
+            ),
+        )
+        result = run_packager(fixture, runtime, "--assets-cleared", skip_build=False)
+        if result.returncode == 0 or "clean manager main worktree" not in result.stderr:
+            fail("packager must recheck source state after the client build")
 
 
 def test_player_launch_defaults_to_renderer_v2() -> None:

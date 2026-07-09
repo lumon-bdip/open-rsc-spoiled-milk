@@ -20,7 +20,8 @@ Current priority order:
 
 1. Make the public hosted server launch path mechanically safe.
 2. Make local/dev/refactor server launches impossible to mistake for live.
-3. Separate live, feature, bugfix, and structural work by physical worktree.
+3. Separate the manager, neutral AI worker slots, and live deployment by
+   physical worktree.
 4. Restructure folders/packages only after the server workflow is protected.
 5. Return to renderer or gameplay cleanup only when the live-server path is
    clear, documented, and verified.
@@ -32,11 +33,11 @@ large and important, but it is not the reason this refactor exists.
 
 The live hosted server must never depend on the active development worktree.
 
-- Live server worktree: clean `main` only.
-- Feature worktree: feature branches only; never used for the public hosted
-  server.
-- Refactor worktree: structural branch only; never used for the public hosted
-  server until merged, packaged, and released.
+- Manager worktree: `main` only, used to collect, test, publish, and release.
+- AI worker worktrees: neutral numbered folders, each owning one temporary
+  focused topic branch at a time.
+- Live worktree: clean detached `HEAD` at an exact published-main commit;
+  never used for development.
 - Dirty worktrees are acceptable for development, but unsafe for public hosted
   server startup.
 - If a command starts the hosted server, it must be obvious which worktree,
@@ -50,26 +51,26 @@ Use physical folders so branch state is visible from the path.
 
 | Folder | Branch | Purpose | Live server allowed |
 | --- | --- | --- | --- |
-| `/tmp/spoiled-milk-live-main` | `main` | Clean live-server checkout for the current public release. | Yes |
-| `/home/justin/Core-Framework` | current feature branch | Normal active development and long-running feature work. | No |
-| `/home/justin/Core-Framework-bugfix` | short-lived `fix/...` branch | Isolated bug fixes intended to merge into `main`. | No |
-| `/home/justin/Core-Framework-structure` | `refactor/project-structure` | Folder/package/code-ownership refactor. | No |
+| `/tmp/spoiled-milk-live-main` | detached published commit | Clean live-server deployment. | Yes |
+| `/home/justin/Core-Framework` | `main` | Manager: review, merge, test, publish, release, and deploy. | No |
+| `/home/justin/Core-Framework-ai-1` | temporary topic branch or detached IDLE | Neutral AI worker slot. | No |
+| `/home/justin/Core-Framework-ai-2` | temporary topic branch or detached IDLE | Neutral AI worker slot. | No |
+| `/home/justin/Core-Framework-ai-3` | temporary topic branch or detached IDLE | Neutral AI worker slot. | No |
 
-The structure refactor folder should be created with `git worktree`, not by
-copying files manually. A worktree keeps branch history and merge behavior
-intact while still giving us a separate physical folder.
+The numbered folders describe AI seats, not categories of work. Feature,
+bugfix, plan, and structural tasks all receive short-lived descriptive
+branches in whichever slot is free.
 
 Recommended setup:
 
 ```bash
-git fetch spoiled-milk
-git worktree add /home/justin/Core-Framework-structure spoiled-milk/main
-cd /home/justin/Core-Framework-structure
-git switch -c refactor/project-structure
+./scripts/ai-workspace.sh init 3
+./scripts/ai-workspace.sh start ai-1 refactor/project-structure
+./scripts/ai-manager.sh status
 ```
 
-Before any hosted release or server restart, confirm the live checkout is on
-clean `main` and not a feature/refactor branch.
+Before any hosted release or server restart, confirm the live checkout is
+clean, detached, published-main history, and not a feature/refactor branch.
 
 ## Refactor Branch Rules
 
@@ -273,13 +274,17 @@ and hosted-server checks:
 
 Before any hosted restart:
 
-- `git status --short --branch` in the live worktree shows clean `main`
-- live worktree commit matches published `spoiled-milk/main`
+- `git status --short --branch` in the live worktree shows clean detached
+  `HEAD`
+- live worktree commit matches the published `spoiled-milk/main` selected for
+  deployment
 - startup output says it is using `myworld-host.conf`
 - startup output says it connected to `spoiled_milk_alpha.db`
+- `live-status.sh` verifies the launch attestation, database symlink, and
+  database file descriptor
 - public port `43605` belongs to the hosted server process
-- no feature, bugfix, or refactor worktree has a server process bound to the
-  public player port
+- no manager or AI worker worktree has a server process bound to the public
+  player port
 
 Before any dev/refactor launch:
 

@@ -2,7 +2,7 @@
 
 Status: implemented-pending-manual-testing
 Owner: An-actual-duck
-Branch: workspace/major-work
+Branch: no active branch; assign the next checklist item to a fresh topic branch in a neutral AI slot
 Related plans:
 - `docs/myworld/in-progress-work-plans/herblaw-side-ingredient-expansion-plan.md`
 

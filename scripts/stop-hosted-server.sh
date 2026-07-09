@@ -6,13 +6,17 @@ ROOT_DIR="${ROOT_DIR:-$SCRIPT_ROOT}"
 source "$SCRIPT_ROOT/scripts/lib/myworld-common.sh"
 
 CONFIRM_STOP=false
+DATABASE_RECOVERED=false
 while (($#)); do
   case "$1" in
     --yes)
       CONFIRM_STOP=true
       ;;
+    --database-recovered)
+      DATABASE_RECOVERED=true
+      ;;
     *)
-      myworld_fail "Unknown option: $1. Use --yes to actually stop the hosted server."
+      myworld_fail "Unknown option: $1. Use --yes to stop; --database-recovered is only for a separately recovered unsafe SQLite descriptor."
       ;;
   esac
   shift
@@ -35,6 +39,15 @@ while IFS= read -r pid; do
 
   if [[ "$root_real" != "$live_root_real" || "$conf" != "myworld-host.conf" ]]; then
     myworld_fail "Refusing to stop PID $pid on public port $MYWORLD_PUBLIC_PORT because it is not the approved hosted server. Run ./scripts/live-status.sh and inspect manually."
+  fi
+
+  if ! myworld_process_uses_only_external_live_database "$pid"; then
+    if [[ "$DATABASE_RECOVERED" != true ]]; then
+      printf 'Unsafe runtime database descriptor(s) for PID %s:\n' "$pid" >&2
+      myworld_process_database_targets "$pid" | sed 's/^/  /' >&2
+      myworld_fail "Refusing to stop a server that may be writing a wrong or deleted SQLite inode. Recover and integrity-check every live database descriptor first, then rerun with --yes --database-recovered."
+    fi
+    printf 'WARN: stopping after explicit confirmation that unsafe database descriptors were recovered.\n' >&2
   fi
 
   if [[ "$CONFIRM_STOP" == true ]]; then

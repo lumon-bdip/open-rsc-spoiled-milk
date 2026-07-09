@@ -2,9 +2,11 @@
 
 ## Main Rule
 
-Do not work directly on `main`.
+Do not implement ordinary changes directly on `main`.
 
 `main` should represent the official, owner-approved game state.
+The dedicated manager checkout may own `main` solely to review, integrate,
+test, publish, and release completed topic branches.
 
 ## Branch Names
 
@@ -30,9 +32,10 @@ A branch should usually answer one question:
 
 Avoid mixing unrelated gameplay, artwork, formatting, and cleanup changes.
 
-When multiple AI sessions or contributors need to work at once, use separate
-Git worktrees instead of switching branches inside one folder. The standard
-workspace setup is documented in [`../workspaces/README.md`](../workspaces/README.md).
+When multiple AI sessions or contributors need to work at once, use the neutral
+`ai-1`, `ai-2`, and `ai-3` worktrees instead of category-named permanent
+branches. The standard slot and manager workflow is documented in
+[`../workspaces/README.md`](../workspaces/README.md).
 
 ## Small Fixes
 
@@ -71,3 +74,8 @@ project state.
 
 Use squash merge for most work. It keeps the project history readable while
 still preserving the pull request discussion.
+
+Manager-collected AI handoffs are the local exception: `ai-manager.sh merge`
+creates an explicit no-fast-forward merge after verifying the exact READY
+commit and its remote backup. This preserves which parallel session supplied
+the handoff. External pull requests still use squash merge by default.
