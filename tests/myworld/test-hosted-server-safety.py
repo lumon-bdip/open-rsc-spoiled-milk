@@ -13,6 +13,7 @@ STATUS = ROOT / "scripts" / "live-status.sh"
 RUN_HOSTED = ROOT / "scripts" / "run-hosted-server.sh"
 DEPLOY = ROOT / "scripts" / "deploy-live-main.sh"
 STOP = ROOT / "scripts" / "stop-hosted-server.sh"
+TERMINAL_LAUNCHER = ROOT / "Launch Live Server.sh"
 FIXED_LIVE_ROOT = "/tmp/spoiled-milk-live-main"
 
 
@@ -243,6 +244,7 @@ def test_script_contracts_and_syntax() -> None:
     deploy = DEPLOY.read_text(encoding="utf-8")
     runner = RUN_HOSTED.read_text(encoding="utf-8")
     stopper = STOP.read_text(encoding="utf-8")
+    terminal_launcher = TERMINAL_LAUNCHER.read_text(encoding="utf-8")
 
     require('MYWORLD_LIVE_ROOT="/tmp/spoiled-milk-live-main"' in common, "live root is not fixed")
     require("origin/main" not in common, "hosted safety still falls back to origin/main")
@@ -284,10 +286,17 @@ def test_script_contracts_and_syntax() -> None:
         and "--database-recovered" in stopper,
         "hosted stop does not guard an unrecovered wrong/deleted database inode",
     )
+    require('LIVE_ROOT="/tmp/spoiled-milk-live-main"' in terminal_launcher, "terminal launcher does not use the fixed live root")
+    require("./scripts/run-hosted-server.sh" in terminal_launcher, "terminal launcher does not use the guarded hosted runner")
+    for forbidden_mutation in ["git switch", "git fetch", "git merge"]:
+        require(
+            forbidden_mutation not in terminal_launcher,
+            f"terminal launcher must not mutate deployment state with {forbidden_mutation}",
+        )
     require(os.access(DEPLOY, os.X_OK), "deploy-live-main.sh is not executable")
 
     syntax = subprocess.run(
-        ["bash", "-n", COMMON, STATUS, RUN_HOSTED, DEPLOY, STOP],
+        ["bash", "-n", COMMON, STATUS, RUN_HOSTED, DEPLOY, STOP, TERMINAL_LAUNCHER],
         cwd=ROOT,
         capture_output=True,
         text=True,
