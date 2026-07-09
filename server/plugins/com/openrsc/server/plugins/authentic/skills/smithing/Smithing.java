@@ -40,6 +40,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		ItemId.IRON_BAR.id(), ItemId.STEEL_BAR.id(), ItemId.MITHRIL_BAR.id(),
 		ItemId.TITAN_STEEL_BAR.id(), ItemId.ADAMANTITE_BAR.id(),
 		ItemId.ORICHALCUM_BAR.id(), ItemId.RUNITE_BAR.id(),
+		ItemId.DRAGON_BAR.id(),
 		MyWorldItemId.PURIFIED_RUNE_BAR
 	};
 
@@ -1031,7 +1032,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	 * Gets the smithing exp for the given amount of the right bars
 	 */
 	public int getSmithingExp(int barID, int barCount) {
-		int[] exps = {25, 40, 50, 100, 150, 200, 240, 250, 300, 350, 500};
+		int[] exps = {25, 40, 50, 100, 150, 200, 240, 250, 300, 350, 400, 500};
 		int type = getBarType(barID);
 		if (type < 0) {
 			return 0;
@@ -1043,7 +1044,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	 * Gets the min level required to smith a bar
 	 */
 	public int minSmithingLevel(int barID) {
-		int[] levels = {1, 8, 15, 22, 30, 38, 46, 54, 62, 70, 90};
+		int[] levels = {1, 8, 15, 22, 30, 38, 46, 54, 62, 70, 80, 90};
 		int type = getBarType(barID);
 		if (type < 0) {
 			return -1;
@@ -1056,7 +1057,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 	 */
 	public int getBarType(int barID) {
 		if (barID == MyWorldItemId.PURIFIED_RUNE_BAR) {
-			return 10;
+			return 11;
 		}
 		switch (ItemId.getById(barID)) {
 			case TIN_BAR:
@@ -1080,6 +1081,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return 8;
 			case RUNITE_BAR:
 				return 9;
+			case DRAGON_BAR:
+				return 10;
 			default:
 				break;
 		}
@@ -1091,7 +1094,7 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 		return id == ItemId.TIN_BAR || id == ItemId.COPPER_BAR || id == ItemId.BRONZE_BAR
 			|| id == ItemId.IRON_BAR || id == ItemId.STEEL_BAR || id == ItemId.MITHRIL_BAR
 			|| id == ItemId.TITAN_STEEL_BAR || id == ItemId.ADAMANTITE_BAR
-			|| id == ItemId.ORICHALCUM_BAR || id == ItemId.RUNITE_BAR
+			|| id == ItemId.ORICHALCUM_BAR || id == ItemId.RUNITE_BAR || id == ItemId.DRAGON_BAR
 			|| barId == MyWorldItemId.PURIFIED_RUNE_BAR;
 	}
 
@@ -1120,6 +1123,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return 9;
 			case RUNITE_BAR:
 				return 10;
+			case DRAGON_BAR:
+				return 11;
 			default:
 				return -1;
 		}
@@ -1155,6 +1160,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_LARGE_HELMET.id();
 			case RUNITE_BAR:
 				return ItemId.LARGE_RUNE_HELMET.id();
+			case DRAGON_BAR:
+				return ItemId.LARGE_DRAGON_HELMET.id();
 			default:
 				return -1;
 		}
@@ -1245,6 +1252,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_SQUARE_SHIELD.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_SQUARE_SHIELD.id();
+			case DRAGON_BAR:
+				return ItemId.DRAGON_SQUARE_SHIELD.id();
 			default:
 				return -1;
 		}
@@ -1275,6 +1284,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_KITE_SHIELD.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_KITE_SHIELD.id();
+			case DRAGON_BAR:
+				return ItemId.DRAGON_KITE_SHIELD.id();
 			default:
 				return -1;
 		}
@@ -1305,6 +1316,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_PLATE_MAIL_LEGS.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_PLATE_MAIL_LEGS.id();
+			case DRAGON_BAR:
+				return ItemId.DRAGON_PLATE_MAIL_LEGS.id();
 			default:
 				return -1;
 		}
@@ -1335,6 +1348,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_PLATE_MAIL_BODY.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_PLATE_MAIL_BODY.id();
+			case DRAGON_BAR:
+				return ItemId.DRAGON_PLATE_MAIL_BODY.id();
 			default:
 				return -1;
 		}
@@ -1500,6 +1515,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_DAGGER.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_DAGGER.id();
+			case DRAGON_BAR:
+				return ItemId.DRAGON_DAGGER.id();
 			default:
 				return -1;
 		}
@@ -1587,6 +1604,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_LONG_SWORD.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_LONG_SWORD.id();
+			case DRAGON_BAR:
+				return ItemId.DRAGON_SWORD.id();
 			default:
 				return -1;
 		}
@@ -1647,6 +1666,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_2_HANDED_SWORD.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_2_HANDED_SWORD.id();
+			case DRAGON_BAR:
+				return ItemId.DRAGON_2_HANDED_SWORD.id();
 			default:
 				return -1;
 		}
@@ -1677,6 +1698,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_AXE.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_AXE.id();
+			case DRAGON_BAR:
+				return ItemId.DRAGON_AXE.id();
 			default:
 				return -1;
 		}
@@ -1707,6 +1730,8 @@ public class Smithing implements UseLocTrigger, OpLocTrigger {
 				return ItemId.ORICHALCUM_BATTLE_AXE.id();
 			case RUNITE_BAR:
 				return ItemId.RUNE_BATTLE_AXE.id();
+			case DRAGON_BAR:
+				return ItemId.DRAGON_BATTLE_AXE.id();
 			default:
 				return -1;
 		}

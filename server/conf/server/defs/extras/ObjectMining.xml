@@ -242,7 +242,7 @@
 	<entry>
 		<int>1328</int><!-- Dragon sulfur -->
 		<ObjectMiningDef>
-			<requiredLvl>90</requiredLvl>
+			<requiredLvl>80</requiredLvl>
 			<oreId>3255</oreId>
 			<exp>650</exp>
 			<depletion>89</depletion>

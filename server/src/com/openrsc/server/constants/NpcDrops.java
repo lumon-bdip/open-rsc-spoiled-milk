@@ -173,6 +173,12 @@ public class NpcDrops {
 			addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
 		}
 		addHiddenUniqueDrop(NpcId.ELDER_GREEN_DRAGON.id(), MyWorldItemId.EXALTED_RUNE_HELMET, 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
+		addHiddenUniqueDrop(NpcId.ELDER_GREEN_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);
+		addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);
+		addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 512);
+		addHiddenUniqueDrop(NpcId.RED_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 1024);
+		addHiddenUniqueDrop(NpcId.DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 2048);
+		addHiddenUniqueDrop(NpcId.BLUE_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 2048);
 	}
 
 	private void addHiddenUniqueDrop(final int npcId, final int itemId, final int amount, final HiddenUniqueRarity rarity) {
@@ -2007,12 +2013,11 @@ public class NpcDrops {
 
 	private void initializeCustomRareDropTables() {
 
-		//KBD Specific table
+		// KBD keeps this table for legacy bad-luck/logging hooks; dragon materials now
+		// use guaranteed and hidden unique drops instead.
 		kbdTableCustom = new DropTable("KBD Rare Drop Table", "kbdrdt", true);
 		kbdTableCustom.addAccessor(NpcId.KING_BLACK_DRAGON.id(), 1673, 51200);
-		kbdTableCustom.addItemDrop(ItemId.KING_BLACK_DRAGON_SCALE.id(), 1, 2048, false);
-		kbdTableCustom.addItemDrop(ItemId.RAW_DRAGON_METAL.id(), 1, 682, false);
-		kbdTableCustom.addEmptyDrop(616);
+		kbdTableCustom.addEmptyDrop(1);
 	}
 
 	private void createCustomQuestDrops() {
@@ -2041,13 +2046,17 @@ public class NpcDrops {
 	}
 
 	private void addGuaranteedDrop(int npcId, int itemId, String description) {
+		addGuaranteedDrop(npcId, itemId, 1, description);
+	}
+
+	private void addGuaranteedDrop(int npcId, int itemId, int amount, String description) {
 		DropTable dropTable = this.npcDrops.get(npcId);
 		if (dropTable == null) {
 			dropTable = new DropTable(description);
 			this.npcDrops.put(npcId, dropTable);
 		}
-		if (!dropTable.hasItemDrop(itemId, 1, 0, false)) {
-			dropTable.addItemDrop(itemId, 1, 0);
+		if (!dropTable.hasItemDrop(itemId, amount, 0, false)) {
+			dropTable.addItemDrop(itemId, amount, 0);
 		}
 	}
 
@@ -2205,8 +2214,10 @@ public class NpcDrops {
 		addNormalDrop(NpcId.BLACK_DEMON.id(), ItemId.DEMON_EYE.id(), 1, 4, "Black Demon eye");
 		addNormalDrop(NpcId.BLACK_DEMON_GRANDTREE.id(), ItemId.DEMON_EYE.id(), 1, 4, "Black Demon Grand Tree eye");
 		addGuaranteedDrop(NpcId.BLACK_DRAGON.id(), ItemId.BLACK_DRAGON_HIDE.id(), "Black Dragon hide");
+		addGuaranteedDrop(NpcId.BLACK_DRAGON.id(), ItemId.KING_BLACK_DRAGON_SCALE.id(), "Black dragon scale");
 		addGuaranteedDrop(NpcId.BALROG.id(), ItemId.BALROG_HIDE.id(), "Balrog hide");
 		addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.BLACK_DRAGON_HIDE.id(), "King Black Dragon black dragon hide");
+		addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.KING_BLACK_DRAGON_SCALE.id(), 2, "King Black Dragon black dragon scale");
 		addGuaranteedDrop(NpcId.ELDER_GREEN_DRAGON.id(), ItemId.ELDER_GREEN_DRAGON_HIDE.id(), "Elder Green Dragon hide");
 		createElderGreenDragonDropTable();
 		addNormalDrop(NpcId.GIANT_BAT.id(), ItemId.BAT_EYE.id(), 1, 4, "Giant bat eye");
@@ -2271,18 +2282,6 @@ public class NpcDrops {
 		rareDrops.addItemDrop(ItemId.RUNE_THROWING_KNIFE.id(), 200, 1);
 		rareDrops.addItemDrop(ItemId.RUNE_SHURIKEN.id(), 200, 1);
 		rareDrops.addItemDrop(ItemId.RUNE_PLATE_MAIL_BODY.id(), 1, 1);
-		rareDrops.addItemDrop(ItemId.DRAGON_SWORD.id(), 1, 1);
-		rareDrops.addItemDrop(ItemId.DRAGON_AXE.id(), 1, 1);
-		rareDrops.addItemDrop(ItemId.DRAGON_2_HANDED_SWORD.id(), 1, 1);
-		rareDrops.addItemDrop(ItemId.DRAGON_DAGGER.id(), 1, 1);
-		rareDrops.addItemDrop(ItemId.POISONED_DRAGON_DAGGER.id(), 1, 1);
-		rareDrops.addItemDrop(ItemId.DRAGON_BATTLE_AXE.id(), 1, 1);
-		rareDrops.addItemDrop(ItemId.DRAGON_CROSSBOW.id(), 1, 1);
-		rareDrops.addItemDrop(ItemId.DRAGON_LONGBOW.id(), 1, 1);
-		rareDrops.addItemDrop(ItemId.DRAGON_ARROWS.id(), 200, 1);
-		rareDrops.addItemDrop(ItemId.POISON_DRAGON_ARROWS.id(), 200, 1);
-		rareDrops.addItemDrop(ItemId.DRAGON_BOLTS.id(), 200, 1);
-		rareDrops.addItemDrop(ItemId.POISON_DRAGON_BOLTS.id(), 200, 1);
 
 		elderGreenDragonDrops.addTableDrop(commonDrops, 96);
 		elderGreenDragonDrops.addTableDrop(uncommonDrops, 24);

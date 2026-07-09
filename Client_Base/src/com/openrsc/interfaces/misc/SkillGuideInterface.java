@@ -1515,9 +1515,8 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(174, "54", "Adamantite bar - 1 adamantite ore and 4 coal"));
 			skillMenuEntries.add(new SkillMenuItem(1958, "62", "2 Orichalcum bars - 1 mithril, 1 adamantite, and 5 coal"));
 			skillMenuEntries.add(new SkillMenuItem(408, "70", "Runite bar - 1 runite ore and 6 coal"));
-			skillMenuEntries.add(new SkillMenuItem(1365, "80", "Dragon bar - 1 raw dragon metal at the lava forge"));
-			skillMenuEntries.add(new SkillMenuItem(1367, "80", "Dragon metal chains - 1 raw dragon metal at the lava forge"));
-			skillMenuEntries.add(new SkillMenuItem(3261, "90", "Purified Rune Bar - 1 rune bar and 14 dragon sulfur"));
+			skillMenuEntries.add(new SkillMenuItem(1365, "80", "Dragon bar - 1 raw dragon metal and 6 dragon sulfur at the repaired lava forge"));
+			skillMenuEntries.add(new SkillMenuItem(3261, "90", "Purified Rune Bar - 1 rune bar and 14 dragon sulfur at the repaired lava forge"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1383, "Smithing");
 			}
@@ -1537,6 +1536,7 @@ public final class SkillGuideInterface {
 			addSmithingTier("Orichalcum", 62, 2028, 2030, 2031, 2032, 2033, 2034, 2049, 2035, 2036, 3189, 2210, 2192, 1977, 1978, 1979, 2227, 1980, 1981, 1982);
 			addSmithingTier("Rune", 70, 396, 397, 75, 398, 81, 405, 1262, 93, 3190, 98, 1092, 2194, 112, 1993, 1994, 403, 404, 402, 401);
 		} else if (curTab == 6) {
+			addSmithingTier("Dragon", 80, 1447, -1, 593, -1, 1346, 594, -1, 2752, -1, -1, -1, -1, 1425, -1, -1, 1278, 1426, 1429, 1427);
 			addSmithingTier("Exalted Rune", 90, 3262, 3263, 3264, 3265, 3266, 3267, 3268, 3269, 3271, 3270, 3273, -1, 3274, 3275, 3276, 3277, 3278, 3279, 3280);
 			skillMenuEntries.add(new SkillMenuItem(979, "4", "Bronze wire - 1 bronze bar"));
 			skillMenuEntries.add(new SkillMenuItem(419, "34", "Nails - 1 steel bar makes 2"));
@@ -1548,16 +1548,23 @@ public final class SkillGuideInterface {
 								int scimitarId, int twoHandedId, int axeId, int pickaxeId, int battleAxeId,
 								int maceId, int scytheId, int spearId, int boltId, int helmId, int gauntletId, int greavesId,
 								int shieldId, int paladinShieldId, int legsId, int bodyId) {
-		skillMenuEntries.add(new SkillMenuItem(daggerId, String.valueOf(baseLevel), name + " weapons - 1 to 3 bars"));
-		skillMenuEntries.add(new SkillMenuItem(axeId, String.valueOf(baseLevel), name + " tools - 1 bar"));
-		skillMenuEntries.add(new SkillMenuItem(scytheId, String.valueOf(baseLevel), name + " scythe - 3 bars"));
-		skillMenuEntries.add(new SkillMenuItem(helmId, String.valueOf(baseLevel), name + " helm - 1 bar"));
-		skillMenuEntries.add(new SkillMenuItem(gauntletId, String.valueOf(baseLevel + 2), name + " gauntlets - 2 bars"));
-		skillMenuEntries.add(new SkillMenuItem(greavesId, String.valueOf(baseLevel + 2), name + " greaves - 2 bars"));
-		skillMenuEntries.add(new SkillMenuItem(shieldId, String.valueOf(baseLevel + 3), name + " square shield - 3 bars"));
-		skillMenuEntries.add(new SkillMenuItem(paladinShieldId, String.valueOf(baseLevel + 4), name + " paladin shield - 3 bars"));
-		skillMenuEntries.add(new SkillMenuItem(legsId, String.valueOf(baseLevel + 4), name + " platelegs - 3 bars"));
-		skillMenuEntries.add(new SkillMenuItem(bodyId, String.valueOf(baseLevel + 6), name + " platebody - 4 bars"));
+		addSmithingGuideItem(daggerId, String.valueOf(baseLevel), name + " weapons - 1 to 3 bars");
+		addSmithingGuideItem(axeId, String.valueOf(baseLevel), name + " tools - 1 bar");
+		addSmithingGuideItem(scytheId, String.valueOf(baseLevel), name + " scythe - 3 bars");
+		addSmithingGuideItem(helmId, String.valueOf(baseLevel), name + " helm - 1 bar");
+		addSmithingGuideItem(gauntletId, String.valueOf(baseLevel + 2), name + " gauntlets - 2 bars");
+		addSmithingGuideItem(greavesId, String.valueOf(baseLevel + 2), name + " greaves - 2 bars");
+		addSmithingGuideItem(shieldId, String.valueOf(baseLevel + 3), name + " square shield - 3 bars");
+		addSmithingGuideItem(paladinShieldId, String.valueOf(baseLevel + 4), name + " paladin shield - 3 bars");
+		addSmithingGuideItem(legsId, String.valueOf(baseLevel + 4), name + " platelegs - 3 bars");
+		addSmithingGuideItem(bodyId, String.valueOf(baseLevel + 6), name + " platebody - 4 bars");
+	}
+
+	private void addSmithingGuideItem(int itemId, String level, String description) {
+		if (itemId < 0) {
+			return;
+		}
+		skillMenuEntries.add(new SkillMenuItem(itemId, level, description));
 	}
 
 	public boolean isVisible() {

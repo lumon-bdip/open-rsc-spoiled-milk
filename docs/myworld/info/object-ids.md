@@ -64,7 +64,7 @@ Most ore types have two IDs that point at the same visual model; either variant 
 | Gem rocks | 588 | `GEM_ROCKS` | `gemrock` | weighted uncut gem roll | 40 | 260 | 70 |
 | Tutorial tin | 496 | `ROCKS_TIN_TUTORIAL` | `rocks1` | 202 `Tin ore` | 1 | 70 | 0 |
 | Tourist Trap jail rocks | 1030 | `ROCKS` | `tinrock1` | 986 `Rocks` | 1 | 0 | 5 |
-| Dragon sulfur | 1328 | `ROCK_DRAGON_SULFUR` | `copperrock1` | 3255 `Dragon sulfur` | 90 | 650 | 420 |
+| Dragon sulfur | 1328 | `ROCK_DRAGON_SULFUR` | `copperrock1` | 3255 `Dragon sulfur` | 80 | 650 | 420 |
 
 ## Notes
 

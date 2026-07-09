@@ -68,78 +68,55 @@ Current Dwarf Youth Rescue flow:
 Access caveat:
 
 - The ladder currently allows entry if the cache key exists at all.
-- Actual raw dragon metal smelting currently requires
+- Lava forge production requires
   `miniquest_dwarf_youth_rescue == 2`.
-- The new repaired-forge state should be separate from miniquest completion:
+- The repaired-forge state is separate from miniquest completion:
   completion grants access, repair grants production.
 
-### Current Lava Forge Use
+### Implemented Lava Forge Use
 
-Current raw dragon metal behavior:
+Implemented lava forge behavior:
 
-- Use `Raw Dragon Metal` on the `Lava Forge`.
 - Requires `miniquest_dwarf_youth_rescue == 2`.
-- Requires 80 Smithing.
-- Player chooses either:
-  - `Dragon bar`: `1 Raw Dragon Metal -> 1 Dragon bar`
-  - `Dragon metal chains`: `1 Raw Dragon Metal -> 50 Dragon Metal Chains`
-- Each raw dragon metal forge action grants `1000` Smithing XP.
+- Requires one-time repair with `100 Black dragon scale` and
+  `1,000,000 coins`.
+- Modern clients open a lava forge production UI.
+- `Dragon bar`: `1 Raw Dragon Metal`, `6 Dragon sulfur`, 80 Smithing,
+  `1000` Smithing XP.
+- `Purified Rune Bar`: `1 Runite bar`, `14 Dragon sulfur`, 90 Smithing,
+  `500` Smithing XP.
+- Dragon metal chains are hidden compatibility-only items and are not produced
+  by the lava forge.
 
-Current direction changes:
-
-- The lava forge should move to its own production UI.
-- Dragon metal chains should be hidden and compatibility-only. They should not
-  be a production target in the new lava forge UI.
-- Dragon bars should require dragon sulfur.
-- Purified rune bars should be produced at the lava forge, not a regular
-  furnace.
-
-### Current Dragon Material Sources
+### Implemented Dragon Material Sources
 
 Relevant file:
 
 - `server/src/com/openrsc/server/constants/NpcDrops.java`
 
-Current custom KBD rare table:
+- Black Dragon drops `1 Black dragon scale`.
+- King Black Dragon drops `2 Black dragon scale`.
+- Raw dragon metal is a hidden rare dragon-family drop:
+  - Elder Green Dragon: `1/128`
+  - King Black Dragon: `1/128`
+  - Black Dragon: `1/512`
+  - Red Dragon: `1/1024`
+  - Green Dragon: `1/2048`
+  - Blue Dragon: `1/2048`
 
-- The table is attached to `King Black Dragon`.
-- The table contains:
-  - `King Black Dragon scale`
-  - `Raw Dragon Metal`
-  - empty outcome
-
-Current KBD table data:
-
-- accessor: `1673 / 51200`
-- `King Black Dragon scale`: weight `2048`
-- `Raw Dragon Metal`: weight `682`
-- empty: weight `616`
-
-This currently ties both raw dragon metal and KBD scales to KBD rather than to
-dragon hunting broadly.
-
-### Current Chipped Dragon Scale Use
+### Retired Chipped Dragon Scale Use
 
 Relevant file:
 
 - `server/plugins/com/openrsc/server/plugins/authentic/skills/crafting/Crafting.java`
 
-Current KBD scale behavior:
-
-- Use a chisel on `King Black Dragon scale`.
-- Requires 90 Crafting.
-- Consumes `1 King Black Dragon scale`.
-- Produces `5 Chipped Dragon Scale`.
-- Grants a small Crafting XP amount.
-
-New direction:
-
-- Chipped dragon scales may remain in code as compatibility-only items.
-- The chisel recipe should be removed.
+- The KBD scale item ID is now named `Black dragon scale`.
+- The chisel recipe has been removed.
+- Chipped dragon scales remain in code as compatibility-only items.
 - Chipped dragon scales should have no active purpose in the first pass of the
   new dragon crafting route.
 
-### Current Wayne Dragon Armor Route
+### Retired Wayne Dragon Armor Route
 
 Relevant files:
 
@@ -147,45 +124,32 @@ Relevant files:
 - `server/plugins/com/openrsc/server/plugins/custom/minigames/DwarfRescue.java`
 - `server/plugins/com/openrsc/server/plugins/authentic/itemactions/InvAction.java`
 
-Wayne's special armor option is currently available after
-`miniquest_dwarf_youth_rescue == 2`.
+Wayne's special armor option has been removed.
 
-Current Wayne outputs:
-
-| Output | Current cost |
-| --- | --- |
-| `Dragon Scale Mail Body` | `500 Dragon Metal Chains`, `150 Chipped Dragon Scales`, `500,000 coins` |
-| `Dragon Scale Mail Legs` | `500 Dragon Metal Chains`, `100 Chipped Dragon Scales`, `500,000 coins` |
-| `Dragon Plate Mail Body` | `4 Dragon bars`, `500,000 coins` |
-
-New direction:
-
-- Wayne should no longer be the main dragon armor crafter.
+- Wayne is no longer the main dragon armor crafter.
 - The one-time lava forge repair cost replaces Wayne's recurring `500,000`
   coin fee.
-- Dragon equipment should be smithed at normal anvils using dragon bars.
-- Dragon scale mail body and legs should be hidden until a better non-metal-line
+- Dragon equipment is smithed at normal anvils using dragon bars.
+- Dragon scale mail body and legs are hidden until a better non-metal-line
   route exists for them.
 - Wayne can be repurposed as a hint NPC, recipe explainer, or legacy dialogue
   contact if desired.
 
-### Current Anvil Support
+### Implemented Anvil Support
 
 Relevant files:
 
 - `server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/Smithing.java`
 - `tests/myworld/test-dragon-metal-production-removal.py`
 
-Current dragon anvil support is intentionally limited:
+Implemented dragon anvil support:
 
-- Dragon bars are not normal Smithing inputs.
+- Dragon bars are normal Smithing inputs.
 - Dragon metal chains do not have a Smithing recipe.
-- Dragon equipment is not broadly crafted at anvils.
+- Dragon platebody, platelegs, large helm, square shield, paladin shield, and
+  existing dragon weapons are crafted at anvils.
 - Dragon square/paladin shield repair remains available through shield halves.
-
-This plan intentionally reverses that current direction. The existing
-`test-dragon-metal-production-removal.py` should be replaced or rewritten once
-implementation starts.
+- `test-dragon-metal-production-removal.py` now validates this route.
 
 ## New Core Decisions
 
@@ -392,75 +356,74 @@ Desired effects:
 
 ## Implementation Checklist
 
-- [ ] Add or rename the repair material as `Black dragon scale`.
-- [ ] Add guaranteed `Black dragon scale` drops to black dragon and KBD.
-- [ ] Add a one-time repaired lava forge player state.
-- [ ] Add Dwarven Smithy or lava forge dialogue explaining the broken forge.
-- [ ] Add lava forge repair interaction requiring `100 Black dragon scale` and
+- [x] Add or rename the repair material as `Black dragon scale`.
+- [x] Add guaranteed `Black dragon scale` drops to black dragon and KBD.
+- [x] Add a one-time repaired lava forge player state.
+- [x] Add Dwarven Smithy or lava forge dialogue explaining the broken forge.
+- [x] Add lava forge repair interaction requiring `100 Black dragon scale` and
       `1,000,000 coins`.
-- [ ] Add repaired lava forge production UI.
-- [ ] Move purified rune production from the regular furnace to lava forge UI.
-- [ ] Change dragon bar production to require `1 Raw Dragon Metal` and
+- [x] Add repaired lava forge production UI.
+- [x] Move purified rune production from the regular furnace to lava forge UI.
+- [x] Change dragon bar production to require `1 Raw Dragon Metal` and
       `6 Dragon sulfur`.
-- [ ] Remove dragon metal chains from the lava forge production choices.
-- [ ] Lower dragon sulfur Mining requirement to `80`.
-- [ ] Lower the new Mining Guild area entry requirement to `80`.
-- [ ] Remove the KBD scale chisel recipe.
-- [ ] Keep chipped dragon scales as compatibility-only/inert items.
-- [ ] Keep dragon metal chains as compatibility-only/inert items.
-- [ ] Add raw dragon metal drops to dragons at the decided rates.
-- [ ] Remove direct dragon equipment/ammunition drops from Elder Green Dragon.
-- [ ] Add dragon equipment recipes to normal anvil Smithing.
-- [ ] Define the active acquisition route for every dragon equipment slot.
-- [ ] Hide dragon scale mail body, dragon scale mail legs, and dragon scale
+- [x] Remove dragon metal chains from the lava forge production choices.
+- [x] Lower dragon sulfur Mining requirement to `80`.
+- [x] Lower the new Mining Guild area entry requirement to `80`.
+- [x] Remove the KBD scale chisel recipe.
+- [x] Keep chipped dragon scales as compatibility-only/inert items.
+- [x] Keep dragon metal chains as compatibility-only/inert items.
+- [x] Add raw dragon metal drops to dragons at the decided rates.
+- [x] Remove direct dragon equipment/ammunition drops from Elder Green Dragon.
+- [x] Add dragon equipment recipes to normal anvil Smithing.
+- [x] Define the active acquisition route for every dragon equipment slot.
+- [x] Hide dragon scale mail body, dragon scale mail legs, and dragon scale
       mail top from player-facing acquisition routes.
-- [ ] Keep dragon medium Helmet compatibility-only and replace its live reward
+- [x] Keep dragon medium Helmet compatibility-only and replace its live reward
       sources with `Dragon Helmet` / `Large Dragon Helmet`.
-- [ ] Remove Wayne's direct dragon armor crafting route or convert him to
+- [x] Remove Wayne's direct dragon armor crafting route or convert him to
       guidance/recipe dialogue.
-- [ ] Hide the current Legends Guild task-provider entry into the old
+- [x] Hide the current Legends Guild task-provider entry into the old
       dragon-leg route until Monster Slayer replaces it with unique rewards.
-- [ ] Update Dwarf Smithy Note text.
-- [ ] Update Smithing guide entries.
+- [x] Update Dwarf Smithy Note text.
+- [x] Update Smithing guide entries.
 - [x] Update `how-to-acquire-dragon-armor.md`.
 - [x] Update `mining-guild-and-smithing-expansion-plan.md`.
 - [x] Update Monster Slayer plan so dragon legs are no longer its top reward.
-- [ ] Replace dragon-metal-removal tests with tests for the new route.
+- [x] Replace dragon-metal-removal tests with tests for the new route.
 
 ## Testing Checklist
 
-- [ ] Dwarf Youth Rescue completion grants lava forge access but not repaired
+- [x] Dwarf Youth Rescue completion grants lava forge access but not repaired
       production.
-- [ ] Unrepaired lava forge explains the repair requirement.
-- [ ] Repair consumes exactly `100 Black dragon scale` and `1,000,000 coins`.
-- [ ] Repair state persists.
-- [ ] Repaired lava forge opens the new production UI.
-- [ ] Dragon bar recipe requires `1 Raw Dragon Metal` and `6 Dragon sulfur`.
-- [ ] Dragon metal chains are not offered by the new lava forge UI.
-- [ ] Purified Rune Bar recipe is unavailable at regular furnaces.
-- [ ] Purified Rune Bar recipe works at repaired lava forge.
-- [ ] Dragon sulfur mining and area entry require 80 Mining.
-- [ ] Black dragon drops `1 Black dragon scale`.
-- [ ] KBD drops `2 Black dragon scale`.
-- [ ] Raw dragon metal rates are wired for blue, green, red, black, KBD, and
+- [x] Unrepaired lava forge explains the repair requirement.
+- [x] Repair consumes exactly `100 Black dragon scale` and `1,000,000 coins`.
+- [x] Repair state persists.
+- [x] Repaired lava forge opens the new production UI.
+- [x] Dragon bar recipe requires `1 Raw Dragon Metal` and `6 Dragon sulfur`.
+- [x] Dragon metal chains are not offered by the new lava forge UI.
+- [x] Purified Rune Bar recipe is unavailable at regular furnaces.
+- [x] Purified Rune Bar recipe works at repaired lava forge.
+- [x] Dragon sulfur mining and area entry require 80 Mining.
+- [x] Black dragon drops `1 Black dragon scale`.
+- [x] KBD drops `2 Black dragon scale`.
+- [x] Raw dragon metal rates are wired for blue, green, red, black, KBD, and
       elder green dragons.
-- [ ] Elder Green Dragon no longer drops direct dragon gear/ammunition.
-- [ ] Chiseling KBD/black dragon scales no longer creates chipped scales.
-- [ ] Dragon equipment can be made at normal anvils with no coin fee.
-- [ ] Dragon equipment recipes require bars only, not chains or chipped scales.
-- [ ] Dragon scale mail body, legs, and top have no player-facing acquisition
+- [x] Elder Green Dragon no longer drops direct dragon gear/ammunition.
+- [x] Chiseling KBD/black dragon scales no longer creates chipped scales.
+- [x] Dragon equipment can be made at normal anvils with no coin fee.
+- [x] Dragon equipment recipes require bars only, not chains or chipped scales.
+- [x] Dragon scale mail body, legs, and top have no player-facing acquisition
       route in the first pass.
-- [ ] Dragon medium Helmet has no active reward route and is not introduced as
+- [x] Dragon medium Helmet has no active reward route and is not introduced as
       a normal anvil recipe in the first pass.
-- [ ] Wayne no longer creates dragon armor directly if that route is retired.
+- [x] Wayne no longer creates dragon armor directly if that route is retired.
 
 ## Open Questions
 
-- Should existing `King Black Dragon scale` be renamed into `Black dragon
-  scale`, or should `Black dragon scale` be a new item?
-- If `King Black Dragon scale` remains, should it convert automatically or be
-  used in the repair as a substitute?
-- Should dragon shields remain shield-half-only, bar-smithable, or both?
+- Existing `King Black Dragon scale` item ID was renamed in definitions to
+  `Black dragon scale`, preserving existing saved items.
+- Dragon shields are both bar-smithable and repairable through the legacy
+  shield-half route.
 - Should metal dragon gloves/gauntlets and boots/greaves be added as part of
   this tier, or should dragonhide hand/foot slots stay separate?
 - What future route, if any, should reintroduce dragon scale mail variants?

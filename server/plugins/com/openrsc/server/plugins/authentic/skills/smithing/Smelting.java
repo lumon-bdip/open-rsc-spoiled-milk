@@ -11,7 +11,6 @@ import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
 import com.openrsc.server.external.Gauntlets;
 import com.openrsc.server.model.Point;
-import com.openrsc.server.model.container.CarriedItems;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
@@ -35,8 +34,11 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	public static final int LAVA_FORGE = SceneryId.LAVA_FORGE.id();
 	private static final int SMELTING_ACTION_DELAY_TICKS = 3;
 	private static final int DRAGON_SMELTING_LEVEL = 80;
-	private static final int DRAGON_METAL_CHAIN_OUTPUT = 50;
 	private static final int RAW_DRAGON_METAL_XP = 1000;
+	private static final int LAVA_FORGE_REPAIR_SCALE_AMOUNT = 100;
+	private static final int LAVA_FORGE_REPAIR_COIN_AMOUNT = 1000000;
+	private static final String DWARF_YOUTH_RESCUE_CACHE_KEY = "miniquest_dwarf_youth_rescue";
+	private static final String LAVA_FORGE_REPAIRED_CACHE_KEY = "myworld_lava_forge_repaired";
 	public static final int FURNACE_CATEGORY_BARS = ItemId.BRONZE_BAR.id();
 	public static final int FURNACE_CATEGORY_RINGS = ItemId.GOLD_RING.id();
 	public static final int FURNACE_CATEGORY_NECKLACES = ItemId.GOLD_NECKLACE.id();
@@ -55,8 +57,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		ItemId.TIN_ORE.id(), ItemId.COPPER_ORE.id(), ItemId.IRON_ORE.id(),
 		ItemId.PIG_IRON_BAR.id(), ItemId.COAL.id(), ItemId.MITHRIL_ORE.id(),
 		ItemId.ADAMANTITE_ORE.id(), ItemId.RUNITE_ORE.id(), ItemId.SILVER.id(),
-		ItemId.GOLD.id(), ItemId.GOLD_FAMILYCREST.id(), ItemId.RUNITE_BAR.id(),
-		ItemId.DRAGON_SULFUR.id()
+		ItemId.GOLD.id(), ItemId.GOLD_FAMILYCREST.id()
 	};
 
 	private static final SmeltRecipe[] RECIPES = {
@@ -79,8 +80,13 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			ingredient(ItemId.MITHRIL_ORE.id(), 1), ingredient(ItemId.ADAMANTITE_ORE.id(), 1),
 			ingredient(ItemId.COAL.id(), 5)),
 		new SmeltRecipe(ItemId.RUNITE_BAR.id(), 70, 200, 1,
-			ingredient(ItemId.RUNITE_ORE.id(), 1), ingredient(ItemId.COAL.id(), 6)),
-		new SmeltRecipe(MyWorldItemId.PURIFIED_RUNE_BAR, 90, 500, 1,
+			ingredient(ItemId.RUNITE_ORE.id(), 1), ingredient(ItemId.COAL.id(), 6))
+	};
+
+	private static final SmeltRecipe[] LAVA_FORGE_RECIPES = {
+		new SmeltRecipe(ItemId.DRAGON_BAR.id(), DRAGON_SMELTING_LEVEL, RAW_DRAGON_METAL_XP, 1, "lava forge",
+			ingredient(ItemId.RAW_DRAGON_METAL.id(), 1), ingredient(ItemId.DRAGON_SULFUR.id(), 6)),
+		new SmeltRecipe(MyWorldItemId.PURIFIED_RUNE_BAR, 90, 500, 1, "lava forge",
 			ingredient(ItemId.RUNITE_BAR.id(), 1), ingredient(ItemId.DRAGON_SULFUR.id(), 14))
 	};
 
@@ -95,7 +101,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			if (!isInFurnaceRange(player, obj)) {
 				return;
 			}
-			player.message("Use raw dragon metal on the lava forge");
+			handleLavaForgeOp(player);
 			return;
 		}
 		if (obj.getID() != FURNACE) {
@@ -113,7 +119,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			if (!isInFurnaceRange(player, obj)) {
 				return;
 			}
-			handleRawDragonMetalForge(player, item);
+			handleLavaForgeUse(player, item);
 			return;
 		}
 		if (obj.getID() == FURNACE) {
@@ -153,84 +159,74 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		}
 	}
 
-	private void handleRawDragonMetalForge(Player player, Item item) {
-		if (item.getCatalogId() != ItemId.RAW_DRAGON_METAL.id()) {
-			player.message("Nothing interesting happens");
-			return;
-		}
-		if (!player.getCache().hasKey("miniquest_dwarf_youth_rescue")
-			|| player.getCache().getInt("miniquest_dwarf_youth_rescue") != 2) {
+	private void handleLavaForgeOp(Player player) {
+		if (!hasDwarfYouthRescueAccess(player)) {
 			player.message("You do not understand how to use this forge yet");
 			return;
 		}
-		if (getCurrentLevel(player, Skill.SMITHING.id()) < DRAGON_SMELTING_LEVEL) {
-			player.playerServerMessage(MessageType.QUEST,
-				"You need to be at least level-" + DRAGON_SMELTING_LEVEL + " smithing to smelt raw dragon metal");
+		if (!isLavaForgeRepaired(player)) {
+			offerLavaForgeRepair(player);
 			return;
 		}
-
-		int option = multi(player, "Dragon bar", "Dragon metal chains", "Cancel");
-		if (option == 0) {
-			makeRawDragonMetalProduction(player, ItemId.DRAGON_BAR.id(), 1, "a dragon bar");
-		} else if (option == 1) {
-			makeRawDragonMetalProduction(player, ItemId.DRAGON_METAL_CHAIN.id(),
-				DRAGON_METAL_CHAIN_OUTPUT, DRAGON_METAL_CHAIN_OUTPUT + " dragon metal chains");
-		}
+		openLavaForgeInterface(player);
 	}
 
-	private boolean makeRawDragonMetalProduction(Player player, int outputItemId, int outputAmount, String outputName) {
-		if (rawDragonMetalCount(player) < 1) {
-			player.message("You have no raw dragon metal left");
-			return false;
+	private void handleLavaForgeUse(Player player, Item item) {
+		if (!hasDwarfYouthRescueAccess(player)) {
+			player.message("You do not understand how to use this forge yet");
+			return;
 		}
-		if (player.getConfig().WANT_FATIGUE && player.getConfig().STOP_SKILLING_FATIGUED >= 2
-			&& player.getFatigue() >= player.MAX_FATIGUE) {
-			player.message("You are too tired to smelt raw dragon metal");
-			return false;
+		if (!isLavaForgeRepaired(player)) {
+			offerLavaForgeRepair(player);
+			return;
 		}
-
-		int repeat = 1;
-		if (player.getConfig().BATCH_PROGRESSION) {
-			repeat = rawDragonMetalCount(player);
+		if (!ActionSender.isRetroClient(player)) {
+			openLavaForgeInterface(player);
+			return;
 		}
-
-		int made = 0;
-		startbatch(player, repeat);
-		while (!ifinterrupted() && !isbatchcomplete()) {
-			if (rawDragonMetalCount(player) < 1) {
-				stopbatch();
-				break;
-			}
-			if (player.getConfig().WANT_FATIGUE && player.getConfig().STOP_SKILLING_FATIGUED >= 2
-				&& player.getFatigue() >= player.MAX_FATIGUE) {
-				player.message("You are too tired to smelt raw dragon metal");
-				stopbatch();
-				break;
-			}
-
-			player.playerServerMessage(MessageType.QUEST, "You place the raw dragon metal into the lava forge");
-			ActionSender.sendActionProgressBar(player, ItemId.RAW_DRAGON_METAL.id(), SMELTING_ACTION_DELAY_TICKS);
-			delay(SMELTING_ACTION_DELAY_TICKS);
-			if (player.getCarriedItems().remove(new Item(ItemId.RAW_DRAGON_METAL.id())) < 0) {
-				stopbatch();
-				break;
-			}
-			thinkbubble(new Item(outputItemId, outputAmount));
-			give(player, outputItemId, outputAmount);
-			player.playerServerMessage(MessageType.QUEST, "You retrieve " + outputName);
-			player.incExp(Skill.SMITHING.id(), RAW_DRAGON_METAL_XP, true);
-
-			made++;
-			updatebatch();
-			if (!ifinterrupted() && !isbatchcomplete()) {
-				delay();
-			}
+		SmeltRecipe recipe = getRetroLavaForgeRecipe(item.getCatalogId());
+		if (recipe == null) {
+			player.message("Use raw dragon metal or a runite bar on the repaired lava forge");
+			return;
 		}
-		return made > 0;
+		int repeat = player.getConfig().BATCH_PROGRESSION ? maxDirectSmelts(player, recipe) : 1;
+		makeSmeltingProduction(player, recipe, repeat);
 	}
 
-	private int rawDragonMetalCount(Player player) {
-		return player.getCarriedItems().getInventory().countId(ItemId.RAW_DRAGON_METAL.id(), Optional.of(false));
+	private boolean hasDwarfYouthRescueAccess(Player player) {
+		return player.getCache().hasKey(DWARF_YOUTH_RESCUE_CACHE_KEY)
+			&& player.getCache().getInt(DWARF_YOUTH_RESCUE_CACHE_KEY) == 2;
+	}
+
+	private boolean isLavaForgeRepaired(Player player) {
+		return player.getCache().hasKey(LAVA_FORGE_REPAIRED_CACHE_KEY)
+			&& player.getCache().getInt(LAVA_FORGE_REPAIRED_CACHE_KEY) == 1;
+	}
+
+	private void offerLavaForgeRepair(Player player) {
+		player.playerServerMessage(MessageType.QUEST,
+			"The lava forge is damaged. It needs " + LAVA_FORGE_REPAIR_SCALE_AMOUNT
+				+ " black dragon scales and " + LAVA_FORGE_REPAIR_COIN_AMOUNT + " coins to repair.");
+		if (inventoryCount(player, ItemId.KING_BLACK_DRAGON_SCALE.id()) < LAVA_FORGE_REPAIR_SCALE_AMOUNT
+			|| inventoryCount(player, ItemId.COINS.id()) < LAVA_FORGE_REPAIR_COIN_AMOUNT) {
+			player.message("You do not have enough materials to repair the lava forge");
+			return;
+		}
+		int option = multi(player, "Repair the lava forge", "Leave it");
+		if (option != 0) {
+			return;
+		}
+		if (player.getCarriedItems().remove(new Item(ItemId.KING_BLACK_DRAGON_SCALE.id(), LAVA_FORGE_REPAIR_SCALE_AMOUNT)) < 0
+			|| player.getCarriedItems().remove(new Item(ItemId.COINS.id(), LAVA_FORGE_REPAIR_COIN_AMOUNT)) < 0) {
+			player.message("You do not have enough materials to repair the lava forge");
+			return;
+		}
+		player.getCache().set(LAVA_FORGE_REPAIRED_CACHE_KEY, 1);
+		player.playerServerMessage(MessageType.QUEST, "You repair the lava forge. Its heat stabilizes.");
+	}
+
+	private int inventoryCount(Player player, int itemId) {
+		return player.getCarriedItems().getInventory().countId(itemId, Optional.of(false));
 	}
 
 	private void openSmeltingInterface(Player player) {
@@ -250,9 +246,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 	private boolean shouldOpenSmeltingChoice(int itemId) {
 		return itemId == ItemId.TIN_ORE.id()
-			|| itemId == ItemId.COPPER_ORE.id()
-			|| itemId == ItemId.RUNITE_BAR.id()
-			|| itemId == ItemId.DRAGON_SULFUR.id();
+			|| itemId == ItemId.COPPER_ORE.id();
 	}
 
 	private ProductionSession createFurnaceCategorySession(Player player) {
@@ -311,6 +305,50 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			return false;
 		}
 		return new Smelting().makeSmeltingProduction(player, recipe, quantity);
+	}
+
+	public static boolean beginLavaForgeProductionFromInterface(Player player, ProductionSession session, int itemId, int quantity) {
+		if (session == null || !session.isType(ProductionSession.TYPE_SMELTING)) {
+			return false;
+		}
+		if (quantity < 1) {
+			player.message("Choose at least one bar to smelt");
+			return false;
+		}
+		Smelting smelting = new Smelting();
+		if (!smelting.hasDwarfYouthRescueAccess(player) || !smelting.isLavaForgeRepaired(player)) {
+			player.message("You cannot use the lava forge yet");
+			return false;
+		}
+		SmeltRecipe recipe = getLavaForgeRecipe(itemId);
+		if (recipe == null) {
+			player.message("Nothing interesting happens");
+			return false;
+		}
+		return smelting.makeSmeltingProduction(player, recipe, quantity);
+	}
+
+	private void openLavaForgeInterface(Player player) {
+		if (ActionSender.isRetroClient(player)) {
+			player.message("Use raw dragon metal or a runite bar on the repaired lava forge");
+			return;
+		}
+		ProductionSession session = createLavaForgeProductionSession(player);
+		player.setAttribute("production_session", session);
+		player.setAttribute("production_starter", (ProductionStarter) Smelting::beginLavaForgeProductionFromInterface);
+		ActionSender.showProductionInterface(player, session);
+	}
+
+	private ProductionSession createLavaForgeProductionSession(Player player) {
+		List<ProductionRecipe> recipes = new ArrayList<>();
+		for (SmeltRecipe recipe : LAVA_FORGE_RECIPES) {
+			recipes.add(new ProductionRecipe(recipe.barId, recipe.requiredLevel,
+				recipe.totalInputAmount(), recipe.outputAmount,
+				getCurrentLevel(player, Skill.SMITHING.id()) >= recipe.requiredLevel,
+				recipe.hasMaterials(player), recipe.ingredientItemIds(),
+				recipe.ingredientFallbackItemIds(), recipe.ingredientAmounts()));
+		}
+		return new ProductionSession(ProductionSession.TYPE_SMELTING, "Choose a lava forge bar", -1, recipes);
 	}
 
 	public static boolean beginFurnaceCategoryFromInterface(Player player, ProductionSession session, int itemId, int quantity) {
@@ -515,6 +553,25 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		return null;
 	}
 
+	private static SmeltRecipe getLavaForgeRecipe(int itemId) {
+		for (SmeltRecipe recipe : LAVA_FORGE_RECIPES) {
+			if (recipe.barId == itemId) {
+				return recipe;
+			}
+		}
+		return null;
+	}
+
+	private static SmeltRecipe getRetroLavaForgeRecipe(int itemId) {
+		if (itemId == ItemId.RAW_DRAGON_METAL.id()) {
+			return getLavaForgeRecipe(ItemId.DRAGON_BAR.id());
+		}
+		if (itemId == ItemId.RUNITE_BAR.id()) {
+			return getLavaForgeRecipe(MyWorldItemId.PURIFIED_RUNE_BAR);
+		}
+		return null;
+	}
+
 	private static SmeltRecipe getDirectOreRecipe(int itemId) {
 		if (itemId == ItemId.TIN_ORE.id()) {
 			return getRecipe(ItemId.TIN_BAR.id());
@@ -567,7 +624,11 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	@Override
 	public boolean blockUseLoc(Player player, GameObject obj, Item item) {
 		if (obj.getID() == LAVA_FORGE) {
-			return item.getCatalogId() == ItemId.RAW_DRAGON_METAL.id();
+			return item.getCatalogId() == ItemId.RAW_DRAGON_METAL.id()
+				|| item.getCatalogId() == ItemId.RUNITE_BAR.id()
+				|| item.getCatalogId() == ItemId.DRAGON_SULFUR.id()
+				|| item.getCatalogId() == ItemId.KING_BLACK_DRAGON_SCALE.id()
+				|| item.getCatalogId() == ItemId.COINS.id();
 		}
 		if (obj.getID() == FURNACE) {
 			return item.getCatalogId() == ItemId.STEEL_BAR.id()
@@ -581,13 +642,19 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		private final int requiredLevel;
 		private final int xp;
 		private final int outputAmount;
+		private final String productionSite;
 		private final Ingredient[] ingredients;
 
 		private SmeltRecipe(int barId, int requiredLevel, int xp, int outputAmount, Ingredient... ingredients) {
+			this(barId, requiredLevel, xp, outputAmount, "furnace", ingredients);
+		}
+
+		private SmeltRecipe(int barId, int requiredLevel, int xp, int outputAmount, String productionSite, Ingredient... ingredients) {
 			this.barId = barId;
 			this.requiredLevel = requiredLevel;
 			this.xp = xp;
 			this.outputAmount = outputAmount;
+			this.productionSite = productionSite;
 			this.ingredients = ingredients;
 		}
 
@@ -655,7 +722,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		}
 
 		private String startMessage(Player player) {
-			return "You place the materials for " + getBarName(player, this) + " into the furnace";
+			return "You place the materials for " + getBarName(player, this) + " into the " + productionSite;
 		}
 	}
 

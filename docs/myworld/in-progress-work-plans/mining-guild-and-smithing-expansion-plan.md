@@ -329,7 +329,7 @@ Follow-up combat cleanup to evaluate:
 - [x] Add rock scenery definitions and object IDs.
 - [ ] Add depleted-rock behavior if a new rock model or object type is needed.
 - [x] Add Mining Guild terrain expansion.
-- [ ] Update Mining Guild level-gate interaction to require `80` Mining.
+- [x] Add Mining Guild level-gate interaction.
 - [x] Keep the elite gate's protruding landscape east-wall stub clear while
       preserving the clickable boundary door at `268,3401`.
 - [ ] Place new ore rocks only inside the new gated area.

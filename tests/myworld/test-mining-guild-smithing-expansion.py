@@ -141,7 +141,7 @@ def main() -> None:
     sulfur_mining_entry = """<entry>
 \t\t<int>1328</int><!-- Dragon sulfur -->
 \t\t<ObjectMiningDef>
-\t\t\t<requiredLvl>90</requiredLvl>
+\t\t\t<requiredLvl>80</requiredLvl>
 \t\t\t<oreId>3255</oreId>
 \t\t\t<exp>650</exp>
 \t\t\t<depletion>89</depletion>
@@ -151,7 +151,7 @@ def main() -> None:
     require(sulfur_mining_entry in object_mining, "ObjectMining should make Dragon sulfur rock mineable")
     require(sulfur_mining_entry in retro_object_mining, "Retro ObjectMining should include Dragon sulfur rock")
     require(
-        "| Dragon sulfur | 1328 | `ROCK_DRAGON_SULFUR` | `copperrock1` | 3255 `Dragon sulfur` | 90 | 650 | 420 |"
+        "| Dragon sulfur | 1328 | `ROCK_DRAGON_SULFUR` | `copperrock1` | 3255 `Dragon sulfur` | 80 | 650 | 420 |"
         in object_ids_doc,
         "Object ID docs should list the Dragon sulfur rock placement ID",
     )

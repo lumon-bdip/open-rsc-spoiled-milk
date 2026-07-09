@@ -51,13 +51,13 @@ def main() -> None:
     )
 
     door_action = DOOR_ACTION.read_text(encoding="utf-8")
-    require("MINING_GUILD_ELITE_MINING_LEVEL = 90" in door_action, "Elite gate should require 90 Mining")
+    require("MINING_GUILD_ELITE_MINING_LEVEL = 80" in door_action, "Elite gate should require 80 Mining")
     require("NpcId.NURMOF.id()" in door_action, "Elite gate should use Nurmof for the warning dialogue")
     require('"Woah, hold your horses."' in door_action, "Elite gate should include Nurmof warning line 1")
     require('"You\'re a part of the mining guild, sure."' in door_action, "Elite gate should include Nurmof warning line 2")
     require('"But that area is still off limits except for the ultra elite miners."' in door_action, "Elite gate should include Nurmof warning line 3")
     require('"It\'s dangerous down there."' in door_action, "Elite gate should include Nurmof warning line 4")
-    require('"You need level 90 Mining to proceed further."' in door_action, "Elite gate should include the system-level requirement message")
+    require('"You need level 80 Mining to proceed further."' in door_action, "Elite gate should include the system-level requirement message")
     require("doDoor(obj, player);" in door_action, "Elite gate should use normal door open/close behavior when allowed")
 
     plan = PLAN.read_text(encoding="utf-8")

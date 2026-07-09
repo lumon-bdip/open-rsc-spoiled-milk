@@ -109,10 +109,8 @@ def require_smelting_runtime_safety() -> None:
     if "shouldOpenSmeltingChoice(item.getCatalogId()) && !ActionSender.isRetroClient(player)" not in text:
         fail("Using tin/copper ore on a furnace should open the smelting chooser on modern clients")
     if ("return itemId == ItemId.TIN_ORE.id()\n"
-        "\t\t\t|| itemId == ItemId.COPPER_ORE.id()\n"
-        "\t\t\t|| itemId == ItemId.RUNITE_BAR.id()\n"
-        "\t\t\t|| itemId == ItemId.DRAGON_SULFUR.id();") not in text:
-        fail("Tin/copper ore and purified rune inputs should open the modern furnace chooser")
+        "\t\t\t|| itemId == ItemId.COPPER_ORE.id();") not in text:
+        fail("Tin/copper ore should open the modern furnace chooser")
     if "if (itemId == ItemId.TIN_ORE.id()) {\n\t\t\treturn getRecipe(ItemId.TIN_BAR.id());" not in text:
         fail("Using tin ore directly on a retro client should still smelt tin as a fallback")
     orichalcum_recipe = re.search(
@@ -142,6 +140,7 @@ def require_smelting_runtime_safety() -> None:
     if purified_recipe is None:
         fail("Purified Rune Bar smelting recipe should exist")
     for ingredient in (
+        '"lava forge"',
         "ingredient(ItemId.RUNITE_BAR.id(), 1)",
         "ingredient(ItemId.DRAGON_SULFUR.id(), 14)",
     ):
@@ -178,9 +177,9 @@ def require_legacy_smelting_def_levels() -> None:
 
 def require_smithing_min_levels() -> None:
     text = SMITHING.read_text(encoding="utf-8")
-    expected = "int[] levels = {1, 8, 15, 22, 30, 38, 46, 54, 62, 70, 90};"
+    expected = "int[] levels = {1, 8, 15, 22, 30, 38, 46, 54, 62, 70, 80, 90};"
     if expected not in text:
-        fail("Smithing minSmithingLevel should follow the 1-90 metal bar ladder")
+        fail("Smithing minSmithingLevel should follow the 1-90 metal bar ladder with dragon at 80")
 
 
 def main() -> None:

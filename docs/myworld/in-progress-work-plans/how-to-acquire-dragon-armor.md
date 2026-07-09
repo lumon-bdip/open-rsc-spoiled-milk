@@ -22,11 +22,15 @@ into Combat Odyssey, not the old skirt reward itself.
   and `Dragon Plated Skirt`. That was added in commit `3a6787542 The Odyssey`.
 - Commit `837de7256 Balance dragon gear and summoning fixes` removed the skirt
   choice and changed the final reward to `Dragon Plate Mail Legs`.
-- Current high-end dragon plate and scale armor is mostly obtained through
-  Wayne in Falador after the Dwarf Youth Rescue miniquest, except dragon plate
-  legs, which are restored to Combat Odyssey as their route.
-- Current dragon shield acquisition still uses the classic shield-half path:
-  right half plus left half plus hammer on an anvil.
+- Current high-end metal dragon armor is obtained by completing Dwarf Youth
+  Rescue, repairing the lava forge, producing dragon bars, and smithing dragon
+  gear at a normal anvil.
+- Wayne no longer crafts dragon armor directly.
+- Combat Odyssey is preserved in code for legacy progress, but new Radimus
+  starts are hidden until Monster Slayer replaces that progression thread.
+- Current dragon shield acquisition supports normal dragon-bar smithing. The
+  classic shield-half path remains available as a compatibility route: right
+  half plus left half plus hammer on an anvil.
 - Item `1430` is legacy-sensitive. Base custom item defs still call it
   `Dragon Plated Skirt`, but MyWorld and the client override it to
   `Dragon Scale Mail Legs`. Treat `1430` as scale mail legs in current
@@ -46,26 +50,26 @@ into Combat Odyssey, not the old skirt reward itself.
 
 | Requested armor | Current item and ID | Current route found | Legacy route found | Notes |
 | --- | --- | --- | --- | --- |
-| Platemail body | `Dragon Plate Mail Body` `1427` | Wayne can make it after Dwarf Youth Rescue for `4 Dragon bars` and `500,000 coins`. | No Combat Odyssey route found. | Female characters use the female plate-top appearance automatically from the body item. |
-| Platemail legs | `Dragon Plate Mail Legs` `1429` | Combat Odyssey awards it on completion. | Original Combat Odyssey final choice could award this or the retired skirt. | Current implementation route; future dragon gear crafting plan moves it to anvil Smithing. |
+| Platemail body | `Dragon Plate Mail Body` `1427` | Smith from dragon bars at a normal anvil after repairing the lava forge. | No Combat Odyssey route found. | Female characters use the female plate-top appearance automatically from the body item. |
+| Platemail legs | `Dragon Plate Mail Legs` `1429` | Smith from dragon bars at a normal anvil after repairing the lava forge. | Original Combat Odyssey final choice could award this or the retired skirt. | Combat Odyssey new starts are hidden. |
 | Skirt | Retired. Legacy `Dragon Plated Skirt` used item `1430`. | No current skirt route should exist. | Original Combat Odyssey final choice could award `Dragon Plated Skirt`. | Do not reintroduce. Current `1430` is `Dragon Scale Mail Legs`. |
 | Top | `Dragon Plate Mail Top` `1428` | No normal acquisition route found. | No current legacy reward route found beyond compatibility/history. | MyWorld/client now label this as `Dragon plate mail body`; it should probably remain a compatibility/female visual support item unless a future plan says otherwise. |
-| Scalemail body | `Dragon Scale Mail Body` `1368` | Wayne can make it after Dwarf Youth Rescue for `500 Dragon Metal Chains`, `150 Chipped Dragon Scales`, and `500,000 coins`. | Dwarf Smithy Note points players to this route. | Current implementation route only. Future plan hides scale mail until a better non-metal-line route exists. |
-| Scalemail legs | `Dragon Scale Mail Legs` `1430` | Wayne can make it for `500 Dragon Metal Chains`, `100 Chipped Dragon Scales`, and `500,000 coins`. | Same ID was formerly the retired `Dragon Plated Skirt`. | Current implementation route only. Future plan hides scale mail until a better non-metal-line route exists. |
+| Scalemail body | `Dragon Scale Mail Body` `1368` | No active route. | Former Wayne route used dragon metal chains, chipped dragon scales, and coins. | Hidden until a better non-metal-line route exists. |
+| Scalemail legs | `Dragon Scale Mail Legs` `1430` | No active route. | Same ID was formerly the retired `Dragon Plated Skirt`; former Wayne route used dragon metal chains, chipped dragon scales, and coins. | Hidden until a better non-metal-line route exists. |
 | Scalemail top | `Dragon Scale Mail Top` `1537` | No normal acquisition route found. | No current legacy reward route found. | Exists in equipment logic and dragon-breath mitigation. Future plan keeps it hidden with the other scale mail variants. |
-| Full helm | `Large Dragon Helmet` / MyWorld `Dragon Helmet` `1425` | Hidden unique drop from Black Demons. | No quest route found. | MyWorld renames this to `Dragon Helmet`, so this appears to be the current "full helm" slot. |
+| Full helm | `Large Dragon Helmet` / MyWorld `Dragon Helmet` `1425` | Smith from dragon bars at a normal anvil; also remains a hidden unique drop from Black Demons. | No quest route found. | MyWorld renames this to `Dragon Helmet`, so this appears to be the current "full helm" slot. |
 | Medium helm | `Dragon medium Helmet` `795` | No intended active route after the dragon crafting cleanup. Former Black Demon, Present, and Halloween Cracker reward slots should use `Large Dragon Helmet` / `Dragon Helmet` instead. | Authentic rare/event lineage exists. | Still exists as compatibility-only unless a future helm-variant plan reintroduces it. |
 | Helm | No separate third dragon helm found. | `Dragon Helmet` appears to be the MyWorld name for item `1425`. | N/A | Treat `helm` as an alias question until a distinct item is added. |
 | Shield | No plain `Dragon Shield` item found. | Closest routes are `Anti dragon breath Shield` from the Duke/Dragon Slayer flow, and `Dragon Square Shield` via shield halves. | Anti-dragon shield is authentic Dragon Slayer utility. | Keep anti-dragon shield separate from dragon armor tiering. |
-| Kite shield | Constant `DRAGON_KITE_SHIELD` `1426`, displayed as `Dragon Paladin Shield`. | Smith from right and left dragon shield halves on an anvil with a hammer at 60 Smithing, choosing the paladin/kite output. | No separate drop route found. | Code calls it kite shield; player-facing name is paladin shield. |
-| Square shield | `Dragon Square Shield` `1278` | Smith from right and left dragon shield halves on an anvil with a hammer at 60 Smithing. | Classic shield-half route. | Right half is sold by Siegfried Erkle. Left half is on the mega rare drop table. Direct hidden KBD/Black Dragon square shield drops only exist if OpenPK points are enabled, which MyWorld disables. |
-| Paladin shield | `Dragon Paladin Shield` `1426` | Same shield-half smithing route as the kite shield entry. | No separate route found. | This is the current player-facing name for `DRAGON_KITE_SHIELD`. |
+| Kite shield | Constant `DRAGON_KITE_SHIELD` `1426`, displayed as `Dragon Paladin Shield`. | Smith from dragon bars at a normal anvil; shield-half repair route remains. | No separate drop route found. | Code calls it kite shield; player-facing name is paladin shield. |
+| Square shield | `Dragon Square Shield` `1278` | Smith from dragon bars at a normal anvil; shield-half repair route remains. | Classic shield-half route. | Right half is sold by Siegfried Erkle. Left half is on the mega rare drop table. Direct hidden KBD/Black Dragon square shield drops only exist if OpenPK points are enabled, which MyWorld disables. |
+| Paladin shield | `Dragon Paladin Shield` `1426` | Smith from dragon bars at a normal anvil; shield-half repair route remains. | No separate route found. | This is the current player-facing name for `DRAGON_KITE_SHIELD`. |
 | Gloves / gauntlets | Dragonhide glove family: baby `1886`, blue `1921`, green/earth `1926`, red `1931`, black `1941`, elder green `1951`. | Crafted from matching tanned dragon leather with thread. Also available as fishing special rewards. | No metal dragon gauntlet route found. | No item named dragon gauntlets was found. |
 | Boots / greaves | Dragonhide boot family: baby `1887`, blue `1922`, green/earth `1927`, red `1932`, black `1942`, elder green `1952`. | Crafted from matching tanned dragon leather with thread. Also available as fishing special rewards. | No metal dragon greaves route found. | Metal greaves exist for other metal tiers, but no dragon greaves were found. |
 
 ## Material Routes
 
-### Wayne's Dragon Armor
+### Repaired Lava Forge And Dragon Bars
 
 Source:
 
@@ -77,35 +81,21 @@ Unlock:
 
 - Player must have `miniquest_dwarf_youth_rescue == 2`.
 
-This is a current implementation finding, not the new intended direction. The
-dragon gear crafting plan moves this armor work away from Wayne and into the
-repaired lava forge plus normal anvil Smithing route.
-
-Wayne options:
-
-| Output | Cost |
-| --- | --- |
-| `Dragon Scale Mail Body` | `500 Dragon Metal Chains`, `150 Chipped Dragon Scales`, `500,000 coins` |
-| `Dragon Scale Mail Legs` | `500 Dragon Metal Chains`, `100 Chipped Dragon Scales`, `500,000 coins` |
-| `Dragon Plate Mail Body` | `4 Dragon bars`, `500,000 coins` |
+Wayne's old armor route is retired. He remains a throwing weapon shop NPC.
 
 Dragon material setup:
 
-- `Raw dragon metal` comes from the KBD custom rare table.
-- At the lava forge, raw dragon metal requires Dwarf Youth Rescue completion
-  and 80 Smithing.
-- One raw dragon metal can become either `1 Dragon bar` or
-  `50 Dragon Metal Chains`.
-- `King Black Dragon scale` comes from the KBD custom rare table.
-- Using a chisel on a KBD scale requires 90 Crafting and produces
-  `5 Chipped Dragon Scales`.
-
-Planning update:
-
-- Dragon bars are the only intended material output for the first new dragon
-  Smithing route.
-- Dragon metal chains and chipped dragon scales should be hidden or
-  compatibility-only unless a future route gives them a new purpose.
+- `Black dragon scale` uses the former KBD scale item ID.
+- Black Dragons drop `1 Black dragon scale`.
+- King Black Dragon drops `2 Black dragon scale`.
+- Repairing the lava forge requires Dwarf Youth Rescue completion,
+  `100 Black dragon scale`, and `1,000,000 coins`.
+- `Dragon bar` requires `1 Raw dragon metal` and `6 Dragon sulfur` at the
+  repaired lava forge.
+- `Purified Rune Bar` requires `1 Runite bar` and `14 Dragon sulfur` at the
+  repaired lava forge.
+- Dragon metal chains and chipped dragon scales are compatibility-only unless a
+  future route gives them a new purpose.
 
 ### Dragon Shield Halves
 

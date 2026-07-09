@@ -11,7 +11,10 @@ SKILL_GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInte
 INV_ACTION = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/InvAction.java"
 DWARF_RESCUE = ROOT / "server/plugins/com/openrsc/server/plugins/custom/minigames/DwarfRescue.java"
 WAYNE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/falador/WaynesChains.java"
-COMBAT_ODYSSEY = ROOT / "server/plugins/com/openrsc/server/plugins/custom/minigames/CombatOdyssey.java"
+LEGENDS_RADIMUS = ROOT / (
+    "server/plugins/com/openrsc/server/plugins/authentic/quests/members/"
+    "legendsquest/npcs/LegendsQuestSirRadimusErkle.java"
+)
 
 
 def fail(message: str) -> NoReturn:
@@ -36,113 +39,62 @@ def main() -> None:
     inv_action = INV_ACTION.read_text(encoding="utf-8")
     dwarf_rescue = DWARF_RESCUE.read_text(encoding="utf-8")
     wayne = WAYNE.read_text(encoding="utf-8")
-    combat_odyssey = COMBAT_ODYSSEY.read_text(encoding="utf-8")
+    radimus = LEGENDS_RADIMUS.read_text(encoding="utf-8")
 
-    forbid(smithing, "LAVA_ANVIL", "Dragon bar smithing should not be handled at the lava anvil")
-    forbid(smithing, "DRAGON_METAL_CHAIN.id()", "Dragon metal chain should not have a smithing recipe")
-    forbid(smithing, "DRAGON_BAR.id()", "Dragon bar should not be a smithing input")
-    require(
-        smithing,
-        "attemptDragonSquareCombine",
-        "Dragon square shield repair must remain available",
-    )
-    require(
-        smithing,
-        "createDragonShieldProductionSession",
-        "Dragon shield halves should open a production choice UI",
-    )
-    require(
-        smithing,
-        "Smithing::beginDragonShieldProductionFromInterface",
-        "Dragon shield production UI should use a dedicated starter",
-    )
-    require(
-        smithing,
-        "ItemId.DRAGON_SQUARE_SHIELD.id()",
-        "Dragon shield production UI should offer square shield",
-    )
-    require(
-        smithing,
-        "ItemId.DRAGON_KITE_SHIELD.id()",
-        "Dragon shield production UI should offer paladin shield",
-    )
+    require(smithing, "ItemId.DRAGON_BAR.id()", "Dragon bar should be a normal Smithing material")
+    require(smithing, "case DRAGON_BAR:\n\t\t\t\treturn 11;", "Dragon bar should map to tier 11")
+    require(smithing, "return ItemId.LARGE_DRAGON_HELMET.id();", "Dragon smithing should include the large helm")
+    require(smithing, "return ItemId.DRAGON_PLATE_MAIL_BODY.id();", "Dragon smithing should include platebody")
+    require(smithing, "return ItemId.DRAGON_PLATE_MAIL_LEGS.id();", "Dragon smithing should include platelegs")
+    require(smithing, "return ItemId.DRAGON_SQUARE_SHIELD.id();", "Dragon smithing should include square shield")
+    require(smithing, "return ItemId.DRAGON_KITE_SHIELD.id();", "Dragon smithing should include paladin shield")
+    require(smithing, "return ItemId.DRAGON_DAGGER.id();", "Dragon smithing should include dagger")
+    require(smithing, "return ItemId.DRAGON_SWORD.id();", "Dragon smithing should include sword")
+    require(smithing, "return ItemId.DRAGON_2_HANDED_SWORD.id();", "Dragon smithing should include 2-handed sword")
+    require(smithing, "return ItemId.DRAGON_AXE.id();", "Dragon smithing should include hatchet")
+    require(smithing, "return ItemId.DRAGON_BATTLE_AXE.id();", "Dragon smithing should include battle axe")
+    forbid(smithing, "DRAGON_METAL_CHAIN.id()", "Dragon metal chain should not have a Smithing recipe")
+    require(smithing, "attemptDragonSquareCombine", "Dragon shield half repair should remain available")
 
-    require(smelting, "LAVA_FORGE = SceneryId.LAVA_FORGE.id()", "Raw dragon metal should use the lava forge")
-    require(smelting, "DRAGON_SMELTING_LEVEL = 80", "Raw dragon metal should require 80 smithing")
-    require(smelting, "RAW_DRAGON_METAL.id()", "Smelting should consume raw dragon metal")
-    require(smelting, "DRAGON_BAR.id()", "Raw dragon metal should smelt into dragon bars")
-    require(smelting, "DRAGON_METAL_CHAIN.id()", "Raw dragon metal should work directly into chains")
-    forbid(smelting, "getDragonMetalSmeltBars", "Dragon item to bar mapping should stay removed")
-    for recycled_item in (
-        "DRAGON_SWORD.id()",
-        "DRAGON_AXE.id()",
-        "DRAGON_2_HANDED_SWORD.id()",
-        "DRAGON_DAGGER.id()",
-        "DRAGON_BATTLE_AXE.id()",
-    ):
-        forbid(smelting, recycled_item, "Dragon equipment should not be recycled into bars")
+    require(smelting, 'LAVA_FORGE_REPAIRED_CACHE_KEY = "myworld_lava_forge_repaired"', "Lava forge should have a repair state")
+    require(smelting, "LAVA_FORGE_REPAIR_SCALE_AMOUNT = 100", "Lava forge repair should require 100 black dragon scales")
+    require(smelting, "LAVA_FORGE_REPAIR_COIN_AMOUNT = 1000000", "Lava forge repair should require 1,000,000 coins")
+    require(smelting, "new SmeltRecipe(ItemId.DRAGON_BAR.id(), DRAGON_SMELTING_LEVEL, RAW_DRAGON_METAL_XP, 1, \"lava forge\"", "Dragon bar should be made at the lava forge")
+    require(smelting, "ingredient(ItemId.RAW_DRAGON_METAL.id(), 1), ingredient(ItemId.DRAGON_SULFUR.id(), 6)", "Dragon bar should require raw dragon metal and dragon sulfur")
+    require(smelting, "new SmeltRecipe(MyWorldItemId.PURIFIED_RUNE_BAR, 90, 500, 1, \"lava forge\"", "Purified rune should be moved to the lava forge")
+    require(smelting, "ingredient(ItemId.RUNITE_BAR.id(), 1), ingredient(ItemId.DRAGON_SULFUR.id(), 14)", "Purified rune should require runite and dragon sulfur")
+    forbid(smelting, "Dragon metal chains", "Lava forge should not offer dragon metal chains")
+    forbid(smelting, "DRAGON_METAL_CHAIN.id()", "Lava forge should not create dragon metal chains")
 
-    forbid(
+    forbid(guide, "Dragon metal chains", "Smithing guide should not advertise dragon chains")
+    require(
         guide,
-        "Dragon bar - 1 piece of dragon equipment",
-        "Smithing guide should not advertise dragon item smelting",
-    )
-    forbid(
-        guide,
-        "Dragon metal chain - 1 dragon bar",
-        "Smithing guide should not advertise dragon chain smithing",
+        'new SkillMenuItem(1365, "80", "Dragon bar - 1 raw dragon metal and 6 dragon sulfur at the repaired lava forge")',
+        "Smithing guide should explain repaired lava forge dragon bars",
     )
     require(
         guide,
-        "Dragon square shield - smith the 2 halves together",
-        "Smithing guide should still mention dragon square shield repair",
+        'new SkillMenuItem(3261, "90", "Purified Rune Bar - 1 rune bar and 14 dragon sulfur at the repaired lava forge")',
+        "Smithing guide should explain repaired lava forge purified rune",
     )
-    require(
-        guide,
-        'new SkillMenuItem(1365, "80", "Dragon bar - 1 raw dragon metal at the lava forge")',
-        "Smithing guide should explain raw dragon metal bars",
-    )
-    require(
-        guide,
-        'new SkillMenuItem(1367, "80", "Dragon metal chains - 1 raw dragon metal at the lava forge")',
-        "Smithing guide should explain raw dragon metal chains",
-    )
+    require(guide, 'addSmithingTier("Dragon", 80, 1447, -1, 593, -1, 1346, 594, -1, 2752, -1, -1, -1, -1, 1425, -1, -1, 1278, 1426, 1429, 1427);', "Smithing guide should list the dragon tier")
+    require(guide, "private void addSmithingGuideItem", "Smithing guide should skip unavailable dragon outputs")
 
     for note_text in (inv_action, dwarf_rescue):
-        forbid(
-            note_text,
-            "Dragon metal chains can be smithed",
-            "Dwarf smithy notes should not describe removed chain smithing",
-        )
-        forbid(
-            note_text,
-            "obtain dragon bars",
-            "Dwarf smithy notes should not point players at removed dragon bars",
-        )
-        require(note_text, "Dragon scale mail legs", "Dwarf smithy notes should list dragon scale mail legs")
-        require(note_text, "100 Chipped Dragon Scales", "Scale legs should cost 50 fewer chipped scales than body")
-        require(note_text, "Dragon plate mail legs", "Dwarf smithy notes should list dragon plate mail legs")
-        require(
-            note_text,
-            "Complete Combat Odyssey through the Legends Guild",
-            "Dwarf smithy notes should point dragon plate legs at Combat Odyssey",
-        )
+        require(note_text, "Repair the lava forge with 100 Black dragon scales and 1,000,000 coins", "Dwarf note should explain lava forge repair")
+        require(note_text, "1 Raw dragon metal", "Dwarf note should explain dragon bar raw metal")
+        require(note_text, "6 Dragon sulfur", "Dwarf note should explain dragon bar sulfur")
+        forbid(note_text, "Dragon Metal Chains", "Dwarf note should not list dragon metal chains")
+        forbid(note_text, "Chipped Dragon Scales", "Dwarf note should not list chipped scale costs")
+        forbid(note_text, "Wayne", "Dwarf note should not route dragon armor through Wayne")
+        forbid(note_text, "Combat Odyssey through the Legends Guild", "Dwarf note should not route platelegs through Combat Odyssey")
 
-    require(wayne, "ItemId.DRAGON_SCALE_MAIL_LEGS.id()", "Wayne should craft dragon scale mail legs")
-    require(wayne, "SCALE_MAIL_LEGS_SCALE_COST = 100", "Wayne scale legs should cost 100 chipped scales")
-    forbid(wayne, "ItemId.DRAGON_PLATE_MAIL_LEGS.id()", "Wayne should not craft dragon plate mail legs")
-    forbid(wayne, "PLATELEGS_BAR_COST", "Wayne should not retain a plate legs bar cost")
+    forbid(wayne, "special armour", "Wayne should no longer offer the special armor route")
+    forbid(wayne, "DRAGON_SCALE_MAIL", "Wayne should not craft dragon scale mail")
+    forbid(wayne, "DRAGON_PLATE_MAIL_BODY", "Wayne should not craft dragon platebody")
+    require(radimus, "if (CombatOdyssey.getIntroStage(player) == CombatOdyssey.NOT_STARTED) {\n\t\t\t\t\treturn false;\n\t\t\t\t}", "Radimus should hide new Combat Odyssey starts")
 
-    require(
-        combat_odyssey,
-        "ItemId.DRAGON_PLATE_MAIL_LEGS.id()",
-        "Combat Odyssey should remain the dragon plate legs route",
-    )
-    forbid(
-        combat_odyssey,
-        "Dragon Plated Skirt",
-        "Combat Odyssey should not offer the retired dragon skirt reward",
-    )
+    print("PASS: dragon metal production route validated")
 
 
 if __name__ == "__main__":

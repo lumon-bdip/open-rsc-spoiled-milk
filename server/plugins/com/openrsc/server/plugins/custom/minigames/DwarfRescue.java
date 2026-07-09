@@ -24,22 +24,16 @@ public class DwarfRescue implements TalkNpcTrigger, OpInvTrigger {
 		if (item.getCatalogId() == ItemId.DWARF_SMITHY_NOTE.id()) {
 			mes("the note reads....");
 			ActionSender.sendBox(player, "How to obtain dragon armour% %"
-				+ "Dragon scale mail:% %"
-				+ "500 Dragon Metal Chains% "
-				+ "150 Chipped Dragon Scales% "
-				+ "500,000 coins% %"
-				+ "Dragon scale mail legs:% %"
-				+ "500 Dragon Metal Chains% "
-				+ "100 Chipped Dragon Scales% "
-				+ "500,000 coins% %"
-				+ "Dragon plate mail body:% %"
-				+ "4 Dragon bars% "
-				+ "500,000 coins% %"
-				+ "Dragon plate mail legs:% %"
-				+ "Complete Combat Odyssey through the Legends Guild% %"
-				+ "Raw dragon metal can be smelted at the lava forge into bars or chains% "
-				+ "Chipped dragon scales are crafted(req 90, chisel) from King Black Dragon scales% %"
-				+ "Once Wayne's armour materials are prepared, seek him out in Falador", true);
+				+ "Complete Dwarf Youth Rescue to access the lava forge% "
+				+ "Repair the lava forge with 100 Black dragon scales and 1,000,000 coins% %"
+				+ "Dragon bar:% %"
+				+ "1 Raw dragon metal% "
+				+ "6 Dragon sulfur% %"
+				+ "Purified Rune Bar:% %"
+				+ "1 Runite bar% "
+				+ "14 Dragon sulfur% %"
+				+ "Dragon plate armour, helms, shields, and weapons can be smithed at a normal anvil% "
+				+ "Chipped dragon scales and dragon metal chains are no longer required", true);
 		}
 	}
 
@@ -107,12 +101,18 @@ public class DwarfRescue implements TalkNpcTrigger, OpInvTrigger {
 		} else if (npc.getID() == NpcId.DWARVEN_SMITHY.id()) {
 			int stage = player.getCache().hasKey("miniquest_dwarf_youth_rescue") ? player.getCache().getInt("miniquest_dwarf_youth_rescue") : -1;
 			if (stage == 2) {
-				npcsay("oi " + player.getUsername(),
-					"Gramat told me about you",
-					"this forge is yours to use",
-					"it's hot enough to melt the strongest of metals",
-					"raw dragon metal can be smelted into bars",
-					"or worked directly into dragon metal chains");
+				if (player.getCache().hasKey("myworld_lava_forge_repaired")
+					&& player.getCache().getInt("myworld_lava_forge_repaired") == 1) {
+					npcsay("oi " + player.getUsername(),
+						"Gramat told me about you",
+						"this forge is yours to use",
+						"raw dragon metal and dragon sulfur can be smelted into bars");
+				} else {
+					npcsay("oi " + player.getUsername(),
+						"Gramat told me about you",
+						"the forge is damaged but you have permission to repair it",
+						"black dragon scales and gold should stabilize its heat");
+				}
 			} else
 				npcsay("this is our reason for digging",
 					"it's the latest in dwarven technology",
