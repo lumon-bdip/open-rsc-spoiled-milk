@@ -938,7 +938,7 @@
     },
     {
       "id": 1453,
-      "rangedOffense": 34,
+      "rangedOffense": 38,
       "weaponSpeed": 4,
       "requiredSkillID": 4,
       "requiredLevel": 80,
@@ -946,7 +946,7 @@
     },
     {
       "id": 1454,
-      "rangedOffense": 48,
+      "rangedOffense": 52,
       "weaponSpeed": 3,
       "wearSlot": 4,
       "requiredSkillID": 4,

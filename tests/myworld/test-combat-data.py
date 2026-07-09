@@ -241,6 +241,29 @@ def ensure_dragon_weapon_breath_split() -> None:
     require_text(range_event, "rollDragonRangedBreathDamage(player, weaponId, ammoId, skillCape)", "Dragon ranged breath damage handoff")
     require_text(projectile_event, "applyDragonWeaponBreathDamage", "Dragon projectile breath hit application")
 
+    dragon_melee_match = re.search(
+        r"public static boolean usesDragonMeleeBreathWeapon\(.*?\n\t}",
+        combat_formula,
+        re.DOTALL,
+    )
+    if dragon_melee_match is None:
+        fail("Dragon melee breath eligibility method is missing")
+    dragon_melee_breath = dragon_melee_match.group(0)
+    for weapon in (
+        "DRAGON_SWORD",
+        "DRAGON_2_HANDED_SWORD",
+        "DRAGON_DAGGER",
+        "POISONED_DRAGON_DAGGER",
+        "DRAGON_BATTLE_AXE",
+    ):
+        require_text(dragon_melee_breath, f"{weapon}.id()", f"{weapon} breath eligibility")
+    for tool in (
+        "DRAGON_AXE",
+        "DRAGON_WOODCUTTING_AXE",
+    ):
+        if f"{tool}.id()" in dragon_melee_breath:
+            fail(f"{tool} is a tool profile and should not trigger dragon weapon breath")
+
     dragon_ranged_match = re.search(
         r"public static boolean usesDragonRangedBreathWeapon\(.*?\n\t}",
         combat_formula,
@@ -361,11 +384,12 @@ def main() -> None:
             + ", ".join(missing_explicit_overrides[:20])
         )
 
+    check_monotonic(items_by_id, [62, 28, 63, 423, 64, 65, 396, 1447, 3262], "meleeOffense", "Dagger family")
     check_monotonic(items_by_id, [82, 83, 84, 85, 86, 398, 3265], "meleeOffense", "Scimitar family")
-    check_monotonic(items_by_id, [76, 77, 78, 79, 80, 81, 3266], "meleeOffense", "2h sword family")
-    check_monotonic(items_by_id, [70, 71, 72, 425, 73, 74, 75, 3264], "meleeOffense", "Long sword family")
+    check_monotonic(items_by_id, [76, 77, 78, 79, 80, 81, 1346, 3266], "meleeOffense", "2h sword family")
+    check_monotonic(items_by_id, [70, 71, 72, 425, 73, 74, 75, 593, 3264], "meleeOffense", "Long sword family")
     check_monotonic(items_by_id, [66, 1, 67, 424, 68, 69, 397, 3263], "meleeOffense", "Short sword family")
-    check_monotonic(items_by_id, [205, 89, 90, 429, 91, 92, 93, 3269], "meleeOffense", "Battleaxe family")
+    check_monotonic(items_by_id, [205, 89, 90, 429, 91, 92, 93, 2752, 3269], "meleeOffense", "Battleaxe family")
     check_monotonic(items_by_id, [2003, 2014, 94, 0, 95, 430, 96, 2025, 97, 2036, 98, 3271], "meleeOffense", "Mace family")
     check_monotonic(items_by_id, [2207, 2208, 827, 1088, 1089, 1090, 2209, 1091, 2210, 1092, 3273], "meleeOffense", "Spear family")
     check_monotonic(items_by_id, [3181, 3182, 3183, 3184, 3185, 3186, 3187, 3188, 3189, 3190, 3270], "meleeOffense", "Scythe family")
@@ -392,7 +416,8 @@ def main() -> None:
 
     require_exact(items_by_id, 656, "rangedOffense", 44, "Magic longbow")
     require_exact(items_by_id, 646, "rangedOffense", 24, "Rune arrows")
-    require_exact(items_by_id, 1454, "rangedOffense", 48, "Dragon longbow tier-10 fire-breath profile")
+    require_exact(items_by_id, 1454, "rangedOffense", 52, "Dragon longbow tier-11 fire-breath profile")
+    require_exact(items_by_id, 1453, "rangedOffense", 38, "Dragon crossbow tier-11 fire-breath profile")
     require_exact(items_by_id, 1449, "rangedOffense", 26, "Dragon arrows normal ammo scaling")
     require_exact(items_by_id, 1450, "rangedOffense", 26, "Poison dragon arrows normal ammo scaling")
     require_exact(items_by_id, 1451, "rangedOffense", 22, "Dragon bolts normal ammo scaling")
@@ -457,12 +482,12 @@ def main() -> None:
     require_exact(items_by_id, 1255, "weaponSpeed", 5, "Dark dagger profile")
     require_exact(items_by_id, 1256, "meleeOffense", 12, "Glowing dark dagger profile")
     require_exact(items_by_id, 1256, "weaponSpeed", 5, "Glowing dark dagger profile")
-    require_exact(items_by_id, 1447, "meleeOffense", 18, "Dragon dagger tier-10 fire-breath profile")
-    require_exact(items_by_id, 1447, "weaponSpeed", 5, "Dragon dagger tier-10 fire-breath profile")
+    require_exact(items_by_id, 1447, "meleeOffense", 21, "Dragon dagger tier-11 fire-breath profile")
+    require_exact(items_by_id, 1447, "weaponSpeed", 5, "Dragon dagger tier-11 fire-breath profile")
     require_exact(items_by_id, 1448, "meleeOffense", items_by_id[1447]["meleeOffense"], "Poisoned dragon dagger parity")
     require_exact(items_by_id, 1448, "weaponSpeed", items_by_id[1447]["weaponSpeed"], "Poisoned dragon dagger speed parity")
-    require_exact(items_by_id, 593, "meleeOffense", 72, "Dragon sword tier-10 fire-breath profile")
-    require_exact(items_by_id, 593, "weaponSpeed", 3, "Dragon sword tier-10 fire-breath profile")
+    require_exact(items_by_id, 593, "meleeOffense", 78, "Dragon sword tier-11 fire-breath profile")
+    require_exact(items_by_id, 593, "weaponSpeed", 3, "Dragon sword tier-11 fire-breath profile")
     require_exact(items_by_id, 3235, "meleeOffense", items_by_id[74]["meleeOffense"], "Fire sword tier-9 long sword profile")
     require_exact(items_by_id, 3235, "weaponSpeed", items_by_id[74]["weaponSpeed"], "Fire sword tier-9 long sword profile")
     require_exact(effective_items_by_id, 3235, "appearanceID", 1035, "Fire sword custom equipped visual")
@@ -477,10 +502,10 @@ def main() -> None:
     require_exact(effective_items_by_id, 3239, "appearanceID", 1042, "Demon pitchfork custom equipped visual")
     require_exact(items_by_id, 1289, "meleeOffense", 12, "Scythe baseline profile")
     require_exact(items_by_id, 1289, "weaponSpeed", 3, "Scythe baseline profile")
-    require_exact(items_by_id, 1346, "meleeOffense", 152, "Dragon 2h tier-10 fire-breath profile")
-    require_exact(items_by_id, 1346, "weaponSpeed", 2, "Dragon 2h tier-10 fire-breath profile")
-    require_exact(items_by_id, 2752, "meleeOffense", 75, "Dragon battle axe tier-10 fire-breath profile")
-    require_exact(items_by_id, 2752, "weaponSpeed", 3, "Dragon battle axe tier-10 fire-breath profile")
+    require_exact(items_by_id, 1346, "meleeOffense", 163, "Dragon 2h tier-11 fire-breath profile")
+    require_exact(items_by_id, 1346, "weaponSpeed", 2, "Dragon 2h tier-11 fire-breath profile")
+    require_exact(items_by_id, 2752, "meleeOffense", 82, "Dragon battle axe tier-11 fire-breath profile")
+    require_exact(items_by_id, 2752, "weaponSpeed", 3, "Dragon battle axe tier-11 fire-breath profile")
     require_exact(items_by_id, 1496, "meleeOffense", 3, "Yoyo novelty weapon profile")
     require_exact(items_by_id, 1496, "weaponSpeed", 5, "Yoyo novelty weapon profile")
     require_exact(items_by_id, 1592, "meleeOffense", 10, "Boomstick novelty weapon profile")
