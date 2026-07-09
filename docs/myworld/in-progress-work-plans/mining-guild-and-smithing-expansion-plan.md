@@ -20,6 +20,8 @@ The current working direction is:
   a normal metal tier.
 - A new purified rune tier fills the level `90` space.
 - A new dragon-rune hybrid tier becomes the level `99` endpoint.
+- Dragon sulfur access now aligns with dragon-tier progression at `80` Mining
+  instead of being held until level `90`.
 
 The new ore is named `Dragon sulfur`. Its role is similar to coal: it is not
 primarily a metal with its own equipment line, but a required alloy ingredient
@@ -49,10 +51,11 @@ The intended player experience is:
 This plan includes:
 
 - A new gated underground Mining Guild area.
-- A likely Mining requirement around level `90` for entering the expansion.
+- A Mining requirement of `80` for entering the expansion.
 - A new mineable alloy ingredient named `Dragon sulfur`.
 - New rock scenery and depleted-rock behavior for the new ore.
-- A new purified rune bar, made from runite and the new ore.
+- A new purified rune bar, made from runite and the new ore at the repaired
+  lava forge.
 - A new purified rune equipment tier around Smithing level `90`.
 - A new dragon-rune alloy bar or recipe path around Smithing level `99`.
 - Dragon-rune equipment as the highest smithable metal tier.
@@ -75,8 +78,8 @@ This plan does not yet define:
 - Exact stats, requirements, XP, or market prices.
 - Exact Mining Guild terrain layout.
 - Exact number or respawn timing of new rocks.
-- Whether dragon metal enters the recipe as bars, drops, salvage, fragments, or
-  a new smelted component.
+- Whether dragon metal enters the future dragon-rune recipe as bars, drops,
+  salvage, fragments, or a new smelted component.
 - Whether purified rune is required as an intermediate for dragon-rune gear or
   whether dragon-rune bars combine runite, dragon metal, and the new ore
   directly.
@@ -112,8 +115,7 @@ confirmed.
 Players should eventually see:
 
 - A new high-level section inside the underground Mining Guild.
-- A new gate requiring a much higher Mining level, currently considering
-  level `90`.
+- A new gate requiring `80` Mining.
 - A new `Dragon sulfur` ore rock found only inside the expanded guild area.
 - A new alloy ingredient with a dragon-adjacent identity.
 - An `Elder Green Dragon` guarding the sulfur rocks.
@@ -163,9 +165,12 @@ The new ore should behave like coal in the recipe structure:
 
 Likely recipe shapes to evaluate:
 
-- `Runite bar + 14 Dragon sulfur -> Purified Rune Bar`
-- `Dragon metal + Runite bar + Dragon sulfur -> Dragon rune bar`
-- `Dragon metal + Purified rune bar + Dragon sulfur -> Dragon rune bar`
+- Repaired lava forge: `Raw Dragon Metal + 6 Dragon sulfur -> Dragon bar`
+- Repaired lava forge: `Runite bar + 14 Dragon sulfur -> Purified Rune Bar`
+- Future dragon-rune option:
+  `Dragon metal + Runite bar + Dragon sulfur -> Dragon rune bar`
+- Future dragon-rune option:
+  `Dragon metal + Purified rune bar + Dragon sulfur -> Dragon rune bar`
 
 The final recipe should account for:
 
@@ -184,8 +189,7 @@ Initial direction:
 
 - Expand the existing underground Mining Guild rather than creating an
   unrelated mining location.
-- Gate the new section with a Mining level requirement, currently considering
-  level `90`.
+- Gate the new section with a Mining level requirement of `80`.
 - Put the new ore only beyond this gate.
 - Keep the area underground and mining-focused.
 - Avoid placing the new rocks anywhere else until the economy and balance are
@@ -325,12 +329,12 @@ Follow-up combat cleanup to evaluate:
 - [x] Add rock scenery definitions and object IDs.
 - [ ] Add depleted-rock behavior if a new rock model or object type is needed.
 - [x] Add Mining Guild terrain expansion.
-- [x] Add Mining Guild level-gate interaction.
+- [ ] Update Mining Guild level-gate interaction to require `80` Mining.
 - [x] Keep the elite gate's protruding landscape east-wall stub clear while
       preserving the clickable boundary door at `268,3401`.
 - [ ] Place new ore rocks only inside the new gated area.
 - [x] Add Mining requirements, XP, respawn timing, and depletion rules.
-- [x] Add purified rune Smithing bar recipe.
+- [ ] Move purified rune Smithing bar recipe to the repaired lava forge UI.
 - [x] Add purified rune equipment recipes.
 - [ ] Add dragon-rune equipment recipes.
 - [x] Add Exalted Rune equipment stats, requirements, prices, and examine text.
@@ -391,9 +395,11 @@ Follow-up combat cleanup to evaluate:
 - The new high-level mining resource should be an alloy ingredient, not a full
   standalone metal line.
 - The new resource should be exclusive to the expanded Mining Guild gated area
-  at first.
+  at first, with the gate set to `80` Mining.
 - The desired late-game Smithing ladder is rune at `70`, dragon around `80`,
   purified rune around `90`, and dragon rune at `99`.
+- Purified rune bar production should move to the repaired lava forge, not a
+  regular furnace.
 - New custom boss-style NPCs should use explicit modern combat stats instead of
   relying on attack/strength shortcuts for ranged and magic power.
 - Existing legacy NPCs should keep fallback stat derivation until deliberately
@@ -412,8 +418,6 @@ Follow-up combat cleanup to evaluate:
 
 ## Open Questions
 
-- Is the Mining Guild gate exactly level `90`, or should it be adjusted after
-  checking current Mining progression?
 - Should the level `90` tier be called `Purified rune`, `Pure rune`,
   `True rune`, or something else?
 - Should the level `99` tier be called `Dragon rune`, `Draconic rune`, or
@@ -446,7 +450,8 @@ This plan can move to completed when:
   for modern content while retaining legacy fallbacks.
 - King Black Dragon and Elder Green Dragon hide/leather/armor sources and names
   match the intended identity split.
-- Purified rune and dragon-rune recipes are implemented and documented.
+- Purified rune production is available at the repaired lava forge, and
+  dragon-rune recipes are implemented and documented when that tier is ready.
 - Mining and Smithing guides match the live mechanics.
 - Item definitions, object references, production flows, and guide tests pass.
 - Manual client testing confirms the area is readable and the new production

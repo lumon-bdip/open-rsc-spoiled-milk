@@ -1,5 +1,14 @@
 # Slayer Guild Rough Draft Plan
 
+Status: superseded by
+[`monster-slayer-guild-plan.md`](../in-progress-work-plans/monster-slayer-guild-plan.md).
+
+This rough draft is kept as historical context. The current direction is now
+the `Monster Slayer` guild plan: rank-and-points progression, deterministic
+mandatory kill tasks, repeatable random kill tasks, no monster material
+turn-ins, and new non-dragon-armor shop rewards. Dragon armor progression now
+belongs to the dragon gear crafting plan.
+
 This is an early concept document for turning the Combat Odyssey monster task
 system into a broader Slayer Guild/faction mechanic. The important direction
 change is that Slayer should not become a full visible skill right now. It

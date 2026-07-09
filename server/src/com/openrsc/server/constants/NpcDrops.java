@@ -167,7 +167,6 @@ public class NpcDrops {
 		addHiddenUniqueDrop(NpcId.GREATER_DEMON.id(), ItemId.DEMON_PITCHFORK.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
 		addHiddenUniqueDrop(NpcId.LESSER_DEMON.id(), ItemId.DEMON_PITCHFORK.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
 
-		addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.DRAGON_MEDIUM_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
 		addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.LARGE_DRAGON_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
 		if (config.WANT_OPENPK_POINTS) {
 			addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);

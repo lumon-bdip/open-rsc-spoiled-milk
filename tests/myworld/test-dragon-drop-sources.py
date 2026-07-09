@@ -6,6 +6,8 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
+PRESENT = ROOT / "server/plugins/com/openrsc/server/plugins/custom/misc/Present.java"
+HALLOWEEN_CRACKER = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/misc/HalloweenCracker.java"
 
 
 def fail(message: str) -> NoReturn:
@@ -34,6 +36,8 @@ def between(text: str, start: str, end: str, message: str) -> str:
 
 def main() -> None:
     drops = NPC_DROPS.read_text(encoding="utf-8")
+    present = PRESENT.read_text(encoding="utf-8")
+    halloween_cracker = HALLOWEEN_CRACKER.read_text(encoding="utf-8")
     elder_green_dragon = between(
         drops,
         "private void createElderGreenDragonDropTable() {",
@@ -117,16 +121,30 @@ def main() -> None:
         "\n\tprivate void addHiddenUniqueDrop(final int npcId, final int itemId, final int amount, final HiddenUniqueRarity rarity)",
         "hidden unique drop registry",
     )
-    require(
+    forbid(
         hidden_unique,
         "addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.DRAGON_MEDIUM_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
-        "Black Demon should drop dragon medium helm through the hidden unique layer",
+        "Black Demon should not drop dragon medium helm through the hidden unique layer",
     )
     require(
         hidden_unique,
         "addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.LARGE_DRAGON_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
         "Black Demon should drop dragon full helm through the hidden unique layer",
     )
+    for reward_source, source_name in (
+        (present, "Present"),
+        (halloween_cracker, "Halloween Cracker"),
+    ):
+        forbid(
+            reward_source,
+            "ItemId.DRAGON_MEDIUM_HELMET.id()",
+            f"{source_name} should not award dragon medium helm",
+        )
+        require(
+            reward_source,
+            "ItemId.LARGE_DRAGON_HELMET.id()",
+            f"{source_name} should award dragon full helm instead of dragon medium helm",
+        )
     require(
         hidden_unique,
         "addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
