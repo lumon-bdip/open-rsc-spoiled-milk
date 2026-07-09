@@ -103,7 +103,7 @@ public class HalloweenCracker implements UsePlayerTrigger, UseNpcTrigger {
 		ItemId.RUNE_PICKAXE.id(),
 		ItemId.DRAGON_AXE.id(),
 		ItemId.DRAGON_SWORD.id(),
-		ItemId.DRAGON_MEDIUM_HELMET.id(),
+		ItemId.LARGE_DRAGON_HELMET.id(),
 	};
 
 

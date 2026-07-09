@@ -760,23 +760,16 @@ public class InvAction implements OpInvTrigger {
 	private void handleDwarfSmithyNote(Player player) {
 		player.message("the note reads....");
 		ActionSender.sendBox(player, "How to obtain dragon armour% %"
-			+ "Dragon scale mail:% %"
-			+ "500 Dragon Metal Chains% "
-			+ "150 Chipped Dragon Scales% "
-			+ "500,000 coins% %"
-			+ "Dragon scale mail legs:% %"
-			+ "500 Dragon Metal Chains% "
-			+ "100 Chipped Dragon Scales% "
-			+ "500,000 coins% %"
-			+ "Dragon plate mail body:% %"
-			+ "4 Dragon bars% "
-			+ "500,000 coins% %"
-			+ "Dragon plate mail legs:% %"
-			+ "3 Dragon bars% "
-			+ "500,000 coins% %"
-			+ "Raw dragon metal can be smelted at the lava forge into bars or chains% "
-			+ "Chipped dragon scales are crafted(req 90, chisel) from King Black Dragon scales% %"
-			+ "Once all items are prepared, seek out Wayne in Falador", true);
+			+ "Complete Dwarf Youth Rescue to access the lava forge% "
+			+ "Repair the lava forge with 100 Black dragon scales and 1,000,000 coins% %"
+			+ "Dragon bar:% %"
+			+ "1 Raw dragon metal% "
+			+ "6 Dragon sulfur% %"
+			+ "Purified Rune Bar:% %"
+			+ "1 Runite bar% "
+			+ "14 Dragon sulfur% %"
+			+ "Dragon plate armour, helms, shields, and weapons can be smithed at a normal anvil% "
+			+ "Chipped dragon scales and dragon metal chains are no longer required", true);
 	}
 	private void handleOldJournal(Player player) {
 		mes("the journal is old and covered in dust");

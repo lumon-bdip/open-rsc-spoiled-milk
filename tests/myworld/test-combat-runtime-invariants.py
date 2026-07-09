@@ -259,7 +259,9 @@ def main() -> None:
     require_contains(ELDER_GREEN_DRAGON_SPECIALS, "HitSplat.TYPE_ARMOR_PROC")
     require_contains(CLIENT, "COMBAT_EFFECT_ELDER_DRAGON_FIRESHOT = 62")
     require_contains(CLIENT, "COMBAT_EFFECT_ELDER_DRAGON_BURN = 63")
-    require_contains(CLIENT, '"elder-dragon-fireshot", "elder-dragon-burn"')
+    require_contains(CLIENT, "COMBAT_EFFECT_TRUE_DEFENSE = 64")
+    require_contains(CLIENT, '"elder-dragon-fireshot", "elder-dragon-burn",')
+    require_contains(CLIENT, '"true-defense"')
 
     print("PASS: combat runtime invariants validated")
 

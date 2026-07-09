@@ -497,6 +497,9 @@ public class LegendsQuestSirRadimusErkle implements QuestInterface, TalkNpcTrigg
 			}
 
 			if (CombatOdyssey.getIntroStage(player) != CombatOdyssey.IN_PROGRESS) {
+				if (CombatOdyssey.getIntroStage(player) == CombatOdyssey.NOT_STARTED) {
+					return false;
+				}
 				CombatOdyssey.radimusDialog(player, npc);
 				return true;
 			} else {

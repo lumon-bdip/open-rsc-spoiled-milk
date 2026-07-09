@@ -202,7 +202,7 @@ public class Present implements UsePlayerTrigger, OpInvTrigger {
 		ultraRareTable.addItemDrop(ItemId.DRAGONSTONE.id(), 2, 3, false);
 		ultraRareTable.addItemDrop(ItemId.DRAGON_SWORD.id(), 1, 14, false);
 		ultraRareTable.addItemDrop(ItemId.DRAGON_AXE.id(), 1, 10, false);
-		ultraRareTable.addItemDrop(ItemId.DRAGON_MEDIUM_HELMET.id(), 1, 2, false);
+		ultraRareTable.addItemDrop(ItemId.LARGE_DRAGON_HELMET.id(), 1, 2, false);
 		ultraRareTable.addItemDrop(ItemId.RIGHT_HALF_DRAGON_SQUARE_SHIELD.id(), 1, 4, false);
 		ultraRareTable.addItemDrop(ItemId.LEFT_HALF_DRAGON_SQUARE_SHIELD.id(), 1, 2, false);
 

@@ -136,7 +136,7 @@ def main() -> None:
     require_text(item_id_text, "FIRE_SWORD(3235)", "ItemId enum")
     require_text(item_id_text, "ICE_SWORD(3236)", "ItemId enum")
     require_text(item_id_text, "EARTH_SWORD(3237)", "ItemId enum")
-    require_text(item_id_text, "maxCustom = 3261", "ItemId maxCustom")
+    require_text(item_id_text, "maxCustom = 3281", "ItemId maxCustom")
 
     custom_items = load_json(ROOT / "server/conf/server/defs/ItemDefsCustom.json", "items")
     myworld_items = load_json(ROOT / "server/conf/server/defs/ItemDefsMyWorld.json", "items")
@@ -161,7 +161,7 @@ def main() -> None:
     require_text(mudclient, "COMBAT_EFFECT_FIRE_SWORD = 59", "Fire sword proc effect id")
     require_text(mudclient, "COMBAT_EFFECT_ICE_SWORD = 60", "Ice sword proc effect id")
     require_text(mudclient, "COMBAT_EFFECT_EARTH_SWORD = 61", "Earth sword proc effect id")
-    require_text(mudclient, "COMBAT_EFFECT_COUNT = 63", "Combat effect table size includes Elder Green Dragon effects")
+    require_text(mudclient, "COMBAT_EFFECT_COUNT = 64", "Combat effect table size includes True Defense")
     require_text(mudclient, '"fire-sword", "ice-sword", "earth-sword"', "Elemental sword proc effect names")
     require_text(mudclient, 'if ("ice-sword".equals(animationName))', "Ice sword proc sheet loader")
     require_text(mudclient, 'if ("earth-sword".equals(animationName))', "Earth sword proc sheet loader")

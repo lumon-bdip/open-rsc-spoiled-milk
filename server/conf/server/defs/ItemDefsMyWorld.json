@@ -12696,6 +12696,221 @@
     {
       "id": 3111,
       "basePrice": 35000
+    },
+    {
+      "id": 3261,
+      "name": "Purified Rune Bar",
+      "basePrice": 39000
+    },
+    {
+      "id": 3262,
+      "name": "Exalted Rune dagger",
+      "meleeOffense": 24,
+      "weaponSpeed": 5,
+      "weaponAimBonus": 30,
+      "weaponPowerBonus": 30,
+      "basePrice": 52000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3263,
+      "name": "Exalted Rune Short Sword",
+      "meleeOffense": 45,
+      "weaponSpeed": 4,
+      "weaponAimBonus": 48,
+      "weaponPowerBonus": 48,
+      "basePrice": 52000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3264,
+      "name": "Exalted Rune Long Sword",
+      "meleeOffense": 84,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 60,
+      "weaponPowerBonus": 60,
+      "basePrice": 104000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3265,
+      "name": "Exalted Rune Scimitar",
+      "meleeOffense": 43,
+      "weaponSpeed": 4,
+      "weaponAimBonus": 54,
+      "weaponPowerBonus": 54,
+      "basePrice": 104000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3266,
+      "name": "Exalted Rune 2-handed Sword",
+      "meleeOffense": 174,
+      "weaponSpeed": 2,
+      "weaponAimBonus": 84,
+      "weaponPowerBonus": 84,
+      "basePrice": 156000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3269,
+      "name": "Exalted Rune battle Axe",
+      "meleeOffense": 88,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 60,
+      "weaponPowerBonus": 78,
+      "basePrice": 156000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3270,
+      "name": "Exalted Rune Scythe",
+      "meleeOffense": 132,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 132,
+      "weaponPowerBonus": 132,
+      "basePrice": 260000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3271,
+      "name": "Exalted Rune Mace",
+      "meleeOffense": 53,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 46,
+      "weaponPowerBonus": 34,
+      "basePrice": 52000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3273,
+      "name": "Exalted Rune Spear",
+      "meleeOffense": 51,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 46,
+      "weaponPowerBonus": 26,
+      "basePrice": 52000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3267,
+      "name": "Exalted Rune Hatchet",
+      "meleeOffense": 0,
+      "rangedOffense": 0,
+      "magicOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "basePrice": 52000,
+      "isWearable": 1,
+      "appearanceID": 1048,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 90,
+      "requiredSkillID": 8
+    },
+    {
+      "id": 3268,
+      "name": "Exalted Rune Pickaxe",
+      "meleeOffense": 0,
+      "rangedOffense": 0,
+      "magicOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "basePrice": 52000,
+      "isWearable": 1,
+      "appearanceID": 1049,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 90,
+      "requiredSkillID": 14
+    },
+    {
+      "id": 3272,
+      "name": "Exalted Rune shears",
+      "meleeOffense": 0,
+      "rangedOffense": 0,
+      "magicOffense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "basePrice": 52000,
+      "isWearable": 1,
+      "appearanceID": 1041,
+      "wearableID": 16,
+      "wearSlot": 4,
+      "requiredLevel": 90,
+      "requiredSkillID": 19
+    },
+    {
+      "id": 3274,
+      "name": "Exalted Rune Helmet",
+      "basePrice": 104000,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "meleeDefense": 18,
+      "rangedDefense": 6
+    },
+    {
+      "id": 3275,
+      "name": "Exalted Rune gauntlets",
+      "basePrice": 52000,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "meleeDefense": 18,
+      "rangedDefense": 6
+    },
+    {
+      "id": 3276,
+      "name": "Exalted Rune greaves",
+      "basePrice": 52000,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "meleeDefense": 18,
+      "rangedDefense": 6
+    },
+    {
+      "id": 3277,
+      "name": "Exalted Rune Square Shield",
+      "basePrice": 104000,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "meleeDefense": 18,
+      "rangedDefense": 6
+    },
+    {
+      "id": 3278,
+      "name": "Exalted Rune Paladin Shield",
+      "basePrice": 156000,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "meleeDefense": 27,
+      "magicDefense": 9
+    },
+    {
+      "id": 3279,
+      "name": "Exalted Rune Plate Mail Legs",
+      "basePrice": 156000,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "meleeDefense": 27,
+      "rangedDefense": 9
+    },
+    {
+      "id": 3280,
+      "name": "Exalted Rune Plate Mail Body",
+      "basePrice": 260000,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "meleeDefense": 45,
+      "rangedDefense": 15
     }
   ]
 }

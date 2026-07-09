@@ -121,6 +121,7 @@ def ensure_client_paladin_shield_names(text: str) -> None:
         "Dragon Paladin Shield",
         "White Paladin Shield",
         "Grey Paladin Shield",
+        "Exalted Rune Paladin Shield",
     )
     for name in expected_names:
         if f'"{name}"' not in text:

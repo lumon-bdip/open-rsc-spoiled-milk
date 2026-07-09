@@ -55,6 +55,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [code-cleanup-and-modularization-plan.md](in-progress-work-plans/code-cleanup-and-modularization-plan.md):
   codebase cleanup roadmap for oversized files, stale options, and renderer
   ownership boundaries.
+- [dragon-gear-crafting-plan.md](in-progress-work-plans/dragon-gear-crafting-plan.md):
+  dragon gear crafting route, lava forge repair, black dragon scales, dragon
+  metal drops, and purified rune forge relocation.
 - [god-relic-reward-plan.md](in-progress-work-plans/god-relic-reward-plan.md):
   prayer/devotion god relic rewards, relic pools, and Mage Arena separation.
 - [herblaw-side-ingredient-expansion-plan.md](in-progress-work-plans/herblaw-side-ingredient-expansion-plan.md):
@@ -63,8 +66,11 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [legacy-limits-audit.md](in-progress-work-plans/legacy-limits-audit.md):
   byte/short-era cap audit and modernization recommendations.
 - [mining-guild-and-smithing-expansion-plan.md](in-progress-work-plans/mining-guild-and-smithing-expansion-plan.md):
-  Mining Guild expansion with a level-90-style gated area, `Dragon sulfur`,
-  purified rune, and dragon-rune Smithing progression.
+  Mining Guild expansion with an `80` Mining sulfur gate, purified rune, and
+  dragon-rune Smithing progression.
+- [monster-slayer-guild-plan.md](in-progress-work-plans/monster-slayer-guild-plan.md):
+  Monster Slayer rank, task, point-shop, Combat Odyssey migration, and dragon
+  armor reward replacement direction.
 - [movement-pathing-release-plan.md](in-progress-work-plans/movement-pathing-release-plan.md):
   movement smoothness, NPC roaming, and pathfinding follow-up plan.
 - [ogg-audio-support-plan.md](in-progress-work-plans/ogg-audio-support-plan.md):
@@ -120,6 +126,8 @@ into one of the category folders, not directly into `docs/myworld/`.
   exploratory altar-bound robe effect notes and tier scaling ideas.
 - [herblaw-potion-rework-plan.md](rough-drafts/herblaw-potion-rework-plan.md):
   square-one Herblaw and potion redesign draft.
+- [slayer-guild-rough-draft-plan.md](rough-drafts/slayer-guild-rough-draft-plan.md):
+  superseded historical Monster Slayer Guild rough draft.
 
 ## Info
 

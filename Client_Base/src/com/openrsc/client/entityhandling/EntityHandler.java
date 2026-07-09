@@ -88,6 +88,7 @@ public class EntityHandler {
 		0xB7C9D9, 0xC86A2B, 16737817, 15654365, 15658734,
 		10072780, 0x8EA6BB, 11717785, 0x5A3F7D, 65535
 	};
+	private static final int EXALTED_RUNE_COLOR = 0xD8FFFF;
 
 	public static int getModelCount() {
 		return models.size();
@@ -4020,7 +4021,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Beverage glass", "A glass left after a tasty drink", "", 1, -1, "items:525", false, false, 0, 0, false, false, true, 1345));
 
 		addItemDefinition(new ItemDef("Dragon 2-handed Sword", "A massive sword", "", 5000000, -1, "items:dragon2hander", false, true, 8216, 0, false, false, true, 1346));
-		addItemDefinition(new ItemDef("King Black Dragon scale", "Taken from a monstrous beast", "", 2500, 146, "items:kbdscale", false, false, 0, 0, true, false, true, 1347));
+		addItemDefinition(new ItemDef("Black dragon scale", "Taken from a black dragon", "", 2500, 146, "items:kbdscale", false, false, 0, 0, true, false, true, 1347));
 
 
 		//Harvesting
@@ -5534,6 +5535,48 @@ public class EntityHandler {
 		setCustomItemDefinition(id, item);
 	}
 
+	private static void addExaltedRuneDefinitions() {
+		setCustomItemDefinition(3261, new ItemDef("Purified Rune Bar", "it's a purified runite bar", "",
+			39000, 79, "items:79", false, false, 0, EXALTED_RUNE_COLOR, true, false, true, 3261));
+		setCustomItemDefinition(3262, new ItemDef("Exalted Rune dagger", "Short but radiant", "",
+			52000, 80, "items:80", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3262));
+		setCustomItemDefinition(3263, new ItemDef("Exalted Rune Short Sword", "A razor sharp shining sword", "",
+			52000, 1, "items:1", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3263));
+		setCustomItemDefinition(3264, new ItemDef("Exalted Rune Long Sword", "A razor sharp shining sword", "",
+			104000, 81, "items:81", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3264));
+		setCustomItemDefinition(3265, new ItemDef("Exalted Rune Scimitar", "A vicious curved shining sword", "",
+			104000, 83, "items:83", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3265));
+		setCustomItemDefinition(3266, new ItemDef("Exalted Rune 2-handed Sword", "A very large shining sword", "",
+			156000, 82, "items:82", false, true, 8216, EXALTED_RUNE_COLOR, true, false, true, 3266));
+		setCustomItemDefinition(3267, new ItemDef("Exalted Rune Hatchet", "A woodcutters axe", "",
+			52000, 85, "items:85", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3267));
+		setCustomItemDefinition(3268, new ItemDef("Exalted Rune Pickaxe", "Used for mining", "",
+			52000, 72, "items:72", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3268));
+		setCustomItemDefinition(3269, new ItemDef("Exalted Rune battle Axe", "A vicious looking shining axe", "",
+			156000, 84, "items:84", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3269));
+		setCustomItemDefinition(3270, new ItemDef("Exalted Rune Scythe", "A two-handed shining scythe for sweeping attacks.", "",
+			260000, 434, "items:434", false, true, 8216, EXALTED_RUNE_COLOR, true, false, true, 3270));
+		setCustomItemDefinition(3271, new ItemDef("Exalted Rune Mace", "A spiky shining mace", "",
+			52000, 0, "items:0", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3271));
+		addMetalShearsDefinition("Exalted Rune shears", 3272, 52000, EXALTED_RUNE_COLOR);
+		setCustomItemDefinition(3273, new ItemDef("Exalted Rune Spear", "A shining pointed stick", "",
+			52000, 283, "items:283", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3273));
+		setCustomItemDefinition(3274, new ItemDef("Exalted Rune Helmet", "A full face glowing helmet. 5% True Defense chance", "",
+			104000, 6, "items:6", false, true, 33, EXALTED_RUNE_COLOR, true, false, true, 3274));
+		setCustomItemDefinition(3275, new ItemDef("Exalted Rune gauntlets", "Heavy shining hand protection. 5% True Defense chance", "",
+			52000, 217, "items:217", false, true, 256, EXALTED_RUNE_COLOR, true, false, true, 3275));
+		setCustomItemDefinition(3276, new ItemDef("Exalted Rune greaves", "Heavy shining foot protection. 5% True Defense chance", "",
+			52000, 223, "items:223", false, true, 512, EXALTED_RUNE_COLOR, true, false, true, 3276));
+		setCustomItemDefinition(3277, new ItemDef("Exalted Rune Square Shield", "A medium shining metal shield. 5% True Defense chance", "",
+			104000, 3, "items:3", false, true, 8, EXALTED_RUNE_COLOR, true, false, true, 3277));
+		setCustomItemDefinition(3278, new ItemDef("Exalted Rune Paladin Shield", "A heavy shining shield. 5% True Defense chance", "",
+			156000, 2, "items:2", false, true, 8, EXALTED_RUNE_COLOR, true, false, true, 3278));
+		setCustomItemDefinition(3279, new ItemDef("Exalted Rune Plate Mail Legs", "These look heavy and radiant. 5% True Defense chance", "",
+			156000, 9, "items:9", false, true, 644, EXALTED_RUNE_COLOR, true, false, true, 3279));
+		setCustomItemDefinition(3280, new ItemDef("Exalted Rune Plate Mail Body", "Excellent shining protection. 5% True Defense chance", "",
+			260000, 8, "items:8", false, true, 322, EXALTED_RUNE_COLOR, true, false, true, 3280));
+	}
+
 	private static void addWoolAccessoryDefinitions() {
 		setCustomItemDefinition(2794, new ItemDef("Wool Gloves", "Simple gloves stitched from wool", "", 12, 17, "items:17",
 			false, true, 256, 0xFFFFFF, false, false, true, 2794));
@@ -5720,6 +5763,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3258, new ItemDef("Fungus", "A fungus used as a potion ingredient", "", 14, -1, "external-png:fungus@14x18", false, false, 0, 0, false, false, true, 3258));
 		setCustomItemDefinition(3259, new ItemDef("Red flower", "A red flower used as a potion ingredient", "", 24, -1, "external-png:red-flower@15x18", false, false, 0, 0, false, false, true, 3259));
 		setCustomItemDefinition(3260, new ItemDef("Blue flower", "A blue flower used as a potion ingredient", "", 40, -1, "external-png:blue-flower@15x18", false, false, 0, 0, false, false, true, 3260));
+		addExaltedRuneDefinitions();
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
@@ -7567,6 +7611,21 @@ public class EntityHandler {
 			animations.add(new AnimationDef("mace", "equipment", 0xFFD84A, 0, true, false, 0)); // 1043 - Saradomin mace
 			animations.add(new AnimationDef("mace", "equipment", 0x8A2BE2, 0, true, false, 0)); // 1044 - Zamorak mace
 			animations.add(new AnimationDef("mace", "equipment", 0xC2A678, 0, true, false, 0)); // 1045 - Guthix mace
+			animations.add(new AnimationDef("sword", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1046 - Exalted Rune sword
+			animations.add(new AnimationDef("2hander", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1047 - Exalted Rune 2h
+			animations.add(new AnimationDef("battleaxe", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1048 - Exalted Rune axe
+			animations.add(new AnimationDef("pickaxe", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1049 - Exalted Rune pickaxe
+			animations.add(new AnimationDef("scythe", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1050 - Exalted Rune scythe
+			animations.add(new AnimationDef("mace", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1051 - Exalted Rune mace
+			animations.add(new AnimationDef("spear", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1052 - Exalted Rune spear
+			animations.add(new AnimationDef("fullhelm", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1053 - Exalted Rune helmet
+			animations.add(new AnimationDef("gauntlets", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1054 - Exalted Rune gauntlets
+			animations.add(new AnimationDef("greaves", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1055 - Exalted Rune greaves
+			animations.add(new AnimationDef("squareshield", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1056 - Exalted Rune square shield
+			animations.add(new AnimationDef("kiteshield", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1057 - Exalted Rune paladin shield
+			animations.add(new AnimationDef("platemaillegs", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1058 - Exalted Rune plate legs
+			animations.add(new AnimationDef("platemailtop", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1059 - Exalted Rune plate body
+			animations.add(new AnimationDef("fplatemailtop", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1060 - Exalted Rune female plate top
 		}
 	}
 

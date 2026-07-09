@@ -22,7 +22,7 @@ public class DoorAction {
 	private static final int MINING_GUILD_ELITE_DOOR_X = 268;
 	private static final int MINING_GUILD_ELITE_DOOR_Y = 3401;
 	private static final int MINING_GUILD_ELITE_DOOR_DIRECTION = 0;
-	private static final int MINING_GUILD_ELITE_MINING_LEVEL = 90;
+	private static final int MINING_GUILD_ELITE_MINING_LEVEL = 80;
 
 	public boolean blockWallObjectAction(final GameObject obj,
 										 final Integer click, final Player player) {
@@ -1497,7 +1497,7 @@ public class DoorAction {
 					"It's dangerous down there.");
 			}
 			delay();
-			player.message("You need level 90 Mining to proceed further.");
+			player.message("You need level 80 Mining to proceed further.");
 			return;
 		}
 

@@ -24,6 +24,7 @@ EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java
 MOB = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 ITEM_IDS = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
+MYWORLD_ITEM_IDS = ROOT / "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
 ITEM_DEFS_CUSTOM = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 ITEM_DEFS_MYWORLD = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 GATHERING_PLAN = ROOT / "docs/myworld/in-progress-work-plans/work-items.md"
@@ -122,7 +123,7 @@ def require_gathering_yield_helpers() -> None:
         "calcGatheringYield",
         "DataConversions.random(1, 10) <= progress + 1",
         "public static final int[] harvestingShearsIDs",
-        "public static final int[] harvestingShearsLvls = {70, 62, 54, 46, 38, 30, 22, 15, 8, 1};",
+        "public static final int[] harvestingShearsLvls = {90, 70, 62, 54, 46, 38, 30, 22, 15, 8, 1};",
     )
     for snippet in snippets:
         if snippet not in text:
@@ -143,14 +144,14 @@ def require_tool_equip_gates() -> None:
     tool_policy = {
         1987: (14, 1), 2047: (14, 8), 156: (14, 15), 1258: (14, 22),
         1259: (14, 30), 1260: (14, 38), 2048: (14, 46), 1261: (14, 54),
-        2049: (14, 62), 1262: (14, 70),
+        2049: (14, 62), 1262: (14, 70), 3268: (14, 90),
         2001: (8, 1), 2012: (8, 8), 87: (8, 15), 12: (8, 22),
         88: (8, 30), 428: (8, 30), 203: (8, 38), 2023: (8, 46),
         204: (8, 54), 2034: (8, 62), 405: (8, 70), 594: (8, 80),
-        1480: (8, 80),
+        1480: (8, 80), 3267: (8, 90),
         144: (19, 1), 2215: (19, 8), 2216: (19, 15), 2217: (19, 22),
         2218: (19, 30), 2219: (19, 38), 2220: (19, 46), 2221: (19, 54),
-        2222: (19, 62), 2223: (19, 70),
+        2222: (19, 62), 2223: (19, 70), 3272: (19, 90),
     }
     tool_defaults = {
         "isWearable": 1,
@@ -198,10 +199,10 @@ def require_tool_equip_gates() -> None:
         if snippet not in client_entity_text:
             fail(f"Pickaxe client held-sprite mapping missing snippet: {snippet}")
 
-    if "public static final int[] miningAxeLvls = {70, 62, 54, 46, 38, 30, 22, 15, 8, 1};" not in formulae_text:
-        fail("Mining tool runtime levels are not on the 1-70 ladder")
-    if "public static final int[] woodcuttingAxeLvls = {80, 70, 62, 54, 46, 38, 30, 30, 22, 15, 8, 1};" not in formulae_text:
-        fail("Woodcutting tool runtime levels are not on the 1-70 ladder")
+    if "public static final int[] miningAxeLvls = {90, 70, 62, 54, 46, 38, 30, 22, 15, 8, 1};" not in formulae_text:
+        fail("Mining tool runtime levels are not on the 1-90 ladder")
+    if "public static final int[] woodcuttingAxeLvls = {90, 80, 70, 62, 54, 46, 38, 30, 30, 22, 15, 8, 1};" not in formulae_text:
+        fail("Woodcutting tool runtime levels are not on the 1-90 ladder")
     for snippet in (
         "case RUNE_PICKAXE:\n\t\t\t\treturn 70;",
         "case ORICHALCUM_PICKAXE:\n\t\t\t\treturn 62;",
@@ -351,6 +352,7 @@ def require_shears_smithing_and_defs() -> None:
     client_text = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     client_override_text = CLIENT_ITEM_OVERRIDES.read_text(encoding="utf-8")
     item_id_text = ITEM_IDS.read_text(encoding="utf-8")
+    myworld_item_id_text = MYWORLD_ITEM_IDS.read_text(encoding="utf-8")
     custom_defs_text = ITEM_DEFS_CUSTOM.read_text(encoding="utf-8")
     myworld_defs_text = ITEM_DEFS_MYWORLD.read_text(encoding="utf-8")
 
@@ -361,6 +363,7 @@ def require_shears_smithing_and_defs() -> None:
         "private int getModernShearsId(int barId)",
         "case TIN_BAR:\n\t\t\t\treturn ItemId.SHEARS.id();",
         "case RUNITE_BAR:\n\t\t\t\treturn ItemId.RUNE_SHEARS.id();",
+        "if (barId == MyWorldItemId.PURIFIED_RUNE_BAR) {\n\t\t\treturn MyWorldItemId.EXALTED_RUNE_SHEARS;\n\t\t}",
     )
     for snippet in smithing_snippets:
         if snippet not in smithing_text:
@@ -379,6 +382,8 @@ def require_shears_smithing_and_defs() -> None:
     ):
         if item_name not in item_id_text:
             fail(f"ItemId shears ladder missing expected snippet: {item_name}")
+    if "EXALTED_RUNE_SHEARS = 3272" not in myworld_item_id_text:
+        fail("MyWorldItemId shears ladder missing EXALTED_RUNE_SHEARS")
     max_custom_match = re.search(r"public static final int maxCustom = (\d+);", item_id_text)
     if not max_custom_match or int(max_custom_match.group(1)) <= 2690:
         fail("ItemId.maxCustom must include the current gathering tool IDs")
@@ -407,12 +412,14 @@ def require_shears_smithing_and_defs() -> None:
         '"name": "Adamantite shears"',
         '"name": "Orichalcum shears"',
         '"name": "Rune shears"',
+        '"name": "Exalted Rune shears"',
     ):
         if item_name not in custom_defs_text:
             fail(f"Custom item defs missing expected shears definition: {item_name}")
     for server_snippet in (
         '"name": "Copper shears",\n      "description": "Copper shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 0,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 1041,\n      "wearableID": 16,',
         '"name": "Rune shears",\n      "description": "Rune shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 0,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 1041,\n      "wearableID": 16,',
+        '"name": "Exalted Rune shears",\n      "description": "Exalted Rune shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 1,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 1041,\n      "wearableID": 16,',
     ):
         if server_snippet not in custom_defs_text:
             fail(f"Custom shears defs do not remain equippable with the universal worn sprite: {server_snippet.splitlines()[0]}")
@@ -423,6 +430,7 @@ def require_shears_smithing_and_defs() -> None:
         'new ItemDef("Tin shears", "Tin shears for harvesting", "", 1, 66, "items:66", false, true, 16',
         'addMetalShearsDefinition("Copper shears", 2215, 4, 0xC86A2B);',
         'addMetalShearsDefinition("Rune shears", 2223, 32000, 0x00FFFF);',
+        'addMetalShearsDefinition("Exalted Rune shears", 3272, 52000, EXALTED_RUNE_COLOR);',
         'new ItemDef(name, name + " for harvesting", "", price, 66, "items:66"',
         "true, 16, pictureMask, false, false, true, id);",
         'new AnimationDef("shears", "equipment", 0, 0, true, false, 0)); // 1041 - Universal shears',

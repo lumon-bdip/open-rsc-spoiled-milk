@@ -11,6 +11,7 @@ import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.TrueDefense;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.impl.projectile.MagicCombatEvent;
@@ -276,6 +277,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 			}
 		}
 		damage = applyFrostbiteReflection(hitter, target, damage);
+		if (target.isPlayer()) {
+			damage = TrueDefense.apply((Player) target, damage);
+		}
 		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
 		final int damageDealt = Math.min(damage, lastHits);
 		target.getUpdateFlags().setDamage(new Damage(target, damage));

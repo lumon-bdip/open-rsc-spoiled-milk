@@ -6,6 +6,7 @@ import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Spells;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.TelePoint;
@@ -82,7 +83,8 @@ public final class EntityHandler {
 		ItemId.TITAN_STEEL_SHEARS.id(),
 		ItemId.ADAMANTITE_SHEARS.id(),
 		ItemId.ORICHALCUM_SHEARS.id(),
-		ItemId.RUNE_SHEARS.id()
+		ItemId.RUNE_SHEARS.id(),
+		MyWorldItemId.EXALTED_RUNE_SHEARS
 	};
 	private static final int[] MYWORLD_PICKAXE_IDS = {
 		ItemId.TIN_PICKAXE.id(),

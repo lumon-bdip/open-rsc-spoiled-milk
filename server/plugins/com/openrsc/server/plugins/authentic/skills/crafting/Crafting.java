@@ -1388,19 +1388,7 @@ public class Crafting implements UseInvTrigger,
 	private void doCutGem(Player player, final Item chisel, final Item gem) {
 		final ItemGemDef gemDef = player.getWorld().getServer().getEntityHandler().getItemGemDef(gem.getCatalogId());
 		if (gemDef == null) {
-			if (gem.getCatalogId() == ItemId.KING_BLACK_DRAGON_SCALE.id()) {
-				if (getCurrentLevel(player, Skill.CRAFTING.id()) < 90) {
-					player.message("You need 90 crafting to split the scales");
-					return;
-				}
-				if (player.getCarriedItems().remove(new Item(ItemId.KING_BLACK_DRAGON_SCALE.id(), 1)) > -1) {
-					player.message("You chip the massive scale into 5 pieces");
-					give(player, ItemId.CHIPPED_DRAGON_SCALE.id(), 5);
-					player.incExp(Skill.CRAFTING.id(), player.getConfig().GAME_TICK * 2, true);
-				}
-			} else {
-				player.message("Nothing interesting happens");
-			}
+			player.message("Nothing interesting happens");
 			return;
 		}
 
@@ -3240,10 +3228,6 @@ public class Crafting implements UseInvTrigger,
 		if (item1ID == ItemId.CHISEL.id() && (gemDef != null || gemDef2 != null)) {
 			return true;
 		} else if (item2ID == ItemId.CHISEL.id() && (gemDef != null || gemDef2 != null)) {
-			return true;
-		} else if (item1ID == ItemId.CHISEL.id() && item2ID == ItemId.KING_BLACK_DRAGON_SCALE.id()) {
-			return true;
-		} else if (item2ID == ItemId.CHISEL.id() && item1ID == ItemId.KING_BLACK_DRAGON_SCALE.id()) {
 			return true;
 		} else if (item1ID == ItemId.GLASSBLOWING_PIPE.id()) {
 			return true;

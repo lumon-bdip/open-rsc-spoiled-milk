@@ -6,6 +6,8 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
+PRESENT = ROOT / "server/plugins/com/openrsc/server/plugins/custom/misc/Present.java"
+HALLOWEEN_CRACKER = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/misc/HalloweenCracker.java"
 
 
 def fail(message: str) -> NoReturn:
@@ -34,14 +36,14 @@ def between(text: str, start: str, end: str, message: str) -> str:
 
 def main() -> None:
     drops = NPC_DROPS.read_text(encoding="utf-8")
+    present = PRESENT.read_text(encoding="utf-8")
+    halloween_cracker = HALLOWEEN_CRACKER.read_text(encoding="utf-8")
     elder_green_dragon = between(
         drops,
         "private void createElderGreenDragonDropTable() {",
         "\n\tprivate void addNormalDrop",
         "elder green dragon drop table",
     )
-    drops_without_elder_green_dragon = drops.replace(elder_green_dragon, "")
-
     for item in (
         "DRAGON_SWORD",
         "DRAGON_AXE",
@@ -57,9 +59,9 @@ def main() -> None:
         "POISON_DRAGON_BOLTS",
     ):
         forbid(
-            drops_without_elder_green_dragon,
+            drops,
             f"addItemDrop(ItemId.{item}.id()",
-            f"{item} should not be an NPC item drop outside Elder Green Dragon",
+            f"{item} should not be a direct NPC item drop",
         )
 
     shared_ultra = between(
@@ -110,6 +112,8 @@ def main() -> None:
         "custom KBD rare drop table",
     )
     forbid(kbd_custom, "DRAGON_2_HANDED_SWORD", "KBD custom rare table should not drop dragon weapons")
+    forbid(kbd_custom, "KING_BLACK_DRAGON_SCALE", "KBD custom rare table should not drop black dragon scales")
+    forbid(kbd_custom, "RAW_DRAGON_METAL", "KBD custom rare table should not drop raw dragon metal")
 
     hidden_unique = between(
         drops,
@@ -117,16 +121,39 @@ def main() -> None:
         "\n\tprivate void addHiddenUniqueDrop(final int npcId, final int itemId, final int amount, final HiddenUniqueRarity rarity)",
         "hidden unique drop registry",
     )
-    require(
+    forbid(
         hidden_unique,
         "addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.DRAGON_MEDIUM_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
-        "Black Demon should drop dragon medium helm through the hidden unique layer",
+        "Black Demon should not drop dragon medium helm through the hidden unique layer",
     )
     require(
         hidden_unique,
         "addHiddenUniqueDrop(NpcId.BLACK_DEMON.id(), ItemId.LARGE_DRAGON_HELMET.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
         "Black Demon should drop dragon full helm through the hidden unique layer",
     )
+    for needle, message in (
+        ("addHiddenUniqueDrop(NpcId.ELDER_GREEN_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);", "Elder Green Dragon should drop raw dragon metal at 1/128"),
+        ("addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);", "King Black Dragon should drop raw dragon metal at 1/128"),
+        ("addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 512);", "Black Dragon should drop raw dragon metal at 1/512"),
+        ("addHiddenUniqueDrop(NpcId.RED_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 1024);", "Red Dragon should drop raw dragon metal at 1/1024"),
+        ("addHiddenUniqueDrop(NpcId.DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 2048);", "Green Dragon should drop raw dragon metal at 1/2048"),
+        ("addHiddenUniqueDrop(NpcId.BLUE_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 2048);", "Blue Dragon should drop raw dragon metal at 1/2048"),
+    ):
+        require(hidden_unique, needle, message)
+    for reward_source, source_name in (
+        (present, "Present"),
+        (halloween_cracker, "Halloween Cracker"),
+    ):
+        forbid(
+            reward_source,
+            "ItemId.DRAGON_MEDIUM_HELMET.id()",
+            f"{source_name} should not award dragon medium helm",
+        )
+        require(
+            reward_source,
+            "ItemId.LARGE_DRAGON_HELMET.id()",
+            f"{source_name} should award dragon full helm instead of dragon medium helm",
+        )
     require(
         hidden_unique,
         "addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);",
@@ -141,6 +168,16 @@ def main() -> None:
         drops,
         'addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.BLACK_DRAGON_HIDE.id(), "King Black Dragon black dragon hide");',
         "King Black Dragon should now use black dragon hide as its guaranteed hide drop",
+    )
+    require(
+        drops,
+        'addGuaranteedDrop(NpcId.BLACK_DRAGON.id(), ItemId.KING_BLACK_DRAGON_SCALE.id(), "Black dragon scale");',
+        "Black Dragon should drop one black dragon scale",
+    )
+    require(
+        drops,
+        'addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.KING_BLACK_DRAGON_SCALE.id(), 2, "King Black Dragon black dragon scale");',
+        "King Black Dragon should drop two black dragon scales",
     )
     require(
         drops,
@@ -198,18 +235,6 @@ def main() -> None:
         ("rareDrops.addItemDrop(ItemId.RUNE_THROWING_KNIFE.id(), 200, 1);", "Elder Green Dragon rare drops should include rune knives"),
         ("rareDrops.addItemDrop(ItemId.RUNE_SHURIKEN.id(), 200, 1);", "Elder Green Dragon rare drops should include rune shuriken"),
         ("rareDrops.addItemDrop(ItemId.RUNE_PLATE_MAIL_BODY.id(), 1, 1);", "Elder Green Dragon rare drops should include rune platemail"),
-        ("rareDrops.addItemDrop(ItemId.DRAGON_SWORD.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon sword"),
-        ("rareDrops.addItemDrop(ItemId.DRAGON_AXE.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon axe"),
-        ("rareDrops.addItemDrop(ItemId.DRAGON_2_HANDED_SWORD.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon two hander"),
-        ("rareDrops.addItemDrop(ItemId.DRAGON_DAGGER.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon dagger"),
-        ("rareDrops.addItemDrop(ItemId.POISONED_DRAGON_DAGGER.id(), 1, 1);", "Elder Green Dragon rare drops should include poisoned dragon dagger"),
-        ("rareDrops.addItemDrop(ItemId.DRAGON_BATTLE_AXE.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon battle axe"),
-        ("rareDrops.addItemDrop(ItemId.DRAGON_CROSSBOW.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon crossbow"),
-        ("rareDrops.addItemDrop(ItemId.DRAGON_LONGBOW.id(), 1, 1);", "Elder Green Dragon rare drops should include dragon longbow"),
-        ("rareDrops.addItemDrop(ItemId.DRAGON_ARROWS.id(), 200, 1);", "Elder Green Dragon rare drops should include dragon arrows"),
-        ("rareDrops.addItemDrop(ItemId.POISON_DRAGON_ARROWS.id(), 200, 1);", "Elder Green Dragon rare drops should include poison dragon arrows"),
-        ("rareDrops.addItemDrop(ItemId.DRAGON_BOLTS.id(), 200, 1);", "Elder Green Dragon rare drops should include dragon bolts"),
-        ("rareDrops.addItemDrop(ItemId.POISON_DRAGON_BOLTS.id(), 200, 1);", "Elder Green Dragon rare drops should include poison dragon bolts"),
         ("elderGreenDragonDrops.addTableDrop(commonDrops, 96);", "Elder Green Dragon common bucket should use 96 weight"),
         ("elderGreenDragonDrops.addTableDrop(uncommonDrops, 24);", "Elder Green Dragon uncommon bucket should use 24 weight"),
         ("elderGreenDragonDrops.addTableDrop(rareDrops, 8);", "Elder Green Dragon rare bucket should use 8 weight"),

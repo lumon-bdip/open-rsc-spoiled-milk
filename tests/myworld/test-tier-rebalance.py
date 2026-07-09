@@ -64,6 +64,7 @@ SMELT_LEVEL_SNIPPETS = {
     "ADAMANTITE_BAR": 54,
     "ORICHALCUM_BAR": 62,
     "RUNITE_BAR": 70,
+    "PURIFIED_RUNE_BAR": 90,
 }
 
 
@@ -93,7 +94,10 @@ def require_levels(label: str, actual: dict[int, int], expected: dict[int, int])
 def require_smelting_enum_levels() -> None:
     text = SMELTING.read_text(encoding="utf-8")
     for bar_name, required_level in SMELT_LEVEL_SNIPPETS.items():
-        pattern = rf"new SmeltRecipe\(ItemId\.{bar_name}\.id\(\),\s*{required_level},"
+        if bar_name == "PURIFIED_RUNE_BAR":
+            pattern = rf"new SmeltRecipe\(MyWorldItemId\.{bar_name},\s*{required_level},"
+        else:
+            pattern = rf"new SmeltRecipe\(ItemId\.{bar_name}\.id\(\),\s*{required_level},"
         if re.search(pattern, text) is None:
             fail(f"Smelting recipe {bar_name} should require level {required_level}")
 
@@ -104,8 +108,9 @@ def require_smelting_runtime_safety() -> None:
         fail("Furnace bars category should use the legacy bronze bar icon, not a new high-id tin bar")
     if "shouldOpenSmeltingChoice(item.getCatalogId()) && !ActionSender.isRetroClient(player)" not in text:
         fail("Using tin/copper ore on a furnace should open the smelting chooser on modern clients")
-    if "return itemId == ItemId.TIN_ORE.id() || itemId == ItemId.COPPER_ORE.id();" not in text:
-        fail("Tin/copper ore should be marked as ambiguous furnace inputs")
+    if ("return itemId == ItemId.TIN_ORE.id()\n"
+        "\t\t\t|| itemId == ItemId.COPPER_ORE.id();") not in text:
+        fail("Tin/copper ore should open the modern furnace chooser")
     if "if (itemId == ItemId.TIN_ORE.id()) {\n\t\t\treturn getRecipe(ItemId.TIN_BAR.id());" not in text:
         fail("Using tin ore directly on a retro client should still smelt tin as a fallback")
     orichalcum_recipe = re.search(
@@ -127,6 +132,20 @@ def require_smelting_runtime_safety() -> None:
     ):
         if ingredient not in recipe_text:
             fail(f"Orichalcum smelting recipe is missing {ingredient}")
+    purified_recipe = re.search(
+        r"new SmeltRecipe\(MyWorldItemId\.PURIFIED_RUNE_BAR,(.*?)\n\t};",
+        text,
+        re.DOTALL,
+    )
+    if purified_recipe is None:
+        fail("Purified Rune Bar smelting recipe should exist")
+    for ingredient in (
+        '"lava forge"',
+        "ingredient(ItemId.RUNITE_BAR.id(), 1)",
+        "ingredient(ItemId.DRAGON_SULFUR.id(), 14)",
+    ):
+        if ingredient not in purified_recipe.group(1):
+            fail(f"Purified Rune Bar smelting recipe is missing {ingredient}")
 
 
 def require_legacy_smelting_def_levels() -> None:
@@ -158,9 +177,9 @@ def require_legacy_smelting_def_levels() -> None:
 
 def require_smithing_min_levels() -> None:
     text = SMITHING.read_text(encoding="utf-8")
-    expected = "int[] levels = {1, 8, 15, 22, 30, 38, 46, 54, 62, 70};"
+    expected = "int[] levels = {1, 8, 15, 22, 30, 38, 46, 54, 62, 70, 80, 90};"
     if expected not in text:
-        fail("Smithing minSmithingLevel should follow the 1-70 metal bar ladder")
+        fail("Smithing minSmithingLevel should follow the 1-90 metal bar ladder with dragon at 80")
 
 
 def main() -> None:

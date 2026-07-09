@@ -11,6 +11,7 @@ import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.TrueDefense;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.container.Item;
@@ -464,6 +465,9 @@ public class CombatEvent extends GameTickEvent {
 			}
 		}
 		damage = applyFrostbiteReflection(hitter, target, damage);
+		if (target.isPlayer()) {
+			damage = TrueDefense.apply((Player) target, damage);
+		}
 
 		// Reduce targets hits by supplied damage amount.
 		int lastHits = target.getLevel(Skill.HITS.id());

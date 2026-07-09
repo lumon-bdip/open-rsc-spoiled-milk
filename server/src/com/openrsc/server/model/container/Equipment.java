@@ -1,6 +1,7 @@
 package com.openrsc.server.model.container;
 
 import com.openrsc.server.constants.*;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.Summoning;
@@ -2488,6 +2489,30 @@ public class Equipment {
 
 	public boolean hasFullHellhoundSet() {
 		return hasFullSet(hellhoundSetIds);
+	}
+
+	public int getExaltedRuneTrueDefensePieces() {
+		int pieces = 0;
+		if (hasEquipped(MyWorldItemId.EXALTED_RUNE_HELMET)) {
+			pieces++;
+		}
+		if (hasEquipped(MyWorldItemId.EXALTED_RUNE_PLATE_MAIL_BODY)) {
+			pieces++;
+		}
+		if (hasEquipped(MyWorldItemId.EXALTED_RUNE_PLATE_MAIL_LEGS)) {
+			pieces++;
+		}
+		if (hasEquipped(MyWorldItemId.EXALTED_RUNE_GAUNTLETS)) {
+			pieces++;
+		}
+		if (hasEquipped(MyWorldItemId.EXALTED_RUNE_GREAVES)) {
+			pieces++;
+		}
+		if (hasEquipped(MyWorldItemId.EXALTED_RUNE_SQUARE_SHIELD)
+			|| hasEquipped(MyWorldItemId.EXALTED_RUNE_PALADIN_SHIELD)) {
+			pieces++;
+		}
+		return pieces;
 	}
 
 	private boolean hasFullSet(final int[] itemIds) {

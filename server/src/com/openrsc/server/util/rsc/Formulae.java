@@ -3,6 +3,7 @@ package com.openrsc.server.util.rsc;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.external.*;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
@@ -35,16 +36,16 @@ public final class Formulae {
 		ItemId.UNIDENTIFIED_IRIT_LEAF.id(), ItemId.UNIDENTIFIED_AVANTOE.id(), ItemId.UNIDENTIFIED_KWUARM.id(),
 		ItemId.UNIDENTIFIED_CADANTINE.id(), ItemId.UNIDENTIFIED_DWARF_WEED.id(), ItemId.UNIDENTIFIED_TORSTOL.id()};
 	private static final int[] herbDropWeights = {32, 25, 19, 14, 11, 8, 6, 5, 4, 3, 1}; //128
-	public static final int[] miningAxeIDs = {ItemId.RUNE_PICKAXE.id(), ItemId.ORICHALCUM_PICKAXE.id(),
-		ItemId.ADAMANTITE_PICKAXE.id(), ItemId.TITAN_STEEL_PICKAXE.id(), ItemId.MITHRIL_PICKAXE.id(),
-		ItemId.STEEL_PICKAXE.id(), ItemId.IRON_PICKAXE.id(), ItemId.BRONZE_PICKAXE.id(),
-		ItemId.COPPER_PICKAXE.id(), ItemId.TIN_PICKAXE.id()};
-	public static final int[] miningAxeLvls = {70, 62, 54, 46, 38, 30, 22, 15, 8, 1};
-	public static final int[] harvestingShearsIDs = {ItemId.RUNE_SHEARS.id(), ItemId.ORICHALCUM_SHEARS.id(),
-		ItemId.ADAMANTITE_SHEARS.id(), ItemId.TITAN_STEEL_SHEARS.id(), ItemId.MITHRIL_SHEARS.id(),
-		ItemId.STEEL_SHEARS.id(), ItemId.IRON_SHEARS.id(), ItemId.BRONZE_SHEARS.id(),
-		ItemId.COPPER_SHEARS.id(), ItemId.SHEARS.id()};
-	public static final int[] harvestingShearsLvls = {70, 62, 54, 46, 38, 30, 22, 15, 8, 1};
+	public static final int[] miningAxeIDs = {MyWorldItemId.EXALTED_RUNE_PICKAXE, ItemId.RUNE_PICKAXE.id(),
+		ItemId.ORICHALCUM_PICKAXE.id(), ItemId.ADAMANTITE_PICKAXE.id(), ItemId.TITAN_STEEL_PICKAXE.id(),
+		ItemId.MITHRIL_PICKAXE.id(), ItemId.STEEL_PICKAXE.id(), ItemId.IRON_PICKAXE.id(),
+		ItemId.BRONZE_PICKAXE.id(), ItemId.COPPER_PICKAXE.id(), ItemId.TIN_PICKAXE.id()};
+	public static final int[] miningAxeLvls = {90, 70, 62, 54, 46, 38, 30, 22, 15, 8, 1};
+	public static final int[] harvestingShearsIDs = {MyWorldItemId.EXALTED_RUNE_SHEARS, ItemId.RUNE_SHEARS.id(),
+		ItemId.ORICHALCUM_SHEARS.id(), ItemId.ADAMANTITE_SHEARS.id(), ItemId.TITAN_STEEL_SHEARS.id(),
+		ItemId.MITHRIL_SHEARS.id(), ItemId.STEEL_SHEARS.id(), ItemId.IRON_SHEARS.id(),
+		ItemId.BRONZE_SHEARS.id(), ItemId.COPPER_SHEARS.id(), ItemId.SHEARS.id()};
+	public static final int[] harvestingShearsLvls = {90, 70, 62, 54, 46, 38, 30, 22, 15, 8, 1};
 	private static final int[] gemDropIDs = {ItemId.NOTHING.id(), ItemId.UNCUT_SAPPHIRE.id(), ItemId.UNCUT_EMERALD.id(),
 		ItemId.UNCUT_RUBY.id(), ItemId.UNCUT_DIAMOND.id(), ItemId.LOOP_KEY_HALF.id(), ItemId.TOOTH_KEY_HALF.id(), ItemId.NOTHING_REROLL.id()};
 	private static final int[] gemDropWeights = {63, 32, 16, 8, 4, 2, 2, 1}; //128
@@ -117,11 +118,12 @@ public final class Formulae {
 		{new java.awt.Point(431, 0), new java.awt.Point(1007, 1007)},
 		{new java.awt.Point(335, 734), new java.awt.Point(437, 894)}};
 	// trawler: 297, 720
-	public static final int[] woodcuttingAxeIDs = {ItemId.DRAGON_WOODCUTTING_AXE.id(), ItemId.RUNE_AXE.id(),
-		ItemId.ORICHALCUM_AXE.id(), ItemId.ADAMANTITE_AXE.id(), ItemId.TITAN_STEEL_AXE.id(),
-		ItemId.MITHRIL_AXE.id(), ItemId.BLACK_AXE.id(), ItemId.STEEL_AXE.id(), ItemId.IRON_AXE.id(),
-		ItemId.BRONZE_AXE.id(), ItemId.COPPER_AXE.id(), ItemId.TIN_AXE.id()};
-	public static final int[] woodcuttingAxeLvls = {80, 70, 62, 54, 46, 38, 30, 30, 22, 15, 8, 1};
+	public static final int[] woodcuttingAxeIDs = {MyWorldItemId.EXALTED_RUNE_HATCHET, ItemId.DRAGON_WOODCUTTING_AXE.id(),
+		ItemId.RUNE_AXE.id(), ItemId.ORICHALCUM_AXE.id(), ItemId.ADAMANTITE_AXE.id(),
+		ItemId.TITAN_STEEL_AXE.id(), ItemId.MITHRIL_AXE.id(), ItemId.BLACK_AXE.id(),
+		ItemId.STEEL_AXE.id(), ItemId.IRON_AXE.id(), ItemId.BRONZE_AXE.id(),
+		ItemId.COPPER_AXE.id(), ItemId.TIN_AXE.id()};
+	public static final int[] woodcuttingAxeLvls = {90, 80, 70, 62, 54, 46, 38, 30, 30, 22, 15, 8, 1};
 
 	public static boolean isGatheringTool(int itemId) {
 		return DataConversions.inArray(miningAxeIDs, itemId)
