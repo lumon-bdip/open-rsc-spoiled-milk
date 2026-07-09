@@ -1515,8 +1515,8 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(174, "54", "Adamantite bar - 1 adamantite ore and 4 coal"));
 			skillMenuEntries.add(new SkillMenuItem(1958, "62", "2 Orichalcum bars - 1 mithril, 1 adamantite, and 5 coal"));
 			skillMenuEntries.add(new SkillMenuItem(408, "70", "Runite bar - 1 runite ore and 6 coal"));
-			skillMenuEntries.add(new SkillMenuItem(1365, "80", "Dragon bar - 1 raw dragon metal and 6 dragon sulfur at the repaired lava forge"));
-			skillMenuEntries.add(new SkillMenuItem(3261, "90", "Purified Rune Bar - 1 rune bar and 14 dragon sulfur at the repaired lava forge"));
+			skillMenuEntries.add(new SkillMenuItem(1365, "80", "Dragon bar - raw dragon metal and 6 dragon sulfur"));
+			skillMenuEntries.add(new SkillMenuItem(3261, "90", "Purified Rune Bar - rune bar and 14 dragon sulfur"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1383, "Smithing");
 			}
@@ -1541,6 +1541,12 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(979, "4", "Bronze wire - 1 bronze bar"));
 			skillMenuEntries.add(new SkillMenuItem(419, "34", "Nails - 1 steel bar makes 2"));
 			skillMenuEntries.add(new SkillMenuItem(1278, "60", "Dragon square shield - smith the 2 halves together"));
+		} else if (curTab == 7) {
+			skillMenuEntries.add(new SkillMenuEntry("", "Dragon bars require the repaired lava forge"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Purified Rune Bars require the repaired lava forge"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Repair the forge after Dwarf Youth Rescue"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Repair cost: 100 black dragon scales and 1,000,000 coins"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Dragon and Exalted Rune gear are smithed at normal anvils"));
 		}
 	}
 

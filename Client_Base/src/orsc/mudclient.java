@@ -25811,6 +25811,7 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Titan/Adam");
 			skillGuideChosenTabs.add("Orich/Rune");
 			skillGuideChosenTabs.add("Special");
+			skillGuideChosenTabs.add("Info");
 		} else if (skillGuideChosen.equalsIgnoreCase("Mining")) {
 			skillGuideChosenTabs.add("Ores");
 			skillGuideChosenTabs.add("Pickaxes");
