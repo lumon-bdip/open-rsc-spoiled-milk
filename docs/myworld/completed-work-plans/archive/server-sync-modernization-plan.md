@@ -496,6 +496,14 @@ Current branch progress:
   hold under those cases, the next code step is promoting the snapshot consumer
   from repair/backstop to the primary movement lane while falling back to the current
   custom movement path.
+- [ ] Follow up on distant NPC rubberbanding after chunk loads. Live observation:
+  after a new chunk loads, NPCs outside the player's immediate chunk can visibly
+  rubberband or desync even while F6 reports no movement/cache issue; moving
+  closer appears to stabilize them. This may be an expected edge of the current
+  transitional server-v2 movement/visibility split, especially while the
+  snapshot consumer is still a repair/backstop instead of the primary movement
+  lane. Do not treat this as resolved without longer captures around distant
+  loaded chunks, zoomed-out views, and chunk-boundary movement.
 - [ ] Next custom-scene milestone: validate parity in local captures across
   login, movement, teleport/region changes, and object mutations, then decide
   whether the renderer should consume the stored baseline as a diagnostic
