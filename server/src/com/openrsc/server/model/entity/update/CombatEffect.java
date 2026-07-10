@@ -69,6 +69,7 @@ public class CombatEffect {
 	public static final int ELDER_DRAGON_BURN = 63;
 	public static final int TRUE_DEFENSE = 64;
 	public static final int TELEPORT = 65;
+	public static final int DRAGON_WEAPON_SLASH_2 = 66;
 	public static final int DEMON_EXPLOSION = LESSER_DEMON_MAGIC;
 
 	public static final int HELLFIRE = HELLS_FIRE;

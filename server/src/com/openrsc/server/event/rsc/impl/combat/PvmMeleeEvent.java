@@ -540,7 +540,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (breathDamage <= 0) {
 			return;
 		}
-		hitter.getUpdateFlags().setCombatEffect(new CombatEffect(hitter, CombatEffect.DRAGON_WEAPON_BREATH));
+		final int slashEffect = DataConversions.random(0, 1) == 0
+			? CombatEffect.DRAGON_WEAPON_BREATH
+			: CombatEffect.DRAGON_WEAPON_SLASH_2;
+		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, slashEffect));
 		inflictAuxiliaryTrueDamage(hitter, target, breathDamage);
 	}
 
@@ -552,7 +555,11 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (effectType == CombatEffect.NONE || !CombatFormula.rollElementalSwordProcChance()) {
 			return;
 		}
-		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, effectType));
+		if (effectType == CombatEffect.ICE_SWORD) {
+			target.getUpdateFlags().setProjectile(new Projectile(hitter, target, Projectile.ICE_SWORD_STAB));
+		} else {
+			target.getUpdateFlags().setCombatEffect(new CombatEffect(target, effectType));
+		}
 		CombatFormula.applyElementalSwordProcDebuff(target, effectType);
 		final int procDamage = CombatFormula.rollElementalSwordProcDamage(hitter);
 		if (procDamage > 0) {
@@ -865,8 +872,11 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (weaponMaxPower > 0 && PoisonProcChance.rollWeapon(player, target, poisonWeaponId)) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, PoisonPower.getWeaponAppliedPoisonPower(poisonWeaponId));
 		}
-		if (styleArmorMaxPower > 0 && PoisonProcChance.rollArmor(player, target, "melee")) {
+		final boolean armorPoisonProc = styleArmorMaxPower > 0
+			&& PoisonProcChance.rollArmor(player, target, "melee");
+		if (armorPoisonProc) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, player.getMeleePoisonArmorAppliedPower());
+			target.getUpdateFlags().setProjectile(new Projectile(player, target, Projectile.ACID_ARMOR_PROC));
 		}
 		if (player.hasFullBlackDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, 15);

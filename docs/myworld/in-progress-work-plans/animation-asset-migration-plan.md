@@ -215,6 +215,15 @@ Add one row for every live effect as it enters a wave.
 | 3 | Blue dragon magic | `water-basic`, on-entity impact | `water-3` | No | Added | Required | Field test |
 | 3 | Red and other fire dragon magic | `fire-basic`, on-entity impact | `explosion-vfx-3` | No | Added | Required | Field test |
 | 3 | Ordinary elemental enemy magic | Moving projectile | Elemental `-basic` fallback | No | Added | Required | Field test |
+| 4 | Dragon weapon breath proc | On-entity impact | Equal roll between `fire-slash-1` and `fire-slash-2` | No | Added | Required | Field test |
+| 4 | Fire Sword proc | On-entity impact | `fire-hit-3` | No | Added | Required | Field test |
+| 4 | Ice Sword proc | Static caster-to-target | `ice-stab` | No | Added | Required | Field test |
+| 4 | Earth Sword proc | On-entity impact | `wood-6` | No | Added | Required | Field test |
+| 4 | True Defense proc | On entity (defender) | `bubble-shield` | No | Added | Required | Field test |
+| 4 | Tail Sting, Spitting Venom, Mystic Venom | Moving projectile | `acid-basic-2` | No | Added | Required | Field test |
+| 4 | Hell's Fire | On-entity impact | `explosion-vfx-15` | No | Added | Required | Field test |
+| 4 | Hell's Blaze | On-entity impact | `explosion-vfx-17` | No | Added | Required | Field test |
+| 4 | Hell's Inferno | On-entity impact | `explosion-vfx-11` | No | Added | Required | Field test |
 
 Wave 2 was deliberately approved as one player-spellbook completion batch
 rather than five smaller assignment groups. It also widens the Teleport sheet
@@ -226,6 +235,11 @@ finishes ordinary enemy magic by removing legacy impact overlays from fallback
 casts. The requested `fire-3` dragon visual is the already accepted tier-three
 fire spell effect cataloged as `explosion-vfx-3`; no duplicate asset folder is
 required.
+
+Wave 4 preserves the stable Dragon weapon effect ID for the first slash and
+adds one alternate ID so the server can make an actual equal per-proc choice.
+The poison armor animation is emitted only when the armor poison roll succeeds;
+weapon poison does not borrow that visual.
 
 Status values should be `Pending`, `In progress`, `Field test`, or `Complete`.
 An effect is not complete merely because its asset loads; placement, timing,

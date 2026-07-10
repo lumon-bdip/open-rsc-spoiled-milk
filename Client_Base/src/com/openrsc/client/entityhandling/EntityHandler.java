@@ -503,7 +503,9 @@ public class EntityHandler {
 		FIRE_LEAD_2(35),
 		ICE_LEAD_2(36),
 		ACID_LEAD_2(37),
-		WOOD_LEAD_2(38);
+		WOOD_LEAD_2(38),
+		ACID_ARMOR_PROC(39),
+		ICE_SWORD_STAB(40);
 
 		private final int value;
 
@@ -560,6 +562,8 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("ice tier 2 lead projectile", mudclient.spriteProjectile + 1, "projectiles:1", 36));
 		projectiles.add(new SpriteDef("acid tier 2 lead projectile", mudclient.spriteProjectile + 1, "projectiles:1", 37));
 		projectiles.add(new SpriteDef("wood tier 2 lead projectile", mudclient.spriteProjectile + 1, "projectiles:1", 38));
+		projectiles.add(new SpriteDef("acid armor proc projectile", mudclient.spriteProjectile + 1, "projectiles:1", 39));
+		projectiles.add(new SpriteDef("ice sword stab projectile", mudclient.spriteProjectile + 1, "projectiles:1", 40));
 	}
 
 	public enum GUIPARTS {

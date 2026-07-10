@@ -33,6 +33,7 @@ EXPECTED_DEFINITIONS = {
     "throwing-knife-basic": ("throwing-knife-basic/throwing-knife-basic.png", 8, 1, 0, 8),
     "shuriken-basic": ("shuriken-basic/shuriken-basic.png", 8, 1, 0, 8),
     "thunder-2": ("thunder-2/Projectile/Projectile 2 wo blur.png", 16, 1, 0, 16),
+    "acid-basic-2": ("acid-basic-2/Acid VFX 03(56x48).png", 16, 1, 0, 16),
 }
 
 EXPECTED_STARTUP_SEGMENTS = {
@@ -82,6 +83,7 @@ EXPECTED_FALLBACKS = {
     "ICE_LEAD_2": "ice-basic",
     "ACID_LEAD_2": "acid-basic",
     "WOOD_LEAD_2": "wood-basic",
+    "ACID_ARMOR_PROC": "acid-basic-2",
 }
 
 
@@ -170,7 +172,7 @@ def main() -> None:
 
     moving_root = ANIMATIONS / "projectile-moving"
     for key, (relative_path, columns, rows, first_frame, frame_count) in definitions.items():
-        if key != "thunder-2" and not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*-basic", key):
+        if key not in ("thunder-2", "acid-basic-2") and not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*-basic", key):
             fail(f"fallback key must use [type]-basic naming: {key}")
         sheet = moving_root / relative_path
         if not sheet.is_file():

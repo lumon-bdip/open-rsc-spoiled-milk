@@ -47,6 +47,10 @@ public final class CombatEffectAnimationCatalog {
 
 	static {
 		LinkedHashMap<Integer, Definition> definitions = new LinkedHashMap<Integer, Definition>();
+		define(definitions, 1, "explosion-vfx-15", ON_ENTITY,
+			"explosions/Explosion VFX 15(32x32).png", 13, 1, 0, 13, 64);
+		define(definitions, 2, "explosion-vfx-17", ON_ENTITY,
+			"explosions/Explosion VFX 17(48x64).png", 11, 1, 0, 11, 64);
 		define(definitions, 6, "fire-2", ON_ENTITY, "fire-2/Fire Claw.png", 9, 1, 0, 9, 64);
 		define(definitions, 8, "earth-2", ON_ENTITY, "earth-2/Earth Hammer (48x48).png", 5, 5, 0, 21, 64);
 		define(definitions, 7, "wind-4", ON_ENTITY, "wind-4/Wind Beam.png", 14, 1, 0, 14, 64);
@@ -57,6 +61,8 @@ public final class CombatEffectAnimationCatalog {
 		define(definitions, 12, "earth-4", ON_ENTITY,
 			"earth-4/Earth Impale 64x64.png", 17, 1, 0, 17, 64);
 		define(definitions, 14, "fire-4", ON_ENTITY, "fire-4/Fire Beam.png", 10, 1, 0, 10, 64);
+		define(definitions, 15, "explosion-vfx-11", ON_ENTITY,
+			"explosions/Explosion VFX 11(64x32).png", 16, 1, 0, 16, 64);
 		define(definitions, 16, "lesser-heal", ON_ENTITY,
 			"lesser-heal/Buff n Debuff P1 03.png", 16, 1, 0, 16, 64);
 		define(definitions, 17, "greater-heal", ON_ENTITY,
@@ -92,8 +98,18 @@ public final class CombatEffectAnimationCatalog {
 			"explosions/Explosion VFX 17(48x64).png", 11, 1, 0, 11, 64);
 		define(definitions, 63, "burn", ON_ENTITY,
 			"burn/Buff n Debuff P07 03.png", 16, 1, 0, 16, 64);
+		define(definitions, 58, "fire-slash-1", ON_ENTITY,
+			"fire-slashes/Slash 1.png", 13, 1, 0, 13, 64);
+		define(definitions, 59, "fire-hit-3", ON_ENTITY,
+			"Fire combo/Fire Hit 3.png", 17, 1, 0, 17, 64);
+		define(definitions, 61, "wood-6", ON_ENTITY,
+			"wood-6/Wood VFX 05(48x48).png", 17, 1, 0, 17, 64);
+		define(definitions, 64, "bubble-shield", ON_ENTITY,
+			"bubble-shield/true-defense.png", 22, 1, 0, 22, 64);
 		define(definitions, 65, "teleport", ON_ENTITY,
 			"teleport/Buff n Debuff P1 04.png", 24, 1, 0, 24, 64);
+		define(definitions, 66, "fire-slash-2", ON_ENTITY,
+			"fire-slashes/Slash 2.png", 12, 1, 0, 12, 64);
 
 		LinkedHashMap<Integer, Definition[]> sequences = new LinkedHashMap<Integer, Definition[]>();
 		for (Map.Entry<Integer, Definition> entry : definitions.entrySet()) {

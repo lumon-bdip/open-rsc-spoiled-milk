@@ -630,11 +630,18 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (weaponMaxPower > 0 && PoisonProcChance.rollWeapon(casterPlayer, opponent, poisonWeaponId)) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, PoisonPower.getWeaponAppliedPoisonPower(poisonWeaponId));
 		}
-		if (isMagicAttack && styleArmorMaxPower > 0 && PoisonProcChance.rollArmor(casterPlayer, opponent, "magic")) {
+		final boolean magicArmorPoisonProc = isMagicAttack && styleArmorMaxPower > 0
+			&& PoisonProcChance.rollArmor(casterPlayer, opponent, "magic");
+		final boolean rangedArmorPoisonProc = isRangedAttack && styleArmorMaxPower > 0
+			&& PoisonProcChance.rollArmor(casterPlayer, opponent, "ranged");
+		if (magicArmorPoisonProc) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, casterPlayer.getMagicPoisonArmorAppliedPower());
 		}
-		if (isRangedAttack && styleArmorMaxPower > 0 && PoisonProcChance.rollArmor(casterPlayer, opponent, "ranged")) {
+		if (rangedArmorPoisonProc) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, casterPlayer.getRangedPoisonArmorAppliedPower());
+		}
+		if (magicArmorPoisonProc || rangedArmorPoisonProc) {
+			opponent.getUpdateFlags().setProjectile(new Projectile(casterPlayer, opponent, Projectile.ACID_ARMOR_PROC));
 		}
 		if (casterPlayer.hasFullBlackDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, 15);
@@ -744,7 +751,10 @@ public class ProjectileEvent extends SingleTickEvent {
 			|| opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
-		caster.getUpdateFlags().setCombatEffect(new CombatEffect(caster, CombatEffect.DRAGON_WEAPON_BREATH));
+		final int slashEffect = DataConversions.random(0, 1) == 0
+			? CombatEffect.DRAGON_WEAPON_BREATH
+			: CombatEffect.DRAGON_WEAPON_SLASH_2;
+		opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, slashEffect));
 		inflictAuxiliaryTrueDamage(caster, opponent, dragonBreathDamage);
 	}
 

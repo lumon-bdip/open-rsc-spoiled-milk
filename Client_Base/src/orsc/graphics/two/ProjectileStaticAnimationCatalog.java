@@ -48,6 +48,8 @@ public final class ProjectileStaticAnimationCatalog {
 			12, 1, 0, 12, 32);
 		define(definitions, PROJECTILE_TYPES.WATER_STATIC_2, "water-2", "water-2/Water Beam.png",
 			5, 5, 0, 25, 48);
+		define(definitions, PROJECTILE_TYPES.ICE_SWORD_STAB, "ice-stab", "ice-stab/Ice VFX 10(64x32).png",
+			22, 1, 0, 22, 32);
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
 	}
 
