@@ -77,6 +77,7 @@ final class OpenGLFrameCapture {
 		writeDepthDiagnostics(frame);
 		writeWorldFaces(frame);
 		writeSpriteCommands(frame);
+		writeRenderer2DCommandLimits(frame);
 		writeWorldSpriteCommands(frame, presenter);
 		writeCompositeSceneCommands(frame, presenter);
 		writeStaticWorldCommands(frame, presenter);
@@ -86,6 +87,63 @@ final class OpenGLFrameCapture {
 		writeSpriteSubmissions(frame);
 		writeCharacterSprites(frame, null);
 		writeSpriteAnchors(frame);
+	}
+
+	private void writeRenderer2DCommandLimits(Frame frame) throws Exception {
+		Renderer2DFrame.CaptureStats stats = frame == null || frame.renderer2DFrame == null
+			? Renderer2DFrame.CaptureStats.EMPTY
+			: frame.renderer2DFrame.getCaptureStats();
+		PrintWriter writer = new PrintWriter(new File(directory, "renderer-2d-command-limits.tsv"));
+		try {
+			writer.println("stream\tlimit\tattempted\taccepted\tdropped");
+			writeRenderer2DCommandLimit(
+				writer,
+				"sprite",
+				stats.getSpriteCommandLimit(),
+				stats.getSpriteCommandAttempts(),
+				stats.getSpriteCommandsCaptured(),
+				stats.getSpriteCommandsSkippedOverflow());
+			writeRenderer2DCommandLimit(
+				writer,
+				"text",
+				stats.getTextCommandLimit(),
+				stats.getTextCommandAttempts(),
+				stats.getTextCommandsCaptured(),
+				stats.getTextCommandsSkippedOverflow());
+			writeRenderer2DCommandLimit(
+				writer,
+				"primitive",
+				stats.getPrimitiveCommandLimit(),
+				stats.getPrimitiveCommandAttempts(),
+				stats.getPrimitiveCommandsCaptured(),
+				stats.getPrimitiveCommandsSkippedOverflow());
+			writeRenderer2DCommandLimit(
+				writer,
+				"rotated-sprite",
+				stats.getRotatedSpriteCommandLimit(),
+				stats.getRotatedSpriteCommandAttempts(),
+				stats.getRotatedSpriteCommandsCaptured(),
+				stats.getRotatedSpriteCommandsSkippedOverflow());
+			writeRenderer2DCommandLimit(
+				writer,
+				"circle",
+				stats.getCircleCommandLimit(),
+				stats.getCircleCommandAttempts(),
+				stats.getCircleCommandsCaptured(),
+				stats.getCircleCommandsSkippedOverflow());
+		} finally {
+			writer.close();
+		}
+	}
+
+	private void writeRenderer2DCommandLimit(
+		PrintWriter writer,
+		String stream,
+		int limit,
+		int attempted,
+		int accepted,
+		int dropped) {
+		writer.println(stream + "\t" + limit + "\t" + attempted + "\t" + accepted + "\t" + dropped);
 	}
 
 	void writeLayer(String name, BufferedImage image) throws Exception {
@@ -1449,7 +1507,6 @@ final class OpenGLFrameCapture {
 		return value.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ');
 	}
 }
-
 
 
 

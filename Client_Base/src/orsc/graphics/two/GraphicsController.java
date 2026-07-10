@@ -26,11 +26,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class GraphicsController {
-	private static final int MAX_RENDERER_2D_SPRITE_COMMANDS = 4096;
-	private static final int MAX_RENDERER_2D_TEXT_COMMANDS = 4096;
-	private static final int MAX_RENDERER_2D_PRIMITIVE_COMMANDS = 4096;
-	private static final int MAX_RENDERER_2D_ROTATED_SPRITE_COMMANDS = 256;
-	private static final int MAX_RENDERER_2D_CIRCLE_COMMANDS = 512;
+	private static final int MAX_RENDERER_2D_SPRITE_COMMANDS = Renderer2DFrame.SPRITE_COMMAND_LIMIT;
+	private static final int MAX_RENDERER_2D_TEXT_COMMANDS = Renderer2DFrame.TEXT_COMMAND_LIMIT;
+	private static final int MAX_RENDERER_2D_PRIMITIVE_COMMANDS = Renderer2DFrame.PRIMITIVE_COMMAND_LIMIT;
+	private static final int MAX_RENDERER_2D_ROTATED_SPRITE_COMMANDS = Renderer2DFrame.ROTATED_SPRITE_COMMAND_LIMIT;
+	private static final int MAX_RENDERER_2D_CIRCLE_COMMANDS = Renderer2DFrame.CIRCLE_COMMAND_LIMIT;
 
 	public enum SPRITE_LAYER {
 		MINIMAP, WORLDMAP, SHOP
@@ -108,6 +108,10 @@ public class GraphicsController {
 	private int renderer2DRotatedSpriteCapturedUi;
 	private int renderer2DCircleDraws;
 	private int renderer2DCircleCapturedUi;
+	private int renderer2DTextSkippedOverflow;
+	private int renderer2DPrimitiveSkippedOverflow;
+	private int renderer2DRotatedSpriteSkippedOverflow;
+	private int renderer2DCircleSkippedOverflow;
 	private int renderer2DNativeUiBlockSprite;
 	private int renderer2DNativeUiBlockText;
 	private int renderer2DNativeUiBlockPrimitive;
@@ -179,6 +183,10 @@ public class GraphicsController {
 		renderer2DRotatedSpriteCapturedUi = 0;
 		renderer2DCircleDraws = 0;
 		renderer2DCircleCapturedUi = 0;
+		renderer2DTextSkippedOverflow = 0;
+		renderer2DPrimitiveSkippedOverflow = 0;
+		renderer2DRotatedSpriteSkippedOverflow = 0;
+		renderer2DCircleSkippedOverflow = 0;
 		renderer2DNativeUiBlockSprite = 0;
 		renderer2DNativeUiBlockText = 0;
 		renderer2DNativeUiBlockPrimitive = 0;
@@ -287,7 +295,22 @@ public class GraphicsController {
 			renderer2DNativeUiBlockClear,
 			renderer2DNativeUiBlockCircle,
 			renderer2DNativeUiBlockPixel,
-			renderer2DUiBaseCaptured && !renderer2DNativeUiSoftwareDirty ? 1 : 0);
+			renderer2DUiBaseCaptured && !renderer2DNativeUiSoftwareDirty ? 1 : 0,
+			renderer2DTextCommands.size(),
+			renderer2DTextSkippedOverflow,
+			renderer2DPrimitiveCommands.size(),
+			renderer2DPrimitiveSkippedOverflow,
+			renderer2DRotatedSpriteSkippedOverflow,
+			renderer2DCircleSkippedOverflow);
+	}
+
+	private void logRenderer2DCommandOverflow(String stream, int limit) {
+		if (renderer2DCommandOverflowLogged) {
+			return;
+		}
+		System.out.println(
+			"[renderer-v2 2d] " + stream + " command capture limit " + limit + " reached for this frame.");
+		renderer2DCommandOverflowLogged = true;
 	}
 
 	private boolean shouldReplaceRenderer2DUiSprite(boolean captured) {
@@ -402,6 +425,8 @@ public class GraphicsController {
 			return false;
 		}
 		if (renderer2DTextCommands.size() >= MAX_RENDERER_2D_TEXT_COMMANDS) {
+			renderer2DTextSkippedOverflow++;
+			logRenderer2DCommandOverflow("text", MAX_RENDERER_2D_TEXT_COMMANDS);
 			return false;
 		}
 
@@ -446,6 +471,8 @@ public class GraphicsController {
 		}
 		renderer2DPrimitiveDraws++;
 		if (renderer2DPrimitiveCommands.size() >= MAX_RENDERER_2D_PRIMITIVE_COMMANDS) {
+			renderer2DPrimitiveSkippedOverflow++;
+			logRenderer2DCommandOverflow("primitive", MAX_RENDERER_2D_PRIMITIVE_COMMANDS);
 			return false;
 		}
 
@@ -489,6 +516,8 @@ public class GraphicsController {
 		}
 		renderer2DRotatedSpriteDraws++;
 		if (renderer2DRotatedSpriteCommands.size() >= MAX_RENDERER_2D_ROTATED_SPRITE_COMMANDS) {
+			renderer2DRotatedSpriteSkippedOverflow++;
+			logRenderer2DCommandOverflow("rotated-sprite", MAX_RENDERER_2D_ROTATED_SPRITE_COMMANDS);
 			return false;
 		}
 
@@ -524,6 +553,8 @@ public class GraphicsController {
 		}
 		renderer2DCircleDraws++;
 		if (renderer2DCircleCommands.size() >= MAX_RENDERER_2D_CIRCLE_COMMANDS) {
+			renderer2DCircleSkippedOverflow++;
+			logRenderer2DCommandOverflow("circle", MAX_RENDERER_2D_CIRCLE_COMMANDS);
 			return false;
 		}
 
@@ -779,10 +810,7 @@ public class GraphicsController {
 
 		if (renderer2DSpriteCommands.size() >= MAX_RENDERER_2D_SPRITE_COMMANDS) {
 			renderer2DCaptureSkippedOverflow++;
-			if (!renderer2DCommandOverflowLogged) {
-				System.out.println("[renderer-v2 2d] sprite command capture limit reached for this frame.");
-				renderer2DCommandOverflowLogged = true;
-			}
+			logRenderer2DCommandOverflow("sprite", MAX_RENDERER_2D_SPRITE_COMMANDS);
 			return false;
 		}
 
@@ -963,10 +991,7 @@ public class GraphicsController {
 
 		if (renderer2DSpriteCommands.size() >= MAX_RENDERER_2D_SPRITE_COMMANDS) {
 			renderer2DCaptureSkippedOverflow++;
-			if (!renderer2DCommandOverflowLogged) {
-				System.out.println("[renderer-v2 2d] sprite command capture limit reached for this frame.");
-				renderer2DCommandOverflowLogged = true;
-			}
+			logRenderer2DCommandOverflow("sprite", MAX_RENDERER_2D_SPRITE_COMMANDS);
 			return false;
 		}
 

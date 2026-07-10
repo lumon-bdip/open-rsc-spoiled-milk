@@ -64,6 +64,20 @@ def make_capture_fixture(capture_dir: Path) -> None:
         ),
     )
     write(
+        capture_dir / "renderer-2d-command-limits.tsv",
+        "\n".join(
+            [
+                "stream\tlimit\tattempted\taccepted\tdropped",
+                "sprite\t4096\t1\t1\t0",
+                "text\t4096\t4\t4\t0",
+                "primitive\t4096\t6\t6\t0",
+                "rotated-sprite\t256\t259\t256\t3",
+                "circle\t512\t2\t2\t0",
+                "",
+            ]
+        ),
+    )
+    write(
         capture_dir / "sprite-anchors.tsv",
         "\n".join(
             [
@@ -200,6 +214,9 @@ def main() -> None:
             "  WALL: 1",
             "spritePhases:",
             "  SCENE: 1",
+            "renderer2DCommandLimits:",
+            "  sprite: limit=4096 attempted=1 accepted=1 dropped=0",
+            "  rotated-sprite: limit=256 attempted=259 accepted=256 dropped=3",
             "worldSpriteCommands:",
             "total:1 anchored:1 missingAnchor:0 depthOwned:1 sourceCropped:0 mirrorX:0 skewed:0",
             "worldSpriteAnchorMatchModes:",
@@ -254,6 +271,28 @@ def main() -> None:
             if snippet not in output:
                 raise AssertionError(f"missing {snippet!r} in:\n{output}")
 
+        make_capture_fixture(capture_dir)
+        (capture_dir / "renderer-2d-command-limits.tsv").unlink()
+        result = run_analyzer(capture_dir, "--strict")
+        if result.returncode != 0:
+            raise AssertionError("older captures without 2D limit data should remain valid:\n" + result.stderr)
+        if "renderer2DCommandLimits:\n  none" not in result.stdout:
+            raise AssertionError(result.stdout)
+
+        make_capture_fixture(capture_dir)
+        limit_text = (capture_dir / "renderer-2d-command-limits.tsv").read_text(encoding="utf-8")
+        limit_text = limit_text.replace(
+            "rotated-sprite\t256\t259\t256\t3",
+            "rotated-sprite\t256\t259\t257\t2",
+        )
+        (capture_dir / "renderer-2d-command-limits.tsv").write_text(limit_text, encoding="utf-8")
+        result = run_analyzer(capture_dir)
+        if result.returncode == 0:
+            raise AssertionError("analyzer should reject accepted 2D command counts above the cap")
+        if "renderer 2D rotated-sprite accepted count exceeds limit: 257 > 256" not in result.stderr:
+            raise AssertionError(result.stderr)
+
+        make_capture_fixture(capture_dir)
         scene_commands = (capture_dir / "scene-commands.tsv").read_text(encoding="utf-8")
         scene_commands = scene_commands.replace(
             "1\tFRONT_OCCLUDER_RANGE\t150\t2147483647\t150\t\t1\t\t\t\t\tfalse\tfalse\tfalse",

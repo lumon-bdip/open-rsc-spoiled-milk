@@ -573,7 +573,7 @@ def main() -> None:
     )
     require(
         presenter,
-        "RenderTelemetry.recordSpriteCaptureStats(renderer2DFrame.getCaptureStats());",
+        "RenderTelemetry.recordSpriteCaptureStats(renderer2DCaptureStats);",
         "sprite capture telemetry hook",
     )
     require(

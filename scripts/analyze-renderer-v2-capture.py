@@ -1247,6 +1247,7 @@ def main() -> None:
     static_world_material_triangles = read_optional_tsv(static_world_material_path)
     static_range_candidates = read_optional_tsv(capture_dir / "static-range-candidates.tsv")
     front_occluder_candidates = read_optional_tsv(capture_dir / "front-occluder-candidates.tsv")
+    renderer_2d_command_limits = read_optional_tsv(capture_dir / "renderer-2d-command-limits.tsv")
     sprite_anchors = read_tsv(capture_dir / "sprite-anchors.tsv")
     sprite_submissions = read_tsv(capture_dir / "sprite-submissions.tsv")
     characters = read_tsv(capture_dir / "character-sprites.tsv")
@@ -1297,6 +1298,27 @@ def main() -> None:
     )
     print_counter("worldKinds:", world_kinds)
     print_counter("spritePhases:", sprite_phases)
+    print("renderer2DCommandLimits:")
+    if not renderer_2d_command_limits:
+        print("  none")
+    else:
+        for row in renderer_2d_command_limits:
+            stream = row.get("stream", "unknown")
+            limit = parse_int(row.get("limit"))
+            attempted = parse_int(row.get("attempted"))
+            accepted = parse_int(row.get("accepted"))
+            dropped = parse_int(row.get("dropped"))
+            if accepted > limit:
+                fail(f"renderer 2D {stream} accepted count exceeds limit: {accepted} > {limit}")
+            if attempted != accepted + dropped:
+                fail(
+                    f"renderer 2D {stream} attempted count does not match accepted+dropped: "
+                    f"{attempted} != {accepted}+{dropped}"
+                )
+            print(
+                f"  {stream}: limit={limit} attempted={attempted} "
+                f"accepted={accepted} dropped={dropped}"
+            )
     world_sprite_summary, world_sprite_match_modes = summarize_world_sprite_commands(world_sprite_commands)
     depth_owned_entity_world_sprite_counts = summarize_depth_owned_entity_world_sprite_commands(
         world_sprite_commands

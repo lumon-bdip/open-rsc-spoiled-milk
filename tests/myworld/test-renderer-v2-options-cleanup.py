@@ -10,10 +10,8 @@ OPENGL_PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
 OPENRSC = ROOT / "PC_Client/src/orsc/OpenRSC.java"
 RENDER_SURFACE_SETTINGS = ROOT / "Client_Base/src/orsc/RenderSurfaceSettings.java"
 PROFILE_SETTINGS = ROOT / "Client_Base/src/orsc/RendererProfileSettings.java"
-BRIGHTNESS_SETTINGS = ROOT / "Client_Base/src/orsc/RendererBrightnessSettings.java"
-FOG_SETTINGS = ROOT / "Client_Base/src/orsc/RendererFogSettings.java"
 LIGHTING_SETTINGS = ROOT / "Client_Base/src/orsc/RendererLightingSettings.java"
-GEOMETRY_SETTINGS = ROOT / "Client_Base/src/orsc/RendererGeometrySettings.java"
+TERRAIN_SETTINGS = ROOT / "Client_Base/src/orsc/RendererTerrainVariationSettings.java"
 PLAN = ROOT / "docs/myworld/in-progress-work-plans/renderer-v2-plan.md"
 
 
@@ -35,14 +33,12 @@ def main() -> None:
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
     scaled_window = SCALED_WINDOW.read_text(encoding="utf-8")
-    opengl_presenter = OPENGL_PRESENTER.read_text(encoding="utf-8")
+    presenter = OPENGL_PRESENTER.read_text(encoding="utf-8")
     openrsc = OPENRSC.read_text(encoding="utf-8")
-    render_surface_settings = RENDER_SURFACE_SETTINGS.read_text(encoding="utf-8")
-    profile_settings = PROFILE_SETTINGS.read_text(encoding="utf-8")
-    brightness_settings = BRIGHTNESS_SETTINGS.read_text(encoding="utf-8")
-    fog_settings = FOG_SETTINGS.read_text(encoding="utf-8")
-    lighting_settings = LIGHTING_SETTINGS.read_text(encoding="utf-8")
-    geometry_settings = GEOMETRY_SETTINGS.read_text(encoding="utf-8")
+    surface = RENDER_SURFACE_SETTINGS.read_text(encoding="utf-8")
+    profile = PROFILE_SETTINGS.read_text(encoding="utf-8")
+    lighting = LIGHTING_SETTINGS.read_text(encoding="utf-8")
+    terrain = TERRAIN_SETTINGS.read_text(encoding="utf-8")
     plan = PLAN.read_text(encoding="utf-8")
 
     require(
@@ -52,448 +48,128 @@ def main() -> None:
     )
     require(
         scaled_window,
-        "if (initialRender) {\n"
-        "\t\t\tif (!OPENGL_PRIMARY_WINDOW_ENABLED) {\n"
-        "\t\t\t\t// Set the window size for the scalar",
-        "OpenGL-primary skips hidden Swing initial resize",
+        "public void resizeWindowToScalar() {\n\t\tif (OPENGL_PRIMARY_WINDOW_ENABLED) {\n\t\t\treturn;",
+        "OpenGL-primary scalar resize guard",
     )
     require(
         scaled_window,
-        "openGLFramePresenter.present(\n"
-        "\t\t\t\topenGLImage,\n"
-        "\t\t\t\t1.0f,\n"
-        "\t\t\t\tScalingAlgorithm.INTEGER_SCALING,",
-        "OpenGL-primary ignores legacy source scale/filter",
-    )
-    require(
-        scaled_window,
-        "public void resizeWindowToScalar() {\n"
-        "\t\tif (OPENGL_PRIMARY_WINDOW_ENABLED) {\n"
-        "\t\t\treturn;\n"
-        "\t\t}",
-        "OpenGL-primary scalar resize no-op",
-    )
-    require(
-        scaled_window,
-        "private void resizeApplet() {\n"
-        "\t\tif (OPENGL_PRIMARY_WINDOW_ENABLED) {\n"
-        "\t\t\treturn;\n"
-        "\t\t}",
-        "OpenGL-primary applet resize no-op",
-    )
-    require(
-        scaled_window,
-        "public void validateAppletSize() {\n"
-        "\t\tif (OPENGL_PRIMARY_WINDOW_ENABLED) {\n"
-        "\t\t\treturn;\n"
-        "\t\t}",
-        "OpenGL-primary login validation resize no-op",
-    )
-    require(
-        scaled_window,
-        "public void componentResized(ComponentEvent e) {\n"
-        "\t\tif (!OPENGL_PRIMARY_WINDOW_ENABLED) {\n"
-        "\t\t\tresizeApplet();\n"
-        "\t\t}",
-        "OpenGL-primary Swing resize event ignored",
+        "public void componentResized(ComponentEvent e) {\n\t\tif (!OPENGL_PRIMARY_WINDOW_ENABLED) {",
+        "OpenGL-primary Swing resize guard",
     )
     require(
         mudclient,
         "boolean isScalarOptionOffered = !isAndroid() && !isOpenGLPrimaryWindow;",
-        "legacy scaler hidden in OpenGL-primary options",
+        "legacy scaler visibility guard",
     )
     require(
         mudclient,
         "ScaledWindow.isOpenGLPrimaryWindowEnabled() ? OPENGL_PRIMARY_TARGET_FPS : getFPS()",
-        "OpenGL-primary 60 FPS client target",
+        "OpenGL-primary client frame target",
     )
-    require(
-        mudclient,
-        "private static final int SETTINGS_SECTION_ROW = -1000;",
-        "reserved non-action settings section row",
-    )
-    require(
-        mudclient,
-        'index = addSettingsSection(index, "Video");',
-        "settings video section",
-    )
-    require(
-        mudclient,
-        'index = addSettingsSection(index, "Graphics");',
-        "settings graphics section",
-    )
-    require(
-        mudclient,
-        'index = addSettingsSection(index, "Interface");',
-        "settings interface section",
-    )
-    require(
-        mudclient,
-        "if (settingIndex == SETTINGS_SECTION_ROW) {\n\t\t\treturn;\n\t\t}",
-        "settings section rows ignore clicks",
-    )
-    require(
-        mudclient,
-        "int scalarOptionIdx = getLegacyScalingSettingsRowIndex();",
-        "settings scaling row accounts for section headers",
-    )
-    require(
-        mudclient,
-        '"@whi@Resolution - " + RenderSurfaceSettings.getMode().label',
-        "player-facing render resolution row",
-    )
-    require(
-        mudclient,
-        '"@whi@Renderer - " + RendererProfileSettings.getMode().label',
-        "player-facing OpenGL renderer profile row",
-    )
-    forbid(
-        mudclient,
-        '"@whi@Font - " + RendererFontSettings.getMode().label',
-        "player-facing OpenGL UI font row",
-    )
-    require(
-        mudclient,
-        '"@whi@Brightness - " + RendererBrightnessSettings.getMode().label',
-        "player-facing OpenGL brightness row",
-    )
-    forbid(
-        mudclient,
-        '"@whi@Lighting - " + RendererLightingSettings.getMode().label',
-        "release-facing OpenGL lighting row",
-    )
-    require(
-        mudclient,
-        '"@whi@Geometry - " + RendererGeometrySettings.getMode().label',
-        "player-facing OpenGL geometry row",
-    )
-    require(
-        mudclient,
-        '"@whi@Fog - " + RendererFogSettings.getMode().label',
-        "player-facing OpenGL fog row",
-    )
-    require(
-        mudclient,
-        "if (isOpenGLPrimaryWindow && settingIndex == 58 && this.mouseButtonClick == 1)",
-        "OpenGL-primary brightness click handler",
-    )
-    require(
-        mudclient,
-        "if (isOpenGLPrimaryWindow && settingIndex == 59 && this.mouseButtonClick == 1)",
-        "OpenGL-primary renderer profile click handler",
-    )
-    require(
-        mudclient,
-        "if (isOpenGLPrimaryWindow && settingIndex == 60 && this.mouseButtonClick == 1)",
-        "OpenGL-primary fog click handler",
-    )
-    forbid(
-        mudclient,
-        "if (isOpenGLPrimaryWindow && settingIndex == 61 && this.mouseButtonClick == 1)",
-        "release-facing OpenGL lighting click handler",
-    )
-    require(
-        mudclient,
-        "if (isOpenGLPrimaryWindow && settingIndex == 62 && this.mouseButtonClick == 1)",
-        "OpenGL-primary geometry click handler",
-    )
-    forbid(
-        mudclient,
-        '"@whi@Fog - @red@Off"',
-        "retired legacy fog toggle row",
-    )
-    forbid(
-        mudclient,
-        "if (C_HIDE_FOG)",
-        "legacy fog state must not control camera fog generation",
-    )
-    require(
-        profile_settings,
-        'static final String PROFILE_PROPERTY_KEY = "opengl_renderer_profile";',
-        "renderer profile config key",
-    )
-    require(
-        profile_settings,
-        'CLASSIC("classic", "@gre@Classic")',
-        "classic renderer profile mode",
-    )
-    require(
-        profile_settings,
-        'CUSTOM("custom", "@yel@Custom")',
-        "custom renderer profile mode",
-    )
-    require(
-        profile_settings,
-        "static Mode markCustom()",
-        "renderer profile custom override marker",
-    )
-    require(
-        profile_settings,
-        '"SPOILED_MILK_OPENGL_RENDERER_PROFILE"',
-        "renderer profile runtime override",
-    )
-    require(
-        openrsc,
-        "RendererProfileSettings.loadFromClientSettings(props);",
-        "renderer profile setting loaded",
-    )
-    require(
-        openrsc,
-        "RendererFogSettings.loadFromClientSettings(props);",
-        "renderer fog setting loaded",
-    )
-    require(
-        openrsc,
-        "RendererLightingSettings.loadFromClientSettings(props);",
-        "renderer lighting setting loaded",
-    )
-    require(
-        openrsc,
-        "RendererGeometrySettings.loadFromClientSettings(props);",
-        "renderer geometry setting loaded",
-    )
-    require(
-        mudclient,
-        "RendererProfileSettings.saveToClientSettings(props);",
-        "renderer profile setting saved",
-    )
-    require(
-        mudclient,
-        "RendererProfileSettings.setMode(RendererProfileSettings.Mode.CLASSIC);\n"
-        "\t\tRendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);\n"
-        "\t\tRendererFogSettings.setMode(RendererFogSettings.Mode.ON);\n"
-        "\t\tRendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);\n"
-        "\t\tRendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);",
-        "renderer profile row restores classic bundle",
-    )
-    require(
-        mudclient,
-        "RendererProfileSettings.markCustom();\n\t\tsaveRendererBrightnessSettings();\n\t\tsaveRendererProfileSettings();",
-        "brightness override marks renderer preset custom",
-    )
-    require(
-        mudclient,
-        "RendererProfileSettings.markCustom();\n\t\tsaveRendererFogSettings();\n\t\tsaveRendererProfileSettings();",
-        "fog override marks renderer preset custom",
-    )
-    require(
-        mudclient,
-        "RendererProfileSettings.markCustom();\n\t\tsaveRendererGeometrySettings();\n\t\tsaveRendererProfileSettings();",
-        "geometry override marks renderer preset custom",
-    )
-    require(
-        brightness_settings,
-        'HIGH("high", "@gre@High", 1.0f)',
-        "brightness high mode preserves current lighting",
-    )
-    require(
-        brightness_settings,
-        'MEDIUM("medium", "@yel@Medium", 0.9f)',
-        "brightness medium mode",
-    )
-    require(
-        brightness_settings,
-        'LOW("low", "@ora@Low", 0.8f)',
-        "brightness low mode",
-    )
-    require(
-        fog_settings,
-        'static final String FOG_PROPERTY_KEY = "opengl_fog_distance";',
-        "renderer fog config key",
-    )
-    require(
-        fog_settings,
-        'ON("on", "@gre@On", 28, 40, 1.0f)',
-        "enabled fog mode",
-    )
-    require(
-        fog_settings,
-        'OFF("off", "@red@Off", 0, 0, 0.0f)',
-        "disabled fog distance mode",
-    )
-    require(
-        fog_settings,
-        '|| "close".equals(normalized)\n\t\t\t\t|| "far".equals(normalized)',
-        "legacy close/far fog settings should migrate to on",
-    )
-    require(
-        lighting_settings,
-        'static final String LIGHTING_PROPERTY_KEY = "opengl_lighting";',
-        "renderer lighting config key",
-    )
-    require(
-        lighting_settings,
-        'CLASSIC("classic", "@gre@Classic")',
-        "classic lighting mode",
-    )
-    require(
-        lighting_settings,
-        "mode = Mode.CLASSIC;",
-        "normal client settings force release lighting back to Classic",
-    )
-    require(
-        lighting_settings,
-        "props.setProperty(LIGHTING_PROPERTY_KEY, Mode.CLASSIC.id);",
-        "release lighting persistence writes Classic",
-    )
-    require(
-        lighting_settings,
-        'DIRECTIONAL("directional", "@yel@Directional")',
-        "directional lighting mode",
-    )
-    require(
-        lighting_settings,
-        'TOON("toon", "@cya@Toon")',
-        "toon lighting mode",
-    )
-    require(
-        geometry_settings,
-        'static final String GEOMETRY_PROPERTY_KEY = "opengl_geometry";',
-        "renderer geometry config key",
-    )
-    require(
-        geometry_settings,
-        'SMOOTH("smooth", "@gre@Smooth")',
-        "smooth geometry mode",
-    )
-    require(
-        geometry_settings,
-        'FACETED("faceted", "@yel@Faceted")',
-        "faceted geometry mode",
-    )
-    require(
-        geometry_settings,
-        'WIRE("wire", "@cya@Wire")',
-        "wire geometry mode",
-    )
-    require(
-        mudclient,
-        "drawDistance = cameraDepthOffset + World.LOCAL_TILE_COUNT * this.tileSize;",
-        "fog-off full loaded-world draw distance",
-    )
-    require(
-        mudclient,
-        'System.out.println("[renderer-v2] OpenGL fog: " + mode.id);',
-        "OpenGL fog log should describe binary fog setting",
-    )
-    require(
-        opengl_presenter,
-        "float brightness = RendererBrightnessSettings.getMode().multiplier;",
-        "OpenGL world mesh brightness multiplier",
-    )
-    require(
-        opengl_presenter,
-        "prepareOverlayTexturedReplayState();\n\t\tfor (Renderer2DFrame.TextCommand.GlyphCommand glyph : command.getGlyphs())",
-        "OpenGL glyph replay owns transparent text state",
-    )
-    require(
-        render_surface_settings,
-        'HD("1280x720", "@gre@1280x720 16:9", 1280, 720, true)',
-        "1280x720 render-surface mode",
-    )
-    require(
-        render_surface_settings,
-        '"720p".equals(normalized)',
-        "1280x720 render-surface alias",
-    )
-    require(
-        mudclient,
-        "if (!isOpenGLPrimaryWindow && settingIndex == 46 && this.mouseButtonClick == 1)",
-        "legacy scaling type click guard",
-    )
-    require(
-        mudclient,
-        "if (isOpenGLPrimaryWindow && settingIndex == 57 && this.mouseButtonClick == 1)",
-        "OpenGL-primary font click handler",
-    )
-    forbid(mudclient, '"@whi@OpenGL fit - "', "OpenGL fit options row")
-    forbid(mudclient, '"@whi@OpenGL window - "', "OpenGL window options row")
-    forbid(mudclient, '"@whi@Renderer overlay - "', "renderer overlay options row")
 
+    require(mudclient, 'index = addSettingsSection(index, "Graphics");', "Graphics section")
+    require(mudclient, 'index = addSettingsSection(index, "Interface");', "Interface section")
+    forbid(mudclient, 'index = addSettingsSection(index, "Video");', "Video section")
     require(
-        opengl_presenter,
-        "private static final int INITIAL_WIDTH = RenderSurfaceSettings.getWidth();",
-        "OpenGL initial width follows configured render surface",
+        mudclient,
+        "if (settingIndex == SETTINGS_SECTION_ROW) {\n\t\t\treturn;",
+        "non-action section rows",
     )
-    require(
-        opengl_presenter,
-        "private static final int INITIAL_HEIGHT = RenderSurfaceSettings.getHeight();",
-        "OpenGL initial height follows configured render surface",
+
+    expected_rows = (
+        ("Preset", "RendererProfileSettings.getMode().label", 59),
+        ("Aspect Ratio", "RenderSurfaceSettings.getAspectLabel()", 56),
+        ("Lighting", "RendererLightingSettings.getMode().label", 61),
+        ("Geometry", "RendererGeometrySettings.getMode().label", 62),
+        ("Terrain Variation", "RendererTerrainVariationSettings.getMode().label", 64),
+        ("Fog", "RendererFogSettings.getMode().label", 60),
+        ("Brightness", "RendererBrightnessSettings.getMode().label", 58),
     )
-    require(
-        opengl_presenter,
-        "private OpenGLPresentationSettings.ScaleMode currentScaleMode()",
-        "OpenGL scale mode helper",
-    )
-    require(
-        opengl_presenter,
-        "? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT",
-        "OpenGL-primary automatic aspect-fit mode",
-    )
-    require(
-        applet,
-        '"Ctrl+F6 expanded"',
-        "release debug overlay shortcut hint",
-    )
-    require(
-        applet,
-        "public void componentResized(ComponentEvent e) {\n"
-        "\t\tif (ScaledWindow.isOpenGLPrimaryWindowEnabled()) {\n"
-        "\t\t\treturn;\n"
-        "\t\t}",
-        "OpenGL-primary ignores hidden applet resize events",
-    )
-    require(
-        applet,
-        "if (!ScaledWindow.isOpenGLPrimaryWindowEnabled() && scaledWindow.isViewportLoaded()) {\n"
-        "\t\t\tscaledWindow.resizeWindowToScalar();",
-        "OpenGL-primary scalar resize skips hidden Swing window",
-    )
-    require(
-        applet,
-        '"renderer " + RendererProfileSettings.getMode().id',
-        "OpenGL-primary debug overlay includes renderer profile",
-    )
-    forbid(applet, "mudclient.cycleOpenGLWindowMode();", "F7 OpenGL window mode hotkey")
-    forbid(applet, "mudclient.cycleRenderSurfaceMode();", "F8 render resolution hotkey")
-    forbid(applet, "mudclient.cycleOpenGLUiFontMode();", "F9 OpenGL font hotkey")
-    forbid(applet, "mudclient.cycleOpenGLScaleMode();", "F9 OpenGL fit hotkey")
-    forbid(applet, "mudclient.cycleScalingType();", "F10 scaling type hotkey")
-    forbid(applet, "mudclient.scaleDown();", "F11 scale down hotkey")
-    forbid(applet, "mudclient.scaleUp();", "F12 scale up hotkey")
+    for label, value, action in expected_rows:
+        require(
+            mudclient,
+            f'index = addSettingsRow(index, "@whi@{label} - " + {value}, {action});',
+            f"{label} settings row",
+        )
+    require(mudclient, 'index = addSettingsRow(index, "@whi@Borderless - " + borderlessLabel, 63);', "Borderless settings row")
+
+    for action, handler in (
+        (56, "cycleRenderSurfaceMode();"),
+        (58, "cycleOpenGLBrightnessMode();"),
+        (59, "cycleOpenGLRendererProfileMode();"),
+        (60, "cycleOpenGLFogMode();"),
+        (61, "cycleOpenGLLightingMode();"),
+        (62, "cycleOpenGLGeometryMode();"),
+        (63, "cycleOpenGLWindowMode();"),
+        (64, "cycleOpenGLTerrainVariationMode();"),
+    ):
+        require(mudclient, f"settingIndex == {action} && this.mouseButtonClick == 1", f"action {action} click guard")
+        require(mudclient, handler, f"action {action} handler")
+
+    for retired in ("@whi@Resolution - ", "@whi@Renderer - ", "@whi@Font - ", "@whi@Tone - "):
+        forbid(mudclient, retired, f"player-facing {retired.strip()} row")
+    forbid(mudclient, '"@whi@Fog - @red@Off"', "legacy Interface fog row")
+    forbid(mudclient, "if (C_HIDE_FOG)", "legacy fog render ownership")
+
+    require(profile, 'CLASSIC("classic", "@gre@Classic")', "Classic preset")
+    require(profile, 'REMASTER("remaster", "@cya@Remaster")', "Remaster preset")
+    require(profile, 'CUSTOM("custom", "@yel@Custom")', "Custom preset")
+    require(profile, "return REMASTER;", "Remaster default")
+    require(mudclient, "if (mode == RendererProfileSettings.Mode.CLASSIC) {", "Classic bundle")
+    require(mudclient, "RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);", "Classic 4:3 surface")
+    require(mudclient, "RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);", "Classic terrain bundle")
+    require(mudclient, "} else if (mode == RendererProfileSettings.Mode.REMASTER) {", "Remaster bundle")
+    require(mudclient, "RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.WIDE);", "Remaster 16:9 surface")
+    require(mudclient, "RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);", "Remaster directional lighting")
+    require(mudclient, "RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.ON);", "Remaster terrain bundle")
+    require(mudclient, "RendererProfileSettings.markCustom();", "manual setting Custom marker")
+
+    require(lighting, 'CLASSIC("classic", "@gre@Classic")', "Classic lighting")
+    require(lighting, 'DIRECTIONAL("directional", "@yel@Directional")', "Directional lighting")
+    require(lighting, "props.setProperty(LIGHTING_PROPERTY_KEY, mode.id);", "saved lighting selection")
+    require(terrain, 'ON("on", "@gre@On")', "terrain variation on mode")
+    require(terrain, 'OFF("off", "@red@Off")', "terrain variation off mode")
+
+    require(surface, 'SVGA("800x600", "@gre@4:3", 800, 600, true', "player-visible 4:3 surface")
+    require(surface, 'WIDE("960x540", "@yel@16:9", 960, 540, true', "player-visible 16:9 surface")
+    require(surface, 'HD("1280x720", "@yel@16:9", 1280, 720, false', "hidden 720p migration surface")
+    require(surface, 'FULL_HD("1920x1080", "@yel@16:9", 1920, 1080, false', "hidden 1080p migration surface")
+    require(surface, '"720p".equals(normalized)', "720p aspect migration")
+    require(surface, '"1080p".equals(normalized)', "1080p aspect migration")
+
+    for settings_class in (
+        "RendererProfileSettings",
+        "RendererFogSettings",
+        "RendererLightingSettings",
+        "RendererGeometrySettings",
+        "RendererTerrainVariationSettings",
+    ):
+        require(openrsc, f"{settings_class}.loadFromClientSettings(props);", f"{settings_class} startup load")
+
+    require(presenter, "private static final int INITIAL_WIDTH = RenderSurfaceSettings.getWidth();", "configured OpenGL width")
+    require(presenter, "private static final int INITIAL_HEIGHT = RenderSurfaceSettings.getHeight();", "configured OpenGL height")
+    require(presenter, "? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT", "automatic aspect-fit presentation")
+    require(applet, '"Ctrl+F6 expanded"', "release debug overlay shortcut hint")
+    for retired_hotkey in (
+        "mudclient.cycleOpenGLWindowMode();",
+        "mudclient.cycleRenderSurfaceMode();",
+        "mudclient.cycleOpenGLUiFontMode();",
+        "mudclient.cycleOpenGLScaleMode();",
+        "mudclient.cycleScalingType();",
+        "mudclient.scaleDown();",
+        "mudclient.scaleUp();",
+    ):
+        forbid(applet, retired_hotkey, f"retired quick hotkey {retired_hotkey}")
 
     require(
         plan,
-        "six player-facing renderer rows: `Resolution`, `Renderer`, `Geometry`,\n`Brightness`, `Fog`, and `Font`",
-        "renderer plan documents release OpenGL-primary options",
+        "`Preset`, `Aspect Ratio`,\n`Borderless`, `Lighting`, `Geometry`, `Terrain Variation`, `Fog`, and\n`Brightness`",
+        "current Graphics row contract",
     )
-    require(
-        plan,
-        "`Renderer` currently exposes the official `Classic` visual\nprofile",
-        "renderer plan documents Classic renderer profile",
-    )
-    require(
-        plan,
-        "Release/default lighting is locked to Classic.",
-        "renderer plan documents release lighting lock",
-    )
-    require(
-        plan,
-        "1024x576|1280x720|1920x1080",
-        "renderer plan documents 1920x1080 resolution option",
-    )
-    require(
-        plan,
-        "integer/bilinear/bicubic",
-        "renderer plan keeps old scaler terminology out of player options",
-    )
-    forbid(
-        plan,
-        "SPOILED_MILK_OPENGL_SCALE_MODE=aspect-fit\n",
-        "OpenGL scale mode in current alpha baseline",
-    )
+    require(plan, "`Preset` provides `Classic`, `Remaster`, and `Custom`.", "preset contract")
+    require(plan, "Active player choices are `4:3` (`800x600`) and `16:9` (`960x540`)", "aspect contract")
 
-    print("PASS: renderer-v2 OpenGL-primary options expose release-safe graphics controls")
+    print("PASS: renderer-v2 OpenGL-primary options match the current graphics contract")
 
 
 if __name__ == "__main__":

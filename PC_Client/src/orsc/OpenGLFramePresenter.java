@@ -861,6 +861,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		boolean worldReplacementComposite = shouldUseOpenGLWorldReplacementComposite(frame);
 		OpenGLFrameCapture frameCapture = beginFrameCaptureIfRequested(frame, worldReplacementComposite);
 		activeFrameCapture = frameCapture;
+		Renderer2DFrame.CaptureStats renderer2DCaptureStats = frame.renderer2DFrame.getCaptureStats();
+		RenderTelemetry.recordSpriteCaptureStats(renderer2DCaptureStats);
+		RenderTelemetry.recordRenderer2DCommandLimits(renderer2DCaptureStats);
 
 		long baseStart = RenderTelemetry.now();
 		phaseCaptureNanos = 0L;
@@ -1867,7 +1870,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		Renderer2DFrame.RotatedSpriteCommand[] rotatedSpriteCommands = renderer2DFrame.getRotatedSpriteCommands();
 		Renderer2DFrame.CircleCommand[] circleCommands = renderer2DFrame.getCircleCommands();
 		boolean replayNativeBaseCommands = shouldReplayNativeBaseCommands(renderer2DFrame);
-		RenderTelemetry.recordSpriteCaptureStats(renderer2DFrame.getCaptureStats());
 		if (!Renderer2DSettings.isOpenGLSpriteOverlayEnabled() && replayOpenGLWorldUi) {
 			drawOpenGLWorldCompositeOverlay(
 				frame,

@@ -8,16 +8,15 @@ logic.
 
 ## Current Priority
 
-1. Widen custom movement update counts, or chunk them safely, before dense
-   areas can exceed `255` moving players or NPCs in a single update.
-2. Convert remaining client-side entity/object/ground-item fixed arrays to
-   growable storage, or add explicit telemetry and graceful dropping where the
-   cap is intentional.
-3. Keep old-client packet formats constrained by `ClientLimitations`; do not
+1. Use renderer 2D F6/capture telemetry to measure real alpha workloads, then
+   replace only demonstrably reachable caps with capacity-managed storage.
+2. Replace or instrument the fixed client network send and incoming packet
+   buffers before larger custom payloads turn back-pressure into disconnects.
+3. Separate game-object, wall-object, and ground-item picking from numeric key
+   ranges before growable object storage can make those ranges overlap.
+4. Keep old-client packet formats constrained by `ClientLimitations`; do not
    widen authentic payload fields unless every matching old client parser is
    handled.
-4. Add limit telemetry for renderer, scene, UI command capture, and packet
-   buffers so testers report "limit reached" instead of discovering freezes.
 
 ## Recently Fixed
 
@@ -25,116 +24,40 @@ logic.
 | --- | --- | --- |
 | Bank item visuals | Bank entries could overflow a byte-sized client display path and wrap item visuals around after `255` entries. | Custom client/server bank paths now support wider counts. Keep legacy client compatibility in `ClientLimitations`. |
 | Scene sprite draw slots | Dense object placement could overflow the scene sprite/pick model backing arrays and freeze the client. | `Scene.drawSprite` now grows its sprite arrays and `RSModel` backing storage dynamically. |
+| Custom movement update counts | Player or NPC counts above `255` could wrap and desynchronize the packet. | The custom server writes 16-bit counts and the Spoiled Milk client reads them with `getShort()`. Keep the custom movement packet-shape guard in normal validation. |
+| Client world-instance arrays | Initial player, NPC, game-object, wall-object, and ground-item arrays acted like hard visibility ceilings. | The client now expands the parallel arrays through capacity helpers before insertion. Numeric pick-key range ownership remains a separate risk. |
 | Client loop crash logging | Some renderer/client-loop failures lost useful cause chains. | `RSRuntimeError` now preserves the wrapped cause and the client loop shuts down the stale connection after failure. |
 
 ## Highest-Risk Remaining Limits
 
-### Custom movement packet count
-
-Files:
-
-- `server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java`
-- `Client_Base/src/orsc/PacketHandler.java`
-
-Current shape:
-
-- Server writes custom movement update player and NPC counts with
-  `writeByte((byte) movement.players.size())` and
-  `writeByte((byte) movement.npcs.size())`.
-- Client reads both counts with `getUnsignedByte()`.
-
-Risk:
-
-- More than `255` visible/moving players or NPCs in one update will wrap the
-  count and desynchronize parsing of the rest of the packet.
-- This is especially relevant now that render distance and dense NPC/object
-  placement are alpha test targets.
-
-Recommended fix:
-
-- Add a remaster/custom payload revision that uses unsigned short counts, or
-  chunk movement updates into multiple packets.
-- Keep old/authentic payloads byte-sized for old clients.
-- Add a server-side guard that logs and refuses to emit a wrapped count.
-
-### Client visible entity arrays
-
-File: `Client_Base/src/orsc/mudclient.java`
-
-Current fixed arrays include:
-
-- `knownPlayers`, `players`, `npcs`, `npcsCache`: `500`
-- `playerServer`: `4000`
-- `npcsServer`: `5000`
-- server-side known-player arrays in
-  `server/src/com/openrsc/server/model/entity/player/Player.java`: `500`
-
-Risk:
-
-- Dense areas or larger visibility windows can exceed client-side visible
-  entity slots before the server-side world itself is overloaded.
-- Packet counts may fail first, but after those are widened these arrays become
-  the next ceiling.
-
-Recommended fix:
-
-- Convert visible player/NPC client arrays to growable lists or capacity-managed
-  arrays.
-- Keep stable server-index lookup separate from visible render order.
-- Add F6 expanded telemetry for visible players, visible NPCs, and capacity
-  headroom.
-
-### Game object instance capacity
+### Game object pick-key ranges
 
 File: `Client_Base/src/orsc/mudclient.java`
 
 Current shape:
 
-- `GAME_OBJECT_INSTANCE_CAPACITY = WALL_OBJECT_KEY_BASE`
+- Game-object storage starts at `GAME_OBJECT_INSTANCE_INITIAL_CAPACITY =
+  WALL_OBJECT_KEY_BASE` but now grows when required.
 - `WALL_OBJECT_KEY_BASE = 20000`
-- Several parallel arrays store object instance ids, positions, directions,
-  models, materialization flags, and state.
+- Game-object model keys use the raw instance index while wall-object keys add
+  `WALL_OBJECT_KEY_BASE`; ground-item scene picks also use a numeric base.
 
 Risk:
 
-- This is high enough for normal play, but world-edit sessions and denser
-  remaster areas can reach it.
-- The cap is tied to pick-index/key encoding, not just storage, so increasing it
-  blindly can collide with wall-object and ground-item pick ranges.
+- Storage growth no longer drops the object at `20000`, but an unusually dense
+  world-edit or remaster area can make the numeric key ranges overlap.
 
 Recommended fix:
 
 - Replace pick-index ranges with explicit typed pick records.
-- Then move object instances to growable storage.
-- Until then, add a visible/logged warning when `canMaterializeGameObject`
-  returns false because the cap was reached.
-
-### Ground item arrays
-
-File: `Client_Base/src/orsc/mudclient.java`
-
-Current fixed arrays include:
-
-- `groundItemID`, `groundItemX`, `groundItemZ`, `groundItemHeight`,
-  `groundItemNoted`, and `groundItemRenderStackIndex`: `5000`
-- `groundItems` is already an `ArrayList`, but it mirrors fixed-array state.
-
-Risk:
-
-- Mass drops, loot-share events, debug spawning, or large visibility can exceed
-  `5000`.
-- Some rendering/menu paths still assume array indexes are valid.
-
-Recommended fix:
-
-- Promote ground item storage to a list of value objects.
-- Keep a compact per-frame render order list.
-- Add a hard telemetry line for skipped/dropped ground items before removing the
-  fixed arrays.
+- Until then, add expanded F6 headroom/warning telemetry for each key range.
 
 ### Renderer 2D command capture caps
 
-File: `Client_Base/src/orsc/graphics/two/GraphicsController.java`
+Files:
+
+- `Client_Base/src/orsc/graphics/Renderer2DFrame.java`
+- `Client_Base/src/orsc/graphics/two/GraphicsController.java`
 
 Current caps:
 
@@ -151,12 +74,24 @@ Risk:
 - Dense nameplates, debug overlays, minimap/UI work, or future particle-like 2D
   effects could trigger them.
 
+Current instrumentation:
+
+- Every stream records capacity attempts, accepted commands, and overflow
+  drops in the immutable frame capture stats.
+- Expanded F6 reports current accepted, lifetime maximum accepted, latest
+  dropped, and the configured cap for sprites, text, primitives, rotated
+  sprites, and circles.
+- `Ctrl+F9` writes `renderer-2d-command-limits.tsv`; the offline analyzer
+  validates the accounting while remaining compatible with older captures.
+- The executable regression fixture confirms that `259` valid rotated-sprite
+  submissions retain `256` commands and report `3` drops.
+
 Recommended fix:
 
-- Convert command capture to growable lists with per-frame reserve sizing, or
-  keep caps but make overflow visible in expanded F6.
-- Treat rotated sprites as the first likely problem because the cap is only
-  `256`.
+- Run representative dense-area, minimap, debug-overlay, and UI captures before
+  changing storage policy.
+- Convert a stream to capacity-managed storage only when current/max/drop data
+  proves its cap is reachable, retaining a high emergency ceiling if needed.
 
 ### Network send buffer
 
@@ -346,25 +281,29 @@ These showed up in searches but should not be treated as immediate bugs:
 
 ## Next Implementation Recommendation
 
-Start with the custom movement packet count.
+Run a measured renderer 2D capture study before changing command capacity.
 
 Reason:
 
-- It is the clearest remaining byte-sized limit that conflicts with remaster
-  draw distance and dense-area testing.
-- If it fails, it can desync packet parsing rather than just drop a visual.
-- It has a clean client/server pair in the custom payload path, so the old-client
-  compatibility blast radius is manageable.
+- Overflow is now visible in F6, periodic telemetry, and Ctrl+F9 capture data,
+  so the next decision can use observed workloads instead of estimates.
+- The `256` rotated-sprite boundary is regression-tested, but a synthetic cap
+  crossing does not prove normal play reaches it.
+- Capturing representative routes first avoids adding capacity and allocation
+  cost to streams that remain comfortably below their limits.
 
 Suggested implementation shape:
 
-1. Add a new custom movement payload version or feature flag.
-2. Write player and NPC movement counts as unsigned shorts for remaster clients.
-3. Read the same counts as unsigned shorts in the Spoiled Milk client.
-4. Log and cap old-byte movement updates for older clients instead of allowing
-   wraparound.
-5. Add expanded F6/server telemetry for movement players/NPCs sent, skipped, and
-   max observed.
+1. Capture dense towns, crowded combat, minimap rotation, bank/production UI,
+   and expanded F6 routes with renderer telemetry enabled.
+2. Record current/max/drop readings and preserve Ctrl+F9 artifacts for any
+   stream that approaches or reaches its cap.
+3. Compare the command pressure with frame, render-phase, allocation, and GC
+   telemetry so high counts are not mistaken for the actual bottleneck.
+4. Replace only demonstrably reachable caps with capacity-managed lists and
+   retain a high emergency ceiling if protection is still needed.
+5. Re-run the renderer guardrail suite and capture before/after frame timings so
+   capacity growth does not hide an allocation regression.
 
 ## Useful Audit Searches
 

@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 OPENRSC = ROOT / "PC_Client/src/orsc/OpenRSC.java"
+KEY_BINDINGS = ROOT / "PC_Client/src/orsc/OpenGLKeyBindings.java"
 SETTINGS = ROOT / "Client_Base/src/orsc/RendererExperimentalSettings.java"
 
 
@@ -27,17 +28,28 @@ def main() -> None:
     client = CLIENT.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
     openrsc = OPENRSC.read_text(encoding="utf-8")
+    key_bindings = KEY_BINDINGS.read_text(encoding="utf-8")
     settings = SETTINGS.read_text(encoding="utf-8")
 
     require(
         settings,
-        'static final String CAMERA_TILT_PROPERTY_KEY = "experimental_camera_tilt";',
-        "camera tilt client setting key",
+        'private static final String CAMERA_TILT_PROPERTY = "spoiledmilk.experimentalCameraTilt";',
+        "camera tilt runtime property",
     )
     require(
         settings,
-        'static final String EXTRA_ZOOM_PROPERTY_KEY = "experimental_extra_zoom";',
-        "extra zoom client setting key",
+        'private static final String CAMERA_TILT_ENV = "SPOILED_MILK_EXPERIMENTAL_CAMERA_TILT";',
+        "camera tilt runtime environment override",
+    )
+    require(
+        settings,
+        'private static final String EXTRA_ZOOM_PROPERTY = "spoiledmilk.experimentalExtraZoom";',
+        "extra zoom runtime property",
+    )
+    require(
+        settings,
+        'private static final String EXTRA_ZOOM_ENV = "SPOILED_MILK_EXPERIMENTAL_EXTRA_ZOOM";',
+        "extra zoom runtime environment override",
     )
     require(
         settings,
@@ -51,28 +63,33 @@ def main() -> None:
     )
     require(
         settings,
-        "static boolean toggleCameraTilt()",
-        "camera tilt toggle setting",
+        "These are no longer player-facing options. Defaults are always on",
+        "baseline camera behavior ignores retired saved toggles",
     )
-    require(
+    forbid(
         settings,
-        "static boolean toggleExtraZoom()",
-        "extra zoom toggle setting",
+        "toggleCameraTilt()",
+        "camera tilt runtime toggle",
+    )
+    forbid(
+        settings,
+        "toggleExtraZoom()",
+        "extra zoom runtime toggle",
     )
     require(
         openrsc,
         "RendererExperimentalSettings.loadFromClientSettings(props);",
         "experimental settings startup load",
     )
-    require(
+    forbid(
         client,
         "private static final int SETTINGS_ACTION_EXPERIMENTAL_CAMERA_TILT = 63;",
-        "local camera tilt settings action",
+        "camera tilt settings action",
     )
-    require(
+    forbid(
         client,
         "private static final int SETTINGS_ACTION_EXPERIMENTAL_EXTRA_ZOOM = 64;",
-        "local extra zoom settings action",
+        "extra zoom settings action",
     )
     forbid(
         client,
@@ -84,25 +101,25 @@ def main() -> None:
         '"@whi@Font - " + RendererFontSettings.getMode().label',
         "retired OpenGL UI font option",
     )
-    require(
+    forbid(
         client,
-        '"@whi@Camera tilt - "\n\t\t\t\t+ (RendererExperimentalSettings.isCameraTiltEnabled() ? "@gre@On" : "@red@Off")',
+        '"@whi@Camera tilt - "',
         "camera tilt options row",
     )
-    require(
+    forbid(
         client,
-        '"@whi@Extra zoom - "\n\t\t\t\t+ (RendererExperimentalSettings.isExtraZoomEnabled() ? "@gre@On" : "@red@Off")',
+        '"@whi@Extra zoom - "',
         "extra zoom options row",
     )
-    require(
+    forbid(
         client,
         "void toggleExperimentalCameraTilt()",
-        "camera tilt click handler implementation",
+        "camera tilt click handler",
     )
-    require(
+    forbid(
         client,
         "void toggleExperimentalExtraZoom()",
-        "extra zoom click handler implementation",
+        "extra zoom click handler",
     )
     require(
         client,
@@ -116,7 +133,7 @@ def main() -> None:
     )
     require(
         client,
-        "this.packetHandler.getClientStream().bufferBits.putByte(persistableCameraZoom);",
+        "clientStream.bufferBits.putByte(persistableCameraZoom);",
         "saved zoom clamps to legacy byte range",
     )
     require(
@@ -175,8 +192,8 @@ def main() -> None:
         "Home key resets camera north",
     )
     require(
-        (ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java").read_text(encoding="utf-8"),
-        'key("GLFW_KEY_HOME", KeyEvent.VK_HOME, KeyEvent.CHAR_UNDEFINED, KeyEvent.CHAR_UNDEFINED),',
+        key_bindings,
+        'key(gl, "GLFW_KEY_HOME", KeyEvent.VK_HOME, KeyEvent.CHAR_UNDEFINED, KeyEvent.CHAR_UNDEFINED),',
         "OpenGL Home key binding",
     )
     forbid(
@@ -190,7 +207,7 @@ def main() -> None:
         "hard-coded applet zoom bounds",
     )
 
-    print("PASS: experimental camera tilt and extra zoom options are wired")
+    print("PASS: camera tilt and extra zoom are baseline-on with diagnostic overrides")
 
 
 if __name__ == "__main__":

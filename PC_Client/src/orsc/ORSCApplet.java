@@ -1157,6 +1157,9 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.spriteOverlayVisibleReplayAverage
 				: "",
 			telemetry.enabled
+				? "2d cap cur/max/drop@limit " + RenderTelemetry.renderer2DCommandLimitSummary()
+				: "",
+			telemetry.enabled
 				? "world faces t/w/r/go/wo/o " + telemetry.worldGeometryTerrainFaceAverage
 					+ "/" + telemetry.worldGeometryWallFaceAverage
 					+ "/" + telemetry.worldGeometryRoofFaceAverage
