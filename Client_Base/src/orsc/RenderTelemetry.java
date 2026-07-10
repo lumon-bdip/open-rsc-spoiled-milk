@@ -119,6 +119,21 @@ public final class RenderTelemetry {
 	private static final CounterStats nativeUiBlockCircleStats = new CounterStats();
 	private static final CounterStats nativeUiBlockPixelStats = new CounterStats();
 	private static final CounterStats nativeUiBaseEligibleStats = new CounterStats();
+	private static final CounterStats renderer2DSpriteCommandAttemptStats = new CounterStats();
+	private static final CounterStats renderer2DSpriteCommandAcceptedStats = new CounterStats();
+	private static final CounterStats renderer2DSpriteCommandDroppedStats = new CounterStats();
+	private static final CounterStats renderer2DTextCommandAttemptStats = new CounterStats();
+	private static final CounterStats renderer2DTextCommandAcceptedStats = new CounterStats();
+	private static final CounterStats renderer2DTextCommandDroppedStats = new CounterStats();
+	private static final CounterStats renderer2DPrimitiveCommandAttemptStats = new CounterStats();
+	private static final CounterStats renderer2DPrimitiveCommandAcceptedStats = new CounterStats();
+	private static final CounterStats renderer2DPrimitiveCommandDroppedStats = new CounterStats();
+	private static final CounterStats renderer2DRotatedSpriteCommandAttemptStats = new CounterStats();
+	private static final CounterStats renderer2DRotatedSpriteCommandAcceptedStats = new CounterStats();
+	private static final CounterStats renderer2DRotatedSpriteCommandDroppedStats = new CounterStats();
+	private static final CounterStats renderer2DCircleCommandAttemptStats = new CounterStats();
+	private static final CounterStats renderer2DCircleCommandAcceptedStats = new CounterStats();
+	private static final CounterStats renderer2DCircleCommandDroppedStats = new CounterStats();
 	private static final CounterStats clientLoopUpdateCountStats = new CounterStats();
 	private static final CounterStats clientLoopSkippedDrawStats = new CounterStats();
 	private static final CounterStats clientLoopSleepRequestStats = new CounterStats();
@@ -416,6 +431,47 @@ public final class RenderTelemetry {
 				+ formatMillis(openGLWorldChunkUploadBudgetLimitNanos)
 				+ "ms";
 		}
+	}
+
+	public static String renderer2DCommandLimitSummary() {
+		synchronized (RenderTelemetry.class) {
+			return "s " + commandLimitSummary(
+				renderer2DSpriteCommandAcceptedStats,
+				renderer2DSpriteCommandDroppedStats,
+				Renderer2DFrame.SPRITE_COMMAND_LIMIT)
+				+ " | t " + commandLimitSummary(
+					renderer2DTextCommandAcceptedStats,
+					renderer2DTextCommandDroppedStats,
+					Renderer2DFrame.TEXT_COMMAND_LIMIT)
+				+ " | p " + commandLimitSummary(
+					renderer2DPrimitiveCommandAcceptedStats,
+					renderer2DPrimitiveCommandDroppedStats,
+					Renderer2DFrame.PRIMITIVE_COMMAND_LIMIT)
+				+ " | r " + commandLimitSummary(
+					renderer2DRotatedSpriteCommandAcceptedStats,
+					renderer2DRotatedSpriteCommandDroppedStats,
+					Renderer2DFrame.ROTATED_SPRITE_COMMAND_LIMIT)
+				+ " | c " + commandLimitSummary(
+					renderer2DCircleCommandAcceptedStats,
+					renderer2DCircleCommandDroppedStats,
+					Renderer2DFrame.CIRCLE_COMMAND_LIMIT);
+		}
+	}
+
+	private static String commandLimitSummary(CounterStats accepted, CounterStats dropped, int limit) {
+		return formatCount(accepted.latest())
+			+ "/" + formatCount(accepted.max)
+			+ "/" + formatCount(dropped.latest())
+			+ "@" + limit;
+	}
+
+	private static String commandLimitAverageSummary(
+		CounterStats attempted,
+		CounterStats accepted,
+		CounterStats dropped) {
+		return formatCount(attempted.average())
+			+ "/" + formatCount(accepted.average())
+			+ "/" + formatCount(dropped.average());
 	}
 
 	static void recordWorldGeometryFrame(
@@ -927,6 +983,30 @@ public final class RenderTelemetry {
 			nativeUiBlockCircleStats.record(captureStats.getNativeUiBlockCircle());
 			nativeUiBlockPixelStats.record(captureStats.getNativeUiBlockPixel());
 			nativeUiBaseEligibleStats.record(captureStats.isNativeUiBaseEligible() ? 1 : 0);
+		}
+	}
+
+	static void recordRenderer2DCommandLimits(Renderer2DFrame.CaptureStats captureStats) {
+		if (!isCollectionEnabled() || captureStats == null) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			renderer2DSpriteCommandAttemptStats.record(captureStats.getSpriteCommandAttempts());
+			renderer2DSpriteCommandAcceptedStats.record(captureStats.getSpriteCommandsCaptured());
+			renderer2DSpriteCommandDroppedStats.record(captureStats.getSpriteCommandsSkippedOverflow());
+			renderer2DTextCommandAttemptStats.record(captureStats.getTextCommandAttempts());
+			renderer2DTextCommandAcceptedStats.record(captureStats.getTextCommandsCaptured());
+			renderer2DTextCommandDroppedStats.record(captureStats.getTextCommandsSkippedOverflow());
+			renderer2DPrimitiveCommandAttemptStats.record(captureStats.getPrimitiveCommandAttempts());
+			renderer2DPrimitiveCommandAcceptedStats.record(captureStats.getPrimitiveCommandsCaptured());
+			renderer2DPrimitiveCommandDroppedStats.record(captureStats.getPrimitiveCommandsSkippedOverflow());
+			renderer2DRotatedSpriteCommandAttemptStats.record(captureStats.getRotatedSpriteCommandAttempts());
+			renderer2DRotatedSpriteCommandAcceptedStats.record(captureStats.getRotatedSpriteCommandsCaptured());
+			renderer2DRotatedSpriteCommandDroppedStats.record(captureStats.getRotatedSpriteCommandsSkippedOverflow());
+			renderer2DCircleCommandAttemptStats.record(captureStats.getCircleCommandAttempts());
+			renderer2DCircleCommandAcceptedStats.record(captureStats.getCircleCommandsCaptured());
+			renderer2DCircleCommandDroppedStats.record(captureStats.getCircleCommandsSkippedOverflow());
 		}
 	}
 
@@ -1536,6 +1616,29 @@ public final class RenderTelemetry {
 				+ "/" + formatCount(nativeUiBlockClearStats.average()));
 
 		System.out.println(
+			"[renderer-v2 telemetry] 2d command capture avg attempted/accepted/dropped: sprite="
+				+ commandLimitAverageSummary(
+					renderer2DSpriteCommandAttemptStats,
+					renderer2DSpriteCommandAcceptedStats,
+					renderer2DSpriteCommandDroppedStats)
+				+ " text=" + commandLimitAverageSummary(
+					renderer2DTextCommandAttemptStats,
+					renderer2DTextCommandAcceptedStats,
+					renderer2DTextCommandDroppedStats)
+				+ " primitive=" + commandLimitAverageSummary(
+					renderer2DPrimitiveCommandAttemptStats,
+					renderer2DPrimitiveCommandAcceptedStats,
+					renderer2DPrimitiveCommandDroppedStats)
+				+ " rotated=" + commandLimitAverageSummary(
+					renderer2DRotatedSpriteCommandAttemptStats,
+					renderer2DRotatedSpriteCommandAcceptedStats,
+					renderer2DRotatedSpriteCommandDroppedStats)
+				+ " circle=" + commandLimitAverageSummary(
+					renderer2DCircleCommandAttemptStats,
+					renderer2DCircleCommandAcceptedStats,
+					renderer2DCircleCommandDroppedStats));
+
+		System.out.println(
 			"[renderer-v2 telemetry] sprite phases avg: scene=" + formatCount(spriteOverlaySceneCommandStats.average())
 				+ " world=" + formatCount(spriteOverlayWorldCommandStats.average())
 				+ " ui=" + formatCount(spriteOverlayUiCommandStats.average())
@@ -1669,6 +1772,21 @@ public final class RenderTelemetry {
 			nativeUiBlockCircleStats,
 			nativeUiBlockPixelStats,
 			nativeUiBaseEligibleStats,
+			renderer2DSpriteCommandAttemptStats,
+			renderer2DSpriteCommandAcceptedStats,
+			renderer2DSpriteCommandDroppedStats,
+			renderer2DTextCommandAttemptStats,
+			renderer2DTextCommandAcceptedStats,
+			renderer2DTextCommandDroppedStats,
+			renderer2DPrimitiveCommandAttemptStats,
+			renderer2DPrimitiveCommandAcceptedStats,
+			renderer2DPrimitiveCommandDroppedStats,
+			renderer2DRotatedSpriteCommandAttemptStats,
+			renderer2DRotatedSpriteCommandAcceptedStats,
+			renderer2DRotatedSpriteCommandDroppedStats,
+			renderer2DCircleCommandAttemptStats,
+			renderer2DCircleCommandAcceptedStats,
+			renderer2DCircleCommandDroppedStats,
 			clientLoopUpdateCountStats,
 			clientLoopSkippedDrawStats,
 			clientLoopSleepRequestStats,
@@ -2032,6 +2150,14 @@ public final class RenderTelemetry {
 
 		private double recentAverage() {
 			return recentCount == 0 ? 0.0 : recentTotal / (double) recentCount;
+		}
+
+		private int latest() {
+			if (recentCount == 0) {
+				return 0;
+			}
+			int latestIndex = (recentIndex - 1 + recentSamples.length) % recentSamples.length;
+			return recentSamples[latestIndex];
 		}
 
 		private void resetWindow() {

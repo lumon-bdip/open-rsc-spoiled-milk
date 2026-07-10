@@ -2119,6 +2119,15 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
         nearly identical; the old loop had switched from ~1ms to ~10ms sleep.
         OpenGL-primary mode now defaults to the modern fixed-cadence loop, with
         the legacy loop retained behind the runtime flag.
+  - [x] Instrument all bounded renderer 2D command streams with attempted,
+        accepted, and overflow-drop counts without adding a per-frame helper
+        allocation. Expanded F6 reports current/max/drop counts beside each
+        cap, `Ctrl+F9` writes `renderer-2d-command-limits.tsv`, and the offline
+        analyzer accepts the file without rejecting older captures. A
+        Java-backed regression crosses the `256` rotated-sprite cap and proves
+        that `259` submissions retain `256` commands while reporting `3`
+        drops. Keep the caps unchanged until field captures show which stream
+        needs capacity-managed growth.
 - [ ] Prioritize retained static world chunks. Terrain, walls, roofs, static
       scenery, wall objects, and game objects should stay in reusable CPU/GPU
       chunk products and rebuild only when the area, plane, roof state,

@@ -5,6 +5,12 @@ import com.openrsc.client.model.Sprite;
 import java.util.List;
 
 public final class Renderer2DFrame {
+	public static final int SPRITE_COMMAND_LIMIT = 4096;
+	public static final int TEXT_COMMAND_LIMIT = 4096;
+	public static final int PRIMITIVE_COMMAND_LIMIT = 4096;
+	public static final int ROTATED_SPRITE_COMMAND_LIMIT = 256;
+	public static final int CIRCLE_COMMAND_LIMIT = 512;
+
 	private static final SpriteCommand[] EMPTY_COMMANDS = new SpriteCommand[0];
 	private static final TextCommand[] EMPTY_TEXT_COMMANDS = new TextCommand[0];
 	private static final PrimitiveCommand[] EMPTY_PRIMITIVE_COMMANDS = new PrimitiveCommand[0];
@@ -206,7 +212,8 @@ public final class Renderer2DFrame {
 	public static final class CaptureStats {
 		public static final CaptureStats EMPTY =
 			new CaptureStats(
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0);
 
 		private final int attempts;
 		private final int captured;
@@ -241,6 +248,12 @@ public final class Renderer2DFrame {
 		private final int nativeUiBlockCircle;
 		private final int nativeUiBlockPixel;
 		private final int nativeUiBaseEligible;
+		private final int textCommandsCaptured;
+		private final int textCommandsSkippedOverflow;
+		private final int primitiveCommandsCaptured;
+		private final int primitiveCommandsSkippedOverflow;
+		private final int rotatedSpriteCommandsSkippedOverflow;
+		private final int circleCommandsSkippedOverflow;
 
 		public CaptureStats(
 			int attempts,
@@ -275,7 +288,13 @@ public final class Renderer2DFrame {
 			int nativeUiBlockClear,
 			int nativeUiBlockCircle,
 			int nativeUiBlockPixel,
-			int nativeUiBaseEligible) {
+			int nativeUiBaseEligible,
+			int textCommandsCaptured,
+			int textCommandsSkippedOverflow,
+			int primitiveCommandsCaptured,
+			int primitiveCommandsSkippedOverflow,
+			int rotatedSpriteCommandsSkippedOverflow,
+			int circleCommandsSkippedOverflow) {
 			this.attempts = Math.max(0, attempts);
 			this.captured = Math.max(0, captured);
 			this.replacedUi = Math.max(0, replacedUi);
@@ -309,6 +328,12 @@ public final class Renderer2DFrame {
 			this.nativeUiBlockCircle = Math.max(0, nativeUiBlockCircle);
 			this.nativeUiBlockPixel = Math.max(0, nativeUiBlockPixel);
 			this.nativeUiBaseEligible = nativeUiBaseEligible > 0 ? 1 : 0;
+			this.textCommandsCaptured = Math.max(0, textCommandsCaptured);
+			this.textCommandsSkippedOverflow = Math.max(0, textCommandsSkippedOverflow);
+			this.primitiveCommandsCaptured = Math.max(0, primitiveCommandsCaptured);
+			this.primitiveCommandsSkippedOverflow = Math.max(0, primitiveCommandsSkippedOverflow);
+			this.rotatedSpriteCommandsSkippedOverflow = Math.max(0, rotatedSpriteCommandsSkippedOverflow);
+			this.circleCommandsSkippedOverflow = Math.max(0, circleCommandsSkippedOverflow);
 		}
 
 		public boolean isEmpty() {
@@ -344,7 +369,13 @@ public final class Renderer2DFrame {
 				&& nativeUiBlockClear == 0
 				&& nativeUiBlockCircle == 0
 				&& nativeUiBlockPixel == 0
-				&& nativeUiBaseEligible == 0;
+				&& nativeUiBaseEligible == 0
+				&& textCommandsCaptured == 0
+				&& textCommandsSkippedOverflow == 0
+				&& primitiveCommandsCaptured == 0
+				&& primitiveCommandsSkippedOverflow == 0
+				&& rotatedSpriteCommandsSkippedOverflow == 0
+				&& circleCommandsSkippedOverflow == 0;
 		}
 
 		public int getAttempts() {
@@ -477,6 +508,86 @@ public final class Renderer2DFrame {
 
 		public boolean isNativeUiBaseEligible() {
 			return nativeUiBaseEligible != 0;
+		}
+
+		public int getSpriteCommandLimit() {
+			return SPRITE_COMMAND_LIMIT;
+		}
+
+		public int getSpriteCommandAttempts() {
+			return captured + skippedOverflow;
+		}
+
+		public int getSpriteCommandsCaptured() {
+			return captured;
+		}
+
+		public int getSpriteCommandsSkippedOverflow() {
+			return skippedOverflow;
+		}
+
+		public int getTextCommandLimit() {
+			return TEXT_COMMAND_LIMIT;
+		}
+
+		public int getTextCommandAttempts() {
+			return textCommandsCaptured + textCommandsSkippedOverflow;
+		}
+
+		public int getTextCommandsCaptured() {
+			return textCommandsCaptured;
+		}
+
+		public int getTextCommandsSkippedOverflow() {
+			return textCommandsSkippedOverflow;
+		}
+
+		public int getPrimitiveCommandLimit() {
+			return PRIMITIVE_COMMAND_LIMIT;
+		}
+
+		public int getPrimitiveCommandAttempts() {
+			return primitiveCommandsCaptured + primitiveCommandsSkippedOverflow;
+		}
+
+		public int getPrimitiveCommandsCaptured() {
+			return primitiveCommandsCaptured;
+		}
+
+		public int getPrimitiveCommandsSkippedOverflow() {
+			return primitiveCommandsSkippedOverflow;
+		}
+
+		public int getRotatedSpriteCommandLimit() {
+			return ROTATED_SPRITE_COMMAND_LIMIT;
+		}
+
+		public int getRotatedSpriteCommandAttempts() {
+			return rotatedSpriteCapturedUi + rotatedSpriteCommandsSkippedOverflow;
+		}
+
+		public int getRotatedSpriteCommandsCaptured() {
+			return rotatedSpriteCapturedUi;
+		}
+
+		public int getRotatedSpriteCommandsSkippedOverflow() {
+			return rotatedSpriteCommandsSkippedOverflow;
+		}
+
+		public int getCircleCommandLimit() {
+			return CIRCLE_COMMAND_LIMIT;
+		}
+
+		public int getCircleCommandAttempts() {
+			return circleCapturedUi + circleCommandsSkippedOverflow;
+		}
+
+		public int getCircleCommandsCaptured() {
+			return circleCapturedUi;
+		}
+
+		public int getCircleCommandsSkippedOverflow() {
+			return circleCommandsSkippedOverflow;
 		}
 	}
 

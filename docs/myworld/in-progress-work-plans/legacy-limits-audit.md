@@ -8,9 +8,8 @@ logic.
 
 ## Current Priority
 
-1. Make renderer 2D command-capture overflow visible in expanded F6 telemetry,
-   then replace the smallest caps with capacity-managed storage where measured
-   alpha workloads can exceed them.
+1. Use renderer 2D F6/capture telemetry to measure real alpha workloads, then
+   replace only demonstrably reachable caps with capacity-managed storage.
 2. Replace or instrument the fixed client network send and incoming packet
    buffers before larger custom payloads turn back-pressure into disconnects.
 3. Separate game-object, wall-object, and ground-item picking from numeric key
@@ -55,7 +54,10 @@ Recommended fix:
 
 ### Renderer 2D command capture caps
 
-File: `Client_Base/src/orsc/graphics/two/GraphicsController.java`
+Files:
+
+- `Client_Base/src/orsc/graphics/Renderer2DFrame.java`
+- `Client_Base/src/orsc/graphics/two/GraphicsController.java`
 
 Current caps:
 
@@ -72,12 +74,24 @@ Risk:
 - Dense nameplates, debug overlays, minimap/UI work, or future particle-like 2D
   effects could trigger them.
 
+Current instrumentation:
+
+- Every stream records capacity attempts, accepted commands, and overflow
+  drops in the immutable frame capture stats.
+- Expanded F6 reports current accepted, lifetime maximum accepted, latest
+  dropped, and the configured cap for sprites, text, primitives, rotated
+  sprites, and circles.
+- `Ctrl+F9` writes `renderer-2d-command-limits.tsv`; the offline analyzer
+  validates the accounting while remaining compatible with older captures.
+- The executable regression fixture confirms that `259` valid rotated-sprite
+  submissions retain `256` commands and report `3` drops.
+
 Recommended fix:
 
-- Convert command capture to growable lists with per-frame reserve sizing, or
-  keep caps but make overflow visible in expanded F6.
-- Treat rotated sprites as the first likely problem because the cap is only
-  `256`.
+- Run representative dense-area, minimap, debug-overlay, and UI captures before
+  changing storage policy.
+- Convert a stream to capacity-managed storage only when current/max/drop data
+  proves its cap is reachable, retaining a high emergency ceiling if needed.
 
 ### Network send buffer
 
@@ -267,28 +281,27 @@ These showed up in searches but should not be treated as immediate bugs:
 
 ## Next Implementation Recommendation
 
-Start with renderer 2D command-capture overflow telemetry and measured capacity
-growth.
+Run a measured renderer 2D capture study before changing command capacity.
 
 Reason:
 
-- It directly affects the renderer/performance roadmap and can silently omit
-  UI, overlays, or scene sprites during alpha stress tests.
-- Rotated sprites have the smallest current cap at `256`; the other bounded
-  streams can then use the same overflow accounting.
-- Instrumenting observed and dropped counts first gives a measured basis for
-  choosing growable storage versus deliberately bounded degradation.
+- Overflow is now visible in F6, periodic telemetry, and Ctrl+F9 capture data,
+  so the next decision can use observed workloads instead of estimates.
+- The `256` rotated-sprite boundary is regression-tested, but a synthetic cap
+  crossing does not prove normal play reaches it.
+- Capturing representative routes first avoids adding capacity and allocation
+  cost to streams that remain comfortably below their limits.
 
 Suggested implementation shape:
 
-1. Record attempted, accepted, and dropped command counts for every renderer 2D
-   command stream.
-2. Expose current/max/dropped counts in the expanded F6 overlay and frame
-   capture diagnostics.
-3. Add a stress fixture that crosses the `256` rotated-sprite limit without
-   destabilizing the client.
-4. Replace demonstrably reachable caps with capacity-managed lists and retain a
-   high emergency ceiling if protection is still needed.
+1. Capture dense towns, crowded combat, minimap rotation, bank/production UI,
+   and expanded F6 routes with renderer telemetry enabled.
+2. Record current/max/drop readings and preserve Ctrl+F9 artifacts for any
+   stream that approaches or reaches its cap.
+3. Compare the command pressure with frame, render-phase, allocation, and GC
+   telemetry so high counts are not mistaken for the actual bottleneck.
+4. Replace only demonstrably reachable caps with capacity-managed lists and
+   retain a high emergency ceiling if protection is still needed.
 5. Re-run the renderer guardrail suite and capture before/after frame timings so
    capacity growth does not hide an allocation regression.
 
