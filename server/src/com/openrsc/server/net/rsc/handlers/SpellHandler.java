@@ -389,6 +389,22 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				return Projectile.ACID_DROP;
 			case BRANCH_SPORE:
 				return Projectile.BRANCH_SPORE;
+			case WIND_BOLT:
+				return Projectile.WIND_STATIC_2;
+			case WATER_BOLT:
+				return Projectile.WATER_STATIC_2;
+			case EARTH_BOLT:
+				return Projectile.EARTH_LEAD_2;
+			case FIRE_BOLT:
+				return Projectile.FIRE_LEAD_2;
+			case THUNDER_SPLASH:
+				return Projectile.THUNDER_BIRD;
+			case ICE_BURST:
+				return Projectile.ICE_LEAD_2;
+			case ACID_FROG:
+				return Projectile.ACID_LEAD_2;
+			case WOOD_DRILL:
+				return Projectile.WOOD_LEAD_2;
 			default:
 				return Projectile.MAGIC;
 		}
@@ -399,12 +415,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			return 0;
 		}
 		switch (spellEnum) {
-			case WIND_BOLT:
-				return CombatEffect.WIND_SLASH;
 			case EARTH_BOLT:
 				return CombatEffect.EARTH_HAMMER;
-			case WATER_BOLT:
-				return CombatEffect.WATER_BURST;
 			case FIRE_BOLT:
 				return CombatEffect.FIRE_CLAW;
 			case THUNDER_SPLASH:
@@ -444,8 +456,20 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 	}
 
+	private static boolean shouldShowSpellProjectile(final Spells spellEnum, final int impactEffect) {
+		if (impactEffect <= 0) {
+			return true;
+		}
+		return spellEnum == Spells.EARTH_BOLT
+			|| spellEnum == Spells.FIRE_BOLT
+			|| spellEnum == Spells.THUNDER_SPLASH
+			|| spellEnum == Spells.ICE_BURST
+			|| spellEnum == Spells.ACID_FROG
+			|| spellEnum == Spells.WOOD_DRILL;
+	}
+
 	private static int getGodSpellProjectileVisual(final Spells spellEnum) {
-		return Projectile.MAGIC;
+		return Projectile.HOLY_MAGIC;
 	}
 
 	private static int getGodSpellImpactEffect(final Spells spellEnum) {
@@ -1672,11 +1696,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						if (!checkAndRemoveRunes(getPlayer(), spell)) {
 							return;
 						}
-						ActionSender.sendTeleBubble(getPlayer(), getLocation().getX(), getLocation().getY(), true);
-						for (Player player : getPlayer().getViewArea().getPlayersInView()) {
-							ActionSender.sendTeleBubble(player, getLocation().getX(), getLocation().getY(), true);
-						}
-
 						getPlayer().getWorld().unregisterItem(affectedItem);
 						finalizeSpell(getPlayer(), spell, "Spell successful");
 						getPlayer().getWorld().getServer().getGameLogger().addQuery(
@@ -2066,7 +2085,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						final int ibanPrimaryDamage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, 15, ibanDamageCapPercent);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
 							ibanPrimaryDamage, 4, setChasing,
-							0, 0, 0, 0, Projectile.SKULL, CombatEffect.IBAN_BLAST, false));
+							0, 0, 0, 0, Projectile.SKULL, CombatEffect.IBAN_BLAST, true));
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Iban blast area effect") {
 							@Override
 							public void action() {
@@ -2123,7 +2142,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						final int primaryDamage = CombatFormula.calculateGodSpellDamage(getPlayer(), affectedMob, spellEnum);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
 							primaryDamage, 1, setChasing,
-							0, 0, 0, 0, godSpellProjectile, godSpellImpact, godSpellImpact <= 0));
+							0, 0, 0, 0, godSpellProjectile, godSpellImpact, true));
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "God spell area effect") {
 							@Override
 							public void action() {
@@ -2243,7 +2262,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							+ " max=" + max + " projectile=" + projectileVisual + " impact=" + impactEffect);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, damage, 1, setChasing,
 							windAccuracyDebuffPercent, waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent,
-							projectileVisual, impactEffect, impactEffect <= 0,
+							projectileVisual, impactEffect, shouldShowSpellProjectile(spellEnum, impactEffect),
 							startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent, isBloodSpell(spell)));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);
@@ -2529,6 +2548,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		player.resetAllExceptDueling();
 		player.setBusy(true);
 		player.message("You begin charging the teleport spell");
+		player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.TELEPORT));
 		player.getWorld().getServer().getGameEventHandler().add(new MiniEvent(player.getWorld(), player, TELEPORT_CHARGE_MS, "Teleport spell charge") {
 			@Override
 			public void action() {
@@ -2562,22 +2582,22 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 		switch (spellEnum) {
 			case VARROCK_TELEPORT:
-				player.teleport(120, 504, true);
+				player.teleport(120, 504, false);
 				break;
 			case LUMBRIDGE_TELEPORT:
-				player.teleport(120, 648, true);
+				player.teleport(120, 648, false);
 				break;
 			case FALADOR_TELEPORT:
-				player.teleport(312, 552, true);
+				player.teleport(312, 552, false);
 				break;
 			case CAMELOT_TELEPORT:
-				player.teleport(456, 456, true);
+				player.teleport(456, 456, false);
 				break;
 			case ARDOUGNE_TELEPORT:
-				player.teleport(588, 621, true);
+				player.teleport(588, 621, false);
 				break;
 			case WATCHTOWER_TELEPORT:
-				player.teleport(493, 3525, true);
+				player.teleport(493, 3525, false);
 				break;
 			default:
 				break;

@@ -33,9 +33,9 @@ No tier 4 dual spells are implemented yet.
 | 1 | Icicle Shot | Air + Water | 1 Air, 1 Water, 1 Mind |
 | 1 | Acid Drop | Fire + Earth | 1 Fire, 1 Earth, 1 Mind |
 | 1 | Spore | Earth + Water | 1 Earth, 1 Water, 1 Mind |
-| 2 | Thunder Splash | Fire + Water | 2 Fire, 2 Water, 1 Chaos |
-| 2 | Ice Burst | Air + Water | 2 Air, 2 Water, 1 Chaos |
-| 2 | Acid Frog | Fire + Earth | 2 Fire, 2 Earth, 1 Chaos |
+| 2 | Thunder Bird | Fire + Water | 2 Fire, 2 Water, 1 Chaos |
+| 2 | Ice Slash | Air + Water | 2 Air, 2 Water, 1 Chaos |
+| 2 | Acid Splash | Fire + Earth | 2 Fire, 2 Earth, 1 Chaos |
 | 2 | Wood Drill | Earth + Water | 2 Earth, 2 Water, 1 Chaos |
 | 3 | Thunder Strike | Fire + Water | 3 Fire, 3 Water, 1 Death |
 | 3 | Ice Crystal | Air + Water | 3 Air, 3 Water, 1 Death |

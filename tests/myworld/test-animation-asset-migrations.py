@@ -4,7 +4,7 @@ import struct
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ASSETS = ROOT / "dev" / "myworld" / "assets" / "animations"
+ASSETS = ROOT / "dev" / "myworld" / "assets" / "legacy animation folder"
 MAGIC_UI_ASSETS = ROOT / "dev" / "myworld" / "assets" / "sprites" / "UI" / "magic"
 
 
@@ -90,7 +90,7 @@ def main():
     client = read("Client_Base/src/orsc/mudclient.java")
     require(client, [
         "public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;",
-        "public static final int CUSTOM_PROJECTILE_COUNT = 24;",
+		"public static final int CUSTOM_PROJECTILE_COUNT = 34;",
         "public static final int PROJECTILE_EFFECT_SCENE_RANGE = CUSTOM_PROJECTILE_COUNT * PROJECTILE_EFFECT_FRAME_SLOTS;",
         "public static final int spriteProjectileEffectMirrorBase = spriteProjectileEffectBase + PROJECTILE_EFFECT_SCENE_RANGE;",
         "public static final int spriteProjectileStaticMirrorBase =",
@@ -149,7 +149,9 @@ def main():
         'if ("corrosive-aura".equals(animationName))',
         'if ("true-defense".equals(animationName))',
         "targetFrames, maxTargetSize, 22, 1, 22, 0);",
-        "final int throwingKnifeFrameCount = 8;",
+        "ProjectileAnimationCatalog.getProjectileFallback(projectileId)",
+        "loadProjectileAnimationSheet(",
+        'getLegacyExternalAnimationFolder("Projectiles", legacyEffectName)',
         "private static final int THROWING_KNIFE_PROJECTILE_SCENE_SIZE = 32;",
         "private static final int SHURIKEN_PROJECTILE_SCENE_SIZE = 64;",
         "projectile.id == PROJECTILE_TYPES.THROWING_KNIFE.id()",
@@ -186,7 +188,7 @@ def main():
         "public static final int COMBAT_EFFECT_ELDER_DRAGON_FIRESHOT = 62;",
         "public static final int COMBAT_EFFECT_ELDER_DRAGON_BURN = 63;",
         "public static final int COMBAT_EFFECT_TRUE_DEFENSE = 64;",
-        "public static final int COMBAT_EFFECT_COUNT = 64;",
+		"public static final int COMBAT_EFFECT_COUNT = 66;",
         '"battering-ram", "dragon-breath",',
         '"divine-grace", "divine-retribution", "corrosive-aura", "lesser-demon-magic", "greater-demon-magic",',
         '"enemy-earth-basic", "black-demon-magic", "balrog-magic"',
@@ -196,21 +198,17 @@ def main():
         '"fire-kin-magic", "ice-kin-magic", "earth-kin-magic", "dragon-weapon-breath",',
         '"fire-sword", "ice-sword", "earth-sword", "elder-dragon-fireshot", "elder-dragon-burn",',
         '"true-defense"',
-        "drawDragonBreathOverlay(character, effect, x, y, width, height, size);",
-        "effectType == COMBAT_EFFECT_DRAGON_WEAPON_BREATH",
+        "drawDragonBreathOverlay(character, effect, x, y, width, height, drawWidth);",
         "return \"dragon-breath\";",
-        "return 224;",
-        "return 145;",
-        "return -(size / 2);",
         "shouldMirrorDragonBreath(character.direction)",
-        "shouldMirrorProjectile(var16, var3)",
-        "isProjectileCasterScreenRightOfVictim(caster, victim)",
+        "var3.projectileMirrored = shouldMirrorProjectile(var16, var3);",
+        "return screenX > 0;",
         "return mirrorX ? spriteProjectileStaticMirrorBase + projectile.id : projectile.id + spriteProjectile;",
         "private Sprite getMirroredStaticProjectileSprite(int projectileId)",
         "private static final int COMBAT_EFFECT_STANDARD_SCREEN_SIZE = 64;",
-        "int size = COMBAT_EFFECT_STANDARD_SCREEN_SIZE;",
-        "int size = getCombatEffectScreenSize(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);",
-        "queuedCombatEffectX[queuedCombatEffectCount] = x + (width / 2) - (size / 2)",
+        "int drawWidth = getCombatEffectScreenWidth(",
+        "int drawHeight = getCombatEffectScreenHeight(",
+        "queuedCombatEffectX[queuedCombatEffectCount] = x + (width / 2) - (drawWidth / 2)",
     ], "mudclient.java")
     require(client, [
         '"dev/myworld/assets/sprites/UI/magic"',
@@ -278,20 +276,20 @@ def main():
         "public static final int FIRE_SWORD = 59;",
         "public static final int ICE_SWORD = 60;",
         "public static final int EARTH_SWORD = 61;",
+        "public static final int DRAGON_WEAPON_SLASH_2 = 66;",
         "public static final int DIVINE_GRACE = 39;",
         "public static final int DIVINE_RETRIBUTION = 40;",
         "public static final int CORROSIVE_AURA = 41;",
     ], "CombatEffect.java")
     handler = read("server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java")
     require(handler, [
-        "return CombatEffect.WIND_SLASH;",
-        "return CombatEffect.WATER_ERUPTION;",
+		"return CombatEffect.WATER_ERUPTION;",
         "return CombatEffect.EXPLOSION;",
         "return CombatEffect.WATER_VORTEX;",
         "return CombatEffect.FIRE_PILLAR;",
     ], "SpellHandler.java")
 
-    print("PASS: renamed magic animations use the supplied frames and sprite-sheet geometry")
+    print("PASS: legacy magic animations retain their supplied frames and sprite-sheet geometry")
 
 
 if __name__ == "__main__":

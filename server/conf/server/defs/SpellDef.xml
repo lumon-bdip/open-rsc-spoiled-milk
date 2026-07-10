@@ -282,7 +282,7 @@
         <entry><int>41</int><int>1</int></entry>
       </requiredRunes>
       <exp>280</exp>
-      <name>Thunder Splash</name>
+		<name>Thunder Bird</name>
       <description>Dual-element thunder damage</description>
       <members>false</members>
       <evil>true</evil>
@@ -297,7 +297,7 @@
         <entry><int>41</int><int>1</int></entry>
       </requiredRunes>
       <exp>280</exp>
-      <name>Ice Burst</name>
+		<name>Ice Slash</name>
       <description>Dual-element ice damage</description>
       <members>false</members>
       <evil>false</evil>
@@ -312,7 +312,7 @@
         <entry><int>41</int><int>1</int></entry>
       </requiredRunes>
       <exp>280</exp>
-      <name>Acid Frog</name>
+		<name>Acid Splash</name>
       <description>Dual-element acid damage</description>
       <members>false</members>
       <evil>true</evil>

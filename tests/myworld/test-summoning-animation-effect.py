@@ -9,11 +9,11 @@ CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 COMBAT_EFFECT = ROOT / "server/src/com/openrsc/server/model/entity/update/CombatEffect.java"
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
-SUMMON_CHARGE_ASSET_DIR = ROOT / "dev/myworld/assets/animations/On Player/summon"
+SUMMON_CHARGE_ASSET_DIR = ROOT / "dev/myworld/assets/legacy animation folder/On Player/summon"
 SUMMON_ARRIVAL_ASSET_DIRS = [
-    ROOT / "dev/myworld/assets/animations/on summon/summon-combat",
-    ROOT / "dev/myworld/assets/animations/on summon/summon-support",
-    ROOT / "dev/myworld/assets/animations/on summon/summon-utility",
+    ROOT / "dev/myworld/assets/legacy animation folder/on summon/summon-combat",
+    ROOT / "dev/myworld/assets/legacy animation folder/on summon/summon-support",
+    ROOT / "dev/myworld/assets/legacy animation folder/on summon/summon-utility",
 ]
 
 
@@ -45,12 +45,12 @@ def main() -> int:
     combat_effect_count = re.search(r"public static final int COMBAT_EFFECT_COUNT = (\d+);", client)
     if not combat_effect_count or int(combat_effect_count.group(1)) < 29:
         failures.append("client combat effect range must include the summon effects through type 29")
-    if 'public static final int spriteProjectileEffectBase = 53000;' not in client:
-        failures.append("projectile effect base must stay clear of the expanded combat effect sprite range")
+    if "spriteCombatEffectBase + (COMBAT_EFFECT_COUNT * COMBAT_EFFECT_FRAME_SLOTS)" not in client:
+        failures.append("projectile effect base must follow the expanded combat effect sprite range")
     if not re.search(r'combatEffectNames\s*=\s*new String\[\]\s*\{.*"summon".*"summon-combat".*"summon-support".*"summon-utility"', client, re.S):
         failures.append("client combatEffectNames must include summon charge and arrival effects")
-    if 'getExternalAnimationFolder("on summon", assetName)' not in client:
-        failures.append("client must load summon arrival animations from the on summon asset category")
+    if 'getLegacyExternalAnimationFolder("on summon", assetName)' not in client:
+        failures.append("client must explicitly load pending summon arrivals from the legacy asset category")
     if "SUMMON_CHARGE_EFFECT_TICKS = 256" not in client:
         failures.append("summon charge effect should last the five-second charge window")
     for expected in (
@@ -67,9 +67,9 @@ def main() -> int:
         failures.append("summon charge should use a logical frame sequence for loop and finish timing")
     if "getSummonChargeLoopCycles(duration, frameCount)" not in client:
         failures.append("summon charge should explicitly control complete loop cycles")
-    if "getCombatEffectScreenXOffset(effectType, frame, size)" not in client:
+    if "getCombatEffectScreenXOffset(effectType, frame, offsetSize)" not in client:
         failures.append("summon charge loop frames should support screen x alignment")
-    if "getCombatEffectScreenYOffset(effectType, frame, size)" not in client:
+    if "getCombatEffectScreenYOffset(effectType, frame, offsetSize)" not in client:
         failures.append("summon arrival effects should support screen y alignment")
     if "getSummonChargeCurrentFrame(effectTime, duration, frameCount)" not in client:
         failures.append("summon charge must loop its hold frames instead of stretching all frames")

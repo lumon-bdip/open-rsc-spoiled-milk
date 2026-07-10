@@ -34,6 +34,16 @@ public class Projectile {
 	public static final int CHAIN_LIGHTNING_A = 28;
 	public static final int CHAIN_LIGHTNING_B = 29;
 	public static final int CHAIN_LIGHTNING_C = 30;
+	public static final int WIND_STATIC_2 = 31;
+	public static final int WATER_STATIC_2 = 32;
+	public static final int THUNDER_BIRD = 33;
+	public static final int EARTH_LEAD_2 = 34;
+	public static final int FIRE_LEAD_2 = 35;
+	public static final int ICE_LEAD_2 = 36;
+	public static final int ACID_LEAD_2 = 37;
+	public static final int WOOD_LEAD_2 = 38;
+	public static final int ACID_ARMOR_PROC = 39;
+	public static final int ICE_SWORD_STAB = 40;
 
 	/**
 	 * Who fired the projectile

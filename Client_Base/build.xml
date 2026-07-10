@@ -30,6 +30,7 @@
         <copy todir="${build}/myworld-assets">
             <fileset dir="../dev/myworld/assets">
                 <include name="animations/**/*.png"/>
+                <include name="legacy animation folder/**/*.png"/>
                 <include name="sprites/**/*.png"/>
             </fileset>
         </copy>

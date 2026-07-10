@@ -33,7 +33,7 @@ def main() -> int:
 
     require(combat_effect, "public static final int TRUE_DEFENSE = 64;", "server combat effect id", failures)
     require(client, "public static final int COMBAT_EFFECT_TRUE_DEFENSE = 64;", "client combat effect id", failures)
-    require(client, "public static final int COMBAT_EFFECT_COUNT = 64;", "client combat effect count", failures)
+    require(client, "public static final int COMBAT_EFFECT_COUNT = 66;", "client combat effect count", failures)
     require(client, '"true-defense"', "client combat effect name", failures)
     require(client, 'if ("true-defense".equals(animationName))', "client true-defense sheet loader", failures)
     require(client, "targetFrames, maxTargetSize, 22, 1, 22, 0);", "client true-defense frame geometry", failures)
@@ -82,7 +82,7 @@ def main() -> int:
     require(item_defs, "5% True Defense chance", "server item descriptions mention true defense", failures)
     require(client_items, "5% True Defense chance", "client item descriptions mention true defense", failures)
 
-    asset = ROOT / "dev/myworld/assets/animations/On Player/true-defense/true-defense.png"
+    asset = ROOT / "dev/myworld/assets/legacy animation folder/On Player/true-defense/true-defense.png"
     if not asset.exists():
         failures.append("true-defense animation asset must exist")
 

@@ -117,49 +117,29 @@ public enum NpcAttackStyleProfile {
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return Projectile.MAGIC;
 		}
-		if (isKolodionIntroForm(npc)) {
-			return getKolodionIntroProjectile(element);
-		}
 		if (isKolodionSpiderForm(npc)) {
 			return Projectile.ACID_DROP;
 		}
-		if (isKolodionSoulessForm(npc)) {
-			return Projectile.MAGIC;
-		}
-		if (isKolodionDemonForm(npc)) {
-			return Projectile.MAGIC;
-		}
 		final String name = npc.getDef().getName().toLowerCase();
-		if (npc.getID() == NpcId.BLUE_DRAGON.id()) {
-			return Projectile.BLUE_DRAGON_MAGIC;
+		if (element == NpcMagicElement.NONE && isHolyMagicNpcName(name)) {
+			return Projectile.HOLY_MAGIC;
 		}
 		switch (element) {
 			case AIR:
-				if (usesBasicCasterAirProjectile(name)) {
-					return Projectile.ENEMY_AIR_BASIC;
-				}
 				return Projectile.WIND_ARROW;
 			case WATER:
-				if (usesBasicCasterWaterProjectile(name)
-					|| usesIceKinMagic(name)
-					|| npc.getID() == NpcId.BABY_BLUE_DRAGON.id()) {
-					return Projectile.ENEMY_WATER_BASIC;
-				}
 				return Projectile.WATER_BALL;
 			case EARTH:
-				if (usesBasicCasterEarthImpact(name)) {
-					return Projectile.BLANK;
-				}
 				return Projectile.ROCK_THROW;
 			case FIRE:
-				return Projectile.ENEMY_FIRE_BASIC;
+				return Projectile.FIREBALL;
+			case THUNDER:
+				return Projectile.THUNDER_BALL;
+			case WOOD:
+				return Projectile.BRANCH_SPORE;
 			default:
-				break;
+				return Projectile.MAGIC;
 		}
-		if (isHolyMagicNpcName(name)) {
-			return Projectile.HOLY_MAGIC;
-		}
-		return Projectile.MAGIC;
 	}
 
 	public int getMagicImpactEffect(final Npc npc, final NpcMagicElement element) {
@@ -185,45 +165,10 @@ public enum NpcAttackStyleProfile {
 		if (enemySpecificEffect != CombatEffect.NONE) {
 			return enemySpecificEffect;
 		}
-		if ("battle mage".equals(name)) {
-			return getBattleMageImpactEffect(element);
-		}
 		if (isDragon(npc)) {
 			return getDragonMagicImpactEffect(element);
 		}
-		switch (element) {
-			case AIR:
-				if (usesBasicCasterAirProjectile(name)) {
-					return CombatEffect.NONE;
-				}
-				return CombatEffect.WIND_SLASH;
-			case WATER:
-				if (usesBasicCasterWaterProjectile(name)) {
-					return CombatEffect.NONE;
-				}
-				if (usesIceKinMagic(name)) {
-					return CombatEffect.ICE_KIN_MAGIC;
-				}
-				return CombatEffect.WATER_BURST;
-			case EARTH:
-				if (usesBasicCasterEarthImpact(name)) {
-					return CombatEffect.ENEMY_EARTH_BASIC;
-				}
-				if (usesEarthKinMagic(name)) {
-					return CombatEffect.EARTH_KIN_MAGIC;
-				}
-				return CombatEffect.EARTH_HAMMER;
-			case FIRE:
-				if (usesBasicCasterFireProjectile(name)) {
-					return CombatEffect.NONE;
-				}
-				if (usesFireKinMagic(name)) {
-					return CombatEffect.FIRE_KIN_MAGIC;
-				}
-				return CombatEffect.FIRE_CLAW;
-			default:
-				return CombatEffect.NONE;
-		}
+		return CombatEffect.NONE;
 	}
 
 	private static int getKolodionOgreImpactEffect(final NpcMagicElement element) {
@@ -250,89 +195,17 @@ public enum NpcAttackStyleProfile {
 		}
 	}
 
-	private static int getKolodionIntroProjectile(final NpcMagicElement element) {
-		switch (element) {
-			case AIR:
-				return Projectile.WIND_ARROW;
-			case WATER:
-				return Projectile.WATER_BALL;
-			case EARTH:
-				return Projectile.ROCK_THROW;
-			case FIRE:
-				return Projectile.FIREBALL;
-			default:
-				return Projectile.MAGIC;
-		}
-	}
-
-	private static int getBattleMageImpactEffect(final NpcMagicElement element) {
-		switch (element) {
-			case AIR:
-				return CombatEffect.BATTLE_MAGE_AIR;
-			case EARTH:
-				return CombatEffect.BATTLE_MAGE_EARTH;
-			case WATER:
-				return CombatEffect.BATTLE_MAGE_WATER;
-			case FIRE:
-				return CombatEffect.BATTLE_MAGE_FIRE;
-			default:
-				return CombatEffect.NONE;
-		}
-	}
-
 	private static int getDragonMagicImpactEffect(final NpcMagicElement element) {
 		switch (element) {
 			case EARTH:
-				return CombatEffect.GREEN_DRAGON_MAGIC;
+				return CombatEffect.EARTH_BURST;
+			case WATER:
+				return CombatEffect.WATER_ERUPTION;
 			case FIRE:
-				return CombatEffect.FIRE_DRAGON_MAGIC;
+				return CombatEffect.EXPLOSION;
 			default:
 				return CombatEffect.NONE;
 		}
-	}
-
-	private static boolean usesBasicCasterFireProjectile(final String name) {
-		return "darkwizard".equals(name)
-			|| "necromancer".equals(name)
-			|| "skeleton mage".equals(name);
-	}
-
-	private static boolean usesBasicCasterAirProjectile(final String name) {
-		return "darkwizard".equals(name)
-			|| "witch".equals(name)
-			|| "wizard".equals(name);
-	}
-
-	private static boolean usesBasicCasterWaterProjectile(final String name) {
-		return "wizard".equals(name)
-			|| "necromancer".equals(name)
-			|| "ghost".equals(name)
-			|| "nazastarool ghost".equals(name);
-	}
-
-	private static boolean usesBasicCasterEarthImpact(final String name) {
-		return "witch".equals(name)
-			|| "skeleton mage".equals(name)
-			|| "ghost".equals(name)
-			|| "nazastarool ghost".equals(name);
-	}
-
-	private static boolean usesFireKinMagic(final String name) {
-		return "fire giant".equals(name)
-			|| "delrith".equals(name)
-			|| "fire warrior".equals(name)
-			|| "the fire warrior of lesarkus".equals(name);
-	}
-
-	private static boolean usesIceKinMagic(final String name) {
-		return "ice giant".equals(name)
-			|| "ice warrior".equals(name)
-			|| "ice queen".equals(name);
-	}
-
-	private static boolean usesEarthKinMagic(final String name) {
-		return "moss giant".equals(name)
-			|| "tree spirit".equals(name);
 	}
 
 	private static boolean isHolyMagicNpcName(final String name) {
