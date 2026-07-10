@@ -193,6 +193,7 @@ def test_myworld_docs_are_consolidated() -> None:
 
     expected_by_category = {
         "in-progress-work-plans": [
+            "animation-asset-migration-plan.md",
             "bug-fixes-and-small-updates.md",
             "chat-and-dialogue-channel-plan.md",
             "code-cleanup-and-modularization-plan.md",

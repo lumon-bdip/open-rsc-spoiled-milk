@@ -50,6 +50,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 - [bug-fixes-and-small-updates.md](in-progress-work-plans/bug-fixes-and-small-updates.md):
   ongoing maintenance queue for focused small fixes and quick updates.
+- [animation-asset-migration-plan.md](in-progress-work-plans/animation-asset-migration-plan.md):
+  spritesheet-first migration to reusable moving projectile, static projectile,
+  and on-entity animation categories.
 - [chat-and-dialogue-channel-plan.md](in-progress-work-plans/chat-and-dialogue-channel-plan.md):
   chat tab/channel cleanup and dialogue privacy/concurrency path.
 - [code-cleanup-and-modularization-plan.md](in-progress-work-plans/code-cleanup-and-modularization-plan.md):
