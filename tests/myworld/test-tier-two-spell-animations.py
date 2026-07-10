@@ -51,9 +51,10 @@ def main() -> int:
     require(combat_catalog, (
         'define(definitions, 6, "fire-2", ON_ENTITY, "fire-2/Fire Claw.png", 9, 1, 0, 9, 64);',
         'define(definitions, 8, "earth-2", ON_ENTITY, "earth-2/Earth Hammer (48x48).png", 5, 5, 0, 21, 64);',
-        'define(definitions, 16, "lesser-heal", ON_ENTITY,',
+        'defineHorizontallyCentered(definitions, 16, "lesser-heal", ON_ENTITY,',
         'define(definitions, 17, "greater-heal", ON_ENTITY,',
         'define(definitions, 18, "holy-vfx-09", ON_ENTITY,',
+        '"Holy VFX 09/Holy Effect 09(16x16).png", 12, 1, 0, 12, 32);',
         'define(definitions, 30, "thunder-2-hit", PROJECTILE_MOVING,',
         'define(definitions, 31, "ice-2", ON_ENTITY, "ice-2/Ice VFX 3(48x48).png", 22, 1, 0, 20, 64);',
         'define(definitions, 32, "acid-2", ON_ENTITY, "acid-2/Acid VFX 09(72x80).png", 23, 1, 0, 23, 64);',
@@ -115,7 +116,13 @@ def main() -> int:
         "new CombatEffect(player, CombatEffect.ALCHEMY)",
         "new CombatEffect(player, CombatEffect.TELEPORT)",
         'TELEPORT_CHARGE_MS, "Teleport spell charge"',
+        "shouldShowSpellProjectile(spellEnum, impactEffect)",
     ), "SpellHandler.java")
+    for composite_spell in (
+        "EARTH_BOLT", "FIRE_BOLT", "THUNDER_SPLASH", "ICE_BURST", "ACID_FROG", "WOOD_DRILL"
+    ):
+        assert f"spellEnum == Spells.{composite_spell}" in spell_handler, \
+            f"{composite_spell} must retain its projectile before the impact effect"
     telegrab_case = re.search(
         r"case TELEKINETIC_GRAB:.*?\n\t\t\t\t\t\tbreak;", spell_handler, re.DOTALL
     )
@@ -142,7 +149,18 @@ def main() -> int:
         'if ("Thunder Bird".equalsIgnoreCase(spellName))',
         'if ("Ice Slash".equalsIgnoreCase(spellName))',
         'if ("Acid Splash".equalsIgnoreCase(spellName))',
+        "public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;",
+        "private static final int COMBAT_EFFECT_FRAME_TICKS = 3;",
+        "frameCount * COMBAT_EFFECT_FRAME_TICKS",
+        "definition.isHorizontallyCentered()",
+        "centerAnimationFrameHorizontally",
+        "scaled.setRequiresShift(true);",
     ), "mudclient.java")
+    assert "COMBAT_EFFECT_TICKS" not in client, \
+        "combat effects must derive total playback time from their loaded frame count"
+    legacy_root = ROOT / "dev/myworld/assets/legacy animation folder/On Enemy"
+    assert len(list((legacy_root / "ice-burst").glob("*.png"))) == 35
+    assert len(list((legacy_root / "ice-crystal").glob("*.png"))) == 34
 
     spell_defs = read("server/conf/server/defs/SpellDef.xml")
     entity_handler = read("Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java")

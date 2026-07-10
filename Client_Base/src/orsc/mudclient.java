@@ -212,9 +212,9 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
 	public static final int COMBAT_EFFECT_COUNT = 65;
-	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
+	public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
-	private static final int COMBAT_EFFECT_TICKS = 40;
+	private static final int COMBAT_EFFECT_FRAME_TICKS = 3;
 	private static final int COMBAT_EFFECT_STANDARD_SCREEN_SIZE = 64;
 	private static final int IBAN_BLAST_COMBAT_EFFECT_SCENE_SIZE = 336;
 	private static final int SUMMON_CHARGE_EFFECT_TICKS = 256;
@@ -19804,7 +19804,7 @@ public final class mudclient implements Runnable {
 				this.combatEffectFrameCounts[effectType] = appendExternalAnimationGridSheetFrames(
 					sheet, this.combatEffectSprites[effectType], definition.getMaxTargetSize(),
 					definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
-					definition.getFrameCount(), 0);
+					definition.getFrameCount(), 0, definition.isHorizontallyCentered());
 				if (this.combatEffectFrameCounts[effectType] > 0) {
 					continue;
 				}
@@ -20553,6 +20553,13 @@ public final class mudclient implements Runnable {
 
 	private int appendExternalAnimationGridSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize,
 			int columns, int rows, int firstFrameIndex, int frameCount, int loadedFrames) {
+		return appendExternalAnimationGridSheetFrames(sourceFile, targetFrames, maxTargetSize,
+			columns, rows, firstFrameIndex, frameCount, loadedFrames, false);
+	}
+
+	private int appendExternalAnimationGridSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize,
+			int columns, int rows, int firstFrameIndex, int frameCount, int loadedFrames,
+			boolean horizontallyCentered) {
 		try {
 			BufferedImage source = readAssetImage(sourceFile);
 			if (source == null || columns <= 0 || rows <= 0 || firstFrameIndex < 0 || frameCount <= 0
@@ -20572,6 +20579,9 @@ public final class mudclient implements Runnable {
 				int sourceX = (sheetFrameIndex % columns) * frameWidth;
 				int sourceY = (sheetFrameIndex / columns) * frameHeight;
 				BufferedImage frame = source.getSubimage(sourceX, sourceY, frameWidth, frameHeight);
+				if (horizontallyCentered) {
+					frame = centerAnimationFrameHorizontally(frame);
+				}
 				Sprite sprite = createExternalAnimationSprite(frame, maxTargetSize, sourceMaxSize);
 				if (sprite != null) {
 					targetFrames[loadedFrames++] = sprite;
@@ -20582,6 +20592,33 @@ public final class mudclient implements Runnable {
 			System.out.println("Failed to load external animation sheet " + sourceFile.getPath() + ": " + e.getMessage());
 			return loadedFrames;
 		}
+	}
+
+	private BufferedImage centerAnimationFrameHorizontally(BufferedImage source) {
+		long weightedX = 0L;
+		long totalAlpha = 0L;
+		for (int y = 0; y < source.getHeight(); y++) {
+			for (int x = 0; x < source.getWidth(); x++) {
+				int alpha = source.getRGB(x, y) >>> 24;
+				if (alpha >= 64) {
+					weightedX += (long) x * alpha;
+					totalAlpha += alpha;
+				}
+			}
+		}
+		if (totalAlpha <= 0L) {
+			return source;
+		}
+		int visualCenterX = (int) Math.round((double) weightedX / totalAlpha);
+		int shiftX = source.getWidth() / 2 - visualCenterX;
+		if (shiftX == 0) {
+			return source;
+		}
+		BufferedImage centered = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = centered.createGraphics();
+		graphics.drawImage(source, shiftX, 0, null);
+		graphics.dispose();
+		return centered;
 	}
 
 	private int appendExternalAnimationNativeGridSheetFrames(File sourceFile, Sprite[] targetFrames,
@@ -21028,7 +21065,8 @@ public final class mudclient implements Runnable {
 		if (effectType == COMBAT_EFFECT_SUMMON) {
 			return SUMMON_CHARGE_EFFECT_TICKS;
 		}
-		return COMBAT_EFFECT_TICKS;
+		int frameCount = getCombatEffectFrameCount(effectType);
+		return frameCount <= 0 ? 0 : frameCount * COMBAT_EFFECT_FRAME_TICKS;
 	}
 
 	public String getCombatEffectName(int effectType) {
@@ -21232,7 +21270,7 @@ public final class mudclient implements Runnable {
 		}
 		Sprite scaled = new Sprite(pixels, bucketedLength, thickness);
 		scaled.setShift(0, 0);
-		scaled.setRequiresShift(false);
+		scaled.setRequiresShift(true);
 		scaled.setSomething(bucketedLength, thickness);
 		if (scaledStaticProjectileSprites.size() >= MAX_SCALED_STATIC_PROJECTILE_CACHE) {
 			scaledStaticProjectileSprites.clear();

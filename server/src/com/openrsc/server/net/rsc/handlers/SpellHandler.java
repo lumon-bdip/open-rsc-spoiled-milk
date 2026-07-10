@@ -456,6 +456,18 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 	}
 
+	private static boolean shouldShowSpellProjectile(final Spells spellEnum, final int impactEffect) {
+		if (impactEffect <= 0) {
+			return true;
+		}
+		return spellEnum == Spells.EARTH_BOLT
+			|| spellEnum == Spells.FIRE_BOLT
+			|| spellEnum == Spells.THUNDER_SPLASH
+			|| spellEnum == Spells.ICE_BURST
+			|| spellEnum == Spells.ACID_FROG
+			|| spellEnum == Spells.WOOD_DRILL;
+	}
+
 	private static int getGodSpellProjectileVisual(final Spells spellEnum) {
 		return Projectile.HOLY_MAGIC;
 	}
@@ -2250,7 +2262,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							+ " max=" + max + " projectile=" + projectileVisual + " impact=" + impactEffect);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, damage, 1, setChasing,
 							windAccuracyDebuffPercent, waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent,
-							projectileVisual, impactEffect, impactEffect <= 0,
+							projectileVisual, impactEffect, shouldShowSpellProjectile(spellEnum, impactEffect),
 							startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent, isBloodSpell(spell)));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);
