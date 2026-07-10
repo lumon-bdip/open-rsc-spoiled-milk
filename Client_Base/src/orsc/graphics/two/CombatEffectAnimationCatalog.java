@@ -19,10 +19,9 @@ public final class CombatEffectAnimationCatalog {
 		private final int firstFrame;
 		private final int frameCount;
 		private final int maxTargetSize;
-		private final boolean horizontallyCentered;
 
 		private Definition(String key, String category, String sheetPath, int columns, int rows,
-				int firstFrame, int frameCount, int maxTargetSize, boolean horizontallyCentered) {
+				int firstFrame, int frameCount, int maxTargetSize) {
 			this.key = key;
 			this.category = category;
 			this.sheetPath = sheetPath;
@@ -31,7 +30,6 @@ public final class CombatEffectAnimationCatalog {
 			this.firstFrame = firstFrame;
 			this.frameCount = frameCount;
 			this.maxTargetSize = maxTargetSize;
-			this.horizontallyCentered = horizontallyCentered;
 		}
 
 		public String getKey() { return key; }
@@ -42,7 +40,6 @@ public final class CombatEffectAnimationCatalog {
 		public int getFirstFrame() { return firstFrame; }
 		public int getFrameCount() { return frameCount; }
 		public int getMaxTargetSize() { return maxTargetSize; }
-		public boolean isHorizontallyCentered() { return horizontallyCentered; }
 	}
 
 	private static final Map<Integer, Definition> DEFINITIONS;
@@ -51,8 +48,6 @@ public final class CombatEffectAnimationCatalog {
 		LinkedHashMap<Integer, Definition> definitions = new LinkedHashMap<Integer, Definition>();
 		define(definitions, 6, "fire-2", ON_ENTITY, "fire-2/Fire Claw.png", 9, 1, 0, 9, 64);
 		define(definitions, 8, "earth-2", ON_ENTITY, "earth-2/Earth Hammer (48x48).png", 5, 5, 0, 21, 64);
-		defineHorizontallyCentered(definitions, 16, "lesser-heal", ON_ENTITY,
-			"lesser-heal/Buff n Debuff P1 03.png", 12, 1, 0, 12, 64);
 		define(definitions, 17, "greater-heal", ON_ENTITY,
 			"greater-heal/Buff n Debuff P07 04.png", 19, 1, 0, 19, 64);
 		define(definitions, 18, "holy-vfx-09", ON_ENTITY,
@@ -73,20 +68,6 @@ public final class CombatEffectAnimationCatalog {
 	private static void define(Map<Integer, Definition> definitions, int effectType, String key,
 			String category, String sheetPath, int columns, int rows, int firstFrame,
 			int frameCount, int maxTargetSize) {
-		define(definitions, effectType, key, category, sheetPath, columns, rows, firstFrame,
-			frameCount, maxTargetSize, false);
-	}
-
-	private static void defineHorizontallyCentered(Map<Integer, Definition> definitions, int effectType,
-			String key, String category, String sheetPath, int columns, int rows, int firstFrame,
-			int frameCount, int maxTargetSize) {
-		define(definitions, effectType, key, category, sheetPath, columns, rows, firstFrame,
-			frameCount, maxTargetSize, true);
-	}
-
-	private static void define(Map<Integer, Definition> definitions, int effectType, String key,
-			String category, String sheetPath, int columns, int rows, int firstFrame,
-			int frameCount, int maxTargetSize, boolean horizontallyCentered) {
 		if (definitions.containsKey(effectType)) {
 			throw new IllegalStateException("Duplicate combat effect animation: " + effectType);
 		}
@@ -95,7 +76,7 @@ public final class CombatEffectAnimationCatalog {
 			throw new IllegalArgumentException("Invalid combat effect animation: " + key);
 		}
 		definitions.put(effectType, new Definition(key, category, sheetPath, columns, rows,
-			firstFrame, frameCount, maxTargetSize, horizontallyCentered));
+			firstFrame, frameCount, maxTargetSize));
 	}
 
 	public static Definition getDefinition(int effectType) {

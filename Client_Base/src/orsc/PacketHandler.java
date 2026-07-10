@@ -3417,6 +3417,7 @@ public class PacketHandler {
 				if (null != npc) {
 					npc.attackingNpcServerIndex = shooterServerIndex;
 					npc.projectileRange = mc.getProjectileMaxRange();
+					npc.pendingCombatEffectType = 0;
 					npc.attackingPlayerServerIndex = -1;
 					npc.incomingProjectileSprite = getProjectileDefForUpdate(sprite, "npc", sender, shooterServerIndex);
 				}
@@ -3425,6 +3426,7 @@ public class PacketHandler {
 				int shooterServerIndex = packetsIncoming.getShort();
 				if (npc != null) {
 					npc.projectileRange = mc.getProjectileMaxRange();
+					npc.pendingCombatEffectType = 0;
 					npc.attackingNpcServerIndex = -1;
 					npc.attackingPlayerServerIndex = shooterServerIndex;
 					npc.incomingProjectileSprite = getProjectileDefForUpdate(sprite, "npc", sender, shooterServerIndex);
@@ -3449,14 +3451,11 @@ public class PacketHandler {
 				}
 			} else if (updateType == 10) {
 				int effectType = packetsIncoming.getUnsignedByte();
-				int duration = mc.getCombatEffectDuration(effectType);
 					if (npc != null) {
 						if (effectType > 0) {
 							mc.detachNpcCombatEffect(npc);
 						}
-						npc.combatEffectType = effectType;
-						npc.combatEffectTime = duration;
-						npc.hasCombatEffectScreenAnchor = false;
+						mc.applyCombatEffectUpdate(npc, effectType);
 					}
 			} else if (updateType == 11) {
 				int hitSplatType = packetsIncoming.getUnsignedByte();
@@ -4233,6 +4232,7 @@ public class PacketHandler {
 				if (null != player) {
 					player.attackingNpcServerIndex = shooterServerIndex;
 					player.projectileRange = mc.getProjectileMaxRange();
+					player.pendingCombatEffectType = 0;
 					player.attackingPlayerServerIndex = -1;
 					player.incomingProjectileSprite = getProjectileDefForUpdate(sprite, "player", playerServerIndex, shooterServerIndex);
 				}
@@ -4241,6 +4241,7 @@ public class PacketHandler {
 				int shooterServerIndex = packetsIncoming.getShort();
 				if (player != null) {
 					player.projectileRange = mc.getProjectileMaxRange();
+					player.pendingCombatEffectType = 0;
 					player.attackingNpcServerIndex = -1;
 					player.attackingPlayerServerIndex = shooterServerIndex;
 					player.incomingProjectileSprite = getProjectileDefForUpdate(sprite, "player", playerServerIndex, shooterServerIndex);
@@ -4333,14 +4334,11 @@ public class PacketHandler {
 				}
 			} else if (updateType == 10) {
 				int effectType = packetsIncoming.getUnsignedByte();
-				int duration = mc.getCombatEffectDuration(effectType);
 					if (player != null) {
 						if (effectType > 0) {
 							mc.detachPlayerCombatEffect(player);
 						}
-						player.combatEffectType = effectType;
-						player.combatEffectTime = duration;
-						player.hasCombatEffectScreenAnchor = false;
+						mc.applyCombatEffectUpdate(player, effectType);
 					}
 			} else if (updateType == 11) {
 				int hitSplatType = packetsIncoming.getUnsignedByte();

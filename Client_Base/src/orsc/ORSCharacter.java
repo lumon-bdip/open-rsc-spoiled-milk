@@ -25,6 +25,7 @@ public final class ORSCharacter {
 	public int combatTimeout = 0;
 	public int combatEffectType = 0;
 	public int combatEffectTime = 0;
+	public int pendingCombatEffectType = 0;
 	public boolean hasCombatEffectScreenAnchor = false;
 	public int combatEffectScreenX = 0;
 	public int combatEffectScreenY = 0;
@@ -54,6 +55,8 @@ public final class ORSCharacter {
 	public int waypointIndexNext;
 	public int npcId;
 	public int projectileRange = 0;
+	public int projectileImpactId = -1;
+	public int projectileImpactTime = 0;
 	public int serverIndex;
 	public int skullVisible = 0;
 	int stepFrame;
@@ -103,6 +106,7 @@ public final class ORSCharacter {
 		combatTimeout = 0;
 		combatEffectType = 0;
 		combatEffectTime = 0;
+		pendingCombatEffectType = 0;
 		hasCombatEffectScreenAnchor = false;
 		hasSceneScreenAnchor = false;
 		damageTaken = 0;
@@ -111,6 +115,8 @@ public final class ORSCharacter {
 		message = null;
 		messageTimeout = 0;
 		projectileRange = 0;
+		projectileImpactId = -1;
+		projectileImpactTime = 0;
 		incomingProjectileSprite = null;
 		suppressAttackOption = false;
 		spiritSummon = false;

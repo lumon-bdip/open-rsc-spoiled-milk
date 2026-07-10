@@ -17,6 +17,28 @@ public final class ProjectileAnimationCatalog {
 
 	public static final String CATEGORY = "projectile-moving";
 
+	public static final class Segment {
+		private final String sheetPath;
+		private final int columns;
+		private final int rows;
+		private final int firstFrame;
+		private final int frameCount;
+
+		private Segment(String sheetPath, int columns, int rows, int firstFrame, int frameCount) {
+			this.sheetPath = sheetPath;
+			this.columns = columns;
+			this.rows = rows;
+			this.firstFrame = firstFrame;
+			this.frameCount = frameCount;
+		}
+
+		public String getSheetPath() { return sheetPath; }
+		public int getColumns() { return columns; }
+		public int getRows() { return rows; }
+		public int getFirstFrame() { return firstFrame; }
+		public int getFrameCount() { return frameCount; }
+	}
+
 	public static final class Definition {
 		private final String key;
 		private final String sourceLabel;
@@ -74,6 +96,8 @@ public final class ProjectileAnimationCatalog {
 
 	private static final Map<String, Definition> DEFINITIONS;
 	private static final Map<Integer, String> PROJECTILE_FALLBACKS;
+	private static final Map<String, Segment[]> STARTUP_SEGMENTS;
+	private static final Map<String, Segment[]> IMPACT_SEGMENTS;
 
 	static {
 		LinkedHashMap<String, Definition> definitions = new LinkedHashMap<String, Definition>();
@@ -93,6 +117,36 @@ public final class ProjectileAnimationCatalog {
 		define(definitions, "shuriken-basic", "Shuriken", "shuriken-basic/shuriken-basic.png", 8, 1, 0, 8);
 		define(definitions, "thunder-2", "Thunder bird", "thunder-2/Projectile/Projectile 2 wo blur.png", 16, 1, 0, 16);
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
+
+		LinkedHashMap<String, Segment[]> startupSegments = new LinkedHashMap<String, Segment[]>();
+		phases(startupSegments, "ice-basic",
+			segment("ice-basic/Ice VFX 1 Start.png", 3, 1, 0, 3));
+		phases(startupSegments, "holy-basic",
+			segment("holy-basic/Holy VFX 01 Initial.png", 2, 1, 0, 2));
+		STARTUP_SEGMENTS = Collections.unmodifiableMap(startupSegments);
+
+		LinkedHashMap<String, Segment[]> impactSegments = new LinkedHashMap<String, Segment[]>();
+		phases(impactSegments, "acid-basic",
+			segment("acid-basic/Acid VFX 01.png", 16, 1, 10, 6));
+		phases(impactSegments, "earth-basic",
+			segment("earth-basic/Earth projectile Spritesheet .png", 9, 2, 6, 10));
+		phases(impactSegments, "fire-basic",
+			segment("fire-basic/Firebolt SpriteSheet.png", 11, 1, 5, 6));
+		phases(impactSegments, "ice-basic",
+			segment("ice-basic/Ice VFX 1 Hit.png", 8, 1, 0, 8));
+		phases(impactSegments, "thunder-basic",
+			segment("thunder-basic/Thunder ball wo blur.png", 9, 2, 9, 7));
+		phases(impactSegments, "water-basic",
+			segment("water-basic/WaterBall - Impact.png", 4, 4, 0, 16));
+		phases(impactSegments, "wind-basic",
+			segment("wind-basic/Projectile 2 impact.png", 6, 1, 0, 6));
+		phases(impactSegments, "wood-basic",
+			segment("wood-basic/Wood VFX 01 Hit.png", 7, 1, 0, 7));
+		phases(impactSegments, "holy-basic",
+			segment("holy-basic/Holy VFX 01 Impact.png", 7, 1, 0, 7));
+		phases(impactSegments, "thunder-2",
+			segment("thunder-2/Hit/Thunder hit wo blur.png", 6, 1, 0, 6));
+		IMPACT_SEGMENTS = Collections.unmodifiableMap(impactSegments);
 
 		LinkedHashMap<Integer, String> fallbacks = new LinkedHashMap<Integer, String>();
 		fallback(fallbacks, PROJECTILE_TYPES.FIREBALL, "fire-basic");
@@ -151,12 +205,39 @@ public final class ProjectileAnimationCatalog {
 		}
 	}
 
+	private static Segment segment(String sheetPath, int columns, int rows, int firstFrame, int frameCount) {
+		if (columns <= 0 || rows <= 0 || firstFrame < 0 || frameCount <= 0
+			|| firstFrame + frameCount > columns * rows) {
+			throw new IllegalArgumentException("Invalid projectile phase: " + sheetPath);
+		}
+		return new Segment(sheetPath, columns, rows, firstFrame, frameCount);
+	}
+
+	private static void phases(Map<String, Segment[]> phases, String key, Segment... segments) {
+		if (!DEFINITIONS.containsKey(key) || segments == null || segments.length == 0) {
+			throw new IllegalArgumentException("Invalid projectile phase key: " + key);
+		}
+		if (phases.put(key, segments.clone()) != null) {
+			throw new IllegalStateException("Duplicate projectile phases: " + key);
+		}
+	}
+
 	public static Definition getDefinition(String key) {
 		return DEFINITIONS.get(key);
 	}
 
 	public static Definition getProjectileFallback(int projectileId) {
 		return getDefinition(PROJECTILE_FALLBACKS.get(projectileId));
+	}
+
+	public static Segment[] getStartupSegments(String key) {
+		Segment[] segments = STARTUP_SEGMENTS.get(key);
+		return segments == null ? new Segment[0] : segments.clone();
+	}
+
+	public static Segment[] getImpactSegments(String key) {
+		Segment[] segments = IMPACT_SEGMENTS.get(key);
+		return segments == null ? new Segment[0] : segments.clone();
 	}
 
 	public static Map<String, Definition> getDefinitions() {

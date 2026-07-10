@@ -51,7 +51,6 @@ def main() -> int:
     require(combat_catalog, (
         'define(definitions, 6, "fire-2", ON_ENTITY, "fire-2/Fire Claw.png", 9, 1, 0, 9, 64);',
         'define(definitions, 8, "earth-2", ON_ENTITY, "earth-2/Earth Hammer (48x48).png", 5, 5, 0, 21, 64);',
-        'defineHorizontallyCentered(definitions, 16, "lesser-heal", ON_ENTITY,',
         'define(definitions, 17, "greater-heal", ON_ENTITY,',
         'define(definitions, 18, "holy-vfx-09", ON_ENTITY,',
         '"Holy VFX 09/Holy Effect 09(16x16).png", 12, 1, 0, 12, 32);',
@@ -61,6 +60,9 @@ def main() -> int:
         'define(definitions, 33, "wood-2", ON_ENTITY, "wood-2/Wood VFX 04(32x48).png", 16, 1, 0, 15, 64);',
         'define(definitions, 65, "teleport", ON_ENTITY,',
     ), "CombatEffectAnimationCatalog.java")
+    assert 'define(definitions, 16, "lesser-heal"' not in combat_catalog, \
+        "lesser heal must use its centered legacy frame sequence"
+    assert "HorizontallyCentered" not in combat_catalog
 
     static_catalog = read("Client_Base/src/orsc/graphics/two/ProjectileStaticAnimationCatalog.java")
     require(static_catalog, (
@@ -79,6 +81,9 @@ def main() -> int:
         'fallback(fallbacks, PROJECTILE_TYPES.ICE_LEAD_2, "ice-basic");',
         'fallback(fallbacks, PROJECTILE_TYPES.ACID_LEAD_2, "acid-basic");',
         'fallback(fallbacks, PROJECTILE_TYPES.WOOD_LEAD_2, "wood-basic");',
+        'segment("fire-basic/Firebolt SpriteSheet.png", 11, 1, 5, 6)',
+        'segment("water-basic/WaterBall - Impact.png", 4, 4, 0, 16)',
+        'segment("thunder-2/Hit/Thunder hit wo blur.png", 6, 1, 0, 6)',
     ), "ProjectileAnimationCatalog.java")
 
     spell_handler = read("server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java")
@@ -152,12 +157,42 @@ def main() -> int:
         "public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;",
         "private static final int COMBAT_EFFECT_FRAME_TICKS = 3;",
         "frameCount * COMBAT_EFFECT_FRAME_TICKS",
-        "definition.isHorizontallyCentered()",
-        "centerAnimationFrameHorizontally",
+        "private static final int PROJECTILE_IMPACT_FRAME_TICKS = 3;",
+        "loadProjectileImpactAnimationSheets",
+        "drawQueuedProjectileImpactOverlays()",
+        "public void applyCombatEffectUpdate(ORSCharacter character, int effectType)",
+        "shouldDeferCombatEffectUntilProjectileArrival",
+        "startGenericProjectileImpact(character);",
         "scaled.setRequiresShift(true);",
     ), "mudclient.java")
     assert "COMBAT_EFFECT_TICKS" not in client, \
         "combat effects must derive total playback time from their loaded frame count"
+    assert "centerAnimationFrameHorizontally" not in client, \
+        "lesser heal must not horizontally sweep a directional spritesheet"
+
+    packet_handler = read("Client_Base/src/orsc/PacketHandler.java")
+    require(packet_handler, (
+        "mc.applyCombatEffectUpdate(npc, effectType);",
+        "mc.applyCombatEffectUpdate(player, effectType);",
+        "pendingCombatEffectType = 0;",
+    ), "PacketHandler.java")
+
+    character = read("Client_Base/src/orsc/ORSCharacter.java")
+    require(character, (
+        "public int pendingCombatEffectType = 0;",
+        "public int projectileImpactId = -1;",
+        "public int projectileImpactTime = 0;",
+    ), "ORSCharacter.java")
+
+    assert "Projectile.SKULL, CombatEffect.IBAN_BLAST, true" in spell_handler, \
+        "Iban blast must render its projectile before its impact"
+    assert re.search(
+        r"godSpellProjectile, godSpellImpact, true\)\);", spell_handler
+    ), "god spells must render their holy projectile before their impact"
+
+    lesser_heal_legacy = ROOT / "dev/myworld/assets/legacy animation folder/On Player/lesser-heal"
+    assert len(list(lesser_heal_legacy.glob("*.png"))) == 6, \
+        "lesser heal must retain its six centered legacy frames"
     legacy_root = ROOT / "dev/myworld/assets/legacy animation folder/On Enemy"
     assert len(list((legacy_root / "ice-burst").glob("*.png"))) == 35
     assert len(list((legacy_root / "ice-crystal").glob("*.png"))) == 34

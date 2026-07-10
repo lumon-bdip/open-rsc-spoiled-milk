@@ -2085,7 +2085,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						final int ibanPrimaryDamage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, 15, ibanDamageCapPercent);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
 							ibanPrimaryDamage, 4, setChasing,
-							0, 0, 0, 0, Projectile.SKULL, CombatEffect.IBAN_BLAST, false));
+							0, 0, 0, 0, Projectile.SKULL, CombatEffect.IBAN_BLAST, true));
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Iban blast area effect") {
 							@Override
 							public void action() {
@@ -2142,7 +2142,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						final int primaryDamage = CombatFormula.calculateGodSpellDamage(getPlayer(), affectedMob, spellEnum);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
 							primaryDamage, 1, setChasing,
-							0, 0, 0, 0, godSpellProjectile, godSpellImpact, godSpellImpact <= 0));
+							0, 0, 0, 0, godSpellProjectile, godSpellImpact, true));
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "God spell area effect") {
 							@Override
 							public void action() {

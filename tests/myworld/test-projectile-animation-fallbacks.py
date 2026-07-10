@@ -35,6 +35,24 @@ EXPECTED_DEFINITIONS = {
     "thunder-2": ("thunder-2/Projectile/Projectile 2 wo blur.png", 16, 1, 0, 16),
 }
 
+EXPECTED_STARTUP_SEGMENTS = {
+    "ice-basic": [("ice-basic/Ice VFX 1 Start.png", 3, 1, 0, 3)],
+    "holy-basic": [("holy-basic/Holy VFX 01 Initial.png", 2, 1, 0, 2)],
+}
+
+EXPECTED_IMPACT_SEGMENTS = {
+    "acid-basic": [("acid-basic/Acid VFX 01.png", 16, 1, 10, 6)],
+    "earth-basic": [("earth-basic/Earth projectile Spritesheet .png", 9, 2, 6, 10)],
+    "fire-basic": [("fire-basic/Firebolt SpriteSheet.png", 11, 1, 5, 6)],
+    "ice-basic": [("ice-basic/Ice VFX 1 Hit.png", 8, 1, 0, 8)],
+    "thunder-basic": [("thunder-basic/Thunder ball wo blur.png", 9, 2, 9, 7)],
+    "water-basic": [("water-basic/WaterBall - Impact.png", 4, 4, 0, 16)],
+    "wind-basic": [("wind-basic/Projectile 2 impact.png", 6, 1, 0, 6)],
+    "wood-basic": [("wood-basic/Wood VFX 01 Hit.png", 7, 1, 0, 7)],
+    "holy-basic": [("holy-basic/Holy VFX 01 Impact.png", 7, 1, 0, 7)],
+    "thunder-2": [("thunder-2/Hit/Thunder hit wo blur.png", 6, 1, 0, 6)],
+}
+
 EXPECTED_FALLBACKS = {
     "FIREBALL": "fire-basic",
     "WIND_ARROW": "wind-basic",
@@ -79,6 +97,53 @@ def png_size(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", data[16:24])
 
 
+def parse_segments(
+    catalog: str,
+    map_name: str,
+    constant_name: str,
+) -> dict[str, list[tuple[str, int, int, int, int]]]:
+    block = re.search(
+        rf"LinkedHashMap<String, Segment\[]> {map_name} =.*?"
+        rf"{constant_name} = Collections\.unmodifiableMap\({map_name}\);",
+        catalog,
+        re.DOTALL,
+    )
+    if block is None:
+        fail(f"missing {map_name} projectile phase map")
+    result = {}
+    for phase in re.finditer(
+        r'phases\([^,]+, "([^"]+)",\s*(.*?)\);', block.group(0), re.DOTALL
+    ):
+        result[phase.group(1)] = [
+            (match.group(1), *(int(match.group(index)) for index in range(2, 6)))
+            for match in re.finditer(
+                r'segment\("([^"]+)", (\d+), (\d+), (\d+), (\d+)\)', phase.group(2)
+            )
+        ]
+    return result
+
+
+def validate_segments(
+    moving_root: Path,
+    segments: dict[str, list[tuple[str, int, int, int, int]]],
+    capacity: int,
+) -> None:
+    for key, key_segments in segments.items():
+        total_frames = 0
+        for relative_path, columns, rows, first_frame, frame_count in key_segments:
+            sheet = moving_root / relative_path
+            if not sheet.is_file():
+                fail(f"missing {key} phase spritesheet: {sheet.relative_to(ROOT)}")
+            width, height = png_size(sheet)
+            if width % columns or height % rows:
+                fail(f"{key} phase sheet {width}x{height} is not divisible by {columns}x{rows}")
+            if first_frame + frame_count > columns * rows:
+                fail(f"{key} phase frame range exceeds its declared grid")
+            total_frames += frame_count
+        if total_frames > capacity:
+            fail(f"{key} phases exceed the {capacity}-frame buffer")
+
+
 def main() -> None:
     if not ANIMATIONS.is_dir() or not LEGACY_ANIMATIONS.is_dir():
         fail("new and temporary legacy animation roots must both exist during migration")
@@ -118,6 +183,19 @@ def main() -> None:
         if frame_count > 36:
             fail(f"{key} exceeds current projectile frame capacity")
 
+    startup_segments = parse_segments(catalog, "startupSegments", "STARTUP_SEGMENTS")
+    if startup_segments != EXPECTED_STARTUP_SEGMENTS:
+        fail(f"projectile startup phases changed: {startup_segments}")
+    impact_segments = parse_segments(catalog, "impactSegments", "IMPACT_SEGMENTS")
+    if impact_segments != EXPECTED_IMPACT_SEGMENTS:
+        fail(f"projectile impact phases changed: {impact_segments}")
+    validate_segments(moving_root, startup_segments, 36)
+    validate_segments(moving_root, impact_segments, 36)
+    for key, key_segments in startup_segments.items():
+        startup_frames = sum(segment[4] for segment in key_segments)
+        if startup_frames + definitions[key][4] > 36:
+            fail(f"{key} startup and travel phases exceed the 36-frame movement buffer")
+
     fallback_matches = {
         match.group(1): match.group(2)
         for match in re.finditer(
@@ -137,6 +215,11 @@ def main() -> None:
     for snippet in (
         "ProjectileAnimationCatalog.getProjectileFallback(projectileId)",
         "loadProjectileAnimationSheet(",
+        "ProjectileAnimationCatalog.getStartupSegments(definition.getKey())",
+        "loadProjectileImpactAnimationSheets(",
+        "ProjectileAnimationCatalog.getImpactSegments(definition.getKey())",
+        "frameCount * PROJECTILE_IMPACT_FRAME_TICKS",
+        "startGenericProjectileImpact(character);",
         'getLegacyExternalAnimationFolder("Projectiles", legacyEffectName)',
         "spriteCombatEffectBase + (COMBAT_EFFECT_COUNT * COMBAT_EFFECT_FRAME_SLOTS)",
     ):
