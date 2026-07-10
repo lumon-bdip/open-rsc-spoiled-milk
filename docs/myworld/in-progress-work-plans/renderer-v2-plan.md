@@ -1182,6 +1182,10 @@ they are not visual requirements for the baseline.
         and separately attributed capture timings. Add a session analyzer that
         validates the schema and produces an evidence-linked `ai-summary.md`
         with cautious timing/GC/chunk/drop/overflow correlations.
+  - [x] Rate-limit and aggregate renderer reason transitions after the first
+        live diagnostic launch showed normal `steady` /
+        `animated-object-signature` alternation flooding the event stream.
+        Preserve the suppressed transition count and flush it on shutdown.
 - [ ] Build a replay harness for captured renderer-v2 frames so a problematic
       entity/occlusion frame can be inspected without live combat timing.
   - [x] Add an offline capture analyzer that validates `Ctrl+F9` capture

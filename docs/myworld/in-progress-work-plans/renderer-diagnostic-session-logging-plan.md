@@ -182,6 +182,12 @@ Implementation checkpoint:
   loads, chunk/shadow/resident reason transitions, OpenGL messages, and client
   exceptions. Existing standalone frame directories remain valid inputs for
   the original capture analyzer.
+- The first live session exposed excessive reason-transition noise because
+  normal animated-object work alternates `steady` and
+  `animated-object-signature` within ordinary rendering. Reason events are now
+  limited to one record per type per second, with suppressed transition counts
+  aggregated and flushed on shutdown. Interrupting the bounded console mirror
+  also exits cleanly without adding a Python traceback to the diagnostic log.
 
 ## Milestone 4: AI-Oriented Session Analyzer
 

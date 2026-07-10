@@ -25,22 +25,25 @@ def main() -> None:
     retained = 0
     truncated = False
     with args.log_file.open("wb") as log:
-        while True:
-            line = sys.stdin.buffer.readline()
-            if not line:
-                break
-            sys.stdout.buffer.write(line)
-            sys.stdout.buffer.flush()
-            if truncated:
-                continue
-            if retained + len(line) + len(TRUNCATION_MARKER) <= args.max_bytes:
-                log.write(line)
-                log.flush()
-                retained += len(line)
-            else:
-                log.write(TRUNCATION_MARKER)
-                log.flush()
-                truncated = True
+        try:
+            while True:
+                line = sys.stdin.buffer.readline()
+                if not line:
+                    break
+                sys.stdout.buffer.write(line)
+                sys.stdout.buffer.flush()
+                if truncated:
+                    continue
+                if retained + len(line) + len(TRUNCATION_MARKER) <= args.max_bytes:
+                    log.write(line)
+                    log.flush()
+                    retained += len(line)
+                else:
+                    log.write(TRUNCATION_MARKER)
+                    log.flush()
+                    truncated = True
+        except KeyboardInterrupt:
+            pass
 
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ final class RendererDiagnosticSession {
 	private static final String MAX_LOG_BYTES_PROPERTY = "spoiledmilk.rendererDiagnosticMaxLogBytes";
 	private static final String MAX_LOG_BYTES_ENV = "SPOILED_MILK_RENDERER_DIAGNOSTIC_MAX_LOG_BYTES";
 	private static final long DEFAULT_MAX_LOG_BYTES = 64L * 1024L * 1024L;
+	private static final long REASON_EVENT_INTERVAL_NANOS = 1_000_000_000L;
 	private static final boolean ENABLED = readBoolean(ENABLED_PROPERTY, ENABLED_ENV);
 	private static final long MAX_LOG_BYTES = Math.max(
 		1024L * 1024L,
@@ -43,6 +44,8 @@ final class RendererDiagnosticSession {
 	private static PrintWriter telemetryWriter;
 	private static PrintWriter eventWriter;
 	private static PrintWriter captureIndexWriter;
+	private static final Map<String, ReasonEventState> reasonEventStates =
+		new java.util.LinkedHashMap<String, ReasonEventState>();
 
 	private RendererDiagnosticSession() {
 	}
@@ -101,6 +104,7 @@ final class RendererDiagnosticSession {
 			if (!started || closed) {
 				return;
 			}
+			flushSuppressedReasonEvents();
 			Record event = newRecord("event");
 			event.string("eventType", "session.stop");
 			writeEvent(event);
@@ -251,6 +255,35 @@ final class RendererDiagnosticSession {
 		}
 	}
 
+	static void recordReasonChange(
+		String eventType,
+		String previousReason,
+		String currentReason,
+		long rendererFrameSequence) {
+		if (!ensureStarted()) {
+			return;
+		}
+		synchronized (LOCK) {
+			long now = System.nanoTime();
+			ReasonEventState state = reasonEventStates.get(eventType);
+			if (state == null) {
+				state = new ReasonEventState();
+				reasonEventStates.put(eventType, state);
+			}
+			state.previousReason = previousReason;
+			state.currentReason = currentReason;
+			state.rendererFrameSequence = rendererFrameSequence;
+			if (state.lastWriteNanos != 0L
+				&& now - state.lastWriteNanos < REASON_EVENT_INTERVAL_NANOS) {
+				state.suppressedTransitions++;
+				return;
+			}
+			writeReasonEvent(eventType, state, false);
+			state.lastWriteNanos = now;
+			state.suppressedTransitions = 0;
+		}
+	}
+
 	static File getSessionDirectory() {
 		if (!ensureStarted()) {
 			return null;
@@ -283,6 +316,31 @@ final class RendererDiagnosticSession {
 
 	private static void writeEvent(Record event) {
 		writeRecord(eventWriter, event);
+	}
+
+	private static void flushSuppressedReasonEvents() {
+		for (Map.Entry<String, ReasonEventState> entry : reasonEventStates.entrySet()) {
+			ReasonEventState state = entry.getValue();
+			if (state.suppressedTransitions <= 0) {
+				continue;
+			}
+			writeReasonEvent(entry.getKey(), state, true);
+			state.suppressedTransitions = 0;
+		}
+	}
+
+	private static void writeReasonEvent(
+		String eventType,
+		ReasonEventState state,
+		boolean finalFlush) {
+		Record event = newRecord("event");
+		event.string("eventType", eventType);
+		event.string("previousReason", state.previousReason);
+		event.string("currentReason", state.currentReason);
+		event.number("rendererFrameSequence", state.rendererFrameSequence);
+		event.number("suppressedTransitions", state.suppressedTransitions);
+		event.bool("finalFlush", finalFlush);
+		writeEvent(event);
 	}
 
 	private static void writeRecord(PrintWriter writer, Record record) {
@@ -556,5 +614,13 @@ final class RendererDiagnosticSession {
 			}
 			json.append('"');
 		}
+	}
+
+	private static final class ReasonEventState {
+		private long lastWriteNanos;
+		private int suppressedTransitions;
+		private String previousReason = "unknown";
+		private String currentReason = "unknown";
+		private long rendererFrameSequence;
 	}
 }

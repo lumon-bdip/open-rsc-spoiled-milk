@@ -815,15 +815,11 @@ public final class RenderTelemetry {
 		if (currentReason.equals(previousReason)) {
 			return;
 		}
-		RendererDiagnosticSession.Record event =
-			RendererDiagnosticSession.newEventRecord(eventType);
-		if (event == null) {
-			return;
-		}
-		event.string("previousReason", previousReason);
-		event.string("currentReason", currentReason);
-		event.number("rendererFrameSequence", frameStats.count);
-		RendererDiagnosticSession.writeEventRecord(event);
+		RendererDiagnosticSession.recordReasonChange(
+			eventType,
+			previousReason,
+			currentReason,
+			frameStats.count);
 	}
 
 	static void recordOpenGLWorldTextureFrame(

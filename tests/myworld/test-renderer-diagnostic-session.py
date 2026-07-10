@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import signal
 import subprocess
 import tempfile
 from pathlib import Path
@@ -48,6 +49,10 @@ public final class RendererDiagnosticSessionFixture {
 		}
 		RenderTelemetry.recordSceneRender(500000L);
 		RenderTelemetry.recordWorldSectionLoad(600000L);
+		RenderTelemetry.recordOpenGLWorldChunkUpload(
+			2, 1, 1, 0, 0, "fixture-upload", 250000L, 1000000L);
+		RenderTelemetry.recordOpenGLWorldChunkUpload(
+			2, 0, 2, 0, 0, "steady", 100000L, 1000000L);
 		RenderTelemetry.recordOpenGLWorldChunkUpload(
 			2, 1, 1, 0, 0, "fixture-upload", 250000L, 1000000L);
 		RenderTelemetry.recordFrame(
@@ -217,10 +222,18 @@ def validate_runtime_session(tmp: Path) -> None:
         "capture.frame.completed",
         "renderer.world-section-load",
         "renderer.chunk-upload-reason-change",
+        "renderer.chunk-upload-reason-change",
         "session.stop",
     ]
     if event_types != expected_types:
         fail(f"unexpected event sequence: {event_types}")
+    reason_events = [
+        event
+        for event in events
+        if event.get("eventType") == "renderer.chunk-upload-reason-change"
+    ]
+    if reason_events[-1].get("suppressedTransitions") != 2:
+        fail(f"reason transition aggregation missing: {reason_events}")
 
     capture_index = read_jsonl(session_dir / "captures" / "capture-index.jsonl")
     if [record.get("status") for record in capture_index] != ["started", "completed"]:
@@ -258,6 +271,31 @@ def validate_bounded_tee(tmp: Path) -> None:
         fail("bounded tee did not mark truncation")
     if b"last visible line" in retained:
         fail("bounded tee retained content after truncation")
+
+    interrupted_log = tmp / "interrupted.log"
+    process = subprocess.Popen(
+        ["python3", str(BOUNDED_TEE), str(interrupted_log), "1024"],
+        cwd=ROOT,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    assert process.stdin is not None
+    assert process.stdout is not None
+    process.stdin.write(b"before interrupt\n")
+    process.stdin.flush()
+    first_line = process.stdout.readline()
+    if first_line != b"before interrupt\n":
+        process.kill()
+        fail(f"bounded tee did not become ready for interrupt test: {first_line!r}")
+    process.send_signal(signal.SIGINT)
+    stdout, stderr = process.communicate(timeout=5)
+    if process.returncode != 0 or b"KeyboardInterrupt" in stderr:
+        fail(
+            "bounded tee did not stop cleanly after interrupt:\n"
+            + (first_line + stdout).decode("utf-8", errors="replace")
+            + stderr.decode("utf-8", errors="replace")
+        )
 
 
 def validate_source_contract() -> None:
