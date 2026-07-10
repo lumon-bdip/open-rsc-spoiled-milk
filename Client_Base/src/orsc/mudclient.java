@@ -137,7 +137,6 @@ public final class mudclient implements Runnable {
 	public static final int spriteWorldGlyphBase = 51000;
 	public static final int spriteWorldOrbBase = 51100;
 	public static final int spriteCombatEffectBase = 51200;
-	public static final int spriteProjectileEffectBase = 53000;
 	public static final int ALTAR_VISUAL_COUNT = 14;
 	public static final int COMBAT_EFFECT_HELLS_FIRE = 1;
 	public static final int COMBAT_EFFECT_HELLS_BLAZE = 2;
@@ -230,6 +229,8 @@ public final class mudclient implements Runnable {
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
 	public static final int CUSTOM_PROJECTILE_COUNT = 24;
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
+	public static final int spriteProjectileEffectBase =
+		spriteCombatEffectBase + (COMBAT_EFFECT_COUNT * COMBAT_EFFECT_FRAME_SLOTS);
 	public static final int PROJECTILE_EFFECT_SCENE_RANGE = CUSTOM_PROJECTILE_COUNT * PROJECTILE_EFFECT_FRAME_SLOTS;
 	public static final int spriteProjectileEffectMirrorBase = spriteProjectileEffectBase + PROJECTILE_EFFECT_SCENE_RANGE;
 	private static final int PROJECTILE_STATIC_MIRROR_SLOTS = 256;

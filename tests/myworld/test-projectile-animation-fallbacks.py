@@ -131,9 +131,29 @@ def main() -> None:
         "ProjectileAnimationCatalog.getProjectileFallback(projectileId)",
         "loadProjectileAnimationSheet(",
         'getLegacyExternalAnimationFolder("Projectiles", legacyEffectName)',
+        "spriteCombatEffectBase + (COMBAT_EFFECT_COUNT * COMBAT_EFFECT_FRAME_SLOTS)",
     ):
         if snippet not in client:
             fail(f"client is missing projectile catalog integration: {snippet}")
+
+    numeric_constant = lambda name: int(re.search(
+        rf"(?:public|private) static final int {name} = (\d+);", client
+    ).group(1))
+    combat_effect_end = (
+        numeric_constant("spriteCombatEffectBase")
+        + numeric_constant("COMBAT_EFFECT_COUNT") * numeric_constant("COMBAT_EFFECT_FRAME_SLOTS")
+    )
+    projectile_scene_range = (
+        numeric_constant("CUSTOM_PROJECTILE_COUNT") * numeric_constant("PROJECTILE_EFFECT_FRAME_SLOTS")
+    )
+    projectile_effect_base = combat_effect_end
+    projectile_mirror_base = projectile_effect_base + projectile_scene_range
+    projectile_static_mirror_base = projectile_mirror_base + projectile_scene_range
+    if not (combat_effect_end <= projectile_effect_base
+            < projectile_mirror_base < projectile_static_mirror_base):
+        fail("combat, original projectile, and mirrored projectile scene ranges must be disjoint")
+    if "public static final int spriteProjectileEffectBase = 53000;" in client:
+        fail("projectile scene IDs must not overlap the combat-effect range")
     for retired in ("generateThrowingKnifeProjectileFrames", "generateShurikenProjectileFrames",
                     "isRootedProjectile", "isCasterRootedProjectile"):
         if retired in client:
