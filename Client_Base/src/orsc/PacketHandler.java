@@ -12,6 +12,7 @@ import orsc.enumerations.ORSCharacterDirection;
 import orsc.graphics.gui.KillAnnouncer;
 import orsc.graphics.gui.SocialLists;
 import orsc.graphics.three.RSModel;
+import orsc.graphics.three.World;
 import orsc.multiclient.ClientPort;
 import orsc.net.Network_Socket;
 import orsc.util.FastMath;
@@ -2198,11 +2199,24 @@ public class PacketHandler {
 	}
 
 	private void applyCompleteSceneBaselineToLegacyLists() {
-		if (mc == null || !sceneBaselineDebugState.hasStoredCompleteBaseline()) {
+		applyCompleteSceneBaselineToLegacyLists(false);
+	}
+
+	public void reapplyCompleteSceneBaselineAfterRegionLoad() {
+		// A death screen can defer the map load after the respawn baseline has
+		// already arrived. Replay it against the new origin instead of waiting
+		// for a server-side scenery change that may never occur.
+		applyCompleteSceneBaselineToLegacyLists(true);
+	}
+
+	private void applyCompleteSceneBaselineToLegacyLists(boolean force) {
+		if (mc == null
+			|| !sceneBaselineDebugState.hasStoredCompleteBaseline()
+			|| !sceneBaselineDebugState.isBaselineOriginLoaded(mc)) {
 			return;
 		}
 		int applyKey = sceneBaselineDebugState.legacyApplyKey(mc);
-		if (applyKey == appliedSceneBaselineKey) {
+		if (!force && applyKey == appliedSceneBaselineKey) {
 			return;
 		}
 
@@ -2853,6 +2867,12 @@ public class PacketHandler {
 			return storedStaticSceneKey == staticSceneKey
 				&& storedSceneryRecords.size() == scenery
 				&& storedWallRecords.size() == walls;
+		}
+
+		private boolean isBaselineOriginLoaded(mudclient mc) {
+			return World.isLocalTile(
+				localX - mc.getMidRegionBaseX(),
+				localY - mc.getMidRegionBaseZ());
 		}
 
 		private String verboseSummary() {
