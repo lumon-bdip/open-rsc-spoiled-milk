@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+
+cd "$ROOT_DIR"
+
+renderer_tests=(
+  test-client-cpu-section-window-cache.py
+  test-client-predictive-terrain-preload.py
+  test-client-world-model-product-split.py
+  test-client-world-streaming-backend.py
+  test-opengl-geometry-modes.py
+  test-opengl-input-modifiers.py
+  test-renderer-experimental-camera-options.py
+  test-renderer-relog-resident-world.py
+  test-renderer-v2-capture-analyzer.py
+  test-renderer-v2-font-policy.py
+  test-renderer-v2-frame-capture.py
+  test-renderer-v2-options-cleanup.py
+  test-renderer-v2-phased-overlay.py
+  test-renderer-v2-world-geometry.py
+)
+
+for test_file in "${renderer_tests[@]}"; do
+  python3 "./tests/myworld/$test_file"
+done

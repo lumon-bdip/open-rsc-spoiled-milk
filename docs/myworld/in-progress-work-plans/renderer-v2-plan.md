@@ -743,8 +743,9 @@ renderer-v2 layer:
 
 When the OpenGL-primary path is active, the in-game general options panel
 exposes player-facing renderer rows under `Graphics`: `Preset`, `Aspect Ratio`,
-`Borderless`, `Lighting`, `Geometry`, `Fog`, and `Brightness`. The old `Video`
-section, free-form `Resolution` row, and manual `Tone` row are retired.
+`Borderless`, `Lighting`, `Geometry`, `Terrain Variation`, `Fog`, and
+`Brightness`. The old `Video` section, free-form `Resolution` row, and manual
+`Tone` row are retired.
 `Aspect Ratio` is the source-framebuffer choice: `4:3` uses `800x600`, and
 `16:9` uses `960x540`.
 Wider field of view is handled by camera zoom rather than by exposing many
@@ -2237,9 +2238,10 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
       testing controls are grouped for release-facing use without changing the
       existing click IDs or settings persistence.
 - [x] Collapse the OpenGL-primary player-facing render options to
-      `Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`, `Fog`,
-      `Brightness`, with the rendering rows under `Graphics`. The manual
-      `Tone` row and release-facing font row were retired.
+      `Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,
+      `Terrain Variation`, `Fog`, `Brightness`, with the rendering rows under
+      `Graphics`. The manual `Tone` row and release-facing font row were
+      retired.
 - [x] Remove release/default quick function-key toggles except `F6` renderer
       debug overlay. Resolution, font, scaling, and window-mode changes should
       go through options or explicit runtime launch configuration.

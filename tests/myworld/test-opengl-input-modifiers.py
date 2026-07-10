@@ -4,7 +4,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
-PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
+INPUT_BRIDGE = ROOT / "PC_Client/src/orsc/OpenGLInputBridge.java"
+KEY_BINDINGS = ROOT / "PC_Client/src/orsc/OpenGLKeyBindings.java"
+LWJGL_BINDINGS = ROOT / "PC_Client/src/orsc/LwjglBindings.java"
 BANK = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/CustomBankInterface.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 
@@ -20,7 +22,9 @@ def require(text: str, needle: str, description: str) -> None:
 
 def main() -> None:
     applet = APPLET.read_text(encoding="utf-8")
-    presenter = PRESENTER.read_text(encoding="utf-8")
+    input_bridge = INPUT_BRIDGE.read_text(encoding="utf-8")
+    key_bindings = KEY_BINDINGS.read_text(encoding="utf-8")
+    lwjgl_bindings = LWJGL_BINDINGS.read_text(encoding="utf-8")
     bank = BANK.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")
 
@@ -36,51 +40,50 @@ def main() -> None:
     )
     require(
         applet,
-        "boolean mayBeScrollable = mudclient.isMouseOverOpenUiTabPanel(e.getX(), e.getY());",
+        "boolean mayBeScrollable = mudclient.isMouseOverOpenUiTabPanel(mouseX, mouseY);",
         "mouse wheel zoom only yields to an open tab under the cursor",
     )
     require(
         applet,
-        "mudclient.isMouseOverOpenUiTabPanel(mudclient.mouseX, mudclient.mouseY)\n"
-        "\t\t\t\t\t\t|| mudclient.isMouseOverOpenUiTabPanel(mudclient.mouseLastProcessedX, mudclient.mouseLastProcessedY);",
+        "|| mudclient.isMouseOverOpenUiTabPanel(mudclient.mouseLastProcessedX, mudclient.mouseLastProcessedY);",
         "drag zoom only yields to an open tab under the drag path",
     )
 
     require(
-        presenter,
+        lwjgl_bindings,
         'glfwGetKey = method(glfwClass, "glfwGetKey", long.class, int.class);',
         "OpenGL physical key polling binding",
     )
-    require(presenter, 'GLFW_KEY_LEFT_CONTROL = constant(glfwClass, "GLFW_KEY_LEFT_CONTROL");', "left Ctrl constant")
-    require(presenter, 'GLFW_KEY_RIGHT_CONTROL = constant(glfwClass, "GLFW_KEY_RIGHT_CONTROL");', "right Ctrl constant")
-    require(presenter, "private boolean isControlDown()", "OpenGL Ctrl helper")
-    require(presenter, "|| isGlfwKeyDown(gl.GLFW_KEY_LEFT_CONTROL)", "left Ctrl physical-state fallback")
-    require(presenter, "|| isGlfwKeyDown(gl.GLFW_KEY_RIGHT_CONTROL)", "right Ctrl physical-state fallback")
-    require(presenter, "if (isControlDown()) {\n\t\t\tmodifiers |= InputEvent.CTRL_MASK;", "AWT Ctrl mask emission")
-    require(presenter, "if (isShiftDown()) {\n\t\t\tmodifiers |= InputEvent.SHIFT_MASK;", "AWT Shift mask emission")
-    require(presenter, "if (isAltDown()) {\n\t\t\tmodifiers |= InputEvent.ALT_MASK;", "AWT Alt mask emission")
+    require(lwjgl_bindings, 'GLFW_KEY_LEFT_CONTROL = constant(glfwClass, "GLFW_KEY_LEFT_CONTROL");', "left Ctrl constant")
+    require(lwjgl_bindings, 'GLFW_KEY_RIGHT_CONTROL = constant(glfwClass, "GLFW_KEY_RIGHT_CONTROL");', "right Ctrl constant")
+    require(input_bridge, "private boolean isControlDown()", "OpenGL Ctrl helper")
+    require(input_bridge, "|| isGlfwKeyDown(gl.GLFW_KEY_LEFT_CONTROL)", "left Ctrl physical-state fallback")
+    require(input_bridge, "|| isGlfwKeyDown(gl.GLFW_KEY_RIGHT_CONTROL)", "right Ctrl physical-state fallback")
+    require(input_bridge, "if (isControlDown()) {\n\t\t\tmodifiers |= InputEvent.CTRL_MASK;", "AWT Ctrl mask emission")
+    require(input_bridge, "if (isShiftDown()) {\n\t\t\tmodifiers |= InputEvent.SHIFT_MASK;", "AWT Shift mask emission")
+    require(input_bridge, "if (isAltDown()) {\n\t\t\tmodifiers |= InputEvent.ALT_MASK;", "AWT Alt mask emission")
     require(
-        presenter,
+        input_bridge,
         "boolean repeated = action == gl.GLFW_REPEAT;",
         "OpenGL key repeat detection",
     )
     require(
-        presenter,
+        input_bridge,
         "if (repeated && !binding.postsRepeatPressEvents())",
         "OpenGL key repeat filter",
     )
     require(
-        presenter,
+        input_bridge,
         "boolean pressed = action == gl.GLFW_PRESS || repeated;",
         "OpenGL repeat emits legacy pressed events",
     )
     require(
-        presenter,
+        input_bridge,
         "if (!repeated && pressed == keyDown[keyIndex])",
         "OpenGL held-key duplicate guard keeps repeats eligible",
     )
     require(
-        presenter,
+        key_bindings,
         "return normalChar == '\\b';",
         "OpenGL backspace repeat whitelist",
     )

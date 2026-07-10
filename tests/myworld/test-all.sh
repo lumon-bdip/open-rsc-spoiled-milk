@@ -66,6 +66,7 @@ python3 ./tests/myworld/test-player-release.py
 python3 ./tests/myworld/test-foundation-optimization-guards.py
 python3 ./tests/myworld/test-server-sync-modernization.py
 python3 ./tests/myworld/test-client-region-load-performance.py
+./tests/myworld/test-renderer-guardrails.sh
 python3 ./tests/myworld/test-path-queue-regressions.py
 python3 ./tests/myworld/test-packet-shape-guards.py
 python3 ./tests/myworld/test-ranged-runtime-tables.py
@@ -96,7 +97,6 @@ python3 ./tests/myworld/test-ground-item-stack-amounts.py
 python3 ./tests/myworld/test-ground-item-identity.py
 python3 ./tests/myworld/test-ground-item-rendering.py
 python3 ./tests/myworld/test-scene-entity-lifecycle.py
-python3 ./tests/myworld/test-renderer-relog-resident-world.py
 python3 ./tests/myworld/test-herblaw-cleanup.py
 python3 ./tests/myworld/test-herblaw-remap.py
 python3 ./tests/myworld/test-burnt-food-ashes.py

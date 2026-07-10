@@ -3,8 +3,14 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
 FRAME_CAPTURE = ROOT / "PC_Client/src/orsc/OpenGLFrameCapture.java"
+CAPTURE_SUBSYSTEM = (
+    ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java",
+    ROOT / "PC_Client/src/orsc/OpenGLInputBridge.java",
+    ROOT / "PC_Client/src/orsc/OpenGLCompositeSceneBuilder.java",
+    ROOT / "PC_Client/src/orsc/OpenGLWorldMeshRenderer.java",
+    ROOT / "PC_Client/src/orsc/OpenGLWorldSpriteDrawController.java",
+)
 DEPTH_FRAME = ROOT / "Client_Base/src/orsc/graphics/three/Renderer3DDepthFrame.java"
 PLAN = ROOT / "docs/myworld/in-progress-work-plans/renderer-v2-plan.md"
 
@@ -20,9 +26,9 @@ def forbid(text: str, needle: str, label: str) -> None:
 
 
 def main() -> None:
-    presenter = PRESENTER.read_text(encoding="utf-8")
     frame_capture = FRAME_CAPTURE.read_text(encoding="utf-8")
-    presenter = presenter + "\n" + frame_capture
+    presenter = "\n".join(path.read_text(encoding="utf-8") for path in CAPTURE_SUBSYSTEM)
+    presenter += "\n" + frame_capture
     depth_frame = DEPTH_FRAME.read_text(encoding="utf-8")
     plan = PLAN.read_text(encoding="utf-8")
 
