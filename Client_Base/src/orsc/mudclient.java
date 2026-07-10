@@ -205,6 +205,7 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_ELDER_DRAGON_BURN = 63;
 	public static final int COMBAT_EFFECT_TRUE_DEFENSE = 64;
 	public static final int COMBAT_EFFECT_TELEPORT = 65;
+	public static final int COMBAT_EFFECT_DEMON_EXPLOSION = COMBAT_EFFECT_LESSER_DEMON_MAGIC;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
 	public static final int COMBAT_EFFECT_WATER_ERUPTION = COMBAT_EFFECT_HURRICANE;
@@ -24942,6 +24943,18 @@ public final class mudclient implements Runnable {
 		}
 		if (projectileId == PROJECTILE_TYPES.WOOD_LEAD_2.id()) {
 			return effectType == COMBAT_EFFECT_WOOD_DRILL;
+		}
+		if (projectileId == PROJECTILE_TYPES.ROCK_THROW.id()) {
+			return effectType == COMBAT_EFFECT_EARTH_BURST;
+		}
+		if (projectileId == PROJECTILE_TYPES.WATER_BALL.id()) {
+			return effectType == COMBAT_EFFECT_WATER_ERUPTION;
+		}
+		if (projectileId == PROJECTILE_TYPES.FIREBALL.id()) {
+			return effectType == COMBAT_EFFECT_EXPLOSION
+				|| effectType == COMBAT_EFFECT_DEMON_EXPLOSION
+				|| effectType == COMBAT_EFFECT_BLACK_DEMON_MAGIC
+				|| effectType == COMBAT_EFFECT_ELDER_DRAGON_BURN;
 		}
 		if (projectileId == PROJECTILE_TYPES.HOLY_MAGIC.id()) {
 			return effectType == COMBAT_EFFECT_SARADOMIN_STRIKE

@@ -69,6 +69,7 @@ public class CombatEffect {
 	public static final int ELDER_DRAGON_BURN = 63;
 	public static final int TRUE_DEFENSE = 64;
 	public static final int TELEPORT = 65;
+	public static final int DEMON_EXPLOSION = LESSER_DEMON_MAGIC;
 
 	public static final int HELLFIRE = HELLS_FIRE;
 	public static final int WIND_SLASH = AIR_SLASH;
@@ -109,18 +110,11 @@ public class CombatEffect {
 		}
 		switch (npcName.toLowerCase()) {
 			case "lesser demon":
-				return LESSER_DEMON_MAGIC;
 			case "greater demon":
 			case "chronozon":
-				return GREATER_DEMON_MAGIC;
+				return DEMON_EXPLOSION;
 			case "black demon":
 				return BLACK_DEMON_MAGIC;
-			case "balrog":
-				return BALROG_MAGIC;
-			case "otherworldly being":
-				return OTHERWORLDLY_BEING_MAGIC;
-			case "paladin":
-				return PALADIN_MAGIC;
 			default:
 				return NONE;
 		}

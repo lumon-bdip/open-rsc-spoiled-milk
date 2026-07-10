@@ -187,32 +187,45 @@ Add one row for every live effect as it enters a wave.
 
 | Wave | Live effect | Render component(s) | New asset key(s) | Legacy fallback | Automated check | Field test | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Basic elemental, holy, and physical ranged projectiles | Moving projectile | `acid-basic`, `earth-basic`, `fire-basic`, `ice-basic`, `thunder-basic`, `water-basic`, `wind-basic`, `wood-basic`, `holy-basic`, `arrow-basic`, `bolt-basic`, `dart-basic`, `throwing-knife-basic`, `shuriken-basic` | Only unclassified specialty projectiles | Added | Required | Field test |
+| 1 | Basic elemental, holy, and physical ranged projectiles | Moving projectile | `acid-basic`, `earth-basic`, `fire-basic`, `ice-basic`, `thunder-basic`, `water-basic`, `wind-basic`, `wood-basic`, `holy-basic`, `arrow-basic`, `bolt-basic`, `dart-basic`, `throwing-knife-basic`, `shuriken-basic` | Only unclassified specialty projectiles | Added | Accepted | Complete |
 | Foundation | Summoning charge and arrivals | On entity | To be assigned from copied legacy assets | Temporary | Existing summoning guardrail | Required | Pending |
-| 2 | Tornado | On-entity impact | `wind-3` | No | Added | Required | Field test |
-| 2 | Water Eruption | On-entity impact | `water-3` | No | Added | Required | Field test |
-| 2 | Earth Burst | On-entity impact | `earth-3` | No | Added | Required | Field test |
-| 2 | Explosion | On-entity impact | `explosion-vfx-3` | No | Added | Required | Field test |
-| 2 | Thunder Strike | On-entity impact | `thunder-3` | No | Added | Required | Field test |
-| 2 | Ice Crystal | On-entity impact | `ice-3` | No | Added | Required | Field test |
-| 2 | Acid Gush | On-entity impact | `acid-3` | No | Added | Required | Field test |
-| 2 | Battering Ram | On-entity impact | `wood-3` | No | Added | Required | Field test |
-| 2 | Iban Blast | Moving projectile, on-entity impact | `skull`, `thunder-explosion-start`, `thunder-explosion` | No | Added | Required | Field test |
-| 2 | Wind Beam | On-entity impact | `wind-4` | No | Added | Required | Field test |
-| 2 | Water Vortex | On-entity impact | `water-4-start`, `water-4-end` | No | Added | Required | Field test |
-| 2 | Earth Impale | On-entity impact | `earth-4` | No | Added | Required | Field test |
-| 2 | Fire Pillar | On-entity impact | `fire-4` | No | Added | Required | Field test |
-| 2 | Eye of Guthix | Moving projectile, on-entity impact | `holy-basic`, `dark-10` | No | Added | Required | Field test |
-| 2 | Saradomin Strike | Moving projectile, on-entity impact | `holy-basic`, `dark-11` | No | Added | Required | Field test |
-| 2 | Void of Zamorak | Moving projectile, on-entity impact | `holy-basic`, `dark-7-repeatable`, `dark-7-ending` | No | Added | Required | Field test |
-| 2 | Zamorak's Apocolypse | Moving projectile, on-entity impact | `holy-basic`, `dark-4` | No | Added | Required | Field test |
-| 2 | Saradomin Soul Slash | Moving projectile, on-entity impact | `holy-basic`, `dark-12` | No | Added | Required | Field test |
-| 2 | Claw of Guthix | Moving projectile, on-entity impact | `holy-basic`, `dark-6-diagonal` | No | Added | Required | Field test |
+| 2 | Tornado | On-entity impact | `wind-3` | No | Added | Accepted | Complete |
+| 2 | Water Eruption | On-entity impact | `water-3` | No | Added | Accepted | Complete |
+| 2 | Earth Burst | On-entity impact | `earth-3` | No | Added | Accepted | Complete |
+| 2 | Explosion | On-entity impact | `explosion-vfx-3` | No | Added | Accepted | Complete |
+| 2 | Thunder Strike | On-entity impact | `thunder-3` | No | Added | Accepted | Complete |
+| 2 | Ice Crystal | On-entity impact | `ice-3` | No | Added | Accepted | Complete |
+| 2 | Acid Gush | On-entity impact | `acid-3` | No | Added | Accepted | Complete |
+| 2 | Battering Ram | On-entity impact | `wood-3` | No | Added | Accepted | Complete |
+| 2 | Iban Blast | Moving projectile, on-entity impact | `skull`, `thunder-explosion-start`, `thunder-explosion` | No | Added | Accepted | Complete |
+| 2 | Wind Beam | On-entity impact | `wind-4` | No | Added | Accepted | Complete |
+| 2 | Water Vortex | On-entity impact | `water-4-start`, `water-4-end` | No | Added | Accepted | Complete |
+| 2 | Earth Impale | On-entity impact | `earth-4` | No | Added | Accepted | Complete |
+| 2 | Fire Pillar | On-entity impact | `fire-4` | No | Added | Accepted | Complete |
+| 2 | Eye of Guthix | Moving projectile, on-entity impact | `holy-basic`, `dark-10` | No | Added | Accepted | Complete |
+| 2 | Saradomin Strike | Moving projectile, on-entity impact | `holy-basic`, `dark-11` | No | Added | Accepted | Complete |
+| 2 | Void of Zamorak | Moving projectile, on-entity impact | `holy-basic`, `dark-7-repeatable`, `dark-7-ending` | No | Added | Accepted | Complete |
+| 2 | Zamorak's Apocolypse | Moving projectile, on-entity impact | `holy-basic`, `dark-4` | No | Added | Accepted | Complete |
+| 2 | Saradomin Soul Slash | Moving projectile, on-entity impact | `holy-basic`, `dark-12` | No | Added | Accepted | Complete |
+| 2 | Claw of Guthix | Moving projectile, on-entity impact | `holy-basic`, `dark-6-diagonal` | No | Added | Accepted | Complete |
+| 3 | Lesser Demon, Greater Demon, Chronozon | `fire-basic`, on-entity impact | `explosion-vfx-15` | No | Added | Required | Field test |
+| 3 | Black Demon | `fire-basic`, on-entity impact | `explosion-vfx-17` | No | Added | Required | Field test |
+| 3 | Elder Green Dragon burn | `fire-basic`, on-entity impact | `burn` | No | Added | Required | Field test |
+| 3 | Green dragon magic | `earth-basic`, on-entity impact | `earth-3` | No | Added | Required | Field test |
+| 3 | Blue dragon magic | `water-basic`, on-entity impact | `water-3` | No | Added | Required | Field test |
+| 3 | Red and other fire dragon magic | `fire-basic`, on-entity impact | `explosion-vfx-3` | No | Added | Required | Field test |
+| 3 | Ordinary elemental enemy magic | Moving projectile | Elemental `-basic` fallback | No | Added | Required | Field test |
 
 Wave 2 was deliberately approved as one player-spellbook completion batch
 rather than five smaller assignment groups. It also widens the Teleport sheet
 rendering by 25 percent after the corrected 48x64 slicing proved slightly too
 narrow in field testing.
+
+Player spellbook status: complete and accepted after field testing. Wave 3
+finishes ordinary enemy magic by removing legacy impact overlays from fallback
+casts. The requested `fire-3` dragon visual is the already accepted tier-three
+fire spell effect cataloged as `explosion-vfx-3`; no duplicate asset folder is
+required.
 
 Status values should be `Pending`, `In progress`, `Field test`, or `Complete`.
 An effect is not complete merely because its asset loads; placement, timing,

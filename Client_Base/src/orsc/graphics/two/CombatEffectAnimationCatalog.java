@@ -86,6 +86,12 @@ public final class CombatEffectAnimationCatalog {
 			"acid-3/Acid VFX 04(48x48).png", 23, 1, 0, 23, 64);
 		define(definitions, 37, "wood-3", ON_ENTITY,
 			"wood-3/Wood VFX 08(56x56).png", 14, 1, 0, 14, 64);
+		define(definitions, 42, "explosion-vfx-15", ON_ENTITY,
+			"explosions/Explosion VFX 15(32x32).png", 13, 1, 0, 13, 64);
+		define(definitions, 45, "explosion-vfx-17", ON_ENTITY,
+			"explosions/Explosion VFX 17(48x64).png", 11, 1, 0, 11, 64);
+		define(definitions, 63, "burn", ON_ENTITY,
+			"burn/Buff n Debuff P07 03.png", 16, 1, 0, 16, 64);
 		define(definitions, 65, "teleport", ON_ENTITY,
 			"teleport/Buff n Debuff P1 04.png", 24, 1, 0, 24, 64);
 
