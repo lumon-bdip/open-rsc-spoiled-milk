@@ -51,6 +51,8 @@ def main() -> int:
     require(combat_catalog, (
         'define(definitions, 6, "fire-2", ON_ENTITY, "fire-2/Fire Claw.png", 9, 1, 0, 9, 64);',
         'define(definitions, 8, "earth-2", ON_ENTITY, "earth-2/Earth Hammer (48x48).png", 5, 5, 0, 21, 64);',
+        'define(definitions, 16, "lesser-heal", ON_ENTITY,',
+        '"lesser-heal/Buff n Debuff P1 03.png", 12, 1, 0, 12, 64);',
         'define(definitions, 17, "greater-heal", ON_ENTITY,',
         'define(definitions, 18, "holy-vfx-09", ON_ENTITY,',
         '"Holy VFX 09/Holy Effect 09(16x16).png", 12, 1, 0, 12, 32);',
@@ -60,8 +62,8 @@ def main() -> int:
         'define(definitions, 33, "wood-2", ON_ENTITY, "wood-2/Wood VFX 04(32x48).png", 16, 1, 0, 15, 64);',
         'define(definitions, 65, "teleport", ON_ENTITY,',
     ), "CombatEffectAnimationCatalog.java")
-    assert 'define(definitions, 16, "lesser-heal"' not in combat_catalog, \
-        "lesser heal must use its centered legacy frame sequence"
+    assert "visibleCenterAnchored.add(16);" in combat_catalog, \
+        "lesser heal must keep each spritesheet frame centered on the player"
     assert "HorizontallyCentered" not in combat_catalog
 
     static_catalog = read("Client_Base/src/orsc/graphics/two/ProjectileStaticAnimationCatalog.java")
@@ -156,13 +158,21 @@ def main() -> int:
         'if ("Acid Splash".equalsIgnoreCase(spellName))',
         "public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;",
         "private static final int COMBAT_EFFECT_FRAME_TICKS = 3;",
-        "private static final int LESSER_HEAL_FRAME_TICKS = 8;",
-        "private static final int TELEPORT_FRAME_TICKS = 14;",
+        "private static final int LESSER_HEAL_FRAME_TICKS = 4;",
+        "private static final int TELEPORT_EFFECT_TICKS = 250;",
+        "private static final int TELEPORT_OPENING_FRAME_COUNT = 8;",
+        "private static final int TELEPORT_LOOP_START_FRAME = 8;",
+        "private static final int TELEPORT_LOOP_END_FRAME = 10;",
         "frameCount * getCombatEffectFrameTicks(effectType)",
         "if (effectType == COMBAT_EFFECT_LESSER_HEAL)",
         "return LESSER_HEAL_FRAME_TICKS;",
         "if (effectType == COMBAT_EFFECT_TELEPORT)",
-        "return TELEPORT_FRAME_TICKS;",
+        "return TELEPORT_EFFECT_TICKS;",
+        "getTeleportCurrentFrame(effectTime, duration, frameCount)",
+        "int finishStartFrame = TELEPORT_LOOP_END_FRAME + 1;",
+        "return TELEPORT_LOOP_START_FRAME + loopFrame;",
+        "anchorAnimationFrameToVisibleCenter",
+        "CombatEffectAnimationCatalog.isVisibleCenterAnchored(effectType)",
         "effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, size / 2) : size",
         "getCombatEffectScreenWidth",
         "getCombatEffectScreenHeight",
@@ -199,10 +209,6 @@ def main() -> int:
     assert re.search(
         r"godSpellProjectile, godSpellImpact, true\)\);", spell_handler
     ), "god spells must render their holy projectile before their impact"
-
-    lesser_heal_legacy = ROOT / "dev/myworld/assets/legacy animation folder/On Player/lesser-heal"
-    assert len(list(lesser_heal_legacy.glob("*.png"))) == 6, \
-        "lesser heal must retain its six centered legacy frames"
 
     migration_plan = read("docs/myworld/in-progress-work-plans/animation-asset-migration-plan.md")
     require(migration_plan, (

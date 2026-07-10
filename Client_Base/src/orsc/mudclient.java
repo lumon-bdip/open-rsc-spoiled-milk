@@ -215,8 +215,11 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_FRAME_TICKS = 3;
-	private static final int LESSER_HEAL_FRAME_TICKS = 8;
-	private static final int TELEPORT_FRAME_TICKS = 14;
+	private static final int LESSER_HEAL_FRAME_TICKS = 4;
+	private static final int TELEPORT_EFFECT_TICKS = 250;
+	private static final int TELEPORT_OPENING_FRAME_COUNT = 8;
+	private static final int TELEPORT_LOOP_START_FRAME = 8;
+	private static final int TELEPORT_LOOP_END_FRAME = 10;
 	private static final int COMBAT_EFFECT_STANDARD_SCREEN_SIZE = 64;
 	private static final int IBAN_BLAST_COMBAT_EFFECT_SCENE_SIZE = 336;
 	private static final int SUMMON_CHARGE_EFFECT_TICKS = 256;
@@ -19844,7 +19847,8 @@ public final class mudclient implements Runnable {
 				this.combatEffectFrameCounts[effectType] = appendExternalAnimationGridSheetFrames(
 					sheet, this.combatEffectSprites[effectType], definition.getMaxTargetSize(),
 					definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
-					definition.getFrameCount(), 0);
+					definition.getFrameCount(), 0,
+					CombatEffectAnimationCatalog.isVisibleCenterAnchored(effectType));
 				if (this.combatEffectFrameCounts[effectType] > 0) {
 					continue;
 				}
@@ -19977,8 +19981,7 @@ public final class mudclient implements Runnable {
 		}
 		return appendExternalAnimationNativeGridSheetFrames(sheet, targetFrames,
 			definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
-			definition.getFrameCount(),
-			ProjectileStaticAnimationCatalog.isSourceEdgeAnchored(definition.getKey()));
+			definition.getFrameCount());
 	}
 
 	private void loadExternalSpellIconSprites() {
@@ -20625,6 +20628,13 @@ public final class mudclient implements Runnable {
 
 	private int appendExternalAnimationGridSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize,
 			int columns, int rows, int firstFrameIndex, int frameCount, int loadedFrames) {
+		return appendExternalAnimationGridSheetFrames(sourceFile, targetFrames, maxTargetSize,
+			columns, rows, firstFrameIndex, frameCount, loadedFrames, false);
+	}
+
+	private int appendExternalAnimationGridSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize,
+			int columns, int rows, int firstFrameIndex, int frameCount, int loadedFrames,
+			boolean visibleCenterAnchored) {
 		try {
 			BufferedImage source = readAssetImage(sourceFile);
 			if (source == null || columns <= 0 || rows <= 0 || firstFrameIndex < 0 || frameCount <= 0
@@ -20644,6 +20654,9 @@ public final class mudclient implements Runnable {
 				int sourceX = (sheetFrameIndex % columns) * frameWidth;
 				int sourceY = (sheetFrameIndex / columns) * frameHeight;
 				BufferedImage frame = source.getSubimage(sourceX, sourceY, frameWidth, frameHeight);
+				if (visibleCenterAnchored) {
+					frame = anchorAnimationFrameToVisibleCenter(frame);
+				}
 				Sprite sprite = createExternalAnimationSprite(frame, maxTargetSize, sourceMaxSize);
 				if (sprite != null) {
 					targetFrames[loadedFrames++] = sprite;
@@ -20656,8 +20669,39 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	private BufferedImage anchorAnimationFrameToVisibleCenter(BufferedImage source) {
+		int minX = source.getWidth();
+		int minY = source.getHeight();
+		int maxX = -1;
+		int maxY = -1;
+		for (int y = 0; y < source.getHeight(); y++) {
+			for (int x = 0; x < source.getWidth(); x++) {
+				if (((source.getRGB(x, y) >>> 24) & 0xFF) >= 64) {
+					minX = Math.min(minX, x);
+					minY = Math.min(minY, y);
+					maxX = Math.max(maxX, x);
+					maxY = Math.max(maxY, y);
+				}
+			}
+		}
+		if (maxX < minX || maxY < minY) {
+			return source;
+		}
+		int shiftX = source.getWidth() / 2 - (minX + maxX + 1) / 2;
+		int shiftY = source.getHeight() / 2 - (minY + maxY + 1) / 2;
+		if (shiftX == 0 && shiftY == 0) {
+			return source;
+		}
+		BufferedImage anchored = new BufferedImage(
+			source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = anchored.createGraphics();
+		graphics.drawImage(source, shiftX, shiftY, null);
+		graphics.dispose();
+		return anchored;
+	}
+
 	private int appendExternalAnimationNativeGridSheetFrames(File sourceFile, Sprite[] targetFrames,
-			int columns, int rows, int firstFrameIndex, int frameCount, boolean sourceEdgeAnchored) {
+			int columns, int rows, int firstFrameIndex, int frameCount) {
 		try {
 			BufferedImage source = readAssetImage(sourceFile);
 			if (source == null || columns <= 0 || rows <= 0 || firstFrameIndex < 0 || frameCount <= 0
@@ -20675,9 +20719,6 @@ public final class mudclient implements Runnable {
 				int sheetFrameIndex = firstFrameIndex + frameIndex;
 				BufferedImage frame = source.getSubimage((sheetFrameIndex % columns) * frameWidth,
 					(sheetFrameIndex / columns) * frameHeight, frameWidth, frameHeight);
-				if (sourceEdgeAnchored) {
-					frame = anchorAnimationFrameToVisibleStart(frame);
-				}
 				int[] pixels = new int[frameWidth * frameHeight];
 				frame.getRGB(0, 0, frameWidth, frameHeight, pixels, 0, frameWidth);
 				for (int i = 0; i < pixels.length; i++) {
@@ -20695,26 +20736,6 @@ public final class mudclient implements Runnable {
 				+ ": " + e.getMessage());
 			return 0;
 		}
-	}
-
-	private BufferedImage anchorAnimationFrameToVisibleStart(BufferedImage source) {
-		int minX = source.getWidth();
-		for (int y = 0; y < source.getHeight(); y++) {
-			for (int x = 0; x < source.getWidth(); x++) {
-				if (((source.getRGB(x, y) >>> 24) & 0xFF) >= 64 && x < minX) {
-					minX = x;
-				}
-			}
-		}
-		if (minX <= 0 || minX >= source.getWidth()) {
-			return source;
-		}
-		BufferedImage anchored = new BufferedImage(
-			source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		Graphics2D graphics = anchored.createGraphics();
-		graphics.drawImage(source, -minX, 0, null);
-		graphics.dispose();
-		return anchored;
 	}
 
 	private int loadExternalAnimationSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize, int frameCount) {
@@ -21039,12 +21060,41 @@ public final class mudclient implements Runnable {
 		if (effectType == COMBAT_EFFECT_SUMMON) {
 			return getSummonChargeCurrentFrame(effectTime, duration, frameCount);
 		}
+		if (effectType == COMBAT_EFFECT_TELEPORT) {
+			return getTeleportCurrentFrame(effectTime, duration, frameCount);
+		}
 		int elapsed = duration - effectTime;
 		int frame = (elapsed * frameCount) / duration;
 		if (frame >= frameCount) {
 			frame = frameCount - 1;
 		}
 		return Math.max(0, frame);
+	}
+
+	private int getTeleportCurrentFrame(int effectTime, int duration, int frameCount) {
+		int finishStartFrame = TELEPORT_LOOP_END_FRAME + 1;
+		if (frameCount <= finishStartFrame) {
+			int elapsed = Math.max(0, duration - effectTime);
+			int frame = (elapsed * frameCount) / Math.max(1, duration);
+			return Math.max(0, Math.min(frameCount - 1, frame));
+		}
+		int elapsed = Math.max(0, duration - effectTime);
+		int openingTicks = TELEPORT_OPENING_FRAME_COUNT * COMBAT_EFFECT_FRAME_TICKS;
+		if (elapsed < openingTicks) {
+			return Math.min(TELEPORT_OPENING_FRAME_COUNT - 1,
+				elapsed / COMBAT_EFFECT_FRAME_TICKS);
+		}
+		int finishFrames = frameCount - finishStartFrame;
+		int finishTicks = finishFrames * COMBAT_EFFECT_FRAME_TICKS;
+		int finishStartTick = Math.max(openingTicks, duration - finishTicks);
+		if (elapsed >= finishStartTick) {
+			int finishFrame = finishStartFrame
+				+ (elapsed - finishStartTick) / COMBAT_EFFECT_FRAME_TICKS;
+			return Math.min(frameCount - 1, finishFrame);
+		}
+		int loopFrameCount = TELEPORT_LOOP_END_FRAME - TELEPORT_LOOP_START_FRAME + 1;
+		int loopFrame = ((elapsed - openingTicks) / COMBAT_EFFECT_FRAME_TICKS) % loopFrameCount;
+		return TELEPORT_LOOP_START_FRAME + loopFrame;
 	}
 
 	private int getSummonChargeCurrentFrame(int effectTime, int duration, int frameCount) {
@@ -21123,6 +21173,9 @@ public final class mudclient implements Runnable {
 		if (effectType == COMBAT_EFFECT_SUMMON) {
 			return SUMMON_CHARGE_EFFECT_TICKS;
 		}
+		if (effectType == COMBAT_EFFECT_TELEPORT) {
+			return TELEPORT_EFFECT_TICKS;
+		}
 		int frameCount = getCombatEffectFrameCount(effectType);
 		return frameCount <= 0 ? 0 : frameCount * getCombatEffectFrameTicks(effectType);
 	}
@@ -21130,9 +21183,6 @@ public final class mudclient implements Runnable {
 	private int getCombatEffectFrameTicks(int effectType) {
 		if (effectType == COMBAT_EFFECT_LESSER_HEAL) {
 			return LESSER_HEAL_FRAME_TICKS;
-		}
-		if (effectType == COMBAT_EFFECT_TELEPORT) {
-			return TELEPORT_FRAME_TICKS;
 		}
 		return COMBAT_EFFECT_FRAME_TICKS;
 	}
@@ -21317,13 +21367,24 @@ public final class mudclient implements Runnable {
 			int deltaX = victim.sceneScreenCenterX - caster.sceneScreenCenterX;
 			int deltaY = victim.sceneScreenCenterY - caster.sceneScreenCenterY;
 			int length = Math.max(1, (int) Math.round(Math.sqrt((double) deltaX * deltaX + (double) deltaY * deltaY)));
-			int thickness = Math.max(1, definition.getThickness());
-			Sprite scaled = getScaledStaticProjectileSprite(projectileId, frame, source, length, thickness);
+			int directionalFixedSize = ProjectileStaticAnimationCatalog.getDirectionalFixedSize(definition.getKey());
+			int renderLength = directionalFixedSize > 0
+				? Math.max(8, Math.min(length, directionalFixedSize))
+				: length;
+			int thickness = directionalFixedSize > 0
+				? renderLength
+				: Math.max(1, definition.getThickness());
+			Sprite scaled = getScaledStaticProjectileSprite(
+				projectileId, frame, source, renderLength, thickness);
 			if (scaled == null) {
 				continue;
 			}
-			int centerX = (caster.sceneScreenCenterX + victim.sceneScreenCenterX) / 2;
-			int centerY = (caster.sceneScreenCenterY + victim.sceneScreenCenterY) / 2;
+			int centerX = directionalFixedSize > 0
+				? caster.sceneScreenCenterX + (deltaX * renderLength) / (2 * length)
+				: (caster.sceneScreenCenterX + victim.sceneScreenCenterX) / 2;
+			int centerY = directionalFixedSize > 0
+				? caster.sceneScreenCenterY + (deltaY * renderLength) / (2 * length)
+				: (caster.sceneScreenCenterY + victim.sceneScreenCenterY) / 2;
 			int angle = (int) Math.round(Math.atan2(deltaY, deltaX) * 128.0D / Math.PI) & 255;
 			this.getSurface().drawMinimapSprite(scaled, centerY, centerX, 0, 128, angle);
 		}

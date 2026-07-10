@@ -2,7 +2,9 @@ package orsc.graphics.two;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 /** Spritesheet-backed on-entity spell effects keyed by stable combat-effect ID. */
 public final class CombatEffectAnimationCatalog {
@@ -43,11 +45,14 @@ public final class CombatEffectAnimationCatalog {
 	}
 
 	private static final Map<Integer, Definition> DEFINITIONS;
+	private static final Set<Integer> VISIBLE_CENTER_ANCHORED;
 
 	static {
 		LinkedHashMap<Integer, Definition> definitions = new LinkedHashMap<Integer, Definition>();
 		define(definitions, 6, "fire-2", ON_ENTITY, "fire-2/Fire Claw.png", 9, 1, 0, 9, 64);
 		define(definitions, 8, "earth-2", ON_ENTITY, "earth-2/Earth Hammer (48x48).png", 5, 5, 0, 21, 64);
+		define(definitions, 16, "lesser-heal", ON_ENTITY,
+			"lesser-heal/Buff n Debuff P1 03.png", 12, 1, 0, 12, 64);
 		define(definitions, 17, "greater-heal", ON_ENTITY,
 			"greater-heal/Buff n Debuff P07 04.png", 19, 1, 0, 19, 64);
 		define(definitions, 18, "holy-vfx-09", ON_ENTITY,
@@ -60,6 +65,10 @@ public final class CombatEffectAnimationCatalog {
 		define(definitions, 65, "teleport", ON_ENTITY,
 			"teleport/Buff n Debuff P1 04.png", 18, 1, 0, 18, 64);
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
+
+		LinkedHashSet<Integer> visibleCenterAnchored = new LinkedHashSet<Integer>();
+		visibleCenterAnchored.add(16);
+		VISIBLE_CENTER_ANCHORED = Collections.unmodifiableSet(visibleCenterAnchored);
 	}
 
 	private CombatEffectAnimationCatalog() {
@@ -81,6 +90,10 @@ public final class CombatEffectAnimationCatalog {
 
 	public static Definition getDefinition(int effectType) {
 		return DEFINITIONS.get(effectType);
+	}
+
+	public static boolean isVisibleCenterAnchored(int effectType) {
+		return VISIBLE_CENTER_ANCHORED.contains(effectType);
 	}
 
 	public static Map<Integer, Definition> getDefinitions() {

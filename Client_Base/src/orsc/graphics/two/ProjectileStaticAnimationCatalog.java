@@ -4,9 +4,7 @@ import com.openrsc.client.entityhandling.EntityHandler.PROJECTILE_TYPES;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 /** Caster-to-target animations that stay aligned instead of translating through the world. */
 public final class ProjectileStaticAnimationCatalog {
@@ -43,7 +41,7 @@ public final class ProjectileStaticAnimationCatalog {
 	}
 
 	private static final Map<Integer, Definition> DEFINITIONS;
-	private static final Set<String> SOURCE_EDGE_ANCHORED;
+	private static final Map<String, Integer> DIRECTIONAL_FIXED_SIZES;
 
 	static {
 		LinkedHashMap<Integer, Definition> definitions = new LinkedHashMap<Integer, Definition>();
@@ -53,9 +51,9 @@ public final class ProjectileStaticAnimationCatalog {
 			5, 5, 0, 25, 48);
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
 
-		LinkedHashSet<String> sourceEdgeAnchored = new LinkedHashSet<String>();
-		sourceEdgeAnchored.add("wind-2");
-		SOURCE_EDGE_ANCHORED = Collections.unmodifiableSet(sourceEdgeAnchored);
+		LinkedHashMap<String, Integer> directionalFixedSizes = new LinkedHashMap<String, Integer>();
+		directionalFixedSizes.put("wind-2", 96);
+		DIRECTIONAL_FIXED_SIZES = Collections.unmodifiableMap(directionalFixedSizes);
 	}
 
 	private ProjectileStaticAnimationCatalog() {
@@ -72,8 +70,9 @@ public final class ProjectileStaticAnimationCatalog {
 		return DEFINITIONS.get(projectileId);
 	}
 
-	public static boolean isSourceEdgeAnchored(String key) {
-		return SOURCE_EDGE_ANCHORED.contains(key);
+	public static int getDirectionalFixedSize(String key) {
+		Integer size = DIRECTIONAL_FIXED_SIZES.get(key);
+		return size == null ? 0 : size.intValue();
 	}
 
 	public static Map<Integer, Definition> getDefinitions() {

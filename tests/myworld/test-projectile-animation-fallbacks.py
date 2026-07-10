@@ -273,14 +273,17 @@ def main() -> None:
     static_catalog = (ROOT / "Client_Base/src/orsc/graphics/two/ProjectileStaticAnimationCatalog.java").read_text(
         encoding="utf-8"
     )
-    if 'sourceEdgeAnchored.add("wind-2");' not in static_catalog:
-        fail("Wind Slash must use a stable source-edge anchor")
+    if 'directionalFixedSizes.put("wind-2", 96);' not in static_catalog:
+        fail("Wind Slash must use its fixed-aspect directional layout")
     for snippet in (
-        "ProjectileStaticAnimationCatalog.isSourceEdgeAnchored(definition.getKey())",
-        "anchorAnimationFrameToVisibleStart",
+        "ProjectileStaticAnimationCatalog.getDirectionalFixedSize(definition.getKey())",
+        "int renderLength = directionalFixedSize > 0",
+        "caster.sceneScreenCenterX + (deltaX * renderLength) / (2 * length)",
     ):
         if snippet not in client:
-            fail(f"client is missing Wind Slash source-edge stabilization: {snippet}")
+            fail(f"client is missing Wind Slash fixed-aspect placement: {snippet}")
+    if "anchorAnimationFrameToVisibleStart" in client:
+        fail("Wind Slash must not rewrite source frames to fit Water Burst's stretch layout")
 
     if "private static final int BRANCH_SPORE_PROJECTILE_SCENE_SIZE = 96;" not in client:
         fail("wood-basic Spore must retain its half-size 96px scene footprint")
