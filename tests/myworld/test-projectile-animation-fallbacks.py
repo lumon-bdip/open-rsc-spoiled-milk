@@ -139,6 +139,27 @@ def main() -> None:
         if retired in client:
             fail(f"client still contains retired projectile behavior: {retired}")
 
+    direction_guard = re.search(
+        r"private boolean shouldMirrorProjectile\(ORSCharacter caster, ORSCharacter victim\) \{(.*?)\n\t\}",
+        client,
+        re.DOTALL,
+    )
+    if direction_guard is None:
+        fail("client is missing the moving-projectile direction guard")
+    direction_body = direction_guard.group(1)
+    for snippet in ("return deltaX < 0;", "return screenX < 0;"):
+        if snippet not in direction_body:
+            fail("left-to-right moving projectiles must select mirrored fallback frames")
+
+    if "private static final int BRANCH_SPORE_PROJECTILE_SCENE_SIZE = 96;" not in client:
+        fail("wood-basic Spore must retain its half-size 96px scene footprint")
+    if not re.search(
+        r"projectile\.id == PROJECTILE_TYPES\.BRANCH_SPORE\.id\(\)\) \{\s*"
+        r"return BRANCH_SPORE_PROJECTILE_SCENE_SIZE;",
+        client,
+    ):
+        fail("Spore must use its dedicated projectile scene size")
+
     spell_handler = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
     for projectile in ("WIND_ARROW", "ROCK_THROW", "WATER_BALL", "FIREBALL",
                        "THUNDER_BALL", "ICICLE_SHOT", "ACID_DROP", "BRANCH_SPORE"):

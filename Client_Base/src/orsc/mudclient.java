@@ -235,6 +235,7 @@ public final class mudclient implements Runnable {
 	private static final int PROJECTILE_STATIC_MIRROR_SLOTS = 256;
 	public static final int spriteProjectileStaticMirrorBase =
 		spriteProjectileEffectMirrorBase + PROJECTILE_EFFECT_SCENE_RANGE;
+	private static final int BRANCH_SPORE_PROJECTILE_SCENE_SIZE = 96;
 	private static final int MAX_SPELL_ICONS = 64;
 	private static final int MAGIC_ICON_COLUMNS = 4;
 	private static final int MAGIC_ICON_VISIBLE_ROWS = 2;
@@ -24523,10 +24524,6 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean shouldMirrorProjectile(ORSCharacter caster, ORSCharacter victim) {
-		return isProjectileCasterScreenRightOfVictim(caster, victim);
-	}
-
-	private boolean isProjectileCasterScreenRightOfVictim(ORSCharacter caster, ORSCharacter victim) {
 		if (caster == null || victim == null) {
 			return false;
 		}
@@ -24540,12 +24537,15 @@ public final class mudclient implements Runnable {
 		int cos = FastMath.trigTable_1024[angle + 1024];
 		int screenX = (int) (((long) deltaX * cos + (long) deltaZ * sin) >> 15);
 		if (screenX == 0) {
-			return deltaX > 0;
+			return deltaX < 0;
 		}
-		return screenX > 0;
+		return screenX < 0;
 	}
 
 	private int getProjectileSceneSize(SpriteDef projectile, boolean enemyProjectile) {
+		if (projectile != null && projectile.id == PROJECTILE_TYPES.BRANCH_SPORE.id()) {
+			return BRANCH_SPORE_PROJECTILE_SCENE_SIZE;
+		}
 		if (projectile != null && projectile.id == PROJECTILE_TYPES.THROWING_KNIFE.id()) {
 			return getProjectileSceneSizeForAnimatedEnemy(
 				projectile,

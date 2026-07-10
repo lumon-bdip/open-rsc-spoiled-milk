@@ -206,7 +206,7 @@ def main():
         "return -(size / 2);",
         "shouldMirrorDragonBreath(character.direction)",
         "shouldMirrorProjectile(var16, var3)",
-        "isProjectileCasterScreenRightOfVictim(caster, victim)",
+        "return screenX < 0;",
         "return mirrorX ? spriteProjectileStaticMirrorBase + projectile.id : projectile.id + spriteProjectile;",
         "private Sprite getMirroredStaticProjectileSprite(int projectileId)",
         "private static final int COMBAT_EFFECT_STANDARD_SCREEN_SIZE = 64;",
