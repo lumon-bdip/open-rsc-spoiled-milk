@@ -39,6 +39,7 @@ import orsc.graphics.three.Scene;
 import orsc.graphics.three.World;
 import orsc.graphics.two.Fonts;
 import orsc.graphics.two.MudClientGraphics;
+import orsc.graphics.two.ProjectileAnimationCatalog;
 import orsc.graphics.two.SpriteArchive.Subspace;
 import orsc.graphics.two.SpriteArchive.Unpacker;
 import orsc.graphics.two.SpriteArchive.Workspace;
@@ -234,7 +235,6 @@ public final class mudclient implements Runnable {
 	private static final int PROJECTILE_STATIC_MIRROR_SLOTS = 256;
 	public static final int spriteProjectileStaticMirrorBase =
 		spriteProjectileEffectMirrorBase + PROJECTILE_EFFECT_SCENE_RANGE;
-	private static final int IRON_THROWING_KNIFE_ITEM_ID = 1075;
 	private static final int MAX_SPELL_ICONS = 64;
 	private static final int MAGIC_ICON_COLUMNS = 4;
 	private static final int MAGIC_ICON_VISIBLE_ROWS = 2;
@@ -1030,7 +1030,7 @@ public final class mudclient implements Runnable {
 	private final Sprite[][] projectileEffectMirrorSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final Sprite[] projectileStaticMirrorSprites = new Sprite[PROJECTILE_STATIC_MIRROR_SLOTS];
 	private final int[] projectileEffectFrameCounts = new int[CUSTOM_PROJECTILE_COUNT];
-	private final String[] projectileEffectNames = new String[] {
+	private final String[] legacyProjectileEffectNames = new String[] {
 		"blow-smoke", "fireball", "wind-arrow", "rock-throw", "water-ball", "throwing-knife", "arrow", "dart",
 		"claws-of-guthix", "thunder-ball", "icicle-shot", "acid-drop", "spore", "bolt", "enemy-fire-basic", "holy-magic",
 		"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic",
@@ -6743,15 +6743,6 @@ public final class mudclient implements Runnable {
 									/ this.projectileMaxRange;
 								int var13 = ((this.projectileMaxRange - var3.projectileRange) * var9
 									+ var6 * var3.projectileRange) / this.projectileMaxRange;
-								if (isRootedProjectile(projectileDef)) {
-									var11 = var8;
-									var12 = var10;
-									var13 = var9;
-								} else if (isCasterRootedProjectile(projectileDef)) {
-									var11 = var5;
-									var12 = var7;
-									var13 = var6;
-								}
 								if (!canDrawWorldSpriteAtLocalPixel(var11, var13)) {
 									continue;
 								}
@@ -6799,15 +6790,6 @@ public final class mudclient implements Runnable {
 									/ this.projectileMaxRange;
 								int var13 = ((this.projectileMaxRange - var3.projectileRange) * var9
 									+ var6 * var3.projectileRange) / this.projectileMaxRange;
-								if (isRootedProjectile(projectileDef)) {
-									var11 = var8;
-									var12 = var10;
-									var13 = var9;
-								} else if (isCasterRootedProjectile(projectileDef)) {
-									var11 = var5;
-									var12 = var7;
-									var13 = var6;
-								}
 								if (!canDrawWorldSpriteAtLocalPixel(var11, var13)) {
 									continue;
 								}
@@ -19265,10 +19247,10 @@ public final class mudclient implements Runnable {
 		return candidateBases[0].resolve(candidateNames[0]).toFile();
 	}
 
-	private File getExternalAnimationFolder(String category, String animationName) {
+	private File getLegacyExternalAnimationFolder(String category, String animationName) {
 		Path[] candidateBases = getAssetCandidateBases(
-			"dev/myworld/assets/animations",
-			"output/animations"
+			"dev/myworld/assets/legacy animation folder",
+			"output/legacy animations"
 		);
 		for (Path basePath : candidateBases) {
 			File candidate = basePath.resolve(category).resolve(animationName).toFile();
@@ -19277,6 +19259,20 @@ public final class mudclient implements Runnable {
 			}
 		}
 		return candidateBases[0].resolve(category).resolve(animationName).toFile();
+	}
+
+	private File getExternalAnimationSheet(String relativePath) {
+		Path[] candidateBases = getAssetCandidateBases(
+			"dev/myworld/assets/animations/" + ProjectileAnimationCatalog.CATEGORY,
+			"output/animations/" + ProjectileAnimationCatalog.CATEGORY
+		);
+		for (Path basePath : candidateBases) {
+			File candidate = basePath.resolve(relativePath).toFile();
+			if (assetFileExists(candidate)) {
+				return candidate;
+			}
+		}
+		return candidateBases[0].resolve(relativePath).toFile();
 	}
 
 	private File getExternalEquipmentNumberedFolder(String equipmentName) {
@@ -19768,18 +19764,18 @@ public final class mudclient implements Runnable {
 		for (int effectType = 1; effectType <= COMBAT_EFFECT_COUNT; effectType++) {
 			String effectName = getCombatEffectName(effectType);
 			String assetName = getCombatEffectAssetName(effectName);
-			File effectFolder = getExternalAnimationFolder("On Player", effectName);
+			File effectFolder = getLegacyExternalAnimationFolder("On Player", effectName);
 			if (!assetDirectoryExists(effectFolder)) {
-				effectFolder = getExternalAnimationFolder("On Enemy", assetName);
+				effectFolder = getLegacyExternalAnimationFolder("On Enemy", assetName);
 			}
 			if (!assetDirectoryExists(effectFolder)) {
-				effectFolder = getExternalAnimationFolder("On Player", assetName);
+				effectFolder = getLegacyExternalAnimationFolder("On Player", assetName);
 			}
 			if (!assetDirectoryExists(effectFolder)) {
-				effectFolder = getExternalAnimationFolder("on summon", assetName);
+				effectFolder = getLegacyExternalAnimationFolder("on summon", assetName);
 			}
 			if (!assetDirectoryExists(effectFolder)) {
-				effectFolder = getExternalAnimationFolder("On Summon", assetName);
+				effectFolder = getLegacyExternalAnimationFolder("On Summon", assetName);
 			}
 			this.combatEffectFrameCounts[effectType] = loadExternalAnimationFrames(
 				effectFolder, this.combatEffectSprites[effectType], 64, "COMBAT_EFFECT_ASSET", assetName);
@@ -19813,13 +19809,34 @@ public final class mudclient implements Runnable {
 
 	private void loadExternalProjectileEffectSprites() {
 		for (int i = 0; i < CUSTOM_PROJECTILE_COUNT; i++) {
-			String effectName = this.projectileEffectNames[i];
-			File effectFolder = getExternalAnimationFolder("Projectiles", effectName);
+			int projectileId = CUSTOM_PROJECTILE_FIRST + i;
+			ProjectileAnimationCatalog.Definition definition =
+				ProjectileAnimationCatalog.getProjectileFallback(projectileId);
+			if (definition != null) {
+				this.projectileEffectFrameCounts[i] = loadProjectileAnimationSheet(
+					definition, this.projectileEffectSprites[i]);
+				continue;
+			}
+			String legacyEffectName = this.legacyProjectileEffectNames[i];
+			File effectFolder = getLegacyExternalAnimationFolder("Projectiles", legacyEffectName);
 			this.projectileEffectFrameCounts[i] = loadExternalAnimationFrames(
-				effectFolder, this.projectileEffectSprites[i], 64, "PROJECTILE_EFFECT_ASSET", effectName);
+				effectFolder, this.projectileEffectSprites[i], 64,
+				"LEGACY_PROJECTILE_EFFECT_ASSET", legacyEffectName);
 		}
-		this.generateThrowingKnifeProjectileFrames();
-		this.generateShurikenProjectileFrames();
+	}
+
+	private int loadProjectileAnimationSheet(ProjectileAnimationCatalog.Definition definition,
+			Sprite[] targetFrames) {
+		Arrays.fill(targetFrames, null);
+		File sheet = getExternalAnimationSheet(definition.getSheetPath());
+		if (!assetFileExists(sheet)) {
+			System.out.println("Missing projectile animation sheet " + definition.getKey()
+				+ ": " + sheet.getPath());
+			return 0;
+		}
+		return appendExternalAnimationGridSheetFrames(sheet, targetFrames,
+			definition.getMaxTargetSize(), definition.getColumns(), definition.getRows(),
+			definition.getFirstFrame(), definition.getFrameCount(), 0);
 	}
 
 	private void loadExternalSpellIconSprites() {
@@ -20623,92 +20640,6 @@ public final class mudclient implements Runnable {
 		return sprite;
 	}
 
-	private void generateThrowingKnifeProjectileFrames() {
-		int projectileIndex = PROJECTILE_TYPES.THROWING_KNIFE.id() - CUSTOM_PROJECTILE_FIRST;
-		if (projectileIndex < 0 || projectileIndex >= this.projectileEffectSprites.length) {
-			return;
-		}
-
-			ItemDef itemDef = EntityHandler.getItemDef(IRON_THROWING_KNIFE_ITEM_ID);
-			if (itemDef == null) {
-				return;
-			}
-
-			Sprite sourceSprite = spriteSelect(itemDef);
-			if (sourceSprite == null || sourceSprite.getWidth() <= 0 || sourceSprite.getHeight() <= 0) {
-				return;
-			}
-
-		BufferedImage source = createMaskedItemImage(sourceSprite, itemDef.getPictureMask(), itemDef.getBlueMask());
-			BufferedImage cropped = cropVisibleImage(source);
-			if (cropped == null) {
-				return;
-			}
-
-		final int throwingKnifeFrameCount = 8;
-		for (int frame = 0; frame < throwingKnifeFrameCount; frame++) {
-			this.projectileEffectSprites[projectileIndex][frame] = createRotatedProjectileSprite(cropped, frame * 45.0D, 52);
-			}
-			this.projectileEffectFrameCounts[projectileIndex] = throwingKnifeFrameCount;
-		}
-
-	private void generateShurikenProjectileFrames() {
-		int projectileIndex = PROJECTILE_TYPES.SHURIKEN.id() - CUSTOM_PROJECTILE_FIRST;
-		if (projectileIndex < 0 || projectileIndex >= this.projectileEffectSprites.length) {
-			return;
-		}
-
-		Sprite sourceSprite = loadExternalItemSprite(getExternalPngFile("shuriken-thrown"), 46, 30);
-		if (sourceSprite == null || sourceSprite.getWidth() <= 0 || sourceSprite.getHeight() <= 0) {
-			return;
-		}
-
-		BufferedImage source = createMaskedItemImage(sourceSprite, 0xFFFFFF, 0);
-		BufferedImage cropped = cropVisibleImage(source);
-		if (cropped == null) {
-			return;
-		}
-
-		final int shurikenFrameCount = 8;
-		for (int frame = 0; frame < shurikenFrameCount; frame++) {
-			this.projectileEffectSprites[projectileIndex][frame] = createRotatedProjectileSprite(cropped, frame * 45.0D, 52);
-		}
-		this.projectileEffectFrameCounts[projectileIndex] = shurikenFrameCount;
-	}
-
-	private BufferedImage createMaskedItemImage(Sprite sourceSprite, int mask, int blueMask) {
-		BufferedImage image = new BufferedImage(sourceSprite.getWidth(), sourceSprite.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		int[] pixels = sourceSprite.getPixels();
-		for (int y = 0; y < sourceSprite.getHeight(); y++) {
-			for (int x = 0; x < sourceSprite.getWidth(); x++) {
-				int sourcePixel = pixels[y * sourceSprite.getWidth() + x];
-				if (sourcePixel == 0) {
-					continue;
-				}
-				image.setRGB(x, y, 0xFF000000 | applySpriteColorMask(sourcePixel, mask, blueMask));
-			}
-		}
-		return image;
-	}
-
-	private int applySpriteColorMask(int sourcePixel, int mask, int blueMask) {
-		int red = sourcePixel >> 16 & 0xFF;
-		int green = sourcePixel >> 8 & 0xFF;
-		int blue = sourcePixel & 0xFF;
-
-		if (red == green && green == blue) {
-			red = ((mask >> 16 & 0xFF) * red) >> 8;
-			green = ((mask >> 8 & 0xFF) * green) >> 8;
-			blue = ((mask & 0xFF) * blue) >> 8;
-		} else if (blueMask != 0 && red == green && blue != red) {
-			int shifter = red * blue;
-			red = ((blueMask >> 16 & 0xFF) * shifter) >> 16;
-			green = ((blueMask >> 8 & 0xFF) * shifter) >> 16;
-			blue = ((blueMask & 0xFF) * shifter) >> 16;
-		}
-		return (red << 16) | (green << 8) | blue;
-	}
-
 	private int getExternalSpritePixel(int argb, int alphaThreshold) {
 		int alpha = argb >>> 24;
 		if (alpha < alphaThreshold) {
@@ -20737,43 +20668,6 @@ public final class mudclient implements Runnable {
 			return null;
 		}
 		return source.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
-	}
-
-	private Sprite createRotatedProjectileSprite(BufferedImage source, double degrees, int maxTargetSize) {
-		int targetWidth = maxTargetSize;
-		int targetHeight = Math.max(1, (source.getHeight() * targetWidth) / Math.max(1, source.getWidth()));
-		if (targetHeight > maxTargetSize) {
-			targetHeight = maxTargetSize;
-			targetWidth = Math.max(1, (source.getWidth() * targetHeight) / Math.max(1, source.getHeight()));
-		}
-
-		BufferedImage scaledSource = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D scaleGraphics = scaledSource.createGraphics();
-		scaleGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-		scaleGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-		scaleGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-		scaleGraphics.drawImage(source, (64 - targetWidth) / 2, (64 - targetHeight) / 2, targetWidth, targetHeight, null);
-		scaleGraphics.dispose();
-
-		BufferedImage rotated = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D rotateGraphics = rotated.createGraphics();
-		rotateGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-		rotateGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-		rotateGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-		rotateGraphics.rotate(Math.toRadians(degrees), 32, 32);
-		rotateGraphics.drawImage(scaledSource, 0, 0, null);
-		rotateGraphics.dispose();
-
-		int[] pixels = new int[64 * 64];
-		rotated.getRGB(0, 0, 64, 64, pixels, 0, 64);
-		for (int i = 0; i < pixels.length; i++) {
-			pixels[i] = getExternalSpritePixel(pixels[i], 64);
-		}
-		Sprite sprite = new Sprite(pixels, 64, 64);
-		sprite.setShift(0, 0);
-		sprite.setRequiresShift(false);
-		sprite.setSomething(64, 64);
-		return sprite;
 	}
 
 	private Sprite loadExternalWorldSprite(File sourceFile, int maxTargetSize) {
@@ -24616,14 +24510,6 @@ public final class mudclient implements Runnable {
 		}
 		int projectileIndex = projectile.id - CUSTOM_PROJECTILE_FIRST;
 		int frameCount = projectileEffectFrameCounts[projectileIndex];
-		if (frameCount <= 0 && projectile.id == PROJECTILE_TYPES.THROWING_KNIFE.id()) {
-			generateThrowingKnifeProjectileFrames();
-			frameCount = projectileEffectFrameCounts[projectileIndex];
-		}
-		if (frameCount <= 0 && projectile.id == PROJECTILE_TYPES.SHURIKEN.id()) {
-			generateShurikenProjectileFrames();
-			frameCount = projectileEffectFrameCounts[projectileIndex];
-		}
 		if (frameCount <= 0) {
 			return mirrorX ? spriteProjectileStaticMirrorBase + projectile.id : projectile.getAuthenticSpriteID();
 		}
@@ -24735,14 +24621,6 @@ public final class mudclient implements Runnable {
 			|| projectile.id == PROJECTILE_TYPES.CHAIN_LIGHTNING_A.id()
 			|| projectile.id == PROJECTILE_TYPES.CHAIN_LIGHTNING_B.id()
 			|| projectile.id == PROJECTILE_TYPES.CHAIN_LIGHTNING_C.id();
-	}
-
-	private boolean isRootedProjectile(SpriteDef projectile) {
-		return projectile != null && projectile.id == PROJECTILE_TYPES.ENEMY_WATER_BASIC.id();
-	}
-
-	private boolean isCasterRootedProjectile(SpriteDef projectile) {
-		return projectile != null && projectile.id == PROJECTILE_TYPES.BLUE_DRAGON_MAGIC.id();
 	}
 
 	private boolean isDualElementProjectile(SpriteDef projectile) {

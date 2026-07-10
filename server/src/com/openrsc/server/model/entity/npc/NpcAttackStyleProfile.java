@@ -117,34 +117,17 @@ public enum NpcAttackStyleProfile {
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return Projectile.MAGIC;
 		}
-		if (isKolodionIntroForm(npc)) {
-			return getKolodionIntroProjectile(element);
-		}
 		if (isKolodionSpiderForm(npc)) {
 			return Projectile.ACID_DROP;
 		}
-		if (isKolodionSoulessForm(npc)) {
-			return Projectile.MAGIC;
-		}
-		if (isKolodionDemonForm(npc)) {
-			return Projectile.MAGIC;
-		}
 		final String name = npc.getDef().getName().toLowerCase();
-		if (npc.getID() == NpcId.BLUE_DRAGON.id()) {
-			return Projectile.BLUE_DRAGON_MAGIC;
+		if (element == NpcMagicElement.NONE && isHolyMagicNpcName(name)) {
+			return Projectile.HOLY_MAGIC;
 		}
 		switch (element) {
 			case AIR:
-				if (usesBasicCasterAirProjectile(name)) {
-					return Projectile.ENEMY_AIR_BASIC;
-				}
 				return Projectile.WIND_ARROW;
 			case WATER:
-				if (usesBasicCasterWaterProjectile(name)
-					|| usesIceKinMagic(name)
-					|| npc.getID() == NpcId.BABY_BLUE_DRAGON.id()) {
-					return Projectile.ENEMY_WATER_BASIC;
-				}
 				return Projectile.WATER_BALL;
 			case EARTH:
 				if (usesBasicCasterEarthImpact(name)) {
@@ -152,14 +135,14 @@ public enum NpcAttackStyleProfile {
 				}
 				return Projectile.ROCK_THROW;
 			case FIRE:
-				return Projectile.ENEMY_FIRE_BASIC;
+				return Projectile.FIREBALL;
+			case THUNDER:
+				return Projectile.THUNDER_BALL;
+			case WOOD:
+				return Projectile.BRANCH_SPORE;
 			default:
-				break;
+				return Projectile.MAGIC;
 		}
-		if (isHolyMagicNpcName(name)) {
-			return Projectile.HOLY_MAGIC;
-		}
-		return Projectile.MAGIC;
 	}
 
 	public int getMagicImpactEffect(final Npc npc, final NpcMagicElement element) {
@@ -247,21 +230,6 @@ public enum NpcAttackStyleProfile {
 				return CombatEffect.BATTERING_RAM;
 			default:
 				return CombatEffect.NONE;
-		}
-	}
-
-	private static int getKolodionIntroProjectile(final NpcMagicElement element) {
-		switch (element) {
-			case AIR:
-				return Projectile.WIND_ARROW;
-			case WATER:
-				return Projectile.WATER_BALL;
-			case EARTH:
-				return Projectile.ROCK_THROW;
-			case FIRE:
-				return Projectile.FIREBALL;
-			default:
-				return Projectile.MAGIC;
 		}
 	}
 

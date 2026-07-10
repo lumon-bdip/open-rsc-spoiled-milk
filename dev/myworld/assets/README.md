@@ -10,9 +10,16 @@ Use `output/` for generated exports, diagnostics, and manual review images.
   and faction skill-XP prayer tiers.
 - `sprites/UI/summon/`: summon menu icons named after their display names.
 - `sprites/UI/magic/`: magic menu icons named after their display names.
-- `animations/`: runtime animation frame folders. The current client expects the existing category folder names, such as `On Enemy`, `On Player`, and `Projectiles`.
+- `animations/`: preferred animation library grouped by `projectile-moving`,
+  `projectile-static`, and `on-entity`. Promoted runtime effects use generic
+  catalog keys such as `water-basic`, not names tied to one spell or NPC.
+- `legacy animation folder/`: temporary migration fallback for explicitly
+  unmigrated specialty effects. Do not add new effects here.
 
-The client searches these folders before the legacy `output/` paths, so new assets should be placed here first.
+The client loads promoted projectile spritesheets from the new animation
+catalog and consults the legacy folder only for an explicit fallback. PNG
+spritesheets are runtime inputs; editable files such as `.aseprite` sources are
+kept for asset work but are not packaged into the client.
 
 ## Credits And Provenance
 

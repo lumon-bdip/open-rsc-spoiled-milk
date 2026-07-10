@@ -4,7 +4,7 @@ import struct
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ASSETS = ROOT / "dev" / "myworld" / "assets" / "animations"
+ASSETS = ROOT / "dev" / "myworld" / "assets" / "legacy animation folder"
 MAGIC_UI_ASSETS = ROOT / "dev" / "myworld" / "assets" / "sprites" / "UI" / "magic"
 
 
@@ -149,7 +149,9 @@ def main():
         'if ("corrosive-aura".equals(animationName))',
         'if ("true-defense".equals(animationName))',
         "targetFrames, maxTargetSize, 22, 1, 22, 0);",
-        "final int throwingKnifeFrameCount = 8;",
+        "ProjectileAnimationCatalog.getProjectileFallback(projectileId)",
+        "loadProjectileAnimationSheet(",
+        'getLegacyExternalAnimationFolder("Projectiles", legacyEffectName)',
         "private static final int THROWING_KNIFE_PROJECTILE_SCENE_SIZE = 32;",
         "private static final int SHURIKEN_PROJECTILE_SCENE_SIZE = 64;",
         "projectile.id == PROJECTILE_TYPES.THROWING_KNIFE.id()",
@@ -291,7 +293,7 @@ def main():
         "return CombatEffect.FIRE_PILLAR;",
     ], "SpellHandler.java")
 
-    print("PASS: renamed magic animations use the supplied frames and sprite-sheet geometry")
+    print("PASS: legacy magic animations retain their supplied frames and sprite-sheet geometry")
 
 
 if __name__ == "__main__":

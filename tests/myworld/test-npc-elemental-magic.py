@@ -17,6 +17,7 @@ SERVER_PROJECTILE = ROOT / "server/src/com/openrsc/server/model/entity/update/Pr
 SERVER_COMBAT_EFFECT = ROOT / "server/src/com/openrsc/server/model/entity/update/CombatEffect.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 CLIENT_MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+CLIENT_PROJECTILE_CATALOG = ROOT / "Client_Base/src/orsc/graphics/two/ProjectileAnimationCatalog.java"
 
 
 def fail(message: str) -> NoReturn:
@@ -45,6 +46,7 @@ def main() -> None:
 	server_combat_effect = SERVER_COMBAT_EFFECT.read_text(encoding="utf-8")
 	client_entity_handler = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
 	client_mudclient = CLIENT_MUDCLIENT.read_text(encoding="utf-8")
+	client_projectile_catalog = CLIENT_PROJECTILE_CATALOG.read_text(encoding="utf-8")
 
 	for name in ("NONE", "AIR", "WATER", "EARTH", "FIRE", "THUNDER", "WOOD"):
 		require(element, name, f"NPC magic element {name}")
@@ -62,7 +64,7 @@ def main() -> None:
 	require(profile, "return Projectile.HOLY_MAGIC;", "Holy magic NPCs should use the holy magic projectile")
 	require(profile, "return NpcMagicElement.NONE;", "Untyped NPC magic should be supported")
 	require(profile, "usesBasicCasterFireProjectile(name)", "Basic fire projectile should be limited to basic fire casters")
-	require(profile, "return Projectile.ENEMY_FIRE_BASIC;", "Basic fire casters should use the enemy-fire-basic projectile")
+	require(profile, "return Projectile.FIREBALL;", "Elemental fire projectiles should use the reusable fire fallback")
 	require(profile, "if (usesBasicCasterFireProjectile(name)) {\n\t\t\t\t\treturn CombatEffect.NONE;", "Basic fire casters should not layer fire claw impact over the projectile")
 	require(profile, "if (usesBasicCasterAirProjectile(name)) {\n\t\t\t\t\treturn CombatEffect.NONE;", "Basic air casters should not layer wind slash impact over the projectile")
 	require(profile, "if (usesBasicCasterWaterProjectile(name)) {\n\t\t\t\t\treturn CombatEffect.NONE;", "Basic water casters should not layer water burst impact over the projectile")
@@ -70,12 +72,12 @@ def main() -> None:
 	require(profile, "\"necromancer\".equals(name)", "Necromancer fire spells should use basic caster fireball")
 	require(profile, "\"skeleton mage\".equals(name)", "Skeleton mage fire spells should use basic caster fireball")
 	require(profile, "usesBasicCasterAirProjectile(name)", "Basic air projectile should be limited to basic casters")
-	require(profile, "return Projectile.ENEMY_AIR_BASIC;", "Basic caster air spells should use enemy air projectile")
+	require(profile, "return Projectile.WIND_ARROW;", "Elemental air projectiles should use the reusable wind fallback")
 	require(profile, "\"witch\".equals(name)", "Witch air spells should use basic enemy air projectile")
 	require(profile, "usesBasicCasterWaterProjectile(name)", "Basic water projectile should be limited to basic casters")
-	require(profile, "return Projectile.ENEMY_WATER_BASIC;", "Basic caster water spells should use enemy water projectile")
-	require(profile, "npc.getID() == NpcId.BLUE_DRAGON.id()", "Adult blue dragons should use their own magic projectile")
-	require(profile, "return Projectile.BLUE_DRAGON_MAGIC;", "Adult blue dragons should use the blue dragon beam projectile")
+	require(profile, "return Projectile.WATER_BALL;", "Elemental water projectiles should use the reusable water fallback")
+	require(profile, "return Projectile.THUNDER_BALL;", "Elemental thunder projectiles should use the reusable thunder fallback")
+	require(profile, "return Projectile.BRANCH_SPORE;", "Elemental wood projectiles should use the reusable wood fallback")
 	require(profile, "getDragonMagicImpactEffect(element)", "Dragon magic should use dragon-specific impact effects")
 	require(profile, "return CombatEffect.GREEN_DRAGON_MAGIC;", "Earth dragons should use green dragon magic impact")
 	require(profile, "return CombatEffect.FIRE_DRAGON_MAGIC;", "Fire dragons should use fire dragon magic impact")
@@ -173,16 +175,14 @@ def main() -> None:
 	require(client_entity_handler, '"enemy air basic projectile"', "Client projectile definitions should include enemy air basic")
 	require(client_entity_handler, '"enemy water basic projectile"', "Client projectile definitions should include enemy water basic")
 	require(client_entity_handler, '"blue dragon magic projectile"', "Client projectile definitions should include blue dragon magic")
-	require(client_mudclient, '"enemy-air-basic"', "Client should load enemy-air-basic projectile asset folder")
-	require(client_mudclient, '"enemy-water-basic"', "Client should load enemy-water-basic projectile asset folder")
-	require(client_mudclient, '"blue-dragon-magic"', "Client should load blue-dragon-magic projectile asset folder")
+	require(client_projectile_catalog, 'fallback(fallbacks, PROJECTILE_TYPES.ENEMY_AIR_BASIC, "wind-basic")', "Legacy enemy air ids should reuse wind-basic")
+	require(client_projectile_catalog, 'fallback(fallbacks, PROJECTILE_TYPES.ENEMY_WATER_BASIC, "water-basic")', "Legacy enemy water ids should reuse water-basic")
+	require(client_projectile_catalog, 'fallback(fallbacks, PROJECTILE_TYPES.BLUE_DRAGON_MAGIC, "water-basic")', "Legacy blue dragon ids should reuse water-basic")
 	require(client_mudclient, "PROJECTILE_TYPES.ENEMY_AIR_BASIC.id()", "Client should size enemy air basic as a spell projectile")
 	require(client_mudclient, "PROJECTILE_TYPES.ENEMY_WATER_BASIC.id()", "Client should size enemy water basic as a spell projectile")
 	require(client_mudclient, "PROJECTILE_TYPES.BLUE_DRAGON_MAGIC.id()", "Client should size blue dragon magic as a spell projectile")
-	require(client_mudclient, "private boolean isRootedProjectile(SpriteDef projectile)", "Client should support rooted projectile visuals")
-	require(client_mudclient, "projectile.id == PROJECTILE_TYPES.ENEMY_WATER_BASIC.id()", "Enemy water basic should render as rooted projectile")
-	require(client_mudclient, "private boolean isCasterRootedProjectile(SpriteDef projectile)", "Client should support caster-rooted projectile visuals")
-	require(client_mudclient, "projectile.id == PROJECTILE_TYPES.BLUE_DRAGON_MAGIC.id()", "Blue dragon magic should render as a caster-rooted beam")
+	if "isRootedProjectile" in client_mudclient or "isCasterRootedProjectile" in client_mudclient:
+		fail("Moving elemental fallbacks must not retain the old rooted-projectile exceptions")
 	require(client_mudclient, "private int getPlayerProjectileCenterY(ORSCharacter player)", "Client should anchor player projectiles at body center")
 	require(client_mudclient, "private int getNpcProjectileCenterY(ORSCharacter npc)", "Client should anchor NPC projectiles at body center")
 	require(client_mudclient, "int projectileBottomY = getProjectileSpriteBottomY(var12, projectileSize);", "Client should draw projectile sprites centered on the projectile path")

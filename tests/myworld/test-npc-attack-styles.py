@@ -192,7 +192,7 @@ def main() -> None:
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.THROWING_KNIFE;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.THROWING_DART;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.BOLT;")
-    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.ENEMY_FIRE_BASIC;")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.FIREBALL;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.HOLY_MAGIC;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("wizard")')
     require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("zamorak")')

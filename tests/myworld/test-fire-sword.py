@@ -122,13 +122,13 @@ def main() -> None:
     require_sword_assets("fire-sword", "Fire sword", (48, 28))
     require_sword_assets("ice-sword", "Ice sword", (42, 29))
     require_sword_assets("earth-sword", "Earth sword", (46, 26), requires_equipment=False)
-    if png_size(ROOT / "dev/myworld/assets/animations/On Enemy/fire-sword/fire-sword1.png") != (32, 32):
+    if png_size(ROOT / "dev/myworld/assets/legacy animation folder/On Enemy/fire-sword/fire-sword1.png") != (32, 32):
         fail("Fire sword proc frame 1 must be a 32x32 On Enemy frame")
-    if png_size(ROOT / "dev/myworld/assets/animations/On Enemy/fire-sword/fire-sword13.png") != (32, 32):
+    if png_size(ROOT / "dev/myworld/assets/legacy animation folder/On Enemy/fire-sword/fire-sword13.png") != (32, 32):
         fail("Fire sword proc frame 13 must be a 32x32 On Enemy frame")
-    if png_size(ROOT / "dev/myworld/assets/animations/On Enemy/ice-sword/ice-sword.png") != (384, 32):
+    if png_size(ROOT / "dev/myworld/assets/legacy animation folder/On Enemy/ice-sword/ice-sword.png") != (384, 32):
         fail("Ice sword proc sheet must be a 12-frame 384x32 On Enemy sheet")
-    if png_size(ROOT / "dev/myworld/assets/animations/On Enemy/earth-sword/earth-sword.png") != (192, 32):
+    if png_size(ROOT / "dev/myworld/assets/legacy animation folder/On Enemy/earth-sword/earth-sword.png") != (192, 32):
         fail("Earth sword proc sheet must be a 6-frame 192x32 On Enemy sheet")
 
     item_id = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"

@@ -9,11 +9,11 @@ CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 COMBAT_EFFECT = ROOT / "server/src/com/openrsc/server/model/entity/update/CombatEffect.java"
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
-SUMMON_CHARGE_ASSET_DIR = ROOT / "dev/myworld/assets/animations/On Player/summon"
+SUMMON_CHARGE_ASSET_DIR = ROOT / "dev/myworld/assets/legacy animation folder/On Player/summon"
 SUMMON_ARRIVAL_ASSET_DIRS = [
-    ROOT / "dev/myworld/assets/animations/on summon/summon-combat",
-    ROOT / "dev/myworld/assets/animations/on summon/summon-support",
-    ROOT / "dev/myworld/assets/animations/on summon/summon-utility",
+    ROOT / "dev/myworld/assets/legacy animation folder/on summon/summon-combat",
+    ROOT / "dev/myworld/assets/legacy animation folder/on summon/summon-support",
+    ROOT / "dev/myworld/assets/legacy animation folder/on summon/summon-utility",
 ]
 
 
@@ -49,8 +49,8 @@ def main() -> int:
         failures.append("projectile effect base must stay clear of the expanded combat effect sprite range")
     if not re.search(r'combatEffectNames\s*=\s*new String\[\]\s*\{.*"summon".*"summon-combat".*"summon-support".*"summon-utility"', client, re.S):
         failures.append("client combatEffectNames must include summon charge and arrival effects")
-    if 'getExternalAnimationFolder("on summon", assetName)' not in client:
-        failures.append("client must load summon arrival animations from the on summon asset category")
+    if 'getLegacyExternalAnimationFolder("on summon", assetName)' not in client:
+        failures.append("client must explicitly load pending summon arrivals from the legacy asset category")
     if "SUMMON_CHARGE_EFFECT_TICKS = 256" not in client:
         failures.append("summon charge effect should last the five-second charge window")
     for expected in (

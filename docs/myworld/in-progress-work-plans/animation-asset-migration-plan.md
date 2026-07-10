@@ -48,6 +48,42 @@ kind of entity originally used the effect.
   promoted into runtime use, but do not bulk rename unassigned library assets
   merely for cosmetic uniformity.
 
+## Basic Moving Projectile Fallbacks
+
+Introductory fallback visuals use the `[type]-basic` naming convention. These
+keys describe reusable baseline art, not a particular spell or NPC.
+
+| Runtime key | Source visual |
+| --- | --- |
+| `acid-basic` | Acid VFX 1 |
+| `earth-basic` | Earth projectile |
+| `fire-basic` | Firebolt |
+| `ice-basic` | Ice VFX 1 |
+| `thunder-basic` | Thunder Ball |
+| `water-basic` | Water Ball |
+| `wind-basic` | Wind projectile |
+| `wood-basic` | Wood VFX 01 |
+| `holy-basic` | Holy VFX 01 |
+| `arrow-basic` | Arrow |
+| `bolt-basic` | Crossbow bolt |
+| `dart-basic` | Throwing dart |
+| `throwing-knife-basic` | Eight-angle legacy throwing knife |
+| `shuriken-basic` | Eight-angle legacy shuriken |
+
+Projectile selection follows this order:
+
+1. Use an explicit assignment when one exists.
+2. Otherwise, when a moving projectile is intended and an element is known,
+   use that element's `-basic` visual.
+3. Use `holy-basic` for a non-elemental god-themed projectile.
+4. Use the matching physical ranged fallback for arrows, bolts, darts,
+   throwing knives, and shuriken.
+5. Use legacy fallback only for an explicitly recorded specialty or currently
+   unclassified effect.
+
+Unassigned assets under `projectile-moving` remain library candidates. Their
+presence in that folder does not automatically make them fallbacks.
+
 ## Folder Transition
 
 At the start of implementation:
@@ -62,6 +98,10 @@ At the start of implementation:
 5. Do not add new effects to the legacy folder.
 6. Delete the legacy folder only after all live mappings have migrated and the
    fallback audit is empty.
+
+Current state: the folder swap was completed in the first fallback wave. The
+new three-category directory is the preferred runtime source, while the old
+folder remains available only through explicit legacy lookup.
 
 The current client build already packages PNG files beneath `animations`.
 Editable sources such as `.aseprite` files should remain repository working
@@ -140,6 +180,7 @@ Add one row for every live effect as it enters a wave.
 
 | Wave | Live effect | Render component(s) | New asset key(s) | Legacy fallback | Automated check | Field test | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Basic elemental, holy, and physical ranged projectiles | Moving projectile | `acid-basic`, `earth-basic`, `fire-basic`, `ice-basic`, `thunder-basic`, `water-basic`, `wind-basic`, `wood-basic`, `holy-basic`, `arrow-basic`, `bolt-basic`, `dart-basic`, `throwing-knife-basic`, `shuriken-basic` | Only unclassified specialty projectiles | Added | Required | Field test |
 | Foundation | Summoning charge and arrivals | On entity | To be assigned from copied legacy assets | Temporary | Existing summoning guardrail | Required | Pending |
 
 Status values should be `Pending`, `In progress`, `Field test`, or `Complete`.

@@ -445,7 +445,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private static int getGodSpellProjectileVisual(final Spells spellEnum) {
-		return Projectile.MAGIC;
+		return Projectile.HOLY_MAGIC;
 	}
 
 	private static int getGodSpellImpactEffect(final Spells spellEnum) {

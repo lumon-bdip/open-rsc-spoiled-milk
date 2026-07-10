@@ -75,7 +75,7 @@ def make_fixture(
     client_jar = fixture / "Client_Base" / "Open_RSC_Client.jar"
     client_jar.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(client_jar, "w") as jar:
-        jar.writestr("myworld-assets/animations/Projectiles/fixture/frame.png", "asset")
+        jar.writestr("myworld-assets/animations/projectile-moving/fixture/frame.png", "asset")
         for entry in OPENGL_RUNTIME_ENTRIES:
             jar.writestr(entry, "native")
     write(fixture / "Client_Base" / "Cache" / "audio" / "audio.dat", "audio")
@@ -528,7 +528,20 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         fail(f"client build failed while checking embedded assets:\n{build.stdout}{build.stderr}")
 
     required = {
-        "myworld-assets/animations/Projectiles/thunder-ball/thunder-ball1.png",
+        "myworld-assets/animations/projectile-moving/acid-basic/Acid VFX 01.png",
+        "myworld-assets/animations/projectile-moving/earth-basic/Earth projectile Spritesheet .png",
+        "myworld-assets/animations/projectile-moving/fire-basic/Firebolt SpriteSheet.png",
+        "myworld-assets/animations/projectile-moving/ice-basic/IceVFX 1 Repeatable.png",
+        "myworld-assets/animations/projectile-moving/thunder-basic/Thunder ball wo blur.png",
+        "myworld-assets/animations/projectile-moving/water-basic/WaterBall - Startup and Infinite.png",
+        "myworld-assets/animations/projectile-moving/wind-basic/Projectile 2.png",
+        "myworld-assets/animations/projectile-moving/wood-basic/Wood VFX 01 Repeatable.png",
+        "myworld-assets/animations/projectile-moving/holy-basic/Holy VFX 01 Repeatable.png",
+        "myworld-assets/animations/projectile-moving/arrow-basic/arrow.png",
+        "myworld-assets/animations/projectile-moving/bolt-basic/bolt-basic.png",
+        "myworld-assets/animations/projectile-moving/dart-basic/dart.png",
+        "myworld-assets/animations/projectile-moving/throwing-knife-basic/throwing-knife-basic.png",
+        "myworld-assets/animations/projectile-moving/shuriken-basic/shuriken-basic.png",
         "myworld-assets/sprites/equipment/fishing-pole/numbered/00.png",
         "myworld-assets/sprites/items/inventory-ground/bolt.png",
         "myworld-assets/sprites/items/inventory-ground/dragon-hatchet.png",
@@ -576,6 +589,8 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         "myworld-assets/sprites/ui/",
         "myworld-assets/animations/On Enemy/phoenix/",
         "myworld-assets/animations/On Enemy/kraken/",
+        "myworld-assets/legacy animation folder/On Enemy/phoenix/",
+        "myworld-assets/legacy animation folder/On Enemy/kraken/",
     ]
     included_forbidden = sorted(
         name for name in names if any(name.startswith(prefix) for prefix in forbidden_prefixes)
@@ -634,6 +649,8 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         ROOT / "dev/myworld/assets/archive",
         ROOT / "dev/myworld/assets/animations/On Enemy/phoenix",
         ROOT / "dev/myworld/assets/animations/On Enemy/kraken",
+        ROOT / "dev/myworld/assets/legacy animation folder/On Enemy/phoenix",
+        ROOT / "dev/myworld/assets/legacy animation folder/On Enemy/kraken",
     ]:
         if removed_path.exists():
             fail(f"removed CraftPix source path still exists: {removed_path.relative_to(ROOT)}")

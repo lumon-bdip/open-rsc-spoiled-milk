@@ -19,6 +19,7 @@ python3 ./tests/myworld/test-content-item-resolution.py
 python3 ./tests/myworld/test-magic-no-random-fail.py
 python3 ./tests/myworld/test-magic-enchanting-costs.py
 python3 ./tests/myworld/test-animation-asset-migrations.py
+python3 ./tests/myworld/test-projectile-animation-fallbacks.py
 python3 ./tests/myworld/test-altar-enchantment-conversion.py
 python3 ./tests/myworld/test-runecraft-data.py
 python3 ./tests/myworld/test-altar-obelisk-symmetry.py
