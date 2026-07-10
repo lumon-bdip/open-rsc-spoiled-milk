@@ -3,7 +3,15 @@ package orsc;
 import orsc.graphics.Renderer2DFrame;
 
 import java.awt.image.BufferedImage;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class RenderTelemetry {
@@ -258,6 +266,9 @@ public final class RenderTelemetry {
 	private static long lastReportNanos;
 	private static String openGLRemasterShadowMaskReason = "not-built";
 	private static String openGLResidentChunkReplacementReason = "not-requested";
+	private static final DiagnosticMetric[] DIAGNOSTIC_METRICS = buildDiagnosticMetrics();
+	private static long diagnosticLastGcCount = -1L;
+	private static long diagnosticLastGcTimeMillis = -1L;
 
 	private RenderTelemetry() {
 	}
@@ -1660,7 +1671,183 @@ public final class RenderTelemetry {
 			"[renderer-v2 telemetry] presents: repaint=" + repaintRequests
 				+ " paintImmediate=" + paintImmediateRequests
 				+ " allocations=" + allocationSummary());
+		writeDiagnosticTelemetry(
+			slowFrame ? "slow-frame" : "periodic",
+			lastFrameNanos,
+			sourceWidth,
+			sourceHeight,
+			scalar,
+			scalingType,
+			framePath);
 		resetReportWindow();
+	}
+
+	private static void writeDiagnosticTelemetry(
+		String trigger,
+		long lastFrameNanos,
+		int sourceWidth,
+		int sourceHeight,
+		float scalar,
+		Object scalingType,
+		String framePath) {
+		RendererDiagnosticSession.Record record =
+			RendererDiagnosticSession.newTelemetryRecord(trigger, frameStats.count);
+		if (record == null) {
+			return;
+		}
+
+		record.number("frame.lastNanos", lastFrameNanos);
+		record.number("frame.sourceWidth", sourceWidth);
+		record.number("frame.sourceHeight", sourceHeight);
+		record.number("frame.scalar", scalar);
+		record.string("frame.scalingType", String.valueOf(scalingType));
+		record.string("frame.path", framePath);
+		record.number("config.reportIntervalFrames", REPORT_INTERVAL);
+		record.number("config.slowFrameNanos", SLOW_FRAME_NANOS);
+		record.number("config.recentSampleLimit", RECENT_SAMPLE_LIMIT);
+		record.number("config.renderer2D.spriteCommandLimit", Renderer2DFrame.SPRITE_COMMAND_LIMIT);
+		record.number("config.renderer2D.textCommandLimit", Renderer2DFrame.TEXT_COMMAND_LIMIT);
+		record.number("config.renderer2D.primitiveCommandLimit", Renderer2DFrame.PRIMITIVE_COMMAND_LIMIT);
+		record.number(
+			"config.renderer2D.rotatedSpriteCommandLimit",
+			Renderer2DFrame.ROTATED_SPRITE_COMMAND_LIMIT);
+		record.number("config.renderer2D.circleCommandLimit", Renderer2DFrame.CIRCLE_COMMAND_LIMIT);
+
+		for (DiagnosticMetric metric : DIAGNOSTIC_METRICS) {
+			try {
+				Object value = metric.field.get(null);
+				if (value instanceof StageStats) {
+					appendDiagnosticStage(record, metric.name, (StageStats) value);
+				} else if (value instanceof CounterStats) {
+					appendDiagnosticCounter(record, metric.name, (CounterStats) value);
+				}
+			} catch (IllegalAccessException ignored) {
+			}
+		}
+
+		record.number("presentation.repaintRequests", repaintRequests);
+		record.number("presentation.paintImmediateRequests", paintImmediateRequests);
+		record.number("presentation.nearestScalePaints", nearestScalePaints);
+		record.number("presentation.interpolationScalePaints", interpolationScalePaints);
+		record.number("presentation.gpuPresenterPaints", gpuPresenterPaints);
+		record.number("openGL.frames.lifetime", openGLFrames);
+		record.number("openGL.droppedFrames.lifetime", openGLDroppedFrames);
+		record.number("openGL.frames.window", openGLFramesWindow);
+		record.number("openGL.droppedFrames.window", openGLDroppedFramesWindow);
+		record.number("openGL.lastFrameNanos", lastOpenGLFrameNanos);
+		record.number("openGL.chunkUploadBudget.limitNanos", openGLWorldChunkUploadBudgetLimitNanos);
+		record.string("openGL.chunkUploadBudget.reason", openGLWorldChunkUploadReason);
+		record.string("openGL.remasterShadowMask.reason", openGLRemasterShadowMaskReason);
+		record.string("openGL.residentChunkReplacement.reason", openGLResidentChunkReplacementReason);
+
+		for (Map.Entry<String, AllocationStats> entry : allocationStats.entrySet()) {
+			String key = "allocation." + diagnosticKey(entry.getKey());
+			record.number(key + ".count", entry.getValue().count);
+			record.number(key + ".estimatedBytes", entry.getValue().estimatedBytes);
+		}
+
+		Runtime runtime = Runtime.getRuntime();
+		MemoryUsage heap = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+		record.number("runtime.uptimeMillis", ManagementFactory.getRuntimeMXBean().getUptime());
+		record.number("runtime.heap.usedBytes", heap.getUsed());
+		record.number("runtime.heap.committedBytes", heap.getCommitted());
+		record.number("runtime.heap.maxBytes", heap.getMax());
+		record.number("runtime.memory.freeBytes", runtime.freeMemory());
+		record.number("runtime.memory.totalBytes", runtime.totalMemory());
+		record.number("runtime.memory.maxBytes", runtime.maxMemory());
+		record.number("runtime.availableProcessors", runtime.availableProcessors());
+
+		long gcCount = 0L;
+		long gcTimeMillis = 0L;
+		for (GarbageCollectorMXBean collector : ManagementFactory.getGarbageCollectorMXBeans()) {
+			long collectorCount = collector.getCollectionCount();
+			long collectorTime = collector.getCollectionTime();
+			if (collectorCount >= 0L) {
+				gcCount += collectorCount;
+			}
+			if (collectorTime >= 0L) {
+				gcTimeMillis += collectorTime;
+			}
+		}
+		record.number("runtime.gc.collectionCount", gcCount);
+		record.number("runtime.gc.collectionTimeMillis", gcTimeMillis);
+		record.number(
+			"runtime.gc.collectionCountDelta",
+			diagnosticLastGcCount < 0L ? 0L : Math.max(0L, gcCount - diagnosticLastGcCount));
+		record.number(
+			"runtime.gc.collectionTimeMillisDelta",
+			diagnosticLastGcTimeMillis < 0L
+				? 0L
+				: Math.max(0L, gcTimeMillis - diagnosticLastGcTimeMillis));
+		diagnosticLastGcCount = gcCount;
+		diagnosticLastGcTimeMillis = gcTimeMillis;
+
+		RendererDiagnosticSession.writeTelemetry(record);
+	}
+
+	private static void appendDiagnosticStage(
+		RendererDiagnosticSession.Record record,
+		String name,
+		StageStats stats) {
+		String key = "stage." + name;
+		record.number(key + ".lifetime.count", stats.count);
+		record.number(key + ".lifetime.totalNanos", stats.total);
+		record.number(key + ".lifetime.averageNanos", stats.average());
+		record.number(key + ".lifetime.maxNanos", stats.max);
+		record.number(key + ".window.count", stats.windowCount);
+		record.number(key + ".window.totalNanos", stats.windowTotal);
+		record.number(key + ".window.averageNanos", stats.windowAverage());
+		record.number(key + ".window.maxNanos", stats.windowMax);
+		record.number(key + ".recent.count", stats.recentCount);
+		record.number(key + ".recent.averageNanos", stats.recentAverage());
+		record.number(key + ".recent.latestNanos", stats.latest());
+	}
+
+	private static void appendDiagnosticCounter(
+		RendererDiagnosticSession.Record record,
+		String name,
+		CounterStats stats) {
+		String key = "counter." + name;
+		record.number(key + ".lifetime.count", stats.count);
+		record.number(key + ".lifetime.total", stats.total);
+		record.number(key + ".lifetime.average", stats.average());
+		record.number(key + ".lifetime.max", stats.max);
+		record.number(key + ".window.count", stats.windowCount);
+		record.number(key + ".window.total", stats.windowTotal);
+		record.number(key + ".window.average", stats.windowAverage());
+		record.number(key + ".window.max", stats.windowMax);
+		record.number(key + ".recent.count", stats.recentCount);
+		record.number(key + ".recent.average", stats.recentAverage());
+		record.number(key + ".recent.latest", stats.latest());
+	}
+
+	private static DiagnosticMetric[] buildDiagnosticMetrics() {
+		List<DiagnosticMetric> metrics = new ArrayList<DiagnosticMetric>();
+		for (Field field : RenderTelemetry.class.getDeclaredFields()) {
+			if (field.getType() != StageStats.class && field.getType() != CounterStats.class) {
+				continue;
+			}
+			field.setAccessible(true);
+			String name = field.getName();
+			if (name.endsWith("Stats")) {
+				name = name.substring(0, name.length() - "Stats".length());
+			}
+			metrics.add(new DiagnosticMetric(name, field));
+		}
+		Collections.sort(metrics, Comparator.comparing(metric -> metric.name));
+		return metrics.toArray(new DiagnosticMetric[metrics.size()]);
+	}
+
+	private static String diagnosticKey(String value) {
+		if (value == null || value.isEmpty()) {
+			return "unknown";
+		}
+		StringBuilder key = new StringBuilder(value.length());
+		for (int i = 0; i < value.length(); i++) {
+			char ch = value.charAt(i);
+			key.append(Character.isLetterOrDigit(ch) || ch == '.' || ch == '-' ? ch : '_');
+		}
+		return key.toString();
 	}
 
 	private static void resetReportWindow() {
@@ -2078,6 +2265,14 @@ public final class RenderTelemetry {
 			return recentCount == 0 ? 0L : recentTotal / recentCount;
 		}
 
+		private long latest() {
+			if (recentCount == 0) {
+				return 0L;
+			}
+			int latestIndex = (recentIndex - 1 + recentSamples.length) % recentSamples.length;
+			return recentSamples[latestIndex];
+		}
+
 		private void resetWindow() {
 			windowCount = 0L;
 			windowTotal = 0L;
@@ -2101,6 +2296,16 @@ public final class RenderTelemetry {
 				recentTotal += nanos;
 			}
 			recentIndex = (recentIndex + 1) % recentSamples.length;
+		}
+	}
+
+	private static final class DiagnosticMetric {
+		private final String name;
+		private final Field field;
+
+		private DiagnosticMetric(String name, Field field) {
+			this.name = name;
+			this.field = field;
 		}
 	}
 

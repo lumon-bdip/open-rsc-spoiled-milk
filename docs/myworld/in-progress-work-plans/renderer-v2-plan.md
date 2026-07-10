@@ -1173,6 +1173,10 @@ they are not visual requirements for the baseline.
         manifest, bounded console and structured logs, safe renderer setting
         inventory, runtime exception events, and no diagnostic output for
         ordinary client launches.
+  - [x] Export raw report-window, recent, and lifetime values for every
+        renderer timing/counter owner alongside frame context, allocation
+        estimates, heap state, and GC deltas. The structured reporter shares
+        the live telemetry sources and runs only at diagnostic boundaries.
 - [ ] Build a replay harness for captured renderer-v2 frames so a problematic
       entity/occlusion frame can be inspected without live combat timing.
   - [x] Add an offline capture analyzer that validates `Ctrl+F9` capture

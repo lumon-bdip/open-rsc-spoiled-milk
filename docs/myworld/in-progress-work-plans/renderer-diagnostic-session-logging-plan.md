@@ -114,22 +114,22 @@ Implementation checkpoint:
 
 ## Milestone 2: Comprehensive Structured Telemetry
 
-- [ ] Refactor renderer reporting so the console formatter and structured
+- [x] Refactor renderer reporting so the console formatter and structured
       writer consume the same raw snapshot rather than maintaining competing
       metric lists.
-- [ ] Include every metric currently exposed through expanded `F6` or periodic
+- [x] Include every metric currently exposed through expanded `F6` or periodic
       renderer telemetry, including frame/client-loop timings, scene phases,
       OpenGL phases, dropped frames, world/chunk geometry and churn, texture
       work, sprite ownership/replay, 2D command limits and drops, shadows,
       renderer reasons/states, allocation estimates, and source/target render
       dimensions.
-- [ ] Add relevant runtime context: heap used/committed/max, process uptime,
+- [x] Add relevant runtime context: heap used/committed/max, process uptime,
       available processors, and per-collector GC count/time deltas.
 - [ ] Emit on the existing report cadence, on slow-frame reports, immediately
       before a `Ctrl+F9` burst, and immediately after the burst completes.
-- [ ] Preserve the current console report and expanded `F6` behavior while the
+- [x] Preserve the current console report and expanded `F6` behavior while the
       structured output is validated.
-- [ ] Add contract tests proving representative F6/console fields exist in the
+- [x] Add contract tests proving representative F6/console fields exist in the
       JSONL schema with raw values and documented units.
 
 Acceptance:
@@ -139,6 +139,16 @@ Acceptance:
   pressure, or capture overhead without scraping console prose.
 - Structured logging does not add a per-frame helper allocation or materially
   alter non-capture frame timing.
+
+Implementation checkpoint:
+
+- Report and slow-frame boundaries now write raw numeric telemetry from the
+  same `StageStats` and `CounterStats` objects used by existing output. Stable
+  fields expose lifetime, report-window, recent, latest, maximum, and total
+  values without parsing formatted milliseconds or slash-delimited summaries.
+- The record also includes frame context, configured command limits, renderer
+  state reasons, allocation estimates, JVM heap/runtime state, and GC deltas.
+  Diagnostic-disabled clients never construct these report records.
 
 ## Milestone 3: Events And `Ctrl+F9` Correlation
 

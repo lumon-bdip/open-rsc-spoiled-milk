@@ -32,6 +32,18 @@ public final class RendererDiagnosticSessionFixture {
 		RendererDiagnosticSession.recordThrowable(
 			"fixture failure",
 			new IllegalStateException("expected test exception"));
+		RenderTelemetry.recordSceneRender(500000L);
+		RenderTelemetry.recordFrame(
+			2000000L,
+			100000L,
+			200000L,
+			300000L,
+			400000L,
+			512,
+			346,
+			1.0f,
+			"fixture-scaling",
+			"fixture-path");
 		RendererDiagnosticSession.close();
 	}
 }
@@ -114,6 +126,8 @@ def validate_runtime_session(tmp: Path) -> None:
         [
             "java",
             "-Dspoiledmilk.rendererDiagnostics=true",
+            "-Dspoiledmilk.rendererTelemetry=true",
+            "-Dspoiledmilk.rendererTelemetryInterval=1",
             f"-Dspoiledmilk.rendererDiagnosticSessionDir={session_dir}",
             "-Dspoiledmilk.rendererExampleSetting=enabled",
             "-Dspoiledmilk.testToken=must-not-appear",
@@ -140,12 +154,34 @@ def validate_runtime_session(tmp: Path) -> None:
         fail("sensitive token-like property leaked into manifest")
 
     telemetry = read_jsonl(session_dir / "telemetry.jsonl")
-    if len(telemetry) != 1:
-        fail(f"expected one telemetry record, got {len(telemetry)}")
-    if telemetry[0].get("rendererFrameSequence") != 42:
+    if len(telemetry) != 2:
+        fail(f"expected fixture and periodic telemetry records, got {len(telemetry)}")
+    fixture_record = next((record for record in telemetry if record.get("trigger") == "fixture"), None)
+    periodic_record = next((record for record in telemetry if record.get("trigger") == "periodic"), None)
+    if fixture_record is None or periodic_record is None:
+        fail(f"missing expected telemetry triggers: {telemetry}")
+    if fixture_record.get("rendererFrameSequence") != 42:
         fail("telemetry frame sequence missing")
-    if telemetry[0].get("frame.totalNanos") != 1234567:
+    if fixture_record.get("frame.totalNanos") != 1234567:
         fail("raw numeric telemetry missing")
+    expected_periodic = {
+        "frame.sourceWidth": 512,
+        "frame.sourceHeight": 346,
+        "frame.path": "fixture-path",
+        "stage.frame.lifetime.averageNanos": 2000000,
+        "stage.sceneRender.lifetime.averageNanos": 500000,
+        "runtime.heap.usedBytes": int,
+        "runtime.gc.collectionCountDelta": int,
+        "counter.renderer2DSpriteCommandDropped.window.average": 0.0,
+        "config.renderer2D.rotatedSpriteCommandLimit": 256,
+    }
+    for key, expected in expected_periodic.items():
+        value = periodic_record.get(key)
+        if expected is int:
+            if not isinstance(value, int) or value < 0:
+                fail(f"periodic telemetry field {key} is not a nonnegative integer: {value!r}")
+        elif value != expected:
+            fail(f"periodic telemetry field {key} expected {expected!r}, got {value!r}")
 
     events = read_jsonl(session_dir / "events.jsonl")
     event_types = [event.get("eventType") for event in events]
