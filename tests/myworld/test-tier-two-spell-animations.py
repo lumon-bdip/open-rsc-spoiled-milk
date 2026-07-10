@@ -52,7 +52,7 @@ def main() -> int:
         'define(definitions, 6, "fire-2", ON_ENTITY, "fire-2/Fire Claw.png", 9, 1, 0, 9, 64);',
         'define(definitions, 8, "earth-2", ON_ENTITY, "earth-2/Earth Hammer (48x48).png", 5, 5, 0, 21, 64);',
         'define(definitions, 16, "lesser-heal", ON_ENTITY,',
-        '"lesser-heal/Buff n Debuff P1 03.png", 12, 1, 0, 12, 64);',
+        '"lesser-heal/Buff n Debuff P1 03.png", 16, 1, 0, 16, 64);',
         'define(definitions, 17, "greater-heal", ON_ENTITY,',
         'define(definitions, 18, "holy-vfx-09", ON_ENTITY,',
         '"Holy VFX 09/Holy Effect 09(16x16).png", 12, 1, 0, 12, 32);',
@@ -61,15 +61,16 @@ def main() -> int:
         'define(definitions, 32, "acid-2", ON_ENTITY, "acid-2/Acid VFX 09(72x80).png", 23, 1, 0, 23, 64);',
         'define(definitions, 33, "wood-2", ON_ENTITY, "wood-2/Wood VFX 04(32x48).png", 16, 1, 0, 15, 64);',
         'define(definitions, 65, "teleport", ON_ENTITY,',
+        '"teleport/Buff n Debuff P1 04.png", 24, 1, 0, 24, 64);',
     ), "CombatEffectAnimationCatalog.java")
-    assert "visibleCenterAnchored.add(16);" in combat_catalog, \
-        "lesser heal must keep each spritesheet frame centered on the player"
+    assert "VisibleCenterAnchored" not in combat_catalog, \
+        "on-entity sheets must retain their authored frame placement"
     assert "HorizontallyCentered" not in combat_catalog
 
     static_catalog = read("Client_Base/src/orsc/graphics/two/ProjectileStaticAnimationCatalog.java")
     require(static_catalog, (
         'PROJECTILE_TYPES.WIND_STATIC_2, "wind-2", "wind-2/Wind Breath.png"',
-        '18, 1, 0, 18, 32);',
+        '12, 1, 0, 12, 32);',
         'PROJECTILE_TYPES.WATER_STATIC_2, "water-2", "water-2/Water Beam.png"',
         '5, 5, 0, 25, 48);',
     ), "ProjectileStaticAnimationCatalog.java")
@@ -163,6 +164,7 @@ def main() -> int:
         "private static final int TELEPORT_OPENING_FRAME_COUNT = 8;",
         "private static final int TELEPORT_LOOP_START_FRAME = 8;",
         "private static final int TELEPORT_LOOP_END_FRAME = 10;",
+        "private static final int TELEPORT_LOOP_FRAME_TICKS = 10;",
         "frameCount * getCombatEffectFrameTicks(effectType)",
         "if (effectType == COMBAT_EFFECT_LESSER_HEAL)",
         "return LESSER_HEAL_FRAME_TICKS;",
@@ -171,8 +173,6 @@ def main() -> int:
         "getTeleportCurrentFrame(effectTime, duration, frameCount)",
         "int finishStartFrame = TELEPORT_LOOP_END_FRAME + 1;",
         "return TELEPORT_LOOP_START_FRAME + loopFrame;",
-        "anchorAnimationFrameToVisibleCenter",
-        "CombatEffectAnimationCatalog.isVisibleCenterAnchored(effectType)",
         "effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, size / 2) : size",
         "getCombatEffectScreenWidth",
         "getCombatEffectScreenHeight",
@@ -184,6 +184,13 @@ def main() -> int:
         "startGenericProjectileImpact(character);",
         "scaled.setRequiresShift(true);",
     ), "mudclient.java")
+    assert "anchorAnimationFrameToVisibleCenter" not in client
+    complete_teleport = re.search(
+        r"private void completeTeleport.*?\n\t\}", spell_handler, re.DOTALL
+    )
+    assert complete_teleport and "teleport(120, 504, false)" in complete_teleport.group(0)
+    assert "teleport(120, 504, true)" not in complete_teleport.group(0), \
+        "spell teleports must not append the legacy teleport bubble"
     assert "COMBAT_EFFECT_TICKS" not in client, \
         "combat effects must derive total playback time from their loaded frame count"
     assert "centerAnimationFrameHorizontally" not in client, \

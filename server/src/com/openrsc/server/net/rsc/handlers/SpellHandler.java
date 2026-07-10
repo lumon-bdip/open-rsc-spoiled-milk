@@ -2582,22 +2582,22 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 		switch (spellEnum) {
 			case VARROCK_TELEPORT:
-				player.teleport(120, 504, true);
+				player.teleport(120, 504, false);
 				break;
 			case LUMBRIDGE_TELEPORT:
-				player.teleport(120, 648, true);
+				player.teleport(120, 648, false);
 				break;
 			case FALADOR_TELEPORT:
-				player.teleport(312, 552, true);
+				player.teleport(312, 552, false);
 				break;
 			case CAMELOT_TELEPORT:
-				player.teleport(456, 456, true);
+				player.teleport(456, 456, false);
 				break;
 			case ARDOUGNE_TELEPORT:
-				player.teleport(588, 621, true);
+				player.teleport(588, 621, false);
 				break;
 			case WATCHTOWER_TELEPORT:
-				player.teleport(493, 3525, true);
+				player.teleport(493, 3525, false);
 				break;
 			default:
 				break;

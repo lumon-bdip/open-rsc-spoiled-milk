@@ -273,15 +273,17 @@ def main() -> None:
     static_catalog = (ROOT / "Client_Base/src/orsc/graphics/two/ProjectileStaticAnimationCatalog.java").read_text(
         encoding="utf-8"
     )
-    if 'directionalFixedSizes.put("wind-2", 96);' not in static_catalog:
-        fail("Wind Slash must use its fixed-aspect directional layout")
+    if '12, 1, 0, 12, 32);' not in static_catalog:
+        fail("Wind Slash must use all twelve authored 48x32 frames")
     for snippet in (
-        "ProjectileStaticAnimationCatalog.getDirectionalFixedSize(definition.getKey())",
-        "int renderLength = directionalFixedSize > 0",
-        "caster.sceneScreenCenterX + (deltaX * renderLength) / (2 * length)",
+        "int renderLength = length;",
+        "int thickness = Math.max(1, definition.getThickness());",
+        "int centerX = (caster.sceneScreenCenterX + victim.sceneScreenCenterX) / 2;",
     ):
         if snippet not in client:
-            fail(f"client is missing Wind Slash fixed-aspect placement: {snippet}")
+            fail(f"client is missing shared static-projectile placement: {snippet}")
+    if "getDirectionalFixedSize" in client or "directionalFixedSizes" in static_catalog:
+        fail("Wind Slash must use the same caster-to-target layout as Water Burst")
     if "anchorAnimationFrameToVisibleStart" in client:
         fail("Wind Slash must not rewrite source frames to fit Water Burst's stretch layout")
 

@@ -41,19 +41,14 @@ public final class ProjectileStaticAnimationCatalog {
 	}
 
 	private static final Map<Integer, Definition> DEFINITIONS;
-	private static final Map<String, Integer> DIRECTIONAL_FIXED_SIZES;
 
 	static {
 		LinkedHashMap<Integer, Definition> definitions = new LinkedHashMap<Integer, Definition>();
 		define(definitions, PROJECTILE_TYPES.WIND_STATIC_2, "wind-2", "wind-2/Wind Breath.png",
-			18, 1, 0, 18, 32);
+			12, 1, 0, 12, 32);
 		define(definitions, PROJECTILE_TYPES.WATER_STATIC_2, "water-2", "water-2/Water Beam.png",
 			5, 5, 0, 25, 48);
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
-
-		LinkedHashMap<String, Integer> directionalFixedSizes = new LinkedHashMap<String, Integer>();
-		directionalFixedSizes.put("wind-2", 96);
-		DIRECTIONAL_FIXED_SIZES = Collections.unmodifiableMap(directionalFixedSizes);
 	}
 
 	private ProjectileStaticAnimationCatalog() {
@@ -68,11 +63,6 @@ public final class ProjectileStaticAnimationCatalog {
 
 	public static Definition getDefinition(int projectileId) {
 		return DEFINITIONS.get(projectileId);
-	}
-
-	public static int getDirectionalFixedSize(String key) {
-		Integer size = DIRECTIONAL_FIXED_SIZES.get(key);
-		return size == null ? 0 : size.intValue();
 	}
 
 	public static Map<Integer, Definition> getDefinitions() {
