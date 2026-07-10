@@ -18812,6 +18812,7 @@ public final class mudclient implements Runnable {
 
 					this.hasCompletedInitialRegionLoad = true;
 					this.world.playerAlive = true;
+					this.packetHandler.reapplyCompleteSceneBaselineAfterRegionLoad();
 					return true;
 				}
 			}
