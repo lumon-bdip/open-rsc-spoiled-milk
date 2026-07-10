@@ -1169,6 +1169,10 @@ they are not visual requirements for the baseline.
       `Ctrl+F9` bursts into a bounded AI-readable bundle. Track the focused
       implementation and visual-refinement feedback loop in
       [renderer-diagnostic-session-logging-plan.md](renderer-diagnostic-session-logging-plan.md).
+  - [x] Establish the opt-in session/launcher foundation with a versioned
+        manifest, bounded console and structured logs, safe renderer setting
+        inventory, runtime exception events, and no diagnostic output for
+        ordinary client launches.
 - [ ] Build a replay harness for captured renderer-v2 frames so a problematic
       entity/occlusion frame can be inspected without live combat timing.
   - [x] Add an offline capture analyzer that validates `Ctrl+F9` capture

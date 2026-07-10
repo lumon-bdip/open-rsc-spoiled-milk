@@ -12,6 +12,7 @@ final class ClientRuntimeLogger {
 	private static final DateTimeFormatter TIMESTAMP_FORMAT =
 		DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 	private static final String LOG_FILE_PROPERTY = "spoiledmilk.clientLog";
+	private static final String LOG_FILE_ENV = "SPOILED_MILK_CLIENT_LOG";
 
 	private static boolean uncaughtHandlerInstalled = false;
 
@@ -39,6 +40,7 @@ final class ClientRuntimeLogger {
 	}
 
 	static void logThrowable(String context, Throwable throwable) {
+		RendererDiagnosticSession.recordThrowable(context, throwable);
 		synchronized (LOCK) {
 			try (PrintWriter writer = openWriter()) {
 				writer.println(timestamp() + " " + context);
@@ -56,6 +58,9 @@ final class ClientRuntimeLogger {
 
 	private static File logFile() {
 		String configuredPath = System.getProperty(LOG_FILE_PROPERTY);
+		if (configuredPath == null || configuredPath.trim().isEmpty()) {
+			configuredPath = System.getenv(LOG_FILE_ENV);
+		}
 		if (configuredPath != null && !configuredPath.trim().isEmpty()) {
 			return new File(configuredPath.trim());
 		}

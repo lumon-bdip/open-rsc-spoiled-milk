@@ -17,6 +17,7 @@ public class OpenRSC extends ORSCApplet {
 
 	public static void main(String[] args) {
 		RendererRuntimeDefaults.apply();
+		RendererDiagnosticSession.start();
 		ClientRuntimeLogger.installUncaughtExceptionHandler();
 
 		// MUST do this before anything else runs in order to override OS-level dpi settings
