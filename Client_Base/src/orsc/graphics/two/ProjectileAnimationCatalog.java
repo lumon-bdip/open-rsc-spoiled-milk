@@ -98,6 +98,7 @@ public final class ProjectileAnimationCatalog {
 	private static final Map<Integer, String> PROJECTILE_FALLBACKS;
 	private static final Map<String, Segment[]> STARTUP_SEGMENTS;
 	private static final Map<String, Segment[]> IMPACT_SEGMENTS;
+	private static final Map<String, Integer> IMPACT_SCREEN_SIZES;
 
 	static {
 		LinkedHashMap<String, Definition> definitions = new LinkedHashMap<String, Definition>();
@@ -147,6 +148,11 @@ public final class ProjectileAnimationCatalog {
 		phases(impactSegments, "thunder-2",
 			segment("thunder-2/Hit/Thunder hit wo blur.png", 6, 1, 0, 6));
 		IMPACT_SEGMENTS = Collections.unmodifiableMap(impactSegments);
+
+		LinkedHashMap<String, Integer> impactScreenSizes = new LinkedHashMap<String, Integer>();
+		impactSize(impactScreenSizes, "fire-basic", 48);
+		impactSize(impactScreenSizes, "water-basic", 48);
+		IMPACT_SCREEN_SIZES = Collections.unmodifiableMap(impactScreenSizes);
 
 		LinkedHashMap<Integer, String> fallbacks = new LinkedHashMap<Integer, String>();
 		fallback(fallbacks, PROJECTILE_TYPES.FIREBALL, "fire-basic");
@@ -222,6 +228,15 @@ public final class ProjectileAnimationCatalog {
 		}
 	}
 
+	private static void impactSize(Map<String, Integer> sizes, String key, int screenSize) {
+		if (!DEFINITIONS.containsKey(key) || screenSize <= 0) {
+			throw new IllegalArgumentException("Invalid projectile impact size: " + key);
+		}
+		if (sizes.put(key, screenSize) != null) {
+			throw new IllegalStateException("Duplicate projectile impact size: " + key);
+		}
+	}
+
 	public static Definition getDefinition(String key) {
 		return DEFINITIONS.get(key);
 	}
@@ -238,6 +253,11 @@ public final class ProjectileAnimationCatalog {
 	public static Segment[] getImpactSegments(String key) {
 		Segment[] segments = IMPACT_SEGMENTS.get(key);
 		return segments == null ? new Segment[0] : segments.clone();
+	}
+
+	public static int getImpactScreenSize(String key) {
+		Integer screenSize = IMPACT_SCREEN_SIZES.get(key);
+		return screenSize == null ? 64 : screenSize.intValue();
 	}
 
 	public static Map<String, Definition> getDefinitions() {

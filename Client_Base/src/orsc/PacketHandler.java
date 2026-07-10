@@ -3417,6 +3417,7 @@ public class PacketHandler {
 				if (null != npc) {
 					npc.attackingNpcServerIndex = shooterServerIndex;
 					npc.projectileRange = mc.getProjectileMaxRange();
+					npc.projectileMirrored = false;
 					npc.pendingCombatEffectType = 0;
 					npc.attackingPlayerServerIndex = -1;
 					npc.incomingProjectileSprite = getProjectileDefForUpdate(sprite, "npc", sender, shooterServerIndex);
@@ -3426,6 +3427,7 @@ public class PacketHandler {
 				int shooterServerIndex = packetsIncoming.getShort();
 				if (npc != null) {
 					npc.projectileRange = mc.getProjectileMaxRange();
+					npc.projectileMirrored = false;
 					npc.pendingCombatEffectType = 0;
 					npc.attackingNpcServerIndex = -1;
 					npc.attackingPlayerServerIndex = shooterServerIndex;
@@ -4232,6 +4234,7 @@ public class PacketHandler {
 				if (null != player) {
 					player.attackingNpcServerIndex = shooterServerIndex;
 					player.projectileRange = mc.getProjectileMaxRange();
+					player.projectileMirrored = false;
 					player.pendingCombatEffectType = 0;
 					player.attackingPlayerServerIndex = -1;
 					player.incomingProjectileSprite = getProjectileDefForUpdate(sprite, "player", playerServerIndex, shooterServerIndex);
@@ -4241,6 +4244,7 @@ public class PacketHandler {
 				int shooterServerIndex = packetsIncoming.getShort();
 				if (player != null) {
 					player.projectileRange = mc.getProjectileMaxRange();
+					player.projectileMirrored = false;
 					player.pendingCombatEffectType = 0;
 					player.attackingNpcServerIndex = -1;
 					player.attackingPlayerServerIndex = shooterServerIndex;

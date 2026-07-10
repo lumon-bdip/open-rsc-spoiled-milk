@@ -134,6 +134,13 @@ currently an empty file. It must be replaced with a valid sheet or excluded
 from that animation's catalog entry before `earth-impale` is promoted into
 runtime use.
 
+Deferred Water Burst projection note: the current `water-2` sheet animates and
+aligns correctly as a screen-space caster-to-target visual, but its flat beam
+is not convincing from every camera angle in the 3D world. Revisit it in a
+later wave and compare three options: replace the asset, reclassify the effect,
+or add perspective-aware warping for `projectile-static` visuals. Do not expand
+the current polish wave into that renderer experiment.
+
 ## Specialty Legacy Effects
 
 Some existing effects were tuned through repeated visual adjustment. Rebuilding

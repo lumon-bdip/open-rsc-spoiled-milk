@@ -4,7 +4,9 @@ import com.openrsc.client.entityhandling.EntityHandler.PROJECTILE_TYPES;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 /** Caster-to-target animations that stay aligned instead of translating through the world. */
 public final class ProjectileStaticAnimationCatalog {
@@ -41,6 +43,7 @@ public final class ProjectileStaticAnimationCatalog {
 	}
 
 	private static final Map<Integer, Definition> DEFINITIONS;
+	private static final Set<String> SOURCE_EDGE_ANCHORED;
 
 	static {
 		LinkedHashMap<Integer, Definition> definitions = new LinkedHashMap<Integer, Definition>();
@@ -49,6 +52,10 @@ public final class ProjectileStaticAnimationCatalog {
 		define(definitions, PROJECTILE_TYPES.WATER_STATIC_2, "water-2", "water-2/Water Beam.png",
 			5, 5, 0, 25, 48);
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
+
+		LinkedHashSet<String> sourceEdgeAnchored = new LinkedHashSet<String>();
+		sourceEdgeAnchored.add("wind-2");
+		SOURCE_EDGE_ANCHORED = Collections.unmodifiableSet(sourceEdgeAnchored);
 	}
 
 	private ProjectileStaticAnimationCatalog() {
@@ -63,6 +70,10 @@ public final class ProjectileStaticAnimationCatalog {
 
 	public static Definition getDefinition(int projectileId) {
 		return DEFINITIONS.get(projectileId);
+	}
+
+	public static boolean isSourceEdgeAnchored(String key) {
+		return SOURCE_EDGE_ANCHORED.contains(key);
 	}
 
 	public static Map<Integer, Definition> getDefinitions() {

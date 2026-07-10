@@ -191,6 +191,12 @@ def main() -> None:
         fail(f"projectile impact phases changed: {impact_segments}")
     validate_segments(moving_root, startup_segments, 36)
     validate_segments(moving_root, impact_segments, 36)
+    for snippet in (
+        'impactSize(impactScreenSizes, "fire-basic", 48);',
+        'impactSize(impactScreenSizes, "water-basic", 48);',
+    ):
+        if snippet not in catalog:
+            fail(f"projectile catalog is missing impact presentation data: {snippet}")
     for key, key_segments in startup_segments.items():
         startup_frames = sum(segment[4] for segment in key_segments)
         if startup_frames + definitions[key][4] > 36:
@@ -220,6 +226,9 @@ def main() -> None:
         "ProjectileAnimationCatalog.getImpactSegments(definition.getKey())",
         "frameCount * PROJECTILE_IMPACT_FRAME_TICKS",
         "startGenericProjectileImpact(character);",
+        "projectileImpactMirrorSprites",
+        "character.projectileMirrored",
+        "getMirroredProjectileImpactSprite",
         'getLegacyExternalAnimationFolder("Projectiles", legacyEffectName)',
         "spriteCombatEffectBase + (COMBAT_EFFECT_COUNT * COMBAT_EFFECT_FRAME_SLOTS)",
     ):
@@ -257,9 +266,21 @@ def main() -> None:
     if direction_guard is None:
         fail("client is missing the moving-projectile direction guard")
     direction_body = direction_guard.group(1)
-    for snippet in ("return deltaX < 0;", "return screenX < 0;"):
+    for snippet in ("return deltaX > 0;", "return screenX > 0;"):
         if snippet not in direction_body:
-            fail("left-to-right moving projectiles must select mirrored fallback frames")
+            fail("projectiles must mirror only when their target is left of the caster")
+
+    static_catalog = (ROOT / "Client_Base/src/orsc/graphics/two/ProjectileStaticAnimationCatalog.java").read_text(
+        encoding="utf-8"
+    )
+    if 'sourceEdgeAnchored.add("wind-2");' not in static_catalog:
+        fail("Wind Slash must use a stable source-edge anchor")
+    for snippet in (
+        "ProjectileStaticAnimationCatalog.isSourceEdgeAnchored(definition.getKey())",
+        "anchorAnimationFrameToVisibleStart",
+    ):
+        if snippet not in client:
+            fail(f"client is missing Wind Slash source-edge stabilization: {snippet}")
 
     if "private static final int BRANCH_SPORE_PROJECTILE_SCENE_SIZE = 96;" not in client:
         fail("wood-basic Spore must retain its half-size 96px scene footprint")

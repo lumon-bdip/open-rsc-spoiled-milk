@@ -55,6 +55,7 @@ public final class ORSCharacter {
 	public int waypointIndexNext;
 	public int npcId;
 	public int projectileRange = 0;
+	public boolean projectileMirrored = false;
 	public int projectileImpactId = -1;
 	public int projectileImpactTime = 0;
 	public int serverIndex;
@@ -115,6 +116,7 @@ public final class ORSCharacter {
 		message = null;
 		messageTimeout = 0;
 		projectileRange = 0;
+		projectileMirrored = false;
 		projectileImpactId = -1;
 		projectileImpactTime = 0;
 		incomingProjectileSprite = null;

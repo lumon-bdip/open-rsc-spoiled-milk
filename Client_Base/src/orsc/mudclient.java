@@ -215,6 +215,8 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_FRAME_TICKS = 3;
+	private static final int LESSER_HEAL_FRAME_TICKS = 8;
+	private static final int TELEPORT_FRAME_TICKS = 14;
 	private static final int COMBAT_EFFECT_STANDARD_SCREEN_SIZE = 64;
 	private static final int IBAN_BLAST_COMBAT_EFFECT_SCENE_SIZE = 336;
 	private static final int SUMMON_CHARGE_EFFECT_TICKS = 256;
@@ -234,7 +236,6 @@ public final class mudclient implements Runnable {
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
 	private static final int PROJECTILE_IMPACT_FRAME_SLOTS = 36;
 	private static final int PROJECTILE_IMPACT_FRAME_TICKS = 3;
-	private static final int PROJECTILE_IMPACT_SCREEN_SIZE = 64;
 	public static final int spriteProjectileEffectBase =
 		spriteCombatEffectBase + (COMBAT_EFFECT_COUNT * COMBAT_EFFECT_FRAME_SLOTS);
 	public static final int PROJECTILE_EFFECT_SCENE_RANGE = CUSTOM_PROJECTILE_COUNT * PROJECTILE_EFFECT_FRAME_SLOTS;
@@ -1039,6 +1040,7 @@ public final class mudclient implements Runnable {
 	private final Sprite[] projectileStaticMirrorSprites = new Sprite[PROJECTILE_STATIC_MIRROR_SLOTS];
 	private final int[] projectileEffectFrameCounts = new int[CUSTOM_PROJECTILE_COUNT];
 	private final Sprite[][] projectileImpactSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_IMPACT_FRAME_SLOTS];
+	private final Sprite[][] projectileImpactMirrorSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_IMPACT_FRAME_SLOTS];
 	private final int[] projectileImpactFrameCounts = new int[CUSTOM_PROJECTILE_COUNT];
 	private final String[] legacyProjectileEffectNames = new String[] {
 		"blow-smoke", "fireball", "wind-arrow", "rock-throw", "water-ball", "throwing-knife", "arrow", "dart",
@@ -6782,8 +6784,9 @@ public final class mudclient implements Runnable {
 								if (!canDrawWorldSpriteAtLocalPixel(var11, var13)) {
 									continue;
 								}
+								var3.projectileMirrored = shouldMirrorProjectile(var16, var3);
 								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
-									shouldMirrorProjectile(var16, var3));
+									var3.projectileMirrored);
 								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
 								int projectileBottomY = getProjectileSpriteBottomY(var12, projectileSize);
 								this.scene.drawSprite(projectileSprite, var13,
@@ -6832,8 +6835,9 @@ public final class mudclient implements Runnable {
 								if (!canDrawWorldSpriteAtLocalPixel(var11, var13)) {
 									continue;
 								}
+								var3.projectileMirrored = shouldMirrorProjectile(var16, var3);
 								int projectileSprite = getProjectileSceneSpriteIndex(projectileDef, var3.projectileRange,
-									shouldMirrorProjectile(var16, var3));
+									var3.projectileMirrored);
 								int projectileSize = getProjectileSceneSize(projectileDef, enemyProjectile);
 								int projectileBottomY = getProjectileSpriteBottomY(var12, projectileSize);
 								this.scene.drawSprite(projectileSprite, var13,
@@ -9125,24 +9129,27 @@ public final class mudclient implements Runnable {
 		if (effect == null) {
 			return;
 		}
-		int size = COMBAT_EFFECT_STANDARD_SCREEN_SIZE;
-		size = getCombatEffectScreenSize(character.combatEffectType, size);
+		int drawWidth = getCombatEffectScreenWidth(
+			character.combatEffectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);
+		int drawHeight = getCombatEffectScreenHeight(
+			character.combatEffectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);
 		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 		try {
 			if (isDragonBreathCombatEffect(character.combatEffectType)) {
-				drawDragonBreathOverlay(character, effect, x, y, width, height, size);
+				drawDragonBreathOverlay(character, effect, x, y, width, height, drawWidth);
 				return;
 			}
-			int drawX = x + width / 2 - size / 2;
-			int drawY = y + height / 2 - size / 2;
-			drawX += getCombatEffectScreenXOffset(character.combatEffectType, frame, size);
-			drawY += getCombatEffectScreenYOffset(character.combatEffectType, frame, size);
+			int drawX = x + width / 2 - drawWidth / 2;
+			int drawY = y + height / 2 - drawHeight / 2;
+			int offsetSize = Math.max(drawWidth, drawHeight);
+			drawX += getCombatEffectScreenXOffset(character.combatEffectType, frame, offsetSize);
+			drawY += getCombatEffectScreenYOffset(character.combatEffectType, frame, offsetSize);
 			character.hasCombatEffectScreenAnchor = true;
 			character.combatEffectScreenX = drawX;
 			character.combatEffectScreenY = drawY;
-			character.combatEffectScreenWidth = size;
-			character.combatEffectScreenHeight = size;
-			this.getSurface().drawSprite(effect, drawX, drawY, size, size, 5924, 224);
+			character.combatEffectScreenWidth = drawWidth;
+			character.combatEffectScreenHeight = drawHeight;
+			this.getSurface().drawSprite(effect, drawX, drawY, drawWidth, drawHeight, 5924, 224);
 		} finally {
 			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 		}
@@ -19095,8 +19102,10 @@ public final class mudclient implements Runnable {
 				if (canDrawWorldSpriteAtLocalPixel(worldX, worldZ)) {
 					int worldY = -this.world.getElevation(worldX, worldZ) - detachedCombatEffectHeightOffset[i];
 					int sceneSprite = spriteCombatEffectBase + ((effectType - 1) * COMBAT_EFFECT_FRAME_SLOTS) + frame;
-					int effectSize = getCombatEffectSceneSize(effectType);
-					this.scene.drawSprite(sceneSprite, worldZ, 78000 + i, worldX, worldY, effectSize, effectSize, (byte) 109);
+					int effectWidth = getCombatEffectSceneWidth(effectType);
+					int effectHeight = getCombatEffectSceneHeight(effectType);
+					this.scene.drawSprite(sceneSprite, worldZ, 78000 + i, worldX, worldY,
+						effectWidth, effectHeight, (byte) 109);
 					++this.spriteCount;
 				}
 			}
@@ -19138,8 +19147,10 @@ public final class mudclient implements Runnable {
 			: getPlayerCombatEffectHeightOffset(character.combatEffectType);
 		int worldY = -this.world.getElevation(worldX, worldZ) - heightOffset;
 		int sceneSprite = spriteCombatEffectBase + ((character.combatEffectType - 1) * COMBAT_EFFECT_FRAME_SLOTS) + frame;
-		int effectSize = getCombatEffectSceneSize(character.combatEffectType);
-		int spriteIndex = this.scene.drawSprite(sceneSprite, worldZ, sceneUid, worldX, worldY, effectSize, effectSize, (byte) 109);
+		int effectWidth = getCombatEffectSceneWidth(character.combatEffectType);
+		int effectHeight = getCombatEffectSceneHeight(character.combatEffectType);
+		int spriteIndex = this.scene.drawSprite(sceneSprite, worldZ, sceneUid, worldX, worldY,
+			effectWidth, effectHeight, (byte) 109);
 		applyCombatEffectVisualOffset(character, spriteIndex);
 		++this.spriteCount;
 	}
@@ -19177,6 +19188,15 @@ public final class mudclient implements Runnable {
 		return 224;
 	}
 
+	private int getCombatEffectSceneWidth(int effectType) {
+		int size = getCombatEffectSceneSize(effectType);
+		return effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, size / 2) : size;
+	}
+
+	private int getCombatEffectSceneHeight(int effectType) {
+		return getCombatEffectSceneSize(effectType);
+	}
+
 	private int getCombatEffectScreenSize(int effectType, int baseSize) {
 		if (isGodSpellCombatEffect(effectType)) {
 			return baseSize * 2;
@@ -19204,6 +19224,15 @@ public final class mudclient implements Runnable {
 			return Math.max(1, (baseSize * 5) / 4);
 		}
 		return baseSize;
+	}
+
+	private int getCombatEffectScreenWidth(int effectType, int baseSize) {
+		int size = getCombatEffectScreenSize(effectType, baseSize);
+		return effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, size / 2) : size;
+	}
+
+	private int getCombatEffectScreenHeight(int effectType, int baseSize) {
+		return getCombatEffectScreenSize(effectType, baseSize);
 	}
 
 	private boolean isGodSpellCombatEffect(int effectType) {
@@ -19869,6 +19898,7 @@ public final class mudclient implements Runnable {
 		scaledStaticProjectileSprites.clear();
 		for (int i = 0; i < CUSTOM_PROJECTILE_COUNT; i++) {
 			Arrays.fill(this.projectileImpactSprites[i], null);
+			Arrays.fill(this.projectileImpactMirrorSprites[i], null);
 			this.projectileImpactFrameCounts[i] = 0;
 			int projectileId = CUSTOM_PROJECTILE_FIRST + i;
 			ProjectileStaticAnimationCatalog.Definition staticDefinition =
@@ -19947,7 +19977,8 @@ public final class mudclient implements Runnable {
 		}
 		return appendExternalAnimationNativeGridSheetFrames(sheet, targetFrames,
 			definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
-			definition.getFrameCount());
+			definition.getFrameCount(),
+			ProjectileStaticAnimationCatalog.isSourceEdgeAnchored(definition.getKey()));
 	}
 
 	private void loadExternalSpellIconSprites() {
@@ -20626,7 +20657,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private int appendExternalAnimationNativeGridSheetFrames(File sourceFile, Sprite[] targetFrames,
-			int columns, int rows, int firstFrameIndex, int frameCount) {
+			int columns, int rows, int firstFrameIndex, int frameCount, boolean sourceEdgeAnchored) {
 		try {
 			BufferedImage source = readAssetImage(sourceFile);
 			if (source == null || columns <= 0 || rows <= 0 || firstFrameIndex < 0 || frameCount <= 0
@@ -20644,6 +20675,9 @@ public final class mudclient implements Runnable {
 				int sheetFrameIndex = firstFrameIndex + frameIndex;
 				BufferedImage frame = source.getSubimage((sheetFrameIndex % columns) * frameWidth,
 					(sheetFrameIndex / columns) * frameHeight, frameWidth, frameHeight);
+				if (sourceEdgeAnchored) {
+					frame = anchorAnimationFrameToVisibleStart(frame);
+				}
 				int[] pixels = new int[frameWidth * frameHeight];
 				frame.getRGB(0, 0, frameWidth, frameHeight, pixels, 0, frameWidth);
 				for (int i = 0; i < pixels.length; i++) {
@@ -20661,6 +20695,26 @@ public final class mudclient implements Runnable {
 				+ ": " + e.getMessage());
 			return 0;
 		}
+	}
+
+	private BufferedImage anchorAnimationFrameToVisibleStart(BufferedImage source) {
+		int minX = source.getWidth();
+		for (int y = 0; y < source.getHeight(); y++) {
+			for (int x = 0; x < source.getWidth(); x++) {
+				if (((source.getRGB(x, y) >>> 24) & 0xFF) >= 64 && x < minX) {
+					minX = x;
+				}
+			}
+		}
+		if (minX <= 0 || minX >= source.getWidth()) {
+			return source;
+		}
+		BufferedImage anchored = new BufferedImage(
+			source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = anchored.createGraphics();
+		graphics.drawImage(source, -minX, 0, null);
+		graphics.dispose();
+		return anchored;
 	}
 
 	private int loadExternalAnimationSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize, int frameCount) {
@@ -21070,7 +21124,17 @@ public final class mudclient implements Runnable {
 			return SUMMON_CHARGE_EFFECT_TICKS;
 		}
 		int frameCount = getCombatEffectFrameCount(effectType);
-		return frameCount <= 0 ? 0 : frameCount * COMBAT_EFFECT_FRAME_TICKS;
+		return frameCount <= 0 ? 0 : frameCount * getCombatEffectFrameTicks(effectType);
+	}
+
+	private int getCombatEffectFrameTicks(int effectType) {
+		if (effectType == COMBAT_EFFECT_LESSER_HEAL) {
+			return LESSER_HEAL_FRAME_TICKS;
+		}
+		if (effectType == COMBAT_EFFECT_TELEPORT) {
+			return TELEPORT_FRAME_TICKS;
+		}
+		return COMBAT_EFFECT_FRAME_TICKS;
 	}
 
 	public String getCombatEffectName(int effectType) {
@@ -21142,6 +21206,20 @@ public final class mudclient implements Runnable {
 		}
 		mirrored = createMirroredSprite(source);
 		projectileEffectMirrorSprites[projectileIndex][frame] = mirrored;
+		return mirrored;
+	}
+
+	private Sprite getMirroredProjectileImpactSprite(int projectileIndex, int frame) {
+		Sprite mirrored = projectileImpactMirrorSprites[projectileIndex][frame];
+		if (mirrored != null) {
+			return mirrored;
+		}
+		Sprite source = projectileImpactSprites[projectileIndex][frame];
+		if (source == null) {
+			return null;
+		}
+		mirrored = createMirroredSprite(source);
+		projectileImpactMirrorSprites[projectileIndex][frame] = mirrored;
 		return mirrored;
 	}
 
@@ -21292,14 +21370,16 @@ public final class mudclient implements Runnable {
 		}
 		int effectType = getCombatEffectTypeForSceneIndex(sceneIndex);
 		int frame = getCombatEffectFrameForSceneIndex(sceneIndex);
-		int size = getCombatEffectScreenSize(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);
+		int drawWidth = getCombatEffectScreenWidth(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);
+		int drawHeight = getCombatEffectScreenHeight(effectType, COMBAT_EFFECT_STANDARD_SCREEN_SIZE);
+		int offsetSize = Math.max(drawWidth, drawHeight);
 		queuedCombatEffectSprite[queuedCombatEffectCount] = sceneIndex;
-		queuedCombatEffectX[queuedCombatEffectCount] = x + (width / 2) - (size / 2)
-			+ getCombatEffectScreenXOffset(effectType, frame, size);
-		queuedCombatEffectY[queuedCombatEffectCount] = y + (height / 2) - (size / 2)
-			+ getCombatEffectScreenYOffset(effectType, frame, size);
-		queuedCombatEffectWidth[queuedCombatEffectCount] = size;
-		queuedCombatEffectHeight[queuedCombatEffectCount] = size;
+		queuedCombatEffectX[queuedCombatEffectCount] = x + (width / 2) - (drawWidth / 2)
+			+ getCombatEffectScreenXOffset(effectType, frame, offsetSize);
+		queuedCombatEffectY[queuedCombatEffectCount] = y + (height / 2) - (drawHeight / 2)
+			+ getCombatEffectScreenYOffset(effectType, frame, offsetSize);
+		queuedCombatEffectWidth[queuedCombatEffectCount] = drawWidth;
+		queuedCombatEffectHeight[queuedCombatEffectCount] = drawHeight;
 		queuedCombatEffectCount++;
 		return true;
 	}
@@ -21392,11 +21472,18 @@ public final class mudclient implements Runnable {
 		int duration = frameCount * PROJECTILE_IMPACT_FRAME_TICKS;
 		int elapsed = Math.max(0, duration - character.projectileImpactTime);
 		int frame = Math.min(frameCount - 1, elapsed / PROJECTILE_IMPACT_FRAME_TICKS);
-		Sprite sprite = projectileImpactSprites[projectileIndex][frame];
+		Sprite sprite = character.projectileMirrored
+			? getMirroredProjectileImpactSprite(projectileIndex, frame)
+			: projectileImpactSprites[projectileIndex][frame];
 		if (sprite == null) {
 			return;
 		}
-		int size = PROJECTILE_IMPACT_SCREEN_SIZE;
+		int size = 64;
+		ProjectileAnimationCatalog.Definition definition =
+			ProjectileAnimationCatalog.getProjectileFallback(character.projectileImpactId);
+		if (definition != null) {
+			size = ProjectileAnimationCatalog.getImpactScreenSize(definition.getKey());
+		}
 		queuedProjectileImpactSprite[queuedProjectileImpactCount] = sprite;
 		queuedProjectileImpactX[queuedProjectileImpactCount] = x + width / 2 - size / 2;
 		queuedProjectileImpactY[queuedProjectileImpactCount] = y + height / 2 - size / 2;
@@ -24912,9 +24999,9 @@ public final class mudclient implements Runnable {
 		int cos = FastMath.trigTable_1024[angle + 1024];
 		int screenX = (int) (((long) deltaX * cos + (long) deltaZ * sin) >> 15);
 		if (screenX == 0) {
-			return deltaX < 0;
+			return deltaX > 0;
 		}
-		return screenX < 0;
+		return screenX > 0;
 	}
 
 	private int getProjectileSceneSize(SpriteDef projectile, boolean enemyProjectile) {

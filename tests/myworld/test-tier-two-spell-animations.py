@@ -156,7 +156,16 @@ def main() -> int:
         'if ("Acid Splash".equalsIgnoreCase(spellName))',
         "public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;",
         "private static final int COMBAT_EFFECT_FRAME_TICKS = 3;",
-        "frameCount * COMBAT_EFFECT_FRAME_TICKS",
+        "private static final int LESSER_HEAL_FRAME_TICKS = 8;",
+        "private static final int TELEPORT_FRAME_TICKS = 14;",
+        "frameCount * getCombatEffectFrameTicks(effectType)",
+        "if (effectType == COMBAT_EFFECT_LESSER_HEAL)",
+        "return LESSER_HEAL_FRAME_TICKS;",
+        "if (effectType == COMBAT_EFFECT_TELEPORT)",
+        "return TELEPORT_FRAME_TICKS;",
+        "effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, size / 2) : size",
+        "getCombatEffectScreenWidth",
+        "getCombatEffectScreenHeight",
         "private static final int PROJECTILE_IMPACT_FRAME_TICKS = 3;",
         "loadProjectileImpactAnimationSheets",
         "drawQueuedProjectileImpactOverlays()",
@@ -182,6 +191,7 @@ def main() -> int:
         "public int pendingCombatEffectType = 0;",
         "public int projectileImpactId = -1;",
         "public int projectileImpactTime = 0;",
+        "public boolean projectileMirrored = false;",
     ), "ORSCharacter.java")
 
     assert "Projectile.SKULL, CombatEffect.IBAN_BLAST, true" in spell_handler, \
@@ -193,6 +203,13 @@ def main() -> int:
     lesser_heal_legacy = ROOT / "dev/myworld/assets/legacy animation folder/On Player/lesser-heal"
     assert len(list(lesser_heal_legacy.glob("*.png"))) == 6, \
         "lesser heal must retain its six centered legacy frames"
+
+    migration_plan = read("docs/myworld/in-progress-work-plans/animation-asset-migration-plan.md")
+    require(migration_plan, (
+        "Deferred Water Burst projection note:",
+        "perspective-aware warping",
+        "current polish wave into that renderer experiment.",
+    ), "animation-asset-migration-plan.md")
     legacy_root = ROOT / "dev/myworld/assets/legacy animation folder/On Enemy"
     assert len(list((legacy_root / "ice-burst").glob("*.png"))) == 35
     assert len(list((legacy_root / "ice-crystal").glob("*.png"))) == 34
