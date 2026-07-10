@@ -495,7 +495,15 @@ public class EntityHandler {
 		BLUE_DRAGON_MAGIC(27),
 		CHAIN_LIGHTNING_A(28),
 		CHAIN_LIGHTNING_B(29),
-		CHAIN_LIGHTNING_C(30);
+		CHAIN_LIGHTNING_C(30),
+		WIND_STATIC_2(31),
+		WATER_STATIC_2(32),
+		THUNDER_BIRD(33),
+		EARTH_LEAD_2(34),
+		FIRE_LEAD_2(35),
+		ICE_LEAD_2(36),
+		ACID_LEAD_2(37),
+		WOOD_LEAD_2(38);
 
 		private final int value;
 
@@ -544,6 +552,14 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("chain lightning A projectile", mudclient.spriteProjectile + 1, "projectiles:1", 28));
 		projectiles.add(new SpriteDef("chain lightning B projectile", mudclient.spriteProjectile + 1, "projectiles:1", 29));
 		projectiles.add(new SpriteDef("chain lightning C projectile", mudclient.spriteProjectile + 1, "projectiles:1", 30));
+		projectiles.add(new SpriteDef("wind static 2 projectile", mudclient.spriteProjectile + 1, "projectiles:1", 31));
+		projectiles.add(new SpriteDef("water static 2 projectile", mudclient.spriteProjectile + 1, "projectiles:1", 32));
+		projectiles.add(new SpriteDef("thunder bird projectile", mudclient.spriteProjectile + 1, "projectiles:1", 33));
+		projectiles.add(new SpriteDef("earth tier 2 lead projectile", mudclient.spriteProjectile + 1, "projectiles:1", 34));
+		projectiles.add(new SpriteDef("fire tier 2 lead projectile", mudclient.spriteProjectile + 1, "projectiles:1", 35));
+		projectiles.add(new SpriteDef("ice tier 2 lead projectile", mudclient.spriteProjectile + 1, "projectiles:1", 36));
+		projectiles.add(new SpriteDef("acid tier 2 lead projectile", mudclient.spriteProjectile + 1, "projectiles:1", 37));
+		projectiles.add(new SpriteDef("wood tier 2 lead projectile", mudclient.spriteProjectile + 1, "projectiles:1", 38));
 	}
 
 	public enum GUIPARTS {
@@ -7740,19 +7756,19 @@ public class EntityHandler {
 		runes.put(31, 2);
 		runes.put(32, 2);
 		runes.put(41, 1);
-		spells.add(new SpellDef("Thunder Splash", "Dual-element thunder damage",
+		spells.add(new SpellDef("Thunder Bird", "Dual-element thunder damage",
 			30, 2, 3, (LinkedHashMap<Integer, Integer>) runes.clone()));
 		runes.clear();
 		runes.put(33, 2);
 		runes.put(32, 2);
 		runes.put(41, 1);
-		spells.add(new SpellDef("Ice Burst", "Dual-element ice damage",
+		spells.add(new SpellDef("Ice Slash", "Dual-element ice damage",
 			30, 2, 3, (LinkedHashMap<Integer, Integer>) runes.clone()));
 		runes.clear();
 		runes.put(31, 2);
 		runes.put(34, 2);
 		runes.put(41, 1);
-		spells.add(new SpellDef("Acid Frog", "Dual-element acid damage",
+		spells.add(new SpellDef("Acid Splash", "Dual-element acid damage",
 			30, 2, 3, (LinkedHashMap<Integer, Integer>) runes.clone()));
 		runes.clear();
 		runes.put(34, 2);

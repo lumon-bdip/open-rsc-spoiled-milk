@@ -90,7 +90,7 @@ def main():
     client = read("Client_Base/src/orsc/mudclient.java")
     require(client, [
         "public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;",
-        "public static final int CUSTOM_PROJECTILE_COUNT = 24;",
+		"public static final int CUSTOM_PROJECTILE_COUNT = 32;",
         "public static final int PROJECTILE_EFFECT_SCENE_RANGE = CUSTOM_PROJECTILE_COUNT * PROJECTILE_EFFECT_FRAME_SLOTS;",
         "public static final int spriteProjectileEffectMirrorBase = spriteProjectileEffectBase + PROJECTILE_EFFECT_SCENE_RANGE;",
         "public static final int spriteProjectileStaticMirrorBase =",
@@ -188,7 +188,7 @@ def main():
         "public static final int COMBAT_EFFECT_ELDER_DRAGON_FIRESHOT = 62;",
         "public static final int COMBAT_EFFECT_ELDER_DRAGON_BURN = 63;",
         "public static final int COMBAT_EFFECT_TRUE_DEFENSE = 64;",
-        "public static final int COMBAT_EFFECT_COUNT = 64;",
+		"public static final int COMBAT_EFFECT_COUNT = 65;",
         '"battering-ram", "dragon-breath",',
         '"divine-grace", "divine-retribution", "corrosive-aura", "lesser-demon-magic", "greater-demon-magic",',
         '"enemy-earth-basic", "black-demon-magic", "balrog-magic"',
@@ -286,8 +286,7 @@ def main():
     ], "CombatEffect.java")
     handler = read("server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java")
     require(handler, [
-        "return CombatEffect.WIND_SLASH;",
-        "return CombatEffect.WATER_ERUPTION;",
+		"return CombatEffect.WATER_ERUPTION;",
         "return CombatEffect.EXPLOSION;",
         "return CombatEffect.WATER_VORTEX;",
         "return CombatEffect.FIRE_PILLAR;",

@@ -30,6 +30,9 @@ public final class ORSCharacter {
 	public int combatEffectScreenY = 0;
 	public int combatEffectScreenWidth = 0;
 	public int combatEffectScreenHeight = 0;
+	public boolean hasSceneScreenAnchor = false;
+	public int sceneScreenCenterX = 0;
+	public int sceneScreenCenterY = 0;
 	int healTimeout = 0;
 	public int currentX;
 	public int currentZ;
@@ -101,6 +104,7 @@ public final class ORSCharacter {
 		combatEffectType = 0;
 		combatEffectTime = 0;
 		hasCombatEffectScreenAnchor = false;
+		hasSceneScreenAnchor = false;
 		damageTaken = 0;
 		healTimeout = 0;
 		healTaken = 0;

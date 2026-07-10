@@ -389,6 +389,22 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				return Projectile.ACID_DROP;
 			case BRANCH_SPORE:
 				return Projectile.BRANCH_SPORE;
+			case WIND_BOLT:
+				return Projectile.WIND_STATIC_2;
+			case WATER_BOLT:
+				return Projectile.WATER_STATIC_2;
+			case EARTH_BOLT:
+				return Projectile.EARTH_LEAD_2;
+			case FIRE_BOLT:
+				return Projectile.FIRE_LEAD_2;
+			case THUNDER_SPLASH:
+				return Projectile.THUNDER_BIRD;
+			case ICE_BURST:
+				return Projectile.ICE_LEAD_2;
+			case ACID_FROG:
+				return Projectile.ACID_LEAD_2;
+			case WOOD_DRILL:
+				return Projectile.WOOD_LEAD_2;
 			default:
 				return Projectile.MAGIC;
 		}
@@ -399,12 +415,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			return 0;
 		}
 		switch (spellEnum) {
-			case WIND_BOLT:
-				return CombatEffect.WIND_SLASH;
 			case EARTH_BOLT:
 				return CombatEffect.EARTH_HAMMER;
-			case WATER_BOLT:
-				return CombatEffect.WATER_BURST;
 			case FIRE_BOLT:
 				return CombatEffect.FIRE_CLAW;
 			case THUNDER_SPLASH:
@@ -1672,11 +1684,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						if (!checkAndRemoveRunes(getPlayer(), spell)) {
 							return;
 						}
-						ActionSender.sendTeleBubble(getPlayer(), getLocation().getX(), getLocation().getY(), true);
-						for (Player player : getPlayer().getViewArea().getPlayersInView()) {
-							ActionSender.sendTeleBubble(player, getLocation().getX(), getLocation().getY(), true);
-						}
-
 						getPlayer().getWorld().unregisterItem(affectedItem);
 						finalizeSpell(getPlayer(), spell, "Spell successful");
 						getPlayer().getWorld().getServer().getGameLogger().addQuery(
@@ -2529,6 +2536,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		player.resetAllExceptDueling();
 		player.setBusy(true);
 		player.message("You begin charging the teleport spell");
+		player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.TELEPORT));
 		player.getWorld().getServer().getGameEventHandler().add(new MiniEvent(player.getWorld(), player, TELEPORT_CHARGE_MS, "Teleport spell charge") {
 			@Override
 			public void action() {

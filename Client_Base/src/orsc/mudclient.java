@@ -37,9 +37,11 @@ import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.Scene;
 import orsc.graphics.three.World;
+import orsc.graphics.two.CombatEffectAnimationCatalog;
 import orsc.graphics.two.Fonts;
 import orsc.graphics.two.MudClientGraphics;
 import orsc.graphics.two.ProjectileAnimationCatalog;
+import orsc.graphics.two.ProjectileStaticAnimationCatalog;
 import orsc.graphics.two.SpriteArchive.Subspace;
 import orsc.graphics.two.SpriteArchive.Unpacker;
 import orsc.graphics.two.SpriteArchive.Workspace;
@@ -202,13 +204,14 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_ELDER_DRAGON_FIRESHOT = 62;
 	public static final int COMBAT_EFFECT_ELDER_DRAGON_BURN = 63;
 	public static final int COMBAT_EFFECT_TRUE_DEFENSE = 64;
+	public static final int COMBAT_EFFECT_TELEPORT = 65;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
 	public static final int COMBAT_EFFECT_WATER_ERUPTION = COMBAT_EFFECT_HURRICANE;
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 64;
+	public static final int COMBAT_EFFECT_COUNT = 65;
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 32;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_TICKS = 40;
@@ -227,7 +230,7 @@ public final class mudclient implements Runnable {
 	private static final int CHAIN_LIGHTNING_PROJECTILE_SCENE_SIZE = 96;
 	private static final int SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT = 34;
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
-	public static final int CUSTOM_PROJECTILE_COUNT = 24;
+	public static final int CUSTOM_PROJECTILE_COUNT = 32;
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
 	public static final int spriteProjectileEffectBase =
 		spriteCombatEffectBase + (COMBAT_EFFECT_COUNT * COMBAT_EFFECT_FRAME_SLOTS);
@@ -1026,7 +1029,7 @@ public final class mudclient implements Runnable {
 		"green-dragon-magic", "fire-dragon-magic", "otherworldly-being-magic", "paladin-magic",
 		"fire-kin-magic", "ice-kin-magic", "earth-kin-magic", "dragon-weapon-breath",
 		"fire-sword", "ice-sword", "earth-sword", "elder-dragon-fireshot", "elder-dragon-burn",
-		"true-defense"
+		"true-defense", "teleport"
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final Sprite[][] projectileEffectMirrorSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
@@ -1036,7 +1039,8 @@ public final class mudclient implements Runnable {
 		"blow-smoke", "fireball", "wind-arrow", "rock-throw", "water-ball", "throwing-knife", "arrow", "dart",
 		"claws-of-guthix", "thunder-ball", "icicle-shot", "acid-drop", "spore", "bolt", "enemy-fire-basic", "holy-magic",
 		"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic",
-		"chain-lightning/A", "chain-lightning/B", "chain-lightning/C"
+		"chain-lightning/A", "chain-lightning/B", "chain-lightning/C", "wind-static-2", "water-static-2",
+		"thunder-bird", "earth-lead-2", "fire-lead-2", "ice-lead-2", "acid-lead-2", "wood-lead-2"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
@@ -1052,6 +1056,14 @@ public final class mudclient implements Runnable {
 	private final int[] queuedProjectileEffectWidth = new int[MAX_QUEUED_PROJECTILE_EFFECTS];
 	private final int[] queuedProjectileEffectHeight = new int[MAX_QUEUED_PROJECTILE_EFFECTS];
 	private int queuedProjectileEffectCount = 0;
+	private static final int MAX_QUEUED_STATIC_PROJECTILES = 32;
+	private final ORSCharacter[] queuedStaticProjectileCaster = new ORSCharacter[MAX_QUEUED_STATIC_PROJECTILES];
+	private final ORSCharacter[] queuedStaticProjectileVictim = new ORSCharacter[MAX_QUEUED_STATIC_PROJECTILES];
+	private final int[] queuedStaticProjectileId = new int[MAX_QUEUED_STATIC_PROJECTILES];
+	private final int[] queuedStaticProjectileFrame = new int[MAX_QUEUED_STATIC_PROJECTILES];
+	private int queuedStaticProjectileCount = 0;
+	private static final int MAX_SCALED_STATIC_PROJECTILE_CACHE = 256;
+	private final Map<String, Sprite> scaledStaticProjectileSprites = new HashMap<String, Sprite>();
 	private static final int MAX_QUEUED_COMBAT_EFFECTS = 64;
 	private final int[] queuedCombatEffectSprite = new int[MAX_QUEUED_COMBAT_EFFECTS];
 	private final int[] queuedCombatEffectX = new int[MAX_QUEUED_COMBAT_EFFECTS];
@@ -6667,6 +6679,13 @@ public final class mudclient implements Runnable {
 					this.scene.reduceSprites((byte) 67, this.spriteCount);
 					this.spriteCount = 0;
 
+					for (centerX = 0; centerX < this.playerCount; ++centerX) {
+						this.players[centerX].hasSceneScreenAnchor = false;
+					}
+					for (centerX = 0; centerX < this.npcCount; ++centerX) {
+						this.npcs[centerX].hasSceneScreenAnchor = false;
+					}
+
 					for (centerX = 0; this.playerCount > centerX; ++centerX) {
 						ORSCharacter var3 = this.players[centerX];
 						if (!this.isInFirstPersonView() || var3.accountName != this.localPlayer.accountName) {
@@ -6712,6 +6731,7 @@ public final class mudclient implements Runnable {
 						}
 					}
 
+					this.queuedStaticProjectileCount = 0;
 					for (centerX = 0; centerX < this.playerCount; ++centerX) {
 						ORSCharacter var3 = this.players[centerX];
 						if (var3.projectileRange > 0) {
@@ -6738,6 +6758,9 @@ public final class mudclient implements Runnable {
 								int var9 = var3.currentZ;
 								int var10 = getPlayerProjectileCenterY(var3);
 								SpriteDef projectileDef = var3.incomingProjectileSprite;
+								if (queueStaticProjectile(projectileDef, var16, var3, var3.projectileRange)) {
+									continue;
+								}
 								int var11 = (var8 * (this.projectileMaxRange - var3.projectileRange)
 									+ var5 * var3.projectileRange) / this.projectileMaxRange;
 								int var12 = (var7 * var3.projectileRange
@@ -6785,6 +6808,9 @@ public final class mudclient implements Runnable {
 								int var9 = var3.currentZ;
 								int var10 = getNpcProjectileCenterY(var3);
 								SpriteDef projectileDef = var3.incomingProjectileSprite;
+								if (queueStaticProjectile(projectileDef, var16, var3, var3.projectileRange)) {
+									continue;
+								}
 								int var11 = (var8 * (this.projectileMaxRange - var3.projectileRange)
 									+ var5 * var3.projectileRange) / this.projectileMaxRange;
 								int var12 = (var7 * var3.projectileRange
@@ -7018,6 +7044,7 @@ public final class mudclient implements Runnable {
 								meshFrame == null ? 0 : meshFrame.getSkippedTriangleCount());
 						}
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
+						this.drawQueuedStaticProjectiles();
 						this.drawQueuedProjectileEffectOverlays();
 						this.drawQueuedCombatEffectOverlays();
 						this.drawDetachedScreenCombatEffects();
@@ -8830,6 +8857,9 @@ public final class mudclient implements Runnable {
 							  int overlayMovement) {
 		try {
 			ORSCharacter npc = this.npcs[npcIndex];
+			npc.hasSceneScreenAnchor = true;
+			npc.sceneScreenCenterX = x + width1 / 2;
+			npc.sceneScreenCenterY = y + height / 2;
 			NPCDef def = EntityHandler.getNpcDef(npc.npcId);
 			int npcColourTransform = getNpcSpriteColourTransform(npc);
 			int var11 = 7 & npc.direction.rsDir + (this.cameraRotation + 16) / 32;
@@ -9185,6 +9215,9 @@ public final class mudclient implements Runnable {
 			}
 
 			ORSCharacter player = this.players[index];
+			player.hasSceneScreenAnchor = true;
+			player.sceneScreenCenterX = x + width / 2;
+			player.sceneScreenCenterY = y + height / 2;
 			if (player.colourBottom != 255) {
 				int wantedAnimDir = (player.direction.rsDir + ((this.cameraRotation + 16) / 32)) & 7;
 				boolean mirrorX = false;
@@ -19263,10 +19296,10 @@ public final class mudclient implements Runnable {
 		return candidateBases[0].resolve(category).resolve(animationName).toFile();
 	}
 
-	private File getExternalAnimationSheet(String relativePath) {
+	private File getExternalAnimationSheet(String category, String relativePath) {
 		Path[] candidateBases = getAssetCandidateBases(
-			"dev/myworld/assets/animations/" + ProjectileAnimationCatalog.CATEGORY,
-			"output/animations/" + ProjectileAnimationCatalog.CATEGORY
+			"dev/myworld/assets/animations/" + category,
+			"output/animations/" + category
 		);
 		for (Path basePath : candidateBases) {
 			File candidate = basePath.resolve(relativePath).toFile();
@@ -19764,6 +19797,18 @@ public final class mudclient implements Runnable {
 
 	private void loadExternalCombatEffectSprites() {
 		for (int effectType = 1; effectType <= COMBAT_EFFECT_COUNT; effectType++) {
+			CombatEffectAnimationCatalog.Definition definition =
+				CombatEffectAnimationCatalog.getDefinition(effectType);
+			if (definition != null) {
+				File sheet = getExternalAnimationSheet(definition.getCategory(), definition.getSheetPath());
+				this.combatEffectFrameCounts[effectType] = appendExternalAnimationGridSheetFrames(
+					sheet, this.combatEffectSprites[effectType], definition.getMaxTargetSize(),
+					definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
+					definition.getFrameCount(), 0);
+				if (this.combatEffectFrameCounts[effectType] > 0) {
+					continue;
+				}
+			}
 			String effectName = getCombatEffectName(effectType);
 			String assetName = getCombatEffectAssetName(effectName);
 			File effectFolder = getLegacyExternalAnimationFolder("On Player", effectName);
@@ -19810,8 +19855,16 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalProjectileEffectSprites() {
+		scaledStaticProjectileSprites.clear();
 		for (int i = 0; i < CUSTOM_PROJECTILE_COUNT; i++) {
 			int projectileId = CUSTOM_PROJECTILE_FIRST + i;
+			ProjectileStaticAnimationCatalog.Definition staticDefinition =
+				ProjectileStaticAnimationCatalog.getDefinition(projectileId);
+			if (staticDefinition != null) {
+				this.projectileEffectFrameCounts[i] = loadProjectileStaticAnimationSheet(
+					staticDefinition, this.projectileEffectSprites[i]);
+				continue;
+			}
 			ProjectileAnimationCatalog.Definition definition =
 				ProjectileAnimationCatalog.getProjectileFallback(projectileId);
 			if (definition != null) {
@@ -19830,7 +19883,7 @@ public final class mudclient implements Runnable {
 	private int loadProjectileAnimationSheet(ProjectileAnimationCatalog.Definition definition,
 			Sprite[] targetFrames) {
 		Arrays.fill(targetFrames, null);
-		File sheet = getExternalAnimationSheet(definition.getSheetPath());
+		File sheet = getExternalAnimationSheet(ProjectileAnimationCatalog.CATEGORY, definition.getSheetPath());
 		if (!assetFileExists(sheet)) {
 			System.out.println("Missing projectile animation sheet " + definition.getKey()
 				+ ": " + sheet.getPath());
@@ -19839,6 +19892,21 @@ public final class mudclient implements Runnable {
 		return appendExternalAnimationGridSheetFrames(sheet, targetFrames,
 			definition.getMaxTargetSize(), definition.getColumns(), definition.getRows(),
 			definition.getFirstFrame(), definition.getFrameCount(), 0);
+	}
+
+	private int loadProjectileStaticAnimationSheet(ProjectileStaticAnimationCatalog.Definition definition,
+			Sprite[] targetFrames) {
+		Arrays.fill(targetFrames, null);
+		File sheet = getExternalAnimationSheet(ProjectileStaticAnimationCatalog.CATEGORY,
+			definition.getSheetPath());
+		if (!assetFileExists(sheet)) {
+			System.out.println("Missing static projectile animation sheet " + definition.getKey()
+				+ ": " + sheet.getPath());
+			return 0;
+		}
+		return appendExternalAnimationNativeGridSheetFrames(sheet, targetFrames,
+			definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
+			definition.getFrameCount());
 	}
 
 	private void loadExternalSpellIconSprites() {
@@ -20242,8 +20310,14 @@ public final class mudclient implements Runnable {
 		if ("Claw of Guthix".equalsIgnoreCase(spellName) || "Claws of Guthix".equalsIgnoreCase(spellName)) {
 			return "claws-of-guthix";
 		}
-		if ("Thunder Splash".equalsIgnoreCase(spellName)) {
+		if ("Thunder Bird".equalsIgnoreCase(spellName)) {
 			return "thunder-wave";
+		}
+		if ("Ice Slash".equalsIgnoreCase(spellName)) {
+			return "ice-burst";
+		}
+		if ("Acid Splash".equalsIgnoreCase(spellName)) {
+			return "acid-frog";
 		}
 		if ("Varrock teleport".equalsIgnoreCase(spellName)) {
 			return "varrok-teleport";
@@ -20507,6 +20581,44 @@ public final class mudclient implements Runnable {
 		} catch (IOException e) {
 			System.out.println("Failed to load external animation sheet " + sourceFile.getPath() + ": " + e.getMessage());
 			return loadedFrames;
+		}
+	}
+
+	private int appendExternalAnimationNativeGridSheetFrames(File sourceFile, Sprite[] targetFrames,
+			int columns, int rows, int firstFrameIndex, int frameCount) {
+		try {
+			BufferedImage source = readAssetImage(sourceFile);
+			if (source == null || columns <= 0 || rows <= 0 || firstFrameIndex < 0 || frameCount <= 0
+				|| firstFrameIndex + frameCount > columns * rows) {
+				return 0;
+			}
+			int frameWidth = source.getWidth() / columns;
+			int frameHeight = source.getHeight() / rows;
+			if (frameWidth <= 0 || frameHeight <= 0 || frameWidth * columns != source.getWidth()
+				|| frameHeight * rows != source.getHeight()) {
+				return 0;
+			}
+			int loadedFrames = 0;
+			for (int frameIndex = 0; frameIndex < frameCount && loadedFrames < targetFrames.length; frameIndex++) {
+				int sheetFrameIndex = firstFrameIndex + frameIndex;
+				BufferedImage frame = source.getSubimage((sheetFrameIndex % columns) * frameWidth,
+					(sheetFrameIndex / columns) * frameHeight, frameWidth, frameHeight);
+				int[] pixels = new int[frameWidth * frameHeight];
+				frame.getRGB(0, 0, frameWidth, frameHeight, pixels, 0, frameWidth);
+				for (int i = 0; i < pixels.length; i++) {
+					pixels[i] = getExternalSpritePixel(pixels[i], 64);
+				}
+				Sprite sprite = new Sprite(pixels, frameWidth, frameHeight);
+				sprite.setShift(0, 0);
+				sprite.setRequiresShift(false);
+				sprite.setSomething(frameWidth, frameHeight);
+				targetFrames[loadedFrames++] = sprite;
+			}
+			return loadedFrames;
+		} catch (IOException e) {
+			System.out.println("Failed to load static projectile sheet " + sourceFile.getPath()
+				+ ": " + e.getMessage());
+			return 0;
 		}
 	}
 
@@ -21032,6 +21144,101 @@ public final class mudclient implements Runnable {
 			return source.getXShift();
 		}
 		return source.getSomething1() - source.getWidth() - source.getXShift();
+	}
+
+	private boolean queueStaticProjectile(SpriteDef projectile, ORSCharacter caster,
+			ORSCharacter victim, int projectileRange) {
+		if (projectile == null || caster == null || victim == null
+			|| ProjectileStaticAnimationCatalog.getDefinition(projectile.id) == null) {
+			return false;
+		}
+		if (queuedStaticProjectileCount >= MAX_QUEUED_STATIC_PROJECTILES) {
+			return false;
+		}
+		int projectileIndex = projectile.id - CUSTOM_PROJECTILE_FIRST;
+		if (projectileIndex < 0 || projectileIndex >= projectileEffectFrameCounts.length) {
+			return false;
+		}
+		int frameCount = projectileEffectFrameCounts[projectileIndex];
+		if (frameCount <= 0) {
+			return false;
+		}
+		int elapsed = Math.max(0, this.projectileMaxRange - projectileRange);
+		int frame = (elapsed * frameCount) / Math.max(1, this.projectileMaxRange);
+		frame = Math.max(0, Math.min(frameCount - 1, frame));
+		queuedStaticProjectileCaster[queuedStaticProjectileCount] = caster;
+		queuedStaticProjectileVictim[queuedStaticProjectileCount] = victim;
+		queuedStaticProjectileId[queuedStaticProjectileCount] = projectile.id;
+		queuedStaticProjectileFrame[queuedStaticProjectileCount] = frame;
+		queuedStaticProjectileCount++;
+		return true;
+	}
+
+	private void drawQueuedStaticProjectiles() {
+		for (int i = 0; i < queuedStaticProjectileCount; i++) {
+			ORSCharacter caster = queuedStaticProjectileCaster[i];
+			ORSCharacter victim = queuedStaticProjectileVictim[i];
+			if (caster == null || victim == null || !caster.hasSceneScreenAnchor || !victim.hasSceneScreenAnchor) {
+				continue;
+			}
+			int projectileId = queuedStaticProjectileId[i];
+			int projectileIndex = projectileId - CUSTOM_PROJECTILE_FIRST;
+			int frame = queuedStaticProjectileFrame[i];
+			if (projectileIndex < 0 || projectileIndex >= projectileEffectSprites.length
+				|| frame < 0 || frame >= projectileEffectSprites[projectileIndex].length) {
+				continue;
+			}
+			Sprite source = projectileEffectSprites[projectileIndex][frame];
+			ProjectileStaticAnimationCatalog.Definition definition =
+				ProjectileStaticAnimationCatalog.getDefinition(projectileId);
+			if (source == null || definition == null) {
+				continue;
+			}
+			int deltaX = victim.sceneScreenCenterX - caster.sceneScreenCenterX;
+			int deltaY = victim.sceneScreenCenterY - caster.sceneScreenCenterY;
+			int length = Math.max(1, (int) Math.round(Math.sqrt((double) deltaX * deltaX + (double) deltaY * deltaY)));
+			int thickness = Math.max(1, definition.getThickness());
+			Sprite scaled = getScaledStaticProjectileSprite(projectileId, frame, source, length, thickness);
+			if (scaled == null) {
+				continue;
+			}
+			int centerX = (caster.sceneScreenCenterX + victim.sceneScreenCenterX) / 2;
+			int centerY = (caster.sceneScreenCenterY + victim.sceneScreenCenterY) / 2;
+			int angle = (int) Math.round(Math.atan2(deltaY, deltaX) * 128.0D / Math.PI) & 255;
+			this.getSurface().drawMinimapSprite(scaled, centerY, centerX, 0, 128, angle);
+		}
+		queuedStaticProjectileCount = 0;
+	}
+
+	private Sprite getScaledStaticProjectileSprite(int projectileId, int frame, Sprite source,
+			int length, int thickness) {
+		int bucketedLength = Math.max(8, Math.min(1024, ((length + 3) / 4) * 4));
+		String cacheKey = projectileId + ":" + frame + ":" + bucketedLength + ":" + thickness;
+		Sprite cached = scaledStaticProjectileSprites.get(cacheKey);
+		if (cached != null) {
+			return cached;
+		}
+		int[] sourcePixels = source.getPixels();
+		if (sourcePixels == null || source.getWidth() <= 0 || source.getHeight() <= 0) {
+			return null;
+		}
+		int[] pixels = new int[bucketedLength * thickness];
+		for (int y = 0; y < thickness; y++) {
+			int sourceY = Math.min(source.getHeight() - 1, y * source.getHeight() / thickness);
+			for (int x = 0; x < bucketedLength; x++) {
+				int sourceX = Math.min(source.getWidth() - 1, x * source.getWidth() / bucketedLength);
+				pixels[y * bucketedLength + x] = sourcePixels[sourceY * source.getWidth() + sourceX];
+			}
+		}
+		Sprite scaled = new Sprite(pixels, bucketedLength, thickness);
+		scaled.setShift(0, 0);
+		scaled.setRequiresShift(false);
+		scaled.setSomething(bucketedLength, thickness);
+		if (scaledStaticProjectileSprites.size() >= MAX_SCALED_STATIC_PROJECTILE_CACHE) {
+			scaledStaticProjectileSprites.clear();
+		}
+		scaledStaticProjectileSprites.put(cacheKey, scaled);
+		return scaled;
 	}
 
 	public boolean queueCombatEffectOverlay(int sceneIndex, int x, int y, int width, int height) {
@@ -24544,6 +24751,13 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getProjectileSceneSize(SpriteDef projectile, boolean enemyProjectile) {
+		int leadInBasicProjectileId = getTierTwoLeadInBasicProjectileId(projectile);
+		if (leadInBasicProjectileId >= 0 && leadInBasicProjectileId < EntityHandler.projectilesCount()) {
+			return Math.max(1, getProjectileSceneSize(EntityHandler.projectiles.get(leadInBasicProjectileId), false) / 2);
+		}
+		if (projectile != null && projectile.id == PROJECTILE_TYPES.THUNDER_BIRD.id()) {
+			return 192;
+		}
 		if (projectile != null && projectile.id == PROJECTILE_TYPES.BRANCH_SPORE.id()) {
 			return BRANCH_SPORE_PROJECTILE_SCENE_SIZE;
 		}
@@ -24581,6 +24795,28 @@ public final class mudclient implements Runnable {
 			return size * 2;
 		}
 		return isSpellProjectile(projectile) ? size * 2 : size;
+	}
+
+	private int getTierTwoLeadInBasicProjectileId(SpriteDef projectile) {
+		if (projectile == null) {
+			return -1;
+		}
+		if (projectile.id == PROJECTILE_TYPES.EARTH_LEAD_2.id()) {
+			return PROJECTILE_TYPES.ROCK_THROW.id();
+		}
+		if (projectile.id == PROJECTILE_TYPES.FIRE_LEAD_2.id()) {
+			return PROJECTILE_TYPES.FIREBALL.id();
+		}
+		if (projectile.id == PROJECTILE_TYPES.ICE_LEAD_2.id()) {
+			return PROJECTILE_TYPES.ICICLE_SHOT.id();
+		}
+		if (projectile.id == PROJECTILE_TYPES.ACID_LEAD_2.id()) {
+			return PROJECTILE_TYPES.ACID_DROP.id();
+		}
+		if (projectile.id == PROJECTILE_TYPES.WOOD_LEAD_2.id()) {
+			return PROJECTILE_TYPES.BRANCH_SPORE.id();
+		}
+		return -1;
 	}
 
 	private int getProjectileSceneSizeForAnimatedEnemy(SpriteDef projectile, boolean enemyProjectile, int size) {

@@ -91,6 +91,7 @@ public final class ProjectileAnimationCatalog {
 		define(definitions, "dart-basic", "Throwing dart", "dart-basic/dart.png", 1, 1, 0, 1);
 		define(definitions, "throwing-knife-basic", "Throwing knife", "throwing-knife-basic/throwing-knife-basic.png", 8, 1, 0, 8);
 		define(definitions, "shuriken-basic", "Shuriken", "shuriken-basic/shuriken-basic.png", 8, 1, 0, 8);
+		define(definitions, "thunder-2", "Thunder bird", "thunder-2/Projectile/Projectile 2 wo blur.png", 16, 1, 0, 16);
 		DEFINITIONS = Collections.unmodifiableMap(definitions);
 
 		LinkedHashMap<Integer, String> fallbacks = new LinkedHashMap<Integer, String>();
@@ -116,6 +117,12 @@ public final class ProjectileAnimationCatalog {
 		fallback(fallbacks, PROJECTILE_TYPES.CHAIN_LIGHTNING_A, "thunder-basic");
 		fallback(fallbacks, PROJECTILE_TYPES.CHAIN_LIGHTNING_B, "thunder-basic");
 		fallback(fallbacks, PROJECTILE_TYPES.CHAIN_LIGHTNING_C, "thunder-basic");
+		fallback(fallbacks, PROJECTILE_TYPES.THUNDER_BIRD, "thunder-2");
+		fallback(fallbacks, PROJECTILE_TYPES.EARTH_LEAD_2, "earth-basic");
+		fallback(fallbacks, PROJECTILE_TYPES.FIRE_LEAD_2, "fire-basic");
+		fallback(fallbacks, PROJECTILE_TYPES.ICE_LEAD_2, "ice-basic");
+		fallback(fallbacks, PROJECTILE_TYPES.ACID_LEAD_2, "acid-basic");
+		fallback(fallbacks, PROJECTILE_TYPES.WOOD_LEAD_2, "wood-basic");
 		PROJECTILE_FALLBACKS = Collections.unmodifiableMap(fallbacks);
 	}
 

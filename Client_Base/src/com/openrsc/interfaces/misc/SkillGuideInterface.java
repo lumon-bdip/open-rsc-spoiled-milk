@@ -1672,13 +1672,13 @@ class MagicSpellMenuItem extends SkillMenuEntry {
 	}
 
 	private String getDualElementalEffectName(String name) {
-		if (name.equals("Thunder Ball") || name.equals("Thunder Splash") || name.equals("Thunder Strike")) {
+		if (name.equals("Thunder Ball") || name.equals("Thunder Bird") || name.equals("Thunder Strike")) {
 			return "Startle";
 		}
-		if (name.equals("Acid Drop") || name.equals("Acid Frog") || name.equals("Acid Gush")) {
+		if (name.equals("Acid Drop") || name.equals("Acid Splash") || name.equals("Acid Gush")) {
 			return "Corrode";
 		}
-		if (name.equals("Icicle Shot") || name.equals("Ice Burst") || name.equals("Ice Crystal")) {
+		if (name.equals("Icicle Shot") || name.equals("Ice Slash") || name.equals("Ice Crystal")) {
 			return "Frostbite";
 		}
 		if (name.equals("Spore") || name.equals("Wood Drill") || name.equals("Battering Ram")) {
@@ -1700,8 +1700,8 @@ class MagicSpellMenuItem extends SkillMenuEntry {
 			|| name.equals("Earth Hammer") || name.equals("Fire Claw")) {
 			return "moderate";
 		}
-		if (name.equals("Thunder Splash") || name.equals("Ice Burst")
-			|| name.equals("Acid Frog") || name.equals("Wood Drill")) {
+		if (name.equals("Thunder Bird") || name.equals("Ice Slash")
+			|| name.equals("Acid Splash") || name.equals("Wood Drill")) {
 			return "moderate";
 		}
 		if (name.equals("Tornado") || name.equals("Water Eruption")

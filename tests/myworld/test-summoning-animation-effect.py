@@ -45,8 +45,8 @@ def main() -> int:
     combat_effect_count = re.search(r"public static final int COMBAT_EFFECT_COUNT = (\d+);", client)
     if not combat_effect_count or int(combat_effect_count.group(1)) < 29:
         failures.append("client combat effect range must include the summon effects through type 29")
-    if 'public static final int spriteProjectileEffectBase = 53000;' not in client:
-        failures.append("projectile effect base must stay clear of the expanded combat effect sprite range")
+    if "spriteCombatEffectBase + (COMBAT_EFFECT_COUNT * COMBAT_EFFECT_FRAME_SLOTS)" not in client:
+        failures.append("projectile effect base must follow the expanded combat effect sprite range")
     if not re.search(r'combatEffectNames\s*=\s*new String\[\]\s*\{.*"summon".*"summon-combat".*"summon-support".*"summon-utility"', client, re.S):
         failures.append("client combatEffectNames must include summon charge and arrival effects")
     if 'getLegacyExternalAnimationFolder("on summon", assetName)' not in client:

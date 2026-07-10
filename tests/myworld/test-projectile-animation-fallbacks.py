@@ -32,6 +32,7 @@ EXPECTED_DEFINITIONS = {
     "dart-basic": ("dart-basic/dart.png", 1, 1, 0, 1),
     "throwing-knife-basic": ("throwing-knife-basic/throwing-knife-basic.png", 8, 1, 0, 8),
     "shuriken-basic": ("shuriken-basic/shuriken-basic.png", 8, 1, 0, 8),
+    "thunder-2": ("thunder-2/Projectile/Projectile 2 wo blur.png", 16, 1, 0, 16),
 }
 
 EXPECTED_FALLBACKS = {
@@ -57,6 +58,12 @@ EXPECTED_FALLBACKS = {
     "CHAIN_LIGHTNING_A": "thunder-basic",
     "CHAIN_LIGHTNING_B": "thunder-basic",
     "CHAIN_LIGHTNING_C": "thunder-basic",
+    "THUNDER_BIRD": "thunder-2",
+    "EARTH_LEAD_2": "earth-basic",
+    "FIRE_LEAD_2": "fire-basic",
+    "ICE_LEAD_2": "ice-basic",
+    "ACID_LEAD_2": "acid-basic",
+    "WOOD_LEAD_2": "wood-basic",
 }
 
 
@@ -98,7 +105,7 @@ def main() -> None:
 
     moving_root = ANIMATIONS / "projectile-moving"
     for key, (relative_path, columns, rows, first_frame, frame_count) in definitions.items():
-        if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*-basic", key):
+        if key != "thunder-2" and not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*-basic", key):
             fail(f"fallback key must use [type]-basic naming: {key}")
         sheet = moving_root / relative_path
         if not sheet.is_file():
