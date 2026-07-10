@@ -89,7 +89,7 @@ embedding large tables or images in the telemetry log.
       Java/OS details, and a privacy-filtered active renderer setting inventory.
 - [x] Keep output under ignored `output/renderer-diagnostics/` and make the
       chosen absolute session path obvious at launch.
-- [ ] Flush at report and capture boundaries. Avoid per-frame filesystem I/O.
+- [x] Flush at report and capture boundaries. Avoid per-frame filesystem I/O.
 - [x] Bound structured and console logs with a configurable byte budget. Keep
       explicit capture artifacts intact rather than automatically deleting
       ignored diagnostic sessions.
@@ -125,7 +125,7 @@ Implementation checkpoint:
       dimensions.
 - [x] Add relevant runtime context: heap used/committed/max, process uptime,
       available processors, and per-collector GC count/time deltas.
-- [ ] Emit on the existing report cadence, on slow-frame reports, immediately
+- [x] Emit on the existing report cadence, on slow-frame reports, immediately
       before a `Ctrl+F9` burst, and immediately after the burst completes.
 - [x] Preserve the current console report and expanded `F6` behavior while the
       structured output is validated.
@@ -152,16 +152,16 @@ Implementation checkpoint:
 
 ## Milestone 3: Events And `Ctrl+F9` Correlation
 
-- [ ] Write structured events for session start/stop, slow frames, 2D overflow,
+- [x] Write structured events for session start/stop, slow frames, 2D overflow,
       renderer warnings, region/resident-chunk transitions, capture request,
       capture frame start/completion/failure, and uncaught client failures.
-- [ ] Index all frames in a capture burst with their telemetry sequence,
+- [x] Index all frames in a capture burst with their telemetry sequence,
       directory, layer list, failure state, and analyzer input inventory.
-- [ ] Keep existing per-frame capture paths valid for the current analyzer;
+- [x] Keep existing per-frame capture paths valid for the current analyzer;
       use relative paths from the session bundle for portability.
-- [ ] Record capture readback/write timing separately so diagnostic overhead is
+- [x] Record capture readback/write timing separately so diagnostic overhead is
       visible and remains excluded from normal renderer phase totals.
-- [ ] Make repeated warning/event records machine-deduplicable with stable
+- [x] Make repeated warning/event records machine-deduplicable with stable
       event types and reason fields rather than message parsing.
 
 Acceptance:
@@ -171,21 +171,33 @@ Acceptance:
 - A failed or partial burst is explicit in the index and does not masquerade
   as a complete capture.
 
+Implementation checkpoint:
+
+- Burst requests now emit pre/post telemetry records and typed lifecycle
+  events. Each frame contributes started/final index records with stable
+  burst/frame identity, relative paths, artifact inventory, failure state,
+  renderer sequence, total frame span, and separately attributed input,
+  layer, finish, and aggregate capture-work timings.
+- Typed session events also retain slow frames, 2D overflow, world-section
+  loads, chunk/shadow/resident reason transitions, OpenGL messages, and client
+  exceptions. Existing standalone frame directories remain valid inputs for
+  the original capture analyzer.
+
 ## Milestone 4: AI-Oriented Session Analyzer
 
-- [ ] Add an offline analyzer that validates the manifest and JSONL streams,
+- [x] Add an offline analyzer that validates the manifest and JSONL streams,
       invokes or reuses the existing per-frame capture analysis, and tolerates
       older standalone frame captures.
-- [ ] Generate `ai-summary.md` containing session identity, duration, renderer
+- [x] Generate `ai-summary.md` containing session identity, duration, renderer
       modes, worst timing windows, recent/lifetime drift, frame drops, GC/heap
       changes, chunk churn, command pressure, warnings, capture failures, and
       links to noteworthy capture frames.
-- [ ] Rank likely correlations without presenting correlation as proven cause.
+- [x] Rank likely correlations without presenting correlation as proven cause.
       Examples include a frame-time spike beside GC activity, section loading,
       chunk uploads, atlas pressure, or command overflow.
-- [ ] Support a concise default report and a verbose mode that exposes raw
+- [x] Support a concise default report and a verbose mode that exposes raw
       record paths and validation details.
-- [ ] Add fixtures for clean sessions, partial last lines, missing optional
+- [x] Add fixtures for clean sessions, partial last lines, missing optional
       fields, schema incompatibility, failed capture frames, overflow, GC
       pressure, and older capture-only directories.
 
@@ -195,6 +207,19 @@ Acceptance:
   receive a reproducible, evidence-linked refinement recommendation.
 - The summary remains compact enough to inspect directly while preserving
   paths to raw evidence.
+
+Usage:
+
+```bash
+./scripts/run-client.sh --live --renderer-diagnostics
+python3 scripts/analyze-renderer-session.py \
+  output/renderer-diagnostics/session-... --strict --analyze-captures
+```
+
+The analyzer always prints its Markdown report and writes `ai-summary.md`
+unless `--no-write` is supplied. `--verbose` includes the full event inventory;
+`--analyze-captures` runs the established strict frame analyzer for completed
+indexed frames.
 
 ## Ongoing Visual Refinement Loop
 
@@ -216,11 +241,11 @@ For each manager-reported visual test:
 
 ## Validation
 
-- [ ] Client compiles with Java 8.
-- [ ] Existing renderer guardrail and capture-analyzer suites remain green.
-- [ ] New schema/rotation/privacy/analyzer fixtures pass.
-- [ ] Diagnostic-disabled launch produces no session bundle.
-- [ ] Diagnostic-enabled launch produces a parseable bundle and visible
+- [x] Client compiles with Java 8.
+- [x] Existing renderer guardrail and capture-analyzer suites remain green.
+- [x] New schema/bounds/privacy/analyzer fixtures pass.
+- [x] Diagnostic-disabled runtime produces no session bundle.
+- [x] Diagnostic-enabled fixture produces a parseable bundle and bounded
       console output.
 - [ ] A real `Ctrl+F9` burst is indexed and analyzable from the session root.
 - [ ] Logging overhead is measured with capture inactive and does not

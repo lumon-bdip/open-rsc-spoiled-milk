@@ -319,6 +319,14 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private volatile boolean frameCaptureRequested;
 	private volatile int frameCaptureBurstRemaining;
 	private int frameCaptureSequence;
+	private long frameCaptureBurstSequence;
+	private long activeFrameCaptureBurstId;
+	private int frameCaptureBurstFrameIndex;
+	private int activeFrameCaptureBurstFrameIndex = -1;
+	private long activeFrameCaptureStartedNanos;
+	private long activeFrameCaptureInputNanos;
+	private long activeFrameCaptureLayerNanos;
+	private boolean frameCaptureBurstCompletionLogged = true;
 	private OpenGLFrameCapture activeFrameCapture;
 	private long phaseCaptureNanos;
 	private FloatBuffer cameraToClipMatrixBuffer;
@@ -945,17 +953,56 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			return null;
 		}
 		frameCaptureBurstRemaining--;
+		activeFrameCaptureBurstFrameIndex = frameCaptureBurstFrameIndex++;
+		activeFrameCaptureStartedNanos = System.nanoTime();
+		activeFrameCaptureInputNanos = 0L;
+		activeFrameCaptureLayerNanos = 0L;
+		OpenGLFrameCapture capture = null;
 		try {
-			OpenGLFrameCapture capture =
-				OpenGLFrameCapture.create(++frameCaptureSequence, frame, worldReplacementComposite, this);
+			capture = OpenGLFrameCapture.create(
+				++frameCaptureSequence,
+				frame,
+				worldReplacementComposite,
+				this);
 			capture.writeFrameInputs(frame, this);
+			activeFrameCaptureInputNanos = System.nanoTime() - activeFrameCaptureStartedNanos;
+			RendererDiagnosticSession.recordCaptureFrame(
+				"started",
+				activeFrameCaptureBurstId,
+				activeFrameCaptureBurstFrameIndex,
+				capture.sequence,
+				RenderTelemetry.currentFrameSequence(),
+				capture.directory,
+				activeFrameCaptureInputNanos,
+				activeFrameCaptureInputNanos,
+				0L,
+				0L,
+				false,
+				null,
+				capture.getArtifactNames());
 			log("OpenGL frame capture started: "
 				+ capture.getDirectoryPath()
 				+ " burstRemaining="
 				+ frameCaptureBurstRemaining);
 			return capture;
 		} catch (Throwable t) {
+			activeFrameCaptureInputNanos = System.nanoTime() - activeFrameCaptureStartedNanos;
 			log("OpenGL frame capture could not start: " + t.getMessage());
+			RendererDiagnosticSession.recordCaptureFrame(
+				"failed",
+				activeFrameCaptureBurstId,
+				activeFrameCaptureBurstFrameIndex,
+				capture == null ? frameCaptureSequence : capture.sequence,
+				RenderTelemetry.currentFrameSequence(),
+				capture == null ? null : capture.directory,
+				activeFrameCaptureInputNanos,
+				activeFrameCaptureInputNanos,
+				activeFrameCaptureLayerNanos,
+				0L,
+				true,
+				t.getClass().getName() + ": " + t.getMessage(),
+				capture == null ? new String[0] : capture.getArtifactNames());
+			completeFrameCaptureBurstIfNeeded();
 			return null;
 		}
 	}
@@ -971,7 +1018,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			capture.markFailed(t);
 			log("OpenGL frame capture failed at " + layerName + ": " + t.getMessage());
 		} finally {
-			phaseCaptureNanos += RenderTelemetry.elapsedSince(captureStart);
+			long captureNanos = RenderTelemetry.elapsedSince(captureStart);
+			phaseCaptureNanos += captureNanos;
+			activeFrameCaptureLayerNanos += captureNanos;
 		}
 	}
 
@@ -982,9 +1031,17 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		if (capture == null) {
 			return;
 		}
+		Throwable finishFailure = null;
+		long finishStartedNanos = System.nanoTime();
+		long layerNanosBeforeFinish = activeFrameCaptureLayerNanos;
 		try {
 			if (!capture.hasFailed()) {
-				capture.writeLayer("07-final", readCurrentViewportImage());
+				long finalLayerStart = RenderTelemetry.now();
+				try {
+					capture.writeLayer("07-final", readCurrentViewportImage());
+				} finally {
+					activeFrameCaptureLayerNanos += RenderTelemetry.elapsedSince(finalLayerStart);
+				}
 			}
 			capture.writeEntityRestoreStats(this);
 			capture.writeEntityDepthEvaluations(this);
@@ -994,8 +1051,49 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			capture.writeSummary(frame, worldReplacementComposite, capture.hasFailed());
 			log("OpenGL frame capture written: " + capture.getDirectoryPath());
 		} catch (Throwable t) {
+			finishFailure = t;
+			capture.markFailed(t);
 			log("OpenGL frame capture could not finish: " + t.getMessage());
+		} finally {
+			long finishTotalNanos = System.nanoTime() - finishStartedNanos;
+			long finalLayerNanos = Math.max(0L, activeFrameCaptureLayerNanos - layerNanosBeforeFinish);
+			long finishCaptureNanos = Math.max(0L, finishTotalNanos - finalLayerNanos);
+			String failure = capture.getFailureMessage();
+			if (failure == null && finishFailure != null) {
+				failure = finishFailure.getClass().getName() + ": " + finishFailure.getMessage();
+			}
+			RendererDiagnosticSession.recordCaptureFrame(
+				capture.hasFailed() ? "failed" : "completed",
+				activeFrameCaptureBurstId,
+				activeFrameCaptureBurstFrameIndex,
+				capture.sequence,
+				RenderTelemetry.currentFrameSequence(),
+				capture.directory,
+				System.nanoTime() - activeFrameCaptureStartedNanos,
+				activeFrameCaptureInputNanos,
+				activeFrameCaptureLayerNanos,
+				finishCaptureNanos,
+				capture.hasFailed(),
+				failure,
+				capture.getArtifactNames());
+			completeFrameCaptureBurstIfNeeded();
 		}
+	}
+
+	private void completeFrameCaptureBurstIfNeeded() {
+		if (frameCaptureBurstRemaining > 0 || frameCaptureBurstCompletionLogged) {
+			return;
+		}
+		frameCaptureBurstCompletionLogged = true;
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord("capture.burst.completed");
+		if (event != null) {
+			event.number("burstId", activeFrameCaptureBurstId);
+			event.number("capturedFrames", frameCaptureBurstFrameIndex);
+			event.number("rendererFrameSequence", RenderTelemetry.currentFrameSequence());
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
+		RenderTelemetry.recordDiagnosticBoundary("capture-burst-after");
 	}
 
 	private BufferedImage readCurrentViewportImage() throws Exception {
@@ -3902,8 +4000,20 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void requestFrameCaptureBurst() {
+		activeFrameCaptureBurstId = ++frameCaptureBurstSequence;
+		frameCaptureBurstFrameIndex = 0;
+		frameCaptureBurstCompletionLogged = false;
 		frameCaptureRequested = true;
 		frameCaptureBurstRemaining = FRAME_CAPTURE_BURST_FRAMES;
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord("capture.burst.requested");
+		if (event != null) {
+			event.number("burstId", activeFrameCaptureBurstId);
+			event.number("plannedFrames", FRAME_CAPTURE_BURST_FRAMES);
+			event.number("rendererFrameSequence", RenderTelemetry.currentFrameSequence());
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
+		RenderTelemetry.recordDiagnosticBoundary("capture-burst-before");
 	}
 
 	private void cleanup(boolean glfwInitialized) {

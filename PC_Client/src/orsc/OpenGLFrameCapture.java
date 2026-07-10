@@ -67,6 +67,25 @@ final class OpenGLFrameCapture {
 		return failed;
 	}
 
+	String getFailureMessage() {
+		return failureMessage;
+	}
+
+	String[] getArtifactNames() {
+		File[] files = directory.listFiles();
+		if (files == null || files.length == 0) {
+			return new String[0];
+		}
+		List<String> names = new ArrayList<String>();
+		for (File file : files) {
+			if (file.isFile()) {
+				names.add(file.getName());
+			}
+		}
+		Collections.sort(names);
+		return names.toArray(new String[names.size()]);
+	}
+
 	void markFailed(Throwable throwable) {
 		failed = true;
 		failureMessage = throwable == null ? "unknown" : throwable.getMessage();
@@ -1507,7 +1526,6 @@ final class OpenGLFrameCapture {
 		return value.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ');
 	}
 }
-
 
 
 

@@ -18,6 +18,8 @@ BOUNDED_TEE = ROOT / "scripts/bounded-log-tee.py"
 JAVA_SOURCE = r"""
 package orsc;
 
+import java.io.File;
+
 public final class RendererDiagnosticSessionFixture {
 	public static void main(String[] args) {
 		RendererDiagnosticSession.start();
@@ -32,7 +34,22 @@ public final class RendererDiagnosticSessionFixture {
 		RendererDiagnosticSession.recordThrowable(
 			"fixture failure",
 			new IllegalStateException("expected test exception"));
+		if (RendererDiagnosticSession.isEnabled()) {
+			File captureDirectory = new File(
+				System.getProperty("spoiledmilk.rendererDiagnosticSessionDir"),
+				"captures/capture-fixture");
+			captureDirectory.mkdirs();
+			RendererDiagnosticSession.recordCaptureFrame(
+				"started", 7L, 0, 3, 42L, captureDirectory, 1000L, 1000L, 0L, 0L,
+				false, null, new String[] {"metadata.txt"});
+			RendererDiagnosticSession.recordCaptureFrame(
+				"completed", 7L, 0, 3, 43L, captureDirectory, 9000L, 1000L, 4000L, 2000L,
+				false, null, new String[] {"00-legacy-source.png", "metadata.txt", "summary.txt"});
+		}
 		RenderTelemetry.recordSceneRender(500000L);
+		RenderTelemetry.recordWorldSectionLoad(600000L);
+		RenderTelemetry.recordOpenGLWorldChunkUpload(
+			2, 1, 1, 0, 0, "fixture-upload", 250000L, 1000000L);
 		RenderTelemetry.recordFrame(
 			2000000L,
 			100000L,
@@ -44,6 +61,8 @@ public final class RendererDiagnosticSessionFixture {
 			1.0f,
 			"fixture-scaling",
 			"fixture-path");
+		RenderTelemetry.recordDiagnosticBoundary("capture-burst-before");
+		RenderTelemetry.recordDiagnosticBoundary("capture-burst-after");
 		RendererDiagnosticSession.close();
 	}
 }
@@ -154,12 +173,17 @@ def validate_runtime_session(tmp: Path) -> None:
         fail("sensitive token-like property leaked into manifest")
 
     telemetry = read_jsonl(session_dir / "telemetry.jsonl")
-    if len(telemetry) != 2:
-        fail(f"expected fixture and periodic telemetry records, got {len(telemetry)}")
+    if len(telemetry) != 4:
+        fail(f"expected fixture, periodic, and boundary telemetry records, got {len(telemetry)}")
     fixture_record = next((record for record in telemetry if record.get("trigger") == "fixture"), None)
     periodic_record = next((record for record in telemetry if record.get("trigger") == "periodic"), None)
     if fixture_record is None or periodic_record is None:
         fail(f"missing expected telemetry triggers: {telemetry}")
+    boundary_triggers = [
+        record.get("trigger") for record in telemetry if str(record.get("trigger", "")).startswith("capture-")
+    ]
+    if boundary_triggers != ["capture-burst-before", "capture-burst-after"]:
+        fail(f"capture boundary telemetry missing: {boundary_triggers}")
     if fixture_record.get("rendererFrameSequence") != 42:
         fail("telemetry frame sequence missing")
     if fixture_record.get("frame.totalNanos") != 1234567:
@@ -185,9 +209,35 @@ def validate_runtime_session(tmp: Path) -> None:
 
     events = read_jsonl(session_dir / "events.jsonl")
     event_types = [event.get("eventType") for event in events]
-    expected_types = ["session.start", "fixture.event", "client.exception", "session.stop"]
+    expected_types = [
+        "session.start",
+        "fixture.event",
+        "client.exception",
+        "capture.frame.started",
+        "capture.frame.completed",
+        "renderer.world-section-load",
+        "renderer.chunk-upload-reason-change",
+        "session.stop",
+    ]
     if event_types != expected_types:
         fail(f"unexpected event sequence: {event_types}")
+
+    capture_index = read_jsonl(session_dir / "captures" / "capture-index.jsonl")
+    if [record.get("status") for record in capture_index] != ["started", "completed"]:
+        fail(f"unexpected capture index: {capture_index}")
+    completed_capture = capture_index[-1]
+    if completed_capture.get("path") != "captures/capture-fixture/":
+        fail(f"capture path is not session-relative: {completed_capture.get('path')!r}")
+    if completed_capture.get("layerCaptureNanos") != 4000:
+        fail("capture layer timing missing")
+    if completed_capture.get("captureWorkNanos") != 7000:
+        fail("capture work timing is not separated from capture span")
+    if completed_capture.get("artifacts") != [
+        "00-legacy-source.png",
+        "metadata.txt",
+        "summary.txt",
+    ]:
+        fail(f"capture artifacts missing: {completed_capture.get('artifacts')}")
 
 
 def validate_bounded_tee(tmp: Path) -> None:
@@ -215,6 +265,9 @@ def validate_source_contract() -> None:
     openrsc = OPENRSC_SOURCE.read_text(encoding="utf-8")
     runtime_logger = RUNTIME_LOGGER_SOURCE.read_text(encoding="utf-8")
     launcher = LAUNCHER.read_text(encoding="utf-8")
+    presenter = (ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java").read_text(encoding="utf-8")
+    graphics = (ROOT / "Client_Base/src/orsc/graphics/two/GraphicsController.java").read_text(encoding="utf-8")
+    opengl_log = (ROOT / "PC_Client/src/orsc/OpenGLRendererLog.java").read_text(encoding="utf-8")
 
     required = {
         "disabled-by-default session gate": "spoiledmilk.rendererDiagnostics",
@@ -231,6 +284,16 @@ def validate_source_contract() -> None:
         fail("desktop client does not start diagnostic sessions")
     if "RendererDiagnosticSession.recordThrowable(context, throwable);" not in runtime_logger:
         fail("uncaught failures are not correlated with the diagnostic session")
+    if 'RenderTelemetry.recordDiagnosticBoundary("capture-burst-before")' not in presenter:
+        fail("capture request does not snapshot pre-burst telemetry")
+    if 'RenderTelemetry.recordDiagnosticBoundary("capture-burst-after")' not in presenter:
+        fail("capture completion does not snapshot post-burst telemetry")
+    if "RendererDiagnosticSession.recordCaptureFrame(" not in presenter:
+        fail("capture frames are not indexed")
+    if "RenderTelemetry.recordRenderer2DOverflowEvent(stream, limit);" not in graphics:
+        fail("2D overflow is not a structured event")
+    if 'RendererDiagnosticSession.recordEvent("renderer.opengl.log", message);' not in opengl_log:
+        fail("OpenGL renderer logs are not retained as session events")
     for needle in (
         "--renderer-diagnostics",
         "SPOILED_MILK_RENDERER_TELEMETRY=true",

@@ -6,5 +6,6 @@ final class OpenGLRendererLog {
 
 	static void log(String message) {
 		System.out.println("[renderer-v2 opengl] " + message);
+		RendererDiagnosticSession.recordEvent("renderer.opengl.log", message);
 	}
 }

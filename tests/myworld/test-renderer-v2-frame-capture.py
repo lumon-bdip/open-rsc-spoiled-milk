@@ -279,7 +279,7 @@ def main() -> None:
     )
     require(
         presenter,
-        "phaseCaptureNanos += RenderTelemetry.elapsedSince(captureStart);",
+        "phaseCaptureNanos += captureNanos;\n\t\t\tactiveFrameCaptureLayerNanos += captureNanos;",
         "captureLayer should report phase-local readback time",
     )
     require(

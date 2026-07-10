@@ -8,6 +8,7 @@ import com.openrsc.client.model.Sprite;
 import com.openrsc.data.DataConversions;
 import orsc.Config;
 import orsc.MiscFunctions;
+import orsc.RenderTelemetry;
 import orsc.graphics.Renderer2DFrame;
 import orsc.graphics.Renderer2DSettings;
 import orsc.graphics.RendererSpriteTransform;
@@ -310,6 +311,7 @@ public class GraphicsController {
 		}
 		System.out.println(
 			"[renderer-v2 2d] " + stream + " command capture limit " + limit + " reached for this frame.");
+		RenderTelemetry.recordRenderer2DOverflowEvent(stream, limit);
 		renderer2DCommandOverflowLogged = true;
 	}
 

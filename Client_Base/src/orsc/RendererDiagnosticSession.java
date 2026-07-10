@@ -42,6 +42,7 @@ final class RendererDiagnosticSession {
 	private static File sessionDirectory;
 	private static PrintWriter telemetryWriter;
 	private static PrintWriter eventWriter;
+	private static PrintWriter captureIndexWriter;
 
 	private RendererDiagnosticSession() {
 	}
@@ -68,6 +69,11 @@ final class RendererDiagnosticSession {
 				startedNanos = System.nanoTime();
 				telemetryWriter = openWriter(new File(sessionDirectory, "telemetry.jsonl"));
 				eventWriter = openWriter(new File(sessionDirectory, "events.jsonl"));
+				File captureDirectory = new File(sessionDirectory, "captures");
+				if (!captureDirectory.mkdirs() && !captureDirectory.isDirectory()) {
+					throw new IOException("could not create " + captureDirectory.getAbsolutePath());
+				}
+				captureIndexWriter = openWriter(new File(captureDirectory, "capture-index.jsonl"));
 				started = true;
 				writeManifest("open");
 				Record event = newRecord("event");
@@ -81,8 +87,10 @@ final class RendererDiagnosticSession {
 			} catch (IOException e) {
 				closeWriter(telemetryWriter);
 				closeWriter(eventWriter);
+				closeWriter(captureIndexWriter);
 				telemetryWriter = null;
 				eventWriter = null;
+				captureIndexWriter = null;
 				System.err.println("[renderer diagnostics] could not start: " + e.getMessage());
 			}
 		}
@@ -105,8 +113,10 @@ final class RendererDiagnosticSession {
 			}
 			closeWriter(telemetryWriter);
 			closeWriter(eventWriter);
+			closeWriter(captureIndexWriter);
 			telemetryWriter = null;
 			eventWriter = null;
+			captureIndexWriter = null;
 		}
 	}
 
@@ -140,6 +150,86 @@ final class RendererDiagnosticSession {
 			event.string("eventType", eventType);
 			if (detail != null && !detail.isEmpty()) {
 				event.string("detail", detail);
+			}
+			writeEvent(event);
+		}
+	}
+
+	static Record newEventRecord(String eventType) {
+		if (!ensureStarted()) {
+			return null;
+		}
+		synchronized (LOCK) {
+			Record event = newRecord("event");
+			event.string("eventType", eventType);
+			return event;
+		}
+	}
+
+	static void writeEventRecord(Record event) {
+		if (event == null) {
+			return;
+		}
+		synchronized (LOCK) {
+			writeEvent(event);
+		}
+	}
+
+	static void recordCaptureFrame(
+		String status,
+		long burstId,
+		int burstFrameIndex,
+		int captureSequence,
+		long rendererFrameSequence,
+		File captureDirectory,
+		long captureSpanNanos,
+		long inputCaptureNanos,
+		long layerCaptureNanos,
+		long finishCaptureNanos,
+		boolean failed,
+		String failure,
+		String[] artifacts) {
+		if (!ensureStarted()) {
+			return;
+		}
+		synchronized (LOCK) {
+			Record record = newRecord("capture");
+			record.string("status", status);
+			record.number("burstId", burstId);
+			record.number("burstFrameIndex", burstFrameIndex);
+			record.number("captureSequence", captureSequence);
+			record.number("rendererFrameSequence", rendererFrameSequence);
+			if (captureDirectory != null) {
+				record.string("path", relativeSessionPath(captureDirectory));
+			}
+			record.number("captureSpanNanos", captureSpanNanos);
+			record.number("inputCaptureNanos", inputCaptureNanos);
+			record.number("layerCaptureNanos", layerCaptureNanos);
+			record.number("finishCaptureNanos", finishCaptureNanos);
+			record.number(
+				"captureWorkNanos",
+				Math.max(0L, inputCaptureNanos)
+					+ Math.max(0L, layerCaptureNanos)
+					+ Math.max(0L, finishCaptureNanos));
+			record.bool("failed", failed);
+			if (failure != null && !failure.isEmpty()) {
+				record.string("failure", failure);
+			}
+			record.strings("artifacts", artifacts);
+			writeRecord(captureIndexWriter, record);
+
+			Record event = newRecord("event");
+			event.string("eventType", "capture.frame." + status);
+			event.number("burstId", burstId);
+			event.number("burstFrameIndex", burstFrameIndex);
+			event.number("captureSequence", captureSequence);
+			event.number("rendererFrameSequence", rendererFrameSequence);
+			if (captureDirectory != null) {
+				event.string("path", relativeSessionPath(captureDirectory));
+			}
+			event.bool("failed", failed);
+			if (failure != null && !failure.isEmpty()) {
+				event.string("failure", failure);
 			}
 			writeEvent(event);
 		}
@@ -240,6 +330,7 @@ final class RendererDiagnosticSession {
 		record.string("files.events", "events.jsonl");
 		record.string("files.console", "console.log");
 		record.string("files.captureRoot", "captures");
+		record.string("files.captureIndex", "captures/capture-index.jsonl");
 		appendRendererSettings(record);
 		try (PrintWriter writer = openWriter(pending)) {
 			writer.println(record.toJson());
@@ -308,6 +399,14 @@ final class RendererDiagnosticSession {
 			file = new File(System.getProperty("user.dir", "."), path);
 		}
 		return file;
+	}
+
+	private static String relativeSessionPath(File file) {
+		if (sessionDirectory == null || file == null) {
+			return file == null ? "" : file.getPath();
+		}
+		String relative = sessionDirectory.toURI().relativize(file.toURI()).getPath();
+		return relative == null || relative.isEmpty() ? file.getAbsolutePath() : relative;
 	}
 
 	private static PrintWriter openWriter(File file) throws IOException {
@@ -390,6 +489,21 @@ final class RendererDiagnosticSession {
 		Record bool(String name, boolean value) {
 			appendName(name);
 			json.append(value);
+			return this;
+		}
+
+		Record strings(String name, String[] values) {
+			appendName(name);
+			json.append('[');
+			if (values != null) {
+				for (int i = 0; i < values.length; i++) {
+					if (i > 0) {
+						json.append(',');
+					}
+					appendQuoted(values[i] == null ? "" : values[i]);
+				}
+			}
+			json.append(']');
 			return this;
 		}
 

@@ -266,6 +266,12 @@ public final class RenderTelemetry {
 	private static long lastReportNanos;
 	private static String openGLRemasterShadowMaskReason = "not-built";
 	private static String openGLResidentChunkReplacementReason = "not-requested";
+	private static long diagnosticLastFrameNanos;
+	private static int diagnosticLastSourceWidth;
+	private static int diagnosticLastSourceHeight;
+	private static float diagnosticLastScalar;
+	private static String diagnosticLastScalingType = "unknown";
+	private static String diagnosticLastFramePath = "unknown";
 	private static final DiagnosticMetric[] DIAGNOSTIC_METRICS = buildDiagnosticMetrics();
 	private static long diagnosticLastGcCount = -1L;
 	private static long diagnosticLastGcTimeMillis = -1L;
@@ -310,6 +316,12 @@ public final class RenderTelemetry {
 			scalarResizeStats.record(scalarResizeNanos);
 			backingCopyStats.record(backingCopyNanos);
 			presentStats.record(presentNanos);
+			diagnosticLastFrameNanos = totalNanos;
+			diagnosticLastSourceWidth = sourceWidth;
+			diagnosticLastSourceHeight = sourceHeight;
+			diagnosticLastScalar = scalar;
+			diagnosticLastScalingType = String.valueOf(scalingType);
+			diagnosticLastFramePath = framePath == null ? "unknown" : framePath;
 
 			boolean slowFrame = totalNanos >= SLOW_FRAME_NANOS;
 			long now = System.nanoTime();
@@ -385,7 +397,28 @@ public final class RenderTelemetry {
 
 		synchronized (RenderTelemetry.class) {
 			worldSectionLoadStats.record(nanos);
+			RendererDiagnosticSession.Record event =
+				RendererDiagnosticSession.newEventRecord("renderer.world-section-load");
+			if (event != null) {
+				event.number("loadNanos", nanos);
+				event.number("rendererFrameSequence", frameStats.count);
+				RendererDiagnosticSession.writeEventRecord(event);
+			}
 		}
+	}
+
+	public static void recordRenderer2DOverflowEvent(String stream, int limit) {
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord("renderer.2d-command-overflow");
+		if (event == null) {
+			return;
+		}
+		event.string("stream", stream);
+		event.number("limit", limit);
+		synchronized (RenderTelemetry.class) {
+			event.number("rendererFrameSequence", frameStats.count);
+		}
+		RendererDiagnosticSession.writeEventRecord(event);
 	}
 
 	public static void recordWorldSectionLoadPhases(
@@ -604,8 +637,13 @@ public final class RenderTelemetry {
 			openGLWorldChunkReuseStats.record(reused);
 			openGLWorldChunkDeferredStats.record(deferred);
 			openGLWorldChunkEvictStats.record(evicted);
-			openGLWorldChunkUploadReason =
+			String normalizedReason =
 				reason == null || reason.trim().isEmpty() ? "unknown" : reason;
+			recordDiagnosticReasonChange(
+				"renderer.chunk-upload-reason-change",
+				openGLWorldChunkUploadReason,
+				normalizedReason);
+			openGLWorldChunkUploadReason = normalizedReason;
 			openGLWorldChunkUploadBudgetStats.record(budgetUsedNanos);
 			openGLWorldChunkUploadBudgetLimitNanos = Math.max(0L, budgetLimitNanos);
 		}
@@ -730,8 +768,13 @@ public final class RenderTelemetry {
 			openGLRemasterShadowMaskStripCasterStats.record(stripCasters);
 			openGLRemasterShadowMaskSoftSceneryCasterStats.record(softSceneryCasters);
 			openGLRemasterShadowMaskContactCasterStats.record(contactCasters);
-			openGLRemasterShadowMaskReason =
+			String normalizedReason =
 				reason == null || reason.trim().isEmpty() ? "unknown" : reason;
+			recordDiagnosticReasonChange(
+				"renderer.shadow-mask-reason-change",
+				openGLRemasterShadowMaskReason,
+				normalizedReason);
+			openGLRemasterShadowMaskReason = normalizedReason;
 			openGLRemasterShadowMaskBuildStats.record(buildNanos);
 			openGLRemasterShadowMaskUploadStats.record(uploadNanos);
 		}
@@ -755,9 +798,32 @@ public final class RenderTelemetry {
 			openGLResidentChunkDrawableTerrainBatchStats.record(drawableTerrainBatches);
 			openGLResidentChunkDrawableWallBatchStats.record(drawableWallBatches);
 			openGLResidentChunkDrawableRoofBatchStats.record(drawableRoofBatches);
-			openGLResidentChunkReplacementReason =
+			String normalizedReason =
 				reason == null || reason.trim().isEmpty() ? "unknown" : reason;
+			recordDiagnosticReasonChange(
+				"renderer.resident-chunk-reason-change",
+				openGLResidentChunkReplacementReason,
+				normalizedReason);
+			openGLResidentChunkReplacementReason = normalizedReason;
 		}
+	}
+
+	private static void recordDiagnosticReasonChange(
+		String eventType,
+		String previousReason,
+		String currentReason) {
+		if (currentReason.equals(previousReason)) {
+			return;
+		}
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord(eventType);
+		if (event == null) {
+			return;
+		}
+		event.string("previousReason", previousReason);
+		event.string("currentReason", currentReason);
+		event.number("rendererFrameSequence", frameStats.count);
+		RendererDiagnosticSession.writeEventRecord(event);
 	}
 
 	static void recordOpenGLWorldTextureFrame(
@@ -1679,6 +1745,18 @@ public final class RenderTelemetry {
 			scalar,
 			scalingType,
 			framePath);
+		if (slowFrame) {
+			RendererDiagnosticSession.Record event =
+				RendererDiagnosticSession.newEventRecord("renderer.slow-frame");
+			if (event != null) {
+				event.number("rendererFrameSequence", frameStats.count);
+				event.number("frameNanos", lastFrameNanos);
+				event.number("thresholdNanos", SLOW_FRAME_NANOS);
+				event.number("sourceWidth", sourceWidth);
+				event.number("sourceHeight", sourceHeight);
+				RendererDiagnosticSession.writeEventRecord(event);
+			}
+		}
 		resetReportWindow();
 	}
 
@@ -1783,6 +1861,28 @@ public final class RenderTelemetry {
 		diagnosticLastGcTimeMillis = gcTimeMillis;
 
 		RendererDiagnosticSession.writeTelemetry(record);
+	}
+
+	static void recordDiagnosticBoundary(String trigger) {
+		if (!RendererDiagnosticSession.isEnabled()) {
+			return;
+		}
+		synchronized (RenderTelemetry.class) {
+			writeDiagnosticTelemetry(
+				trigger,
+				diagnosticLastFrameNanos,
+				diagnosticLastSourceWidth,
+				diagnosticLastSourceHeight,
+				diagnosticLastScalar,
+				diagnosticLastScalingType,
+				diagnosticLastFramePath);
+		}
+	}
+
+	static long currentFrameSequence() {
+		synchronized (RenderTelemetry.class) {
+			return frameStats.count;
+		}
 	}
 
 	private static void appendDiagnosticStage(
