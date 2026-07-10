@@ -3328,8 +3328,11 @@ public class PacketHandler {
 						}
 						continue;
 					}
-					npc.animationNext = (nextSpriteOffset << 2)
-						+ packetsIncoming.getBitMask(2);
+					int nextSprite = (nextSpriteOffset << 2) + packetsIncoming.getBitMask(2);
+					if (npc != null) {
+						mc.invalidateCustomNpcMovementTarget(npc.serverIndex);
+						npc.animationNext = nextSprite;
+					}
 				} else {
 					rsDir = packetsIncoming.getBitMask(3);
 					waypointCurrentIndex = npc.waypointIndexCurrent;

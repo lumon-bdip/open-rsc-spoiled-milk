@@ -3120,6 +3120,7 @@ public final class mudclient implements Runnable {
 			}
 
 			if (var8) {
+				invalidateCustomNpcMovementTarget(serverIndex);
 				character.animationNext = sprite;
 				character.npcId = type;
 				waypointIdx = character.waypointIndexCurrent;
@@ -23141,6 +23142,14 @@ public final class mudclient implements Runnable {
 		this.customNpcMovementTargetMillis[serverIndex] = System.currentTimeMillis();
 		this.customNpcMovementTargetValid[serverIndex] = true;
 		this.customNpcMovementTargetResult[serverIndex] = "stored";
+	}
+
+	public void invalidateCustomNpcMovementTarget(int serverIndex) {
+		if (serverIndex < 0 || serverIndex >= this.customNpcMovementTargetValid.length) {
+			return;
+		}
+		this.customNpcMovementTargetValid[serverIndex] = false;
+		this.customNpcMovementTargetResult[serverIndex] = "invalidated by direct NPC stance update";
 	}
 
 	public String describeCustomNpcMovementDebug(int serverIndex) {

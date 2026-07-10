@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 SERVER_UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
 
@@ -15,6 +16,7 @@ def require(text: str, needle: str, label: str) -> None:
 
 def main() -> None:
     client = CLIENT.read_text(encoding="utf-8")
+    packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
     server_updater = SERVER_UPDATER.read_text(encoding="utf-8")
 
@@ -64,9 +66,24 @@ def main() -> None:
         "custom movement should retain subpixel interpolation remainder per character",
     )
     require(
-        (ROOT / "Client_Base/src/orsc/PacketHandler.java").read_text(encoding="utf-8"),
+        packet_handler,
         "props.setProperty(\"C_NPC_MOVE_PER_FRAME\", String.valueOf(movePerFrame)); //66",
         "custom movement should mirror server movement speed to NPC interpolation",
+    )
+    require(
+        packet_handler,
+        "mc.invalidateCustomNpcMovementTarget(npc.serverIndex);\n\t\t\t\t\t\tnpc.animationNext = nextSprite;",
+        "stationary NPC stance update should invalidate stale movement direction",
+    )
+    require(
+        client,
+        "if (var8) {\n\t\t\t\tinvalidateCustomNpcMovementTarget(serverIndex);\n\t\t\t\tcharacter.animationNext = sprite;",
+        "cached NPC refresh should preserve its direct combat stance",
+    )
+    require(
+        client,
+        "this.customNpcMovementTargetValid[serverIndex] = false;\n\t\tthis.customNpcMovementTargetResult[serverIndex] = \"invalidated by direct NPC stance update\";",
+        "direct NPC stance invalidation helper",
     )
     require(
         applet,
@@ -95,8 +112,8 @@ def main() -> None:
     )
     require(
         server_updater,
-        "private static final int LOCAL_NPC_LIMIT = 255;",
-        "custom movement NPC local cache limit constant",
+        "final int localNpcLimit = localMobLimit(playerToUpdate);",
+        "custom movement NPC local cache limit",
     )
     require(
         server_updater,
