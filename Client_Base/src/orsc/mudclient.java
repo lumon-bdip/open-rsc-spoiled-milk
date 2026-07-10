@@ -19194,7 +19194,7 @@ public final class mudclient implements Runnable {
 
 	private int getCombatEffectSceneWidth(int effectType) {
 		int size = getCombatEffectSceneSize(effectType);
-		return effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, size / 2) : size;
+		return effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, (size * 5) / 8) : size;
 	}
 
 	private int getCombatEffectSceneHeight(int effectType) {
@@ -19232,7 +19232,7 @@ public final class mudclient implements Runnable {
 
 	private int getCombatEffectScreenWidth(int effectType, int baseSize) {
 		int size = getCombatEffectScreenSize(effectType, baseSize);
-		return effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, size / 2) : size;
+		return effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, (size * 5) / 8) : size;
 	}
 
 	private int getCombatEffectScreenHeight(int effectType, int baseSize) {
@@ -19841,14 +19841,18 @@ public final class mudclient implements Runnable {
 
 	private void loadExternalCombatEffectSprites() {
 		for (int effectType = 1; effectType <= COMBAT_EFFECT_COUNT; effectType++) {
-			CombatEffectAnimationCatalog.Definition definition =
-				CombatEffectAnimationCatalog.getDefinition(effectType);
-			if (definition != null) {
-				File sheet = getExternalAnimationSheet(definition.getCategory(), definition.getSheetPath());
-				this.combatEffectFrameCounts[effectType] = appendExternalAnimationGridSheetFrames(
-					sheet, this.combatEffectSprites[effectType], definition.getMaxTargetSize(),
-					definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
-					definition.getFrameCount(), 0);
+			CombatEffectAnimationCatalog.Definition[] sequence =
+				CombatEffectAnimationCatalog.getSequence(effectType);
+			if (sequence != null) {
+				int loadedFrames = 0;
+				for (CombatEffectAnimationCatalog.Definition definition : sequence) {
+					File sheet = getExternalAnimationSheet(definition.getCategory(), definition.getSheetPath());
+					loadedFrames = appendExternalAnimationGridSheetFrames(
+						sheet, this.combatEffectSprites[effectType], definition.getMaxTargetSize(),
+						definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
+						definition.getFrameCount(), loadedFrames);
+				}
+				this.combatEffectFrameCounts[effectType] = loadedFrames;
 				if (this.combatEffectFrameCounts[effectType] > 0) {
 					continue;
 				}

@@ -173,7 +173,7 @@ def main() -> int:
         "getTeleportCurrentFrame(effectTime, duration, frameCount)",
         "int finishStartFrame = TELEPORT_LOOP_END_FRAME + 1;",
         "return TELEPORT_LOOP_START_FRAME + loopFrame;",
-        "effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, size / 2) : size",
+        "effectType == COMBAT_EFFECT_TELEPORT ? Math.max(1, (size * 5) / 8) : size",
         "getCombatEffectScreenWidth",
         "getCombatEffectScreenHeight",
         "private static final int PROJECTILE_IMPACT_FRAME_TICKS = 3;",
