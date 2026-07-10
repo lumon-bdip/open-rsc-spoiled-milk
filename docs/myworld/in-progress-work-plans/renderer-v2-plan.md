@@ -1164,6 +1164,11 @@ they are not visual requirements for the baseline.
       for the exact frame range under investigation. This is disabled by
       default for release builds and requires
       `SPOILED_MILK_OPENGL_FRAME_CAPTURE=true`.
+- [ ] Add versioned renderer diagnostic sessions that join raw F6/periodic
+      telemetry, JVM/GC context, structured events, console output, and indexed
+      `Ctrl+F9` bursts into a bounded AI-readable bundle. Track the focused
+      implementation and visual-refinement feedback loop in
+      [renderer-diagnostic-session-logging-plan.md](renderer-diagnostic-session-logging-plan.md).
 - [ ] Build a replay harness for captured renderer-v2 frames so a problematic
       entity/occlusion frame can be inspected without live combat timing.
   - [x] Add an offline capture analyzer that validates `Ctrl+F9` capture
