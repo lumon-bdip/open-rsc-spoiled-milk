@@ -4,6 +4,7 @@
     <property name="build" location="build"/>
     <property name="lib" location="../PC_Client/lib"/>
     <property name="jar" location="Open_RSC_Client.jar"/>
+    <property name="release.marker.file" location="../output/release-build-marker-disabled"/>
     <property name="javac.source" value="1.8"/>
     <property name="javac.target" value="1.8"/>
 
@@ -24,6 +25,10 @@
         <delete file="${jar}"/>
         <delete dir="${build}"/>
         <mkdir dir="${build}"/>
+        <copy file="${release.marker.file}"
+              tofile="${build}/spoiled-milk-release-build.marker"
+              failonerror="false"
+              quiet="true"/>
         <copy todir="${build}/res">
             <fileset dir="src/res"/>
         </copy>
