@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import hashlib
+import io
 import os
 import shutil
 import subprocess
@@ -28,6 +29,9 @@ RENDERER_V2_FLAGS = [
 CLIENT_JVM_MEMORY_FLAGS = [
     "-Xms512m",
     "-Xmx2g",
+]
+CLIENT_RELEASE_FLAGS = [
+    "-Dspoiledmilk.releaseBuild=true",
 ]
 OPENGL_RUNTIME_ENTRIES = [
     "linux/x64/org/lwjgl/liblwjgl.so",
@@ -260,6 +264,10 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     fail(f"{archive.name} does not carry the packaged version stamp")
                 if package.read(f"{package_name}/game-files/SOURCE-COMMIT.txt").decode() != f"{source_commit}\n":
                     fail(f"{archive.name} does not carry the exact packaged source commit")
+                packaged_client = package.read(f"{package_name}/game-files/Spoiled_Milk_Client.jar")
+                with zipfile.ZipFile(io.BytesIO(packaged_client)) as client_jar:
+                    if "spoiled-milk-release-build.marker" not in client_jar.namelist():
+                        fail(f"{archive.name} client jar is missing its release-build marker")
                 readme = package.read(f"{package_name}/README.txt").decode()
                 for snippet in [
                     "Launch with play-spoiled-milk.sh on Linux or macOS.",
@@ -278,6 +286,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     'cd /d "%~dp0game-files"',
                     "Spoiled_Milk_Client.jar",
                     *CLIENT_JVM_MEMORY_FLAGS,
+                    *CLIENT_RELEASE_FLAGS,
                     *RENDERER_V2_FLAGS,
                 ]:
                     if snippet not in launcher:
@@ -314,6 +323,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                 'cd "$GAME_DIR"',
                 '-jar "Spoiled_Milk_Client.jar"',
                 *CLIENT_JVM_MEMORY_FLAGS,
+                *CLIENT_RELEASE_FLAGS,
                 *RENDERER_V2_FLAGS,
             ]:
                 if snippet not in shell_launcher:

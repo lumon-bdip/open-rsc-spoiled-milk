@@ -1044,10 +1044,12 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			+ " | tone " + RendererDayNightCycle.debugSummary();
 		String shadingLine = RendererReliefSettings.debugSummary()
 			+ " | " + RendererColorDiagnosticSettings.debugSummary();
-		String tuningKeysLine = "F7 terrain " + RendererReliefSettings.getTerrainLevel()
-			+ " | Shift+F7 object " + RendererReliefSettings.getObjectLevel()
-			+ " | F8 dim " + RendererColorDiagnosticSettings.getDimnessLevel()
-			+ " | Shift+F8 contrast " + RendererColorDiagnosticSettings.getContrastLevel();
+		String tuningKeysLine = ClientHotkeySettings.showDeveloperFunctionKeyHints()
+			? "F7 terrain " + RendererReliefSettings.getTerrainLevel()
+				+ " | Shift+F7 object " + RendererReliefSettings.getObjectLevel()
+				+ " | F8 dim " + RendererColorDiagnosticSettings.getDimnessLevel()
+				+ " | Shift+F8 contrast " + RendererColorDiagnosticSettings.getContrastLevel()
+			: "";
 		PacketHandler activePacketHandler = mudclient == null ? null : mudclient.packetHandler;
 		String[] sceneBaselineLines = activePacketHandler == null
 			? new String[] { "sceneBase unavailable", "", "" }
@@ -1416,6 +1418,9 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				updateControlShiftState(var1);
 				char keyChar = var1.getKeyChar();
 				int keyCode = var1.getKeyCode();
+				if (ClientHotkeySettings.shouldSuppressFunctionKey(keyCode)) {
+					return;
+				}
 				boolean hitInputFilter = false;
 				mudclient.handleKeyPress((byte) 126, (int) keyChar);
 				mudclient.lastMouseAction = 0;

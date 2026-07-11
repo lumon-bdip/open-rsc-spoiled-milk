@@ -235,6 +235,7 @@ for launcher in \
   "$PACKAGE_ASSETS/Play Spoiled Milk Windows.cmd"; do
   require_launcher_flag "$launcher" "-Xms512m"
   require_launcher_flag "$launcher" "-Xmx2g"
+  require_launcher_flag "$launcher" "-Dspoiledmilk.releaseBuild=true"
   require_launcher_flag "$launcher" "-Dsun.java2d.opengl=true"
   for renderer_flag in \
     "-Dspoiledmilk.directFramebuffer=true" \
@@ -264,6 +265,7 @@ done
 
 OUTPUT_DIR="$ROOT_DIR/output/releases/$VERSION"
 STAGING_DIR="$OUTPUT_DIR/staging"
+RELEASE_MARKER_ENTRY="spoiled-milk-release-build.marker"
 JAVA_NAME="spoiled-milk-$VERSION-java"
 WINDOWS_NAME="spoiled-milk-$VERSION-windows-x64"
 JAVA_DIR="$STAGING_DIR/$JAVA_NAME"
@@ -279,6 +281,10 @@ stage_payload_files() {
 	local destination="$1"
 
 	cp "$CLIENT_JAR" "$destination/Spoiled_Milk_Client.jar"
+	printf 'release-build=true\n' > "$STAGING_DIR/$RELEASE_MARKER_ENTRY"
+	jar uf "$destination/Spoiled_Milk_Client.jar" -C "$STAGING_DIR" "$RELEASE_MARKER_ENTRY"
+	jar tf "$destination/Spoiled_Milk_Client.jar" | grep -Fx "$RELEASE_MARKER_ENTRY" >/dev/null \
+		|| fail "Packaged client jar is missing the release-build marker"
 	cp -R "$CLIENT_CACHE/audio" "$destination/Cache/audio"
 	cp -R "$CLIENT_CACHE/video" "$destination/Cache/video"
 	cp "$CLIENT_CACHE/config.txt" "$destination/Cache/config.txt"
