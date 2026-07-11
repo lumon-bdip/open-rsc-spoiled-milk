@@ -198,6 +198,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "chat-and-dialogue-channel-plan.md",
             "code-cleanup-and-modularization-plan.md",
             "dragon-gear-crafting-plan.md",
+            "fixes-and-changes-plan.md",
             "god-relic-reward-plan.md",
             "herblaw-brawn-harvestable-ingredients-plan.md",
             "herblaw-side-ingredient-expansion-plan.md",
@@ -229,6 +230,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "fishing-rework-plan.md",
             "geode-and-gathering-spirit-plan.md",
             "migration-regression-audit.md",
+            "movement-stutter-investigation.md",
             "pvm-population-and-cluster-plan.md",
         ],
         "rough-drafts": [
