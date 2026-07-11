@@ -71,6 +71,8 @@ python3 ./tests/myworld/test-hosted-server-safety.py
 python3 ./tests/myworld/test-player-release.py
 python3 ./tests/myworld/test-foundation-optimization-guards.py
 python3 ./tests/myworld/test-client-custom-movement-stability.py
+python3 ./tests/myworld/test-movement-stutter-diagnostics.py
+python3 ./tests/myworld/test-client-movement-timing-diagnostics.py
 python3 ./tests/myworld/test-server-sync-modernization.py
 python3 ./tests/myworld/test-client-region-load-performance.py
 ./tests/myworld/test-renderer-guardrails.sh

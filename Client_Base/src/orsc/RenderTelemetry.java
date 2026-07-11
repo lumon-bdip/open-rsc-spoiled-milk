@@ -276,6 +276,7 @@ public final class RenderTelemetry {
 	private static long openGLFramesWindow;
 	private static long openGLDroppedFramesWindow;
 	private static long lastOpenGLFrameNanos;
+	private static long lastClientLoopSampleNanos;
 	private static long openGLWorldChunkUploadBudgetLimitNanos;
 	private static String openGLWorldChunkUploadReason = "steady";
 	private static long lastReportNanos;
@@ -376,6 +377,7 @@ public final class RenderTelemetry {
 		}
 
 		synchronized (RenderTelemetry.class) {
+			lastClientLoopSampleNanos = System.nanoTime();
 			clientLoopStats.record(loopNanos);
 			clientLoopSleepStats.record(sleepNanos);
 			clientLoopUpdateStats.record(updateNanos);
@@ -2005,6 +2007,30 @@ public final class RenderTelemetry {
 		}
 	}
 
+	static void appendMovementCorrelation(
+		RendererDiagnosticSession.Record record,
+		long movementSampleNanos) {
+		if (record == null) {
+			return;
+		}
+		synchronized (RenderTelemetry.class) {
+			record.number("frame.rendererFrameSequence", frameStats.count);
+			record.number("frame.clientLoopSequence", clientLoopStats.count);
+			record.number("frame.clientLoopLatestNanos", clientLoopStats.latest());
+			record.number("frame.clientLoopRecentAverageNanos", clientLoopStats.recentAverage());
+			record.number("frame.clientLoopRecentMaxNanos", clientLoopStats.recentMax());
+			record.number("frame.renderLatestNanos", frameStats.latest());
+			record.number("frame.renderRecentAverageNanos", frameStats.recentAverage());
+			record.number("frame.renderRecentMaxNanos", frameStats.recentMax());
+			record.number("frame.openGLRenderLatestNanos", openGLRenderStats.latest());
+			record.number(
+				"frame.clientLoopSampleAgeNanos",
+				lastClientLoopSampleNanos == 0L
+					? -1L
+					: Math.max(0L, movementSampleNanos - lastClientLoopSampleNanos));
+		}
+	}
+
 	private static void appendDiagnosticStage(
 		RendererDiagnosticSession.Record record,
 		String name,
@@ -2501,6 +2527,14 @@ public final class RenderTelemetry {
 			}
 			int latestIndex = (recentIndex - 1 + recentSamples.length) % recentSamples.length;
 			return recentSamples[latestIndex];
+		}
+
+		private long recentMax() {
+			long recentMax = 0L;
+			for (int i = 0; i < recentCount; i++) {
+				recentMax = Math.max(recentMax, recentSamples[i]);
+			}
+			return recentMax;
 		}
 
 		private void resetWindow() {

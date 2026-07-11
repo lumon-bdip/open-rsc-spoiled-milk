@@ -1610,6 +1610,7 @@ public class PacketHandler {
 			mc.applyCustomNpcMovementUpdate(serverIndex, x, z, direction);
 		}
 		movementPacketDebugState.recordMovementUpdate(fingerprint);
+		MovementTimingDiagnostics.recordMovementPacket(playerCount, npcCount);
 	}
 
 	private void updateMovementSnapshot(int length) {
@@ -1678,6 +1679,11 @@ public class PacketHandler {
 			parity,
 			movementPacketDebugState.compareSnapshot(snapshotFingerprint),
 			stageResult);
+		MovementTimingDiagnostics.recordMovementSnapshot(
+			serverTick,
+			sequence,
+			playerCount,
+			npcCount);
 		packetsIncoming.packetEnd = length;
 	}
 

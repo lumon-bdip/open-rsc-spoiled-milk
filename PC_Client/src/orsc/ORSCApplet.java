@@ -1456,6 +1456,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				if (keyCode == KeyEvent.VK_HOME) mudclient.resetCameraNorth();
 				if (keyCode == KeyEvent.VK_F6 && var1.isControlDown()) mudclient.toggleRendererDebugOverlayMode();
 				else if (keyCode == KeyEvent.VK_F6) mudclient.toggleRendererDebugOverlay(); // renderer overlay
+				if (keyCode == KeyEvent.VK_F8 && var1.isControlDown()) mudclient.markMovementStutterObserved();
 				if (keyCode == 39) mudclient.keyRight = true;
 				if (keyCode == 37) mudclient.keyLeft = true;
 				if (keyCode == 13 || keyCode == 10) mudclient.enterPressed = true;

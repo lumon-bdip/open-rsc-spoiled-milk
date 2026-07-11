@@ -13,6 +13,7 @@ CLIENT_TARGET_MODE="live"
 CLIENT_TARGET_HOST="localhost"
 CLIENT_TARGET_PORT="$MYWORLD_PUBLIC_PORT"
 RENDERER_DIAGNOSTICS=false
+FRAME_CAPTURE_ENABLED=true
 
 while (($#)); do
   case "$1" in
@@ -33,6 +34,9 @@ while (($#)); do
       ;;
     --renderer-diagnostics)
       RENDERER_DIAGNOSTICS=true
+      ;;
+    --no-frame-capture)
+      FRAME_CAPTURE_ENABLED=false
       ;;
     --target)
       [[ $# -ge 2 ]] || myworld_fail "--target requires host:port"
@@ -76,7 +80,7 @@ if [[ "$RENDERER_DIAGNOSTICS" == true ]]; then
   mkdir -p "$RENDERER_DIAGNOSTIC_SESSION_DIR/captures"
   export SPOILED_MILK_RENDERER_DIAGNOSTICS=true
   export SPOILED_MILK_RENDERER_TELEMETRY=true
-  export SPOILED_MILK_OPENGL_FRAME_CAPTURE=true
+  export SPOILED_MILK_OPENGL_FRAME_CAPTURE="$FRAME_CAPTURE_ENABLED"
   export SPOILED_MILK_RENDERER_DIAGNOSTIC_SESSION_DIR="$RENDERER_DIAGNOSTIC_SESSION_DIR"
   export SPOILED_MILK_RENDERER_DIAGNOSTIC_MAX_LOG_BYTES="$RENDERER_DIAGNOSTIC_MAX_LOG_BYTES"
   export SPOILED_MILK_OPENGL_FRAME_CAPTURE_DIR="$RENDERER_DIAGNOSTIC_SESSION_DIR/captures"
@@ -107,6 +111,7 @@ printf 'Commit:   %s\n' "$(myworld_git_commit)" >&2
 printf 'Endpoint: %s:%s\n' "${CLIENT_TARGET_HOST:-unknown}" "${CLIENT_TARGET_PORT:-unknown}" >&2
 if [[ "$RENDERER_DIAGNOSTICS" == true ]]; then
   printf 'Diagnostics: %s\n' "$RENDERER_DIAGNOSTIC_SESSION_DIR" >&2
+  printf 'Frame capture: %s\n' "$FRAME_CAPTURE_ENABLED" >&2
 fi
 printf '============================================================\n\n' >&2
 
