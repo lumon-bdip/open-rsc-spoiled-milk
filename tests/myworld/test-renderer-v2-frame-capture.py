@@ -144,6 +144,12 @@ def main() -> None:
     )
     require(
         presenter,
+        'new File(directory, "resident-material-families.tsv")',
+        "resident material-family capture",
+    )
+    require(presenter, '"\\tglowEmitterCount\\ttriangleCount"', "resident glow evidence")
+    require(
+        presenter,
         'new File(directory, "world-sprite-batch-stats.tsv")',
         "world sprite atlas batch capture",
     )
@@ -279,7 +285,7 @@ def main() -> None:
     )
     require(
         presenter,
-        "phaseCaptureNanos += RenderTelemetry.elapsedSince(captureStart);",
+        "phaseCaptureNanos += captureNanos;\n\t\t\tactiveFrameCaptureLayerNanos += captureNanos;",
         "captureLayer should report phase-local readback time",
     )
     require(

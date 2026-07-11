@@ -551,6 +551,9 @@ current alpha baseline:
   - Preserve true black texture pixels without special black-to-1 behavior.
   - Add material categories for terrain, water, roof, wall, object, foliage,
     ore, and effect surfaces so shader work is data-driven.
+  - The proposed parity-preserving resident-world metadata, shader-input, and
+    diagnostic foundation is specified in
+    [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md).
 - **Camera, zoom, and render-surface expansion**
   - Stress test larger render surfaces and mouse-wheel zoom limits now that the
     OpenGL world can draw a wider scene.
@@ -1164,6 +1167,56 @@ they are not visual requirements for the baseline.
       for the exact frame range under investigation. This is disabled by
       default for release builds and requires
       `SPOILED_MILK_OPENGL_FRAME_CAPTURE=true`.
+- [x] Add versioned renderer diagnostic sessions that join raw F6/periodic
+      telemetry, JVM/GC context, structured events, console output, and indexed
+      `Ctrl+F9` bursts into a bounded AI-readable bundle. Track the focused
+      implementation and visual-refinement feedback loop in
+      [renderer-diagnostic-session-logging-plan.md](renderer-diagnostic-session-logging-plan.md).
+  - [x] Establish the opt-in session/launcher foundation with a versioned
+        manifest, bounded console and structured logs, safe renderer setting
+        inventory, runtime exception events, and no diagnostic output for
+        ordinary client launches.
+  - [x] Export raw report-window, recent, and lifetime values for every
+        renderer timing/counter owner alongside frame context, allocation
+        estimates, heap state, and GC deltas. The structured reporter shares
+        the live telemetry sources and runs only at diagnostic boundaries.
+  - [x] Correlate typed renderer/runtime events and each `Ctrl+F9` burst through
+        stable burst/frame identifiers, relative artifact paths, failure state,
+        and separately attributed capture timings. Add a session analyzer that
+        validates the schema and produces an evidence-linked `ai-summary.md`
+        with cautious timing/GC/chunk/drop/overflow correlations.
+  - [x] Rate-limit and aggregate renderer reason transitions after the first
+        live diagnostic launch showed normal `steady` /
+        `animated-object-signature` alternation flooding the event stream.
+        Preserve the suppressed transition count and flush it on shutdown.
+  - [x] Accept the first structured live-session visual/performance baseline
+        after dense NPC, sprite, scenery, shadow, and animation routes looked
+        correct. OpenGL render p95 was `9.139ms` with a `10.057ms` worst sampled
+        window and no slow-frame/exception events. Primitive overflow was
+        isolated to load-transition reporting: all `32` events matched the
+        `32` section loads, with zero current dense-frame drops. Heap-floor
+        growth remains a retention signal for a later idle/relog comparison,
+        not a diagnosed leak.
+  - [x] Validate the first session-indexed live `Ctrl+F9` burst: all `12`
+        frames and artifacts completed, all strict frame analyses passed,
+        `954..956` world faces and `709..725` world-sprite commands were
+        represented, and missing anchors, suspicious visibility, occlusion
+        disagreements, and 2D drops were all zero. Full capture averaged
+        `2.108s` of synchronous work per frame, so session analysis now excludes
+        indexed capture intervals from normal performance rankings and reports
+        their `1,517` replaced frames separately.
+  - [x] Characterize the remaining heap-floor retention signal with
+        post-collection old-generation, per-collector, direct-buffer, and
+        account-free login-epoch telemetry. Run the approved no-capture
+        idle/route/logout/relogin procedure in
+        [renderer-retention-characterization-plan.md](renderer-retention-characterization-plan.md)
+        before considering heap/cache changes or focused heap profiling. The
+        `444.6s` two-epoch route showed `PS Old Gen` settle at exactly
+        `398,790,048` bytes through logout/relogin and the complete second
+        route. Direct buffers fluctuated/reclaimed below `77MB`, GC used
+        `0.61%` of sampled time, and there were no slow-frame or exception
+        events. Close the concern without heap/cache changes; continue passive
+        monitoring in ordinary diagnostic sessions.
 - [ ] Build a replay harness for captured renderer-v2 frames so a problematic
       entity/occlusion frame can be inspected without live combat timing.
   - [x] Add an offline capture analyzer that validates `Ctrl+F9` capture
@@ -1598,6 +1651,19 @@ they are not visual requirements for the baseline.
       legacy light/fog.
 - [ ] Add material metadata for terrain, water, walls, roofs, foliage, ore,
       objects, sprites, and effects so shader behavior is data-driven.
+  - [x] Establish the parity-preserving resident static-world foundation in
+        [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md):
+        explicit stable ids, centralized terrain/object classification,
+        per-triangle chunk/signature/VBO/shader propagation, F6/session
+        telemetry, and strict `Ctrl+F9` coverage analysis are implemented and
+        live-accepted. Twelve strict capture frames each covered
+        `260,032/260,032` resident triangles with zero unknown, invalid,
+        duplicate, missing, or contradictory rows. Dense visual/performance and
+        two-epoch logout/relogin/section-transition validation also passed.
+        Normal fragment output remains intentionally unchanged.
+  - [ ] Extend explicit ownership beyond resident static triangles to players,
+        NPCs, ground items, projectiles, particles, and other world sprites;
+        do not infer those families from screen-space sprite ids.
 - [x] Promote resident chunk face normals into owned geometry data. The first
       implementation stores scaled per-vertex normals on `ChunkMesh` and routes
       chunk diffuse lighting through those accessors, removing another place
@@ -2089,7 +2155,10 @@ they are not visual requirements for the baseline.
         snapshot/upload/render timing, chunk upload/reuse, resident draw
         buckets, sprite replay counts, world face buckets, and allocation
         summary.
-- [ ] Add a command-line or config option to dump frame timing to a log.
+- [x] Add a command-line/config option to dump frame timing to a structured
+      session log. `scripts/run-client.sh --renderer-diagnostics` records raw
+      timing windows, renderer counters, events, runtime state, and capture
+      correlation in bounded JSONL files.
 - [ ] Add automated frame-diff tooling for the baseline acuity locations.
 - [ ] Track allocation rate during camera movement and section loading.
 - [ ] Establish minimum target hardware for alpha testing.

@@ -34,6 +34,7 @@ public final class RSModel {
 	int[] faceTextureBack;
 	int[] faceTextureFront;
 	private Renderer3DModelKind renderer3DModelKind = Renderer3DModelKind.UNCLASSIFIED;
+	private Renderer3DMaterialFamily renderer3DMaterialFamily = Renderer3DMaterialFamily.UNCLASSIFIED;
 	private int renderer3DGlowColor;
 	private int renderer3DGlowRadius;
 	private int renderer3DGlowIntensity;
@@ -402,6 +403,7 @@ public final class RSModel {
 		combined.m_cb = this.m_cb;
 		combined.m_hc = this.m_hc;
 		combined.renderer3DModelKind = this.renderer3DModelKind;
+		combined.renderer3DMaterialFamily = this.renderer3DMaterialFamily;
 		combined.copyRenderer3DGlowEmitterFrom(this);
 		combined.pickBoundsScale = this.pickBoundsScale;
 		return combined;
@@ -568,6 +570,16 @@ public final class RSModel {
 
 	public Renderer3DModelKind getRenderer3DModelKind() {
 		return renderer3DModelKind;
+	}
+
+	public void setRenderer3DMaterialFamily(Renderer3DMaterialFamily renderer3DMaterialFamily) {
+		this.renderer3DMaterialFamily = renderer3DMaterialFamily == null
+			? Renderer3DMaterialFamily.UNCLASSIFIED
+			: renderer3DMaterialFamily;
+	}
+
+	public Renderer3DMaterialFamily getRenderer3DMaterialFamily() {
+		return renderer3DMaterialFamily;
 	}
 
 	public void setRenderer3DGlowEmitter(int color, int radius, int intensity) {
@@ -825,6 +837,10 @@ public final class RSModel {
 			RSModel[] var6 = new RSModel[]{this};
 			RSModel copy = new RSModel(var6, 1, var4, var5, noDiffuse, var1);
 			copy.m_hc = this.m_hc;
+			copy.renderer3DModelKind = this.renderer3DModelKind;
+			copy.renderer3DMaterialFamily = this.renderer3DMaterialFamily;
+			copy.copyRenderer3DGlowEmitterFrom(this);
+			copy.pickBoundsScale = this.pickBoundsScale;
 			return copy;
 		} catch (RuntimeException var9) {
 			throw GenUtil.makeThrowable(var9,
@@ -1074,6 +1090,7 @@ public final class RSModel {
 			var3.m_cb = this.m_cb;
 			var3.m_hc = this.m_hc;
 			var3.renderer3DModelKind = this.renderer3DModelKind;
+			var3.renderer3DMaterialFamily = this.renderer3DMaterialFamily;
 			var3.copyRenderer3DGlowEmitterFrom(this);
 			var3.pickBoundsScale = this.pickBoundsScale;
 			return var3;
@@ -1334,6 +1351,7 @@ public final class RSModel {
 
 				output[i] = new RSModel(outVertCount[i], outFaceCount[i], true, true, true, var8, true);
 				output[i].renderer3DModelKind = this.renderer3DModelKind;
+				output[i].renderer3DMaterialFamily = this.renderer3DMaterialFamily;
 				output[i].copyRenderer3DGlowEmitterFrom(this);
 				output[i].diffuseParam2 = this.diffuseParam2;
 				output[i].diffuseParam1 = this.diffuseParam1;
@@ -1545,6 +1563,8 @@ public final class RSModel {
 		private final List<Integer> triangleTextures = new ArrayList<Integer>();
 		private final List<Integer> triangleFallbackColors = new ArrayList<Integer>();
 		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
+		private final List<Renderer3DMaterialFamily> triangleMaterialFamilies =
+			new ArrayList<Renderer3DMaterialFamily>();
 		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
 			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
 		private final List<Renderer3DWorldChunkFrame.GlowEmitter> glowEmitters =
@@ -1570,6 +1590,7 @@ public final class RSModel {
 				return;
 			}
 			Renderer3DModelKind kind = model.getRenderer3DModelKind();
+			Renderer3DMaterialFamily family = model.getRenderer3DMaterialFamily();
 				if (kind != Renderer3DModelKind.GAME_OBJECT && kind != Renderer3DModelKind.WALL_OBJECT) {
 					return;
 				}
@@ -1595,6 +1616,7 @@ public final class RSModel {
 				}
 				addFace(
 					kind,
+					family,
 					model.faceTextureFront[face],
 					model.faceTextureBack[face],
 					faceVertexCoords,
@@ -1618,6 +1640,7 @@ public final class RSModel {
 
 		private void addFace(
 			Renderer3DModelKind kind,
+			Renderer3DMaterialFamily family,
 			int frontMaterial,
 			int backMaterial,
 			int[] faceVertexCoords,
@@ -1630,15 +1653,16 @@ public final class RSModel {
 			boolean visibleFront = isVisibleMaterial(frontMaterial);
 			boolean visibleBack = isVisibleMaterial(backMaterial);
 			if (visibleFront) {
-				addMaterialSide(kind, frontMaterial, faceVertexCoords, frontVertexLights, false);
+				addMaterialSide(kind, family, frontMaterial, faceVertexCoords, frontVertexLights, false);
 			}
 			if (visibleBack) {
-				addMaterialSide(kind, backMaterial, faceVertexCoords, backVertexLights, true);
+				addMaterialSide(kind, family, backMaterial, faceVertexCoords, backVertexLights, true);
 			}
 			if (visibleFront != visibleBack) {
 				int visibleMaterial = visibleFront ? frontMaterial : backMaterial;
 				addMaterialSide(
 					kind,
+					family,
 					visibleMaterial,
 					faceVertexCoords,
 					visibleFront ? backVertexLights : frontVertexLights,
@@ -1652,6 +1676,7 @@ public final class RSModel {
 
 		private void addMaterialSide(
 			Renderer3DModelKind kind,
+			Renderer3DMaterialFamily family,
 			int material,
 			int[] faceVertexCoords,
 			int[] faceVertexLights,
@@ -1671,6 +1696,7 @@ public final class RSModel {
 				if (reversed) {
 					addTriangle(
 						kind,
+						family,
 						resolved.texture,
 						resolved.fallbackColor,
 						faceVertexCoords,
@@ -1683,6 +1709,7 @@ public final class RSModel {
 				} else {
 					addTriangle(
 						kind,
+						family,
 						resolved.texture,
 						resolved.fallbackColor,
 						faceVertexCoords,
@@ -1698,6 +1725,7 @@ public final class RSModel {
 
 		private void addTriangle(
 			Renderer3DModelKind kind,
+			Renderer3DMaterialFamily family,
 			int texture,
 			int fallbackColor,
 			int[] faceVertexCoords,
@@ -1717,6 +1745,9 @@ public final class RSModel {
 			triangleTextures.add(Integer.valueOf(texture));
 			triangleFallbackColors.add(Integer.valueOf(fallbackColor));
 			triangleModelKinds.add(kind);
+			triangleMaterialFamilies.add(family == null
+				? Renderer3DMaterialClassifier.fallbackFor(kind)
+				: family);
 		}
 
 		private void addModelShadowCaster(Renderer3DModelKind kind, RSModel model) {
@@ -1927,6 +1958,8 @@ public final class RSModel {
 			int[] fallbackArray = toIntArray(triangleFallbackColors);
 			Renderer3DModelKind[] kindArray =
 				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
+			Renderer3DMaterialFamily[] familyArray = triangleMaterialFamilies.toArray(
+				new Renderer3DMaterialFamily[triangleMaterialFamilies.size()]);
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray =
 				shadowCasters.toArray(new Renderer3DWorldChunkFrame.ShadowCaster[shadowCasters.size()]);
 			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray =
@@ -1940,6 +1973,7 @@ public final class RSModel {
 				textureArray,
 				fallbackArray,
 				kindArray,
+				familyArray,
 				shadowCasterArray,
 				glowEmitterArray);
 			return new Renderer3DWorldChunkFrame.ChunkMesh(
@@ -1952,12 +1986,19 @@ public final class RSModel {
 				textureUArray,
 				textureVArray,
 				lightArray,
+				null,
+				null,
 				indexArray,
 				textureArray,
 				fallbackArray,
 				kindArray,
+				familyArray,
 				shadowCasterArray,
 				glowEmitterArray,
+				null,
+				null,
+				0,
+				0,
 				0,
 				0,
 				0,
@@ -1991,6 +2032,7 @@ public final class RSModel {
 			int[] textureArray,
 			int[] fallbackArray,
 			Renderer3DModelKind[] kindArray,
+			Renderer3DMaterialFamily[] familyArray,
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray,
 			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray) {
 			long hash = FNV_OFFSET_BASIS;
@@ -2023,6 +2065,9 @@ public final class RSModel {
 			}
 			for (Renderer3DModelKind kind : kindArray) {
 				hash = mix(hash, kind.ordinal());
+			}
+			for (Renderer3DMaterialFamily family : familyArray) {
+				hash = mix(hash, family.getShaderId());
 			}
 			for (Renderer3DWorldChunkFrame.ShadowCaster caster : shadowCasterArray) {
 				hash = mix(hash, caster.getModelKind().ordinal());

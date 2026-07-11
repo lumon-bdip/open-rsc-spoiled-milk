@@ -13,7 +13,10 @@ renderer_tests=(
   test-opengl-geometry-modes.py
   test-opengl-input-modifiers.py
   test-renderer-2d-overflow-telemetry.py
+  test-renderer-diagnostic-session.py
+  test-renderer-diagnostic-session-analyzer.py
   test-renderer-experimental-camera-options.py
+  test-renderer-material-family.py
   test-renderer-relog-resident-world.py
   test-renderer-v2-capture-analyzer.py
   test-renderer-v2-font-policy.py
