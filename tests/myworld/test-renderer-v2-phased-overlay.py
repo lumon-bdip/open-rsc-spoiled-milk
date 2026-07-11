@@ -873,10 +873,15 @@ def main() -> None:
         "legacySceneSpriteRestoreCommandAverage",
         "telemetry legacy scene sprite restore summary",
     )
-    require(
+    forbid(
         applet,
         "recent gl phases b/w/ws/o/db/s ",
-        "performance overlay OpenGL phase timing line",
+        "bounded performance overlay verbose OpenGL phase timing line",
+    )
+    require(
+        applet,
+        "String tuningKeysLine = \"F7 terrain \"",
+        "bounded performance overlay live renderer tuning line",
     )
     require(
         telemetry,

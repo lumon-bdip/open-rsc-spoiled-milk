@@ -387,9 +387,15 @@ final class OpenGLFrameCapture {
 				writer.println(
 					"roofsVisible=" + renderer3DFrame.getRoofVisibility().areRoofsVisible());
 				writer.println("shading.terrainReliefMode=" + RendererReliefSettings.getTerrainMode().id);
+				writer.println("shading.terrainReliefLevel=" + RendererReliefSettings.getTerrainLevel());
 				writer.println("shading.terrainReliefStrength=" + RendererReliefSettings.getTerrainStrength());
 				writer.println("shading.objectReliefMode=" + RendererReliefSettings.getObjectMode().id);
+				writer.println("shading.objectReliefLevel=" + RendererReliefSettings.getObjectLevel());
 				writer.println("shading.objectReliefStrength=" + RendererReliefSettings.getObjectStrength());
+				writer.println("shading.dimnessLevel=" + RendererColorDiagnosticSettings.getDimnessLevel());
+				writer.println("shading.dimnessMultiplier=" + RendererColorDiagnosticSettings.getDimnessMultiplier());
+				writer.println("shading.contrastLevel=" + RendererColorDiagnosticSettings.getContrastLevel());
+				writer.println("shading.contrastMultiplier=" + RendererColorDiagnosticSettings.getContrastMultiplier());
 				writer.println("shading.diffuseResponse=model-kind-fixed");
 				writer.println("shading.terrainShadowChannels=directional+contact");
 				writer.println("shading.objectShadowMask=not-applied");

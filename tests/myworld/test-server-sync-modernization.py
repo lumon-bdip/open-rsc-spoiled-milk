@@ -809,9 +809,8 @@ def main() -> None:
         require(snippet in movement_snapshot_stage, f"client movement snapshot staging helper missing: {snippet}")
     require(
         "activePacketHandler.getMovementSnapshotDebugSummaryLines()" in client_applet
-        and "movementSnapshotLines[0]" in client_applet
-        and "movementSnapshotLines[1]" in client_applet,
-        "expanded client debug overlay should expose movement snapshot diagnostics as split lines",
+        and "movementSnapshotLines[0]" in client_applet,
+        "expanded client debug overlay should expose a compact movement snapshot summary",
     )
     for snippet in (
         "public int protocolVersion;",
@@ -913,13 +912,8 @@ def main() -> None:
     require(
         "PacketHandler activePacketHandler = mudclient == null ? null : mudclient.packetHandler;" in client_applet
         and "activePacketHandler.getSceneBaselineDebugSummaryLines()" in client_applet
-        and "sceneBaselineLines[0]" in client_applet
-        and "sceneBaselineLines[1]" in client_applet,
-        "expanded client debug overlay should expose scene baseline completeness summary",
-    )
-    require(
-        "sceneBaselineLines[2]" in client_applet,
-        "expanded client debug overlay should expose scene baseline parity summary",
+        and "sceneBaselineLines[0]" in client_applet,
+        "expanded client debug overlay should expose a compact scene baseline summary",
     )
     require(
         "static PacketHandler packetHandler;" not in client_applet,

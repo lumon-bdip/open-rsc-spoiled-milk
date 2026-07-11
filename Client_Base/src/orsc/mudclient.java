@@ -642,6 +642,10 @@ public final class mudclient implements Runnable {
 	private static final int SETTINGS_SCALE_LABEL_X_OFFSET = 73;
 	private static final int SETTINGS_SCALE_PLUS_X_OFFSET = 45;
 	private static final int SETTINGS_SECTION_ROW = -1000;
+	private static final int SETTINGS_TERRAIN_RELIEF_SLIDER = 66;
+	private static final int SETTINGS_OBJECT_RELIEF_SLIDER = 67;
+	private static final int SETTINGS_DIMNESS_SLIDER = 68;
+	private static final int SETTINGS_CONTRAST_SLIDER = 69;
 	private static final int NORMAL_CAMERA_ZOOM_MIN = 0;
 	private static final int NORMAL_CAMERA_ZOOM_MAX = 255;
 	private static final int EXTRA_CAMERA_ZOOM_MIN = -100;
@@ -1285,13 +1289,6 @@ public final class mudclient implements Runnable {
 		saveClientSettings(props);
 	}
 
-	private static void saveRendererBrightnessSettings() {
-		Properties props = loadClientSettings();
-		RendererBrightnessSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
 	private static void saveRendererFogSettings() {
 		Properties props = loadClientSettings();
 		RendererFogSettings.saveToClientSettings(props);
@@ -1323,6 +1320,14 @@ public final class mudclient implements Runnable {
 	private static void saveRendererToneSettings() {
 		Properties props = loadClientSettings();
 		RendererToneSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRendererTuningSettings() {
+		Properties props = loadClientSettings();
+		RendererReliefSettings.saveToClientSettings(props);
+		RendererColorDiagnosticSettings.saveToClientSettings(props);
 
 		saveClientSettings(props);
 	}
@@ -13308,6 +13313,14 @@ public final class mudclient implements Runnable {
 		return index;
 	}
 
+	private String rendererTuningSliderBar(int level) {
+		StringBuilder bar = new StringBuilder("@whi@- [");
+		for (int i = 1; i <= 10; i++) {
+			bar.append(i == level ? "@gre@o@whi@" : "-");
+		}
+		return bar.append("] + @yel@[").append(level).append("]").toString();
+	}
+
 	private int getLegacyScalingSettingsRowIndex() {
 		int index = 0;
 		index++; // Gameplay section.
@@ -13441,7 +13454,18 @@ public final class mudclient implements Runnable {
 			index = addSettingsRow(index, "@whi@Geometry - " + RendererGeometrySettings.getMode().label, 62);
 			index = addSettingsRow(index, "@whi@Terrain Variation - " + RendererTerrainVariationSettings.getMode().label, 64);
 			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
-			index = addSettingsRow(index, "@whi@Brightness - " + RendererBrightnessSettings.getMode().label, 58);
+			index = addSettingsRow(index, "@whi@Terrain shading", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(RendererReliefSettings.getTerrainLevel()),
+				SETTINGS_TERRAIN_RELIEF_SLIDER);
+			index = addSettingsRow(index, "@whi@Object shading", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(RendererReliefSettings.getObjectLevel()),
+				SETTINGS_OBJECT_RELIEF_SLIDER);
+			index = addSettingsRow(index, "@whi@Dimness", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(RendererColorDiagnosticSettings.getDimnessLevel()),
+				SETTINGS_DIMNESS_SLIDER);
+			index = addSettingsRow(index, "@whi@Contrast", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(RendererColorDiagnosticSettings.getContrastLevel()),
+				SETTINGS_CONTRAST_SLIDER);
 			index = addSettingsSection(index, "Interface");
 		}
 
@@ -13853,6 +13877,10 @@ public final class mudclient implements Runnable {
 		if (settingIndex == SETTINGS_SECTION_ROW) {
 			return;
 		}
+		if (isRendererTuningSlider(settingIndex)) {
+			this.handleRendererTuningSliderInput(settingIndex, var6);
+			return;
+		}
 
 		// camera mode - byte index 0
 		if (settingIndex == 0 && this.mouseButtonClick == 1) {
@@ -13909,9 +13937,6 @@ public final class mudclient implements Runnable {
 
 		if (settingIndex == 56 && this.mouseButtonClick == 1) {
 			cycleRenderSurfaceMode();
-		}
-		if (isOpenGLPrimaryWindow && settingIndex == 58 && this.mouseButtonClick == 1) {
-			cycleOpenGLBrightnessMode();
 		}
 		if (isOpenGLPrimaryWindow && settingIndex == 59 && this.mouseButtonClick == 1) {
 			cycleOpenGLRendererProfileMode();
@@ -15323,6 +15348,107 @@ public final class mudclient implements Runnable {
 		System.out.println("[renderer-v2] debug overlay mode " + mode.id);
 	}
 
+	void cycleRendererTerrainReliefDiagnostic() {
+		int level = RendererReliefSettings.cycleTerrainLevel();
+		reportRendererTuningChange("terrain-relief", level, RendererReliefSettings.getTerrainStrength());
+	}
+
+	void cycleRendererObjectReliefDiagnostic() {
+		int level = RendererReliefSettings.cycleObjectLevel();
+		reportRendererTuningChange("object-relief", level, RendererReliefSettings.getObjectStrength());
+	}
+
+	void cycleRendererDimnessDiagnostic() {
+		int level = RendererColorDiagnosticSettings.cycleDimnessLevel();
+		reportRendererTuningChange("dimness", level, RendererColorDiagnosticSettings.getDimnessMultiplier());
+	}
+
+	void cycleRendererContrastDiagnostic() {
+		int level = RendererColorDiagnosticSettings.cycleContrastLevel();
+		reportRendererTuningChange("contrast", level, RendererColorDiagnosticSettings.getContrastMultiplier());
+	}
+
+	private boolean isRendererTuningSlider(int settingIndex) {
+		return settingIndex >= SETTINGS_TERRAIN_RELIEF_SLIDER
+			&& settingIndex <= SETTINGS_CONTRAST_SLIDER;
+	}
+
+	private void handleRendererTuningSliderInput(int settingIndex, int textX) {
+		int segmentWidth = Math.max(1, this.getSurface().stringWidth(1, "-"));
+		int trackStartX = textX + this.getSurface().stringWidth(1, "- [");
+		int trackEndX = trackStartX + segmentWidth * 10;
+		int plusStartX = textX + this.getSurface().stringWidth(1, "- [----------] ");
+		int plusEndX = plusStartX + this.getSurface().stringWidth(1, "+");
+		int currentLevel = getRendererTuningLevel(settingIndex);
+
+		if (this.mouseButtonClick == 1 && this.mouseX < trackStartX) {
+			this.setRendererTuningLevel(settingIndex, currentLevel - 1);
+		} else if ((this.mouseButtonClick == 1 || this.getMouseButtonDown() == 1)
+			&& this.mouseX >= trackStartX && this.mouseX < trackEndX) {
+			this.setRendererTuningLevel(settingIndex, (this.mouseX - trackStartX) / segmentWidth + 1);
+		} else if (this.mouseButtonClick == 1
+			&& this.mouseX >= plusStartX && this.mouseX <= plusEndX) {
+			this.setRendererTuningLevel(settingIndex, currentLevel + 1);
+		}
+	}
+
+	private int getRendererTuningLevel(int settingIndex) {
+		if (settingIndex == SETTINGS_TERRAIN_RELIEF_SLIDER) {
+			return RendererReliefSettings.getTerrainLevel();
+		}
+		if (settingIndex == SETTINGS_OBJECT_RELIEF_SLIDER) {
+			return RendererReliefSettings.getObjectLevel();
+		}
+		if (settingIndex == SETTINGS_DIMNESS_SLIDER) {
+			return RendererColorDiagnosticSettings.getDimnessLevel();
+		}
+		return RendererColorDiagnosticSettings.getContrastLevel();
+	}
+
+	private void setRendererTuningLevel(int settingIndex, int level) {
+		if (settingIndex == SETTINGS_TERRAIN_RELIEF_SLIDER) {
+			if (RendererReliefSettings.getTerrainLevel() != level) {
+				RendererReliefSettings.setTerrainLevel(level);
+				reportRendererTuningChange("terrain-relief", level, RendererReliefSettings.getTerrainStrength());
+			}
+		} else if (settingIndex == SETTINGS_OBJECT_RELIEF_SLIDER) {
+			if (RendererReliefSettings.getObjectLevel() != level) {
+				RendererReliefSettings.setObjectLevel(level);
+				reportRendererTuningChange("object-relief", level, RendererReliefSettings.getObjectStrength());
+			}
+		} else if (settingIndex == SETTINGS_DIMNESS_SLIDER) {
+			if (RendererColorDiagnosticSettings.getDimnessLevel() != level) {
+				RendererColorDiagnosticSettings.setDimnessLevel(level);
+				reportRendererTuningChange("dimness", level, RendererColorDiagnosticSettings.getDimnessMultiplier());
+			}
+		} else if (settingIndex == SETTINGS_CONTRAST_SLIDER
+			&& RendererColorDiagnosticSettings.getContrastLevel() != level) {
+			RendererColorDiagnosticSettings.setContrastLevel(level);
+			reportRendererTuningChange("contrast", level, RendererColorDiagnosticSettings.getContrastMultiplier());
+		}
+	}
+
+	private void reportRendererTuningChange(String control, int level, float value) {
+		RendererProfileSettings.markCustom();
+		saveRendererTuningSettings();
+		saveRendererProfileSettings();
+		String label = "terrain-relief".equals(control)
+			? "terrain shading"
+			: "object-relief".equals(control) ? "object shading" : control.replace('-', ' ');
+		this.showMessage(false, null,
+			"Renderer " + label + ": " + level + "/10 (" + value + ")",
+			MessageType.GAME, 0, null);
+		System.out.println("[renderer-v2] tuning " + control + " level=" + level + " value=" + value);
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord("renderer.tuning.change");
+		if (event != null) {
+			event.string("control", control);
+			event.number("level", level);
+			event.number("value", value);
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
+	}
+
 	void cycleRenderSurfaceMode() {
 		RenderSurfaceSettings.Mode mode = RenderSurfaceSettings.cycleMode();
 		this.resizeWidth = mode.width;
@@ -15340,6 +15466,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void applyOpenGLRendererProfileMode(RendererProfileSettings.Mode mode) {
+		if (mode != RendererProfileSettings.Mode.CUSTOM) {
+			RendererReliefSettings.resetDefaults();
+			RendererColorDiagnosticSettings.resetDefaults();
+		}
 		if (mode == RendererProfileSettings.Mode.CLASSIC) {
 			RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);
 			OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
@@ -15363,12 +15493,12 @@ public final class mudclient implements Runnable {
 		}
 		saveRenderSurfaceSettings();
 		saveOpenGLWindowSettings();
-		saveRendererBrightnessSettings();
 		saveRendererFogSettings();
 		saveRendererLightingSettings();
 		saveRendererGeometrySettings();
 		saveRendererTerrainVariationSettings();
 		saveRendererToneSettings();
+		saveRendererTuningSettings();
 		saveRendererProfileSettings();
 	}
 
@@ -15377,14 +15507,6 @@ public final class mudclient implements Runnable {
 		this.resizeWidth = surfaceMode.width;
 		this.resizeHeight = surfaceMode.height;
 		scalarChangedSinceLogin = true;
-	}
-
-	void cycleOpenGLBrightnessMode() {
-		RendererBrightnessSettings.Mode mode = RendererBrightnessSettings.cycleMode();
-		RendererProfileSettings.markCustom();
-		saveRendererBrightnessSettings();
-		saveRendererProfileSettings();
-		System.out.println("[renderer-v2] OpenGL brightness: " + mode.id);
 	}
 
 	void cycleOpenGLFogMode() {

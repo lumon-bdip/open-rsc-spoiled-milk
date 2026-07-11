@@ -211,6 +211,18 @@ The first visually acceptable baseline is now:
   response from the terrain-only directional/contact shadow mask. Scoped
   runtime overrides allow visual attribution before any player-facing shading
   setting is promoted.
+- Live diagnostic hotkeys now expose independent ten-step terrain relief,
+  object relief, world dimness, and world contrast comparisons without
+  persisting provisional player settings. The controls compose after both
+  Classic and Remaster resident shading, report values on-screen and in
+  structured diagnostics, and are mirrored by uncluttered two-line,
+  ten-segment Graphics-menu bars with direct click/drag selection. Owner review
+  doubled relief increments, retained the dimness range, and widened contrast
+  from the former level-5 result through ten stronger comparison stops. The
+  shader-side relief ceiling now matches the `4.5` control endpoint instead of
+  flattening values above the old maximum.
+  Expanded F6 is intentionally bounded to summary lines; full phase/channel
+  detail stays in JSONL telemetry and `Ctrl+F9` artifacts.
 - The disabled shadow proof now builds a frame-wide semantic caster list and
   hashes that list into the resident chunk cache. Terrain chunks receive one
   cached shadow receiver layer made from affected terrain triangles with
@@ -767,10 +779,11 @@ renderer-v2 layer:
     after-frame sprite overlay replay.
 
 When the OpenGL-primary path is active, the in-game general options panel
-exposes player-facing renderer rows under `Graphics`: `Preset`, `Aspect Ratio`,
-`Borderless`, `Lighting`, `Geometry`, `Terrain Variation`, `Fog`, and
-`Brightness`. The old `Video` section, free-form `Resolution` row, and manual
-`Tone` row are retired.
+exposes player-facing renderer rows under `Graphics`: `Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,
+`Terrain Variation`, and `Fog`, followed by two-line `Terrain shading`,
+`Object shading`, `Dimness`, and `Contrast` sliders. The old `Video` section,
+free-form `Resolution` row, manual `Tone` row, and superseded `Brightness` row
+are retired.
 `Aspect Ratio` is the source-framebuffer choice: `4:3` uses `800x600`, and
 `16:9` uses `960x540`.
 Wider field of view is handled by camera zoom rather than by exposing many
@@ -779,9 +792,10 @@ camera behavior rather than player-facing option rows; launch properties/env
 vars remain available only for diagnostics.
 `Preset` provides `Classic`, `Remaster`, and `Custom`. `Classic` applies `4:3`,
 Borderless On, Classic lighting, Smooth geometry, neutral Day tone, Fog On, and
-High brightness. `Remaster` applies `16:9`, Borderless On, Directional lighting,
-Smooth geometry, the server-synced day/night Cycle tone, Fog On, and High
-brightness. Manual edits to any bundled row mark the preset as `Custom`.
+the default tuning levels. `Remaster` applies `16:9`, Borderless On,
+Directional lighting, Smooth geometry, the server-synced day/night Cycle tone,
+Fog On, and the same default tuning levels. Manual edits to any bundled row
+mark the preset as `Custom`.
 Fresh installs default to `Remaster`; existing saved settings are migrated by
 aspect and retained as much as possible. `Geometry` offers Smooth, Faceted, and
 Wire proof modes. Tone is now an internal day/night presentation state instead
@@ -790,13 +804,13 @@ of a player option. The accepted first target is `Sunrise Amber` for dawn,
 for most of night. The cycle consumes the server-owned 60-minute world clock
 when connected to a custom server and locally interpolates between sync packets;
 before a sync arrives it falls back to a local 60-minute preview clock.
-Brightness applies to OpenGL world geometry only and defaults to
-`High`, which preserves the current accepted lighting. `Medium` and `Low`
-provide conservative step-downs for players who find the OpenGL world brighter
-than the legacy client. The day/night cycle temporarily dims dawn/dusk one step
-below the saved brightness without changing the player's stored brightness
-setting, but the dimming is eased into and out of the dawn/dusk window so color
-tone and brightness move together instead of producing a hard dark snap.
+Dimness supersedes the old Brightness choice so two controls cannot compound
+the same presentation concern. The hidden internal brightness state remains
+neutral for day/night calculations, while persisted Dimness owns player world
+darkening. Contrast independently reshapes dark and light colors. Terrain and
+object relief are persisted separately and apply after either Classic or
+Remaster base shading. Both presets default terrain/object relief to level 5
+(`2.0`), Dimness to level 1 (`1.0`), and Contrast to level 1 (`1.2`).
 Automatic day/night presentation must not animate
 `RendererDayNightCycle.currentBrightnessMultiplier()` directly, because the
 world mesh and resident chunk paths bake/signature brightness; transition
@@ -2350,9 +2364,9 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
       existing click IDs or settings persistence.
 - [x] Collapse the OpenGL-primary player-facing render options to
       `Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,
-      `Terrain Variation`, `Fog`, `Brightness`, with the rendering rows under
-      `Graphics`. The manual `Tone` row and release-facing font row were
-      retired.
+      `Terrain Variation`, and `Fog`, followed by persisted relief, dimness,
+      and contrast sliders under `Graphics`. The manual `Tone`, superseded
+      `Brightness`, and release-facing font rows were retired.
 - [x] Remove release/default quick function-key toggles except `F6` renderer
       debug overlay. Resolution, font, scaling, and window-mode changes should
       go through options or explicit runtime launch configuration.

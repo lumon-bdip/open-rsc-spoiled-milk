@@ -261,6 +261,38 @@ setting.
   tuning. `Ctrl+F9` metadata records stable individual shading fields,
   including the fixed diffuse response and the absence of object shadow-mask
   receiving, so owner observations can be attributed to one channel.
+- Added live ten-step comparison controls: `F7` cycles terrain relief,
+  `Shift+F7` cycles object relief, `F8` cycles world dimness, and `Shift+F8`
+  cycles world contrast. Owner review expanded relief to `0.0..4.5` in `0.5`
+  steps, placing the accepted `2.0` value at level 5. Dimness retains
+  `1.0..0.55`. Contrast level 1 now starts at the previously tested level-5
+  value (`1.2`) and advances in doubled `0.1` increments through `2.1`.
+- Live review found the resident shader still capped relief input at `2.5`,
+  flattening the expanded scale above its former maximum. The shader ceiling
+  now matches the slider's `4.5` endpoint; final output remains conservatively
+  clamped to prevent black or blown-out geometry.
+- Added four two-line Graphics-menu controls so labels retain their full width
+  and each ten-segment scale gets an uncluttered row. The bars use the requested
+  `- [----o-----] + [5]` presentation and support minus, plus, direct track,
+  and drag selection; hotkeys remain available for rapid comparisons.
+- The color controls compose with the selected graphics profile. Brightness is
+  now applied after either Classic or Remaster resident shading instead of
+  only inside the Remaster-lighting branch. Dimness remains neutral at level 1;
+  contrast uses the owner-selected `1.2` comparison floor while this diagnostic
+  range is evaluated under Classic and Remaster ownership.
+- Owner review promoted the four controls from session comparisons to persisted
+  player settings. Terrain/object relief default to level 5, Dimness to level
+  1, and Contrast to level 1. Relief now applies after Classic or Remaster base
+  shading. The redundant player-facing Brightness row and saved-setting load
+  were removed so hidden legacy brightness cannot compound with Dimness.
+- Player-facing labels use `Terrain shading` and `Object shading`; internal
+  renderer diagnostics retain the more precise local-relief terminology.
+- Each hotkey reports its level/value in game, emits a structured
+  `renderer.tuning.change` event, appears in F6, and is recorded by
+  `Ctrl+F9`. Expanded F6 was condensed to the high-value timing, chunk,
+  material, sync, capacity, and tuning summaries so it remains on-screen;
+  detailed phases and per-channel shadow constants remain in structured logs
+  and captures.
 - The executable diagnostic fixture verifies parity defaults, legacy shared
   override compatibility, and independent scoped overrides. The full renderer
   guard suite and Java 8 client build pass without changing default visuals.
@@ -376,8 +408,11 @@ values continue to load unchanged.
 - Roof behavior is resolved for this task: retain the legacy whole-grid unit
   while making its state explicit and consistent across renderers. Connected
   roof-volume hiding remains a possible later enhancement, not a parity fix.
-- Shading terminology: does "terrain ambient occlusion" mean local terrain
-  relief, scenery contact shadow strength, or both as separate controls?
+- Shading terminology remains under live comparison. Ten-step diagnostic
+  relief, dimness, and contrast ranges will be reduced to at least five
+  player-facing stops only after representative-area captures identify useful
+  visual intervals. Terrain contact-shadow strength remains a separate channel
+  from local relief.
 - Text layout is resolved as one shared Icons/Text preference for all three
   tabs. Per-tab modes would add preference and interaction complexity without
   changing any gameplay action, so they are outside this task.

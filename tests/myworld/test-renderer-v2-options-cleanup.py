@@ -83,7 +83,6 @@ def main() -> None:
         ("Geometry", "RendererGeometrySettings.getMode().label", 62),
         ("Terrain Variation", "RendererTerrainVariationSettings.getMode().label", 64),
         ("Fog", "RendererFogSettings.getMode().label", 60),
-        ("Brightness", "RendererBrightnessSettings.getMode().label", 58),
     )
     for label, value, action in expected_rows:
         require(
@@ -95,7 +94,6 @@ def main() -> None:
 
     for action, handler in (
         (56, "cycleRenderSurfaceMode();"),
-        (58, "cycleOpenGLBrightnessMode();"),
         (59, "cycleOpenGLRendererProfileMode();"),
         (60, "cycleOpenGLFogMode();"),
         (61, "cycleOpenGLLightingMode();"),
@@ -108,6 +106,14 @@ def main() -> None:
 
     for retired in ("@whi@Resolution - ", "@whi@Renderer - ", "@whi@Font - ", "@whi@Tone - "):
         forbid(mudclient, retired, f"player-facing {retired.strip()} row")
+    forbid(mudclient, '"@whi@Brightness - "', "superseded player-facing Brightness row")
+    forbid(mudclient, "cycleOpenGLBrightnessMode()", "superseded Brightness click handler")
+    for label in ("Terrain shading", "Object shading", "Dimness", "Contrast"):
+        require(mudclient, f'index = addSettingsRow(index, "@whi@{label}", SETTINGS_SECTION_ROW);',
+                f"two-line {label} slider label")
+    require(mudclient, 'new StringBuilder("@whi@- [")', "slider minus and track presentation")
+    require(mudclient, 'bar.append("] + @yel@[")', "slider plus and value presentation")
+    require(mudclient, "handleRendererTuningSliderInput(settingIndex, var6);", "slider click/drag handling")
     forbid(mudclient, '"@whi@Fog - @red@Off"', "legacy Interface fog row")
     forbid(mudclient, "if (C_HIDE_FOG)", "legacy fog render ownership")
 
@@ -139,6 +145,8 @@ def main() -> None:
 
     for settings_class in (
         "RendererProfileSettings",
+        "RendererReliefSettings",
+        "RendererColorDiagnosticSettings",
         "RendererFogSettings",
         "RendererLightingSettings",
         "RendererGeometrySettings",
@@ -163,7 +171,7 @@ def main() -> None:
 
     require(
         plan,
-        "`Preset`, `Aspect Ratio`,\n`Borderless`, `Lighting`, `Geometry`, `Terrain Variation`, `Fog`, and\n`Brightness`",
+        "`Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,\n`Terrain Variation`, and `Fog`, followed by two-line `Terrain shading`,\n`Object shading`, `Dimness`, and `Contrast` sliders",
         "current Graphics row contract",
     )
     require(plan, "`Preset` provides `Classic`, `Remaster`, and `Custom`.", "preset contract")

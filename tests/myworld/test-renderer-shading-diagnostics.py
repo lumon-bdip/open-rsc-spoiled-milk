@@ -8,6 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 RELIEF = ROOT / "Client_Base/src/orsc/RendererReliefSettings.java"
+COLOR = ROOT / "Client_Base/src/orsc/RendererColorDiagnosticSettings.java"
+MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 SHADER = ROOT / "PC_Client/src/orsc/OpenGLShaderProgram.java"
 SHADOW_MASK = ROOT / "PC_Client/src/orsc/RemasterShadowMaskBuilder.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
@@ -24,12 +26,37 @@ def compile_fixture(temp: Path) -> None:
         """
         package orsc;
 
+        import java.util.Properties;
+
         public final class RendererShadingDiagnosticsFixture {
             public static void main(String[] args) {
+                if (args.length > 0 && "persistence".equals(args[0])) {
+                    Properties loaded = new Properties();
+                    loaded.setProperty("opengl_terrain_relief_level", "10");
+                    loaded.setProperty("opengl_object_relief_level", "0");
+                    loaded.setProperty("opengl_dimness_level", "7");
+                    loaded.setProperty("opengl_contrast_level", "99");
+                    RendererReliefSettings.loadFromClientSettings(loaded);
+                    RendererColorDiagnosticSettings.loadFromClientSettings(loaded);
+                    Properties saved = new Properties();
+                    RendererReliefSettings.saveToClientSettings(saved);
+                    RendererColorDiagnosticSettings.saveToClientSettings(saved);
+                    System.out.println(saved.getProperty("opengl_terrain_relief_level"));
+                    System.out.println(saved.getProperty("opengl_object_relief_level"));
+                    System.out.println(saved.getProperty("opengl_dimness_level"));
+                    System.out.println(saved.getProperty("opengl_contrast_level"));
+                    return;
+                }
                 System.out.println(RendererReliefSettings.getTerrainMode().id);
                 System.out.println(RendererReliefSettings.getTerrainStrength());
+                System.out.println(RendererReliefSettings.getTerrainLevel());
                 System.out.println(RendererReliefSettings.getObjectMode().id);
                 System.out.println(RendererReliefSettings.getObjectStrength());
+                System.out.println(RendererReliefSettings.getObjectLevel());
+                System.out.println(RendererColorDiagnosticSettings.getDimnessLevel());
+                System.out.println(RendererColorDiagnosticSettings.getDimnessMultiplier());
+                System.out.println(RendererColorDiagnosticSettings.getContrastLevel());
+                System.out.println(RendererColorDiagnosticSettings.getContrastMultiplier());
             }
         }
         """
@@ -37,13 +64,13 @@ def compile_fixture(temp: Path) -> None:
     fixture_path = temp / "RendererShadingDiagnosticsFixture.java"
     fixture_path.write_text(fixture, encoding="utf-8")
     subprocess.run(
-        ["javac", "-d", str(temp), str(RELIEF), str(fixture_path)],
+        ["javac", "-d", str(temp), str(RELIEF), str(COLOR), str(fixture_path)],
         check=True,
         cwd=ROOT,
     )
 
 
-def run_fixture(temp: Path, overrides: dict[str, str]) -> list[str]:
+def run_fixture(temp: Path, overrides: dict[str, str], *args: str) -> list[str]:
     env = os.environ.copy()
     for key in (
         "SPOILED_MILK_OPENGL_RELIEF",
@@ -53,7 +80,7 @@ def run_fixture(temp: Path, overrides: dict[str, str]) -> list[str]:
         env.pop(key, None)
     env.update(overrides)
     result = subprocess.run(
-        ["java", "-cp", str(temp), "orsc.RendererShadingDiagnosticsFixture"],
+        ["java", "-cp", str(temp), "orsc.RendererShadingDiagnosticsFixture", *args],
         check=True,
         cwd=ROOT,
         env=env,
@@ -65,6 +92,8 @@ def run_fixture(temp: Path, overrides: dict[str, str]) -> list[str]:
 
 def main() -> None:
     relief = RELIEF.read_text(encoding="utf-8")
+    color = COLOR.read_text(encoding="utf-8")
+    mudclient = MUDCLIENT.read_text(encoding="utf-8")
     shader = SHADER.read_text(encoding="utf-8")
     shadow_mask = SHADOW_MASK.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
@@ -86,6 +115,50 @@ def main() -> None:
             "terrain relief uniform upload")
     require(shader, "RendererReliefSettings.getObjectStrength()",
             "object relief uniform upload")
+    require(shader, "clamp(reliefStrength, 0.0, 4.5)",
+            "shader relief ceiling matches the ten-step diagnostic range")
+    require(shader, "RendererColorDiagnosticSettings.getDimnessMultiplier()",
+            "live dimness uniform composition")
+    require(shader, '"uniform float uContrast;\\n"',
+            "live contrast shader uniform")
+    require(shader, "RendererColorDiagnosticSettings.getContrastMultiplier()",
+            "live contrast uniform upload")
+    require(shader, '"\\tcolor.rgb *= uBrightness;\\n"',
+            "brightness applies after Classic or Remaster shading")
+    require(color, "private static volatile int dimnessLevel = 1;",
+            "neutral dimness diagnostic default")
+    require(color, "private static volatile int contrastLevel = 1;",
+            "owner-selected contrast comparison floor")
+    require(color, "return 1.2f + (contrastLevel - 1) * 0.1f;",
+            "expanded contrast comparison range")
+    require(relief, "return (clampLevel(level) - 1) * 0.5f;",
+            "expanded relief comparison range")
+    require(relief, 'TERRAIN_LEVEL_PROPERTY_KEY = "opengl_terrain_relief_level"',
+            "persisted terrain relief level")
+    require(relief, "static void loadFromClientSettings(Properties props)",
+            "persisted relief settings load")
+    require(color, 'DIMNESS_LEVEL_PROPERTY_KEY = "opengl_dimness_level"',
+            "persisted dimness level")
+    require(color, "static void saveToClientSettings(Properties props)",
+            "persisted color settings save")
+    require(applet, "KeyEvent.VK_F7 && var1.isShiftDown()",
+            "object relief diagnostic hotkey")
+    require(applet, "KeyEvent.VK_F8 && var1.isShiftDown()",
+            "contrast diagnostic hotkey")
+    require(mudclient, 'RendererDiagnosticSession.newEventRecord("renderer.tuning.change")',
+            "AI-readable tuning event")
+    require(mudclient, 'index = addSettingsRow(index, "@whi@Terrain shading", SETTINGS_SECTION_ROW);',
+            "player-facing terrain shading slider label")
+    require(mudclient, '? "terrain shading"',
+            "player-facing terrain shading change message")
+    require(mudclient, "rendererTuningSliderBar(RendererColorDiagnosticSettings.getContrastLevel())",
+            "two-line contrast slider scale")
+    require(mudclient, "private void handleRendererTuningSliderInput(int settingIndex, int textX)",
+            "direct slider segment selection")
+    require(mudclient, "saveRendererTuningSettings();",
+            "tuning changes persist")
+    require(shader, '"\\tif (uRawMaterialMode == 0) {\\n"',
+            "relief applies outside the Remaster-only lighting branch")
     require(shadow_mask, 'return "terrain shadow dir " + REMASTER_SHADOW_MASK_BASE_ALPHA',
             "shadow channel debug summary")
     require(shadow_mask,
@@ -98,9 +171,15 @@ def main() -> None:
             "F6 shading summary")
     for key in (
         "shading.terrainReliefMode=",
+        "shading.terrainReliefLevel=",
         "shading.terrainReliefStrength=",
         "shading.objectReliefMode=",
+        "shading.objectReliefLevel=",
         "shading.objectReliefStrength=",
+        "shading.dimnessLevel=",
+        "shading.dimnessMultiplier=",
+        "shading.contrastLevel=",
+        "shading.contrastMultiplier=",
         "shading.diffuseResponse=model-kind-fixed",
         "shading.terrainShadowChannels=directional+contact",
         "shading.objectShadowMask=not-applied",
@@ -113,10 +192,10 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="renderer-shading-test-") as temp_dir:
         temp = Path(temp_dir)
         compile_fixture(temp)
-        if run_fixture(temp, {}) != ["max", "2.0", "max", "2.0"]:
+        if run_fixture(temp, {}) != ["max", "2.0", "5", "max", "2.0", "5", "1", "1.0", "1", "1.2"]:
             raise AssertionError("parity defaults must retain max relief for terrain and objects")
         if run_fixture(temp, {"SPOILED_MILK_OPENGL_RELIEF": "low"}) != [
-            "low", "0.5", "low", "0.5"
+            "low", "0.5", "2", "low", "0.5", "2", "1", "1.0", "1", "1.2"
         ]:
             raise AssertionError("legacy shared relief override must still drive both scopes")
         if run_fixture(
@@ -126,8 +205,10 @@ def main() -> None:
                 "SPOILED_MILK_OPENGL_TERRAIN_RELIEF": "off",
                 "SPOILED_MILK_OPENGL_OBJECT_RELIEF": "high",
             },
-        ) != ["off", "0.0", "high", "1.5"]:
+        ) != ["off", "0.0", "1", "high", "1.5", "4", "1", "1.0", "1", "1.2"]:
             raise AssertionError("scoped terrain/object overrides must be independent")
+        if run_fixture(temp, {}, "persistence") != ["10", "1", "7", "10"]:
+            raise AssertionError("persisted tuning levels must load, clamp, and save")
 
     print("PASS: terrain and object shading diagnostics are independent with parity defaults")
 
