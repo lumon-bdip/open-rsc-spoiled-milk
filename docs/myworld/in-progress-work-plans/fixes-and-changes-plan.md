@@ -1,0 +1,285 @@
+# Fixes And Changes Backlog Plan
+
+Status: scoped and owned; Task 1 is ready for owner approval and implementation.
+Owner: An-actual-duck, with focused worker branches coordinated from this plan.
+Planning branch: `docs/player-experience-improvements`.
+
+## Summary
+
+This plan preserves and coordinates the current "Fixes and Changes" backlog:
+
+- [ ] Default camera mode should be Manual.
+- [ ] Correct indoor/upper-floor roof hiding when roofs are enabled.
+- [ ] Explore adjustable terrain ambient occlusion/shading.
+- [ ] Explore adjustable object shading.
+- [ ] Add optional text-list layouts for Magic, Prayer, and Summoning.
+- [ ] Add a Lumbridge bank or bank chest.
+
+The list crosses client defaults, account persistence, renderer ownership,
+interface layout, and server world content. It must not be implemented as one
+branch or one code commit. This document is the coordinating ledger; each task
+below gets its own focused implementation branch, tests, checkpoint, and
+manager review.
+
+## Current-System Findings
+
+### Camera default
+
+- `mudclient.optionCameraModeAuto` currently initializes to `true` before the
+  server sends the account setting.
+- Camera mode is account-persisted as game-setting index `0` and the client
+  already sends explicit Auto/Manual changes over packet `111`.
+- New accounts currently inherit `cameraauto DEFAULT 1` in the MySQL and SQLite
+  schema templates and in `server/inc/sqlite/myworld_seed.db`.
+- `MySqlQueries.createPlayer` omits `cameraauto`, so both MySQL and the SQLite
+  subclass depend on that database default.
+- Existing players' saved choices should not be migrated or overwritten. The
+  requested change is a new-account and pre-sync default, not removal of Auto.
+
+### Roof visibility
+
+- Global `Config.C_HIDE_ROOFS` currently controls whether roof geometry is
+  included in cached world products at all. Toggling it performs a region
+  reload through `reloadCurrentRegionForRoofVisibility()`.
+- With roofs enabled, the legacy frame path removes current roof grids every
+  frame, then re-adds them only when `lastHeightOffset == 0` and the player's
+  collision tile does not contain bit `0x80`. This makes upper-floor behavior
+  depend on a ground-plane-only condition.
+- On the ground plane, the same loop also removes/re-adds plane 1 and 2 wall
+  and roof grids as a group. It has no explicit, named contract for outdoor,
+  indoor, upstairs, or roof-above-player states.
+- The resident OpenGL paths primarily filter roofs by the global
+  `C_HIDE_ROOFS` setting. A fix must keep legacy scene ownership, resident
+  chunks, world-product cache keys, roof shadow coverage, and toggle/relog
+  lifecycle in agreement.
+
+### Terrain and object shading
+
+- Remaster shading currently combines directional diffuse,
+  `remasterClassicShadeFactor`, and `remasterLocalReliefFactor` in the resident
+  shader. Terrain and non-terrain geometry use different fixed curves, but
+  share one runtime-only `RendererReliefSettings` strength.
+- The accepted terrain shadow mask also contains directional cast shadows and
+  scenery contact shadows. The contact channel is described as AO-like
+  grounding, while interior terrain receivers are suppressed.
+- Therefore "terrain ambient occlusion/shading" could refer to at least two
+  different controls: local terrain relief/diffuse contrast or terrain shadow
+  mask/contact strength. Those channels must be measured separately before a
+  player-facing label is chosen.
+- Material-family metadata is now available, but model kind remains the safer
+  first ownership boundary for terrain versus scenery. Exploration must not
+  silently change Classic or normal Remaster defaults.
+
+### Magic, Prayer, and Summoning layouts
+
+- All three tabs are rendered and clicked inside the large
+  `mudclient.drawUiTabMagic()` path.
+- The current presentation is a four-column, two-visible-row icon grid with
+  separate scroll-row state and click arithmetic for Magic, Prayer, and
+  Summoning.
+- Magic filters hidden spells and owns selection, autocast, self-cast, and
+  inventory-target behavior. Prayer owns active/allocation checks and the
+  current prayer-book ordering. Summoning sends an interface option by summon
+  index. A text layout must call these same actions rather than create parallel
+  gameplay rules.
+- The option is purely presentational and should be stored in client settings,
+  not consume another server game-setting/protocol index. Icon layout remains
+  the default until the text mode is manually selected.
+- Authentic/custom panel placement, Android's last-spell box, mouse wheel,
+  scrollbar bounds, hover descriptions, disabled colors, and selected states
+  all need explicit coverage.
+
+### Lumbridge banking
+
+- The reusable `Bank Chest` scenery is `SceneryId.BANK_CHEST` (`942`).
+- The authentic Shantay Pass plugin currently claims every scenery object with
+  id `942`, applies a members-world gate before coordinate-specific behavior,
+  and only special-cases Shantay Pass and McGrubor's Wood. Placing another
+  chest without changing ownership would make Lumbridge banking depend on an
+  unrelated desert plugin.
+- Standard banker NPCs refuse bank access unless their location is recognized
+  by `Point.isInBank(...)`; adding a banker alone therefore also requires bank
+  area data and PvP/safety review.
+- A focused MyWorld bank-chest handler is the lower-content-cost direction,
+  provided trigger ownership is narrowed and Ultimate Ironman plus bank-pin
+  rules remain intact.
+- Final placement needs an in-game map check. Proximity to the new-player spawn,
+  castle routes, respawn/death flow, doors, quests, and existing scenery can
+  materially change early-game convenience.
+
+## Dependency And Risk Map
+
+| Work item | Depends on | Primary risks |
+| --- | --- | --- |
+| Manual camera default | Account creation query and schema defaults | Overwriting existing choices; client/server disagreement before settings sync; retro-schema drift |
+| Roof visibility | Plane/collision semantics, world-product cache, resident roof filtering | Entire floors disappearing; roofs leaking indoors; stale chunks after toggle/relog; shadow coverage disagreement |
+| Shading exploration | Accepted roof behavior, renderer diagnostics, existing relief/shadow-mask channels | Mislabeling shadows as AO; double-darkening terrain; changing defaults; shader/cache churn |
+| Terrain shading control | Exploration contract and visual route | Crushed dark terrain, noisy slopes, indoor mismatch, Classic contamination |
+| Object shading control | Exploration contract, model-kind/material ownership | Flat or black two-sided scenery, foliage/ore over-tuning, sprite confusion |
+| Text-list layouts | Shared tab action/index mapping and client-setting persistence | Wrong spell/prayer/summon activation; scroll/click mismatch; mobile/custom UI regressions |
+| Lumbridge bank chest | Approved placement and chest trigger ownership | Bypassed UIM/pin rules; unwanted members restriction; spawn/economy distortion; scenery overlap |
+
+## Focused Implementation Tasks And Order
+
+### 1. Default new players to Manual camera
+
+Recommended branch: `fix/default-manual-camera`
+
+This is first because it is small, isolated, easy to guard, and establishes a
+clean settings/default change without entangling renderer behavior. The full
+implementation-ready specification is below.
+
+### 2. Correct enabled-roof indoor and upper-floor visibility
+
+Recommended branch: `fix/roof-visibility`
+
+Define a named roof-visibility state from player plane and roof/collision
+coverage, then apply the same decision to legacy scene grids and resident
+OpenGL draw ownership. Do this before shading so indoor and upper-floor visual
+tests have trustworthy geometry.
+
+The first checkpoint should be diagnostic/test-only if the intended visibility
+matrix cannot be proven from the current conditions. Required test states:
+
+- ground-floor outdoor;
+- ground-floor under a roof;
+- first/second upper floors, both covered and uncovered;
+- stairs/plane transitions;
+- global Hide Roofs on/off;
+- logout/relogin and section transition;
+- Classic and Remaster renderer profiles.
+
+### 3. Add optional text-list spellbook layouts
+
+Recommended branch: `feat/spellbook-text-layouts`
+
+Add one persisted client-side `Icons / Text` presentation setting and a shared
+row model for the three tabs. Reuse the current action methods and canonical
+indices. Keep icon mode as default. This is one cohesive UI feature, but it
+must not be bundled with roof, shading, or content changes.
+
+### 4. Separate terrain and object shading diagnostics
+
+Recommended branch: `feat/renderer-shading-controls`
+
+First add runtime/diagnostic-only terrain and object strength ownership with
+parity defaults. Attribute whether the requested terrain control belongs to
+local relief, diffuse response, shadow-mask directional strength, or contact
+strength. Record the chosen terms in captures/F6 before exposing a normal
+setting.
+
+### 5. Promote an accepted terrain shading/AO control
+
+Recommended branch: `feat/terrain-shading-control`
+
+Only after Task 4 visual comparison, persist the narrow accepted terrain
+control and place it in the appropriate Graphics/profile ownership. Do not
+combine it with object tuning. Classic stays unchanged and existing Remaster
+appearance remains the migration/default value.
+
+### 6. Promote an accepted object shading control
+
+Recommended branch: `feat/object-shading-control`
+
+Use model kind first and material families only where evidence supports a
+different response. Test ordinary scenery, walls, wall objects, foliage, ore,
+emissive objects, two-sided materials, and animated scenery independently from
+terrain.
+
+### 7. Add a Lumbridge bank chest
+
+Recommended branch: `content/lumbridge-bank-chest`
+
+Prefer a bank chest over a banker unless map review shows a real bank room is
+appropriate. Approve the exact tile before implementation. Narrow the existing
+Shantay chest trigger to its owned coordinates or introduce explicit shared
+chest routing, then add the Lumbridge placement and a MyWorld-owned handler.
+Preserve bank-pin validation, Ultimate Ironman denial, and normal bank close /
+movement behavior.
+
+## Task 1 Implementation-Ready Specification
+
+### Goal
+
+New players and the client before account-setting synchronization start in
+Manual camera mode. Auto remains selectable and existing saved Auto/Manual
+values continue to load unchanged.
+
+### Intended changes
+
+- Change `mudclient.optionCameraModeAuto`'s initialization from `true` to
+  `false`.
+- Make the shared account-creation SQL explicitly insert `cameraauto = 0` so
+  both MySQL and the SQLite subclass get the new behavior even on an existing
+  deployed schema whose historical column default is still `1`.
+- Change the MySQL core/retro and SQLite core/retro schema-template defaults to
+  `0` for new databases.
+- Update the empty canonical `myworld_seed.db` schema default reproducibly;
+  preserve every other table, index, trigger, and row.
+- Replace or supersede the historical `correct_cameraauto_default.sql` intent
+  with a forward migration/default statement for fresh or externally managed
+  MySQL deployments. Do not update existing player values.
+- Add `tests/myworld/test-default-manual-camera.py` and include it in the
+  appropriate small client/server guard suite.
+
+### Guard assertions
+
+- Client fallback is Manual.
+- Account-creation SQL names `cameraauto` explicitly and supplies `0`.
+- Every text schema template declares `cameraauto DEFAULT 0`.
+- The canonical seed's `PRAGMA table_info(players)` reports default `0`.
+- The setting packet and save/load paths still use game-setting index `0` and
+  still accept both values.
+- No SQL statement performs a bulk `UPDATE players SET cameraauto = 0`.
+
+### Validation
+
+- Run the focused camera-default guard.
+- Run `./scripts/build-client.sh`.
+- Run `./scripts/build-server.sh`.
+- Create a disposable new account and confirm Settings shows `Camera mode -
+  Manual` on first login.
+- Toggle to Auto, logout/login, and confirm Auto persists.
+- Toggle back to Manual, logout/login, and confirm Manual persists.
+- Confirm an existing account saved as Auto is not changed by deployment.
+
+### Completion criteria
+
+- New accounts reliably start Manual on SQLite and MySQL paths.
+- Existing account preferences are preserved.
+- Auto camera remains functional and persistent.
+- The task is committed and handed back independently of every other item in
+  this plan.
+
+## Documentation Workflow
+
+- Keep the six owner requests verbatim at the top until each is completed.
+- Each implementation branch updates its own task section and relevant source
+  plan, then checkpoints independently.
+- Move completed task detail to the maintenance history or a completed focused
+  plan; do not wait for the entire backlog before integrating a safe task.
+- Do not use this planning branch for code implementation.
+
+## Open Decisions
+
+- Roof behavior: should enabled roofs hide only the connected roof volume over
+  the player, or continue hiding an entire legacy grid cell? Capture the current
+  and desired examples before choosing.
+- Shading terminology: does "terrain ambient occlusion" mean local terrain
+  relief, scenery contact shadow strength, or both as separate controls?
+- Text layout: one shared Icons/Text preference is recommended; confirm whether
+  per-tab layout choices are desired instead.
+- Lumbridge bank: approve a precise chest tile after an in-game map check and
+  decide whether the area should merely provide bank access or become a formal
+  protected bank zone.
+
+## Backlog Completion Criteria
+
+- Every checked request has an independently reviewable implementation commit.
+- Defaults and saved settings migrate without overwriting player intent.
+- Roof and shading work passes Classic/Remaster, indoor/outdoor, plane,
+  relog, and section-transition tests.
+- Text mode preserves all actions and icon mode remains available.
+- Lumbridge banking preserves pin/UIM rules and has an approved, non-overlapping
+  location.
+- Documentation records final decisions, tests, risks, and deferred follow-up.
