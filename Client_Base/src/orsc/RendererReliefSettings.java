@@ -3,6 +3,11 @@ package orsc;
 import java.util.Properties;
 
 final class RendererReliefSettings {
+	static final int MIN_LEVEL = 1;
+	static final int MAX_LEVEL = 20;
+	static final int DEFAULT_LEVEL = 10;
+	private static final String SCALE_VERSION_PROPERTY_KEY = "opengl_relief_tuning_scale";
+	private static final String CENTERED_SCALE_VERSION = "centered-default-20-v1";
 	static final String TERRAIN_LEVEL_PROPERTY_KEY = "opengl_terrain_relief_level";
 	static final String OBJECT_LEVEL_PROPERTY_KEY = "opengl_object_relief_level";
 	private static final String RELIEF_PROPERTY = "spoiledmilk.openglRelief";
@@ -18,8 +23,8 @@ final class RendererReliefSettings {
 	private static final Mode configuredObjectMode = Mode.from(readScopedRuntimeSetting(
 		OBJECT_RELIEF_PROPERTY,
 		OBJECT_RELIEF_ENV));
-	private static volatile int terrainLevel = configuredTerrainMode.diagnosticLevel;
-	private static volatile int objectLevel = configuredObjectMode.diagnosticLevel;
+	private static volatile int terrainLevel = closestLevelForStrength(configuredTerrainMode.strength);
+	private static volatile int objectLevel = closestLevelForStrength(configuredObjectMode.strength);
 	private static final boolean terrainRuntimeOverride = hasScopedRuntimeSetting(
 		TERRAIN_RELIEF_PROPERTY,
 		TERRAIN_RELIEF_ENV);
@@ -79,15 +84,16 @@ final class RendererReliefSettings {
 			return;
 		}
 		if (!terrainRuntimeOverride) {
-			terrainLevel = readSavedLevel(props, TERRAIN_LEVEL_PROPERTY_KEY, configuredTerrainMode.diagnosticLevel);
+			terrainLevel = readSavedLevel(props, TERRAIN_LEVEL_PROPERTY_KEY, configuredTerrainMode);
 		}
 		if (!objectRuntimeOverride) {
-			objectLevel = readSavedLevel(props, OBJECT_LEVEL_PROPERTY_KEY, configuredObjectMode.diagnosticLevel);
+			objectLevel = readSavedLevel(props, OBJECT_LEVEL_PROPERTY_KEY, configuredObjectMode);
 		}
 	}
 
 	static void saveToClientSettings(Properties props) {
 		if (props != null) {
+			props.setProperty(SCALE_VERSION_PROPERTY_KEY, CENTERED_SCALE_VERSION);
 			props.setProperty(TERRAIN_LEVEL_PROPERTY_KEY, String.valueOf(terrainLevel));
 			props.setProperty(OBJECT_LEVEL_PROPERTY_KEY, String.valueOf(objectLevel));
 		}
@@ -95,10 +101,10 @@ final class RendererReliefSettings {
 
 	static void resetDefaults() {
 		if (!terrainRuntimeOverride) {
-			terrainLevel = Mode.MAX.diagnosticLevel;
+			terrainLevel = DEFAULT_LEVEL;
 		}
 		if (!objectRuntimeOverride) {
-			objectLevel = Mode.MAX.diagnosticLevel;
+			objectLevel = DEFAULT_LEVEL;
 		}
 	}
 
@@ -108,27 +114,53 @@ final class RendererReliefSettings {
 	}
 
 	private static int nextLevel(int level) {
-		return level >= 10 ? 1 : level + 1;
+		return level >= MAX_LEVEL ? MIN_LEVEL : level + 1;
 	}
 
 	private static float strengthForLevel(int level) {
-		return (clampLevel(level) - 1) * 0.5f;
+		int boundedLevel = clampLevel(level);
+		if (boundedLevel <= 5) {
+			return (boundedLevel - 1) * 0.25f;
+		}
+		if (boundedLevel <= 8) {
+			return 1.0f + (boundedLevel - 5) * (0.5f / 3.0f);
+		}
+		if (boundedLevel <= DEFAULT_LEVEL) {
+			return 1.5f + (boundedLevel - 8) * 0.25f;
+		}
+		return 2.0f + (boundedLevel - DEFAULT_LEVEL) * 0.75f;
 	}
 
 	private static int clampLevel(int level) {
-		return Math.max(1, Math.min(10, level));
+		return Math.max(MIN_LEVEL, Math.min(MAX_LEVEL, level));
 	}
 
-	private static int readSavedLevel(Properties props, String key, int fallback) {
+	private static int readSavedLevel(Properties props, String key, Mode fallbackMode) {
 		String value = props.getProperty(key);
 		if (value == null || value.trim().isEmpty()) {
-			return fallback;
+			return closestLevelForStrength(fallbackMode.strength);
 		}
 		try {
-			return clampLevel(Integer.parseInt(value.trim()));
+			int savedLevel = clampLevel(Integer.parseInt(value.trim()));
+			return CENTERED_SCALE_VERSION.equals(props.getProperty(SCALE_VERSION_PROPERTY_KEY))
+				? savedLevel
+				: closestLevelForStrength((savedLevel - 1) * 0.5f);
 		} catch (NumberFormatException ignored) {
-			return fallback;
+			return closestLevelForStrength(fallbackMode.strength);
 		}
+	}
+
+	private static int closestLevelForStrength(float targetStrength) {
+		int closestLevel = DEFAULT_LEVEL;
+		float closestDistance = Float.MAX_VALUE;
+		for (int level = MIN_LEVEL; level <= MAX_LEVEL; level++) {
+			float distance = Math.abs(strengthForLevel(level) - targetStrength);
+			if (distance < closestDistance) {
+				closestLevel = level;
+				closestDistance = distance;
+			}
+		}
+		return closestLevel;
 	}
 
 	private static boolean hasScopedRuntimeSetting(String propertyName, String envName) {

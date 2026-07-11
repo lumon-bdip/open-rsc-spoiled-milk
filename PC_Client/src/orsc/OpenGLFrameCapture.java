@@ -396,6 +396,10 @@ final class OpenGLFrameCapture {
 				writer.println("shading.dimnessMultiplier=" + RendererColorDiagnosticSettings.getDimnessMultiplier());
 				writer.println("shading.contrastLevel=" + RendererColorDiagnosticSettings.getContrastLevel());
 				writer.println("shading.contrastMultiplier=" + RendererColorDiagnosticSettings.getContrastMultiplier());
+				writer.println("shading.gammaLevel=" + RendererColorDiagnosticSettings.getGammaLevel());
+				writer.println("shading.gammaValue=" + RendererColorDiagnosticSettings.getGammaValue());
+				writer.println("shading.saturationLevel=" + RendererColorDiagnosticSettings.getSaturationLevel());
+				writer.println("shading.saturationMultiplier=" + RendererColorDiagnosticSettings.getSaturationMultiplier());
 				writer.println("shading.diffuseResponse=model-kind-fixed");
 				writer.println("shading.terrainShadowChannels=directional+contact");
 				writer.println("shading.objectShadowMask=not-applied");

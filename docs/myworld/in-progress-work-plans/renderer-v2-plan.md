@@ -781,7 +781,8 @@ renderer-v2 layer:
 When the OpenGL-primary path is active, the in-game general options panel
 exposes player-facing renderer rows under `Graphics`: `Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,
 `Terrain Variation`, and `Fog`, followed by two-line `Terrain shading`,
-`Object shading`, `Dimness`, and `Contrast` sliders. The old `Video` section,
+`Object shading`, `Brightness / dimness`, `Contrast`, `Gamma`, and `Saturation`
+sliders. The old `Video` section,
 free-form `Resolution` row, manual `Tone` row, and superseded `Brightness` row
 are retired.
 `Aspect Ratio` is the source-framebuffer choice: `4:3` uses `800x600`, and
@@ -792,9 +793,10 @@ camera behavior rather than player-facing option rows; launch properties/env
 vars remain available only for diagnostics.
 `Preset` provides `Classic`, `Remaster`, and `Custom`. `Classic` applies `4:3`,
 Borderless On, Classic lighting, Smooth geometry, neutral Day tone, Fog On, and
-the default tuning levels. `Remaster` applies `16:9`, Borderless On,
+tuning levels `18/18/14/7` (terrain/object/brightness-dimness/contrast).
+`Remaster` applies `16:9`, Borderless On,
 Directional lighting, Smooth geometry, the server-synced day/night Cycle tone,
-Fog On, and the same default tuning levels. Manual edits to any bundled row
+Fog On, and the baseline `10/10/10/10` tuning levels. Manual edits to any bundled row
 mark the preset as `Custom`.
 Fresh installs default to `Remaster`; existing saved settings are migrated by
 aspect and retained as much as possible. `Geometry` offers Smooth, Faceted, and
@@ -2365,8 +2367,27 @@ Classic visual ordering, entity occlusion, and sprite composition correct.
 - [x] Collapse the OpenGL-primary player-facing render options to
       `Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,
       `Terrain Variation`, and `Fog`, followed by persisted relief, dimness,
-      and contrast sliders under `Graphics`. The manual `Tone`, superseded
+      contrast, gamma, and saturation sliders under `Graphics`. The manual `Tone`, superseded
       `Brightness`, and release-facing font rows were retired.
+      All six sliders use 20 positions and place the original default visual
+      response at level 10. Terrain/object level 10 maps to relief strength
+      `2.0`; brightness/dimness maps to `1.0`; contrast maps to `1.2`. Lower
+      positions provide lighter shading, brighter output, or lower contrast,
+      while higher positions retain the accepted expanded endpoints. Versioned
+      persistence migrates older levels by effective strength/multiplier.
+      Selecting Classic applies the owner-tuned `18/18/14/7` bundle; selecting
+      Remaster restores the baseline `10/10/10/10` bundle. Manual tuning still
+      marks the profile Custom.
+      Gamma and Saturation use the same 1–20 centered control contract, with
+      neutral shader parity at level 10. Gamma spans `0.5..1.0..1.5` and
+      saturation spans `0.0..1.0..2.0`; both remain neutral when either preset
+      is selected until owner testing chooses profile-specific values. The
+      shader applies them after tone/contrast and before fog, without dirtying
+      resident geometry. Worktree shortcuts are F10/Shift+F10 and remain
+      suppressed in release builds by the existing non-F6 rule.
+      Owner live review accepted both centered controls at their neutral level
+      10 defaults. Runtime compilation passed for the projected and resident
+      shader variants, completing this renderer-shading tuning milestone.
 - [x] Remove release/default quick function-key toggles except `F6` renderer
       debug overlay. Resolution, font, scaling, and window-mode changes should
       go through options or explicit runtime launch configuration.

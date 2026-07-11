@@ -1045,10 +1045,12 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		String shadingLine = RendererReliefSettings.debugSummary()
 			+ " | " + RendererColorDiagnosticSettings.debugSummary();
 		String tuningKeysLine = ClientHotkeySettings.showDeveloperFunctionKeyHints()
-			? "F7 terrain " + RendererReliefSettings.getTerrainLevel()
-				+ " | Shift+F7 object " + RendererReliefSettings.getObjectLevel()
-				+ " | F8 dim " + RendererColorDiagnosticSettings.getDimnessLevel()
-				+ " | Shift+F8 contrast " + RendererColorDiagnosticSettings.getContrastLevel()
+			? "F7 t/o " + RendererReliefSettings.getTerrainLevel() + "/"
+				+ RendererReliefSettings.getObjectLevel()
+				+ " | F8 d/c " + RendererColorDiagnosticSettings.getDimnessLevel() + "/"
+				+ RendererColorDiagnosticSettings.getContrastLevel()
+				+ " | F10 g/s " + RendererColorDiagnosticSettings.getGammaLevel() + "/"
+				+ RendererColorDiagnosticSettings.getSaturationLevel()
 			: "";
 		PacketHandler activePacketHandler = mudclient == null ? null : mudclient.packetHandler;
 		String[] sceneBaselineLines = activePacketHandler == null
@@ -1437,6 +1439,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				if (keyCode == KeyEvent.VK_F8 && var1.isControlDown()) mudclient.markMovementStutterObserved();
 				else if (keyCode == KeyEvent.VK_F8 && var1.isShiftDown()) mudclient.cycleRendererContrastDiagnostic();
 				else if (keyCode == KeyEvent.VK_F8) mudclient.cycleRendererDimnessDiagnostic();
+				if (keyCode == KeyEvent.VK_F10 && var1.isShiftDown()) mudclient.cycleRendererSaturationDiagnostic();
+				else if (keyCode == KeyEvent.VK_F10) mudclient.cycleRendererGammaDiagnostic();
 				if (keyCode == 39) mudclient.keyRight = true;
 				if (keyCode == 37) mudclient.keyLeft = true;
 				if (keyCode == 13 || keyCode == 10) mudclient.enterPressed = true;

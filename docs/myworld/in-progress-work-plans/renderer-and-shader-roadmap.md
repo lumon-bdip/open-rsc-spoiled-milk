@@ -243,8 +243,10 @@ Still incomplete:
   need a separate authored family contract before broad polish can be trusted.
 - Shader comparison tooling is not yet strong enough to show legacy software,
   current OpenGL, and shader output for the same camera frame.
-- Shader polish controls such as saturation, contrast, fog response, slope
-  emphasis, or tile blending are not ready for release use.
+- Centered player controls for terrain/object shading, brightness/dimness,
+  contrast, gamma, and saturation are implemented and owner-accepted. Further
+  shader polish such as adjustable fog response, slope emphasis, or tile
+  blending is not ready for release use.
 - Glow is not yet bloom, a real point-light system, or a shadow caster. It is a
   cheap emissive mask meant to validate lava/fire warmth before heavier
   material-light work.

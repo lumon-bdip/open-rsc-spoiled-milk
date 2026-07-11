@@ -108,7 +108,9 @@ def main() -> None:
         forbid(mudclient, retired, f"player-facing {retired.strip()} row")
     forbid(mudclient, '"@whi@Brightness - "', "superseded player-facing Brightness row")
     forbid(mudclient, "cycleOpenGLBrightnessMode()", "superseded Brightness click handler")
-    for label in ("Terrain shading", "Object shading", "Dimness", "Contrast"):
+    for label in (
+        "Terrain shading", "Object shading", "Brightness / dimness", "Contrast", "Gamma", "Saturation"
+    ):
         require(mudclient, f'index = addSettingsRow(index, "@whi@{label}", SETTINGS_SECTION_ROW);',
                 f"two-line {label} slider label")
     require(mudclient, 'new StringBuilder("@whi@- [")', "slider minus and track presentation")
@@ -122,6 +124,13 @@ def main() -> None:
     require(profile, 'CUSTOM("custom", "@yel@Custom")', "Custom preset")
     require(profile, "return REMASTER;", "Remaster default")
     require(mudclient, "if (mode == RendererProfileSettings.Mode.CLASSIC) {", "Classic bundle")
+    for setting in (
+        "RendererReliefSettings.setTerrainLevel(18);",
+        "RendererReliefSettings.setObjectLevel(18);",
+        "RendererColorDiagnosticSettings.setDimnessLevel(14);",
+        "RendererColorDiagnosticSettings.setContrastLevel(7);",
+    ):
+        require(mudclient, setting, f"Classic tuning bundle {setting}")
     require(mudclient, "RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);", "Classic 4:3 surface")
     require(mudclient, "RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);", "Classic terrain bundle")
     require(mudclient, "} else if (mode == RendererProfileSettings.Mode.REMASTER) {", "Remaster bundle")
@@ -171,7 +180,7 @@ def main() -> None:
 
     require(
         plan,
-        "`Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,\n`Terrain Variation`, and `Fog`, followed by two-line `Terrain shading`,\n`Object shading`, `Dimness`, and `Contrast` sliders",
+        "`Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,\n`Terrain Variation`, and `Fog`, followed by two-line `Terrain shading`,\n`Object shading`, `Brightness / dimness`, `Contrast`, `Gamma`, and `Saturation`\nsliders",
         "current Graphics row contract",
     )
     require(plan, "`Preset` provides `Classic`, `Remaster`, and `Custom`.", "preset contract")
