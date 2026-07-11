@@ -144,7 +144,10 @@ final class OpenGLWorldSpriteDrawController {
 				textureData = OpenGLSpriteTextureBuilder.buildDirectSpriteTexture(command);
 			}
 			drawn = textureData != null
-				&& delegate.drawDynamicSpriteTexture(command, textureData, 1.0f);
+				&& delegate.drawDynamicSpriteTexture(
+					command,
+					textureData,
+					command.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA);
 		}
 		if (!drawn) {
 			delegate.drawFallbackSprite(command);

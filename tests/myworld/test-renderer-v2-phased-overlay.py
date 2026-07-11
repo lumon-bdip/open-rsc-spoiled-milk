@@ -544,7 +544,7 @@ def main() -> None:
     require(
         presenter,
         "logCompositeSpriteCommand(\"direct-overlay\", command, command.getWidth() * command.getHeight());\n\t\t\t\tdrawOpenGLCompositeDirectSpriteCommand(command);",
-        "OpenGL replacement composite replays direct world sprite overlays with baked alpha textures",
+        "OpenGL replacement composite replays direct world sprite overlays",
     )
     require(
         presenter,
@@ -563,8 +563,8 @@ def main() -> None:
     )
     require(
         presenter,
-        "rgba = (replayRgb << 8) | alpha;",
-        "OpenGL replacement composite bakes command alpha into direct sprite pixels",
+        "rgba = (replayRgb << 8) | Renderer2DFrame.SpriteCommand.FULL_ALPHA;",
+        "OpenGL replacement composite keeps direct sprite texture pixels opaque",
     )
     require(
         presenter,

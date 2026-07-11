@@ -48,7 +48,10 @@ final class OpenGLSpriteTextureBuilder {
 					if (orsc.graphics.RendererTransparency.isVisibleSpritePixel(sourcePixel)) {
 						int replayRgb = command.getTransform().apply(sourcePixel)
 							& orsc.graphics.RendererTransparency.RGB_MASK;
-						rgba = (replayRgb << 8) | alpha;
+						// SpriteCommand opacity is applied when the direct texture is drawn.
+						// Keeping bridge texture pixels opaque prevents partial opacity from
+						// being multiplied once here and again by OpenGL's draw colour.
+						rgba = (replayRgb << 8) | Renderer2DFrame.SpriteCommand.FULL_ALPHA;
 						visiblePixelCount++;
 					}
 				}
@@ -171,7 +174,10 @@ final class OpenGLSpriteTextureBuilder {
 				if (alpha >= Renderer2DFrame.SpriteCommand.FULL_ALPHA) {
 					compositePixels[targetIndex] = (rgb << 8) | 0xFF;
 				} else {
-					compositePixels[targetIndex] = blendRgbaOver(compositePixels[targetIndex], rgb, alpha);
+					compositePixels[targetIndex] = OpenGLSpriteAlpha.blendStraightRgbaOver(
+						compositePixels[targetIndex],
+						rgb,
+						alpha);
 				}
 				visiblePixelCount++;
 			}
@@ -179,17 +185,4 @@ final class OpenGLSpriteTextureBuilder {
 		return visiblePixelCount;
 	}
 
-	private static int blendRgbaOver(int destinationRgba, int sourceRgb, int sourceAlpha) {
-		int inverseAlpha = 256 - sourceAlpha;
-		int destinationAlpha = destinationRgba & 0xFF;
-		int destinationRgb = destinationRgba >> 8 & orsc.graphics.RendererTransparency.RGB_MASK;
-		int red = (((sourceRgb >> 16 & 0xFF) * sourceAlpha)
-			+ ((destinationRgb >> 16 & 0xFF) * inverseAlpha)) >> 8;
-		int green = (((sourceRgb >> 8 & 0xFF) * sourceAlpha)
-			+ ((destinationRgb >> 8 & 0xFF) * inverseAlpha)) >> 8;
-		int blue = (((sourceRgb & 0xFF) * sourceAlpha)
-			+ ((destinationRgb & 0xFF) * inverseAlpha)) >> 8;
-		int alpha = Math.min(255, sourceAlpha + (destinationAlpha * inverseAlpha >> 8));
-		return (red << 24) | (green << 16) | (blue << 8) | alpha;
-	}
 }
