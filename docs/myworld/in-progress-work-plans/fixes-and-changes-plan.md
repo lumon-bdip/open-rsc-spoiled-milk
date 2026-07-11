@@ -1,6 +1,7 @@
 # Fixes And Changes Backlog Plan
 
-Status: active; Tasks 1 through 4 implemented and guarded.
+Status: ready for manager review; Tasks 1 through 6 implemented and guarded,
+with Lumbridge banking explicitly deferred.
 Owner: An-actual-duck, with independently checkpointed tasks coordinated from this plan.
 Implementation branch: `feat/player-experience-backlog`.
 
@@ -10,8 +11,8 @@ This plan preserves and coordinates the current "Fixes and Changes" backlog:
 
 - [x] Default camera mode should be Manual.
 - [x] Correct indoor/upper-floor roof hiding when roofs are enabled.
-- [ ] Explore adjustable terrain ambient occlusion/shading.
-- [ ] Explore adjustable object shading.
+- [x] Explore adjustable terrain ambient occlusion/shading.
+- [x] Explore adjustable object shading.
 - [x] Add optional text-list layouts for Magic, Prayer, and Summoning.
 - [ ] Add a Lumbridge bank or bank chest.
 
@@ -299,21 +300,33 @@ setting.
 
 ### 5. Promote an accepted terrain shading/AO control
 
-Recommended branch: `feat/terrain-shading-control`
+#### Implementation record — 2026-07-11
 
-Only after Task 4 visual comparison, persist the narrow accepted terrain
-control and place it in the appropriate Graphics/profile ownership. Do not
-combine it with object tuning. Classic stays unchanged and existing Remaster
-appearance remains the migration/default value.
+- Promoted terrain shading to a persisted ten-step Graphics control with the
+  owner-approved two-line `- [----o-----] + [5]` layout, direct track/drag
+  selection, plus/minus controls, and retained F7 comparison shortcut.
+- The accepted pre-control strength `2.0` maps to default level 5. The full
+  range is `0.0..4.5` in `0.5` steps and its shader ceiling matches the exposed
+  endpoint.
+- Terrain shading applies after either Classic or Remaster base shading.
+  Captures retain the precise `terrainRelief` level/strength terminology for
+  technical attribution.
 
 ### 6. Promote an accepted object shading control
 
-Recommended branch: `feat/object-shading-control`
+#### Implementation record — 2026-07-11
 
-Use model kind first and material families only where evidence supports a
-different response. Test ordinary scenery, walls, wall objects, foliage, ore,
-emissive objects, two-sided materials, and animated scenery independently from
-terrain.
+- Promoted object shading as a separately persisted ten-step control using the
+  same slider/input contract and a level-5 (`2.0`) continuity default.
+- Model kind remains the ownership boundary: object shading covers non-terrain
+  resident world geometry, including walls, roofs, scenery, and wall objects.
+  It now applies after Classic or Remaster base shading; material-family
+  specialization remains a possible later refinement rather than an inferred
+  release rule.
+- Persisted Dimness and Contrast were promoted with the same control contract.
+  Dimness defaults neutral at level 1; Contrast uses the owner-selected `1.2`
+  level-1 floor. The redundant player-facing Brightness row and legacy saved
+  Brightness load were retired.
 
 ### 7. Add a Lumbridge bank chest
 
@@ -408,17 +421,17 @@ values continue to load unchanged.
 - Roof behavior is resolved for this task: retain the legacy whole-grid unit
   while making its state explicit and consistent across renderers. Connected
   roof-volume hiding remains a possible later enhancement, not a parity fix.
-- Shading terminology remains under live comparison. Ten-step diagnostic
-  relief, dimness, and contrast ranges will be reduced to at least five
-  player-facing stops only after representative-area captures identify useful
-  visual intervals. Terrain contact-shadow strength remains a separate channel
-  from local relief.
+- Shading controls are resolved for this branch as persisted ten-step sliders.
+  Player-facing terminology is `Terrain shading` / `Object shading`; captures
+  retain local-relief terminology. Terrain contact-shadow strength remains a
+  separate technical channel and is not mislabeled as this control.
 - Text layout is resolved as one shared Icons/Text preference for all three
   tabs. Per-tab modes would add preference and interaction complexity without
   changing any gameplay action, so they are outside this task.
 - Lumbridge bank: approve a precise chest tile after an in-game map check and
   decide whether the area should merely provide bank access or become a formal
-  protected bank zone.
+  protected bank zone. This content item is deferred from the current handoff
+  and remains preserved for a later focused branch.
 
 ## Backlog Completion Criteria
 
