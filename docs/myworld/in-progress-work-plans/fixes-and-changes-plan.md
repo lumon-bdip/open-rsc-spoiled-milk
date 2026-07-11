@@ -223,6 +223,9 @@ must not be bundled with roof, shading, or content changes.
   row builders, shared actions, canonical Magic mapping, per-tab scrolling,
   persistence, and the settings control. Prayer UI guards and the Java 8 client
   build pass.
+- Owner review found all three text layouts functionally correct. The shared
+  Prayer point summary baseline was moved down four pixels so its glyphs clear
+  the divider above it in both icon and text presentation.
 
 ### 4. Separate terrain and object shading diagnostics
 

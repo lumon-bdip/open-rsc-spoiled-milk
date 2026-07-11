@@ -11576,7 +11576,7 @@ public final class mudclient implements Runnable {
 					magicLevel = hoveredPrayer;
 					this.getSurface().drawColoredStringCentered(magicPanelX + magicPanelWidth / 2,
 						"Prayer: " + prayerAvailablePoints + "/" + prayerMaxPoints,
-						0xFFFFFF, 0, 1, prayerTooltipY);
+						0xFFFFFF, 0, 1, prayerTooltipY + 4);
 					if (hoveredPrayer == -1) {
 						this.getSurface().drawString("Point at a prayer for a description", magicPanelX + 2, prayerTooltipY + 13, 0, 1);
 					} else {

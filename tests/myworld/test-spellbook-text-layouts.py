@@ -91,6 +91,8 @@ def main() -> None:
             "general settings layout action")
     require(mudclient, "private int drawMagicTextList()", "magic text list")
     require(mudclient, "private int drawPrayerTextList()", "prayer text list")
+    require(mudclient, "0xFFFFFF, 0, 1, prayerTooltipY + 4);",
+            "prayer point summary clears its divider")
     require(mudclient, "private int drawSummoningTextList()", "summoning text list")
     require(mudclient, "this.getMagicMenuSpellIndex(selectedRow)",
             "hidden-spell canonical index mapping")
