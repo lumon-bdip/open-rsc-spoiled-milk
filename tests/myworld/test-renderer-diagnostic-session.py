@@ -357,7 +357,8 @@ def validate_source_contract() -> None:
     for needle in (
         "--renderer-diagnostics",
         "SPOILED_MILK_RENDERER_TELEMETRY=true",
-        "SPOILED_MILK_OPENGL_FRAME_CAPTURE=true",
+        "FRAME_CAPTURE_ENABLED=true",
+        'SPOILED_MILK_OPENGL_FRAME_CAPTURE="$FRAME_CAPTURE_ENABLED"',
         "bounded-log-tee.py",
     ):
         if needle not in launcher:

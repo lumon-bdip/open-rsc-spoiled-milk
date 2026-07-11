@@ -15651,6 +15651,7 @@ public final class mudclient implements Runnable {
 				int stepsToMove;
 				int amountToMove;
 				final long movementFrameNow = System.currentTimeMillis();
+				MovementTimingDiagnostics.observeLocalPlayer(this.localPlayer);
 				for (updateIndex = 0; updateIndex < this.playerCount; ++updateIndex) {
 					updateEntity = this.players[updateIndex];
 					waypointIndexCurrent = (1 + updateEntity.waypointIndexCurrent) % 10;
@@ -15722,6 +15723,12 @@ public final class mudclient implements Runnable {
 								updateEntity.currentZ = updateEntity.waypointsZ[waypointIndexNext];
 							}
 						} else {
+							MovementTimingDiagnostics.recordCorrectionSnap(
+								updateEntity == this.localPlayer,
+								"distance",
+								Math.max(
+									Math.abs(updateEntity.waypointsX[waypointIndexNext] - updateEntity.currentX),
+									Math.abs(updateEntity.waypointsZ[waypointIndexNext] - updateEntity.currentZ)));
 							updateEntity.currentX = updateEntity.waypointsX[waypointIndexNext];
 							updateEntity.currentZ = updateEntity.waypointsZ[waypointIndexNext];
 							resetMovementInterpolation(updateEntity);
@@ -15732,6 +15739,9 @@ public final class mudclient implements Runnable {
 						}
 
 						if (updateEntity.waypointsX[waypointIndexNext] == updateEntity.currentX && updateEntity.waypointsZ[waypointIndexNext] == updateEntity.currentZ) {
+							MovementTimingDiagnostics.recordEndpointSnap(
+								updateEntity == this.localPlayer,
+								MovementTimingDiagnostics.waypointDepth(updateEntity));
 							updateEntity.waypointIndexNext = (1 + waypointIndexNext) % 10;
 						}
 					}
@@ -15840,6 +15850,12 @@ public final class mudclient implements Runnable {
 								updateEntity.currentZ = updateEntity.waypointsZ[waypointIndexNext];
 							}
 						} else {
+							MovementTimingDiagnostics.recordCorrectionSnap(
+								false,
+								"distance",
+								Math.max(
+									Math.abs(updateEntity.waypointsX[waypointIndexNext] - updateEntity.currentX),
+									Math.abs(updateEntity.waypointsZ[waypointIndexNext] - updateEntity.currentZ)));
 							updateEntity.currentX = updateEntity.waypointsX[waypointIndexNext];
 							updateEntity.currentZ = updateEntity.waypointsZ[waypointIndexNext];
 							resetMovementInterpolation(updateEntity);
@@ -15850,6 +15866,9 @@ public final class mudclient implements Runnable {
 						}
 
 						if (updateEntity.currentX == updateEntity.waypointsX[waypointIndexNext] && updateEntity.waypointsZ[waypointIndexNext] == updateEntity.currentZ) {
+							MovementTimingDiagnostics.recordEndpointSnap(
+								false,
+								MovementTimingDiagnostics.waypointDepth(updateEntity));
 							updateEntity.waypointIndexNext = (1 + waypointIndexNext) % 10;
 						}
 					}
@@ -22917,6 +22936,12 @@ public final class mudclient implements Runnable {
 		int currentZ = this.playerLocalZ * this.tileSize + 64;
 		traceLocalWalkServerUpdate(this.playerLocalX, this.playerLocalZ, currentX, currentZ, this.localPlayer);
 		if (needNextRegion && consumeRegionLoadNeedsHardPlayerReset()) {
+			MovementTimingDiagnostics.recordCorrectionSnap(
+				true,
+				"region-reset",
+				Math.max(
+					Math.abs(currentX - this.localPlayer.currentX),
+					Math.abs(currentZ - this.localPlayer.currentZ)));
 			this.localPlayer.waypointIndexNext = 0;
 			this.localPlayer.waypointIndexCurrent = 0;
 			this.localPlayer.currentX = this.localPlayer.waypointsX[0] = currentX;
@@ -23233,6 +23258,7 @@ public final class mudclient implements Runnable {
 		int pixelZ = localTileZ * this.tileSize + 64;
 		int waypointIdx = character.waypointIndexCurrent;
 		boolean wasIdle = character.waypointIndexNext == (waypointIdx + 1) % character.waypointsX.length;
+		boolean appended = false;
 		character.animationNext = direction;
 		if (character.waypointsX[waypointIdx] != pixelX || character.waypointsZ[waypointIdx] != pixelZ) {
 			if (wasIdle) {
@@ -23241,8 +23267,19 @@ public final class mudclient implements Runnable {
 			character.waypointIndexCurrent = waypointIdx = (waypointIdx + 1) % 10;
 			character.waypointsX[waypointIdx] = pixelX;
 			character.waypointsZ[waypointIdx] = pixelZ;
+			appended = true;
+		}
+		if (appended) {
+			MovementTimingDiagnostics.recordWaypointAppend(
+				character,
+				character == this.localPlayer,
+				wasIdle);
 		}
 		return true;
+	}
+
+	public void markMovementStutterObserved() {
+		MovementTimingDiagnostics.markStutterObserved(this.localPlayer);
 	}
 
 	private boolean isValidCustomMovementDirection(int direction) {

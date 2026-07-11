@@ -387,6 +387,20 @@ def build_summary(
     direct_key, direct_name = direct_buffer_key(normal_telemetry)
     direct_values = metric_values(normal_telemetry, direct_key)
     epochs = login_epochs(events, elapsed_nanos)
+    movement_summaries = [
+        event for event in events if event.get("eventType") == "movement.timing-summary"
+    ]
+    movement_markers = [
+        event for event in events if event.get("eventType") == "movement.stutter-observed"
+    ]
+    movement_arrival_outliers = [
+        event
+        for event in events
+        if event.get("eventType") == "movement.packet-arrival-outlier"
+    ]
+    movement_corrections = [
+        event for event in events if event.get("eventType") == "movement.correction-snap"
+    ]
 
     lines = [
         "# Renderer Diagnostic Session Summary",
@@ -494,6 +508,52 @@ def build_summary(
             f"world {milliseconds(numeric(record, 'stage.openGLWorld.window.averageNanos'))}, "
             f"client loop {milliseconds(numeric(record, 'stage.clientLoop.window.averageNanos'))}; "
             f"correlated with {correlation}."
+        )
+
+    lines.extend(["", "## Movement Timing", ""])
+    lines.append(
+        f"- Timing summaries/markers/arrival outliers/correction records: "
+        f"{len(movement_summaries)} / {len(movement_markers)} / "
+        f"{len(movement_arrival_outliers)} / {len(movement_corrections)}."
+    )
+    if movement_summaries:
+        latest_movement = movement_summaries[-1]
+        lines.append(
+            "- Latest packet window: "
+            f"movement={int(numeric(latest_movement, 'movement.movementPackets'))}, "
+            f"snapshot={int(numeric(latest_movement, 'movement.snapshotPackets'))}, "
+            f"records={int(numeric(latest_movement, 'movement.packetRecords'))}, "
+            f"server tick/sequence="
+            f"{int(numeric(latest_movement, 'movement.latestServerTick', -1))}/"
+            f"{int(numeric(latest_movement, 'movement.latestSequence', -1))}."
+        )
+        lines.append(
+            "- Snapshot arrival upper-bound p50/p95/p99/max: "
+            f"{milliseconds(numeric(latest_movement, 'movement.snapshotArrival.p50UpperBound'))} / "
+            f"{milliseconds(numeric(latest_movement, 'movement.snapshotArrival.p95UpperBound'))} / "
+            f"{milliseconds(numeric(latest_movement, 'movement.snapshotArrival.p99UpperBound'))} / "
+            f"{milliseconds(numeric(latest_movement, 'movement.snapshotArrival.max'))}."
+        )
+        lines.append(
+            "- Waypoint/idle window: "
+            f"current depth={int(numeric(latest_movement, 'movement.currentWaypointDepth'))}, "
+            f"max depth={int(numeric(latest_movement, 'movement.maxWaypointDepth'))}, "
+            f"idle transitions={int(numeric(latest_movement, 'movement.idleTransitions'))}, "
+            f"idle p95 upper bound="
+            f"{milliseconds(numeric(latest_movement, 'movement.idleDuration.p95UpperBound'))}, "
+            f"endpoint snaps={int(numeric(latest_movement, 'movement.endpointSnaps'))}, "
+            f"correction snaps={int(numeric(latest_movement, 'movement.correctionSnaps'))}."
+        )
+    else:
+        lines.append("- No movement timing summaries were recorded.")
+    for index, marker in enumerate(movement_markers, start=1):
+        lines.append(
+            f"- Marker {index} at {numeric(marker, 'sessionElapsedNanos') / 1_000_000_000.0:.3f}s: "
+            f"arrival={milliseconds(numeric(marker, 'movement.latestArrivalIntervalNanos'))}, "
+            f"depth={int(numeric(marker, 'movement.currentWaypointDepth'))}, "
+            f"current idle={milliseconds(numeric(marker, 'movement.currentIdleNanos'))}, "
+            f"nearby client loop={milliseconds(numeric(marker, 'frame.clientLoopLatestNanos'))} "
+            f"(sample age {milliseconds(numeric(marker, 'frame.clientLoopSampleAgeNanos'))})."
         )
 
     lines.extend(["", "## Renderer Signals", ""])
