@@ -10,6 +10,7 @@ TEXTURE_BUILDER = ROOT / "PC_Client/src/orsc/OpenGLSpriteTextureBuilder.java"
 WORLD_SPRITE_CONTROLLER = ROOT / "PC_Client/src/orsc/OpenGLWorldSpriteDrawController.java"
 PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+GRAPHICS_CONTROLLER = ROOT / "Client_Base/src/orsc/graphics/two/GraphicsController.java"
 
 
 def require(text: str, needle: str, label: str) -> None:
@@ -69,11 +70,32 @@ def main() -> None:
     controller = WORLD_SPRITE_CONTROLLER.read_text(encoding="utf-8")
     presenter = PRESENTER.read_text(encoding="utf-8")
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
+    graphics_controller = GRAPHICS_CONTROLLER.read_text(encoding="utf-8")
 
     require(
         mudclient,
         "npc != null && npc.spiritSummon ? 0x99FFFFFF : 0xFFFFFFFF",
         "armor spirit summon 60-percent opacity",
+    )
+    require(
+        graphics_controller,
+        "private boolean canCaptureRenderer2DTransformedSpriteReplay() {\n"
+        "\t\treturn canReplaceRenderer2DSceneSprite()\n"
+        "\t\t\t|| canCaptureRenderer2DOpenGLWorldOverlayReplay();\n"
+        "\t}",
+        "partial-alpha scene sprite transform capture",
+    )
+    require(
+        graphics_controller,
+        "!transform.canReplayOverSoftwareFrame()\n"
+        "\t\t\t\t&& !canCaptureRenderer2DTransformedSpriteReplay()",
+        "transformed sprite capture gate",
+    )
+    forbid(
+        graphics_controller,
+        "!transform.canReplayOverSoftwareFrame()\n"
+        "\t\t\t\t&& !canCaptureRenderer2DOpenGLWorldOverlayReplay()",
+        "scene spirit sprite transform rejection",
     )
 
     require(

@@ -404,6 +404,11 @@ public class GraphicsController {
 				|| renderer2DPhase == Renderer2DFrame.Phase.UI_OVERLAY);
 	}
 
+	private boolean canCaptureRenderer2DTransformedSpriteReplay() {
+		return canReplaceRenderer2DSceneSprite()
+			|| canCaptureRenderer2DOpenGLWorldOverlayReplay();
+	}
+
 	private boolean canCaptureRenderer2DNativeUiCommand() {
 		return canReplaceRenderer2DNativeUi() || canCaptureRenderer2DOpenGLWorldOverlayReplay();
 	}
@@ -788,7 +793,7 @@ public class GraphicsController {
 		}
 		if (transform == null
 			|| (!transform.canReplayOverSoftwareFrame()
-				&& !canCaptureRenderer2DOpenGLWorldOverlayReplay())) {
+				&& !canCaptureRenderer2DTransformedSpriteReplay())) {
 			renderer2DCaptureSkippedTransform++;
 			return false;
 		}
@@ -950,7 +955,7 @@ public class GraphicsController {
 		}
 		if (transform == null
 			|| (!transform.canReplayOverSoftwareFrame()
-				&& !canCaptureRenderer2DOpenGLWorldOverlayReplay())) {
+				&& !canCaptureRenderer2DTransformedSpriteReplay())) {
 			renderer2DCaptureSkippedTransform++;
 			return false;
 		}
