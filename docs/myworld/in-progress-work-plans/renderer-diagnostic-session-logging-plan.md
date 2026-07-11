@@ -253,7 +253,20 @@ indexed frames.
   load-transition primitives are intentionally disposable or visually
   relevant.
 - No `Ctrl+F9` burst was present in the initially reviewed session, so live
-  artifact-index and strict per-frame validation remain pending.
+  artifact-index and strict per-frame validation were initially pending.
+- The subsequent `Ctrl+F9` burst completed all `12` frames with zero capture
+  failures and complete indexed artifacts. Every frame passed the established
+  strict capture analyzer. Across the burst, captured world faces stayed at
+  `954..956`, world-sprite commands stayed at `709..725`, and there were zero
+  missing anchors, zero suspicious visibility cases, zero occlusion
+  disagreements, and zero renderer 2D command drops.
+- Full capture is intentionally diagnostic-heavy: the burst took `25.500s`,
+  averaging `2.108s` of synchronous capture work per frame and replacing
+  `1,517` pending frames while only `12` capture frames were presented. The
+  session analyzer now isolates indexed burst intervals from normal timing,
+  dropped-frame, GC, heap, and worst-window summaries. If future temporal bugs
+  require close consecutive frames, add a separate compact capture profile
+  rather than weakening the current full evidence bundle silently.
 
 ## Ongoing Visual Refinement Loop
 
@@ -281,6 +294,6 @@ For each manager-reported visual test:
 - [x] Diagnostic-disabled runtime produces no session bundle.
 - [x] Diagnostic-enabled fixture produces a parseable bundle and bounded
       console output.
-- [ ] A real `Ctrl+F9` burst is indexed and analyzable from the session root.
+- [x] A real `Ctrl+F9` burst is indexed and analyzable from the session root.
 - [ ] Logging overhead is measured with capture inactive and does not
       materially regress recent frame timing or allocation behavior.

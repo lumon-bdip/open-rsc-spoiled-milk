@@ -1194,6 +1194,14 @@ they are not visual requirements for the baseline.
         `32` section loads, with zero current dense-frame drops. Heap-floor
         growth remains a retention signal for a later idle/relog comparison,
         not a diagnosed leak.
+  - [x] Validate the first session-indexed live `Ctrl+F9` burst: all `12`
+        frames and artifacts completed, all strict frame analyses passed,
+        `954..956` world faces and `709..725` world-sprite commands were
+        represented, and missing anchors, suspicious visibility, occlusion
+        disagreements, and 2D drops were all zero. Full capture averaged
+        `2.108s` of synchronous work per frame, so session analysis now excludes
+        indexed capture intervals from normal performance rankings and reports
+        their `1,517` replaced frames separately.
 - [ ] Build a replay harness for captured renderer-v2 frames so a problematic
       entity/occlusion frame can be inspected without live combat timing.
   - [x] Add an offline capture analyzer that validates `Ctrl+F9` capture

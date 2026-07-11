@@ -52,6 +52,7 @@ def make_session(session_dir: Path) -> None:
                 trigger="periodic",
                 rendererFrameSequence=300,
                 **{
+                    "sessionElapsedNanos": 1_000_000_000,
                     "frame.lastNanos": 16_000_000,
                     "stage.clientLoop.window.averageNanos": 16_700_000,
                     "stage.sceneRender.window.averageNanos": 3_000_000,
@@ -61,6 +62,7 @@ def make_session(session_dir: Path) -> None:
                     "runtime.gc.collectionCountDelta": 0,
                     "runtime.gc.collectionTimeMillisDelta": 0,
                     "openGL.droppedFrames.lifetime": 0,
+                    "openGL.frames.lifetime": 300,
                     "openGL.droppedFrames.window": 0,
                     "counter.openGLWorldChunkUpload.window.total": 0,
                     "counter.renderer2DRotatedSpriteCommandAccepted.recent.latest": 12,
@@ -71,9 +73,43 @@ def make_session(session_dir: Path) -> None:
             ),
             record(
                 "telemetry",
+                trigger="capture-burst-before",
+                rendererFrameSequence=301,
+                **{
+                    "sessionElapsedNanos": 2_000_000_000,
+                    "openGL.frames.lifetime": 300,
+                    "openGL.droppedFrames.lifetime": 0,
+                },
+            ),
+            record(
+                "telemetry",
+                trigger="periodic",
+                rendererFrameSequence=450,
+                **{
+                    "sessionElapsedNanos": 3_000_000_000,
+                    "stage.openGLRender.window.averageNanos": 30_000_000,
+                    "openGL.frames.lifetime": 301,
+                    "openGL.droppedFrames.lifetime": 100,
+                    "runtime.gc.collectionCountDelta": 4,
+                    "runtime.gc.collectionTimeMillisDelta": 20,
+                },
+            ),
+            record(
+                "telemetry",
+                trigger="capture-burst-after",
+                rendererFrameSequence=451,
+                **{
+                    "sessionElapsedNanos": 4_000_000_000,
+                    "openGL.frames.lifetime": 301,
+                    "openGL.droppedFrames.lifetime": 100,
+                },
+            ),
+            record(
+                "telemetry",
                 trigger="slow-frame",
                 rendererFrameSequence=600,
                 **{
+                    "sessionElapsedNanos": 5_000_000_000,
                     "frame.lastNanos": 48_000_000,
                     "stage.clientLoop.window.averageNanos": 16_800_000,
                     "stage.sceneRender.window.averageNanos": 3_500_000,
@@ -82,7 +118,8 @@ def make_session(session_dir: Path) -> None:
                     "runtime.heap.usedBytes": 140_000_000,
                     "runtime.gc.collectionCountDelta": 1,
                     "runtime.gc.collectionTimeMillisDelta": 7,
-                    "openGL.droppedFrames.lifetime": 2,
+                    "openGL.droppedFrames.lifetime": 102,
+                    "openGL.frames.lifetime": 600,
                     "openGL.droppedFrames.window": 2,
                     "counter.openGLWorldChunkUpload.window.total": 4,
                     "counter.renderer2DRotatedSpriteCommandAccepted.recent.latest": 256,
@@ -147,9 +184,11 @@ def main() -> None:
             "# Renderer Diagnostic Session Summary",
             "OpenGL render window p50/p95/p99: 7.000ms / 10.000ms / 10.000ms",
             "GC delta across report windows: 1 collections / 7ms (7.00ms average",
+            "OpenGL normal presented/dropped frames: 599 / 2 (0.33% dropped, excluding indexed capture bursts)",
             "Frame 600: render 10.000ms, world 8.000ms, client loop 16.800ms; correlated with GC activity, chunk uploads, OpenGL frame drops, RotatedSprite command overflow.",
             "rotated-sprite: latest accepted 256, lifetime max 256, latest dropped 0, total dropped 3 across 1 report windows, limit 256",
             "Burst 1 frame 0: `completed` at `captures/capture-fixture/`",
+            "Presented/dropped during indexed bursts: 1 / 100",
             "Indexed capture artifacts are present.",
         ):
             if snippet not in result.stdout:

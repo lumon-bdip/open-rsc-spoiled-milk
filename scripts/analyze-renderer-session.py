@@ -123,6 +123,31 @@ def final_capture_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]
     return list(final_by_key.values())
 
 
+def capture_telemetry_ranges(
+    telemetry: list[dict[str, Any]],
+) -> list[tuple[float, float, dict[str, Any], dict[str, Any]]]:
+    ranges: list[tuple[float, float, dict[str, Any], dict[str, Any]]] = []
+    pending: dict[str, Any] | None = None
+    for record in telemetry:
+        trigger = record.get("trigger")
+        if trigger == "capture-burst-before":
+            pending = record
+        elif trigger == "capture-burst-after" and pending is not None:
+            start = numeric(pending, "sessionElapsedNanos")
+            end = numeric(record, "sessionElapsedNanos")
+            ranges.append((start, end, pending, record))
+            pending = None
+    return ranges
+
+
+def within_capture_range(
+    record: dict[str, Any],
+    ranges: list[tuple[float, float, dict[str, Any], dict[str, Any]]],
+) -> bool:
+    elapsed = numeric(record, "sessionElapsedNanos")
+    return any(start <= elapsed <= end for start, end, _, _ in ranges)
+
+
 def capture_artifact_issues(
     session_dir: Path, capture_records: list[dict[str, Any]]
 ) -> list[str]:
@@ -196,7 +221,11 @@ def build_summary(
     report_records = [
         record for record in telemetry if record.get("trigger") in {"periodic", "slow-frame"}
     ]
-    timing_records = report_records or telemetry
+    capture_ranges = capture_telemetry_ranges(telemetry)
+    normal_report_records = [
+        record for record in report_records if not within_capture_range(record, capture_ranges)
+    ]
+    timing_records = normal_report_records or report_records or telemetry
     client_loop_nanos = [
         numeric(record, "stage.clientLoop.window.averageNanos") for record in timing_records
     ]
@@ -218,10 +247,10 @@ def build_summary(
     completed_captures = final_capture_records(capture_index)
     failed_captures = [record for record in completed_captures if record.get("failed")]
     total_gc_count = sum(
-        numeric(record, "runtime.gc.collectionCountDelta") for record in report_records
+        numeric(record, "runtime.gc.collectionCountDelta") for record in normal_report_records
     )
     total_gc_time = sum(
-        numeric(record, "runtime.gc.collectionTimeMillisDelta") for record in report_records
+        numeric(record, "runtime.gc.collectionTimeMillisDelta") for record in normal_report_records
     )
     heap_values = [numeric(record, "runtime.heap.usedBytes") for record in timing_records]
     dropped_frames = max(
@@ -232,9 +261,27 @@ def build_summary(
         (numeric(record, "openGL.frames.lifetime") for record in telemetry),
         default=0.0,
     )
+    capture_dropped_frames = sum(
+        max(
+            0.0,
+            numeric(after, "openGL.droppedFrames.lifetime")
+            - numeric(before, "openGL.droppedFrames.lifetime"),
+        )
+        for _, _, before, after in capture_ranges
+    )
+    capture_presented_frames = sum(
+        max(
+            0.0,
+            numeric(after, "openGL.frames.lifetime")
+            - numeric(before, "openGL.frames.lifetime"),
+        )
+        for _, _, before, after in capture_ranges
+    )
+    normal_dropped_frames = max(0.0, dropped_frames - capture_dropped_frames)
+    normal_presented_frames = max(0.0, presented_frames - capture_presented_frames)
     dropped_percent = (
-        dropped_frames * 100.0 / (presented_frames + dropped_frames)
-        if presented_frames + dropped_frames > 0
+        normal_dropped_frames * 100.0 / (normal_presented_frames + normal_dropped_frames)
+        if normal_presented_frames + normal_dropped_frames > 0
         else 0.0
     )
     elapsed_nanos = max(
@@ -268,8 +315,8 @@ def build_summary(
         f"{milliseconds(percentile(open_gl_render_nanos, 0.95))} / {milliseconds(percentile(open_gl_render_nanos, 0.99))}",
         f"- OpenGL world window p50/p95/p99: {milliseconds(percentile(open_gl_world_nanos, 0.50))} / "
         f"{milliseconds(percentile(open_gl_world_nanos, 0.95))} / {milliseconds(percentile(open_gl_world_nanos, 0.99))}",
-        f"- OpenGL presented/dropped frames: {int(presented_frames)} / {int(dropped_frames)} "
-        f"({dropped_percent:.2f}% dropped)",
+        f"- OpenGL normal presented/dropped frames: {int(normal_presented_frames)} / "
+        f"{int(normal_dropped_frames)} ({dropped_percent:.2f}% dropped, excluding indexed capture bursts)",
         f"- GC delta across report windows: {int(total_gc_count)} collections / {int(total_gc_time)}ms "
         f"({gc_average_millis:.2f}ms average, {gc_time_percent:.2f}% of sampled duration)",
     ]
@@ -368,6 +415,25 @@ def build_summary(
         )
     for relative, valid, detail in capture_analysis:
         lines.append(f"- Analyzer `{relative}`: {'PASS' if valid else 'FAIL'} — {detail}")
+    if capture_ranges:
+        capture_duration_nanos = sum(max(0.0, end - start) for start, end, _, _ in capture_ranges)
+        capture_work_nanos = sum(numeric(record, "captureWorkNanos") for record in completed_captures)
+        average_capture_work = (
+            capture_work_nanos / len(completed_captures) if completed_captures else 0.0
+        )
+        lines.extend(
+            [
+                "",
+                "### Capture impact",
+                "",
+                f"- Burst duration: {capture_duration_nanos / 1_000_000_000.0:.3f}s",
+                f"- Capture work total/average: {milliseconds(capture_work_nanos)} / "
+                f"{milliseconds(average_capture_work)} per frame",
+                f"- Presented/dropped during indexed bursts: {int(capture_presented_frames)} / "
+                f"{int(capture_dropped_frames)}",
+                "- Capture impact is reported separately and excluded from normal performance rankings.",
+            ]
+        )
 
     lines.extend(["", "## Data Quality", ""])
     if partial_files:
