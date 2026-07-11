@@ -165,16 +165,45 @@ Acceptance:
 - [x] Full renderer guardrail suite passes.
 - [x] Classifier fixtures cover broad fallbacks plus representative water,
       foliage, ore, fire/torch/furnace, lava, and unknown inputs.
-- [ ] A strict `Ctrl+F9` capture has complete family coverage with no missing
+- [x] A strict `Ctrl+F9` capture has complete family coverage with no missing
       triangle metadata or capture artifacts.
-- [ ] Default-output screenshots/capture layers show no material-driven visual
+- [x] Default-output screenshots/capture layers show no material-driven visual
       change in terrain, water, walls, roofs, foliage, ore rocks, ordinary
       scenery, lava/fire, sprites, shadows, or UI.
-- [ ] Dense-route telemetry shows no new draw calls/texture binds, no material
+- [x] Dense-route telemetry shows no new draw calls/texture binds, no material
       regression in render or client-loop p95, and bounded VBO/direct-memory
       growth consistent with one additional attribute.
 - [ ] Relog and section/teleport transitions retain correct resident family
       coverage without stale chunk reuse.
+
+## Live Validation Findings — 2026-07-10
+
+- User visual review accepted the default Remaster output after travel through
+  dense scenery/entity coverage. Terrain, water, scenery, foliage, ore,
+  emissive surfaces, sprites, shadows, animations, and UI showed no visible
+  regression. The expanded F6 family line was populated and readable.
+- All 12 frames in diagnostic burst `session-20260710-210116-3032922` passed
+  strict analysis. Every frame reported `260,032/260,032` resident triangles,
+  `798` unique aggregate rows, and zero missing triangles, duplicate rows,
+  invalid ids, contradictions, or unclassified coverage. The stable family
+  totals were terrain `42,384`, water `244`, wall `6,036`, scenery `116,956`,
+  foliage `83,440`, ore `2,322`, and emissive `8,650`; roof/effect were absent
+  from this active resident scene rather than unclassified.
+- The non-capture session had zero slow-frame and client-exception events.
+  Client-loop p50/p95/p99 was `16.666/17.701/18.026ms`; OpenGL render was
+  `9.395/10.581/13.322ms`. On report windows with the same `260,032` resident
+  triangles as the earlier accepted baseline, world-render p50/p95 was
+  `7.361/8.120ms` versus `7.187/7.491ms`, while the new run generally drew a
+  denser visible triangle subset. Draw calls remained within `486..500` versus
+  `481..536`, and texture binds remained exactly `1`.
+- The new float raises the resident vertex stride from `108` to `112` bytes
+  (`3.7%`, or `3,120,384` bytes for `780,096` resident vertices). JVM direct
+  buffers settled into a bounded approximately `166..181MiB` sawtooth late in
+  the dense/capture session rather than showing monotonic growth. Continue the
+  already-established passive retention monitoring; this evidence does not
+  justify a memory/cache change.
+- Eleven section loads retained complete family coverage. A live logout/login
+  cycle remains before closing the lifecycle acceptance item.
 
 ## Explicitly Deferred
 
