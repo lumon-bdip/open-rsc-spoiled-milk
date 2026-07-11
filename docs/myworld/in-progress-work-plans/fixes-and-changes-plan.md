@@ -171,6 +171,21 @@ matrix cannot be proven from the current conditions. Required test states:
   floors, global-option precedence, active-floor walls, upper-plane walls,
   roofs, and terrain. The full renderer guard suite and Java 8 client build
   pass.
+- A live follow-up exposed a separate region-basis bug when the setting was
+  toggled inside the eight-tile movement hysteresis band at a section edge.
+  The toggle selected a neighboring 3x3 world window from the player's tile
+  without rebasing collision, entities, scenery, or the camera, producing an
+  exact 48-tile visual/picking shift. Roof reloads now rebuild the already
+  active window from `midRegionBaseX/Z` and leave its bounds unchanged.
+  `events.jsonl` records each successful `roof.visibility.reload` with active
+  section, player world tile, and player-to-active section deltas so future
+  reports remain attributable even when toggled while moving.
+- Live validation recorded 35 successful toggles while walking and stationary.
+  Several events reached `playerSectionDeltaX=1` or `playerSectionDeltaZ=1`,
+  directly exercising the boundary condition that previously shifted visuals;
+  the active section remained fixed and visual, picking, and collision
+  alignment held. The strict session analyzer accepted all 12 `Ctrl+F9` burst
+  frames with no failed captures or client exceptions.
 - This task deliberately preserves the legacy whole-grid visibility unit. A
   connected-roof-volume refinement would require a separate spatial ownership
   design and is not necessary to correct renderer parity.

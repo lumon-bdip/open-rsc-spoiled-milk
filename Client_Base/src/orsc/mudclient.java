@@ -26812,23 +26812,40 @@ public final class mudclient implements Runnable {
 			playerTileCovered);
 	}
 
+	private static int activeRegionCenterWorldTile(int localBaseTile, int worldOffset) {
+		return localBaseTile + worldOffset + World.SECTION_SIZE;
+	}
+
 	private void reloadCurrentRegionForRoofVisibility() {
 		if (!this.hasCompletedInitialRegionLoad || this.localPlayer == null) {
 			return;
 		}
-		int worldX = this.midRegionBaseX + this.playerLocalX;
-		int worldZ = this.midRegionBaseZ + this.playerLocalZ;
-		int shiftedWorldX = worldX + this.worldOffsetX;
-		int shiftedWorldZ = worldZ + this.worldOffsetZ;
-		int midRegionX = World.worldTileToSection(shiftedWorldX);
-		int midRegionZ = World.worldTileToSection(shiftedWorldZ);
-		this.currentRegionMaxX = midRegionX * World.SECTION_SIZE + 32;
-		this.currentRegionMinX = midRegionX * World.SECTION_SIZE - 32;
-		this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE + 32;
-		this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE - 32;
-		this.world.loadSections(shiftedWorldX, shiftedWorldZ, this.requestedPlane);
+		int activeWorldX = activeRegionCenterWorldTile(this.midRegionBaseX, this.worldOffsetX);
+		int activeWorldZ = activeRegionCenterWorldTile(this.midRegionBaseZ, this.worldOffsetZ);
+		int activeSectionX = World.worldTileToSection(activeWorldX);
+		int activeSectionZ = World.worldTileToSection(activeWorldZ);
+		int playerWorldX = this.midRegionBaseX + this.playerLocalX + this.worldOffsetX;
+		int playerWorldZ = this.midRegionBaseZ + this.playerLocalZ + this.worldOffsetZ;
+
+		this.world.loadSections(activeWorldX, activeWorldZ, this.requestedPlane);
 		this.rematerializeLoadedTerrainSceneryAfterWorldReload();
 		this.world.playerAlive = true;
+
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord("roof.visibility.reload");
+		if (event != null) {
+			event.bool("hideRoofs", C_HIDE_ROOFS);
+			event.number("plane", this.requestedPlane);
+			event.number("activeSectionX", activeSectionX);
+			event.number("activeSectionZ", activeSectionZ);
+			event.number("activeCenterWorldX", activeWorldX);
+			event.number("activeCenterWorldZ", activeWorldZ);
+			event.number("playerWorldX", playerWorldX);
+			event.number("playerWorldZ", playerWorldZ);
+			event.number("playerSectionDeltaX", World.worldTileToSection(playerWorldX) - activeSectionX);
+			event.number("playerSectionDeltaZ", World.worldTileToSection(playerWorldZ) - activeSectionZ);
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
 	}
 
 	private void ensureGameplayRendererWorldChunkFrame() {

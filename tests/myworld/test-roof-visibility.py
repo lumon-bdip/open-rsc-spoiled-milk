@@ -12,6 +12,7 @@ FRAME = ROOT / "Client_Base/src/orsc/graphics/three/Renderer3DFrame.java"
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 CHUNK_RENDERER = ROOT / "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java"
 FRAME_CAPTURE = ROOT / "PC_Client/src/orsc/OpenGLFrameCapture.java"
+WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
 
 
 def require(text: str, needle: str, label: str) -> None:
@@ -95,12 +96,38 @@ def run_visibility_matrix() -> None:
         )
 
 
+def run_active_region_reload_matrix() -> None:
+    section_size = 48
+
+    def world_tile_to_section(world_tile: int) -> int:
+        return (section_size // 2 + world_tile) // section_size
+
+    def section_to_local_base_tile(section: int) -> int:
+        return (section - 1) * section_size
+
+    for active_section in (1, 50, 100):
+        local_base = section_to_local_base_tile(active_section)
+        active_center = local_base + section_size
+        assert world_tile_to_section(active_center) == active_section
+
+        # Normal movement retains the active window for 32 tiles on either
+        # side. Directly resolving the player's section changes eight tiles
+        # too early at both edges and shifts visual products by 48 tiles.
+        lower_hysteresis_tile = active_center - 31
+        upper_hysteresis_tile = active_center + 31
+        assert world_tile_to_section(lower_hysteresis_tile) == active_section - 1
+        assert world_tile_to_section(upper_hysteresis_tile) == active_section + 1
+        assert active_center - section_to_local_base_tile(active_section - 1) == section_size * 2
+        assert active_center - section_to_local_base_tile(active_section + 1) == 0
+
+
 def main() -> None:
     roof_visibility = ROOF_VISIBILITY.read_text(encoding="utf-8")
     frame = FRAME.read_text(encoding="utf-8")
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
     chunk_renderer = CHUNK_RENDERER.read_text(encoding="utf-8")
     frame_capture = FRAME_CAPTURE.read_text(encoding="utf-8")
+    world = WORLD.read_text(encoding="utf-8")
 
     require(roof_visibility, "HIDDEN_INDOORS", "named indoor roof state")
     require(roof_visibility, "HIDDEN_ABOVE_ACTIVE_FLOOR", "named upper-floor roof state")
@@ -116,8 +143,19 @@ def main() -> None:
             "resident chunk roof visibility query")
     require(frame_capture, 'writer.println("roofVisibility=" + renderer3DFrame.getRoofVisibility().name());',
             "AI-readable roof state capture")
+    require(world, "return (SECTION_SIZE / 2 + worldTile) / SECTION_SIZE;",
+            "section selection uses half-section rounding")
+    require(mudclient, "private static int activeRegionCenterWorldTile(int localBaseTile, int worldOffset)",
+            "roof reload derives the active window center from its local base")
+    require(mudclient, "return localBaseTile + worldOffset + World.SECTION_SIZE;",
+            "active window center conversion")
+    require(mudclient, "this.world.loadSections(activeWorldX, activeWorldZ, this.requestedPlane);",
+            "roof reload keeps the active section window")
+    require(mudclient, 'RendererDiagnosticSession.newEventRecord("roof.visibility.reload")',
+            "AI-readable roof reload event")
 
     run_visibility_matrix()
+    run_active_region_reload_matrix()
     print("PASS: roof visibility matrix is shared by legacy and resident rendering")
 
 

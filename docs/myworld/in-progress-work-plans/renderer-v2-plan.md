@@ -196,6 +196,15 @@ The first visually acceptable baseline is now:
   resident path also suppresses walls from planes above an indoor ground-floor
   player while preserving active-floor walls upstairs. `Ctrl+F9` metadata
   records the active plane and resolved roof state for visual correlation.
+- Roof-option reloads now preserve the active section window rather than
+  resolving a new window from the player's tile. This closes a 48-tile
+  visual/picking desync at movement hysteresis edges, where normal movement
+  intentionally retained the old window but a toggle previously loaded its
+  neighbor without a coordinate rebase. Structured `roof.visibility.reload`
+  events record the active section and player-to-section delta.
+  Live validation exercised 35 toggles, including non-zero X and Z section
+  deltas, without desynchronizing visuals, picking, or collision; all 12
+  indexed capture frames passed strict offline analysis.
 - Remaster shading diagnostics now separate terrain and non-terrain/object
   local-relief strength while retaining the accepted `Max`/`2.0` parity
   default for both. F6 and `Ctrl+F9` also distinguish fixed model-kind diffuse
