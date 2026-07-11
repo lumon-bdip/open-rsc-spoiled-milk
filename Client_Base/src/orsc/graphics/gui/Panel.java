@@ -355,6 +355,20 @@ public final class Panel {
 		}
 	}
 
+	public final void setSprite(int control, Sprite sprite) {
+		if (control < 0 || control >= this.controlCount
+			|| this.controlType[control] != PanelControlType.SPRITE || sprite == null) {
+			return;
+		}
+		int centerX = this.controlX[control] + this.controlWidth[control] / 2;
+		int centerY = this.controlY[control] + this.controlHeight[control] / 2;
+		this.controlArgSprite[control] = sprite;
+		this.controlWidth[control] = sprite.getWidth();
+		this.controlHeight[control] = sprite.getHeight();
+		this.controlX[control] = centerX - this.controlWidth[control] / 2;
+		this.controlY[control] = centerY - this.controlHeight[control] / 2;
+	}
+
 	public final void addToList(String str, boolean scrollToEnd, int crownId, String str3, String str2, int control) {
 		try {
 

@@ -36,6 +36,8 @@
             <fileset dir="../dev/myworld/assets">
                 <include name="animations/**/*.png"/>
                 <include name="legacy animation folder/**/*.png"/>
+                <include name="remastered-sprites/**/frames/*.png"/>
+                <include name="remastered-sprites/manifest.json"/>
                 <include name="sprites/**/*.png"/>
             </fileset>
         </copy>

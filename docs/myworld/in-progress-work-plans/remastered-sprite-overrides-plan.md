@@ -739,7 +739,7 @@ be compared to the exact asset set.
   templates, category folders, incoming boundary, and output rules.
 - [x] Add its human-readable contributor index and connect it to
   `dev/myworld/assets/README.md`.
-- [ ] Add the promoted remaster credit to the release asset-source inventory
+- [x] Add the promoted remaster credit to the release asset-source inventory
   when the player package first begins shipping remastered PNGs.
 - [x] Add the documented inventory, classify, scaffold, validate, generate, and
   report command surface before building a large runtime catalog.
@@ -764,20 +764,34 @@ Workspace foundation result on 2026-07-11: `113` leaf descriptors account for
 all `198` contributed PNGs and legacy IDs. `88` sets are authoring-ready (`156`
 per-frame manifest entries); `25` sets remain deliberately in `work` (the
 18-frame provisional hatchet target, the one width-mismatched pie image, and
-23 textures). The client build does not package or load this catalog yet.
+23 textures). Phase 1 now packages and resolves the ready entries; work assets
+remain excluded.
 
 ### Phase 1: Safe foundation
 
-- Add the setting, catalog schema/loader, resolver, validation, and diagnostics
+- [x] Add the setting, catalog schema/loader, resolver, validation, and diagnostics
   with zero required overrides.
-- Prove that disabled mode and enabled mode with an empty catalog both render
-  canonical art.
-- Keep version 1 to exact-canonical dimensions, inherited recoloring, and
+- [x] Prove that disabled mode and enabled mode with absent catalog coverage both
+  return the exact canonical object. The empty-catalog case uses the same null
+  entry path.
+- [x] Keep version 1 to exact-canonical dimensions, inherited recoloring, and
   binary-alpha conversion.
-- Bind canonical objects after OSAR packs and existing external equipment have
+- [x] Bind canonical objects after OSAR packs and existing external equipment have
   completed loading.
-- Rebind the retained appearance-panel arrows on a live toggle.
-- Add packaging and fallback tests before expanding coverage.
+- [x] Rebind the retained appearance-panel arrows on a live toggle.
+- [x] Add packaging and fallback tests before expanding coverage.
+
+Side-by-side loader result on 2026-07-11: generated catalog data provides `156`
+ready entries to `RemasteredSpriteCatalog`; `RemasteredSpriteResolver` lazily
+decodes a separately cached override `Sprite` while retaining the exact supplied
+canonical object. Item, animation-frame, and `SpriteDef` selection all resolve
+through stable keys. Disabled, absent, incompatible, or failed entries return
+the same canonical object supplied by the existing final selection path. The
+player JAR packages only declared `frames/` PNGs and the audit manifest. The
+persisted `Remastered sprites` setting defaults Off, manual changes mark the
+renderer profile Custom, and Classic forces Off unless an explicit diagnostic
+runtime override is active. Remaster does not force On before private visual
+approval.
 
 ### Phase 2: Visually testable proof
 
@@ -970,14 +984,11 @@ without asking the manager to authorize every small adjustment. It should:
 
 ## Open Decisions
 
-- Exact package/class names for the generated catalog and resolver components.
 - Named safety limits for catalog entries, PNG dimensions/pixels, sheet frames,
   decoded bytes, and diagnostic samples.
 - Whether higher-resolution PNGs use an extended logical pixel-density
   contract or category-specific generated renditions after Phase 2B.
 - Which three sprites form the first proof set.
-- Final settings wording and row placement after checking the already tall
-  OpenGL Graphics list.
 - The proof-approval checkpoint at which the Remaster preset begins enabling
   the option automatically.
 - Whether runtime-ready textures share a renamed `Remastered assets` toggle or
@@ -1012,3 +1023,11 @@ without asking the manager to authorize every small adjustment. It should:
 - 2026-07-11: Classic will force the feature Off. Remaster will force it On
   only after the private proof is approved; manual changes mark the renderer
   preset Custom.
+- 2026-07-11: Generate `orsc.remastered.RemasteredSpriteCatalogData`; keep
+  catalog validation, stable keys, settings, and resolution in the
+  `orsc.remastered` package. Integrate the resolver at the three converged
+  `GraphicsController.spriteSelect` paths, with the existing external-item
+  injection resolved before the remaster choice.
+- 2026-07-11: Label the persisted setting `Remastered sprites`, place it in the
+  OpenGL Graphics section (and the software Interface section), default it Off,
+  and retain a runtime property/environment override for diagnostics.

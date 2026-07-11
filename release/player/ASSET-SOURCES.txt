@@ -7,6 +7,11 @@ distribution is permitted with source code available.
 Original additions by the project author include the fishing rod equipment
 sprites.
 
+ThatKidBobo supplied the remastered player, NPC, inventory/ground item, and
+equipment sprite artwork included by the optional remastered-sprite catalog.
+Per-set mappings and provenance are tracked under
+dev/myworld/assets/remastered-sprites/.
+
 Prayer UI icon assets are sourced from a royalty-free repository.
 
 Summon UI icon provenance is tracked in dev/myworld/assets/credit.

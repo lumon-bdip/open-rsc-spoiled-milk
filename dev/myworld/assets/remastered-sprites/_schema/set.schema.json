@@ -51,7 +51,7 @@
           },
           "sizePolicy": {"const": "exact-canonical"},
           "recolorPolicy": {"enum": ["inherit", "none"]},
-          "alphaThreshold": {"type": "integer", "minimum": 0, "maximum": 255},
+          "alphaThreshold": {"type": "integer", "minimum": 1, "maximum": 255},
           "legacySourceIds": {
             "type": "array",
             "items": {"type": "integer", "minimum": 0},

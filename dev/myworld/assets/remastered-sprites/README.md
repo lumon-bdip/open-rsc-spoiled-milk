@@ -6,8 +6,8 @@ must be able to fall back to its original sprite or animation frame.
 
 Nothing in this directory is loaded merely because a PNG exists. A leaf set
 must have a valid `set.json`, use `status: "ready"`, and pass the workspace
-validator before it can enter the generated manifest. Client packaging is a
-separate later step.
+validator before it can enter the generated manifest. The client build packages
+only those ready frame paths; selection still requires the player-side setting.
 
 ## Layout
 
@@ -57,8 +57,8 @@ Run the wrapper from the repository root:
   overwrite an existing path.
 - `validate` checks descriptors, PNGs, paths, frame numbering, archive targets,
   duplicate keys, provenance, and ready/work separation.
-- `generate` deterministically rebuilds `manifest.json`; `--check` fails if the
-  committed file is stale.
+- `generate` deterministically rebuilds `manifest.json` and the Java catalog
+  data used by the client; `--check` fails if either committed file is stale.
 - `report` writes a local review report beneath
   `output/remastered-sprites/` (ignored by Git).
 
@@ -88,8 +88,8 @@ or texture descriptors.
 - `ready`: validated art in `frames/`; included in the generated manifest.
 - `retired`: retained metadata for an intentionally withdrawn set; excluded.
 
-Only PNGs declared by a ready descriptor may eventually be packaged. The
-build must always exclude `incoming/`, `work/`, `source/`, `_schema/`,
+Only PNGs declared by a ready descriptor may be packaged. The build always
+excludes `incoming/`, `work/`, `source/`, `_schema/`,
 `_templates/`, and local `output/`. Textures remain `work` until the separate
 texture resolver and cache-invalidation phase is implemented.
 

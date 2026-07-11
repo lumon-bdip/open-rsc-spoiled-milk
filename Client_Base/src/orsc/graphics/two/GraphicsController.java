@@ -15,6 +15,8 @@ import orsc.graphics.RendererSpriteTransform;
 import orsc.graphics.RendererTransparency;
 import orsc.graphics.two.SpriteArchive.*;
 import orsc.mudclient;
+import orsc.remastered.RemasteredSpriteKey;
+import orsc.remastered.RemasteredSpriteResolver;
 import orsc.util.FastMath;
 import orsc.util.GenUtil;
 
@@ -130,6 +132,7 @@ public class GraphicsController {
 	// public int[][] image2D_pixels;
 	private int[] m_Xb;
 	private ZipFile spriteArchive;
+	private final RemasteredSpriteResolver remasteredSpriteResolver = new RemasteredSpriteResolver();
 
 	GraphicsController(int var1, int var2, int var3) {
 		try {
@@ -1278,10 +1281,13 @@ public class GraphicsController {
 	}
 
 	public Sprite spriteSelect(ItemDef item) {
+		Sprite canonical;
 		if (!Config.S_WANT_CUSTOM_SPRITES) {
 			if (item.spriteID + mudclient.spriteItem >= sprites.length || null == sprites[item.spriteID + mudclient.spriteItem])
-				return Sprite.getUnknownSprite(48, 32);
-			return sprites[item.spriteID + mudclient.spriteItem];
+				canonical = Sprite.getUnknownSprite(48, 32);
+			else
+				canonical = sprites[item.spriteID + mudclient.spriteItem];
+			return resolveRemastered(item, canonical);
 		}
 
 		String[] location = item.getSpriteLocation().split(":");
@@ -1290,14 +1296,18 @@ public class GraphicsController {
 			|| !spriteTree.get(location[0]).containsKey(location[1])
 			|| spriteTree.get(location[0]).get(location[1]).getFrames().length < 1) {
 			if (item.spriteID + mudclient.spriteItem < sprites.length && sprites[item.spriteID + mudclient.spriteItem] != null) {
-				return sprites[item.spriteID + mudclient.spriteItem];
+				canonical = sprites[item.spriteID + mudclient.spriteItem];
+			} else {
+				canonical = Sprite.getUnknownSprite(48, 32);
 			}
-			return Sprite.getUnknownSprite(48, 32);
+		} else {
+			canonical = spriteTree.get(location[0]).get(location[1]).getFrames()[0].getSprite();
 		}
-		return spriteTree.get(location[0]).get(location[1]).getFrames()[0].getSprite();
+		return resolveRemastered(item, canonical);
 	}
 
 	public Sprite spriteSelect(AnimationDef animation, int offset) {
+		Sprite canonical;
 		if (!Config.S_WANT_CUSTOM_SPRITES) {
 			if (animation == null) {
 				return Sprite.getUnknownSprite(18, 18);
@@ -1310,24 +1320,39 @@ public class GraphicsController {
 			if (sprite == null) {
 				return Sprite.getUnknownSprite(18, 18);
 			}
-			return sprites[animation.getNumber() + offset];
+			canonical = sprites[animation.getNumber() + offset];
+			return remasteredSpriteResolver.resolve(RemasteredSpriteKey.forAnimation(animation, offset), canonical);
 		}
 
 		try {
-			Sprite theSprite = spriteTree.get(animation.category).get(animation.name).getFrames()[offset].getSprite();
-			return theSprite == null ? Sprite.getUnknownSprite(18, 18) : theSprite;
+			canonical = spriteTree.get(animation.category).get(animation.name).getFrames()[offset].getSprite();
+			if (canonical == null) {
+				canonical = Sprite.getUnknownSprite(18, 18);
+			}
 		} catch (NullPointerException ignored) {
-			return Sprite.getUnknownSprite(18, 18);
+			canonical = Sprite.getUnknownSprite(18, 18);
 		}
+		return remasteredSpriteResolver.resolve(RemasteredSpriteKey.forAnimation(animation, offset), canonical);
 	}
 
 	public Sprite spriteSelect(SpriteDef sprite) {
-		if (!Config.S_WANT_CUSTOM_SPRITES)
-			return sprites[sprite.getAuthenticSpriteID()];
+		Sprite canonical;
+		if (!Config.S_WANT_CUSTOM_SPRITES) {
+			canonical = sprites[sprite.getAuthenticSpriteID()];
+			return remasteredSpriteResolver.resolve(RemasteredSpriteKey.forSprite(sprite), canonical);
+		}
 
 		String[] location = sprite.getSpriteLocation().split(":");
+		canonical = spriteTree.get(location[0]).get(location[1]).getFrames()[0].getSprite();
+		return remasteredSpriteResolver.resolve(RemasteredSpriteKey.forSprite(sprite), canonical);
+	}
 
-		return spriteTree.get(location[0]).get(location[1]).getFrames()[0].getSprite();
+	public Sprite resolveRemastered(ItemDef item, Sprite canonical) {
+		return remasteredSpriteResolver.resolve(RemasteredSpriteKey.forItem(item), canonical);
+	}
+
+	public String getRemasteredSpriteDiagnostics() {
+		return remasteredSpriteResolver.diagnostics();
 	}
 
 	public final void a(Sprite sprite, int var2, int var3, int var4, int var5) {
