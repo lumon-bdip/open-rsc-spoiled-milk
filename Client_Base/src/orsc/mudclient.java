@@ -13313,9 +13313,9 @@ public final class mudclient implements Runnable {
 		return index;
 	}
 
-	private String rendererTuningSliderBar(int level) {
+	private String rendererTuningSliderBar(int level, int maxLevel) {
 		StringBuilder bar = new StringBuilder("@whi@- [");
-		for (int i = 1; i <= 10; i++) {
+		for (int i = RendererReliefSettings.MIN_LEVEL; i <= maxLevel; i++) {
 			bar.append(i == level ? "@gre@o@whi@" : "-");
 		}
 		return bar.append("] + @yel@[").append(level).append("]").toString();
@@ -13455,16 +13455,20 @@ public final class mudclient implements Runnable {
 			index = addSettingsRow(index, "@whi@Terrain Variation - " + RendererTerrainVariationSettings.getMode().label, 64);
 			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
 			index = addSettingsRow(index, "@whi@Terrain shading", SETTINGS_SECTION_ROW);
-			index = addSettingsRow(index, rendererTuningSliderBar(RendererReliefSettings.getTerrainLevel()),
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererReliefSettings.getTerrainLevel(), RendererReliefSettings.MAX_LEVEL),
 				SETTINGS_TERRAIN_RELIEF_SLIDER);
 			index = addSettingsRow(index, "@whi@Object shading", SETTINGS_SECTION_ROW);
-			index = addSettingsRow(index, rendererTuningSliderBar(RendererReliefSettings.getObjectLevel()),
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererReliefSettings.getObjectLevel(), RendererReliefSettings.MAX_LEVEL),
 				SETTINGS_OBJECT_RELIEF_SLIDER);
-			index = addSettingsRow(index, "@whi@Dimness", SETTINGS_SECTION_ROW);
-			index = addSettingsRow(index, rendererTuningSliderBar(RendererColorDiagnosticSettings.getDimnessLevel()),
+			index = addSettingsRow(index, "@whi@Brightness / dimness", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererColorDiagnosticSettings.getDimnessLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
 				SETTINGS_DIMNESS_SLIDER);
 			index = addSettingsRow(index, "@whi@Contrast", SETTINGS_SECTION_ROW);
-			index = addSettingsRow(index, rendererTuningSliderBar(RendererColorDiagnosticSettings.getContrastLevel()),
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererColorDiagnosticSettings.getContrastLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
 				SETTINGS_CONTRAST_SLIDER);
 			index = addSettingsSection(index, "Interface");
 		}
@@ -15374,18 +15378,28 @@ public final class mudclient implements Runnable {
 	}
 
 	private void handleRendererTuningSliderInput(int settingIndex, int textX) {
-		int segmentWidth = Math.max(1, this.getSurface().stringWidth(1, "-"));
 		int trackStartX = textX + this.getSurface().stringWidth(1, "- [");
-		int trackEndX = trackStartX + segmentWidth * 10;
-		int plusStartX = textX + this.getSurface().stringWidth(1, "- [----------] ");
-		int plusEndX = plusStartX + this.getSurface().stringWidth(1, "+");
+		int trackEndX = trackStartX;
 		int currentLevel = getRendererTuningLevel(settingIndex);
+		int maxLevel = getRendererTuningMaxLevel(settingIndex);
+		for (int level = RendererReliefSettings.MIN_LEVEL;
+			 level <= maxLevel;
+			 level++) {
+			String segment = level == currentLevel ? "o" : "-";
+			int segmentEndX = trackEndX + Math.max(1, this.getSurface().stringWidth(1, segment));
+			if ((this.mouseButtonClick == 1 || this.getMouseButtonDown() == 1)
+				&& this.mouseX >= trackEndX && this.mouseX < segmentEndX) {
+				this.setRendererTuningLevel(settingIndex, level);
+				return;
+			}
+			trackEndX = segmentEndX;
+		}
+		int minusEndX = textX + this.getSurface().stringWidth(1, "-");
+		int plusStartX = trackEndX + this.getSurface().stringWidth(1, "] ");
+		int plusEndX = plusStartX + this.getSurface().stringWidth(1, "+");
 
-		if (this.mouseButtonClick == 1 && this.mouseX < trackStartX) {
+		if (this.mouseButtonClick == 1 && this.mouseX >= textX && this.mouseX <= minusEndX) {
 			this.setRendererTuningLevel(settingIndex, currentLevel - 1);
-		} else if ((this.mouseButtonClick == 1 || this.getMouseButtonDown() == 1)
-			&& this.mouseX >= trackStartX && this.mouseX < trackEndX) {
-			this.setRendererTuningLevel(settingIndex, (this.mouseX - trackStartX) / segmentWidth + 1);
 		} else if (this.mouseButtonClick == 1
 			&& this.mouseX >= plusStartX && this.mouseX <= plusEndX) {
 			this.setRendererTuningLevel(settingIndex, currentLevel + 1);
@@ -15405,26 +15419,38 @@ public final class mudclient implements Runnable {
 		return RendererColorDiagnosticSettings.getContrastLevel();
 	}
 
+	private int getRendererTuningMaxLevel(int settingIndex) {
+		return settingIndex == SETTINGS_TERRAIN_RELIEF_SLIDER
+			|| settingIndex == SETTINGS_OBJECT_RELIEF_SLIDER
+			? RendererReliefSettings.MAX_LEVEL
+			: RendererColorDiagnosticSettings.MAX_LEVEL;
+	}
+
 	private void setRendererTuningLevel(int settingIndex, int level) {
 		if (settingIndex == SETTINGS_TERRAIN_RELIEF_SLIDER) {
-			if (RendererReliefSettings.getTerrainLevel() != level) {
-				RendererReliefSettings.setTerrainLevel(level);
-				reportRendererTuningChange("terrain-relief", level, RendererReliefSettings.getTerrainStrength());
+			int oldLevel = RendererReliefSettings.getTerrainLevel();
+			int acceptedLevel = RendererReliefSettings.setTerrainLevel(level);
+			if (oldLevel != acceptedLevel) {
+				reportRendererTuningChange("terrain-relief", acceptedLevel, RendererReliefSettings.getTerrainStrength());
 			}
 		} else if (settingIndex == SETTINGS_OBJECT_RELIEF_SLIDER) {
-			if (RendererReliefSettings.getObjectLevel() != level) {
-				RendererReliefSettings.setObjectLevel(level);
-				reportRendererTuningChange("object-relief", level, RendererReliefSettings.getObjectStrength());
+			int oldLevel = RendererReliefSettings.getObjectLevel();
+			int acceptedLevel = RendererReliefSettings.setObjectLevel(level);
+			if (oldLevel != acceptedLevel) {
+				reportRendererTuningChange("object-relief", acceptedLevel, RendererReliefSettings.getObjectStrength());
 			}
 		} else if (settingIndex == SETTINGS_DIMNESS_SLIDER) {
-			if (RendererColorDiagnosticSettings.getDimnessLevel() != level) {
-				RendererColorDiagnosticSettings.setDimnessLevel(level);
-				reportRendererTuningChange("dimness", level, RendererColorDiagnosticSettings.getDimnessMultiplier());
+			int oldLevel = RendererColorDiagnosticSettings.getDimnessLevel();
+			int acceptedLevel = RendererColorDiagnosticSettings.setDimnessLevel(level);
+			if (oldLevel != acceptedLevel) {
+				reportRendererTuningChange("dimness", acceptedLevel, RendererColorDiagnosticSettings.getDimnessMultiplier());
 			}
-		} else if (settingIndex == SETTINGS_CONTRAST_SLIDER
-			&& RendererColorDiagnosticSettings.getContrastLevel() != level) {
-			RendererColorDiagnosticSettings.setContrastLevel(level);
-			reportRendererTuningChange("contrast", level, RendererColorDiagnosticSettings.getContrastMultiplier());
+		} else if (settingIndex == SETTINGS_CONTRAST_SLIDER) {
+			int oldLevel = RendererColorDiagnosticSettings.getContrastLevel();
+			int acceptedLevel = RendererColorDiagnosticSettings.setContrastLevel(level);
+			if (oldLevel != acceptedLevel) {
+				reportRendererTuningChange("contrast", acceptedLevel, RendererColorDiagnosticSettings.getContrastMultiplier());
+			}
 		}
 	}
 
@@ -15436,7 +15462,8 @@ public final class mudclient implements Runnable {
 			? "terrain shading"
 			: "object-relief".equals(control) ? "object shading" : control.replace('-', ' ');
 		this.showMessage(false, null,
-			"Renderer " + label + ": " + level + "/10 (" + value + ")",
+			"Renderer " + label + ": " + level + "/" + getRendererTuningMaxLevelForControl(control)
+				+ " (" + value + ")",
 			MessageType.GAME, 0, null);
 		System.out.println("[renderer-v2] tuning " + control + " level=" + level + " value=" + value);
 		RendererDiagnosticSession.Record event =
@@ -15447,6 +15474,12 @@ public final class mudclient implements Runnable {
 			event.number("value", value);
 			RendererDiagnosticSession.writeEventRecord(event);
 		}
+	}
+
+	private int getRendererTuningMaxLevelForControl(String control) {
+		return "terrain-relief".equals(control) || "object-relief".equals(control)
+			? RendererReliefSettings.MAX_LEVEL
+			: RendererColorDiagnosticSettings.MAX_LEVEL;
 	}
 
 	void cycleRenderSurfaceMode() {
@@ -15471,6 +15504,10 @@ public final class mudclient implements Runnable {
 			RendererColorDiagnosticSettings.resetDefaults();
 		}
 		if (mode == RendererProfileSettings.Mode.CLASSIC) {
+			RendererReliefSettings.setTerrainLevel(18);
+			RendererReliefSettings.setObjectLevel(18);
+			RendererColorDiagnosticSettings.setDimnessLevel(14);
+			RendererColorDiagnosticSettings.setContrastLevel(7);
 			RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);
 			OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
 			RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);

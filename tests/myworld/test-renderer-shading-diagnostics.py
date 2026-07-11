@@ -32,9 +32,9 @@ def compile_fixture(temp: Path) -> None:
             public static void main(String[] args) {
                 if (args.length > 0 && "persistence".equals(args[0])) {
                     Properties loaded = new Properties();
-                    loaded.setProperty("opengl_terrain_relief_level", "10");
+                    loaded.setProperty("opengl_terrain_relief_level", "20");
                     loaded.setProperty("opengl_object_relief_level", "0");
-                    loaded.setProperty("opengl_dimness_level", "7");
+                    loaded.setProperty("opengl_dimness_level", "10");
                     loaded.setProperty("opengl_contrast_level", "99");
                     RendererReliefSettings.loadFromClientSettings(loaded);
                     RendererColorDiagnosticSettings.loadFromClientSettings(loaded);
@@ -45,6 +45,54 @@ def compile_fixture(temp: Path) -> None:
                     System.out.println(saved.getProperty("opengl_object_relief_level"));
                     System.out.println(saved.getProperty("opengl_dimness_level"));
                     System.out.println(saved.getProperty("opengl_contrast_level"));
+                    System.out.println(saved.getProperty("opengl_color_tuning_scale"));
+                    System.out.println(saved.getProperty("opengl_relief_tuning_scale"));
+                    return;
+                }
+                if (args.length > 0 && "legacy-relief-default".equals(args[0])) {
+                    Properties loaded = new Properties();
+                    loaded.setProperty("opengl_terrain_relief_level", "5");
+                    loaded.setProperty("opengl_object_relief_level", "5");
+                    RendererReliefSettings.loadFromClientSettings(loaded);
+                    System.out.println(RendererReliefSettings.getTerrainLevel());
+                    System.out.println(RendererReliefSettings.getTerrainStrength());
+                    System.out.println(RendererReliefSettings.getObjectLevel());
+                    System.out.println(RendererReliefSettings.getObjectStrength());
+                    return;
+                }
+                if (args.length > 0 && "legacy-baseline".equals(args[0])) {
+                    Properties loaded = new Properties();
+                    loaded.setProperty("opengl_dimness_level", "1");
+                    loaded.setProperty("opengl_contrast_level", "1");
+                    RendererColorDiagnosticSettings.loadFromClientSettings(loaded);
+                    System.out.println(RendererColorDiagnosticSettings.getDimnessLevel());
+                    System.out.println(RendererColorDiagnosticSettings.getDimnessMultiplier());
+                    System.out.println(RendererColorDiagnosticSettings.getContrastLevel());
+                    System.out.println(RendererColorDiagnosticSettings.getContrastMultiplier());
+                    return;
+                }
+                if (args.length > 0 && "centered-endpoints".equals(args[0])) {
+                    Properties loaded = new Properties();
+                    loaded.setProperty("opengl_color_tuning_scale", "centered-20-v2");
+                    loaded.setProperty("opengl_dimness_level", "1");
+                    loaded.setProperty("opengl_contrast_level", "20");
+                    RendererColorDiagnosticSettings.loadFromClientSettings(loaded);
+                    System.out.println(RendererColorDiagnosticSettings.getDimnessLevel());
+                    System.out.println(RendererColorDiagnosticSettings.getDimnessMultiplier());
+                    System.out.println(RendererColorDiagnosticSettings.getContrastLevel());
+                    System.out.println(RendererColorDiagnosticSettings.getContrastMultiplier());
+                    return;
+                }
+                if (args.length > 0 && "previous-centered-baseline".equals(args[0])) {
+                    Properties loaded = new Properties();
+                    loaded.setProperty("opengl_color_tuning_scale", "centered-21-v1");
+                    loaded.setProperty("opengl_dimness_level", "11");
+                    loaded.setProperty("opengl_contrast_level", "11");
+                    RendererColorDiagnosticSettings.loadFromClientSettings(loaded);
+                    System.out.println(RendererColorDiagnosticSettings.getDimnessLevel());
+                    System.out.println(RendererColorDiagnosticSettings.getDimnessMultiplier());
+                    System.out.println(RendererColorDiagnosticSettings.getContrastLevel());
+                    System.out.println(RendererColorDiagnosticSettings.getContrastMultiplier());
                     return;
                 }
                 System.out.println(RendererReliefSettings.getTerrainMode().id);
@@ -115,8 +163,10 @@ def main() -> None:
             "terrain relief uniform upload")
     require(shader, "RendererReliefSettings.getObjectStrength()",
             "object relief uniform upload")
-    require(shader, "clamp(reliefStrength, 0.0, 4.5)",
-            "shader relief ceiling matches the ten-step diagnostic range")
+    require(shader, "clamp(reliefStrength, 0.0, 9.5)",
+            "shader relief ceiling matches the twenty-step diagnostic range")
+    require(shader, "pow(reliefFactor, max(boundedStrength - 4.5, 0.0))",
+            "extended relief range remains progressive above the preserved endpoint")
     require(shader, "RendererColorDiagnosticSettings.getDimnessMultiplier()",
             "live dimness uniform composition")
     require(shader, '"uniform float uContrast;\\n"',
@@ -125,14 +175,22 @@ def main() -> None:
             "live contrast uniform upload")
     require(shader, '"\\tcolor.rgb *= uBrightness;\\n"',
             "brightness applies after Classic or Remaster shading")
-    require(color, "private static volatile int dimnessLevel = 1;",
-            "neutral dimness diagnostic default")
-    require(color, "private static volatile int contrastLevel = 1;",
-            "owner-selected contrast comparison floor")
-    require(color, "return 1.2f + (contrastLevel - 1) * 0.1f;",
-            "expanded contrast comparison range")
-    require(relief, "return (clampLevel(level) - 1) * 0.5f;",
-            "expanded relief comparison range")
+    require(color, "private static volatile int dimnessLevel = CENTER_LEVEL;",
+            "centered brightness/dimness default")
+    require(color, "private static volatile int contrastLevel = CENTER_LEVEL;",
+            "centered contrast default")
+    require(color, 'CENTERED_SCALE_VERSION = "centered-20-v2"',
+            "versioned centered color persistence")
+    require(color, "return 1.0f + progress * 0.5f;",
+            "brightness range below the center")
+    require(color, "return 1.2f - progress * 0.9f;",
+            "inverse contrast range below the center")
+    require(color, "return 1.2f + progress * 1.9f;",
+            "accepted high-contrast endpoint above the center")
+    require(relief, "return 2.0f + (boundedLevel - DEFAULT_LEVEL) * 0.75f;",
+            "expanded relief range above the centered default")
+    require(relief, 'CENTERED_SCALE_VERSION = "centered-default-20-v1"',
+            "versioned centered relief persistence")
     require(relief, 'TERRAIN_LEVEL_PROPERTY_KEY = "opengl_terrain_relief_level"',
             "persisted terrain relief level")
     require(relief, "static void loadFromClientSettings(Properties props)",
@@ -151,7 +209,8 @@ def main() -> None:
             "player-facing terrain shading slider label")
     require(mudclient, '? "terrain shading"',
             "player-facing terrain shading change message")
-    require(mudclient, "rendererTuningSliderBar(RendererColorDiagnosticSettings.getContrastLevel())",
+    require(mudclient,
+            "RendererColorDiagnosticSettings.getContrastLevel(), RendererColorDiagnosticSettings.MAX_LEVEL",
             "two-line contrast slider scale")
     require(mudclient, "private void handleRendererTuningSliderInput(int settingIndex, int textX)",
             "direct slider segment selection")
@@ -192,10 +251,10 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="renderer-shading-test-") as temp_dir:
         temp = Path(temp_dir)
         compile_fixture(temp)
-        if run_fixture(temp, {}) != ["max", "2.0", "5", "max", "2.0", "5", "1", "1.0", "1", "1.2"]:
+        if run_fixture(temp, {}) != ["max", "2.0", "10", "max", "2.0", "10", "10", "1.0", "10", "1.2"]:
             raise AssertionError("parity defaults must retain max relief for terrain and objects")
         if run_fixture(temp, {"SPOILED_MILK_OPENGL_RELIEF": "low"}) != [
-            "low", "0.5", "2", "low", "0.5", "2", "1", "1.0", "1", "1.2"
+            "low", "0.5", "3", "low", "0.5", "3", "10", "1.0", "10", "1.2"
         ]:
             raise AssertionError("legacy shared relief override must still drive both scopes")
         if run_fixture(
@@ -205,10 +264,22 @@ def main() -> None:
                 "SPOILED_MILK_OPENGL_TERRAIN_RELIEF": "off",
                 "SPOILED_MILK_OPENGL_OBJECT_RELIEF": "high",
             },
-        ) != ["off", "0.0", "1", "high", "1.5", "4", "1", "1.0", "1", "1.2"]:
+        ) != ["off", "0.0", "1", "high", "1.5", "8", "10", "1.0", "10", "1.2"]:
             raise AssertionError("scoped terrain/object overrides must be independent")
-        if run_fixture(temp, {}, "persistence") != ["10", "1", "7", "10"]:
+        if run_fixture(temp, {}, "legacy-relief-default") != ["10", "2.0", "10", "2.0"]:
+            raise AssertionError("legacy relief defaults must migrate to level 10 without visual change")
+        if run_fixture(temp, {}, "legacy-baseline") != ["10", "1.0", "10", "1.2"]:
+            raise AssertionError("legacy baseline color settings must migrate to the centered baseline")
+        if run_fixture(temp, {}, "previous-centered-baseline") != ["10", "1.0", "10", "1.2"]:
+            raise AssertionError("21-position centered baseline must migrate to the 20-position baseline")
+        if run_fixture(temp, {}, "persistence") != [
+            "20", "1", "14", "20", "centered-20-v2", "centered-default-20-v1"
+        ]:
             raise AssertionError("persisted tuning levels must load, clamp, and save")
+        centered_endpoints = run_fixture(temp, {}, "centered-endpoints")
+        if centered_endpoints[0] != "1" or centered_endpoints[1] != "1.5" \
+                or centered_endpoints[2] != "20" or abs(float(centered_endpoints[3]) - 3.1) > 0.0001:
+            raise AssertionError("centered color endpoints must expose brightness and inverse contrast")
 
     print("PASS: terrain and object shading diagnostics are independent with parity defaults")
 

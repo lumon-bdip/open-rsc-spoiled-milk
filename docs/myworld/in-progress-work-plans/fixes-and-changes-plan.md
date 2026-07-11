@@ -298,6 +298,51 @@ setting.
   override compatibility, and independent scoped overrides. The full renderer
   guard suite and Java 8 client build pass without changing default visuals.
 
+#### Iterative range-tuning record — 2026-07-11
+
+- Owner review reopened the four Graphics controls for a wider visual tuning
+  pass. The first candidate extends each persisted scale from 10 to 20 while
+  preserving existing saved levels, all level `1..10` mappings, and defaults
+  (`5/5/1/1`).
+- The slider now derives segment and plus-button hitboxes from the glyphs it
+  actually draws instead of assuming `o` and `-` have identical widths. This
+  makes both endpoints directly selectable and keeps plus/minus and dragging
+  aligned with the visible control.
+- Terrain/object shading retain the accepted linear response through level 10.
+  Levels 11–20 continue from that exact endpoint with a bounded exponential
+  tail, avoiding the old final-factor clamp that would otherwise turn the new
+  steps into duplicate output. Dimness preserves `1.0..0.55` through level 10
+  and then tapers toward dark without reaching black; Contrast continues its
+  existing `0.1` increments through `3.1`.
+- This candidate remains pending private-client visual acceptance. Developer
+  F7/F8 comparison keys remain available in worktree builds; the release-build
+  guard continues to suppress every non-F6 function key.
+- Owner review accepted the expanded shading response and requested bipolar
+  color controls. The second candidate keeps all four sliders at 20 positions
+  and places the old color level-1 baseline at level 10. Brightness/dimness spans
+  `1.5..1.0..0.192`; contrast spans `0.3..1.2..3.1`.
+- Centered color saves carry `opengl_color_tuning_scale=centered-20-v2`.
+  Unversioned 1–10 settings and the first 1–20 experimental scale migrate to
+  the closest matching multiplier, so the old default loads at the new center
+  without changing its output.
+- The transient `centered-21-v1` test format also migrates by multiplier, so
+  the tested level-11 baseline becomes level 10 with identical output.
+- Owner clarification established that visual parity—not merely matching knob
+  positions—is the level-10 contract. Terrain/object level 10 is therefore
+  recalibrated to the original `2.0` default instead of the overly dark `4.5`
+  test value. Levels 1–9 provide progressively lighter shading; levels 11–20
+  retain the accepted expanded response through `9.5`.
+- Relief saves now carry
+  `opengl_relief_tuning_scale=centered-default-20-v1`. Older levels migrate by
+  their effective strength, including old default level 5 becoming new level
+  10 with unchanged `2.0` output. The worktree visual-test settings are reset
+  to `10/10/10/10` for default-experience review.
+- Owner visual tuning selected `18/18/14/7` as the Classic profile bundle
+  (terrain shading, object shading, brightness/dimness, contrast). Selecting
+  Classic now persists those values; selecting Remaster restores the intended
+  `10/10/10/10` baseline. Subsequent manual edits still mark the profile
+  Custom.
+
 ### 5. Promote an accepted terrain shading/AO control
 
 #### Implementation record — 2026-07-11
@@ -421,7 +466,8 @@ values continue to load unchanged.
 - Roof behavior is resolved for this task: retain the legacy whole-grid unit
   while making its state explicit and consistent across renderers. Connected
   roof-volume hiding remains a possible later enhancement, not a parity fix.
-- Shading controls are resolved for this branch as persisted ten-step sliders.
+- Shading controls remain in active visual refinement as four persisted
+  20-position sliders, with the bipolar color baseline at level 10.
   Player-facing terminology is `Terrain shading` / `Object shading`; captures
   retain local-relief terminology. Terrain contact-shadow strength remains a
   separate technical channel and is not mislabeled as this control.
