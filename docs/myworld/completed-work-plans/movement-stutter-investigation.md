@@ -511,10 +511,55 @@ This private run therefore did not implicate renderer saturation, outgoing
 backpressure, or local correction churn. It did reveal a repeatable
 active-client world-tick cost that aligns with sub-430ms movement-poll delays.
 The default 160ms tick-outlier threshold did not retain stage details for these
-sub-160ms ticks, so the next targeted private experiment should repeat the same
-walk with an `80ms` tick threshold before assigning the cost to a specific tick
-stage. That is an instrumentation experiment, not approval for a behavioral
-fix.
+sub-160ms ticks, so a second private run lowered that threshold to `80ms`.
+
+#### 80ms stage-attribution follow-up
+
+The same private server/client procedure was repeated with:
+
+```bash
+OPENRSC_MOVEMENT_STUTTER_DIAGNOSTICS=true \
+OPENRSC_MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS=5 \
+OPENRSC_MOVEMENT_STUTTER_TICK_OUTLIER_MS=80 \
+./scripts/run-server.sh
+
+./scripts/run-client.sh --dev --renderer-diagnostics --no-frame-capture
+```
+
+The tester walked continuously for one minute after login. No visual stutter
+was marked with `Ctrl+F8`, but 43 world-tick outliers were retained during the
+run. They averaged `98.3ms`; the NPC stage averaged `92.8ms`, or `94.4%` of the
+measured tick duration. The maximum tick was `182ms`, including `143ms` in NPC
+processing and a one-time `32ms` event stage at login. In the recurring
+post-login samples:
+
+- NPC processing was typically `76-117ms` and reached `126ms`;
+- event processing was normally `1-2ms`;
+- player processing was reported as `0ms`;
+- client-update construction was `0-1ms` in most samples and reached `3ms` at
+  login;
+- outgoing submission and cleanup were reported as `0ms`;
+- outgoing queues still peaked at two, with no non-writable-channel samples.
+
+The 12 complete client summaries in the walk window recorded 855 movement
+packets and 855 paired snapshots, zero arrival outliers above `650ms`, zero
+local correction snaps, and a maximum snapshot-arrival interval of `450.1ms`.
+One five-second summary contained a `118.5ms` recent client-loop maximum, but
+the full session had client-loop p50/p95/p99 of
+`16.665/17.267/18.388ms`, no renderer slow-frame event, and no tester marker.
+
+Strict analysis of
+`session-20260711-121708-3272922` passed with a closed manifest, complete JSONL
+records, and zero indexed frame captures. The client and private server were
+stopped afterward; the public server remained untouched.
+
+This follow-up assigns the repeatable active-client server cost to
+`GameStateUpdater.processNpcs()`, which visits the live NPC list and calls NPC
+behavior updates on each `640ms` world tick. It does not yet identify which
+operation inside individual NPC behavior updates dominates. The existing
+Phase 3 private profiling/load experiment is the appropriate next step before
+changing NPC scheduling or throttling; this run does not itself approve such a
+behavioral change.
 
 One validation-discovered presentation defect was corrected: histogram values
 above the final finite bucket initially rendered as `Long.MAX_VALUE`; overflow
