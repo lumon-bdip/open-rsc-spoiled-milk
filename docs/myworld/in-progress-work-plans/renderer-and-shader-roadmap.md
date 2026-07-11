@@ -507,7 +507,8 @@ come from one of these areas unless a concrete shadow regression appears:
    family foundation, then material-aware shader polish:
    terrain, water, foliage, ore, walls, roofs, scenery, sprites, projectiles,
    and effects should get explicit material families instead of one generic
-   response.
+   response. The proposed first metadata/telemetry slice is tracked in
+   [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md).
 4. Treat the completed first terrain-variation and tile-edge blending pass as
    the baseline; revisit it only with a specific captured visual regression.
 5. Move world-space sprites/entities/effects farther away from legacy command replay

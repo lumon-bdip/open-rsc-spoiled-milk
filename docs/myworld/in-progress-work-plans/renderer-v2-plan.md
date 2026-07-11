@@ -551,6 +551,9 @@ current alpha baseline:
   - Preserve true black texture pixels without special black-to-1 behavior.
   - Add material categories for terrain, water, roof, wall, object, foliage,
     ore, and effect surfaces so shader work is data-driven.
+  - The proposed parity-preserving resident-world metadata, shader-input, and
+    diagnostic foundation is specified in
+    [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md).
 - **Camera, zoom, and render-surface expansion**
   - Stress test larger render surfaces and mouse-wheel zoom limits now that the
     OpenGL world can draw a wider scene.

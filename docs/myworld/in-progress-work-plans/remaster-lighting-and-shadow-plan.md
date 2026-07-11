@@ -510,7 +510,9 @@ default work queue:
 - Material-aware lighting. Teach the shader about terrain, walls, roofs,
   foliage, water, ore, scenery, sprites, projectiles, and effects as material
   families. This should come before heavy polish controls so Remaster lighting
-  does not apply one generic response to every asset.
+  does not apply one generic response to every asset. The proposed first
+  parity-preserving resident-world contract is tracked in
+  [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md).
 - Emissive material metadata. Move lava/fire glow classification out of
   `mudclient` heuristics and into explicit material/object metadata. After that,
   test bloom-like glow filtering, fire/lava particles, and localized light
