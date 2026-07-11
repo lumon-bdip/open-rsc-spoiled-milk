@@ -296,7 +296,7 @@ For each manager-reported visual test:
 - [x] Diagnostic-enabled fixture produces a parseable bundle and bounded
       console output.
 - [x] A real `Ctrl+F9` burst is indexed and analyzable from the session root.
-- [ ] Logging overhead is measured with capture inactive and does not
+- [x] Logging overhead is measured with capture inactive and does not
       materially regress recent frame timing or allocation behavior.
 
 ## Active Retention Follow-Up
@@ -308,3 +308,10 @@ not leak proof. The approved
 adds post-collection old-generation, per-collector, direct-buffer, and
 account-free login-epoch evidence, then uses a no-capture idle/route/relogin
 test to decide whether focused retention profiling is warranted.
+
+Completed result: the `444.6s` no-capture route showed client-loop p95
+`17.215ms`, OpenGL render p95 `8.688ms`, GC cost `0.61%`, no slow-frame or
+exception events, and an old-generation plateau that remained exact across
+logout/relogin and the second route. Direct buffers fluctuated below `77MB`
+with evidence of reclamation. No heap/cache change or focused profiler pass is
+warranted; retain this telemetry for regression monitoring.

@@ -174,6 +174,11 @@ def metric_values(records: list[dict[str, Any]], key: str | None) -> list[float]
     return values
 
 
+def early_late_floor(values: list[float]) -> tuple[float, float]:
+    quarter = max(1, len(values) // 4)
+    return min(values[:quarter]), min(values[-quarter:])
+
+
 def login_epochs(
     events: list[dict[str, Any]], session_end_nanos: float
 ) -> list[tuple[float, float]]:
@@ -424,9 +429,7 @@ def build_summary(
 
     lines.extend(["", "## Memory Retention", ""])
     if old_generation_values:
-        quarter = max(1, len(old_generation_values) // 4)
-        early_old_floor = min(old_generation_values[:quarter])
-        late_old_floor = min(old_generation_values[-quarter:])
+        early_old_floor, late_old_floor = early_late_floor(old_generation_values)
         lines.append(
             f"- Post-GC old-generation pool `{old_generation_name}` range: "
             f"{int(min(old_generation_values))}..{int(max(old_generation_values))} bytes; "
@@ -436,10 +439,12 @@ def build_summary(
     else:
         lines.append("- Post-GC old-generation occupancy is unavailable in this session.")
     if direct_values:
+        early_direct_floor, late_direct_floor = early_late_floor(direct_values)
         lines.append(
-            f"- Native buffer pool `{direct_name}` first/last/max: "
-            f"{int(direct_values[0])} / {int(direct_values[-1])} / "
-            f"{int(max(direct_values))} bytes."
+            f"- Native buffer pool `{direct_name}` range: "
+            f"{int(min(direct_values))}..{int(max(direct_values))} bytes; "
+            f"early/late floor {int(early_direct_floor)} / {int(late_direct_floor)} "
+            f"(delta {int(late_direct_floor - early_direct_floor):+d})."
         )
     else:
         lines.append("- Native/direct buffer-pool occupancy is unavailable in this session.")
@@ -466,7 +471,8 @@ def build_summary(
             else "old-gen post-GC unavailable"
         )
         direct_text = (
-            f"direct {int(epoch_direct[0])}->{int(epoch_direct[-1])} bytes"
+            f"direct range {int(min(epoch_direct))}..{int(max(epoch_direct))} bytes, "
+            f"first/last {int(epoch_direct[0])}->{int(epoch_direct[-1])}"
             if epoch_direct
             else "direct unavailable"
         )

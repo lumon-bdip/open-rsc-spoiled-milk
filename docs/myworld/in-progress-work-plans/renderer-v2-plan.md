@@ -1202,12 +1202,18 @@ they are not visual requirements for the baseline.
         `2.108s` of synchronous work per frame, so session analysis now excludes
         indexed capture intervals from normal performance rankings and reports
         their `1,517` replaced frames separately.
-  - [ ] Characterize the remaining heap-floor retention signal with
+  - [x] Characterize the remaining heap-floor retention signal with
         post-collection old-generation, per-collector, direct-buffer, and
         account-free login-epoch telemetry. Run the approved no-capture
         idle/route/logout/relogin procedure in
         [renderer-retention-characterization-plan.md](renderer-retention-characterization-plan.md)
-        before considering heap/cache changes or focused heap profiling.
+        before considering heap/cache changes or focused heap profiling. The
+        `444.6s` two-epoch route showed `PS Old Gen` settle at exactly
+        `398,790,048` bytes through logout/relogin and the complete second
+        route. Direct buffers fluctuated/reclaimed below `77MB`, GC used
+        `0.61%` of sampled time, and there were no slow-frame or exception
+        events. Close the concern without heap/cache changes; continue passive
+        monitoring in ordinary diagnostic sessions.
 - [ ] Build a replay harness for captured renderer-v2 frames so a problematic
       entity/occlusion frame can be inspected without live combat timing.
   - [x] Add an offline capture analyzer that validates `Ctrl+F9` capture

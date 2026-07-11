@@ -497,13 +497,14 @@ come from one of these areas unless a concrete shadow regression appears:
 
 ## Recommended Near-Term Order
 
-1. Complete the short renderer retention-characterization route: compare
-   post-collection old-generation and direct-buffer floors across idle,
-   traversal, logout, and relog epochs without a full capture burst.
+1. Treat the completed retention-characterization route as sufficient: old
+   generation plateaued across relog and the second route, direct buffers were
+   bounded/reclaimed below `77MB`, and no heap/cache tuning is warranted.
 2. Treat day/night color, Remaster directional lighting, terrain-receiver
    shadows, and the static/animated object chunk split as the current accepted
    alpha baseline.
-3. Start non-shadow visual improvements with material-aware shader polish:
+3. Start non-shadow visual improvements with a parity-preserving material
+   family foundation, then material-aware shader polish:
    terrain, water, foliage, ore, walls, roofs, scenery, sprites, projectiles,
    and effects should get explicit material families instead of one generic
    response.

@@ -1,6 +1,7 @@
 # Renderer Retention Characterization Plan
 
-Status: approved and active on `feat/renderer-v2-refinement`.
+Status: implemented and live-validated on `feat/renderer-v2-refinement`;
+continued monitoring is part of ordinary renderer diagnostics.
 
 This is a short measurement milestone inside the ongoing renderer-v2
 refinement workstream. It follows the accepted live visual/performance route
@@ -72,10 +73,42 @@ behavior.
 - [x] Diagnostic session/analyzer fixtures cover the new stable fields and
       lifecycle epoch summary.
 - [x] Full renderer guardrail suite passes.
-- [ ] A controlled two-epoch live session is captured and analyzed.
-- [ ] Findings and the resulting next renderer milestone are recorded in this
+- [x] A controlled two-epoch live session is captured and analyzed.
+- [x] Findings and the resulting next renderer milestone are recorded in this
       plan, `renderer-diagnostic-session-logging-plan.md`, and
       `renderer-v2-plan.md`.
+
+## Live Finding
+
+The controlled no-capture session ran for `444.6s` across two login epochs,
+five in-game section loads, a dense-area idle/traversal, a teleport to a quiet
+area, logout/relogin, a shorter second traversal, and a final idle.
+
+- `PS Old Gen` post-collection occupancy changed only twice, both during the
+  first epoch: roughly `48.5MB -> 321.0MB -> 398.8MB`. It then remained exactly
+  `398,790,048` bytes through the first quiet idle, logout, relog, the complete
+  second route, and final idle. The two `PS MarkSweep` collections consumed
+  `182ms` total. This is a one-time warm-up/route plateau, not evidence of
+  continuing per-login retention.
+- Direct-buffer use fluctuated and was repeatedly reclaimed rather than rising
+  monotonically. It stayed below `76.1MB`; late first-epoch samples ranged
+  roughly `54.6..72.4MB`, while late second-epoch samples ranged
+  `62.3..76.1MB`. The modest higher floor after a different region was loaded,
+  alongside lower buffer counts, is consistent with different resident-region
+  products. It does not justify native-buffer profiling now.
+- Aggregate GC cost remained small: `0.61%` of sampled duration, with no
+  renderer slow-frame or exception events. Client-loop p95 was `17.215ms`,
+  effectively matching the prior accepted diagnostic route, while OpenGL
+  render p95 was `8.688ms`.
+
+Decision: close the current retention concern without changing heap size,
+forcing GC, or taking a heap dump. Keep the fields in normal diagnostic
+sessions and reopen focused profiling only if post-collection old-generation
+or direct-buffer floors continue rising across comparable later epochs.
+
+The recommended next renderer milestone is a parity-preserving material-family
+foundation: introduce explicit stable classifications and telemetry before
+changing visible shader response.
 
 Checkpoint the implemented instrumentation and tests before the live route,
 then keep the branch ACTIVE. This is not a final handoff.
