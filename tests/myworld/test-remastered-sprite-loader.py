@@ -71,7 +71,9 @@ def main():
     client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
     require(client, [
         "RemasteredSpriteSettings.loadFromClientSettings(clientSettings);",
-        "@whi@Remastered sprites - ",
+        "@whi@Sprites: ",
+        "@cya@Enhanced",
+        "@gre@Classic",
         "toggleRemasteredSprites();",
         "RemasteredSpriteSettings.applyClassicProfile();",
         "getSurface().resolveRemastered(item, externalSprite)",

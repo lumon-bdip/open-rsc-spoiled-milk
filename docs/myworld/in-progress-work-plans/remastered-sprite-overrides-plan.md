@@ -556,8 +556,8 @@ catalog active.
 
 ## Player Setting
 
-Add a persisted client-local option labelled clearly, such as
-`Remastered sprites: On/Off`, under the most discoverable graphics or
+Add a persisted client-local option labelled
+`Sprites: Classic/Enhanced`, under the most discoverable graphics or
 interface settings group. Default it to **Off** while coverage is experimental.
 It is independent of the server and other players.
 
@@ -788,7 +788,7 @@ canonical object. Item, animation-frame, and `SpriteDef` selection all resolve
 through stable keys. Disabled, absent, incompatible, or failed entries return
 the same canonical object supplied by the existing final selection path. The
 player JAR packages only declared `frames/` PNGs and the audit manifest. The
-persisted `Remastered sprites` setting defaults Off, manual changes mark the
+persisted `Sprites: Classic/Enhanced` setting defaults Classic, manual changes mark the
 renderer profile Custom, and Classic forces Off unless an explicit diagnostic
 runtime override is active. Remaster does not force On before private visual
 approval.
@@ -1028,6 +1028,6 @@ without asking the manager to authorize every small adjustment. It should:
   `orsc.remastered` package. Integrate the resolver at the three converged
   `GraphicsController.spriteSelect` paths, with the existing external-item
   injection resolved before the remaster choice.
-- 2026-07-11: Label the persisted setting `Remastered sprites`, place it in the
+- 2026-07-11: Label the persisted setting `Sprites: Classic/Enhanced`, place it in the
   OpenGL Graphics section (and the software Interface section), default it Off,
   and retain a runtime property/environment override for diagnostics.

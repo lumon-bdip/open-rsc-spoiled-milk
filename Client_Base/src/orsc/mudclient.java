@@ -13483,8 +13483,8 @@ public final class mudclient implements Runnable {
 		if (!isAndroid() && isOpenGLPrimaryWindow) {
 			index = addSettingsSection(index, "Graphics");
 			index = addSettingsRow(index, "@whi@Preset - " + RendererProfileSettings.getMode().label, 59);
-			index = addSettingsRow(index, "@whi@Remastered sprites - "
-				+ (RemasteredSpriteSettings.isEnabled() ? "@gre@On" : "@red@Off"),
+			index = addSettingsRow(index, "@whi@Sprites: "
+				+ (RemasteredSpriteSettings.isEnabled() ? "@cya@Enhanced" : "@gre@Classic"),
 				SETTINGS_REMASTERED_SPRITES);
 			index = addSettingsRow(index, "@whi@Aspect Ratio - " + RenderSurfaceSettings.getAspectLabel(), 56);
 			String borderlessLabel = OpenGLWindowSettings.getMode() == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN
@@ -13524,8 +13524,8 @@ public final class mudclient implements Runnable {
 
 		if (!isOpenGLPrimaryWindow) {
 			index = addSettingsSection(index, "Interface");
-			index = addSettingsRow(index, "@whi@Remastered sprites - "
-				+ (RemasteredSpriteSettings.isEnabled() ? "@gre@On" : "@red@Off"),
+			index = addSettingsRow(index, "@whi@Sprites: "
+				+ (RemasteredSpriteSettings.isEnabled() ? "@cya@Enhanced" : "@gre@Classic"),
 				SETTINGS_REMASTERED_SPRITES);
 		}
 
