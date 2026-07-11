@@ -36,6 +36,8 @@ def compile_fixture(temp: Path) -> None:
                     loaded.setProperty("opengl_object_relief_level", "0");
                     loaded.setProperty("opengl_dimness_level", "10");
                     loaded.setProperty("opengl_contrast_level", "99");
+                    loaded.setProperty("opengl_gamma_level", "0");
+                    loaded.setProperty("opengl_saturation_level", "99");
                     RendererReliefSettings.loadFromClientSettings(loaded);
                     RendererColorDiagnosticSettings.loadFromClientSettings(loaded);
                     Properties saved = new Properties();
@@ -45,6 +47,8 @@ def compile_fixture(temp: Path) -> None:
                     System.out.println(saved.getProperty("opengl_object_relief_level"));
                     System.out.println(saved.getProperty("opengl_dimness_level"));
                     System.out.println(saved.getProperty("opengl_contrast_level"));
+                    System.out.println(saved.getProperty("opengl_gamma_level"));
+                    System.out.println(saved.getProperty("opengl_saturation_level"));
                     System.out.println(saved.getProperty("opengl_color_tuning_scale"));
                     System.out.println(saved.getProperty("opengl_relief_tuning_scale"));
                     return;
@@ -105,6 +109,10 @@ def compile_fixture(temp: Path) -> None:
                 System.out.println(RendererColorDiagnosticSettings.getDimnessMultiplier());
                 System.out.println(RendererColorDiagnosticSettings.getContrastLevel());
                 System.out.println(RendererColorDiagnosticSettings.getContrastMultiplier());
+                System.out.println(RendererColorDiagnosticSettings.getGammaLevel());
+                System.out.println(RendererColorDiagnosticSettings.getGammaValue());
+                System.out.println(RendererColorDiagnosticSettings.getSaturationLevel());
+                System.out.println(RendererColorDiagnosticSettings.getSaturationMultiplier());
             }
         }
         """
@@ -173,12 +181,23 @@ def main() -> None:
             "live contrast shader uniform")
     require(shader, "RendererColorDiagnosticSettings.getContrastMultiplier()",
             "live contrast uniform upload")
+    require(shader, '"uniform float uGamma;\\n"', "live gamma shader uniform")
+    require(shader, '"uniform float uSaturation;\\n"', "live saturation shader uniform")
+    require(shader, "RendererColorDiagnosticSettings.getGammaValue()", "live gamma uniform upload")
+    require(shader, "RendererColorDiagnosticSettings.getSaturationMultiplier()",
+            "live saturation uniform upload")
+    require(shader, "color.rgb = applySaturation(color.rgb)", "saturation color-grade pass")
+    require(shader, "color.rgb = applyGamma(color.rgb)", "gamma color-grade pass")
     require(shader, '"\\tcolor.rgb *= uBrightness;\\n"',
             "brightness applies after Classic or Remaster shading")
     require(color, "private static volatile int dimnessLevel = CENTER_LEVEL;",
             "centered brightness/dimness default")
     require(color, "private static volatile int contrastLevel = CENTER_LEVEL;",
             "centered contrast default")
+    require(color, "private static volatile int gammaLevel = CENTER_LEVEL;",
+            "centered gamma default")
+    require(color, "private static volatile int saturationLevel = CENTER_LEVEL;",
+            "centered saturation default")
     require(color, 'CENTERED_SCALE_VERSION = "centered-20-v2"',
             "versioned centered color persistence")
     require(color, "return 1.0f + progress * 0.5f;",
@@ -203,6 +222,8 @@ def main() -> None:
             "object relief diagnostic hotkey")
     require(applet, "KeyEvent.VK_F8 && var1.isShiftDown()",
             "contrast diagnostic hotkey")
+    require(applet, "KeyEvent.VK_F10 && var1.isShiftDown()",
+            "saturation diagnostic hotkey")
     require(mudclient, 'RendererDiagnosticSession.newEventRecord("renderer.tuning.change")',
             "AI-readable tuning event")
     require(mudclient, 'index = addSettingsRow(index, "@whi@Terrain shading", SETTINGS_SECTION_ROW);',
@@ -239,6 +260,10 @@ def main() -> None:
         "shading.dimnessMultiplier=",
         "shading.contrastLevel=",
         "shading.contrastMultiplier=",
+        "shading.gammaLevel=",
+        "shading.gammaValue=",
+        "shading.saturationLevel=",
+        "shading.saturationMultiplier=",
         "shading.diffuseResponse=model-kind-fixed",
         "shading.terrainShadowChannels=directional+contact",
         "shading.objectShadowMask=not-applied",
@@ -251,10 +276,14 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="renderer-shading-test-") as temp_dir:
         temp = Path(temp_dir)
         compile_fixture(temp)
-        if run_fixture(temp, {}) != ["max", "2.0", "10", "max", "2.0", "10", "10", "1.0", "10", "1.2"]:
+        if run_fixture(temp, {}) != [
+            "max", "2.0", "10", "max", "2.0", "10", "10", "1.0", "10", "1.2",
+            "10", "1.0", "10", "1.0"
+        ]:
             raise AssertionError("parity defaults must retain max relief for terrain and objects")
         if run_fixture(temp, {"SPOILED_MILK_OPENGL_RELIEF": "low"}) != [
-            "low", "0.5", "3", "low", "0.5", "3", "10", "1.0", "10", "1.2"
+            "low", "0.5", "3", "low", "0.5", "3", "10", "1.0", "10", "1.2",
+            "10", "1.0", "10", "1.0"
         ]:
             raise AssertionError("legacy shared relief override must still drive both scopes")
         if run_fixture(
@@ -264,7 +293,10 @@ def main() -> None:
                 "SPOILED_MILK_OPENGL_TERRAIN_RELIEF": "off",
                 "SPOILED_MILK_OPENGL_OBJECT_RELIEF": "high",
             },
-        ) != ["off", "0.0", "1", "high", "1.5", "8", "10", "1.0", "10", "1.2"]:
+        ) != [
+            "off", "0.0", "1", "high", "1.5", "8", "10", "1.0", "10", "1.2",
+            "10", "1.0", "10", "1.0"
+        ]:
             raise AssertionError("scoped terrain/object overrides must be independent")
         if run_fixture(temp, {}, "legacy-relief-default") != ["10", "2.0", "10", "2.0"]:
             raise AssertionError("legacy relief defaults must migrate to level 10 without visual change")
@@ -273,7 +305,8 @@ def main() -> None:
         if run_fixture(temp, {}, "previous-centered-baseline") != ["10", "1.0", "10", "1.2"]:
             raise AssertionError("21-position centered baseline must migrate to the 20-position baseline")
         if run_fixture(temp, {}, "persistence") != [
-            "20", "1", "14", "20", "centered-20-v2", "centered-default-20-v1"
+            "20", "1", "14", "20", "1", "20", "centered-20-v2",
+            "centered-default-20-v1"
         ]:
             raise AssertionError("persisted tuning levels must load, clamp, and save")
         centered_endpoints = run_fixture(temp, {}, "centered-endpoints")

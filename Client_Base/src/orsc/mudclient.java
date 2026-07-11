@@ -646,6 +646,8 @@ public final class mudclient implements Runnable {
 	private static final int SETTINGS_OBJECT_RELIEF_SLIDER = 67;
 	private static final int SETTINGS_DIMNESS_SLIDER = 68;
 	private static final int SETTINGS_CONTRAST_SLIDER = 69;
+	private static final int SETTINGS_GAMMA_SLIDER = 70;
+	private static final int SETTINGS_SATURATION_SLIDER = 71;
 	private static final int NORMAL_CAMERA_ZOOM_MIN = 0;
 	private static final int NORMAL_CAMERA_ZOOM_MAX = 255;
 	private static final int EXTRA_CAMERA_ZOOM_MIN = -100;
@@ -13470,6 +13472,14 @@ public final class mudclient implements Runnable {
 			index = addSettingsRow(index, rendererTuningSliderBar(
 				RendererColorDiagnosticSettings.getContrastLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
 				SETTINGS_CONTRAST_SLIDER);
+			index = addSettingsRow(index, "@whi@Gamma", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererColorDiagnosticSettings.getGammaLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
+				SETTINGS_GAMMA_SLIDER);
+			index = addSettingsRow(index, "@whi@Saturation", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererColorDiagnosticSettings.getSaturationLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
+				SETTINGS_SATURATION_SLIDER);
 			index = addSettingsSection(index, "Interface");
 		}
 
@@ -15372,9 +15382,19 @@ public final class mudclient implements Runnable {
 		reportRendererTuningChange("contrast", level, RendererColorDiagnosticSettings.getContrastMultiplier());
 	}
 
+	void cycleRendererGammaDiagnostic() {
+		int level = RendererColorDiagnosticSettings.cycleGammaLevel();
+		reportRendererTuningChange("gamma", level, RendererColorDiagnosticSettings.getGammaValue());
+	}
+
+	void cycleRendererSaturationDiagnostic() {
+		int level = RendererColorDiagnosticSettings.cycleSaturationLevel();
+		reportRendererTuningChange("saturation", level, RendererColorDiagnosticSettings.getSaturationMultiplier());
+	}
+
 	private boolean isRendererTuningSlider(int settingIndex) {
 		return settingIndex >= SETTINGS_TERRAIN_RELIEF_SLIDER
-			&& settingIndex <= SETTINGS_CONTRAST_SLIDER;
+			&& settingIndex <= SETTINGS_SATURATION_SLIDER;
 	}
 
 	private void handleRendererTuningSliderInput(int settingIndex, int textX) {
@@ -15416,7 +15436,13 @@ public final class mudclient implements Runnable {
 		if (settingIndex == SETTINGS_DIMNESS_SLIDER) {
 			return RendererColorDiagnosticSettings.getDimnessLevel();
 		}
-		return RendererColorDiagnosticSettings.getContrastLevel();
+		if (settingIndex == SETTINGS_CONTRAST_SLIDER) {
+			return RendererColorDiagnosticSettings.getContrastLevel();
+		}
+		if (settingIndex == SETTINGS_GAMMA_SLIDER) {
+			return RendererColorDiagnosticSettings.getGammaLevel();
+		}
+		return RendererColorDiagnosticSettings.getSaturationLevel();
 	}
 
 	private int getRendererTuningMaxLevel(int settingIndex) {
@@ -15450,6 +15476,19 @@ public final class mudclient implements Runnable {
 			int acceptedLevel = RendererColorDiagnosticSettings.setContrastLevel(level);
 			if (oldLevel != acceptedLevel) {
 				reportRendererTuningChange("contrast", acceptedLevel, RendererColorDiagnosticSettings.getContrastMultiplier());
+			}
+		} else if (settingIndex == SETTINGS_GAMMA_SLIDER) {
+			int oldLevel = RendererColorDiagnosticSettings.getGammaLevel();
+			int acceptedLevel = RendererColorDiagnosticSettings.setGammaLevel(level);
+			if (oldLevel != acceptedLevel) {
+				reportRendererTuningChange("gamma", acceptedLevel, RendererColorDiagnosticSettings.getGammaValue());
+			}
+		} else if (settingIndex == SETTINGS_SATURATION_SLIDER) {
+			int oldLevel = RendererColorDiagnosticSettings.getSaturationLevel();
+			int acceptedLevel = RendererColorDiagnosticSettings.setSaturationLevel(level);
+			if (oldLevel != acceptedLevel) {
+				reportRendererTuningChange("saturation", acceptedLevel,
+					RendererColorDiagnosticSettings.getSaturationMultiplier());
 			}
 		}
 	}

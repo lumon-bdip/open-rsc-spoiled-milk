@@ -51,6 +51,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		+ "uniform int uLightingMode;\n"
 		+ "uniform float uBrightness;\n"
 		+ "uniform float uContrast;\n"
+		+ "uniform float uGamma;\n"
+		+ "uniform float uSaturation;\n"
 		+ "uniform float uFogStrength;\n"
 		+ "uniform float uToneRed;\n"
 		+ "uniform float uToneGreen;\n"
@@ -105,6 +107,13 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		+ "vec3 applyContrast(vec3 color) {\n"
 		+ "\treturn clamp((color - vec3(0.5)) * uContrast + vec3(0.5), 0.0, 1.0);\n"
 		+ "}\n"
+		+ "vec3 applySaturation(vec3 color) {\n"
+		+ "\tfloat luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));\n"
+		+ "\treturn clamp(mix(vec3(luminance), color, uSaturation), 0.0, 1.0);\n"
+		+ "}\n"
+		+ "vec3 applyGamma(vec3 color) {\n"
+		+ "\treturn pow(clamp(color, 0.0, 1.0), vec3(1.0 / max(uGamma, 0.01)));\n"
+		+ "}\n"
 		+ "void main() {\n"
 		+ "\tfloat effectiveLight = effectiveLegacyLight(vBaseLegacyLight, vLegacyLight);\n"
 		+ "\tvec4 color = uTextureEnabled != 0\n"
@@ -112,6 +121,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		+ "\t\t: vec4(legacyFlatMaterialColor(vRawMaterialColor, effectiveLight), vMaterialColor.a);\n"
 		+ "\tcolor.rgb = applyTone(color.rgb);\n"
 		+ "\tcolor.rgb = applyContrast(color.rgb);\n"
+		+ "\tcolor.rgb = applySaturation(color.rgb);\n"
+		+ "\tcolor.rgb = applyGamma(color.rgb);\n"
 		+ "\tgl_FragColor = color;\n"
 		+ "}\n";
 	private static final String RESIDENT_CHUNK_PARITY_VERTEX_SHADER =
@@ -184,6 +195,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "uniform float uToneBlend;\n"
 			+ "uniform float uBrightness;\n"
 			+ "uniform float uContrast;\n"
+			+ "uniform float uGamma;\n"
+			+ "uniform float uSaturation;\n"
 			+ "uniform float uTerrainReliefStrength;\n"
 			+ "uniform float uObjectReliefStrength;\n"
 			+ "uniform int uTerrainVariationEnabled;\n"
@@ -294,6 +307,13 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "vec3 applyContrast(vec3 color) {\n"
 			+ "\treturn clamp((color - vec3(0.5)) * uContrast + vec3(0.5), 0.0, 1.0);\n"
 			+ "}\n"
+			+ "vec3 applySaturation(vec3 color) {\n"
+			+ "\tfloat luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));\n"
+			+ "\treturn clamp(mix(vec3(luminance), color, uSaturation), 0.0, 1.0);\n"
+			+ "}\n"
+			+ "vec3 applyGamma(vec3 color) {\n"
+			+ "\treturn pow(clamp(color, 0.0, 1.0), vec3(1.0 / max(uGamma, 0.01)));\n"
+			+ "}\n"
 			+ "float distanceFogAmount() {\n"
 			+ "\tif (uFogEnabled == 0) {\n"
 			+ "\t\treturn 0.0;\n"
@@ -359,6 +379,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\tcolor.rgb *= uBrightness;\n"
 			+ "\tcolor.rgb = applyTone(color.rgb);\n"
 			+ "\tcolor.rgb = applyContrast(color.rgb);\n"
+			+ "\tcolor.rgb = applySaturation(color.rgb);\n"
+			+ "\tcolor.rgb = applyGamma(color.rgb);\n"
 			+ "\tif (uFogEnabled != 0) {\n"
 			+ "\t\tcolor.rgb = mix(color.rgb, vec3(uFogRed, uFogGreen, uFogBlue), distanceFogAmount());\n"
 			+ "\t}\n"
@@ -385,6 +407,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private final int lightingModeUniformLocation;
 	private final int brightnessUniformLocation;
 	private final int contrastUniformLocation;
+	private final int gammaUniformLocation;
+	private final int saturationUniformLocation;
 	private final int fogStrengthUniformLocation;
 	private final int toneRedUniformLocation;
 	private final int toneGreenUniformLocation;
@@ -435,6 +459,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int lightingModeUniformLocation,
 		int brightnessUniformLocation,
 		int contrastUniformLocation,
+		int gammaUniformLocation,
+		int saturationUniformLocation,
 		int fogStrengthUniformLocation,
 		int toneRedUniformLocation,
 		int toneGreenUniformLocation,
@@ -482,6 +508,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		this.lightingModeUniformLocation = lightingModeUniformLocation;
 		this.brightnessUniformLocation = brightnessUniformLocation;
 		this.contrastUniformLocation = contrastUniformLocation;
+		this.gammaUniformLocation = gammaUniformLocation;
+		this.saturationUniformLocation = saturationUniformLocation;
 		this.fogStrengthUniformLocation = fogStrengthUniformLocation;
 		this.toneRedUniformLocation = toneRedUniformLocation;
 		this.toneGreenUniformLocation = toneGreenUniformLocation;
@@ -551,9 +579,11 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					-1,
 					-1,
 					gl.glGetUniformLocation(program, "uLightingMode"),
-					gl.glGetUniformLocation(program, "uBrightness"),
-					gl.glGetUniformLocation(program, "uContrast"),
-					gl.glGetUniformLocation(program, "uFogStrength"),
+						gl.glGetUniformLocation(program, "uBrightness"),
+						gl.glGetUniformLocation(program, "uContrast"),
+						gl.glGetUniformLocation(program, "uGamma"),
+						gl.glGetUniformLocation(program, "uSaturation"),
+						gl.glGetUniformLocation(program, "uFogStrength"),
 					gl.glGetUniformLocation(program, "uToneRed"),
 					gl.glGetUniformLocation(program, "uToneGreen"),
 					gl.glGetUniformLocation(program, "uToneBlue"),
@@ -640,9 +670,11 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					gl.glGetUniformLocation(program, "uLightAmbient"),
 					gl.glGetUniformLocation(program, "uLightIntensity"),
 					-1,
-					gl.glGetUniformLocation(program, "uBrightness"),
-					gl.glGetUniformLocation(program, "uContrast"),
-					-1,
+						gl.glGetUniformLocation(program, "uBrightness"),
+						gl.glGetUniformLocation(program, "uContrast"),
+						gl.glGetUniformLocation(program, "uGamma"),
+						gl.glGetUniformLocation(program, "uSaturation"),
+						-1,
 					gl.glGetUniformLocation(program, "uToneRed"),
 					gl.glGetUniformLocation(program, "uToneGreen"),
 					gl.glGetUniformLocation(program, "uToneBlue"),
@@ -734,6 +766,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		}
 		if (contrastUniformLocation >= 0) {
 			gl.glUniform1f(contrastUniformLocation, RendererColorDiagnosticSettings.getContrastMultiplier());
+		}
+		if (gammaUniformLocation >= 0) {
+			gl.glUniform1f(gammaUniformLocation, RendererColorDiagnosticSettings.getGammaValue());
+		}
+		if (saturationUniformLocation >= 0) {
+			gl.glUniform1f(saturationUniformLocation, RendererColorDiagnosticSettings.getSaturationMultiplier());
 		}
 		if (fogStrengthUniformLocation >= 0) {
 			gl.glUniform1f(fogStrengthUniformLocation, RendererFogSettings.getMode().multiplier);

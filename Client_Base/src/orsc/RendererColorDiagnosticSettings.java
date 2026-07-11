@@ -13,8 +13,12 @@ final class RendererColorDiagnosticSettings {
 	private static final String PREVIOUS_CENTERED_SCALE_VERSION = "centered-21-v1";
 	static final String DIMNESS_LEVEL_PROPERTY_KEY = "opengl_dimness_level";
 	static final String CONTRAST_LEVEL_PROPERTY_KEY = "opengl_contrast_level";
+	static final String GAMMA_LEVEL_PROPERTY_KEY = "opengl_gamma_level";
+	static final String SATURATION_LEVEL_PROPERTY_KEY = "opengl_saturation_level";
 	private static volatile int dimnessLevel = CENTER_LEVEL;
 	private static volatile int contrastLevel = CENTER_LEVEL;
+	private static volatile int gammaLevel = CENTER_LEVEL;
+	private static volatile int saturationLevel = CENTER_LEVEL;
 
 	private RendererColorDiagnosticSettings() {
 	}
@@ -27,6 +31,14 @@ final class RendererColorDiagnosticSettings {
 		return contrastLevel;
 	}
 
+	static int getGammaLevel() {
+		return gammaLevel;
+	}
+
+	static int getSaturationLevel() {
+		return saturationLevel;
+	}
+
 	static int cycleDimnessLevel() {
 		dimnessLevel = nextLevel(dimnessLevel);
 		return dimnessLevel;
@@ -35,6 +47,16 @@ final class RendererColorDiagnosticSettings {
 	static int cycleContrastLevel() {
 		contrastLevel = nextLevel(contrastLevel);
 		return contrastLevel;
+	}
+
+	static int cycleGammaLevel() {
+		gammaLevel = nextLevel(gammaLevel);
+		return gammaLevel;
+	}
+
+	static int cycleSaturationLevel() {
+		saturationLevel = nextLevel(saturationLevel);
+		return saturationLevel;
 	}
 
 	static int setDimnessLevel(int level) {
@@ -47,12 +69,30 @@ final class RendererColorDiagnosticSettings {
 		return contrastLevel;
 	}
 
+	static int setGammaLevel(int level) {
+		gammaLevel = clampLevel(level);
+		return gammaLevel;
+	}
+
+	static int setSaturationLevel(int level) {
+		saturationLevel = clampLevel(level);
+		return saturationLevel;
+	}
+
 	static float getDimnessMultiplier() {
 		return dimnessMultiplierForLevel(dimnessLevel);
 	}
 
 	static float getContrastMultiplier() {
 		return contrastMultiplierForLevel(contrastLevel);
+	}
+
+	static float getGammaValue() {
+		return gammaForLevel(gammaLevel);
+	}
+
+	static float getSaturationMultiplier() {
+		return saturationForLevel(saturationLevel);
 	}
 
 	static void loadFromClientSettings(Properties props) {
@@ -73,6 +113,8 @@ final class RendererColorDiagnosticSettings {
 			dimnessLevel = closestDimnessLevel(readLegacyLevel(props, DIMNESS_LEVEL_PROPERTY_KEY));
 			contrastLevel = closestContrastLevel(readLegacyLevel(props, CONTRAST_LEVEL_PROPERTY_KEY));
 		}
+		gammaLevel = readSavedLevel(props, GAMMA_LEVEL_PROPERTY_KEY, CENTER_LEVEL);
+		saturationLevel = readSavedLevel(props, SATURATION_LEVEL_PROPERTY_KEY, CENTER_LEVEL);
 	}
 
 	static void saveToClientSettings(Properties props) {
@@ -80,17 +122,23 @@ final class RendererColorDiagnosticSettings {
 			props.setProperty(SCALE_VERSION_PROPERTY_KEY, CENTERED_SCALE_VERSION);
 			props.setProperty(DIMNESS_LEVEL_PROPERTY_KEY, String.valueOf(dimnessLevel));
 			props.setProperty(CONTRAST_LEVEL_PROPERTY_KEY, String.valueOf(contrastLevel));
+			props.setProperty(GAMMA_LEVEL_PROPERTY_KEY, String.valueOf(gammaLevel));
+			props.setProperty(SATURATION_LEVEL_PROPERTY_KEY, String.valueOf(saturationLevel));
 		}
 	}
 
 	static void resetDefaults() {
 		dimnessLevel = CENTER_LEVEL;
 		contrastLevel = CENTER_LEVEL;
+		gammaLevel = CENTER_LEVEL;
+		saturationLevel = CENTER_LEVEL;
 	}
 
 	static String debugSummary() {
-		return "dim " + dimnessLevel + " (" + getDimnessMultiplier() + ")"
-			+ " | contrast " + contrastLevel + " (" + getContrastMultiplier() + ")";
+		return "color d/c/g/s " + dimnessLevel + "/" + contrastLevel + "/"
+			+ gammaLevel + "/" + saturationLevel + " (" + getDimnessMultiplier() + "/"
+			+ getContrastMultiplier() + "/" + getGammaValue() + "/"
+			+ getSaturationMultiplier() + ")";
 	}
 
 	private static int nextLevel(int level) {
@@ -208,5 +256,25 @@ final class RendererColorDiagnosticSettings {
 		}
 		float progress = (boundedLevel - CENTER_LEVEL) / (float) (MAX_LEVEL - CENTER_LEVEL);
 		return 1.2f + progress * 1.9f;
+	}
+
+	private static float gammaForLevel(int level) {
+		int boundedLevel = clampLevel(level);
+		if (boundedLevel <= CENTER_LEVEL) {
+			float progress = (CENTER_LEVEL - boundedLevel) / (float) (CENTER_LEVEL - MIN_LEVEL);
+			return 1.0f - progress * 0.5f;
+		}
+		float progress = (boundedLevel - CENTER_LEVEL) / (float) (MAX_LEVEL - CENTER_LEVEL);
+		return 1.0f + progress * 0.5f;
+	}
+
+	private static float saturationForLevel(int level) {
+		int boundedLevel = clampLevel(level);
+		if (boundedLevel <= CENTER_LEVEL) {
+			float progress = (CENTER_LEVEL - boundedLevel) / (float) (CENTER_LEVEL - MIN_LEVEL);
+			return 1.0f - progress;
+		}
+		float progress = (boundedLevel - CENTER_LEVEL) / (float) (MAX_LEVEL - CENTER_LEVEL);
+		return 1.0f + progress;
 	}
 }

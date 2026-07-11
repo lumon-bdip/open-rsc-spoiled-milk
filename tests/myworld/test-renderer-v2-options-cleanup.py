@@ -108,7 +108,9 @@ def main() -> None:
         forbid(mudclient, retired, f"player-facing {retired.strip()} row")
     forbid(mudclient, '"@whi@Brightness - "', "superseded player-facing Brightness row")
     forbid(mudclient, "cycleOpenGLBrightnessMode()", "superseded Brightness click handler")
-    for label in ("Terrain shading", "Object shading", "Brightness / dimness", "Contrast"):
+    for label in (
+        "Terrain shading", "Object shading", "Brightness / dimness", "Contrast", "Gamma", "Saturation"
+    ):
         require(mudclient, f'index = addSettingsRow(index, "@whi@{label}", SETTINGS_SECTION_ROW);',
                 f"two-line {label} slider label")
     require(mudclient, 'new StringBuilder("@whi@- [")', "slider minus and track presentation")
@@ -178,7 +180,7 @@ def main() -> None:
 
     require(
         plan,
-        "`Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,\n`Terrain Variation`, and `Fog`, followed by two-line `Terrain shading`,\n`Object shading`, `Brightness / dimness`, and `Contrast` sliders",
+        "`Preset`, `Aspect Ratio`, `Borderless`, `Lighting`, `Geometry`,\n`Terrain Variation`, and `Fog`, followed by two-line `Terrain shading`,\n`Object shading`, `Brightness / dimness`, `Contrast`, `Gamma`, and `Saturation`\nsliders",
         "current Graphics row contract",
     )
     require(plan, "`Preset` provides `Classic`, `Remaster`, and `Custom`.", "preset contract")

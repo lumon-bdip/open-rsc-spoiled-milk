@@ -342,6 +342,17 @@ setting.
   Classic now persists those values; selecting Remaster restores the intended
   `10/10/10/10` baseline. Subsequent manual edits still mark the profile
   Custom.
+- Gamma and Saturation complete the accepted iterative color-control set. Both use the same
+  persisted 20-position slider/input contract with neutral level 10 defaults.
+  Gamma spans `0.5..1.0..1.5`; Saturation spans `0.0..1.0..2.0`. The resident
+  and projected shaders apply them after tone/contrast and before fog, and F6,
+  structured tuning events, and `Ctrl+F9` captures record their levels and
+  effective values. F10 and Shift+F10 remain worktree-only comparison keys.
+- Owner live review accepted both controls at neutral level 10 defaults and
+  selected this milestone as the renderer-shading stopping point. The focused
+  guards, complete renderer guard suite, Java 8 build, and runtime compilation
+  of both projected and resident shaders pass; the branch is ready for manager
+  handoff.
 
 ### 5. Promote an accepted terrain shading/AO control
 
