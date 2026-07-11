@@ -937,7 +937,7 @@ public final class mudclient implements Runnable {
 	private int objectAnimationNumberFireLightningSpell = 0;
 	private int objectAnimationNumberTorch = 0;
 	private int objectAnimationNumberCosmicSparkles = 0;
-	private boolean optionCameraModeAuto = true;
+	private boolean optionCameraModeAuto = false;
 	private boolean optionMouseButtonOne = false;
 	private boolean clanInviteBlockSetting = false;
 	private boolean partyInviteBlockSetting = false;

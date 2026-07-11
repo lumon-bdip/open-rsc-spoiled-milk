@@ -8,7 +8,7 @@ Planning branch: `docs/player-experience-improvements`.
 
 This plan preserves and coordinates the current "Fixes and Changes" backlog:
 
-- [ ] Default camera mode should be Manual.
+- [x] Default camera mode should be Manual.
 - [ ] Correct indoor/upper-floor roof hiding when roofs are enabled.
 - [ ] Explore adjustable terrain ambient occlusion/shading.
 - [ ] Explore adjustable object shading.
@@ -250,6 +250,21 @@ values continue to load unchanged.
 - Auto camera remains functional and persistent.
 - The task is committed and handed back independently of every other item in
   this plan.
+
+### Implementation record — 2026-07-11
+
+- Client pre-sync camera state now initializes to Manual.
+- Shared account creation explicitly writes `cameraauto = 0`, covering both
+  MySQL and the SQLite subclass without depending on a deployed column default.
+- MySQL/SQLite core and retro schema templates plus the empty canonical MyWorld
+  seed now declare default `0`. The seed table rebuild preserved all other
+  schema objects and passed SQLite integrity validation.
+- Existing player rows are not migrated. The unchanged account load/save and
+  packet-index-`0` paths continue to preserve explicit Auto and Manual choices.
+- `test-default-manual-camera.py` verifies client fallback, creation SQL,
+  schema/seed defaults, a materialized fresh seed account, and the absence of
+  preference-overwriting SQL. Client and server Java 8 builds pass alongside
+  the focused camera and player-data guards.
 
 ## Documentation Workflow
 
