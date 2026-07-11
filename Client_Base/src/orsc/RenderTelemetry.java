@@ -3,8 +3,11 @@ package orsc;
 import orsc.graphics.Renderer2DFrame;
 
 import java.awt.image.BufferedImage;
+import java.lang.management.BufferPoolMXBean;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -275,6 +278,8 @@ public final class RenderTelemetry {
 	private static final DiagnosticMetric[] DIAGNOSTIC_METRICS = buildDiagnosticMetrics();
 	private static long diagnosticLastGcCount = -1L;
 	private static long diagnosticLastGcTimeMillis = -1L;
+	private static final Map<String, Long> diagnosticLastGcCountByName = new LinkedHashMap<>();
+	private static final Map<String, Long> diagnosticLastGcTimeByName = new LinkedHashMap<>();
 
 	private RenderTelemetry() {
 	}
@@ -1822,10 +1827,10 @@ public final class RenderTelemetry {
 
 		Runtime runtime = Runtime.getRuntime();
 		MemoryUsage heap = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+		MemoryUsage nonHeap = ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage();
 		record.number("runtime.uptimeMillis", ManagementFactory.getRuntimeMXBean().getUptime());
-		record.number("runtime.heap.usedBytes", heap.getUsed());
-		record.number("runtime.heap.committedBytes", heap.getCommitted());
-		record.number("runtime.heap.maxBytes", heap.getMax());
+		appendDiagnosticMemoryUsage(record, "runtime.heap", heap);
+		appendDiagnosticMemoryUsage(record, "runtime.nonHeap", nonHeap);
 		record.number("runtime.memory.freeBytes", runtime.freeMemory());
 		record.number("runtime.memory.totalBytes", runtime.totalMemory());
 		record.number("runtime.memory.maxBytes", runtime.maxMemory());
@@ -1833,9 +1838,31 @@ public final class RenderTelemetry {
 
 		long gcCount = 0L;
 		long gcTimeMillis = 0L;
-		for (GarbageCollectorMXBean collector : ManagementFactory.getGarbageCollectorMXBeans()) {
+		List<GarbageCollectorMXBean> collectors =
+			new ArrayList<>(ManagementFactory.getGarbageCollectorMXBeans());
+		Collections.sort(collectors, Comparator.comparing(GarbageCollectorMXBean::getName));
+		for (GarbageCollectorMXBean collector : collectors) {
 			long collectorCount = collector.getCollectionCount();
 			long collectorTime = collector.getCollectionTime();
+			String collectorName = collector.getName();
+			String collectorKey = "runtime.gcCollector." + diagnosticKey(collectorName);
+			record.string(collectorKey + ".name", collectorName);
+			record.number(collectorKey + ".collectionCount", collectorCount);
+			record.number(collectorKey + ".collectionTimeMillis", collectorTime);
+			Long previousCount = diagnosticLastGcCountByName.get(collectorName);
+			Long previousTime = diagnosticLastGcTimeByName.get(collectorName);
+			record.number(
+				collectorKey + ".collectionCountDelta",
+				collectorCount < 0L || previousCount == null
+					? 0L
+					: Math.max(0L, collectorCount - previousCount));
+			record.number(
+				collectorKey + ".collectionTimeMillisDelta",
+				collectorTime < 0L || previousTime == null
+					? 0L
+					: Math.max(0L, collectorTime - previousTime));
+			diagnosticLastGcCountByName.put(collectorName, collectorCount);
+			diagnosticLastGcTimeByName.put(collectorName, collectorTime);
 			if (collectorCount >= 0L) {
 				gcCount += collectorCount;
 			}
@@ -1856,7 +1883,46 @@ public final class RenderTelemetry {
 		diagnosticLastGcCount = gcCount;
 		diagnosticLastGcTimeMillis = gcTimeMillis;
 
+		List<MemoryPoolMXBean> memoryPools =
+			new ArrayList<>(ManagementFactory.getMemoryPoolMXBeans());
+		Collections.sort(memoryPools, Comparator.comparing(MemoryPoolMXBean::getName));
+		for (MemoryPoolMXBean pool : memoryPools) {
+			if (!pool.isValid()) {
+				continue;
+			}
+			String key = "runtime.memoryPool." + diagnosticKey(pool.getName());
+			record.string(key + ".name", pool.getName());
+			record.string(key + ".type", pool.getType() == MemoryType.HEAP ? "heap" : "non-heap");
+			appendDiagnosticMemoryUsage(record, key + ".usage", pool.getUsage());
+			appendDiagnosticMemoryUsage(record, key + ".peak", pool.getPeakUsage());
+			appendDiagnosticMemoryUsage(record, key + ".collection", pool.getCollectionUsage());
+		}
+
+		List<BufferPoolMXBean> bufferPools =
+			new ArrayList<>(ManagementFactory.getPlatformMXBeans(BufferPoolMXBean.class));
+		Collections.sort(bufferPools, Comparator.comparing(BufferPoolMXBean::getName));
+		for (BufferPoolMXBean pool : bufferPools) {
+			String key = "runtime.bufferPool." + diagnosticKey(pool.getName());
+			record.string(key + ".name", pool.getName());
+			record.number(key + ".count", pool.getCount());
+			record.number(key + ".memoryUsedBytes", pool.getMemoryUsed());
+			record.number(key + ".totalCapacityBytes", pool.getTotalCapacity());
+		}
+
 		RendererDiagnosticSession.writeTelemetry(record);
+	}
+
+	private static void appendDiagnosticMemoryUsage(
+		RendererDiagnosticSession.Record record,
+		String key,
+		MemoryUsage usage) {
+		if (usage == null) {
+			return;
+		}
+		record.number(key + ".initBytes", usage.getInit());
+		record.number(key + ".usedBytes", usage.getUsed());
+		record.number(key + ".committedBytes", usage.getCommitted());
+		record.number(key + ".maxBytes", usage.getMax());
 	}
 
 	static void recordDiagnosticBoundary(String trigger) {

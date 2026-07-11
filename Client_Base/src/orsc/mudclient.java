@@ -18383,6 +18383,11 @@ public final class mudclient implements Runnable {
 
 	private void jumpToLogin() {
 		try {
+			boolean endingGameSession = this.currentViewMode == GameMode.GAME;
+			if (endingGameSession) {
+				RenderTelemetry.recordDiagnosticBoundary("client-logout");
+				RendererDiagnosticSession.recordEvent("client.logout", null);
+			}
 			this.logoutTimeout = 0;
 			this.loginScreenNumber = 0;
 			this.currentViewMode = GameMode.LOGIN;
@@ -22150,6 +22155,8 @@ public final class mudclient implements Runnable {
 			}
 
 			bank.resetUncertMode();
+			RendererDiagnosticSession.recordEvent("client.login", null);
+			RenderTelemetry.recordDiagnosticBoundary("client-login");
 
 		} catch (RuntimeException var4) {
 			throw GenUtil.makeThrowable(var4, "client.UD(" + var1 + ')');

@@ -112,6 +112,88 @@ def milliseconds(nanos: float) -> str:
     return f"{nanos / 1_000_000.0:.3f}ms"
 
 
+def select_old_generation_key(records: list[dict[str, Any]]) -> tuple[str | None, str]:
+    suffix = ".collection.usedBytes"
+    candidates: dict[str, list[float]] = {}
+    names: dict[str, str] = {}
+    for record in records:
+        for key, value in record.items():
+            if not key.startswith("runtime.memoryPool.") or not key.endswith(suffix):
+                continue
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+                continue
+            base = key[: -len(suffix)]
+            candidates.setdefault(key, []).append(float(value))
+            name = record.get(base + ".name")
+            if isinstance(name, str):
+                names[key] = name
+    if not candidates:
+        return None, "unavailable"
+
+    def rank(key: str) -> tuple[int, int, float]:
+        label = names.get(key, key).lower()
+        preferred = int("old" in label or "tenured" in label)
+        values = candidates[key]
+        return preferred, len(values), max(values)
+
+    selected = max(candidates, key=rank)
+    return selected, names.get(selected, selected)
+
+
+def direct_buffer_key(records: list[dict[str, Any]]) -> tuple[str | None, str]:
+    suffix = ".memoryUsedBytes"
+    candidates: dict[str, int] = {}
+    names: dict[str, str] = {}
+    for record in records:
+        for key, value in record.items():
+            if not key.startswith("runtime.bufferPool.") or not key.endswith(suffix):
+                continue
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+                continue
+            candidates[key] = candidates.get(key, 0) + 1
+            base = key[: -len(suffix)]
+            name = record.get(base + ".name")
+            if isinstance(name, str):
+                names[key] = name
+    if not candidates:
+        return None, "unavailable"
+    direct = [key for key in candidates if names.get(key, key).lower() == "direct"]
+    selected = max(direct or list(candidates), key=lambda key: candidates[key])
+    return selected, names.get(selected, selected)
+
+
+def metric_values(records: list[dict[str, Any]], key: str | None) -> list[float]:
+    if key is None:
+        return []
+    values = []
+    for record in records:
+        value = record.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+            continue
+        values.append(float(value))
+    return values
+
+
+def login_epochs(
+    events: list[dict[str, Any]], session_end_nanos: float
+) -> list[tuple[float, float]]:
+    epochs: list[tuple[float, float]] = []
+    start: float | None = None
+    for event in sorted(events, key=lambda item: numeric(item, "sessionElapsedNanos")):
+        event_type = event.get("eventType")
+        elapsed = numeric(event, "sessionElapsedNanos")
+        if event_type == "client.login":
+            if start is not None:
+                epochs.append((start, elapsed))
+            start = elapsed
+        elif event_type == "client.logout" and start is not None:
+            epochs.append((start, elapsed))
+            start = None
+    if start is not None:
+        epochs.append((start, session_end_nanos))
+    return epochs
+
+
 def final_capture_records(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     final_by_key: dict[tuple[Any, Any], dict[str, Any]] = {}
     for record in records:
@@ -226,6 +308,9 @@ def build_summary(
         record for record in report_records if not within_capture_range(record, capture_ranges)
     ]
     timing_records = normal_report_records or report_records or telemetry
+    normal_telemetry = [
+        record for record in telemetry if not within_capture_range(record, capture_ranges)
+    ]
     client_loop_nanos = [
         numeric(record, "stage.clientLoop.window.averageNanos") for record in timing_records
     ]
@@ -292,6 +377,11 @@ def build_summary(
         total_gc_time * 1_000_000.0 * 100.0 / elapsed_nanos if elapsed_nanos > 0 else 0.0
     )
     gc_average_millis = total_gc_time / total_gc_count if total_gc_count > 0 else 0.0
+    old_generation_key, old_generation_name = select_old_generation_key(normal_telemetry)
+    old_generation_values = metric_values(normal_telemetry, old_generation_key)
+    direct_key, direct_name = direct_buffer_key(normal_telemetry)
+    direct_values = metric_values(normal_telemetry, direct_key)
+    epochs = login_epochs(events, elapsed_nanos)
 
     lines = [
         "# Renderer Diagnostic Session Summary",
@@ -330,6 +420,60 @@ def build_summary(
         lines.append(
             f"- Early/late sampled heap floor: {int(early_floor)} / {int(late_floor)} bytes "
             f"(delta {int(late_floor - early_floor):+d}); this is a retention signal, not leak proof."
+        )
+
+    lines.extend(["", "## Memory Retention", ""])
+    if old_generation_values:
+        quarter = max(1, len(old_generation_values) // 4)
+        early_old_floor = min(old_generation_values[:quarter])
+        late_old_floor = min(old_generation_values[-quarter:])
+        lines.append(
+            f"- Post-GC old-generation pool `{old_generation_name}` range: "
+            f"{int(min(old_generation_values))}..{int(max(old_generation_values))} bytes; "
+            f"early/late floor {int(early_old_floor)} / {int(late_old_floor)} "
+            f"(delta {int(late_old_floor - early_old_floor):+d})."
+        )
+    else:
+        lines.append("- Post-GC old-generation occupancy is unavailable in this session.")
+    if direct_values:
+        lines.append(
+            f"- Native buffer pool `{direct_name}` first/last/max: "
+            f"{int(direct_values[0])} / {int(direct_values[-1])} / "
+            f"{int(max(direct_values))} bytes."
+        )
+    else:
+        lines.append("- Native/direct buffer-pool occupancy is unavailable in this session.")
+    if not epochs:
+        lines.append("- No client login epochs were recorded.")
+    for index, (start, end) in enumerate(epochs, start=1):
+        epoch_records = [
+            record
+            for record in normal_telemetry
+            if start <= numeric(record, "sessionElapsedNanos") <= end
+        ]
+        epoch_old = metric_values(epoch_records, old_generation_key)
+        epoch_direct = metric_values(epoch_records, direct_key)
+        epoch_gc = sum(numeric(record, "runtime.gc.collectionCountDelta") for record in epoch_records)
+        section_loads = sum(
+            1
+            for event in events
+            if event.get("eventType") == "renderer.world-section-load"
+            and start <= numeric(event, "sessionElapsedNanos") <= end
+        )
+        old_text = (
+            f"old-gen post-GC {int(epoch_old[0])}->{int(epoch_old[-1])} bytes"
+            if epoch_old
+            else "old-gen post-GC unavailable"
+        )
+        direct_text = (
+            f"direct {int(epoch_direct[0])}->{int(epoch_direct[-1])} bytes"
+            if epoch_direct
+            else "direct unavailable"
+        )
+        lines.append(
+            f"- Login epoch {index}: {(end - start) / 1_000_000_000.0:.1f}s, "
+            f"{len(epoch_records)} telemetry records, {int(epoch_gc)} GC collections, "
+            f"{section_loads} section loads; {old_text}; {direct_text}."
         )
 
     lines.extend(["", "### Worst sampled OpenGL render windows", ""])

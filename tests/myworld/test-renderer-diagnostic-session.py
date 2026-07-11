@@ -200,6 +200,7 @@ def validate_runtime_session(tmp: Path) -> None:
         "stage.frame.lifetime.averageNanos": 2000000,
         "stage.sceneRender.lifetime.averageNanos": 500000,
         "runtime.heap.usedBytes": int,
+        "runtime.nonHeap.usedBytes": int,
         "runtime.gc.collectionCountDelta": int,
         "counter.renderer2DSpriteCommandDropped.window.average": 0.0,
         "config.renderer2D.rotatedSpriteCommandLimit": 256,
@@ -211,6 +212,21 @@ def validate_runtime_session(tmp: Path) -> None:
                 fail(f"periodic telemetry field {key} is not a nonnegative integer: {value!r}")
         elif value != expected:
             fail(f"periodic telemetry field {key} expected {expected!r}, got {value!r}")
+    if not any(
+        key.startswith("runtime.memoryPool.") and key.endswith(".collection.usedBytes")
+        for key in periodic_record
+    ):
+        fail("post-collection memory-pool telemetry is missing")
+    if not any(
+        key.startswith("runtime.gcCollector.") and key.endswith(".collectionTimeMillisDelta")
+        for key in periodic_record
+    ):
+        fail("per-collector GC telemetry is missing")
+    if not any(
+        key.startswith("runtime.bufferPool.") and key.endswith(".memoryUsedBytes")
+        for key in periodic_record
+    ):
+        fail("native buffer-pool telemetry is missing")
 
     events = read_jsonl(session_dir / "events.jsonl")
     event_types = [event.get("eventType") for event in events]
@@ -306,6 +322,7 @@ def validate_source_contract() -> None:
     presenter = (ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java").read_text(encoding="utf-8")
     graphics = (ROOT / "Client_Base/src/orsc/graphics/two/GraphicsController.java").read_text(encoding="utf-8")
     opengl_log = (ROOT / "PC_Client/src/orsc/OpenGLRendererLog.java").read_text(encoding="utf-8")
+    mudclient = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text(encoding="utf-8")
 
     required = {
         "disabled-by-default session gate": "spoiledmilk.rendererDiagnostics",
@@ -332,6 +349,10 @@ def validate_source_contract() -> None:
         fail("2D overflow is not a structured event")
     if 'RendererDiagnosticSession.recordEvent("renderer.opengl.log", message);' not in opengl_log:
         fail("OpenGL renderer logs are not retained as session events")
+    if 'RendererDiagnosticSession.recordEvent("client.login", null);' not in mudclient:
+        fail("diagnostic sessions do not mark account-free login epochs")
+    if 'RendererDiagnosticSession.recordEvent("client.logout", null);' not in mudclient:
+        fail("diagnostic sessions do not mark account-free logout epochs")
     for needle in (
         "--renderer-diagnostics",
         "SPOILED_MILK_RENDERER_TELEMETRY=true",

@@ -497,21 +497,25 @@ come from one of these areas unless a concrete shadow regression appears:
 
 ## Recommended Near-Term Order
 
-1. Treat day/night color, Remaster directional lighting, terrain-receiver
+1. Complete the short renderer retention-characterization route: compare
+   post-collection old-generation and direct-buffer floors across idle,
+   traversal, logout, and relog epochs without a full capture burst.
+2. Treat day/night color, Remaster directional lighting, terrain-receiver
    shadows, and the static/animated object chunk split as the current accepted
    alpha baseline.
-2. Start non-shadow visual improvements with material-aware shader polish:
+3. Start non-shadow visual improvements with material-aware shader polish:
    terrain, water, foliage, ore, walls, roofs, scenery, sprites, projectiles,
    and effects should get explicit material families instead of one generic
    response.
-3. Test terrain variation and tile-edge blending for broad flat areas and hard
-   grass/dirt transitions.
-4. Move world-space sprites/entities/effects farther away from legacy command replay
+4. Treat the completed first terrain-variation and tile-edge blending pass as
+   the baseline; revisit it only with a specific captured visual regression.
+5. Move world-space sprites/entities/effects farther away from legacy command replay
    and toward explicit depth anchors, batching, and culling.
-5. Turn quality settings into real work culling: entity distance, draw distance,
+6. Turn quality settings into real work culling: entity distance, draw distance,
    roof visibility, sprite/effect distance, and weak-hardware presets should
    reduce built/submitted/drawn work.
-6. Add benchmark/capture routes before another large optimization pass so dense
+7. Convert the accepted dense-area route into a repeatable benchmark/capture
+   route before another large optimization pass so dense
    scenes and zoomed-out movement can be compared without relying only on manual
    F6 screenshots.
 

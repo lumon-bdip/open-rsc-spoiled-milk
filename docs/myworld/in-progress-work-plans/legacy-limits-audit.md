@@ -8,15 +8,15 @@ logic.
 
 ## Current Priority
 
-1. Use renderer 2D F6/capture telemetry to measure real alpha workloads, then
-   replace only demonstrably reachable caps with capacity-managed storage.
-2. Replace or instrument the fixed client network send and incoming packet
+1. Replace or instrument the fixed client network send and incoming packet
    buffers before larger custom payloads turn back-pressure into disconnects.
-3. Separate game-object, wall-object, and ground-item picking from numeric key
+2. Separate game-object, wall-object, and ground-item picking from numeric key
    ranges before growable object storage can make those ranges overlap.
-4. Keep old-client packet formats constrained by `ClientLimitations`; do not
+3. Keep old-client packet formats constrained by `ClientLimitations`; do not
    widen authentic payload fields unless every matching old client parser is
    handled.
+4. Continue observing renderer 2D capacity in ordinary diagnostics, but do not
+   grow current caps without a reproducible live overflow.
 
 ## Recently Fixed
 
@@ -281,29 +281,29 @@ These showed up in searches but should not be treated as immediate bugs:
 
 ## Next Implementation Recommendation
 
-Run a measured renderer 2D capture study before changing command capacity.
+The measured renderer 2D capture study is complete. Keep the present command
+capacities and move the legacy-limit audit to fixed network buffers and numeric
+pick-key ownership.
 
 Reason:
 
-- Overflow is now visible in F6, periodic telemetry, and Ctrl+F9 capture data,
-  so the next decision can use observed workloads instead of estimates.
-- The `256` rotated-sprite boundary is regression-tested, but a synthetic cap
-  crossing does not prove normal play reaches it.
-- Capturing representative routes first avoids adding capacity and allocation
-  cost to streams that remain comfortably below their limits.
+- The accepted dense-area route and strict `12`-frame capture burst showed zero
+  current-frame renderer 2D drops and comfortable sprite/text/rotated/circle
+  headroom.
+- Primitive drops were confined to load-transition windows and every reported
+  overflow aligned with a world-section load. No visual loss was reported.
+- Raising capacities now would add cost without evidence that ordinary play
+  reaches the limits. Existing F6/session/capture telemetry remains the
+  regression detector.
 
-Suggested implementation shape:
+Suggested next implementation shape:
 
-1. Capture dense towns, crowded combat, minimap rotation, bank/production UI,
-   and expanded F6 routes with renderer telemetry enabled.
-2. Record current/max/drop readings and preserve Ctrl+F9 artifacts for any
-   stream that approaches or reaches its cap.
-3. Compare the command pressure with frame, render-phase, allocation, and GC
-   telemetry so high counts are not mistaken for the actual bottleneck.
-4. Replace only demonstrably reachable caps with capacity-managed lists and
-   retain a high emergency ceiling if protection is still needed.
-5. Re-run the renderer guardrail suite and capture before/after frame timings so
-   capacity growth does not hide an allocation regression.
+1. Instrument fixed network buffer occupancy and rejected/oversized packet
+   paths without changing authentic protocol widths.
+2. Exercise the largest current custom payloads and identify whether capacity,
+   back-pressure, or parsing is the actual constraint.
+3. Document and then separate game-object, wall-object, and ground-item pick
+   key ranges before expanding those stores further.
 
 ## Useful Audit Searches
 

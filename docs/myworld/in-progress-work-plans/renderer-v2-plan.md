@@ -1164,7 +1164,7 @@ they are not visual requirements for the baseline.
       for the exact frame range under investigation. This is disabled by
       default for release builds and requires
       `SPOILED_MILK_OPENGL_FRAME_CAPTURE=true`.
-- [ ] Add versioned renderer diagnostic sessions that join raw F6/periodic
+- [x] Add versioned renderer diagnostic sessions that join raw F6/periodic
       telemetry, JVM/GC context, structured events, console output, and indexed
       `Ctrl+F9` bursts into a bounded AI-readable bundle. Track the focused
       implementation and visual-refinement feedback loop in
@@ -1202,6 +1202,12 @@ they are not visual requirements for the baseline.
         `2.108s` of synchronous work per frame, so session analysis now excludes
         indexed capture intervals from normal performance rankings and reports
         their `1,517` replaced frames separately.
+  - [ ] Characterize the remaining heap-floor retention signal with
+        post-collection old-generation, per-collector, direct-buffer, and
+        account-free login-epoch telemetry. Run the approved no-capture
+        idle/route/logout/relogin procedure in
+        [renderer-retention-characterization-plan.md](renderer-retention-characterization-plan.md)
+        before considering heap/cache changes or focused heap profiling.
 - [ ] Build a replay harness for captured renderer-v2 frames so a problematic
       entity/occlusion frame can be inspected without live combat timing.
   - [x] Add an offline capture analyzer that validates `Ctrl+F9` capture
@@ -2127,7 +2133,10 @@ they are not visual requirements for the baseline.
         snapshot/upload/render timing, chunk upload/reuse, resident draw
         buckets, sprite replay counts, world face buckets, and allocation
         summary.
-- [ ] Add a command-line or config option to dump frame timing to a log.
+- [x] Add a command-line/config option to dump frame timing to a structured
+      session log. `scripts/run-client.sh --renderer-diagnostics` records raw
+      timing windows, renderer counters, events, runtime state, and capture
+      correlation in bounded JSONL files.
 - [ ] Add automated frame-diff tooling for the baseline acuity locations.
 - [ ] Track allocation rate during camera movement and section loading.
 - [ ] Establish minimum target hardware for alpha testing.

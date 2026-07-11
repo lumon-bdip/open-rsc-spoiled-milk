@@ -1,6 +1,7 @@
 # Renderer Diagnostic Session Logging Plan
 
-Status: proposed; awaiting manager approval before implementation.
+Status: implemented and live-validated; retention characterization remains an
+active follow-up milestone.
 
 This plan is a focused milestone ledger within the ongoing renderer-v2
 refinement workstream. It does not create a separate renderer project. The
@@ -297,3 +298,13 @@ For each manager-reported visual test:
 - [x] A real `Ctrl+F9` burst is indexed and analyzable from the session root.
 - [ ] Logging overhead is measured with capture inactive and does not
       materially regress recent frame timing or allocation behavior.
+
+## Active Retention Follow-Up
+
+The first accepted session's sampled heap floor rose during a long route and
+rose sharply around the intentionally intrusive full capture burst. This is
+not leak proof. The approved
+[renderer-retention-characterization-plan.md](renderer-retention-characterization-plan.md)
+adds post-collection old-generation, per-collector, direct-buffer, and
+account-free login-epoch evidence, then uses a no-capture idle/route/relogin
+test to decide whether focused retention profiling is warranted.
