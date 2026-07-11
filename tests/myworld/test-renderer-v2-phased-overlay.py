@@ -653,10 +653,10 @@ def main() -> None:
     )
     require(
         graphics,
-        "(!transform.canReplayOverSoftwareFrame()\n\t\t\t\t&& !canCaptureRenderer2DOpenGLWorldOverlayReplay())",
-        "replacement composite captures translucent masked UI sprites",
+        "(!transform.canReplayOverSoftwareFrame()\n\t\t\t\t&& !canCaptureRenderer2DTransformedSpriteReplay())",
+        "replacement composite captures translucent transformed sprites",
     )
-    if graphics.count("&& !canCaptureRenderer2DOpenGLWorldOverlayReplay())") < 2:
+    if graphics.count("&& !canCaptureRenderer2DTransformedSpriteReplay())") < 2:
         raise AssertionError("both generic and masked translucent sprite capture paths must support replacement replay")
     require(
         graphics,

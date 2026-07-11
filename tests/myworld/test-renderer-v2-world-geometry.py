@@ -156,6 +156,8 @@ def main() -> None:
     require(graphics_controller, "renderer2DLegacySpriteId = previousLegacySpriteId;", "drawEntity legacy sprite id restore")
     require(graphics_controller, "protected final void withRenderer2DLegacySpriteId(int legacySpriteId, Runnable drawAction)", "custom drawEntity legacy sprite id scope")
     require(graphics_controller, "renderer2DPhase == Renderer2DFrame.Phase.SCENE\n\t\t\t\t\t&& Renderer2DSettings.canReplayOpenGLWorldSprites()", "OpenGL world sprite partial alpha capture")
+    require(graphics_controller, "private boolean canCaptureRenderer2DTransformedSpriteReplay()", "OpenGL transformed scene sprite capture helper")
+    require(graphics_controller, "return canReplaceRenderer2DSceneSprite()\n\t\t\t|| canCaptureRenderer2DOpenGLWorldOverlayReplay();", "OpenGL transformed sprite capture includes scene entities")
     require(graphics_controller, "private boolean canReplaceRenderer2DSceneSprite()", "OpenGL scene sprite software raster skip helper")
     require(graphics_controller, "renderer2DPhase == Renderer2DFrame.Phase.SCENE\n\t\t\t&& Renderer2DSettings.canReplayOpenGLWorldSprites();", "OpenGL scene sprites can skip software raster after command capture")
     require(mud_client_graphics, "withRenderer2DLegacySpriteId(index, () ->\n\t\t\t\t\t\tsuper.drawSprite(glyph, x, y, width, height, 5924, ALTAR_GLYPH_ALPHA));", "altar glyph world sprite legacy id tagging")
