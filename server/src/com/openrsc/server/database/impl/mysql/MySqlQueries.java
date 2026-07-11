@@ -92,7 +92,7 @@ public class MySqlQueries {
 		playerMaxExp = playerMaxExp + "FROM `" + PREFIX + "maxstats` WHERE `playerID`=?";
 
 		copyPassword = "UPDATE `" + PREFIX + "players` SET `pass` = ?, `salt` = ? WHERE LOWER(`username`) = LOWER(?)";
-		createPlayer = "INSERT INTO `" + PREFIX + "players` (`username`, `email`, `pass`, `creation_date`, `creation_ip`) VALUES (?, ?, ?, ?, ?)";
+		createPlayer = "INSERT INTO `" + PREFIX + "players` (`username`, `email`, `pass`, `creation_date`, `creation_ip`, `cameraauto`) VALUES (?, ?, ?, ?, ?, 0)";
 		recentlyRegistered = "SELECT count(*) AS count FROM `" + PREFIX + "players` WHERE `creation_ip`=?" +
 			" AND `creation_date` > ?";
 		initMaxStats = "INSERT INTO `" + PREFIX + "maxstats` (`playerID`) VALUES (?)";

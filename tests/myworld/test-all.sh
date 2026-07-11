@@ -35,6 +35,7 @@ python3 ./tests/myworld/test-enchanting-data.py
 python3 ./tests/myworld/test-jewelry-runtime-effects.py
 python3 ./tests/myworld/test-bank-filters.py
 python3 ./tests/myworld/test-bank-shortcuts.py
+python3 ./tests/myworld/test-default-manual-camera.py
 python3 ./tests/myworld/test-player-convenience-commands.py
 python3 ./tests/myworld/test-bank-wide-slot-updates.py
 python3 ./tests/myworld/test-charged-item-bank-preservation.py
