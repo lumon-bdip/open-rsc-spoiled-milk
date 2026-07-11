@@ -10,6 +10,8 @@ SOURCE = ROOT / "PC_Client/src/orsc/ClientHotkeySettings.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 INPUT_BRIDGE = ROOT / "PC_Client/src/orsc/OpenGLInputBridge.java"
 PACKAGER = ROOT / "scripts/package-player-release.sh"
+BUILD_SCRIPT = ROOT / "scripts/build-client.sh"
+BUILD_FILE = ROOT / "Client_Base/build.xml"
 LAUNCHERS = (
     ROOT / "release/player/play-spoiled-milk.sh",
     ROOT / "release/player/Play Spoiled Milk.cmd",
@@ -56,6 +58,8 @@ def main() -> None:
     applet = APPLET.read_text(encoding="utf-8")
     bridge = INPUT_BRIDGE.read_text(encoding="utf-8")
     packager = PACKAGER.read_text(encoding="utf-8")
+    build_script = BUILD_SCRIPT.read_text(encoding="utf-8")
+    build_file = BUILD_FILE.read_text(encoding="utf-8")
     guard = "ClientHotkeySettings.shouldSuppressFunctionKey(keyCode)"
     if guard not in applet:
         fail("desktop key handler does not apply the release function-key guard")
@@ -68,6 +72,10 @@ def main() -> None:
         fail("OpenGL frame-capture hotkey bypasses the release guard")
     if 'RELEASE_MARKER_ENTRY="spoiled-milk-release-build.marker"' not in packager:
         fail("release packager does not embed a client-jar release marker")
+    if 'SPOILED_MILK_RELEASE_BUILD=1 "$ROOT_DIR/scripts/build-client.sh"' not in packager:
+        fail("release packager does not request a marked client build")
+    if "SPOILED_MILK_RELEASE_BUILD" not in build_script or "release.marker.file" not in build_file:
+        fail("client build does not support an isolated release marker")
     for launcher in LAUNCHERS:
         if "-Dspoiledmilk.releaseBuild=true" not in launcher.read_text(encoding="utf-8"):
             fail(f"release launcher is missing release mode: {launcher.name}")

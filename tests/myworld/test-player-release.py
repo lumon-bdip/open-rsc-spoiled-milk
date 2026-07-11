@@ -80,6 +80,7 @@ def make_fixture(
     client_jar.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(client_jar, "w") as jar:
         jar.writestr("myworld-assets/animations/projectile-moving/fixture/frame.png", "asset")
+        jar.writestr("spoiled-milk-release-build.marker", "release-build=true\n")
         for entry in OPENGL_RUNTIME_ENTRIES:
             jar.writestr(entry, "native")
     write(fixture / "Client_Base" / "Cache" / "audio" / "audio.dat", "audio")

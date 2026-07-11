@@ -9,6 +9,15 @@ if [[ ! -f "$ROOT_DIR/Client_Base/build.xml" || ! -d "$ROOT_DIR/scripts" ]]; the
 fi
 ANT_HOME="${ANT_HOME:-$ROOT_DIR/tools/vendor/apache-ant-1.10.5}"
 ANT_BIN="${ANT_BIN:-$ANT_HOME/bin/ant}"
+ANT_ARGS=(compile)
+
+if [[ "${SPOILED_MILK_RELEASE_BUILD:-0}" == 1 ]]; then
+  RELEASE_MARKER_DIR="$ROOT_DIR/output/release-build"
+  RELEASE_MARKER_FILE="$RELEASE_MARKER_DIR/spoiled-milk-release-build.marker"
+  mkdir -p "$RELEASE_MARKER_DIR"
+  printf 'release-build=true\n' > "$RELEASE_MARKER_FILE"
+  ANT_ARGS=("-Drelease.marker.file=$RELEASE_MARKER_FILE" compile)
+fi
 
 if [[ ! -f "$ANT_BIN" ]]; then
   printf 'FAIL: Missing bundled Ant launcher: %s\n' "$ANT_BIN" >&2
@@ -17,5 +26,5 @@ fi
 
 (
   cd "$ROOT_DIR/Client_Base"
-  ANT_HOME="$ANT_HOME" sh "$ANT_BIN" compile
+  ANT_HOME="$ANT_HOME" sh "$ANT_BIN" "${ANT_ARGS[@]}"
 )

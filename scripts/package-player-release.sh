@@ -11,6 +11,7 @@ WINDOWS_JRE=""
 ASSETS_CLEARED=false
 SKIP_BUILD=false
 SOURCE_COMMIT=""
+RELEASE_MARKER_ENTRY="spoiled-milk-release-build.marker"
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -167,7 +168,7 @@ fi
   || fail "Windows player bundle requires a Java 17+ runtime; found $runtime_version"
 
 if [[ "$SKIP_BUILD" != true ]]; then
-  "$ROOT_DIR/scripts/build-client.sh"
+  SPOILED_MILK_RELEASE_BUILD=1 "$ROOT_DIR/scripts/build-client.sh"
 fi
 
 # A build or concurrent session must not change the source snapshot after its
@@ -177,6 +178,9 @@ require_release_git_state "$SOURCE_COMMIT"
 CLIENT_JAR="$ROOT_DIR/Client_Base/Open_RSC_Client.jar"
 CLIENT_CACHE="$ROOT_DIR/Client_Base/Cache"
 PACKAGE_ASSETS="$ROOT_DIR/release/player"
+
+jar tf "$CLIENT_JAR" | grep -Fx "$RELEASE_MARKER_ENTRY" >/dev/null \
+  || fail "Release client jar is missing the embedded release-build marker"
 
 for required_path in \
   "$CLIENT_JAR" \
@@ -265,7 +269,6 @@ done
 
 OUTPUT_DIR="$ROOT_DIR/output/releases/$VERSION"
 STAGING_DIR="$OUTPUT_DIR/staging"
-RELEASE_MARKER_ENTRY="spoiled-milk-release-build.marker"
 JAVA_NAME="spoiled-milk-$VERSION-java"
 WINDOWS_NAME="spoiled-milk-$VERSION-windows-x64"
 JAVA_DIR="$STAGING_DIR/$JAVA_NAME"
@@ -281,10 +284,6 @@ stage_payload_files() {
 	local destination="$1"
 
 	cp "$CLIENT_JAR" "$destination/Spoiled_Milk_Client.jar"
-	printf 'release-build=true\n' > "$STAGING_DIR/$RELEASE_MARKER_ENTRY"
-	jar uf "$destination/Spoiled_Milk_Client.jar" -C "$STAGING_DIR" "$RELEASE_MARKER_ENTRY"
-	jar tf "$destination/Spoiled_Milk_Client.jar" | grep -Fx "$RELEASE_MARKER_ENTRY" >/dev/null \
-		|| fail "Packaged client jar is missing the release-build marker"
 	cp -R "$CLIENT_CACHE/audio" "$destination/Cache/audio"
 	cp -R "$CLIENT_CACHE/video" "$destination/Cache/video"
 	cp "$CLIENT_CACHE/config.txt" "$destination/Cache/config.txt"
