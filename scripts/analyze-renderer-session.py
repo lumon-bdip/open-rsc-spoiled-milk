@@ -197,10 +197,21 @@ def build_summary(
         record for record in telemetry if record.get("trigger") in {"periodic", "slow-frame"}
     ]
     timing_records = report_records or telemetry
-    frame_nanos = [numeric(record, "frame.lastNanos") for record in timing_records]
+    client_loop_nanos = [
+        numeric(record, "stage.clientLoop.window.averageNanos") for record in timing_records
+    ]
+    scene_nanos = [
+        numeric(record, "stage.sceneRender.window.averageNanos") for record in timing_records
+    ]
+    open_gl_render_nanos = [
+        numeric(record, "stage.openGLRender.window.averageNanos") for record in timing_records
+    ]
+    open_gl_world_nanos = [
+        numeric(record, "stage.openGLWorld.window.averageNanos") for record in timing_records
+    ]
     worst_records = sorted(
         timing_records,
-        key=lambda record: numeric(record, "frame.lastNanos"),
+        key=lambda record: numeric(record, "stage.openGLRender.window.averageNanos"),
         reverse=True,
     )[:5]
     event_counts = Counter(str(event.get("eventType", "unknown")) for event in events)
@@ -217,6 +228,23 @@ def build_summary(
         (numeric(record, "openGL.droppedFrames.lifetime") for record in telemetry),
         default=0.0,
     )
+    presented_frames = max(
+        (numeric(record, "openGL.frames.lifetime") for record in telemetry),
+        default=0.0,
+    )
+    dropped_percent = (
+        dropped_frames * 100.0 / (presented_frames + dropped_frames)
+        if presented_frames + dropped_frames > 0
+        else 0.0
+    )
+    elapsed_nanos = max(
+        (numeric(record, "sessionElapsedNanos") for record in telemetry),
+        default=0.0,
+    )
+    gc_time_percent = (
+        total_gc_time * 1_000_000.0 * 100.0 / elapsed_nanos if elapsed_nanos > 0 else 0.0
+    )
+    gc_average_millis = total_gc_time / total_gc_count if total_gc_count > 0 else 0.0
 
     lines = [
         "# Renderer Diagnostic Session Summary",
@@ -228,20 +256,36 @@ def build_summary(
         f"- Telemetry records: {len(telemetry)} ({len(report_records)} report windows)",
         f"- Event records: {len(events)}",
         f"- Indexed capture frames: {len(completed_captures)} ({len(failed_captures)} failed)",
+        f"- Sampled duration: {elapsed_nanos / 1_000_000_000.0:.1f}s",
         "",
         "## Performance",
         "",
-        f"- Frame sample p50/p95/p99: {milliseconds(percentile(frame_nanos, 0.50))} / "
-        f"{milliseconds(percentile(frame_nanos, 0.95))} / {milliseconds(percentile(frame_nanos, 0.99))}",
-        f"- OpenGL dropped frames observed: {int(dropped_frames)}",
-        f"- GC delta across report windows: {int(total_gc_count)} collections / {int(total_gc_time)}ms",
+        f"- Client-loop window p50/p95/p99: {milliseconds(percentile(client_loop_nanos, 0.50))} / "
+        f"{milliseconds(percentile(client_loop_nanos, 0.95))} / {milliseconds(percentile(client_loop_nanos, 0.99))}",
+        f"- Scene window p50/p95/p99: {milliseconds(percentile(scene_nanos, 0.50))} / "
+        f"{milliseconds(percentile(scene_nanos, 0.95))} / {milliseconds(percentile(scene_nanos, 0.99))}",
+        f"- OpenGL render window p50/p95/p99: {milliseconds(percentile(open_gl_render_nanos, 0.50))} / "
+        f"{milliseconds(percentile(open_gl_render_nanos, 0.95))} / {milliseconds(percentile(open_gl_render_nanos, 0.99))}",
+        f"- OpenGL world window p50/p95/p99: {milliseconds(percentile(open_gl_world_nanos, 0.50))} / "
+        f"{milliseconds(percentile(open_gl_world_nanos, 0.95))} / {milliseconds(percentile(open_gl_world_nanos, 0.99))}",
+        f"- OpenGL presented/dropped frames: {int(presented_frames)} / {int(dropped_frames)} "
+        f"({dropped_percent:.2f}% dropped)",
+        f"- GC delta across report windows: {int(total_gc_count)} collections / {int(total_gc_time)}ms "
+        f"({gc_average_millis:.2f}ms average, {gc_time_percent:.2f}% of sampled duration)",
     ]
     if heap_values:
         lines.append(
             f"- Heap used range: {int(min(heap_values))}..{int(max(heap_values))} bytes"
         )
+        quarter = max(1, len(heap_values) // 4)
+        early_floor = min(heap_values[:quarter])
+        late_floor = min(heap_values[-quarter:])
+        lines.append(
+            f"- Early/late sampled heap floor: {int(early_floor)} / {int(late_floor)} bytes "
+            f"(delta {int(late_floor - early_floor):+d}); this is a retention signal, not leak proof."
+        )
 
-    lines.extend(["", "### Worst sampled frames", ""])
+    lines.extend(["", "### Worst sampled OpenGL render windows", ""])
     if not worst_records:
         lines.append("- No telemetry samples.")
     for record in worst_records:
@@ -249,7 +293,10 @@ def build_summary(
         correlation = ", ".join(flags) if flags else "no recorded pressure signal"
         lines.append(
             f"- Frame {int(numeric(record, 'rendererFrameSequence'))}: "
-            f"{milliseconds(numeric(record, 'frame.lastNanos'))}; correlated with {correlation}."
+            f"render {milliseconds(numeric(record, 'stage.openGLRender.window.averageNanos'))}, "
+            f"world {milliseconds(numeric(record, 'stage.openGLWorld.window.averageNanos'))}, "
+            f"client loop {milliseconds(numeric(record, 'stage.clientLoop.window.averageNanos'))}; "
+            f"correlated with {correlation}."
         )
 
     lines.extend(["", "## Renderer Signals", ""])
@@ -263,7 +310,17 @@ def build_summary(
         "client.exception",
     )
     for event_type in signal_types:
-        lines.append(f"- `{event_type}`: {event_counts.get(event_type, 0)}")
+        matching_events = [event for event in events if event.get("eventType") == event_type]
+        transition_count = sum(
+            1 + int(numeric(event, "suppressedTransitions")) for event in matching_events
+        )
+        if any("suppressedTransitions" in event for event in matching_events):
+            lines.append(
+                f"- `{event_type}`: {len(matching_events)} records / "
+                f"{transition_count} aggregated transitions"
+            )
+        else:
+            lines.append(f"- `{event_type}`: {event_counts.get(event_type, 0)}")
 
     lines.extend(["", "## Renderer 2D Capacity", ""])
     latest = telemetry[-1] if telemetry else {}
@@ -284,10 +341,19 @@ def build_summary(
         dropped = numeric(
             latest, f"counter.renderer2D{metric_name}CommandDropped.lifetime.total"
         )
+        latest_dropped = numeric(
+            latest, f"counter.renderer2D{metric_name}CommandDropped.recent.latest"
+        )
+        drop_windows = sum(
+            1
+            for record in report_records
+            if numeric(record, f"counter.renderer2D{metric_name}CommandDropped.window.total") > 0
+        )
         limit = numeric(latest, f"config.renderer2D.{limit_name}")
         lines.append(
             f"- {label}: latest accepted {accepted:g}, lifetime max {maximum:g}, "
-            f"total dropped {dropped:g}, limit {limit:g}"
+            f"latest dropped {latest_dropped:g}, total dropped {dropped:g} across "
+            f"{drop_windows} report windows, limit {limit:g}"
         )
 
     lines.extend(["", "## Captures", ""])

@@ -53,6 +53,10 @@ def make_session(session_dir: Path) -> None:
                 rendererFrameSequence=300,
                 **{
                     "frame.lastNanos": 16_000_000,
+                    "stage.clientLoop.window.averageNanos": 16_700_000,
+                    "stage.sceneRender.window.averageNanos": 3_000_000,
+                    "stage.openGLRender.window.averageNanos": 7_000_000,
+                    "stage.openGLWorld.window.averageNanos": 5_000_000,
                     "runtime.heap.usedBytes": 100_000_000,
                     "runtime.gc.collectionCountDelta": 0,
                     "runtime.gc.collectionTimeMillisDelta": 0,
@@ -71,6 +75,10 @@ def make_session(session_dir: Path) -> None:
                 rendererFrameSequence=600,
                 **{
                     "frame.lastNanos": 48_000_000,
+                    "stage.clientLoop.window.averageNanos": 16_800_000,
+                    "stage.sceneRender.window.averageNanos": 3_500_000,
+                    "stage.openGLRender.window.averageNanos": 10_000_000,
+                    "stage.openGLWorld.window.averageNanos": 8_000_000,
                     "runtime.heap.usedBytes": 140_000_000,
                     "runtime.gc.collectionCountDelta": 1,
                     "runtime.gc.collectionTimeMillisDelta": 7,
@@ -137,10 +145,10 @@ def main() -> None:
             raise AssertionError(result.stderr)
         for snippet in (
             "# Renderer Diagnostic Session Summary",
-            "Frame sample p50/p95/p99: 16.000ms / 48.000ms / 48.000ms",
-            "GC delta across report windows: 1 collections / 7ms",
-            "Frame 600: 48.000ms; correlated with GC activity, chunk uploads, OpenGL frame drops, RotatedSprite command overflow.",
-            "rotated-sprite: latest accepted 256, lifetime max 256, total dropped 3, limit 256",
+            "OpenGL render window p50/p95/p99: 7.000ms / 10.000ms / 10.000ms",
+            "GC delta across report windows: 1 collections / 7ms (7.00ms average",
+            "Frame 600: render 10.000ms, world 8.000ms, client loop 16.800ms; correlated with GC activity, chunk uploads, OpenGL frame drops, RotatedSprite command overflow.",
+            "rotated-sprite: latest accepted 256, lifetime max 256, latest dropped 0, total dropped 3 across 1 report windows, limit 256",
             "Burst 1 frame 0: `completed` at `captures/capture-fixture/`",
             "Indexed capture artifacts are present.",
         ):

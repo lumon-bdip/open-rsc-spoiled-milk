@@ -227,6 +227,34 @@ unless `--no-write` is supplied. `--verbose` includes the full event inventory;
 `--analyze-captures` runs the established strict frame analyzer for completed
 indexed frames.
 
+### First live session finding
+
+- A roughly `16`-minute live route through several dense NPC, sprite, and
+  scenery areas was visually accepted: world visuals, shadows, and animations
+  all looked correct.
+- The corrected analyzer now ranks actual OpenGL render windows instead of the
+  lightweight framebuffer handoff. Client-loop p50/p95/p99 was
+  `16.666/17.683/18.591ms`; OpenGL render p50/p95/p99 was
+  `6.673/9.139/9.782ms`; the worst sampled render window was `10.057ms`.
+  There were no renderer slow-frame events or client exceptions.
+- OpenGL reported `57,277` presented and `696` replaced pending frames
+  (`1.20%`). This did not produce visible instability and the latest windows
+  were generally near the expected cadence, so treat it as a trend to compare
+  rather than an immediate visual defect.
+- GC accounted for about `0.78%` of sampled session time at `2.93ms` per
+  collection on average. The late sampled heap floor was about `270MB` above
+  the early floor after extensive area traversal. That is a retention signal,
+  not proof of a leak; a longer idle/relog comparison should precede JVM or
+  cache changes.
+- Primitive command capture reached `4096` and accumulated `41,926` drops only
+  in the first report window. All `32` overflow events aligned exactly with the
+  session's `32` world-section loads, while current dense-area frames reported
+  zero drops. Do not grow the cap based on this alone; first determine whether
+  load-transition primitives are intentionally disposable or visually
+  relevant.
+- No `Ctrl+F9` burst was present in the initially reviewed session, so live
+  artifact-index and strict per-frame validation remain pending.
+
 ## Ongoing Visual Refinement Loop
 
 For each manager-reported visual test:

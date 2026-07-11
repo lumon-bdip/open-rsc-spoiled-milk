@@ -1186,6 +1186,14 @@ they are not visual requirements for the baseline.
         live diagnostic launch showed normal `steady` /
         `animated-object-signature` alternation flooding the event stream.
         Preserve the suppressed transition count and flush it on shutdown.
+  - [x] Accept the first structured live-session visual/performance baseline
+        after dense NPC, sprite, scenery, shadow, and animation routes looked
+        correct. OpenGL render p95 was `9.139ms` with a `10.057ms` worst sampled
+        window and no slow-frame/exception events. Primitive overflow was
+        isolated to load-transition reporting: all `32` events matched the
+        `32` section loads, with zero current dense-frame drops. Heap-floor
+        growth remains a retention signal for a later idle/relog comparison,
+        not a diagnosed leak.
 - [ ] Build a replay harness for captured renderer-v2 frames so a problematic
       entity/occlusion frame can be inspected without live combat timing.
   - [x] Add an offline capture analyzer that validates `Ctrl+F9` capture
