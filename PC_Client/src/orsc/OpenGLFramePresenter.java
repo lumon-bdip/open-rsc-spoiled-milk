@@ -3411,7 +3411,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			drawSpriteCommand(command);
 			return;
 		}
-		if (!drawOpenGLCompositeDynamicSpriteTexture(command, textureData, 1.0f)) {
+		if (!drawOpenGLCompositeDynamicSpriteTexture(
+			command,
+			textureData,
+			command.getAlpha() / (float) Renderer2DFrame.SpriteCommand.FULL_ALPHA)) {
 			drawSpriteCommand(command);
 		}
 	}
@@ -3576,7 +3579,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				}
 				int replayRgb = command.getTransform().apply(sourcePixel)
 					& orsc.graphics.RendererTransparency.RGB_MASK;
-				rgba = (replayRgb << 8) | alpha;
+				// Depth masking owns visibility only. Sprite opacity is applied by
+				// drawSpriteRegion, keeping it out of the texture alpha channel.
+				rgba = (replayRgb << 8) | Renderer2DFrame.SpriteCommand.FULL_ALPHA;
 				visiblePixelCount++;
 				overlayPixels.putInt(rgba);
 			}
