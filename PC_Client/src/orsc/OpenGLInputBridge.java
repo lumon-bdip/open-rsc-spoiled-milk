@@ -195,6 +195,7 @@ final class OpenGLInputBridge implements AutoCloseable {
 		if (pressed
 			&& frameCaptureHotkeyEnabled
 			&& binding.awtKeyCode == KeyEvent.VK_F9
+			&& !ClientHotkeySettings.shouldSuppressFunctionKey(binding.awtKeyCode)
 			&& (mods & gl.GLFW_MOD_CONTROL) != 0) {
 			delegate.requestFrameCaptureBurst();
 			delegate.log("OpenGL frame capture burst requested; next "

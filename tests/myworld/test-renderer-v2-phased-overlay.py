@@ -880,8 +880,8 @@ def main() -> None:
     )
     require(
         applet,
-        "String tuningKeysLine = \"F7 terrain \"",
-        "bounded performance overlay live renderer tuning line",
+        "String tuningKeysLine = ClientHotkeySettings.showDeveloperFunctionKeyHints()",
+        "bounded performance overlay release-aware renderer tuning line",
     )
     require(
         telemetry,

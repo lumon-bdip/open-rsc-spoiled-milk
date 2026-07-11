@@ -49,8 +49,10 @@ def main() -> None:
     )
     require(
         presenter,
-        "binding.awtKeyCode == KeyEvent.VK_F9\n\t\t\t&& (mods & gl.GLFW_MOD_CONTROL) != 0",
-        "Ctrl+F9 burst capture trigger",
+        "binding.awtKeyCode == KeyEvent.VK_F9\n"
+        "\t\t\t&& !ClientHotkeySettings.shouldSuppressFunctionKey(binding.awtKeyCode)\n"
+        "\t\t\t&& (mods & gl.GLFW_MOD_CONTROL) != 0",
+        "developer-only Ctrl+F9 burst capture trigger",
     )
     require(
         presenter,

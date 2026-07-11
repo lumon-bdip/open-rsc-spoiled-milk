@@ -18,6 +18,7 @@ cd /d "%~dp0game-files"
 java ^
   -Xms512m ^
   -Xmx2g ^
+  -Dspoiledmilk.releaseBuild=true ^
   -Dsun.java2d.opengl=true ^
   -Dspoiledmilk.directFramebuffer=true ^
   -Dspoiledmilk.openglPresenter=true ^

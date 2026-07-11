@@ -26,6 +26,7 @@ cd "$GAME_DIR"
 exec java \
   -Xms512m \
   -Xmx2g \
+  -Dspoiledmilk.releaseBuild=true \
   -Dsun.java2d.opengl=true \
   -Dspoiledmilk.directFramebuffer=true \
   -Dspoiledmilk.openglPresenter=true \
