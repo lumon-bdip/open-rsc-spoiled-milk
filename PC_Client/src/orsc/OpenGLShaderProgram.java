@@ -50,6 +50,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		+ "uniform int uTextureEnabled;\n"
 		+ "uniform int uLightingMode;\n"
 		+ "uniform float uBrightness;\n"
+		+ "uniform float uContrast;\n"
 		+ "uniform float uFogStrength;\n"
 		+ "uniform float uToneRed;\n"
 		+ "uniform float uToneGreen;\n"
@@ -101,12 +102,16 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		+ "\tvec3 toned = clamp(color * vec3(uToneRed, uToneGreen, uToneBlue), 0.0, 1.0);\n"
 		+ "\treturn mix(color, toned, clamp(uToneBlend, 0.0, 1.0));\n"
 		+ "}\n"
+		+ "vec3 applyContrast(vec3 color) {\n"
+		+ "\treturn clamp((color - vec3(0.5)) * uContrast + vec3(0.5), 0.0, 1.0);\n"
+		+ "}\n"
 		+ "void main() {\n"
 		+ "\tfloat effectiveLight = effectiveLegacyLight(vBaseLegacyLight, vLegacyLight);\n"
 		+ "\tvec4 color = uTextureEnabled != 0\n"
 		+ "\t\t? vec4(vec3(textureLightFactor(effectiveLight) * uBrightness), vMaterialColor.a) * texture2D(uTexture, vTexCoord)\n"
 		+ "\t\t: vec4(legacyFlatMaterialColor(vRawMaterialColor, effectiveLight), vMaterialColor.a);\n"
 		+ "\tcolor.rgb = applyTone(color.rgb);\n"
+		+ "\tcolor.rgb = applyContrast(color.rgb);\n"
 		+ "\tgl_FragColor = color;\n"
 		+ "}\n";
 	private static final String RESIDENT_CHUNK_PARITY_VERTEX_SHADER =
@@ -178,7 +183,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "uniform float uToneBlue;\n"
 			+ "uniform float uToneBlend;\n"
 			+ "uniform float uBrightness;\n"
-			+ "uniform float uReliefStrength;\n"
+			+ "uniform float uContrast;\n"
+			+ "uniform float uTerrainReliefStrength;\n"
+			+ "uniform float uObjectReliefStrength;\n"
 			+ "uniform int uTerrainVariationEnabled;\n"
 			+ "uniform float uTerrainVariationStrength;\n"
 			+ "uniform float uTerrainVariationTolerance;\n"
@@ -240,7 +247,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\tfloat detailFloor = vModelKind > 0.5 && vModelKind < 1.5 ? 0.84 : 0.89;\n"
 			+ "\tfloat detailCeiling = vModelKind > 0.5 && vModelKind < 1.5 ? 1.08 : 1.04;\n"
 			+ "\tfloat reliefFactor = mix(detailCeiling, detailFloor, legacyDetail);\n"
-			+ "\treturn clamp(mix(1.0, reliefFactor, clamp(uReliefStrength, 0.0, 2.5)), 0.35, 1.25);\n"
+			+ "\tfloat reliefStrength = vModelKind > 0.5 && vModelKind < 1.5\n"
+			+ "\t\t? uTerrainReliefStrength : uObjectReliefStrength;\n"
+			+ "\treturn clamp(mix(1.0, reliefFactor, clamp(reliefStrength, 0.0, 4.5)), 0.35, 1.25);\n"
 			+ "}\n"
 			+ "float terrainVariationHash(vec2 position) {\n"
 			+ "\treturn fract(sin(dot(position, vec2(127.1, 311.7))) * 43758.5453123);\n"
@@ -277,6 +286,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "vec3 applyTone(vec3 color) {\n"
 			+ "\tvec3 toned = clamp(color * vec3(uToneRed, uToneGreen, uToneBlue), 0.0, 1.0);\n"
 			+ "\treturn mix(color, toned, clamp(uToneBlend, 0.0, 1.0));\n"
+			+ "}\n"
+			+ "vec3 applyContrast(vec3 color) {\n"
+			+ "\treturn clamp((color - vec3(0.5)) * uContrast + vec3(0.5), 0.0, 1.0);\n"
 			+ "}\n"
 			+ "float distanceFogAmount() {\n"
 			+ "\tif (uFogEnabled == 0) {\n"
@@ -333,12 +345,16 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\t\tfloat diffuse = remasterDiffuse(lightDirection);\n"
 			+ "\t\tcolor.rgb = applyTerrainTransitionBlend(color.rgb);\n"
 			+ "\t\tcolor.rgb = applyTargetedTerrainVariation(color.rgb);\n"
-			+ "\t\tcolor.rgb *= remasterClassicShadeFactor(diffuse) * remasterLocalReliefFactor();\n"
+			+ "\t\tcolor.rgb *= remasterClassicShadeFactor(diffuse);\n"
 			+ "\t\tcolor.rgb *= 1.0 - terrainShadowMaskAlpha();\n"
-			+ "\t\tcolor.rgb *= uBrightness;\n"
 			+ "\t\tcolor.rgb = clamp(color.rgb + remasterGlowColor(), 0.0, 1.0);\n"
 			+ "\t}\n"
+			+ "\tif (uRawMaterialMode == 0) {\n"
+			+ "\t\tcolor.rgb *= remasterLocalReliefFactor();\n"
+			+ "\t}\n"
+			+ "\tcolor.rgb *= uBrightness;\n"
 			+ "\tcolor.rgb = applyTone(color.rgb);\n"
+			+ "\tcolor.rgb = applyContrast(color.rgb);\n"
 			+ "\tif (uFogEnabled != 0) {\n"
 			+ "\t\tcolor.rgb = mix(color.rgb, vec3(uFogRed, uFogGreen, uFogBlue), distanceFogAmount());\n"
 			+ "\t}\n"
@@ -364,12 +380,14 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private final int lightIntensityUniformLocation;
 	private final int lightingModeUniformLocation;
 	private final int brightnessUniformLocation;
+	private final int contrastUniformLocation;
 	private final int fogStrengthUniformLocation;
 	private final int toneRedUniformLocation;
 	private final int toneGreenUniformLocation;
 	private final int toneBlueUniformLocation;
 	private final int toneBlendUniformLocation;
-	private final int reliefStrengthUniformLocation;
+	private final int terrainReliefStrengthUniformLocation;
+	private final int objectReliefStrengthUniformLocation;
 	private final int terrainVariationEnabledUniformLocation;
 	private final int terrainVariationStrengthUniformLocation;
 	private final int terrainVariationToleranceUniformLocation;
@@ -412,12 +430,14 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int lightIntensityUniformLocation,
 		int lightingModeUniformLocation,
 		int brightnessUniformLocation,
+		int contrastUniformLocation,
 		int fogStrengthUniformLocation,
 		int toneRedUniformLocation,
 		int toneGreenUniformLocation,
 		int toneBlueUniformLocation,
 		int toneBlendUniformLocation,
-		int reliefStrengthUniformLocation,
+		int terrainReliefStrengthUniformLocation,
+		int objectReliefStrengthUniformLocation,
 		int terrainVariationEnabledUniformLocation,
 		int terrainVariationStrengthUniformLocation,
 		int terrainVariationToleranceUniformLocation,
@@ -457,12 +477,14 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		this.lightIntensityUniformLocation = lightIntensityUniformLocation;
 		this.lightingModeUniformLocation = lightingModeUniformLocation;
 		this.brightnessUniformLocation = brightnessUniformLocation;
+		this.contrastUniformLocation = contrastUniformLocation;
 		this.fogStrengthUniformLocation = fogStrengthUniformLocation;
 		this.toneRedUniformLocation = toneRedUniformLocation;
 		this.toneGreenUniformLocation = toneGreenUniformLocation;
 		this.toneBlueUniformLocation = toneBlueUniformLocation;
 		this.toneBlendUniformLocation = toneBlendUniformLocation;
-		this.reliefStrengthUniformLocation = reliefStrengthUniformLocation;
+		this.terrainReliefStrengthUniformLocation = terrainReliefStrengthUniformLocation;
+		this.objectReliefStrengthUniformLocation = objectReliefStrengthUniformLocation;
 		this.terrainVariationEnabledUniformLocation = terrainVariationEnabledUniformLocation;
 		this.terrainVariationStrengthUniformLocation = terrainVariationStrengthUniformLocation;
 		this.terrainVariationToleranceUniformLocation = terrainVariationToleranceUniformLocation;
@@ -526,11 +548,13 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					-1,
 					gl.glGetUniformLocation(program, "uLightingMode"),
 					gl.glGetUniformLocation(program, "uBrightness"),
+					gl.glGetUniformLocation(program, "uContrast"),
 					gl.glGetUniformLocation(program, "uFogStrength"),
 					gl.glGetUniformLocation(program, "uToneRed"),
 					gl.glGetUniformLocation(program, "uToneGreen"),
 					gl.glGetUniformLocation(program, "uToneBlue"),
 					gl.glGetUniformLocation(program, "uToneBlend"),
+					-1,
 					-1,
 					-1,
 					-1,
@@ -613,12 +637,14 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					gl.glGetUniformLocation(program, "uLightIntensity"),
 					-1,
 					gl.glGetUniformLocation(program, "uBrightness"),
+					gl.glGetUniformLocation(program, "uContrast"),
 					-1,
 					gl.glGetUniformLocation(program, "uToneRed"),
 					gl.glGetUniformLocation(program, "uToneGreen"),
 					gl.glGetUniformLocation(program, "uToneBlue"),
 					gl.glGetUniformLocation(program, "uToneBlend"),
-					gl.glGetUniformLocation(program, "uReliefStrength"),
+					gl.glGetUniformLocation(program, "uTerrainReliefStrength"),
+					gl.glGetUniformLocation(program, "uObjectReliefStrength"),
 					gl.glGetUniformLocation(program, "uTerrainVariationEnabled"),
 					gl.glGetUniformLocation(program, "uTerrainVariationStrength"),
 					gl.glGetUniformLocation(program, "uTerrainVariationTolerance"),
@@ -697,7 +723,13 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			gl.glUniform1i(lightingModeUniformLocation, RendererLightingSettings.getMode().ordinal());
 		}
 		if (brightnessUniformLocation >= 0) {
-			gl.glUniform1f(brightnessUniformLocation, RendererDayNightCycle.currentBrightnessMultiplier());
+			gl.glUniform1f(
+				brightnessUniformLocation,
+				RendererDayNightCycle.currentBrightnessMultiplier()
+					* RendererColorDiagnosticSettings.getDimnessMultiplier());
+		}
+		if (contrastUniformLocation >= 0) {
+			gl.glUniform1f(contrastUniformLocation, RendererColorDiagnosticSettings.getContrastMultiplier());
 		}
 		if (fogStrengthUniformLocation >= 0) {
 			gl.glUniform1f(fogStrengthUniformLocation, RendererFogSettings.getMode().multiplier);
@@ -715,8 +747,15 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		if (toneBlendUniformLocation >= 0) {
 			gl.glUniform1f(toneBlendUniformLocation, presentation.toneBlend);
 		}
-		if (reliefStrengthUniformLocation >= 0) {
-			gl.glUniform1f(reliefStrengthUniformLocation, RendererReliefSettings.getStrength());
+		if (terrainReliefStrengthUniformLocation >= 0) {
+			gl.glUniform1f(
+				terrainReliefStrengthUniformLocation,
+				RendererReliefSettings.getTerrainStrength());
+		}
+		if (objectReliefStrengthUniformLocation >= 0) {
+			gl.glUniform1f(
+				objectReliefStrengthUniformLocation,
+				RendererReliefSettings.getObjectStrength());
 		}
 		if (terrainVariationEnabledUniformLocation >= 0) {
 			gl.glUniform1i(terrainVariationEnabledUniformLocation, RendererTerrainVariationSettings.isEnabled() ? 1 : 0);

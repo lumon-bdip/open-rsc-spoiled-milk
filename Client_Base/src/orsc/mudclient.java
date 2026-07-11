@@ -33,6 +33,7 @@ import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.Renderer3DMeshFrame;
 import orsc.graphics.three.Renderer3DMaterialClassifier;
 import orsc.graphics.three.Renderer3DModelKind;
+import orsc.graphics.three.Renderer3DRoofVisibility;
 import orsc.graphics.three.Renderer3DSettings;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.RSModel;
@@ -641,6 +642,10 @@ public final class mudclient implements Runnable {
 	private static final int SETTINGS_SCALE_LABEL_X_OFFSET = 73;
 	private static final int SETTINGS_SCALE_PLUS_X_OFFSET = 45;
 	private static final int SETTINGS_SECTION_ROW = -1000;
+	private static final int SETTINGS_TERRAIN_RELIEF_SLIDER = 66;
+	private static final int SETTINGS_OBJECT_RELIEF_SLIDER = 67;
+	private static final int SETTINGS_DIMNESS_SLIDER = 68;
+	private static final int SETTINGS_CONTRAST_SLIDER = 69;
 	private static final int NORMAL_CAMERA_ZOOM_MIN = 0;
 	private static final int NORMAL_CAMERA_ZOOM_MAX = 255;
 	private static final int EXTRA_CAMERA_ZOOM_MIN = -100;
@@ -1168,6 +1173,9 @@ public final class mudclient implements Runnable {
 	private int magicIconScrollRow = 0;
 	private int prayerIconScrollRow = 0;
 	private int summoningIconScrollRow = 0;
+	private int magicTextScrollPosition = 0;
+	private int prayerTextScrollPosition = 0;
+	private int summoningTextScrollPosition = 0;
 	private int flag = 0;
 	private Timer tiktok = new Timer();
 	private NComponent mainComponent;
@@ -1231,6 +1239,7 @@ public final class mudclient implements Runnable {
 		}
 
 		initConfig();
+		SpellbookLayoutSettings.loadFromClientSettings(loadClientSettings());
 		loadMinimapSettings();
 	}
 
@@ -1280,13 +1289,6 @@ public final class mudclient implements Runnable {
 		saveClientSettings(props);
 	}
 
-	private static void saveRendererBrightnessSettings() {
-		Properties props = loadClientSettings();
-		RendererBrightnessSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
 	private static void saveRendererFogSettings() {
 		Properties props = loadClientSettings();
 		RendererFogSettings.saveToClientSettings(props);
@@ -1318,6 +1320,21 @@ public final class mudclient implements Runnable {
 	private static void saveRendererToneSettings() {
 		Properties props = loadClientSettings();
 		RendererToneSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRendererTuningSettings() {
+		Properties props = loadClientSettings();
+		RendererReliefSettings.saveToClientSettings(props);
+		RendererColorDiagnosticSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveSpellbookLayoutSettings() {
+		Properties props = loadClientSettings();
+		SpellbookLayoutSettings.saveToClientSettings(props);
 
 		saveClientSettings(props);
 	}
@@ -6590,6 +6607,10 @@ public final class mudclient implements Runnable {
 					} else if (this.world.playerAlive) {
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
+						Renderer3DRoofVisibility roofVisibility = this.currentRenderer3DRoofVisibility();
+						boolean roofsVisible = roofVisibility.areRoofsVisible();
+						boolean automaticRoofCameraZoom = roofVisibility.usesAutomaticRoofCameraZoom();
+
 						int centerX;
 					for (centerX = 0; centerX < this.world.modelRoofGrid[this.lastHeightOffset].length; ++centerX) {
 						this.scene.removeModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
@@ -6601,7 +6622,7 @@ public final class mudclient implements Runnable {
 						}
 
 						// If the player is hiding roofs, we want to skip the camera zoom
-						if (!C_HIDE_ROOFS && !this.doCameraZoom) {
+						if (automaticRoofCameraZoom && !this.doCameraZoom) {
 							amountToZoom -= 50;
 							this.doCameraZoom = true;
 						}
@@ -6609,18 +6630,13 @@ public final class mudclient implements Runnable {
 						// Sets camera zoom distance based on last saved value in the player cache
 						cameraZoom = minCameraZoom + (osConfig.C_LAST_ZOOM * 2);
 
-						if ((this.lastHeightOffset == 0
-							&& (world.collisionFlags[this.localPlayer.currentX / 128][this.localPlayer.currentZ
-							/ 128] & 0x80) == 0)) {
-
-							if (!C_HIDE_ROOFS) {
-								this.scene.addModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
-								if (this.lastHeightOffset == 0) {
-									this.scene.addModel(this.world.modelWallGrid[1][centerX]);
-									this.scene.addModel(this.world.modelRoofGrid[1][centerX]);
-									this.scene.addModel(this.world.modelWallGrid[2][centerX]);
-									this.scene.addModel(this.world.modelRoofGrid[2][centerX]);
-								}
+						if (roofsVisible) {
+							this.scene.addModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
+							if (this.lastHeightOffset == 0) {
+								this.scene.addModel(this.world.modelWallGrid[1][centerX]);
+								this.scene.addModel(this.world.modelRoofGrid[1][centerX]);
+								this.scene.addModel(this.world.modelWallGrid[2][centerX]);
+								this.scene.addModel(this.world.modelRoofGrid[2][centerX]);
 							}
 
 							if (this.doCameraZoom) {
@@ -7042,6 +7058,7 @@ public final class mudclient implements Runnable {
 					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
 					if (renderer3DFrame != null) {
+						renderer3DFrame.setRoofVisibility(roofVisibility, this.lastHeightOffset);
 						renderer3DFrame.setWorldChunkFrame(
 							this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame()));
 						Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
@@ -11389,15 +11406,18 @@ public final class mudclient implements Runnable {
 
 				// 0 is magic list
 				if (this.magicOrPrayerList == 0) {
-					this.panelMagic.clearList(this.controlMagicPanel);
-					this.clampMagicIconScrollRow();
+					int hoveredSpell = -1;
+					if (SpellbookLayoutSettings.usesTextLayout()) {
+						hoveredSpell = this.drawMagicTextList();
+					} else {
+						this.panelMagic.clearList(this.controlMagicPanel);
+						this.clampMagicIconScrollRow();
 					int spellColumns = MAGIC_ICON_COLUMNS;
 					int spellIconSize = MAGIC_ICON_SIZE;
 					int spellGap = MAGIC_ICON_GAP;
 					int spellGridWidth = spellColumns * spellIconSize + (spellColumns - 1) * spellGap;
 					int spellGridX = magicPanelX + (magicPanelWidth - spellGridWidth) / 2;
 					int spellGridY = magicPanelYStart + 27;
-					int hoveredSpell = -1;
 					int relativeSpellMouseX = this.mouseX - spellGridX;
 					int relativeSpellMouseY = this.mouseY - spellGridY;
 					int firstVisibleSpellSlot = this.magicIconScrollRow * spellColumns;
@@ -11454,6 +11474,7 @@ public final class mudclient implements Runnable {
 					}
 					this.drawMagicIconScrollbar(magicPanelX + magicPanelWidth - 11, spellGridY,
 						MAGIC_ICON_VISIBLE_ROWS * spellIconSize + (MAGIC_ICON_VISIBLE_ROWS - 1) * spellGap);
+					}
 
 					magicLevel = hoveredSpell;
 					if (magicLevel != -1) {
@@ -11501,8 +11522,16 @@ public final class mudclient implements Runnable {
 
 				// 1 is prayer list
 				if (this.magicOrPrayerList == 1) {
-					this.panelMagic.clearList(this.controlMagicPanel);
-					this.clampPrayerIconScrollRow();
+					int prayerAllocatedPoints = this.getAllocatedPrayerPoints();
+					int prayerMaxPoints = this.getPrayerAllocationPoints();
+					int prayerAvailablePoints = Math.max(0, prayerMaxPoints - prayerAllocatedPoints);
+					int prayerTooltipY = magicPanelYStart + 122;
+					int hoveredPrayer = -1;
+					if (SpellbookLayoutSettings.usesTextLayout()) {
+						hoveredPrayer = this.drawPrayerTextList();
+					} else {
+						this.panelMagic.clearList(this.controlMagicPanel);
+						this.clampPrayerIconScrollRow();
 					int prayerColumns = PRAYER_ICON_COLUMNS;
 					int prayerIconSize = PRAYER_ICON_SIZE;
 					int prayerGap = PRAYER_ICON_GAP;
@@ -11510,11 +11539,7 @@ public final class mudclient implements Runnable {
 					int prayerGridX = magicPanelX + (magicPanelWidth - prayerGridWidth) / 2;
 					int prayerGridY = magicPanelYStart + 27;
 					int prayerGridHeight = PRAYER_ICON_VISIBLE_ROWS * prayerIconSize + (PRAYER_ICON_VISIBLE_ROWS - 1) * prayerGap;
-					int prayerTooltipY = prayerGridY + prayerGridHeight + 14;
-					int prayerAllocatedPoints = this.getAllocatedPrayerPoints();
-					int prayerMaxPoints = this.getPrayerAllocationPoints();
-					int prayerAvailablePoints = Math.max(0, prayerMaxPoints - prayerAllocatedPoints);
-					int hoveredPrayer = -1;
+					prayerTooltipY = prayerGridY + prayerGridHeight + 14;
 					int relativePrayerMouseX = this.mouseX - prayerGridX;
 					int relativePrayerMouseY = this.mouseY - prayerGridY;
 					int firstVisiblePrayerSlot = this.prayerIconScrollRow * prayerColumns;
@@ -11551,11 +11576,12 @@ public final class mudclient implements Runnable {
 					}
 					this.drawPrayerIconScrollbar(magicPanelX + magicPanelWidth - 11, prayerGridY,
 						PRAYER_ICON_VISIBLE_ROWS * prayerIconSize + (PRAYER_ICON_VISIBLE_ROWS - 1) * prayerGap);
+					}
 
 					magicLevel = hoveredPrayer;
 					this.getSurface().drawColoredStringCentered(magicPanelX + magicPanelWidth / 2,
 						"Prayer: " + prayerAvailablePoints + "/" + prayerMaxPoints,
-						0xFFFFFF, 0, 1, prayerTooltipY);
+						0xFFFFFF, 0, 1, prayerTooltipY + 4);
 					if (hoveredPrayer == -1) {
 						this.getSurface().drawString("Point at a prayer for a description", magicPanelX + 2, prayerTooltipY + 13, 0, 1);
 					} else {
@@ -11577,8 +11603,13 @@ public final class mudclient implements Runnable {
 
 				// 2 is summoning list
 				if (this.magicOrPrayerList == 2) {
-					this.panelMagic.clearList(this.controlMagicPanel);
-					this.clampSummoningIconScrollRow();
+					int summonTooltipY = magicPanelYStart + 114;
+					int hoveredSummon = -1;
+					if (SpellbookLayoutSettings.usesTextLayout()) {
+						hoveredSummon = this.drawSummoningTextList();
+					} else {
+						this.panelMagic.clearList(this.controlMagicPanel);
+						this.clampSummoningIconScrollRow();
 					int summonColumns = SUMMONING_ICON_COLUMNS;
 					int summonIconSize = SUMMONING_ICON_SIZE;
 					int summonGap = SUMMONING_ICON_GAP;
@@ -11586,8 +11617,6 @@ public final class mudclient implements Runnable {
 					int summonGridX = magicPanelX + (magicPanelWidth - summonGridWidth) / 2;
 					int summonGridY = magicPanelYStart + 27;
 					int summonGridHeight = SUMMONING_ICON_VISIBLE_ROWS * summonIconSize + (SUMMONING_ICON_VISIBLE_ROWS - 1) * summonGap;
-					int summonTooltipY = magicPanelYStart + 114;
-					int hoveredSummon = -1;
 					int relativeSummonMouseX = this.mouseX - summonGridX;
 					int relativeSummonMouseY = this.mouseY - summonGridY;
 					int firstVisibleSummonSlot = this.summoningIconScrollRow * summonColumns;
@@ -11624,6 +11653,7 @@ public final class mudclient implements Runnable {
 					}
 					this.drawSummoningIconScrollbar(magicPanelX + magicPanelWidth - 11, summonGridY,
 						SUMMONING_ICON_VISIBLE_ROWS * summonIconSize + (SUMMONING_ICON_VISIBLE_ROWS - 1) * summonGap);
+					}
 
 					if (hoveredSummon == -1) {
 						this.getSurface().drawColoredStringCentered(magicPanelX + magicPanelWidth / 2,
@@ -11650,63 +11680,52 @@ public final class mudclient implements Runnable {
 								? 0
 								: magicPanelX < firstTabWidth + secondTabWidth ? 1 : 2;
 							if (clickedList != this.magicOrPrayerList) {
-								if (this.magicOrPrayerList == 0) {
-									magicMenuIndex = this.magicIconScrollRow;
-								}
-								this.magicOrPrayerList = clickedList;
-								if (this.magicOrPrayerList == 0) {
-									this.magicIconScrollRow = magicMenuIndex;
-									this.clampMagicIconScrollRow();
-								} else if (this.magicOrPrayerList == 1) {
-									this.clampPrayerIconScrollRow();
+								if (SpellbookLayoutSettings.usesTextLayout()) {
+									this.saveSpellbookTextScrollPosition(this.magicOrPrayerList);
+									this.magicOrPrayerList = clickedList;
+									this.restoreSpellbookTextScrollPosition(this.magicOrPrayerList);
 								} else {
-									this.clampSummoningIconScrollRow();
+									if (this.magicOrPrayerList == 0) {
+										magicMenuIndex = this.magicIconScrollRow;
+									}
+									this.magicOrPrayerList = clickedList;
+									if (this.magicOrPrayerList == 0) {
+										this.magicIconScrollRow = magicMenuIndex;
+										this.clampMagicIconScrollRow();
+									} else if (this.magicOrPrayerList == 1) {
+										this.clampPrayerIconScrollRow();
+									} else {
+										this.clampSummoningIconScrollRow();
+									}
 								}
 							}
 						}
 
 						if (this.mouseButtonClick == 1 && this.magicOrPrayerList == 0) {
-							int spellColumns = MAGIC_ICON_COLUMNS;
-							int spellIconSize = MAGIC_ICON_SIZE;
-							int spellGap = MAGIC_ICON_GAP;
-							int spellGridWidth = spellColumns * spellIconSize + (spellColumns - 1) * spellGap;
-							int spellGridX = (magicPanelWidth - spellGridWidth) / 2;
-							int localSpellX = magicPanelX - spellGridX;
-							int localSpellY = relativeMouseY - 27;
-							int spellColumn = localSpellX / (spellIconSize + spellGap);
-							int spellRow = localSpellY / (spellIconSize + spellGap);
 							spellIndex = -1;
-							if (localSpellX >= 0 && localSpellY >= 0
-								&& spellColumn >= 0 && spellColumn < spellColumns
-								&& spellRow >= 0 && spellRow < MAGIC_ICON_VISIBLE_ROWS
-								&& localSpellX % (spellIconSize + spellGap) < spellIconSize
-								&& localSpellY % (spellIconSize + spellGap) < spellIconSize) {
-								spellIndex = this.getMagicMenuSpellIndex((this.magicIconScrollRow + spellRow) * spellColumns + spellColumn);
-							}
-							if (spellIndex != -1) {
-								magicLevel = this.playerStatCurrent[6];
-								if (magicLevel < EntityHandler.getSpellDef(spellIndex).getReqLevel()) {
-									this.showMessage(false, null,
-										"Your magic ability is not high enough for this spell", MessageType.GAME, 0,
-										null);
-								} else {
-									int k3 = 0;
-									for (Entry<Integer, Integer> e : EntityHandler.getSpellDef(spellIndex)
-										.getRunesRequired()) {
-										if (!hasRunes(e.getKey(), e.getValue())) {
-											this.showMessage(false, null,
-												"You don't have all the reagents you need for this spell",
-												MessageType.GAME, 0, null);
-											k3 = -1;
-											break;
-										}
-										k3++;
-									}
-									if (k3 == EntityHandler.getSpellDef(spellIndex).getRuneCount()) {
-										this.handleMagicSpellClick(spellIndex);
-									}
+							if (SpellbookLayoutSettings.usesTextLayout()) {
+								int selectedRow = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+								spellIndex = selectedRow < 0 ? -1 : this.getMagicMenuSpellIndex(selectedRow);
+							} else {
+								int spellColumns = MAGIC_ICON_COLUMNS;
+								int spellIconSize = MAGIC_ICON_SIZE;
+								int spellGap = MAGIC_ICON_GAP;
+								int spellGridWidth = spellColumns * spellIconSize + (spellColumns - 1) * spellGap;
+								int spellGridX = (magicPanelWidth - spellGridWidth) / 2;
+								int localSpellX = magicPanelX - spellGridX;
+								int localSpellY = relativeMouseY - 27;
+								int spellColumn = localSpellX / (spellIconSize + spellGap);
+								int spellRow = localSpellY / (spellIconSize + spellGap);
+								if (localSpellX >= 0 && localSpellY >= 0
+									&& spellColumn >= 0 && spellColumn < spellColumns
+									&& spellRow >= 0 && spellRow < MAGIC_ICON_VISIBLE_ROWS
+									&& localSpellX % (spellIconSize + spellGap) < spellIconSize
+									&& localSpellY % (spellIconSize + spellGap) < spellIconSize) {
+									spellIndex = this.getMagicMenuSpellIndex(
+										(this.magicIconScrollRow + spellRow) * spellColumns + spellColumn);
 								}
 							}
+							this.activateMagicMenuSpell(spellIndex);
 
 							if (mouseX > lastSpellX && mouseX < lastSpellX + lastSpellWidth && mouseY > lastSpellY && mouseY < lastSpellY + lastSpellHeight
 								&& mouseButtonClick > 0) {
@@ -11731,63 +11750,56 @@ public final class mudclient implements Runnable {
 						}
 
 						if (this.mouseButtonClick == 1 && this.magicOrPrayerList == 1) {
-							int prayerColumns = PRAYER_ICON_COLUMNS;
-							int prayerIconSize = PRAYER_ICON_SIZE;
-							int prayerGap = PRAYER_ICON_GAP;
-							int prayerGridWidth = prayerColumns * prayerIconSize + (prayerColumns - 1) * prayerGap;
-							int prayerGridX = (magicPanelWidth - prayerGridWidth) / 2;
-							int localPrayerX = magicPanelX - prayerGridX;
-							int localPrayerY = relativeMouseY - 27;
-							int prayerColumn = localPrayerX / (prayerIconSize + prayerGap);
-							int prayerRow = localPrayerY / (prayerIconSize + prayerGap);
 							spellIndex = -1;
-							if (localPrayerX >= 0 && localPrayerY >= 0
-								&& prayerColumn >= 0 && prayerColumn < prayerColumns
-								&& prayerRow >= 0 && prayerRow < PRAYER_ICON_VISIBLE_ROWS
-								&& localPrayerX % (prayerIconSize + prayerGap) < prayerIconSize
-								&& localPrayerY % (prayerIconSize + prayerGap) < prayerIconSize) {
-								int prayerIndex = (this.prayerIconScrollRow + prayerRow) * prayerColumns + prayerColumn;
-								if (prayerIndex < EntityHandler.prayerCount()) {
-									spellIndex = prayerIndex;
-								}
-							}
-							if (spellIndex != -1) {
-								if (!this.prayerOn[spellIndex]) {
-									if (!this.canActivatePrayer(spellIndex)) {
-										PrayerDef prayerDef = EntityHandler.getPrayerDef(spellIndex);
-										this.showMessage(false, null,
-											"You need " + prayerDef.getPointCost() + " free prayer points to activate this prayer",
-											MessageType.GAME, 0, null);
-									} else {
-										this.packetHandler.getClientStream().newPacket(60);
-										this.packetHandler.getClientStream().bufferBits.putByte(spellIndex);
-										this.packetHandler.getClientStream().finishPacket();
+							if (SpellbookLayoutSettings.usesTextLayout()) {
+								spellIndex = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+							} else {
+								int prayerColumns = PRAYER_ICON_COLUMNS;
+								int prayerIconSize = PRAYER_ICON_SIZE;
+								int prayerGap = PRAYER_ICON_GAP;
+								int prayerGridWidth = prayerColumns * prayerIconSize + (prayerColumns - 1) * prayerGap;
+								int prayerGridX = (magicPanelWidth - prayerGridWidth) / 2;
+								int localPrayerX = magicPanelX - prayerGridX;
+								int localPrayerY = relativeMouseY - 27;
+								int prayerColumn = localPrayerX / (prayerIconSize + prayerGap);
+								int prayerRow = localPrayerY / (prayerIconSize + prayerGap);
+								if (localPrayerX >= 0 && localPrayerY >= 0
+									&& prayerColumn >= 0 && prayerColumn < prayerColumns
+									&& prayerRow >= 0 && prayerRow < PRAYER_ICON_VISIBLE_ROWS
+									&& localPrayerX % (prayerIconSize + prayerGap) < prayerIconSize
+									&& localPrayerY % (prayerIconSize + prayerGap) < prayerIconSize) {
+									int prayerIndex =
+										(this.prayerIconScrollRow + prayerRow) * prayerColumns + prayerColumn;
+									if (prayerIndex < EntityHandler.prayerCount()) {
+										spellIndex = prayerIndex;
 									}
-								} else {
-									this.packetHandler.getClientStream().newPacket(254);
-									this.packetHandler.getClientStream().bufferBits.putByte(spellIndex);
-									this.packetHandler.getClientStream().finishPacket();
 								}
 							}
+							this.togglePrayerMenuPrayer(spellIndex);
 						}
 
 						if (this.mouseButtonClick == 1 && this.magicOrPrayerList == 2) {
-							int summonColumns = SUMMONING_ICON_COLUMNS;
-							int summonIconSize = SUMMONING_ICON_SIZE;
-							int summonGap = SUMMONING_ICON_GAP;
-							int summonGridWidth = summonColumns * summonIconSize + (summonColumns - 1) * summonGap;
-							int summonGridX = (magicPanelWidth - summonGridWidth) / 2;
-							int localSummonX = magicPanelX - summonGridX;
-							int localSummonY = relativeMouseY - 27;
-							int summonColumn = localSummonX / (summonIconSize + summonGap);
-							int summonRow = localSummonY / (summonIconSize + summonGap);
 							int summonIndex = -1;
-							if (localSummonX >= 0 && localSummonY >= 0
-								&& summonColumn >= 0 && summonColumn < summonColumns
-								&& summonRow >= 0 && summonRow < SUMMONING_ICON_VISIBLE_ROWS
-								&& localSummonX % (summonIconSize + summonGap) < summonIconSize
-								&& localSummonY % (summonIconSize + summonGap) < summonIconSize) {
-								summonIndex = (this.summoningIconScrollRow + summonRow) * summonColumns + summonColumn;
+							if (SpellbookLayoutSettings.usesTextLayout()) {
+								summonIndex = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+							} else {
+								int summonColumns = SUMMONING_ICON_COLUMNS;
+								int summonIconSize = SUMMONING_ICON_SIZE;
+								int summonGap = SUMMONING_ICON_GAP;
+								int summonGridWidth = summonColumns * summonIconSize + (summonColumns - 1) * summonGap;
+								int summonGridX = (magicPanelWidth - summonGridWidth) / 2;
+								int localSummonX = magicPanelX - summonGridX;
+								int localSummonY = relativeMouseY - 27;
+								int summonColumn = localSummonX / (summonIconSize + summonGap);
+								int summonRow = localSummonY / (summonIconSize + summonGap);
+								if (localSummonX >= 0 && localSummonY >= 0
+									&& summonColumn >= 0 && summonColumn < summonColumns
+									&& summonRow >= 0 && summonRow < SUMMONING_ICON_VISIBLE_ROWS
+									&& localSummonX % (summonIconSize + summonGap) < summonIconSize
+									&& localSummonY % (summonIconSize + summonGap) < summonIconSize) {
+									summonIndex =
+										(this.summoningIconScrollRow + summonRow) * summonColumns + summonColumn;
+								}
 							}
 							if (summonIndex >= 0 && summonIndex < SUMMONING_NAMES.length) {
 								this.castSummon(summonIndex);
@@ -11801,6 +11813,130 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var16) {
 			throw GenUtil.makeThrowable(var16, "client.GA(" + var1 + ',' + var2 + ')');
 		}
+	}
+
+	private int drawMagicTextList() {
+		this.panelMagic.clearList(this.controlMagicPanel);
+		int row = 0;
+		for (int spellIndex = 0; spellIndex < EntityHandler.spellCount(); spellIndex++) {
+			if (this.isSpellHiddenFromMagicMenu(spellIndex)) {
+				continue;
+			}
+			SpellDef spellDef = EntityHandler.getSpellDef(spellIndex);
+			boolean hasLevel = this.playerStatCurrent[6] >= spellDef.getReqLevel();
+			boolean hasRunes = this.hasSpellRunes(spellIndex);
+			String color = !hasLevel
+				? "@bla@"
+				: this.autoCastSpell == spellIndex
+					? "@gre@"
+					: this.selectedSpell == spellIndex
+						? "@cya@"
+						: hasRunes ? "@yel@" : "@whi@";
+			String marker = this.autoCastSpell == spellIndex
+				? "* "
+				: this.selectedSpell == spellIndex ? "> " : "";
+			this.panelMagic.setListEntry(
+				this.controlMagicPanel,
+				row++,
+				color + marker + "Lvl " + spellDef.getReqLevel() + ": " + spellDef.getName(),
+				0,
+				null,
+				null);
+		}
+		this.panelMagic.drawPanel();
+		int selectedRow = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+		return selectedRow < 0 ? -1 : this.getMagicMenuSpellIndex(selectedRow);
+	}
+
+	private int drawPrayerTextList() {
+		this.panelMagic.clearList(this.controlMagicPanel);
+		for (int prayerIndex = 0; prayerIndex < EntityHandler.prayerCount(); prayerIndex++) {
+			PrayerDef prayerDef = EntityHandler.getPrayerDef(prayerIndex);
+			String color = this.prayerOn[prayerIndex]
+				? "@gre@"
+				: this.canActivatePrayer(prayerIndex) ? "@whi@" : "@bla@";
+			this.panelMagic.setListEntry(
+				this.controlMagicPanel,
+				prayerIndex,
+				color + prayerDef.getName() + " [" + prayerDef.getPointCost() + "]",
+				0,
+				null,
+				null);
+		}
+		this.panelMagic.drawPanel();
+		return this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+	}
+
+	private int drawSummoningTextList() {
+		this.panelMagic.clearList(this.controlMagicPanel);
+		for (int summonIndex = 0; summonIndex < SUMMONING_NAMES.length; summonIndex++) {
+			int level = summonIndex < SUMMONING_LEVELS.length ? SUMMONING_LEVELS[summonIndex] : 1;
+			this.panelMagic.setListEntry(
+				this.controlMagicPanel,
+				summonIndex,
+				"@yel@Lvl " + level + ": " + SUMMONING_NAMES[summonIndex],
+				0,
+				null,
+				null);
+		}
+		this.panelMagic.drawPanel();
+		return this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+	}
+
+	private void saveSpellbookTextScrollPosition(int tab) {
+		int position = this.panelMagic.getScrollPosition(this.controlMagicPanel);
+		if (tab == 0) {
+			this.magicTextScrollPosition = position;
+		} else if (tab == 1) {
+			this.prayerTextScrollPosition = position;
+		} else {
+			this.summoningTextScrollPosition = position;
+		}
+	}
+
+	private void restoreSpellbookTextScrollPosition(int tab) {
+		int position = tab == 0
+			? this.magicTextScrollPosition
+			: tab == 1 ? this.prayerTextScrollPosition : this.summoningTextScrollPosition;
+		this.panelMagic.resetListToIndex(this.controlMagicPanel, position);
+	}
+
+	private void activateMagicMenuSpell(int spellIndex) {
+		if (spellIndex < 0 || spellIndex >= EntityHandler.spellCount()) {
+			return;
+		}
+		SpellDef spellDef = EntityHandler.getSpellDef(spellIndex);
+		if (this.playerStatCurrent[6] < spellDef.getReqLevel()) {
+			this.showMessage(false, null,
+				"Your magic ability is not high enough for this spell", MessageType.GAME, 0, null);
+			return;
+		}
+		if (!this.hasSpellRunes(spellIndex)) {
+			this.showMessage(false, null,
+				"You don't have all the reagents you need for this spell", MessageType.GAME, 0, null);
+			return;
+		}
+		this.handleMagicSpellClick(spellIndex);
+	}
+
+	private void togglePrayerMenuPrayer(int prayerIndex) {
+		if (prayerIndex < 0 || prayerIndex >= EntityHandler.prayerCount()) {
+			return;
+		}
+		if (!this.prayerOn[prayerIndex]) {
+			if (!this.canActivatePrayer(prayerIndex)) {
+				PrayerDef prayerDef = EntityHandler.getPrayerDef(prayerIndex);
+				this.showMessage(false, null,
+					"You need " + prayerDef.getPointCost() + " free prayer points to activate this prayer",
+					MessageType.GAME, 0, null);
+				return;
+			}
+			this.packetHandler.getClientStream().newPacket(60);
+		} else {
+			this.packetHandler.getClientStream().newPacket(254);
+		}
+		this.packetHandler.getClientStream().bufferBits.putByte(prayerIndex);
+		this.packetHandler.getClientStream().finishPacket();
 	}
 
 	private boolean hasSpellRunes(int spellIndex) {
@@ -12823,6 +12959,17 @@ public final class mudclient implements Runnable {
 		this.saveCoordinatesOverlaySetting();
 	}
 
+	private void cycleSpellbookLayoutMode() {
+		if (SpellbookLayoutSettings.usesTextLayout()) {
+			this.saveSpellbookTextScrollPosition(this.magicOrPrayerList);
+		}
+		SpellbookLayoutSettings.cycleMode();
+		if (SpellbookLayoutSettings.usesTextLayout()) {
+			this.restoreSpellbookTextScrollPosition(this.magicOrPrayerList);
+		}
+		saveSpellbookLayoutSettings();
+	}
+
 	// wrench settings menu
 	private void drawUiTabOptions(int var1, boolean mustTrackMouse) {
 
@@ -13166,6 +13313,14 @@ public final class mudclient implements Runnable {
 		return index;
 	}
 
+	private String rendererTuningSliderBar(int level) {
+		StringBuilder bar = new StringBuilder("@whi@- [");
+		for (int i = 1; i <= 10; i++) {
+			bar.append(i == level ? "@gre@o@whi@" : "-");
+		}
+		return bar.append("] + @yel@[").append(level).append("]").toString();
+	}
+
 	private int getLegacyScalingSettingsRowIndex() {
 		int index = 0;
 		index++; // Gameplay section.
@@ -13299,7 +13454,18 @@ public final class mudclient implements Runnable {
 			index = addSettingsRow(index, "@whi@Geometry - " + RendererGeometrySettings.getMode().label, 62);
 			index = addSettingsRow(index, "@whi@Terrain Variation - " + RendererTerrainVariationSettings.getMode().label, 64);
 			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
-			index = addSettingsRow(index, "@whi@Brightness - " + RendererBrightnessSettings.getMode().label, 58);
+			index = addSettingsRow(index, "@whi@Terrain shading", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(RendererReliefSettings.getTerrainLevel()),
+				SETTINGS_TERRAIN_RELIEF_SLIDER);
+			index = addSettingsRow(index, "@whi@Object shading", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(RendererReliefSettings.getObjectLevel()),
+				SETTINGS_OBJECT_RELIEF_SLIDER);
+			index = addSettingsRow(index, "@whi@Dimness", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(RendererColorDiagnosticSettings.getDimnessLevel()),
+				SETTINGS_DIMNESS_SLIDER);
+			index = addSettingsRow(index, "@whi@Contrast", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(RendererColorDiagnosticSettings.getContrastLevel()),
+				SETTINGS_CONTRAST_SLIDER);
 			index = addSettingsSection(index, "Interface");
 		}
 
@@ -13318,6 +13484,9 @@ public final class mudclient implements Runnable {
 
 		index = addSettingsRow(index,
 			"@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"), 51);
+
+		index = addSettingsRow(index,
+			"@whi@Spellbook layout - " + SpellbookLayoutSettings.getMode().label, 65);
 
 		// custom UI
 		if (S_WANT_CUSTOM_UI) {
@@ -13708,6 +13877,10 @@ public final class mudclient implements Runnable {
 		if (settingIndex == SETTINGS_SECTION_ROW) {
 			return;
 		}
+		if (isRendererTuningSlider(settingIndex)) {
+			this.handleRendererTuningSliderInput(settingIndex, var6);
+			return;
+		}
 
 		// camera mode - byte index 0
 		if (settingIndex == 0 && this.mouseButtonClick == 1) {
@@ -13765,9 +13938,6 @@ public final class mudclient implements Runnable {
 		if (settingIndex == 56 && this.mouseButtonClick == 1) {
 			cycleRenderSurfaceMode();
 		}
-		if (isOpenGLPrimaryWindow && settingIndex == 58 && this.mouseButtonClick == 1) {
-			cycleOpenGLBrightnessMode();
-		}
 		if (isOpenGLPrimaryWindow && settingIndex == 59 && this.mouseButtonClick == 1) {
 			cycleOpenGLRendererProfileMode();
 		}
@@ -13802,6 +13972,10 @@ public final class mudclient implements Runnable {
 
 		if (settingIndex == 51 && this.mouseButtonClick == 1) {
 			this.toggleCoordinatesOverlay();
+		}
+
+		if (settingIndex == 65 && this.mouseButtonClick == 1) {
+			this.cycleSpellbookLayoutMode();
 		}
 
 		// custom UI - byte index 39
@@ -15174,6 +15348,107 @@ public final class mudclient implements Runnable {
 		System.out.println("[renderer-v2] debug overlay mode " + mode.id);
 	}
 
+	void cycleRendererTerrainReliefDiagnostic() {
+		int level = RendererReliefSettings.cycleTerrainLevel();
+		reportRendererTuningChange("terrain-relief", level, RendererReliefSettings.getTerrainStrength());
+	}
+
+	void cycleRendererObjectReliefDiagnostic() {
+		int level = RendererReliefSettings.cycleObjectLevel();
+		reportRendererTuningChange("object-relief", level, RendererReliefSettings.getObjectStrength());
+	}
+
+	void cycleRendererDimnessDiagnostic() {
+		int level = RendererColorDiagnosticSettings.cycleDimnessLevel();
+		reportRendererTuningChange("dimness", level, RendererColorDiagnosticSettings.getDimnessMultiplier());
+	}
+
+	void cycleRendererContrastDiagnostic() {
+		int level = RendererColorDiagnosticSettings.cycleContrastLevel();
+		reportRendererTuningChange("contrast", level, RendererColorDiagnosticSettings.getContrastMultiplier());
+	}
+
+	private boolean isRendererTuningSlider(int settingIndex) {
+		return settingIndex >= SETTINGS_TERRAIN_RELIEF_SLIDER
+			&& settingIndex <= SETTINGS_CONTRAST_SLIDER;
+	}
+
+	private void handleRendererTuningSliderInput(int settingIndex, int textX) {
+		int segmentWidth = Math.max(1, this.getSurface().stringWidth(1, "-"));
+		int trackStartX = textX + this.getSurface().stringWidth(1, "- [");
+		int trackEndX = trackStartX + segmentWidth * 10;
+		int plusStartX = textX + this.getSurface().stringWidth(1, "- [----------] ");
+		int plusEndX = plusStartX + this.getSurface().stringWidth(1, "+");
+		int currentLevel = getRendererTuningLevel(settingIndex);
+
+		if (this.mouseButtonClick == 1 && this.mouseX < trackStartX) {
+			this.setRendererTuningLevel(settingIndex, currentLevel - 1);
+		} else if ((this.mouseButtonClick == 1 || this.getMouseButtonDown() == 1)
+			&& this.mouseX >= trackStartX && this.mouseX < trackEndX) {
+			this.setRendererTuningLevel(settingIndex, (this.mouseX - trackStartX) / segmentWidth + 1);
+		} else if (this.mouseButtonClick == 1
+			&& this.mouseX >= plusStartX && this.mouseX <= plusEndX) {
+			this.setRendererTuningLevel(settingIndex, currentLevel + 1);
+		}
+	}
+
+	private int getRendererTuningLevel(int settingIndex) {
+		if (settingIndex == SETTINGS_TERRAIN_RELIEF_SLIDER) {
+			return RendererReliefSettings.getTerrainLevel();
+		}
+		if (settingIndex == SETTINGS_OBJECT_RELIEF_SLIDER) {
+			return RendererReliefSettings.getObjectLevel();
+		}
+		if (settingIndex == SETTINGS_DIMNESS_SLIDER) {
+			return RendererColorDiagnosticSettings.getDimnessLevel();
+		}
+		return RendererColorDiagnosticSettings.getContrastLevel();
+	}
+
+	private void setRendererTuningLevel(int settingIndex, int level) {
+		if (settingIndex == SETTINGS_TERRAIN_RELIEF_SLIDER) {
+			if (RendererReliefSettings.getTerrainLevel() != level) {
+				RendererReliefSettings.setTerrainLevel(level);
+				reportRendererTuningChange("terrain-relief", level, RendererReliefSettings.getTerrainStrength());
+			}
+		} else if (settingIndex == SETTINGS_OBJECT_RELIEF_SLIDER) {
+			if (RendererReliefSettings.getObjectLevel() != level) {
+				RendererReliefSettings.setObjectLevel(level);
+				reportRendererTuningChange("object-relief", level, RendererReliefSettings.getObjectStrength());
+			}
+		} else if (settingIndex == SETTINGS_DIMNESS_SLIDER) {
+			if (RendererColorDiagnosticSettings.getDimnessLevel() != level) {
+				RendererColorDiagnosticSettings.setDimnessLevel(level);
+				reportRendererTuningChange("dimness", level, RendererColorDiagnosticSettings.getDimnessMultiplier());
+			}
+		} else if (settingIndex == SETTINGS_CONTRAST_SLIDER
+			&& RendererColorDiagnosticSettings.getContrastLevel() != level) {
+			RendererColorDiagnosticSettings.setContrastLevel(level);
+			reportRendererTuningChange("contrast", level, RendererColorDiagnosticSettings.getContrastMultiplier());
+		}
+	}
+
+	private void reportRendererTuningChange(String control, int level, float value) {
+		RendererProfileSettings.markCustom();
+		saveRendererTuningSettings();
+		saveRendererProfileSettings();
+		String label = "terrain-relief".equals(control)
+			? "terrain shading"
+			: "object-relief".equals(control) ? "object shading" : control.replace('-', ' ');
+		this.showMessage(false, null,
+			"Renderer " + label + ": " + level + "/10 (" + value + ")",
+			MessageType.GAME, 0, null);
+		System.out.println("[renderer-v2] tuning " + control + " level=" + level + " value=" + value);
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord("renderer.tuning.change");
+		if (event != null) {
+			event.string("control", control);
+			event.number("level", level);
+			event.number("value", value);
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
+	}
+
 	void cycleRenderSurfaceMode() {
 		RenderSurfaceSettings.Mode mode = RenderSurfaceSettings.cycleMode();
 		this.resizeWidth = mode.width;
@@ -15191,6 +15466,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void applyOpenGLRendererProfileMode(RendererProfileSettings.Mode mode) {
+		if (mode != RendererProfileSettings.Mode.CUSTOM) {
+			RendererReliefSettings.resetDefaults();
+			RendererColorDiagnosticSettings.resetDefaults();
+		}
 		if (mode == RendererProfileSettings.Mode.CLASSIC) {
 			RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);
 			OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
@@ -15214,12 +15493,12 @@ public final class mudclient implements Runnable {
 		}
 		saveRenderSurfaceSettings();
 		saveOpenGLWindowSettings();
-		saveRendererBrightnessSettings();
 		saveRendererFogSettings();
 		saveRendererLightingSettings();
 		saveRendererGeometrySettings();
 		saveRendererTerrainVariationSettings();
 		saveRendererToneSettings();
+		saveRendererTuningSettings();
 		saveRendererProfileSettings();
 	}
 
@@ -15228,14 +15507,6 @@ public final class mudclient implements Runnable {
 		this.resizeWidth = surfaceMode.width;
 		this.resizeHeight = surfaceMode.height;
 		scalarChangedSinceLogin = true;
-	}
-
-	void cycleOpenGLBrightnessMode() {
-		RendererBrightnessSettings.Mode mode = RendererBrightnessSettings.cycleMode();
-		RendererProfileSettings.markCustom();
-		saveRendererBrightnessSettings();
-		saveRendererProfileSettings();
-		System.out.println("[renderer-v2] OpenGL brightness: " + mode.id);
 	}
 
 	void cycleOpenGLFogMode() {
@@ -26500,7 +26771,9 @@ public final class mudclient implements Runnable {
 		} else if (showUiTab == Config.OPTIONS_TAB) { // Settings wrench menu
 			panelSettings.scrollMethodCustomList(controlSettingPanel, x, 1);
 		} else if (showUiTab == Config.MAGIC_AND_PRAYER_TAB) { // Magic and prayer book list.
-			if (this.magicOrPrayerList == 0) {
+			if (SpellbookLayoutSettings.usesTextLayout()) {
+				this.panelMagic.scrollMethodList(this.controlMagicPanel, x);
+			} else if (this.magicOrPrayerList == 0) {
 				this.scrollMagicIconMenu(x);
 			} else if (this.magicOrPrayerList == 1) {
 				this.scrollPrayerIconMenu(x);
@@ -26679,23 +26952,59 @@ public final class mudclient implements Runnable {
 		C_HIDE_ROOFS = b;
 	}
 
+	private Renderer3DRoofVisibility currentRenderer3DRoofVisibility() {
+		boolean playerTileCovered = false;
+		if (this.world != null && this.localPlayer != null) {
+			int tileX = this.localPlayer.currentX / this.tileSize;
+			int tileZ = this.localPlayer.currentZ / this.tileSize;
+			if (tileX >= 0
+				&& tileX < this.world.collisionFlags.length
+				&& tileZ >= 0
+				&& tileZ < this.world.collisionFlags[tileX].length) {
+				playerTileCovered =
+					(this.world.collisionFlags[tileX][tileZ] & CollisionFlag.OBJECT) != 0;
+			}
+		}
+		return Renderer3DRoofVisibility.resolve(
+			C_HIDE_ROOFS,
+			this.lastHeightOffset,
+			playerTileCovered);
+	}
+
+	private static int activeRegionCenterWorldTile(int localBaseTile, int worldOffset) {
+		return localBaseTile + worldOffset + World.SECTION_SIZE;
+	}
+
 	private void reloadCurrentRegionForRoofVisibility() {
 		if (!this.hasCompletedInitialRegionLoad || this.localPlayer == null) {
 			return;
 		}
-		int worldX = this.midRegionBaseX + this.playerLocalX;
-		int worldZ = this.midRegionBaseZ + this.playerLocalZ;
-		int shiftedWorldX = worldX + this.worldOffsetX;
-		int shiftedWorldZ = worldZ + this.worldOffsetZ;
-		int midRegionX = World.worldTileToSection(shiftedWorldX);
-		int midRegionZ = World.worldTileToSection(shiftedWorldZ);
-		this.currentRegionMaxX = midRegionX * World.SECTION_SIZE + 32;
-		this.currentRegionMinX = midRegionX * World.SECTION_SIZE - 32;
-		this.currentRegionMaxZ = midRegionZ * World.SECTION_SIZE + 32;
-		this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE - 32;
-		this.world.loadSections(shiftedWorldX, shiftedWorldZ, this.requestedPlane);
+		int activeWorldX = activeRegionCenterWorldTile(this.midRegionBaseX, this.worldOffsetX);
+		int activeWorldZ = activeRegionCenterWorldTile(this.midRegionBaseZ, this.worldOffsetZ);
+		int activeSectionX = World.worldTileToSection(activeWorldX);
+		int activeSectionZ = World.worldTileToSection(activeWorldZ);
+		int playerWorldX = this.midRegionBaseX + this.playerLocalX + this.worldOffsetX;
+		int playerWorldZ = this.midRegionBaseZ + this.playerLocalZ + this.worldOffsetZ;
+
+		this.world.loadSections(activeWorldX, activeWorldZ, this.requestedPlane);
 		this.rematerializeLoadedTerrainSceneryAfterWorldReload();
 		this.world.playerAlive = true;
+
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord("roof.visibility.reload");
+		if (event != null) {
+			event.bool("hideRoofs", C_HIDE_ROOFS);
+			event.number("plane", this.requestedPlane);
+			event.number("activeSectionX", activeSectionX);
+			event.number("activeSectionZ", activeSectionZ);
+			event.number("activeCenterWorldX", activeWorldX);
+			event.number("activeCenterWorldZ", activeWorldZ);
+			event.number("playerWorldX", playerWorldX);
+			event.number("playerWorldZ", playerWorldZ);
+			event.number("playerSectionDeltaX", World.worldTileToSection(playerWorldX) - activeSectionX);
+			event.number("playerSectionDeltaZ", World.worldTileToSection(playerWorldZ) - activeSectionZ);
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
 	}
 
 	private void ensureGameplayRendererWorldChunkFrame() {

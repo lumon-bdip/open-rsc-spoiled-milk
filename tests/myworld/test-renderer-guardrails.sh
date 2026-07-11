@@ -18,6 +18,8 @@ renderer_tests=(
   test-renderer-diagnostic-session-analyzer.py
   test-renderer-experimental-camera-options.py
   test-renderer-material-family.py
+  test-renderer-shading-diagnostics.py
+  test-roof-visibility.py
   test-renderer-relog-resident-world.py
   test-renderer-v2-capture-analyzer.py
   test-renderer-v2-font-policy.py

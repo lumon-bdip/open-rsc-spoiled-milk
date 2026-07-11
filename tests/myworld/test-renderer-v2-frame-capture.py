@@ -338,6 +338,11 @@ def main() -> None:
         "modelKind == Renderer3DModelKind.ROOF",
         "entity sprite depth occluders include roofs",
     )
+    require(
+        frame_capture,
+        'writer.println("roofVisibility=" + renderer3DFrame.getRoofVisibility().name());',
+        "frame capture records named roof visibility state",
+    )
     depth_miss_start = presenter.find(
         "if (visiblePixelCount == 0) {\n\t\t\trecordLegacyEntitySpriteDepthFallbackMiss("
     )

@@ -1,25 +1,26 @@
 # Fixes And Changes Backlog Plan
 
-Status: scoped and owned; Task 1 is ready for owner approval and implementation.
-Owner: An-actual-duck, with focused worker branches coordinated from this plan.
-Planning branch: `docs/player-experience-improvements`.
+Status: ready for manager review; Tasks 1 through 6 implemented and guarded,
+with Lumbridge banking explicitly deferred.
+Owner: An-actual-duck, with independently checkpointed tasks coordinated from this plan.
+Implementation branch: `feat/player-experience-backlog`.
 
 ## Summary
 
 This plan preserves and coordinates the current "Fixes and Changes" backlog:
 
 - [x] Default camera mode should be Manual.
-- [ ] Correct indoor/upper-floor roof hiding when roofs are enabled.
-- [ ] Explore adjustable terrain ambient occlusion/shading.
-- [ ] Explore adjustable object shading.
-- [ ] Add optional text-list layouts for Magic, Prayer, and Summoning.
+- [x] Correct indoor/upper-floor roof hiding when roofs are enabled.
+- [x] Explore adjustable terrain ambient occlusion/shading.
+- [x] Explore adjustable object shading.
+- [x] Add optional text-list layouts for Magic, Prayer, and Summoning.
 - [ ] Add a Lumbridge bank or bank chest.
 
 The list crosses client defaults, account persistence, renderer ownership,
 interface layout, and server world content. It must not be implemented as one
-branch or one code commit. This document is the coordinating ledger; each task
-below gets its own focused implementation branch, tests, checkpoint, and
-manager review.
+code commit. This document is the coordinating ledger; the manager-approved
+umbrella branch keeps each task in its own tested and pushed checkpoint before
+the next task begins.
 
 ## Current-System Findings
 
@@ -131,7 +132,7 @@ implementation-ready specification is below.
 
 ### 2. Correct enabled-roof indoor and upper-floor visibility
 
-Recommended branch: `fix/roof-visibility`
+Checkpoint scope: roof visibility only.
 
 Define a named roof-visibility state from player plane and roof/collision
 coverage, then apply the same decision to legacy scene grids and resident
@@ -149,18 +150,87 @@ matrix cannot be proven from the current conditions. Required test states:
 - logout/relogin and section transition;
 - Classic and Remaster renderer profiles.
 
+#### Implementation record — 2026-07-11
+
+- Added the named per-frame states `VISIBLE`, `HIDDEN_BY_SETTING`,
+  `HIDDEN_INDOORS`, and `HIDDEN_ABOVE_ACTIVE_FLOOR`. Resolution preserves the
+  original client contract: enabled roofs appear only on an outdoor ground
+  tile; a covered ground tile hides roof layers and structures above the
+  active floor; an upper floor keeps its active walls while hiding the roof
+  above it.
+- The legacy scene loop and resident OpenGL chunks now consume the same state.
+  This closes the split where projected geometry hid roofs indoors/upstairs
+  but resident chunks filtered only from the global saved option.
+- Global Hide Roofs still selects no-roof cached world products and reloads
+  the region. Resident filtering additionally suppresses upper-plane wall
+  batches from a ground-floor view, matching the legacy scene-grid behavior,
+  without suppressing active-floor walls upstairs.
+- `Ctrl+F9` capture metadata now records `activePlane`, `roofVisibility`, and
+  `roofsVisible`, making a visual report directly correlatable with the
+  resolved technical state.
+- The focused executable matrix covers outdoor ground, covered ground, upper
+  floors, global-option precedence, active-floor walls, upper-plane walls,
+  roofs, and terrain. The full renderer guard suite and Java 8 client build
+  pass.
+- A live follow-up exposed a separate region-basis bug when the setting was
+  toggled inside the eight-tile movement hysteresis band at a section edge.
+  The toggle selected a neighboring 3x3 world window from the player's tile
+  without rebasing collision, entities, scenery, or the camera, producing an
+  exact 48-tile visual/picking shift. Roof reloads now rebuild the already
+  active window from `midRegionBaseX/Z` and leave its bounds unchanged.
+  `events.jsonl` records each successful `roof.visibility.reload` with active
+  section, player world tile, and player-to-active section deltas so future
+  reports remain attributable even when toggled while moving.
+- Live validation recorded 35 successful toggles while walking and stationary.
+  Several events reached `playerSectionDeltaX=1` or `playerSectionDeltaZ=1`,
+  directly exercising the boundary condition that previously shifted visuals;
+  the active section remained fixed and visual, picking, and collision
+  alignment held. The strict session analyzer accepted all 12 `Ctrl+F9` burst
+  frames with no failed captures or client exceptions.
+- This task deliberately preserves the legacy whole-grid visibility unit. A
+  connected-roof-volume refinement would require a separate spatial ownership
+  design and is not necessary to correct renderer parity.
+
 ### 3. Add optional text-list spellbook layouts
 
-Recommended branch: `feat/spellbook-text-layouts`
+Checkpoint scope: spellbook presentation only.
 
 Add one persisted client-side `Icons / Text` presentation setting and a shared
 row model for the three tabs. Reuse the current action methods and canonical
 indices. Keep icon mode as default. This is one cohesive UI feature, but it
 must not be bundled with roof, shading, or content changes.
 
+#### Implementation record — 2026-07-11
+
+- Added one local `spellbook_layout` preference with `Icons` as the default and
+  `Text` as the optional mode. It is stored in `clientSettings.conf`; no server
+  game-setting or protocol index was added.
+- Added the preference to the General settings Interface section. One choice
+  controls Magic, Prayer, and Summoning consistently, as approved in this
+  plan.
+- Text mode uses the existing 196x90 scrolling panel in authentic and custom UI
+  placement. Each tab retains its own text scroll position, mouse-wheel and
+  scrollbar behavior, hover description, and tooltip/cost area.
+- Magic text rows preserve hidden-spell filtering, canonical spell indices,
+  level/rune colors, selected state, and autocast state. Both layouts call the
+  same validation and spell-selection/autocast action.
+- Prayer text rows preserve prayer-book order, active and unavailable colors,
+  current allocation-point rules, and the same activate/deactivate packets as
+  icon mode. Summoning rows preserve canonical summon indices and call the
+  existing interface action. The Android last-spell box remains available in
+  either layout.
+- The focused executable settings fixture verifies default, cycle, save/load,
+  compatibility alias, and fallback behavior. Source guards verify all three
+  row builders, shared actions, canonical Magic mapping, per-tab scrolling,
+  persistence, and the settings control. Prayer UI guards and the Java 8 client
+  build pass.
+- Owner review found all three text layouts functionally correct. The shared
+  Prayer point summary baseline was moved down four pixels so its glyphs clear
+  the divider above it in both icon and text presentation.
+
 ### 4. Separate terrain and object shading diagnostics
 
-Recommended branch: `feat/renderer-shading-controls`
+Checkpoint scope: diagnostic-only shading ownership.
 
 First add runtime/diagnostic-only terrain and object strength ownership with
 parity defaults. Attribute whether the requested terrain control belongs to
@@ -168,23 +238,95 @@ local relief, diffuse response, shadow-mask directional strength, or contact
 strength. Record the chosen terms in captures/F6 before exposing a normal
 setting.
 
+#### Implementation record — 2026-07-11
+
+- Split the old shared runtime relief override into independent terrain and
+  non-terrain/object scopes. Both retain the accepted `Max`/`2.0` default, and
+  the legacy `SPOILED_MILK_OPENGL_RELIEF` override remains a compatibility
+  fallback that drives both scopes when no scoped override is supplied.
+- Added diagnostic overrides
+  `SPOILED_MILK_OPENGL_TERRAIN_RELIEF` and
+  `SPOILED_MILK_OPENGL_OBJECT_RELIEF`. The resident shader selects between the
+  two from model kind; the object scope currently means all non-terrain static
+  geometry, including walls, roofs, scenery, and wall objects.
+- Identified the existing channels precisely: local relief reshapes captured
+  legacy base light; directional diffuse uses fixed model-kind curves; the
+  terrain-only shadow mask combines directional wall/scenery projection with
+  a contact channel; non-terrain objects do not currently receive that shadow
+  mask.
+- Added `SPOILED_MILK_REMASTER_DIRECTIONAL_SHADOW_ALPHA_SCALE` as a
+  diagnostic-only terrain shadow comparison knob with a parity default of
+  `1.0`. The existing contact-alpha runtime override remains the contact
+  comparison knob. Both participate in mask cache signatures.
+- F6 now reports terrain/object relief modes and the directional/contact shadow
+  tuning. `Ctrl+F9` metadata records stable individual shading fields,
+  including the fixed diffuse response and the absence of object shadow-mask
+  receiving, so owner observations can be attributed to one channel.
+- Added live ten-step comparison controls: `F7` cycles terrain relief,
+  `Shift+F7` cycles object relief, `F8` cycles world dimness, and `Shift+F8`
+  cycles world contrast. Owner review expanded relief to `0.0..4.5` in `0.5`
+  steps, placing the accepted `2.0` value at level 5. Dimness retains
+  `1.0..0.55`. Contrast level 1 now starts at the previously tested level-5
+  value (`1.2`) and advances in doubled `0.1` increments through `2.1`.
+- Live review found the resident shader still capped relief input at `2.5`,
+  flattening the expanded scale above its former maximum. The shader ceiling
+  now matches the slider's `4.5` endpoint; final output remains conservatively
+  clamped to prevent black or blown-out geometry.
+- Added four two-line Graphics-menu controls so labels retain their full width
+  and each ten-segment scale gets an uncluttered row. The bars use the requested
+  `- [----o-----] + [5]` presentation and support minus, plus, direct track,
+  and drag selection; hotkeys remain available for rapid comparisons.
+- The color controls compose with the selected graphics profile. Brightness is
+  now applied after either Classic or Remaster resident shading instead of
+  only inside the Remaster-lighting branch. Dimness remains neutral at level 1;
+  contrast uses the owner-selected `1.2` comparison floor while this diagnostic
+  range is evaluated under Classic and Remaster ownership.
+- Owner review promoted the four controls from session comparisons to persisted
+  player settings. Terrain/object relief default to level 5, Dimness to level
+  1, and Contrast to level 1. Relief now applies after Classic or Remaster base
+  shading. The redundant player-facing Brightness row and saved-setting load
+  were removed so hidden legacy brightness cannot compound with Dimness.
+- Player-facing labels use `Terrain shading` and `Object shading`; internal
+  renderer diagnostics retain the more precise local-relief terminology.
+- Each hotkey reports its level/value in game, emits a structured
+  `renderer.tuning.change` event, appears in F6, and is recorded by
+  `Ctrl+F9`. Expanded F6 was condensed to the high-value timing, chunk,
+  material, sync, capacity, and tuning summaries so it remains on-screen;
+  detailed phases and per-channel shadow constants remain in structured logs
+  and captures.
+- The executable diagnostic fixture verifies parity defaults, legacy shared
+  override compatibility, and independent scoped overrides. The full renderer
+  guard suite and Java 8 client build pass without changing default visuals.
+
 ### 5. Promote an accepted terrain shading/AO control
 
-Recommended branch: `feat/terrain-shading-control`
+#### Implementation record — 2026-07-11
 
-Only after Task 4 visual comparison, persist the narrow accepted terrain
-control and place it in the appropriate Graphics/profile ownership. Do not
-combine it with object tuning. Classic stays unchanged and existing Remaster
-appearance remains the migration/default value.
+- Promoted terrain shading to a persisted ten-step Graphics control with the
+  owner-approved two-line `- [----o-----] + [5]` layout, direct track/drag
+  selection, plus/minus controls, and retained F7 comparison shortcut.
+- The accepted pre-control strength `2.0` maps to default level 5. The full
+  range is `0.0..4.5` in `0.5` steps and its shader ceiling matches the exposed
+  endpoint.
+- Terrain shading applies after either Classic or Remaster base shading.
+  Captures retain the precise `terrainRelief` level/strength terminology for
+  technical attribution.
 
 ### 6. Promote an accepted object shading control
 
-Recommended branch: `feat/object-shading-control`
+#### Implementation record — 2026-07-11
 
-Use model kind first and material families only where evidence supports a
-different response. Test ordinary scenery, walls, wall objects, foliage, ore,
-emissive objects, two-sided materials, and animated scenery independently from
-terrain.
+- Promoted object shading as a separately persisted ten-step control using the
+  same slider/input contract and a level-5 (`2.0`) continuity default.
+- Model kind remains the ownership boundary: object shading covers non-terrain
+  resident world geometry, including walls, roofs, scenery, and wall objects.
+  It now applies after Classic or Remaster base shading; material-family
+  specialization remains a possible later refinement rather than an inferred
+  release rule.
+- Persisted Dimness and Contrast were promoted with the same control contract.
+  Dimness defaults neutral at level 1; Contrast uses the owner-selected `1.2`
+  level-1 floor. The redundant player-facing Brightness row and legacy saved
+  Brightness load were retired.
 
 ### 7. Add a Lumbridge bank chest
 
@@ -269,24 +411,27 @@ values continue to load unchanged.
 ## Documentation Workflow
 
 - Keep the six owner requests verbatim at the top until each is completed.
-- Each implementation branch updates its own task section and relevant source
-  plan, then checkpoints independently.
-- Move completed task detail to the maintenance history or a completed focused
-  plan; do not wait for the entire backlog before integrating a safe task.
-- Do not use this planning branch for code implementation.
+- Each implementation task updates its section and relevant source plan, then
+  checkpoints independently on the manager-approved umbrella branch.
+- Keep completed task detail here until the overall backlog receives its final
+  roundup and handoff.
 
 ## Open Decisions
 
-- Roof behavior: should enabled roofs hide only the connected roof volume over
-  the player, or continue hiding an entire legacy grid cell? Capture the current
-  and desired examples before choosing.
-- Shading terminology: does "terrain ambient occlusion" mean local terrain
-  relief, scenery contact shadow strength, or both as separate controls?
-- Text layout: one shared Icons/Text preference is recommended; confirm whether
-  per-tab layout choices are desired instead.
+- Roof behavior is resolved for this task: retain the legacy whole-grid unit
+  while making its state explicit and consistent across renderers. Connected
+  roof-volume hiding remains a possible later enhancement, not a parity fix.
+- Shading controls are resolved for this branch as persisted ten-step sliders.
+  Player-facing terminology is `Terrain shading` / `Object shading`; captures
+  retain local-relief terminology. Terrain contact-shadow strength remains a
+  separate technical channel and is not mislabeled as this control.
+- Text layout is resolved as one shared Icons/Text preference for all three
+  tabs. Per-tab modes would add preference and interaction complexity without
+  changing any gameplay action, so they are outside this task.
 - Lumbridge bank: approve a precise chest tile after an in-game map check and
   decide whether the area should merely provide bank access or become a formal
-  protected bank zone.
+  protected bank zone. This content item is deferred from the current handoff
+  and remains preserved for a later focused branch.
 
 ## Backlog Completion Criteria
 

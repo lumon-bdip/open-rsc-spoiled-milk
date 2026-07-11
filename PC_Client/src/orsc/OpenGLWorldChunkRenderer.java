@@ -949,7 +949,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			matchedBuffer = true;
 			matchedResidentChunks++;
 			for (WorldChunkMaterialBatch batch : buffer.materialBatches) {
-				if (batch.indexCount <= 0 || !shouldDrawChunkModelKind(batch.kind)) {
+				if (batch.indexCount <= 0 || !shouldDrawChunkModelKind(frame, chunk, batch.kind)) {
 					continue;
 				}
 				if (!isDrawableResidentStaticBatch(frame, batch, textured)) {
@@ -1375,9 +1375,6 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		boolean shaderActive,
 		FloatBuffer residentWorldToClipMatrix,
 		FloatBuffer residentWorldViewMatrix) throws Exception {
-		if (!shouldDrawChunkModelKind(modelKind)) {
-			return;
-		}
 		boolean wallDepthPriority = modelKind == Renderer3DModelKind.WALL;
 		if (wallDepthPriority) {
 			enableWallDepthPriority();
@@ -1390,6 +1387,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		long shadowProofSignature = currentShadowProofSignature(chunkFrame);
 		try {
 			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+				if (!shouldDrawChunkModelKind(frame, chunk, modelKind)) {
+					continue;
+				}
 				WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
 				WorldChunkBuffer buffer = residentChunks.get(key);
 				if (buffer == null || !buffer.matches(
@@ -1495,14 +1495,19 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		gl.glDisable(gl.GL_POLYGON_OFFSET_FILL);
 	}
 
-	private boolean shouldDrawChunkModelKind(Renderer3DModelKind modelKind) {
+	private boolean shouldDrawChunkModelKind(
+		Renderer3DFrame frame,
+		Renderer3DWorldChunkFrame.ChunkMesh chunk,
+		Renderer3DModelKind modelKind) {
 		if (replacementCompositeEnabled
 			&& (modelKind == Renderer3DModelKind.GAME_OBJECT
 				|| modelKind == Renderer3DModelKind.WALL_OBJECT)
 			&& !residentObjectsEnabled) {
 			return false;
 		}
-		return modelKind != Renderer3DModelKind.ROOF || !Config.C_HIDE_ROOFS;
+		return frame == null
+			|| chunk == null
+			|| frame.isWorldChunkModelKindVisible(modelKind, chunk.getPlane());
 	}
 
 	private void bindChunkVertexAttributes(boolean textured) throws Exception {

@@ -382,6 +382,38 @@ final class OpenGLFrameCapture {
 					+ renderer3DFrame.getCameraRotationY()
 					+ ","
 					+ renderer3DFrame.getCameraRotationZ());
+				writer.println("activePlane=" + renderer3DFrame.getActivePlane());
+				writer.println("roofVisibility=" + renderer3DFrame.getRoofVisibility().name());
+				writer.println(
+					"roofsVisible=" + renderer3DFrame.getRoofVisibility().areRoofsVisible());
+				writer.println("shading.terrainReliefMode=" + RendererReliefSettings.getTerrainMode().id);
+				writer.println("shading.terrainReliefLevel=" + RendererReliefSettings.getTerrainLevel());
+				writer.println("shading.terrainReliefStrength=" + RendererReliefSettings.getTerrainStrength());
+				writer.println("shading.objectReliefMode=" + RendererReliefSettings.getObjectMode().id);
+				writer.println("shading.objectReliefLevel=" + RendererReliefSettings.getObjectLevel());
+				writer.println("shading.objectReliefStrength=" + RendererReliefSettings.getObjectStrength());
+				writer.println("shading.dimnessLevel=" + RendererColorDiagnosticSettings.getDimnessLevel());
+				writer.println("shading.dimnessMultiplier=" + RendererColorDiagnosticSettings.getDimnessMultiplier());
+				writer.println("shading.contrastLevel=" + RendererColorDiagnosticSettings.getContrastLevel());
+				writer.println("shading.contrastMultiplier=" + RendererColorDiagnosticSettings.getContrastMultiplier());
+				writer.println("shading.diffuseResponse=model-kind-fixed");
+				writer.println("shading.terrainShadowChannels=directional+contact");
+				writer.println("shading.objectShadowMask=not-applied");
+				writer.println(
+					"shading.terrainShadowDirectionalBaseAlpha="
+						+ RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_BASE_ALPHA);
+				writer.println(
+					"shading.terrainShadowDirectionalMaxAlpha="
+						+ RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_MAX_ALPHA);
+				writer.println(
+					"shading.terrainShadowDirectionalAlphaScale="
+						+ RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_DIRECTIONAL_ALPHA_SCALE);
+				writer.println(
+					"shading.terrainShadowSceneryAlphaScale="
+						+ RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE);
+				writer.println(
+					"shading.terrainShadowContactAlpha="
+						+ RemasterShadowMaskBuilder.REMASTER_SHADOW_MASK_CONTACT_ALPHA);
 				writer.println("worldFaces=" + renderer3DFrame.getWorldFaceCount());
 				for (Renderer3DModelKind kind : Renderer3DModelKind.values()) {
 					writer.println("worldFaces." + kind.name() + "=" + renderer3DFrame.getWorldFaceCount(kind));

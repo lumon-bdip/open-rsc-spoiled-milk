@@ -1041,13 +1041,13 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		String graphicsLine = "lighting " + RendererLightingSettings.getMode().id
 			+ " | geometry " + RendererGeometrySettings.getMode().id
 			+ " | fog " + RendererFogSettings.getMode().id
-			+ " | brightness " + RendererBrightnessSettings.getMode().id
 			+ " | tone " + RendererDayNightCycle.debugSummary();
-		String chunkCullLine = "chunk cull spatial "
-			+ (OpenGLFramePresenter.WORLD_CHUNKS_SPATIAL_CULL ? "on" : "off")
-			+ " | cell " + OpenGLWorldChunkRenderer.spatialBatchTileSize() + "t"
-			+ " | fog draw " + RendererFogSettings.getMode().drawDistanceTiles + "t";
-		String remasterLightLine = "remaster light " + RendererRemasterLightSettings.debugSummary();
+		String shadingLine = RendererReliefSettings.debugSummary()
+			+ " | " + RendererColorDiagnosticSettings.debugSummary();
+		String tuningKeysLine = "F7 terrain " + RendererReliefSettings.getTerrainLevel()
+			+ " | Shift+F7 object " + RendererReliefSettings.getObjectLevel()
+			+ " | F8 dim " + RendererColorDiagnosticSettings.getDimnessLevel()
+			+ " | Shift+F8 contrast " + RendererColorDiagnosticSettings.getContrastLevel();
 		PacketHandler activePacketHandler = mudclient == null ? null : mudclient.packetHandler;
 		String[] sceneBaselineLines = activePacketHandler == null
 			? new String[] { "sceneBase unavailable", "", "" }
@@ -1061,6 +1061,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				rendererLine,
 				openGLLine,
 				graphicsLine,
+				shadingLine,
+				tuningKeysLine,
 				"Ctrl+F6 expanded"
 			};
 		}
@@ -1068,9 +1070,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			"Renderer v2 Perf HUD",
 			rendererLine,
 			graphicsLine,
+			shadingLine,
+			tuningKeysLine,
 			memoryUsage.heapLine,
 			memoryUsage.bufferAndGcLine,
-			remasterLightLine,
 			telemetry.enabled
 				? "frame avg/max " + telemetry.frameAverageMs + "/" + telemetry.frameMaxMs
 					+ "ms | scene " + telemetry.sceneAverageMs
@@ -1080,47 +1083,29 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				? "recent frame/scene/gl " + telemetry.recentFrameSummary
 				: "",
 			telemetry.enabled
-				? "recent gl snapshot/upload/render " + telemetry.recentOpenGLTimingSummary
-				: "",
-			telemetry.enabled
 				? "gl frames/dropped " + telemetry.openGLFrames
-					+ "/" + telemetry.openGLDroppedFrames
-					+ " | swap " + telemetry.openGLSwapAverageMs + "ms"
-				: "",
-			telemetry.enabled
-				? "recent gl phases b/w/ws/o/db/s " + telemetry.recentOpenGLPhaseSummary
+					+ "/" + telemetry.openGLDroppedFrames + " | snap/up/render "
+					+ telemetry.recentOpenGLTimingSummary
 				: "",
 			telemetry.enabled
 				? "world load avg/max/recent " + RenderTelemetry.worldSectionLoadSummary()
 				: "",
 			telemetry.enabled
-				? "world load phases reset/main/up/bridge/chunk/preload "
-					+ RenderTelemetry.worldSectionLoadPhaseSummary()
-				: "",
-			telemetry.enabled
 				? "loop recent total/sleep/update/repo/draw " + telemetry.recentClientLoopSummary
 				: "",
 			telemetry.enabled
-				? "chunks c/v/i/t " + telemetry.openGLWorldChunkAverage
-					+ "/" + telemetry.openGLWorldChunkVertexAverage
-					+ "/" + telemetry.openGLWorldChunkIndexAverage
+				? "chunks c/t " + telemetry.openGLWorldChunkAverage
 					+ "/" + telemetry.openGLWorldChunkTriangleAverage
+					+ " | vis c/d/cull " + telemetry.openGLWorldChunkVisibilityAverage
 				: "",
 			telemetry.enabled
 				? "material families " + RenderTelemetry.worldMaterialFamilySummary()
 				: "",
 			telemetry.enabled
-				? "chunk vis c/d/cull " + telemetry.openGLWorldChunkVisibilityAverage
-					+ " | submit calls/binds " + telemetry.openGLWorldChunkSubmitAverage
-				: "",
-			chunkCullLine,
-			telemetry.enabled
-				? "chunk req/up/reuse/defer/evict " + telemetry.openGLWorldChunkRequestedAverage
+				? "chunk req/up/reuse/evict " + telemetry.openGLWorldChunkRequestedAverage
 					+ "/" + telemetry.openGLWorldChunkUploadAverage
 					+ "/" + telemetry.openGLWorldChunkReuseAverage
-					+ "/" + RenderTelemetry.worldChunkUploadDeferredSummary()
 					+ "/" + telemetry.openGLWorldChunkEvictAverage
-					+ " | budget " + RenderTelemetry.worldChunkUploadBudgetSummary()
 					+ " | reason " + telemetry.openGLWorldChunkUploadReason
 				: "",
 			telemetry.enabled
@@ -1128,17 +1113,10 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.openGLResidentChunkReplacementActiveAverage
 					+ "/" + telemetry.openGLResidentChunkReplacementFallbackAverage
 					+ " | reason " + telemetry.openGLResidentChunkReplacementReason
-					+ " | batches t/w/r " + telemetry.openGLResidentChunkDrawableTerrainBatchAverage
-					+ "/" + telemetry.openGLResidentChunkDrawableWallBatchAverage
-					+ "/" + telemetry.openGLResidentChunkDrawableRoofBatchAverage
 				: "",
 			telemetry.enabled
-				? "shadow mask size/pix " + telemetry.openGLRemasterShadowMaskSizeAverage
-					+ " | build/upload " + telemetry.openGLRemasterShadowMaskTimingAverageMs + "ms"
-					+ " | caster strip/soft/contact " + telemetry.openGLRemasterShadowMaskCasterAverage
-				: "",
-			telemetry.enabled
-				? "shadow mask cache hit/rebuild/up/skip " + telemetry.openGLRemasterShadowMaskCacheAverage
+				? "shadow mask build/upload " + telemetry.openGLRemasterShadowMaskTimingAverageMs
+					+ "ms | cache " + telemetry.openGLRemasterShadowMaskCacheAverage
 					+ " | reason " + telemetry.openGLRemasterShadowMaskReason
 				: "",
 			telemetry.enabled
@@ -1147,18 +1125,13 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.openGLWorldChunkDrawPhaseAverageMs + "ms"
 				: "",
 			telemetry.enabled
-				? "entity vis c/d/cull " + telemetry.openGLWorldEntityVisibilityAverage
-				: "",
-			sceneBaselineLines[0],
-			sceneBaselineLines[1],
-			sceneBaselineLines[2],
-			movementSnapshotLines[0],
-			movementSnapshotLines[1],
-			telemetry.enabled
-				? "sprite cap/static/vis " + telemetry.spriteOverlayCapturedAverage
+				? "entity c/d/cull " + telemetry.openGLWorldEntityVisibilityAverage
+					+ " | sprite cap/static/vis " + telemetry.spriteOverlayCapturedAverage
 					+ "/" + telemetry.spriteOverlayStaticReplayAverage
 					+ "/" + telemetry.spriteOverlayVisibleReplayAverage
 				: "",
+			sceneBaselineLines[0],
+			movementSnapshotLines[0],
 			telemetry.enabled
 				? "2d cap cur/max/drop@limit " + RenderTelemetry.renderer2DCommandLimitSummary()
 				: "",
@@ -1169,9 +1142,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					+ "/" + telemetry.worldGeometryGameObjectFaceAverage
 					+ "/" + telemetry.worldGeometryWallObjectFaceAverage
 					+ "/" + telemetry.worldGeometryOtherFaceAverage
-				: "",
-			telemetry.enabled
-				? "depth f/t/p " + telemetry.worldDepthFaceAverage
+					+ " | depth f/t/p " + telemetry.worldDepthFaceAverage
 					+ "/" + telemetry.worldDepthTriangleAverage
 					+ "/" + telemetry.worldDepthPixelWriteAverage
 					+ " | c/a/r " + telemetry.worldDepthCullAverage
@@ -1456,7 +1427,11 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				if (keyCode == KeyEvent.VK_HOME) mudclient.resetCameraNorth();
 				if (keyCode == KeyEvent.VK_F6 && var1.isControlDown()) mudclient.toggleRendererDebugOverlayMode();
 				else if (keyCode == KeyEvent.VK_F6) mudclient.toggleRendererDebugOverlay(); // renderer overlay
+				if (keyCode == KeyEvent.VK_F7 && var1.isShiftDown()) mudclient.cycleRendererObjectReliefDiagnostic();
+				else if (keyCode == KeyEvent.VK_F7) mudclient.cycleRendererTerrainReliefDiagnostic();
 				if (keyCode == KeyEvent.VK_F8 && var1.isControlDown()) mudclient.markMovementStutterObserved();
+				else if (keyCode == KeyEvent.VK_F8 && var1.isShiftDown()) mudclient.cycleRendererContrastDiagnostic();
+				else if (keyCode == KeyEvent.VK_F8) mudclient.cycleRendererDimnessDiagnostic();
 				if (keyCode == 39) mudclient.keyRight = true;
 				if (keyCode == 37) mudclient.keyLeft = true;
 				if (keyCode == 13 || keyCode == 10) mudclient.enterPressed = true;

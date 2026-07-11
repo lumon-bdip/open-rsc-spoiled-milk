@@ -53,7 +53,8 @@ public class OpenRSC extends ORSCApplet {
 				RenderSurfaceSettings.loadFromClientSettings(props);
 				RendererProfileSettings.loadFromClientSettings(props);
 				RendererFontSettings.loadFromClientSettings(props);
-				RendererBrightnessSettings.loadFromClientSettings(props);
+				RendererReliefSettings.loadFromClientSettings(props);
+				RendererColorDiagnosticSettings.loadFromClientSettings(props);
 				RendererFogSettings.loadFromClientSettings(props);
 				RendererLightingSettings.loadFromClientSettings(props);
 				RendererGeometrySettings.loadFromClientSettings(props);
