@@ -34,28 +34,28 @@ public final class MovementStutterDiagnostics {
 	private final long pollOutlierDurationNanos;
 	private final long tickOutlierDurationNanos;
 
-	private final BoundedHistogram pollInterval = new BoundedHistogram(HISTOGRAM_UPPER_BOUNDS_NANOS);
-	private final BoundedHistogram pollDuration = new BoundedHistogram(HISTOGRAM_UPPER_BOUNDS_NANOS);
-	private final BoundedHistogram pollLateness = new BoundedHistogram(HISTOGRAM_UPPER_BOUNDS_NANOS);
-	private final BoundedHistogram tickDuration = new BoundedHistogram(HISTOGRAM_UPPER_BOUNDS_NANOS);
+	private final BoundedHistogram pollInterval;
+	private final BoundedHistogram pollDuration;
+	private final BoundedHistogram pollLateness;
+	private final BoundedHistogram tickDuration;
 
-	private final byte[] outlierKinds = new byte[OUTLIER_LIMIT];
-	private final long[] outlierIds = new long[OUTLIER_LIMIT];
-	private final long[] outlierIntervals = new long[OUTLIER_LIMIT];
-	private final long[] outlierDurations = new long[OUTLIER_LIMIT];
-	private final long[] outlierLateness = new long[OUTLIER_LIMIT];
-	private final int[] outlierMovedPlayers = new int[OUTLIER_LIMIT];
-	private final int[] outlierMovedNpcs = new int[OUTLIER_LIMIT];
-	private final int[] outlierQueuedPackets = new int[OUTLIER_LIMIT];
-	private final int[] outlierMaxQueue = new int[OUTLIER_LIMIT];
-	private final int[] outlierBackpressuredPlayers = new int[OUTLIER_LIMIT];
-	private final long[] outlierWorldUpdate = new long[OUTLIER_LIMIT];
-	private final long[] outlierEvents = new long[OUTLIER_LIMIT];
-	private final long[] outlierPlayers = new long[OUTLIER_LIMIT];
-	private final long[] outlierNpcs = new long[OUTLIER_LIMIT];
-	private final long[] outlierUpdateClients = new long[OUTLIER_LIMIT];
-	private final long[] outlierOutgoing = new long[OUTLIER_LIMIT];
-	private final long[] outlierCleanup = new long[OUTLIER_LIMIT];
+	private final byte[] outlierKinds;
+	private final long[] outlierIds;
+	private final long[] outlierIntervals;
+	private final long[] outlierDurations;
+	private final long[] outlierLateness;
+	private final int[] outlierMovedPlayers;
+	private final int[] outlierMovedNpcs;
+	private final int[] outlierQueuedPackets;
+	private final int[] outlierMaxQueue;
+	private final int[] outlierBackpressuredPlayers;
+	private final long[] outlierWorldUpdate;
+	private final long[] outlierEvents;
+	private final long[] outlierPlayers;
+	private final long[] outlierNpcs;
+	private final long[] outlierUpdateClients;
+	private final long[] outlierOutgoing;
+	private final long[] outlierCleanup;
 
 	private long windowStartedNanos;
 	private long lastPollStartedNanos;
@@ -84,6 +84,27 @@ public final class MovementStutterDiagnostics {
 		this.pollOutlierLatenessNanos = Math.max(1L, pollOutlierLatenessNanos);
 		this.pollOutlierDurationNanos = Math.max(1L, pollOutlierDurationNanos);
 		this.tickOutlierDurationNanos = Math.max(1L, tickOutlierDurationNanos);
+		pollInterval = enabled ? new BoundedHistogram(HISTOGRAM_UPPER_BOUNDS_NANOS) : null;
+		pollDuration = enabled ? new BoundedHistogram(HISTOGRAM_UPPER_BOUNDS_NANOS) : null;
+		pollLateness = enabled ? new BoundedHistogram(HISTOGRAM_UPPER_BOUNDS_NANOS) : null;
+		tickDuration = enabled ? new BoundedHistogram(HISTOGRAM_UPPER_BOUNDS_NANOS) : null;
+		outlierKinds = enabled ? new byte[OUTLIER_LIMIT] : null;
+		outlierIds = enabled ? new long[OUTLIER_LIMIT] : null;
+		outlierIntervals = enabled ? new long[OUTLIER_LIMIT] : null;
+		outlierDurations = enabled ? new long[OUTLIER_LIMIT] : null;
+		outlierLateness = enabled ? new long[OUTLIER_LIMIT] : null;
+		outlierMovedPlayers = enabled ? new int[OUTLIER_LIMIT] : null;
+		outlierMovedNpcs = enabled ? new int[OUTLIER_LIMIT] : null;
+		outlierQueuedPackets = enabled ? new int[OUTLIER_LIMIT] : null;
+		outlierMaxQueue = enabled ? new int[OUTLIER_LIMIT] : null;
+		outlierBackpressuredPlayers = enabled ? new int[OUTLIER_LIMIT] : null;
+		outlierWorldUpdate = enabled ? new long[OUTLIER_LIMIT] : null;
+		outlierEvents = enabled ? new long[OUTLIER_LIMIT] : null;
+		outlierPlayers = enabled ? new long[OUTLIER_LIMIT] : null;
+		outlierNpcs = enabled ? new long[OUTLIER_LIMIT] : null;
+		outlierUpdateClients = enabled ? new long[OUTLIER_LIMIT] : null;
+		outlierOutgoing = enabled ? new long[OUTLIER_LIMIT] : null;
+		outlierCleanup = enabled ? new long[OUTLIER_LIMIT] : null;
 	}
 
 	public boolean isEnabled() {
@@ -363,7 +384,7 @@ public final class MovementStutterDiagnostics {
 			for (int i = 0; i < buckets.length; i++) {
 				seen += buckets[i];
 				if (seen >= rank) {
-					return upperBounds[i];
+					return upperBounds[i] == Long.MAX_VALUE ? max : upperBounds[i];
 				}
 			}
 			return upperBounds[upperBounds.length - 1];

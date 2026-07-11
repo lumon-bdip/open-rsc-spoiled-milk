@@ -36,11 +36,13 @@ final class MovementTimingDiagnostics {
 		1_000_000L,
 		readLong(ARRIVAL_OUTLIER_PROPERTY, DEFAULT_ARRIVAL_OUTLIER_NANOS / 1_000_000L)
 			* 1_000_000L);
-	private static final TimingAccumulator ACCUMULATOR = new TimingAccumulator(
-		SUMMARY_INTERVAL_NANOS,
-		ARRIVAL_OUTLIER_NANOS,
-		RECENT_PACKET_LIMIT,
-		OUTLIER_EVENT_LIMIT_PER_WINDOW);
+	private static final TimingAccumulator ACCUMULATOR = ENABLED
+		? new TimingAccumulator(
+			SUMMARY_INTERVAL_NANOS,
+			ARRIVAL_OUTLIER_NANOS,
+			RECENT_PACKET_LIMIT,
+			OUTLIER_EVENT_LIMIT_PER_WINDOW)
+		: null;
 
 	private MovementTimingDiagnostics() {
 	}
@@ -598,7 +600,7 @@ final class MovementTimingDiagnostics {
 			for (int i = 0; i < buckets.length; i++) {
 				seen += buckets[i];
 				if (seen >= rank) {
-					return upperBounds[i];
+					return upperBounds[i] == Long.MAX_VALUE ? max : upperBounds[i];
 				}
 			}
 			return upperBounds[upperBounds.length - 1];

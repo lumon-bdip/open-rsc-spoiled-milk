@@ -51,7 +51,7 @@ public final class MovementTimingDiagnosticsFixture {
         histogram.record(21L);
         require(histogram.count() == 5L, "histogram count");
         require(histogram.percentileUpperBound(0.50D) == 20L, "histogram p50");
-        require(histogram.percentileUpperBound(0.95D) == Long.MAX_VALUE, "histogram p95");
+        require(histogram.percentileUpperBound(0.95D) == 21L, "histogram overflow p95");
 
         MovementTimingDiagnostics.TimingAccumulator timing =
             new MovementTimingDiagnostics.TimingAccumulator(100L, 50L, 4, 2);
@@ -112,6 +112,8 @@ def main() -> None:
             fail(f"missing {label}: {snippet}")
     if "if (!ENABLED)" not in source_text:
         fail("disabled diagnostics gate missing")
+    if "ACCUMULATOR = ENABLED" not in source_text:
+        fail("disabled diagnostics still allocate accumulator storage")
     if "--no-frame-capture" not in launcher_text or 'SPOILED_MILK_OPENGL_FRAME_CAPTURE="$FRAME_CAPTURE_ENABLED"' not in launcher_text:
         fail("renderer diagnostics cannot explicitly disable frame capture")
 

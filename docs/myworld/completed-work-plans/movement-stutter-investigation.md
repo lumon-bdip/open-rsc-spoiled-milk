@@ -1,6 +1,6 @@
 # Intermittent Movement Stutter Investigation
 
-Status: investigation complete; no runtime fix implemented
+Status: investigation complete; Phase 1 diagnostics implemented and privately validated; no gameplay fix implemented
 
 Date: 2026-07-11
 
@@ -415,3 +415,130 @@ select the behavioral change.
   and logs using read-only commands.
 - Confirmed no live server restart, modification, deployment, diagnostic burst,
   forced GC, heap dump, or packet capture was performed.
+
+## Phase 1 Diagnostic Implementation
+
+Phase 1 was implemented on `feat/movement-stutter-diagnostics` without changing
+movement cadence, interpolation, packet contents, or other gameplay behavior.
+Both sides are opt-in and remain disabled in the checked-in server
+configuration.
+
+### Server diagnostics
+
+- `MovementStutterDiagnostics` records fixed-bucket histograms for movement-poll
+  interval, duration, lateness, and world-tick duration.
+- Each reporting window includes moved player/NPC totals, polls containing
+  movement, outgoing queue totals and maxima, the largest per-player queue, and
+  non-writable-channel samples.
+- World-tick outliers retain the existing timing counters for world update,
+  events, players, NPCs, client updates, outgoing submission, and cleanup.
+- Outlier retention is fixed at 16 records per reporting window. The summary
+  preserves total, retained, and dropped counts so truncation is visible.
+- When disabled, the movement path does not read the diagnostic clock, inspect
+  queues/channels, allocate stage objects, or allocate histogram/outlier
+  storage.
+- Output contains only clocks, tick/sequence values, durations, and aggregate
+  counts. It does not include accounts, chat, credentials, or network
+  addresses.
+
+The default summary window is 60 seconds, with a 25ms movement-poll threshold
+and a configurable 160ms world-tick threshold. Private tests can override them
+with `OPENRSC_MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS`,
+`OPENRSC_MOVEMENT_STUTTER_POLL_OUTLIER_MS`, and
+`OPENRSC_MOVEMENT_STUTTER_TICK_OUTLIER_MS`.
+
+### Client diagnostics
+
+- Movement and movement-snapshot packet arrivals are tracked independently,
+  including the snapshot server tick/sequence and record counts.
+- Fixed histograms record arrival intervals, completed local idle-at-waypoint
+  intervals, and waypoint depth. The client also records local/all-entity
+  endpoint completions and correction snaps separately.
+- Summaries include the closest frame/client-loop timing sample, recent loop
+  average/max, render timing, OpenGL timing, and sample age.
+- Recent packet history is fixed at 64 records; a marker emits at most the
+  newest 16. Arrival and correction event output is capped at eight of each per
+  reporting window, with suppression counters.
+- `Ctrl+F8` records a `movement.stutter-observed` marker during a renderer
+  diagnostic session. The marker and summaries intentionally omit identity,
+  chat, credentials, addresses, and local coordinates.
+- The client accumulator is not allocated when renderer diagnostics are
+  disabled. `--no-frame-capture` explicitly disables indexed frame capture
+  while preserving timing telemetry.
+- `analyze-renderer-session.py` now summarizes movement timing, markers,
+  outliers, waypoint/idle values, corrections, and nearby frame timing.
+
+### Private 430ms long-walk validation
+
+The private server and client were run on port `43615`; the public server on
+`43605` was not changed or restarted.
+
+```bash
+OPENRSC_MOVEMENT_STUTTER_DIAGNOSTICS=true \
+OPENRSC_MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS=5 \
+./scripts/run-server.sh
+
+./scripts/run-client.sh --dev --renderer-diagnostics --no-frame-capture
+
+python3 scripts/analyze-renderer-session.py \
+  output/renderer-diagnostics/session-20260711-120039-3262613 --strict
+```
+
+After login, the tester performed a sustained one-minute walk. Eleven complete
+five-second client windows in the observed interval recorded:
+
+- 965 movement packets and 965 paired snapshot packets, with no arrival above
+  the configured 650ms outlier threshold;
+- a maximum snapshot-arrival interval of `316.6ms` and maximum waypoint depth
+  of two;
+- 27 completed local idle transitions and 93 normal local endpoint
+  completions, but zero local correction snaps;
+- a maximum nearby client-loop window of `33.5ms`.
+
+Across the full 489.9-second diagnostic session, client-loop p50/p95/p99 was
+`16.666/17.107/18.203ms`, OpenGL-render p95 was `8.391ms`, and no renderer
+slow-frame events occurred. The session closed cleanly, strict analysis found
+no malformed records, and indexed frame captures remained at zero.
+
+During the manual-walk server interval, outgoing queue depth never exceeded
+two and no non-writable-channel sample occurred. Movement-poll p95 remained at
+`16ms`, but individual polls were late by roughly `75-104ms`. World ticks
+averaged about `41-61ms` per five-second window and peaked around `75-104ms`.
+After the client disconnected, world ticks returned to roughly `2ms` average
+and `2-3ms` maximum, while movement-poll maximum interval returned to `20ms`.
+
+This private run therefore did not implicate renderer saturation, outgoing
+backpressure, or local correction churn. It did reveal a repeatable
+active-client world-tick cost that aligns with sub-430ms movement-poll delays.
+The default 160ms tick-outlier threshold did not retain stage details for these
+sub-160ms ticks, so the next targeted private experiment should repeat the same
+walk with an `80ms` tick threshold before assigning the cost to a specific tick
+stage. That is an instrumentation experiment, not approval for a behavioral
+fix.
+
+One validation-discovered presentation defect was corrected: histogram values
+above the final finite bucket initially rendered as `Long.MAX_VALUE`; overflow
+percentiles now report the finite observed maximum.
+
+### Phase 1 verification commands
+
+```text
+./scripts/build-server.sh
+  BUILD SUCCESSFUL (core and plugins)
+./scripts/build-client.sh
+  BUILD SUCCESSFUL
+python3 tests/myworld/test-movement-stutter-diagnostics.py
+  PASS: deterministic movement stutter diagnostics
+python3 tests/myworld/test-client-movement-timing-diagnostics.py
+  PASS: client movement timing diagnostics and privacy guardrails
+python3 tests/myworld/test-client-custom-movement-stability.py
+  PASS: custom movement update and resize stability guards are present
+python3 tests/myworld/test-server-sync-modernization.py
+  PASS: server sync modernization guards validated
+python3 tests/myworld/test-renderer-diagnostic-session.py
+  PASS: renderer diagnostic session foundation is bounded and machine-readable
+python3 tests/myworld/test-renderer-diagnostic-session-analyzer.py
+  PASS: renderer diagnostic session analyzer validates and correlates AI-readable logs
+git diff --check
+  PASS
+```

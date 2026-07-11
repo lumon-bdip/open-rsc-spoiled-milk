@@ -46,7 +46,7 @@ public final class MovementStutterDiagnosticsFixture {
         histogram.record(21L);
         require(histogram.count() == 5L, "histogram count");
         require(histogram.percentileUpperBound(0.50D) == 20L, "histogram p50");
-        require(histogram.percentileUpperBound(0.95D) == Long.MAX_VALUE, "histogram p95");
+        require(histogram.percentileUpperBound(0.95D) == 21L, "histogram overflow p95");
         histogram.reset();
         require(histogram.count() == 0L, "histogram reset");
 
@@ -95,10 +95,13 @@ public final class MovementStutterDiagnosticsFixture {
 
 def main() -> None:
     server_text = SERVER.read_text(encoding="utf-8")
+    source_text = SOURCE.read_text(encoding="utf-8")
     if "movementDiagnosticsEnabled ? System.nanoTime() : 0L" not in server_text:
         fail("disabled movement-poll path does not gate the monotonic clock read")
     if "if (movementStutterDiagnostics.isEnabled())" not in server_text:
         fail("world-tick diagnostics are not gated")
+    if "pollInterval = enabled ? new BoundedHistogram" not in source_text:
+        fail("disabled server diagnostics still allocate histogram storage")
 
     with tempfile.TemporaryDirectory(prefix="movement-stutter-test-") as raw_tmp:
         tmp = Path(raw_tmp)
