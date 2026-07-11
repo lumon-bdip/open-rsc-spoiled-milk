@@ -41,8 +41,10 @@ def main():
             "Prayer UI should limit interaction through the shared visible-row constant")
     require("drawBoxAlpha(prayerX, prayerY, prayerIconSize, prayerIconSize" in mudclient,
             "Prayer UI should draw icon placeholder cells")
-    require("int prayerTooltipY = prayerGridY + prayerGridHeight + 14;" in mudclient,
-            "Prayer detail text should use the compact vertical gap below the icon grid")
+    require("prayerTooltipY = prayerGridY + prayerGridHeight + 14;" in mudclient,
+            "Prayer icon detail text should use the compact vertical gap below the icon grid")
+    require("int prayerTooltipY = magicPanelYStart + 122;" in mudclient,
+            "Prayer text detail should share the compact description panel")
     require("Reserved points: \" + prayerDef.getPointCost()" in mudclient,
             "Prayer tooltip should show allocation cost instead of drain rate")
     require("int prayerLevel = this.playerStatCurrent.length > 5 ? this.playerStatCurrent[5] : 0;" in mudclient,

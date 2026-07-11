@@ -1,6 +1,6 @@
 # Fixes And Changes Backlog Plan
 
-Status: active; Tasks 1 and 2 implemented and guarded.
+Status: active; Tasks 1 through 3 implemented and guarded.
 Owner: An-actual-duck, with independently checkpointed tasks coordinated from this plan.
 Implementation branch: `feat/player-experience-backlog`.
 
@@ -12,7 +12,7 @@ This plan preserves and coordinates the current "Fixes and Changes" backlog:
 - [x] Correct indoor/upper-floor roof hiding when roofs are enabled.
 - [ ] Explore adjustable terrain ambient occlusion/shading.
 - [ ] Explore adjustable object shading.
-- [ ] Add optional text-list layouts for Magic, Prayer, and Summoning.
+- [x] Add optional text-list layouts for Magic, Prayer, and Summoning.
 - [ ] Add a Lumbridge bank or bank chest.
 
 The list crosses client defaults, account persistence, renderer ownership,
@@ -177,12 +177,37 @@ matrix cannot be proven from the current conditions. Required test states:
 
 ### 3. Add optional text-list spellbook layouts
 
-Recommended branch: `feat/spellbook-text-layouts`
+Checkpoint scope: spellbook presentation only.
 
 Add one persisted client-side `Icons / Text` presentation setting and a shared
 row model for the three tabs. Reuse the current action methods and canonical
 indices. Keep icon mode as default. This is one cohesive UI feature, but it
 must not be bundled with roof, shading, or content changes.
+
+#### Implementation record — 2026-07-11
+
+- Added one local `spellbook_layout` preference with `Icons` as the default and
+  `Text` as the optional mode. It is stored in `clientSettings.conf`; no server
+  game-setting or protocol index was added.
+- Added the preference to the General settings Interface section. One choice
+  controls Magic, Prayer, and Summoning consistently, as approved in this
+  plan.
+- Text mode uses the existing 196x90 scrolling panel in authentic and custom UI
+  placement. Each tab retains its own text scroll position, mouse-wheel and
+  scrollbar behavior, hover description, and tooltip/cost area.
+- Magic text rows preserve hidden-spell filtering, canonical spell indices,
+  level/rune colors, selected state, and autocast state. Both layouts call the
+  same validation and spell-selection/autocast action.
+- Prayer text rows preserve prayer-book order, active and unavailable colors,
+  current allocation-point rules, and the same activate/deactivate packets as
+  icon mode. Summoning rows preserve canonical summon indices and call the
+  existing interface action. The Android last-spell box remains available in
+  either layout.
+- The focused executable settings fixture verifies default, cycle, save/load,
+  compatibility alias, and fallback behavior. Source guards verify all three
+  row builders, shared actions, canonical Magic mapping, per-tab scrolling,
+  persistence, and the settings control. Prayer UI guards and the Java 8 client
+  build pass.
 
 ### 4. Separate terrain and object shading diagnostics
 
@@ -307,8 +332,9 @@ values continue to load unchanged.
   roof-volume hiding remains a possible later enhancement, not a parity fix.
 - Shading terminology: does "terrain ambient occlusion" mean local terrain
   relief, scenery contact shadow strength, or both as separate controls?
-- Text layout: one shared Icons/Text preference is recommended; confirm whether
-  per-tab layout choices are desired instead.
+- Text layout is resolved as one shared Icons/Text preference for all three
+  tabs. Per-tab modes would add preference and interaction complexity without
+  changing any gameplay action, so they are outside this task.
 - Lumbridge bank: approve a precise chest tile after an in-game map check and
   decide whether the area should merely provide bank access or become a formal
   protected bank zone.
