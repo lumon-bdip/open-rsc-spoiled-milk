@@ -196,6 +196,12 @@ The first visually acceptable baseline is now:
   resident path also suppresses walls from planes above an indoor ground-floor
   player while preserving active-floor walls upstairs. `Ctrl+F9` metadata
   records the active plane and resolved roof state for visual correlation.
+- Remaster shading diagnostics now separate terrain and non-terrain/object
+  local-relief strength while retaining the accepted `Max`/`2.0` parity
+  default for both. F6 and `Ctrl+F9` also distinguish fixed model-kind diffuse
+  response from the terrain-only directional/contact shadow mask. Scoped
+  runtime overrides allow visual attribution before any player-facing shading
+  setting is promoted.
 - The disabled shadow proof now builds a frame-wide semantic caster list and
   hashes that list into the resident chunk cache. Terrain chunks receive one
   cached shadow receiver layer made from affected terrain triangles with
@@ -1622,6 +1628,12 @@ they are not visual requirements for the baseline.
         scenery/game-object blur radius `4`, scenery/game-object alpha scale
         `1.3`, contact alpha `0.5`, contact radius scale `0.05`, and contact
         blur radius `2`.
+  - [x] Separate diagnostic terrain/object relief ownership and expose shading
+        channel identity. Scoped runtime overrides preserve the old shared
+        override as a fallback, the shader selects relief by model kind, and a
+        parity-default directional-alpha scale allows terrain relief,
+        directional projection, and contact shadow comparisons to be captured
+        independently before adding normal settings.
   - [ ] Treat full shadow maps, per-pixel dynamic shadows, object-to-object
         shadow receiving, and point-light shadows as later remaster work after
         material/light ownership is cleaner.

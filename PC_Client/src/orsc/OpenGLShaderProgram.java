@@ -178,7 +178,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "uniform float uToneBlue;\n"
 			+ "uniform float uToneBlend;\n"
 			+ "uniform float uBrightness;\n"
-			+ "uniform float uReliefStrength;\n"
+			+ "uniform float uTerrainReliefStrength;\n"
+			+ "uniform float uObjectReliefStrength;\n"
 			+ "uniform int uTerrainVariationEnabled;\n"
 			+ "uniform float uTerrainVariationStrength;\n"
 			+ "uniform float uTerrainVariationTolerance;\n"
@@ -240,7 +241,9 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\tfloat detailFloor = vModelKind > 0.5 && vModelKind < 1.5 ? 0.84 : 0.89;\n"
 			+ "\tfloat detailCeiling = vModelKind > 0.5 && vModelKind < 1.5 ? 1.08 : 1.04;\n"
 			+ "\tfloat reliefFactor = mix(detailCeiling, detailFloor, legacyDetail);\n"
-			+ "\treturn clamp(mix(1.0, reliefFactor, clamp(uReliefStrength, 0.0, 2.5)), 0.35, 1.25);\n"
+			+ "\tfloat reliefStrength = vModelKind > 0.5 && vModelKind < 1.5\n"
+			+ "\t\t? uTerrainReliefStrength : uObjectReliefStrength;\n"
+			+ "\treturn clamp(mix(1.0, reliefFactor, clamp(reliefStrength, 0.0, 2.5)), 0.35, 1.25);\n"
 			+ "}\n"
 			+ "float terrainVariationHash(vec2 position) {\n"
 			+ "\treturn fract(sin(dot(position, vec2(127.1, 311.7))) * 43758.5453123);\n"
@@ -369,7 +372,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private final int toneGreenUniformLocation;
 	private final int toneBlueUniformLocation;
 	private final int toneBlendUniformLocation;
-	private final int reliefStrengthUniformLocation;
+	private final int terrainReliefStrengthUniformLocation;
+	private final int objectReliefStrengthUniformLocation;
 	private final int terrainVariationEnabledUniformLocation;
 	private final int terrainVariationStrengthUniformLocation;
 	private final int terrainVariationToleranceUniformLocation;
@@ -417,7 +421,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int toneGreenUniformLocation,
 		int toneBlueUniformLocation,
 		int toneBlendUniformLocation,
-		int reliefStrengthUniformLocation,
+		int terrainReliefStrengthUniformLocation,
+		int objectReliefStrengthUniformLocation,
 		int terrainVariationEnabledUniformLocation,
 		int terrainVariationStrengthUniformLocation,
 		int terrainVariationToleranceUniformLocation,
@@ -462,7 +467,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		this.toneGreenUniformLocation = toneGreenUniformLocation;
 		this.toneBlueUniformLocation = toneBlueUniformLocation;
 		this.toneBlendUniformLocation = toneBlendUniformLocation;
-		this.reliefStrengthUniformLocation = reliefStrengthUniformLocation;
+		this.terrainReliefStrengthUniformLocation = terrainReliefStrengthUniformLocation;
+		this.objectReliefStrengthUniformLocation = objectReliefStrengthUniformLocation;
 		this.terrainVariationEnabledUniformLocation = terrainVariationEnabledUniformLocation;
 		this.terrainVariationStrengthUniformLocation = terrainVariationStrengthUniformLocation;
 		this.terrainVariationToleranceUniformLocation = terrainVariationToleranceUniformLocation;
@@ -551,6 +557,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					-1,
 					-1,
 					-1,
+					-1,
 					-1);
 			program = 0;
 			return shaderProgram;
@@ -618,7 +625,8 @@ final class OpenGLShaderProgram implements AutoCloseable {
 					gl.glGetUniformLocation(program, "uToneGreen"),
 					gl.glGetUniformLocation(program, "uToneBlue"),
 					gl.glGetUniformLocation(program, "uToneBlend"),
-					gl.glGetUniformLocation(program, "uReliefStrength"),
+					gl.glGetUniformLocation(program, "uTerrainReliefStrength"),
+					gl.glGetUniformLocation(program, "uObjectReliefStrength"),
 					gl.glGetUniformLocation(program, "uTerrainVariationEnabled"),
 					gl.glGetUniformLocation(program, "uTerrainVariationStrength"),
 					gl.glGetUniformLocation(program, "uTerrainVariationTolerance"),
@@ -715,8 +723,15 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		if (toneBlendUniformLocation >= 0) {
 			gl.glUniform1f(toneBlendUniformLocation, presentation.toneBlend);
 		}
-		if (reliefStrengthUniformLocation >= 0) {
-			gl.glUniform1f(reliefStrengthUniformLocation, RendererReliefSettings.getStrength());
+		if (terrainReliefStrengthUniformLocation >= 0) {
+			gl.glUniform1f(
+				terrainReliefStrengthUniformLocation,
+				RendererReliefSettings.getTerrainStrength());
+		}
+		if (objectReliefStrengthUniformLocation >= 0) {
+			gl.glUniform1f(
+				objectReliefStrengthUniformLocation,
+				RendererReliefSettings.getObjectStrength());
 		}
 		if (terrainVariationEnabledUniformLocation >= 0) {
 			gl.glUniform1i(terrainVariationEnabledUniformLocation, RendererTerrainVariationSettings.isEnabled() ? 1 : 0);

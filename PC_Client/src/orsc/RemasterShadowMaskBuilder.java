@@ -21,6 +21,10 @@ final class RemasterShadowMaskBuilder {
 	private static final String SCENERY_BLUR_RADIUS_ENV = "SPOILED_MILK_REMASTER_SCENERY_SHADOW_BLUR_RADIUS";
 	private static final String SCENERY_ALPHA_SCALE_PROPERTY = "spoiledmilk.remasterSceneryShadowAlphaScale";
 	private static final String SCENERY_ALPHA_SCALE_ENV = "SPOILED_MILK_REMASTER_SCENERY_SHADOW_ALPHA_SCALE";
+	private static final String DIRECTIONAL_ALPHA_SCALE_PROPERTY =
+		"spoiledmilk.remasterDirectionalShadowAlphaScale";
+	private static final String DIRECTIONAL_ALPHA_SCALE_ENV =
+		"SPOILED_MILK_REMASTER_DIRECTIONAL_SHADOW_ALPHA_SCALE";
 	private static final String LENGTH_SCALE_PROPERTY = "spoiledmilk.remasterShadowLengthScale";
 	private static final String LENGTH_SCALE_ENV = "SPOILED_MILK_REMASTER_SHADOW_LENGTH_SCALE";
 	private static final String AZIMUTH_BUCKET_PROPERTY = "spoiledmilk.remasterShadowMaskAzimuthBucket";
@@ -54,6 +58,8 @@ final class RemasterShadowMaskBuilder {
 		readInt(SCENERY_BLUR_RADIUS_PROPERTY, SCENERY_BLUR_RADIUS_ENV, 4, 0, 12);
 	static final float REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE =
 		readFloat(SCENERY_ALPHA_SCALE_PROPERTY, SCENERY_ALPHA_SCALE_ENV, 1.3f, 0.25f, 2.0f);
+	static final float REMASTER_SHADOW_MASK_DIRECTIONAL_ALPHA_SCALE =
+		readFloat(DIRECTIONAL_ALPHA_SCALE_PROPERTY, DIRECTIONAL_ALPHA_SCALE_ENV, 1.0f, 0.0f, 2.0f);
 	static final float REMASTER_SHADOW_MASK_AZIMUTH_BUCKET_DEGREES =
 		readFloat(AZIMUTH_BUCKET_PROPERTY, AZIMUTH_BUCKET_ENV, 3.0f, 1.0f, 45.0f);
 	static final float REMASTER_SHADOW_MASK_ELEVATION_BUCKET_DEGREES =
@@ -188,6 +194,14 @@ final class RemasterShadowMaskBuilder {
 		lastBuildReason = "cleared";
 	}
 
+	static String debugSettingsSummary() {
+		return "terrain shadow dir " + REMASTER_SHADOW_MASK_BASE_ALPHA
+			+ "/" + REMASTER_SHADOW_MASK_MAX_ALPHA
+			+ " x" + REMASTER_SHADOW_MASK_DIRECTIONAL_ALPHA_SCALE
+			+ " soft " + REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE
+			+ " contact " + REMASTER_SHADOW_MASK_CONTACT_ALPHA;
+	}
+
 	static long remasterShadowWorldSignature(Renderer3DWorldChunkFrame chunkFrame) {
 		long hash = 0xcbf29ce484222325L;
 		if (chunkFrame == null) {
@@ -308,6 +322,7 @@ final class RemasterShadowMaskBuilder {
 		hash = mix(hash, REMASTER_SHADOW_MASK_BLUR_RADIUS);
 		hash = mix(hash, REMASTER_SHADOW_MASK_SCENERY_BLUR_RADIUS);
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_DIRECTIONAL_ALPHA_SCALE));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_TEXTURE_PADDING));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_LENGTH_SCALE));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CENTER_RETAIN));
@@ -387,7 +402,8 @@ final class RemasterShadowMaskBuilder {
 				sceneryAlpha[index] * REMASTER_SHADOW_MASK_CENTER_RETAIN,
 				sceneryBlurredAlpha[index] * REMASTER_SHADOW_MASK_BLUR_BOOST)
 				* REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE;
-			float directionalAlpha = Math.max(stripDirectionalAlpha, sceneryDirectionalAlpha);
+			float directionalAlpha = Math.max(stripDirectionalAlpha, sceneryDirectionalAlpha)
+				* REMASTER_SHADOW_MASK_DIRECTIONAL_ALPHA_SCALE;
 			float diffusedContactAlpha = Math.max(
 				contactAlpha[index] * REMASTER_SHADOW_MASK_CONTACT_CENTER_RETAIN,
 				contactBlurredAlpha[index] * REMASTER_SHADOW_MASK_CONTACT_BLUR_BOOST);
@@ -436,6 +452,7 @@ final class RemasterShadowMaskBuilder {
 		hash = mix(hash, REMASTER_SHADOW_MASK_BLUR_RADIUS);
 		hash = mix(hash, REMASTER_SHADOW_MASK_SCENERY_BLUR_RADIUS);
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_SCENERY_ALPHA_SCALE));
+		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_DIRECTIONAL_ALPHA_SCALE));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_TEXTURE_PADDING));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_LENGTH_SCALE));
 		hash = mix(hash, Float.floatToIntBits(REMASTER_SHADOW_MASK_CENTER_RETAIN));

@@ -1,6 +1,6 @@
 # Fixes And Changes Backlog Plan
 
-Status: active; Tasks 1 through 3 implemented and guarded.
+Status: active; Tasks 1 through 4 implemented and guarded.
 Owner: An-actual-duck, with independently checkpointed tasks coordinated from this plan.
 Implementation branch: `feat/player-experience-backlog`.
 
@@ -211,13 +211,41 @@ must not be bundled with roof, shading, or content changes.
 
 ### 4. Separate terrain and object shading diagnostics
 
-Recommended branch: `feat/renderer-shading-controls`
+Checkpoint scope: diagnostic-only shading ownership.
 
 First add runtime/diagnostic-only terrain and object strength ownership with
 parity defaults. Attribute whether the requested terrain control belongs to
 local relief, diffuse response, shadow-mask directional strength, or contact
 strength. Record the chosen terms in captures/F6 before exposing a normal
 setting.
+
+#### Implementation record — 2026-07-11
+
+- Split the old shared runtime relief override into independent terrain and
+  non-terrain/object scopes. Both retain the accepted `Max`/`2.0` default, and
+  the legacy `SPOILED_MILK_OPENGL_RELIEF` override remains a compatibility
+  fallback that drives both scopes when no scoped override is supplied.
+- Added diagnostic overrides
+  `SPOILED_MILK_OPENGL_TERRAIN_RELIEF` and
+  `SPOILED_MILK_OPENGL_OBJECT_RELIEF`. The resident shader selects between the
+  two from model kind; the object scope currently means all non-terrain static
+  geometry, including walls, roofs, scenery, and wall objects.
+- Identified the existing channels precisely: local relief reshapes captured
+  legacy base light; directional diffuse uses fixed model-kind curves; the
+  terrain-only shadow mask combines directional wall/scenery projection with
+  a contact channel; non-terrain objects do not currently receive that shadow
+  mask.
+- Added `SPOILED_MILK_REMASTER_DIRECTIONAL_SHADOW_ALPHA_SCALE` as a
+  diagnostic-only terrain shadow comparison knob with a parity default of
+  `1.0`. The existing contact-alpha runtime override remains the contact
+  comparison knob. Both participate in mask cache signatures.
+- F6 now reports terrain/object relief modes and the directional/contact shadow
+  tuning. `Ctrl+F9` metadata records stable individual shading fields,
+  including the fixed diffuse response and the absence of object shadow-mask
+  receiving, so owner observations can be attributed to one channel.
+- The executable diagnostic fixture verifies parity defaults, legacy shared
+  override compatibility, and independent scoped overrides. The full renderer
+  guard suite and Java 8 client build pass without changing default visuals.
 
 ### 5. Promote an accepted terrain shading/AO control
 

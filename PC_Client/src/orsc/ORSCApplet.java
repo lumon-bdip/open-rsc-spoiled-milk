@@ -1048,6 +1048,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			+ " | cell " + OpenGLWorldChunkRenderer.spatialBatchTileSize() + "t"
 			+ " | fog draw " + RendererFogSettings.getMode().drawDistanceTiles + "t";
 		String remasterLightLine = "remaster light " + RendererRemasterLightSettings.debugSummary();
+		String shadingLine = RendererReliefSettings.debugSummary()
+			+ " | " + RemasterShadowMaskBuilder.debugSettingsSummary();
 		PacketHandler activePacketHandler = mudclient == null ? null : mudclient.packetHandler;
 		String[] sceneBaselineLines = activePacketHandler == null
 			? new String[] { "sceneBase unavailable", "", "" }
@@ -1061,6 +1063,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				rendererLine,
 				openGLLine,
 				graphicsLine,
+				shadingLine,
 				"Ctrl+F6 expanded"
 			};
 		}
@@ -1071,6 +1074,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			memoryUsage.heapLine,
 			memoryUsage.bufferAndGcLine,
 			remasterLightLine,
+			shadingLine,
 			telemetry.enabled
 				? "frame avg/max " + telemetry.frameAverageMs + "/" + telemetry.frameMaxMs
 					+ "ms | scene " + telemetry.sceneAverageMs
