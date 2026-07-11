@@ -39,7 +39,10 @@ docs/player-command-list
 
 ## Small Updates
 
-- [ ] Add small updates here.
+- [ ] Execute the cross-system "Fixes and Changes" queue through independent
+      focused branches. The preserved backlog, dependency audit, execution
+      order, and implementation-ready first camera task live in
+      [fixes-and-changes-plan.md](fixes-and-changes-plan.md).
 
 ## Recently Completed
 

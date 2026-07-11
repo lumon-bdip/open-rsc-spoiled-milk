@@ -50,6 +50,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 - [bug-fixes-and-small-updates.md](in-progress-work-plans/bug-fixes-and-small-updates.md):
   ongoing maintenance queue for focused small fixes and quick updates.
+- [fixes-and-changes-plan.md](in-progress-work-plans/fixes-and-changes-plan.md):
+  coordinated player-experience backlog for camera defaults, roof visibility,
+  renderer shading controls, spellbook layouts, and Lumbridge banking.
 - [animation-asset-migration-plan.md](in-progress-work-plans/animation-asset-migration-plan.md):
   spritesheet-first migration to reusable moving projectile, static projectile,
   and on-entity animation categories.
