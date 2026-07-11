@@ -211,6 +211,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "prayer-devotion-equipment-plan.md",
             "project-structure-refactor-plan.md",
             "remaster-lighting-and-shadow-plan.md",
+            "remastered-sprite-overrides-plan.md",
             "renderer-and-shader-roadmap.md",
             "renderer-diagnostic-session-logging-plan.md",
             "renderer-material-family-foundation-plan.md",

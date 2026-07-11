@@ -92,6 +92,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   repository restructure.
 - [remaster-lighting-and-shadow-plan.md](in-progress-work-plans/remaster-lighting-and-shadow-plan.md):
   detailed implementation ledger for clean-slate Remaster lighting and shadows.
+- [remastered-sprite-overrides-plan.md](in-progress-work-plans/remastered-sprite-overrides-plan.md):
+  optional remastered PNG sprite overrides with a player toggle, stable
+  identities, metadata preservation, and per-sprite original fallback.
 - [renderer-and-shader-roadmap.md](in-progress-work-plans/renderer-and-shader-roadmap.md):
   combined current renderer/shader status and next big-swing roadmap.
 - [renderer-v2-plan.md](in-progress-work-plans/renderer-v2-plan.md):
