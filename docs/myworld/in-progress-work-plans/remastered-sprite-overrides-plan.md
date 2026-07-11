@@ -27,6 +27,12 @@ it is useful.
   [`animation-asset-migration-plan.md`](animation-asset-migration-plan.md) into
   this project. Both systems may use PNGs, but their identities and rendering
   contracts differ.
+- Let the authored workspace organize future texture replacements, but do not
+  route textures through the ordinary sprite resolver. Texture runtime support
+  has its own adapter and cache-invalidation phase.
+- Treat collaborator drops such as `bobo-resprites/` as valuable migration
+  inputs. Preserve attribution and Git history while converting flat/raw IDs
+  into stable named sets; do not maintain parallel permanent sources.
 - Do not require the server or network protocol to know which art style a
   player selected.
 - Do not decode PNGs, read files, or emit repeated missing-asset messages from
@@ -50,30 +56,112 @@ overloaded term `custom sprites`.
 
 ## Asset and Catalog Layout
 
-Use the following authored location unless the implementation inventory finds
-a compelling packaging constraint:
+Use a dedicated authored workspace beside the existing `sprites/` and
+`animations/` trees:
 
 ```text
-dev/myworld/assets/sprites/remastered/
-  manifest.json
+dev/myworld/assets/remastered-sprites/
+  README.md
+  CREDITS.md
+  _schema/
+  _templates/
+  incoming/
+    <contributor>/<batch>/
+  npcs/
+    demon/
+      set.json
+      frames/
+        00.png
+        01.png
+        ...
+        17.png
+      source/
+      work/
+  players/
+  equipment/
   items/
+  textures/
   ui/
-  entities/
   static/
+  manifest.json                 # generated; do not edit by hand
 ```
 
-The client build already packages PNG files beneath
-`dev/myworld/assets/sprites/`, but its current Ant include does not package
-JSON. The authoritative catalog will be `manifest.json`; the build must package
-it beside the art. The desktop client has no JSON library other than unrelated
-Discord runtime code, so Phase 1 should not add an ad hoc render-time parser or
-a large dependency. Use the repository's established generated-data pattern:
+This root is the long-term source of truth for remastered art. It belongs under
+`dev/myworld/assets/` because it is an authored distributable-asset workspace,
+but it should not be nested inside today's `sprites/` or `animations/` runtime
+layouts. Keeping it as their sibling gives collaborators one predictable drop
+location while avoiding a mix of canonical project PNGs, combat VFX, source
+files, drafts, and optional remaster overrides.
 
-1. a small build/developer tool validates `manifest.json` and generates a
-   deterministic Java catalog data class;
+The primary navigation is art identity, not raw cache ID or contributor name.
+Related frames live together. A demon submission belongs under `npcs/demon/`;
+player body frames might live under `players/body1/`; a hatchet set under
+`equipment/hatchet/`; and a single item icon under a named leaf such as
+`items/weapons/dragon-sword/`. Category folders may gain sensible nested
+families, but every independently reviewable leaf has one `set.json`.
+
+Use lowercase kebab-case for authored directories and zero-padded frame names.
+Raw cache IDs may be recorded as migration metadata, but must not be the only
+human-facing filename after classification. The stable runtime key remains the
+actual identity; the friendly folders are a navigation and authoring layer.
+
+### Set folder contract
+
+Each leaf set is self-describing and independently reviewable:
+
+- `set.json`: stable targets, frame mapping, expected canonical metadata,
+  status, contributor/provenance, policies, and notes;
+- `frames/`: validated runtime-ready PNGs only; this is the only leaf image
+  directory eligible for release packaging;
+- `source/`: optional distributable editable masters or original sheets;
+- `work/`: incomplete crops, experiments, or not-yet-approved frames; never
+  packaged; and
+- generated comparisons, contact sheets, and reports go under
+  `output/remastered-sprites/`, never back into the authored set.
+
+An 18-frame set should normally use `frames/00.png` through `frames/17.png`.
+The descriptor may instead declare a spritesheet plus rectangles when that is
+the actual authored source, but individual numbered frames are preferred for
+drop-in review and per-frame fallback. A missing frame is legal only when the
+descriptor explicitly declares partial coverage; an accidental numbering gap
+is a validation error.
+
+`incoming/<contributor>/<batch>/` is temporary classification space for flat
+or externally named deliveries. It preserves an untouched incoming batch while
+the importer produces a mapping report, but it is never a second runtime source
+and is never packaged. After a reviewed promotion, move the accepted files into
+named sets and remove the redundant incoming copy in the same checkpoint. Git
+history and `set.json` retain the original batch attribution.
+
+### Distributed descriptors and generated catalog
+
+A drop-in workflow should not require hand-editing one ever-growing central
+manifest. The authoritative declarations are the distributed `set.json` files.
+A deterministic generator scans those descriptors and produces:
+
+- the root `manifest.json` used for audits and packaging;
+- a generated Java catalog data class used by the client; and
+- a coverage/inventory report under `output/remastered-sprites/`.
+
+The generated root manifest and Java data must be committed or regenerated in
+the established project workflow and checked for drift. Never author the same
+entry independently in a leaf descriptor and the root catalog.
+
+The current Ant build packages PNGs only from `sprites/` and `animations/`, so
+Phase 1 must add an explicit remastered-assets fileset. Package only generated
+catalog data and approved `frames/` resources beneath
+`myworld-assets/remastered-sprites/`; exclude `incoming/`, `source/`, `work/`,
+templates, and local reports.
+
+The desktop client has no general JSON library other than unrelated Discord
+runtime code, so Phase 1 should not add an ad hoc render-time parser or a large
+dependency. Use the repository's established generated-data pattern:
+
+1. a small build/developer tool validates every `set.json` and generates the
+   deterministic root manifest and Java catalog data class;
 2. the generated class is committed and checked for drift by automation;
 3. runtime loads the generated catalog without parsing arbitrary JSON; and
-4. the original manifest is still packaged for auditing, release validation,
+4. the generated root manifest is packaged for auditing, release validation,
    and future tooling.
 
 If implementation evidence strongly favors a small dependency-free runtime
@@ -81,8 +169,10 @@ format instead, record that decision here before changing the source of truth.
 Do not maintain two independently authored catalogs.
 
 PNG pixels are not enough to reconstruct the current `Sprite` contract. Each
-catalog entry must identify the replacement and validate the metadata relevant
-to its canonical sprite, including:
+set descriptor must identify its logical target(s), frame files, policies, and
+provenance. The generator expands that compact authoring declaration into
+per-frame catalog entries and records the metadata relevant to each canonical
+sprite, including:
 
 - stable sprite key and PNG path;
 - optional sheet frame, row, and column information;
@@ -91,44 +181,113 @@ to its canonical sprite, including:
 - category and any scale or anchor policy;
 - palette-mask/recolor policy where equipment or character art needs it.
 
-Canonical placement metadata should be inherited and copied automatically,
-not re-authored as a second source of truth. The expected values in the
-manifest are compatibility assertions: if the runtime canonical frame no
-longer matches them, reject only that override and use the runtime canonical
-frame. This also protects players whose active `.osar` sprite pack changes a
-frame contract.
+Canonical placement metadata should be inventoried, inherited, and copied
+automatically, not hand-authored across eighteen frame records. The expected
+values emitted into the generated manifest are compatibility assertions: if
+the runtime canonical frame no longer matches them, reject only that override
+and use the runtime canonical frame. This also protects players whose active
+`.osar` sprite pack changes a frame contract.
 
-The version-1 entry schema should contain at least:
+A compact Demon `set.json` should look broadly like:
 
 ```json
 {
-  "key": "sprite/items/273/0",
-  "png": "items/dragon-sword.png",
-  "sourceRect": null,
-  "expectedCanonical": {
-    "pixelWidth": 48,
-    "pixelHeight": 32,
-    "requiresShift": false,
-    "shiftX": 0,
-    "shiftY": 0,
-    "boundWidth": 48,
-    "boundHeight": 32
+  "schemaVersion": 1,
+  "setId": "npc-demon",
+  "displayName": "Demon",
+  "status": "ready",
+  "contributor": {
+    "id": "thatkidbobo",
+    "displayName": "ThatKidBobo",
+    "sourceCommit": "abd9d08fc23cb4752d3389ed127d388af2d18b2b",
+    "provenance": "project-contribution"
   },
-  "sizePolicy": "exact-canonical",
-  "recolorPolicy": "inherit",
-  "alphaThreshold": 128
+  "targets": [
+    {
+      "keyPrefix": "sprite/npc/demon",
+      "frames": {
+        "pattern": "frames/%02d.png",
+        "first": 0,
+        "count": 18
+      },
+      "sizePolicy": "exact-canonical",
+      "recolorPolicy": "inherit",
+      "alphaThreshold": 128,
+      "legacySourceRange": {"first": 864, "last": 881}
+    }
+  ]
 }
 ```
 
-`sourceRect` is optional and supports one frame cut from a declared sheet. The
-generator must reject duplicate keys, invalid or overlapping declarations when
-overlap is forbidden, out-of-bounds rectangles, unknown policy values, and
-paths outside the remaster root. One PNG may intentionally serve more than one
-key.
+The generated catalog expands that declaration into keys
+`sprite/npc/demon/0` through `sprite/npc/demon/17`, concrete resource paths,
+and per-frame expected canonical contracts. `legacySourceRange` documents an
+incoming numeric range; it is not used for runtime lookup.
+
+A descriptor may use explicit frame maps or a `sourceRect` sheet declaration
+instead of the pattern form. The generator must reject duplicate keys, invalid
+or overlapping declarations when overlap is forbidden, out-of-bounds
+rectangles, unknown policy values, orphan ready PNGs, and paths outside the
+remaster root. One PNG may intentionally serve more than one key.
 
 Catalog paths must be normalized beneath the packaged remaster root. Reject
-absolute paths and traversal rather than allowing the manifest to read an
-arbitrary local file.
+absolute paths and traversal rather than allowing a descriptor or generated
+catalog to read an arbitrary local file.
+
+### Existing Bobo contribution as the first migration batch
+
+`dev/myworld/assets/bobo-resprites/` is the reason this workspace is now
+needed, not disposable clutter. Commit `abd9d08fc` added `198` improved PNGs
+from ThatKidBobo with shading/color improvements based on the existing art:
+
+| Incoming area | Files | Inventory result |
+| --- | ---: | --- |
+| `entity-animations/` | 90 | five complete 18-frame groups |
+| `items-inventory-ground/` | 85 | all map to current `items` entries |
+| `textures/` | 23 | all map to archive entries; 21 have active texture definitions |
+
+The five flat entity ranges map by dimensions, visible-pixel shape, and current
+archive identity as follows:
+
+| Incoming IDs | Named destination | Stable target |
+| --- | --- | --- |
+| `27-44` | `players/body1/` | `sprite/player/body1/0-17` |
+| `54-71` | `players/legs1/` | `sprite/player/legs1/0-17` |
+| `108-125` | `players/fbody1/` | `sprite/player/fbody1/0-17` |
+| `864-881` | `npcs/demon/` | `sprite/npc/demon/0-17` |
+| `1674-1691` | likely `equipment/hatchet/` (review required) | provisional `sprite/equipment/hatchet/0-17` |
+
+The first four mappings are high-confidence archive matches. The final group
+visually and by mask similarity favors `hatchet`, but another equipment entry
+shares its dimensions. Keep that target provisional until a side-by-side
+contact sheet is approved; the migration is also a regression fixture proving
+that classification reports ambiguity rather than silently choosing a target.
+
+The item files use authentic array IDs. Their logical item entry is currently
+`raw ID - mudclient.spriteItem (2150)`; the texture files similarly map through
+`raw ID - mudclient.spriteTexture (3225)`. Those offsets belong only in import
+metadata/tooling. Promoted set descriptors use stable logical keys.
+
+All 90 grouped frames and all 23 textures match their canonical pixel
+dimensions. Texture entries `57` and `58` are present in the custom archive but
+do not currently have active `TextureDef` records; keep them staged and report
+their dormant status instead of treating them as runtime proof assets.
+
+Of the 85 item images, 84 match exactly. Incoming `id-02262.png` (logical
+`items:112`) is `36x22` while the current canonical frame is `35x22`; keep that
+file in `work/` until the one-pixel difference is deliberately resolved or a
+later size policy supports it. Many logical item sprites are intentionally
+shared by multiple definitions and palette masks. The classifier/report must
+list every current `ItemDef` alias, then use a visual-family folder name such
+as `items/weapons/mace/` rather than misleadingly naming a shared sprite after
+only its first item.
+
+Migration should use reviewed `git mv` operations into the named workspace so
+history remains useful. Do not keep `bobo-resprites/` and
+`remastered-sprites/` as parallel permanent sources. Preserve Bobo's identity,
+source commit, and contribution terms in every promoted set descriptor and the
+asset credits. Future Bobo drops follow the same incoming -> classify -> named
+set -> validate -> promote workflow.
 
 ## Stable Sprite Identity
 
@@ -150,7 +309,7 @@ and `190` animations:
 | `player` | 8 | 18-frame animations |
 | `projectiles` | 7 | static sprites |
 | `skill_icons` | 20 | static sprites |
-| `textures` | 67 | renderer materials, excluded from this sprite plan |
+| `textures` | 67 | renderer materials; workspace-supported, excluded from sprite resolver v1 |
 
 All current subspace and entry names fit `[A-Za-z0-9._-]+`, but the key parser
 must still reject separators and traversal instead of assuming future names
@@ -182,6 +341,12 @@ not part of the key.
 The authentic item offset (`mudclient.spriteItem + spriteID`) is used only to
 obtain the canonical fallback. It must never appear in a public remaster key.
 Incidental animation `number` and render-array indices are also not keys.
+
+Reserve a separate `texture/<lowercase-entry>` namespace for the texture
+workspace, for example `texture/1`. Do not pretend a texture is an ordinary
+`Sprite` merely because the custom OSAR stores its source pixels in a sprite
+frame. Texture replacement has different transparency, atlas, resident chunk,
+and live-reload responsibilities and receives its own adapter phase below.
 
 ### Source precedence
 
@@ -219,8 +384,9 @@ covered by the foundation:
   sprites owned by the separate animation migration system;
 - captcha and network-created images;
 - the runtime minimap image and other generated buffers; and
-- `textures`, terrain materials, models, walls, and scenery. RSC scenery is
-  normally geometry/material data, not a sprite override.
+- texture runtime replacement, terrain materials, models, walls, and scenery.
+  Texture artwork is organized in this workspace, but RSC textures and scenery
+  are not ordinary sprite resolver entries.
 
 `Panel` stores the appearance-screen arrow `Sprite` objects at panel creation.
 Those twelve cached controls are the known retained-reference exception to
@@ -241,6 +407,96 @@ The original minimum identity requirements remain useful guardrails:
 Do not treat an incidental render-array index as a universal identity unless
 the inventory proves that index is stable and namespaced. Different sources
 may legitimately use the same numeric ID.
+
+## Authoring Workspace Lifecycle
+
+The clean workspace is a first-class deliverable, not incidental support code.
+An artist or maintainer should be able to understand where a new drop belongs,
+what is ready, what is incomplete, and why an asset maps to a game identity
+without opening `mudclient.java`.
+
+### Normal drop-in workflow
+
+1. Place an untouched delivery under
+   `incoming/<contributor>/<yyyy-mm-dd-or-batch-name>/`.
+2. Run an inventory/classification command. It reports image dimensions,
+   consecutive ranges, likely canonical matches, collisions, and ambiguous
+   mappings without moving files.
+3. Review ambiguous results. Raw IDs and dimension matches are evidence, not
+   permission to guess an identity.
+4. Scaffold or select the named leaf set, such as `npcs/demon/`.
+5. Move accepted files with `git mv` into `frames/` if runtime-ready or `work/`
+   if incomplete. Normalize them to numbered/named files without discarding
+   the incoming IDs recorded in `set.json`.
+6. Complete contributor, source commit/batch, provenance, target key, policies,
+   and notes in `set.json`.
+7. Run set validation and generate the root manifest/catalog.
+8. Generate canonical/remastered contact sheets and a coverage report under
+   `output/remastered-sprites/` for human review.
+9. Checkpoint the coherent set and remove its redundant `incoming/` copy. A
+   failed or uncertain classification remains in incoming/work and never
+   becomes a silent runtime override.
+
+For an already-classified set, future work is simpler: drop the updated
+numbered frames into that set, validate, regenerate, review the contact sheet,
+and checkpoint. Updating Demon should not require touching unrelated item or
+texture descriptors.
+
+### Tooling surface
+
+Provide one documented wrapper, tentatively
+`./scripts/remastered-sprites.sh`, backed by focused tooling under
+`tools/myworld/remastered-sprites/`. It should support at least:
+
+- `inventory`: report canonical sprite/texture identities and current coverage;
+- `classify <incoming-path>`: propose mappings without mutation;
+- `scaffold <category> <set-name>`: create a descriptor and standard folders
+  from `_templates/`;
+- `validate [set-path]`: validate one set or the complete workspace;
+- `generate`: deterministically rebuild root manifest and Java catalog data;
+  and
+- `report`: write coverage, orphan, size, provenance, and package-delta reports
+  under `output/remastered-sprites/`.
+
+The classifier should understand known legacy offsets only as import adapters,
+then confirm candidates with canonical dimensions, alpha/visible-pixel bounds,
+frame counts, and where useful mask similarity. It must report multiple
+possible matches rather than auto-promoting an ambiguous set such as two
+equipment entries that share dimensions.
+
+For items, classification output includes all `ItemDef` IDs/names, picture
+masks, and notes/certificate aliases that use the logical sprite. For textures,
+it includes `TextureDef` data/animation names and clearly marks archive entries
+without a current runtime definition.
+
+### Workspace invariants
+
+- One ready PNG belongs to exactly one declared set unless intentional reuse is
+  explicit.
+- Every `frames/` PNG is declared; every declared runtime PNG exists.
+- Drafts, editable sources, incoming deliveries, and generated reports are not
+  player-package inputs.
+- No contributor-named folder becomes a permanent runtime namespace;
+  attribution lives in metadata and credits.
+- No raw ID is accepted as the sole stable target.
+- Set status is explicit (`incoming`, `work`, `ready`, `retired` or the final
+  validated equivalent), and only ready entries enter the generated runtime
+  catalog.
+- Generated files are deterministic and fail drift checks instead of silently
+  changing during an ordinary client build.
+- Case, path, frame numbering, orphan, duplicate, provenance, and canonical
+  contract errors are actionable and identify the leaf set.
+- Git history is preserved during reorganization; do not delete and recreate a
+  collaborator's files when `git mv` expresses the migration.
+
+The workspace README must include the folder tree, the normal drop-in workflow,
+descriptor examples for an NPC animation, static item, and texture, command
+reference, status meanings, provenance rules, and how to recover from a failed
+validation without bypassing it. `CREDITS.md` provides the human-readable
+collaborator/batch index, while `set.json` remains the machine-verifiable
+per-set record. Update `dev/myworld/assets/README.md` and
+`release/player/ASSET-SOURCES.txt` when promoted art changes their inventories;
+do not let the remaster workspace become an unreferenced credit island.
 
 ## Runtime Architecture
 
@@ -338,14 +594,14 @@ Therefore the safe foundation contract is binary transparency:
 - treat alpha at or above the threshold as opaque RGB;
 - normalize opaque black away from zero, using the existing
   `RendererTransparency.OPAQUE_BLACK_REPLACEMENT` rule; and
-- default the manifest threshold to `128` unless visual testing justifies a
+- default the set/catalog threshold to `128` unless visual testing justifies a
   per-entry value.
 
 Do not claim that fractional PNG alpha is preserved. Assets in the first proof
 should use intentional hard transparency or antialiasing authored for the
 binary threshold. True fractional-alpha sprites require a separate shared
 `Sprite`/software/OpenGL contract extension and parity tests before the
-manifest may declare such a mode.
+catalog may declare such a mode.
 
 ### Dimensions and placement
 
@@ -358,7 +614,7 @@ layout. Version 1 therefore supports `sizePolicy: exact-canonical` only:
   dimensions;
 - `requiresShift`, shift X/Y, bound width/height, ID, and package metadata are
   copied from the canonical frame; and
-- manifest expected-canonical fields must match before the override is valid.
+- generated expected-canonical fields must match before the override is valid.
 
 This restriction is a foundation safety rail, not the final remaster ambition.
 Before accepting higher-resolution art, add an explicit logical-source-size
@@ -406,7 +662,7 @@ Even curated packaged data needs deterministic validation:
   resources; a development build may prefer the matching repository path for
   iteration, but must not scan arbitrary user folders;
 - normalize separators and require paths relative to
-  `myworld-assets/sprites/remastered/`;
+  `myworld-assets/remastered-sprites/`;
 - reject absolute paths, `..`, empty segments, control characters, and
   case-colliding keys/files that behave differently on Windows and Linux;
 - read and validate PNG headers before full `ImageIO` decode;
@@ -419,7 +675,7 @@ Even curated packaged data needs deterministic validation:
 
 Every shipped PNG needs redistribution permission and a provenance/credit
 entry consistent with `dev/myworld/assets/README.md` and
-`release/player/ASSET-SOURCES.txt`. The manifest should carry a required
+`release/player/ASSET-SOURCES.txt`. Each set descriptor should carry a required
 credit/provenance identifier, including an explicit project-author identifier
 for original work, so validation can reject uncredited release art.
 Do not commit speculative or license-unclear proof images merely to exercise
@@ -477,6 +733,30 @@ be compared to the exact asset set.
 - [ ] Select the smallest useful proof sprites with the owner before producing a
   large art set.
 
+### Phase 0B: Authoring workspace foundation
+
+- Create `dev/myworld/assets/remastered-sprites/` with its README, schema,
+  templates, category folders, incoming boundary, and output rules.
+- Add its human-readable contributor index and connect it to
+  `dev/myworld/assets/README.md` and the release asset-source inventory.
+- Add the documented inventory, classify, scaffold, validate, generate, and
+  report command surface before building a large runtime catalog.
+- Import the existing Bobo contribution as the first real classification test.
+  Preserve its original commit and contributor metadata.
+- Migrate the four confirmed animation groups with reviewed `git mv`
+  operations and per-set descriptors. Resolve the fifth group against the
+  provisional `hatchet` mapping before promoting it from work to ready.
+- Map the 85 raw item IDs to stable `sprite/items/<entry>/0` sets. Keep
+  `id-02262.png` in work until its one-pixel width mismatch is resolved.
+- Organize the 23 texture images into named or ID-audited texture sets with
+  `texture/<entry>` targets, but keep them non-runtime/staged until the texture
+  adapter phase.
+- Generate the aggregate manifest, catalog data, coverage report, and contact
+  sheets; prove repeat generation is byte-stable.
+- Add workspace guardrails before retiring the now-redundant
+  `bobo-resprites/` path through reviewed `git mv` operations, then checkpoint
+  the clean migration as its own milestone.
+
 ### Phase 1: Safe foundation
 
 - Add the setting, catalog schema/loader, resolver, validation, and diagnostics
@@ -512,6 +792,27 @@ be compared to the exact asset set.
   while claiming software parity.
 - Keep version-1 assets valid and fallback-compatible after either extension.
 
+### Phase 2C: Texture override adapter
+
+- Keep texture art in the same authoring workspace and generated inventory,
+  but route it through `texture/<entry>` keys and a texture-specific resolver.
+- Resolve a remastered texture before the canonical sprite-tree texture is
+  converted into scene texture data; retain the canonical texture as the exact
+  per-entry fallback.
+- Define texture transparency and resolution rules separately from sprite
+  rules. Existing Bobo textures match canonical dimensions, making them the
+  safe first candidates.
+- A live texture toggle must deliberately invalidate/rebuild OpenGL world
+  texture caches and any resident chunk/material state that captures texture
+  identity. Do not claim immediate live parity until that rebuild is proven
+  safe and bounded.
+- Decide whether the player-facing row expands to `Remastered assets`, whether
+  textures follow the same toggle invisibly, or whether textures receive a
+  separate advanced option. Classic must always retain canonical textures.
+- Test software texture loading, OpenGL atlases, animated textures, transparent
+  materials, relog/world reload, and per-texture fallback before promoting the
+  staged Bobo texture sets to runtime-ready.
+
 ### Phase 3: Character and animation coverage
 
 - Expand the stable-key adapter to sprite-tree equipment, player, and NPC
@@ -522,10 +823,11 @@ be compared to the exact asset set.
 - Add final-color recolor policy only after policy travels explicitly through
   software and OpenGL draw transforms.
 
-### Phase 4: Authoring workflow
+### Phase 4: Authoring workflow refinement
 
-- Add validation/export tooling and a concise contributor guide for naming,
-  metadata, transparent padding, scaling, and visual review.
+- Refine the foundation tooling and contributor guide from real collaborator
+  use, including naming, metadata, transparent padding, scaling, and visual
+  review.
 - Keep a ledger of implemented keys so PNG filenames do not become the only
   source of truth.
 - Generate contact sheets or canonical/remastered/fallback comparison captures
@@ -543,6 +845,20 @@ be compared to the exact asset set.
 
 ## Required Automated Coverage
 
+- Workspace validation discovers every leaf `set.json`, rejects orphan ready
+  PNGs, and ignores `incoming/`, `source/`, `work/`, and `output/` as runtime
+  inputs.
+- Scaffolding creates the documented category/set shape without overwriting an
+  existing set.
+- Classification is read-only, translates known raw offsets only in import
+  metadata, reports ambiguous matches, and never guesses/pushes a promotion.
+- Distributed descriptors generate one deterministic manifest/catalog with no
+  duplicate stable keys; a second generation produces no diff.
+- The Bobo migration fixture accounts for all 198 contributed files, five
+  complete frame groups, the 85 item mappings, 23 texture mappings, and the
+  one known item width mismatch.
+- Draft/work assets and staged textures are absent from the player JAR until
+  their runtime status is explicitly promoted.
 - Disabled mode returns the exact canonical path/object behavior.
 - Enabled mode selects an available valid override.
 - A missing or malformed saved setting defaults Off; an explicit supported
@@ -604,6 +920,16 @@ and development client only.
 
 ## Acceptance Criteria
 
+- `dev/myworld/assets/remastered-sprites/` is a documented, navigable source of
+  truth organized by category and named related-frame sets.
+- A collaborator drop can be inventoried, classified, scaffolded, validated,
+  reported, and promoted without editing renderer code or a giant central
+  manifest.
+- The original Bobo batch is fully accounted for and reorganized without
+  losing contributor attribution or Git history; no parallel permanent
+  `bobo-resprites/` runtime tree remains.
+- Draft/source/incoming files are visibly distinct from runtime-ready frames
+  and cannot enter a player package accidentally.
 - Original sprite archives and current custom-sprite behavior remain intact.
 - The player has one clear, persisted, reversible remastered-sprite toggle.
 - Mixed original/remastered coverage is safe at sprite and animation-frame
@@ -645,6 +971,10 @@ without asking the manager to authorize every small adjustment. It should:
   OpenGL Graphics list.
 - The proof-approval checkpoint at which the Remaster preset begins enabling
   the option automatically.
+- Whether runtime-ready textures share a renamed `Remastered assets` toggle or
+  receive a separate option after the texture adapter is proven.
+- Friendly leaf names/families for the 85 Bobo item images and 23 textures
+  after the stable keys are resolved to player-facing definitions/materials.
 - Whether a future external user-mod directory is desirable after the curated
   packaged system is mature.
 
@@ -656,9 +986,17 @@ without asking the manager to authorize every small adjustment. It should:
   authentic array offsets remain fallback implementation details.
 - 2026-07-11: Treat the final post-pack/post-injection object as canonical and
   preserve it unchanged.
-- 2026-07-11: Keep `manifest.json` authoritative and generate deterministic
-  runtime catalog data unless implementation evidence justifies one
-  dependency-free runtime source instead.
+- 2026-07-11: Use `dev/myworld/assets/remastered-sprites/` as a clean authored
+  workspace beside `sprites/` and `animations/`, organized by category and
+  named related-frame sets such as `npcs/demon/`.
+- 2026-07-11: Make distributed leaf `set.json` descriptors authoritative and
+  generate the aggregate `manifest.json` plus deterministic Java catalog data.
+- 2026-07-11: Treat the 198-file ThatKidBobo `bobo-resprites` contribution as
+  the first migration/import fixture; preserve attribution and history while
+  retiring the contributor-named path after reviewed promotion.
+- 2026-07-11: Organize textures in the same workspace under separate
+  `texture/<entry>` identities, but do not route them through sprite resolver
+  v1 or package staged texture work as active overrides.
 - 2026-07-11: Foundation entries require exact canonical pixel dimensions,
   inherited recoloring, and thresholded binary transparency. Higher-resolution,
   final-color, and fractional-alpha contracts require later decision gates.
