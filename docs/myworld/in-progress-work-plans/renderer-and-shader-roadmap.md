@@ -219,6 +219,12 @@ Implemented or started:
   mask, and the resident shader adds the sampled glow before tone/fog. Future
   material work should make these emitters data-driven rather than keeping the
   first-pass classifier in `mudclient`.
+- The parity-preserving resident material-family foundation is implemented and
+  awaiting live capture/performance acceptance. Static resident triangles now
+  carry stable `TERRAIN`, `WATER`, `WALL`, `ROOF`, `SCENERY`, `FOLIAGE`, `ORE`,
+  `EMISSIVE`, `EFFECT`, or `UNCLASSIFIED` ids through chunk signatures, VBOs,
+  the resident shader interface, F6/session telemetry, and `Ctrl+F9` evidence.
+  The normal shader does not use the value to alter output yet.
 
 Still incomplete:
 
@@ -228,9 +234,10 @@ Still incomplete:
   The accepted Remaster resident-chunk path keeps automatic tone/brightness
   presentation shader-owned, and these presentation-only changes must not dirty
   resident chunk buffers.
-- Material behavior is not yet fully data-driven. Terrain, water, roofs, walls,
-  foliage, ore, scenery, sprites, and effects still need explicit material
-  metadata before polish shaders can be trusted.
+- Material behavior is not yet fully data-driven. Resident static families are
+  explicit, but their visual responses remain parity-neutral and players,
+  NPCs, ground items, projectiles, particles, and other world sprites still
+  need a separate authored family contract before broad polish can be trusted.
 - Shader comparison tooling is not yet strong enough to show legacy software,
   current OpenGL, and shader output for the same camera frame.
 - Shader polish controls such as saturation, contrast, fog response, slope
@@ -314,10 +321,10 @@ Still incomplete:
 
 2. Material-aware visual polish
 
-   Add explicit material families and shader-owned polish for terrain, water,
-   foliage, ore, roofs, walls, scenery, sprites, projectiles, and effects. This
-   is the best next visual-improvement direction now that shadows are accepted
-   for alpha.
+   Validate the new resident static-family coverage live, then add narrowly
+   controlled shader-owned polish for terrain, water, foliage, ore, roofs,
+   walls, scenery, and emissive surfaces. Give sprites, projectiles, and effects
+   their own ownership contract before including them in the same controls.
 
 3. World-space entity and sprite renderer
 
@@ -365,9 +372,10 @@ Still incomplete:
 Shadows are accepted for the current alpha pass. The next visual work should
 come from one of these areas unless a concrete shadow regression appears:
 
-- Material families and polish uniforms: make terrain, water, foliage, ore,
-  walls, roofs, scenery, sprites, projectiles, and effects respond through
-  explicit shader/material data instead of one generic lighting path.
+- Material families and polish uniforms: live-validate the parity-only resident
+  foundation, then make static terrain, water, foliage, ore, walls, roofs,
+  scenery, and emissive surfaces respond through explicit shader/material data.
+  Sprites, projectiles, and effects remain a separate ownership milestone.
 - Terrain variation and tile-edge blending: reduce flat broad fields and hard
   grass/dirt transitions without changing original assets or map data. The
   current first pass is targeted RGB variation for one terrain color at a time;

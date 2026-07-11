@@ -1651,6 +1651,15 @@ they are not visual requirements for the baseline.
       legacy light/fog.
 - [ ] Add material metadata for terrain, water, walls, roofs, foliage, ore,
       objects, sprites, and effects so shader behavior is data-driven.
+  - [x] Establish the parity-preserving resident static-world foundation in
+        [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md):
+        explicit stable ids, centralized terrain/object classification,
+        per-triangle chunk/signature/VBO/shader propagation, F6/session
+        telemetry, and strict `Ctrl+F9` coverage analysis are implemented.
+        Normal fragment output remains unchanged pending live validation.
+  - [ ] Extend explicit ownership beyond resident static triangles to players,
+        NPCs, ground items, projectiles, particles, and other world sprites;
+        do not infer those families from screen-space sprite ids.
 - [x] Promote resident chunk face normals into owned geometry data. The first
       implementation stores scaled per-vertex normals on `ChunkMesh` and routes
       chunk diffuse lighting through those accessors, removing another place

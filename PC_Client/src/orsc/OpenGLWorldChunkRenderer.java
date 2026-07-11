@@ -1,6 +1,7 @@
 package orsc;
 
 import orsc.graphics.three.Renderer3DFrame;
+import orsc.graphics.three.Renderer3DMaterialFamily;
 import orsc.graphics.three.Renderer3DModelKind;
 import orsc.graphics.three.Renderer3DTextureData;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
@@ -38,6 +39,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private static final int RAW_MATERIAL_COLOR_COMPONENT_COUNT = 3;
 	private static final int NORMAL_COMPONENT_COUNT = 3;
 	private static final int MODEL_KIND_COMPONENT_COUNT = 1;
+	private static final int MATERIAL_FAMILY_COMPONENT_COUNT = 1;
 	private static final int TERRAIN_VARIATION_MASK_COMPONENT_COUNT = 1;
 	private static final int TERRAIN_BLEND_COLOR_COMPONENT_COUNT = 3;
 	private static final int TERRAIN_BLEND_STRENGTH_COMPONENT_COUNT = 1;
@@ -51,6 +53,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			+ RAW_MATERIAL_COLOR_COMPONENT_COUNT
 			+ NORMAL_COMPONENT_COUNT
 			+ MODEL_KIND_COMPONENT_COUNT
+			+ MATERIAL_FAMILY_COMPONENT_COUNT
 			+ TERRAIN_VARIATION_MASK_COMPONENT_COUNT
 			+ TERRAIN_BLEND_COLOR_COMPONENT_COUNT
 			+ TERRAIN_BLEND_STRENGTH_COMPONENT_COUNT;
@@ -69,8 +72,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		RAW_MATERIAL_COLOR_OFFSET_BYTES + RAW_MATERIAL_COLOR_COMPONENT_COUNT * 4;
 	private static final int MODEL_KIND_OFFSET_BYTES =
 		NORMAL_OFFSET_BYTES + NORMAL_COMPONENT_COUNT * 4;
-	private static final int TERRAIN_VARIATION_MASK_OFFSET_BYTES =
+	private static final int MATERIAL_FAMILY_OFFSET_BYTES =
 		MODEL_KIND_OFFSET_BYTES + MODEL_KIND_COMPONENT_COUNT * 4;
+	private static final int TERRAIN_VARIATION_MASK_OFFSET_BYTES =
+		MATERIAL_FAMILY_OFFSET_BYTES + MATERIAL_FAMILY_COMPONENT_COUNT * 4;
 	private static final int TERRAIN_BLEND_COLOR_OFFSET_BYTES =
 		TERRAIN_VARIATION_MASK_OFFSET_BYTES + TERRAIN_VARIATION_MASK_COMPONENT_COUNT * 4;
 	private static final int TERRAIN_BLEND_STRENGTH_OFFSET_BYTES =
@@ -1559,6 +1564,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			BASE_LEGACY_LIGHT_COMPONENT_COUNT,
 			NORMAL_COMPONENT_COUNT,
 			MODEL_KIND_COMPONENT_COUNT,
+			MATERIAL_FAMILY_COMPONENT_COUNT,
 			TERRAIN_VARIATION_MASK_COMPONENT_COUNT,
 			TERRAIN_BLEND_COLOR_COMPONENT_COUNT,
 			TERRAIN_BLEND_STRENGTH_COMPONENT_COUNT,
@@ -1570,6 +1576,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			BASE_LEGACY_LIGHT_OFFSET_BYTES,
 			NORMAL_OFFSET_BYTES,
 			MODEL_KIND_OFFSET_BYTES,
+			MATERIAL_FAMILY_OFFSET_BYTES,
 			TERRAIN_VARIATION_MASK_OFFSET_BYTES,
 			TERRAIN_BLEND_COLOR_OFFSET_BYTES,
 			TERRAIN_BLEND_STRENGTH_OFFSET_BYTES);
@@ -2304,6 +2311,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			? chunk.getTriangleModelKind(triangle)
 			: Renderer3DModelKind.UNCLASSIFIED;
 		vertexUploadBuffer.put((float) modelKind.ordinal());
+		Renderer3DMaterialFamily materialFamily = triangle >= 0 && triangle < chunk.getTriangleCount()
+			? chunk.getTriangleMaterialFamily(triangle)
+			: Renderer3DMaterialFamily.UNCLASSIFIED;
+		vertexUploadBuffer.put((float) materialFamily.getShaderId());
 		vertexUploadBuffer.put(triangle >= 0 && triangle < chunk.getTriangleCount()
 			? (float) chunk.getTriangleTerrainVariationMask(triangle)
 			: 0.0f);

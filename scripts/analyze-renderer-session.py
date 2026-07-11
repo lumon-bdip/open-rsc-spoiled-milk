@@ -519,8 +519,49 @@ def build_summary(
         else:
             lines.append(f"- `{event_type}`: {event_counts.get(event_type, 0)}")
 
-    lines.extend(["", "## Renderer 2D Capacity", ""])
     latest = telemetry[-1] if telemetry else {}
+    lines.extend(["", "## Resident Material Families", ""])
+    material_fields = {
+        "unclassified": "Unclassified",
+        "terrain": "Terrain",
+        "water": "Water",
+        "wall": "Wall",
+        "roof": "Roof",
+        "scenery": "Scenery",
+        "foliage": "Foliage",
+        "ore": "Ore",
+        "emissive": "Emissive",
+        "effect": "Effect",
+    }
+    material_values = {
+        label: numeric(latest, f"counter.openGLWorldMaterial{name}.recent.latest")
+        for label, name in material_fields.items()
+    }
+    material_keys_present = any(
+        f"counter.openGLWorldMaterial{name}.recent.latest" in latest
+        for name in material_fields.values()
+    )
+    if material_keys_present:
+        material_total = sum(material_values.values())
+        unclassified = material_values["unclassified"]
+        unclassified_percent = (
+            unclassified * 100.0 / material_total if material_total > 0 else 0.0
+        )
+        lines.append(
+            f"- Latest resident triangle total: {int(material_total)}; "
+            f"unclassified {int(unclassified)} ({unclassified_percent:.2f}%)."
+        )
+        lines.append(
+            "- Family counts: "
+            + ", ".join(
+                f"{label}={int(material_values[label])}" for label in material_fields
+            )
+            + "."
+        )
+    else:
+        lines.append("- Material-family telemetry is unavailable in this session.")
+
+    lines.extend(["", "## Renderer 2D Capacity", ""])
     stream_fields = {
         "sprite": ("Sprite", "spriteCommandLimit"),
         "text": ("Text", "textCommandLimit"),

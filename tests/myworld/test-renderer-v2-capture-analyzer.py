@@ -30,6 +30,7 @@ def make_capture_fixture(capture_dir: Path) -> None:
                 "source=1024x768",
                 "target=1920x1080",
                 "worldReplacementComposite=true",
+                "residentTriangles=4",
                 "",
             ]
         ),
@@ -144,6 +145,19 @@ def make_capture_fixture(capture_dir: Path) -> None:
         ),
     )
     write(
+        capture_dir / "resident-material-families.tsv",
+        "\n".join(
+            [
+                "chunkIndex\tplane\tcenterSectionX\tcenterSectionY\tchunkRole\tmodelKind\tmaterialFamily\tshaderId\ttextureId\tfallbackColor\tglowEmitterCount\ttriangleCount",
+				"0\t0\t50\t50\t0\tTERRAIN\tTERRAIN\t1\t-1\t123\t0\t1",
+				"0\t0\t50\t50\t0\tTERRAIN\tWATER\t2\t1\t12345678\t0\t1",
+				"1\t0\t50\t50\t1\tGAME_OBJECT\tFOLIAGE\t6\t4\t12345678\t0\t1",
+				"1\t0\t50\t50\t1\tGAME_OBJECT\tORE\t7\t4\t12345678\t0\t1",
+                "",
+            ]
+        ),
+    )
+    write(
         capture_dir / "static-range-candidates.tsv",
         "\n".join(
             [
@@ -208,7 +222,7 @@ def main() -> None:
             raise AssertionError(result.stderr or result.stdout)
         output = result.stdout
         for snippet in [
-            "counts=worldFaces:2 spriteCommands:1 worldSpriteCommands:1 sceneCommands:2 staticWorldCommands:2 staticWorldOwnedFaces:2 staticWorldMaterialTriangles:4 staticRangeCandidates:1 frontOccluderCandidates:1 spriteAnchors:1 spriteSubmissions:0 characters:1 entityDepthEvaluations:1",
+            "counts=worldFaces:2 spriteCommands:1 worldSpriteCommands:1 sceneCommands:2 staticWorldCommands:2 staticWorldOwnedFaces:2 staticWorldMaterialTriangles:4 residentMaterialRows:4 staticRangeCandidates:1 frontOccluderCandidates:1 spriteAnchors:1 spriteSubmissions:0 characters:1 entityDepthEvaluations:1",
             "worldKinds:",
             "  TERRAIN: 1",
             "  WALL: 1",
@@ -234,6 +248,13 @@ def main() -> None:
             "staticWorldCommandKinds:",
             "  TERRAIN: 1",
             "  WALL: 1",
+            "residentMaterialFamilies:",
+            "total:4 expected:4 rows:4 uniqueRows:4 duplicateRows:0 missingTriangles:0 invalidRows:0 contradictions:0 waterNonTerrain:0 semanticNonObject:0 emissiveWithoutGlow:0 unclassified:0",
+            "residentMaterialFamilyCounts:",
+            "  FOLIAGE: 1",
+            "  ORE: 1",
+            "  TERRAIN: 1",
+            "  WATER: 1",
             "staticRangeCandidates:",
             "total:1 finalRanges:1 worldSpriteCommandsAtOrders:1 staticFaces:1 overlapFaces:1 overlapWorldSpriteCommands:1 overlapTerrain:0 overlapWall:1 overlapRoof:0 overlapGameObject:0 overlapWallObject:0",
             "staticRangeOutliers:",
@@ -277,6 +298,43 @@ def main() -> None:
         if result.returncode != 0:
             raise AssertionError("older captures without 2D limit data should remain valid:\n" + result.stderr)
         if "renderer2DCommandLimits:\n  none" not in result.stdout:
+            raise AssertionError(result.stdout)
+
+        make_capture_fixture(capture_dir)
+        (capture_dir / "resident-material-families.tsv").unlink()
+        result = run_analyzer(capture_dir, "--strict")
+        if result.returncode != 0:
+            raise AssertionError(
+                "older captures without material-family data should remain valid:\n" + result.stderr
+            )
+        if "residentMaterialFamilies:\n  none" not in result.stdout:
+            raise AssertionError(result.stdout)
+
+        make_capture_fixture(capture_dir)
+        material_text = (capture_dir / "resident-material-families.tsv").read_text(
+            encoding="utf-8"
+        )
+        material_text = material_text.replace("\tFOLIAGE\t6\t", "\tFOLIAGE\t4\t")
+        (capture_dir / "resident-material-families.tsv").write_text(
+            material_text, encoding="utf-8"
+        )
+        result = run_analyzer(capture_dir, "--strict")
+        if result.returncode == 0:
+            raise AssertionError("analyzer should reject unstable material-family shader ids")
+        if "material family 'FOLIAGE' has shader id 4, expected 6" not in result.stderr:
+            raise AssertionError(result.stderr)
+
+        make_capture_fixture(capture_dir)
+        material_path = capture_dir / "resident-material-families.tsv"
+        material_text = material_path.read_text(encoding="utf-8").replace(
+            "\tGAME_OBJECT\tORE\t7\t4\t12345678\t0\t1",
+            "\tGAME_OBJECT\tEMISSIVE\t8\t4\t12345678\t0\t1",
+        )
+        material_path.write_text(material_text, encoding="utf-8")
+        result = run_analyzer(capture_dir, "--strict")
+        if result.returncode != 0:
+            raise AssertionError("classification contradictions should remain advisory:\n" + result.stderr)
+        if "contradictions:1 waterNonTerrain:0 semanticNonObject:0 emissiveWithoutGlow:1" not in result.stdout:
             raise AssertionError(result.stdout)
 
         make_capture_fixture(capture_dir)

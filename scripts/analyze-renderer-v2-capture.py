@@ -39,6 +39,19 @@ SPRITE_OCCLUDER_KINDS = {
     "WALL_OBJECT",
 }
 
+MATERIAL_FAMILY_SHADER_IDS = {
+    "UNCLASSIFIED": 0,
+    "TERRAIN": 1,
+    "WATER": 2,
+    "WALL": 3,
+    "ROOF": 4,
+    "SCENERY": 5,
+    "FOLIAGE": 6,
+    "ORE": 7,
+    "EMISSIVE": 8,
+    "EFFECT": 9,
+}
+
 
 def fail(message: str) -> None:
     print(f"FAIL: {message}", file=sys.stderr)
@@ -1230,6 +1243,77 @@ def print_counter(title: str, counter: Counter[str]) -> None:
         print(f"  {key}: {count}")
 
 
+def summarize_resident_material_families(
+    rows: list[dict[str, str]], expected: int
+) -> tuple[dict[str, int], Counter[str], Counter[str], list[str]]:
+    families: Counter[str] = Counter()
+    model_kinds: Counter[str] = Counter()
+    seen: set[tuple[str, ...]] = set()
+    duplicate_rows = 0
+    invalid_rows = 0
+    water_non_terrain = 0
+    semantic_non_object = 0
+    emissive_without_glow = 0
+    errors: list[str] = []
+    total_triangles = 0
+    for row in rows:
+        key = tuple(
+            row.get(field, "")
+            for field in (
+                "chunkIndex",
+                "modelKind",
+                "materialFamily",
+                "shaderId",
+                "textureId",
+                "fallbackColor",
+                "glowEmitterCount",
+            )
+        )
+        if key in seen:
+            duplicate_rows += 1
+        seen.add(key)
+        triangle_count = max(0, parse_int(row.get("triangleCount")))
+        total_triangles += triangle_count
+        family = row.get("materialFamily", "UNCLASSIFIED")
+        model_kind = row.get("modelKind", "UNCLASSIFIED")
+        families[family] += triangle_count
+        model_kinds[model_kind] += triangle_count
+        expected_shader_id = MATERIAL_FAMILY_SHADER_IDS.get(family)
+        shader_id = parse_int(row.get("shaderId"), -1)
+        if expected_shader_id is None or shader_id != expected_shader_id:
+            invalid_rows += 1
+            errors.append(
+                f"resident material family {family!r} has shader id {shader_id}, "
+                f"expected {expected_shader_id!r}"
+            )
+        if family == "WATER" and model_kind != "TERRAIN":
+            water_non_terrain += 1
+        if family in {"FOLIAGE", "ORE"} and model_kind not in {"GAME_OBJECT", "WALL_OBJECT"}:
+            semantic_non_object += 1
+        if (
+            family == "EMISSIVE"
+            and "glowEmitterCount" in row
+            and parse_int(row.get("glowEmitterCount")) <= 0
+        ):
+            emissive_without_glow += 1
+    contradictions = water_non_terrain + semantic_non_object + emissive_without_glow
+    summary = {
+        "rows": len(rows),
+        "total": total_triangles,
+        "expected": expected,
+        "uniqueRows": len(seen),
+        "duplicateRows": duplicate_rows,
+        "missingTriangles": max(0, expected - total_triangles),
+        "invalidRows": invalid_rows,
+        "contradictions": contradictions,
+        "waterNonTerrain": water_non_terrain,
+        "semanticNonObject": semantic_non_object,
+        "emissiveWithoutGlow": emissive_without_glow,
+        "unclassified": families.get("UNCLASSIFIED", 0),
+    }
+    return summary, families, model_kinds, errors
+
+
 def main() -> None:
     args = parse_args()
     capture_dir = args.capture_dir.resolve()
@@ -1245,6 +1329,8 @@ def main() -> None:
     static_world_face_ownership = read_optional_tsv(capture_dir / "static-world-face-ownership.tsv")
     static_world_material_path = capture_dir / "static-world-material-triangles.tsv"
     static_world_material_triangles = read_optional_tsv(static_world_material_path)
+    resident_material_path = capture_dir / "resident-material-families.tsv"
+    resident_material_families = read_optional_tsv(resident_material_path)
     static_range_candidates = read_optional_tsv(capture_dir / "static-range-candidates.tsv")
     front_occluder_candidates = read_optional_tsv(capture_dir / "front-occluder-candidates.tsv")
     renderer_2d_command_limits = read_optional_tsv(capture_dir / "renderer-2d-command-limits.tsv")
@@ -1287,6 +1373,7 @@ def main() -> None:
         f"staticWorldCommands:{len(static_world_commands)} "
         f"staticWorldOwnedFaces:{len(static_world_face_ownership)} "
         f"staticWorldMaterialTriangles:{len(static_world_material_triangles)} "
+        f"residentMaterialRows:{len(resident_material_families)} "
         f"staticRangeCandidates:{len(static_range_candidates)} "
         f"frontOccluderCandidates:{len(front_occluder_candidates)} "
         f"spriteAnchors:{len(sprite_anchors)} "
@@ -1483,6 +1570,54 @@ def main() -> None:
         )
         print_counter("staticWorldMaterialPassCounts:", material_passes)
         print_counter("staticWorldMaterialModelKinds:", material_kinds)
+    resident_expected = parse_int(metadata.get("residentTriangles"), len(resident_material_families))
+    resident_summary, resident_families, resident_kinds, resident_errors = (
+        summarize_resident_material_families(resident_material_families, resident_expected)
+    )
+    if args.strict and resident_material_path.exists():
+        if resident_summary["total"] != resident_summary["expected"]:
+            fail(
+                "resident material family total differs from resident triangles: "
+                f"{resident_summary['total']} != {resident_summary['expected']}"
+            )
+        if resident_summary["duplicateRows"] != 0:
+            fail(
+                "resident material family capture contains duplicate rows: "
+                f"{resident_summary['duplicateRows']}"
+            )
+        if resident_summary["missingTriangles"] != 0:
+            fail(
+                "resident material family capture is missing triangles: "
+                f"{resident_summary['missingTriangles']}"
+            )
+        if resident_summary["invalidRows"] != 0 and resident_errors:
+            fail(resident_errors[0])
+    print("residentMaterialFamilies:")
+    if not resident_material_families:
+        print("  none")
+    else:
+        print(
+            "  "
+            + " ".join(
+                f"{key}:{value}"
+                for key, value in [
+                    ("total", resident_summary["total"]),
+                    ("expected", resident_summary["expected"]),
+                    ("rows", resident_summary["rows"]),
+                    ("uniqueRows", resident_summary["uniqueRows"]),
+                    ("duplicateRows", resident_summary["duplicateRows"]),
+                    ("missingTriangles", resident_summary["missingTriangles"]),
+                    ("invalidRows", resident_summary["invalidRows"]),
+                    ("contradictions", resident_summary["contradictions"]),
+                    ("waterNonTerrain", resident_summary["waterNonTerrain"]),
+                    ("semanticNonObject", resident_summary["semanticNonObject"]),
+                    ("emissiveWithoutGlow", resident_summary["emissiveWithoutGlow"]),
+                    ("unclassified", resident_summary["unclassified"]),
+                ]
+            )
+        )
+        print_counter("residentMaterialFamilyCounts:", resident_families)
+        print_counter("residentMaterialModelKinds:", resident_kinds)
     static_range_summary = summarize_static_range_candidates(static_range_candidates)
     static_range_outliers = top_static_range_candidates(static_range_candidates, args.top)
     print("staticRangeCandidates:")

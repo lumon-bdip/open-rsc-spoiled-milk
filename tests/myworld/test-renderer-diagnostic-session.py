@@ -202,6 +202,7 @@ def validate_runtime_session(tmp: Path) -> None:
         "runtime.heap.usedBytes": int,
         "runtime.nonHeap.usedBytes": int,
         "runtime.gc.collectionCountDelta": int,
+        "counter.openGLWorldMaterialUnclassified.window.average": 0.0,
         "counter.renderer2DSpriteCommandDropped.window.average": 0.0,
         "config.renderer2D.rotatedSpriteCommandLimit": 256,
     }

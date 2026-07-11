@@ -31,6 +31,7 @@ import orsc.graphics.three.CollisionFlag;
 import orsc.graphics.three.Renderer3DDepthFrame;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.Renderer3DMeshFrame;
+import orsc.graphics.three.Renderer3DMaterialClassifier;
 import orsc.graphics.three.Renderer3DModelKind;
 import orsc.graphics.three.Renderer3DSettings;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
@@ -3707,7 +3708,7 @@ public final class mudclient implements Runnable {
 			builder = new ResidentObjectChunkInputBuilder(anchor, cellKey, cellX, cellZ, chunkRole, cellTileSize);
 			builders.put(cellKey, builder);
 		}
-		applyRenderer3DGlowEmitter(kind, objectId, model);
+		applyRenderer3DMaterialMetadata(kind, objectId, model);
 		boolean debugMatched = shouldDebugResidentObjectChunkModel(kind, tileX, tileZ, objectId);
 		builder.add(
 			kind,
@@ -3729,16 +3730,17 @@ public final class mudclient implements Runnable {
 			: RESIDENT_OBJECT_CHUNK_TILE_SIZE;
 	}
 
-	private void applyRenderer3DGlowEmitter(Renderer3DModelKind kind, int objectId, RSModel model) {
+	private void applyRenderer3DMaterialMetadata(Renderer3DModelKind kind, int objectId, RSModel model) {
 		if (model == null) {
 			return;
 		}
 		model.clearRenderer3DGlowEmitter();
-		if (kind != Renderer3DModelKind.GAME_OBJECT) {
-			return;
-		}
-		GameObjectDef def = EntityHandler.getObjectDef(objectId);
+		GameObjectDef def = kind == Renderer3DModelKind.GAME_OBJECT
+			? EntityHandler.getObjectDef(objectId)
+			: null;
 		Renderer3DGlowSpec glowSpec = renderer3DGlowSpecFor(def);
+		model.setRenderer3DMaterialFamily(
+			Renderer3DMaterialClassifier.classifyObject(kind, def, glowSpec != null));
 		if (glowSpec == null) {
 			return;
 		}

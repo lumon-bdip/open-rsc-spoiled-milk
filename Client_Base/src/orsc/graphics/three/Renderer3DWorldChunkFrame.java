@@ -18,6 +18,7 @@ public final class Renderer3DWorldChunkFrame {
 	private final int totalVertexCount;
 	private final int totalIndexCount;
 	private final int totalTriangleCount;
+	private final int[] materialFamilyTriangleCounts;
 
 	private Renderer3DWorldChunkFrame(
 		List<ChunkMesh> chunks,
@@ -28,6 +29,13 @@ public final class Renderer3DWorldChunkFrame {
 		this.totalVertexCount = totalVertexCount;
 		this.totalIndexCount = totalIndexCount;
 		this.totalTriangleCount = totalTriangleCount;
+		this.materialFamilyTriangleCounts = new int[Renderer3DMaterialFamily.values().length];
+		for (ChunkMesh chunk : chunks) {
+			for (Renderer3DMaterialFamily family : Renderer3DMaterialFamily.values()) {
+				this.materialFamilyTriangleCounts[family.ordinal()] +=
+					chunk.getMaterialFamilyTriangleCount(family);
+			}
+		}
 	}
 
 	public static Renderer3DWorldChunkFrame fromChunks(List<ChunkMesh> chunks) {
@@ -71,6 +79,17 @@ public final class Renderer3DWorldChunkFrame {
 		return totalTriangleCount;
 	}
 
+	public int getMaterialFamilyTriangleCount(Renderer3DMaterialFamily family) {
+		Renderer3DMaterialFamily safeFamily = family == null
+			? Renderer3DMaterialFamily.UNCLASSIFIED
+			: family;
+		return materialFamilyTriangleCounts[safeFamily.ordinal()];
+	}
+
+	public int[] copyMaterialFamilyTriangleCounts() {
+		return materialFamilyTriangleCounts.clone();
+	}
+
 	public static final class ChunkMesh {
 		private final int plane;
 		private final int centerSectionX;
@@ -90,6 +109,8 @@ public final class Renderer3DWorldChunkFrame {
 		private final int[] triangleTextures;
 		private final int[] triangleFallbackColors;
 		private final Renderer3DModelKind[] triangleModelKinds;
+		private Renderer3DMaterialFamily[] triangleMaterialFamilies;
+		private int[] materialFamilyTriangleCounts;
 		private final int[] triangleTerrainVariationMasks;
 		private final ShadowCaster[] shadowCasters;
 		private final GlowEmitter[] glowEmitters;
@@ -313,6 +334,11 @@ public final class Renderer3DWorldChunkFrame {
 			this.triangleFallbackColors =
 				triangleFallbackColors == null ? new int[0] : triangleFallbackColors.clone();
 			this.triangleModelKinds = normalizeKinds(triangleModelKinds, this.triangleTextures.length);
+			this.triangleMaterialFamilies = normalizeFamilies(
+				null,
+				this.triangleModelKinds,
+				this.triangleTextures.length);
+			this.materialFamilyTriangleCounts = countFamilies(this.triangleMaterialFamilies);
 			this.triangleTerrainVariationMasks = normalizeIntArray(null, this.triangleTextures.length, 0);
 			int[][] vertexNormals = buildVertexNormals(
 				this.vertexCoords,
@@ -602,6 +628,11 @@ public final class Renderer3DWorldChunkFrame {
 			this.triangleFallbackColors =
 				triangleFallbackColors == null ? new int[0] : triangleFallbackColors.clone();
 			this.triangleModelKinds = normalizeKinds(triangleModelKinds, this.triangleTextures.length);
+			this.triangleMaterialFamilies = normalizeFamilies(
+				null,
+				this.triangleModelKinds,
+				this.triangleTextures.length);
+			this.materialFamilyTriangleCounts = countFamilies(this.triangleMaterialFamilies);
 			this.triangleTerrainVariationMasks =
 				normalizeIntArray(triangleTerrainVariationMasks, this.triangleTextures.length, 0);
 			int[][] vertexNormals = buildVertexNormals(
@@ -623,6 +654,70 @@ public final class Renderer3DWorldChunkFrame {
 			this.objectChunk = objectChunk;
 			this.chunkRole = normalizeChunkRole(objectChunk, chunkRole);
 			this.signature = signature;
+		}
+
+		public ChunkMesh(
+			int plane,
+			int centerSectionX,
+			int centerSectionY,
+			int originWorldX,
+			int originWorldZ,
+			int[] vertexCoords,
+			float[] vertexTextureU,
+			float[] vertexTextureV,
+			int[] vertexLights,
+			int[] vertexTerrainBlendColors,
+			int[] vertexTerrainBlendStrengths,
+			int[] indices,
+			int[] triangleTextures,
+			int[] triangleFallbackColors,
+			Renderer3DModelKind[] triangleModelKinds,
+			Renderer3DMaterialFamily[] triangleMaterialFamilies,
+			ShadowCaster[] shadowCasters,
+			GlowEmitter[] glowEmitters,
+			int[] triangleTerrainVariationMasks,
+			long[] roofCoverageBits,
+			int roofCoverageAxis,
+			int roofCoveredTileCount,
+			int terrainTriangles,
+			int wallTriangles,
+			int roofTriangles,
+			boolean objectChunk,
+			int chunkRole,
+			long signature) {
+			this(
+				plane,
+				centerSectionX,
+				centerSectionY,
+				originWorldX,
+				originWorldZ,
+				vertexCoords,
+				vertexTextureU,
+				vertexTextureV,
+				vertexLights,
+				vertexTerrainBlendColors,
+				vertexTerrainBlendStrengths,
+				indices,
+				triangleTextures,
+				triangleFallbackColors,
+				triangleModelKinds,
+				shadowCasters,
+				glowEmitters,
+				triangleTerrainVariationMasks,
+				roofCoverageBits,
+				roofCoverageAxis,
+				roofCoveredTileCount,
+				terrainTriangles,
+				wallTriangles,
+				roofTriangles,
+				objectChunk,
+				chunkRole,
+				signature);
+			this.triangleMaterialFamilies = normalizeFamilies(
+				triangleMaterialFamilies,
+				this.triangleModelKinds,
+				this.triangleTextures.length);
+			this.materialFamilyTriangleCounts = countFamilies(this.triangleMaterialFamilies);
 		}
 
 		private static int normalizeChunkRole(boolean objectChunk, int chunkRole) {
@@ -648,6 +743,34 @@ public final class Renderer3DWorldChunkFrame {
 
 		private static GlowEmitter[] normalizeGlowEmitters(GlowEmitter[] glowEmitters) {
 			return glowEmitters == null ? new GlowEmitter[0] : glowEmitters.clone();
+		}
+
+		private static Renderer3DMaterialFamily[] normalizeFamilies(
+			Renderer3DMaterialFamily[] families,
+			Renderer3DModelKind[] kinds,
+			int count) {
+			Renderer3DMaterialFamily[] normalized = new Renderer3DMaterialFamily[count];
+			for (int i = 0; i < normalized.length; i++) {
+				Renderer3DMaterialFamily family = families == null || i >= families.length ? null : families[i];
+				Renderer3DModelKind kind = kinds == null || i >= kinds.length
+					? Renderer3DModelKind.UNCLASSIFIED
+					: kinds[i];
+				normalized[i] = family == null
+					? Renderer3DMaterialClassifier.fallbackFor(kind)
+					: family;
+			}
+			return normalized;
+		}
+
+		private static int[] countFamilies(Renderer3DMaterialFamily[] families) {
+			int[] counts = new int[Renderer3DMaterialFamily.values().length];
+			for (Renderer3DMaterialFamily family : families) {
+				Renderer3DMaterialFamily safeFamily = family == null
+					? Renderer3DMaterialFamily.UNCLASSIFIED
+					: family;
+				counts[safeFamily.ordinal()]++;
+			}
+			return counts;
 		}
 
 		private static int[] normalizeIntArray(int[] values, int count, int defaultValue) {
@@ -1012,6 +1135,17 @@ public final class Renderer3DWorldChunkFrame {
 			return triangleModelKinds[triangleIndex];
 		}
 
+		public Renderer3DMaterialFamily getTriangleMaterialFamily(int triangleIndex) {
+			return triangleMaterialFamilies[triangleIndex];
+		}
+
+		public int getMaterialFamilyTriangleCount(Renderer3DMaterialFamily family) {
+			Renderer3DMaterialFamily safeFamily = family == null
+				? Renderer3DMaterialFamily.UNCLASSIFIED
+				: family;
+			return materialFamilyTriangleCounts[safeFamily.ordinal()];
+		}
+
 		public int getTriangleTerrainVariationMask(int triangleIndex) {
 			return triangleTerrainVariationMasks[triangleIndex];
 		}
@@ -1074,6 +1208,10 @@ public final class Renderer3DWorldChunkFrame {
 
 		public Renderer3DModelKind[] copyTriangleModelKinds() {
 			return triangleModelKinds.clone();
+		}
+
+		public Renderer3DMaterialFamily[] copyTriangleMaterialFamilies() {
+			return triangleMaterialFamilies.clone();
 		}
 
 		public int[] copyTriangleTerrainVariationMasks() {

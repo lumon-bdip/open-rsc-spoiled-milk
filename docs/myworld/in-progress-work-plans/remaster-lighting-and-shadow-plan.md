@@ -511,8 +511,11 @@ default work queue:
   foliage, water, ore, scenery, sprites, projectiles, and effects as material
   families. This should come before heavy polish controls so Remaster lighting
   does not apply one generic response to every asset. The proposed first
-  parity-preserving resident-world contract is tracked in
+  parity-preserving resident-world contract is now implemented and awaiting
+  live capture/performance acceptance in
   [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md).
+  It covers static resident triangles without changing normal fragment output;
+  sprites, projectiles, and effects remain explicitly deferred.
 - Emissive material metadata. Move lava/fire glow classification out of
   `mudclient` heuristics and into explicit material/object metadata. After that,
   test bloom-like glow filtering, fire/lava particles, and localized light

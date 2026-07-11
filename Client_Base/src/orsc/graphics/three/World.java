@@ -885,6 +885,7 @@ public final class World {
 		for (TerrainOverlayFaceInput overlay : input.overlayFaces) {
 			builder.addFace(
 				Renderer3DModelKind.TERRAIN,
+				overlay.materialFamily,
 				overlay.texture,
 				Scene.TRANSPARENT,
 				offsetCoords(drawOriginX, drawOriginZ, overlay.vertexCoords),
@@ -923,6 +924,7 @@ public final class World {
 			if (face.colorResource == face.res01 && face.slope == 0) {
 				if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
 					addTerrainQuadByVertexIndex(builder, input, Scene.TRANSPARENT, face.colorResource, drawOriginX, drawOriginZ,
+						face.materialFamily,
 						face.terrainVariationEligible ? 1 : 0,
 						face.z - (-(face.x * LOCAL_TILE_COUNT) - LOCAL_TILE_COUNT),
 						face.z + face.x * LOCAL_TILE_COUNT,
@@ -935,6 +937,7 @@ public final class World {
 		if (face.bridge00_11 == 0) {
 			if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
 				addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.colorResource, drawOriginX, drawOriginZ,
+					face.materialFamily,
 					face.terrainVariationEligible ? 1 : 0,
 					LOCAL_TILE_COUNT + face.z + face.x * LOCAL_TILE_COUNT,
 					face.x * LOCAL_TILE_COUNT + face.z,
@@ -943,6 +946,7 @@ public final class World {
 
 			if (face.res01 != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
 				addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.res01, drawOriginX, drawOriginZ,
+					face.materialFamily,
 					face.terrainVariationEligible ? 1 : 0,
 					1 + face.x * LOCAL_TILE_COUNT + face.z,
 					LOCAL_TILE_COUNT + 1 + face.x * LOCAL_TILE_COUNT + face.z,
@@ -953,6 +957,7 @@ public final class World {
 
 		if (face.colorResource != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
 			addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.colorResource, drawOriginX, drawOriginZ,
+				face.materialFamily,
 				face.terrainVariationEligible ? 1 : 0,
 				1 + face.x * LOCAL_TILE_COUNT + face.z,
 				LOCAL_TILE_COUNT + face.x * LOCAL_TILE_COUNT + face.z + 1,
@@ -961,6 +966,7 @@ public final class World {
 
 		if (face.res01 != Scene.TRANSPARENT || face.pickableInvisibleOverlay) {
 			addTerrainTriangleByVertexIndex(builder, input, Scene.TRANSPARENT, face.res01, drawOriginX, drawOriginZ,
+				face.materialFamily,
 				face.terrainVariationEligible ? 1 : 0,
 				face.x * LOCAL_TILE_COUNT + face.z + LOCAL_TILE_COUNT,
 				face.z + face.x * LOCAL_TILE_COUNT,
@@ -975,6 +981,7 @@ public final class World {
 		int fallbackColor,
 		int drawOriginX,
 		int drawOriginZ,
+		Renderer3DMaterialFamily materialFamily,
 		int terrainVariationMask,
 		int a,
 		int b,
@@ -986,6 +993,7 @@ public final class World {
 		TerrainVertexInput vd = input.vertices[d];
 		builder.addFace(
 			Renderer3DModelKind.TERRAIN,
+			materialFamily,
 			texture,
 			fallbackColor,
 			new int[] {
@@ -1007,6 +1015,7 @@ public final class World {
 		int fallbackColor,
 		int drawOriginX,
 		int drawOriginZ,
+		Renderer3DMaterialFamily materialFamily,
 		int terrainVariationMask,
 		int a,
 		int b,
@@ -1016,6 +1025,7 @@ public final class World {
 		TerrainVertexInput vc = input.vertices[c];
 		builder.addFace(
 			Renderer3DModelKind.TERRAIN,
+			materialFamily,
 			texture,
 			fallbackColor,
 			new int[] {
@@ -1273,11 +1283,13 @@ public final class World {
 				byte bridge00_11 = 0;
 				boolean collisionFullBlock = false;
 				boolean collisionObject = false;
+				boolean waterLike = false;
 				int decorID = source.tileDecorationID(x, z);
 				boolean terrainVariationEligible = plane == 0 && decorID == 0;
 				boolean lavaGlowEmitter = decorID == LAVA_GLOW_OVERLAY_ID;
 				if (decorID > 0) {
 					int decorType = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getTileValue();
+					waterLike = decorType == 4;
 					int decorType2 = source.tileType2(x, z);
 					colorResource = res01 = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getColour();
 					if (decorType == 4) {
@@ -1346,6 +1358,7 @@ public final class World {
 					source.pickableInvisibleOverlay(x, z),
 					terrainVariationEligible,
 					lavaGlowEmitter,
+					Renderer3DMaterialClassifier.classifyTerrain(waterLike, lavaGlowEmitter),
 					collisionFullBlock,
 					collisionObject);
 			}
@@ -1362,7 +1375,7 @@ public final class World {
 
 					int tileDecor = Objects.requireNonNull(EntityHandler.getTileDef(source.tileDecorationID(x, z) - 1))
 						.getColour();
-					addTerrainOverlayFace(overlays, x, z, tileDecor,
+					addTerrainOverlayFace(overlays, x, z, tileDecor, source.tileDecorationID(x, z),
 						x * 128, -source.tileElevation(x, z), z * 128,
 						(x + 1) * 128, -source.tileElevation(x + 1, z), z * 128,
 						(x + 1) * 128, -source.tileElevation(x + 1, z + 1), (z + 1) * 128,
@@ -1375,7 +1388,7 @@ public final class World {
 						int tileDecor = Objects.requireNonNull(EntityHandler
 							.getTileDef(source.tileDecorationID(x, z + 1) - 1))
 							.getColour();
-						addTerrainOverlayFace(overlays, x, z, tileDecor,
+						addTerrainOverlayFace(overlays, x, z, tileDecor, source.tileDecorationID(x, z + 1),
 							x * 128, -source.tileElevation(x, z), z * 128,
 							(x + 1) * 128, -source.tileElevation(x + 1, z), z * 128,
 							128 + x * 128, -source.tileElevation(x + 1, z + 1), (z + 1) * 128,
@@ -1388,7 +1401,7 @@ public final class World {
 						int tileDecor = Objects.requireNonNull(EntityHandler
 							.getTileDef(source.tileDecorationID(x, z - 1) - 1))
 							.getColour();
-						addTerrainOverlayFace(overlays, x, z, tileDecor,
+						addTerrainOverlayFace(overlays, x, z, tileDecor, source.tileDecorationID(x, z - 1),
 							x * 128, -source.tileElevation(x, z), z * 128,
 							(x + 1) * 128, -source.tileElevation(x + 1, z), z * 128,
 							(x + 1) * 128, -source.tileElevation(x + 1, z + 1), (z + 1) * 128,
@@ -1401,7 +1414,7 @@ public final class World {
 						int tileDecor = Objects.requireNonNull(EntityHandler
 							.getTileDef(source.tileDecorationID(x + 1, z) - 1))
 							.getColour();
-						addTerrainOverlayFace(overlays, x, z, tileDecor,
+						addTerrainOverlayFace(overlays, x, z, tileDecor, source.tileDecorationID(x + 1, z),
 							x * 128, -source.tileElevation(x, z), z * 128,
 							128 + x * 128, -source.tileElevation(x + 1, z), z * 128,
 							(x + 1) * 128, -source.tileElevation(x + 1, z + 1), z * 128 + 128,
@@ -1414,7 +1427,7 @@ public final class World {
 						int tileDecor = Objects.requireNonNull(EntityHandler
 							.getTileDef(source.tileDecorationID(x - 1, z) - 1))
 							.getColour();
-						addTerrainOverlayFace(overlays, x, z, tileDecor,
+						addTerrainOverlayFace(overlays, x, z, tileDecor, source.tileDecorationID(x - 1, z),
 							x * 128, -source.tileElevation(x, z), z * 128,
 							(x + 1) * 128, -source.tileElevation(x + 1, z), z * 128,
 							128 + x * 128, -source.tileElevation(x + 1, z + 1), z * 128 + 128,
@@ -1431,8 +1444,14 @@ public final class World {
 		int x,
 		int z,
 		int texture,
+		int decorationId,
 		int... vertexCoords) {
-		overlays.add(new TerrainOverlayFaceInput(x, z, texture, vertexCoords));
+		overlays.add(new TerrainOverlayFaceInput(
+			x,
+			z,
+			texture,
+			Renderer3DMaterialClassifier.classifyTerrain(true, decorationId == LAVA_GLOW_OVERLAY_ID),
+			vertexCoords));
 	}
 
 	private void emitTerrainProduct(TerrainModelInput input, RSModel worldMod) {
@@ -3215,6 +3234,7 @@ public final class World {
 		private final int[] triangleTextures;
 		private final int[] triangleFallbackColors;
 		private final Renderer3DModelKind[] triangleModelKinds;
+		private final Renderer3DMaterialFamily[] triangleMaterialFamilies;
 		private final int[] triangleTerrainVariationMasks;
 		private final Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasters;
 		private final Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitters;
@@ -3242,6 +3262,7 @@ public final class World {
 			int[] triangleTextures,
 			int[] triangleFallbackColors,
 			Renderer3DModelKind[] triangleModelKinds,
+			Renderer3DMaterialFamily[] triangleMaterialFamilies,
 			int[] triangleTerrainVariationMasks,
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasters,
 			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitters,
@@ -3267,6 +3288,7 @@ public final class World {
 			this.triangleTextures = triangleTextures;
 			this.triangleFallbackColors = triangleFallbackColors;
 			this.triangleModelKinds = triangleModelKinds;
+			this.triangleMaterialFamilies = triangleMaterialFamilies;
 			this.triangleTerrainVariationMasks = triangleTerrainVariationMasks;
 			this.shadowCasters = shadowCasters;
 			this.glowEmitters = glowEmitters;
@@ -3300,6 +3322,7 @@ public final class World {
 				triangleTextures,
 				triangleFallbackColors,
 				triangleModelKinds,
+				triangleMaterialFamilies,
 				shadowCasters,
 				glowEmitters,
 				triangleTerrainVariationMasks,
@@ -3310,6 +3333,7 @@ public final class World {
 				wallTriangles,
 				roofTriangles,
 				false,
+				Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD,
 				signature);
 		}
 	}
@@ -3333,6 +3357,8 @@ public final class World {
 		private final List<Integer> triangleTextures = new ArrayList<Integer>();
 		private final List<Integer> triangleFallbackColors = new ArrayList<Integer>();
 		private final List<Renderer3DModelKind> triangleModelKinds = new ArrayList<Renderer3DModelKind>();
+		private final List<Renderer3DMaterialFamily> triangleMaterialFamilies =
+			new ArrayList<Renderer3DMaterialFamily>();
 		private final List<Integer> triangleTerrainVariationMasks = new ArrayList<Integer>();
 		private final List<Renderer3DWorldChunkFrame.ShadowCaster> shadowCasters =
 			new ArrayList<Renderer3DWorldChunkFrame.ShadowCaster>();
@@ -3370,11 +3396,40 @@ public final class World {
 			int fallbackColor,
 			int[] faceVertexCoords,
 			int[] faceVertexLights) {
-			addFace(kind, texture, fallbackColor, faceVertexCoords, faceVertexLights, null, null, 0);
+			addFace(
+				kind,
+				Renderer3DMaterialClassifier.fallbackFor(kind),
+				texture,
+				fallbackColor,
+				faceVertexCoords,
+				faceVertexLights,
+				null,
+				null,
+				0);
 		}
 
 		private void addFace(
 			Renderer3DModelKind kind,
+			Renderer3DMaterialFamily family,
+			int texture,
+			int fallbackColor,
+			int[] faceVertexCoords,
+			int[] faceVertexLights) {
+			addFace(
+				kind,
+				family,
+				texture,
+				fallbackColor,
+				faceVertexCoords,
+				faceVertexLights,
+				null,
+				null,
+				0);
+		}
+
+		private void addFace(
+			Renderer3DModelKind kind,
+			Renderer3DMaterialFamily family,
 			int texture,
 			int fallbackColor,
 			int[] faceVertexCoords,
@@ -3394,6 +3449,7 @@ public final class World {
 			for (int vertex = 1; vertex < vertexCount - 1; vertex++) {
 				addTriangle(
 					kind,
+					family,
 					texture,
 					fallbackColor,
 					faceVertexCoords,
@@ -3411,6 +3467,7 @@ public final class World {
 
 		private void addTriangle(
 			Renderer3DModelKind kind,
+			Renderer3DMaterialFamily family,
 			int texture,
 			int fallbackColor,
 			int[] faceVertexCoords,
@@ -3433,6 +3490,9 @@ public final class World {
 			triangleTextures.add(Integer.valueOf(texture));
 			triangleFallbackColors.add(Integer.valueOf(resolveFallbackColor(texture, fallbackColor)));
 			triangleModelKinds.add(kind);
+			triangleMaterialFamilies.add(family == null
+				? Renderer3DMaterialClassifier.fallbackFor(kind)
+				: family);
 			triangleTerrainVariationMasks.add(Integer.valueOf(terrainVariationMask));
 			if (kind == Renderer3DModelKind.TERRAIN) {
 				terrainTriangles++;
@@ -3631,6 +3691,8 @@ public final class World {
 			int[] terrainVariationMaskArray = toIntArray(triangleTerrainVariationMasks);
 			Renderer3DModelKind[] kindArray =
 				triangleModelKinds.toArray(new Renderer3DModelKind[triangleModelKinds.size()]);
+			Renderer3DMaterialFamily[] familyArray = triangleMaterialFamilies.toArray(
+				new Renderer3DMaterialFamily[triangleMaterialFamilies.size()]);
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray =
 				shadowCasters.toArray(new Renderer3DWorldChunkFrame.ShadowCaster[shadowCasters.size()]);
 			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray =
@@ -3647,6 +3709,7 @@ public final class World {
 				fallbackArray,
 				terrainVariationMaskArray,
 				kindArray,
+				familyArray,
 				shadowCasterArray,
 				glowEmitterArray,
 				roofCoverageBits,
@@ -3668,6 +3731,7 @@ public final class World {
 				textureArray,
 				fallbackArray,
 				kindArray,
+				familyArray,
 				terrainVariationMaskArray,
 				shadowCasterArray,
 				glowEmitterArray,
@@ -3708,6 +3772,7 @@ public final class World {
 			int[] fallbackArray,
 			int[] terrainVariationMaskArray,
 			Renderer3DModelKind[] kindArray,
+			Renderer3DMaterialFamily[] familyArray,
 			Renderer3DWorldChunkFrame.ShadowCaster[] shadowCasterArray,
 			Renderer3DWorldChunkFrame.GlowEmitter[] glowEmitterArray,
 			long[] roofCoverageBits,
@@ -3751,6 +3816,9 @@ public final class World {
 			}
 			for (Renderer3DModelKind kind : kindArray) {
 				hash = mix(hash, kind.ordinal());
+			}
+			for (Renderer3DMaterialFamily family : familyArray) {
+				hash = mix(hash, family.getShaderId());
 			}
 			for (Renderer3DWorldChunkFrame.ShadowCaster caster : shadowCasterArray) {
 				hash = mix(hash, caster.getModelKind().ordinal());
@@ -4059,6 +4127,7 @@ public final class World {
 		private final boolean pickableInvisibleOverlay;
 		private final boolean terrainVariationEligible;
 		private final boolean lavaGlowEmitter;
+		private final Renderer3DMaterialFamily materialFamily;
 		private final boolean collisionFullBlock;
 		private final boolean collisionObject;
 
@@ -4072,6 +4141,7 @@ public final class World {
 			boolean pickableInvisibleOverlay,
 			boolean terrainVariationEligible,
 			boolean lavaGlowEmitter,
+			Renderer3DMaterialFamily materialFamily,
 			boolean collisionFullBlock,
 			boolean collisionObject) {
 			this.x = x;
@@ -4083,6 +4153,9 @@ public final class World {
 			this.pickableInvisibleOverlay = pickableInvisibleOverlay;
 			this.terrainVariationEligible = terrainVariationEligible;
 			this.lavaGlowEmitter = lavaGlowEmitter;
+			this.materialFamily = materialFamily == null
+				? Renderer3DMaterialFamily.TERRAIN
+				: materialFamily;
 			this.collisionFullBlock = collisionFullBlock;
 			this.collisionObject = collisionObject;
 		}
@@ -4092,12 +4165,21 @@ public final class World {
 		private final int x;
 		private final int z;
 		private final int texture;
+		private final Renderer3DMaterialFamily materialFamily;
 		private final int[] vertexCoords;
 
-		private TerrainOverlayFaceInput(int x, int z, int texture, int[] vertexCoords) {
+		private TerrainOverlayFaceInput(
+			int x,
+			int z,
+			int texture,
+			Renderer3DMaterialFamily materialFamily,
+			int[] vertexCoords) {
 			this.x = x;
 			this.z = z;
 			this.texture = texture;
+			this.materialFamily = materialFamily == null
+				? Renderer3DMaterialFamily.WATER
+				: materialFamily;
 			this.vertexCoords = vertexCoords.clone();
 		}
 	}

@@ -1,6 +1,8 @@
 package orsc;
 
 import orsc.graphics.Renderer2DFrame;
+import orsc.graphics.three.Renderer3DMaterialFamily;
+import orsc.graphics.three.Renderer3DWorldChunkFrame;
 
 import java.awt.image.BufferedImage;
 import java.lang.management.BufferPoolMXBean;
@@ -183,6 +185,16 @@ public final class RenderTelemetry {
 	private static final CounterStats openGLWorldChunkVertexStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkIndexStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkTriangleStats = new CounterStats();
+	private static final CounterStats openGLWorldMaterialUnclassifiedStats = new CounterStats();
+	private static final CounterStats openGLWorldMaterialTerrainStats = new CounterStats();
+	private static final CounterStats openGLWorldMaterialWaterStats = new CounterStats();
+	private static final CounterStats openGLWorldMaterialWallStats = new CounterStats();
+	private static final CounterStats openGLWorldMaterialRoofStats = new CounterStats();
+	private static final CounterStats openGLWorldMaterialSceneryStats = new CounterStats();
+	private static final CounterStats openGLWorldMaterialFoliageStats = new CounterStats();
+	private static final CounterStats openGLWorldMaterialOreStats = new CounterStats();
+	private static final CounterStats openGLWorldMaterialEmissiveStats = new CounterStats();
+	private static final CounterStats openGLWorldMaterialEffectStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkRequestedStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkUploadStats = new CounterStats();
 	private static final CounterStats openGLWorldChunkReuseStats = new CounterStats();
@@ -482,6 +494,22 @@ public final class RenderTelemetry {
 		}
 	}
 
+	public static String worldMaterialFamilySummary() {
+		synchronized (RenderTelemetry.class) {
+			return "u/t/wa/w/r/s/f/o/em/ef "
+				+ formatCount(openGLWorldMaterialUnclassifiedStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldMaterialTerrainStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldMaterialWaterStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldMaterialWallStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldMaterialRoofStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldMaterialSceneryStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldMaterialFoliageStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldMaterialOreStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldMaterialEmissiveStats.recentAverage()) + "/"
+				+ formatCount(openGLWorldMaterialEffectStats.recentAverage());
+		}
+	}
+
 	public static String renderer2DCommandLimitSummary() {
 		synchronized (RenderTelemetry.class) {
 			return "s " + commandLimitSummary(
@@ -621,6 +649,32 @@ public final class RenderTelemetry {
 			openGLWorldChunkIndexStats.record(indices);
 			openGLWorldChunkTriangleStats.record(triangles);
 		}
+	}
+
+	static void recordOpenGLWorldMaterialFamilies(Renderer3DWorldChunkFrame chunkFrame) {
+		if (!isCollectionEnabled()) {
+			return;
+		}
+
+		synchronized (RenderTelemetry.class) {
+			openGLWorldMaterialUnclassifiedStats.record(
+				familyCount(chunkFrame, Renderer3DMaterialFamily.UNCLASSIFIED));
+			openGLWorldMaterialTerrainStats.record(familyCount(chunkFrame, Renderer3DMaterialFamily.TERRAIN));
+			openGLWorldMaterialWaterStats.record(familyCount(chunkFrame, Renderer3DMaterialFamily.WATER));
+			openGLWorldMaterialWallStats.record(familyCount(chunkFrame, Renderer3DMaterialFamily.WALL));
+			openGLWorldMaterialRoofStats.record(familyCount(chunkFrame, Renderer3DMaterialFamily.ROOF));
+			openGLWorldMaterialSceneryStats.record(familyCount(chunkFrame, Renderer3DMaterialFamily.SCENERY));
+			openGLWorldMaterialFoliageStats.record(familyCount(chunkFrame, Renderer3DMaterialFamily.FOLIAGE));
+			openGLWorldMaterialOreStats.record(familyCount(chunkFrame, Renderer3DMaterialFamily.ORE));
+			openGLWorldMaterialEmissiveStats.record(familyCount(chunkFrame, Renderer3DMaterialFamily.EMISSIVE));
+			openGLWorldMaterialEffectStats.record(familyCount(chunkFrame, Renderer3DMaterialFamily.EFFECT));
+		}
+	}
+
+	private static int familyCount(
+		Renderer3DWorldChunkFrame chunkFrame,
+		Renderer3DMaterialFamily family) {
+		return chunkFrame == null ? 0 : chunkFrame.getMaterialFamilyTriangleCount(family);
 	}
 
 	static void recordOpenGLWorldChunkUpload(
@@ -1580,6 +1634,10 @@ public final class RenderTelemetry {
 				+ " skipped=" + formatCount(worldMeshSkippedTriangleStats.average()));
 
 		System.out.println(
+			"[renderer-v2 telemetry] resident material families window "
+				+ worldMaterialFamilySummary());
+
+		System.out.println(
 			"[renderer-v2 telemetry] world mesh materials window: textured="
 				+ formatCount(worldMeshTexturedTriangleStats.windowAverage())
 				+ " flat=" + formatCount(worldMeshFlatColorTriangleStats.windowAverage())
@@ -2174,6 +2232,16 @@ public final class RenderTelemetry {
 			openGLWorldChunkVertexStats,
 			openGLWorldChunkIndexStats,
 			openGLWorldChunkTriangleStats,
+			openGLWorldMaterialUnclassifiedStats,
+			openGLWorldMaterialTerrainStats,
+			openGLWorldMaterialWaterStats,
+			openGLWorldMaterialWallStats,
+			openGLWorldMaterialRoofStats,
+			openGLWorldMaterialSceneryStats,
+			openGLWorldMaterialFoliageStats,
+			openGLWorldMaterialOreStats,
+			openGLWorldMaterialEmissiveStats,
+			openGLWorldMaterialEffectStats,
 			openGLWorldChunkRequestedStats,
 			openGLWorldChunkUploadStats,
 			openGLWorldChunkReuseStats,

@@ -1,6 +1,6 @@
 # Renderer Material-Family Foundation Plan
 
-Status: proposed; awaiting manager approval before implementation.
+Status: approved; implementation active on `feat/renderer-v2-refinement`.
 
 This is the next milestone in the ongoing renderer-v2 refinement workstream on
 `feat/renderer-v2-refinement`. It follows the accepted visual/performance,
@@ -88,21 +88,21 @@ that protocol/data migration is outside this parity foundation.
 
 ## Milestone 1: Shared Metadata And Chunk Products
 
-- [ ] Add `Renderer3DMaterialFamily` in the shared client renderer contract,
+- [x] Add `Renderer3DMaterialFamily` in the shared client renderer contract,
       with explicit shader ids and telemetry names.
-- [ ] Add material-family metadata to `RSModel`, including copy/clone behavior,
+- [x] Add material-family metadata to `RSModel`, including copy/clone behavior,
       so resident object chunk construction retains an instance's classified
       family just as it retains model kind and glow metadata.
-- [ ] Classify resident object instances once, near the existing renderer glow
+- [x] Classify resident object instances once, near the existing renderer glow
       metadata application, then let `RSModel` and the chunk builder carry the
       result without consulting definitions again.
-- [ ] Carry a material family for every world and object triangle through
+- [x] Carry a material family for every world and object triangle through
       `Renderer3DWorldChunkFrame.ChunkMesh`; normalize missing arrays to
       `UNCLASSIFIED` and expose safe per-triangle/copy accessors.
-- [ ] Include material-family values in world/object chunk signatures and
+- [x] Include material-family values in world/object chunk signatures and
       buffer identity so a semantic change cannot incorrectly reuse an older
       resident product.
-- [ ] Keep `Renderer3DModelKind`, `StaticWorldMaterialPass`, texture id, and
+- [x] Keep `Renderer3DModelKind`, `StaticWorldMaterialPass`, texture id, and
       family as distinct fields. Do not replace or overload any existing one.
 
 Acceptance:
@@ -114,17 +114,17 @@ Acceptance:
 
 ## Milestone 2: Shader-Ready Parity Path
 
-- [ ] Add a material-family float attribute to resident chunk vertices and a
+- [x] Add a material-family float attribute to resident chunk vertices and a
       matching shader varying using the enum's explicit shader id.
-- [ ] Preserve the existing per-triangle duplication/attribute rules so one
+- [x] Preserve the existing per-triangle duplication/attribute rules so one
       triangle cannot inherit another triangle's family through vertex reuse.
-- [ ] Do not split material batches or add draw calls solely for family;
+- [x] Do not split material batches or add draw calls solely for family;
       family is per-vertex shader data.
-- [ ] Compile and pass the value through the accepted resident shader without
+- [x] Compile and pass the value through the accepted resident shader without
       changing normal fragment color, alpha, lighting, fog, tone, brightness,
       terrain variation, glow, or shadow results.
-- [ ] If an inspection view is useful, make family diagnostic colors opt-in,
-      clearly labeled, and disabled in all normal profiles.
+- [x] No inspection view was added for this parity milestone; all normal
+      profiles therefore keep the existing fragment output unchanged.
 
 Acceptance:
 
@@ -135,16 +135,16 @@ Acceptance:
 
 ## Milestone 3: AI-Readable Coverage
 
-- [ ] Add current/recent material-family triangle counts to expanded F6 and
+- [x] Add current/recent material-family triangle counts to expanded F6 and
       structured renderer diagnostic telemetry.
-- [ ] Record family coverage for resident chunk products in `Ctrl+F9` evidence,
+- [x] Record family coverage for resident chunk products in `Ctrl+F9` evidence,
       including model kind, family, texture/fallback identity, chunk role, and
       triangle count. Keep the existing projected-world material-pass capture
       intact rather than conflating the two contracts.
-- [ ] Extend the capture/session analyzer to report family totals, unknown
+- [x] Extend the capture/session analyzer to report family totals, unknown
       coverage, and contradictory combinations without treating
       `UNCLASSIFIED` as a crash or silently dropping it.
-- [ ] Add guardrails for stable shader ids, classifier precedence, complete
+- [x] Add guardrails for stable shader ids, classifier precedence, complete
       chunk-array lengths, signature participation, capture schema, and
       diagnostic-disabled behavior.
 
@@ -161,9 +161,9 @@ Acceptance:
 
 ## Validation Route
 
-- [ ] Client compiles with Java 8.
-- [ ] Full renderer guardrail suite passes.
-- [ ] Classifier fixtures cover broad fallbacks plus representative water,
+- [x] Client compiles with Java 8.
+- [x] Full renderer guardrail suite passes.
+- [x] Classifier fixtures cover broad fallbacks plus representative water,
       foliage, ore, fire/torch/furnace, lava, and unknown inputs.
 - [ ] A strict `Ctrl+F9` capture has complete family coverage with no missing
       triangle metadata or capture artifacts.

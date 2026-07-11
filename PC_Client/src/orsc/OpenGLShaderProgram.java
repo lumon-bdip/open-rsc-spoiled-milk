@@ -21,6 +21,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private static final int TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION = 8;
 	private static final int TERRAIN_BLEND_COLOR_ATTRIBUTE_LOCATION = 9;
 	private static final int TERRAIN_BLEND_STRENGTH_ATTRIBUTE_LOCATION = 10;
+	private static final int MATERIAL_FAMILY_ATTRIBUTE_LOCATION = 11;
 	private static final String FIXED_PIPELINE_VERTEX_SHADER =
 		"#version 120\n"
 			+ "uniform mat4 uProjectionMatrix;\n"
@@ -119,6 +120,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "attribute float aBaseLegacyLight;\n"
 			+ "attribute vec3 aNormal;\n"
 			+ "attribute float aModelKind;\n"
+			+ "attribute float aMaterialFamily;\n"
 			+ "attribute float aTerrainVariationMask;\n"
 			+ "attribute vec3 aTerrainBlendColor;\n"
 			+ "attribute float aTerrainBlendStrength;\n"
@@ -129,6 +131,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "varying float vBaseLegacyLight;\n"
 			+ "varying vec3 vNormal;\n"
 			+ "varying float vModelKind;\n"
+			+ "varying float vMaterialFamily;\n"
 			+ "varying float vTerrainVariationMask;\n"
 			+ "varying vec3 vTerrainBlendColor;\n"
 			+ "varying float vTerrainBlendStrength;\n"
@@ -143,6 +146,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\tvBaseLegacyLight = aBaseLegacyLight;\n"
 			+ "\tvNormal = aNormal;\n"
 			+ "\tvModelKind = aModelKind;\n"
+			+ "\tvMaterialFamily = aMaterialFamily;\n"
 			+ "\tvTerrainVariationMask = aTerrainVariationMask;\n"
 			+ "\tvTerrainBlendColor = aTerrainBlendColor;\n"
 			+ "\tvTerrainBlendStrength = aTerrainBlendStrength;\n"
@@ -196,6 +200,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "varying float vBaseLegacyLight;\n"
 			+ "varying vec3 vNormal;\n"
 			+ "varying float vModelKind;\n"
+			+ "varying float vMaterialFamily;\n"
 			+ "varying float vTerrainVariationMask;\n"
 			+ "varying vec3 vTerrainBlendColor;\n"
 			+ "varying float vTerrainBlendStrength;\n"
@@ -578,6 +583,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			gl.glBindAttribLocation(program, BASE_LEGACY_LIGHT_ATTRIBUTE_LOCATION, "aBaseLegacyLight");
 			gl.glBindAttribLocation(program, NORMAL_ATTRIBUTE_LOCATION, "aNormal");
 			gl.glBindAttribLocation(program, MODEL_KIND_ATTRIBUTE_LOCATION, "aModelKind");
+			gl.glBindAttribLocation(program, MATERIAL_FAMILY_ATTRIBUTE_LOCATION, "aMaterialFamily");
 			gl.glBindAttribLocation(program, TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION, "aTerrainVariationMask");
 			gl.glBindAttribLocation(program, TERRAIN_BLEND_COLOR_ATTRIBUTE_LOCATION, "aTerrainBlendColor");
 			gl.glBindAttribLocation(program, TERRAIN_BLEND_STRENGTH_ATTRIBUTE_LOCATION, "aTerrainBlendStrength");
@@ -840,6 +846,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int baseLegacyLightComponents,
 		int normalComponents,
 		int modelKindComponents,
+		int materialFamilyComponents,
 		int terrainVariationMaskComponents,
 		int terrainBlendColorComponents,
 		int terrainBlendStrengthComponents,
@@ -851,6 +858,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		long baseLegacyLightOffsetBytes,
 		long normalOffsetBytes,
 		long modelKindOffsetBytes,
+		long materialFamilyOffsetBytes,
 		long terrainVariationMaskOffsetBytes,
 		long terrainBlendColorOffsetBytes,
 		long terrainBlendStrengthOffsetBytes) throws Exception {
@@ -863,6 +871,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		gl.glEnableVertexAttribArray(BASE_LEGACY_LIGHT_ATTRIBUTE_LOCATION);
 		gl.glEnableVertexAttribArray(NORMAL_ATTRIBUTE_LOCATION);
 		gl.glEnableVertexAttribArray(MODEL_KIND_ATTRIBUTE_LOCATION);
+		gl.glEnableVertexAttribArray(MATERIAL_FAMILY_ATTRIBUTE_LOCATION);
 		gl.glEnableVertexAttribArray(TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION);
 		gl.glEnableVertexAttribArray(TERRAIN_BLEND_COLOR_ATTRIBUTE_LOCATION);
 		gl.glEnableVertexAttribArray(TERRAIN_BLEND_STRENGTH_ATTRIBUTE_LOCATION);
@@ -915,6 +924,13 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			false,
 			strideBytes,
 			modelKindOffsetBytes);
+		gl.glVertexAttribPointer(
+			MATERIAL_FAMILY_ATTRIBUTE_LOCATION,
+			materialFamilyComponents,
+			gl.GL_FLOAT,
+			false,
+			strideBytes,
+			materialFamilyOffsetBytes);
 		gl.glVertexAttribPointer(
 			TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION,
 			terrainVariationMaskComponents,
@@ -1032,6 +1048,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	}
 
 	void unbindWorldTextureAttributes() throws Exception {
+		gl.glDisableVertexAttribArray(MATERIAL_FAMILY_ATTRIBUTE_LOCATION);
 		gl.glDisableVertexAttribArray(TERRAIN_BLEND_STRENGTH_ATTRIBUTE_LOCATION);
 		gl.glDisableVertexAttribArray(TERRAIN_BLEND_COLOR_ATTRIBUTE_LOCATION);
 		gl.glDisableVertexAttribArray(TERRAIN_VARIATION_MASK_ATTRIBUTE_LOCATION);

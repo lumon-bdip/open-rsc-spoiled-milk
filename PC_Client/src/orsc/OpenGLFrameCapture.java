@@ -4,7 +4,9 @@ import com.openrsc.client.model.Sprite;
 import orsc.graphics.Renderer2DFrame;
 import orsc.graphics.three.Renderer3DDepthFrame;
 import orsc.graphics.three.Renderer3DFrame;
+import orsc.graphics.three.Renderer3DMaterialFamily;
 import orsc.graphics.three.Renderer3DModelKind;
+import orsc.graphics.three.Renderer3DWorldChunkFrame;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -101,6 +103,7 @@ final class OpenGLFrameCapture {
 		writeCompositeSceneCommands(frame, presenter);
 		writeStaticWorldCommands(frame, presenter);
 		writeStaticWorldMaterialTriangles(frame, presenter);
+		writeResidentMaterialFamilies(frame);
 		writeStaticRangeCandidates(frame, presenter);
 		writeFrontOccluderCandidates(frame, presenter);
 		writeSpriteSubmissions(frame);
@@ -382,6 +385,16 @@ final class OpenGLFrameCapture {
 				writer.println("worldFaces=" + renderer3DFrame.getWorldFaceCount());
 				for (Renderer3DModelKind kind : Renderer3DModelKind.values()) {
 					writer.println("worldFaces." + kind.name() + "=" + renderer3DFrame.getWorldFaceCount(kind));
+				}
+				Renderer3DWorldChunkFrame worldChunkFrame = renderer3DFrame.getWorldChunkFrame();
+				if (worldChunkFrame != null) {
+					writer.println("residentChunks=" + worldChunkFrame.getChunkCount());
+					writer.println("residentTriangles=" + worldChunkFrame.getTotalTriangleCount());
+					for (Renderer3DMaterialFamily family : Renderer3DMaterialFamily.values()) {
+						writer.println(
+							"residentMaterialFamily." + family.name() + "="
+								+ worldChunkFrame.getMaterialFamilyTriangleCount(family));
+					}
 				}
 				writer.println("spriteSubmissions=" + renderer3DFrame.getSpriteSubmissionCount());
 				writer.println("characterSprites=" + renderer3DFrame.getCharacterSpriteCount());
@@ -677,6 +690,49 @@ final class OpenGLFrameCapture {
 					+ "\t" + triangle.faceId
 					+ "\t" + triangle.textureId
 					+ "\t" + triangle.textureHasTransparency);
+			}
+		} finally {
+			writer.close();
+		}
+	}
+
+	void writeResidentMaterialFamilies(Frame frame) throws Exception {
+		PrintWriter writer = new PrintWriter(new File(directory, "resident-material-families.tsv"));
+		try {
+			writer.println(
+				"chunkIndex\tplane\tcenterSectionX\tcenterSectionY\tchunkRole"
+					+ "\tmodelKind\tmaterialFamily\tshaderId\ttextureId\tfallbackColor"
+					+ "\tglowEmitterCount\ttriangleCount");
+			if (frame == null || frame.renderer3DFrame == null) {
+				return;
+			}
+			Renderer3DWorldChunkFrame chunkFrame = frame.renderer3DFrame.getWorldChunkFrame();
+			if (chunkFrame == null) {
+				return;
+			}
+			List<Renderer3DWorldChunkFrame.ChunkMesh> chunks = chunkFrame.getChunks();
+			Map<String, Integer> counts = new java.util.LinkedHashMap<String, Integer>();
+			for (int chunkIndex = 0; chunkIndex < chunks.size(); chunkIndex++) {
+				Renderer3DWorldChunkFrame.ChunkMesh chunk = chunks.get(chunkIndex);
+				for (int triangle = 0; triangle < chunk.getTriangleCount(); triangle++) {
+					Renderer3DMaterialFamily family = chunk.getTriangleMaterialFamily(triangle);
+					String key = chunkIndex
+						+ "\t" + chunk.getPlane()
+						+ "\t" + chunk.getCenterSectionX()
+						+ "\t" + chunk.getCenterSectionY()
+						+ "\t" + chunk.getChunkRole()
+						+ "\t" + chunk.getTriangleModelKind(triangle)
+						+ "\t" + family
+						+ "\t" + family.getShaderId()
+						+ "\t" + chunk.getTriangleTexture(triangle)
+						+ "\t" + chunk.getTriangleFallbackColor(triangle)
+						+ "\t" + chunk.getGlowEmitterCount();
+					Integer count = counts.get(key);
+					counts.put(key, Integer.valueOf(count == null ? 1 : count.intValue() + 1));
+				}
+			}
+			for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+				writer.println(entry.getKey() + "\t" + entry.getValue());
 			}
 		} finally {
 			writer.close();
@@ -1526,6 +1582,3 @@ final class OpenGLFrameCapture {
 		return value.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ');
 	}
 }
-
-
-

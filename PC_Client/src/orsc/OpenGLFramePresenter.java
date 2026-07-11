@@ -1620,6 +1620,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			worldChunkFrame.getTotalVertexCount(),
 			worldChunkFrame.getTotalIndexCount(),
 			worldChunkFrame.getTotalTriangleCount());
+		RenderTelemetry.recordOpenGLWorldMaterialFamilies(
+			worldChunkFrame);
 		RemasterShadowInventory shadowInventory = RenderTelemetry.isEnabled()
 			? RemasterShadowClassifier.inspectInventory(worldChunkFrame)
 			: RemasterShadowInventory.EMPTY;
