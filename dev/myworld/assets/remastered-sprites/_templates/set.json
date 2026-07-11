@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "setId": "replace-me",
+  "displayName": "Replace Me",
+  "status": "work",
+  "contributor": {
+    "id": "replace-me",
+    "displayName": "Replace Me",
+    "sourceBatch": "replace-me",
+    "provenance": "verify-before-release"
+  },
+  "targets": [
+    {
+      "keyPrefix": "sprite/npc/replace-me",
+      "frames": {
+        "pattern": "work/%02d.png",
+        "first": 0,
+        "count": 1
+      },
+      "sizePolicy": "exact-canonical",
+      "recolorPolicy": "inherit",
+      "alphaThreshold": 128,
+      "legacySourceIds": [],
+      "mappingConfidence": "provisional"
+    }
+  ]
+}

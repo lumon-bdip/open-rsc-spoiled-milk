@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "setId": "texture-archive-entry-57-dormant-entry-57",
+  "displayName": "Archive Entry 57 Dormant",
+  "status": "work",
+  "contributor": {
+    "id": "thatkidbobo",
+    "displayName": "ThatKidBobo",
+    "sourceCommit": "abd9d08fc23cb4752d3389ed127d388af2d18b2b",
+    "sourceBatch": "initial-bobo-resprites",
+    "provenance": "project-contribution"
+  },
+  "targets": [
+    {
+      "keyPrefix": "texture/57",
+      "frames": {
+        "pattern": "work/%02d.png",
+        "first": 0,
+        "count": 1
+      },
+      "sizePolicy": "exact-canonical",
+      "recolorPolicy": "none",
+      "alphaThreshold": 128,
+      "legacySourceIds": [
+        3282
+      ],
+      "mappingConfidence": "confirmed"
+    }
+  ],
+  "notes": "Archive texture has no active TextureDef and remains dormant."
+}

@@ -735,27 +735,36 @@ be compared to the exact asset set.
 
 ### Phase 0B: Authoring workspace foundation
 
-- Create `dev/myworld/assets/remastered-sprites/` with its README, schema,
+- [x] Create `dev/myworld/assets/remastered-sprites/` with its README, schema,
   templates, category folders, incoming boundary, and output rules.
-- Add its human-readable contributor index and connect it to
-  `dev/myworld/assets/README.md` and the release asset-source inventory.
-- Add the documented inventory, classify, scaffold, validate, generate, and
+- [x] Add its human-readable contributor index and connect it to
+  `dev/myworld/assets/README.md`.
+- [ ] Add the promoted remaster credit to the release asset-source inventory
+  when the player package first begins shipping remastered PNGs.
+- [x] Add the documented inventory, classify, scaffold, validate, generate, and
   report command surface before building a large runtime catalog.
-- Import the existing Bobo contribution as the first real classification test.
+- [x] Import the existing Bobo contribution as the first real classification test.
   Preserve its original commit and contributor metadata.
-- Migrate the four confirmed animation groups with reviewed `git mv`
+- [x] Migrate the four confirmed animation groups with reviewed `git mv`
   operations and per-set descriptors. Resolve the fifth group against the
   provisional `hatchet` mapping before promoting it from work to ready.
-- Map the 85 raw item IDs to stable `sprite/items/<entry>/0` sets. Keep
+- [x] Map the 85 raw item IDs to stable `sprite/items/<entry>/0` sets. Keep
   `id-02262.png` in work until its one-pixel width mismatch is resolved.
-- Organize the 23 texture images into named or ID-audited texture sets with
+- [x] Organize the 23 texture images into named or ID-audited texture sets with
   `texture/<entry>` targets, but keep them non-runtime/staged until the texture
   adapter phase.
-- Generate the aggregate manifest, catalog data, coverage report, and contact
-  sheets; prove repeat generation is byte-stable.
-- Add workspace guardrails before retiring the now-redundant
+- [ ] Generate the Java catalog data and canonical/remastered contact sheets.
+  The aggregate JSON manifest and workspace report are implemented and repeat
+  generation is byte-stable.
+- [x] Add workspace guardrails before retiring the now-redundant
   `bobo-resprites/` path through reviewed `git mv` operations, then checkpoint
   the clean migration as its own milestone.
+
+Workspace foundation result on 2026-07-11: `113` leaf descriptors account for
+all `198` contributed PNGs and legacy IDs. `88` sets are authoring-ready (`156`
+per-frame manifest entries); `25` sets remain deliberately in `work` (the
+18-frame provisional hatchet target, the one width-mismatched pie image, and
+23 textures). The client build does not package or load this catalog yet.
 
 ### Phase 1: Safe foundation
 
