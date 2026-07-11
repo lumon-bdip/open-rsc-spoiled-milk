@@ -12,6 +12,7 @@ renderer_tests=(
   test-client-world-streaming-backend.py
   test-opengl-geometry-modes.py
   test-opengl-input-modifiers.py
+  test-opengl-spirit-summon-alpha.py
   test-renderer-2d-overflow-telemetry.py
   test-renderer-diagnostic-session.py
   test-renderer-diagnostic-session-analyzer.py
