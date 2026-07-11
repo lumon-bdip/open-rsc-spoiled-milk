@@ -220,11 +220,14 @@ Implemented or started:
   material work should make these emitters data-driven rather than keeping the
   first-pass classifier in `mudclient`.
 - The parity-preserving resident material-family foundation is implemented and
-  awaiting live capture/performance acceptance. Static resident triangles now
+  live-accepted. Static resident triangles now
   carry stable `TERRAIN`, `WATER`, `WALL`, `ROOF`, `SCENERY`, `FOLIAGE`, `ORE`,
   `EMISSIVE`, `EFFECT`, or `UNCLASSIFIED` ids through chunk signatures, VBOs,
   the resident shader interface, F6/session telemetry, and `Ctrl+F9` evidence.
-  The normal shader does not use the value to alter output yet.
+  Twelve strict frames had complete `260,032`-triangle coverage with no unknown
+  or contradictory classifications; dense visual/performance and relog/section
+  lifecycle checks passed. The normal shader does not use the value to alter
+  output yet.
 
 Still incomplete:
 

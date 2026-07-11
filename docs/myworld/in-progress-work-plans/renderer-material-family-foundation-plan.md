@@ -1,6 +1,7 @@
 # Renderer Material-Family Foundation Plan
 
-Status: approved; implementation active on `feat/renderer-v2-refinement`.
+Status: complete and live-accepted on `feat/renderer-v2-refinement`; the parent
+renderer-v2 refinement workstream remains active.
 
 This is the next milestone in the ongoing renderer-v2 refinement workstream on
 `feat/renderer-v2-refinement`. It follows the accepted visual/performance,
@@ -173,7 +174,7 @@ Acceptance:
 - [x] Dense-route telemetry shows no new draw calls/texture binds, no material
       regression in render or client-loop p95, and bounded VBO/direct-memory
       growth consistent with one additional attribute.
-- [ ] Relog and section/teleport transitions retain correct resident family
+- [x] Relog and section/teleport transitions retain correct resident family
       coverage without stale chunk reuse.
 
 ## Live Validation Findings — 2026-07-10
@@ -203,7 +204,13 @@ Acceptance:
   already-established passive retention monitoring; this evidence does not
   justify a memory/cache change.
 - Eleven section loads retained complete family coverage. A live logout/login
-  cycle remains before closing the lifecycle acceptance item.
+  cycle was then validated in `session-20260710-211104-3038022`: two login
+  epochs separated by one logout reached `258,404` and `260,032` fully
+  classified resident triangles respectively. The second epoch crossed another
+  section boundary and settled at `213,350` triangles with a new stable family
+  distribution. All observed resident states kept `UNCLASSIFIED=0`; the
+  session recorded zero slow frames or client exceptions, and the user
+  accepted visuals before and after relog.
 
 ## Explicitly Deferred
 

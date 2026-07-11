@@ -1655,8 +1655,12 @@ they are not visual requirements for the baseline.
         [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md):
         explicit stable ids, centralized terrain/object classification,
         per-triangle chunk/signature/VBO/shader propagation, F6/session
-        telemetry, and strict `Ctrl+F9` coverage analysis are implemented.
-        Normal fragment output remains unchanged pending live validation.
+        telemetry, and strict `Ctrl+F9` coverage analysis are implemented and
+        live-accepted. Twelve strict capture frames each covered
+        `260,032/260,032` resident triangles with zero unknown, invalid,
+        duplicate, missing, or contradictory rows. Dense visual/performance and
+        two-epoch logout/relogin/section-transition validation also passed.
+        Normal fragment output remains intentionally unchanged.
   - [ ] Extend explicit ownership beyond resident static triangles to players,
         NPCs, ground items, projectiles, particles, and other world sprites;
         do not infer those families from screen-space sprite ids.
