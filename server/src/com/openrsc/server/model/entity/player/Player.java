@@ -727,6 +727,16 @@ public final class Player extends Mob {
 		}
 	}
 
+	public int getOutgoingPacketQueueSize() {
+		synchronized (outgoingPackets) {
+			return outgoingPackets.size();
+		}
+	}
+
+	public boolean isOutgoingChannelWritable() {
+		return channel != null && channel.isOpen() && channel.isActive() && channel.isWritable();
+	}
+
 	public LinkedHashSet<Npc> getLocalNpcs() {
 		return localNpcs;
 	}

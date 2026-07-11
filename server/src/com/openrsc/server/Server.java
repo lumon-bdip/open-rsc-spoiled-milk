@@ -13,6 +13,7 @@ import com.openrsc.server.database.impl.mysql.MySqlGameLogger;
 import com.openrsc.server.database.impl.sqlite.SqliteGameDatabase;
 import com.openrsc.server.database.patches.JDBCPatchApplier;
 import com.openrsc.server.database.patches.PatchApplier;
+import com.openrsc.server.diagnostics.MovementStutterDiagnostics;
 import com.openrsc.server.event.custom.DailyShutdownEvent;
 import com.openrsc.server.event.custom.HourlyResetEvent;
 import com.openrsc.server.event.rsc.FinitePeriodicEvent;
@@ -102,6 +103,7 @@ public class Server implements Runnable {
 	private final RSCPacketFilter packetFilter;
 	private final IPlayerService playerService;
 	private final I18NService i18nService;
+	private final MovementStutterDiagnostics movementStutterDiagnostics;
 
 	private final World world;
 	private final String name;
@@ -432,6 +434,20 @@ public class Server implements Runnable {
 
 		name = getConfig().SERVER_NAME;
 		worldDayNightClock = new WorldDayNightClock();
+		movementStutterDiagnostics = new MovementStutterDiagnostics(
+			getConfig().WANT_MOVEMENT_STUTTER_DIAGNOSTICS,
+			10_000_000L,
+			getConfig().MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS * 1_000_000_000L,
+			getConfig().MOVEMENT_STUTTER_POLL_OUTLIER_MS * 1_000_000L,
+			getConfig().MOVEMENT_STUTTER_POLL_OUTLIER_MS * 1_000_000L,
+			getConfig().MOVEMENT_STUTTER_TICK_OUTLIER_MS * 1_000_000L);
+		if (movementStutterDiagnostics.isEnabled()) {
+			LOGGER.info(
+				"Movement stutter diagnostics enabled: summary={}s pollOutlier={}ms tickOutlier={}ms",
+				box(getConfig().MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS),
+				box(getConfig().MOVEMENT_STUTTER_POLL_OUTLIER_MS),
+				box(getConfig().MOVEMENT_STUTTER_TICK_OUTLIER_MS));
+		}
 
 		packetFilter = new RSCPacketFilter(this);
 
@@ -1055,6 +1071,22 @@ public class Server implements Runnable {
 					});
 
 					monitorTickPerformance();
+					if (movementStutterDiagnostics.isEnabled()) {
+						final long diagnosticNow = System.nanoTime();
+						movementStutterDiagnostics.recordWorldTick(
+							diagnosticNow,
+							getCurrentTick(),
+							lastTickDuration,
+							new MovementStutterDiagnostics.TickStages(
+								lastWorldUpdateDuration,
+								lastEventsDuration,
+								lastProcessPlayersDuration,
+								lastProcessNpcsDuration,
+								lastUpdateClientsDuration,
+								lastOutgoingPacketsDuration,
+								lastDoCleanupDuration));
+						emitMovementStutterDiagnostics(diagnosticNow);
+					}
 					recordBenchmarkTick();
 
 					dailyShutdownEvent();
@@ -1077,6 +1109,8 @@ public class Server implements Runnable {
 					//LOGGER.info("Tick " + getCurrentTick() + " processed.");
 				} else {
 					if (getConfig().WANT_CUSTOM_WALK_SPEED) {
+						final boolean movementDiagnosticsEnabled = movementStutterDiagnostics.isEnabled();
+						final long movementPollStarted = movementDiagnosticsEnabled ? System.nanoTime() : 0L;
 						World world = getWorld();
 						final ArrayList<Player> movedPlayers = new ArrayList<>();
 						for (final Player p : getWorld().getPlayers()) {
@@ -1116,13 +1150,47 @@ public class Server implements Runnable {
 						});
 
 						if (!movedPlayers.isEmpty() || !movedNpcs.isEmpty()) {
+							int queuedPackets = 0;
+							int maxPlayerQueue = 0;
+							int backpressuredPlayers = 0;
 							for (final Player p : world.getPlayers()) {
 								boolean sentMovementPacket = getGameUpdater().sendMovementUpdatePacket(p, movedPlayers, movedNpcs);
 								sentMovementPacket |= getGameUpdater().sendMovementSnapshotPacket(p, movedPlayers, movedNpcs);
 								if (sentMovementPacket) {
+									if (movementDiagnosticsEnabled) {
+										final int playerQueue = p.getOutgoingPacketQueueSize();
+										queuedPackets += playerQueue;
+										maxPlayerQueue = Math.max(maxPlayerQueue, playerQueue);
+										if (!p.isOutgoingChannelWritable()) {
+											backpressuredPlayers++;
+										}
+									}
 									p.processOutgoingPackets();
 								}
 							}
+							if (movementDiagnosticsEnabled) {
+								final long movementPollFinished = System.nanoTime();
+								movementStutterDiagnostics.recordMovementPoll(
+									movementPollStarted,
+									movementPollFinished,
+									movedPlayers.size(),
+									movedNpcs.size(),
+									queuedPackets,
+									maxPlayerQueue,
+									backpressuredPlayers);
+								emitMovementStutterDiagnostics(movementPollFinished);
+							}
+						} else if (movementDiagnosticsEnabled) {
+							final long movementPollFinished = System.nanoTime();
+							movementStutterDiagnostics.recordMovementPoll(
+								movementPollStarted,
+								movementPollFinished,
+								0,
+								0,
+								0,
+								0,
+								0);
+							emitMovementStutterDiagnostics(movementPollFinished);
 						}
 
 						final long now = System.currentTimeMillis();
@@ -1158,6 +1226,12 @@ public class Server implements Runnable {
 			} catch (final Throwable t) {
 				LOGGER.error("Exception in Server run()", t);
 			}
+		}
+	}
+
+	private void emitMovementStutterDiagnostics(final long nowNanos) {
+		for (final String line : movementStutterDiagnostics.drainIfDue(nowNanos)) {
+			LOGGER.info("MOVEMENT_STUTTER_DIAGNOSTIC {}", line);
 		}
 	}
 

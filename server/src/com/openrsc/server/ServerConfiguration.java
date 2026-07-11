@@ -87,6 +87,10 @@ public class ServerConfiguration {
 	public boolean WANT_SYNC_VISIBILITY_TICK_CACHE;
 	public boolean WANT_SYNC_SCENE_BASELINE;
 	public boolean WANT_SYNC_MOVEMENT_SNAPSHOT;
+	public boolean WANT_MOVEMENT_STUTTER_DIAGNOSTICS;
+	public int MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS;
+	public int MOVEMENT_STUTTER_POLL_OUTLIER_MS;
+	public int MOVEMENT_STUTTER_TICK_OUTLIER_MS;
 	public boolean WANT_NPC_IDLE_TICK_THROTTLE;
 	public int NPC_IDLE_TICK_THROTTLE_INTERVAL;
 	public boolean BREAK_NPC_LOCATION_CACHE;
@@ -481,6 +485,26 @@ public class ServerConfiguration {
 			"OPENRSC_SYNC_MOVEMENT_SNAPSHOT",
 			"want_sync_movement_snapshot",
 			false);
+		WANT_MOVEMENT_STUTTER_DIAGNOSTICS = readBoolSystemEnvConfig(
+			"openrsc.movementStutterDiagnostics",
+			"OPENRSC_MOVEMENT_STUTTER_DIAGNOSTICS",
+			"want_movement_stutter_diagnostics",
+			false);
+		MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS = Math.max(5, readIntSystemEnvConfig(
+			"openrsc.movementStutterDiagnosticSummarySeconds",
+			"OPENRSC_MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS",
+			"movement_stutter_diagnostic_summary_seconds",
+			60));
+		MOVEMENT_STUTTER_POLL_OUTLIER_MS = Math.max(1, readIntSystemEnvConfig(
+			"openrsc.movementStutterPollOutlierMs",
+			"OPENRSC_MOVEMENT_STUTTER_POLL_OUTLIER_MS",
+			"movement_stutter_poll_outlier_ms",
+			25));
+		MOVEMENT_STUTTER_TICK_OUTLIER_MS = Math.max(1, readIntSystemEnvConfig(
+			"openrsc.movementStutterTickOutlierMs",
+			"OPENRSC_MOVEMENT_STUTTER_TICK_OUTLIER_MS",
+			"movement_stutter_tick_outlier_ms",
+			160));
 		WANT_NPC_IDLE_TICK_THROTTLE = readBoolSystemEnvConfig(
 			"openrsc.npcIdleTickThrottle",
 			"OPENRSC_NPC_IDLE_TICK_THROTTLE",
