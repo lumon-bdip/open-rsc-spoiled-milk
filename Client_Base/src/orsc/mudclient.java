@@ -33,6 +33,7 @@ import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.Renderer3DMeshFrame;
 import orsc.graphics.three.Renderer3DMaterialClassifier;
 import orsc.graphics.three.Renderer3DModelKind;
+import orsc.graphics.three.Renderer3DRoofVisibility;
 import orsc.graphics.three.Renderer3DSettings;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.RSModel;
@@ -6590,6 +6591,10 @@ public final class mudclient implements Runnable {
 					} else if (this.world.playerAlive) {
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
+						Renderer3DRoofVisibility roofVisibility = this.currentRenderer3DRoofVisibility();
+						boolean roofsVisible = roofVisibility.areRoofsVisible();
+						boolean automaticRoofCameraZoom = roofVisibility.usesAutomaticRoofCameraZoom();
+
 						int centerX;
 					for (centerX = 0; centerX < this.world.modelRoofGrid[this.lastHeightOffset].length; ++centerX) {
 						this.scene.removeModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
@@ -6601,7 +6606,7 @@ public final class mudclient implements Runnable {
 						}
 
 						// If the player is hiding roofs, we want to skip the camera zoom
-						if (!C_HIDE_ROOFS && !this.doCameraZoom) {
+						if (automaticRoofCameraZoom && !this.doCameraZoom) {
 							amountToZoom -= 50;
 							this.doCameraZoom = true;
 						}
@@ -6609,18 +6614,13 @@ public final class mudclient implements Runnable {
 						// Sets camera zoom distance based on last saved value in the player cache
 						cameraZoom = minCameraZoom + (osConfig.C_LAST_ZOOM * 2);
 
-						if ((this.lastHeightOffset == 0
-							&& (world.collisionFlags[this.localPlayer.currentX / 128][this.localPlayer.currentZ
-							/ 128] & 0x80) == 0)) {
-
-							if (!C_HIDE_ROOFS) {
-								this.scene.addModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
-								if (this.lastHeightOffset == 0) {
-									this.scene.addModel(this.world.modelWallGrid[1][centerX]);
-									this.scene.addModel(this.world.modelRoofGrid[1][centerX]);
-									this.scene.addModel(this.world.modelWallGrid[2][centerX]);
-									this.scene.addModel(this.world.modelRoofGrid[2][centerX]);
-								}
+						if (roofsVisible) {
+							this.scene.addModel(this.world.modelRoofGrid[this.lastHeightOffset][centerX]);
+							if (this.lastHeightOffset == 0) {
+								this.scene.addModel(this.world.modelWallGrid[1][centerX]);
+								this.scene.addModel(this.world.modelRoofGrid[1][centerX]);
+								this.scene.addModel(this.world.modelWallGrid[2][centerX]);
+								this.scene.addModel(this.world.modelRoofGrid[2][centerX]);
 							}
 
 							if (this.doCameraZoom) {
@@ -7042,6 +7042,7 @@ public final class mudclient implements Runnable {
 					RenderTelemetry.recordSceneRender(RenderTelemetry.elapsedSince(sceneRenderStart));
 					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
 					if (renderer3DFrame != null) {
+						renderer3DFrame.setRoofVisibility(roofVisibility, this.lastHeightOffset);
 						renderer3DFrame.setWorldChunkFrame(
 							this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame()));
 						Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
@@ -26640,6 +26641,25 @@ public final class mudclient implements Runnable {
 
 	public void setOptionHideRoofs(boolean b) {
 		C_HIDE_ROOFS = b;
+	}
+
+	private Renderer3DRoofVisibility currentRenderer3DRoofVisibility() {
+		boolean playerTileCovered = false;
+		if (this.world != null && this.localPlayer != null) {
+			int tileX = this.localPlayer.currentX / this.tileSize;
+			int tileZ = this.localPlayer.currentZ / this.tileSize;
+			if (tileX >= 0
+				&& tileX < this.world.collisionFlags.length
+				&& tileZ >= 0
+				&& tileZ < this.world.collisionFlags[tileX].length) {
+				playerTileCovered =
+					(this.world.collisionFlags[tileX][tileZ] & CollisionFlag.OBJECT) != 0;
+			}
+		}
+		return Renderer3DRoofVisibility.resolve(
+			C_HIDE_ROOFS,
+			this.lastHeightOffset,
+			playerTileCovered);
 	}
 
 	private void reloadCurrentRegionForRoofVisibility() {

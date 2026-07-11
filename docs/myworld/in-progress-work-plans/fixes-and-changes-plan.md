@@ -1,15 +1,15 @@
 # Fixes And Changes Backlog Plan
 
-Status: scoped and owned; Task 1 is ready for owner approval and implementation.
-Owner: An-actual-duck, with focused worker branches coordinated from this plan.
-Planning branch: `docs/player-experience-improvements`.
+Status: active; Tasks 1 and 2 implemented and guarded.
+Owner: An-actual-duck, with independently checkpointed tasks coordinated from this plan.
+Implementation branch: `feat/player-experience-backlog`.
 
 ## Summary
 
 This plan preserves and coordinates the current "Fixes and Changes" backlog:
 
 - [x] Default camera mode should be Manual.
-- [ ] Correct indoor/upper-floor roof hiding when roofs are enabled.
+- [x] Correct indoor/upper-floor roof hiding when roofs are enabled.
 - [ ] Explore adjustable terrain ambient occlusion/shading.
 - [ ] Explore adjustable object shading.
 - [ ] Add optional text-list layouts for Magic, Prayer, and Summoning.
@@ -17,9 +17,9 @@ This plan preserves and coordinates the current "Fixes and Changes" backlog:
 
 The list crosses client defaults, account persistence, renderer ownership,
 interface layout, and server world content. It must not be implemented as one
-branch or one code commit. This document is the coordinating ledger; each task
-below gets its own focused implementation branch, tests, checkpoint, and
-manager review.
+code commit. This document is the coordinating ledger; the manager-approved
+umbrella branch keeps each task in its own tested and pushed checkpoint before
+the next task begins.
 
 ## Current-System Findings
 
@@ -131,7 +131,7 @@ implementation-ready specification is below.
 
 ### 2. Correct enabled-roof indoor and upper-floor visibility
 
-Recommended branch: `fix/roof-visibility`
+Checkpoint scope: roof visibility only.
 
 Define a named roof-visibility state from player plane and roof/collision
 coverage, then apply the same decision to legacy scene grids and resident
@@ -148,6 +148,32 @@ matrix cannot be proven from the current conditions. Required test states:
 - global Hide Roofs on/off;
 - logout/relogin and section transition;
 - Classic and Remaster renderer profiles.
+
+#### Implementation record — 2026-07-11
+
+- Added the named per-frame states `VISIBLE`, `HIDDEN_BY_SETTING`,
+  `HIDDEN_INDOORS`, and `HIDDEN_ABOVE_ACTIVE_FLOOR`. Resolution preserves the
+  original client contract: enabled roofs appear only on an outdoor ground
+  tile; a covered ground tile hides roof layers and structures above the
+  active floor; an upper floor keeps its active walls while hiding the roof
+  above it.
+- The legacy scene loop and resident OpenGL chunks now consume the same state.
+  This closes the split where projected geometry hid roofs indoors/upstairs
+  but resident chunks filtered only from the global saved option.
+- Global Hide Roofs still selects no-roof cached world products and reloads
+  the region. Resident filtering additionally suppresses upper-plane wall
+  batches from a ground-floor view, matching the legacy scene-grid behavior,
+  without suppressing active-floor walls upstairs.
+- `Ctrl+F9` capture metadata now records `activePlane`, `roofVisibility`, and
+  `roofsVisible`, making a visual report directly correlatable with the
+  resolved technical state.
+- The focused executable matrix covers outdoor ground, covered ground, upper
+  floors, global-option precedence, active-floor walls, upper-plane walls,
+  roofs, and terrain. The full renderer guard suite and Java 8 client build
+  pass.
+- This task deliberately preserves the legacy whole-grid visibility unit. A
+  connected-roof-volume refinement would require a separate spatial ownership
+  design and is not necessary to correct renderer parity.
 
 ### 3. Add optional text-list spellbook layouts
 
@@ -269,17 +295,16 @@ values continue to load unchanged.
 ## Documentation Workflow
 
 - Keep the six owner requests verbatim at the top until each is completed.
-- Each implementation branch updates its own task section and relevant source
-  plan, then checkpoints independently.
-- Move completed task detail to the maintenance history or a completed focused
-  plan; do not wait for the entire backlog before integrating a safe task.
-- Do not use this planning branch for code implementation.
+- Each implementation task updates its section and relevant source plan, then
+  checkpoints independently on the manager-approved umbrella branch.
+- Keep completed task detail here until the overall backlog receives its final
+  roundup and handoff.
 
 ## Open Decisions
 
-- Roof behavior: should enabled roofs hide only the connected roof volume over
-  the player, or continue hiding an entire legacy grid cell? Capture the current
-  and desired examples before choosing.
+- Roof behavior is resolved for this task: retain the legacy whole-grid unit
+  while making its state explicit and consistent across renderers. Connected
+  roof-volume hiding remains a possible later enhancement, not a parity fix.
 - Shading terminology: does "terrain ambient occlusion" mean local terrain
   relief, scenery contact shadow strength, or both as separate controls?
 - Text layout: one shared Icons/Text preference is recommended; confirm whether

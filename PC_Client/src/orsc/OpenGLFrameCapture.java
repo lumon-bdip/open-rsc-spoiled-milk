@@ -382,6 +382,10 @@ final class OpenGLFrameCapture {
 					+ renderer3DFrame.getCameraRotationY()
 					+ ","
 					+ renderer3DFrame.getCameraRotationZ());
+				writer.println("activePlane=" + renderer3DFrame.getActivePlane());
+				writer.println("roofVisibility=" + renderer3DFrame.getRoofVisibility().name());
+				writer.println(
+					"roofsVisible=" + renderer3DFrame.getRoofVisibility().areRoofsVisible());
 				writer.println("worldFaces=" + renderer3DFrame.getWorldFaceCount());
 				for (Renderer3DModelKind kind : Renderer3DModelKind.values()) {
 					writer.println("worldFaces." + kind.name() + "=" + renderer3DFrame.getWorldFaceCount(kind));

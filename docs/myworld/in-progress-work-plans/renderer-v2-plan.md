@@ -189,6 +189,13 @@ The first visually acceptable baseline is now:
   height, width, opacity, and outdoor-only state. This avoids deriving scenery
   shadows from individual object triangles and gives future terrain
   shadow-mask/decal work a compact caster list.
+- Roof visibility is now an explicit per-frame renderer state rather than an
+  implied side effect of legacy scene membership. Covered ground tiles,
+  upper-floor views, and the saved Hide Roofs option resolve to stable named
+  states shared by the legacy scene loop and resident chunk filtering. The
+  resident path also suppresses walls from planes above an indoor ground-floor
+  player while preserving active-floor walls upstairs. `Ctrl+F9` metadata
+  records the active plane and resolved roof state for visual correlation.
 - The disabled shadow proof now builds a frame-wide semantic caster list and
   hashes that list into the resident chunk cache. Terrain chunks receive one
   cached shadow receiver layer made from affected terrain triangles with
@@ -1903,6 +1910,11 @@ they are not visual requirements for the baseline.
               removing hidden roofs from the projected scenery bridge's
               depth-only occluder pass, and by building a no-roof
               `WorldModelProduct` variant when roofs are hidden.
+        - [x] Align automatic indoor and upper-floor roof visibility between
+              legacy scene grids and resident chunks. A named frame state now
+              distinguishes saved-option, covered-ground, upper-floor, and
+              visible-outdoor cases; resident roof and above-floor wall batches
+              consume that state, and frame captures expose it directly.
         - [x] Restore the first-pass resident chunk lighting baseline by
               applying wall endpoint terrain light mutations before GPU chunk
               upload, drawing flat fallback materials from per-vertex shaded

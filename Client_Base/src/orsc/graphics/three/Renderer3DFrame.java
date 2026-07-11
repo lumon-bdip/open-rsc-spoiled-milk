@@ -33,6 +33,8 @@ public final class Renderer3DFrame {
 	private Renderer3DDepthFrame depthFrame;
 	private Renderer3DMeshFrame meshFrame;
 	private Renderer3DWorldChunkFrame worldChunkFrame = Renderer3DWorldChunkFrame.EMPTY;
+	private Renderer3DRoofVisibility roofVisibility = Renderer3DRoofVisibility.VISIBLE;
+	private int activePlane;
 
 	Renderer3DFrame(
 		int sourceModelCount,
@@ -427,6 +429,25 @@ public final class Renderer3DFrame {
 
 	public Renderer3DWorldChunkFrame getWorldChunkFrame() {
 		return worldChunkFrame;
+	}
+
+	public void setRoofVisibility(Renderer3DRoofVisibility roofVisibility, int activePlane) {
+		this.roofVisibility = roofVisibility == null
+			? Renderer3DRoofVisibility.VISIBLE
+			: roofVisibility;
+		this.activePlane = Math.max(0, activePlane);
+	}
+
+	public Renderer3DRoofVisibility getRoofVisibility() {
+		return roofVisibility;
+	}
+
+	public int getActivePlane() {
+		return activePlane;
+	}
+
+	public boolean isWorldChunkModelKindVisible(Renderer3DModelKind modelKind, int chunkPlane) {
+		return roofVisibility.isWorldChunkModelKindVisible(modelKind, activePlane, chunkPlane);
 	}
 
 	public static final class CharacterSprite {
