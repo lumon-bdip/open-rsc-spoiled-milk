@@ -13065,9 +13065,13 @@ public final class mudclient implements Runnable {
 					this.drawGeneralSettingsOptions(var3, var5, var6, var7);
 				}
 
-				// android settings definitions
+				// platform-specific third settings tab
 				if (this.settingTab == 2) {
-					this.drawAndroidSettingsOptions(var3, var5, var6, var7);
+					if (isAndroid()) {
+						this.drawAndroidSettingsOptions(var3, var5, var6, var7);
+					} else {
+						this.drawGraphicsSettingsOptions(var3, var5, var6, var7);
+					}
 				}
 			}
 
@@ -13096,10 +13100,13 @@ public final class mudclient implements Runnable {
 							}
 						} else if (!isAndroid()) {
 							if (var13 <= 24 && this.mouseButtonClick == 1) {
-								if (var3 < 98 && this.settingTab == 1) {
+								if (var3 < 66 && (this.settingTab == 1 || this.settingTab == 2)) {
 									this.settingTab = 0; // Social Settings Tab
-								} else if (var3 >= 98 && this.settingTab == 0) {
+								} else if (var3 >= 66 && var3 <= 131
+									&& (this.settingTab == 0 || this.settingTab == 2)) {
 									this.settingTab = 1; // General Settings Tab
+								} else if (var3 > 131 && (this.settingTab == 0 || this.settingTab == 1)) {
+									this.settingTab = 2; // Graphics Settings Tab
 								}
 								this.panelSettings.resetList(this.controlSettingPanel);
 							}
@@ -13126,9 +13133,13 @@ public final class mudclient implements Runnable {
 							this.handleSocialSettingsClicks(var5, var6, var7);
 						}
 
-						/* android tab option clicks */
+						/* platform-specific third tab option clicks */
 						if (this.settingTab == 2) {
-							this.handleAndroidSettingsClicks(var5, var6, var7);
+							if (isAndroid()) {
+								this.handleAndroidSettingsClicks(var5, var6, var7);
+							} else {
+								this.handleGeneralSettingsClicks(var5, var6, var7);
+							}
 						}
 					} else {
 						var7 = var10 + 15;
@@ -13173,19 +13184,26 @@ public final class mudclient implements Runnable {
 
 	// custom settings menu
 	private void drawCustomSettingsBox(int var3, int var4, short var5, int chosenColor, int unchosenColor) {
-		if (this.settingTab == 0) {
-			this.getSurface().drawBoxAlpha(var3, var4 - 25, var5 / 2, 24, chosenColor, 128);
-			this.getSurface().drawBoxAlpha(var5 / 2 + var3, var4 - 25, var5 / 2, 24, unchosenColor, 128);
-		} else if (this.settingTab == 1) {
-			this.getSurface().drawBoxAlpha(var3, var4 - 25, var5 / 2, 24, unchosenColor, 128);
-			this.getSurface().drawBoxAlpha(var5 / 2 + var3, var4 - 25, var5 / 2, 24, chosenColor, 128);
-		}
+		int firstDivider = var5 / 3;
+		int secondDivider = 2 * (var5 / 3) + 1;
+		this.getSurface().drawBoxAlpha(var3, var4 - 25, firstDivider, 24,
+			this.settingTab == 0 ? chosenColor : unchosenColor, 128);
+		this.getSurface().drawBoxAlpha(var3 + firstDivider, var4 - 25,
+			secondDivider - firstDivider, 24,
+			this.settingTab == 1 ? chosenColor : unchosenColor, 128);
+		this.getSurface().drawBoxAlpha(var3 + secondDivider, var4 - 25,
+			var5 - secondDivider, 24,
+			this.settingTab == 2 ? chosenColor : unchosenColor, 128);
 
 		this.getSurface().drawLineHoriz(var3, 24 + var4 - 25, var5, 0);
-		this.getSurface().drawLineVert(var3 + var5 / 2, 0 + var4 - 25, 0, 24);
+		this.getSurface().drawLineVert(var3 + firstDivider, 0 + var4 - 25, 0, 24);
+		this.getSurface().drawLineVert(var3 + secondDivider, 0 + var4 - 25, 0, 24);
 
-		this.getSurface().drawColoredStringCentered(var5 / 4 + var3, "Social", 0, 0, 4, 16 + var4 - 25);
-		this.getSurface().drawColoredStringCentered(var3 + var5 / 4 + var5 / 2, "General", 0, 0, 4, 16 + var4 - 25);
+		this.getSurface().drawColoredStringCentered(var3 + firstDivider / 2, "Social", 0, 0, 4, 16 + var4 - 25);
+		this.getSurface().drawColoredStringCentered(var3 + (firstDivider + secondDivider) / 2,
+			"General", 0, 0, 4, 16 + var4 - 25);
+		this.getSurface().drawColoredStringCentered(var3 + (secondDivider + var5) / 2,
+			"Graphics", 0, 0, 4, 16 + var4 - 25);
 
 		this.getSurface().drawBoxAlpha(var3, var4, var5, 200, GenUtil.buildColor(181, 181, 181), 160);
 		this.getSurface().drawBoxAlpha(var3, var4 + 200, var5, 40, GenUtil.buildColor(201, 201, 201), 160);
@@ -13360,13 +13378,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getLegacyScalingSettingsRowIndex() {
-		int index = 0;
-		index++; // Gameplay section.
-		index++; // Camera angle mode.
-		if (wantMembers()) {
-			index++; // Sound effects.
-		}
-		return index;
+		return 2; // Graphics section, sprite mode, then software scaling.
 	}
 
 	private void drawGeneralSettingsOptions(int baseX, short boxWidth, int x, int y) {
@@ -13393,137 +13405,10 @@ public final class mudclient implements Runnable {
 			}
 		}
 
-		// Client scaling is a legacy software-presenter option. OpenGL-primary uses
-		// the selected render surface directly and applies automatic aspect-fit bars.
-
-		boolean isOpenGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
-		boolean isScalarOptionOffered = !isAndroid() && !isOpenGLPrimaryWindow;
-		int scalarOptionIdx = getLegacyScalingSettingsRowIndex();
-		boolean isScalarOptionShowing = panelSettings.controlScrollAmount[0] <= scalarOptionIdx && isScalarOptionOffered;
-
-		if (isScalarOptionOffered) {
-			if (isScalarOptionShowing) {
-				int yPos = y + ((scalarOptionIdx - panelSettings.controlScrollAmount[0] + 1) * 15);
-
-				// Scale down button
-				boolean scaleMinusHover = (this.gameWidth - this.mouseX) >= SETTINGS_SCALE_MINUS_X_OFFSET - 18
-					&& (this.gameWidth - this.mouseX) <= SETTINGS_SCALE_MINUS_X_OFFSET &&
-					this.mouseY >= (yPos - 7) && this.mouseY <= (yPos + 4);
-
-				final String minusButtonLabel;
-				final int minusButtonColor;
-				if (renderingScalar <= 1) {
-					minusButtonLabel = " ";
-					minusButtonColor = 16777215;
-				} else {
-					minusButtonLabel = "-";
-					minusButtonColor = scaleMinusHover ? 65280 : 16616744;
-				}
-
-				this.getSurface().drawString("[ " + minusButtonLabel + " ]", this.gameWidth - SETTINGS_SCALE_MINUS_X_OFFSET, yPos, minusButtonColor, 1);
-
-				// Scalar label
-				final String scalarLabel = scalingType == ScalingAlgorithm.INTEGER_SCALING ?
-					(int) renderingScalar + "x" : renderingScalar + "x";
-				int scalarLabelOffset = scalingType == ScalingAlgorithm.INTEGER_SCALING ? SETTINGS_SCALE_LABEL_X_OFFSET : SETTINGS_SCALE_LABEL_X_OFFSET + 5;
-
-				final int scalarLabelColor;
-				if (renderingScalar > 1) {
-					// Anything above 1x, draw green
-					scalarLabelColor = 65280;
-				} else {
-					// At 0, draw white
-					scalarLabelColor = 16777215;
-				}
-
-				this.getSurface().drawString(scalarLabel, this.gameWidth - scalarLabelOffset, yPos + 1, scalarLabelColor, 1);
-
-				// Scale up button
-				boolean scalePlusHover = (this.gameWidth - this.mouseX) >= SETTINGS_SCALE_PLUS_X_OFFSET - 20
-					&& (this.gameWidth - this.mouseX) <= SETTINGS_SCALE_PLUS_X_OFFSET &&
-					this.mouseY >= (yPos - 7) && this.mouseY <= (yPos + 4);
-
-				final List<Float> scalars = scalingType == ScalingAlgorithm.INTEGER_SCALING ? integerScalars : interpolationScalars;
-				boolean maxScalar = scalars.indexOf(renderingScalar) == scalars.size() - 1;
-
-				final String plusButtonLabel;
-				final int plusButtonColor;
-
-				if (maxScalar) {
-					plusButtonLabel = "  ";
-					plusButtonColor = 16777215;
-				} else {
-					plusButtonLabel = "+";
-					plusButtonColor = scalePlusHover ? 65280 : 16616744;
-				}
-
-				this.getSurface().drawString("[ " + plusButtonLabel + " ]", this.gameWidth - SETTINGS_SCALE_PLUS_X_OFFSET, yPos, plusButtonColor, 1);
-			}
-
-			index = addSettingsRow(index, "@whi@Scaling - ", 49);
-
-			// scaling type - byte index 46
-			String scalingTypeDescription;
-			switch (scalingType) {
-				default:
-				case INTEGER_SCALING:
-					scalingTypeDescription = "@gre@Integer";
-					break;
-				case BILINEAR_INTERPOLATION:
-					scalingTypeDescription = "@yel@Bilinear";
-					break;
-				case BICUBIC_INTERPOLATION:
-					scalingTypeDescription = "@ora@Bicubic";
-					break;
-			}
-
-			index = addSettingsRow(index, "@whi@Scaling type - @gre@" + scalingTypeDescription, 46);
-		}
-
-		if (!isAndroid() && isOpenGLPrimaryWindow) {
-			index = addSettingsSection(index, "Graphics");
-			index = addSettingsRow(index, "@whi@Preset - " + RendererProfileSettings.getMode().label, 59);
-			index = addSettingsRow(index, "@whi@Sprites: "
-				+ (RemasteredSpriteSettings.isEnabled() ? "@cya@Enhanced" : "@gre@Classic"),
-				SETTINGS_REMASTERED_SPRITES);
-			index = addSettingsRow(index, "@whi@Aspect Ratio - " + RenderSurfaceSettings.getAspectLabel(), 56);
-			String borderlessLabel = OpenGLWindowSettings.getMode() == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN
-				? "@gre@On"
-				: "@red@Off";
-			index = addSettingsRow(index, "@whi@Borderless - " + borderlessLabel, 63);
-			index = addSettingsRow(index, "@whi@Lighting - " + RendererLightingSettings.getMode().label, 61);
-			index = addSettingsRow(index, "@whi@Geometry - " + RendererGeometrySettings.getMode().label, 62);
-			index = addSettingsRow(index, "@whi@Terrain Variation - " + RendererTerrainVariationSettings.getMode().label, 64);
-			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
-			index = addSettingsRow(index, "@whi@Terrain shading", SETTINGS_SECTION_ROW);
-			index = addSettingsRow(index, rendererTuningSliderBar(
-				RendererReliefSettings.getTerrainLevel(), RendererReliefSettings.MAX_LEVEL),
-				SETTINGS_TERRAIN_RELIEF_SLIDER);
-			index = addSettingsRow(index, "@whi@Object shading", SETTINGS_SECTION_ROW);
-			index = addSettingsRow(index, rendererTuningSliderBar(
-				RendererReliefSettings.getObjectLevel(), RendererReliefSettings.MAX_LEVEL),
-				SETTINGS_OBJECT_RELIEF_SLIDER);
-			index = addSettingsRow(index, "@whi@Brightness / dimness", SETTINGS_SECTION_ROW);
-			index = addSettingsRow(index, rendererTuningSliderBar(
-				RendererColorDiagnosticSettings.getDimnessLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
-				SETTINGS_DIMNESS_SLIDER);
-			index = addSettingsRow(index, "@whi@Contrast", SETTINGS_SECTION_ROW);
-			index = addSettingsRow(index, rendererTuningSliderBar(
-				RendererColorDiagnosticSettings.getContrastLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
-				SETTINGS_CONTRAST_SLIDER);
-			index = addSettingsRow(index, "@whi@Gamma", SETTINGS_SECTION_ROW);
-			index = addSettingsRow(index, rendererTuningSliderBar(
-				RendererColorDiagnosticSettings.getGammaLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
-				SETTINGS_GAMMA_SLIDER);
-			index = addSettingsRow(index, "@whi@Saturation", SETTINGS_SECTION_ROW);
-			index = addSettingsRow(index, rendererTuningSliderBar(
-				RendererColorDiagnosticSettings.getSaturationLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
-				SETTINGS_SATURATION_SLIDER);
-			index = addSettingsSection(index, "Interface");
-		}
-
-		if (!isOpenGLPrimaryWindow) {
-			index = addSettingsSection(index, "Interface");
+		index = addSettingsSection(index, "Interface");
+		// Android retains its existing sprite option in General. Desktop exposes
+		// all visual settings through the dedicated Graphics tab.
+		if (isAndroid() && !ScaledWindow.isOpenGLPrimaryWindowEnabled()) {
 			index = addSettingsRow(index, "@whi@Sprites: "
 				+ (RemasteredSpriteSettings.isEnabled() ? "@cya@Enhanced" : "@gre@Classic"),
 				SETTINGS_REMASTERED_SPRITES);
@@ -13604,7 +13489,7 @@ public final class mudclient implements Runnable {
 			}
 		}
 		// show roof
-		if (S_SHOW_ROOF_TOGGLE) {
+		if (isAndroid() && S_SHOW_ROOF_TOGGLE) {
 			if (!C_HIDE_ROOFS) {
 				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
 					"@whi@Hide Roofs - @red@Off", 26, null, null);
@@ -13615,7 +13500,7 @@ public final class mudclient implements Runnable {
 		}
 
 		// underground lighting flicker toggle
-		if (S_SHOW_UNDERGROUND_FLICKER_TOGGLE) {
+		if (isAndroid() && S_SHOW_UNDERGROUND_FLICKER_TOGGLE) {
 			if (!C_HIDE_UNDERGROUND_FLICKER) {
 				this.panelSettings.setListEntry(this.controlSettingPanel, index++,
 					"@whi@Hide Underground Flicker - @red@Off", 42, null, null);
@@ -13776,6 +13661,140 @@ public final class mudclient implements Runnable {
 		this.getSurface().drawString("Click here to logout", baseX + 3, y, logoutColor, 1);
 		this.panelSettings.drawPanel();
 
+	}
+
+	// custom desktop graphics menu tab
+	private void drawGraphicsSettingsOptions(int baseX, short boxWidth, int x, int y) {
+		int var4 = y - 15;
+		this.panelSettings.clearList(this.controlSettingPanel);
+		int index = 0;
+		this.getSurface().drawString("Graphics options", 3 + baseX, y, 0, 1);
+
+		index = addSettingsSection(index, "Graphics");
+		boolean isOpenGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
+		if (isOpenGLPrimaryWindow) {
+			index = addSettingsRow(index, "@whi@Preset - " + RendererProfileSettings.getMode().label, 59);
+		}
+		index = addSettingsRow(index, "@whi@Sprites: "
+			+ (RemasteredSpriteSettings.isEnabled() ? "@cya@Enhanced" : "@gre@Classic"),
+			SETTINGS_REMASTERED_SPRITES);
+
+		// Client scaling is a legacy software-presenter option. OpenGL-primary uses
+		// the selected render surface directly and applies automatic aspect-fit bars.
+		boolean isScalarOptionOffered = !isAndroid() && !isOpenGLPrimaryWindow;
+		int scalarOptionIdx = getLegacyScalingSettingsRowIndex();
+		boolean isScalarOptionShowing = panelSettings.controlScrollAmount[0] <= scalarOptionIdx && isScalarOptionOffered;
+		if (isScalarOptionOffered) {
+			if (isScalarOptionShowing) {
+				int yPos = y + ((scalarOptionIdx - panelSettings.controlScrollAmount[0] + 1) * 15);
+
+				boolean scaleMinusHover = (this.gameWidth - this.mouseX) >= SETTINGS_SCALE_MINUS_X_OFFSET - 18
+					&& (this.gameWidth - this.mouseX) <= SETTINGS_SCALE_MINUS_X_OFFSET
+					&& this.mouseY >= (yPos - 7) && this.mouseY <= (yPos + 4);
+				final String minusButtonLabel;
+				final int minusButtonColor;
+				if (renderingScalar <= 1) {
+					minusButtonLabel = " ";
+					minusButtonColor = 16777215;
+				} else {
+					minusButtonLabel = "-";
+					minusButtonColor = scaleMinusHover ? 65280 : 16616744;
+				}
+				this.getSurface().drawString("[ " + minusButtonLabel + " ]",
+					this.gameWidth - SETTINGS_SCALE_MINUS_X_OFFSET, yPos, minusButtonColor, 1);
+
+				final String scalarLabel = scalingType == ScalingAlgorithm.INTEGER_SCALING
+					? (int) renderingScalar + "x" : renderingScalar + "x";
+				int scalarLabelOffset = scalingType == ScalingAlgorithm.INTEGER_SCALING
+					? SETTINGS_SCALE_LABEL_X_OFFSET : SETTINGS_SCALE_LABEL_X_OFFSET + 5;
+				int scalarLabelColor = renderingScalar > 1 ? 65280 : 16777215;
+				this.getSurface().drawString(scalarLabel, this.gameWidth - scalarLabelOffset,
+					yPos + 1, scalarLabelColor, 1);
+
+				boolean scalePlusHover = (this.gameWidth - this.mouseX) >= SETTINGS_SCALE_PLUS_X_OFFSET - 20
+					&& (this.gameWidth - this.mouseX) <= SETTINGS_SCALE_PLUS_X_OFFSET
+					&& this.mouseY >= (yPos - 7) && this.mouseY <= (yPos + 4);
+				final List<Float> scalars = scalingType == ScalingAlgorithm.INTEGER_SCALING
+					? integerScalars : interpolationScalars;
+				boolean maxScalar = scalars.indexOf(renderingScalar) == scalars.size() - 1;
+				String plusButtonLabel = maxScalar ? "  " : "+";
+				int plusButtonColor = maxScalar ? 16777215 : (scalePlusHover ? 65280 : 16616744);
+				this.getSurface().drawString("[ " + plusButtonLabel + " ]",
+					this.gameWidth - SETTINGS_SCALE_PLUS_X_OFFSET, yPos, plusButtonColor, 1);
+			}
+
+			index = addSettingsRow(index, "@whi@Scaling - ", 49);
+			String scalingTypeDescription;
+			switch (scalingType) {
+				default:
+				case INTEGER_SCALING:
+					scalingTypeDescription = "@gre@Integer";
+					break;
+				case BILINEAR_INTERPOLATION:
+					scalingTypeDescription = "@yel@Bilinear";
+					break;
+				case BICUBIC_INTERPOLATION:
+					scalingTypeDescription = "@ora@Bicubic";
+					break;
+			}
+			index = addSettingsRow(index, "@whi@Scaling type - @gre@" + scalingTypeDescription, 46);
+		}
+
+		if (isOpenGLPrimaryWindow) {
+			index = addSettingsRow(index, "@whi@Aspect Ratio - " + RenderSurfaceSettings.getAspectLabel(), 56);
+			String borderlessLabel = OpenGLWindowSettings.getMode() == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN
+				? "@gre@On" : "@red@Off";
+			index = addSettingsRow(index, "@whi@Borderless - " + borderlessLabel, 63);
+			index = addSettingsRow(index, "@whi@Lighting - " + RendererLightingSettings.getMode().label, 61);
+			index = addSettingsRow(index, "@whi@Geometry - " + RendererGeometrySettings.getMode().label, 62);
+			index = addSettingsRow(index, "@whi@Terrain Variation - " + RendererTerrainVariationSettings.getMode().label, 64);
+			index = addSettingsRow(index, "@whi@Fog - " + RendererFogSettings.getMode().label, 60);
+			index = addSettingsRow(index, "@whi@Terrain shading", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererReliefSettings.getTerrainLevel(), RendererReliefSettings.MAX_LEVEL),
+				SETTINGS_TERRAIN_RELIEF_SLIDER);
+			index = addSettingsRow(index, "@whi@Object shading", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererReliefSettings.getObjectLevel(), RendererReliefSettings.MAX_LEVEL),
+				SETTINGS_OBJECT_RELIEF_SLIDER);
+			index = addSettingsRow(index, "@whi@Brightness / dimness", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererColorDiagnosticSettings.getDimnessLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
+				SETTINGS_DIMNESS_SLIDER);
+			index = addSettingsRow(index, "@whi@Contrast", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererColorDiagnosticSettings.getContrastLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
+				SETTINGS_CONTRAST_SLIDER);
+			index = addSettingsRow(index, "@whi@Gamma", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererColorDiagnosticSettings.getGammaLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
+				SETTINGS_GAMMA_SLIDER);
+			index = addSettingsRow(index, "@whi@Saturation", SETTINGS_SECTION_ROW);
+			index = addSettingsRow(index, rendererTuningSliderBar(
+				RendererColorDiagnosticSettings.getSaturationLevel(), RendererColorDiagnosticSettings.MAX_LEVEL),
+				SETTINGS_SATURATION_SLIDER);
+		}
+
+		index = addSettingsSection(index, "Visibility");
+		if (S_SHOW_ROOF_TOGGLE) {
+			index = addSettingsRow(index, "@whi@Hide Roofs - "
+				+ (C_HIDE_ROOFS ? "@gre@On" : "@red@Off"), 26);
+		}
+		if (S_SHOW_UNDERGROUND_FLICKER_TOGGLE) {
+			index = addSettingsRow(index, "@whi@Hide Underground Flicker - "
+				+ (C_HIDE_UNDERGROUND_FLICKER ? "@gre@On" : "@red@Off"), 42);
+		}
+
+		y = C_CUSTOM_UI ? var4 + 214 : 275;
+		this.getSurface().drawString("Always logout when you finish", x, y, 0, 1);
+		y += 15;
+		int logoutColor = 0xFFFFFF;
+		if (x < this.mouseX && x + boxWidth > this.mouseX
+			&& y - 12 < this.mouseY && this.mouseY < y + 4) {
+			logoutColor = 0xFFFF00;
+		}
+		this.getSurface().drawString("Click here to logout", baseX + 3, y, logoutColor, 1);
+		this.panelSettings.drawPanel();
 	}
 
 	// android menu tab
@@ -13961,6 +13980,7 @@ public final class mudclient implements Runnable {
 		boolean isOpenGLPrimaryWindow = ScaledWindow.isOpenGLPrimaryWindowEnabled();
 		int scalarOptionIdx = getLegacyScalingSettingsRowIndex();
 		boolean isScalarOptionShowing = !isAndroid()
+			&& this.settingTab == 2
 			&& !isOpenGLPrimaryWindow
 			&& panelSettings.controlScrollAmount[0] <= scalarOptionIdx;
 

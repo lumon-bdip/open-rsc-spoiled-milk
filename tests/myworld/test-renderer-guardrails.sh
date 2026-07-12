@@ -10,6 +10,7 @@ renderer_tests=(
   test-client-predictive-terrain-preload.py
   test-client-world-model-product-split.py
   test-client-world-streaming-backend.py
+  test-desktop-graphics-options-tab.py
   test-opengl-geometry-modes.py
   test-opengl-input-modifiers.py
   test-opengl-spirit-summon-alpha.py
