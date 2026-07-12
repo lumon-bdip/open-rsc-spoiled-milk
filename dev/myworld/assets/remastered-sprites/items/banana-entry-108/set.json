@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "setId": "item-banana-entry-108",
+  "displayName": "Banana",
+  "status": "ready",
+  "contributor": {
+    "id": "thatkidbobo",
+    "displayName": "ThatKidBobo",
+    "sourceCommit": "abd9d08fc23cb4752d3389ed127d388af2d18b2b",
+    "sourceBatch": "initial-bobo-resprites",
+    "provenance": "project-contribution"
+  },
+  "targets": [
+    {
+      "keyPrefix": "sprite/items/108",
+      "frames": {
+        "pattern": "frames/%02d.png",
+        "first": 0,
+        "count": 1
+      },
+      "sizePolicy": "exact-canonical",
+      "recolorPolicy": "inherit",
+      "alphaThreshold": 128,
+      "legacySourceIds": [
+        2258
+      ],
+      "mappingConfidence": "confirmed"
+    }
+  ]
+}

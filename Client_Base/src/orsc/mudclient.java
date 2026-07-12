@@ -50,6 +50,7 @@ import orsc.graphics.two.SpriteArchive.Workspace;
 import orsc.multiclient.ClientPort;
 import orsc.net.Network_Socket;
 import orsc.net.Opcodes;
+import orsc.remastered.RemasteredSpriteSettings;
 import orsc.util.FastMath;
 import orsc.util.GenUtil;
 import orsc.util.StringUtil;
@@ -624,7 +625,7 @@ public final class mudclient implements Runnable {
 			|| S_EXPERIENCE_COUNTER_TOGGLE || S_WANT_GLOBAL_CHAT
 			|| S_EXPERIENCE_DROPS_TOGGLE || S_ITEMS_ON_DEATH_MENU
 			|| S_HIDE_LOGIN_BOX || S_WANT_GLOBAL_FRIEND
-			|| S_GROUND_ITEM_NAMES);
+			|| S_GROUND_ITEM_NAMES || S_WANT_CUSTOM_SPRITES);
 	public long totalXpGainedStartTime = 0;
 	public String[] achievementNames = new String[500];
 	public String[] achievementTitles = new String[500];
@@ -648,6 +649,7 @@ public final class mudclient implements Runnable {
 	private static final int SETTINGS_CONTRAST_SLIDER = 69;
 	private static final int SETTINGS_GAMMA_SLIDER = 70;
 	private static final int SETTINGS_SATURATION_SLIDER = 71;
+	private static final int SETTINGS_REMASTERED_SPRITES = 72;
 	private static final int NORMAL_CAMERA_ZOOM_MIN = 0;
 	private static final int NORMAL_CAMERA_ZOOM_MAX = 255;
 	private static final int EXTRA_CAMERA_ZOOM_MIN = -100;
@@ -951,6 +953,8 @@ public final class mudclient implements Runnable {
 	private int controlPartyPanel;
 	private Panel panelParty;
 	private Panel panelAppearance;
+	private final int[] appearanceSpriteControls = new int[12];
+	private int appearanceSpriteControlCount;
 	private Panel panelLogin;
 	private Panel panelLoginWelcome;
 	private Panel panelSetRecoveryQuestion;
@@ -1241,7 +1245,12 @@ public final class mudclient implements Runnable {
 		}
 
 		initConfig();
-		SpellbookLayoutSettings.loadFromClientSettings(loadClientSettings());
+		Properties clientSettings = loadClientSettings();
+		SpellbookLayoutSettings.loadFromClientSettings(clientSettings);
+		RemasteredSpriteSettings.loadFromClientSettings(clientSettings);
+		if (RendererProfileSettings.getMode() == RendererProfileSettings.Mode.CLASSIC) {
+			RemasteredSpriteSettings.applyClassicProfile();
+		}
 		loadMinimapSettings();
 	}
 
@@ -1287,6 +1296,13 @@ public final class mudclient implements Runnable {
 	private static void saveRendererProfileSettings() {
 		Properties props = loadClientSettings();
 		RendererProfileSettings.saveToClientSettings(props);
+
+		saveClientSettings(props);
+	}
+
+	private static void saveRemasteredSpriteSettings() {
+		Properties props = loadClientSettings();
+		RemasteredSpriteSettings.saveToClientSettings(props);
 
 		saveClientSettings(props);
 	}
@@ -2843,6 +2859,7 @@ public final class mudclient implements Runnable {
 		int factor = type > 0 ? 2 : 1;
 		try {
 			this.panelAppearance = new Panel(this.getSurface(), 100);
+			this.appearanceSpriteControlCount = 0;
 
 			this.panelAppearance.addCenteredText(256, 10, "Please design Your Character", 4, true);
 			short var2 = 140;
@@ -2859,31 +2876,31 @@ public final class mudclient implements Runnable {
 			this.panelAppearance.addDecoratedBox((var6 - var4), yFromTopDistance, 53, 41);
 			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance - 8, "Head", 1, true);
 			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance + 8, "Type", 1, true);
-			this.panelAppearance.addSprite(var6 - var4 - 40, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
+			this.addAppearanceSprite(var6 - var4 - 40, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
 			this.controlButtonAppearanceHeadMinus = this.panelAppearance.addButton(-40 - var4 + var6, yFromTopDistance, 20, 20);
-			this.panelAppearance.addSprite(var6 - var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
+			this.addAppearanceSprite(var6 - var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
 			this.controlButtonAppearanceHeadPlus = this.panelAppearance.addButton(var6 + (40 - var4), yFromTopDistance, 20, 20);
 			this.panelAppearance.addDecoratedBox((var6 + var4), yFromTopDistance, 53, 41);
 			this.panelAppearance.addCenteredText(var6 + var4, yFromTopDistance - 8, "Hair", 1, true);
 			this.panelAppearance.addCenteredText(var4 + var6, 8 + yFromTopDistance, "Color", 1, true);
-			this.panelAppearance.addSprite(var4 + (var6 - 40), yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
+			this.addAppearanceSprite(var4 + (var6 - 40), yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
 			this.controlButtonAppearanceHair1 = this.panelAppearance.addButton(var6 + var4 - 40, yFromTopDistance, 20, 20);
-			this.panelAppearance.addSprite(40 + var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
+			this.addAppearanceSprite(40 + var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
 			this.controlButtonAppearanceHair2 = this.panelAppearance.addButton(40 + var4 + var6, yFromTopDistance, 20, 20);
 			yFromTopDistance += 50;
 			this.panelAppearance.addDecoratedBox((var6 - var4), yFromTopDistance, 53, 41);
 			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance - 8, "Body", 1, true);
 			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance + 8, "Type", 1, true);
-			this.panelAppearance.addSprite(var6 - var4 - 40, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
+			this.addAppearanceSprite(var6 - var4 - 40, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
 			this.controlButtonAppearanceGender1 = this.panelAppearance.addButton(var6 - 40 - var4, yFromTopDistance, 20, 20);
-			this.panelAppearance.addSprite(40 - var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
+			this.addAppearanceSprite(40 - var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
 			this.controlButtonAppearanceGender2 = this.panelAppearance.addButton(40 + (var6 - var4), yFromTopDistance, 20, 20);
 			this.panelAppearance.addDecoratedBox((var4 + var6), yFromTopDistance, 53, 41);
 			this.panelAppearance.addCenteredText(var4 + var6, yFromTopDistance - 8, "Top", 1, true);
 			this.panelAppearance.addCenteredText(var4 + var6, 8 + yFromTopDistance, "Color", 1, true);
-			this.panelAppearance.addSprite(var6 + (var4 - 40), yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
+			this.addAppearanceSprite(var6 + (var4 - 40), yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
 			this.controlButtonAppearanceTop1 = this.panelAppearance.addButton(var4 + (var6 - 40), yFromTopDistance, 20, 20);
-			this.panelAppearance.addSprite(40 + var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
+			this.addAppearanceSprite(40 + var4 + var6, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
 			this.controlButtonAppearanceTop2 = this.panelAppearance.addButton(var6 - (-var4 - 40), yFromTopDistance, 20, 20);
 			yFromTopDistance += 50;
 			if (var1 != -24595) {
@@ -2893,16 +2910,16 @@ public final class mudclient implements Runnable {
 			this.panelAppearance.addDecoratedBox((var6 - var4), yFromTopDistance, 53, 41);
 			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance - 8, "Skin", 1, true);
 			this.panelAppearance.addCenteredText(var6 - var4, yFromTopDistance + 8, "Color", 1, true);
-			this.panelAppearance.addSprite(var6 - 40 - var4, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
+			this.addAppearanceSprite(var6 - 40 - var4, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
 			this.controlButtonAppearanceSkin1 = this.panelAppearance.addButton(var6 - var4 - 40, yFromTopDistance, 20, 20);
-			this.panelAppearance.addSprite(var6 - var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
+			this.addAppearanceSprite(var6 - var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
 			this.controlButtonAppearanceSkin2 = this.panelAppearance.addButton(var6 + (40 - var4), yFromTopDistance, 20, 20);
 			this.panelAppearance.addDecoratedBox((var4 + var6), yFromTopDistance, 53, 41);
 			this.panelAppearance.addCenteredText(var4 + var6, yFromTopDistance - 8, "Bottom", 1, true);
 			this.panelAppearance.addCenteredText(var4 + var6, yFromTopDistance + 8, "Color", 1, true);
-			this.panelAppearance.addSprite(var4 - 40 + var6, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
+			this.addAppearanceSprite(var4 - 40 + var6, yFromTopDistance, spriteSelect(GUIPARTS.LEFTARROW.getDef()));
 			this.controlButtonAppearanceBottom1 = this.panelAppearance.addButton(var6 - (40 - var4), yFromTopDistance, 20, 20);
-			this.panelAppearance.addSprite(var6 + var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
+			this.addAppearanceSprite(var6 + var4 + 40, yFromTopDistance, spriteSelect(GUIPARTS.RIGHTARROW.getDef()));
 			this.controlButtonAppearanceBottom2 = this.panelAppearance.addButton(40 + var4 + var6, yFromTopDistance, 20, 20);
 			yFromTopDistance += 82;
 			yFromTopDistance -= 35;
@@ -2928,6 +2945,25 @@ public final class mudclient implements Runnable {
 			}
 		} catch (RuntimeException var5) {
 			throw GenUtil.makeThrowable(var5, "client.J(" + var1 + ',' + type + ')');
+		}
+	}
+
+	private void addAppearanceSprite(int x, int y, Sprite sprite) {
+		int control = this.panelAppearance.addSprite(x, y, sprite);
+		if (this.appearanceSpriteControlCount < this.appearanceSpriteControls.length) {
+			this.appearanceSpriteControls[this.appearanceSpriteControlCount++] = control;
+		}
+	}
+
+	private void refreshAppearancePanelSprites() {
+		if (this.panelAppearance == null) {
+			return;
+		}
+		for (int i = 0; i < this.appearanceSpriteControlCount; i++) {
+			Sprite sprite = spriteSelect((i & 1) == 0
+				? GUIPARTS.LEFTARROW.getDef()
+				: GUIPARTS.RIGHTARROW.getDef());
+			this.panelAppearance.setSprite(this.appearanceSpriteControls[i], sprite);
 		}
 	}
 
@@ -4367,7 +4403,7 @@ public final class mudclient implements Runnable {
 		try {
 			Sprite externalSprite = getExternalItemSprite(item);
 			if (externalSprite != null) {
-				return externalSprite;
+				return getSurface().resolveRemastered(item, externalSprite);
 			}
 			return getSurface().spriteSelect(item);
 		} catch (NullPointerException ex) {
@@ -13447,6 +13483,9 @@ public final class mudclient implements Runnable {
 		if (!isAndroid() && isOpenGLPrimaryWindow) {
 			index = addSettingsSection(index, "Graphics");
 			index = addSettingsRow(index, "@whi@Preset - " + RendererProfileSettings.getMode().label, 59);
+			index = addSettingsRow(index, "@whi@Sprites: "
+				+ (RemasteredSpriteSettings.isEnabled() ? "@cya@Enhanced" : "@gre@Classic"),
+				SETTINGS_REMASTERED_SPRITES);
 			index = addSettingsRow(index, "@whi@Aspect Ratio - " + RenderSurfaceSettings.getAspectLabel(), 56);
 			String borderlessLabel = OpenGLWindowSettings.getMode() == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN
 				? "@gre@On"
@@ -13485,6 +13524,9 @@ public final class mudclient implements Runnable {
 
 		if (!isOpenGLPrimaryWindow) {
 			index = addSettingsSection(index, "Interface");
+			index = addSettingsRow(index, "@whi@Sprites: "
+				+ (RemasteredSpriteSettings.isEnabled() ? "@cya@Enhanced" : "@gre@Classic"),
+				SETTINGS_REMASTERED_SPRITES);
 		}
 
 		// mouse button(s) - byte index 1
@@ -13969,6 +14011,9 @@ public final class mudclient implements Runnable {
 		}
 		if (isOpenGLPrimaryWindow && settingIndex == 64 && this.mouseButtonClick == 1) {
 			cycleOpenGLTerrainVariationMode();
+		}
+		if (settingIndex == SETTINGS_REMASTERED_SPRITES && this.mouseButtonClick == 1) {
+			toggleRemasteredSprites();
 		}
 
 		// one or two mouse button(s) - byte index 1
@@ -15537,12 +15582,27 @@ public final class mudclient implements Runnable {
 		System.out.println("[renderer-v2] OpenGL renderer profile: " + mode.id);
 	}
 
+	void toggleRemasteredSprites() {
+		boolean previous = RemasteredSpriteSettings.isEnabled();
+		boolean enabled = RemasteredSpriteSettings.toggle();
+		if (enabled != previous) {
+			RendererProfileSettings.markCustom();
+			refreshAppearancePanelSprites();
+			saveRemasteredSpriteSettings();
+			saveRendererProfileSettings();
+		}
+		System.out.println("[remastered-sprites] " + RemasteredSpriteSettings.description()
+			+ " " + this.getSurface().getRemasteredSpriteDiagnostics());
+	}
+
 	private void applyOpenGLRendererProfileMode(RendererProfileSettings.Mode mode) {
 		if (mode != RendererProfileSettings.Mode.CUSTOM) {
 			RendererReliefSettings.resetDefaults();
 			RendererColorDiagnosticSettings.resetDefaults();
 		}
 		if (mode == RendererProfileSettings.Mode.CLASSIC) {
+			RemasteredSpriteSettings.applyClassicProfile();
+			refreshAppearancePanelSprites();
 			RendererReliefSettings.setTerrainLevel(18);
 			RendererReliefSettings.setObjectLevel(18);
 			RendererColorDiagnosticSettings.setDimnessLevel(14);
@@ -15576,6 +15636,7 @@ public final class mudclient implements Runnable {
 		saveRendererToneSettings();
 		saveRendererTuningSettings();
 		saveRendererProfileSettings();
+		saveRemasteredSpriteSettings();
 	}
 
 	private void applyRenderSurfaceResize() {

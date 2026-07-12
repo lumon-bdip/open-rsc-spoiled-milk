@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "setId": "equipment-hatchet",
+  "displayName": "Hatchet",
+  "status": "work",
+  "contributor": {
+    "id": "thatkidbobo",
+    "displayName": "ThatKidBobo",
+    "sourceCommit": "abd9d08fc23cb4752d3389ed127d388af2d18b2b",
+    "sourceBatch": "initial-bobo-resprites",
+    "provenance": "project-contribution"
+  },
+  "targets": [
+    {
+      "keyPrefix": "sprite/equipment/hatchet",
+      "frames": {
+        "pattern": "work/%02d.png",
+        "first": 0,
+        "count": 18
+      },
+      "sizePolicy": "exact-canonical",
+      "recolorPolicy": "inherit",
+      "alphaThreshold": 128,
+      "legacySourceIds": [
+        1674,
+        1675,
+        1676,
+        1677,
+        1678,
+        1679,
+        1680,
+        1681,
+        1682,
+        1683,
+        1684,
+        1685,
+        1686,
+        1687,
+        1688,
+        1689,
+        1690,
+        1691
+      ],
+      "mappingConfidence": "provisional"
+    }
+  ],
+  "notes": "Provisional match: visible-mask similarity favors hatchet, but another equipment entry shares these dimensions. Requires side-by-side approval."
+}

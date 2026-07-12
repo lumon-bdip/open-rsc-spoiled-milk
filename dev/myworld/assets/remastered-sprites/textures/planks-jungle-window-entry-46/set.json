@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "setId": "texture-planks-jungle-window-entry-46",
+  "displayName": "Planks Jungle Window",
+  "status": "work",
+  "contributor": {
+    "id": "thatkidbobo",
+    "displayName": "ThatKidBobo",
+    "sourceCommit": "abd9d08fc23cb4752d3389ed127d388af2d18b2b",
+    "sourceBatch": "initial-bobo-resprites",
+    "provenance": "project-contribution"
+  },
+  "targets": [
+    {
+      "keyPrefix": "texture/46",
+      "frames": {
+        "pattern": "work/%02d.png",
+        "first": 0,
+        "count": 1
+      },
+      "sizePolicy": "exact-canonical",
+      "recolorPolicy": "none",
+      "alphaThreshold": 128,
+      "legacySourceIds": [
+        3271
+      ],
+      "mappingConfidence": "confirmed"
+    }
+  ],
+  "notes": "Staged until the texture-specific resolver and cache invalidation are implemented."
+}

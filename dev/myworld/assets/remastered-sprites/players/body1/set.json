@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "setId": "player-body1",
+  "displayName": "Player Body 1",
+  "status": "ready",
+  "contributor": {
+    "id": "thatkidbobo",
+    "displayName": "ThatKidBobo",
+    "sourceCommit": "abd9d08fc23cb4752d3389ed127d388af2d18b2b",
+    "sourceBatch": "initial-bobo-resprites",
+    "provenance": "project-contribution"
+  },
+  "targets": [
+    {
+      "keyPrefix": "sprite/player/body1",
+      "frames": {
+        "pattern": "frames/%02d.png",
+        "first": 0,
+        "count": 18
+      },
+      "sizePolicy": "exact-canonical",
+      "recolorPolicy": "inherit",
+      "alphaThreshold": 128,
+      "legacySourceIds": [
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44
+      ],
+      "mappingConfidence": "confirmed"
+    }
+  ]
+}

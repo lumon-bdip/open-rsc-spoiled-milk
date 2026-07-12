@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "setId": "item-pie-entry-112",
+  "displayName": "Pie",
+  "status": "work",
+  "contributor": {
+    "id": "thatkidbobo",
+    "displayName": "ThatKidBobo",
+    "sourceCommit": "abd9d08fc23cb4752d3389ed127d388af2d18b2b",
+    "sourceBatch": "initial-bobo-resprites",
+    "provenance": "project-contribution"
+  },
+  "targets": [
+    {
+      "keyPrefix": "sprite/items/112",
+      "frames": {
+        "pattern": "work/%02d.png",
+        "first": 0,
+        "count": 1
+      },
+      "sizePolicy": "exact-canonical",
+      "recolorPolicy": "inherit",
+      "alphaThreshold": 128,
+      "legacySourceIds": [
+        2262
+      ],
+      "mappingConfidence": "confirmed"
+    }
+  ],
+  "notes": "Contributor PNG is 36x22 while canonical items:112 is 35x22; keep staged until the size policy or image is deliberately resolved."
+}

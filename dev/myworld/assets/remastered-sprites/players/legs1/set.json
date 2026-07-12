@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "setId": "player-legs1",
+  "displayName": "Player Legs 1",
+  "status": "ready",
+  "contributor": {
+    "id": "thatkidbobo",
+    "displayName": "ThatKidBobo",
+    "sourceCommit": "abd9d08fc23cb4752d3389ed127d388af2d18b2b",
+    "sourceBatch": "initial-bobo-resprites",
+    "provenance": "project-contribution"
+  },
+  "targets": [
+    {
+      "keyPrefix": "sprite/player/legs1",
+      "frames": {
+        "pattern": "frames/%02d.png",
+        "first": 0,
+        "count": 18
+      },
+      "sizePolicy": "exact-canonical",
+      "recolorPolicy": "inherit",
+      "alphaThreshold": 128,
+      "legacySourceIds": [
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71
+      ],
+      "mappingConfidence": "confirmed"
+    }
+  ]
+}
