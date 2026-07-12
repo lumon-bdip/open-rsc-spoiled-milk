@@ -20,6 +20,26 @@ public class TileValue {
 	private int terrainWallProjectileCount = 0;
 	private int dynamicProjectileCount = 0;
 
+	public TileValue copy() {
+		TileValue copy = new TileValue();
+		copy.traversalMask = traversalMask;
+		copy.diagWallVal = diagWallVal;
+		copy.horizontalWallVal = horizontalWallVal;
+		copy.overlay = overlay;
+		copy.verticalWallVal = verticalWallVal;
+		copy.elevation = elevation;
+		copy.projectileAllowed = projectileAllowed;
+		copy.originalProjectileAllowed = originalProjectileAllowed;
+		copy.terrainBlocked = terrainBlocked;
+		copy.blockingSceneryCount = blockingSceneryCount;
+		copy.terrainCollisionMask = terrainCollisionMask;
+		System.arraycopy(dynamicCollisionCounts, 0, copy.dynamicCollisionCounts, 0, dynamicCollisionCounts.length);
+		copy.terrainOverlayProjectileBlocked = terrainOverlayProjectileBlocked;
+		copy.terrainWallProjectileCount = terrainWallProjectileCount;
+		copy.dynamicProjectileCount = dynamicProjectileCount;
+		return copy;
+	}
+
 	public void initializeTerrainCollision(){traversalMask=(byte)terrainCollisionMask;refreshFullBlock();refreshProjectile();}
 	public void addTerrainCollision(int flags){terrainCollisionMask|=flags;refreshCollisionFlags(flags);}
 	public void removeTerrainCollision(int flags){terrainCollisionMask&=~flags;refreshCollisionFlags(flags);}

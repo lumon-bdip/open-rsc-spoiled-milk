@@ -71,7 +71,7 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		ActionSender.sendWorldEditor(p,out);
 	}
 	private void applyRuntimeTerrain(Player p,WorldEditorTerrainArchive.Snapshot before,WorldEditorTerrainArchive.Snapshot s,int fieldMask){
-		int x=s.coordinates.worldX,y=s.coordinates.worldY;TileValue runtime=p.getWorld().getTile(x,y);
+		int x=s.coordinates.worldX,y=s.coordinates.worldY;TileValue runtime=p.getWorld().getMutableTile(x,y);
 		if(runtime==null)throw new IllegalArgumentException("Terrain tile is outside the runtime world.");
 		if((fieldMask&1)!=0)runtime.elevation=(byte)s.elevation;
 		if((fieldMask&4)!=0){runtime.overlay=(byte)s.groundOverlay;runtime.setTerrainBlocked(overlayBlocks(p,s.groundOverlay));runtime.setTerrainOverlayProjectileBlocked(s.groundOverlay==2||s.groundOverlay==11);}
@@ -116,8 +116,8 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 	private void applyNorthWall(Player p,int x,int y,int raw,boolean add){if(!wallBlocks(p,raw))return;terrainCollision(p,x,y,CollisionFlag.WALL_NORTH,add);terrainCollision(p,x,y-1,CollisionFlag.WALL_SOUTH,add);if(WorldLoader.projectileClipAllowed(raw)){terrainProjectile(p,x,y,add);terrainProjectile(p,x,y-1,add);}}
 	private void applyEastWall(Player p,int x,int y,int raw,boolean add){if(!wallBlocks(p,raw))return;terrainCollision(p,x,y,CollisionFlag.WALL_EAST,add);terrainCollision(p,x-1,y,CollisionFlag.WALL_WEST,add);if(WorldLoader.projectileClipAllowed(raw)){terrainProjectile(p,x,y,add);terrainProjectile(p,x-1,y,add);}}
 	private void applyDiagonalWall(Player p,int x,int y,int diagonal,boolean add){int raw=diagonalRawWall(diagonal);if(!wallBlocks(p,raw))return;terrainCollision(p,x,y,diagonal>12000?CollisionFlag.FULL_BLOCK_A:CollisionFlag.FULL_BLOCK_B,add);if(WorldLoader.projectileClipAllowed(raw))terrainProjectile(p,x,y,add);}
-	private void terrainCollision(Player p,int x,int y,int flag,boolean add){TileValue tile=p.getWorld().getTile(x,y);if(tile==null)return;if(add)tile.addTerrainCollision(flag);else tile.removeTerrainCollision(flag);}
-	private void terrainProjectile(Player p,int x,int y,boolean add){TileValue tile=p.getWorld().getTile(x,y);if(tile==null)return;if(add)tile.addTerrainWallProjectileBlock();else tile.removeTerrainWallProjectileBlock();}
+	private void terrainCollision(Player p,int x,int y,int flag,boolean add){TileValue tile=p.getWorld().getMutableTile(x,y);if(tile==null)return;if(add)tile.addTerrainCollision(flag);else tile.removeTerrainCollision(flag);}
+	private void terrainProjectile(Player p,int x,int y,boolean add){TileValue tile=p.getWorld().getMutableTile(x,y);if(tile==null)return;if(add)tile.addTerrainWallProjectileBlock();else tile.removeTerrainWallProjectileBlock();}
 	private String wallDefinitionName(Player p,int id){if(id<0)return "none";try{return p.getWorld().getServer().getEntityHandler().getDoorDef(id).getName();}catch(Exception e){return "unknown";}}
 	private void inspectObject(WorldEditorRequestStruct r, Player p, int next) {
 		GameObject object=p.getViewArea().getGameObject(Point.location(r.x,r.y));

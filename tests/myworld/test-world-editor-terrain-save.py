@@ -59,8 +59,8 @@ public final class WorldEditorTerrainSaveHarness {
         createArchive(server, first, second); Files.copy(server, client, StandardCopyOption.REPLACE_EXISTING);
         String base = WorldEditorTerrainSaveFiles.sha256(server);
         List<TileRecord> edits = Arrays.asList(
-            TileRecord.of(1, 2, 0, 11, 12, 13, 14, 15, 16, 0x01020304),
-            TileRecord.of(0, 0, 0, 1, 2, 3, 4, 5, 6, 0x11223344));
+            TileRecord.of(1, 2, 0, 11, 12, 1, 14, 15, 16, 0x01020304),
+            TileRecord.of(0, 0, 0, 1, 2, 10, 4, 5, 6, 0x11223344));
         WorldEditorTerrainSaveFiles.SaveResult result = WorldEditorTerrainSaveFiles.save(server, client, backups, base, edits);
         require(result.tilesSaved == 2 && result.sectorsChanged == 1, "save summary changed");
         require(result.resultSha256.equals(WorldEditorTerrainSaveFiles.sha256(server)), "result hash mismatch");
@@ -70,9 +70,11 @@ public final class WorldEditorTerrainSaveHarness {
             Enumeration<? extends ZipEntry> names = saved.entries();
             require(names.nextElement().getName().equals("h0x48y37") && names.nextElement().getName().equals("h0x48y38"), "entry order changed");
             byte[] patched = read(saved, "h0x48y37");
-            require((patched[0] & 255) == 1 && (patched[1] & 255) == 2 && (patched[5] & 255) == 6, "first tile bytes wrong");
+            require((patched[0] & 255) == 1 && (patched[1] & 255) == 2 && (patched[2] & 255) == 10 && (patched[5] & 255) == 6,
+                "blocked overlay did not survive save materialization");
             int offset = (1 * 48 + 2) * 10;
-            require((patched[offset] & 255) == 11 && (patched[offset + 5] & 255) == 16, "second tile bytes wrong");
+            require((patched[offset] & 255) == 11 && (patched[offset + 2] & 255) == 1 && (patched[offset + 5] & 255) == 16,
+                "walkable overlay did not survive save materialization");
             require(Arrays.equals(second, read(saved, "h0x48y38")), "unrelated sector changed");
         }
         String savedHash = result.resultSha256;
