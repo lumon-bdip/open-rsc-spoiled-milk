@@ -90,11 +90,18 @@ byte ranges, and Floor Texture definition. Accepted records enter a coalesced,
 Inspection reads through this draft. The client applies only accepted full
 records. Brush choices are centered 1x1 and centered 3x3 squares; Roof may use
 either, while any wall field forces an exact 1x1 stroke to avoid generating an
-internal wall grid. A stroke is one bounded, sequenced request and one response
-containing either one or nine authoritative full-tile snapshots. The server
-prevalidates every coordinate and projected draft-size change before committing
-the stroke; the client applies the response and performs one rebuild. The UI
-reports click-to-ack and rebuild time for targeted performance follow-up. The
+internal wall grid. Normal clicks send one or nine tiles. Ctrl + left-drag
+collects each distinct footprint tile once, commits on release, and flushes long
+drags in bounded 64-tile chunks while continuing to collect. Each chunk is one
+sequenced request and one response of authoritative full-tile snapshots. The
+server rejects duplicate, malformed, cross-plane, out-of-world, or oversized
+lists and prevalidates every coordinate and projected draft-size change before
+committing the chunk; the client applies it with one rebuild. The UI reports
+pending/accepted counts plus click-to-ack and rebuild time. An optional
+non-persistent Fast mode temporarily selects classic lighting, disables terrain
+variation and relief, fixes tone to daytime, limits fog distance, and pauses
+scenery animation refresh; closing the editor restores the exact prior runtime
+renderer settings. The
 client advances a terrain-cache revision
 so older background preload products cannot win. Legacy water-like overlays
 normally extend visual faces onto four cardinal neighbors; transient editor

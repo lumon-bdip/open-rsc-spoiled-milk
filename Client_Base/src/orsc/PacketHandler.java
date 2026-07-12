@@ -364,7 +364,7 @@ public class PacketHandler {
 		if(type==1){mc.worldEditorInterface.open(packetsIncoming.getLong(0),sequence);return;}
 		if(type==2){mc.worldEditorInterface.closeFromServer();return;}
 		if(type==8){int fieldMask=packetsIncoming.getByte()&0xff,count=packetsIncoming.getByte()&0xff;
-			if(count<1||count>9){mc.worldEditorInterface.showError("Server returned an invalid terrain stroke size.");return;}
+			if(count<1||count>64){mc.worldEditorInterface.showError("Server returned an invalid terrain stroke size.");return;}
 			int[][] tiles=new int[count][15];boolean[] projectiles=new boolean[count];
 			for(int i=0;i<count;i++){int[] tile=tiles[i];tile[0]=packetsIncoming.getShort();tile[1]=packetsIncoming.getShort();tile[2]=packetsIncoming.getByte()&0xff;
 				tile[3]=packetsIncoming.getShort();tile[4]=packetsIncoming.getShort();tile[5]=packetsIncoming.getByte()&0xff;tile[6]=packetsIncoming.getByte()&0xff;

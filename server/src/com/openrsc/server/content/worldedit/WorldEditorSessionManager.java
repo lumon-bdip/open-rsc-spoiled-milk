@@ -72,11 +72,11 @@ public final class WorldEditorSessionManager {
 		}
 		return painted;
 	}
-	public synchronized TerrainStrokeResult paintTerrainStroke(Player player,int centerX,int centerY,int plane,int brushSize,
+	public synchronized TerrainStrokeResult paintTerrainStroke(Player player,int[][] requestedTiles,int plane,
 		int fieldMask,int elevation,int groundTexture,int groundOverlay,int roofTexture,
 		int horizontalWall,int verticalWall,int diagonal) throws IOException {
 		validateTerrainPaint(fieldMask,elevation,groundTexture,groundOverlay,roofTexture,horizontalWall,verticalWall);
-		int[][] coordinates=WorldEditorTerrainStroke.coordinates(centerX,centerY,brushSize,fieldMask);
+		int[][] coordinates=WorldEditorTerrainStroke.validateTiles(requestedTiles);
 		List<WorldEditorTerrainArchive.Snapshot> before=new ArrayList<WorldEditorTerrainArchive.Snapshot>(coordinates.length);
 		List<WorldEditorTerrainArchive.Snapshot> after=new ArrayList<WorldEditorTerrainArchive.Snapshot>(coordinates.length);
 		List<WorldEditorTerrainArchive.Snapshot> archived=new ArrayList<WorldEditorTerrainArchive.Snapshot>(coordinates.length);

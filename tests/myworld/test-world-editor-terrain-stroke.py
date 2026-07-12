@@ -38,7 +38,15 @@ public final class WorldEditorTerrainStrokeHarness {
         boolean[] after = {true, false, true, true};
         require(WorldEditorTerrainStroke.projectedDraftSize(10, before, after) == 11, "draft delta accounting changed");
         rejects(() -> WorldEditorTerrainStroke.projectedDraftSize(0, new boolean[]{true}, new boolean[]{false}), "draft underflow was accepted");
-        rejects(() -> WorldEditorTerrainStroke.projectedDraftSize(0, new boolean[10], new boolean[10]), "oversized stroke was accepted");
+        int[][] sixtyFour = new int[64][2];
+        for (int i = 0; i < sixtyFour.length; i++) { sixtyFour[i][0] = i; sixtyFour[i][1] = 500; }
+        int[][] accepted = WorldEditorTerrainStroke.validateTiles(sixtyFour);
+        require(accepted.length == 64, "64-tile stroke was rejected");
+        sixtyFour[0][0] = 999;
+        require(accepted[0][0] == 0, "validated coordinates were not defensively copied");
+        rejects(() -> WorldEditorTerrainStroke.validateTiles(new int[65][2]), "oversized coordinate batch was accepted");
+        rejects(() -> WorldEditorTerrainStroke.validateTiles(new int[][]{{1, 2}, {1, 2}}), "duplicate coordinates were accepted");
+        rejects(() -> WorldEditorTerrainStroke.projectedDraftSize(0, new boolean[65], new boolean[65]), "oversized stroke accounting was accepted");
     }
 }
 """

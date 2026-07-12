@@ -2,16 +2,27 @@ package com.openrsc.server.content.worldedit;
 
 /** Pure bounds and draft-size accounting for authoritative terrain brush strokes. */
 public final class WorldEditorTerrainStroke {
-	public static final int MAX_TILES = 9;
+	public static final int MAX_TILES = 64;
+	private static final int BRUSH_TILES = 9;
 	private WorldEditorTerrainStroke() {}
 
 	public static int[][] coordinates(int centerX,int centerY,int brushSize,int fieldMask) {
 		if(brushSize!=1&&brushSize!=3)throw new IllegalArgumentException("Terrain brush must be 1x1 or 3x3.");
 		if(brushSize==3&&(fieldMask&112)!=0)throw new IllegalArgumentException("Wall fields require the 1x1 brush.");
 		if(brushSize==1)return new int[][]{{centerX,centerY}};
-		int[][] tiles=new int[MAX_TILES][2];tiles[0][0]=centerX;tiles[0][1]=centerY;int at=1;
+		int[][] tiles=new int[BRUSH_TILES][2];tiles[0][0]=centerX;tiles[0][1]=centerY;int at=1;
 		for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++)if(dx!=0||dy!=0){tiles[at][0]=centerX+dx;tiles[at++][1]=centerY+dy;}
 		return tiles;
+	}
+	public static int[][] validateTiles(int[][] requested){
+		if(requested==null||requested.length<1||requested.length>MAX_TILES)throw new IllegalArgumentException("Terrain stroke must contain 1 to 64 tiles.");
+		int[][] copy=new int[requested.length][2];java.util.HashSet<Long> unique=new java.util.HashSet<Long>();
+		for(int i=0;i<requested.length;i++){
+			if(requested[i]==null||requested[i].length!=2)throw new IllegalArgumentException("Terrain stroke tile coordinate is malformed.");
+			int x=requested[i][0],y=requested[i][1];long key=((long)x<<32)^(y&0xffffffffL);
+			if(!unique.add(key))throw new IllegalArgumentException("Terrain stroke contains duplicate tiles.");copy[i][0]=x;copy[i][1]=y;
+		}
+		return copy;
 	}
 
 	public static int projectedDraftSize(int currentSize,boolean[] draftedBefore,boolean[] draftedAfter) {

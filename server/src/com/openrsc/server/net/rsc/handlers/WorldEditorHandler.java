@@ -52,13 +52,13 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 	}
 	private void paintTerrainStroke(WorldEditorRequestStruct r,Player p,int next) throws Exception {
 		validateTerrainDefinitions(p,r);
-		int[][] coordinates=WorldEditorTerrainStroke.coordinates(r.x,r.y,r.brushSize,r.fieldMask);
+		int[][] coordinates=WorldEditorTerrainStroke.validateTiles(r.terrainTiles);
 		for(int[] coordinate:coordinates){
 			if(!p.getWorld().withinWorld(coordinate[0],coordinate[1])||p.getWorld().getTile(coordinate[0],coordinate[1])==null)
 				throw new IllegalArgumentException("Terrain stroke contains a tile outside the runtime world.");
 			if(Math.floorDiv(coordinate[1],944)!=r.plane)throw new IllegalArgumentException("Terrain stroke crosses a plane boundary.");
 		}
-		TerrainStrokeResult result=p.getWorld().getServer().getWorldEditorSessions().paintTerrainStroke(p,r.x,r.y,r.plane,r.brushSize,
+		TerrainStrokeResult result=p.getWorld().getServer().getWorldEditorSessions().paintTerrainStroke(p,coordinates,r.plane,
 			r.fieldMask,r.elevation,r.groundTexture,r.groundOverlay,r.roofTexture,r.horizontalWall,r.verticalWall,r.diagonal);
 		WorldEditorStruct out=new WorldEditorStruct();out.type=8;out.sequence=next;out.fieldMask=r.fieldMask;
 		for(int i=0;i<result.after.size();i++){

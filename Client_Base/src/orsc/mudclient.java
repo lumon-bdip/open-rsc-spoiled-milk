@@ -690,6 +690,12 @@ public final class mudclient implements Runnable {
 	public LostOnDeathInterface lostOnDeathInterface;
 	public TerritorySignupInterface territorySignupInterface;
 	public WorldEditorInterface worldEditorInterface;
+	private boolean worldEditorFastMode=false;
+	private RendererLightingSettings.Mode worldEditorSavedLighting;
+	private RendererTerrainVariationSettings.Mode worldEditorSavedTerrainVariation;
+	private RendererFogSettings.Mode worldEditorSavedFog;
+	private RendererToneSettings.Mode worldEditorSavedTone;
+	private int worldEditorSavedTerrainRelief,worldEditorSavedObjectRelief;
 	String m_p = null;
 	int clearBox = GenUtil.buildColor(181, 181, 181);
 	int selectedBox = GenUtil.buildColor(220, 220, 220);
@@ -7087,7 +7093,7 @@ public final class mudclient implements Runnable {
 							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2);
 					}
 
-					this.updateSceneryAnimations();
+					if(!worldEditorFastMode)this.updateSceneryAnimations();
 					this.queuedProjectileEffectCount = 0;
 					this.queuedProjectileImpactCount = 0;
 					this.queuedCombatEffectCount = 0;
@@ -16635,6 +16641,7 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 					this.scene.setMouseLoc(0, this.mouseX, this.mouseY);
+					if(updateWorldEditorTerrainDrag()){this.mouseButtonClick=0;this.lastMouseButtonDown=0;}
 					this.lastMouseButtonDown = 0;
 					if (this.optionCameraModeAuto && !this.isInFirstPersonView()) {
 						if (this.m_Wc == 0 || this.cameraAutoAngleDebug) {
@@ -22695,6 +22702,7 @@ public final class mudclient implements Runnable {
 
 	private void resetLoginScreenVariables(byte var1) {
 		try {
+			setWorldEditorFastMode(false);
 			this.npcCount = 0;
 			this.playerCount = 0;
 			this.loginScreenNumber = 0;
@@ -22758,6 +22766,31 @@ public final class mudclient implements Runnable {
 
 	public void setWorldEditorNavigateClickTeleport(boolean enabled) {
 		this.devClickTeleportMode = enabled && canUseClickTeleport();
+	}
+	public void setWorldEditorFastMode(boolean enabled){
+		if(worldEditorFastMode==enabled)return;
+		if(enabled){
+			worldEditorSavedLighting=RendererLightingSettings.getMode();worldEditorSavedTerrainVariation=RendererTerrainVariationSettings.getMode();
+			worldEditorSavedFog=RendererFogSettings.getMode();worldEditorSavedTone=RendererToneSettings.getMode();
+			worldEditorSavedTerrainRelief=RendererReliefSettings.getTerrainLevel();worldEditorSavedObjectRelief=RendererReliefSettings.getObjectLevel();
+			RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);
+			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);
+			RendererReliefSettings.setTerrainLevel(RendererReliefSettings.MIN_LEVEL);RendererReliefSettings.setObjectLevel(RendererReliefSettings.MIN_LEVEL);
+		}else{
+			if(worldEditorSavedLighting!=null)RendererLightingSettings.setMode(worldEditorSavedLighting);
+			if(worldEditorSavedTerrainVariation!=null)RendererTerrainVariationSettings.setMode(worldEditorSavedTerrainVariation);
+			if(worldEditorSavedFog!=null)RendererFogSettings.setMode(worldEditorSavedFog);if(worldEditorSavedTone!=null)RendererToneSettings.setMode(worldEditorSavedTone);
+			if(worldEditorSavedTerrainRelief>0)RendererReliefSettings.setTerrainLevel(worldEditorSavedTerrainRelief);
+			if(worldEditorSavedObjectRelief>0)RendererReliefSettings.setObjectLevel(worldEditorSavedObjectRelief);
+		}
+		worldEditorFastMode=enabled;
+	}
+	private boolean updateWorldEditorTerrainDrag(){
+		if(worldEditorInterface==null||!worldEditorInterface.isEditorOpen())return false;int worldX=-1,worldY=-1;
+		boolean picking=controlPressed&&currentMouseButtonDown==1&&showUiTab==0&&mouseY<getGameHeight()-70&&!mouseInTabArea_CUSTOM();
+		if(picking&&scene!=null&&world!=null&&localPlayer!=null){int[] local=scene.projectScreenToGroundTile(mouseX,mouseY,tileSize,getClickTeleportGroundPlaneY());
+			if(local!=null&&local[0]>=0&&local[0]<World.LOCAL_TILE_COUNT&&local[1]>=0&&local[1]<World.LOCAL_TILE_COUNT){worldX=midRegionBaseX+local[0];worldY=midRegionBaseZ+local[1];}}
+		return worldEditorInterface.updateTerrainDrag(controlPressed,currentMouseButtonDown==1,worldX,worldY);
 	}
 
 	public void worldEditorTeleport(int worldX, int worldY) {
@@ -22833,6 +22866,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().finishPacket();
 						clientPort.setTitle(Config.getServerName());
 						this.logoutTimeout = 1000;
+						setWorldEditorFastMode(false);
 						devClickTeleportMode = false;
 						modMenu = false;
 						developerMenu = false;

@@ -170,7 +170,7 @@ class WorldEditorFoundationTest(unittest.TestCase):
         match = re.search(r"WORLD_EDITOR_PACKET_LENGTHS\s*=\s*\{([^}]+)\}", parser)
         self.assertIsNotNone(match)
         accepted = {int(value) for value in re.findall(r"\d+", match.group(1))}
-        self.assertEqual({13, 15, 19, 22, 29, 30}, accepted)
+        self.assertEqual({13, 15, 19, 22, 29}, accepted)
         self.assertTrue(accepted.isdisjoint({12, 14, 16, 18, 20, 21, 23, 28, 31}))
         self.assertIn("return isWorldEditorPacketLength(packet.getLength());", parser)
 
@@ -182,15 +182,26 @@ class WorldEditorFoundationTest(unittest.TestCase):
         client_handler = (ROOT / "Client_Base/src/orsc/PacketHandler.java").read_text()
         ui = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java").read_text()
 
-        self.assertIn("editor.type == 6 ? 30", parser)
+        self.assertIn("length>=30&&length<=282&&(length-26)%4==0", parser)
+        self.assertIn("packet.getLength()!=26+count*4", parser)
         self.assertIn("paintTerrainStroke(request", handler)
         self.assertLess(sessions.index("for(int[] coordinate:coordinates)"), sessions.index("terrainDraft.put(key,after.get(i))"))
         self.assertIn("projectedDraftSize>TERRAIN_DRAFT_LIMIT", sessions)
         self.assertIn("editor.type == 8", generator)
-        self.assertIn("count<1||count>9", client_handler)
+        self.assertIn("count<1||count>64", client_handler)
         self.assertIn("acceptTerrainStroke", client_handler)
         self.assertIn("putByte(6)", ui)
         self.assertIn('ack "+ackMs+"ms, rebuild "', ui)
+        self.assertIn("updateTerrainDrag", ui)
+        self.assertIn("terrainDragSeen.add(key)", ui)
+        self.assertIn("TERRAIN_BATCH_LIMIT=64", ui)
+        client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
+        fast_mode = re.search(r"public void setWorldEditorFastMode\(boolean enabled\)\{(?P<body>.*?)\n\t\}", client, re.S)
+        self.assertIsNotNone(fast_mode)
+        self.assertIn("worldEditorSavedLighting", fast_mode.group("body"))
+        self.assertIn("RendererReliefSettings.MIN_LEVEL", fast_mode.group("body"))
+        self.assertNotIn("saveRenderer", fast_mode.group("body"))
+        self.assertIn("if(!worldEditorFastMode)this.updateSceneryAnimations();", client)
 
 if __name__ == "__main__":
     unittest.main()
