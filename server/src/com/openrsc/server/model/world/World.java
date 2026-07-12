@@ -522,23 +522,23 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 							handleProjectileClipAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);
 						}
 						if (o.getGameObjectDef().getType() == 1) {
-							getTile(x, y).traversalMask |= CollisionFlag.FULL_BLOCK_C;
+							getTile(x, y).addBlockingScenery();
 						} else if (dir == 0) {
-							getTile(x, y).traversalMask |= CollisionFlag.WALL_EAST;
+							getTile(x, y).addDynamicCollision(CollisionFlag.WALL_EAST);
 							if (getTile(x - 1, y) != null)
-								getTile(x - 1, y).traversalMask |= CollisionFlag.WALL_WEST;
+								getTile(x - 1, y).addDynamicCollision(CollisionFlag.WALL_WEST);
 						} else if (dir == 2) {
-							getTile(x, y).traversalMask |= CollisionFlag.WALL_SOUTH;
+							getTile(x, y).addDynamicCollision(CollisionFlag.WALL_SOUTH);
 							if (getTile(x, y + 1) != null)
-								getTile(x, y + 1).traversalMask |= CollisionFlag.WALL_NORTH;
+								getTile(x, y + 1).addDynamicCollision(CollisionFlag.WALL_NORTH);
 						} else if (dir == 4) {
-							getTile(x, y).traversalMask |= CollisionFlag.WALL_WEST;
+							getTile(x, y).addDynamicCollision(CollisionFlag.WALL_WEST);
 							if (getTile(x + 1, y) != null)
-								getTile(x + 1, y).traversalMask |= CollisionFlag.WALL_EAST;
+								getTile(x + 1, y).addDynamicCollision(CollisionFlag.WALL_EAST);
 						} else if (dir == 6) {
-							getTile(x, y).traversalMask |= CollisionFlag.WALL_NORTH;
+							getTile(x, y).addDynamicCollision(CollisionFlag.WALL_NORTH);
 							if (getTile(x, y - 1) != null)
-								getTile(x, y - 1).traversalMask |= CollisionFlag.WALL_SOUTH;
+								getTile(x, y - 1).addDynamicCollision(CollisionFlag.WALL_SOUTH);
 						}
 					}
 				}
@@ -554,17 +554,17 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 				}
 				if (dir == 0) {
 
-					getTile(x, y).traversalMask |= CollisionFlag.WALL_NORTH;
+					getTile(x, y).addDynamicCollision(CollisionFlag.WALL_NORTH);
 					if (getTile(x, y - 1) != null)
-						getTile(x, y - 1).traversalMask |= CollisionFlag.WALL_SOUTH;
+						getTile(x, y - 1).addDynamicCollision(CollisionFlag.WALL_SOUTH);
 				} else if (dir == 1) {
-					getTile(x, y).traversalMask |= CollisionFlag.WALL_EAST;
+					getTile(x, y).addDynamicCollision(CollisionFlag.WALL_EAST);
 					if (getTile(x - 1, y) != null)
-						getTile(x - 1, y).traversalMask |= CollisionFlag.WALL_WEST;
+						getTile(x - 1, y).addDynamicCollision(CollisionFlag.WALL_WEST);
 				} else if (dir == 2) {
-					getTile(x, y).traversalMask |= CollisionFlag.FULL_BLOCK_A;
+					getTile(x, y).addDynamicCollision(CollisionFlag.FULL_BLOCK_A);
 				} else if (dir == 3) {
-					getTile(x, y).traversalMask |= CollisionFlag.FULL_BLOCK_B;
+					getTile(x, y).addDynamicCollision(CollisionFlag.FULL_BLOCK_B);
 				}
 				break;
 		}
@@ -598,30 +598,30 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	private void handleProjectileClipAllowance(final int x, final int y, final int dir, final int type, final int objectType, final int doorType) {
 
 		// Always give the current tile a clip mask.
-		getTile(x, y).projectileAllowed = true;
+		getTile(x, y).addDynamicProjectileBlock();
 
 		if ((type == 0 && objectType == 1) || (type == 1 && doorType != 1)) return;
 
 		if (dir == 0 && getTile(x - 1, y) != null) {
-			getTile(x - 1, y).projectileAllowed = true;
+			getTile(x - 1, y).addDynamicProjectileBlock();
 		}
 
 		else if (dir == 2 && getTile(x, y + 1) != null) {
-			getTile(x, y + 1).projectileAllowed = true;
+			getTile(x, y + 1).addDynamicProjectileBlock();
 		}
 
 		else if (dir == 4 && getTile(x + 1, y) != null) {
-			getTile(x + 1, y).projectileAllowed = true;
+			getTile(x + 1, y).addDynamicProjectileBlock();
 		}
 
 		else if (dir == 6 && getTile(x, y - 1) != null) {
-			getTile(x, y - 1).projectileAllowed = true;
+			getTile(x, y - 1).addDynamicProjectileBlock();
 		}
 	}
 
 	public void resetProjectileAllowance(final int x, final int y, final int dir, final int type, final int objectType, final int doorType) {
 		TileValue tile = getTile(x, y);
-		tile.projectileAllowed = tile.originalProjectileAllowed;
+		tile.removeDynamicProjectileBlock();
 
 		if ((type == 0 && objectType == 1) || (type == 1 && doorType != 1)) return;
 
@@ -640,7 +640,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		else if (dir == 6 && getTile(x, y - 1) != null) {
 			tile = getTile(x, y - 1);
 		}
-		tile.projectileAllowed = tile.originalProjectileAllowed;
+		tile.removeDynamicProjectileBlock();
 	}
 
 	public void registerItem(final GroundItem i) {
@@ -799,19 +799,19 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 							resetProjectileAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);
 						}
 						if (o.getGameObjectDef().getType() == 1) {
-							getTile(x, y).traversalMask &= 0xffbf;
+							getTile(x, y).removeBlockingScenery();
 						} else if (dir == 0) {
-							getTile(x, y).traversalMask &= 0xfffd;
-							getTile(x - 1, y).traversalMask &= 65535 - 8;
+							getTile(x, y).removeDynamicCollision(CollisionFlag.WALL_EAST);
+							getTile(x - 1, y).removeDynamicCollision(CollisionFlag.WALL_WEST);
 						} else if (dir == 2) {
-							getTile(x, y).traversalMask &= 0xfffb;
-							getTile(x, y + 1).traversalMask &= 65535 - 1;
+							getTile(x, y).removeDynamicCollision(CollisionFlag.WALL_SOUTH);
+							getTile(x, y + 1).removeDynamicCollision(CollisionFlag.WALL_NORTH);
 						} else if (dir == 4) {
-							getTile(x, y).traversalMask &= 0xfff7;
-							getTile(x + 1, y).traversalMask &= 65535 - 2;
+							getTile(x, y).removeDynamicCollision(CollisionFlag.WALL_WEST);
+							getTile(x + 1, y).removeDynamicCollision(CollisionFlag.WALL_EAST);
 						} else if (dir == 6) {
-							getTile(x, y).traversalMask &= 0xfffe;
-							getTile(x, y - 1).traversalMask &= 65535 - 4;
+							getTile(x, y).removeDynamicCollision(CollisionFlag.WALL_NORTH);
+							getTile(x, y - 1).removeDynamicCollision(CollisionFlag.WALL_SOUTH);
 						}
 					}
 				}
@@ -827,15 +827,15 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 				}
 
 				if (dir == 0) {
-					getTile(x, y).traversalMask &= 0xfffe;
-					getTile(x, y - 1).traversalMask &= 65535 - 4;
+					getTile(x, y).removeDynamicCollision(CollisionFlag.WALL_NORTH);
+					getTile(x, y - 1).removeDynamicCollision(CollisionFlag.WALL_SOUTH);
 				} else if (dir == 1) {
-					getTile(x, y).traversalMask &= 0xfffd;
-					getTile(x - 1, y).traversalMask &= 65535 - 8;
+					getTile(x, y).removeDynamicCollision(CollisionFlag.WALL_EAST);
+					getTile(x - 1, y).removeDynamicCollision(CollisionFlag.WALL_WEST);
 				} else if (dir == 2) {
-					getTile(x, y).traversalMask &= 0xffef;
+					getTile(x, y).removeDynamicCollision(CollisionFlag.FULL_BLOCK_A);
 				} else if (dir == 3) {
-					getTile(x, y).traversalMask &= 0xffdf;
+					getTile(x, y).removeDynamicCollision(CollisionFlag.FULL_BLOCK_B);
 				}
 				break;
 		}
@@ -871,6 +871,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	 */
 	public void unregisterPlayer(final Player player) {
 		try {
+			getServer().getWorldEditorSessions().closeFor(player);
 			if (getServer().getLoginExecutor() != null) {
 				getServer().getGameLogger().addQuery(new PlayerOnlineFlagQuery(getServer(), player.getDatabaseID(), false));
 				// We handle avatar generation code exceptions separately, they are not a critical part of the logout process.

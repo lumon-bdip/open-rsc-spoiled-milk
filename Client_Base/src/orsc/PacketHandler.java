@@ -180,6 +180,7 @@ public class PacketHandler {
 		put(147, "SEND_KILLS2");
 		put(148, "SET_OPENPK_POINTS");
 		put(150, "UPDATE_PRESET");
+		put(151, "WORLD_EDITOR");
 		put(250, "UPDATE_UNLOCKED_APPEARANCES");
 		put(254, "UPDATE_EQUIPMENT");
 		put(255, "UPDATE_EQUIPMENT_SLOT");
@@ -345,6 +346,8 @@ public class PacketHandler {
 
 			else if (opcode == 150) updatePreset();
 
+			else if (opcode == 151) updateWorldEditor();
+
 				// Set Server Configs
 			else if (opcode == 19) setServerConfiguration();
 
@@ -353,6 +356,33 @@ public class PacketHandler {
 		} catch (RuntimeException var11) {
 			throw GenUtil.makeThrowable(var11, "client.LD(" + "dummy" + ',' + length + ',' + opcode + ')');
 		}
+	}
+
+	private void updateWorldEditor() {
+		int type=packetsIncoming.getByte()&0xff, version=packetsIncoming.getByte()&0xff, sequence=packetsIncoming.get32();
+		if(version!=1||mc.worldEditorInterface==null||Config.isAndroid())return;
+		if(type==1){mc.worldEditorInterface.open(packetsIncoming.getLong(0),sequence);return;}
+		if(type==2){mc.worldEditorInterface.closeFromServer();return;}
+		if(type==8){int fieldMask=packetsIncoming.getByte()&0xff,count=packetsIncoming.getByte()&0xff;
+			if(count<1||count>64){mc.worldEditorInterface.showError("Server returned an invalid terrain stroke size.");return;}
+			int[][] tiles=new int[count][15];boolean[] projectiles=new boolean[count];
+			for(int i=0;i<count;i++){int[] tile=tiles[i];tile[0]=packetsIncoming.getShort();tile[1]=packetsIncoming.getShort();tile[2]=packetsIncoming.getByte()&0xff;
+				tile[3]=packetsIncoming.getShort();tile[4]=packetsIncoming.getShort();tile[5]=packetsIncoming.getByte()&0xff;tile[6]=packetsIncoming.getByte()&0xff;
+				tile[7]=packetsIncoming.getByte()&0xff;tile[8]=packetsIncoming.getByte()&0xff;tile[9]=packetsIncoming.getByte()&0xff;tile[10]=packetsIncoming.getByte()&0xff;
+				tile[11]=packetsIncoming.getByte()&0xff;tile[12]=packetsIncoming.getByte()&0xff;tile[13]=packetsIncoming.get32();tile[14]=packetsIncoming.getShort()&0xffff;
+				projectiles[i]=packetsIncoming.getByte()!=0;}
+			mc.worldEditorInterface.acceptTerrainStroke(sequence,fieldMask,tiles,projectiles,packetsIncoming.readString());return;}
+		if(type==3||type==7){int x=packetsIncoming.getShort(),y=packetsIncoming.getShort(),plane=packetsIncoming.getByte()&0xff;
+			int sx=packetsIncoming.getShort(),sy=packetsIncoming.getShort(),lx=packetsIncoming.getByte()&0xff,ly=packetsIncoming.getByte()&0xff;
+			int elev=packetsIncoming.getByte()&0xff,texture=packetsIncoming.getByte()&0xff,overlay=packetsIncoming.getByte()&0xff,roof=packetsIncoming.getByte()&0xff;
+			int hw=packetsIncoming.getByte()&0xff,vw=packetsIncoming.getByte()&0xff,diag=packetsIncoming.get32(),collision=packetsIncoming.getShort()&0xffff;
+			boolean projectile=packetsIncoming.getByte()!=0,copied=packetsIncoming.getByte()!=0;
+			int fieldMask=type==7?packetsIncoming.getByte()&0xff:0;
+			String definitions=packetsIncoming.readString();
+			if(type==7)mc.worldEditorInterface.acceptTerrainPaint(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,fieldMask,definitions);
+			else mc.worldEditorInterface.showTerrain(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,copied,definitions);return;}
+		String message=packetsIncoming.readString();if(sequence>0)mc.worldEditorInterface.setSequence(sequence);
+		if(type==6)mc.worldEditorInterface.showError(message);else mc.worldEditorInterface.showInfo(type,message);
 	}
 
 	public final void handlePacket2(int opcode, int length) {

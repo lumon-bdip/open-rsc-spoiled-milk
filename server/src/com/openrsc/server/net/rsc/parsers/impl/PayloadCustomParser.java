@@ -19,6 +19,14 @@ import org.apache.logging.log4j.Logger;
 public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final int[] WORLD_EDITOR_PACKET_LENGTHS = {13, 15, 19, 22, 29};
+
+	private static boolean isWorldEditorPacketLength(int length) {
+		for (int accepted : WORLD_EDITOR_PACKET_LENGTHS) {
+			if (length == accepted) return true;
+		}
+		return length>=30&&length<=282&&(length-26)%4==0;
+	}
 
 	@Override
 	public OpcodeIn toOpcodeEnum(Packet packet, Player player) {
@@ -255,6 +263,9 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case 89:
 				opcode = OpcodeIn.NPC_DEFINITION_REQUEST;
 				break;
+			case 152:
+				opcode = OpcodeIn.WORLD_EDITOR_REQUEST;
+				break;
 			case 0:
 				opcode = OpcodeIn.LOGIN;
 				break;
@@ -458,6 +469,8 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case WALK_TO_POINT:
 			case WALK_TO_ENTITY:
 				return packet.getLength() >= 4;
+			case WORLD_EDITOR_REQUEST:
+				return isWorldEditorPacketLength(packet.getLength());
 		}
 		return true;
 	}
@@ -481,6 +494,35 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 		}
 
 		switch (opcode) {
+			case WORLD_EDITOR_REQUEST:
+				WorldEditorRequestStruct editor = new WorldEditorRequestStruct();
+				editor.type = packet.readByte() & 0xff;
+				int expectedEditorLength = editor.type == 1 ? 13 : editor.type == 2 ? 19 : editor.type == 3 ? 22 : editor.type == 4 ? 15 : editor.type == 5 ? 29 : -1;
+				if (editor.type!=6&&packet.getLength()!=expectedEditorLength) return null;
+				editor.sessionId = packet.readLong();
+				editor.sequence = packet.readInt();
+				if (editor.type == 2) {
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.objectType=packet.readByte()&0xff;
+				} else if (editor.type == 3) {
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.entityId=packet.readShort(); editor.direction=packet.readByte()&0xff; editor.objectType=packet.readByte()&0xff;
+				} else if (editor.type == 4) editor.entityId=packet.readShort();
+				else if (editor.type == 5) {
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.fieldMask=packet.readByte()&0xff; editor.elevation=packet.readByte()&0xff;
+					editor.groundTexture=packet.readByte()&0xff; editor.groundOverlay=packet.readByte()&0xff;
+					editor.roofTexture=packet.readByte()&0xff;editor.horizontalWall=packet.readByte()&0xff;
+					editor.verticalWall=packet.readByte()&0xff;editor.diagonal=packet.readInt();
+				} else if(editor.type==6){
+					editor.plane=packet.readByte()&0xff;editor.fieldMask=packet.readByte()&0xff;editor.elevation=packet.readByte()&0xff;
+					editor.groundTexture=packet.readByte()&0xff;editor.groundOverlay=packet.readByte()&0xff;editor.roofTexture=packet.readByte()&0xff;
+					editor.horizontalWall=packet.readByte()&0xff;editor.verticalWall=packet.readByte()&0xff;editor.diagonal=packet.readInt();
+					int count=packet.readByte()&0xff;if(count<1||count>64||packet.getLength()!=26+count*4)return null;
+					editor.terrainTiles=new int[count][2];for(int i=0;i<count;i++){editor.terrainTiles[i][0]=packet.readShort();editor.terrainTiles[i][1]=packet.readShort();}
+				}
+				result = editor;
+				break;
 			case COMBAT_STYLE_CHANGED:
 				CombatStyleStruct c = new CombatStyleStruct();
 				c.style = packet.readByte();

@@ -38,7 +38,7 @@ public class WorldLoader {
 		this.worldPopulator = new WorldPopulator(getWorld());
 	}
 
-	private static boolean projectileClipAllowed(final int wallID) {
+	public static boolean projectileClipAllowed(final int wallID) {
 		for (final int allowedWallIdType : ALLOWED_WALL_ID_TYPES) {
 			if (allowedWallIdType == wallID) {
 				return true;
@@ -371,34 +371,31 @@ public class WorldLoader {
 				TileValue tile = getWorld().getTile(bx, by);
 
 				tile.overlay = sectorTile.groundOverlay;
-				tile.diagWallVal = sectorTile.diagonalWalls;
+				// Runtime collision retains the historic short field; archive Tile preserves all four raw bytes.
+				tile.diagWallVal = (short) sectorTile.diagonalWalls;
 				tile.horizontalWallVal = sectorTile.horizontalWall;
 				tile.verticalWallVal = sectorTile.verticalWall;
 				tile.elevation = sectorTile.groundElevation;
-				tile.traversalMask = 0;
+				tile.initializeTerrainCollision();
 
 				if ((sectorTile.groundOverlay & 0xff) == 250) {
 					sectorTile.groundOverlay = (byte) 2;
 				}
 
 				final byte groundOverlay = sectorTile.groundOverlay;
-				if (groundOverlay > 0
-					&& getWorld().getServer().getEntityHandler().getTileDef(groundOverlay - 1).getObjectType() != 0) {
-					tile.traversalMask |= 0x40; // 64
-				}
+				tile.setTerrainBlocked(groundOverlay > 0
+					&& getWorld().getServer().getEntityHandler().getTileDef(groundOverlay - 1).getObjectType() != 0);
 
 				final int verticalWall = sectorTile.verticalWall & 0xFF;
 				if (verticalWall > 0
 					&& getWorld().getServer().getEntityHandler().getDoorDef(verticalWall - 1).getUnknown() == 0
 					&& getWorld().getServer().getEntityHandler().getDoorDef(verticalWall - 1).getDoorType() != 0) {
-					getWorld().getTile(bx, by).traversalMask |= 1; // 1
-					getWorld().getTile(bx, by - 1).traversalMask |= 4; // 4
+					getWorld().getTile(bx, by).addTerrainCollision(1);
+					getWorld().getTile(bx, by - 1).addTerrainCollision(4);
 
 					if (projectileClipAllowed(verticalWall)) {
-						tile.projectileAllowed = true;
-						tile.originalProjectileAllowed = true;
-						getWorld().getTile(bx, by - 1).projectileAllowed = true;
-						getWorld().getTile(bx, by - 1).originalProjectileAllowed = true;
+						tile.addTerrainWallProjectileBlock();
+						getWorld().getTile(bx, by - 1).addTerrainWallProjectileBlock();
 					}
 				}
 
@@ -406,13 +403,11 @@ public class WorldLoader {
 				if (horizontalWall > 0
 					&& getWorld().getServer().getEntityHandler().getDoorDef(horizontalWall - 1).getUnknown() == 0
 					&& getWorld().getServer().getEntityHandler().getDoorDef(horizontalWall - 1).getDoorType() != 0) {
-					tile.traversalMask |= 2; // 2
-					getWorld().getTile(bx - 1, by).traversalMask |= 8; // 8
+					tile.addTerrainCollision(2);
+					getWorld().getTile(bx - 1, by).addTerrainCollision(8);
 					if (projectileClipAllowed(horizontalWall)) {
-						tile.projectileAllowed = true;
-						tile.originalProjectileAllowed = true;
-						getWorld().getTile(bx - 1, by).projectileAllowed = true;
-						getWorld().getTile(bx - 1, by).originalProjectileAllowed = true;
+						tile.addTerrainWallProjectileBlock();
+						getWorld().getTile(bx - 1, by).addTerrainWallProjectileBlock();
 					}
 				}
 
@@ -421,28 +416,23 @@ public class WorldLoader {
 					&& diagonalWalls < 12000
 					&& getWorld().getServer().getEntityHandler().getDoorDef(diagonalWalls - 1).getUnknown() == 0
 					&& getWorld().getServer().getEntityHandler().getDoorDef(diagonalWalls - 1).getDoorType() != 0) {
-					tile.traversalMask |= 0x20; // 32
+					tile.addTerrainCollision(0x20);
 					if (projectileClipAllowed(diagonalWalls & 0xFF)) {
-						tile.projectileAllowed = true;
-						tile.originalProjectileAllowed = true;
+						tile.addTerrainWallProjectileBlock();
 					}
 				}
 				if (diagonalWalls > 12000
 					&& diagonalWalls < 24000
 					&& getWorld().getServer().getEntityHandler().getDoorDef(diagonalWalls - 12001).getUnknown() == 0
 					&& getWorld().getServer().getEntityHandler().getDoorDef(diagonalWalls - 12001).getDoorType() != 0) {
-					tile.traversalMask |= 0x10; // 16
+					tile.addTerrainCollision(0x10);
 
 					if (projectileClipAllowed(diagonalWalls & 0xFF)) {
-						tile.projectileAllowed = true;
-						tile.originalProjectileAllowed = true;
+						tile.addTerrainWallProjectileBlock();
 					}
 				}
 
-				if (tile.overlay == 2 || tile.overlay == 11) {
-					tile.projectileAllowed = true;
-					tile.originalProjectileAllowed = true;
-				}
+				tile.setTerrainOverlayProjectileBlocked(tile.overlay == 2 || tile.overlay == 11);
 			}
 		}
 		return true;

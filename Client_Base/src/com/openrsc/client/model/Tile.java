@@ -41,6 +41,8 @@ public class Tile {
 	 * The overlay texture ID
 	 */
 	public byte groundOverlay = 0;
+	/** Transient editor metadata; never packed into the landscape archive. */
+	public boolean editorPaintedOverlay = false;
 
 	/**
 	 * Create a new tile from raw data packed into the given ByteBuffer
@@ -71,6 +73,7 @@ public class Tile {
 		tile.verticalWall = verticalWall;
 		tile.diagonalWalls = diagonalWalls;
 		tile.groundOverlay = groundOverlay;
+		tile.editorPaintedOverlay = editorPaintedOverlay;
 		return tile;
 	}
 

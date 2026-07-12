@@ -121,6 +121,7 @@ public class PayloadValidator {
 		put(OpcodeOut.SEND_YOPTIN, NoPayloadStruct.class); // retro rsc
 		put(OpcodeOut.SEND_INVENTORY_SIZE, InventoryStruct.class); // retro rsc
 		put(OpcodeOut.SEND_UNLOCKED_APPEARANCES, UnlockedAppearancesStruct.class);
+		put(OpcodeOut.SEND_WORLD_EDITOR, WorldEditorStruct.class);
 	}};
 
 	public static boolean isPayloadCorrectInstance(AbstractStruct<OpcodeOut> payload, OpcodeOut opcode) {

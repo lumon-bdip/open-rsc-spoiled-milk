@@ -689,6 +689,13 @@ public final class mudclient implements Runnable {
 	public DoSkillInterface doSkillInterface;
 	public LostOnDeathInterface lostOnDeathInterface;
 	public TerritorySignupInterface territorySignupInterface;
+	public WorldEditorInterface worldEditorInterface;
+	private boolean worldEditorFastMode=false;
+	private RendererLightingSettings.Mode worldEditorSavedLighting;
+	private RendererTerrainVariationSettings.Mode worldEditorSavedTerrainVariation;
+	private RendererFogSettings.Mode worldEditorSavedFog;
+	private RendererToneSettings.Mode worldEditorSavedTone;
+	private int worldEditorSavedTerrainRelief,worldEditorSavedObjectRelief;
 	String m_p = null;
 	int clearBox = GenUtil.buildColor(181, 181, 181);
 	int selectedBox = GenUtil.buildColor(220, 220, 220);
@@ -7086,7 +7093,7 @@ public final class mudclient implements Runnable {
 							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2);
 					}
 
-					this.updateSceneryAnimations();
+					if(!worldEditorFastMode)this.updateSceneryAnimations();
 					this.queuedProjectileEffectCount = 0;
 					this.queuedProjectileImpactCount = 0;
 					this.queuedCombatEffectCount = 0;
@@ -10366,6 +10373,14 @@ public final class mudclient implements Runnable {
 								}
 
 								this.wallObjectInstance_Arg1[var9] = true;
+								if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
+									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
+										this.wallObjectInstanceZ[var9], this.wallObjectInstanceDir[var9], this.wallObjectInstanceX[var9], id,
+										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Inspect editor data");
+									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
+										this.wallObjectInstanceZ[var9], this.wallObjectInstanceDir[var9], this.wallObjectInstanceX[var9], id,
+										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Copy editor data");
+								}
 							}
 						}
 						// Game Object Right Click Menu
@@ -10413,6 +10428,18 @@ public final class mudclient implements Runnable {
 												"@gr2@Remove Object",
 												"@cya@" + EntityHandler.getObjectDef(id).getName());
 										}
+										if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
+											this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
+											this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9], this.gameObjectInstanceX[var9],
+											this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Inspect editor data");
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
+											this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9], this.gameObjectInstanceX[var9],
+										this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Copy editor data");
+									}
+									if (worldEditorInterface != null && worldEditorInterface.isSceneryRotating())
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_ROTATE_SCENERY,this.gameObjectInstanceZ[var9],this.gameObjectInstanceDir[var9],this.gameObjectInstanceX[var9],id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Rotate scenery");
+									if (worldEditorInterface != null && worldEditorInterface.isSceneryRemoving())
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_REMOVE_SCENERY,this.gameObjectInstanceZ[var9],this.gameObjectInstanceDir[var9],this.gameObjectInstanceX[var9],id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Remove scenery");
 
 										this.menuCommon
 											.addTileItem_WithID(MenuItemAction.OBJECT_EXAMINE,
@@ -10555,6 +10582,14 @@ public final class mudclient implements Runnable {
 											MenuItemAction.DEV_REMOVE_NPC, "@gr2@Remove NPC",
 											"@yel@" + EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
 									}
+									if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
+										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex, MenuItemAction.WORLD_EDITOR_INSPECT_NPC,
+											"Inspect editor data", "@yel@"+EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
+										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex, MenuItemAction.WORLD_EDITOR_COPY_NPC,
+											"Copy editor data", "@yel@"+EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
+									}
+									if (worldEditorInterface != null && worldEditorInterface.isNpcRemoving())
+										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex,MenuItemAction.WORLD_EDITOR_REMOVE_NPC,"Remove NPC","@yel@"+EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
 
 									if (this.npcs[var9].suppressAttackOption) {
 										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex,
@@ -10617,7 +10652,7 @@ public final class mudclient implements Runnable {
 
 					this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "",
 						MenuItemAction.LANDSCAPE_WALK_HERE,
-						this.devClickTeleportMode && canUseClickTeleport() ? "Teleport here" : "Walk here",
+						isClickTeleportActiveForCurrentContext() ? "Teleport here" : "Walk here",
 						this.world.faceTileZ[var2]);
 					if (modMenu) {
 						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "",
@@ -10631,8 +10666,18 @@ public final class mudclient implements Runnable {
 							MenuItemAction.DEV_ADD_OBJECT, "@gr2@Add Object @whi@(@or1@" + devMenuNpcID + "@whi@)",
 							this.world.faceTileZ[var2]);
 					}
+					if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_INSPECT_TERRAIN, "Inspect terrain", this.world.faceTileZ[var2]);
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_COPY_TERRAIN, "Copy terrain data", this.world.faceTileZ[var2]);
+					}
+					if (worldEditorInterface != null && worldEditorInterface.isTerrainPainting())
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2],"",MenuItemAction.WORLD_EDITOR_PAINT_TERRAIN,"Paint terrain",this.world.faceTileZ[var2]);
+					if (worldEditorInterface != null && worldEditorInterface.isSceneryPlacing())
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2],"",MenuItemAction.WORLD_EDITOR_PLACE_SCENERY,"Place "+EntityHandler.getObjectDef(worldEditorInterface.getSceneryId()).getName(),this.world.faceTileZ[var2]);
+					if (worldEditorInterface != null && worldEditorInterface.isNpcPlacing())
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2],"",MenuItemAction.WORLD_EDITOR_PLACE_NPC,"Place "+EntityHandler.getNpcDef(worldEditorInterface.getNpcId()).getName(),this.world.faceTileZ[var2]);
 				}
-				} else if (this.devClickTeleportMode && canUseClickTeleport()
+				} else if (isClickTeleportActiveForCurrentContext()
 					&& this.selectedSpell < 0 && this.selectedItemInventoryIndex < 0) {
 					int[] fallbackTile = this.scene.projectScreenToGroundTile(
 						this.mouseX,
@@ -16596,6 +16641,7 @@ public final class mudclient implements Runnable {
 						this.lastMouseButtonDown = 0;
 					}
 					this.scene.setMouseLoc(0, this.mouseX, this.mouseY);
+					if(updateWorldEditorTerrainDrag()){this.mouseButtonClick=0;this.lastMouseButtonDown=0;}
 					this.lastMouseButtonDown = 0;
 					if (this.optionCameraModeAuto && !this.isInFirstPersonView()) {
 						if (this.m_Wc == 0 || this.cameraAutoAngleDebug) {
@@ -17919,7 +17965,9 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case LANDSCAPE_WALK_HERE: {
-					if (this.devClickTeleportMode && canUseClickTeleport()) {
+					if (worldEditorInterface != null && worldEditorInterface.isEditorOpen())
+						worldEditorInterface.recordWorldClick(indexOrX + midRegionBaseX, idOrZ + midRegionBaseZ);
+					if (isClickTeleportActiveForCurrentContext()) {
 						this.sendBlinkToTile(indexOrX, idOrZ);
 					} else {
 						//System.out.println("LANDSCAPE_WALK_HERE: playerLocalX=" + this.playerLocalX + ", playerLocalZ= " + this.playerLocalZ + ", indexOrX=" + indexOrX + ", idOrZ=" + idOrZ);
@@ -17967,6 +18015,26 @@ public final class mudclient implements Runnable {
 						+ (idOrZ + midRegionBaseZ) + "");
 					break;
 				}
+				case WORLD_EDITOR_INSPECT_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,false); break; }
+				case WORLD_EDITOR_COPY_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,true); break; }
+				case WORLD_EDITOR_PAINT_TERRAIN: { worldEditorInterface.paintTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ); break; }
+				case WORLD_EDITOR_INSPECT_OBJECT: { worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0); break; }
+				case WORLD_EDITOR_COPY_OBJECT: { worldEditorInterface.selectScenery(tileID);worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0,true); break; }
+				case WORLD_EDITOR_INSPECT_NPC: {
+					ORSCharacter editorNpc=getNpcFromServer(indexOrX);
+					if(editorNpc!=null)worldEditorInterface.recordWorldClick(midRegionBaseX+editorNpc.currentX/tileSize,midRegionBaseZ+editorNpc.currentZ/tileSize);
+					worldEditorInterface.inspectNpc(indexOrX);break;
+				}
+				case WORLD_EDITOR_COPY_NPC: {
+					ORSCharacter editorNpc=getNpcFromServer(indexOrX);
+					if(editorNpc!=null){worldEditorInterface.recordWorldClick(midRegionBaseX+editorNpc.currentX/tileSize,midRegionBaseZ+editorNpc.currentZ/tileSize);worldEditorInterface.selectNpc(editorNpc.npcId,worldEditorInterface.getNpcRadius());}
+					worldEditorInterface.inspectNpc(indexOrX,true);break;
+				}
+				case WORLD_EDITOR_PLACE_SCENERY: { sendCommandString("aobject "+worldEditorInterface.getSceneryId()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_ROTATE_SCENERY: { sendCommandString("rotateobject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_REMOVE_SCENERY: { sendCommandString("robject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_PLACE_NPC: { sendCommandString("cnpc "+worldEditorInterface.getNpcId()+" "+worldEditorInterface.getNpcRadius()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_REMOVE_NPC: { sendCommandString("rpc "+indexOrX); break; }
 				case MOD_SUMMON_PLAYER: {
 					String playerName = var9;
 					playerName = playerName.replaceAll(" ", "_");
@@ -22634,6 +22702,7 @@ public final class mudclient implements Runnable {
 
 	private void resetLoginScreenVariables(byte var1) {
 		try {
+			setWorldEditorFastMode(false);
 			this.npcCount = 0;
 			this.playerCount = 0;
 			this.loginScreenNumber = 0;
@@ -22676,6 +22745,11 @@ public final class mudclient implements Runnable {
 		return localPlayer != null && (localPlayer.isDev() || localPlayer.isMod());
 	}
 
+	private boolean isClickTeleportActiveForCurrentContext() {
+		return devClickTeleportMode && canUseClickTeleport()
+			&& (worldEditorInterface == null || !worldEditorInterface.isEditorOpen() || worldEditorInterface.isNavigating());
+	}
+
 	private void setDevClickTeleportMode(boolean enabled) {
 		if (!canUseClickTeleport()) {
 			this.devClickTeleportMode = false;
@@ -22688,6 +22762,59 @@ public final class mudclient implements Runnable {
 		this.showMessage(false, null,
 			"Click teleport mode " + (this.devClickTeleportMode ? "enabled" : "disabled") + ".",
 			MessageType.GAME, 0, null);
+	}
+
+	public void setWorldEditorNavigateClickTeleport(boolean enabled) {
+		this.devClickTeleportMode = enabled && canUseClickTeleport();
+	}
+	public void setWorldEditorFastMode(boolean enabled){
+		if(worldEditorFastMode==enabled)return;
+		if(enabled){
+			worldEditorSavedLighting=RendererLightingSettings.getMode();worldEditorSavedTerrainVariation=RendererTerrainVariationSettings.getMode();
+			worldEditorSavedFog=RendererFogSettings.getMode();worldEditorSavedTone=RendererToneSettings.getMode();
+			worldEditorSavedTerrainRelief=RendererReliefSettings.getTerrainLevel();worldEditorSavedObjectRelief=RendererReliefSettings.getObjectLevel();
+			RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);
+			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);
+			RendererReliefSettings.setTerrainLevel(RendererReliefSettings.MIN_LEVEL);RendererReliefSettings.setObjectLevel(RendererReliefSettings.MIN_LEVEL);
+		}else{
+			if(worldEditorSavedLighting!=null)RendererLightingSettings.setMode(worldEditorSavedLighting);
+			if(worldEditorSavedTerrainVariation!=null)RendererTerrainVariationSettings.setMode(worldEditorSavedTerrainVariation);
+			if(worldEditorSavedFog!=null)RendererFogSettings.setMode(worldEditorSavedFog);if(worldEditorSavedTone!=null)RendererToneSettings.setMode(worldEditorSavedTone);
+			if(worldEditorSavedTerrainRelief>0)RendererReliefSettings.setTerrainLevel(worldEditorSavedTerrainRelief);
+			if(worldEditorSavedObjectRelief>0)RendererReliefSettings.setObjectLevel(worldEditorSavedObjectRelief);
+		}
+		worldEditorFastMode=enabled;
+	}
+	private boolean updateWorldEditorTerrainDrag(){
+		if(worldEditorInterface==null||!worldEditorInterface.isEditorOpen())return false;int worldX=-1,worldY=-1;
+		boolean picking=controlPressed&&currentMouseButtonDown==1&&showUiTab==0&&mouseY<getGameHeight()-70&&!mouseInTabArea_CUSTOM();
+		if(picking&&scene!=null&&world!=null&&localPlayer!=null){int[] local=scene.projectScreenToGroundTile(mouseX,mouseY,tileSize,getClickTeleportGroundPlaneY());
+			if(local!=null&&local[0]>=0&&local[0]<World.LOCAL_TILE_COUNT&&local[1]>=0&&local[1]<World.LOCAL_TILE_COUNT){worldX=midRegionBaseX+local[0];worldY=midRegionBaseZ+local[1];}}
+		return worldEditorInterface.updateTerrainDrag(controlPressed,currentMouseButtonDown==1,worldX,worldY);
+	}
+
+	public void worldEditorTeleport(int worldX, int worldY) {
+		if (worldEditorInterface == null || !worldEditorInterface.isNavigating() || !canUseClickTeleport()) return;
+		preloadTerrainForLocalTarget(worldX - midRegionBaseX, worldY - midRegionBaseZ);
+		this.packetHandler.getClientStream().newPacket(Opcodes.Out.BLINK.getOpcode());
+		this.packetHandler.getClientStream().bufferBits.putShort(worldX);
+		this.packetHandler.getClientStream().bufferBits.putShort(worldY);
+		this.packetHandler.getClientStream().finishPacket();
+	}
+
+	public void applyWorldEditorTerrainPatch(int worldX,int worldY,int plane,int elevation,int groundTexture,int groundOverlay,
+		int roofTexture,int horizontalWall,int verticalWall,int diagonal,boolean overlayPainted,boolean rebuild){
+		if(world==null)return;
+		world.applyWorldEditorTerrainPatch(plane,worldX+worldOffsetX,worldY+worldOffsetZ,elevation,groundTexture,groundOverlay,roofTexture,horizontalWall,verticalWall,diagonal,overlayPainted);
+		if(rebuild&&plane==requestedPlane)reloadWorldEditorTerrain();
+	}
+	public void reloadWorldEditorTerrain(){
+		if(!hasCompletedInitialRegionLoad||localPlayer==null)return;
+		int activeWorldX=activeRegionCenterWorldTile(midRegionBaseX,worldOffsetX);
+		int activeWorldZ=activeRegionCenterWorldTile(midRegionBaseZ,worldOffsetZ);
+		world.loadSections(activeWorldX,activeWorldZ,requestedPlane);
+		rematerializeLoadedTerrainSceneryAfterWorldReload();
+		world.playerAlive=true;
 	}
 
 	private void handleDevClickTeleportCommand(String commandText) {
@@ -22739,6 +22866,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().finishPacket();
 						clientPort.setTitle(Config.getServerName());
 						this.logoutTimeout = 1000;
+						setWorldEditorFastMode(false);
 						devClickTeleportMode = false;
 						modMenu = false;
 						developerMenu = false;
@@ -25794,9 +25922,11 @@ public final class mudclient implements Runnable {
 				if (S_ITEMS_ON_DEATH_MENU)
 					lostOnDeathInterface = new LostOnDeathInterface(this);
 				territorySignupInterface = new TerritorySignupInterface(this);
+				worldEditorInterface = new WorldEditorInterface(this);
 
 				mainComponent = new NComponent(this);
 				mainComponent.setSize(getGameWidth(), getGameHeight());
+				mainComponent.addComponent(worldEditorInterface);
 
 				bankPinInterface = new BankPinInterface(this);
 				mainComponent.addComponent(bankPinInterface);
@@ -26497,6 +26627,9 @@ public final class mudclient implements Runnable {
 	public ORSCharacter getLocalPlayer() {
 		return localPlayer;
 	}
+
+	public int getEditorPlayerWorldX() { return midRegionBaseX + (localPlayer == null ? playerLocalX : localPlayer.currentX / tileSize); }
+	public int getEditorPlayerWorldY() { return midRegionBaseZ + (localPlayer == null ? playerLocalZ : localPlayer.currentZ / tileSize); }
 
 	public void setLocalPlayer(ORSCharacter p) {
 		this.localPlayer = p;
