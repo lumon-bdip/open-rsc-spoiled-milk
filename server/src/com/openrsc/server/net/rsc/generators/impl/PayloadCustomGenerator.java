@@ -160,6 +160,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeByte((byte) editor.horizontalWall); builder.writeByte((byte) editor.verticalWall);
 						builder.writeInt(editor.diagonal); builder.writeShort(editor.traversalMask);
 						builder.writeByte((byte) (editor.projectileAllowed ? 1 : 0)); builder.writeByte((byte) (editor.copy ? 1 : 0));
+						builder.writeString(editor.message == null ? "" : editor.message);
 					} else if (editor.type == 4 || editor.type == 5 || editor.type == 6) {
 						builder.writeString(editor.message == null ? "" : editor.message);
 					}

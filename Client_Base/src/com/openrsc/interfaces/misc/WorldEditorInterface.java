@@ -13,10 +13,11 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private Mode mode=Mode.INSPECT;
 	private long sessionId; private int nextSequence;
 	private String status="No selection"; private String[] details=new String[0];
+	private int[] copiedTerrainFields;
 	private int dragX=-1, dragY=-1;
 
 	public WorldEditorInterface(mudclient client) {
-		super(client); mc=client; setLocation(12,48); setSize(390,286); setVisible(false); setIsOverlay(true);
+		super(client); mc=client; setLocation(12,8); setSize(390,330); setVisible(false); setIsOverlay(true);
 		setInputListener(new InputListener(){ @Override public boolean onMouseDown(int mx,int my,int down,int click){return handleMouse(mx,my,down,click);} });
 	}
 	public void open(long id,int sequence){if(Config.isAndroid())return;sessionId=id;nextSequence=sequence;status="Read-only session active";details=new String[0];setVisible(true);}
@@ -26,13 +27,16 @@ public final class WorldEditorInterface extends NCustomComponent {
 	public void setSequence(int sequence){nextSequence=sequence;}
 	public void showInfo(String text){status="Authoritative inspection";details=wrap(text,58);}
 	public void showError(String text){status="Server rejected request";details=wrap(text,58);}
-	public void showTerrain(int sequence,int x,int y,int plane,int sx,int sy,int lx,int ly,int elev,int texture,int overlay,int roof,int hwall,int vwall,int diag,int collision,boolean projectile,boolean copied){
+	public void showTerrain(int sequence,int x,int y,int plane,int sx,int sy,int lx,int ly,int elev,int texture,int overlay,int roof,int hwall,int vwall,int diag,int collision,boolean projectile,boolean copied,String definitions){
 		nextSequence=sequence;status=copied?"Terrain fields copied locally (painting disabled)":"Authoritative terrain snapshot";
-		details=new String[]{"World: "+x+","+y+" plane "+plane,"Sector: "+sx+","+sy+" local "+lx+","+ly,
+		if(copied)copiedTerrainFields=new int[]{elev,texture,overlay,roof,hwall,vwall,diag};
+		java.util.List<String> lines=new java.util.ArrayList<String>();java.util.Collections.addAll(lines,"World: "+x+","+y+" plane "+plane,"Sector: "+sx+","+sy+" local "+lx+","+ly,
 			"Elevation "+elev+"  Ground texture "+texture,"Overlay "+overlay+"  Roof "+roof,
 			"Horizontal wall "+hwall+"  Vertical wall "+vwall,"Diagonal raw "+diag+"  "+diagonal(diag),
-			"Collision 0x"+Integer.toHexString(collision)+"  Projectile "+projectile};
+			"Collision 0x"+Integer.toHexString(collision)+"  Projectile "+projectile);
+		java.util.Collections.addAll(lines,wrap(definitions,58));details=lines.toArray(new String[lines.size()]);
 	}
+	public int[] getCopiedTerrainFields(){return copiedTerrainFields==null?null:copiedTerrainFields.clone();}
 	public void inspectTerrain(int worldX,int worldY,boolean copy){send(2,worldX,worldY,Math.floorDiv(worldY,944),0,0,copy?1:0);}
 	public void inspectObject(int worldX,int worldY,int id,int direction,int type){send(3,worldX,worldY,Math.floorDiv(worldY,944),id,direction,type);}
 	public void inspectNpc(int serverIndex){send(4,0,0,0,serverIndex,0,0);}
@@ -49,19 +53,19 @@ public final class WorldEditorInterface extends NCustomComponent {
 		else {dragX=dragY=-1;}
 		if(click==1){if(rx>=365&&ry<24){send(1,0,0,0,0,0,0);setVisible(false);return true;}
 			if(ry>=30&&ry<50){int tab=Math.min(4,Math.max(0,rx/78));mode=Mode.values()[tab];return true;}
-			if(ry>=238&&ry<261&&rx>=10&&rx<180){inspectTerrain(mc.getEditorPlayerWorldX(),mc.getEditorPlayerWorldY(),false);return true;}
-			if(ry>=238&&ry<261&&rx>=190&&rx<365){inspectTerrain(mc.getEditorPlayerWorldX(),mc.getEditorPlayerWorldY(),true);return true;}}
-		return rx>=0&&ry>=0&&rx<=390&&ry<=286;
+			if(ry>=275&&ry<298&&rx>=10&&rx<180){inspectTerrain(mc.getEditorPlayerWorldX(),mc.getEditorPlayerWorldY(),false);return true;}
+			if(ry>=275&&ry<298&&rx>=190&&rx<365){inspectTerrain(mc.getEditorPlayerWorldX(),mc.getEditorPlayerWorldY(),true);return true;}}
+		return rx>=0&&ry>=0&&rx<=390&&ry<=330;
 	}
 	@Override public void render(){
 		if(!isVisible()||Config.isAndroid())return;int x=getX(),y=getY();
-		graphics().drawBoxAlpha(x,y,390,286,0x24190c,235);graphics().drawBoxBorder(x,390,y,286,0);graphics().drawBoxAlpha(x,y,390,24,0x4a3620,255);
+		graphics().drawBoxAlpha(x,y,390,330,0x24190c,235);graphics().drawBoxBorder(x,390,y,330,0);graphics().drawBoxAlpha(x,y,390,24,0x4a3620,255);
 		graphics().drawString("World Editor - READ ONLY",x+8,y+17,0xffff00,2);graphics().drawString("X",x+372,y+17,0xffffff,2);
 		for(int i=0;i<TABS.length;i++){graphics().drawBoxAlpha(x+i*78,y+30,77,20,mode.ordinal()==i?0x6b8e23:0x333333,220);graphics().drawString(TABS[i],x+i*78+6,y+44,0xffffff,2);}
 		graphics().drawString(status,x+10,y+70,0xffff00,2);int line=y+89;for(String s:details){graphics().drawString(s,x+10,line,0xffffff,2);line+=17;}
-		graphics().drawString("Mutation controls unavailable until client/server parity is proven.",x+10,y+223,0xff981f,1);
-		button(x+10,y+238,170,"Inspect player tile");button(x+190,y+238,175,"Copy terrain fields");
-		graphics().drawString("Mode: "+mode+" | session sequence "+nextSequence,x+10,y+278,0xbdbdbd,1);
+		graphics().drawString("Mutation controls unavailable until client/server parity is proven.",x+10,y+260,0xff981f,1);
+		button(x+10,y+275,170,"Inspect player tile");button(x+190,y+275,175,"Copy terrain fields");
+		graphics().drawString("Mode: "+mode+" | session sequence "+nextSequence,x+10,y+321,0xbdbdbd,1);
 	}
 	private void button(int x,int y,int w,String text){graphics().drawBoxAlpha(x,y,w,23,0x333333,220);graphics().drawBoxBorder(x,w,y,23,0);graphics().drawString(text,x+6,y+16,0xffffff,2);}
 	private static String diagonal(int v){if(v>0&&v<12000)return "def "+(v-1)+" NW-SE";if(v>12000&&v<24000)return "def "+(v-12001)+" NE-SW";return "none";}
