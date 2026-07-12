@@ -522,7 +522,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 							handleProjectileClipAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);
 						}
 						if (o.getGameObjectDef().getType() == 1) {
-							getTile(x, y).traversalMask |= CollisionFlag.FULL_BLOCK_C;
+							getTile(x, y).addBlockingScenery();
 						} else if (dir == 0) {
 							getTile(x, y).traversalMask |= CollisionFlag.WALL_EAST;
 							if (getTile(x - 1, y) != null)
@@ -799,7 +799,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 							resetProjectileAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);
 						}
 						if (o.getGameObjectDef().getType() == 1) {
-							getTile(x, y).traversalMask &= 0xffbf;
+							getTile(x, y).removeBlockingScenery();
 						} else if (dir == 0) {
 							getTile(x, y).traversalMask &= 0xfffd;
 							getTile(x - 1, y).traversalMask &= 65535 - 8;

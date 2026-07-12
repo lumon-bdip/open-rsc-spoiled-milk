@@ -11,6 +11,21 @@ public class TileValue {
 	public byte elevation = 0;
 	public boolean projectileAllowed = false;
 	public boolean originalProjectileAllowed = false;
+	private boolean terrainBlocked = false;
+	private int blockingSceneryCount = 0;
+
+	public void setTerrainBlocked(boolean blocked) {
+		terrainBlocked=blocked;
+		refreshFullBlock();
+	}
+	public boolean isTerrainBlocked(){return terrainBlocked;}
+	public void addBlockingScenery(){blockingSceneryCount++;refreshFullBlock();}
+	public void removeBlockingScenery(){if(blockingSceneryCount>0)blockingSceneryCount--;refreshFullBlock();}
+	public int getBlockingSceneryCount(){return blockingSceneryCount;}
+	private void refreshFullBlock(){
+		if(terrainBlocked||blockingSceneryCount>0)traversalMask|=CollisionFlag.FULL_BLOCK_C;
+		else traversalMask&=~CollisionFlag.FULL_BLOCK_C;
+	}
 
 	@Override
 	public String toString() {
@@ -23,6 +38,8 @@ public class TileValue {
 			", elevation=" + elevation +
 			", projectileAllowed=" + projectileAllowed +
 			", originalProjectileAllowed=" + originalProjectileAllowed +
+			", terrainBlocked=" + terrainBlocked +
+			", blockingSceneryCount=" + blockingSceneryCount +
 			'}';
 	}
 
@@ -34,6 +51,8 @@ public class TileValue {
 				this.verticalWallVal == other.verticalWallVal &&
 				this.elevation == other.elevation &&
 				this.projectileAllowed == other.projectileAllowed &&
-				this.originalProjectileAllowed == other.originalProjectileAllowed;
+				this.originalProjectileAllowed == other.originalProjectileAllowed &&
+				this.terrainBlocked == other.terrainBlocked &&
+				this.blockingSceneryCount == other.blockingSceneryCount;
 	}
 }

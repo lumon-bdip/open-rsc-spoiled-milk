@@ -3,5 +3,6 @@ import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.struct.AbstractStruct;
 public final class WorldEditorRequestStruct extends AbstractStruct<OpcodeIn> {
 	public int type, sequence, x, y, plane, entityId, direction, objectType;
+	public int fieldMask, elevation, groundTexture, groundOverlay;
 	public long sessionId;
 }

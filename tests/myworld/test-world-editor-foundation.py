@@ -41,14 +41,16 @@ class WorldEditorFoundationTest(unittest.TestCase):
                     index = (x % 48) * 48 + (base_y % 48)
                     self.assertEqual(10, len(raw[index * 10:index * 10 + 10]))
 
-    def test_gate_and_protocol_are_read_only_by_construction(self):
+    def test_gate_and_authoritative_protocol_guards_are_present(self):
         config = (ROOT / "server/src/com/openrsc/server/ServerConfiguration.java").read_text()
         self.assertIn('tryReadBool("allow_in_game_world_editor").orElse(false)', config)
         for path in (ROOT / "server/myworld.conf", ROOT / "server/myworld-host.conf"):
             self.assertRegex(path.read_text(), r"allow_in_game_world_editor:\s*false")
         incoming = (ROOT / "server/src/com/openrsc/server/net/rsc/handlers/WorldEditorHandler.java").read_text()
-        self.assertNotRegex(incoming.lower(), r"\b(paint|place|delete|rotate|save|publish)\b")
-        self.assertIn("Unsupported read-only editor operation", incoming)
+        self.assertLess(incoming.index("ALLOW_IN_GAME_WORLD_EDITOR"), incoming.index("paintTerrain(request"))
+        self.assertLess(incoming.index("validate(player"), incoming.index("paintTerrain(request"))
+        self.assertNotRegex(incoming.lower(), r"\b(save|publish)\b")
+        self.assertIn("Unsupported editor operation", incoming)
 
     def test_desktop_shell_and_session_guards_are_present(self):
         ui = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java").read_text()
@@ -68,7 +70,7 @@ class WorldEditorFoundationTest(unittest.TestCase):
         self.assertIn("Last clicked tile", ui)
         self.assertIn("Brush: inactive at", ui)
         self.assertIn("Teleport to coordinates", ui)
-        self.assertIn("Reserved for a later editor phase", ui)
+        self.assertIn("Terrain paint - one tile", ui)
         client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
         self.assertIn("setWorldEditorNavigateClickTeleport", client)
         self.assertIn("worldEditorTeleport", client)
@@ -119,6 +121,31 @@ class WorldEditorFoundationTest(unittest.TestCase):
         ):
             self.assertIn(action, actions)
         self.assertIn('" radius="+radius', handler)
+
+    def test_terrain_t1_is_bounded_server_authoritative_and_unsaved(self):
+        ui = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java").read_text()
+        client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
+        world = (ROOT / "Client_Base/src/orsc/graphics/three/World.java").read_text()
+        parser = (ROOT / "server/src/com/openrsc/server/net/rsc/parsers/impl/PayloadCustomParser.java").read_text()
+        sessions = (ROOT / "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java").read_text()
+        collision = (ROOT / "server/src/com/openrsc/server/model/world/region/TileValue.java").read_text()
+
+        self.assertIn("editor.type == 5 ? 22", parser)
+        self.assertIn("fieldMask<=0||(fieldMask&~7)!=0", sessions)
+        self.assertIn("TERRAIN_DRAFT_LIMIT = 4096", sessions)
+        self.assertIn("terrainDraft.remove(key)", sessions)
+        self.assertIn("unsaved server draft", (ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java").read_text())
+        self.assertIn("paintElevation?1:0", ui)
+        self.assertIn("paintFloorColor?2:0", ui)
+        self.assertIn("paintFloorTexture?4:0", ui)
+        self.assertIn("saving is disabled in T1", ui)
+        self.assertIn("WORLD_EDITOR_PAINT_TERRAIN(100)", (ROOT / "Client_Base/src/orsc/enumerations/MenuItemAction.java").read_text())
+        self.assertIn("applyWorldEditorTerrainPatch", client)
+        self.assertIn("worldEditorTerrainRevision", world)
+        self.assertIn("-editor-", world)
+        self.assertIn("terrainBlocked||blockingSceneryCount>0", collision)
+        self.assertNotIn("undo", ui.lower())
+        self.assertNotIn("redo", ui.lower())
 
 if __name__ == "__main__":
     unittest.main()

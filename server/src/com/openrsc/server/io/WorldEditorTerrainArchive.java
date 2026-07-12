@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-/** Read-only access to the exact 10-byte landscape records used by the server. */
+	/** Access to immutable snapshots of the exact 10-byte landscape records used by the server. */
 public final class WorldEditorTerrainArchive implements AutoCloseable {
 	public static final int REGION_SIZE = 48;
 	private static final int CACHE_LIMIT = 16;
@@ -68,6 +68,24 @@ public final class WorldEditorTerrainArchive implements AutoCloseable {
 			this.coordinates=coordinates; elevation=tile.getGroundElevation(); groundTexture=tile.getGroundTexture();
 			groundOverlay=tile.getGroundOverlay(); roofTexture=tile.getRoofTexture(); horizontalWall=tile.getHorizontalWall();
 			verticalWall=tile.getVerticalWall(); diagonal=tile.getDiagonalWalls();
+		}
+		private Snapshot(Coordinates coordinates, int elevation, int groundTexture, int groundOverlay,
+			int roofTexture, int horizontalWall, int verticalWall, int diagonal) {
+			this.coordinates=coordinates; this.elevation=elevation; this.groundTexture=groundTexture;
+			this.groundOverlay=groundOverlay; this.roofTexture=roofTexture; this.horizontalWall=horizontalWall;
+			this.verticalWall=verticalWall; this.diagonal=diagonal;
+		}
+		public Snapshot paint(int fieldMask, int newElevation, int newGroundTexture, int newGroundOverlay) {
+			return new Snapshot(coordinates,
+				(fieldMask & 1) != 0 ? newElevation : elevation,
+				(fieldMask & 2) != 0 ? newGroundTexture : groundTexture,
+				(fieldMask & 4) != 0 ? newGroundOverlay : groundOverlay,
+				roofTexture,horizontalWall,verticalWall,diagonal);
+		}
+		public boolean sameRawTile(Snapshot other) {
+			return other != null && elevation==other.elevation && groundTexture==other.groundTexture
+				&& groundOverlay==other.groundOverlay && roofTexture==other.roofTexture
+				&& horizontalWall==other.horizontalWall && verticalWall==other.verticalWall && diagonal==other.diagonal;
 		}
 		public int diagonalDefinitionId() {
 			if (diagonal > 0 && diagonal < 12000) return diagonal - 1;

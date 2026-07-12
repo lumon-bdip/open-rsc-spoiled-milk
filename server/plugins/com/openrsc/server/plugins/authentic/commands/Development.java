@@ -658,7 +658,7 @@ public final class Development implements CommandTrigger {
 		WorldEditorStruct out = new WorldEditorStruct();
 		out.type = 1; out.sessionId = result.sessionId; out.sequence = result.nextSequence;
 		ActionSender.sendWorldEditor(player, out);
-		player.message(messagePrefix + "Read-only world editor session opened. Painting is disabled.");
+		player.message(messagePrefix + "World editor session opened. Terrain painting uses an unsaved server draft.");
 	}
 
 	private void createNpc(Player player, String command, String[] args) {

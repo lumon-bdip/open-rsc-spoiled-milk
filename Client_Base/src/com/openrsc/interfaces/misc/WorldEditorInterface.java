@@ -27,11 +27,15 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private int lastClickedX=-1,lastClickedY=-1,brushX=-1,brushY=-1;
 	private String teleportX="",teleportY="";
 	private int coordinateFocus=0;
+	private boolean replaceFocusedText=false;
 	private boolean clickTeleportPreferred=false;
 	private SceneryTool sceneryTool=SceneryTool.PLACE;
 	private NpcTool npcTool=NpcTool.PLACE;
 	private int sceneryId=0,npcId=0,npcRadius=0;
 	private String sceneryIdText="0",npcIdText="0",npcRadiusText="0";
+	private boolean paintElevation=false,paintFloorColor=true,paintFloorTexture=false;
+	private int terrainElevation=0,terrainFloorColor=0,terrainFloorTexture=0;
+	private String terrainElevationText="0",terrainFloorColorText="0",terrainFloorTextureText="0";
 	private int dragX=-1,dragY=-1;
 
 	public WorldEditorInterface(mudclient client) {
@@ -52,6 +56,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	public boolean isEditorOpen(){return isVisible()&&sessionId!=0;}
 	public boolean isInspecting(){return isEditorOpen()&&mode==Mode.INSPECT;}
 	public boolean isNavigating(){return isEditorOpen()&&mode==Mode.NAVIGATE;}
+	public boolean isTerrainPainting(){return isEditorOpen()&&mode==Mode.TERRAIN;}
 	public boolean isSceneryPlacing(){return isEditorOpen()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.PLACE;}
 	public boolean isSceneryRotating(){return isEditorOpen()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.ROTATE;}
 	public boolean isSceneryRemoving(){return isEditorOpen()&&mode==Mode.SCENERY&&sceneryTool==SceneryTool.REMOVE;}
@@ -88,24 +93,44 @@ public final class WorldEditorInterface extends NCustomComponent {
 		inspectionDetails=lines.toArray(new String[lines.size()]);
 		if(copied||copyNextInspection)copyInspected();copyNextInspection=false;
 	}
+	public void acceptTerrainPaint(int sequence,int x,int y,int plane,int sx,int sy,int lx,int ly,int elev,int texture,int overlay,int roof,int hwall,int vwall,int diag,int collision,boolean projectile,String definitions){
+		showTerrain(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hwall,vwall,diag,collision,projectile,false,definitions);
+		inspectionStatus="Paint accepted at "+x+","+y+" (unsaved draft)";
+		mc.applyWorldEditorTerrainPatch(x,y,plane,elev,texture,overlay);
+	}
 	public int[] getCopiedTerrainFields(){return copiedTerrainFields==null?null:copiedTerrainFields.clone();}
 	public void inspectTerrain(int worldX,int worldY,boolean copy){recordWorldClick(worldX,worldY);send(2,worldX,worldY,Math.floorDiv(worldY,944),0,0,copy?1:0);}
+	public void paintTerrain(int worldX,int worldY){
+		recordWorldClick(worldX,worldY);int mask=(paintElevation?1:0)|(paintFloorColor?2:0)|(paintFloorTexture?4:0);
+		if(mask==0){showError("Select at least one terrain field to paint.");return;}if(!isTerrainPainting())return;
+		mc.packetHandler.getClientStream().newPacket(152);mc.packetHandler.getClientStream().bufferBits.putByte(5);
+		mc.packetHandler.getClientStream().bufferBits.putLong(sessionId);mc.packetHandler.getClientStream().bufferBits.putInt(nextSequence);
+		mc.packetHandler.getClientStream().bufferBits.putShort(worldX);mc.packetHandler.getClientStream().bufferBits.putShort(worldY);
+		mc.packetHandler.getClientStream().bufferBits.putByte(Math.floorDiv(worldY,944));mc.packetHandler.getClientStream().bufferBits.putByte(mask);
+		mc.packetHandler.getClientStream().bufferBits.putByte(terrainElevation);mc.packetHandler.getClientStream().bufferBits.putByte(terrainFloorColor);
+		mc.packetHandler.getClientStream().bufferBits.putByte(terrainFloorTexture);mc.packetHandler.getClientStream().finishPacket();
+	}
 	public void inspectObject(int worldX,int worldY,int id,int direction,int type){inspectObject(worldX,worldY,id,direction,type,false);}
 	public void inspectObject(int worldX,int worldY,int id,int direction,int type,boolean copy){recordWorldClick(worldX,worldY);copyNextInspection=copy;send(3,worldX,worldY,Math.floorDiv(worldY,944),id,direction,type);}
 	public void inspectNpc(int serverIndex){inspectNpc(serverIndex,false);}
 	public void inspectNpc(int serverIndex,boolean copy){copyNextInspection=copy;send(4,0,0,0,serverIndex,0,0);}
 	public void copyInspected(){
 		if(inspectionKind.isEmpty())return;copiedInspectionKind=inspectionKind;copiedInspectionDetails=inspectionDetails.clone();
-		if("Terrain".equals(inspectionKind)&&inspectedTerrainFields!=null)copiedTerrainFields=inspectedTerrainFields.clone();
+		if("Terrain".equals(inspectionKind)&&inspectedTerrainFields!=null){copiedTerrainFields=inspectedTerrainFields.clone();seedTerrain(inspectedTerrainFields[0],inspectedTerrainFields[1],inspectedTerrainFields[2]);}
 		if("Scenery".equals(inspectionKind)){int id=valueAfter(join(inspectionDetails),"id=");if(id>=0)setSceneryId(id);}
 		if("NPC".equals(inspectionKind)){String text=join(inspectionDetails);int id=valueAfter(text,"id="),radius=valueAfter(text,"radius=");if(id>=0)setNpcId(id);if(radius>=0)setNpcRadius(radius);}
 		inspectionStatus="Copied "+inspectionKind.toLowerCase()+" inspection into its editor selection";
 	}
 
-	private void selectMode(Mode selected){mode=selected;coordinateFocus=0;mc.setWorldEditorNavigateClickTeleport(mode==Mode.NAVIGATE&&clickTeleportPreferred);}
+	private void selectMode(Mode selected){mode=selected;coordinateFocus=0;replaceFocusedText=false;mc.setWorldEditorNavigateClickTeleport(mode==Mode.NAVIGATE&&clickTeleportPreferred);}
 	private void setSceneryId(int id){sceneryId=Math.max(0,Math.min(id,EntityHandler.objectCount()-1));sceneryIdText=String.valueOf(sceneryId);}
 	private void setNpcId(int id){npcId=Math.max(0,Math.min(id,EntityHandler.npcs.size()-1));npcIdText=String.valueOf(npcId);}
 	private void setNpcRadius(int radius){npcRadius=Math.max(0,Math.min(radius,64));npcRadiusText=String.valueOf(npcRadius);}
+	private void setTerrainElevation(int value){terrainElevation=rawByte(value);terrainElevationText=String.valueOf(terrainElevation);}
+	private void setTerrainFloorColor(int value){terrainFloorColor=rawByte(value);terrainFloorColorText=String.valueOf(terrainFloorColor);}
+	private void setTerrainFloorTexture(int value){terrainFloorTexture=rawByte(value);terrainFloorTextureText=String.valueOf(terrainFloorTexture);}
+	private void seedTerrain(int elevation,int color,int texture){setTerrainElevation(elevation);setTerrainFloorColor(color);setTerrainFloorTexture(texture);}
+	private static int rawByte(int value){return Math.max(0,Math.min(value,255));}
 	private void teleportToFields(){
 		try{int x=Integer.parseInt(teleportX),y=Integer.parseInt(teleportY);if(x<0||x>32767||y<0||y>32767)throw new NumberFormatException();
 			recordWorldClick(x,y);mc.worldEditorTeleport(x,y);
@@ -121,18 +146,21 @@ public final class WorldEditorInterface extends NCustomComponent {
 
 	private boolean handleKey(char c,int key){
 		if(coordinateFocus==0)return false;
-		String value=coordinateFocus==1?teleportX:coordinateFocus==2?teleportY:coordinateFocus==3?sceneryIdText:coordinateFocus==4?npcIdText:npcRadiusText;
-		if(key==8&&value.length()>0)value=value.substring(0,value.length()-1);
-		else if(key==9){coordinateFocus=coordinateFocus==1?2:coordinateFocus==2?1:coordinateFocus;return true;}
+		String value=focusedText();
+		if(key==8){if(replaceFocusedText)value="";else if(value.length()>0)value=value.substring(0,value.length()-1);replaceFocusedText=false;}
+		else if(key==9){coordinateFocus=coordinateFocus==1?2:coordinateFocus==2?1:coordinateFocus;replaceFocusedText=true;return true;}
 		else if((key==10||key==13)&&!value.isEmpty()){applyFocusedValue(value);return true;}
-		else if(c>='0'&&c<='9'&&value.length()<5)value+=c;
+		else if(c>='0'&&c<='9'&&(replaceFocusedText||value.length()<5)){value=replaceFocusedText?String.valueOf(c):value+c;replaceFocusedText=false;}
 		else return true;
-		if(coordinateFocus==1)teleportX=value;else if(coordinateFocus==2)teleportY=value;else if(coordinateFocus==3)sceneryIdText=value;else if(coordinateFocus==4)npcIdText=value;else npcRadiusText=value;return true;
+		setFocusedText(value);return true;
 	}
 	private void applyFocusedValue(String value){
-		try{int parsed=Integer.parseInt(value);if(coordinateFocus==1||coordinateFocus==2){teleportToFields();return;}if(coordinateFocus==3)setSceneryId(parsed);else if(coordinateFocus==4)setNpcId(parsed);else setNpcRadius(parsed);}
+		try{int parsed=Integer.parseInt(value);if(coordinateFocus==1||coordinateFocus==2){teleportToFields();return;}if(coordinateFocus==3)setSceneryId(parsed);else if(coordinateFocus==4)setNpcId(parsed);else if(coordinateFocus==5)setNpcRadius(parsed);else if(coordinateFocus==6)setTerrainElevation(parsed);else if(coordinateFocus==7)setTerrainFloorColor(parsed);else setTerrainFloorTexture(parsed);}
 		catch(NumberFormatException ignored){}coordinateFocus=0;
 	}
+	private String focusedText(){switch(coordinateFocus){case 1:return teleportX;case 2:return teleportY;case 3:return sceneryIdText;case 4:return npcIdText;case 5:return npcRadiusText;case 6:return terrainElevationText;case 7:return terrainFloorColorText;default:return terrainFloorTextureText;}}
+	private void setFocusedText(String value){switch(coordinateFocus){case 1:teleportX=value;break;case 2:teleportY=value;break;case 3:sceneryIdText=value;break;case 4:npcIdText=value;break;case 5:npcRadiusText=value;break;case 6:terrainElevationText=value;break;case 7:terrainFloorColorText=value;break;default:terrainFloorTextureText=value;}}
+	private void focusNumber(int focus){coordinateFocus=focus;replaceFocusedText=true;}
 	private boolean handleMouse(int mx,int my,int down,int click){
 		if(!isVisible())return false;int rx=mx-getX(),ry=my-getY();
 		if(down==1&&ry>=0&&ry<24){if(dragX<0){dragX=rx;dragY=ry;}else setLocation(Math.max(0,mx-dragX),Math.max(0,my-dragY));}else{dragX=dragY=-1;}
@@ -141,24 +169,29 @@ public final class WorldEditorInterface extends NCustomComponent {
 			if(ry>=30&&ry<50){selectMode(Mode.values()[Math.min(4,Math.max(0,rx/78))]);return true;}
 			if(mode==Mode.NAVIGATE){
 				if(ry>=150&&ry<172){clickTeleportPreferred=!clickTeleportPreferred;mc.setWorldEditorNavigateClickTeleport(clickTeleportPreferred);return true;}
-				if(ry>=197&&ry<221&&rx>=45&&rx<145){coordinateFocus=1;return true;}
-				if(ry>=197&&ry<221&&rx>=180&&rx<280){coordinateFocus=2;return true;}
+				if(ry>=197&&ry<221&&rx>=45&&rx<145){focusNumber(1);return true;}
+				if(ry>=197&&ry<221&&rx>=180&&rx<280){focusNumber(2);return true;}
 				if(ry>=197&&ry<221&&rx>=295&&rx<375){coordinateFocus=0;teleportToFields();return true;}
 			}
 			if(mode==Mode.INSPECT&&ry>=276&&ry<300&&rx>=10&&rx<175&&!inspectionKind.isEmpty()){copyInspected();return true;}
+			if(mode==Mode.TERRAIN){
+				if(ry>=82&&ry<106){if(rx>=10&&rx<30)paintElevation=!paintElevation;else if(rx>=150&&rx<178)setTerrainElevation(terrainElevation-1);else if(rx>=185&&rx<265)focusNumber(6);else if(rx>=272&&rx<300)setTerrainElevation(terrainElevation+1);return true;}
+				if(ry>=122&&ry<146){if(rx>=10&&rx<30)paintFloorColor=!paintFloorColor;else if(rx>=150&&rx<178)setTerrainFloorColor(terrainFloorColor-1);else if(rx>=185&&rx<265)focusNumber(7);else if(rx>=272&&rx<300)setTerrainFloorColor(terrainFloorColor+1);return true;}
+				if(ry>=162&&ry<186){if(rx>=10&&rx<30)paintFloorTexture=!paintFloorTexture;else if(rx>=150&&rx<178)setTerrainFloorTexture(terrainFloorTexture-1);else if(rx>=185&&rx<265)focusNumber(8);else if(rx>=272&&rx<300)setTerrainFloorTexture(terrainFloorTexture+1);return true;}
+			}
 			if(mode==Mode.SCENERY){
 				if(ry>=86&&ry<110&&rx>=10&&rx<38){setSceneryId(sceneryId-1);return true;}
-				if(ry>=86&&ry<110&&rx>=45&&rx<125){coordinateFocus=3;return true;}
+				if(ry>=86&&ry<110&&rx>=45&&rx<125){focusNumber(3);return true;}
 				if(ry>=86&&ry<110&&rx>=132&&rx<160){setSceneryId(sceneryId+1);return true;}
 				if(ry>=145&&ry<169){if(rx>=10&&rx<105)sceneryTool=SceneryTool.PLACE;else if(rx>=112&&rx<207)sceneryTool=SceneryTool.ROTATE;else if(rx>=214&&rx<309)sceneryTool=SceneryTool.REMOVE;return true;}
 				if(ry>=276&&ry<300&&rx>=10&&rx<175){mc.sendCommandString("saveworldedits");return true;}
 			}
 			if(mode==Mode.NPC){
 				if(ry>=86&&ry<110&&rx>=10&&rx<38){setNpcId(npcId-1);return true;}
-				if(ry>=86&&ry<110&&rx>=45&&rx<125){coordinateFocus=4;return true;}
+				if(ry>=86&&ry<110&&rx>=45&&rx<125){focusNumber(4);return true;}
 				if(ry>=86&&ry<110&&rx>=132&&rx<160){setNpcId(npcId+1);return true;}
 				if(ry>=145&&ry<169&&rx>=10&&rx<38){setNpcRadius(npcRadius-1);return true;}
-				if(ry>=145&&ry<169&&rx>=45&&rx<125){coordinateFocus=5;return true;}
+				if(ry>=145&&ry<169&&rx>=45&&rx<125){focusNumber(5);return true;}
 				if(ry>=145&&ry<169&&rx>=132&&rx<160){setNpcRadius(npcRadius+1);return true;}
 				if(ry>=190&&ry<214){if(rx>=10&&rx<105)npcTool=NpcTool.PLACE;else if(rx>=112&&rx<207)npcTool=NpcTool.REMOVE;return true;}
 				if(ry>=276&&ry<300&&rx>=10&&rx<175){mc.sendCommandString("saveworldedits");return true;}
@@ -173,7 +206,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		graphics().drawBoxAlpha(x,y,390,330,0x24190c,235);graphics().drawBoxBorder(x,390,y,330,0);graphics().drawBoxAlpha(x,y,390,24,0x4a3620,255);
 		graphics().drawString("World Editor",x+8,y+17,0xffff00,2);graphics().drawString("X",x+372,y+17,0xffffff,2);
 		for(int i=0;i<TABS.length;i++){graphics().drawBoxAlpha(x+i*78,y+30,77,20,mode.ordinal()==i?0x6b8e23:0x333333,220);graphics().drawString(TABS[i],x+i*78+6,y+44,0xffffff,2);}
-		if(mode==Mode.NAVIGATE)renderNavigate(x,y);else if(mode==Mode.INSPECT)renderInspect(x,y);else if(mode==Mode.SCENERY)renderScenery(x,y);else if(mode==Mode.NPC)renderNpc(x,y);else renderFutureMode(x,y);
+		if(mode==Mode.NAVIGATE)renderNavigate(x,y);else if(mode==Mode.INSPECT)renderInspect(x,y);else if(mode==Mode.TERRAIN)renderTerrain(x,y);else if(mode==Mode.SCENERY)renderScenery(x,y);else renderNpc(x,y);
 		graphics().drawString("Mode: "+mode+" | session sequence "+nextSequence,x+10,y+321,0xbdbdbd,1);
 	}
 	private void renderNavigate(int x,int y){
@@ -194,11 +227,22 @@ public final class WorldEditorInterface extends NCustomComponent {
 		graphics().drawString("Right-click targets to inspect or copy authoritative data.",x+10,y+263,0xff981f,1);
 		button(x+10,y+276,165,inspectionKind.isEmpty()?"Copy inspected (empty)":"Copy inspected");
 	}
-	private void renderFutureMode(int x,int y){
-		graphics().drawString(TABS[mode.ordinal()]+" editing",x+10,y+70,0xffff00,2);
-		graphics().drawString("Reserved for a later editor phase.",x+10,y+96,0xffffff,2);
-		graphics().drawString("No editable fields or mutation controls are enabled.",x+10,y+118,0xff981f,1);
-		if(!copiedInspectionKind.isEmpty())graphics().drawString("Copied "+copiedInspectionKind+" data is ready for this future editor.",x+10,y+146,0xbdbdbd,1);
+	private void renderTerrain(int x,int y){
+		graphics().drawString("Terrain paint - one tile",x+10,y+70,0xffff00,2);
+		terrainField(x,y+82,"Elevation",paintElevation,terrainElevationText,coordinateFocus==6);
+		terrainField(x,y+122,"Floor Color",paintFloorColor,terrainFloorColorText,coordinateFocus==7);
+		terrainField(x,y+162,"Floor Texture",paintFloorTexture,terrainFloorTextureText,coordinateFocus==8);
+		graphics().drawString(floorTextureDescription(),x+10,y+211,0xbdbdbd,1);
+		graphics().drawString("Click terrain to paint checked fields at "+point(brushX,brushY)+".",x+10,y+235,0xffffff,2);
+		graphics().drawString("Copy inspected fills values without changing the checkboxes.",x+10,y+257,0xff981f,1);
+		graphics().drawString("Server-authoritative draft only; saving is disabled in T1.",x+10,y+278,0xff981f,1);
+		graphics().drawString(inspectionStatus,x+10,y+299,0xbdbdbd,1);
+	}
+	private void terrainField(int x,int y,String label,boolean enabled,String value,boolean focused){checkbox(x+10,y,enabled,label);button(x+150,y,28,"-");textField(x+185,y,80,value,focused);button(x+272,y,28,"+");}
+	private String floorTextureDescription(){
+		if(terrainFloorTexture==0)return "Floor Texture 0: none (base Floor Color is visible).";
+		if(terrainFloorTexture==250)return "Floor Texture 250: bridge transition sentinel.";
+		try{return "Floor Texture "+terrainFloorTexture+": "+(EntityHandler.getTileDef(terrainFloorTexture-1).getObjectType()!=0?"blocking":"walkable")+" definition.";}catch(Exception e){return "Floor Texture "+terrainFloorTexture+": undefined and will be rejected.";}
 	}
 	private void renderScenery(int x,int y){
 		graphics().drawString("Scenery editing",x+10,y+70,0xffff00,2);

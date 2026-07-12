@@ -10664,6 +10664,8 @@ public final class mudclient implements Runnable {
 						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_INSPECT_TERRAIN, "Inspect terrain", this.world.faceTileZ[var2]);
 						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_COPY_TERRAIN, "Copy terrain data", this.world.faceTileZ[var2]);
 					}
+					if (worldEditorInterface != null && worldEditorInterface.isTerrainPainting())
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2],"",MenuItemAction.WORLD_EDITOR_PAINT_TERRAIN,"Paint terrain",this.world.faceTileZ[var2]);
 					if (worldEditorInterface != null && worldEditorInterface.isSceneryPlacing())
 						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2],"",MenuItemAction.WORLD_EDITOR_PLACE_SCENERY,"Place "+EntityHandler.getObjectDef(worldEditorInterface.getSceneryId()).getName(),this.world.faceTileZ[var2]);
 					if (worldEditorInterface != null && worldEditorInterface.isNpcPlacing())
@@ -18008,6 +18010,7 @@ public final class mudclient implements Runnable {
 				}
 				case WORLD_EDITOR_INSPECT_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,false); break; }
 				case WORLD_EDITOR_COPY_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,true); break; }
+				case WORLD_EDITOR_PAINT_TERRAIN: { worldEditorInterface.paintTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ); break; }
 				case WORLD_EDITOR_INSPECT_OBJECT: { worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0); break; }
 				case WORLD_EDITOR_COPY_OBJECT: { worldEditorInterface.selectScenery(tileID);worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0,true); break; }
 				case WORLD_EDITOR_INSPECT_NPC: {
@@ -22764,6 +22767,17 @@ public final class mudclient implements Runnable {
 		this.packetHandler.getClientStream().bufferBits.putShort(worldX);
 		this.packetHandler.getClientStream().bufferBits.putShort(worldY);
 		this.packetHandler.getClientStream().finishPacket();
+	}
+
+	public void applyWorldEditorTerrainPatch(int worldX,int worldY,int plane,int elevation,int groundTexture,int groundOverlay){
+		if(world==null)return;
+		world.applyWorldEditorTerrainPatch(plane,worldX+worldOffsetX,worldY+worldOffsetZ,elevation,groundTexture,groundOverlay);
+		if(!hasCompletedInitialRegionLoad||localPlayer==null||plane!=requestedPlane)return;
+		int activeWorldX=activeRegionCenterWorldTile(midRegionBaseX,worldOffsetX);
+		int activeWorldZ=activeRegionCenterWorldTile(midRegionBaseZ,worldOffsetZ);
+		world.loadSections(activeWorldX,activeWorldZ,requestedPlane);
+		rematerializeLoadedTerrainSceneryAfterWorldReload();
+		world.playerAlive=true;
 	}
 
 	private void handleDevClickTeleportCommand(String commandText) {

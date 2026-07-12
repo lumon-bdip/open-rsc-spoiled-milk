@@ -90,7 +90,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_OPENPK_POINTS, 148); // custom
 		put(OpcodeOut.SEND_FRIEND_UPDATE, 149);
 		put(OpcodeOut.SEND_BANK_PRESET, 150); // custom
-		put(OpcodeOut.SEND_WORLD_EDITOR, 151); // custom, versioned read-only editor envelope
+		put(OpcodeOut.SEND_WORLD_EDITOR, 151); // custom, versioned editor envelope
 		put(OpcodeOut.SEND_EQUIPMENT_STATS, 153);
 		put(OpcodeOut.SEND_STATS, 156);
 		put(OpcodeOut.SEND_STAT, 159);
@@ -151,7 +151,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					builder.writeInt(editor.sequence);
 					if (editor.type == 1) {
 						builder.writeLong(editor.sessionId);
-					} else if (editor.type == 3) {
+					} else if (editor.type == 3 || editor.type == 7) {
 						builder.writeShort(editor.x); builder.writeShort(editor.y); builder.writeByte((byte) editor.plane);
 						builder.writeShort(editor.sectorX); builder.writeShort(editor.sectorY);
 						builder.writeByte((byte) editor.localX); builder.writeByte((byte) editor.localY);

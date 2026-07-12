@@ -14,6 +14,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -70,6 +71,10 @@ public final class World {
 	private final Object roofModelInputCacheLock = new Object();
 	private final Object worldModelProductCacheLock = new Object();
 	private final Object tileArchiveLock = new Object();
+	private final Object worldEditorTerrainPatchLock = new Object();
+	private final Map<String, Map<Integer, TerrainPatch>> worldEditorTerrainPatches =
+		new HashMap<String, Map<Integer, TerrainPatch>>();
+	private volatile long worldEditorTerrainRevision = 0L;
 	private final Map<String, Sector> sectorTemplateCache = Collections.synchronizedMap(
 		new LinkedHashMap<String, Sector>(SECTOR_CACHE_LIMIT, 0.75F, true) {
 			@Override
@@ -2684,7 +2689,9 @@ public final class World {
 		int originY = sectionY - ACTIVE_SECTION_ORIGIN_OFFSET;
 		for (int y = 0; y < ACTIVE_SECTION_GRID; y++) {
 			for (int x = 0; x < ACTIVE_SECTION_GRID; x++) {
-				window[y * ACTIVE_SECTION_GRID + x] = loadSectorTemplate(height, originX + x, originY + y).copy();
+				int sectorX=originX+x,sectorY=originY+y;
+				window[y * ACTIVE_SECTION_GRID + x] = loadSectorTemplate(height,sectorX,sectorY).copy();
+				applyWorldEditorTerrainPatches(window[y * ACTIVE_SECTION_GRID + x],height,sectorX,sectorY);
 			}
 		}
 		applyBridgeDecorations(window);
@@ -2732,7 +2739,7 @@ public final class World {
 	}
 
 	private String sectionWindowKey(int height, int sectionX, int sectionY) {
-		return sectorFilename(height, sectionX, sectionY) + "-window";
+		return sectorFilename(height, sectionX, sectionY) + "-editor-"+worldEditorTerrainRevision+"-window";
 	}
 
 	private String terrainModelInputKey(int height, int sectionX, int sectionY) {
@@ -3131,10 +3138,36 @@ public final class World {
 
 	private void loadWorldmapSection(int sector, int height, int sectionX, int sectionY) {
 		worldMapSector[sector] = loadSectorTemplate(height, sectionX, sectionY).copy();
+		applyWorldEditorTerrainPatches(worldMapSector[sector],height,sectionX,sectionY);
 	}
 
 	private void loadSection(int sector, int height, int sectionX, int sectionY) {
 		sectors[sector] = loadSectorTemplate(height, sectionX, sectionY).copy();
+		applyWorldEditorTerrainPatches(sectors[sector],height,sectionX,sectionY);
+	}
+
+	public void applyWorldEditorTerrainPatch(int plane,int archiveX,int archiveZ,int elevation,int groundTexture,int groundOverlay){
+		int sectionX=Math.floorDiv(archiveX,SECTION_SIZE),sectionY=Math.floorDiv(archiveZ,SECTION_SIZE);
+		int localX=Math.floorMod(archiveX,SECTION_SIZE),localZ=Math.floorMod(archiveZ,SECTION_SIZE);
+		String sector=sectorFilename(plane,sectionX,sectionY);
+		synchronized(worldEditorTerrainPatchLock){
+			Map<Integer,TerrainPatch> patches=worldEditorTerrainPatches.get(sector);
+			if(patches==null){patches=new HashMap<Integer,TerrainPatch>();worldEditorTerrainPatches.put(sector,patches);}
+			patches.put(localX*SECTION_SIZE+localZ,new TerrainPatch(localX,localZ,elevation,groundTexture,groundOverlay));
+			worldEditorTerrainRevision++;
+		}
+	}
+	private void applyWorldEditorTerrainPatches(Sector sector,int plane,int sectionX,int sectionY){
+		if(sector==null)return;Map<Integer,TerrainPatch> snapshot;
+		synchronized(worldEditorTerrainPatchLock){Map<Integer,TerrainPatch> stored=worldEditorTerrainPatches.get(sectorFilename(plane,sectionX,sectionY));if(stored==null||stored.isEmpty())return;snapshot=new HashMap<Integer,TerrainPatch>(stored);}
+		for(TerrainPatch patch:snapshot.values()){
+			com.openrsc.client.model.Tile tile=sector.getTile(patch.localX,patch.localZ);
+			tile.groundElevation=(byte)patch.elevation;tile.groundTexture=(byte)patch.groundTexture;tile.groundOverlay=(byte)patch.groundOverlay;
+		}
+	}
+	private static final class TerrainPatch{
+		final int localX,localZ,elevation,groundTexture,groundOverlay;
+		TerrainPatch(int x,int z,int e,int t,int o){localX=x;localZ=z;elevation=e;groundTexture=t;groundOverlay=o;}
 	}
 
 	private Sector loadSectorTemplate(int height, int sectionX, int sectionY) {

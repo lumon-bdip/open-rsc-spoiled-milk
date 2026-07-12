@@ -363,13 +363,14 @@ public class PacketHandler {
 		if(version!=1||mc.worldEditorInterface==null||Config.isAndroid())return;
 		if(type==1){mc.worldEditorInterface.open(packetsIncoming.getLong(0),sequence);return;}
 		if(type==2){mc.worldEditorInterface.closeFromServer();return;}
-		if(type==3){int x=packetsIncoming.getShort(),y=packetsIncoming.getShort(),plane=packetsIncoming.getByte()&0xff;
+		if(type==3||type==7){int x=packetsIncoming.getShort(),y=packetsIncoming.getShort(),plane=packetsIncoming.getByte()&0xff;
 			int sx=packetsIncoming.getShort(),sy=packetsIncoming.getShort(),lx=packetsIncoming.getByte()&0xff,ly=packetsIncoming.getByte()&0xff;
 			int elev=packetsIncoming.getByte()&0xff,texture=packetsIncoming.getByte()&0xff,overlay=packetsIncoming.getByte()&0xff,roof=packetsIncoming.getByte()&0xff;
 			int hw=packetsIncoming.getByte()&0xff,vw=packetsIncoming.getByte()&0xff,diag=packetsIncoming.get32(),collision=packetsIncoming.getShort()&0xffff;
 			boolean projectile=packetsIncoming.getByte()!=0,copied=packetsIncoming.getByte()!=0;
 			String definitions=packetsIncoming.readString();
-			mc.worldEditorInterface.showTerrain(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,copied,definitions);return;}
+			if(type==7)mc.worldEditorInterface.acceptTerrainPaint(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,definitions);
+			else mc.worldEditorInterface.showTerrain(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,copied,definitions);return;}
 		String message=packetsIncoming.readString();if(sequence>0)mc.worldEditorInterface.setSequence(sequence);
 		if(type==6)mc.worldEditorInterface.showError(message);else mc.worldEditorInterface.showInfo(type,message);
 	}

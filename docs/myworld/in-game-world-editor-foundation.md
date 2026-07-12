@@ -1,8 +1,9 @@
 # In-game world editor: foundation and entity tools
 
 Status: the inspection foundation is complete. Scenery and NPC editing delegate
-to the established administrator commands. Terrain painting, undo/redo, publish,
-and terrain patch replay remain intentionally unavailable.
+to the established administrator commands. Terrain T1 provides bounded,
+single-tile, server-authoritative draft painting. Durable terrain save/export,
+undo/redo, publish, and terrain patch replay remain intentionally unavailable.
 
 ## Raw terrain contract
 
@@ -44,8 +45,11 @@ scenery, and neighboring tiles; it must never be inferred from one raw field.
 ## Protocol and authorization
 
 - Client to server opcode 152 and server to client opcode 151 are reserved for
-  one versioned editor envelope. Version 1 has only close, terrain inspect/copy,
-  scenery inspect, and NPC inspect operations. It contains no mutation type.
+  one versioned editor envelope. Version 1 supports close, terrain inspect/copy,
+  scenery inspect, NPC inspect, and T1 terrain-paint operations. A paint request
+  carries one coordinate, a three-bit field mask, and the candidate elevation,
+  Floor Color, and Floor Texture values. The accepted response contains the
+  complete canonical terrain record; the client does not preview rejected data.
 - `allow_in_game_world_editor` defaults false and is explicitly false in both
   MyWorld configurations.
 - `::worldeditormode` is server authoritative. It requires the gate, an
@@ -72,7 +76,21 @@ diagonal wall definitions, and derived collision while retaining raw archive
 fields in the copied snapshot. Object and NPC results are resolved against the
 live authoritative world and labelled `runtime-authoritative`.
 
-Terrain remains a read-only placeholder. Scenery exposes an object-definition
+Terrain exposes three independently enabled raw-byte fields: Elevation, Floor
+Color, and Floor Texture. Copying an inspected terrain tile seeds all three
+values without changing which fields are enabled. T1 uses a one-tile brush and
+a low-priority-number Paint action. The server validates the feature gate,
+administrator, session ID, sequence, coordinate/plane agreement, field mask,
+byte ranges, and Floor Texture definition. Accepted records enter a coalesced,
+4,096-tile server-lifetime draft and update runtime elevation/overlay collision.
+Inspection reads through this draft. The client applies only the accepted full
+record, advances a terrain-cache revision so older background preload products
+cannot win, and rebuilds the active terrain and scenery. Terrain blocking and
+blocking-scenery counts are tracked separately so removing an overlay cannot
+erase scenery collision. T1 intentionally has no terrain Save control; a server
+restart discards the draft.
+
+Scenery exposes an object-definition
 selector with resolved name and Place, Rotate, and Remove tools. These tools are
 limited to type-0 scenery; boundary walls remain inspection-only. NPC exposes a
 definition selector with resolved name, a roam radius from 0 through 64, and

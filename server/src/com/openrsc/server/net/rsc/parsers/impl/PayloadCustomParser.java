@@ -490,7 +490,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case WORLD_EDITOR_REQUEST:
 				WorldEditorRequestStruct editor = new WorldEditorRequestStruct();
 				editor.type = packet.readByte() & 0xff;
-				int expectedEditorLength = editor.type == 1 ? 13 : editor.type == 2 ? 19 : editor.type == 3 ? 22 : editor.type == 4 ? 15 : -1;
+				int expectedEditorLength = editor.type == 1 ? 13 : editor.type == 2 ? 19 : editor.type == 3 ? 22 : editor.type == 4 ? 15 : editor.type == 5 ? 22 : -1;
 				if (packet.getLength() != expectedEditorLength) return null;
 				editor.sessionId = packet.readLong();
 				editor.sequence = packet.readInt();
@@ -501,6 +501,11 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
 					editor.entityId=packet.readShort(); editor.direction=packet.readByte()&0xff; editor.objectType=packet.readByte()&0xff;
 				} else if (editor.type == 4) editor.entityId=packet.readShort();
+				else if (editor.type == 5) {
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.fieldMask=packet.readByte()&0xff; editor.elevation=packet.readByte()&0xff;
+					editor.groundTexture=packet.readByte()&0xff; editor.groundOverlay=packet.readByte()&0xff;
+				}
 				result = editor;
 				break;
 			case COMBAT_STYLE_CHANGED:

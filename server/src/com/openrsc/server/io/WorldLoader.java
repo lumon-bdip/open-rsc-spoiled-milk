@@ -383,10 +383,8 @@ public class WorldLoader {
 				}
 
 				final byte groundOverlay = sectorTile.groundOverlay;
-				if (groundOverlay > 0
-					&& getWorld().getServer().getEntityHandler().getTileDef(groundOverlay - 1).getObjectType() != 0) {
-					tile.traversalMask |= 0x40; // 64
-				}
+				tile.setTerrainBlocked(groundOverlay > 0
+					&& getWorld().getServer().getEntityHandler().getTileDef(groundOverlay - 1).getObjectType() != 0);
 
 				final int verticalWall = sectorTile.verticalWall & 0xFF;
 				if (verticalWall > 0
