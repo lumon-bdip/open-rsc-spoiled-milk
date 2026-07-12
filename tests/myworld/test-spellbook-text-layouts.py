@@ -81,8 +81,10 @@ def main() -> None:
     require(settings, 'PROPERTY_KEY = "spellbook_layout"', "local preference key")
     require(settings, 'ICONS("icons", "@gre@Icons")', "icon default mode")
     require(settings, 'TEXT("text", "@yel@Text")', "text mode")
-    require(mudclient, "SpellbookLayoutSettings.loadFromClientSettings(loadClientSettings());",
-            "client preference load")
+    require(mudclient, "Properties clientSettings = loadClientSettings();",
+            "shared client preference load")
+    require(mudclient, "SpellbookLayoutSettings.loadFromClientSettings(clientSettings);",
+            "spellbook client preference load")
     require(mudclient, "SpellbookLayoutSettings.saveToClientSettings(props);",
             "client preference save")
     require(mudclient, '"@whi@Spellbook layout - " + SpellbookLayoutSettings.getMode().label, 65',
