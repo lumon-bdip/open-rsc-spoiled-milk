@@ -10428,8 +10428,12 @@ public final class mudclient implements Runnable {
 											this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Inspect editor data");
 										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
 											this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9], this.gameObjectInstanceX[var9],
-											this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Copy editor data");
-										}
+										this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Copy editor data");
+									}
+									if (worldEditorInterface != null && worldEditorInterface.isSceneryRotating())
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_ROTATE_SCENERY,this.gameObjectInstanceZ[var9],this.gameObjectInstanceDir[var9],this.gameObjectInstanceX[var9],id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Rotate scenery");
+									if (worldEditorInterface != null && worldEditorInterface.isSceneryRemoving())
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_REMOVE_SCENERY,this.gameObjectInstanceZ[var9],this.gameObjectInstanceDir[var9],this.gameObjectInstanceX[var9],id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Remove scenery");
 
 										this.menuCommon
 											.addTileItem_WithID(MenuItemAction.OBJECT_EXAMINE,
@@ -10578,6 +10582,8 @@ public final class mudclient implements Runnable {
 										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex, MenuItemAction.WORLD_EDITOR_COPY_NPC,
 											"Copy editor data", "@yel@"+EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
 									}
+									if (worldEditorInterface != null && worldEditorInterface.isNpcRemoving())
+										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex,MenuItemAction.WORLD_EDITOR_REMOVE_NPC,"Remove NPC","@yel@"+EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
 
 									if (this.npcs[var9].suppressAttackOption) {
 										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex,
@@ -10658,6 +10664,10 @@ public final class mudclient implements Runnable {
 						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_INSPECT_TERRAIN, "Inspect terrain", this.world.faceTileZ[var2]);
 						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_COPY_TERRAIN, "Copy terrain data", this.world.faceTileZ[var2]);
 					}
+					if (worldEditorInterface != null && worldEditorInterface.isSceneryPlacing())
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2],"",MenuItemAction.WORLD_EDITOR_PLACE_SCENERY,"Place "+EntityHandler.getObjectDef(worldEditorInterface.getSceneryId()).getName(),this.world.faceTileZ[var2]);
+					if (worldEditorInterface != null && worldEditorInterface.isNpcPlacing())
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2],"",MenuItemAction.WORLD_EDITOR_PLACE_NPC,"Place "+EntityHandler.getNpcDef(worldEditorInterface.getNpcId()).getName(),this.world.faceTileZ[var2]);
 				}
 				} else if (isClickTeleportActiveForCurrentContext()
 					&& this.selectedSpell < 0 && this.selectedItemInventoryIndex < 0) {
@@ -17999,7 +18009,7 @@ public final class mudclient implements Runnable {
 				case WORLD_EDITOR_INSPECT_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,false); break; }
 				case WORLD_EDITOR_COPY_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,true); break; }
 				case WORLD_EDITOR_INSPECT_OBJECT: { worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0); break; }
-				case WORLD_EDITOR_COPY_OBJECT: { worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0,true); break; }
+				case WORLD_EDITOR_COPY_OBJECT: { worldEditorInterface.selectScenery(tileID);worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0,true); break; }
 				case WORLD_EDITOR_INSPECT_NPC: {
 					ORSCharacter editorNpc=getNpcFromServer(indexOrX);
 					if(editorNpc!=null)worldEditorInterface.recordWorldClick(midRegionBaseX+editorNpc.currentX/tileSize,midRegionBaseZ+editorNpc.currentZ/tileSize);
@@ -18007,9 +18017,14 @@ public final class mudclient implements Runnable {
 				}
 				case WORLD_EDITOR_COPY_NPC: {
 					ORSCharacter editorNpc=getNpcFromServer(indexOrX);
-					if(editorNpc!=null)worldEditorInterface.recordWorldClick(midRegionBaseX+editorNpc.currentX/tileSize,midRegionBaseZ+editorNpc.currentZ/tileSize);
+					if(editorNpc!=null){worldEditorInterface.recordWorldClick(midRegionBaseX+editorNpc.currentX/tileSize,midRegionBaseZ+editorNpc.currentZ/tileSize);worldEditorInterface.selectNpc(editorNpc.npcId,worldEditorInterface.getNpcRadius());}
 					worldEditorInterface.inspectNpc(indexOrX,true);break;
 				}
+				case WORLD_EDITOR_PLACE_SCENERY: { sendCommandString("aobject "+worldEditorInterface.getSceneryId()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_ROTATE_SCENERY: { sendCommandString("rotateobject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_REMOVE_SCENERY: { sendCommandString("robject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_PLACE_NPC: { sendCommandString("cnpc "+worldEditorInterface.getNpcId()+" "+worldEditorInterface.getNpcRadius()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_REMOVE_NPC: { sendCommandString("rpc "+indexOrX); break; }
 				case MOD_SUMMON_PLAYER: {
 					String playerName = var9;
 					playerName = playerName.replaceAll(" ", "_");

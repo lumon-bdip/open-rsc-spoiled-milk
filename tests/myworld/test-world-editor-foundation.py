@@ -54,7 +54,7 @@ class WorldEditorFoundationTest(unittest.TestCase):
         ui = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java").read_text()
         self.assertIn("Config.isAndroid()", ui)
         self.assertIn('"Navigate","Inspect","Terrain","Scenery","NPC"', ui)
-        self.assertIn("editing disabled", ui.lower())
+        self.assertIn("World Editor", ui)
         sessions = (ROOT / "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java").read_text()
         self.assertIn("!player.isAdmin()", sessions)
         self.assertIn("sequence != active.nextSequence", sessions)
@@ -87,6 +87,38 @@ class WorldEditorFoundationTest(unittest.TestCase):
             "First floor", "Second floor", "Underground", "Copy inspected",
         ):
             self.assertIn(label, ui)
+
+    def test_scenery_and_npc_tools_delegate_to_established_commands(self):
+        ui = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java").read_text()
+        client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
+        actions = (ROOT / "Client_Base/src/orsc/enumerations/MenuItemAction.java").read_text()
+        handler = (ROOT / "server/src/com/openrsc/server/net/rsc/handlers/WorldEditorHandler.java").read_text()
+
+        self.assertIn("enum SceneryTool { PLACE, ROTATE, REMOVE }", ui)
+        self.assertIn("enum NpcTool { PLACE, REMOVE }", ui)
+        self.assertIn("Math.min(radius,64)", ui)
+        self.assertIn("Boundaries remain inspection-only", ui)
+        self.assertIn('sendCommandString("saveworldedits")', ui)
+        self.assertNotRegex(ui.lower(), r"\b(undo|redo)\b")
+
+        expected_commands = (
+            'sendCommandString("aobject "+',
+            'sendCommandString("rotateobject "+',
+            'sendCommandString("robject "+',
+            'sendCommandString("cnpc "+',
+            'sendCommandString("rpc "+',
+        )
+        for command in expected_commands:
+            self.assertIn(command, client)
+        for action in (
+            "WORLD_EDITOR_PLACE_SCENERY(100)",
+            "WORLD_EDITOR_ROTATE_SCENERY(100)",
+            "WORLD_EDITOR_REMOVE_SCENERY(100)",
+            "WORLD_EDITOR_PLACE_NPC(100)",
+            "WORLD_EDITOR_REMOVE_NPC(100)",
+        ):
+            self.assertIn(action, actions)
+        self.assertIn('" radius="+radius', handler)
 
 if __name__ == "__main__":
     unittest.main()

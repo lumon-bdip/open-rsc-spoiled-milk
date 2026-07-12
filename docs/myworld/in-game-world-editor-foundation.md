@@ -1,7 +1,8 @@
-# In-game world editor: Phase 0/1 foundation
+# In-game world editor: foundation and entity tools
 
-Status: read-only foundation. Painting, placement, deletion, rotation, undo/redo,
-save, publish, and patch replay are intentionally unavailable.
+Status: the inspection foundation is complete. Scenery and NPC editing delegate
+to the established administrator commands. Terrain painting, undo/redo, publish,
+and terrain patch replay remain intentionally unavailable.
 
 ## Raw terrain contract
 
@@ -55,7 +56,7 @@ scenery, and neighboring tiles; it must never be inferred from one raw field.
 - Android never creates or opens the shell. Normal play receives no editor
   packets and adds no menu entries while the shell is closed.
 
-## Read-only UI contract
+## UI contract
 
 The movable desktop overlay exposes mutually exclusive Navigate, Inspect,
 Terrain, Scenery, and NPC tabs. Navigate continuously reports the player,
@@ -64,15 +65,25 @@ and click-teleport preference use existing staff-authorized movement and are
 active only in Navigate. Inspect restores ordinary walking and is the only mode
 that adds terrain, boundary, scenery, and NPC inspection entries. It displays
 the last authoritative result. Every target also has a right-click copy action,
-and Inspect can copy its last successful result. Copies remain local and only
-seed their corresponding future editing tab. Terrain snapshots use player-facing
+and Inspect can copy its last successful result. Copies remain local and seed
+the matching editor selection. Terrain snapshots use player-facing
 coordinates, named planes, floor color/texture semantics, normalized north/east/
 diagonal wall definitions, and derived collision while retaining raw archive
-fields in the copied snapshot. The three editing tabs are explicit placeholders and
-contain no duplicated inspection or mutation controls. Object and NPC results
-are resolved against the live authoritative world and labelled
-`runtime-authoritative`. A later persistence phase must distinguish base
-archive, custom overlay, and draft origins before it can write.
+fields in the copied snapshot. Object and NPC results are resolved against the
+live authoritative world and labelled `runtime-authoritative`.
+
+Terrain remains a read-only placeholder. Scenery exposes an object-definition
+selector with resolved name and Place, Rotate, and Remove tools. These tools are
+limited to type-0 scenery; boundary walls remain inspection-only. NPC exposes a
+definition selector with resolved name, a roam radius from 0 through 64, and
+Place and Remove tools. Active tools add low-priority-number context actions so
+one click performs one operation while the editor tab is selected. They invoke
+the existing `aobject`, `rotateobject`, `robject`, `cnpc`, and `rpc`
+administrator commands, retaining their authorization, validation, runtime
+registration, and pending-edit behavior. `Save queued edits` invokes the
+existing `saveworldedits` command. Undo and redo are deliberately deferred until
+the complete editing workflow exists; no partial command-queue undo semantics
+are introduced here.
 
 ## Future patch/recovery decision
 

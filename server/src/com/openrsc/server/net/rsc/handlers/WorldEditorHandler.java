@@ -56,7 +56,8 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 	}
 	private void inspectNpc(WorldEditorRequestStruct r, Player p, int next) {
 		Npc npc=p.getWorld().getNpc(r.entityId);
-		String text=npc==null?"NPC is no longer present":npc.getDef().getName()+" | id="+npc.getID()+" serverIndex="+npc.getIndex()
+		int radius=npc==null||npc.getLoc()==null?0:Math.max(Math.max(npc.getLoc().startX-npc.getLoc().minX,npc.getLoc().maxX-npc.getLoc().startX),Math.max(npc.getLoc().startY-npc.getLoc().minY,npc.getLoc().maxY-npc.getLoc().startY));
+		String text=npc==null?"NPC is no longer present":npc.getDef().getName()+" | id="+npc.getID()+" radius="+radius+" serverIndex="+npc.getIndex()
 			+" source=runtime-authoritative @ "+npc.getX()+","+npc.getY();
 		info(p,5,next,text);
 	}
