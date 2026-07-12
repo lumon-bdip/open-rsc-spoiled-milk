@@ -10631,7 +10631,7 @@ public final class mudclient implements Runnable {
 
 					this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "",
 						MenuItemAction.LANDSCAPE_WALK_HERE,
-						this.devClickTeleportMode && canUseClickTeleport() ? "Teleport here" : "Walk here",
+						isClickTeleportActiveForCurrentContext() ? "Teleport here" : "Walk here",
 						this.world.faceTileZ[var2]);
 					if (modMenu) {
 						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "",
@@ -10647,10 +10647,9 @@ public final class mudclient implements Runnable {
 					}
 					if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
 						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_INSPECT_TERRAIN, "Inspect terrain", this.world.faceTileZ[var2]);
-						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_COPY_TERRAIN, "Copy terrain fields", this.world.faceTileZ[var2]);
 					}
 				}
-				} else if (this.devClickTeleportMode && canUseClickTeleport()
+				} else if (isClickTeleportActiveForCurrentContext()
 					&& this.selectedSpell < 0 && this.selectedItemInventoryIndex < 0) {
 					int[] fallbackTile = this.scene.projectScreenToGroundTile(
 						this.mouseX,
@@ -17937,7 +17936,9 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case LANDSCAPE_WALK_HERE: {
-					if (this.devClickTeleportMode && canUseClickTeleport()) {
+					if (worldEditorInterface != null && worldEditorInterface.isEditorOpen())
+						worldEditorInterface.recordWorldClick(indexOrX + midRegionBaseX, idOrZ + midRegionBaseZ);
+					if (isClickTeleportActiveForCurrentContext()) {
 						this.sendBlinkToTile(indexOrX, idOrZ);
 					} else {
 						//System.out.println("LANDSCAPE_WALK_HERE: playerLocalX=" + this.playerLocalX + ", playerLocalZ= " + this.playerLocalZ + ", indexOrX=" + indexOrX + ", idOrZ=" + idOrZ);
@@ -17988,7 +17989,11 @@ public final class mudclient implements Runnable {
 				case WORLD_EDITOR_INSPECT_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,false); break; }
 				case WORLD_EDITOR_COPY_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,true); break; }
 				case WORLD_EDITOR_INSPECT_OBJECT: { worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0); break; }
-				case WORLD_EDITOR_INSPECT_NPC: { worldEditorInterface.inspectNpc(indexOrX); break; }
+				case WORLD_EDITOR_INSPECT_NPC: {
+					ORSCharacter editorNpc=getNpcFromServer(indexOrX);
+					if(editorNpc!=null)worldEditorInterface.recordWorldClick(midRegionBaseX+editorNpc.currentX/tileSize,midRegionBaseZ+editorNpc.currentZ/tileSize);
+					worldEditorInterface.inspectNpc(indexOrX);break;
+				}
 				case MOD_SUMMON_PLAYER: {
 					String playerName = var9;
 					playerName = playerName.replaceAll(" ", "_");
@@ -22698,6 +22703,11 @@ public final class mudclient implements Runnable {
 		return localPlayer != null && (localPlayer.isDev() || localPlayer.isMod());
 	}
 
+	private boolean isClickTeleportActiveForCurrentContext() {
+		return devClickTeleportMode && canUseClickTeleport()
+			&& (worldEditorInterface == null || !worldEditorInterface.isEditorOpen() || worldEditorInterface.isNavigating());
+	}
+
 	private void setDevClickTeleportMode(boolean enabled) {
 		if (!canUseClickTeleport()) {
 			this.devClickTeleportMode = false;
@@ -22710,6 +22720,19 @@ public final class mudclient implements Runnable {
 		this.showMessage(false, null,
 			"Click teleport mode " + (this.devClickTeleportMode ? "enabled" : "disabled") + ".",
 			MessageType.GAME, 0, null);
+	}
+
+	public void setWorldEditorNavigateClickTeleport(boolean enabled) {
+		this.devClickTeleportMode = enabled && canUseClickTeleport();
+	}
+
+	public void worldEditorTeleport(int worldX, int worldY) {
+		if (worldEditorInterface == null || !worldEditorInterface.isNavigating() || !canUseClickTeleport()) return;
+		preloadTerrainForLocalTarget(worldX - midRegionBaseX, worldY - midRegionBaseZ);
+		this.packetHandler.getClientStream().newPacket(Opcodes.Out.BLINK.getOpcode());
+		this.packetHandler.getClientStream().bufferBits.putShort(worldX);
+		this.packetHandler.getClientStream().bufferBits.putShort(worldY);
+		this.packetHandler.getClientStream().finishPacket();
 	}
 
 	private void handleDevClickTeleportCommand(String commandText) {

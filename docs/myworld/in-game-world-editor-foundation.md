@@ -58,13 +58,17 @@ scenery, and neighboring tiles; it must never be inferred from one raw field.
 ## Read-only UI contract
 
 The movable desktop overlay exposes mutually exclusive Navigate, Inspect,
-Terrain, Scenery, and NPC tabs. Terrain, scenery, and NPC context entries send
-bounded requests to the server. Terrain snapshots show raw coordinates/fields
-plus derived collision. “Copy terrain fields” only populates the client-side
-details state and is clearly labelled as non-painting; it sends no write.
-Object and NPC results are resolved against the live authoritative world and
-labelled `runtime-authoritative`. A later persistence phase must distinguish
-base archive, custom overlay, and draft origins before it can write.
+Terrain, Scenery, and NPC tabs. Navigate continuously reports the player,
+last-clicked tile, and stored inactive brush positions. Its coordinate teleport
+and click-teleport preference use existing staff-authorized movement and are
+active only in Navigate. Inspect restores ordinary walking and is the only mode
+that adds terrain, boundary, scenery, and NPC inspection entries. It displays
+the last authoritative result. Terrain snapshots show raw coordinates/fields
+plus derived collision. The three editing tabs are explicit placeholders and
+contain no duplicated inspection or mutation controls. Object and NPC results
+are resolved against the live authoritative world and labelled
+`runtime-authoritative`. A later persistence phase must distinguish base
+archive, custom overlay, and draft origins before it can write.
 
 ## Future patch/recovery decision
 

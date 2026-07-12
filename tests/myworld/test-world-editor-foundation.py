@@ -61,5 +61,25 @@ class WorldEditorFoundationTest(unittest.TestCase):
         world = (ROOT / "server/src/com/openrsc/server/model/world/World.java").read_text()
         self.assertIn("getWorldEditorSessions().closeFor(player)", world)
 
+    def test_navigate_and_inspect_have_distinct_behavior(self):
+        ui = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java").read_text()
+        self.assertIn("mode==Mode.INSPECT", ui)
+        self.assertIn("mode==Mode.NAVIGATE&&clickTeleportPreferred", ui)
+        self.assertIn("Last clicked tile", ui)
+        self.assertIn("Brush: inactive at", ui)
+        self.assertIn("Teleport to coordinates", ui)
+        self.assertIn("Reserved for a later editor phase", ui)
+        client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
+        self.assertIn("setWorldEditorNavigateClickTeleport", client)
+        self.assertIn("worldEditorTeleport", client)
+        self.assertIn("isClickTeleportActiveForCurrentContext", client)
+        terrain_menu = re.search(
+            r"if \(worldEditorInterface != null && worldEditorInterface\.isInspecting\(\)\) \{(?P<body>.*?)\n\s*\}",
+            client,
+            re.S,
+        )
+        self.assertIsNotNone(terrain_menu)
+        self.assertNotIn("WORLD_EDITOR_COPY_TERRAIN", terrain_menu.group("body"))
+
 if __name__ == "__main__":
     unittest.main()
