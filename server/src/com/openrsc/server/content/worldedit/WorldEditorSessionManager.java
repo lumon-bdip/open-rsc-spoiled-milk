@@ -5,7 +5,9 @@ import com.openrsc.server.io.WorldEditorTerrainArchive;
 import java.io.File;
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Single-owner, strictly sequenced editor session and bounded server-lifetime terrain draft. */
@@ -70,7 +72,37 @@ public final class WorldEditorSessionManager {
 		}
 		return painted;
 	}
+	public synchronized TerrainStrokeResult paintTerrainStroke(Player player,int centerX,int centerY,int plane,int brushSize,
+		int fieldMask,int elevation,int groundTexture,int groundOverlay,int roofTexture,
+		int horizontalWall,int verticalWall,int diagonal) throws IOException {
+		validateTerrainPaint(fieldMask,elevation,groundTexture,groundOverlay,roofTexture,horizontalWall,verticalWall);
+		int[][] coordinates=WorldEditorTerrainStroke.coordinates(centerX,centerY,brushSize,fieldMask);
+		List<WorldEditorTerrainArchive.Snapshot> before=new ArrayList<WorldEditorTerrainArchive.Snapshot>(coordinates.length);
+		List<WorldEditorTerrainArchive.Snapshot> after=new ArrayList<WorldEditorTerrainArchive.Snapshot>(coordinates.length);
+		List<WorldEditorTerrainArchive.Snapshot> archived=new ArrayList<WorldEditorTerrainArchive.Snapshot>(coordinates.length);
+		boolean[] draftedBefore=new boolean[coordinates.length],draftedAfter=new boolean[coordinates.length];int at=0;
+		for(int[] coordinate:coordinates){
+			WorldEditorTerrainArchive.Snapshot base=inspectArchivedTerrain(player,coordinate[0],coordinate[1],plane);
+			String key=terrainKey(coordinate[0],coordinate[1],plane);
+			WorldEditorTerrainArchive.Snapshot current=terrainDraft.containsKey(key)?terrainDraft.get(key):base;
+			WorldEditorTerrainArchive.Snapshot painted=current.paint(fieldMask,elevation,groundTexture,groundOverlay,roofTexture,horizontalWall,verticalWall,diagonal);
+			draftedBefore[at]=terrainDraft.containsKey(key);draftedAfter[at]=!painted.sameRawTile(base);at++;
+			archived.add(base);before.add(current);after.add(painted);
+		}
+		int projectedDraftSize=WorldEditorTerrainStroke.projectedDraftSize(terrainDraft.size(),draftedBefore,draftedAfter);
+		if(projectedDraftSize>TERRAIN_DRAFT_LIMIT)throw new IllegalStateException("Terrain draft limit reached.");
+		for(int i=0;i<coordinates.length;i++){
+			String key=terrainKey(coordinates[i][0],coordinates[i][1],plane);
+			if(after.get(i).sameRawTile(archived.get(i)))terrainDraft.remove(key);else terrainDraft.put(key,after.get(i));
+		}
+		return new TerrainStrokeResult(before,after);
+	}
 	public synchronized int terrainDraftSize(){return terrainDraft.size();}
+	private static void validateTerrainPaint(int fieldMask,int elevation,int groundTexture,int groundOverlay,int roofTexture,int horizontalWall,int verticalWall){
+		if(fieldMask<=0||(fieldMask&~127)!=0)throw new IllegalArgumentException("Select at least one supported terrain field.");
+		if(!rawByte(elevation)||!rawByte(groundTexture)||!rawByte(groundOverlay)||!rawByte(roofTexture)
+			||!rawByte(horizontalWall)||!rawByte(verticalWall))throw new IllegalArgumentException("Terrain byte values must be from 0 to 255.");
+	}
 	private WorldEditorTerrainArchive.Snapshot inspectArchivedTerrain(Player player, int x, int y, int plane) throws IOException {
 		if (terrainArchive == null) {
 			String name = player.getConfig().WANT_CUSTOM_LANDSCAPE ? "Custom_Landscape.orsc"
@@ -83,6 +115,10 @@ public final class WorldEditorSessionManager {
 	private static boolean rawByte(int value){return value>=0&&value<=255;}
 
 	private static final class Session { final long id, ownerHash; int nextSequence=1; Session(long i,long o){id=i;ownerHash=o;} }
+	public static final class TerrainStrokeResult {
+		public final List<WorldEditorTerrainArchive.Snapshot> before,after;
+		private TerrainStrokeResult(List<WorldEditorTerrainArchive.Snapshot> b,List<WorldEditorTerrainArchive.Snapshot> a){before=b;after=a;}
+	}
 	public static final class OpenResult {
 		public final boolean opened; public final long sessionId; public final int nextSequence; public final String message;
 		private OpenResult(boolean o,long i,int s,String m){opened=o;sessionId=i;nextSequence=s;message=m;}

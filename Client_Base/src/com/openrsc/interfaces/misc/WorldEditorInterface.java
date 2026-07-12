@@ -39,7 +39,8 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private boolean terrainStructureTab=false,paintRoof=false,paintEastWall=false,paintNorthWall=false,paintDiagonalWall=false;
 	private int terrainRoof=0,terrainEastWall=0,terrainNorthWall=0,terrainDiagonalWall=0,terrainDiagonalOrientation=0;
 	private String terrainRoofText="0",terrainEastWallText="0",terrainNorthWallText="0",terrainDiagonalWallText="0";
-	private int terrainBrushSize=1,terrainStrokeIndex=0,terrainStrokeMask=0;
+	private int terrainBrushSize=1,terrainStrokeMask=0;
+	private long terrainStrokeStartedNanos=0L;
 	private int terrainStrokeElevation=0,terrainStrokeColor=0,terrainStrokeTexture=0;
 	private int terrainStrokeRoof=0,terrainStrokeEastWall=0,terrainStrokeNorthWall=0,terrainStrokeDiagonal=0;
 	private int[][] terrainStrokeTiles=null;
@@ -84,7 +85,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		if(copyNextInspection)copyInspected();copyNextInspection=false;
 	}
 	public void showError(String text){
-		copyNextInspection=false;if(terrainStrokeTiles!=null&&terrainStrokeIndex>0)mc.reloadWorldEditorTerrain();terrainStrokeTiles=null;
+		copyNextInspection=false;terrainStrokeTiles=null;terrainStrokeStartedNanos=0L;
 		inspectionStatus="Server rejected request";inspectionDetails=wrap(text,58);
 	}
 	public void showTerrain(int sequence,int x,int y,int plane,int sx,int sy,int lx,int ly,int elev,int texture,int overlay,int roof,int hwall,int vwall,int diag,int collision,boolean projectile,boolean copied,String definitions){
@@ -105,10 +106,19 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 	public void acceptTerrainPaint(int sequence,int x,int y,int plane,int sx,int sy,int lx,int ly,int elev,int texture,int overlay,int roof,int hwall,int vwall,int diag,int collision,boolean projectile,int fieldMask,String definitions){
 		showTerrain(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hwall,vwall,diag,collision,projectile,false,definitions);
-		boolean last=terrainStrokeTiles==null||terrainStrokeIndex>=terrainStrokeTiles.length-1;
-		mc.applyWorldEditorTerrainPatch(x,y,plane,elev,texture,overlay,roof,hwall,vwall,diag,(fieldMask&4)!=0,last);
-		if(last){int count=terrainStrokeTiles==null?1:terrainStrokeTiles.length;terrainStrokeTiles=null;inspectionStatus="Paint accepted: "+count+" tile"+(count==1?"":"s")+" (unsaved draft)";}
-		else{terrainStrokeIndex++;inspectionStatus="Paint accepted "+terrainStrokeIndex+"/"+terrainStrokeTiles.length;sendTerrainStrokeTile();}
+		mc.applyWorldEditorTerrainPatch(x,y,plane,elev,texture,overlay,roof,hwall,vwall,diag,(fieldMask&4)!=0,true);
+		terrainStrokeTiles=null;inspectionStatus="Paint accepted: 1 tile (unsaved draft)";
+	}
+	public void acceptTerrainStroke(int sequence,int fieldMask,int[][] tiles,boolean[] projectiles,String definitions){
+		if(tiles==null||tiles.length<1||tiles.length>9||projectiles==null||projectiles.length!=tiles.length){showError("Server returned an invalid terrain stroke.");return;}
+		long responseNanos=System.nanoTime();int[] center=tiles[0];
+		showTerrain(sequence,center[0],center[1],center[2],center[3],center[4],center[5],center[6],center[7],center[8],center[9],center[10],center[11],center[12],center[13],center[14],projectiles[0],false,definitions);
+		for(int i=0;i<tiles.length;i++){int[] tile=tiles[i];
+			mc.applyWorldEditorTerrainPatch(tile[0],tile[1],tile[2],tile[7],tile[8],tile[9],tile[10],tile[11],tile[12],tile[13],(fieldMask&4)!=0,i==tiles.length-1);
+		}
+		long completedNanos=System.nanoTime();long ackMs=terrainStrokeStartedNanos==0L?0L:(responseNanos-terrainStrokeStartedNanos)/1000000L;
+		long rebuildMs=(completedNanos-responseNanos)/1000000L;terrainStrokeTiles=null;terrainStrokeStartedNanos=0L;
+		inspectionStatus="Paint accepted: "+tiles.length+" tile"+(tiles.length==1?"":"s")+" | ack "+ackMs+"ms, rebuild "+rebuildMs+"ms";
 	}
 	public int[] getCopiedTerrainFields(){return copiedTerrainFields==null?null:copiedTerrainFields.clone();}
 	public void inspectTerrain(int worldX,int worldY,boolean copy){recordWorldClick(worldX,worldY);send(2,worldX,worldY,Math.floorDiv(worldY,944),0,0,copy?1:0);}
@@ -116,20 +126,20 @@ public final class WorldEditorInterface extends NCustomComponent {
 		recordWorldClick(worldX,worldY);int mask=terrainStructureTab?((paintRoof?8:0)|(paintEastWall?16:0)|(paintNorthWall?32:0)|(paintDiagonalWall?64:0)):((paintElevation?1:0)|(paintFloorColor?2:0)|(paintFloorTexture?4:0));
 		if(mask==0){showError("Select at least one terrain field to paint.");return;}if(!isTerrainPainting()||terrainStrokeTiles!=null)return;
 		int strokeSize=(mask&112)!=0?1:terrainBrushSize;terrainStrokeTiles=strokeSize==1?new int[][]{{worldX,worldY}}:centeredThreeByThree(worldX,worldY);
-		terrainStrokeIndex=0;terrainStrokeMask=mask;terrainStrokeElevation=terrainElevation;terrainStrokeColor=terrainFloorColor;terrainStrokeTexture=terrainFloorTexture;
+		terrainStrokeMask=mask;terrainStrokeElevation=terrainElevation;terrainStrokeColor=terrainFloorColor;terrainStrokeTexture=terrainFloorTexture;
 		terrainStrokeRoof=terrainRoof;terrainStrokeEastWall=terrainEastWall;terrainStrokeNorthWall=terrainNorthWall;terrainStrokeDiagonal=encodedDiagonalWall();
-		sendTerrainStrokeTile();
+		terrainStrokeStartedNanos=System.nanoTime();sendTerrainStroke();
 	}
-	private void sendTerrainStrokeTile(){
-		int worldX=terrainStrokeTiles[terrainStrokeIndex][0],worldY=terrainStrokeTiles[terrainStrokeIndex][1];
-		mc.packetHandler.getClientStream().newPacket(152);mc.packetHandler.getClientStream().bufferBits.putByte(5);
+	private void sendTerrainStroke(){
+		int worldX=terrainStrokeTiles[0][0],worldY=terrainStrokeTiles[0][1];
+		mc.packetHandler.getClientStream().newPacket(152);mc.packetHandler.getClientStream().bufferBits.putByte(6);
 		mc.packetHandler.getClientStream().bufferBits.putLong(sessionId);mc.packetHandler.getClientStream().bufferBits.putInt(nextSequence);
 		mc.packetHandler.getClientStream().bufferBits.putShort(worldX);mc.packetHandler.getClientStream().bufferBits.putShort(worldY);
 		mc.packetHandler.getClientStream().bufferBits.putByte(Math.floorDiv(worldY,944));mc.packetHandler.getClientStream().bufferBits.putByte(terrainStrokeMask);
 		mc.packetHandler.getClientStream().bufferBits.putByte(terrainStrokeElevation);mc.packetHandler.getClientStream().bufferBits.putByte(terrainStrokeColor);
 		mc.packetHandler.getClientStream().bufferBits.putByte(terrainStrokeTexture);mc.packetHandler.getClientStream().bufferBits.putByte(terrainStrokeRoof);
 		mc.packetHandler.getClientStream().bufferBits.putByte(terrainStrokeEastWall);mc.packetHandler.getClientStream().bufferBits.putByte(terrainStrokeNorthWall);
-		mc.packetHandler.getClientStream().bufferBits.putInt(terrainStrokeDiagonal);mc.packetHandler.getClientStream().finishPacket();
+		mc.packetHandler.getClientStream().bufferBits.putInt(terrainStrokeDiagonal);mc.packetHandler.getClientStream().bufferBits.putByte(terrainStrokeTiles.length==1?1:3);mc.packetHandler.getClientStream().finishPacket();
 	}
 	private static int[][] centeredThreeByThree(int x,int y){int[][] tiles=new int[9][2];tiles[0][0]=x;tiles[0][1]=y;int at=1;for(int dx=-1;dx<=1;dx++)for(int dy=-1;dy<=1;dy++)if(dx!=0||dy!=0){tiles[at][0]=x+dx;tiles[at++][1]=y+dy;}return tiles;}
 	public void inspectObject(int worldX,int worldY,int id,int direction,int type){inspectObject(worldX,worldY,id,direction,type,false);}

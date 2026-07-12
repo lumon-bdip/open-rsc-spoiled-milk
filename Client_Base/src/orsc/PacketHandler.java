@@ -363,6 +363,15 @@ public class PacketHandler {
 		if(version!=1||mc.worldEditorInterface==null||Config.isAndroid())return;
 		if(type==1){mc.worldEditorInterface.open(packetsIncoming.getLong(0),sequence);return;}
 		if(type==2){mc.worldEditorInterface.closeFromServer();return;}
+		if(type==8){int fieldMask=packetsIncoming.getByte()&0xff,count=packetsIncoming.getByte()&0xff;
+			if(count<1||count>9){mc.worldEditorInterface.showError("Server returned an invalid terrain stroke size.");return;}
+			int[][] tiles=new int[count][15];boolean[] projectiles=new boolean[count];
+			for(int i=0;i<count;i++){int[] tile=tiles[i];tile[0]=packetsIncoming.getShort();tile[1]=packetsIncoming.getShort();tile[2]=packetsIncoming.getByte()&0xff;
+				tile[3]=packetsIncoming.getShort();tile[4]=packetsIncoming.getShort();tile[5]=packetsIncoming.getByte()&0xff;tile[6]=packetsIncoming.getByte()&0xff;
+				tile[7]=packetsIncoming.getByte()&0xff;tile[8]=packetsIncoming.getByte()&0xff;tile[9]=packetsIncoming.getByte()&0xff;tile[10]=packetsIncoming.getByte()&0xff;
+				tile[11]=packetsIncoming.getByte()&0xff;tile[12]=packetsIncoming.getByte()&0xff;tile[13]=packetsIncoming.get32();tile[14]=packetsIncoming.getShort()&0xffff;
+				projectiles[i]=packetsIncoming.getByte()!=0;}
+			mc.worldEditorInterface.acceptTerrainStroke(sequence,fieldMask,tiles,projectiles,packetsIncoming.readString());return;}
 		if(type==3||type==7){int x=packetsIncoming.getShort(),y=packetsIncoming.getShort(),plane=packetsIncoming.getByte()&0xff;
 			int sx=packetsIncoming.getShort(),sy=packetsIncoming.getShort(),lx=packetsIncoming.getByte()&0xff,ly=packetsIncoming.getByte()&0xff;
 			int elev=packetsIncoming.getByte()&0xff,texture=packetsIncoming.getByte()&0xff,overlay=packetsIncoming.getByte()&0xff,roof=packetsIncoming.getByte()&0xff;

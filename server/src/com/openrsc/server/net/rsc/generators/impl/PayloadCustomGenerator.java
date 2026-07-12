@@ -162,6 +162,16 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeByte((byte) (editor.projectileAllowed ? 1 : 0)); builder.writeByte((byte) (editor.copy ? 1 : 0));
 						if(editor.type==7)builder.writeByte((byte)editor.fieldMask);
 						builder.writeString(editor.message == null ? "" : editor.message);
+					} else if (editor.type == 8) {
+						builder.writeByte((byte)editor.fieldMask);builder.writeByte((byte)editor.terrainTiles.size());
+						for(WorldEditorStruct.TerrainTile tile:editor.terrainTiles){
+							builder.writeShort(tile.x);builder.writeShort(tile.y);builder.writeByte((byte)tile.plane);
+							builder.writeShort(tile.sectorX);builder.writeShort(tile.sectorY);builder.writeByte((byte)tile.localX);builder.writeByte((byte)tile.localY);
+							builder.writeByte((byte)tile.elevation);builder.writeByte((byte)tile.groundTexture);builder.writeByte((byte)tile.groundOverlay);
+							builder.writeByte((byte)tile.roofTexture);builder.writeByte((byte)tile.horizontalWall);builder.writeByte((byte)tile.verticalWall);
+							builder.writeInt(tile.diagonal);builder.writeShort(tile.traversalMask);builder.writeByte((byte)(tile.projectileAllowed?1:0));
+						}
+						builder.writeString(editor.message == null ? "" : editor.message);
 					} else if (editor.type == 4 || editor.type == 5 || editor.type == 6) {
 						builder.writeString(editor.message == null ? "" : editor.message);
 					}

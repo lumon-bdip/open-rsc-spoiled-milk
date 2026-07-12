@@ -170,11 +170,27 @@ class WorldEditorFoundationTest(unittest.TestCase):
         match = re.search(r"WORLD_EDITOR_PACKET_LENGTHS\s*=\s*\{([^}]+)\}", parser)
         self.assertIsNotNone(match)
         accepted = {int(value) for value in re.findall(r"\d+", match.group(1))}
-        self.assertEqual({13, 15, 19, 22, 29}, accepted)
-        for supported in accepted:
-            self.assertNotIn(supported - 1, accepted)
-            self.assertNotIn(supported + 1, accepted)
+        self.assertEqual({13, 15, 19, 22, 29, 30}, accepted)
+        self.assertTrue(accepted.isdisjoint({12, 14, 16, 18, 20, 21, 23, 28, 31}))
         self.assertIn("return isWorldEditorPacketLength(packet.getLength());", parser)
+
+    def test_terrain_stroke_uses_one_bounded_authoritative_round_trip(self):
+        parser = (ROOT / "server/src/com/openrsc/server/net/rsc/parsers/impl/PayloadCustomParser.java").read_text()
+        handler = (ROOT / "server/src/com/openrsc/server/net/rsc/handlers/WorldEditorHandler.java").read_text()
+        sessions = (ROOT / "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java").read_text()
+        generator = (ROOT / "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java").read_text()
+        client_handler = (ROOT / "Client_Base/src/orsc/PacketHandler.java").read_text()
+        ui = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java").read_text()
+
+        self.assertIn("editor.type == 6 ? 30", parser)
+        self.assertIn("paintTerrainStroke(request", handler)
+        self.assertLess(sessions.index("for(int[] coordinate:coordinates)"), sessions.index("terrainDraft.put(key,after.get(i))"))
+        self.assertIn("projectedDraftSize>TERRAIN_DRAFT_LIMIT", sessions)
+        self.assertIn("editor.type == 8", generator)
+        self.assertIn("count<1||count>9", client_handler)
+        self.assertIn("acceptTerrainStroke", client_handler)
+        self.assertIn("putByte(6)", ui)
+        self.assertIn('ack "+ackMs+"ms, rebuild "', ui)
 
 if __name__ == "__main__":
     unittest.main()

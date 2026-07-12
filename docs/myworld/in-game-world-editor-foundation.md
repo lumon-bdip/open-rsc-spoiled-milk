@@ -90,9 +90,12 @@ byte ranges, and Floor Texture definition. Accepted records enter a coalesced,
 Inspection reads through this draft. The client applies only accepted full
 records. Brush choices are centered 1x1 and centered 3x3 squares; Roof may use
 either, while any wall field forces an exact 1x1 stroke to avoid generating an
-internal wall grid. The 3x3
-stroke serializes nine individually authorized and sequenced tile requests,
-then performs one client rebuild. The client advances a terrain-cache revision
+internal wall grid. A stroke is one bounded, sequenced request and one response
+containing either one or nine authoritative full-tile snapshots. The server
+prevalidates every coordinate and projected draft-size change before committing
+the stroke; the client applies the response and performs one rebuild. The UI
+reports click-to-ack and rebuild time for targeted performance follow-up. The
+client advances a terrain-cache revision
 so older background preload products cannot win. Legacy water-like overlays
 normally extend visual faces onto four cardinal neighbors; transient editor
 metadata suppresses that spill for painted overlays so brush previews match

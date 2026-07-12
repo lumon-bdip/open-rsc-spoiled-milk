@@ -1,6 +1,8 @@
 package com.openrsc.server.net.rsc.handlers;
 
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager.Validation;
+import com.openrsc.server.content.worldedit.WorldEditorSessionManager.TerrainStrokeResult;
+import com.openrsc.server.content.worldedit.WorldEditorTerrainStroke;
 import com.openrsc.server.io.WorldEditorTerrainArchive;
 import com.openrsc.server.io.WorldLoader;
 import com.openrsc.server.model.Point;
@@ -31,6 +33,7 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 			else if (request.type == 3) inspectObject(request, player, validation.nextSequence);
 			else if (request.type == 4) inspectNpc(request, player, validation.nextSequence);
 			else if (request.type == 5) paintTerrain(request, player, validation.nextSequence);
+			else if (request.type == 6) paintTerrainStroke(request, player, validation.nextSequence);
 			else error(player, validation.nextSequence, "Unsupported editor operation.");
 		} catch (Exception e) { error(player, validation.nextSequence, "Editor request failed: " + e.getMessage()); }
 	}
@@ -44,14 +47,44 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		validateTerrainDefinitions(p,r);
 		WorldEditorTerrainArchive.Snapshot before=p.getWorld().getServer().getWorldEditorSessions().inspectTerrain(p,r.x,r.y,r.plane);
 		WorldEditorTerrainArchive.Snapshot s=p.getWorld().getServer().getWorldEditorSessions().paintTerrain(p,r.x,r.y,r.plane,r.fieldMask,r.elevation,r.groundTexture,r.groundOverlay,r.roofTexture,r.horizontalWall,r.verticalWall,r.diagonal);
-		TileValue runtime=p.getWorld().getTile(r.x,r.y);
-		if(runtime==null)throw new IllegalArgumentException("Terrain tile is outside the runtime world.");
-		if((r.fieldMask&1)!=0)runtime.elevation=(byte)s.elevation;
-		if((r.fieldMask&4)!=0){runtime.overlay=(byte)s.groundOverlay;runtime.setTerrainBlocked(overlayBlocks(p,s.groundOverlay));runtime.setTerrainOverlayProjectileBlocked(s.groundOverlay==2||s.groundOverlay==11);}
-		if((r.fieldMask&16)!=0){applyEastWall(p,r.x,r.y,before.horizontalWall,false);runtime.horizontalWallVal=(byte)s.horizontalWall;applyEastWall(p,r.x,r.y,s.horizontalWall,true);}
-		if((r.fieldMask&32)!=0){applyNorthWall(p,r.x,r.y,before.verticalWall,false);runtime.verticalWallVal=(byte)s.verticalWall;applyNorthWall(p,r.x,r.y,s.verticalWall,true);}
-		if((r.fieldMask&64)!=0){applyDiagonalWall(p,r.x,r.y,before.diagonal,false);runtime.diagWallVal=(short)s.diagonal;applyDiagonalWall(p,r.x,r.y,s.diagonal,true);}
+		applyRuntimeTerrain(p,before,s,r.fieldMask);
 		sendTerrain(p,s,next,7,false,r.fieldMask);
+	}
+	private void paintTerrainStroke(WorldEditorRequestStruct r,Player p,int next) throws Exception {
+		validateTerrainDefinitions(p,r);
+		int[][] coordinates=WorldEditorTerrainStroke.coordinates(r.x,r.y,r.brushSize,r.fieldMask);
+		for(int[] coordinate:coordinates){
+			if(!p.getWorld().withinWorld(coordinate[0],coordinate[1])||p.getWorld().getTile(coordinate[0],coordinate[1])==null)
+				throw new IllegalArgumentException("Terrain stroke contains a tile outside the runtime world.");
+			if(Math.floorDiv(coordinate[1],944)!=r.plane)throw new IllegalArgumentException("Terrain stroke crosses a plane boundary.");
+		}
+		TerrainStrokeResult result=p.getWorld().getServer().getWorldEditorSessions().paintTerrainStroke(p,r.x,r.y,r.plane,r.brushSize,
+			r.fieldMask,r.elevation,r.groundTexture,r.groundOverlay,r.roofTexture,r.horizontalWall,r.verticalWall,r.diagonal);
+		WorldEditorStruct out=new WorldEditorStruct();out.type=8;out.sequence=next;out.fieldMask=r.fieldMask;
+		for(int i=0;i<result.after.size();i++){
+			WorldEditorTerrainArchive.Snapshot before=result.before.get(i),after=result.after.get(i);
+			applyRuntimeTerrain(p,before,after,r.fieldMask);out.terrainTiles.add(terrainTile(p,after));
+		}
+		WorldEditorTerrainArchive.Snapshot center=result.after.get(0);
+		out.message=wallDefinitionName(p,center.verticalWall-1)+"\t"+wallDefinitionName(p,center.horizontalWall-1)
+			+"\t"+wallDefinitionName(p,center.diagonalDefinitionId());
+		ActionSender.sendWorldEditor(p,out);
+	}
+	private void applyRuntimeTerrain(Player p,WorldEditorTerrainArchive.Snapshot before,WorldEditorTerrainArchive.Snapshot s,int fieldMask){
+		int x=s.coordinates.worldX,y=s.coordinates.worldY;TileValue runtime=p.getWorld().getTile(x,y);
+		if(runtime==null)throw new IllegalArgumentException("Terrain tile is outside the runtime world.");
+		if((fieldMask&1)!=0)runtime.elevation=(byte)s.elevation;
+		if((fieldMask&4)!=0){runtime.overlay=(byte)s.groundOverlay;runtime.setTerrainBlocked(overlayBlocks(p,s.groundOverlay));runtime.setTerrainOverlayProjectileBlocked(s.groundOverlay==2||s.groundOverlay==11);}
+		if((fieldMask&16)!=0){applyEastWall(p,x,y,before.horizontalWall,false);runtime.horizontalWallVal=(byte)s.horizontalWall;applyEastWall(p,x,y,s.horizontalWall,true);}
+		if((fieldMask&32)!=0){applyNorthWall(p,x,y,before.verticalWall,false);runtime.verticalWallVal=(byte)s.verticalWall;applyNorthWall(p,x,y,s.verticalWall,true);}
+		if((fieldMask&64)!=0){applyDiagonalWall(p,x,y,before.diagonal,false);runtime.diagWallVal=(short)s.diagonal;applyDiagonalWall(p,x,y,s.diagonal,true);}
+	}
+	private WorldEditorStruct.TerrainTile terrainTile(Player p,WorldEditorTerrainArchive.Snapshot s){
+		TileValue runtime=p.getWorld().getTile(s.coordinates.worldX,s.coordinates.worldY);WorldEditorStruct.TerrainTile tile=new WorldEditorStruct.TerrainTile();
+		tile.x=s.coordinates.worldX;tile.y=s.coordinates.worldY;tile.plane=s.coordinates.plane;tile.sectorX=s.coordinates.sectorX;tile.sectorY=s.coordinates.sectorY;
+		tile.localX=s.coordinates.localX;tile.localY=s.coordinates.localY;tile.elevation=s.elevation;tile.groundTexture=s.groundTexture;tile.groundOverlay=s.groundOverlay;
+		tile.roofTexture=s.roofTexture;tile.horizontalWall=s.horizontalWall;tile.verticalWall=s.verticalWall;tile.diagonal=s.diagonal;
+		tile.traversalMask=runtime==null?0:runtime.traversalMask&0xff;tile.projectileAllowed=runtime!=null&&runtime.projectileAllowed;return tile;
 	}
 	private void sendTerrain(Player p,WorldEditorTerrainArchive.Snapshot s,int next,int type,boolean copied,int fieldMask) {
 		TileValue runtime=p.getWorld().getTile(s.coordinates.worldX,s.coordinates.worldY);
