@@ -10874,6 +10874,25 @@ public final class mudclient implements Runnable {
 						yOffset + 243 + currSkill * 13, 0xFFFFFF);
 					this.getSurface().drawLineHoriz(xOffset, yOffset + 228, 245, 0);
 				}
+
+				if (var2 && !isAndroid() && this.mouseButtonClick == 0) {
+					int hoveredEquipmentSlot = EquipmentSlotHoverTarget.findSlot(
+						equipIconXLocations,
+						equipIconYLocations,
+						S_PLAYER_SLOT_COUNT,
+						xOffset,
+						yOffset,
+						this.mouseX,
+						this.mouseY);
+					if (hoveredEquipmentSlot >= 0 && equippedItems[hoveredEquipmentSlot] != null) {
+						this.menuCommon.addCharacterItem(
+							hoveredEquipmentSlot,
+							MenuItemAction.ITEM_UNEQUIP_FROM_EQUIPMENT,
+							"Unequip",
+							"@lre@" + equippedItems[hoveredEquipmentSlot].getName());
+					}
+				}
+
 				//handle equipment clicks
 				if ((this.mouseButtonClick == 1 || this.mouseButtonClick == 2) && this.mouseY > yOffset) {
 					for (int j = 0; j < S_PLAYER_SLOT_COUNT; j++) {
