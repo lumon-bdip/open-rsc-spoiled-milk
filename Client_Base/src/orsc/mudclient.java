@@ -10245,6 +10245,29 @@ public final class mudclient implements Runnable {
 	}
 
 	// game screen right click menu definitions */
+	private void addWorldEditorTileActions(int localX,int localZ){
+		if(worldEditorInterface==null||!worldEditorInterface.isEditorOpen())return;
+		if(worldEditorInterface.isInspecting()){
+			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_INSPECT_TERRAIN,"Inspect terrain",localZ);
+			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_COPY_TERRAIN,"Copy terrain data",localZ);
+		}
+		if(worldEditorInterface.isTerrainPainting())
+			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PAINT_TERRAIN,"Paint terrain",localZ);
+		if(worldEditorInterface.isSceneryPlacing())
+			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_SCENERY,"Place "+EntityHandler.getObjectDef(worldEditorInterface.getSceneryId()).getName(),localZ);
+		if(worldEditorInterface.isNpcPlacing())
+			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_NPC,"Place "+EntityHandler.getNpcDef(worldEditorInterface.getNpcId()).getName(),localZ);
+	}
+	private boolean addProjectedEditorTileFallback(){
+		boolean editorOpen=worldEditorInterface!=null&&worldEditorInterface.isEditorOpen();
+		if((!editorOpen&&!isClickTeleportActiveForCurrentContext())||this.selectedSpell>=0||this.selectedItemInventoryIndex>=0)return false;
+		if(mouseY>=getGameHeight()-70||mouseInTabArea_CUSTOM()||scene==null)return false;
+		int[] tile=scene.projectScreenToGroundTile(mouseX,mouseY,tileSize,getClickTeleportGroundPlaneY());
+		if(tile==null||tile[0]<0||tile[1]<0||tile[0]>=World.LOCAL_FACE_TILE_COUNT||tile[1]>=World.LOCAL_FACE_TILE_COUNT)return false;
+		this.menuVisible=true;this.m_rf=midRegionBaseX+tile[0];this.m_Cg=midRegionBaseZ+tile[1];
+		this.menuCommon.addCharacterItem_WithID(tile[0],"",MenuItemAction.LANDSCAPE_WALK_HERE,isClickTeleportActiveForCurrentContext()?"Teleport here":"Walk here",tile[1]);
+		addWorldEditorTileActions(tile[0],tile[1]);return true;
+	}
 	private void drawUiTab0(int var1) {
 		try {
 			if (this.messageTabSelected == MessageTab.CHAT && this.panelMessageTabs.isClicked(this.panelMessageChat)
@@ -10666,32 +10689,9 @@ public final class mudclient implements Runnable {
 							MenuItemAction.DEV_ADD_OBJECT, "@gr2@Add Object @whi@(@or1@" + devMenuNpcID + "@whi@)",
 							this.world.faceTileZ[var2]);
 					}
-					if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
-						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_INSPECT_TERRAIN, "Inspect terrain", this.world.faceTileZ[var2]);
-						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_COPY_TERRAIN, "Copy terrain data", this.world.faceTileZ[var2]);
-					}
-					if (worldEditorInterface != null && worldEditorInterface.isTerrainPainting())
-						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2],"",MenuItemAction.WORLD_EDITOR_PAINT_TERRAIN,"Paint terrain",this.world.faceTileZ[var2]);
-					if (worldEditorInterface != null && worldEditorInterface.isSceneryPlacing())
-						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2],"",MenuItemAction.WORLD_EDITOR_PLACE_SCENERY,"Place "+EntityHandler.getObjectDef(worldEditorInterface.getSceneryId()).getName(),this.world.faceTileZ[var2]);
-					if (worldEditorInterface != null && worldEditorInterface.isNpcPlacing())
-						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2],"",MenuItemAction.WORLD_EDITOR_PLACE_NPC,"Place "+EntityHandler.getNpcDef(worldEditorInterface.getNpcId()).getName(),this.world.faceTileZ[var2]);
+					addWorldEditorTileActions(this.world.faceTileX[var2],this.world.faceTileZ[var2]);
 				}
-				} else if (isClickTeleportActiveForCurrentContext()
-					&& this.selectedSpell < 0 && this.selectedItemInventoryIndex < 0) {
-					int[] fallbackTile = this.scene.projectScreenToGroundTile(
-						this.mouseX,
-						this.mouseY,
-						this.tileSize,
-						getClickTeleportGroundPlaneY());
-					if (fallbackTile != null) {
-						this.menuVisible = true;
-						this.m_rf = this.midRegionBaseX + fallbackTile[0];
-						this.m_Cg = this.midRegionBaseZ + fallbackTile[1];
-						this.menuCommon.addCharacterItem_WithID(fallbackTile[0], "",
-							MenuItemAction.LANDSCAPE_WALK_HERE, "Teleport here", fallbackTile[1]);
-					}
-				}
+				} else addProjectedEditorTileFallback();
 
 			} catch (RuntimeException var16) {
 			throw GenUtil.makeThrowable(var16, "client.TA(" + var1 + ')');
