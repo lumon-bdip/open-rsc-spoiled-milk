@@ -43,6 +43,16 @@ The authoritative response reports both raw archive fields and the current
 runtime tile's derived traversal mask/projectile flag. Collision is derived
 from overlay definitions, horizontal/vertical walls, diagonal walls, runtime
 scenery, and neighboring tiles; it must never be inferred from one raw field.
+The Surface UI calls raw `groundTexture` **Floor Color**; it selects one of the
+256 base palette colors and does not affect collision. It calls raw
+`groundOverlay` **Floor Texture**; nonzero values are one-based tile-definition
+references, and that definition's object type determines terrain blocking.
+
+Uniform 48-by-48 server regions may be memory-compressed to one shared
+`TileValue`. Every post-load collision writer uses the mutable-tile API, which
+expands that region into independent copies before changing one coordinate.
+Terrain painting and runtime scenery/boundary registration therefore cannot
+mutate collision on untouched tiles through the compressed representation.
 
 ## Protocol and authorization
 

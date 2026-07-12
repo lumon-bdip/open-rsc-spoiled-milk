@@ -481,6 +481,13 @@ public class RegionManager {
 		return getRegion(x, y).getTileValue(x % Constants.REGION_SIZE, y % Constants.REGION_SIZE);
 	}
 
+	public TileValue getMutableTile(final int x, final int y) {
+		if (!withinWorld(x, y)) {
+			return null;
+		}
+		return getRegion(x, y).getMutableTileValue(x % Constants.REGION_SIZE, y % Constants.REGION_SIZE);
+	}
+
 	public TileValue getTile(final Point point) {
 		return getTile(point.getX(), point.getY());
 	}

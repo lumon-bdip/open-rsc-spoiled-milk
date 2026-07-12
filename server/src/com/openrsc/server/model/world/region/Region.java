@@ -250,7 +250,31 @@ public class Region {
 	}
 
 	public TileValue getTileValue(final int regionX, final int regionY) {
-		return tile != null ? tile : tiles[regionX][regionY];
+		TileValue shared = tile;
+		TileValue[][] expanded = tiles;
+		return shared != null ? shared : expanded[regionX][regionY];
+	}
+
+	/** Expands a uniform region before returning a tile that will be mutated. */
+	public TileValue getMutableTileValue(final int regionX, final int regionY) {
+		TileValue[][] expanded = tiles;
+		if (expanded != null) {
+			return expanded[regionX][regionY];
+		}
+		synchronized (this) {
+			if (tile != null) {
+				TileValue shared = tile;
+				expanded = new TileValue[Constants.REGION_SIZE][Constants.REGION_SIZE];
+				for (int x = 0; x < Constants.REGION_SIZE; x++) {
+					for (int y = 0; y < Constants.REGION_SIZE; y++) {
+						expanded[x][y] = shared.copy();
+					}
+				}
+				tiles = expanded;
+				tile = null;
+			}
+			return tiles[regionX][regionY];
+		}
 	}
 
 	public TileValue getTileValue(final Point regionPoint) {
