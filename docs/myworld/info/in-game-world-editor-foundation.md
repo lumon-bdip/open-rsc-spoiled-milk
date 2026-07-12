@@ -1,4 +1,4 @@
-# In-game world editor: foundation and entity tools
+# In-Game World Editor: Foundation and Entity Tools
 
 Status: the inspection foundation is complete. Scenery and NPC editing delegate
 to the established administrator commands. Terrain draft painting covers the
