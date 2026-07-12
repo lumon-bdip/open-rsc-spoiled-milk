@@ -10371,6 +10371,9 @@ public final class mudclient implements Runnable {
 									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
 										this.wallObjectInstanceZ[var9], this.wallObjectInstanceDir[var9], this.wallObjectInstanceX[var9], id,
 										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Inspect editor data");
+									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
+										this.wallObjectInstanceZ[var9], this.wallObjectInstanceDir[var9], this.wallObjectInstanceX[var9], id,
+										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Copy editor data");
 								}
 							}
 						}
@@ -10421,8 +10424,11 @@ public final class mudclient implements Runnable {
 										}
 										if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
 											this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
-												this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9], this.gameObjectInstanceX[var9],
-												this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Inspect editor data");
+											this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9], this.gameObjectInstanceX[var9],
+											this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Inspect editor data");
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
+											this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9], this.gameObjectInstanceX[var9],
+											this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Copy editor data");
 										}
 
 										this.menuCommon
@@ -10566,9 +10572,12 @@ public final class mudclient implements Runnable {
 											MenuItemAction.DEV_REMOVE_NPC, "@gr2@Remove NPC",
 											"@yel@" + EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
 									}
-									if (worldEditorInterface != null && worldEditorInterface.isInspecting())
+									if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
 										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex, MenuItemAction.WORLD_EDITOR_INSPECT_NPC,
 											"Inspect editor data", "@yel@"+EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
+										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex, MenuItemAction.WORLD_EDITOR_COPY_NPC,
+											"Copy editor data", "@yel@"+EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
+									}
 
 									if (this.npcs[var9].suppressAttackOption) {
 										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex,
@@ -10647,6 +10656,7 @@ public final class mudclient implements Runnable {
 					}
 					if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
 						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_INSPECT_TERRAIN, "Inspect terrain", this.world.faceTileZ[var2]);
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_COPY_TERRAIN, "Copy terrain data", this.world.faceTileZ[var2]);
 					}
 				}
 				} else if (isClickTeleportActiveForCurrentContext()
@@ -17989,10 +17999,16 @@ public final class mudclient implements Runnable {
 				case WORLD_EDITOR_INSPECT_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,false); break; }
 				case WORLD_EDITOR_COPY_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,true); break; }
 				case WORLD_EDITOR_INSPECT_OBJECT: { worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0); break; }
+				case WORLD_EDITOR_COPY_OBJECT: { worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0,true); break; }
 				case WORLD_EDITOR_INSPECT_NPC: {
 					ORSCharacter editorNpc=getNpcFromServer(indexOrX);
 					if(editorNpc!=null)worldEditorInterface.recordWorldClick(midRegionBaseX+editorNpc.currentX/tileSize,midRegionBaseZ+editorNpc.currentZ/tileSize);
 					worldEditorInterface.inspectNpc(indexOrX);break;
+				}
+				case WORLD_EDITOR_COPY_NPC: {
+					ORSCharacter editorNpc=getNpcFromServer(indexOrX);
+					if(editorNpc!=null)worldEditorInterface.recordWorldClick(midRegionBaseX+editorNpc.currentX/tileSize,midRegionBaseZ+editorNpc.currentZ/tileSize);
+					worldEditorInterface.inspectNpc(indexOrX,true);break;
 				}
 				case MOD_SUMMON_PLAYER: {
 					String playerName = var9;

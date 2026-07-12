@@ -15,7 +15,12 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private int nextSequence;
 	private String inspectionStatus="Nothing inspected yet";
 	private String[] inspectionDetails=new String[0];
+	private String inspectionKind="";
+	private String copiedInspectionKind="";
+	private String[] copiedInspectionDetails=new String[0];
+	private boolean copyNextInspection=false;
 	private int[] copiedTerrainFields;
+	private int[] inspectedTerrainFields;
 	private int lastClickedX=-1,lastClickedY=-1,brushX=-1,brushY=-1;
 	private String teleportX="",teleportY="";
 	private int coordinateFocus=0;
@@ -42,22 +47,39 @@ public final class WorldEditorInterface extends NCustomComponent {
 	public boolean isNavigating(){return isEditorOpen()&&mode==Mode.NAVIGATE;}
 	public void setSequence(int sequence){nextSequence=sequence;}
 	public void recordWorldClick(int x,int y){lastClickedX=x;lastClickedY=y;if(mode!=Mode.NAVIGATE){brushX=x;brushY=y;}}
-	public void showInfo(String text){inspectionStatus="Authoritative inspection";inspectionDetails=wrap(text,58);}
-	public void showError(String text){inspectionStatus="Server rejected request";inspectionDetails=wrap(text,58);}
+	public void showInfo(int responseType,String text){
+		inspectionKind=responseType==5?"NPC":(text!=null&&text.contains("type=boundary")?"Boundary":"Scenery");
+		inspectionStatus="Authoritative "+inspectionKind.toLowerCase()+" inspection";inspectionDetails=wrap(text,58);
+		if(copyNextInspection)copyInspected();copyNextInspection=false;
+	}
+	public void showError(String text){copyNextInspection=false;inspectionStatus="Server rejected request";inspectionDetails=wrap(text,58);}
 	public void showTerrain(int sequence,int x,int y,int plane,int sx,int sy,int lx,int ly,int elev,int texture,int overlay,int roof,int hwall,int vwall,int diag,int collision,boolean projectile,boolean copied,String definitions){
-		nextSequence=sequence;inspectionStatus=copied?"Terrain fields copied locally (painting disabled)":"Authoritative terrain snapshot";
-		if(copied)copiedTerrainFields=new int[]{elev,texture,overlay,roof,hwall,vwall,diag};
+		nextSequence=sequence;inspectionKind="Terrain";inspectionStatus="Authoritative terrain inspection";
+		inspectedTerrainFields=new int[]{elev,texture,overlay,roof,hwall,vwall,diag};
+		String[] names=definitions==null?new String[0]:definitions.split("\\t",-1);
+		String northName=names.length>0?names[0]:"unknown",eastName=names.length>1?names[1]:"unknown",diagonalName=names.length>2?names[2]:"unknown";
+		int northId=vwall>0?vwall-1:-1,eastId=hwall>0?hwall-1:-1,diagonalId=diagonalDefinitionId(diag);
 		java.util.List<String> lines=new java.util.ArrayList<String>();java.util.Collections.addAll(lines,
-			"World: "+x+","+y+" plane "+plane,"Sector: "+sx+","+sy+" local "+lx+","+ly,
-			"Elevation "+elev+"  Ground texture "+texture,"Overlay "+overlay+"  Roof "+roof,
-			"Horizontal wall "+hwall+"  Vertical wall "+vwall,"Diagonal raw "+diag+"  "+diagonal(diag),
-			"Collision 0x"+Integer.toHexString(collision)+"  Projectile "+projectile);
-		java.util.Collections.addAll(lines,wrap(definitions,58));inspectionDetails=lines.toArray(new String[lines.size()]);
+			"Coordinates: "+x+", "+y,"Plane: "+plane+" ("+planeName(plane)+")","Elevation: "+elev,
+			"Floor Color: "+texture,"Floor Texture: "+overlay,
+			"Walls: North "+wall(northId,northName)+" | East "+wall(eastId,eastName),
+			"Diagonal "+wall(diagonalId,diagonalName)+" ("+diagonalRotation(diag)+")",
+			"Collision: 0x"+Integer.toHexString(collision)+" | Projectiles: "+(projectile?"allowed":"blocked"),
+			"Archive: sector "+sx+","+sy+" | local "+lx+","+ly);
+		inspectionDetails=lines.toArray(new String[lines.size()]);
+		if(copied||copyNextInspection)copyInspected();copyNextInspection=false;
 	}
 	public int[] getCopiedTerrainFields(){return copiedTerrainFields==null?null:copiedTerrainFields.clone();}
 	public void inspectTerrain(int worldX,int worldY,boolean copy){recordWorldClick(worldX,worldY);send(2,worldX,worldY,Math.floorDiv(worldY,944),0,0,copy?1:0);}
-	public void inspectObject(int worldX,int worldY,int id,int direction,int type){recordWorldClick(worldX,worldY);send(3,worldX,worldY,Math.floorDiv(worldY,944),id,direction,type);}
-	public void inspectNpc(int serverIndex){send(4,0,0,0,serverIndex,0,0);}
+	public void inspectObject(int worldX,int worldY,int id,int direction,int type){inspectObject(worldX,worldY,id,direction,type,false);}
+	public void inspectObject(int worldX,int worldY,int id,int direction,int type,boolean copy){recordWorldClick(worldX,worldY);copyNextInspection=copy;send(3,worldX,worldY,Math.floorDiv(worldY,944),id,direction,type);}
+	public void inspectNpc(int serverIndex){inspectNpc(serverIndex,false);}
+	public void inspectNpc(int serverIndex,boolean copy){copyNextInspection=copy;send(4,0,0,0,serverIndex,0,0);}
+	public void copyInspected(){
+		if(inspectionKind.isEmpty())return;copiedInspectionKind=inspectionKind;copiedInspectionDetails=inspectionDetails.clone();
+		if("Terrain".equals(inspectionKind)&&inspectedTerrainFields!=null)copiedTerrainFields=inspectedTerrainFields.clone();
+		inspectionStatus="Copied "+inspectionKind.toLowerCase()+" inspection locally (editing disabled)";
+	}
 
 	private void selectMode(Mode selected){mode=selected;coordinateFocus=0;mc.setWorldEditorNavigateClickTeleport(mode==Mode.NAVIGATE&&clickTeleportPreferred);}
 	private void teleportToFields(){
@@ -95,6 +117,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 				if(ry>=197&&ry<221&&rx>=180&&rx<280){coordinateFocus=2;return true;}
 				if(ry>=197&&ry<221&&rx>=295&&rx<375){coordinateFocus=0;teleportToFields();return true;}
 			}
+			if(mode==Mode.INSPECT&&ry>=276&&ry<300&&rx>=10&&rx<175&&!inspectionKind.isEmpty()){copyInspected();return true;}
 			coordinateFocus=0;
 		}
 		return rx>=0&&ry>=0&&rx<=390&&ry<=330;
@@ -122,18 +145,23 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 	private void renderInspect(int x,int y){
 		graphics().drawString(inspectionStatus,x+10,y+70,0xffff00,2);int line=y+89;
-		for(String s:inspectionDetails){if(line>y+265)break;graphics().drawString(s,x+10,line,0xffffff,2);line+=17;}
-		graphics().drawString("Right-click terrain, scenery, boundaries, or NPCs to inspect.",x+10,y+285,0xff981f,1);
+		for(String s:inspectionDetails){if(line>y+242)break;graphics().drawString(s,x+10,line,0xffffff,2);line+=17;}
+		graphics().drawString("Right-click targets to inspect or copy authoritative data.",x+10,y+263,0xff981f,1);
+		button(x+10,y+276,165,inspectionKind.isEmpty()?"Copy inspected (empty)":"Copy inspected");
 	}
 	private void renderFutureMode(int x,int y){
 		graphics().drawString(TABS[mode.ordinal()]+" editing",x+10,y+70,0xffff00,2);
 		graphics().drawString("Reserved for a later editor phase.",x+10,y+96,0xffffff,2);
 		graphics().drawString("No editable fields or mutation controls are enabled.",x+10,y+118,0xff981f,1);
+		if(!copiedInspectionKind.isEmpty())graphics().drawString("Copied "+copiedInspectionKind+" data is ready for this future editor.",x+10,y+146,0xbdbdbd,1);
 	}
 	private void textField(int x,int y,int w,String text,boolean focused){graphics().drawBoxAlpha(x,y,w,24,focused?0x6580b7:0x222222,240);graphics().drawBoxBorder(x,w,y,24,0);graphics().drawString(text+(focused?"*":""),x+6,y+17,0xffffff,2);}
 	private void checkbox(int x,int y,boolean checked,String text){graphics().drawBoxAlpha(x,y,18,18,checked?0x6b8e23:0x333333,255);graphics().drawBoxBorder(x,18,y,18,0);if(checked)graphics().drawString("X",x+5,y+14,0xffffff,2);graphics().drawString(text,x+26,y+14,0xffffff,2);}
 	private void button(int x,int y,int w,String text){graphics().drawBoxAlpha(x,y,w,24,0x333333,220);graphics().drawBoxBorder(x,w,y,24,0);graphics().drawString(text,x+6,y+17,0xffffff,2);}
 	private static String point(int x,int y){return x<0||y<0?"not set":x+","+y;}
-	private static String diagonal(int v){if(v>0&&v<12000)return "def "+(v-1)+" NW-SE";if(v>12000&&v<24000)return "def "+(v-12001)+" NE-SW";return "none";}
+	private static int diagonalDefinitionId(int v){if(v>0&&v<12000)return v-1;if(v>12000&&v<24000)return v-12001;return -1;}
+	private static String diagonalRotation(int v){return v>12000&&v<24000?"rotated":v>0&&v<12000?"not rotated":"none";}
+	private static String wall(int id,String name){return id<0?"none":"#"+id+" ("+name+")";}
+	private static String planeName(int plane){switch(plane){case 0:return "Surface";case 1:return "First floor";case 2:return "Second floor";case 3:return "Underground";default:return "Unknown";}}
 	private static String[] wrap(String s,int width){if(s==null||s.isEmpty())return new String[0];java.util.List<String> lines=new java.util.ArrayList<String>();while(s.length()>width){int p=s.lastIndexOf(' ',width);if(p<1)p=width;lines.add(s.substring(0,p));s=s.substring(p).trim();}lines.add(s);return lines.toArray(new String[lines.size()]);}
 }

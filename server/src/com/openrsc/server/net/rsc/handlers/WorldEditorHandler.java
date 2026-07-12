@@ -39,15 +39,12 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		o.elevation=s.elevation;o.groundTexture=s.groundTexture;o.groundOverlay=s.groundOverlay;o.roofTexture=s.roofTexture;
 		o.horizontalWall=s.horizontalWall;o.verticalWall=s.verticalWall;o.diagonal=s.diagonal;
 		o.traversalMask=runtime==null?0:runtime.traversalMask&0xff;o.projectileAllowed=runtime!=null&&runtime.projectileAllowed;o.copy=r.objectType==1;
-		o.message="Overlay "+s.groundOverlay+tileDefinition(p,s.groundOverlay)+" | horizontal "+wallDefinition(p,s.horizontalWall)
-			+" | vertical "+wallDefinition(p,s.verticalWall)+" | diagonal "+wallDefinitionRaw(p,s.diagonalDefinitionId());
+		// Names are tab-delimited protocol data; the client owns the concise semantic layout.
+		o.message=wallDefinitionName(p,s.verticalWall-1)+"\t"+wallDefinitionName(p,s.horizontalWall-1)
+			+"\t"+wallDefinitionName(p,s.diagonalDefinitionId());
 		ActionSender.sendWorldEditor(p,o);
 	}
-	private String tileDefinition(Player p,int raw){
-		if(raw<=0)return " (none)";try{return " (objectType="+p.getWorld().getServer().getEntityHandler().getTileDef(raw-1).getObjectType()+")";}catch(Exception e){return " (unknown definition)";}
-	}
-	private String wallDefinition(Player p,int raw){return raw<=0?"none":wallDefinitionRaw(p,raw-1);}
-	private String wallDefinitionRaw(Player p,int id){if(id<0)return "none";try{return p.getWorld().getServer().getEntityHandler().getDoorDef(id).getName()+" (#"+id+")";}catch(Exception e){return "unknown (#"+id+")";}}
+	private String wallDefinitionName(Player p,int id){if(id<0)return "none";try{return p.getWorld().getServer().getEntityHandler().getDoorDef(id).getName();}catch(Exception e){return "unknown";}}
 	private void inspectObject(WorldEditorRequestStruct r, Player p, int next) {
 		GameObject object=p.getViewArea().getGameObject(Point.location(r.x,r.y));
 		String text;

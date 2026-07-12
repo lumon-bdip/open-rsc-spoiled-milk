@@ -54,7 +54,7 @@ class WorldEditorFoundationTest(unittest.TestCase):
         ui = (ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java").read_text()
         self.assertIn("Config.isAndroid()", ui)
         self.assertIn('"Navigate","Inspect","Terrain","Scenery","NPC"', ui)
-        self.assertIn("painting disabled", ui.lower())
+        self.assertIn("editing disabled", ui.lower())
         sessions = (ROOT / "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java").read_text()
         self.assertIn("!player.isAdmin()", sessions)
         self.assertIn("sequence != active.nextSequence", sessions)
@@ -79,7 +79,14 @@ class WorldEditorFoundationTest(unittest.TestCase):
             re.S,
         )
         self.assertIsNotNone(terrain_menu)
-        self.assertNotIn("WORLD_EDITOR_COPY_TERRAIN", terrain_menu.group("body"))
+        self.assertIn("WORLD_EDITOR_COPY_TERRAIN", client)
+        self.assertIn("WORLD_EDITOR_COPY_OBJECT", client)
+        self.assertIn("WORLD_EDITOR_COPY_NPC", client)
+        for label in (
+            "Coordinates:", "Floor Color:", "Floor Texture:", "Walls: North",
+            "First floor", "Second floor", "Underground", "Copy inspected",
+        ):
+            self.assertIn(label, ui)
 
 if __name__ == "__main__":
     unittest.main()

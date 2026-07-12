@@ -371,7 +371,7 @@ public class PacketHandler {
 			String definitions=packetsIncoming.readString();
 			mc.worldEditorInterface.showTerrain(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,copied,definitions);return;}
 		String message=packetsIncoming.readString();if(sequence>0)mc.worldEditorInterface.setSequence(sequence);
-		if(type==6)mc.worldEditorInterface.showError(message);else mc.worldEditorInterface.showInfo(message);
+		if(type==6)mc.worldEditorInterface.showError(message);else mc.worldEditorInterface.showInfo(type,message);
 	}
 
 	public final void handlePacket2(int opcode, int length) {
