@@ -2,8 +2,10 @@
 
 Status: the inspection foundation is complete. Scenery and NPC editing delegate
 to the established administrator commands. Terrain draft painting covers the
-complete raw tile record through compact Surface and Structure tools. Durable terrain save/export,
-undo/redo, publish, and terrain patch replay remain intentionally unavailable.
+complete raw tile record through compact Surface and Structure tools. An
+explicit save now durably materializes terrain drafts into the matching server
+and client landscape archives. Undo/redo, publish, and terrain patch replay
+remain intentionally unavailable.
 
 ## Raw terrain contract
 
@@ -109,8 +111,9 @@ metadata suppresses that spill for painted overlays so brush previews match
 their exact raw-tile footprint without changing existing world water. Terrain
 overlay, directional wall, diagonal wall, and projectile collision ownership is
 tracked separately from runtime scenery/boundaries. Removing terrain therefore
-cannot erase an overlapping dynamic collision source. Terrain still has no Save control; a server
-restart discards the draft.
+cannot erase an overlapping dynamic collision source. `Save edits` invokes the
+existing `::saveworldedits` commit point. Terrain remains a server-lifetime
+draft until that explicit save succeeds.
 
 Scenery exposes an object-definition
 selector with resolved name and Place, Rotate, and Remove tools. These tools are
@@ -125,12 +128,29 @@ existing `saveworldedits` command. Undo and redo are deliberately deferred until
 the complete editing workflow exists; no partial command-queue undo semantics
 are introduced here.
 
+## Terrain save contract
+
+Saving terrain requires the administrator who owns the active editor session.
+The server verifies that its landscape still matches the digest captured when
+the draft was opened and that the tracked server and client archives are
+byte-identical. It writes and verifies temporary output before replacing either
+archive, confirms their resulting SHA-256 hashes match, and preserves a
+timestamped pre-save copy under
+`server/conf/server/data/world-editor-backups/`. Replacement uses an atomic move
+where supported and restores both copies from the backup if replacement or
+final verification fails. The in-memory draft is cleared only after the saved
+archive reopens successfully; failures retain the recoverable draft.
+
+This commit point updates the two workspace `Custom_Landscape.orsc` files. It
+does not publish, deploy, or transmit a new archive to other connected clients.
+Those steps remain part of the normal manager review and release workflow.
+
 ## Future patch/recovery decision
 
 The future durable format will be an append-only, versioned patch journal, not
 a rewritten ZIP as the editing working copy. Each transaction will carry an
 opaque transaction ID, editor identity, base archive digest, ordered before/after
 raw tile records or entity loc records, and a commit marker. Startup recovery
-may replay committed transactions only. Export will materialize a temporary
-archive, byte-verify it, then atomically replace the destination. This decision
-is documented now but no journal code exists in Phase 1.
+may replay committed transactions only. The current verified archive
+materializer and backups provide durable manual saves, but no append-only
+journal or startup replay exists yet.

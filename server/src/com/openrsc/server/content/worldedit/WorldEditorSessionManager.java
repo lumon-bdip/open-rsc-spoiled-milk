@@ -2,8 +2,10 @@ package com.openrsc.server.content.worldedit;
 
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.io.WorldEditorTerrainArchive;
-import java.io.File;
+import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -16,6 +18,8 @@ public final class WorldEditorSessionManager {
 	private final SecureRandom random;
 	private Session active;
 	private WorldEditorTerrainArchive terrainArchive;
+	private Path terrainArchivePath;
+	private String terrainBaseSha256;
 	private final Map<String,WorldEditorTerrainArchive.Snapshot> terrainDraft =
 		new LinkedHashMap<String,WorldEditorTerrainArchive.Snapshot>();
 	public WorldEditorSessionManager() { this(new SecureRandom()); }
@@ -50,6 +54,7 @@ public final class WorldEditorSessionManager {
 		if (player != null && active != null && active.ownerHash == player.getUsernameHash()) active = null;
 	}
 	public synchronized boolean hasActiveSession() { return active != null; }
+	public synchronized boolean ownsActiveSession(Player player){return player!=null&&player.isAdmin()&&active!=null&&active.ownerHash==player.getUsernameHash();}
 	public synchronized WorldEditorTerrainArchive.Snapshot inspectTerrain(Player player, int x, int y, int plane) throws IOException {
 		WorldEditorTerrainArchive.Snapshot archived=inspectArchivedTerrain(player,x,y,plane);
 		WorldEditorTerrainArchive.Snapshot drafted=terrainDraft.get(terrainKey(x,y,plane));
@@ -98,6 +103,21 @@ public final class WorldEditorSessionManager {
 		return new TerrainStrokeResult(before,after);
 	}
 	public synchronized int terrainDraftSize(){return terrainDraft.size();}
+	public synchronized int terrainDraftSectorCount(){java.util.HashSet<String> sectors=new java.util.HashSet<String>();for(WorldEditorTerrainArchive.Snapshot tile:terrainDraft.values())sectors.add(tile.coordinates.plane+":"+tile.coordinates.sectorX+":"+tile.coordinates.sectorY);return sectors.size();}
+	public synchronized WorldEditorTerrainSaveFiles.SaveResult saveTerrainDraft(Player player) throws IOException {
+		if(!ownsActiveSession(player))throw new IllegalStateException("An active world editor session owned by this administrator is required.");
+		if(terrainDraft.isEmpty())throw new IllegalStateException("Terrain draft is empty.");
+		if(!player.getConfig().WANT_CUSTOM_LANDSCAPE)throw new IllegalStateException("Durable terrain saving requires Custom_Landscape.orsc.");
+		if(terrainArchivePath==null||terrainBaseSha256==null)throw new IllegalStateException("Terrain archive base revision is unavailable.");
+		List<WorldEditorTerrainSaveFiles.TileRecord> records=new ArrayList<WorldEditorTerrainSaveFiles.TileRecord>(terrainDraft.size());
+		for(WorldEditorTerrainArchive.Snapshot s:terrainDraft.values())records.add(WorldEditorTerrainSaveFiles.TileRecord.of(s.coordinates.worldX,s.coordinates.worldY,s.coordinates.plane,s.elevation,s.groundTexture,s.groundOverlay,s.roofTexture,s.horizontalWall,s.verticalWall,s.diagonal));
+		Path clientArchive=Paths.get("../Client_Base/Cache/video/Custom_Landscape.orsc").toAbsolutePath().normalize();
+		Path backups=terrainArchivePath.getParent().resolve("world-editor-backups");closeTerrainArchive();
+		try{
+			WorldEditorTerrainSaveFiles.SaveResult saved=WorldEditorTerrainSaveFiles.save(terrainArchivePath,clientArchive,backups,terrainBaseSha256,records);
+			terrainBaseSha256=saved.resultSha256;terrainArchive=new WorldEditorTerrainArchive(terrainArchivePath.toFile());terrainDraft.clear();return saved;
+		}catch(IOException|RuntimeException failure){try{terrainArchive=new WorldEditorTerrainArchive(terrainArchivePath.toFile());}catch(IOException reopen){failure.addSuppressed(reopen);}throw failure;}
+	}
 	private static void validateTerrainPaint(int fieldMask,int elevation,int groundTexture,int groundOverlay,int roofTexture,int horizontalWall,int verticalWall){
 		if(fieldMask<=0||(fieldMask&~127)!=0)throw new IllegalArgumentException("Select at least one supported terrain field.");
 		if(!rawByte(elevation)||!rawByte(groundTexture)||!rawByte(groundOverlay)||!rawByte(roofTexture)
@@ -107,10 +127,12 @@ public final class WorldEditorSessionManager {
 		if (terrainArchive == null) {
 			String name = player.getConfig().WANT_CUSTOM_LANDSCAPE ? "Custom_Landscape.orsc"
 				: (player.getConfig().MEMBER_WORLD ? "Authentic_Landscape.orsc" : "F2PLandscape.orsc");
-			terrainArchive = new WorldEditorTerrainArchive(new File("./conf/server/data/" + name));
+			terrainArchivePath=Paths.get("./conf/server/data/"+name).toAbsolutePath().normalize();terrainBaseSha256=WorldEditorTerrainSaveFiles.sha256(terrainArchivePath);
+			terrainArchive = new WorldEditorTerrainArchive(terrainArchivePath.toFile());
 		}
 		return terrainArchive.inspect(x, y, plane);
 	}
+	private void closeTerrainArchive() throws IOException {if(terrainArchive!=null){terrainArchive.close();terrainArchive=null;}}
 	private static String terrainKey(int x,int y,int plane){return plane+":"+x+":"+y;}
 	private static boolean rawByte(int value){return value>=0&&value<=255;}
 
