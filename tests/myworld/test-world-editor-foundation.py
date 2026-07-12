@@ -165,5 +165,16 @@ class WorldEditorFoundationTest(unittest.TestCase):
         self.assertNotIn("WORLD_EDITOR_UNDO", actions)
         self.assertNotIn("WORLD_EDITOR_REDO", actions)
 
+    def test_world_editor_dispatcher_accepts_only_supported_envelope_lengths(self):
+        parser = (ROOT / "server/src/com/openrsc/server/net/rsc/parsers/impl/PayloadCustomParser.java").read_text()
+        match = re.search(r"WORLD_EDITOR_PACKET_LENGTHS\s*=\s*\{([^}]+)\}", parser)
+        self.assertIsNotNone(match)
+        accepted = {int(value) for value in re.findall(r"\d+", match.group(1))}
+        self.assertEqual({13, 15, 19, 22, 29}, accepted)
+        for supported in accepted:
+            self.assertNotIn(supported - 1, accepted)
+            self.assertNotIn(supported + 1, accepted)
+        self.assertIn("return isWorldEditorPacketLength(packet.getLength());", parser)
+
 if __name__ == "__main__":
     unittest.main()

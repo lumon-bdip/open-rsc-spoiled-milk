@@ -19,6 +19,14 @@ import org.apache.logging.log4j.Logger;
 public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final int[] WORLD_EDITOR_PACKET_LENGTHS = {13, 15, 19, 22, 29};
+
+	private static boolean isWorldEditorPacketLength(int length) {
+		for (int accepted : WORLD_EDITOR_PACKET_LENGTHS) {
+			if (length == accepted) return true;
+		}
+		return false;
+	}
 
 	@Override
 	public OpcodeIn toOpcodeEnum(Packet packet, Player player) {
@@ -462,8 +470,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case WALK_TO_ENTITY:
 				return packet.getLength() >= 4;
 			case WORLD_EDITOR_REQUEST:
-				return packet.getLength() == 13 || packet.getLength() == 19
-					|| packet.getLength() == 22 || packet.getLength() == 15;
+				return isWorldEditorPacketLength(packet.getLength());
 		}
 		return true;
 	}
