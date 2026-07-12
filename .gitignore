@@ -171,6 +171,7 @@ server/inc/sqlite/*.db.pre_*
 
 .idea/sqldialects.xml
 server/conf/server/data/specialsleepwords/
+server/conf/server/data/world-editor-backups/
 
 Client_Base/Cache/video/BoundaryLocsExpansion.json
 Client_Base/Cache/video/GroundItemsExpansion.json

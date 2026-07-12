@@ -9,6 +9,7 @@ import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
+import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
 import com.openrsc.server.external.ObjectWoodcuttingDef;
@@ -1158,12 +1159,14 @@ public final class Development implements CommandTrigger {
 			npcEdits = new ArrayList<WorldNpcEditFiles.Edit>(PENDING_NPC_EDITS.values());
 		}
 
-		if (edits.isEmpty() && npcEdits.isEmpty()) {
+		int terrainEdits=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSize();
+		int terrainSectors=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSectorCount();
+		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0) {
 			player.message(messagePrefix + "No pending world edits.");
 			return;
 		}
 
-		player.message(messagePrefix + "Pending world edits: scenery " + edits.size()
+		player.message(messagePrefix + "Pending world edits: terrain " + terrainEdits+" tiles / "+terrainSectors+" sectors, scenery " + edits.size()
 			+ ", NPCs " + npcEdits.size() + ".");
 		int shown = 0;
 		for (WorldSceneryEditFiles.Edit edit : edits) {
@@ -1194,12 +1197,15 @@ public final class Development implements CommandTrigger {
 			npcEdits = new ArrayList<WorldNpcEditFiles.Edit>(PENDING_NPC_EDITS.values());
 		}
 
-		if (edits.isEmpty() && npcEdits.isEmpty()) {
+		WorldEditorSessionManager editor=player.getWorld().getServer().getWorldEditorSessions();int terrainEdits=editor.terrainDraftSize();
+		if (edits.isEmpty() && npcEdits.isEmpty() && terrainEdits==0) {
 			player.message(messagePrefix + "No pending world edits to save.");
 			return;
 		}
+		if(terrainEdits>0&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the terrain draft.");return;}
 
 		try {
+			WorldEditorTerrainSaveFiles.SaveResult terrainResult=terrainEdits==0?null:editor.saveTerrainDraft(player);
 			WorldSceneryEditFiles.SaveResult sceneryResult = null;
 			WorldNpcEditFiles.SaveResult npcResult = null;
 			String configDir = player.getWorld().getServer().getConfig().CONFIG_DIR;
@@ -1219,9 +1225,13 @@ public final class Development implements CommandTrigger {
 					}
 				}
 			}
-			int saved = (sceneryResult == null ? 0 : sceneryResult.editsApplied)
+			int saved = (terrainResult == null ? 0 : terrainResult.tilesSaved)+(sceneryResult == null ? 0 : sceneryResult.editsApplied)
 				+ (npcResult == null ? 0 : npcResult.editsApplied);
 			player.message(messagePrefix + "Saved " + saved + " world edits.");
+			if(terrainResult!=null){
+				player.message(messagePrefix+"Terrain: "+terrainResult.tilesSaved+" tiles across "+terrainResult.sectorsChanged+" sectors; hash "+terrainResult.resultSha256.substring(0,12)+".");
+				LOGGER.info(player.getUsername()+" saved "+terrainResult.tilesSaved+" terrain edits to "+terrainResult.serverArchive+" and "+terrainResult.clientArchive+"; backup "+terrainResult.backupArchive+"; sha256 "+terrainResult.resultSha256);
+			}
 			if (sceneryResult != null) {
 				player.message(messagePrefix + "Scenery locs: " + sceneryResult.sceneryLocsWritten
 					+ ", removals: " + sceneryResult.removalsWritten + ".");
@@ -1251,8 +1261,9 @@ public final class Development implements CommandTrigger {
 			npcCount = PENDING_NPC_EDITS.size();
 			PENDING_NPC_EDITS.clear();
 		}
+		int terrainCount=player.getWorld().getServer().getWorldEditorSessions().terrainDraftSize();
 		player.message(messagePrefix + "Cleared " + (count + npcCount)
-			+ " pending world edits. Live entities were not reverted.");
+			+ " pending entity edits. Live entities were not reverted."+(terrainCount>0?" Terrain draft retained: "+terrainCount+" tiles.":""));
 	}
 
 	private void tileInformation(Player player) {

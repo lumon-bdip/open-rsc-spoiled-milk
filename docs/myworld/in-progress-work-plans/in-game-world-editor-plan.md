@@ -464,6 +464,13 @@ clearly measured and replaced before brush rollout.
 
 ## Persistence and `::saveworldedits`
 
+Current implementation note: the first durable commit path materializes the
+coalesced in-memory terrain draft directly into both workspace landscape
+archives. It verifies the captured base digest, exact client/server agreement,
+every output entry, final matching hashes, and a timestamped rollback copy.
+The draft clears only after the saved server archive reopens. The versioned
+patch journal described below remains future recovery and transaction work.
+
 Use a versioned, deterministic terrain patch representation during editing,
 for example `MyWorldTerrainEdits.json`. The exact filename and schema may be
 adjusted during the architecture phase, but the following contract is fixed:
