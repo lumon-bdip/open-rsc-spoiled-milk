@@ -129,6 +129,10 @@ public class ActionSender {
 		}
 	}
 
+	public static void sendWorldEditor(Player player, WorldEditorStruct struct) {
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_WORLD_EDITOR, struct, player);
+	}
+
 	public static boolean isRetroClient(Player player) {
 		//return player.getClientVersion() == 38;
 		return player.isUsing38CompatibleClient() || player.isUsing39CompatibleClient() || player.isUsing69CompatibleClient();

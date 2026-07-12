@@ -197,6 +197,7 @@ public class PayloadProcessorManager {
 		bind(OpcodeIn.SEND_DEBUG_INFO, ClientDebugHandler.class);
 
 		bind(OpcodeIn.KNOWN_PLAYERS, KnownPlayersHandler.class); // TODO: class logic needs to be implemented
+		bind(OpcodeIn.WORLD_EDITOR_REQUEST, WorldEditorHandler.class);
 	}
 
 	private static void bind(OpcodeIn opcode, Class<?> clazz) {

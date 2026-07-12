@@ -689,6 +689,7 @@ public final class mudclient implements Runnable {
 	public DoSkillInterface doSkillInterface;
 	public LostOnDeathInterface lostOnDeathInterface;
 	public TerritorySignupInterface territorySignupInterface;
+	public WorldEditorInterface worldEditorInterface;
 	String m_p = null;
 	int clearBox = GenUtil.buildColor(181, 181, 181);
 	int selectedBox = GenUtil.buildColor(220, 220, 220);
@@ -10366,6 +10367,11 @@ public final class mudclient implements Runnable {
 								}
 
 								this.wallObjectInstance_Arg1[var9] = true;
+								if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
+									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
+										this.wallObjectInstanceZ[var9], this.wallObjectInstanceDir[var9], this.wallObjectInstanceX[var9], id,
+										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Inspect editor data");
+								}
 							}
 						}
 						// Game Object Right Click Menu
@@ -10412,6 +10418,11 @@ public final class mudclient implements Runnable {
 												this.gameObjectInstanceX[var9], this.gameObjectInstanceID[var9],
 												"@gr2@Remove Object",
 												"@cya@" + EntityHandler.getObjectDef(id).getName());
+										}
+										if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
+											this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
+												this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9], this.gameObjectInstanceX[var9],
+												this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Inspect editor data");
 										}
 
 										this.menuCommon
@@ -10555,6 +10566,9 @@ public final class mudclient implements Runnable {
 											MenuItemAction.DEV_REMOVE_NPC, "@gr2@Remove NPC",
 											"@yel@" + EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
 									}
+									if (worldEditorInterface != null && worldEditorInterface.isInspecting())
+										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex, MenuItemAction.WORLD_EDITOR_INSPECT_NPC,
+											"Inspect editor data", "@yel@"+EntityHandler.getNpcDef(this.npcs[var9].npcId).getName());
 
 									if (this.npcs[var9].suppressAttackOption) {
 										this.menuCommon.addCharacterItem(this.npcs[var9].serverIndex,
@@ -10630,6 +10644,10 @@ public final class mudclient implements Runnable {
 						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "",
 							MenuItemAction.DEV_ADD_OBJECT, "@gr2@Add Object @whi@(@or1@" + devMenuNpcID + "@whi@)",
 							this.world.faceTileZ[var2]);
+					}
+					if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_INSPECT_TERRAIN, "Inspect terrain", this.world.faceTileZ[var2]);
+						this.menuCommon.addCharacterItem_WithID(this.world.faceTileX[var2], "", MenuItemAction.WORLD_EDITOR_COPY_TERRAIN, "Copy terrain fields", this.world.faceTileZ[var2]);
 					}
 				}
 				} else if (this.devClickTeleportMode && canUseClickTeleport()
@@ -17967,6 +17985,10 @@ public final class mudclient implements Runnable {
 						+ (idOrZ + midRegionBaseZ) + "");
 					break;
 				}
+				case WORLD_EDITOR_INSPECT_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,false); break; }
+				case WORLD_EDITOR_COPY_TERRAIN: { worldEditorInterface.inspectTerrain(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,true); break; }
+				case WORLD_EDITOR_INSPECT_OBJECT: { worldEditorInterface.inspectObject(indexOrX+midRegionBaseX,idOrZ+midRegionBaseZ,tileID,dir,0); break; }
+				case WORLD_EDITOR_INSPECT_NPC: { worldEditorInterface.inspectNpc(indexOrX); break; }
 				case MOD_SUMMON_PLAYER: {
 					String playerName = var9;
 					playerName = playerName.replaceAll(" ", "_");
@@ -25794,9 +25816,11 @@ public final class mudclient implements Runnable {
 				if (S_ITEMS_ON_DEATH_MENU)
 					lostOnDeathInterface = new LostOnDeathInterface(this);
 				territorySignupInterface = new TerritorySignupInterface(this);
+				worldEditorInterface = new WorldEditorInterface(this);
 
 				mainComponent = new NComponent(this);
 				mainComponent.setSize(getGameWidth(), getGameHeight());
+				mainComponent.addComponent(worldEditorInterface);
 
 				bankPinInterface = new BankPinInterface(this);
 				mainComponent.addComponent(bankPinInterface);
@@ -26497,6 +26521,9 @@ public final class mudclient implements Runnable {
 	public ORSCharacter getLocalPlayer() {
 		return localPlayer;
 	}
+
+	public int getEditorPlayerWorldX() { return midRegionBaseX + (localPlayer == null ? playerLocalX : localPlayer.currentX / tileSize); }
+	public int getEditorPlayerWorldY() { return midRegionBaseZ + (localPlayer == null ? playerLocalZ : localPlayer.currentZ / tileSize); }
 
 	public void setLocalPlayer(ORSCharacter p) {
 		this.localPlayer = p;

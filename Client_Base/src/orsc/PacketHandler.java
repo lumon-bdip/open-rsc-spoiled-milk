@@ -180,6 +180,7 @@ public class PacketHandler {
 		put(147, "SEND_KILLS2");
 		put(148, "SET_OPENPK_POINTS");
 		put(150, "UPDATE_PRESET");
+		put(151, "WORLD_EDITOR");
 		put(250, "UPDATE_UNLOCKED_APPEARANCES");
 		put(254, "UPDATE_EQUIPMENT");
 		put(255, "UPDATE_EQUIPMENT_SLOT");
@@ -345,6 +346,8 @@ public class PacketHandler {
 
 			else if (opcode == 150) updatePreset();
 
+			else if (opcode == 151) updateWorldEditor();
+
 				// Set Server Configs
 			else if (opcode == 19) setServerConfiguration();
 
@@ -353,6 +356,21 @@ public class PacketHandler {
 		} catch (RuntimeException var11) {
 			throw GenUtil.makeThrowable(var11, "client.LD(" + "dummy" + ',' + length + ',' + opcode + ')');
 		}
+	}
+
+	private void updateWorldEditor() {
+		int type=packetsIncoming.getByte()&0xff, version=packetsIncoming.getByte()&0xff, sequence=packetsIncoming.get32();
+		if(version!=1||mc.worldEditorInterface==null||Config.isAndroid())return;
+		if(type==1){mc.worldEditorInterface.open(packetsIncoming.getLong(0),sequence);return;}
+		if(type==2){mc.worldEditorInterface.closeFromServer();return;}
+		if(type==3){int x=packetsIncoming.getShort(),y=packetsIncoming.getShort(),plane=packetsIncoming.getByte()&0xff;
+			int sx=packetsIncoming.getShort(),sy=packetsIncoming.getShort(),lx=packetsIncoming.getByte()&0xff,ly=packetsIncoming.getByte()&0xff;
+			int elev=packetsIncoming.getByte()&0xff,texture=packetsIncoming.getByte()&0xff,overlay=packetsIncoming.getByte()&0xff,roof=packetsIncoming.getByte()&0xff;
+			int hw=packetsIncoming.getByte()&0xff,vw=packetsIncoming.getByte()&0xff,diag=packetsIncoming.get32(),collision=packetsIncoming.getShort()&0xffff;
+			boolean projectile=packetsIncoming.getByte()!=0,copied=packetsIncoming.getByte()!=0;
+			mc.worldEditorInterface.showTerrain(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,copied);return;}
+		String message=packetsIncoming.readString();if(sequence>0)mc.worldEditorInterface.setSequence(sequence);
+		if(type==6)mc.worldEditorInterface.showError(message);else mc.worldEditorInterface.showInfo(message);
 	}
 
 	public final void handlePacket2(int opcode, int length) {

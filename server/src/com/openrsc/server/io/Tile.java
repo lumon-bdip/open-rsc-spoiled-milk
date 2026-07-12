@@ -7,10 +7,17 @@ import java.nio.ByteBuffer;
  * A representation of one tile within our world map
  */
 public class Tile {
+	public int getDiagonalWalls() { return diagonalWalls; }
+	public int getGroundElevation() { return groundElevation & 0xff; }
+	public int getGroundOverlay() { return groundOverlay & 0xff; }
+	public int getGroundTexture() { return groundTexture & 0xff; }
+	public int getHorizontalWall() { return horizontalWall & 0xff; }
+	public int getRoofTexture() { return roofTexture & 0xff; }
+	public int getVerticalWall() { return verticalWall & 0xff; }
 	/**
 	 * The ID of any diagonal walls on this tile
 	 */
-	short diagonalWalls = 0;
+	int diagonalWalls = 0;
 	/**
 	 * The elevation of this tile
 	 */
@@ -51,7 +58,7 @@ public class Tile {
 		tile.roofTexture = in.get();
 		tile.horizontalWall = in.get();
 		tile.verticalWall = in.get();
-		tile.diagonalWalls = (short)in.getInt();
+		tile.diagonalWalls = in.getInt();
 
 		return tile;
 	}

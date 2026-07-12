@@ -109,6 +109,7 @@ public class Opcodes {
 		ON_TUTORIAL_ISLAND(84),
 		ON_BLACK_HOLE(86),
 		NPC_DEFINITION_REQUEST(89),
+		WORLD_EDITOR_REQUEST(152),
 		;
 
 		private int opcode;

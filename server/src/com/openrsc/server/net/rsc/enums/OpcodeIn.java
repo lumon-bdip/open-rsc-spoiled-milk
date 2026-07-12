@@ -97,6 +97,7 @@ public enum OpcodeIn {
 	SKIP_TUTORIAL,
 	ON_BLACK_HOLE, // custom
 	NPC_DEFINITION_REQUEST, // custom
+	WORLD_EDITOR_REQUEST, // custom, read-only foundation
 
 	LOGIN,
 	RELOGIN, // retro rsc

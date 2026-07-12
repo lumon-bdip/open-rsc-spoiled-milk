@@ -8,6 +8,7 @@ import com.openrsc.server.constants.Skills;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
 import com.openrsc.server.external.ObjectWoodcuttingDef;
@@ -22,6 +23,7 @@ import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.net.rsc.struct.outgoing.WorldEditorStruct;
 import com.openrsc.server.plugins.authentic.quests.members.touristtrap.Tourist_Trap_Mechanism;
 import com.openrsc.server.plugins.authentic.skills.fishing.Fishing;
 import com.openrsc.server.plugins.authentic.skills.woodcutting.Woodcutting;
@@ -73,7 +75,10 @@ public final class Development implements CommandTrigger {
 			badSyntaxPrefix = config().BAD_SYNTAX_PREFIX;
 		}
 
-		if (command.equalsIgnoreCase("radiusnpc") || command.equalsIgnoreCase("createnpc") || command.equalsIgnoreCase("cnpc")|| command.equalsIgnoreCase("cpc")) {
+		if (command.equalsIgnoreCase("worldeditormode")) {
+			openWorldEditor(player);
+		}
+		else if (command.equalsIgnoreCase("radiusnpc") || command.equalsIgnoreCase("createnpc") || command.equalsIgnoreCase("cnpc")|| command.equalsIgnoreCase("cpc")) {
 			createNpc(player, command, args);
 		}
 		else if (command.equalsIgnoreCase("rpc") || command.equalsIgnoreCase("rnpc") || command.equalsIgnoreCase("removenpc")){
@@ -644,6 +649,16 @@ public final class Development implements CommandTrigger {
 		}
 		mes("Top color: " + player.getSettings().getAppearance().getTopColour());
 		mes("Trouser color: " + player.getSettings().getAppearance().getTrouserColour());
+	}
+
+	private void openWorldEditor(Player player) {
+		WorldEditorSessionManager.OpenResult result = player.getWorld().getServer().getWorldEditorSessions()
+			.open(player, player.getConfig().ALLOW_IN_GAME_WORLD_EDITOR && player.getClientVersion() > 10000);
+		if (!result.opened) { player.message(messagePrefix + result.message); return; }
+		WorldEditorStruct out = new WorldEditorStruct();
+		out.type = 1; out.sessionId = result.sessionId; out.sequence = result.nextSequence;
+		ActionSender.sendWorldEditor(player, out);
+		player.message(messagePrefix + "Read-only world editor session opened. Painting is disabled.");
 	}
 
 	private void createNpc(Player player, String command, String[] args) {

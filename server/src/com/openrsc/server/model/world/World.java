@@ -871,6 +871,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	 */
 	public void unregisterPlayer(final Player player) {
 		try {
+			getServer().getWorldEditorSessions().closeFor(player);
 			if (getServer().getLoginExecutor() != null) {
 				getServer().getGameLogger().addQuery(new PlayerOnlineFlagQuery(getServer(), player.getDatabaseID(), false));
 				// We handle avatar generation code exceptions separately, they are not a critical part of the logout process.

@@ -255,6 +255,9 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case 89:
 				opcode = OpcodeIn.NPC_DEFINITION_REQUEST;
 				break;
+			case 152:
+				opcode = OpcodeIn.WORLD_EDITOR_REQUEST;
+				break;
 			case 0:
 				opcode = OpcodeIn.LOGIN;
 				break;
@@ -458,6 +461,9 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case WALK_TO_POINT:
 			case WALK_TO_ENTITY:
 				return packet.getLength() >= 4;
+			case WORLD_EDITOR_REQUEST:
+				return packet.getLength() == 13 || packet.getLength() == 19
+					|| packet.getLength() == 22 || packet.getLength() == 15;
 		}
 		return true;
 	}
@@ -481,6 +487,22 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 		}
 
 		switch (opcode) {
+			case WORLD_EDITOR_REQUEST:
+				WorldEditorRequestStruct editor = new WorldEditorRequestStruct();
+				editor.type = packet.readByte() & 0xff;
+				int expectedEditorLength = editor.type == 1 ? 13 : editor.type == 2 ? 19 : editor.type == 3 ? 22 : editor.type == 4 ? 15 : -1;
+				if (packet.getLength() != expectedEditorLength) return null;
+				editor.sessionId = packet.readLong();
+				editor.sequence = packet.readInt();
+				if (editor.type == 2) {
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.objectType=packet.readByte()&0xff;
+				} else if (editor.type == 3) {
+					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
+					editor.entityId=packet.readShort(); editor.direction=packet.readByte()&0xff; editor.objectType=packet.readByte()&0xff;
+				} else if (editor.type == 4) editor.entityId=packet.readShort();
+				result = editor;
+				break;
 			case COMBAT_STYLE_CHANGED:
 				CombatStyleStruct c = new CombatStyleStruct();
 				c.style = packet.readByte();

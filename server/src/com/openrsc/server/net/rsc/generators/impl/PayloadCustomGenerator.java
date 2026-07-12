@@ -90,6 +90,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_OPENPK_POINTS, 148); // custom
 		put(OpcodeOut.SEND_FRIEND_UPDATE, 149);
 		put(OpcodeOut.SEND_BANK_PRESET, 150); // custom
+		put(OpcodeOut.SEND_WORLD_EDITOR, 151); // custom, versioned read-only editor envelope
 		put(OpcodeOut.SEND_EQUIPMENT_STATS, 153);
 		put(OpcodeOut.SEND_STATS, 156);
 		put(OpcodeOut.SEND_STAT, 159);
@@ -143,6 +144,26 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 
 		if (builder != null && possiblyValid) {
 			switch (payload.getOpcode()) {
+				case SEND_WORLD_EDITOR:
+					WorldEditorStruct editor = (WorldEditorStruct) payload;
+					builder.writeByte((byte) editor.type);
+					builder.writeByte((byte) editor.protocolVersion);
+					builder.writeInt(editor.sequence);
+					if (editor.type == 1) {
+						builder.writeLong(editor.sessionId);
+					} else if (editor.type == 3) {
+						builder.writeShort(editor.x); builder.writeShort(editor.y); builder.writeByte((byte) editor.plane);
+						builder.writeShort(editor.sectorX); builder.writeShort(editor.sectorY);
+						builder.writeByte((byte) editor.localX); builder.writeByte((byte) editor.localY);
+						builder.writeByte((byte) editor.elevation); builder.writeByte((byte) editor.groundTexture);
+						builder.writeByte((byte) editor.groundOverlay); builder.writeByte((byte) editor.roofTexture);
+						builder.writeByte((byte) editor.horizontalWall); builder.writeByte((byte) editor.verticalWall);
+						builder.writeInt(editor.diagonal); builder.writeShort(editor.traversalMask);
+						builder.writeByte((byte) (editor.projectileAllowed ? 1 : 0)); builder.writeByte((byte) (editor.copy ? 1 : 0));
+					} else if (editor.type == 4 || editor.type == 5 || editor.type == 6) {
+						builder.writeString(editor.message == null ? "" : editor.message);
+					}
+					break;
 				// not currently implemented
 				case SEND_28_BYTES_UNUSED:
 					break;

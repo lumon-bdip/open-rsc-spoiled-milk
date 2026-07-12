@@ -371,7 +371,8 @@ public class WorldLoader {
 				TileValue tile = getWorld().getTile(bx, by);
 
 				tile.overlay = sectorTile.groundOverlay;
-				tile.diagWallVal = sectorTile.diagonalWalls;
+				// Runtime collision retains the historic short field; archive Tile preserves all four raw bytes.
+				tile.diagWallVal = (short) sectorTile.diagonalWalls;
 				tile.horizontalWallVal = sectorTile.horizontalWall;
 				tile.verticalWallVal = sectorTile.verticalWall;
 				tile.elevation = sectorTile.groundElevation;

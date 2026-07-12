@@ -6,6 +6,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.achievement.AchievementSystem;
+import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.JDBCDatabase;
 import com.openrsc.server.database.impl.mysql.MySqlGameDatabase;
@@ -104,6 +105,7 @@ public class Server implements Runnable {
 	private final IPlayerService playerService;
 	private final I18NService i18nService;
 	private final MovementStutterDiagnostics movementStutterDiagnostics;
+	private final WorldEditorSessionManager worldEditorSessions;
 
 	private final World world;
 	private final String name;
@@ -434,6 +436,7 @@ public class Server implements Runnable {
 
 		name = getConfig().SERVER_NAME;
 		worldDayNightClock = new WorldDayNightClock();
+		worldEditorSessions = new WorldEditorSessionManager();
 		movementStutterDiagnostics = new MovementStutterDiagnostics(
 			getConfig().WANT_MOVEMENT_STUTTER_DIAGNOSTICS,
 			10_000_000L,
@@ -2161,6 +2164,8 @@ public class Server implements Runnable {
 	public final ServerConfiguration getConfig() {
 		return config;
 	}
+
+	public final WorldEditorSessionManager getWorldEditorSessions() { return worldEditorSessions; }
 
 	public final boolean isRunning() {
 		return running.get();
