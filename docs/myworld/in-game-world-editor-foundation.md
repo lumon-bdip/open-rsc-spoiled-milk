@@ -1,8 +1,8 @@
 # In-game world editor: foundation and entity tools
 
 Status: the inspection foundation is complete. Scenery and NPC editing delegate
-to the established administrator commands. Terrain T1 provides bounded,
-single-tile, server-authoritative draft painting. Durable terrain save/export,
+to the established administrator commands. Terrain draft painting covers the
+complete raw tile record through compact Surface and Structure tools. Durable terrain save/export,
 undo/redo, publish, and terrain patch replay remain intentionally unavailable.
 
 ## Raw terrain contract
@@ -46,9 +46,9 @@ scenery, and neighboring tiles; it must never be inferred from one raw field.
 
 - Client to server opcode 152 and server to client opcode 151 are reserved for
   one versioned editor envelope. Version 1 supports close, terrain inspect/copy,
-  scenery inspect, NPC inspect, and T1 terrain-paint operations. A paint request
-  carries one coordinate, a three-bit field mask, and the candidate elevation,
-  Floor Color, and Floor Texture values. The accepted response contains the
+  scenery inspect, NPC inspect, and terrain-paint operations. A paint request
+  carries one coordinate, a seven-bit field mask, and candidate Elevation,
+  Floor Color, Floor Texture, Roof, East Wall, North Wall, and Diagonal Wall values. The accepted response contains the
   complete canonical terrain record; the client does not preview rejected data.
 - `allow_in_game_world_editor` defaults false and is explicitly false in both
   MyWorld configurations.
@@ -76,23 +76,30 @@ diagonal wall definitions, and derived collision while retaining raw archive
 fields in the copied snapshot. Object and NPC results are resolved against the
 live authoritative world and labelled `runtime-authoritative`.
 
-Terrain exposes three independently enabled raw-byte fields: Elevation, Floor
-Color, and Floor Texture. Copying an inspected terrain tile seeds all three
-values without changing which fields are enabled. T1 uses a one-tile brush and
+Terrain uses Surface and Structure sub-tabs within the existing window size.
+Surface exposes three independently enabled raw-byte fields: Elevation, Floor
+Color, and Floor Texture. Structure exposes Roof, North Wall, East Wall, and
+Diagonal Wall fields with resolved definition labels; diagonal orientation is
+selected as `\\` or `/` and encoded into the archive convention. Zero removes
+the selected component. Copying an inspected terrain tile seeds both pages
+without changing which fields are enabled. The editor uses a one-tile brush and
 a low-priority-number Paint action. The server validates the feature gate,
 administrator, session ID, sequence, coordinate/plane agreement, field mask,
 byte ranges, and Floor Texture definition. Accepted records enter a coalesced,
 4,096-tile server-lifetime draft and update runtime elevation/overlay collision.
 Inspection reads through this draft. The client applies only accepted full
-records. Brush choices are centered 1x1 and centered 3x3 squares; the 3x3
+records. Brush choices are centered 1x1 and centered 3x3 squares; Roof may use
+either, while any wall field forces an exact 1x1 stroke to avoid generating an
+internal wall grid. The 3x3
 stroke serializes nine individually authorized and sequenced tile requests,
 then performs one client rebuild. The client advances a terrain-cache revision
 so older background preload products cannot win. Legacy water-like overlays
 normally extend visual faces onto four cardinal neighbors; transient editor
 metadata suppresses that spill for painted overlays so brush previews match
-their exact raw-tile footprint without changing existing world water. Terrain blocking and
-blocking-scenery counts are tracked separately so removing an overlay cannot
-erase scenery collision. T1 intentionally has no terrain Save control; a server
+their exact raw-tile footprint without changing existing world water. Terrain
+overlay, directional wall, diagonal wall, and projectile collision ownership is
+tracked separately from runtime scenery/boundaries. Removing terrain therefore
+cannot erase an overlapping dynamic collision source. Terrain still has no Save control; a server
 restart discards the draft.
 
 Scenery exposes an object-definition

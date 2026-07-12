@@ -1,6 +1,7 @@
 package com.openrsc.server.model.world.region;
 
 import com.openrsc.server.util.rsc.CollisionFlag;
+import java.util.Arrays;
 
 public class TileValue {
 	public byte traversalMask = CollisionFlag.FULL_BLOCK;
@@ -13,6 +14,18 @@ public class TileValue {
 	public boolean originalProjectileAllowed = false;
 	private boolean terrainBlocked = false;
 	private int blockingSceneryCount = 0;
+	private int terrainCollisionMask = 0;
+	private final int[] dynamicCollisionCounts = new int[6];
+	private boolean terrainOverlayProjectileBlocked = false;
+	private int terrainWallProjectileCount = 0;
+	private int dynamicProjectileCount = 0;
+
+	public void initializeTerrainCollision(){traversalMask=(byte)terrainCollisionMask;refreshFullBlock();refreshProjectile();}
+	public void addTerrainCollision(int flags){terrainCollisionMask|=flags;refreshCollisionFlags(flags);}
+	public void removeTerrainCollision(int flags){terrainCollisionMask&=~flags;refreshCollisionFlags(flags);}
+	public void addDynamicCollision(int flags){for(int bit=0;bit<dynamicCollisionCounts.length;bit++)if((flags&(1<<bit))!=0)dynamicCollisionCounts[bit]++;refreshCollisionFlags(flags);}
+	public void removeDynamicCollision(int flags){for(int bit=0;bit<dynamicCollisionCounts.length;bit++)if((flags&(1<<bit))!=0&&dynamicCollisionCounts[bit]>0)dynamicCollisionCounts[bit]--;refreshCollisionFlags(flags);}
+	private void refreshCollisionFlags(int flags){for(int bit=0;bit<dynamicCollisionCounts.length;bit++){int flag=1<<bit;if((flags&flag)==0)continue;if((terrainCollisionMask&flag)!=0||dynamicCollisionCounts[bit]>0)traversalMask|=flag;else traversalMask&=~flag;}}
 
 	public void setTerrainBlocked(boolean blocked) {
 		terrainBlocked=blocked;
@@ -22,6 +35,12 @@ public class TileValue {
 	public void addBlockingScenery(){blockingSceneryCount++;refreshFullBlock();}
 	public void removeBlockingScenery(){if(blockingSceneryCount>0)blockingSceneryCount--;refreshFullBlock();}
 	public int getBlockingSceneryCount(){return blockingSceneryCount;}
+	public void setTerrainOverlayProjectileBlocked(boolean blocked){terrainOverlayProjectileBlocked=blocked;refreshProjectile();}
+	public void addTerrainWallProjectileBlock(){terrainWallProjectileCount++;refreshProjectile();}
+	public void removeTerrainWallProjectileBlock(){if(terrainWallProjectileCount>0)terrainWallProjectileCount--;refreshProjectile();}
+	public void addDynamicProjectileBlock(){dynamicProjectileCount++;refreshProjectile();}
+	public void removeDynamicProjectileBlock(){if(dynamicProjectileCount>0)dynamicProjectileCount--;refreshProjectile();}
+	private void refreshProjectile(){originalProjectileAllowed=terrainOverlayProjectileBlocked||terrainWallProjectileCount>0;projectileAllowed=originalProjectileAllowed||dynamicProjectileCount>0;}
 	private void refreshFullBlock(){
 		if(terrainBlocked||blockingSceneryCount>0)traversalMask|=CollisionFlag.FULL_BLOCK_C;
 		else traversalMask&=~CollisionFlag.FULL_BLOCK_C;
@@ -40,6 +59,8 @@ public class TileValue {
 			", originalProjectileAllowed=" + originalProjectileAllowed +
 			", terrainBlocked=" + terrainBlocked +
 			", blockingSceneryCount=" + blockingSceneryCount +
+			", terrainCollisionMask=" + terrainCollisionMask +
+			", dynamicCollisionCounts=" + Arrays.toString(dynamicCollisionCounts) +
 			'}';
 	}
 
@@ -53,6 +74,11 @@ public class TileValue {
 				this.projectileAllowed == other.projectileAllowed &&
 				this.originalProjectileAllowed == other.originalProjectileAllowed &&
 				this.terrainBlocked == other.terrainBlocked &&
-				this.blockingSceneryCount == other.blockingSceneryCount;
+				this.blockingSceneryCount == other.blockingSceneryCount &&
+				this.terrainCollisionMask == other.terrainCollisionMask &&
+				Arrays.equals(this.dynamicCollisionCounts,other.dynamicCollisionCounts) &&
+				this.terrainOverlayProjectileBlocked == other.terrainOverlayProjectileBlocked &&
+				this.terrainWallProjectileCount == other.terrainWallProjectileCount &&
+				this.dynamicProjectileCount == other.dynamicProjectileCount;
 	}
 }

@@ -75,12 +75,16 @@ public final class WorldEditorTerrainArchive implements AutoCloseable {
 			this.groundOverlay=groundOverlay; this.roofTexture=roofTexture; this.horizontalWall=horizontalWall;
 			this.verticalWall=verticalWall; this.diagonal=diagonal;
 		}
-		public Snapshot paint(int fieldMask, int newElevation, int newGroundTexture, int newGroundOverlay) {
+		public Snapshot paint(int fieldMask, int newElevation, int newGroundTexture, int newGroundOverlay,
+			int newRoofTexture,int newHorizontalWall,int newVerticalWall,int newDiagonal) {
 			return new Snapshot(coordinates,
 				(fieldMask & 1) != 0 ? newElevation : elevation,
 				(fieldMask & 2) != 0 ? newGroundTexture : groundTexture,
 				(fieldMask & 4) != 0 ? newGroundOverlay : groundOverlay,
-				roofTexture,horizontalWall,verticalWall,diagonal);
+				(fieldMask & 8) != 0 ? newRoofTexture : roofTexture,
+				(fieldMask & 16) != 0 ? newHorizontalWall : horizontalWall,
+				(fieldMask & 32) != 0 ? newVerticalWall : verticalWall,
+				(fieldMask & 64) != 0 ? newDiagonal : diagonal);
 		}
 		public boolean sameRawTile(Snapshot other) {
 			return other != null && elevation==other.elevation && groundTexture==other.groundTexture

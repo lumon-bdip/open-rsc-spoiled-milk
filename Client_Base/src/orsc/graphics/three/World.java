@@ -3146,7 +3146,8 @@ public final class World {
 		applyWorldEditorTerrainPatches(sectors[sector],height,sectionX,sectionY);
 	}
 
-	public void applyWorldEditorTerrainPatch(int plane,int archiveX,int archiveZ,int elevation,int groundTexture,int groundOverlay,boolean overlayPainted){
+	public void applyWorldEditorTerrainPatch(int plane,int archiveX,int archiveZ,int elevation,int groundTexture,int groundOverlay,
+		int roofTexture,int horizontalWall,int verticalWall,int diagonal,boolean overlayPainted){
 		int sectionX=Math.floorDiv(archiveX,SECTION_SIZE),sectionY=Math.floorDiv(archiveZ,SECTION_SIZE);
 		int localX=Math.floorMod(archiveX,SECTION_SIZE),localZ=Math.floorMod(archiveZ,SECTION_SIZE);
 		String sector=sectorFilename(plane,sectionX,sectionY);
@@ -3154,7 +3155,7 @@ public final class World {
 			Map<Integer,TerrainPatch> patches=worldEditorTerrainPatches.get(sector);
 			if(patches==null){patches=new HashMap<Integer,TerrainPatch>();worldEditorTerrainPatches.put(sector,patches);}
 			int key=localX*SECTION_SIZE+localZ;TerrainPatch previous=patches.get(key);
-			patches.put(key,new TerrainPatch(localX,localZ,elevation,groundTexture,groundOverlay,overlayPainted||(previous!=null&&previous.editorPaintedOverlay)));
+			patches.put(key,new TerrainPatch(localX,localZ,elevation,groundTexture,groundOverlay,roofTexture,horizontalWall,verticalWall,diagonal,overlayPainted||(previous!=null&&previous.editorPaintedOverlay)));
 			worldEditorTerrainRevision++;
 		}
 	}
@@ -3163,12 +3164,13 @@ public final class World {
 		synchronized(worldEditorTerrainPatchLock){Map<Integer,TerrainPatch> stored=worldEditorTerrainPatches.get(sectorFilename(plane,sectionX,sectionY));if(stored==null||stored.isEmpty())return;snapshot=new HashMap<Integer,TerrainPatch>(stored);}
 		for(TerrainPatch patch:snapshot.values()){
 			com.openrsc.client.model.Tile tile=sector.getTile(patch.localX,patch.localZ);
-			tile.groundElevation=(byte)patch.elevation;tile.groundTexture=(byte)patch.groundTexture;tile.groundOverlay=(byte)patch.groundOverlay;tile.editorPaintedOverlay=patch.editorPaintedOverlay;
+			tile.groundElevation=(byte)patch.elevation;tile.groundTexture=(byte)patch.groundTexture;tile.groundOverlay=(byte)patch.groundOverlay;
+			tile.roofTexture=(byte)patch.roofTexture;tile.horizontalWall=(byte)patch.horizontalWall;tile.verticalWall=(byte)patch.verticalWall;tile.diagonalWalls=patch.diagonal;tile.editorPaintedOverlay=patch.editorPaintedOverlay;
 		}
 	}
 	private static final class TerrainPatch{
-		final int localX,localZ,elevation,groundTexture,groundOverlay;final boolean editorPaintedOverlay;
-		TerrainPatch(int x,int z,int e,int t,int o,boolean painted){localX=x;localZ=z;elevation=e;groundTexture=t;groundOverlay=o;editorPaintedOverlay=painted;}
+		final int localX,localZ,elevation,groundTexture,groundOverlay,roofTexture,horizontalWall,verticalWall,diagonal;final boolean editorPaintedOverlay;
+		TerrainPatch(int x,int z,int e,int t,int o,int r,int h,int v,int d,boolean painted){localX=x;localZ=z;elevation=e;groundTexture=t;groundOverlay=o;roofTexture=r;horizontalWall=h;verticalWall=v;diagonal=d;editorPaintedOverlay=painted;}
 	}
 
 	private Sector loadSectorTemplate(int height, int sectionX, int sectionY) {

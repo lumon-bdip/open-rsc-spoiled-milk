@@ -54,13 +54,15 @@ public final class WorldEditorSessionManager {
 		return drafted==null?archived:drafted;
 	}
 	public synchronized WorldEditorTerrainArchive.Snapshot paintTerrain(Player player, int x, int y, int plane,
-		int fieldMask, int elevation, int groundTexture, int groundOverlay) throws IOException {
-		if(fieldMask<=0||(fieldMask&~7)!=0)throw new IllegalArgumentException("Select at least one supported terrain field.");
-		if(!rawByte(elevation)||!rawByte(groundTexture)||!rawByte(groundOverlay))throw new IllegalArgumentException("Terrain values must be from 0 to 255.");
+		int fieldMask, int elevation, int groundTexture, int groundOverlay,int roofTexture,
+		int horizontalWall,int verticalWall,int diagonal) throws IOException {
+		if(fieldMask<=0||(fieldMask&~127)!=0)throw new IllegalArgumentException("Select at least one supported terrain field.");
+		if(!rawByte(elevation)||!rawByte(groundTexture)||!rawByte(groundOverlay)||!rawByte(roofTexture)
+			||!rawByte(horizontalWall)||!rawByte(verticalWall))throw new IllegalArgumentException("Terrain byte values must be from 0 to 255.");
 		WorldEditorTerrainArchive.Snapshot archived=inspectArchivedTerrain(player,x,y,plane);
 		String key=terrainKey(x,y,plane);
 		WorldEditorTerrainArchive.Snapshot current=terrainDraft.containsKey(key)?terrainDraft.get(key):archived;
-		WorldEditorTerrainArchive.Snapshot painted=current.paint(fieldMask,elevation,groundTexture,groundOverlay);
+		WorldEditorTerrainArchive.Snapshot painted=current.paint(fieldMask,elevation,groundTexture,groundOverlay,roofTexture,horizontalWall,verticalWall,diagonal);
 		if(painted.sameRawTile(archived))terrainDraft.remove(key);
 		else {
 			if(!terrainDraft.containsKey(key)&&terrainDraft.size()>=TERRAIN_DRAFT_LIMIT)throw new IllegalStateException("Terrain draft limit reached.");

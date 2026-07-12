@@ -2,6 +2,7 @@ package com.openrsc.server.net.rsc.handlers;
 
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager.Validation;
 import com.openrsc.server.io.WorldEditorTerrainArchive;
+import com.openrsc.server.io.WorldLoader;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -12,8 +13,10 @@ import com.openrsc.server.net.rsc.PayloadProcessor;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.struct.incoming.WorldEditorRequestStruct;
 import com.openrsc.server.net.rsc.struct.outgoing.WorldEditorStruct;
+import com.openrsc.server.util.rsc.CollisionFlag;
 
 public final class WorldEditorHandler implements PayloadProcessor<WorldEditorRequestStruct, OpcodeIn> {
+	private static final int MAX_ROOF_TEXTURE=6;
 	@Override public void process(WorldEditorRequestStruct request, Player player) {
 		if (!player.getConfig().ALLOW_IN_GAME_WORLD_EDITOR || !player.isAdmin()) { error(player, 0, "Editor authorization was revoked."); return; }
 		Validation validation = player.getWorld().getServer().getWorldEditorSessions().validate(player, request.sessionId, request.sequence);
@@ -38,12 +41,16 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 	}
 	private void paintTerrain(WorldEditorRequestStruct r,Player p,int next) throws Exception {
 		if(!p.getWorld().withinWorld(r.x,r.y))throw new IllegalArgumentException("Terrain tile is outside the runtime world.");
-		validateOverlay(p,r.fieldMask,r.groundOverlay);
-		WorldEditorTerrainArchive.Snapshot s=p.getWorld().getServer().getWorldEditorSessions().paintTerrain(p,r.x,r.y,r.plane,r.fieldMask,r.elevation,r.groundTexture,r.groundOverlay);
+		validateTerrainDefinitions(p,r);
+		WorldEditorTerrainArchive.Snapshot before=p.getWorld().getServer().getWorldEditorSessions().inspectTerrain(p,r.x,r.y,r.plane);
+		WorldEditorTerrainArchive.Snapshot s=p.getWorld().getServer().getWorldEditorSessions().paintTerrain(p,r.x,r.y,r.plane,r.fieldMask,r.elevation,r.groundTexture,r.groundOverlay,r.roofTexture,r.horizontalWall,r.verticalWall,r.diagonal);
 		TileValue runtime=p.getWorld().getTile(r.x,r.y);
 		if(runtime==null)throw new IllegalArgumentException("Terrain tile is outside the runtime world.");
 		if((r.fieldMask&1)!=0)runtime.elevation=(byte)s.elevation;
-		if((r.fieldMask&4)!=0){runtime.overlay=(byte)s.groundOverlay;runtime.setTerrainBlocked(overlayBlocks(p,s.groundOverlay));}
+		if((r.fieldMask&4)!=0){runtime.overlay=(byte)s.groundOverlay;runtime.setTerrainBlocked(overlayBlocks(p,s.groundOverlay));runtime.setTerrainOverlayProjectileBlocked(s.groundOverlay==2||s.groundOverlay==11);}
+		if((r.fieldMask&16)!=0){applyEastWall(p,r.x,r.y,before.horizontalWall,false);runtime.horizontalWallVal=(byte)s.horizontalWall;applyEastWall(p,r.x,r.y,s.horizontalWall,true);}
+		if((r.fieldMask&32)!=0){applyNorthWall(p,r.x,r.y,before.verticalWall,false);runtime.verticalWallVal=(byte)s.verticalWall;applyNorthWall(p,r.x,r.y,s.verticalWall,true);}
+		if((r.fieldMask&64)!=0){applyDiagonalWall(p,r.x,r.y,before.diagonal,false);runtime.diagWallVal=(short)s.diagonal;applyDiagonalWall(p,r.x,r.y,s.diagonal,true);}
 		sendTerrain(p,s,next,7,false,r.fieldMask);
 	}
 	private void sendTerrain(Player p,WorldEditorTerrainArchive.Snapshot s,int next,int type,boolean copied,int fieldMask) {
@@ -58,12 +65,26 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 			+"\t"+wallDefinitionName(p,s.diagonalDefinitionId());
 		ActionSender.sendWorldEditor(p,o);
 	}
-	private void validateOverlay(Player p,int mask,int overlay){if((mask&4)==0)return;overlayBlocks(p,overlay);}
+	private void validateTerrainDefinitions(Player p,WorldEditorRequestStruct r){
+		if((r.fieldMask&4)!=0)overlayBlocks(p,r.groundOverlay);
+		if((r.fieldMask&8)!=0&&r.roofTexture>MAX_ROOF_TEXTURE)throw new IllegalArgumentException("Roof texture "+r.roofTexture+" is not defined.");
+		if((r.fieldMask&16)!=0)validateWall(p,r.horizontalWall,"East wall");
+		if((r.fieldMask&32)!=0)validateWall(p,r.verticalWall,"North wall");
+		if((r.fieldMask&64)!=0){if(r.diagonal!=0&&(r.diagonal<1||r.diagonal>=24000||r.diagonal==12000))throw new IllegalArgumentException("Diagonal wall encoding is invalid.");validateWall(p,diagonalRawWall(r.diagonal),"Diagonal wall");}
+	}
+	private void validateWall(Player p,int raw,String label){if(raw==0)return;try{if(p.getWorld().getServer().getEntityHandler().getDoorDef(raw-1)==null)throw new Exception();}catch(Exception e){throw new IllegalArgumentException(label+" "+raw+" is not defined.");}}
 	private boolean overlayBlocks(Player p,int overlay){
 		int effective=overlay==250?2:overlay;if(effective==0)return false;
 		try{return p.getWorld().getServer().getEntityHandler().getTileDef(effective-1).getObjectType()!=0;}
 		catch(Exception e){throw new IllegalArgumentException("Floor texture "+overlay+" is not defined.");}
 	}
+	private boolean wallBlocks(Player p,int raw){if(raw<=0)return false;try{return p.getWorld().getServer().getEntityHandler().getDoorDef(raw-1).getUnknown()==0&&p.getWorld().getServer().getEntityHandler().getDoorDef(raw-1).getDoorType()!=0;}catch(Exception e){return false;}}
+	private static int diagonalRawWall(int diagonal){return diagonal>12000?diagonal-12000:diagonal;}
+	private void applyNorthWall(Player p,int x,int y,int raw,boolean add){if(!wallBlocks(p,raw))return;terrainCollision(p,x,y,CollisionFlag.WALL_NORTH,add);terrainCollision(p,x,y-1,CollisionFlag.WALL_SOUTH,add);if(WorldLoader.projectileClipAllowed(raw)){terrainProjectile(p,x,y,add);terrainProjectile(p,x,y-1,add);}}
+	private void applyEastWall(Player p,int x,int y,int raw,boolean add){if(!wallBlocks(p,raw))return;terrainCollision(p,x,y,CollisionFlag.WALL_EAST,add);terrainCollision(p,x-1,y,CollisionFlag.WALL_WEST,add);if(WorldLoader.projectileClipAllowed(raw)){terrainProjectile(p,x,y,add);terrainProjectile(p,x-1,y,add);}}
+	private void applyDiagonalWall(Player p,int x,int y,int diagonal,boolean add){int raw=diagonalRawWall(diagonal);if(!wallBlocks(p,raw))return;terrainCollision(p,x,y,diagonal>12000?CollisionFlag.FULL_BLOCK_A:CollisionFlag.FULL_BLOCK_B,add);if(WorldLoader.projectileClipAllowed(raw))terrainProjectile(p,x,y,add);}
+	private void terrainCollision(Player p,int x,int y,int flag,boolean add){TileValue tile=p.getWorld().getTile(x,y);if(tile==null)return;if(add)tile.addTerrainCollision(flag);else tile.removeTerrainCollision(flag);}
+	private void terrainProjectile(Player p,int x,int y,boolean add){TileValue tile=p.getWorld().getTile(x,y);if(tile==null)return;if(add)tile.addTerrainWallProjectileBlock();else tile.removeTerrainWallProjectileBlock();}
 	private String wallDefinitionName(Player p,int id){if(id<0)return "none";try{return p.getWorld().getServer().getEntityHandler().getDoorDef(id).getName();}catch(Exception e){return "unknown";}}
 	private void inspectObject(WorldEditorRequestStruct r, Player p, int next) {
 		GameObject object=p.getViewArea().getGameObject(Point.location(r.x,r.y));

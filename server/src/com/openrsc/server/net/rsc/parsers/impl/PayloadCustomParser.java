@@ -490,7 +490,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case WORLD_EDITOR_REQUEST:
 				WorldEditorRequestStruct editor = new WorldEditorRequestStruct();
 				editor.type = packet.readByte() & 0xff;
-				int expectedEditorLength = editor.type == 1 ? 13 : editor.type == 2 ? 19 : editor.type == 3 ? 22 : editor.type == 4 ? 15 : editor.type == 5 ? 22 : -1;
+				int expectedEditorLength = editor.type == 1 ? 13 : editor.type == 2 ? 19 : editor.type == 3 ? 22 : editor.type == 4 ? 15 : editor.type == 5 ? 29 : -1;
 				if (packet.getLength() != expectedEditorLength) return null;
 				editor.sessionId = packet.readLong();
 				editor.sequence = packet.readInt();
@@ -505,6 +505,8 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 					editor.x=packet.readShort(); editor.y=packet.readShort(); editor.plane=packet.readByte()&0xff;
 					editor.fieldMask=packet.readByte()&0xff; editor.elevation=packet.readByte()&0xff;
 					editor.groundTexture=packet.readByte()&0xff; editor.groundOverlay=packet.readByte()&0xff;
+					editor.roofTexture=packet.readByte()&0xff;editor.horizontalWall=packet.readByte()&0xff;
+					editor.verticalWall=packet.readByte()&0xff;editor.diagonal=packet.readInt();
 				}
 				result = editor;
 				break;
