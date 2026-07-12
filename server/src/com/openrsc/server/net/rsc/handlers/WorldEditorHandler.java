@@ -34,7 +34,7 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 
 	private void inspectTerrain(WorldEditorRequestStruct r, Player p, int next) throws Exception {
 		WorldEditorTerrainArchive.Snapshot s=p.getWorld().getServer().getWorldEditorSessions().inspectTerrain(p,r.x,r.y,r.plane);
-		sendTerrain(p,s,next,3,r.objectType==1);
+		sendTerrain(p,s,next,3,r.objectType==1,0);
 	}
 	private void paintTerrain(WorldEditorRequestStruct r,Player p,int next) throws Exception {
 		if(!p.getWorld().withinWorld(r.x,r.y))throw new IllegalArgumentException("Terrain tile is outside the runtime world.");
@@ -44,15 +44,15 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		if(runtime==null)throw new IllegalArgumentException("Terrain tile is outside the runtime world.");
 		if((r.fieldMask&1)!=0)runtime.elevation=(byte)s.elevation;
 		if((r.fieldMask&4)!=0){runtime.overlay=(byte)s.groundOverlay;runtime.setTerrainBlocked(overlayBlocks(p,s.groundOverlay));}
-		sendTerrain(p,s,next,7,false);
+		sendTerrain(p,s,next,7,false,r.fieldMask);
 	}
-	private void sendTerrain(Player p,WorldEditorTerrainArchive.Snapshot s,int next,int type,boolean copied) {
+	private void sendTerrain(Player p,WorldEditorTerrainArchive.Snapshot s,int next,int type,boolean copied,int fieldMask) {
 		TileValue runtime=p.getWorld().getTile(s.coordinates.worldX,s.coordinates.worldY);
 		WorldEditorStruct o=new WorldEditorStruct(); o.type=type; o.sequence=next; o.x=s.coordinates.worldX;o.y=s.coordinates.worldY;o.plane=s.coordinates.plane;
 		o.sectorX=s.coordinates.sectorX;o.sectorY=s.coordinates.sectorY;o.localX=s.coordinates.localX;o.localY=s.coordinates.localY;
 		o.elevation=s.elevation;o.groundTexture=s.groundTexture;o.groundOverlay=s.groundOverlay;o.roofTexture=s.roofTexture;
 		o.horizontalWall=s.horizontalWall;o.verticalWall=s.verticalWall;o.diagonal=s.diagonal;
-		o.traversalMask=runtime==null?0:runtime.traversalMask&0xff;o.projectileAllowed=runtime!=null&&runtime.projectileAllowed;o.copy=copied;
+		o.traversalMask=runtime==null?0:runtime.traversalMask&0xff;o.projectileAllowed=runtime!=null&&runtime.projectileAllowed;o.copy=copied;o.fieldMask=fieldMask;
 		// Names are tab-delimited protocol data; the client owns the concise semantic layout.
 		o.message=wallDefinitionName(p,s.verticalWall-1)+"\t"+wallDefinitionName(p,s.horizontalWall-1)
 			+"\t"+wallDefinitionName(p,s.diagonalDefinitionId());

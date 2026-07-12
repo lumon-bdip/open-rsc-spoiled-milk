@@ -83,9 +83,14 @@ a low-priority-number Paint action. The server validates the feature gate,
 administrator, session ID, sequence, coordinate/plane agreement, field mask,
 byte ranges, and Floor Texture definition. Accepted records enter a coalesced,
 4,096-tile server-lifetime draft and update runtime elevation/overlay collision.
-Inspection reads through this draft. The client applies only the accepted full
-record, advances a terrain-cache revision so older background preload products
-cannot win, and rebuilds the active terrain and scenery. Terrain blocking and
+Inspection reads through this draft. The client applies only accepted full
+records. Brush choices are centered 1x1 and centered 3x3 squares; the 3x3
+stroke serializes nine individually authorized and sequenced tile requests,
+then performs one client rebuild. The client advances a terrain-cache revision
+so older background preload products cannot win. Legacy water-like overlays
+normally extend visual faces onto four cardinal neighbors; transient editor
+metadata suppresses that spill for painted overlays so brush previews match
+their exact raw-tile footprint without changing existing world water. Terrain blocking and
 blocking-scenery counts are tracked separately so removing an overlay cannot
 erase scenery collision. T1 intentionally has no terrain Save control; a server
 restart discards the draft.

@@ -368,8 +368,9 @@ public class PacketHandler {
 			int elev=packetsIncoming.getByte()&0xff,texture=packetsIncoming.getByte()&0xff,overlay=packetsIncoming.getByte()&0xff,roof=packetsIncoming.getByte()&0xff;
 			int hw=packetsIncoming.getByte()&0xff,vw=packetsIncoming.getByte()&0xff,diag=packetsIncoming.get32(),collision=packetsIncoming.getShort()&0xffff;
 			boolean projectile=packetsIncoming.getByte()!=0,copied=packetsIncoming.getByte()!=0;
+			int fieldMask=type==7?packetsIncoming.getByte()&0xff:0;
 			String definitions=packetsIncoming.readString();
-			if(type==7)mc.worldEditorInterface.acceptTerrainPaint(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,definitions);
+			if(type==7)mc.worldEditorInterface.acceptTerrainPaint(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,fieldMask,definitions);
 			else mc.worldEditorInterface.showTerrain(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,copied,definitions);return;}
 		String message=packetsIncoming.readString();if(sequence>0)mc.worldEditorInterface.setSequence(sequence);
 		if(type==6)mc.worldEditorInterface.showError(message);else mc.worldEditorInterface.showInfo(type,message);

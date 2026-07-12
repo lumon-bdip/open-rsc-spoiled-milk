@@ -70,7 +70,7 @@ class WorldEditorFoundationTest(unittest.TestCase):
         self.assertIn("Last clicked tile", ui)
         self.assertIn("Brush: inactive at", ui)
         self.assertIn("Teleport to coordinates", ui)
-        self.assertIn("Terrain paint - one tile", ui)
+        self.assertIn("Terrain paint", ui)
         client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
         self.assertIn("setWorldEditorNavigateClickTeleport", client)
         self.assertIn("worldEditorTeleport", client)
@@ -101,7 +101,8 @@ class WorldEditorFoundationTest(unittest.TestCase):
         self.assertIn("Math.min(radius,64)", ui)
         self.assertIn("Boundaries remain inspection-only", ui)
         self.assertIn('sendCommandString("saveworldedits")', ui)
-        self.assertNotRegex(ui.lower(), r"\b(undo|redo)\b")
+        self.assertNotIn("WORLD_EDITOR_UNDO", actions)
+        self.assertNotIn("WORLD_EDITOR_REDO", actions)
 
         expected_commands = (
             'sendCommandString("aobject "+',
@@ -138,14 +139,19 @@ class WorldEditorFoundationTest(unittest.TestCase):
         self.assertIn("paintElevation?1:0", ui)
         self.assertIn("paintFloorColor?2:0", ui)
         self.assertIn("paintFloorTexture?4:0", ui)
-        self.assertIn("saving is disabled in T1", ui)
+        self.assertIn("terrainBrushSize==1", ui)
+        self.assertIn("centeredThreeByThree", ui)
+        self.assertIn("saving and undo remain disabled", ui)
         self.assertIn("WORLD_EDITOR_PAINT_TERRAIN(100)", (ROOT / "Client_Base/src/orsc/enumerations/MenuItemAction.java").read_text())
         self.assertIn("applyWorldEditorTerrainPatch", client)
         self.assertIn("worldEditorTerrainRevision", world)
         self.assertIn("-editor-", world)
+        self.assertIn("editorPaintedOverlay", world)
+        self.assertIn("!source.editorPaintedOverlay", world)
         self.assertIn("terrainBlocked||blockingSceneryCount>0", collision)
-        self.assertNotIn("undo", ui.lower())
-        self.assertNotIn("redo", ui.lower())
+        actions = (ROOT / "Client_Base/src/orsc/enumerations/MenuItemAction.java").read_text()
+        self.assertNotIn("WORLD_EDITOR_UNDO", actions)
+        self.assertNotIn("WORLD_EDITOR_REDO", actions)
 
 if __name__ == "__main__":
     unittest.main()

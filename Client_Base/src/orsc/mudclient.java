@@ -22769,10 +22769,13 @@ public final class mudclient implements Runnable {
 		this.packetHandler.getClientStream().finishPacket();
 	}
 
-	public void applyWorldEditorTerrainPatch(int worldX,int worldY,int plane,int elevation,int groundTexture,int groundOverlay){
+	public void applyWorldEditorTerrainPatch(int worldX,int worldY,int plane,int elevation,int groundTexture,int groundOverlay,boolean overlayPainted,boolean rebuild){
 		if(world==null)return;
-		world.applyWorldEditorTerrainPatch(plane,worldX+worldOffsetX,worldY+worldOffsetZ,elevation,groundTexture,groundOverlay);
-		if(!hasCompletedInitialRegionLoad||localPlayer==null||plane!=requestedPlane)return;
+		world.applyWorldEditorTerrainPatch(plane,worldX+worldOffsetX,worldY+worldOffsetZ,elevation,groundTexture,groundOverlay,overlayPainted);
+		if(rebuild&&plane==requestedPlane)reloadWorldEditorTerrain();
+	}
+	public void reloadWorldEditorTerrain(){
+		if(!hasCompletedInitialRegionLoad||localPlayer==null)return;
 		int activeWorldX=activeRegionCenterWorldTile(midRegionBaseX,worldOffsetX);
 		int activeWorldZ=activeRegionCenterWorldTile(midRegionBaseZ,worldOffsetZ);
 		world.loadSections(activeWorldX,activeWorldZ,requestedPlane);

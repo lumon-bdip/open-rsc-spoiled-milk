@@ -1387,7 +1387,7 @@ public final class World {
 						x * 128, -source.tileElevation(x, z + 1), 128 + z * 128);
 				} else if (source.tileDecorationID(x, z) == 0 || Objects.requireNonNull(EntityHandler
 					.getTileDef(source.tileDecorationID(x, z) - 1)).getTileValue() != 3) {
-					if (source.tileDecorationID(x, z + 1) > 0
+					if (source.tileDecorationID(x, z + 1) > 0 && !source.editorPaintedOverlay(x,z+1)
 						&& Objects.requireNonNull(EntityHandler.getTileDef(source.tileDecorationID(x, z + 1) - 1))
 						.getTileValue() == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler
@@ -1400,7 +1400,7 @@ public final class World {
 							x * 128, -source.tileElevation(x, z + 1), z * 128 + 128);
 					}
 
-					if (source.tileDecorationID(x, z - 1) > 0
+					if (source.tileDecorationID(x, z - 1) > 0 && !source.editorPaintedOverlay(x,z-1)
 						&& Objects.requireNonNull(EntityHandler.getTileDef(source.tileDecorationID(x, z - 1) - 1))
 						.getTileValue() == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler
@@ -1413,7 +1413,7 @@ public final class World {
 							x * 128, -source.tileElevation(x, z + 1), 128 + z * 128);
 					}
 
-					if (source.tileDecorationID(x + 1, z) > 0 && Objects.requireNonNull(EntityHandler
+					if (source.tileDecorationID(x + 1, z) > 0 && !source.editorPaintedOverlay(x+1,z) && Objects.requireNonNull(EntityHandler
 						.getTileDef(source.tileDecorationID(x + 1, z) - 1))
 						.getTileValue() == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler
@@ -1426,7 +1426,7 @@ public final class World {
 							x * 128, -source.tileElevation(x, z + 1), (z + 1) * 128);
 					}
 
-					if (source.tileDecorationID(x - 1, z) > 0 && Objects.requireNonNull(EntityHandler
+					if (source.tileDecorationID(x - 1, z) > 0 && !source.editorPaintedOverlay(x-1,z) && Objects.requireNonNull(EntityHandler
 						.getTileDef(source.tileDecorationID(x - 1, z) - 1))
 						.getTileValue() == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler
@@ -3146,14 +3146,15 @@ public final class World {
 		applyWorldEditorTerrainPatches(sectors[sector],height,sectionX,sectionY);
 	}
 
-	public void applyWorldEditorTerrainPatch(int plane,int archiveX,int archiveZ,int elevation,int groundTexture,int groundOverlay){
+	public void applyWorldEditorTerrainPatch(int plane,int archiveX,int archiveZ,int elevation,int groundTexture,int groundOverlay,boolean overlayPainted){
 		int sectionX=Math.floorDiv(archiveX,SECTION_SIZE),sectionY=Math.floorDiv(archiveZ,SECTION_SIZE);
 		int localX=Math.floorMod(archiveX,SECTION_SIZE),localZ=Math.floorMod(archiveZ,SECTION_SIZE);
 		String sector=sectorFilename(plane,sectionX,sectionY);
 		synchronized(worldEditorTerrainPatchLock){
 			Map<Integer,TerrainPatch> patches=worldEditorTerrainPatches.get(sector);
 			if(patches==null){patches=new HashMap<Integer,TerrainPatch>();worldEditorTerrainPatches.put(sector,patches);}
-			patches.put(localX*SECTION_SIZE+localZ,new TerrainPatch(localX,localZ,elevation,groundTexture,groundOverlay));
+			int key=localX*SECTION_SIZE+localZ;TerrainPatch previous=patches.get(key);
+			patches.put(key,new TerrainPatch(localX,localZ,elevation,groundTexture,groundOverlay,overlayPainted||(previous!=null&&previous.editorPaintedOverlay)));
 			worldEditorTerrainRevision++;
 		}
 	}
@@ -3162,12 +3163,12 @@ public final class World {
 		synchronized(worldEditorTerrainPatchLock){Map<Integer,TerrainPatch> stored=worldEditorTerrainPatches.get(sectorFilename(plane,sectionX,sectionY));if(stored==null||stored.isEmpty())return;snapshot=new HashMap<Integer,TerrainPatch>(stored);}
 		for(TerrainPatch patch:snapshot.values()){
 			com.openrsc.client.model.Tile tile=sector.getTile(patch.localX,patch.localZ);
-			tile.groundElevation=(byte)patch.elevation;tile.groundTexture=(byte)patch.groundTexture;tile.groundOverlay=(byte)patch.groundOverlay;
+			tile.groundElevation=(byte)patch.elevation;tile.groundTexture=(byte)patch.groundTexture;tile.groundOverlay=(byte)patch.groundOverlay;tile.editorPaintedOverlay=patch.editorPaintedOverlay;
 		}
 	}
 	private static final class TerrainPatch{
-		final int localX,localZ,elevation,groundTexture,groundOverlay;
-		TerrainPatch(int x,int z,int e,int t,int o){localX=x;localZ=z;elevation=e;groundTexture=t;groundOverlay=o;}
+		final int localX,localZ,elevation,groundTexture,groundOverlay;final boolean editorPaintedOverlay;
+		TerrainPatch(int x,int z,int e,int t,int o,boolean painted){localX=x;localZ=z;elevation=e;groundTexture=t;groundOverlay=o;editorPaintedOverlay=painted;}
 	}
 
 	private Sector loadSectorTemplate(int height, int sectionX, int sectionY) {
@@ -3919,6 +3920,10 @@ public final class World {
 		private int tileDecorationID(int tileX, int tileZ) {
 			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
 			return sector == null ? 0 : sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundOverlay & 0xff;
+		}
+		private boolean editorPaintedOverlay(int tileX,int tileZ){
+			Sector sector=sectorForLocalTile(sectors,tileX,tileZ);
+			return sector!=null&&sector.getTile(tileInSector(tileX),tileInSector(tileZ)).editorPaintedOverlay;
 		}
 
 		private int tileDecorationCacheVal(int tileX, int tileZ, int defaultVal) {
