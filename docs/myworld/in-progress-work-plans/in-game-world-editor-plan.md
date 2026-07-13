@@ -1,10 +1,14 @@
 # In-Game World Editor Plan
 
-Status: active; implementation-ready foundation assigned to AI-2
+Status: active; the foundation, terrain painting, durable save, void picking,
+and editor collision isolation are implemented. The next active phase is the
+compact icon toolbar, followed by measured editing-performance work.
 
 Owner: Spoiled Milk project owner
 
 Initial branch: `feat/in-game-world-editor-foundation`
+
+Next branch: `feat/world-editor-compact-toolbar`
 
 ## Summary
 
@@ -624,6 +628,310 @@ This is the initial `feat/in-game-world-editor-foundation` branch scope.
   revisions and recoverable drafts.
 - [ ] Consider a supported signed map-patch distribution system separately
   from the first editor release.
+
+## Next Phase: Compact Toolbar, Custom Icons, and Editing Performance
+
+Approved direction: July 12, 2026
+
+The current editor proves the editing model, but its large form consumes too
+much of the world view and its Fast option is buried among terrain controls.
+This phase turns that form into a small paint-editor-style tool dock, prepares
+the client to use real custom PNG icons supplied by the project owner, and
+then addresses measured renderer/rebuild costs in a separate follow-up branch.
+
+The UI refactor and the rebuild optimization are deliberately separate. The
+first branch must preserve editing behavior while changing presentation. The
+second branch may change rebuild behavior only after baseline measurements and
+private testing establish that it is safe.
+
+### Goals
+
+- Give the editor as much unobstructed world view as practical.
+- Make the currently active mode, field mask, brush size, performance profile,
+  pending operation count, and unsaved state visible at a glance.
+- Use real, replaceable PNG assets for editor icons without making missing or
+  invalid artwork capable of breaking the editor.
+- Keep all existing safety semantics: ordinary clicks stamp, Ctrl+left-drag
+  brushes, middle-drag rotates the camera, and modes remain exclusive.
+- Move Fast mode to a global editor control and make every performance profile
+  reversible when the editor closes.
+- Measure input, acknowledgement, and world-rebuild latency before optimizing
+  them.
+- Preserve desktop-only scope. Android UI and controls remain unchanged.
+
+### Non-goals for the first branch
+
+- Do not redesign the packet protocol, saved patch format, collision rules, or
+  server authority merely to support the compact UI.
+- Do not add new map-editing shapes, undo/redo, multiplayer editing, or a
+  different renderer backend.
+- Do not silently change normal player graphics preferences or save editor
+  performance choices as ordinary gameplay defaults.
+- Do not remove terrain, scenery, NPC, wall, or roof rendering so completely
+  that the editor can no longer pick or understand what it is editing.
+- Do not ship invented font glyphs or code-drawn symbols as the final icon set.
+
+### Custom PNG icon contract
+
+The project owner will acquire the final artwork. Implementation must build a
+small editor-icon registry and loader so replacing artwork is a file operation,
+not a Java source edit.
+
+- Author icons under `dev/myworld/assets/ui/world-editor/` and package them at
+  `myworld-assets/ui/world-editor/` in player builds.
+- Use transparent RGBA PNG files on an exact `24x24` pixel canvas. Icons should
+  remain legible at native scale against both light and dark terrain.
+- Use stable lowercase kebab-case filenames. Java code refers to semantic icon
+  keys in one registry rather than scattered path strings.
+- Load and decode icons once when editor assets initialize, cache the resulting
+  sprites, and never read image files from the draw loop.
+- Render hover, selected, enabled, disabled, warning, and dirty states through
+  the button background, border, tint, or badge. Do not require a duplicate
+  PNG for every state unless a specific icon cannot remain readable otherwise.
+- Use nearest-neighbor/native-size drawing. If high-DPI variants are added
+  later, name them consistently and select them in the registry rather than
+  allowing arbitrary draw-loop scaling.
+- A missing, malformed, or unsupported PNG must produce one concise diagnostic
+  and a labeled code-drawn fallback button. It must not prevent login, editor
+  entry, or use of the tool. The fallback is development resilience, not final
+  release artwork.
+- Add an asset README containing this contract and a credits/license file that
+  records the source, author, license, and modifications for every acquired
+  icon set. Do not merge artwork whose redistribution rights are unknown.
+- Extend the Ant player-asset fileset explicitly so the new directory appears
+  in packaged clients, then test both a development run and the produced player
+  archive. An icon working only from the source tree is not sufficient.
+
+Initial required icon keys and filenames:
+
+| Key | Filename | Meaning |
+| --- | --- | --- |
+| `toolbar-collapse` | `toolbar-collapse.png` | Collapse or expand the dock |
+| `mode-navigate` | `mode-navigate.png` | Safe navigation mode |
+| `mode-inspect` | `mode-inspect.png` | Inspect/copy tile values |
+| `mode-terrain` | `mode-terrain.png` | Terrain editing mode |
+| `mode-scenery` | `mode-scenery.png` | Scenery placement/removal |
+| `mode-npc` | `mode-npc.png` | NPC placement/removal |
+| `field-elevation` | `field-elevation.png` | Elevation field mask/value |
+| `field-floor-color` | `field-floor-color.png` | Ground color/material |
+| `field-floor-texture` | `field-floor-texture.png` | Ground texture/overlay |
+| `field-roof` | `field-roof.png` | Roof value |
+| `field-wall-north` | `field-wall-north.png` | North wall value |
+| `field-wall-east` | `field-wall-east.png` | East wall value |
+| `field-wall-diagonal` | `field-wall-diagonal.png` | Diagonal wall value |
+| `tool-brush` | `tool-brush.png` | Stamp/brush size and controls |
+| `action-rotate` | `action-rotate.png` | Reverse diagonal orientation |
+| `profile-fast` | `profile-fast.png` | Fast editor visual profile |
+| `profile-grid` | `profile-grid.png` | Future minimal/grid profile |
+| `action-save` | `action-save.png` | Persist the current draft |
+| `action-pin` | `action-pin.png` | Keep the current flyout open |
+| `action-close` | `action-close.png` | Exit the editor |
+
+Undo, redo, shape, layer-visibility, and prefab icons may be reserved in the
+registry later, but must not appear as active controls before those functions
+exist.
+
+### Compact desktop interaction model
+
+The default editor presentation is a fixed vertical dock on the left edge,
+approximately 40 pixels wide, plus at most one contextual flyout. The dock
+must not cover the chat tabs, minimap, or other permanent desktop controls.
+Supporting right-side docking can follow later; the first implementation
+should prefer a dependable fixed location over a generalized window system.
+
+The dock contains, from top to bottom:
+
+1. collapse/expand;
+2. mutually exclusive Navigate, Inspect, Terrain, Scenery, and NPC modes;
+3. controls relevant to the active mode;
+4. global Fast profile, Save, and Close controls.
+
+Selecting a mode activates that mode and opens its flyout. Selecting the
+already active mode toggles its flyout without deactivating the safe, explicit
+mode. Only one flyout may be open. A flyout opens immediately to the right of
+the dock, is roughly 220-260 pixels wide, and may be pinned. An unpinned flyout
+closes when the user makes a valid world-view action, but the selected values
+and field masks remain active.
+
+Terrain field buttons are multi-select only within Terrain mode:
+
+- Left-click opens that field's value editor and preview without changing
+  whether the field will be painted.
+- Right-click toggles the field into or out of the paint mask, matching the
+  requested paint-editor workflow.
+- An active field has an unmistakable selected border/check marker; inactive
+  fields remain visible but subdued. Invalid values use a warning state.
+- Turning a field off retains its last value so it can be re-enabled without
+  re-entry. It must never apply while unchecked.
+- Every button has a tooltip containing its name, current value/definition,
+  active state, left-click action, and right-click action. Icons alone are not
+  treated as sufficient discoverability.
+
+The diagonal-wall flyout exposes wall definition and orientation separately.
+Rotate changes the orientation control; the normal UI must not make users add
+or subtract `12000`. Copying a tile must populate both the base definition and
+orientation, and painting must preserve the existing encoded protocol rules.
+
+Scenery and NPC flyouts expose definition search/ID, name, placement options,
+and remove/copy actions as appropriate. Activating either mode deactivates the
+Terrain field mask for application purposes without erasing its configured
+values. Mode exclusivity remains enforced in the model, not merely by drawing
+one selected button.
+
+Save carries a dirty/pending badge. It is disabled while a stroke is still in
+flight and reports success or failure without hiding an error in a closed
+flyout. Close must retain the existing unsaved-change protection. A narrow
+status line beside or beneath the dock shows coordinates/plane, active mode,
+brush size, queued/acknowledged work, and last rebuild time without expanding
+the full form.
+
+### Input invariants
+
+- Left-click in the world performs one stamp in an editing mode.
+- Ctrl+left-drag is required for continuous brush sampling. Merely holding or
+  dragging left-click must not become an implicit brush.
+- Middle-click and middle-drag remain reserved for camera behavior and never
+  stamp, sample, or toggle a toolbar control through button aliasing.
+- Right-clicking a toolbar icon is consumed by the toolbar and never opens a
+  world menu beneath it. Right-clicking the world keeps editor-specific
+  inspect/copy/remove options appropriate to the active mode.
+- Keyboard focus inside a numeric/search field prevents world shortcuts from
+  firing. Escape closes the current flyout before it exits editor mode.
+- The compact and temporarily expanded/fallback layouts share one editor
+  state model; a presentation change must not reset configured fields.
+
+### Performance profiles
+
+Fast mode becomes a global editor profile rather than a Terrain checkbox. The
+existing implementation is the baseline: it snapshots the current lighting,
+terrain variation, fog, tone, terrain/object relief, and scenery-animation
+state; applies a cheaper editor configuration; and restores the exact snapshot
+when disabled or when the editor closes. Refactoring must preserve and test
+that restoration before adding more settings.
+
+Profiles are explicit and reversible:
+
+- **Normal:** the ordinary renderer with the user's pre-editor preferences.
+- **Fast:** reduced terrain/object relief and variation, inexpensive lighting,
+  paused nonessential scenery animation, and other individually benchmarked
+  reductions that retain reliable picking and visual identification.
+- **Grid/minimal (follow-up):** a purpose-built editor view emphasizing tile
+  edges, elevation/material distinctions, brush footprint, boundaries, and
+  entity markers. This is preferable to blindly turning the renderer off,
+  because an invisible world cannot be inspected or selected safely.
+
+Profile changes are client-local. The server continues collision and entity
+simulation unless a separately designed private-editor-server mode is approved.
+Layer visibility controls for roofs, scenery, NPCs, ground items, effects, or
+the minimap may be added after the compact dock, but their saved state must be
+editor-only and every hidden editable layer needs an obvious indicator.
+
+### Measurement and optimization phase
+
+The likely high-cost path is the visible-world/terrain rebuild after accepted
+edit batches, but that is a hypothesis to measure rather than an assumed cause.
+Before altering it, capture at least:
+
+- client frame time and worst frame during idle, hover, stamp, and brush;
+- input-to-preview, client-to-server acknowledgement, and acknowledgement-to-
+  rebuilt-world time;
+- tiles sent, accepted, rejected, and rebuilt per operation;
+- number of rebuilds and minimap refreshes per complete stroke;
+- queued batches/backpressure and time spent waiting for the final batch;
+- renderer-v1 and renderer-v2 results under Normal and Fast profiles.
+
+Diagnostics should aggregate per operation/stroke and remain readable by an AI.
+Avoid per-tile log floods. The UI status line may show the most recent frame,
+acknowledgement, and rebuild figures while the detailed diagnostic log retains
+operation IDs and counts.
+
+After measurement, implement the smallest safe invalidation strategy:
+
+- Update accepted values in the client-side editor state immediately while
+  retaining the authoritative server acknowledgement and revision checks.
+- Coalesce geometry and minimap invalidation so a complete stroke rebuilds at
+  most once after its final accepted batch, rather than once per input sample
+  or transport chunk.
+- Track dirty sectors/chunks and field types. Material-only changes should not
+  rebuild unrelated geometry; elevation, wall, and roof changes must include
+  every neighboring tile whose derived mesh or occlusion depends on them.
+- Preserve the current bounded batching, deduplication, and backpressure. A
+  faster renderer is not permission to create an unbounded command queue.
+- Prevent stale asynchronous work from overwriting a newer operation by using
+  editor revision/operation IDs in any deferred rebuild.
+- Throttle hover/brush-preview recomputation and reuse buffers where profiling
+  shows avoidable per-frame allocation, without making cursor feedback laggy.
+- Refresh the minimap once per completed operation when needed, not once per
+  tile.
+- Fall back to the known full reload when dirty-region validation fails. An
+  optimization must never leave client visuals or collision understanding
+  silently inconsistent.
+
+### Branch and handoff sequence
+
+#### Slice A: compact UI and icon infrastructure
+
+Branch: `feat/world-editor-compact-toolbar`
+
+- [ ] Add the semantic icon registry, cached PNG loader, missing-icon fallback,
+  asset README/credits template, and release-build asset packaging.
+- [ ] Refactor the current coordinate-coded form onto a shared editor state and
+  compact dock/flyout presentation without changing packets or mutations.
+- [ ] Implement the left-click/value and right-click/field-mask behavior,
+  tooltips, visible state markers, pinning, status line, dirty/pending Save,
+  and unsaved Close behavior.
+- [ ] Move current Fast mode to the global dock and prove exact preference
+  restoration on Fast-off, editor exit, disconnect, and error paths.
+- [ ] Keep a temporary expanded/fallback presentation available until the
+  acquired icons have been validated in a packaged client.
+- [ ] Test privately with both missing fallback icons and the acquired final
+  icons before release consideration.
+
+This handoff may be code-complete before final artwork is delivered, provided
+the asset contract, loader, packaging, fallbacks, and missing-icon inventory
+are complete. It is not visually release-ready until the owner supplies and
+approves all required icons.
+
+#### Slice B: measured incremental rebuild
+
+Branch: `perf/world-editor-incremental-rebuild`
+
+- [ ] Record private baseline measurements and include them in the handoff.
+- [ ] Coalesce accepted brush batches and add field-aware dirty-region rebuilds
+  with revision protection and a safe full-reload fallback.
+- [ ] Add aggregated AI-readable operation diagnostics and last-operation UI
+  timing.
+- [ ] Compare correctness and frame/rebuild latency against the baseline for
+  stamp, rapid brush, large radius, sector edge, upper floor, void expansion,
+  walls/roofs, undo/discard if present, save, and restart.
+
+#### Slice C: optional grid/minimal profile
+
+Branch: `feat/world-editor-grid-profile`
+
+Begin only after Slice B identifies which renderer work is still material. The
+profile must render a usable editing representation, preserve picking, display
+hidden-layer state, and restore Normal/Fast state exactly. It should not become
+a second independent map renderer without a measured need.
+
+### Next-phase acceptance criteria
+
+- The collapsed dock leaves substantially more world view visible than the
+  current 390x330 form and every existing editing value remains reachable.
+- All required controls work with final PNGs, in the packaged player client,
+  without source-tree file dependencies.
+- Removing or corrupting one icon yields one diagnostic and a usable labeled
+  fallback; no unrelated editor control breaks.
+- Active mode and field masks are understandable from state markers and
+  tooltips even when artwork is unfamiliar.
+- Left/right/middle/Ctrl input invariants pass repeated private testing, with
+  particular attention to camera rotation and accidental terrain placement.
+- Fast mode always restores the exact pre-editor graphics state and produces a
+  measurable improvement on at least one representative expensive edit case.
+- Incremental rebuild work demonstrates fewer or shorter rebuild stalls without
+  visual, collision, minimap, save/reload, or server/client revision drift.
+- A private server/client test and owner visual confirmation occur before the
+  manager merges either behavior-changing branch for release.
 
 ## Test Plan
 
