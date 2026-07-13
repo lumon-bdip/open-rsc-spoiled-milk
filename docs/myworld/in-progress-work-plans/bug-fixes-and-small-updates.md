@@ -57,6 +57,11 @@ docs/player-command-list
       scene baseline remains optional rather than becoming a production
       dependency. The regression covers both scenery and walls with the
       baseline disabled, alongside the existing baseline replay case.
+      Live validation used the worktree client against the hosted server and
+      reproduced a real death from a distant area to the `120,648` Lumbridge
+      respawn. Destination scenery, walls, collision, and interaction remained
+      present when the death screen ended; no logout/relogin recovery was
+      required.
 
 ## Notes
 
