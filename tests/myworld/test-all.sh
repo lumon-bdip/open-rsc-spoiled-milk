@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 
 ./scripts/check.sh
 ./tests/myworld/test-smoke.sh
+python3 ./tests/myworld/test-server-build-source-of-truth.py
 python3 ./tests/myworld/audit_client_item_coverage.py
 python3 ./tests/myworld/test-client-runtime-item-definitions.py
 python3 ./tests/myworld/test-desktop-sound-lifecycle.py

@@ -1,3 +1,8 @@
+// SECONDARY / NON-AUTHORITATIVE BUILD DESCRIPTION
+// Production build, run, hosted deployment, and server smoke-test scripts use
+// the bundled Ant launcher with build.xml. Gradle dependency and artifact
+// parity has not been established; do not use Gradle output for deployment.
+
 plugins {
     id "application"
     id "java"
@@ -70,8 +75,10 @@ ant.importBuild("build.xml") { targetName ->
 
 run {
     dependsOn compile_plugins
+    description = "Secondary Gradle application run; not production-Ant artifact parity"
 }
 
 test {
     useJUnitPlatform()
+    description = "Secondary Gradle test task; does not validate production-Ant packaging parity"
 }
