@@ -195,9 +195,10 @@ def test_myworld_docs_are_consolidated() -> None:
         "in-progress-work-plans": [
             "animation-asset-migration-plan.md",
             "bug-fixes-and-small-updates.md",
-            "chat-and-dialogue-channel-plan.md",
-            "code-cleanup-and-modularization-plan.md",
-            "dragon-gear-crafting-plan.md",
+                "chat-and-dialogue-channel-plan.md",
+                "code-cleanup-and-modularization-plan.md",
+                "code-health-audit-2026-07-12.md",
+                "dragon-gear-crafting-plan.md",
             "fixes-and-changes-plan.md",
             "god-relic-reward-plan.md",
             "herblaw-brawn-harvestable-ingredients-plan.md",
