@@ -5,6 +5,7 @@ ROOT = Path(__file__).resolve().parents[2]
 GUIDE = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "interfaces" / "misc" / "SkillGuideInterface.java"
 CLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
 CLIENT_ITEMS = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "client" / "entityhandling" / "EntityHandler.java"
+SPELL_METADATA = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "client" / "entityhandling" / "defs" / "ElementalSpellDisplayMetadata.java"
 
 
 def fail(message: str) -> None:
@@ -25,6 +26,7 @@ def main() -> None:
     guide = GUIDE.read_text()
     client = CLIENT.read_text()
     client_items = CLIENT_ITEMS.read_text()
+    spell_metadata = SPELL_METADATA.read_text()
 
     require(guide, 'populateRangedGuide();', "ranged guide helper")
     require(guide, 'addRangedBowGuide("Blood", 70, 2130, 2129);', "blood bow ranged requirement")
@@ -173,10 +175,9 @@ def main() -> None:
     require(client, 'skillGuideChosenTabs.add("Woodcraft");', "crafting woodcraft tab")
     require(client, 'skillGuideChosenTabs.add("Rods");', "fishing rod tab")
     require(client, 'skillGuideChosenTabs.add("Hatchets");', "woodcutting hatchet tab")
-    require(guide, 'name.equals("Spore") || name.equals("Wood Drill") || name.equals("Battering Ram")', "wood splinter guide mapping")
-    require(guide, 'return "Splinter";', "wood splinter guide label")
-    require(client, 'spellName.equals("spore") || spellName.equals("wood drill")', "wood splinter tooltip mapping")
-    require(client, 'return "Splinter";', "wood splinter tooltip label")
+    require(spell_metadata, 'WOOD("Splinter")', "shared wood splinter classification")
+    require(guide, 'metadata.getGuideTooltip()', "shared wood splinter guide mapping")
+    require(client, 'metadata.getEffectName()', "shared wood splinter tooltip mapping")
     require(guide, 'Spells using mind runes will do damage equal to chaos runes', "chaos gauntlets magic guide wording")
     require(guide, 'Thunder spells can Startle and negate the next attack', "thunder dual spell guide effect")
     require(guide, 'Acid spells can Corrode and apply poison', "acid dual spell guide effect")

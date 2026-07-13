@@ -233,10 +233,15 @@ def main() -> int:
     for new_name in ("Thunder Bird", "Ice Slash", "Acid Splash"):
         require(spell_defs, (f"<name>{new_name}</name>",), "SpellDef.xml")
         require(entity_handler, (f'new SpellDef("{new_name}"',), "EntityHandler.java")
-        require(skill_guide, (f'name.equals("{new_name}")',), "SkillGuideInterface.java")
+    require(skill_guide, (
+        "ElementalSpellDisplayMetadata.resolve(spellIndex, spell)",
+        "metadata.getSpellName()",
+        "metadata.getGuideTooltip()",
+    ), "SkillGuideInterface.java")
     for retired_name in ("Thunder Splash", "Ice Burst", "Acid Frog"):
         assert f"<name>{retired_name}</name>" not in spell_defs
         assert f'new SpellDef("{retired_name}"' not in entity_handler
+        assert retired_name not in skill_guide
 
     print("PASS: tier-two spell animation mappings, names, geometry, and teleport timing validated")
     return 0
