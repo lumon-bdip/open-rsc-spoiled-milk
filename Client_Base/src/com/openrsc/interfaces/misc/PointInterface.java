@@ -53,6 +53,7 @@ public final class PointInterface {
 	private int bordColour;
 	private int lineColour;
 	private int pColour;
+	private final int[] selectableSkillIds;
 
 	// Arrays to drive rendering
 	private static final int[] SKILL_IDS = {ATTACK, DEFENSE, STRENGTH, RANGED, PRAYER, MAGIC};
@@ -71,8 +72,10 @@ public final class PointInterface {
 		this.mc = mc;
 		x = (mc.getGameWidth() - width) / 2;
 		y = (mc.getGameHeight() - height) / 2;
+		selectableSkillIds = ExperienceSkillSelector.buildSelectableSkillIds(mudclient.skillCount);
 		experienceConfig = new Panel(mc.getSurface(), 5);
-		experienceConfigScroll = experienceConfig.addScrollingList(x + 95, y + 34, 160, height - 40, 20, 2, false);
+		experienceConfigScroll = experienceConfig.addScrollingList(x + 95, y + 34, 160, height - 40,
+			Math.max(1, selectableSkillIds.length), 2, false);
 	}
 
 	public void reposition() {
@@ -293,12 +296,14 @@ public final class PointInterface {
 		});
 		String[] skillNames = mc.getSkillNamesLong();
 		experienceConfig.clearList(experienceConfigScroll);
-		for (int i = 0; i < mudclient.skillCount; i++) {
-			experienceConfig.setListEntry(experienceConfigScroll, i, "@whi@" + skillNames[i], 0, (String) null, (String) null);
+		for (int row = 0; row < selectableSkillIds.length; row++) {
+			int skillId = selectableSkillIds[row];
+			experienceConfig.setListEntry(experienceConfigScroll, row, "@whi@" + skillNames[skillId], 0, (String) null, (String) null);
 		}
-		int index = experienceConfig.getControlSelectedListIndex(experienceConfigScroll);
-		if (index >= 0 && mc.mouseButtonClick == 1) {
-			mc.selectedSkill = index;
+		int selectedRow = experienceConfig.getControlSelectedListIndex(experienceConfigScroll);
+		int selectedSkillId = ExperienceSkillSelector.resolveSkillId(selectableSkillIds, selectedRow);
+		if (selectedSkillId >= 0 && mc.mouseButtonClick == 1) {
+			mc.selectedSkill = selectedSkillId;
 			experienceConfig.resetScrollIndex(experienceConfigScroll);
 			selectSkillMenu = false;
 			mc.setMouseClick(0);

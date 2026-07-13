@@ -57,6 +57,7 @@ python3 ./tests/myworld/test-heroes-guild-stairs.py
 python3 ./tests/myworld/test-lost-city-market-tax-waiver.py
 python3 ./tests/myworld/test-magecraft-data.py
 python3 ./tests/myworld/test-production-ui.py
+python3 ./tests/myworld/test-experience-skill-selectors.py
 python3 ./tests/myworld/test-production-behavior.py
 python3 ./tests/myworld/test-production-flow.py
 python3 ./tests/myworld/test-prayer-rework.py
