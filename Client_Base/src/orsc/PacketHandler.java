@@ -2719,6 +2719,7 @@ public class PacketHandler {
 					mc.setGameObjectInstanceDir(writeIndex, mc.getGameObjectInstanceDir(readIndex));
 					mc.setGameObjectInstanceModel(writeIndex, mc.getGameObjectInstanceModel(readIndex));
 					mc.setGameObjectInstanceMaterialized(writeIndex, mc.isGameObjectInstanceMaterialized(readIndex));
+					mc.setGameObjectInstancePendingAreaLoad(writeIndex, mc.isGameObjectInstancePendingAreaLoad(readIndex));
 				}
 				writeIndex++;
 			}
@@ -2745,6 +2746,7 @@ public class PacketHandler {
 					mc.setWallObjectInstanceDir(writeIndex, mc.getWallObjectInstanceDir(readIndex));
 					mc.setWallObjectInstanceID(writeIndex, mc.getWallObjectInstanceID(readIndex));
 					mc.setWallObjectInstanceMaterialized(writeIndex, mc.isWallObjectInstanceMaterialized(readIndex));
+					mc.setWallObjectInstancePendingAreaLoad(writeIndex, mc.isWallObjectInstancePendingAreaLoad(readIndex));
 				}
 				writeIndex++;
 			}
@@ -2990,6 +2992,7 @@ public class PacketHandler {
 							mc.setGameObjectInstanceDir(count, mc.getGameObjectInstanceDir(i));
 							mc.setGameObjectInstanceModel(count, mc.getGameObjectInstanceModel(i));
 							mc.setGameObjectInstanceMaterialized(count, mc.isGameObjectInstanceMaterialized(i));
+							mc.setGameObjectInstancePendingAreaLoad(count, mc.isGameObjectInstancePendingAreaLoad(i));
 						}
 
 						++count;
@@ -3017,6 +3020,7 @@ public class PacketHandler {
 					mc.setGameObjectInstanceDir(instanceIndex, dir);
 					mc.setGameObjectInstanceModel(instanceIndex, m);
 					mc.setGameObjectInstanceMaterialized(instanceIndex, false);
+					mc.setGameObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());
 					mc.materializeGameObjectInstance(instanceIndex);
 					mc.setGameObjectInstanceCount(instanceIndex + 1);
 				}
@@ -3039,6 +3043,7 @@ public class PacketHandler {
 							mc.setGameObjectInstanceDir(id, mc.getGameObjectInstanceDir(localIndex));
 							mc.setGameObjectInstanceModel(id, mc.getGameObjectInstanceModel(localIndex));
 							mc.setGameObjectInstanceMaterialized(id, mc.isGameObjectInstanceMaterialized(localIndex));
+							mc.setGameObjectInstancePendingAreaLoad(id, mc.isGameObjectInstancePendingAreaLoad(localIndex));
 						}
 						++id;
 					}
@@ -3303,6 +3308,7 @@ public class PacketHandler {
 							mc.setWallObjectInstanceDir(wallID, mc.getWallObjectInstanceDir(wallInstance));
 							mc.setWallObjectInstanceID(wallID, mc.getWallObjectInstanceID(wallInstance));
 							mc.setWallObjectInstanceMaterialized(wallID, mc.isWallObjectInstanceMaterialized(wallInstance));
+							mc.setWallObjectInstancePendingAreaLoad(wallID, mc.isWallObjectInstancePendingAreaLoad(wallInstance));
 						}
 
 						++wallID;
@@ -3332,6 +3338,7 @@ public class PacketHandler {
 							mc.setWallObjectInstanceDir(localIndex, mc.getWallObjectInstanceDir(var9));
 							mc.setWallObjectInstanceID(localIndex, mc.getWallObjectInstanceID(var9));
 							mc.setWallObjectInstanceMaterialized(localIndex, mc.isWallObjectInstanceMaterialized(var9));
+							mc.setWallObjectInstancePendingAreaLoad(localIndex, mc.isWallObjectInstancePendingAreaLoad(var9));
 						}
 
 						++localIndex;
@@ -3350,6 +3357,7 @@ public class PacketHandler {
 					mc.setWallObjectInstanceID(instanceIndex, id);
 					mc.setWallObjectInstanceDir(instanceIndex, direction);
 					mc.setWallObjectInstanceMaterialized(instanceIndex, false);
+					mc.setWallObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());
 					mc.materializeWallObjectInstance(instanceIndex);
 					mc.setWallObjectInstanceCount(instanceIndex + 1);
 				}
@@ -3566,7 +3574,7 @@ public class PacketHandler {
 	}
 
 	private void loadArea() {
-		mc.setLoadingArea(true);
+		mc.beginAreaLoad();
 		mc.setLocalPlayerServerIndex(packetsIncoming.getShort());
 		mc.setWorldOffsetX(packetsIncoming.getShort());
 		mc.setWorldOffsetZ(packetsIncoming.getShort());
@@ -3638,6 +3646,7 @@ public class PacketHandler {
 						mc.setGameObjectInstanceDir(newIndex, mc.getGameObjectInstanceDir(oldIndex));
 						mc.setGameObjectInstanceModel(newIndex, mc.getGameObjectInstanceModel(oldIndex));
 						mc.setGameObjectInstanceMaterialized(newIndex, mc.isGameObjectInstanceMaterialized(oldIndex));
+						mc.setGameObjectInstancePendingAreaLoad(newIndex, mc.isGameObjectInstancePendingAreaLoad(oldIndex));
 					}
 
 					++newIndex;
@@ -3661,6 +3670,7 @@ public class PacketHandler {
 						mc.setWallObjectInstanceDir(newIndex, mc.getWallObjectInstanceDir(oldIndex));
 						mc.setWallObjectInstanceID(newIndex, mc.getWallObjectInstanceID(oldIndex));
 						mc.setWallObjectInstanceMaterialized(newIndex, mc.isWallObjectInstanceMaterialized(oldIndex));
+						mc.setWallObjectInstancePendingAreaLoad(newIndex, mc.isWallObjectInstancePendingAreaLoad(oldIndex));
 					}
 
 					++newIndex;

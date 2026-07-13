@@ -57,6 +57,33 @@ class SceneClientModel:
             self.objects = {1242}
 
 
+class LegacySceneClientModel:
+    """Model legacy scenery delivery while a death screen defers a hard load."""
+
+    def __init__(self) -> None:
+        self.area_load_pending = False
+        self.objects = {"old-tree": False}
+        self.walls = {"old-wall": False}
+
+    def begin_area_load(self) -> None:
+        self.area_load_pending = True
+        self.objects = {name: False for name in self.objects}
+        self.walls = {name: False for name in self.walls}
+
+    def receive_legacy_destination_scene(self) -> None:
+        self.objects["lumbridge-rowboat"] = self.area_load_pending
+        self.walls["lumbridge-bank-wall"] = self.area_load_pending
+
+    def finish_hard_area_load(self) -> None:
+        self.objects = {
+            name: False for name, pending in self.objects.items() if pending
+        }
+        self.walls = {
+            name: False for name, pending in self.walls.items() if pending
+        }
+        self.area_load_pending = False
+
+
 def verify_repeated_use_and_death_model() -> None:
     client = SceneClientModel()
     for _ in range(2):
@@ -67,6 +94,21 @@ def verify_repeated_use_and_death_model() -> None:
         require(not client.objects, "respawn baseline applied against the stale Edgeville origin")
         client.finish_region_load("lumbridge")
         require(1242 in client.objects, "rowboat baseline was not replayed after respawn region load")
+
+
+def verify_legacy_deferred_load_model() -> None:
+    client = LegacySceneClientModel()
+    client.begin_area_load()
+    client.receive_legacy_destination_scene()
+    client.finish_hard_area_load()
+    require(
+        set(client.objects) == {"lumbridge-rowboat"},
+        "deferred hard load discarded destination legacy scenery",
+    )
+    require(
+        set(client.walls) == {"lumbridge-bank-wall"},
+        "deferred hard load discarded destination legacy walls",
+    )
 
 
 def main() -> None:
@@ -120,9 +162,31 @@ def main() -> None:
         < region_load.index("return true;"),
         "baseline replay must happen after the new region is live and before region load returns",
     )
+    require(
+        "this.retainPendingAreaLoadStaticScene();" in region_load,
+        "hard area loads must retain legacy destination scenery received during a deferred load",
+    )
+    require(
+        "public void beginAreaLoad()" in client
+        and "public boolean isAreaLoadPending()" in client,
+        "the client must identify packets received for a pending area load",
+    )
+
+    require(
+        "mc.beginAreaLoad();" in packet_handler,
+        "world-info packets must begin legacy static-scene transition tracking",
+    )
+    for snippet in (
+        "mc.setGameObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());",
+        "mc.setWallObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());",
+        "mc.setGameObjectInstancePendingAreaLoad(count, mc.isGameObjectInstancePendingAreaLoad(i));",
+        "mc.setWallObjectInstancePendingAreaLoad(localIndex, mc.isWallObjectInstancePendingAreaLoad(var9));",
+    ):
+        require(snippet in packet_handler, f"legacy scene transition metadata missing: {snippet}")
 
     verify_repeated_use_and_death_model()
-    print("PASS: Lumbridge rowboat survives repeated travel and deferred death/respawn region loads")
+    verify_legacy_deferred_load_model()
+    print("PASS: Lumbridge static scene survives baseline and legacy deferred death/respawn loads")
 
 
 if __name__ == "__main__":
