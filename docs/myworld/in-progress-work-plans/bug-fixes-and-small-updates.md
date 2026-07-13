@@ -53,6 +53,9 @@ docs/player-command-list
       their original skill IDs before tracking XP. This omission is UI-only:
       ID `11` remains in the protocol/server arrays at hidden level `99`, so
       standard and custom Firemaking actions retain access to every log tier.
+      The menu's `Reset` control now clears total and per-skill session gains,
+      restarts every XP/hour timer, and invalidates its cached rate regardless
+      of the current mode or selected skill.
 
 - [x] `2026-07-12` Preserve scenery and walls across deferred death/respawn
       area loads. The production legacy scene packets can arrive while the

@@ -14,6 +14,7 @@ SELECTOR_USERS = (
     INTERFACES / "PointInterface.java",
     INTERFACES / "PointsToGpInterface.java",
 )
+CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 
 
 def require(condition: bool, message: str) -> None:
@@ -103,10 +104,36 @@ def audit_selector_users() -> None:
         )
 
 
+def audit_reset_control() -> None:
+    interface_source = SELECTOR_USERS[0].read_text(encoding="utf-8")
+    client_source = CLIENT.read_text(encoding="utf-8")
+    require(
+        "mc.resetExperienceCounter();" in interface_source,
+        "Experience Config Reset must use the complete counter reset",
+    )
+    require(
+        "mc.getRecentSkill()" not in interface_source
+        and "mc.setPlayerStatXpGained(mc.selectedSkill" not in interface_source,
+        "Experience Config Reset must not clear only the currently displayed skills",
+    )
+    required_reset_steps = (
+        "public void resetExperienceCounter()",
+        "this.totalXpGainedStartTime = resetTime;",
+        "this.playerXpGainedTotal = 0;",
+        "this.xpPerHour = 0;",
+        "this.xpPerHourCount = 0;",
+        "Arrays.fill(this.playerStatXpGained, 0L);",
+        "Arrays.fill(this.xpGainedStartTime, resetTime);",
+    )
+    for step in required_reset_steps:
+        require(step in client_source, f"Experience counter reset is missing: {step}")
+
+
 def main() -> None:
     compile_and_run_selector_regression()
     audit_selector_users()
-    print("PASS: Experience Config selectors safely map 20 rows across 21 skill IDs")
+    audit_reset_control()
+    print("PASS: Experience Config safely maps 21 skill IDs and resets all counters")
 
 
 if __name__ == "__main__":

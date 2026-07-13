@@ -25157,6 +25157,20 @@ public final class mudclient implements Runnable {
 		this.playerXpGainedTotal = exp;
 	}
 
+	public void resetExperienceCounter() {
+		long resetTime = System.currentTimeMillis();
+		this.totalXpGainedStartTime = resetTime;
+		this.playerXpGainedTotal = 0;
+		this.xpPerHour = 0;
+		this.xpPerHourCount = 0;
+		if (this.playerStatXpGained != null) {
+			Arrays.fill(this.playerStatXpGained, 0L);
+		}
+		if (this.xpGainedStartTime != null) {
+			Arrays.fill(this.xpGainedStartTime, resetTime);
+		}
+	}
+
 	public ArrayList getXpNotifications() {
 		return xpNotifications;
 	}

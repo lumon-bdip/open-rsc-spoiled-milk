@@ -183,18 +183,7 @@ public final class ExperienceConfigInterface {
 		this.drawButton(x + 135, y + 195, 50, 20, "Reset", 2, false, new ButtonHandler() {
 			@Override
 			void handle() {
-				long time = System.currentTimeMillis();
-				mc.totalXpGainedStartTime = time;
-				mc.setPlayerXpGainedTotal(0);
-				if (mc.getRecentSkill() >= 0) {
-					mc.setPlayerStatXpGained(mc.getRecentSkill(), 0);
-					mc.setXpGainedStartTime(mc.getRecentSkill(), time);
-				}
-				if (mc.selectedSkill >= 0) {
-					mc.setPlayerStatXpGained(mc.selectedSkill, 0);
-					mc.setXpGainedStartTime(mc.selectedSkill, time);
-				}
-
+				mc.resetExperienceCounter();
 			}
 		});
 		this.drawButton(x + 200, y + 195, 60, 20, "Submenu", 2, Config.C_EXPERIENCE_CONFIG_SUBMENU, new ButtonHandler() {
