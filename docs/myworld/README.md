@@ -61,6 +61,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [code-cleanup-and-modularization-plan.md](in-progress-work-plans/code-cleanup-and-modularization-plan.md):
   codebase cleanup roadmap for oversized files, stale options, and renderer
   ownership boundaries.
+- [code-health-audit-2026-07-12.md](in-progress-work-plans/code-health-audit-2026-07-12.md):
+  evidence-backed size/churn, band-aid, compatibility, dead-code, and static-
+  analysis audit with prioritized follow-up branches.
 - [dragon-gear-crafting-plan.md](in-progress-work-plans/dragon-gear-crafting-plan.md):
   dragon gear crafting route, lava forge repair, black dragon scales, dragon
   metal drops, and purified rune forge relocation.
