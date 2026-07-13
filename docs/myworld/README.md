@@ -170,6 +170,8 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [object-ids.md](info/object-ids.md): builder-facing scenery/object ID reference.
 - [pvm-npc-cluster-audit.md](info/pvm-npc-cluster-audit.md): hostile-NPC
   proximity audit and Wilderness population view.
+- [server-build-source-of-truth.md](info/server-build-source-of-truth.md):
+  authoritative Ant server build, dependency, artifact, and Gradle-drift reference.
 - [testing-quick-reference.md](info/testing-quick-reference.md): compact test
   and field-validation reference.
 

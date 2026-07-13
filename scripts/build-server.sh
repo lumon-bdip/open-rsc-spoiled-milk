@@ -10,3 +10,4 @@ GENERATOR_MODE="$(myworld_resolve_generator_mode "$@")"
 myworld_prepare_generated_artifacts "$GENERATOR_MODE"
 myworld_ant_build compile_core
 myworld_ant_build compile_plugins
+python3 "$SCRIPT_ROOT/scripts/audit-server-build.py" --check --require-artifacts
