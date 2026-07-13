@@ -1,6 +1,7 @@
 package com.openrsc.interfaces.misc;
 
 import com.openrsc.client.entityhandling.EntityHandler;
+import com.openrsc.client.entityhandling.defs.ElementalSpellDisplayMetadata;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.entityhandling.defs.NPCDef;
 import com.openrsc.client.entityhandling.defs.SpellDef;
@@ -1620,8 +1621,10 @@ class MagicSpellMenuItem extends SkillMenuEntry {
 
 	public MagicSpellMenuItem(int spellIndex, SpellDef spell) {
 		super(String.valueOf(spell.getReqLevel()), "");
-		this.spellName = formatSpellName(spell.getName());
-		this.tooltip = formatTooltip(spell.getName(), spell.getDescription());
+		ElementalSpellDisplayMetadata metadata = ElementalSpellDisplayMetadata.resolve(spellIndex, spell);
+		String displayName = metadata == null ? spell.getName() : metadata.getSpellName();
+		this.spellName = formatSpellName(displayName);
+		this.tooltip = formatTooltip(spell.getDescription(), metadata);
 	}
 
 	private String formatSpellName(String name) {
@@ -1637,24 +1640,12 @@ class MagicSpellMenuItem extends SkillMenuEntry {
 		return name.replace("teleport", "Tele").replace("Teleport", "Tele");
 	}
 
-	private String formatTooltip(String name, String description) {
+	private String formatTooltip(String description, ElementalSpellDisplayMetadata metadata) {
+		if (metadata != null) {
+			return metadata.getGuideTooltip();
+		}
 		if (description == null) {
 			return "";
-		}
-		if (description.startsWith("Applies ")) {
-			String debuff = description.substring("Applies ".length());
-			int durationIndex = debuff.indexOf(" for ");
-			if (durationIndex >= 0) {
-				debuff = debuff.substring(0, durationIndex);
-			}
-			return "Deals " + getElementalDamageWord(name) + " damage. Applies " + debuff + ".";
-		}
-		if (description.startsWith("Dual-element ")) {
-			String effect = getDualElementalEffectName(name);
-			if (effect.length() > 0) {
-				return "Deals " + getElementalDamageWord(name) + " damage. Can " + effect + ".";
-			}
-			return "Deals " + getElementalDamageWord(name) + " dual-element damage.";
 		}
 		if (description.startsWith("Advanced god spell")) {
 			return description.substring("Advanced god spell; ".length());
@@ -1669,54 +1660,6 @@ class MagicSpellMenuItem extends SkillMenuEntry {
 			return "Area dark magic damage";
 		}
 		return description;
-	}
-
-	private String getDualElementalEffectName(String name) {
-		if (name.equals("Thunder Ball") || name.equals("Thunder Bird") || name.equals("Thunder Strike")) {
-			return "Startle";
-		}
-		if (name.equals("Acid Drop") || name.equals("Acid Splash") || name.equals("Acid Gush")) {
-			return "Corrode";
-		}
-		if (name.equals("Icicle Shot") || name.equals("Ice Slash") || name.equals("Ice Crystal")) {
-			return "Frostbite";
-		}
-		if (name.equals("Spore") || name.equals("Wood Drill") || name.equals("Battering Ram")) {
-			return "Splinter";
-		}
-		return "";
-	}
-
-	private String getElementalDamageWord(String name) {
-		if (name.equals("Wind Arrow") || name.equals("Water Ball")
-			|| name.equals("Rock Throw") || name.equals("Fireball")) {
-			return "minor";
-		}
-		if (name.equals("Thunder Ball") || name.equals("Icicle Shot")
-			|| name.equals("Acid Drop") || name.equals("Spore")) {
-			return "minor";
-		}
-		if (name.equals("Wind Slash") || name.equals("Water Burst")
-			|| name.equals("Earth Hammer") || name.equals("Fire Claw")) {
-			return "moderate";
-		}
-		if (name.equals("Thunder Bird") || name.equals("Ice Slash")
-			|| name.equals("Acid Splash") || name.equals("Wood Drill")) {
-			return "moderate";
-		}
-		if (name.equals("Tornado") || name.equals("Water Eruption")
-			|| name.equals("Earth Burst") || name.equals("Explosion")) {
-			return "major";
-		}
-		if (name.equals("Thunder Strike") || name.equals("Ice Crystal")
-			|| name.equals("Acid Gush") || name.equals("Battering Ram")) {
-			return "major";
-		}
-		if (name.equals("Wind Beam") || name.equals("Water Vortex")
-			|| name.equals("Earth Impale") || name.equals("Fire Pillar")) {
-			return "heavy";
-		}
-		return "magic";
 	}
 
 	public String getSpellName() {

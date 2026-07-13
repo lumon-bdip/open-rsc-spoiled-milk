@@ -4,6 +4,7 @@ import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.EntityHandler.GUIPARTS;
 import com.openrsc.client.entityhandling.EntityHandler.PROJECTILE_TYPES;
 import com.openrsc.client.entityhandling.defs.ItemDef;
+import com.openrsc.client.entityhandling.defs.ElementalSpellDisplayMetadata;
 import com.openrsc.client.entityhandling.defs.NPCDef;
 import com.openrsc.client.entityhandling.defs.PrayerDef;
 import com.openrsc.client.entityhandling.defs.SpellDef;
@@ -12271,11 +12272,13 @@ public final class mudclient implements Runnable {
 		if (spellDef == null) {
 			return;
 		}
+		ElementalSpellDisplayMetadata metadata = ElementalSpellDisplayMetadata.resolve(spellIndex, spellDef);
+		String spellName = metadata == null ? spellDef.getName() : metadata.getSpellName();
 		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
-			spellDef.getName() + " (Level " + spellDef.getReqLevel() + ")",
+			spellName + " (Level " + spellDef.getReqLevel() + ")",
 			0xFFFF00, 0, 1, tooltipY + 13);
 		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
-			this.getBriefSpellDescription(spellDef), 0xFFFFFF, 0, 0, tooltipY + 26);
+			this.getBriefSpellDescription(spellDef, metadata), 0xFFFFFF, 0, 0, tooltipY + 26);
 
 		int[] itemIds = new int[8];
 		int[] amounts = new int[8];
@@ -12346,63 +12349,12 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private String getBriefSpellDescription(SpellDef spellDef) {
+	private String getBriefSpellDescription(SpellDef spellDef, ElementalSpellDisplayMetadata metadata) {
+		if (metadata != null) {
+			return "Max hit: " + this.getElementalSpellMaxHit(metadata) + ". Applies "
+				+ metadata.getEffectName() + ".";
+		}
 		String name = spellDef.getName().toLowerCase(Locale.ENGLISH);
-		if (name.equals("wind arrow")) {
-			return this.getElementalSpellDescription(name, "Weaker Unsteady.");
-		}
-		if (name.equals("wind slash")) {
-			return this.getElementalSpellDescription(name, "Weak Unsteady.");
-		}
-		if (name.equals("tornado")) {
-			return this.getElementalSpellDescription(name, "Strong Unsteady.");
-		}
-		if (name.equals("wind beam")) {
-			return this.getElementalSpellDescription(name, "Stronger Unsteady.");
-		}
-		if (name.equals("water ball")) {
-			return this.getElementalSpellDescription(name, "Weaker Dampen.");
-		}
-		if (name.equals("water burst")) {
-			return this.getElementalSpellDescription(name, "Weak Dampen.");
-		}
-		if (name.equals("water eruption")) {
-			return this.getElementalSpellDescription(name, "Strong Dampen.");
-		}
-		if (name.equals("water vortex")) {
-			return this.getElementalSpellDescription(name, "Stronger Dampen.");
-		}
-		if (name.equals("rock throw")) {
-			return this.getElementalSpellDescription(name, "Weaker Slow.");
-		}
-		if (name.equals("earth hammer")) {
-			return this.getElementalSpellDescription(name, "Weak Slow.");
-		}
-		if (name.equals("earth burst")) {
-			return this.getElementalSpellDescription(name, "Strong Slow.");
-		}
-		if (name.equals("earth impale")) {
-			return this.getElementalSpellDescription(name, "Stronger Slow.");
-		}
-		if (name.equals("fireball")) {
-			return this.getElementalSpellDescription(name, "Weaker Scorch.");
-		}
-		if (name.equals("fire claw")) {
-			return this.getElementalSpellDescription(name, "Weak Scorch.");
-		}
-		if (name.equals("explosion")) {
-			return this.getElementalSpellDescription(name, "Strong Scorch.");
-		}
-		if (name.equals("fire pillar")) {
-			return this.getElementalSpellDescription(name, "Stronger Scorch.");
-		}
-		if (this.isDualElementalSpell(name)) {
-			String effectName = this.getDualElementalEffectName(name);
-			if (effectName.length() > 0) {
-				return "Max hit: " + this.getElementalSpellMaxHit(name) + ". Applies " + effectName + ".";
-			}
-			return "Max hit: " + this.getElementalSpellMaxHit(name) + ". Dual-element damage.";
-		}
 		if (name.contains("teleport")) {
 			return "Teleports you after a short charge.";
 		}
@@ -12415,156 +12367,45 @@ public final class mudclient implements Runnable {
 		return this.shortenTooltipDescription(spellDef.getDescription());
 	}
 
-	private String getElementalSpellDescription(String spellName, String debuffName) {
-		return "Max hit: " + this.getElementalSpellMaxHit(spellName) + ". Applies " + debuffName;
-	}
-
-	private String getDualElementalEffectName(String spellName) {
-		if (spellName.equals("thunder ball") || spellName.equals("thunder splash")
-			|| spellName.equals("thunder strike")) {
-			return "Startle";
-		}
-		if (spellName.equals("acid drop") || spellName.equals("acid frog")
-			|| spellName.equals("acid gush")) {
-			return "Corrode";
-		}
-		if (spellName.equals("icicle shot") || spellName.equals("ice burst")
-			|| spellName.equals("ice crystal")) {
-			return "Frostbite";
-		}
-		if (spellName.equals("spore") || spellName.equals("wood drill")
-			|| spellName.equals("battering ram")) {
-			return "Splinter";
-		}
-		return "";
-	}
-
-	private int getElementalSpellMaxHit(String spellName) {
-		double spellMax = this.getElementalSpellBaseMax(spellName);
-		spellMax = this.applyElementalRingTooltipBonus(spellName, spellMax);
-		if (this.hasEquippedItem(701) && this.isTierTwoElementalSpell(spellName)) {
+	private int getElementalSpellMaxHit(ElementalSpellDisplayMetadata metadata) {
+		double spellMax = metadata.getBaseDamage();
+		spellMax = this.applyElementalRingTooltipBonus(metadata, spellMax);
+		if (this.hasEquippedItem(701) && metadata.getTier() == 2) {
 			spellMax += 1.0D;
 		}
 		int spellAttackMax = Math.max(1, (int) Math.ceil(spellMax));
 		int offenseBonus = Math.max(0, (int) Math.ceil(this.getClientMagicOffense() / 7.0D));
 		int attackMax = spellAttackMax + offenseBonus;
-		return Math.max(1, (int) Math.ceil(attackMax * this.getElementalSpellCapPercent(spellName)));
+		return Math.max(1, (int) Math.ceil(attackMax * metadata.getDamageCapPercent()));
 	}
 
-	private double getElementalSpellBaseMax(String spellName) {
-		if (this.isTierOneDualElementalSpell(spellName)) {
-			return 4.8D;
-		}
-		if (this.isTierTwoDualElementalSpell(spellName)) {
-			return 7.2D;
-		}
-		if (this.isTierThreeDualElementalSpell(spellName)) {
-			return 9.6D;
-		}
-		if (this.isTierOneElementalSpell(spellName)) {
-			return 4.0D;
-		}
-		if (this.isTierTwoElementalSpell(spellName)) {
-			return 6.0D;
-		}
-		if (this.isTierThreeElementalSpell(spellName)) {
-			return 8.0D;
-		}
-		return 10.0D;
-	}
-
-	private double getElementalSpellCapPercent(String spellName) {
-		if (this.isTierOneElementalSpell(spellName) || this.isTierOneDualElementalSpell(spellName)) {
-			return 0.40D;
-		}
-		if (this.isTierTwoElementalSpell(spellName) || this.isTierTwoDualElementalSpell(spellName)) {
-			return 0.60D;
-		}
-		if (this.isTierThreeElementalSpell(spellName) || this.isTierThreeDualElementalSpell(spellName)) {
-			return 0.80D;
-		}
-		return 1.0D;
-	}
-
-	private boolean isTierOneElementalSpell(String spellName) {
-		return spellName.equals("wind arrow") || spellName.equals("water ball")
-			|| spellName.equals("rock throw") || spellName.equals("fireball");
-	}
-
-	private boolean isTierTwoElementalSpell(String spellName) {
-		return spellName.equals("wind slash") || spellName.equals("water burst")
-			|| spellName.equals("earth hammer") || spellName.equals("fire claw");
-	}
-
-	private boolean isTierThreeElementalSpell(String spellName) {
-		return spellName.equals("tornado") || spellName.equals("water eruption")
-			|| spellName.equals("earth burst") || spellName.equals("explosion");
-	}
-
-	private boolean isDualElementalSpell(String spellName) {
-		return this.isTierOneDualElementalSpell(spellName)
-			|| this.isTierTwoDualElementalSpell(spellName)
-			|| this.isTierThreeDualElementalSpell(spellName);
-	}
-
-	private boolean isTierOneDualElementalSpell(String spellName) {
-		return spellName.equals("thunder ball") || spellName.equals("icicle shot")
-			|| spellName.equals("acid drop") || spellName.equals("spore");
-	}
-
-	private boolean isTierTwoDualElementalSpell(String spellName) {
-		return spellName.equals("thunder splash") || spellName.equals("ice burst")
-			|| spellName.equals("acid frog") || spellName.equals("wood drill");
-	}
-
-	private boolean isTierThreeDualElementalSpell(String spellName) {
-		return spellName.equals("thunder strike") || spellName.equals("ice crystal")
-			|| spellName.equals("acid gush") || spellName.equals("battering ram");
-	}
-
-	private double applyElementalRingTooltipBonus(String spellName, double spellMax) {
+	private double applyElementalRingTooltipBonus(ElementalSpellDisplayMetadata metadata, double spellMax) {
 		int ringId = this.getEquippedItemIdInSlot(13);
-		int ringTier = this.getMatchingElementalRingTier(spellName, ringId);
+		int ringTier = this.getMatchingElementalRingTier(metadata, ringId);
 		return ringTier <= 0 ? spellMax : spellMax * (1.0D + ringTier * 0.05D);
 	}
 
-	private int getMatchingElementalRingTier(String spellName, int ringId) {
+	private int getMatchingElementalRingTier(ElementalSpellDisplayMetadata metadata, int ringId) {
 		if (ringId < 0) {
 			return 0;
 		}
-		if (this.isAirElementalSpell(spellName) && ringId >= 1673 && ringId <= 1677) {
+		if (metadata.getClassification() == ElementalSpellDisplayMetadata.Classification.AIR
+			&& ringId >= 1673 && ringId <= 1677) {
 			return ringId - 1672;
 		}
-		if (this.isWaterElementalSpell(spellName) && ringId >= 1678 && ringId <= 1682) {
+		if (metadata.getClassification() == ElementalSpellDisplayMetadata.Classification.WATER
+			&& ringId >= 1678 && ringId <= 1682) {
 			return ringId - 1677;
 		}
-		if (this.isEarthElementalSpell(spellName) && ringId >= 1683 && ringId <= 1687) {
+		if (metadata.getClassification() == ElementalSpellDisplayMetadata.Classification.EARTH
+			&& ringId >= 1683 && ringId <= 1687) {
 			return ringId - 1682;
 		}
-		if (this.isFireElementalSpell(spellName) && ringId >= 1688 && ringId <= 1692) {
+		if (metadata.getClassification() == ElementalSpellDisplayMetadata.Classification.FIRE
+			&& ringId >= 1688 && ringId <= 1692) {
 			return ringId - 1687;
 		}
 		return 0;
-	}
-
-	private boolean isAirElementalSpell(String spellName) {
-		return spellName.equals("wind arrow") || spellName.equals("wind slash")
-			|| spellName.equals("tornado") || spellName.equals("wind beam");
-	}
-
-	private boolean isWaterElementalSpell(String spellName) {
-		return spellName.equals("water ball") || spellName.equals("water burst")
-			|| spellName.equals("water eruption") || spellName.equals("water vortex");
-	}
-
-	private boolean isEarthElementalSpell(String spellName) {
-		return spellName.equals("rock throw") || spellName.equals("earth hammer")
-			|| spellName.equals("earth burst") || spellName.equals("earth impale");
-	}
-
-	private boolean isFireElementalSpell(String spellName) {
-		return spellName.equals("fireball") || spellName.equals("fire claw")
-			|| spellName.equals("explosion") || spellName.equals("fire pillar");
 	}
 
 	private int getClientMagicOffense() {
