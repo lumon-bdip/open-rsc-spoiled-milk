@@ -696,6 +696,7 @@ public final class mudclient implements Runnable {
 	private RendererFogSettings.Mode worldEditorSavedFog;
 	private RendererToneSettings.Mode worldEditorSavedTone;
 	private int worldEditorSavedTerrainRelief,worldEditorSavedObjectRelief;
+	private boolean worldEditorFastSnapshotValid=false;
 	String m_p = null;
 	int clearBox = GenUtil.buildColor(181, 181, 181);
 	int selectedBox = GenUtil.buildColor(220, 220, 220);
@@ -18030,11 +18031,11 @@ public final class mudclient implements Runnable {
 					if(editorNpc!=null){worldEditorInterface.recordWorldClick(midRegionBaseX+editorNpc.currentX/tileSize,midRegionBaseZ+editorNpc.currentZ/tileSize);worldEditorInterface.selectNpc(editorNpc.npcId,worldEditorInterface.getNpcRadius());}
 					worldEditorInterface.inspectNpc(indexOrX,true);break;
 				}
-				case WORLD_EDITOR_PLACE_SCENERY: { sendCommandString("aobject "+worldEditorInterface.getSceneryId()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
-				case WORLD_EDITOR_ROTATE_SCENERY: { sendCommandString("rotateobject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
-				case WORLD_EDITOR_REMOVE_SCENERY: { sendCommandString("robject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
-				case WORLD_EDITOR_PLACE_NPC: { sendCommandString("cnpc "+worldEditorInterface.getNpcId()+" "+worldEditorInterface.getNpcRadius()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
-				case WORLD_EDITOR_REMOVE_NPC: { sendCommandString("rpc "+indexOrX); break; }
+				case WORLD_EDITOR_PLACE_SCENERY: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("aobject "+worldEditorInterface.getSceneryId()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_ROTATE_SCENERY: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("rotateobject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_REMOVE_SCENERY: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("robject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_PLACE_NPC: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("cnpc "+worldEditorInterface.getNpcId()+" "+worldEditorInterface.getNpcRadius()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_REMOVE_NPC: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("rpc "+indexOrX); break; }
 				case MOD_SUMMON_PLAYER: {
 					String playerName = var9;
 					playerName = playerName.replaceAll(" ", "_");
@@ -22773,15 +22774,16 @@ public final class mudclient implements Runnable {
 			worldEditorSavedLighting=RendererLightingSettings.getMode();worldEditorSavedTerrainVariation=RendererTerrainVariationSettings.getMode();
 			worldEditorSavedFog=RendererFogSettings.getMode();worldEditorSavedTone=RendererToneSettings.getMode();
 			worldEditorSavedTerrainRelief=RendererReliefSettings.getTerrainLevel();worldEditorSavedObjectRelief=RendererReliefSettings.getObjectLevel();
+			worldEditorFastSnapshotValid=true;
 			RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);
 			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);
 			RendererReliefSettings.setTerrainLevel(RendererReliefSettings.MIN_LEVEL);RendererReliefSettings.setObjectLevel(RendererReliefSettings.MIN_LEVEL);
-		}else{
+		}else if(worldEditorFastSnapshotValid){
 			if(worldEditorSavedLighting!=null)RendererLightingSettings.setMode(worldEditorSavedLighting);
 			if(worldEditorSavedTerrainVariation!=null)RendererTerrainVariationSettings.setMode(worldEditorSavedTerrainVariation);
 			if(worldEditorSavedFog!=null)RendererFogSettings.setMode(worldEditorSavedFog);if(worldEditorSavedTone!=null)RendererToneSettings.setMode(worldEditorSavedTone);
-			if(worldEditorSavedTerrainRelief>0)RendererReliefSettings.setTerrainLevel(worldEditorSavedTerrainRelief);
-			if(worldEditorSavedObjectRelief>0)RendererReliefSettings.setObjectLevel(worldEditorSavedObjectRelief);
+			RendererReliefSettings.setTerrainLevel(worldEditorSavedTerrainRelief);RendererReliefSettings.setObjectLevel(worldEditorSavedObjectRelief);
+			worldEditorFastSnapshotValid=false;
 		}
 		worldEditorFastMode=enabled;
 	}

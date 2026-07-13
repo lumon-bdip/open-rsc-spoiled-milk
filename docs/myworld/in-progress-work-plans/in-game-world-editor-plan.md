@@ -873,16 +873,16 @@ After measurement, implement the smallest safe invalidation strategy:
 
 Branch: `feat/world-editor-compact-toolbar`
 
-- [ ] Add the semantic icon registry, cached PNG loader, missing-icon fallback,
+- [x] Add the semantic icon registry, cached PNG loader, missing-icon fallback,
   asset README/credits template, and release-build asset packaging.
-- [ ] Refactor the current coordinate-coded form onto a shared editor state and
+- [x] Refactor the current coordinate-coded form onto a shared editor state and
   compact dock/flyout presentation without changing packets or mutations.
-- [ ] Implement the left-click/value and right-click/field-mask behavior,
+- [x] Implement the left-click/value and right-click/field-mask behavior,
   tooltips, visible state markers, pinning, status line, dirty/pending Save,
   and unsaved Close behavior.
-- [ ] Move current Fast mode to the global dock and prove exact preference
+- [x] Move current Fast mode to the global dock and prove exact preference
   restoration on Fast-off, editor exit, disconnect, and error paths.
-- [ ] Keep a temporary expanded/fallback presentation available until the
+- [x] Keep a temporary expanded/fallback presentation available until the
   acquired icons have been validated in a packaged client.
 - [ ] Test privately with both missing fallback icons and the acquired final
   icons before release consideration.
