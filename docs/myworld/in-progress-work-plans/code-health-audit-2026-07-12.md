@@ -7,7 +7,7 @@ into focused follow-up branches. It is an evidence pass, not authorization for
 a mass cleanup. In particular, this branch does not refactor large classes,
 remove compatibility paths, change formatting, or delete suspected dead code.
 
-The audit was performed at commit `8ff9e90a5` on
+The audit was reconciled against published `main` commit `f84bd6664` on
 `docs/code-health-audit-plan`. It covers the active desktop client, shared
 client, server core, dynamically loaded server plugins, scripts, tests, build
 definitions, and explicitly archived material. It complements the earlier
@@ -237,10 +237,10 @@ count. The following files combine size with mixed runtime responsibilities.
 
 | File | Lines | 30-day touches | 12-month churn | Responsibilities and sensible first boundary | Risk |
 | --- | ---: | ---: | ---: | --- | --- |
-| `Client_Base/src/orsc/mudclient.java` | 27,520 | 94 | 31,054 | Game loop/state, login, UI tabs, settings, tooltip combat math, asset loading, scene instances, projectiles/effects, movement and renderer bridges. First extract spell-display metadata, renderer settings panel, external assets, and scene instance store; do not start with arbitrary method moves. | Very high |
+| `Client_Base/src/orsc/mudclient.java` | 27,594 | 95 | 31,132 | Game loop/state, login, UI tabs, settings, tooltip combat math, asset loading, scene instances, projectiles/effects, movement and renderer bridges. First extract spell-display metadata, renderer settings panel, external assets, and scene instance store; do not start with arbitrary method moves. | Very high |
 | `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,778 | 34 | 15,872 | Static registry plus thousands of hardcoded NPC/item/spell/prayer/tile/door/object definitions, MyWorld overrides, fallback logging, and generated families. Separate read-only registry/API from authored/generated loaders and prayer-book state. | High |
 | `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,931 | 16 | 6,543 | Identity/session, persistence-facing state, combat/skills, social state, local entity caches, quest/cache attributes, protocol selection, and UI helpers. Extract immutable identity/session and bounded state components before gameplay behavior. | Very high |
-| `Client_Base/src/orsc/PacketHandler.java` | 4,580 | 29 | 4,946 | Opcode dispatch, parsing, direct client mutation, movement snapshots, scene-baseline storage/parity, diagnostics, UI updates, and configuration. Move `Movement*DebugState` and `SceneBaselineDebugState` first; then split handlers by packet family while preserving wire order. | Very high |
+| `Client_Base/src/orsc/PacketHandler.java` | 4,590 | 30 | 4,958 | Opcode dispatch, parsing, direct client mutation, movement snapshots, scene-baseline storage/parity, diagnostics, UI updates, and configuration. Move `Movement*DebugState` and `SceneBaselineDebugState` first; then split handlers by packet family while preserving wire order. | Very high |
 | `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,346 | 10 | 4,500 | Legacy pixel/sprite/font rasterization, archive loading, scaling/transforms, and renderer-v2 capture. Separate capture recorder and archive loader before touching raster behavior. | High |
 | `PC_Client/src/orsc/OpenGLFramePresenter.java` | 4,295 | 28 | 35,354 | GLFW/GL lifecycle, window state, viewport/presentation, pass orchestration, texture upload, world/sprite composite glue, debug overlay, capture coordination, and cleanup. Continue the existing plan with viewport and window controllers; leave sprite ordering until visual parity tests exist. | High |
 | `Client_Base/src/orsc/graphics/three/World.java` | 4,253 | 16 | 6,319 | Sector IO/cache, terrain/wall/roof construction, collision, minimap, renderer products, and streaming. Extract pure product builders and sector cache behind characterization tests. | Very high |
