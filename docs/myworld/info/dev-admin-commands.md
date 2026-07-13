@@ -185,7 +185,10 @@ Server and diagnostics:
 - `::saveall`
 - `::restart`
 - `::shutdown`
-- `::update`
+- `::update [seconds] [reason]` — informs connected players, displays the
+  system-update countdown, and schedules a graceful shutdown. It defaults to
+  300 seconds. On the public server, obtain explicit shutdown permission
+  before using it and let the full countdown complete.
 - `::reloadworld`
 - `::reloadland`
 - `::serverstats`

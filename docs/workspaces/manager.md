@@ -58,6 +58,12 @@ to `package-player-release.sh` after repeating the manager gate. Deploying the
 hosted server is a separate controlled operation described in
 [live-deployment.md](live-deployment.md).
 
+Release preparation and publication never authorize stopping or restarting
+the public server. Keep the existing live process uninterrupted until the user
+gives fresh, explicit shutdown permission for the current maintenance window.
+Only then may an administrator run the in-game `::update` warning and allow
+its full countdown to initiate the graceful shutdown required for deployment.
+
 Active worker branches do not block a release when their changes are cleanly
 checkpointed and excluded from `main`. Dirty, unrescued, or ambiguous state
 does block release management.

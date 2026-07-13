@@ -24,7 +24,7 @@ A running server may safely remain on the previous published commit while the
 manager advances `main`. Status should distinguish that expected state from a
 wrong worktree, configuration, database, port, or unexplained dirty checkout.
 
-## Controlled Deployment
+## Non-Disruptive Release Preparation
 
 From clean, published manager `main`:
 
@@ -32,22 +32,72 @@ From clean, published manager `main`:
 ./scripts/ai-manager.sh release-check
 ```
 
+Building, tagging, uploading, publishing, and advancing manager `main` do not
+authorize a public-server shutdown. They also do not alter the detached live
+checkout. The current server can continue running its previous published
+commit while a release is prepared and published.
+
 Make an online SQLite backup under the external `backups/` directory while the
-current server is still running. Activation then uses a short, explicit
-maintenance window:
+current server is still running. If the user has not explicitly authorized a
+public/live-server shutdown for the current maintenance window, stop here and
+report that live activation is waiting for permission.
+
+Do not infer shutdown permission from a request to release, publish, deploy,
+or "make it live," from a previous maintenance window, from general approval,
+or from a report that no players are online.
+
+## Authorized Live Activation
+
+The in-game admin command is:
+
+```text
+::update [seconds] [reason]
+```
+
+It immediately informs connected players, displays the system-update
+countdown, and schedules a graceful shutdown when the countdown expires. The
+default is 300 seconds. Because the command initiates shutdown, the AI must
+receive fresh, explicit permission to stop or restart the public server
+**before** asking an administrator to run it or issuing it by any available
+mechanism.
+
+After that permission is received:
+
+1. Confirm the online database backup and `./scripts/live-status.sh` are safe.
+2. Have an administrator run a suitably timed command such as
+   `::update 300 Deploying RELEASE_VERSION`.
+3. Let the full warning countdown complete. Do not accelerate it with a
+   signal, Ctrl-C, or the stop script.
+4. Confirm the public listener and live JVM have exited.
+5. Deploy and restart from the fixed live checkout:
 
 ```bash
-./scripts/stop-hosted-server.sh --yes
 ./scripts/deploy-live-main.sh
 cd /tmp/spoiled-milk-live-main
 ./scripts/run-hosted-server.sh
 ```
 
+Normally `::update` performs the stop, so `stop-hosted-server.sh` is not
+needed. If the JVM remains after the entire authorized update window, inspect
+it first. The guarded fallback requires attestations that both gates were
+actually satisfied:
+
+```bash
+./scripts/stop-hosted-server.sh \
+  --yes \
+  --shutdown-authorized \
+  --update-window-complete
+```
+
+Those flags do not grant permission. They may be passed only when the user
+explicitly authorized this shutdown and the in-game update warning window has
+completed.
+
 If `live-status.sh` reports a wrong or deleted runtime database descriptor,
 do not stop the JVM yet. Copy that open descriptor to the backup directory and
 integrity-check it first. Only after confirming recovery may the stop command
-be acknowledged with `--yes --database-recovered`; the guard otherwise
-refuses a shutdown that could discard an unlinked SQLite inode.
+also include `--database-recovered`; the guard otherwise refuses a shutdown
+that could discard an unlinked SQLite inode.
 
 Deployment refuses to change the live worktree while anything is listening on
 the public port. It validates the external-database link before and after
@@ -60,5 +110,5 @@ attestation, and the external database file descriptor.
 
 Ordinary worker activity, manager merges, and pushes never alter the deployed
 tree. That separation is what allows the hosted server to remain uninterrupted
-while several AI sessions work. Only deliberate activation needs the brief
-stop/deploy/start window.
+while several AI sessions work. Only explicitly authorized activation may use
+the warning/deploy/start window.

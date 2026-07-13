@@ -49,10 +49,10 @@ RELEASE_COMMIT=$(git rev-parse HEAD)
   --assets-cleared
 ```
 
-Do not start the public server from the manager checkout. Prepare the detached
-live worktree with `./scripts/deploy-live-main.sh`, then follow
-[HOSTING-CHECKLIST.md](HOSTING-CHECKLIST.md) for a separate controlled restart
-when the new build should go live.
+Do not start the public server from the manager checkout. Packaging stops short
+of changing the detached live worktree. When the new build should go live,
+follow the separate authorization, warning, deployment, and restart procedure
+in [HOSTING-CHECKLIST.md](HOSTING-CHECKLIST.md).
 
 Use the same public host/IP and TCP port that your router forwards to the
 machine running `scripts/run-hosted-server.sh`. Do not upload packages built
@@ -109,3 +109,18 @@ sha256sum -c SHA256SUMS.txt
     problems.
 12. Watch `#installation-help` and `#bug-reports` after publication for update
     failures, launch problems, and regressions.
+
+## Separate Live Activation Gate
+
+Completing this checklist, creating the GitHub release, or being asked to
+release/publish/deploy does not authorize stopping or restarting the public
+server. Leave it running on its current published commit unless the user gives
+fresh, explicit permission for a public/live-server shutdown in the current
+maintenance window.
+
+After that permission, back up live data and use the in-game
+`::update [seconds] [reason]` command so players receive the warning and full
+countdown. The command schedules the graceful shutdown itself. Follow
+[../workspaces/live-deployment.md](../workspaces/live-deployment.md) for the
+deployment and guarded fallback procedure; never jump directly from release
+publication to a signal or stop command.

@@ -44,13 +44,19 @@ same port to `scripts/package-player-release.sh`.
 
 ## Routine Operation
 
-1. Back up the live SQLite database before each server build or gameplay
-   deployment.
-2. Run `./scripts/pre-field-test.sh` and compile the server build selected for
+1. Run `./scripts/pre-field-test.sh` and compile the server build selected for
    deployment before replacing the hosted server binaries.
-3. Keep the published client endpoint and hosted server port synchronized.
-4. Record the git revision used for each hosted alpha build and each attached
+2. Keep the published client endpoint and hosted server port synchronized.
+3. Record the git revision used for each hosted alpha build and each attached
    player download.
+4. Treat packaging and publication as non-disruptive work. They never grant
+   permission to stop or restart the public server.
+5. Immediately before an authorized gameplay deployment, inspect live status
+   and back up the live SQLite database while the server is still running.
+6. Before initiating the shutdown, obtain fresh, explicit user permission for
+   the current maintenance window. Then have an administrator run
+   `::update [seconds] [reason]` and allow its full player-warning countdown to
+   finish.
 
 ## Hosted Launch Safety
 
@@ -71,14 +77,22 @@ Routine safety commands:
 ./scripts/deploy-live-main.sh
 ./scripts/run-hosted-server.sh
 ./scripts/stop-hosted-server.sh
-./scripts/stop-hosted-server.sh --yes
+./scripts/stop-hosted-server.sh --yes --shutdown-authorized --update-window-complete
 ```
 
 Advancing and publishing manager `main` does not touch the live checkout. A
 running server can therefore remain safely on an older published commit until
-activation is scheduled. At activation, back up the external database, stop
-the server, deploy, and start it again. Deployment refuses to switch tracked
-files while the public port has a listener.
+activation is scheduled. A release, deployment request, earlier approval, or
+empty player count is not shutdown permission. At activation, first obtain
+explicit permission to shut down the public server, back up the external
+database, run the in-game `::update` warning, wait for its full countdown and
+graceful exit, then deploy and start it again. Deployment refuses to switch
+tracked files while the public port has a listener.
+
+The stop script is a fallback for a JVM still present after that window, not a
+replacement for `::update`. Its flags attest that the user authorized this
+specific shutdown and that the warning window completed; the flags do not
+create authorization. Never use direct signals or Ctrl-C to skip the warning.
 
 Status separately audits the checkout, recorded launch commit, verified-live
 marker, database symlink, and database file descriptor. A missing or legacy
@@ -88,7 +102,8 @@ controlled restart rather than an OK state.
 Never stop a process that reports a deleted or wrong runtime database
 descriptor until that open descriptor has been copied and integrity-checked.
 The stop guard requires the explicit `--database-recovered` acknowledgement
-after that separate recovery.
+after that separate recovery, in addition to the shutdown and update-window
+acknowledgements.
 
 The public port is only fully safe when it reports:
 

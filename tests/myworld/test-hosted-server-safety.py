@@ -13,6 +13,9 @@ STATUS = ROOT / "scripts" / "live-status.sh"
 RUN_HOSTED = ROOT / "scripts" / "run-hosted-server.sh"
 DEPLOY = ROOT / "scripts" / "deploy-live-main.sh"
 STOP = ROOT / "scripts" / "stop-hosted-server.sh"
+AI_MANAGER = ROOT / "scripts" / "ai-manager.sh"
+AGENT_RULES = ROOT / "AGENTS.md"
+LIVE_DEPLOYMENT = ROOT / "docs" / "workspaces" / "live-deployment.md"
 TERMINAL_LAUNCHER = ROOT / "Launch Live Server.sh"
 FIXED_LIVE_ROOT = "/tmp/spoiled-milk-live-main"
 
@@ -244,6 +247,9 @@ def test_script_contracts_and_syntax() -> None:
     deploy = DEPLOY.read_text(encoding="utf-8")
     runner = RUN_HOSTED.read_text(encoding="utf-8")
     stopper = STOP.read_text(encoding="utf-8")
+    ai_manager = AI_MANAGER.read_text(encoding="utf-8")
+    agent_rules = AGENT_RULES.read_text(encoding="utf-8")
+    live_deployment = LIVE_DEPLOYMENT.read_text(encoding="utf-8")
     terminal_launcher = TERMINAL_LAUNCHER.read_text(encoding="utf-8")
 
     require('MYWORLD_LIVE_ROOT="/tmp/spoiled-milk-live-main"' in common, "live root is not fixed")
@@ -286,6 +292,30 @@ def test_script_contracts_and_syntax() -> None:
         and "--database-recovered" in stopper,
         "hosted stop does not guard an unrecovered wrong/deleted database inode",
     )
+    require(
+        "--shutdown-authorized" in stopper and "--update-window-complete" in stopper,
+        "hosted stop omits the explicit shutdown-permission or player-warning acknowledgement",
+    )
+    require(
+        stopper.index('[[ "$SHUTDOWN_AUTHORIZED" == true ]]') < stopper.index('kill "$pid"')
+        and stopper.index('[[ "$UPDATE_WINDOW_COMPLETE" == true ]]') < stopper.index('kill "$pid"'),
+        "hosted stop checks maintenance acknowledgements only after signaling the server",
+    )
+    require(
+        "release preparation and publication do not authorize a public-server shutdown" in ai_manager,
+        "manager release check omits the live shutdown authorization reminder",
+    )
+    require(
+        "Never initiate a public-server shutdown without fresh, explicit user" in agent_rules
+        and "::update [seconds] [reason]" in agent_rules,
+        "AI collaboration rules omit the public shutdown authorization gate",
+    )
+    require(
+        "Do not infer shutdown permission" in live_deployment
+        and "--shutdown-authorized" in live_deployment
+        and "--update-window-complete" in live_deployment,
+        "live deployment guide omits the authorization and update-window gates",
+    )
     require('LIVE_ROOT="/tmp/spoiled-milk-live-main"' in terminal_launcher, "terminal launcher does not use the fixed live root")
     require("./scripts/run-hosted-server.sh" in terminal_launcher, "terminal launcher does not use the guarded hosted runner")
     for forbidden_mutation in ["git switch", "git fetch", "git merge"]:
@@ -296,7 +326,7 @@ def test_script_contracts_and_syntax() -> None:
     require(os.access(DEPLOY, os.X_OK), "deploy-live-main.sh is not executable")
 
     syntax = subprocess.run(
-        ["bash", "-n", COMMON, STATUS, RUN_HOSTED, DEPLOY, STOP, TERMINAL_LAUNCHER],
+        ["bash", "-n", COMMON, STATUS, RUN_HOSTED, DEPLOY, STOP, AI_MANAGER, TERMINAL_LAUNCHER],
         cwd=ROOT,
         capture_output=True,
         text=True,

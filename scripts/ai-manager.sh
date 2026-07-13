@@ -226,6 +226,7 @@ manager_release_check() {
 
   ((problems == 0)) || ai_fail "Release readiness checks failed. No files were changed."
   printf 'PASS: clean published %s; every worker is clean and durably backed up.\n' "$AI_MAIN_BRANCH"
+  printf 'LIVE GATE: release preparation and publication do not authorize a public-server shutdown. Keep it running until the user explicitly authorizes this maintenance window, then use the in-game ::update warning and wait for its countdown.\n'
 }
 
 manager_release() {

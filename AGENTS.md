@@ -21,6 +21,32 @@ git status --short --branch
 - `/tmp/spoiled-milk-live-main` is the detached live deployment. Never edit,
   commit, build experimental work, or switch branches there.
 
+## Public Server Shutdown Gate
+
+- Building, tagging, uploading, publishing, or being asked to "release" or
+  "deploy" does **not** authorize stopping or restarting the public server.
+- Never initiate a public-server shutdown without fresh, explicit user
+  permission for that shutdown in the current maintenance window. Permission
+  must specifically authorize stopping, restarting, or running `::update` on
+  the public/live server. Do not infer it from earlier permission, a general
+  approval, a release request, a deployment request, or a report that no
+  players are online.
+- The in-game `::update [seconds] [reason]` command warns players, displays the
+  countdown, and schedules the graceful shutdown. Because it initiates the
+  shutdown, obtain permission **before** asking an administrator to run it or
+  running it by any available mechanism.
+- After permission, back up the live database, have an administrator run
+  `::update`, and let the full warning window complete. If the AI cannot issue
+  the in-game command, it must pause and ask the user to run it and confirm the
+  countdown completed. Never bypass the warning window with `kill`, Ctrl-C,
+  `stop-hosted-server.sh`, or another signal.
+- `stop-hosted-server.sh` is only a guarded fallback for a process that remains
+  after the authorized `::update` window. Its acknowledgement flags are
+  attestations, not permission; pass them only when those facts are true.
+- Release preparation and publication may proceed without interruption. If
+  shutdown permission is absent, leave the current public server running and
+  report that live activation is waiting for authorization.
+
 ## Worker Rules
 
 1. One task and one topic branch per slot. Never work on `main` or detached
@@ -52,8 +78,9 @@ git status --short --branch
    not contained in published `main`.
 6. Run `./scripts/ai-manager.sh release-check` before live deployment and use
    `./scripts/ai-manager.sh release ...` for player packaging.
-7. Back up and stop the public server before `deploy-live-main.sh`; deployment
-   refuses to change tracked live files while the public port is occupied.
+7. For live activation, follow the Public Server Shutdown Gate above and
+   `docs/workspaces/live-deployment.md`. `deploy-live-main.sh` refuses to change
+   tracked live files while the public port is occupied.
 
 ## Preservation Rules
 
