@@ -522,6 +522,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	@Override
 	public final void stop() {
 		try {
+			stopSoundPlayer();
 			try {
 				mudclient.clientBaseThread.join();
 			} catch (InterruptedException e) {
@@ -1205,12 +1206,12 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 	@Override
 	public void playSound(byte[] soundData, int offset, int dataLength) {
-		throw new UnsupportedOperationException("Not supported yet.");
+		// Maintained mobile compatibility hook. Desktop playback uses soundPlayer.
 	}
 
 	@Override
 	public void stopSoundPlayer() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		soundPlayer.stopAllSounds();
 	}
 
 	public void setTitle(String title) {

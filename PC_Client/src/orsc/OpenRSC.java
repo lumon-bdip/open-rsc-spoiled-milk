@@ -5,6 +5,8 @@ import orsc.util.Utils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
@@ -96,6 +98,14 @@ public class OpenRSC extends ORSCApplet {
 			applet.setPreferredSize(renderSurfaceSize);
 			jframe.getContentPane().setLayout(new BorderLayout());
 			jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			jframe.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent event) {
+					if (applet != null) {
+						applet.stopSoundPlayer();
+					}
+				}
+			});
 			jframe.setIconImage(Utils.getImage("icon.png").getImage());
 			jframe.setTitle(Config.WINDOW_TITLE);
 			jframe.getContentPane().add(applet);
@@ -147,12 +157,12 @@ public class OpenRSC extends ORSCApplet {
 
 	@Override
 	public void playSound(byte[] soundData, int offset, int dataLength) {
-		throw new UnsupportedOperationException("Not supported yet.");
+		// Maintained mobile compatibility hook. Desktop playback uses soundPlayer.
 	}
 
 	@Override
 	public void stopSoundPlayer() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		soundPlayer.stopAllSounds();
 	}
 
 	public boolean getResizable() {
