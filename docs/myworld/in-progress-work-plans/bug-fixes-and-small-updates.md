@@ -46,7 +46,17 @@ docs/player-command-list
 
 ## Recently Completed
 
-- Add completed small fixes here when the record is useful.
+- [x] `2026-07-12` Preserve scenery and walls across deferred death/respawn
+      area loads. The production legacy scene packets can arrive while the
+      death screen still blocks the hard region load; the later load formerly
+      cleared those already-delivered instances, while the server correctly
+      considered its local scene current and did not resend them. Legacy
+      records received for the pending area-load generation are now retained,
+      shifted to the newly loaded origin, and materialized after terrain is
+      ready. Old-area records remain discarded, and the default-off complete
+      scene baseline remains optional rather than becoming a production
+      dependency. The regression covers both scenery and walls with the
+      baseline disabled, alongside the existing baseline replay case.
 
 ## Notes
 

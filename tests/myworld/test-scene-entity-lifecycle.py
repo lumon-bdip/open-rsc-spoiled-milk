@@ -28,8 +28,18 @@ def main() -> None:
     player = PLAYER.read_text(encoding="utf-8")
     require(
         text,
-        "if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.setGameObjectInstanceCount(0);\n\t\t\t\t\t\tthis.setWallObjectInstanceCount(0);\n\t\t\t\t\t}",
-        "hard area/plane object cache reset",
+        "if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.retainPendingAreaLoadStaticScene();\n\t\t\t\t\t}",
+        "transition-aware hard area/plane object cache reset",
+    )
+    require(
+        text,
+        "if (!this.gameObjectInstancePendingAreaLoad[readIndex]) {\n\t\t\t\tcontinue;\n\t\t\t}",
+        "old-area scenery rejection during hard loads",
+    )
+    require(
+        text,
+        "if (!this.wallObjectInstancePendingAreaLoad[readIndex]) {\n\t\t\t\tcontinue;\n\t\t\t}",
+        "old-area wall rejection during hard loads",
     )
     require(
         text,

@@ -447,6 +447,7 @@ public final class mudclient implements Runnable {
 	private int[] gameObjectInstanceDir = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
 	private int[] gameObjectInstanceID = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
 	private boolean[] gameObjectInstanceMaterialized = new boolean[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
+	private boolean[] gameObjectInstancePendingAreaLoad = new boolean[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
 	private RSModel[] gameObjectInstanceModel = new RSModel[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
 	private int[] gameObjectInstanceX = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
 	private int sceneObjectDebugLastHoverSignature = 0;
@@ -566,6 +567,7 @@ public final class mudclient implements Runnable {
 	private int[] wallObjectInstanceDir = new int[WALL_OBJECT_INSTANCE_CAPACITY];
 	private int[] wallObjectInstanceID = new int[WALL_OBJECT_INSTANCE_CAPACITY];
 	private boolean[] wallObjectInstanceMaterialized = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
+	private boolean[] wallObjectInstancePendingAreaLoad = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
 	private RSModel[] wallObjectInstanceModel = new RSModel[WALL_OBJECT_INSTANCE_CAPACITY];
 	private int[] wallObjectInstanceX = new int[WALL_OBJECT_INSTANCE_CAPACITY];
 	private int[] wallObjectInstanceZ = new int[WALL_OBJECT_INSTANCE_CAPACITY];
@@ -3595,6 +3597,47 @@ public final class mudclient implements Runnable {
 		for (int i = 0; i < this.wallObjectInstanceCount; i++) {
 			materializeWallObjectInstance(i);
 		}
+	}
+
+	private void retainPendingAreaLoadStaticScene() {
+		int retainedGameObjects = 0;
+		for (int readIndex = 0; readIndex < this.gameObjectInstanceCount; readIndex++) {
+			if (!this.gameObjectInstancePendingAreaLoad[readIndex]) {
+				continue;
+			}
+			if (retainedGameObjects != readIndex) {
+				this.gameObjectInstanceX[retainedGameObjects] = this.gameObjectInstanceX[readIndex];
+				this.gameObjectInstanceZ[retainedGameObjects] = this.gameObjectInstanceZ[readIndex];
+				this.gameObjectInstanceID[retainedGameObjects] = this.gameObjectInstanceID[readIndex];
+				this.gameObjectInstanceDir[retainedGameObjects] = this.gameObjectInstanceDir[readIndex];
+				this.gameObjectInstanceModel[retainedGameObjects] = this.gameObjectInstanceModel[readIndex];
+				if (this.gameObjectInstanceModel[retainedGameObjects] != null) {
+					this.gameObjectInstanceModel[retainedGameObjects].key = retainedGameObjects;
+				}
+				this.gameObjectInstanceMaterialized[retainedGameObjects] = false;
+			}
+			this.gameObjectInstancePendingAreaLoad[retainedGameObjects] = false;
+			retainedGameObjects++;
+		}
+		this.setGameObjectInstanceCount(retainedGameObjects);
+
+		int retainedWalls = 0;
+		for (int readIndex = 0; readIndex < this.wallObjectInstanceCount; readIndex++) {
+			if (!this.wallObjectInstancePendingAreaLoad[readIndex]) {
+				continue;
+			}
+			if (retainedWalls != readIndex) {
+				this.wallObjectInstanceX[retainedWalls] = this.wallObjectInstanceX[readIndex];
+				this.wallObjectInstanceZ[retainedWalls] = this.wallObjectInstanceZ[readIndex];
+				this.wallObjectInstanceID[retainedWalls] = this.wallObjectInstanceID[readIndex];
+				this.wallObjectInstanceDir[retainedWalls] = this.wallObjectInstanceDir[readIndex];
+				this.wallObjectInstanceModel[retainedWalls] = null;
+				this.wallObjectInstanceMaterialized[retainedWalls] = false;
+			}
+			this.wallObjectInstancePendingAreaLoad[retainedWalls] = false;
+			retainedWalls++;
+		}
+		this.setWallObjectInstanceCount(retainedWalls);
 	}
 
 	private void rematerializeLoadedTerrainSceneryAfterWorldReload() {
@@ -19264,8 +19307,7 @@ public final class mudclient implements Runnable {
 					int baseDZ = this.midRegionBaseZ - oldBaseZ;
 
 					if (hardAreaLoad || heightOffsetChanged) {
-						this.setGameObjectInstanceCount(0);
-						this.setWallObjectInstanceCount(0);
+						this.retainPendingAreaLoadStaticScene();
 					}
 
 					for (int i = 0; this.gameObjectInstanceCount > i; ++i) {
@@ -23927,6 +23969,7 @@ public final class mudclient implements Runnable {
 			this.gameObjectInstanceDir = Arrays.copyOf(this.gameObjectInstanceDir, capacity);
 			this.gameObjectInstanceID = Arrays.copyOf(this.gameObjectInstanceID, capacity);
 			this.gameObjectInstanceMaterialized = Arrays.copyOf(this.gameObjectInstanceMaterialized, capacity);
+			this.gameObjectInstancePendingAreaLoad = Arrays.copyOf(this.gameObjectInstancePendingAreaLoad, capacity);
 			this.gameObjectInstanceModel = Arrays.copyOf(this.gameObjectInstanceModel, capacity);
 			this.gameObjectInstanceX = Arrays.copyOf(this.gameObjectInstanceX, capacity);
 			this.gameObjectInstanceZ = Arrays.copyOf(this.gameObjectInstanceZ, capacity);
@@ -23940,6 +23983,7 @@ public final class mudclient implements Runnable {
 			this.wallObjectInstanceDir = Arrays.copyOf(this.wallObjectInstanceDir, capacity);
 			this.wallObjectInstanceID = Arrays.copyOf(this.wallObjectInstanceID, capacity);
 			this.wallObjectInstanceMaterialized = Arrays.copyOf(this.wallObjectInstanceMaterialized, capacity);
+			this.wallObjectInstancePendingAreaLoad = Arrays.copyOf(this.wallObjectInstancePendingAreaLoad, capacity);
 			this.wallObjectInstanceModel = Arrays.copyOf(this.wallObjectInstanceModel, capacity);
 			this.wallObjectInstanceX = Arrays.copyOf(this.wallObjectInstanceX, capacity);
 			this.wallObjectInstanceZ = Arrays.copyOf(this.wallObjectInstanceZ, capacity);
@@ -24039,6 +24083,7 @@ public final class mudclient implements Runnable {
 		ensureGameObjectInstanceCapacity(i);
 		for (int index = Math.max(0, i); index < this.gameObjectInstanceCount; index++) {
 			this.gameObjectInstanceMaterialized[index] = false;
+			this.gameObjectInstancePendingAreaLoad[index] = false;
 			this.gameObjectInstanceModel[index] = null;
 		}
 		this.gameObjectInstanceCount = i;
@@ -24089,6 +24134,15 @@ public final class mudclient implements Runnable {
 		this.gameObjectInstanceMaterialized[i] = materialized;
 	}
 
+	public boolean isGameObjectInstancePendingAreaLoad(int i) {
+		return this.gameObjectInstancePendingAreaLoad[i];
+	}
+
+	public void setGameObjectInstancePendingAreaLoad(int i, boolean pending) {
+		ensureGameObjectInstanceCapacity(i + 1);
+		this.gameObjectInstancePendingAreaLoad[i] = pending;
+	}
+
 	public void setGameObjectInstanceID(int i, int n) {
 		ensureGameObjectInstanceCapacity(i + 1);
 		this.gameObjectInstanceID[i] = n;
@@ -24126,6 +24180,7 @@ public final class mudclient implements Runnable {
 		ensureWallObjectInstanceCapacity(i);
 		for (int index = Math.max(0, i); index < this.wallObjectInstanceCount; index++) {
 			this.wallObjectInstanceMaterialized[index] = false;
+			this.wallObjectInstancePendingAreaLoad[index] = false;
 			this.wallObjectInstanceModel[index] = null;
 		}
 		this.wallObjectInstanceCount = i;
@@ -24174,6 +24229,15 @@ public final class mudclient implements Runnable {
 	public void setWallObjectInstanceMaterialized(int i, boolean materialized) {
 		ensureWallObjectInstanceCapacity(i + 1);
 		this.wallObjectInstanceMaterialized[i] = materialized;
+	}
+
+	public boolean isWallObjectInstancePendingAreaLoad(int i) {
+		return this.wallObjectInstancePendingAreaLoad[i];
+	}
+
+	public void setWallObjectInstancePendingAreaLoad(int i, boolean pending) {
+		ensureWallObjectInstanceCapacity(i + 1);
+		this.wallObjectInstancePendingAreaLoad[i] = pending;
 	}
 
 	public void setWallObjectInstanceDir(int i, int n) {
@@ -24309,6 +24373,16 @@ public final class mudclient implements Runnable {
 
 	public void setLoadingArea(boolean loading) {
 		this.loadingArea = loading;
+	}
+
+	public void beginAreaLoad() {
+		this.loadingArea = true;
+		Arrays.fill(this.gameObjectInstancePendingAreaLoad, 0, this.gameObjectInstanceCount, false);
+		Arrays.fill(this.wallObjectInstancePendingAreaLoad, 0, this.wallObjectInstanceCount, false);
+	}
+
+	public boolean isAreaLoadPending() {
+		return this.loadingArea;
 	}
 
 	public boolean consumeRegionLoadNeedsHardPlayerReset() {
