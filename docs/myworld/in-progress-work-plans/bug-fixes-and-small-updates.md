@@ -46,6 +46,17 @@ docs/player-command-list
 
 ## Recently Completed
 
+- [x] `2026-07-13` Fix the Experience Config `Select` crash when Enchanting,
+      Harvest, and Summoning produce 21 protocol skill slots. All three copied
+      selectors now size their lists from the runtime selectable skill IDs,
+      omit retired Firemaking ID `11`, and translate displayed rows back to
+      their original skill IDs before tracking XP. This omission is UI-only:
+      ID `11` remains in the protocol/server arrays at hidden level `99`, so
+      standard and custom Firemaking actions retain access to every log tier.
+      The menu's `Reset` control now clears total and per-skill session gains,
+      restarts every XP/hour timer, and invalidates its cached rate regardless
+      of the current mode or selected skill.
+
 - [x] `2026-07-12` Preserve scenery and walls across deferred death/respawn
       area loads. The production legacy scene packets can arrive while the
       death screen still blocks the hard region load; the later load formerly

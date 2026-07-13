@@ -9,6 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FIREMAKING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/firemaking/Firemaking.java"
 FIREMAKING_DEF = ROOT / "server/conf/server/defs/extras/FiremakingDef.xml"
+SKILLS_MODEL = ROOT / "server/src/com/openrsc/server/model/Skills.java"
+SKILLS_CONSTANTS = ROOT / "server/src/com/openrsc/server/constants/Skills.java"
 SKILL_GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 INV_ACTION = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/InvAction.java"
@@ -54,6 +56,8 @@ def parse_firemaking_defs() -> dict[int, dict[str, int]]:
 
 def main() -> None:
     firemaking_text = FIREMAKING.read_text(encoding="utf-8")
+    skills_model_text = SKILLS_MODEL.read_text(encoding="utf-8")
+    skills_constants_text = SKILLS_CONSTANTS.read_text(encoding="utf-8")
     skill_guide_text = SKILL_GUIDE.read_text(encoding="utf-8")
     client_text = CLIENT.read_text(encoding="utf-8")
     inv_action_text = INV_ACTION.read_text(encoding="utf-8")
@@ -82,6 +86,13 @@ def main() -> None:
         if definitions[item_id]["exp"] != 0:
             fail(f"{constant} should not carry Firemaking XP")
 
+    hidden_level = 99
+    highest_requirement = max(definition["level"] for definition in definitions.values())
+    if highest_requirement > hidden_level:
+        fail(
+            f"Firemaking requirement {highest_requirement} exceeds hidden level {hidden_level}"
+        )
+
     forbidden_pairs = (
         (firemaking_text, "player.incExp(Skill.FIREMAKING.id()", "Firemaking action should not award XP"),
         (firemaking_text, "You need at least", "Firemaking action should not display skill gates"),
@@ -105,6 +116,13 @@ def main() -> None:
             fail(message)
 
     required_pairs = (
+        (skills_constants_text, "FIREMAKING = 11", "Firemaking must retain protocol skill ID 11"),
+        (skills_constants_text, 'new SkillDef("Firemaking", "Firemaking", 1, 99', "Firemaking must retain its server skill slot"),
+        (skills_model_text, "private static final int HIDDEN_SKILL_LEVEL = 99;", "Retired Firemaking must remain auto-maxed for players"),
+        (skills_model_text, "skill == Skill.FIREMAKING.id()", "Hidden-skill handling must still target Firemaking"),
+        (skills_model_text, "applyHiddenSkillDefaults();", "Loaded player data must restore the hidden Firemaking defaults"),
+        (firemaking_text, "Formulae.lightLogs(player.getSkills().getLevel(Skill.FIREMAKING.id()))", "Standard logs must use the hidden Firemaking level"),
+        (firemaking_text, "Formulae.lightCustomLogs(def, player.getSkills().getLevel(Skill.FIREMAKING.id()))", "Custom logs must use the hidden Firemaking level"),
         (firemaking_text, "player.getWorld().registerGameObject(fire);", "Log lighting should still create fires"),
         (inv_action_text, "player.getCarriedItems().getInventory().add(new Item(ItemId.LIT_TORCH.id()));", "Dry sticks should still light torches"),
         (client_text, 'addSkill("Retired");', "Hidden stat slot should be labeled retired in the client"),
@@ -117,7 +135,7 @@ def main() -> None:
         if snippet not in text:
             fail(message)
 
-    print("PASS: retired Firemaking stays usable without visible progression")
+    print("PASS: retired Firemaking keeps protocol ID 11 and all log tiers remain usable")
 
 
 if __name__ == "__main__":
