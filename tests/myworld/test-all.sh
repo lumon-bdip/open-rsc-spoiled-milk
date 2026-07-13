@@ -9,6 +9,7 @@ cd "$ROOT_DIR"
 ./tests/myworld/test-smoke.sh
 python3 ./tests/myworld/audit_client_item_coverage.py
 python3 ./tests/myworld/test-client-runtime-item-definitions.py
+python3 ./tests/myworld/test-desktop-sound-lifecycle.py
 python3 ./tests/myworld/audit-item-id-integrity.py
 python3 ./tests/myworld/test-definition-override-loading.py
 python3 ./tests/myworld/test-player-data-integrity.py

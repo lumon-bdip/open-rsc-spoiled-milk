@@ -53,8 +53,17 @@ public interface ClientPort {
 
 	Sprite getSpriteFromByteArray(ByteArrayInputStream byteArrayInputStream);
 
+	/**
+	 * Compatibility hook for platform-owned byte-buffer playback. Platforms that
+	 * use another maintained audio path may intentionally do nothing, but must not
+	 * throw merely because this format is unsupported.
+	 */
 	void playSound(byte[] soundData, int offset, int dataLength);
 
+	/**
+	 * Stops platform-owned playback. Cleanup must be idempotent, safe before any
+	 * playback, and non-throwing when a platform has no active sound resources.
+	 */
 	void stopSoundPlayer();
 
 	void drawKeyboard();

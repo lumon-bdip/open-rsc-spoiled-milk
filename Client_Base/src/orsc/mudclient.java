@@ -2488,7 +2488,6 @@ public final class mudclient implements Runnable {
 		try {
 
 			this.closeConnection(true);
-			clientPort.stopSoundPlayer();
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "client.SA(" + "dummy" + ')');
 		}
@@ -2506,12 +2505,24 @@ public final class mudclient implements Runnable {
 				}
 			}
 			this.closeClientStreamOnly();
+			this.stopSoundPlayback();
 
 			this.setUsername("");
 			this.password = "";
 			this.jumpToLogin();
 		} catch (RuntimeException var5) {
 			throw GenUtil.makeThrowable(var5, "client.RB(" + sendPacket + ',' + "dummy" + ')');
+		}
+	}
+
+	private void stopSoundPlayback() {
+		if (clientPort == null) {
+			return;
+		}
+		try {
+			clientPort.stopSoundPlayer();
+		} catch (RuntimeException e) {
+			ClientRuntimeLogger.logThrowable("Failed to stop sound playback", e);
 		}
 	}
 
@@ -22275,6 +22286,7 @@ public final class mudclient implements Runnable {
 
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
+			this.stopSoundPlayback();
 			if (var1 <= 59) {
 				this.drawDialogOptionsMenu(-85);
 			}
