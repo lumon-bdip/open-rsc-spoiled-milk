@@ -839,6 +839,11 @@ Phase 5 foundation evidence recorded on 2026-07-14:
   confirmed by the project owner to match the prayer-icon source. A real
   clean-extraction launch/import/undo smoke test remains required after both
   redistribution-ready runtime inputs are available on manager main.
+- The desktop editor shortcut layer defaults to keyboard-driven Builder mode:
+  mode and dock actions, terrain field toggles/value focus, save, and repeated
+  mode actions are available without chat capture. `Ctrl+Enter` deliberately
+  switches between shortcut capture and ordinary chat/developer-command input;
+  legacy AWT and OpenGL input use the same physical-key mapping.
 
 Exit gate: a non-development machine or clean VM can perform the complete
 workflow without Git, Ant, source code, or manual account creation.

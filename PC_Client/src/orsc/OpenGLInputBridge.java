@@ -204,7 +204,11 @@ final class OpenGLInputBridge implements AutoCloseable {
 			keySuppressUntilRelease[keyIndex] = true;
 			return;
 		}
-		if (!binding.postsPhysicalEvents()) {
+		boolean editorShortcut = pressed
+			&& binding.isLetter()
+			&& OpenRSC.applet != null
+			&& OpenRSC.applet.isWorldEditorShortcutMode();
+		if (!binding.postsPhysicalEvents() && !editorShortcut) {
 			return;
 		}
 
@@ -216,6 +220,9 @@ final class OpenGLInputBridge implements AutoCloseable {
 
 	private void handleChar(long callbackWindow, int codepoint) {
 		if (!enabled || callbackWindow != window || !inputFocused || !Character.isValidCodePoint(codepoint)) {
+			return;
+		}
+		if (Character.isLetter(codepoint) && OpenRSC.applet != null && OpenRSC.applet.isWorldEditorShortcutMode()) {
 			return;
 		}
 

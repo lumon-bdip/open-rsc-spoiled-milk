@@ -130,4 +130,8 @@ final class KeyBinding {
 	boolean postsRepeatPressEvents() {
 		return normalChar == '\b';
 	}
+
+	boolean isLetter() {
+		return normalChar >= 'a' && normalChar <= 'z';
+	}
 }

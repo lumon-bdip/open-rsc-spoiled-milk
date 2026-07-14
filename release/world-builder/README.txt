@@ -33,6 +33,28 @@ Use the editor's Save control before closing. Saves affect only:
 
 They do not change the parent private server.
 
+EDITOR KEYBOARD SHORTCUTS
+-------------------------
+
+Editor shortcuts are active by default and ordinary chat typing is paused.
+Press Ctrl+Enter to switch between editor shortcuts and normal chat/command
+entry. Numeric editor fields still accept typing when explicitly selected.
+
+  B                 Brush; press again while the Brush tool is active to
+                    switch between 1x1 and 3x3
+  N                 Navigate; press again to toggle click teleport
+  I                 Inspect; press again to copy the current inspection
+  D                 Hide or show the editor dock
+  H / C / T / R     Toggle Height, Floor Color, Floor Texture, or Roof while
+                    in Terrain mode
+  Shift+N / E / D   Toggle North, East, or Diagonal Wall in Terrain mode
+  Ctrl+H/C/T/R      Open that terrain value and select its numeric field
+  Ctrl+N/E/D        Open that wall value and select its numeric field
+  Ctrl+Shift+S      Save world edits
+  Ctrl+Enter        Toggle editor-shortcut mode and chat/command-entry mode
+
+Arrow keys and camera controls remain available in either input mode.
+
 IMPORTING MAP CHANGES
 ---------------------
 

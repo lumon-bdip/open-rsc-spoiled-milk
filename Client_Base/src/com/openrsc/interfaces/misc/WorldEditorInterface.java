@@ -63,6 +63,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private int dragX=-1,dragY=-1;
 	private int compactMouseX=-1,compactMouseY=-1,terrainActiveField=7;
 	private String toolbarTooltip="";
+	private boolean keyboardShortcutsEnabled=true;
 	private boolean unsavedChanges=false,saveRequested=false,closeArmed=false;
 	private int pendingEntityActions=0;
 	private long lastAckMillis=0L,lastRebuildMillis=0L;
@@ -80,11 +81,13 @@ public final class WorldEditorInterface extends NCustomComponent {
 		if(Config.isAndroid())return;
 		sessionId=id;nextSequence=sequence;mode=Mode.NAVIGATE;toolbar.reset();icons.initialize();
 		int x=mc.getEditorPlayerWorldX(),y=mc.getEditorPlayerWorldY();brushX=x;brushY=y;teleportX=String.valueOf(x);teleportY=String.valueOf(y);
-		clickTeleportPreferred=false;unsavedChanges=false;saveRequested=false;closeArmed=false;pendingEntityActions=0;
+		clickTeleportPreferred=false;keyboardShortcutsEnabled=true;unsavedChanges=false;saveRequested=false;closeArmed=false;pendingEntityActions=0;
 		setTerrainBuildMode(false);mc.setWorldEditorNavigateClickTeleport(false);clearTerrainDrag();updatePresentationBounds();setVisible(true);
 	}
 	public void closeFromServer(){setTerrainBuildMode(false);mc.setWorldEditorNavigateClickTeleport(false);setVisible(false);sessionId=0;coordinateFocus=0;clearTerrainDrag();toolbar.reset();}
 	public boolean isEditorOpen(){return isVisible()&&sessionId!=0;}
+	public boolean isKeyboardCaptureActive(){return isEditorOpen()&&(keyboardShortcutsEnabled||coordinateFocus!=0);}
+	public boolean isKeyboardShortcutMode(){return isEditorOpen()&&keyboardShortcutsEnabled;}
 	public boolean isInspecting(){return isEditorOpen()&&mode==Mode.INSPECT;}
 	public boolean isNavigating(){return isEditorOpen()&&mode==Mode.NAVIGATE;}
 	public boolean isTerrainPainting(){return isEditorOpen()&&mode==Mode.TERRAIN;}
@@ -254,13 +257,23 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 
 	private boolean handleKey(char c,int key){
+		WorldEditorKeyboardShortcuts.Action shortcut=WorldEditorKeyboardShortcuts.resolve(c,key,mc.getDesktopKeyCode(),mc.controlPressed,mc.shiftPressed,mode==Mode.TERRAIN,keyboardShortcutsEnabled);
+		if(shortcut==WorldEditorKeyboardShortcuts.Action.TOGGLE_CHAT){
+			keyboardShortcutsEnabled=!keyboardShortcutsEnabled;coordinateFocus=0;replaceFocusedText=false;
+			inspectionStatus=keyboardShortcutsEnabled?"Editor shortcuts enabled; Ctrl+Enter opens chat input.":"Chat input enabled; Ctrl+Enter restores editor shortcuts.";
+			return true;
+		}
 		if(key==27){
 			coordinateFocus=0;replaceFocusedText=false;
 			if(toolbar.isExpandedFallback()){toolbar.setExpandedFallback(false);updatePresentationBounds();return true;}
 			if(toolbar.closeFlyout()){updatePresentationBounds();return true;}
 			requestEditorClose();return true;
 		}
-		if(coordinateFocus==0)return false;
+		if(coordinateFocus==0){
+			if(!keyboardShortcutsEnabled)return false;
+			if(shortcut!=WorldEditorKeyboardShortcuts.Action.NONE)applyKeyboardShortcut(shortcut);
+			return true;
+		}
 		String value=focusedText();
 		if(key==8){if(replaceFocusedText)value="";else if(value.length()>0)value=value.substring(0,value.length()-1);replaceFocusedText=false;}
 		else if(key==9){coordinateFocus=coordinateFocus==1?2:coordinateFocus==2?1:coordinateFocus;replaceFocusedText=true;return true;}
@@ -268,6 +281,38 @@ public final class WorldEditorInterface extends NCustomComponent {
 		else if(c>='0'&&c<='9'&&(replaceFocusedText||value.length()<5)){value=replaceFocusedText?String.valueOf(c):value+c;replaceFocusedText=false;}
 		else return true;
 		setFocusedText(value);return true;
+	}
+	private void applyKeyboardShortcut(WorldEditorKeyboardShortcuts.Action shortcut){
+		switch(shortcut){
+			case SAVE:requestWorldEditSave();return;
+			case BRUSH:if(mode==Mode.TERRAIN&&terrainActiveField==0)toggleBrushSize();else openTerrainTool(0);return;
+			case NAVIGATE:
+				if(mode!=Mode.NAVIGATE){selectMode(Mode.NAVIGATE);return;}
+				clickTeleportPreferred=!clickTeleportPreferred;mc.setWorldEditorNavigateClickTeleport(clickTeleportPreferred);
+				inspectionStatus="Navigate click teleport "+(clickTeleportPreferred?"enabled":"disabled")+".";return;
+			case INSPECT:if(mode==Mode.INSPECT)copyInspected();else selectMode(Mode.INSPECT);return;
+			case DOCK:
+				coordinateFocus=0;replaceFocusedText=false;if(toolbar.isExpandedFallback())toolbar.setExpandedFallback(false);
+				toolbar.toggleCollapsed();updatePresentationBounds();return;
+			case TOGGLE_ELEVATION:toggleTerrainField(6);return;
+			case TOGGLE_FLOOR_COLOR:toggleTerrainField(7);return;
+			case TOGGLE_FLOOR_TEXTURE:toggleTerrainField(8);return;
+			case TOGGLE_ROOF:toggleTerrainField(9);return;
+			case TOGGLE_NORTH_WALL:toggleTerrainField(10);return;
+			case TOGGLE_EAST_WALL:toggleTerrainField(11);return;
+			case TOGGLE_DIAGONAL_WALL:toggleTerrainField(12);return;
+			case EDIT_ELEVATION:openTerrainValueEditor(6);return;
+			case EDIT_FLOOR_COLOR:openTerrainValueEditor(7);return;
+			case EDIT_FLOOR_TEXTURE:openTerrainValueEditor(8);return;
+			case EDIT_ROOF:openTerrainValueEditor(9);return;
+			case EDIT_NORTH_WALL:openTerrainValueEditor(10);return;
+			case EDIT_EAST_WALL:openTerrainValueEditor(11);return;
+			case EDIT_DIAGONAL_WALL:openTerrainValueEditor(12);return;
+			default:return;
+		}
+	}
+	private void openTerrainValueEditor(int field){
+		if(toolbar.isCollapsed())toolbar.toggleCollapsed();openTerrainTool(field);focusNumber(field);updatePresentationBounds();
 	}
 	private void applyFocusedValue(String value){
 		try{int parsed=Integer.parseInt(value);if(coordinateFocus==1||coordinateFocus==2){teleportToFields();return;}if(coordinateFocus==3)setSceneryId(parsed);else if(coordinateFocus==4)setNpcId(parsed);else if(coordinateFocus==5)setNpcRadius(parsed);else if(coordinateFocus==6)setTerrainElevation(parsed);else if(coordinateFocus==7)setTerrainFloorColor(parsed);else if(coordinateFocus==8)setTerrainFloorTexture(parsed);else if(coordinateFocus==9)setTerrainRoof(parsed);else if(coordinateFocus==10)setTerrainNorthWall(parsed);else if(coordinateFocus==11)setTerrainEastWall(parsed);else setTerrainDiagonalWall(parsed);}

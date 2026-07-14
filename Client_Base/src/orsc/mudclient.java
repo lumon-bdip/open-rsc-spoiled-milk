@@ -606,6 +606,7 @@ public final class mudclient implements Runnable {
 	public int screenOffsetX;
 	public int screenOffsetY;
 	public boolean shiftPressed = false;
+	private int desktopKeyCode = -1;
 	//public int groupID = 100;
 	public boolean rendering;
 	public int bankItemsMax = 50;
@@ -16923,6 +16924,19 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	public void handleDesktopKeyPress(byte context, int key, int physicalKeyCode) {
+		desktopKeyCode = physicalKeyCode;
+		try {
+			handleKeyPress(context, key);
+		} finally {
+			desktopKeyCode = -1;
+		}
+	}
+
+	public int getDesktopKeyCode() {
+		return desktopKeyCode;
+	}
+
 	private void handleLoginScreenInput(int var1) {
 		try {
 			if (var1 != 2) {
@@ -22666,6 +22680,12 @@ public final class mudclient implements Runnable {
 
 	public void setWorldEditorNavigateClickTeleport(boolean enabled) {
 		this.devClickTeleportMode = enabled && canUseClickTeleport();
+	}
+
+	public boolean shouldSuppressWorldEditorChatInput(int key) {
+		if (worldEditorInterface == null || !worldEditorInterface.isEditorOpen()) return false;
+		return worldEditorInterface.isKeyboardCaptureActive()
+			|| controlPressed && (key == 10 || key == 13);
 	}
 
 	private void drawWorldEditorBuildGridLegacy(Renderer3DFrame frame){
