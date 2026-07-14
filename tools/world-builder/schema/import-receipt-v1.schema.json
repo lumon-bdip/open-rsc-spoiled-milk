@@ -9,9 +9,14 @@
     "manifestType",
     "transactionId",
     "status",
+    "transactionType",
+    "createdAtUtc",
     "layoutAdapter",
+    "targetIdentitySha256",
     "targetFingerprintBeforeSha256",
     "exportManifestSha256",
+    "selectedConfig",
+    "revertsTransactionId",
     "files"
   ],
   "properties": {
@@ -19,9 +24,14 @@
     "manifestType": {"const": "world-builder-import-receipt"},
     "transactionId": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
     "status": {"enum": ["pending", "successful", "rolled-back", "reverted"]},
+    "transactionType": {"enum": ["import", "rollback"]},
+    "createdAtUtc": {"type": "string", "format": "date-time"},
     "layoutAdapter": {"type": "string", "minLength": 1},
+    "targetIdentitySha256": {"$ref": "#/$defs/sha256"},
     "targetFingerprintBeforeSha256": {"$ref": "#/$defs/sha256"},
     "exportManifestSha256": {"$ref": "#/$defs/sha256"},
+    "selectedConfig": {"type": "string", "pattern": "^server/.+\\.conf$"},
+    "revertsTransactionId": {"type": "string", "pattern": "^$|^[A-Za-z0-9._-]+$"},
     "files": {
       "type": "array",
       "minItems": 1,
@@ -38,6 +48,7 @@
         "relativePath",
         "existedBefore",
         "beforeSha256",
+        "installedPresent",
         "installedSha256",
         "backupRelativePath"
       ],
@@ -45,7 +56,8 @@
         "relativePath": {"type": "string", "minLength": 1},
         "existedBefore": {"type": "boolean"},
         "beforeSha256": {"$ref": "#/$defs/optionalSha256"},
-        "installedSha256": {"$ref": "#/$defs/sha256"},
+        "installedPresent": {"type": "boolean"},
+        "installedSha256": {"$ref": "#/$defs/optionalSha256"},
         "backupRelativePath": {"type": "string"}
       }
     }

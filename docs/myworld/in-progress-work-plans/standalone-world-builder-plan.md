@@ -681,16 +681,40 @@ identity metadata.
 
 ### Phase 4: Transactional import and rollback
 
-- [ ] Add dry-run and interactive preview.
-- [ ] Add robust target-server-running detection and conservative refusal.
-- [ ] Add base-hash and compatibility revalidation.
-- [ ] Back up all existing/absent destination states.
-- [ ] Stage, parse, replace, and verify all target outputs.
-- [ ] Update required configuration keys transactionally.
-- [ ] Add failure injection around every replacement stage.
-- [ ] Add automatic rollback for failed imports.
-- [ ] Add receipt-based `Undo Last Map Import`.
-- [ ] Refuse rollback over files changed after import.
+- [x] Add dry-run and explicit-apply preview.
+- [x] Add robust target-server-running detection and conservative refusal.
+- [x] Add base-hash and compatibility revalidation.
+- [x] Back up all existing/absent destination states.
+- [x] Stage, parse, replace, and verify all target outputs.
+- [x] Revalidate the v1 adapter's required configuration keys throughout the
+  transaction; the adapter already requires both authored-data flags enabled,
+  so it does not rewrite an unchanged configuration.
+- [x] Add failure injection around every replacement stage.
+- [x] Add automatic rollback for failed imports.
+- [x] Add receipt-based `Undo Last Map Import`.
+- [x] Refuse rollback over files changed after import.
+
+Phase 4 implementation evidence recorded on 2026-07-14:
+
+- `python3 tests/myworld/test-world-builder-import.py` (12 tests)
+- `python3 tests/myworld/test-world-builder-export.py` (5 tests)
+- `./scripts/build-world-builder-tools.sh`
+- Dry-run holds a shared configuration lock and the target server-port lease,
+  reports exact add/replace actions, and creates no target, backup, or receipt
+  state. Apply uses an exclusive lock and repeats all revision checks.
+- Successful imports preserve untouched files and configuration bytes, install
+  matching server/client terrain, retain verified before-state backups, and
+  publish a strict successful receipt.
+- Injected failure after every replacement position restores every original
+  target byte. A file absent before import is removed again during recovery.
+- Undo safeguards the installed state, restores original bytes and original
+  absence, and links a successful rollback receipt to the reverted import.
+  Injected undo failures restore the imported state. Changed-after-import
+  files, active target ports, target revision drift, unsafe paths, and pending
+  transactions are refused.
+
+Private import, target restart, visual verification, and undo/restart
+acceptance remain required before this phase's exit gate is closed.
 
 Exit gate: imported terrain/scenery/NPC edits load after target server/client
 restart, and rollback restores every original byte and original file absence.

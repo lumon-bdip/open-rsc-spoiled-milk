@@ -73,5 +73,36 @@ the byte-identical verified export; no-op projects report `no-changes` without
 creating an export. Active Builder sessions, source drift, malformed input,
 unsafe paths, incomplete data, and tampered existing exports are refused.
 
+Preview an import while the target private server is offline:
+
+```bash
+java -jar output/world-builder-tools/world-builder-tools.jar import \
+  --workspace /path/to/world-builder-project \
+  --export /path/to/world-builder-project/exports/export-0123456789abcdef \
+  --target-root /path/to/private-server \
+  --dry-run
+```
+
+After reviewing the exact additions/replacements, repeat with `--apply` in
+place of `--dry-run`. Apply reserves the configured server port for the whole
+transaction, rechecks the source revision, writes a pending receipt, verifies
+backups and same-filesystem staging, replaces in deterministic order, and
+marks success only after reopening every installed file. Any partial failure
+restores the prior bytes and prior file absence before reporting failure.
+
+Preview or apply the newest eligible receipt-based undo with:
+
+```bash
+java -jar output/world-builder-tools/world-builder-tools.jar undo-import \
+  --workspace /path/to/world-builder-project \
+  --target-root /path/to/private-server \
+  --dry-run
+```
+
+Use `--apply` only after reviewing the undo. Undo refuses if any installed file
+changed after import, safeguards the installed state, restores the exact prior
+state, and records a successful rollback receipt. There is intentionally no
+force option.
+
 The manifest schemas in `schema/` are release contracts. Add a new schema
 version instead of changing the meaning of an existing version.

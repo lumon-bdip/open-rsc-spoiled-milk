@@ -36,6 +36,9 @@ public final class WorldBuilderCli {
 		if ("import".equals(args[0])) {
 			return importChanges(args);
 		}
+		if ("undo-import".equals(args[0])) {
+			return undoImport(args);
+		}
 		if (!"discover".equals(args[0])) {
 			System.err.println("ERROR: Unsupported World Builder command: " + args[0]);
 			usage();
@@ -154,6 +157,7 @@ public final class WorldBuilderCli {
 		Path export = null;
 		Path target = null;
 		boolean dryRun = false;
+		boolean apply = false;
 		for (int index = 1; index < args.length; index++) {
 			String argument = args[index];
 			if ("--workspace".equals(argument) && index + 1 < args.length) {
@@ -164,26 +168,73 @@ public final class WorldBuilderCli {
 				target = Paths.get(args[++index]);
 			} else if ("--dry-run".equals(argument)) {
 				dryRun = true;
+			} else if ("--apply".equals(argument)) {
+				apply = true;
 			} else {
 				System.err.println("ERROR: Unknown or incomplete argument: " + argument);
 				usage();
 				return 2;
 			}
 		}
-		if (workspace == null || export == null || target == null || !dryRun) {
-			System.err.println("ERROR: import currently requires --workspace, --export, "
-				+ "--target-root, and --dry-run.");
+		if (workspace == null || export == null || target == null || dryRun == apply) {
+			System.err.println("ERROR: import requires --workspace, --export, --target-root, "
+				+ "and exactly one of --dry-run or --apply.");
 			usage();
 			return 2;
 		}
 		try {
-			System.out.print(new WorldBuilderImporter().preview(workspace, export, target).toJson());
+			WorldBuilderImporter importer = new WorldBuilderImporter();
+			System.out.print(dryRun
+				? importer.preview(workspace, export, target).toJson()
+				: importer.apply(workspace, export, target).toJson());
 			return 0;
 		} catch (WorldBuilderDiscoveryException refusal) {
 			System.err.println("ERROR: " + refusal.getMessage());
 			return 3;
 		} catch (Exception failure) {
-			System.err.println("ERROR: Could not preview Builder import: " + failure.getMessage());
+			System.err.println("ERROR: Could not process Builder import: " + failure.getMessage());
+			return 4;
+		}
+	}
+
+	private static int undoImport(String[] args) {
+		Path workspace = null;
+		Path target = null;
+		boolean dryRun = false;
+		boolean apply = false;
+		for (int index = 1; index < args.length; index++) {
+			String argument = args[index];
+			if ("--workspace".equals(argument) && index + 1 < args.length) {
+				workspace = Paths.get(args[++index]);
+			} else if ("--target-root".equals(argument) && index + 1 < args.length) {
+				target = Paths.get(args[++index]);
+			} else if ("--dry-run".equals(argument)) {
+				dryRun = true;
+			} else if ("--apply".equals(argument)) {
+				apply = true;
+			} else {
+				System.err.println("ERROR: Unknown or incomplete argument: " + argument);
+				usage();
+				return 2;
+			}
+		}
+		if (workspace == null || target == null || dryRun == apply) {
+			System.err.println("ERROR: undo-import requires --workspace, --target-root, "
+				+ "and exactly one of --dry-run or --apply.");
+			usage();
+			return 2;
+		}
+		try {
+			WorldBuilderImporter importer = new WorldBuilderImporter();
+			System.out.print(dryRun
+				? importer.previewRollback(workspace, target).toJson()
+				: importer.rollback(workspace, target).toJson());
+			return 0;
+		} catch (WorldBuilderDiscoveryException refusal) {
+			System.err.println("ERROR: " + refusal.getMessage());
+			return 3;
+		} catch (Exception failure) {
+			System.err.println("ERROR: Could not undo Builder import: " + failure.getMessage());
 			return 4;
 		}
 	}
@@ -264,6 +315,9 @@ public final class WorldBuilderCli {
 		System.err.println("  WorldBuilderCli export --workspace <prepared-path>"
 			+ " --builder-version <version> --source-commit <40-hex>");
 		System.err.println("  WorldBuilderCli import --workspace <prepared-path>"
-			+ " --export <export-directory> --target-root <private-server-root> --dry-run");
+			+ " --export <export-directory> --target-root <private-server-root>"
+			+ " (--dry-run | --apply)");
+		System.err.println("  WorldBuilderCli undo-import --workspace <prepared-path>"
+			+ " --target-root <private-server-root> (--dry-run | --apply)");
 	}
 }
