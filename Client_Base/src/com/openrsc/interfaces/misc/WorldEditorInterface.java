@@ -165,7 +165,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	public void paintTerrain(int worldX,int worldY){
 		recordWorldClick(worldX,worldY);int mask=terrainPaintMask();
 		if(mask==0){showError("Select at least one terrain field to paint.");return;}if(!isTerrainPainting()||terrainStrokeTiles!=null||terrainDragActive||terrainDragReleasePending)return;
-		int strokeSize=(mask&112)!=0?1:terrainBrushSize;terrainStrokeTiles=strokeSize==1?new int[][]{{worldX,worldY}}:centeredThreeByThree(worldX,worldY);
+		int strokeSize=terrainBrushSize;terrainStrokeTiles=strokeSize==1?new int[][]{{worldX,worldY}}:centeredThreeByThree(worldX,worldY);
 		snapshotTerrainPaint(mask);
 		terrainStrokeStartedNanos=System.nanoTime();sendTerrainStroke();
 	}
@@ -182,7 +182,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private int terrainPaintMask(){return (paintElevation?1:0)|(paintFloorColor?2:0)|(paintFloorTexture?4:0)|(paintRoof?8:0)|(paintEastWall?16:0)|(paintNorthWall?32:0)|(paintDiagonalWall?64:0);}
 	private void snapshotTerrainPaint(int mask){terrainStrokeMask=mask;terrainStrokeElevation=terrainElevation;terrainStrokeColor=terrainFloorColor;terrainStrokeTexture=terrainFloorTexture;terrainStrokeRoof=terrainRoof;terrainStrokeEastWall=terrainEastWall;terrainStrokeNorthWall=terrainNorthWall;terrainStrokeDiagonal=encodedDiagonalWall();}
 	private void addTerrainDragCenter(int worldX,int worldY){
-		terrainDragHoverX=worldX;terrainDragHoverY=worldY;recordWorldClick(worldX,worldY);int strokeSize=(terrainStrokeMask&112)!=0?1:terrainBrushSize;
+		terrainDragHoverX=worldX;terrainDragHoverY=worldY;recordWorldClick(worldX,worldY);int strokeSize=terrainBrushSize;
 		int[][] footprint=strokeSize==1?new int[][]{{worldX,worldY}}:centeredThreeByThree(worldX,worldY);int plane=Math.floorDiv(worldY,944);
 		for(int[] tile:footprint){if(Math.floorDiv(tile[1],944)!=plane)continue;long key=terrainTileKey(tile[0],tile[1]);
 			if(terrainDragSeen.size()>=TERRAIN_DRAG_LIMIT&&!terrainDragSeen.contains(key))continue;
@@ -347,7 +347,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 			if(toolbar.isCollapsed())return true;
 			Mode selected=dockModeAt(rx,ry);if(selected!=null){if(click==1)selectMode(selected);return true;}
 			int field=terrainFieldAtDock(rx,ry);if(field>=0){if(click==2)toggleTerrainField(field);else openTerrainTool(field);return true;}
-			if(dockHit(rx,ry,0,3)){if(click==2)toggleBrushSize();else openTerrainTool(0);return true;}
+			if(dockHit(rx,ry,0,3)){if(click==2)toggleBrushSize();else toggleBrushFlyout();return true;}
 			if(dockHit(rx,ry,0,4)){if(click==1)setTerrainBuildMode(!terrainBuildMode);return true;}
 			if(dockHit(rx,ry,0,5)){if(click==1)requestWorldEditSave();return true;}
 			if(dockHit(rx,ry,0,6)){if(click==1)requestEditorClose();return true;}
@@ -375,6 +375,10 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void openTerrainTool(int field){
 		mode=Mode.TERRAIN;terrainActiveField=field;if(field>0)terrainStructureTab=field>=9;coordinateFocus=0;replaceFocusedText=false;closeArmed=false;
 		mc.setWorldEditorNavigateClickTeleport(false);toolbar.open(WorldEditorToolbarState.Flyout.TERRAIN);updatePresentationBounds();
+	}
+	private void toggleBrushFlyout(){
+		if(mode==Mode.TERRAIN&&terrainActiveField==0&&toolbar.getFlyout()==WorldEditorToolbarState.Flyout.TERRAIN){toolbar.closeFlyout();updatePresentationBounds();return;}
+		openTerrainTool(0);
 	}
 	private void toggleBrushSize(){terrainBrushSize=terrainBrushSize==1?3:1;closeArmed=false;}
 	private void toggleTerrainField(int field){
@@ -467,12 +471,12 @@ public final class WorldEditorInterface extends NCustomComponent {
 		int dockWidth=toolbar.isCollapsed()?40:DOCK_WIDTH;graphics().drawBoxAlpha(x,y,dockWidth,toolbar.isCollapsed()?38:DOCK_HEIGHT,0x24190c,235);graphics().drawBoxBorder(x,dockWidth,y,toolbar.isCollapsed()?38:DOCK_HEIGHT,0);
 		drawIconButton(toolbar.isCollapsed()?WorldEditorIconRegistry.Key.TOOLBAR_EXPAND:WorldEditorIconRegistry.Key.TOOLBAR_COLLAPSE,x+DOCK_LEFT,y+DOCK_TOP,toolbar.isCollapsed(),false,false,false);
 		if(toolbar.isCollapsed()){renderCompactTooltip(x,y);return;}
-		drawIconButton(WorldEditorIconRegistry.Key.MODE_SCENERY,x+DOCK_RIGHT,y+dockRowY(0),mode==Mode.SCENERY,false,false,false);
-		drawIconButton(WorldEditorIconRegistry.Key.MODE_NAVIGATE,x+DOCK_LEFT,y+dockRowY(1),mode==Mode.NAVIGATE,false,false,false);
-		drawIconButton(WorldEditorIconRegistry.Key.MODE_NPC,x+DOCK_RIGHT,y+dockRowY(1),mode==Mode.NPC,false,false,false);
-		drawIconButton(WorldEditorIconRegistry.Key.MODE_INSPECT,x+DOCK_LEFT,y+dockRowY(2),mode==Mode.INSPECT,false,false,false);
+		drawModeIcon(WorldEditorIconRegistry.Key.MODE_SCENERY,x+DOCK_RIGHT,y+dockRowY(0),Mode.SCENERY);
+		drawModeIcon(WorldEditorIconRegistry.Key.MODE_NAVIGATE,x+DOCK_LEFT,y+dockRowY(1),Mode.NAVIGATE);
+		drawModeIcon(WorldEditorIconRegistry.Key.MODE_NPC,x+DOCK_RIGHT,y+dockRowY(1),Mode.NPC);
+		drawModeIcon(WorldEditorIconRegistry.Key.MODE_INSPECT,x+DOCK_LEFT,y+dockRowY(2),Mode.INSPECT);
 		drawTerrainIcon(WorldEditorIconRegistry.Key.FIELD_ELEVATION,x+DOCK_RIGHT,y+dockRowY(2),6,paintElevation);
-		drawIconButton(terrainBrushSize==1?WorldEditorIconRegistry.Key.TOOL_BRUSH_1X1:WorldEditorIconRegistry.Key.TOOL_BRUSH_3X3,x+DOCK_LEFT,y+dockRowY(3),mode==Mode.TERRAIN,terrainActiveField==0&&toolbar.isFlyoutOpen(),false,false);
+		drawIconButton(terrainBrushSize==1?WorldEditorIconRegistry.Key.TOOL_BRUSH_1X1:WorldEditorIconRegistry.Key.TOOL_BRUSH_3X3,x+DOCK_LEFT,y+dockRowY(3),mode==Mode.TERRAIN,mode==Mode.TERRAIN&&terrainActiveField==0&&toolbar.isFlyoutOpen(),false,false);
 		drawTerrainIcon(WorldEditorIconRegistry.Key.FIELD_FLOOR_COLOR,x+DOCK_RIGHT,y+dockRowY(3),7,paintFloorColor);
 		drawIconButton(WorldEditorIconRegistry.Key.PROFILE_BUILD,x+DOCK_LEFT,y+dockRowY(4),terrainBuildMode,false,false,false);
 		drawTerrainIcon(WorldEditorIconRegistry.Key.FIELD_FLOOR_TEXTURE,x+DOCK_RIGHT,y+dockRowY(4),8,paintFloorTexture);
@@ -486,14 +490,15 @@ public final class WorldEditorInterface extends NCustomComponent {
 		renderCompactTooltip(x,y);
 	}
 	private static int dockRowY(int row){return DOCK_TOP+row*DOCK_STEP;}
+	private void drawModeIcon(WorldEditorIconRegistry.Key key,int x,int y,Mode iconMode){boolean selected=mode==iconMode;drawIconButton(key,x,y,selected,selected&&toolbar.isFlyoutOpen(),false,false);}
 	private void drawTerrainIcon(WorldEditorIconRegistry.Key key,int x,int y,int field,boolean enabled){drawIconButton(key,x,y,enabled,mode==Mode.TERRAIN&&terrainActiveField==field&&toolbar.isFlyoutOpen(),terrainFieldInvalid(field),false);}
-	private void drawIconButton(WorldEditorIconRegistry.Key key,int x,int y,boolean active,boolean focused,boolean warning,boolean badge){
-		int background=warning?0x7a281f:active?0x526f24:focused?0x365b82:0x333333;
-		graphics().drawBoxAlpha(x,y,28,28,background,235);graphics().drawBoxBorder(x,28,y,28,focused?0x66b3ff:active?0xb6e36a:warning?0xff981f:0x080808);
+	private void drawIconButton(WorldEditorIconRegistry.Key key,int x,int y,boolean selected,boolean viewed,boolean warning,boolean badge){
+		int background=warning?0x7a281f:viewed?0x526f24:selected?0x365b82:0x333333;
+		graphics().drawBoxAlpha(x,y,28,28,background,235);graphics().drawBoxBorder(x,28,y,28,viewed?0xb6e36a:selected?0x66b3ff:warning?0xff981f:0x080808);
 		Sprite sprite=icons.get(key);if(sprite!=null)graphics().drawSprite(sprite,x+2,y+2);else{
 			String label=key.fallbackLabel();int width=graphics().stringWidth(1,label);graphics().drawString(label,x+14-width/2,y+17,0xffffff,1);
 		}
-		if(active){graphics().drawBoxAlpha(x+21,y+3,4,4,0xc8ff75,255);}if(warning){graphics().drawString("!",x+21,y+12,0xffff00,1);}if(badge){graphics().drawString("*",x+20,y+13,0xff981f,2);}
+		if(selected){graphics().drawBoxAlpha(x+21,y+3,4,4,viewed?0xc8ff75:0x66b3ff,255);}if(warning){graphics().drawString("!",x+21,y+12,0xffff00,1);}if(badge){graphics().drawString("*",x+20,y+13,0xff981f,2);}
 	}
 	private void renderCompactFlyout(int x,int y){
 		graphics().drawBoxAlpha(x,y,FLYOUT_WIDTH,DOCK_HEIGHT,0x24190c,235);graphics().drawBoxBorder(x,FLYOUT_WIDTH,y,DOCK_HEIGHT,0);
@@ -505,7 +510,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 	private String compactFlyoutTitle(){return mode==Mode.TERRAIN?(terrainActiveField==0?"Brush":activeTerrainLabel()):TABS[mode.ordinal()];}
 	private void drawHeaderIcon(WorldEditorIconRegistry.Key key,int x,int y,boolean active){
-		graphics().drawBoxAlpha(x,y,36,24,active?0x526f24:0x333333,235);graphics().drawBoxBorder(x,36,y,24,0);Sprite sprite=icons.get(key);
+		graphics().drawBoxAlpha(x,y,36,24,active?0x365b82:0x333333,235);graphics().drawBoxBorder(x,36,y,24,active?0x66b3ff:0);Sprite sprite=icons.get(key);
 		if(sprite!=null)graphics().drawSprite(sprite,x+6,y);else graphics().drawString(key.fallbackLabel(),x+5,y+16,0xffffff,1);
 	}
 	private void renderCompactNavigate(int x,int y){
@@ -611,7 +616,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		structureField(x,y+190,"Diagonal",paintDiagonalWall,terrainDiagonalWallText,coordinateFocus==12,wallDescription(terrainDiagonalWall));
 		graphics().drawString("Diagonal",x+10,y+237,0xffffff,2);toolButton(x+118,y+220,60,"\\",terrainDiagonalOrientation==0);toolButton(x+185,y+220,60,"/",terrainDiagonalOrientation==1);
 		graphics().drawString("Brush",x+10,y+265,0xffffff,2);toolButton(x+80,y+248,60,"1x1",terrainBrushSize==1);toolButton(x+147,y+248,60,"3x3",terrainBrushSize==3);button(x+220,y+248,155,"Save edits");
-		graphics().drawString(terrainDragActive||terrainDragReleasePending?terrainDragStatus():(paintNorthWall||paintEastWall||paintDiagonalWall)?"Walls use 1x1 centers; Ctrl-drag may paint many distinct tiles.":"Roof may use 1x1/3x3; Ctrl-drag batches distinct tiles.",x+10,y+286,0xff981f,1);
+		graphics().drawString(terrainDragActive||terrainDragReleasePending?terrainDragStatus():"Structures use 1x1/3x3; Ctrl-drag batches distinct tiles.",x+10,y+286,0xff981f,1);
 		graphics().drawString(inspectionStatus,x+10,y+307,0xbdbdbd,1);
 	}
 	private void terrainField(int x,int y,String label,boolean enabled,String value,boolean focused){checkbox(x+10,y,enabled,label);button(x+150,y,28,"-");textField(x+185,y,80,value,focused);button(x+272,y,28,"+");}
@@ -641,11 +646,11 @@ public final class WorldEditorInterface extends NCustomComponent {
 		graphics().drawString(npcTool==NpcTool.PLACE?"Click terrain to place one NPC.":"Click an existing NPC to remove it.",x+10,y+235,0xffffff,2);
 		button(x+10,y+276,165,"Save queued edits");
 	}
-	private void toolButton(int x,int y,int w,String text,boolean active){graphics().drawBoxAlpha(x,y,w,24,active?0x6b8e23:0x333333,220);graphics().drawBoxBorder(x,w,y,24,0);graphics().drawString(text,x+6,y+17,0xffffff,2);}
+	private void toolButton(int x,int y,int w,String text,boolean active){graphics().drawBoxAlpha(x,y,w,24,active?0x365b82:0x333333,220);graphics().drawBoxBorder(x,w,y,24,active?0x66b3ff:0);graphics().drawString(text,x+6,y+17,0xffffff,2);}
 	private String sceneryName(){try{return EntityHandler.getObjectDef(sceneryId).getName();}catch(Exception e){return "Unknown scenery";}}
 	private String npcName(){try{return EntityHandler.getNpcDef(npcId).getName();}catch(Exception e){return "Unknown NPC";}}
 	private void textField(int x,int y,int w,String text,boolean focused){graphics().drawBoxAlpha(x,y,w,24,focused?0x6580b7:0x222222,240);graphics().drawBoxBorder(x,w,y,24,0);graphics().drawString(text+(focused?"*":""),x+6,y+17,0xffffff,2);}
-	private void checkbox(int x,int y,boolean checked,String text){graphics().drawBoxAlpha(x,y,18,18,checked?0x6b8e23:0x333333,255);graphics().drawBoxBorder(x,18,y,18,0);if(checked)graphics().drawString("X",x+5,y+14,0xffffff,2);graphics().drawString(text,x+26,y+14,0xffffff,2);}
+	private void checkbox(int x,int y,boolean checked,String text){graphics().drawBoxAlpha(x,y,18,18,checked?0x365b82:0x333333,255);graphics().drawBoxBorder(x,18,y,18,checked?0x66b3ff:0);if(checked)graphics().drawString("X",x+5,y+14,0xffffff,2);graphics().drawString(text,x+26,y+14,0xffffff,2);}
 	private void button(int x,int y,int w,String text){graphics().drawBoxAlpha(x,y,w,24,0x333333,220);graphics().drawBoxBorder(x,w,y,24,0);graphics().drawString(text,x+6,y+17,0xffffff,2);}
 	private static String point(int x,int y){return x<0||y<0?"not set":x+","+y;}
 	private static int diagonalDefinitionId(int v){if(v>0&&v<12000)return v-1;if(v>12000&&v<24000)return v-12001;return -1;}

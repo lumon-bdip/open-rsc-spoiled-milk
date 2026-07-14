@@ -220,11 +220,11 @@ public final class WorldBuilderProcessSupervisor {
 			"-Xms512m",
 			"-Xmx2g",
 			// The Builder's primary renderer owns its own LWJGL context. Avoid also
-			// enabling Java2D's OpenGL pipeline, and use a bounded windowed/vsynced
-			// presentation profile so a local editing session cannot monopolize the
-			// desktop compositor while other GPU applications are active.
+			// enabling Java2D's OpenGL pipeline. Start in the same borderless/vsynced
+			// presentation used by the normal client while retaining the in-game
+			// window-mode toggle for users who prefer a bounded window.
 			"-Dsun.java2d.opengl=false",
-			"-Dspoiledmilk.openglWindowMode=windowed",
+			"-Dspoiledmilk.openglWindowMode=borderless-fullscreen",
 			"-Dspoiledmilk.openglVsync=true",
 			"-Dopenrsc.worldBuilderMode=true",
 			"-Dopenrsc.worldBuilderHost=127.0.0.1",

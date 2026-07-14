@@ -4,8 +4,10 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Extracts and caches the square tile boundaries from resident terrain geometry.
- * Triangle diagonals and all non-terrain geometry are deliberately excluded.
+ * Builds and caches square tile boundaries for the active terrain plane.
+ * Loaded height-grid data keeps void tiles visible; geometry extraction remains
+ * as a compatibility fallback. Triangle diagonals and non-terrain geometry are
+ * deliberately excluded from that fallback.
  */
 public final class WorldEditorTerrainGrid {
 	private static final int TILE_SIZE = 128;
@@ -37,6 +39,7 @@ public final class WorldEditorTerrainGrid {
 			}
 			hash = mix(hash, chunk.getPlane());
 			hash = mix(hash, chunk.getTerrainTriangles());
+			hash = mix(hash, chunk.getWorldEditorTerrainGridSignature());
 			hash ^= chunk.getSignature();
 			hash *= FNV_PRIME;
 		}
@@ -46,6 +49,11 @@ public final class WorldEditorTerrainGrid {
 	private static int[] extract(Renderer3DWorldChunkFrame frame, int activePlane) {
 		if (frame == null || frame.getChunkCount() == 0) {
 			return new int[0];
+		}
+		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : frame.getChunks()) {
+			if (isActiveTerrainChunk(chunk, activePlane) && chunk.hasWorldEditorTerrainGrid()) {
+				return completeGrid(chunk);
+			}
 		}
 		Set<Edge> edges = new LinkedHashSet<Edge>();
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : frame.getChunks()) {
@@ -71,11 +79,46 @@ public final class WorldEditorTerrainGrid {
 		return result;
 	}
 
+	private static int[] completeGrid(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		int axis = chunk.getWorldEditorTerrainGridAxis();
+		int[] result = new int[2 * axis * (axis - 1) * COORDS_PER_SEGMENT];
+		int offset = 0;
+		for (int x = 0; x < axis; x++) {
+			for (int z = 0; z < axis - 1; z++) {
+				offset = writeGridSegment(result, offset, chunk, axis, x, z, x, z + 1);
+			}
+		}
+		for (int x = 0; x < axis - 1; x++) {
+			for (int z = 0; z < axis; z++) {
+				offset = writeGridSegment(result, offset, chunk, axis, x, z, x + 1, z);
+			}
+		}
+		return result;
+	}
+
+	private static int writeGridSegment(
+		int[] destination,
+		int offset,
+		Renderer3DWorldChunkFrame.ChunkMesh chunk,
+		int axis,
+		int x1,
+		int z1,
+		int x2,
+		int z2) {
+		destination[offset++] = x1 * TILE_SIZE;
+		destination[offset++] = chunk.getWorldEditorTerrainGridHeight(x1 * axis + z1);
+		destination[offset++] = z1 * TILE_SIZE;
+		destination[offset++] = x2 * TILE_SIZE;
+		destination[offset++] = chunk.getWorldEditorTerrainGridHeight(x2 * axis + z2);
+		destination[offset++] = z2 * TILE_SIZE;
+		return offset;
+	}
+
 	private static boolean isActiveTerrainChunk(Renderer3DWorldChunkFrame.ChunkMesh chunk, int activePlane) {
 		return chunk != null
 			&& chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD
 			&& chunk.getPlane() == activePlane
-			&& chunk.getTerrainTriangles() > 0;
+			&& (chunk.getTerrainTriangles() > 0 || chunk.hasWorldEditorTerrainGrid());
 	}
 
 	private static void addEdge(
