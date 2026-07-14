@@ -82,7 +82,7 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 	private WorldEditorStruct.TerrainTile terrainTile(Player p,WorldEditorTerrainArchive.Snapshot s){
 		TileValue runtime=p.getWorld().getTile(s.coordinates.worldX,s.coordinates.worldY);WorldEditorStruct.TerrainTile tile=new WorldEditorStruct.TerrainTile();
 		tile.x=s.coordinates.worldX;tile.y=s.coordinates.worldY;tile.plane=s.coordinates.plane;tile.sectorX=s.coordinates.sectorX;tile.sectorY=s.coordinates.sectorY;
-		tile.localX=s.coordinates.localX;tile.localY=s.coordinates.localY;tile.elevation=s.elevation;tile.groundTexture=s.groundTexture;tile.groundOverlay=s.groundOverlay;
+		tile.localX=s.coordinates.localX;tile.localY=s.coordinates.localY;tile.elevation=s.elevation;tile.groundTexture=s.groundTexture;tile.groundOverlay=inspectionGroundOverlay(runtime,s.groundOverlay);
 		tile.roofTexture=s.roofTexture;tile.horizontalWall=s.horizontalWall;tile.verticalWall=s.verticalWall;tile.diagonal=s.diagonal;
 		tile.traversalMask=runtime==null?0:runtime.traversalMask&0xff;tile.projectileAllowed=runtime!=null&&runtime.projectileAllowed;return tile;
 	}
@@ -90,13 +90,16 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		TileValue runtime=p.getWorld().getTile(s.coordinates.worldX,s.coordinates.worldY);
 		WorldEditorStruct o=new WorldEditorStruct(); o.type=type; o.sequence=next; o.x=s.coordinates.worldX;o.y=s.coordinates.worldY;o.plane=s.coordinates.plane;
 		o.sectorX=s.coordinates.sectorX;o.sectorY=s.coordinates.sectorY;o.localX=s.coordinates.localX;o.localY=s.coordinates.localY;
-		o.elevation=s.elevation;o.groundTexture=s.groundTexture;o.groundOverlay=s.groundOverlay;o.roofTexture=s.roofTexture;
+		o.elevation=s.elevation;o.groundTexture=s.groundTexture;o.groundOverlay=inspectionGroundOverlay(runtime,s.groundOverlay);o.roofTexture=s.roofTexture;
 		o.horizontalWall=s.horizontalWall;o.verticalWall=s.verticalWall;o.diagonal=s.diagonal;
 		o.traversalMask=runtime==null?0:runtime.traversalMask&0xff;o.projectileAllowed=runtime!=null&&runtime.projectileAllowed;o.copy=copied;o.fieldMask=fieldMask;
 		// Names are tab-delimited protocol data; the client owns the concise semantic layout.
 		o.message=wallDefinitionName(p,s.verticalWall-1)+"\t"+wallDefinitionName(p,s.horizontalWall-1)
 			+"\t"+wallDefinitionName(p,s.diagonalDefinitionId());
 		ActionSender.sendWorldEditor(p,o);
+	}
+	static int inspectionGroundOverlay(TileValue runtime,int archivedGroundOverlay){
+		return runtime==null?archivedGroundOverlay:runtime.overlay&0xff;
 	}
 	private void validateTerrainDefinitions(Player p,WorldEditorRequestStruct r){
 		if((r.fieldMask&4)!=0)overlayBlocks(p,r.groundOverlay);

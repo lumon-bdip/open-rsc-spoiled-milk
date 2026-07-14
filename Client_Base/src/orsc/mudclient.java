@@ -10308,10 +10308,10 @@ public final class mudclient implements Runnable {
 	// game screen right click menu definitions */
 	private void addWorldEditorTileActions(int localX,int localZ){
 		if(worldEditorInterface==null||!worldEditorInterface.isEditorOpen())return;
-		if(worldEditorInterface.isInspecting()){
+		if(worldEditorInterface.isInspecting())
 			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_INSPECT_TERRAIN,"Inspect terrain",localZ);
+		if(worldEditorInterface.isInspecting()||worldEditorInterface.isTerrainPainting())
 			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_COPY_TERRAIN,"Copy terrain data",localZ);
-		}
 		if(worldEditorInterface.isTerrainPainting())
 			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PAINT_TERRAIN,"Paint terrain",localZ);
 		if(worldEditorInterface.isSceneryPlacing())
