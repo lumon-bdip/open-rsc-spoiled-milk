@@ -1,6 +1,7 @@
 # Standalone World Builder Plan
 
-Status: active; product architecture approved, implementation not started
+Status: active; Phase 0 contracts and read-only discovery complete, Phase 1
+isolated Builder runtime pending
 
 Owner: Spoiled Milk project owner
 
@@ -515,7 +516,7 @@ useful checkpoint with its test evidence before the next phase begins.
 
 | Phase | Status | Required proof before advancing |
 | --- | --- | --- |
-| 0. Contracts and fixtures | In progress | Approved plan, supported-layout fixtures, deterministic discovery/manifest tests |
+| 0. Contracts and fixtures | Complete | Approved plan, supported-layout fixtures, deterministic discovery/manifest tests |
 | 1. Isolated Builder runtime | Pending | Loopback local launch, automatic Builder login, invulnerability, editor open, normal-mode regression coverage |
 | 2. Workspace-owned persistence | Pending | Terrain/scenery/NPC saves change only working files; target hashes remain identical |
 | 3. Deterministic export | Pending | Complete five-file bundle, manifest validation, repeatable hashes/content |
@@ -528,15 +529,23 @@ useful checkpoint with its test evidence before the next phase begins.
 - [x] Approve the isolated local appliance architecture.
 - [x] Define the five-file authored bundle and six target destinations.
 - [x] Define import, rollback, credential, and loopback invariants.
-- [ ] Introduce a versioned project/export/receipt manifest schema.
-- [ ] Add representative supported private-server fixture layouts.
-- [ ] Add unsupported, ambiguous, missing-client, mismatched-archive, and
+- [x] Introduce a versioned project/export/receipt manifest schema.
+- [x] Add representative supported private-server fixture layouts.
+- [x] Add unsupported, ambiguous, missing-client, mismatched-archive, and
   incompatible-definition fixtures.
-- [ ] Implement read-only target discovery and effective-map selection.
-- [ ] Prove discovery has no writes on both success and failure.
+- [x] Implement read-only target discovery and effective-map selection.
+- [x] Prove discovery has no writes on both success and failure.
 
 Exit gate: fixture-backed discovery selects only known compatible targets and
 produces a stable source manifest without mutating them.
+
+Phase 0 evidence recorded on 2026-07-13:
+
+- `python3 tests/myworld/test-world-builder-discovery.py`
+- `python3 tests/myworld/test-standalone-layout.py`
+- `./scripts/build-world-builder-tools.sh`
+- Read-only discovery of the current repository with its expected content
+  fingerprint produced a valid deterministic source manifest.
 
 ### Phase 1: Isolated Builder runtime
 
