@@ -763,6 +763,37 @@ Phase 4 launch-safety follow-up recorded on 2026-07-14:
   its logs must remain on persistent storage and receive bounded external
   process monitoring during the acceptance run.
 
+Phase 4 owner acceptance recorded on 2026-07-14:
+
+- A persistent disposable project launched with the safety profile, and the
+  owner painted one terrain tile, placed a Pine Tree at `(118, 652)`, placed a
+  Unicorn at `(116, 648)`, saved, and closed cleanly. The working terrain
+  mirrors agreed, scenery increased from 344 to 345 entries, and NPCs increased
+  from 143 to 144 while the source snapshot and target remained unchanged.
+- Export `export-180549cf5c8e3874` reported the three changed logical authored
+  files. Import dry-run reported exactly four replacements: both terrain
+  mirrors plus scenery locations and NPC locations. Apply transaction
+  `20260714T150505201Z-04f1c74f54a1` retained verified before-state backups.
+- A completely fresh Builder workspace prepared from the imported target
+  loaded 345 scenery entries and 144 NPC entries. The owner visually confirmed
+  the terrain edit, Pine Tree, and Unicorn were present after restart, then the
+  client and server exited with code 0.
+- Undo dry-run reported the inverse four restorations. Rollback transaction
+  `20260714T150616964Z-c49f189f8550` restored the exact original terrain,
+  scenery, and NPC hashes, retained a safeguard copy of the imported state,
+  and linked to the now-reverted import receipt.
+- A completely fresh post-undo workspace loaded the original 344 scenery and
+  143 NPC entries. The owner visually confirmed all three edits were absent,
+  then the client and server again exited with code 0.
+- All three graphical runs retained persistent client/server logs and bounded
+  host samples. Minimum available memory stayed above 19 GiB, maximum sampled
+  discrete-GPU busy was 23%, and no swap, OOM, GPU reset, Java fatal error, or
+  desktop stall occurred. This does not prove the earlier hang's precise root
+  cause, but the Builder-only windowed/vsynced/single-GL-pipeline mitigation
+  completed the full acceptance sequence without recurrence.
+
+Phase 4 exit gate is satisfied.
+
 Exit gate: imported terrain/scenery/NPC edits load after target server/client
 restart, and rollback restores every original byte and original file absence.
 
