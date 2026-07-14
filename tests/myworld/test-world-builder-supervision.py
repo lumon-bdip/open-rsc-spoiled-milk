@@ -65,6 +65,16 @@ class WorldBuilderSupervisionTest(unittest.TestCase):
                                     + "\\\",\\\"port\\\":" + port + "}\\n").getBytes(StandardCharsets.UTF_8));
 
                             WorldBuilderProcessSupervisor supervisor = new WorldBuilderProcessSupervisor();
+                            List<String> realServer = WorldBuilderProcessSupervisor.defaultServerCommand(
+                                workspace);
+                            int classpathFlag = realServer.indexOf("-cp");
+                            require(classpathFlag >= 0 && classpathFlag + 1 < realServer.size(),
+                                "Builder server classpath argument");
+                            String serverClasspath = realServer.get(classpathFlag + 1);
+                            String expectedClasspath = String.join(System.getProperty("path.separator"),
+                                "lib/*", "core.jar", "plugins.jar");
+                            require(expectedClasspath.equals(serverClasspath),
+                                "dependency jars must precede the fat server jar for Java 9+");
                             List<String> realClient = WorldBuilderProcessSupervisor.defaultClientCommand(
                                 workspace, port);
                             require(realClient.contains("-Dsun.java2d.opengl=false"),

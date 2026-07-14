@@ -192,12 +192,12 @@ public final class WorldBuilderProcessSupervisor {
 		return workspace;
 	}
 
-	private static List<String> defaultServerCommand(Path workspace) {
+	static List<String> defaultServerCommand(Path workspace) {
 		String java = javaExecutable();
 		String credential = workspace.resolve(WorldBuilderRuntimePreparer.BUILDER_CREDENTIAL).toString();
 		String control = workspace.resolve("working/server/run/world-builder").toString();
 		String classpath = String.join(System.getProperty("path.separator"),
-			"core.jar", "plugins.jar", "lib/*");
+			"lib/*", "core.jar", "plugins.jar");
 		return Arrays.asList(
 			java,
 			"-Xms256m",
