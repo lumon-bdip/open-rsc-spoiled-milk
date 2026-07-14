@@ -222,6 +222,7 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
             ROOT / "server/src/com/openrsc/server/content/worldedit/WorldBuilderPlayerSession.java"
         ).read_text())
         self.assertIn("isAndroid() || !WorldBuilderClientProfile.isEnabled()", client)
+        self.assertIn("profile.applyConnection()", client)
         self.assertIn("this.autoLoginTimeout = 3", client)
 
 

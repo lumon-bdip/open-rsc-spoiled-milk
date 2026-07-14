@@ -26144,6 +26144,9 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		WorldBuilderClientProfile profile = WorldBuilderClientProfile.current();
+		// The initial server-config packet refreshes cached connection properties.
+		// Reassert the explicit local profile immediately before authenticated login.
+		profile.applyConnection();
 		this.autoLoginTimeout = 3;
 		this.login(-12, profile.credential(), profile.username(), false);
 		if (this.currentViewMode != GameMode.GAME) {
