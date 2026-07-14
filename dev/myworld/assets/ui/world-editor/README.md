@@ -22,3 +22,8 @@ source checkout.
 Brush size uses two state-specific source files, `tool-brush-1x1.png` and
 `tool-brush-3x3.png`. They occupy the same dock position and swap when the
 configured footprint changes.
+
+The dock arrow also uses two state-specific files. `toolbar-collapse.png`
+points up while the dock is open; `toolbar-expand.png` points down while it is
+collapsed. Terrain is entered through the active Brush control, and Rotate is
+presented inside Scenery, so neither needs a separate dock icon.

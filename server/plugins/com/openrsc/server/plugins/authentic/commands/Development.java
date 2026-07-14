@@ -9,6 +9,7 @@ import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
+import com.openrsc.server.content.worldedit.WorldEditorAccessService;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
@@ -24,7 +25,6 @@ import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
-import com.openrsc.server.net.rsc.struct.outgoing.WorldEditorStruct;
 import com.openrsc.server.plugins.authentic.quests.members.touristtrap.Tourist_Trap_Mechanism;
 import com.openrsc.server.plugins.authentic.skills.fishing.Fishing;
 import com.openrsc.server.plugins.authentic.skills.woodcutting.Woodcutting;
@@ -653,13 +653,7 @@ public final class Development implements CommandTrigger {
 	}
 
 	private void openWorldEditor(Player player) {
-		WorldEditorSessionManager.OpenResult result = player.getWorld().getServer().getWorldEditorSessions()
-			.open(player, player.getConfig().ALLOW_IN_GAME_WORLD_EDITOR && player.getClientVersion() > 10000);
-		if (!result.opened) { player.message(messagePrefix + result.message); return; }
-		WorldEditorStruct out = new WorldEditorStruct();
-		out.type = 1; out.sessionId = result.sessionId; out.sequence = result.nextSequence;
-		ActionSender.sendWorldEditor(player, out);
-		player.message(messagePrefix + "World editor session opened. Terrain painting uses an unsaved server draft.");
+		WorldEditorAccessService.open(player);
 	}
 
 	private void createNpc(Player player, String command, String[] args) {
@@ -1208,8 +1202,11 @@ public final class Development implements CommandTrigger {
 			WorldEditorTerrainSaveFiles.SaveResult terrainResult=terrainEdits==0?null:editor.saveTerrainDraft(player);
 			WorldSceneryEditFiles.SaveResult sceneryResult = null;
 			WorldNpcEditFiles.SaveResult npcResult = null;
-			String configDir = player.getWorld().getServer().getConfig().CONFIG_DIR;
+			com.openrsc.server.content.worldedit.WorldEditStorageContext storage = player.getWorld().getServer().getWorldEditStorage();
+			java.nio.file.Path configDir = storage.configDirectory();
 			if (!edits.isEmpty()) {
+				storage.validateWorkingAuthoredFile(WorldSceneryEditFiles.sceneryLocsPath(configDir));
+				storage.validateWorkingAuthoredFile(WorldSceneryEditFiles.sceneryRemovalsPath(configDir));
 				sceneryResult = WorldSceneryEditFiles.save(configDir, edits);
 				synchronized (PENDING_SCENERY_EDITS) {
 					for (WorldSceneryEditFiles.Edit edit : edits) {
@@ -1218,6 +1215,8 @@ public final class Development implements CommandTrigger {
 				}
 			}
 			if (!npcEdits.isEmpty()) {
+				storage.validateWorkingAuthoredFile(WorldNpcEditFiles.npcLocsPath(configDir));
+				storage.validateWorkingAuthoredFile(WorldNpcEditFiles.npcRemovalsPath(configDir));
 				npcResult = WorldNpcEditFiles.save(configDir, npcEdits);
 				synchronized (PENDING_NPC_EDITS) {
 					for (WorldNpcEditFiles.Edit edit : npcEdits) {

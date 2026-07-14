@@ -18,6 +18,13 @@ public class OpenRSC extends ORSCApplet {
 	private static final long serialVersionUID = 1L;
 
 	public static void main(String[] args) {
+		try {
+			WorldBuilderClientProfile.initializeFromSystemProperties().applyConnection();
+		} catch (IllegalArgumentException exception) {
+			System.err.println("World Builder startup refused: " + exception.getMessage());
+			System.exit(2);
+			return;
+		}
 		RendererRuntimeDefaults.apply();
 		RendererDiagnosticSession.start();
 		ClientRuntimeLogger.installUncaughtExceptionHandler();

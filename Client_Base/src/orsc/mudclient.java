@@ -606,6 +606,7 @@ public final class mudclient implements Runnable {
 	public int screenOffsetX;
 	public int screenOffsetY;
 	public boolean shiftPressed = false;
+	private int desktopKeyCode = -1;
 	//public int groupID = 100;
 	public boolean rendering;
 	public int bankItemsMax = 50;
@@ -16923,6 +16924,19 @@ public final class mudclient implements Runnable {
 		}
 	}
 
+	public void handleDesktopKeyPress(byte context, int key, int physicalKeyCode) {
+		desktopKeyCode = physicalKeyCode;
+		try {
+			handleKeyPress(context, key);
+		} finally {
+			desktopKeyCode = -1;
+		}
+	}
+
+	public int getDesktopKeyCode() {
+		return desktopKeyCode;
+	}
+
 	private void handleLoginScreenInput(int var1) {
 		try {
 			if (var1 != 2) {
@@ -22668,6 +22682,12 @@ public final class mudclient implements Runnable {
 		this.devClickTeleportMode = enabled && canUseClickTeleport();
 	}
 
+	public boolean shouldSuppressWorldEditorChatInput(int key) {
+		if (worldEditorInterface == null || !worldEditorInterface.isEditorOpen()) return false;
+		return worldEditorInterface.isKeyboardCaptureActive()
+			|| controlPressed && (key == 10 || key == 13);
+	}
+
 	private void drawWorldEditorBuildGridLegacy(Renderer3DFrame frame){
 		if(!WorldEditorBuildSettings.isEnabled()||ScaledWindow.isOpenGLPrimaryWindowEnabled()||frame==null)return;
 		int[] segments=worldEditorTerrainGrid.segments(frame.getWorldChunkFrame(),frame.getActivePlane());
@@ -26133,8 +26153,28 @@ public final class mudclient implements Runnable {
 			if (C_CUSTOM_UI) {
 				repositionCustomUI();
 			}
+			startWorldBuilderSession();
 		} catch (RuntimeException var9) {
 			throw GenUtil.makeThrowable(var9, "client.KC(" + var1 + ')');
+		}
+	}
+
+	private void startWorldBuilderSession() {
+		if (isAndroid() || !WorldBuilderClientProfile.isEnabled() || this.errorLoadingData) {
+			return;
+		}
+		WorldBuilderClientProfile profile = WorldBuilderClientProfile.current();
+		// The initial server-config packet refreshes cached connection properties.
+		// Reassert the explicit local profile immediately before authenticated login.
+		profile.applyConnection();
+		this.autoLoginTimeout = 3;
+		this.login(-12, profile.credential(), profile.username(), false);
+		if (this.currentViewMode != GameMode.GAME) {
+			this.autoLoginTimeout = 0;
+			this.password = "";
+			this.setUsername(profile.username());
+			this.showLoginScreenStatus("World Builder could not start.",
+				"Close it and check the local runtime logs.");
 		}
 	}
 

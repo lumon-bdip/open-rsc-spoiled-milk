@@ -338,7 +338,8 @@ public final class WorldPopulator {
 					}
 					loadNpcLocs(getWorld().getServer().getConfig().CONFIG_DIR + "/defs/locs/NpcLocsOther.json");
 					if (getWorld().getServer().getConfig().WANT_MYWORLD) {
-						loadNpcLocs(getWorld().getServer().getConfig().CONFIG_DIR + "/defs/locs/MyWorldNpcLocs.json");
+						loadNpcLocs(WorldNpcEditFiles.npcLocsPath(
+							getWorld().getServer().getWorldEditStorage().configDirectory()).toString());
 					}
 				}
 				return;
@@ -466,7 +467,7 @@ public final class WorldPopulator {
 
 		try {
 			Set<String> removals = WorldSceneryEditFiles.readSceneryRemovalKeys(
-				WorldSceneryEditFiles.sceneryRemovalsPath(getWorld().getServer().getConfig().CONFIG_DIR)
+				WorldSceneryEditFiles.sceneryRemovalsPath(getWorld().getServer().getWorldEditStorage().configDirectory())
 			);
 			if (removals.isEmpty()) {
 				return;
@@ -486,7 +487,7 @@ public final class WorldPopulator {
 			return;
 		}
 		loadOptionalGameObjLocs(
-			WorldSceneryEditFiles.sceneryLocsPath(getWorld().getServer().getConfig().CONFIG_DIR).toString(),
+			WorldSceneryEditFiles.sceneryLocsPath(getWorld().getServer().getWorldEditStorage().configDirectory()).toString(),
 			LocType.Scenery
 		);
 	}
@@ -517,7 +518,7 @@ public final class WorldPopulator {
 		}
 		try {
 			Set<String> removals = WorldNpcEditFiles.readNpcRemovalKeys(
-				WorldNpcEditFiles.npcRemovalsPath(getWorld().getServer().getConfig().CONFIG_DIR)
+				WorldNpcEditFiles.npcRemovalsPath(getWorld().getServer().getWorldEditStorage().configDirectory())
 			);
 			if (removals.isEmpty()) {
 				return;

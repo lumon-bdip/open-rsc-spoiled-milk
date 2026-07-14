@@ -84,6 +84,11 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 		return keyHandler;
 	}
 
+	boolean isWorldEditorShortcutMode() {
+		return mudclient != null && mudclient.worldEditorInterface != null
+			&& mudclient.worldEditorInterface.isKeyboardShortcutMode();
+	}
+
 	private static int getClientMouseX(MouseEvent e) {
 		return e.getX() - mudclient.screenOffsetX;
 	}
@@ -1425,7 +1430,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 					return;
 				}
 				boolean hitInputFilter = false;
-				mudclient.handleKeyPress((byte) 126, (int) keyChar);
+				mudclient.handleDesktopKeyPress((byte) 126, (int) keyChar, keyCode);
 				mudclient.lastMouseAction = 0;
 
 				if (keyCode == 112) mudclient.interlace = !mudclient.interlace;
@@ -1456,23 +1461,23 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 						break;
 					}
 
-				if (hitInputFilter && mudclient.inputTextCurrent.length() < 20)
+				if (hitInputFilter && !mudclient.shouldSuppressWorldEditorChatInput(keyCode) && mudclient.inputTextCurrent.length() < 20)
 					mudclient.inputTextCurrent = mudclient.inputTextCurrent + keyChar;
 
-				if (hitInputFilter && mudclient.chatMessageInput.length() < 80 && !mudclient.getIsSleeping())
+				if (hitInputFilter && !mudclient.shouldSuppressWorldEditorChatInput(keyCode) && mudclient.chatMessageInput.length() < 80 && !mudclient.getIsSleeping())
 					mudclient.chatMessageInput = mudclient.chatMessageInput + keyChar;
 
 				// Backspace
-				if (keyChar == '\b' && mudclient.inputTextCurrent.length() > 0)
+				if (keyChar == '\b' && !mudclient.shouldSuppressWorldEditorChatInput(keyCode) && mudclient.inputTextCurrent.length() > 0)
 					mudclient.inputTextCurrent = mudclient.inputTextCurrent.substring(0,
 						mudclient.inputTextCurrent.length() - 1);
 
 				// Backspace
-				if (keyChar == '\b' && mudclient.chatMessageInput.length() > 0)
+				if (keyChar == '\b' && !mudclient.shouldSuppressWorldEditorChatInput(keyCode) && mudclient.chatMessageInput.length() > 0)
 					mudclient.chatMessageInput = mudclient.chatMessageInput.substring(0,
 						mudclient.chatMessageInput.length() - 1);
 
-				if (keyChar == '\n' || keyChar == '\r') {
+				if ((keyChar == '\n' || keyChar == '\r') && !mudclient.shouldSuppressWorldEditorChatInput(keyCode)) {
 					mudclient.inputTextFinal = mudclient.inputTextCurrent;
 					mudclient.chatMessageInputCommit = mudclient.chatMessageInput;
 				}

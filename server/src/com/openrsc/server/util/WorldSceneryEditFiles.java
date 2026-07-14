@@ -102,11 +102,19 @@ public final class WorldSceneryEditFiles {
 	}
 
 	public static Path sceneryLocsPath(String configDir) {
-		return Paths.get(configDir, LOCS_RELATIVE_PATH);
+		return sceneryLocsPath(Paths.get(configDir));
+	}
+
+	public static Path sceneryLocsPath(Path configDir) {
+		return configDir.resolve(LOCS_RELATIVE_PATH).normalize();
 	}
 
 	public static Path sceneryRemovalsPath(String configDir) {
-		return Paths.get(configDir, REMOVALS_RELATIVE_PATH);
+		return sceneryRemovalsPath(Paths.get(configDir));
+	}
+
+	public static Path sceneryRemovalsPath(Path configDir) {
+		return configDir.resolve(REMOVALS_RELATIVE_PATH).normalize();
 	}
 
 	public static String sceneryKey(int x, int y) {
@@ -134,6 +142,10 @@ public final class WorldSceneryEditFiles {
 	}
 
 	public static SaveResult save(String configDir, Collection<Edit> edits) throws IOException {
+		return save(Paths.get(configDir), edits);
+	}
+
+	public static SaveResult save(Path configDir, Collection<Edit> edits) throws IOException {
 		Path sceneryLocsPath = sceneryLocsPath(configDir);
 		Path removalsPath = sceneryRemovalsPath(configDir);
 
