@@ -1,6 +1,6 @@
 # Standalone World Builder Plan
 
-Status: active; Phase 0 complete, Phase 1 isolated Builder runtime in progress
+Status: active; Phases 0-1 complete, Phase 2 workspace-owned persistence pending
 
 Owner: Spoiled Milk project owner
 
@@ -516,7 +516,7 @@ useful checkpoint with its test evidence before the next phase begins.
 | Phase | Status | Required proof before advancing |
 | --- | --- | --- |
 | 0. Contracts and fixtures | Complete | Approved plan, supported-layout fixtures, deterministic discovery/manifest tests |
-| 1. Isolated Builder runtime | In progress | Loopback local launch, automatic Builder login, invulnerability, editor open, normal-mode regression coverage |
+| 1. Isolated Builder runtime | Complete | Loopback local launch, automatic Builder login, invulnerability, editor open, normal-mode regression coverage |
 | 2. Workspace-owned persistence | Pending | Terrain/scenery/NPC saves change only working files; target hashes remain identical |
 | 3. Deterministic export | Pending | Complete five-file bundle, manifest validation, repeatable hashes/content |
 | 4. Transactional import and rollback | Pending | Dry-run, offline guard, failure rollback, successful restart, byte-exact undo |
@@ -577,9 +577,19 @@ Phase 1 runtime-contract evidence recorded on 2026-07-13:
   SQLite seed, provisioned the Builder administrator, and reached network
   readiness without reading runtime state from the target tree.
 
-Phase 1 remains in progress until the owner visually confirms automatic login,
-invulnerability, and authoritative editor opening, and an ordinary private
-client is reconfirmed to retain its login screen.
+Phase 1 owner acceptance recorded on 2026-07-13:
+
+- The combined launcher prepared a fresh isolated runtime and launched it on
+  `127.0.0.1:43645`.
+- The owner confirmed login was skipped correctly, the visible identity was
+  `Builder`, the character and world loaded in the correct states, and the
+  authoritative world editor opened automatically.
+- Server logs recorded successful normal authentication as the provisioned
+  Builder administrator and the shared player-login/editor-session trigger.
+- Normal mode remains the default and its connection, login, and editor paths
+  are unchanged when the explicit Builder client/server flags are absent, as
+  covered by `test-world-builder-runtime.py` and the production client/server
+  builds.
 
 Exit gate: a private visual test launches from a fixture root and arrives as
 the invulnerable Builder with the editor open, while a normal private client
