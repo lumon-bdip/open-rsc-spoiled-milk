@@ -1,5 +1,7 @@
 package com.openrsc.worldbuilder;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -38,6 +40,12 @@ public final class WorldBuilderCli {
 		}
 		if ("undo-import".equals(args[0])) {
 			return undoImport(args);
+		}
+		if ("export-import".equals(args[0])) {
+			return exportImport(args);
+		}
+		if ("undo-latest-import".equals(args[0])) {
+			return undoLatestImport(args);
 		}
 		if (!"discover".equals(args[0])) {
 			System.err.println("ERROR: Unsupported World Builder command: " + args[0]);
@@ -101,12 +109,15 @@ public final class WorldBuilderCli {
 				return 2;
 			}
 		}
-		if (workspace == null || port == 0) {
-			System.err.println("ERROR: run requires --workspace and --port.");
+		if (workspace == null || (launchArguments && port == 0)) {
+			System.err.println("ERROR: run requires --workspace; launch also requires --port.");
 			usage();
 			return 2;
 		}
 		try {
+			if (port == 0) {
+				port = WorldBuilderProcessSupervisor.readPreparedPort(workspace);
+			}
 			System.out.println("Starting isolated World Builder. Logs: "
 				+ workspace.toAbsolutePath().normalize().resolve("logs"));
 			int result = new WorldBuilderProcessSupervisor().runPrepared(workspace, port);
@@ -127,6 +138,108 @@ public final class WorldBuilderCli {
 			System.err.println("ERROR: World Builder launch failed: " + failure.getMessage());
 			return 4;
 		}
+	}
+
+	private static int exportImport(String[] args) {
+		Path workspace = null;
+		Path target = null;
+		String builderVersion = null;
+		String sourceCommit = null;
+		for (int index = 1; index < args.length; index++) {
+			String argument = args[index];
+			if ("--workspace".equals(argument) && index + 1 < args.length) {
+				workspace = Paths.get(args[++index]);
+			} else if ("--target-root".equals(argument) && index + 1 < args.length) {
+				target = Paths.get(args[++index]);
+			} else if ("--builder-version".equals(argument) && index + 1 < args.length) {
+				builderVersion = args[++index];
+			} else if ("--source-commit".equals(argument) && index + 1 < args.length) {
+				sourceCommit = args[++index];
+			} else {
+				System.err.println("ERROR: Unknown or incomplete argument: " + argument);
+				usage();
+				return 2;
+			}
+		}
+		if (workspace == null || target == null || builderVersion == null || sourceCommit == null) {
+			System.err.println("ERROR: export-import requires --workspace, --target-root, "
+				+ "--builder-version, and --source-commit.");
+			usage();
+			return 2;
+		}
+		try {
+			WorldBuilderExporter.ExportResult exported = new WorldBuilderExporter().export(
+				workspace, builderVersion, sourceCommit);
+			System.out.print(exported.toJson());
+			if (exported.exportDirectory == null) {
+				System.out.println("No saved map changes are available to import.");
+				return 0;
+			}
+			WorldBuilderImporter importer = new WorldBuilderImporter();
+			System.out.println("Import preview:");
+			System.out.print(importer.preview(workspace, exported.exportDirectory, target).toJson());
+			if (!confirm("IMPORT", "Type IMPORT to install these map changes, or press Enter to cancel: ")) {
+				System.out.println("Import cancelled; the target private server was not changed.");
+				return 0;
+			}
+			System.out.print(importer.apply(workspace, exported.exportDirectory, target).toJson());
+			return 0;
+		} catch (WorldBuilderDiscoveryException refusal) {
+			System.err.println("ERROR: " + refusal.getMessage());
+			return 3;
+		} catch (Exception failure) {
+			System.err.println("ERROR: Could not export and import Builder changes: "
+				+ failure.getMessage());
+			return 4;
+		}
+	}
+
+	private static int undoLatestImport(String[] args) {
+		Path workspace = null;
+		Path target = null;
+		for (int index = 1; index < args.length; index++) {
+			String argument = args[index];
+			if ("--workspace".equals(argument) && index + 1 < args.length) {
+				workspace = Paths.get(args[++index]);
+			} else if ("--target-root".equals(argument) && index + 1 < args.length) {
+				target = Paths.get(args[++index]);
+			} else {
+				System.err.println("ERROR: Unknown or incomplete argument: " + argument);
+				usage();
+				return 2;
+			}
+		}
+		if (workspace == null || target == null) {
+			System.err.println(
+				"ERROR: undo-latest-import requires --workspace and --target-root.");
+			usage();
+			return 2;
+		}
+		try {
+			WorldBuilderImporter importer = new WorldBuilderImporter();
+			System.out.println("Undo preview:");
+			System.out.print(importer.previewRollback(workspace, target).toJson());
+			if (!confirm("UNDO", "Type UNDO to restore the previous map files, or press Enter to cancel: ")) {
+				System.out.println("Undo cancelled; the target private server was not changed.");
+				return 0;
+			}
+			System.out.print(importer.rollback(workspace, target).toJson());
+			return 0;
+		} catch (WorldBuilderDiscoveryException refusal) {
+			System.err.println("ERROR: " + refusal.getMessage());
+			return 3;
+		} catch (Exception failure) {
+			System.err.println("ERROR: Could not undo the latest Builder import: "
+				+ failure.getMessage());
+			return 4;
+		}
+	}
+
+	private static boolean confirm(String expected, String prompt) throws Exception {
+		System.out.print(prompt);
+		System.out.flush();
+		String response = new BufferedReader(new InputStreamReader(System.in, "UTF-8")).readLine();
+		return expected.equals(response == null ? "" : response.trim());
 	}
 
 	private static int export(String[] args) {
@@ -311,7 +424,7 @@ public final class WorldBuilderCli {
 			+ " --workspace <path> --port <port>"
 			+ " [--config server/myworld.conf] [--runtime-config server/myworld.conf]"
 			+ "\n  WorldBuilderCli launch <same arguments as prepare>"
-			+ "\n  WorldBuilderCli run --workspace <prepared-path> --port <port>");
+			+ "\n  WorldBuilderCli run --workspace <prepared-path> [--port <port>]");
 		System.err.println("  WorldBuilderCli export --workspace <prepared-path>"
 			+ " --builder-version <version> --source-commit <40-hex>");
 		System.err.println("  WorldBuilderCli import --workspace <prepared-path>"
@@ -319,5 +432,10 @@ public final class WorldBuilderCli {
 			+ " (--dry-run | --apply)");
 		System.err.println("  WorldBuilderCli undo-import --workspace <prepared-path>"
 			+ " --target-root <private-server-root> (--dry-run | --apply)");
+		System.err.println("  WorldBuilderCli export-import --workspace <prepared-path>"
+			+ " --target-root <private-server-root> --builder-version <version>"
+			+ " --source-commit <40-hex>");
+		System.err.println("  WorldBuilderCli undo-latest-import --workspace <prepared-path>"
+			+ " --target-root <private-server-root>");
 	}
 }

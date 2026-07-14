@@ -28,6 +28,8 @@ public final class WorldBuilderProcessSupervisor {
 	private static final long SHUTDOWN_TIMEOUT_MILLIS = 20_000L;
 	private static final Pattern SOURCE_FINGERPRINT = Pattern.compile(
 		"\\\"sourceFingerprintSha256\\\"\\s*:\\s*\\\"([0-9a-f]{64})\\\"");
+	private static final Pattern RUNTIME_PORT = Pattern.compile(
+		"\\\"port\\\"\\s*:\\s*([0-9]+)");
 
 	public int runPrepared(Path requestedWorkspace, int port)
 		throws IOException, WorldBuilderDiscoveryException, InterruptedException {
@@ -181,6 +183,12 @@ public final class WorldBuilderProcessSupervisor {
 			}
 		}
 		WorldBuilderSourceSnapshot.verify(workspace);
+		int preparedPort = readPreparedPort(workspace);
+		if (port != preparedPort) {
+			throw new WorldBuilderDiscoveryException(
+				"Requested Builder port " + port + " does not match prepared project port "
+					+ preparedPort + ".");
+		}
 		return workspace;
 	}
 
@@ -243,6 +251,34 @@ public final class WorldBuilderProcessSupervisor {
 		} catch (IOException failure) {
 			throw new IllegalStateException("Prepared World Builder source revision is invalid", failure);
 		}
+	}
+
+	static int readPreparedPort(Path requestedWorkspace)
+		throws IOException, WorldBuilderDiscoveryException {
+		Path workspace = requestedWorkspace.toAbsolutePath().normalize();
+		Path metadata = workspace.resolve("runtime.json");
+		if (!Files.isRegularFile(metadata, LinkOption.NOFOLLOW_LINKS)
+			|| Files.isSymbolicLink(metadata) || Files.size(metadata) > 16_384L) {
+			throw new WorldBuilderDiscoveryException(
+				"Prepared World Builder runtime metadata is missing or unsafe.");
+		}
+		Matcher matcher = RUNTIME_PORT.matcher(
+			new String(Files.readAllBytes(metadata), StandardCharsets.UTF_8));
+		if (!matcher.find()) {
+			throw new WorldBuilderDiscoveryException(
+				"Prepared World Builder runtime port is missing.");
+		}
+		int port;
+		try {
+			port = Integer.parseInt(matcher.group(1));
+		} catch (NumberFormatException invalid) {
+			port = 0;
+		}
+		if (port < 1 || port >= 65535) {
+			throw new WorldBuilderDiscoveryException(
+				"Prepared World Builder runtime port is invalid.");
+		}
+		return port;
 	}
 
 	private static String javaExecutable() {

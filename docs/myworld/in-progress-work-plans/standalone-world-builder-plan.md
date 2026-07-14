@@ -1,6 +1,6 @@
 # Standalone World Builder Plan
 
-Status: active; Phases 0-3 complete, Phase 4 transactional import pending
+Status: active; Phases 0-4 complete, Phase 5 standalone packaging active
 
 Owner: Spoiled Milk project owner
 
@@ -519,8 +519,8 @@ useful checkpoint with its test evidence before the next phase begins.
 | 1. Isolated Builder runtime | Complete | Loopback local launch, automatic Builder login, invulnerability, editor open, normal-mode regression coverage |
 | 2. Workspace-owned persistence | Complete | Terrain/scenery/NPC saves change only working files; target hashes remain identical |
 | 3. Deterministic export | Complete | Complete five-file bundle, manifest validation, repeatable hashes/content |
-| 4. Transactional import and rollback | Pending | Dry-run, offline guard, failure rollback, successful restart, byte-exact undo |
-| 5. Standalone release packaging | Pending | Clean Java/Windows artifacts, fresh-install smoke tests, attribution and checksum gates |
+| 4. Transactional import and rollback | Complete | Dry-run, offline guard, failure rollback, successful restart, byte-exact undo |
+| 5. Standalone release packaging | Active | Clean Java/Windows artifacts, fresh-install smoke tests, attribution and checksum gates |
 | 6. Visual acceptance and documentation | Pending | Owner-verified editing/import/revert flow and final user documentation |
 
 ### Phase 0: Contracts and fixtures
@@ -799,14 +799,48 @@ restart, and rollback restores every original byte and original file absence.
 
 ### Phase 5: Standalone release packaging
 
-- [ ] Add a dedicated manager-only packaging script and packaging tests.
-- [ ] Package compiled client, server, launcher, definitions, assets, and docs.
-- [ ] Provide Java and Windows-x64 launch/import/rollback wrappers.
-- [ ] Exclude all generated project and credential state.
-- [ ] Verify bundled Java metadata and legal files.
+- [x] Add a dedicated manager-only packaging script and packaging tests.
+- [x] Package compiled client, server, launcher, definitions, assets, and docs.
+- [x] Provide Java and Windows-x64 launch/import/rollback wrappers.
+- [x] Exclude all generated project and credential state.
+- [x] Verify bundled Java metadata and legal files.
 - [ ] Verify asset redistribution and attribution.
-- [ ] Generate checksums and source provenance files.
+- [x] Generate checksums and source provenance files.
 - [ ] Test from clean extracted archives outside the repository.
+
+Phase 5 foundation evidence recorded on 2026-07-14:
+
+- `package-world-builder-release.sh` is manager-main-only, requires clean
+  published source, builds the client/server/tools, validates Java 17+ runtime
+  metadata and legal files, checks protocol and required jar entries, stages
+  separate generic-Java and Windows-x64 archives, and generates SHA-256 sums.
+- Both archives contain the launch/import/undo scripts, compiled client,
+  server, definitions, isolated seed database, tooling schemas, documentation,
+  source provenance, licenses, notices, and asset records. Generated
+  workspaces, credentials, databases, identities, endpoints, logs, exports,
+  receipts, and backups are rejected from staging.
+- Shell and Windows wrappers locate the parent private server, create or reopen
+  the isolated workspace, and delegate import/undo confirmation to Java rather
+  than parsing JSON in platform scripts. Existing projects read their recorded
+  port from strict runtime metadata.
+- `export-import` exports saved data, prints the authoritative preview, and
+  requires exact `IMPORT` confirmation. `undo-latest-import` prints the
+  authoritative rollback preview and requires exact `UNDO`; cancellation of
+  either makes no target changes.
+- `python3 tests/myworld/test-world-builder-release.py` (3 tests) creates both
+  archive types from a clean manager-main fixture, verifies archive contents,
+  checksums, exclusions, Windows runtime files, substituted provenance, and
+  runs every generic shell wrapper after extraction from outside the source
+  repository using a captured Java boundary.
+- `python3 tests/myworld/test-world-builder-import.py` (13 tests) now includes
+  human-workflow preview, cancellation, confirmed import, cancelled undo, and
+  byte-exact confirmed undo coverage. Supervisor, export, preparation, and
+  working-persistence suites also pass with the packaged workflow changes.
+- The real release remains deliberately blocked because
+  `dev/myworld/assets/ui/world-editor/CREDITS.md` still labels the editor icon
+  source and redistribution terms as pending. The packager refuses that state
+  even when `--assets-cleared` is supplied. After provenance is resolved, a
+  real clean-extraction launch/import/undo smoke test remains required.
 
 Exit gate: a non-development machine or clean VM can perform the complete
 workflow without Git, Ant, source code, or manual account creation.

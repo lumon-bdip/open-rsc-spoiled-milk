@@ -139,6 +139,16 @@ class WorldBuilderImportTest(unittest.TestCase):
             timeout=20,
         )
 
+    def run_cli_input(self, user_input: str, *args):
+        return subprocess.run(
+            ["java", "-cp", str(self.classes), MAIN_CLASS, *map(str, args)],
+            cwd=ROOT,
+            text=True,
+            input=user_input,
+            capture_output=True,
+            timeout=20,
+        )
+
     def run_cli_with_property(self, property_value, *args):
         return subprocess.run(
             [
@@ -319,6 +329,50 @@ class WorldBuilderImportTest(unittest.TestCase):
                 self.assertEqual(before_bytes[relative], (target / relative).read_bytes())
             self.assertEqual(config_before, (target / "server/myworld.conf").read_bytes())
             self.assertFalse(any(target.glob(".world-builder-import-staging-*")))
+
+    def test_human_workflows_preview_cancel_apply_and_undo(self):
+        with tempfile.TemporaryDirectory(prefix="world-builder-human-workflow-") as temp:
+            target, workspace, export_dir = self.prepared_export(Path(temp))
+            before = self.snapshot(target)
+            before_bytes = {
+                path.relative_to(target).as_posix(): path.read_bytes()
+                for path in target.rglob("*") if path.is_file()
+            }
+            command = (
+                "export-import", "--workspace", workspace,
+                "--target-root", target, "--builder-version", "v-test",
+                "--source-commit", COMMIT,
+            )
+
+            cancelled = self.run_cli_input("\n", *command)
+            self.assertEqual(0, cancelled.returncode, cancelled.stderr)
+            self.assertIn('"status": "ready"', cancelled.stdout)
+            self.assertIn("Import cancelled", cancelled.stdout)
+            self.assertEqual(before, self.snapshot(target))
+
+            imported = self.run_cli_input("IMPORT\n", *command)
+            self.assertEqual(0, imported.returncode, imported.stderr)
+            self.assertIn('"status": "imported"', imported.stdout)
+            installed = self.snapshot(target)
+            self.assertNotEqual(before, installed)
+
+            undo_command = (
+                "undo-latest-import", "--workspace", workspace,
+                "--target-root", target,
+            )
+            undo_cancelled = self.run_cli_input("\n", *undo_command)
+            self.assertEqual(0, undo_cancelled.returncode, undo_cancelled.stderr)
+            self.assertIn("Undo cancelled", undo_cancelled.stdout)
+            self.assertEqual(installed, self.snapshot(target))
+
+            undone = self.run_cli_input("UNDO\n", *undo_command)
+            self.assertEqual(0, undone.returncode, undone.stderr)
+            self.assertIn('"status": "rolled-back"', undone.stdout)
+            after_undo_bytes = {
+                path.relative_to(target).as_posix(): path.read_bytes()
+                for path in target.rglob("*") if path.is_file()
+            }
+            self.assertEqual(before_bytes, after_undo_bytes)
 
     def test_injected_partial_failure_restores_every_target_byte(self):
         for fail_after in (1, 2, 3):

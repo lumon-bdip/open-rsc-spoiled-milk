@@ -32,7 +32,9 @@ java -jar output/world-builder-tools/world-builder-tools.jar launch \
 ```
 
 `prepare` accepts the same arguments but stops after staging. `run` starts an
-existing prepared workspace with `--workspace` and `--port`.
+existing prepared workspace with `--workspace`; it reads the recorded port
+from `runtime.json`. An explicit matching `--port` remains available for
+diagnostics.
 
 Preparation never replaces an existing workspace. It records the target's
 verified authored files under immutable-by-contract `<workspace>/source` and
@@ -103,6 +105,27 @@ Use `--apply` only after reviewing the undo. Undo refuses if any installed file
 changed after import, safeguards the installed state, restores the exact prior
 state, and records a successful rollback receipt. There is intentionally no
 force option.
+
+Packaged launchers use two human-oriented commands so shell and Windows batch
+files do not parse transaction JSON or duplicate safety logic:
+
+```bash
+java -jar world-builder-tools.jar export-import \
+  --workspace /path/to/world-builder-project \
+  --target-root /path/to/private-server \
+  --builder-version v0.1.0 \
+  --source-commit 0123456789abcdef0123456789abcdef01234567
+
+java -jar world-builder-tools.jar undo-latest-import \
+  --workspace /path/to/world-builder-project \
+  --target-root /path/to/private-server
+```
+
+The first command exports saved working data, prints the full import preview,
+and requires the exact confirmation `IMPORT`. The second prints the rollback
+preview and requires `UNDO`. Empty input or any other response cancels without
+changing the target. Both retain the same offline, revision, backup, receipt,
+and changed-after-import protections as the lower-level commands.
 
 The manifest schemas in `schema/` are release contracts. Add a new schema
 version instead of changing the meaning of an existing version.

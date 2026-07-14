@@ -62,7 +62,7 @@ class WorldBuilderSupervisionTest(unittest.TestCase):
                             Files.write(workspace.resolve("runtime.json"),
                                 ("{\\\"sourceFingerprintSha256\\\":\\\""
                                     + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-                                    + "\\\"}\\n").getBytes(StandardCharsets.UTF_8));
+                                    + "\\\",\\\"port\\\":" + port + "}\\n").getBytes(StandardCharsets.UTF_8));
 
                             WorldBuilderProcessSupervisor supervisor = new WorldBuilderProcessSupervisor();
                             List<String> realClient = WorldBuilderProcessSupervisor.defaultClientCommand(
@@ -75,6 +75,8 @@ class WorldBuilderSupervisionTest(unittest.TestCase):
                                 "Builder must start with vsync enabled");
                             require(!realClient.contains("-Dsun.java2d.opengl=true"),
                                 "unsafe Java2D OpenGL launch flag");
+                            require(WorldBuilderProcessSupervisor.readPreparedPort(workspace) == port,
+                                "prepared runtime port");
                             List<String> server = command(classes, "FakeServer", workspace, port);
                             List<String> client = command(classes, "FakeClient", workspace, port);
                             int first = supervisor.superviseWithCommands(workspace, port, server, client, 5000L);
