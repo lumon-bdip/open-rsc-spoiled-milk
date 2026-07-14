@@ -1,6 +1,7 @@
 package orsc.graphics.three;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -123,6 +124,9 @@ public final class Renderer3DWorldChunkFrame {
 		private final boolean objectChunk;
 		private final int chunkRole;
 		private final long signature;
+		private int worldEditorTerrainGridAxis;
+		private int[] worldEditorTerrainGridHeights = new int[0];
+		private int worldEditorTerrainGridSignature;
 
 		public ChunkMesh(
 			int plane,
@@ -1010,6 +1014,35 @@ public final class Renderer3DWorldChunkFrame {
 
 		public int getTerrainTriangles() {
 			return terrainTriangles;
+		}
+
+		void setWorldEditorTerrainGrid(int axis, int[] heights) {
+			long expected = (long) axis * (long) axis;
+			if (objectChunk || axis < 2 || heights == null || expected != heights.length) {
+				worldEditorTerrainGridAxis = 0;
+				worldEditorTerrainGridHeights = new int[0];
+				worldEditorTerrainGridSignature = 0;
+				return;
+			}
+			worldEditorTerrainGridAxis = axis;
+			worldEditorTerrainGridHeights = heights.clone();
+			worldEditorTerrainGridSignature = 31 * axis + Arrays.hashCode(worldEditorTerrainGridHeights);
+		}
+
+		public boolean hasWorldEditorTerrainGrid() {
+			return worldEditorTerrainGridAxis >= 2;
+		}
+
+		public int getWorldEditorTerrainGridAxis() {
+			return worldEditorTerrainGridAxis;
+		}
+
+		public int getWorldEditorTerrainGridHeight(int index) {
+			return worldEditorTerrainGridHeights[index];
+		}
+
+		public int getWorldEditorTerrainGridSignature() {
+			return worldEditorTerrainGridSignature;
 		}
 
 		public int getWallTriangles() {

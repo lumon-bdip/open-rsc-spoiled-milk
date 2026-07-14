@@ -32,7 +32,8 @@ public final class WorldEditorTerrainStrokeHarness {
             require(unique.contains((100 + dx) + ":" + (200 + dy)), "3x3 is not centered and complete");
 
         rejects(() -> WorldEditorTerrainStroke.coordinates(0, 0, 2, 2), "unsupported brush was accepted");
-        rejects(() -> WorldEditorTerrainStroke.coordinates(0, 0, 3, 16), "3x3 wall stroke was accepted");
+        require(WorldEditorTerrainStroke.coordinates(0, 0, 3, 16).length == 9,
+            "3x3 wall stroke was rejected");
 
         boolean[] before = {false, true, false, true};
         boolean[] after = {true, false, true, true};

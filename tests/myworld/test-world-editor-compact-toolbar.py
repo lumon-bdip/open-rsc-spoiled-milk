@@ -211,6 +211,10 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
         self.assertIn("if(click!=1&&click!=2)return false", ui)
         self.assertIn("if(click==2)toggleTerrainField(field)", ui)
         self.assertIn("else openTerrainTool(field)", ui)
+        self.assertIn("else toggleBrushFlyout()", ui)
+        self.assertIn("viewed?0x526f24:selected?0x365b82", ui)
+        self.assertIn("int strokeSize=terrainBrushSize", ui)
+        self.assertNotIn("mask&112", ui)
         self.assertIn("if(click==2)return true", ui)
         self.assertIn("closeUnpinnedAfterWorldAction", ui)
         self.assertIn('button(x+278,y,82,"Compact")', ui)
@@ -293,6 +297,15 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                             plane, 0, 0, 0, 0, coordinates, null, null, null,
                             indices, textures, new int[] {0,0}, kinds, 2, 0, 0, object, 91L + plane);
                     }
+                    private static Renderer3DWorldChunkFrame.ChunkMesh completeGridChunk() {
+                        Renderer3DWorldChunkFrame.ChunkMesh chunk = chunk(0, false);
+                        chunk.setWorldEditorTerrainGrid(3, new int[] {
+                            0, -1, -2,
+                            -3, -4, -5,
+                            -6, -7, -8
+                        });
+                        return chunk;
+                    }
                     public static void main(String[] args) {
                         require(!WorldEditorBuildSettings.isEnabled());
                         WorldEditorBuildSettings.setEnabled(true);
@@ -310,6 +323,13 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                             require((dx == 128 && dz == 0) || (dx == 0 && dz == 128));
                         }
                         require(grid.segments(frame, 2).length == 0);
+                        Renderer3DWorldChunkFrame completeFrame = Renderer3DWorldChunkFrame.fromChunks(
+                            Arrays.asList(completeGridChunk()));
+                        int[] complete = grid.segments(completeFrame, 0);
+                        require(complete.length == 72);
+                        boolean includesVoidHeight = false;
+                        for (int coordinate : complete) if (coordinate == -4) includesVoidHeight = true;
+                        require(includesVoidHeight);
                         System.out.println("world-editor-grid-ok");
                     }
                 }
@@ -331,6 +351,9 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
         self.assertIn("gl.glEnable(gl.GL_DEPTH_TEST)", chunk_renderer)
         self.assertIn("chunk.getTriangleModelKind(triangle) != Renderer3DModelKind.TERRAIN", grid)
         self.assertIn("chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD", grid)
+        self.assertIn("chunk.hasWorldEditorTerrainGrid()", grid)
+        self.assertIn("worldEditorTerrainGridHeights(product.terrainInput)",
+                      (CLIENT / "orsc/graphics/three/World.java").read_text())
         self.assertNotIn("RendererGeometrySettings.Mode.WIRE", grid)
 
 

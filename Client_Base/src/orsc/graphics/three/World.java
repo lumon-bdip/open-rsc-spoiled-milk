@@ -836,7 +836,20 @@ public final class World {
 		if (product == null || !product.hasTerrainIfNeeded(requireTerrain) || product.gpuChunkMesh == null) {
 			return;
 		}
-		chunks.add(product.gpuChunkMesh.toRenderer3DWorldChunkMesh());
+		Renderer3DWorldChunkFrame.ChunkMesh chunk = product.gpuChunkMesh.toRenderer3DWorldChunkMesh();
+		if (requireTerrain && product.terrainInput != null) {
+			chunk.setWorldEditorTerrainGrid(LOCAL_TILE_COUNT, worldEditorTerrainGridHeights(product.terrainInput));
+		}
+		chunks.add(chunk);
+	}
+
+	private static int[] worldEditorTerrainGridHeights(TerrainModelInput input) {
+		int[] heights = new int[input.vertices.length];
+		for (int index = 0; index < heights.length; index++) {
+			TerrainVertexInput vertex = input.vertices[index];
+			heights[index] = vertex == null ? 0 : vertex.y;
+		}
+		return heights;
 	}
 
 	private static WorldGpuChunkMesh buildWorldGpuChunkMesh(
