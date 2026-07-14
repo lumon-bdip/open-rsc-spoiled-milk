@@ -1,6 +1,6 @@
 # Standalone World Builder Plan
 
-Status: active; Phases 0-1 complete, Phase 2 implemented and awaiting owner visual acceptance
+Status: active; Phases 0-2 complete, Phase 3 deterministic export pending
 
 Owner: Spoiled Milk project owner
 
@@ -635,8 +635,20 @@ Phase 2 implementation evidence recorded on 2026-07-13:
 
 Exit gate: repeated terrain, scenery, and NPC edits survive Builder restart,
 and a before/after hash inventory proves the target private server did not
-change. Automated coverage passes; owner visual save/restart confirmation is
-still required before Phase 2 is considered accepted.
+change.
+
+Phase 2 owner acceptance recorded on 2026-07-14:
+
+- The owner painted and saved three terrain tiles, closed the supervised client,
+  and confirmed the same terrain after reopening the exact workspace.
+- The owner then placed and saved one scenery object and one NPC. A second
+  restart loaded 345 MyWorld scenery entries and 144 MyWorld NPC entries, one
+  additional working entry in each file, and the owner visually confirmed both
+  entities loaded properly.
+- Both save/restart cycles ended with client and server exit code 0.
+- The working server/client terrain hashes remained identical. The source
+  snapshot and repository target retained their original terrain and overlay
+  hashes throughout both edits and both restarts.
 
 ### Phase 3: Deterministic export
 
