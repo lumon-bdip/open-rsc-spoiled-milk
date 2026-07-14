@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "server"
 CLIENT_NPC_DEFS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+WORLD_NPC_EDIT_FILES = SERVER / "src/com/openrsc/server/util/WorldNpcEditFiles.java"
 
 
 def fail(message: str) -> None:
@@ -81,6 +82,7 @@ def main() -> None:
     drops = (SERVER / "src/com/openrsc/server/constants/NpcDrops.java").read_text(encoding="utf-8")
     cracker = (SERVER / "plugins/com/openrsc/server/plugins/authentic/misc/HalloweenCracker.java").read_text(encoding="utf-8")
     populator = (SERVER / "src/com/openrsc/server/database/WorldPopulator.java").read_text(encoding="utf-8")
+    world_npc_edit_files = WORLD_NPC_EDIT_FILES.read_text(encoding="utf-8")
     audit = (ROOT / "tools/myworld/audit-npc-clusters.py").read_text(encoding="utf-8")
 
     require("GREY_KNIGHT(836)" in npc_ids, "Grey Knight NPC constant is missing")
@@ -241,7 +243,8 @@ def main() -> None:
         require(wilderness_level(loc["start"]["X"], loc["start"]["Y"]) > 0,
                 f"MyWorld Wilderness addition is outside the Wilderness: {loc}")
 
-    require("MyWorldNpcLocs.json" in populator and "WANT_MYWORLD" in populator,
+    require("WorldNpcEditFiles.npcLocsPath" in populator and "WANT_MYWORLD" in populator
+            and "MyWorldNpcLocs.json" in world_npc_edit_files,
             "Runtime location loader does not include the MyWorld NPC overlay")
     require("MyWorldNpcLocs.json" in audit and "--wilderness-only" in audit
             and "Population By Wilderness Level" in audit,

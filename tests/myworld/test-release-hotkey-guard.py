@@ -64,7 +64,7 @@ def main() -> None:
     if guard not in applet:
         fail("desktop key handler does not apply the release function-key guard")
     key_handler = applet.index("public final synchronized void keyPressed")
-    if applet.index(guard, key_handler) > applet.index("mudclient.handleKeyPress", key_handler):
+    if applet.index(guard, key_handler) > applet.index("mudclient.handleDesktopKeyPress", key_handler):
         fail("release function-key guard runs after general client input handling")
     if "ClientHotkeySettings.showDeveloperFunctionKeyHints()" not in applet:
         fail("release diagnostics still advertise disabled developer hotkeys")
