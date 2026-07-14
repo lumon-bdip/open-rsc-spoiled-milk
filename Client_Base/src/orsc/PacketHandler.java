@@ -956,6 +956,9 @@ public class PacketHandler {
 			colour = packetsIncoming.readString();
 		}
 
+		if (mc.worldEditorInterface != null) {
+			mc.worldEditorInterface.observeGameMessage(message);
+		}
 		// Why is clan being sent into former name?
 		mc.showMessage(true, sender, message, type, crown, clan, colour);
 	}

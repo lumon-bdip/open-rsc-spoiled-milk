@@ -634,7 +634,7 @@ This is the initial `feat/in-game-world-editor-foundation` branch scope.
 Approved direction: July 12, 2026
 
 The current editor proves the editing model, but its large form consumes too
-much of the world view and its Fast option is buried among terrain controls.
+much of the world view and its performance option is buried among terrain controls.
 This phase turns that form into a small paint-editor-style tool dock, prepares
 the client to use real custom PNG icons supplied by the project owner, and
 then addresses measured renderer/rebuild costs in a separate follow-up branch.
@@ -653,7 +653,7 @@ private testing establish that it is safe.
   invalid artwork capable of breaking the editor.
 - Keep all existing safety semantics: ordinary clicks stamp, Ctrl+left-drag
   brushes, middle-drag rotates the camera, and modes remain exclusive.
-- Move Fast mode to a global editor control and make every performance profile
+- Move the editor performance mode to a global control and make it
   reversible when the editor closes.
 - Measure input, acknowledgement, and world-rebuild latency before optimizing
   them.
@@ -719,10 +719,10 @@ Initial required icon keys and filenames:
 | `field-wall-north` | `field-wall-north.png` | North wall value |
 | `field-wall-east` | `field-wall-east.png` | East wall value |
 | `field-wall-diagonal` | `field-wall-diagonal.png` | Diagonal wall value |
-| `tool-brush` | `tool-brush.png` | Stamp/brush size and controls |
+| `tool-brush-1x1` | `tool-brush-1x1.png` | Single-tile stamp/brush size |
+| `tool-brush-3x3` | `tool-brush-3x3.png` | Centered three-by-three brush size |
 | `action-rotate` | `action-rotate.png` | Reverse diagonal orientation |
-| `profile-fast` | `profile-fast.png` | Fast editor visual profile |
-| `profile-grid` | `profile-grid.png` | Future minimal/grid profile |
+| `profile-build` | `profile-build.png` | Faceted, gridded Build view |
 | `action-save` | `action-save.png` | Persist the current draft |
 | `action-pin` | `action-pin.png` | Keep the current flyout open |
 | `action-close` | `action-close.png` | Exit the editor |
@@ -733,18 +733,18 @@ exist.
 
 ### Compact desktop interaction model
 
-The default editor presentation is a fixed vertical dock on the left edge,
-approximately 40 pixels wide, plus at most one contextual flyout. The dock
+The default editor presentation is a fixed two-column dock on the left edge,
+approximately 70 pixels wide, plus at most one contextual flyout. The dock
 must not cover the chat tabs, minimap, or other permanent desktop controls.
 Supporting right-side docking can follow later; the first implementation
 should prefer a dependable fixed location over a generalized window system.
 
-The dock contains, from top to bottom:
-
-1. collapse/expand;
-2. mutually exclusive Navigate, Inspect, Terrain, Scenery, and NPC modes;
-3. controls relevant to the active mode;
-4. global Fast profile, Save, and Close controls.
+The compact dock keeps collapse, Navigate, Inspect, Brush/Terrain, Build, Save,
+and Close in its left column. Scenery, NPC, Elevation, Floor Color, Floor
+Texture, Roof, North Wall, East Wall, and Diagonal Wall occupy the right
+column. This makes every terrain field directly reachable without the compact
+Surface/Structure tab switch. The detailed expanded form retains those tabs
+as a learning/reference view.
 
 Selecting a mode activates that mode and opens its flyout. Selecting the
 already active mode toggles its flyout without deactivating the safe, explicit
@@ -766,6 +766,12 @@ Terrain field buttons are multi-select only within Terrain mode:
 - Every button has a tooltip containing its name, current value/definition,
   active state, left-click action, and right-click action. Icons alone are not
   treated as sufficient discoverability.
+
+Brush left-click opens its compact footprint controls. Brush right-click
+toggles directly between 1x1 and 3x3, with a distinct cached PNG for each size.
+Compact terrain flyouts intentionally show only decrement/value/increment,
+the short definition name when one exists, and paint On/Off. The expanded form
+remains available from a visible Compact/Full switch for explanatory detail.
 
 The diagonal-wall flyout exposes wall definition and orientation separately.
 Rotate changes the orientation control; the normal UI must not make users add
@@ -802,23 +808,19 @@ the full form.
 
 ### Performance profiles
 
-Fast mode becomes a global editor profile rather than a Terrain checkbox. The
-existing implementation is the baseline: it snapshots the current lighting,
-terrain variation, fog, tone, terrain/object relief, and scenery-animation
-state; applies a cheaper editor configuration; and restores the exact snapshot
-when disabled or when the editor closes. Refactoring must preserve and test
-that restoration before adding more settings.
+Build mode is a global editor profile rather than a Terrain checkbox. It
+snapshots the current lighting, geometry, terrain variation, fog, tone,
+terrain/object relief, and scenery-animation state; applies a cheaper editor
+configuration with a square tile-boundary grid; and restores the exact snapshot
+when disabled or when the editor closes.
 
 Profiles are explicit and reversible:
 
 - **Normal:** the ordinary renderer with the user's pre-editor preferences.
-- **Fast:** reduced terrain/object relief and variation, inexpensive lighting,
-  paused nonessential scenery animation, and other individually benchmarked
-  reductions that retain reliable picking and visual identification.
-- **Grid/minimal (follow-up):** a purpose-built editor view emphasizing tile
-  edges, elevation/material distinctions, brush footprint, boundaries, and
-  entity markers. This is preferable to blindly turning the renderer off,
-  because an invisible world cannot be inspected or selected safely.
+- **Build:** faceted geometry, reduced terrain/object relief and variation,
+  inexpensive lighting, paused nonessential scenery animation, and a true
+  square terrain grid. The grid is derived only from active-plane terrain tile
+  boundaries, excluding triangle diagonals, walls, roofs, and scenery.
 
 Profile changes are client-local. The server continues collision and entity
 simulation unless a separately designed private-editor-server mode is approved.
@@ -838,7 +840,7 @@ Before altering it, capture at least:
 - tiles sent, accepted, rejected, and rebuilt per operation;
 - number of rebuilds and minimap refreshes per complete stroke;
 - queued batches/backpressure and time spent waiting for the final batch;
-- renderer-v1 and renderer-v2 results under Normal and Fast profiles.
+- renderer-v1 and renderer-v2 results under Normal and Build profiles.
 
 Diagnostics should aggregate per operation/stroke and remain readable by an AI.
 Avoid per-tile log floods. The UI status line may show the most recent frame,
@@ -873,16 +875,18 @@ After measurement, implement the smallest safe invalidation strategy:
 
 Branch: `feat/world-editor-compact-toolbar`
 
-- [ ] Add the semantic icon registry, cached PNG loader, missing-icon fallback,
+- [x] Add the semantic icon registry, cached PNG loader, missing-icon fallback,
   asset README/credits template, and release-build asset packaging.
-- [ ] Refactor the current coordinate-coded form onto a shared editor state and
+- [x] Refactor the current coordinate-coded form onto a shared editor state and
   compact dock/flyout presentation without changing packets or mutations.
-- [ ] Implement the left-click/value and right-click/field-mask behavior,
+- [x] Implement the left-click/value and right-click/field-mask behavior,
   tooltips, visible state markers, pinning, status line, dirty/pending Save,
   and unsaved Close behavior.
-- [ ] Move current Fast mode to the global dock and prove exact preference
-  restoration on Fast-off, editor exit, disconnect, and error paths.
-- [ ] Keep a temporary expanded/fallback presentation available until the
+- [x] Move the performance mode to the global dock and prove exact preference
+  restoration on Build-off, editor exit, disconnect, and error paths.
+- [x] Extend it into Build mode with faceted geometry and a true active-plane
+  terrain grid in legacy and OpenGL presentation paths.
+- [x] Keep a temporary expanded/fallback presentation available until the
   acquired icons have been validated in a packaged client.
 - [ ] Test privately with both missing fallback icons and the acquired final
   icons before release consideration.
@@ -905,14 +909,11 @@ Branch: `perf/world-editor-incremental-rebuild`
   stamp, rapid brush, large radius, sector edge, upper floor, void expansion,
   walls/roofs, undo/discard if present, save, and restart.
 
-#### Slice C: optional grid/minimal profile
+#### Slice C: Build-view follow-ups
 
-Branch: `feat/world-editor-grid-profile`
-
-Begin only after Slice B identifies which renderer work is still material. The
-profile must render a usable editing representation, preserve picking, display
-hidden-layer state, and restore Normal/Fast state exactly. It should not become
-a second independent map renderer without a measured need.
+The initial Build view now ships with Slice A. Further visibility controls or
+entity markers should follow only when private testing demonstrates a concrete
+need; they must preserve picking and exact Normal-state restoration.
 
 ### Next-phase acceptance criteria
 
@@ -926,7 +927,7 @@ a second independent map renderer without a measured need.
   tooltips even when artwork is unfamiliar.
 - Left/right/middle/Ctrl input invariants pass repeated private testing, with
   particular attention to camera rotation and accidental terrain placement.
-- Fast mode always restores the exact pre-editor graphics state and produces a
+- Build mode always restores the exact pre-editor graphics state and produces a
   measurable improvement on at least one representative expensive edit case.
 - Incremental rebuild work demonstrates fewer or shorter rebuild stalls without
   visual, collision, minimap, save/reload, or server/client revision drift.

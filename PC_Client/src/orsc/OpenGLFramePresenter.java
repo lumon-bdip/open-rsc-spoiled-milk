@@ -1803,6 +1803,12 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			worldChunkRenderer.drawRemasterTerrainShadowMask(frame.renderer3DFrame);
 			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		}
+		if (WorldEditorBuildSettings.isEnabled()
+			&& worldChunkRenderer != null
+			&& frame.renderer3DFrame != null) {
+			worldChunkRenderer.drawWorldEditorBuildGrid(frame.renderer3DFrame);
+			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
+		}
 		RenderTelemetry.recordOpenGLWorldPhaseBreakdown(
 			chunkUploadPhaseNanos,
 			projectedMeshPhaseNanos,

@@ -40,6 +40,7 @@ import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import orsc.graphics.three.RSModel;
 import orsc.graphics.three.Scene;
 import orsc.graphics.three.World;
+import orsc.graphics.three.WorldEditorTerrainGrid;
 import orsc.graphics.two.CombatEffectAnimationCatalog;
 import orsc.graphics.two.Fonts;
 import orsc.graphics.two.MudClientGraphics;
@@ -693,12 +694,15 @@ public final class mudclient implements Runnable {
 	public LostOnDeathInterface lostOnDeathInterface;
 	public TerritorySignupInterface territorySignupInterface;
 	public WorldEditorInterface worldEditorInterface;
-	private boolean worldEditorFastMode=false;
+	private boolean worldEditorBuildMode=false;
 	private RendererLightingSettings.Mode worldEditorSavedLighting;
+	private RendererGeometrySettings.Mode worldEditorSavedGeometry;
 	private RendererTerrainVariationSettings.Mode worldEditorSavedTerrainVariation;
 	private RendererFogSettings.Mode worldEditorSavedFog;
 	private RendererToneSettings.Mode worldEditorSavedTone;
 	private int worldEditorSavedTerrainRelief,worldEditorSavedObjectRelief;
+	private boolean worldEditorBuildSnapshotValid=false;
+	private final WorldEditorTerrainGrid worldEditorTerrainGrid=new WorldEditorTerrainGrid();
 	String m_p = null;
 	int clearBox = GenUtil.buildColor(181, 181, 181);
 	int selectedBox = GenUtil.buildColor(220, 220, 220);
@@ -7148,7 +7152,7 @@ public final class mudclient implements Runnable {
 							this.isInFirstPersonView() ? 0 : scaledCameraZoom * 2);
 					}
 
-					if(!worldEditorFastMode)this.updateSceneryAnimations();
+					if(!worldEditorBuildMode)this.updateSceneryAnimations();
 					this.queuedProjectileEffectCount = 0;
 					this.queuedProjectileImpactCount = 0;
 					this.queuedCombatEffectCount = 0;
@@ -7185,6 +7189,7 @@ public final class mudclient implements Runnable {
 								meshFrame == null ? 0 : meshFrame.getFlatColorTriangleCount(),
 								meshFrame == null ? 0 : meshFrame.getTransparentTriangleCount(),
 								meshFrame == null ? 0 : meshFrame.getSkippedTriangleCount());
+						this.drawWorldEditorBuildGridLegacy(renderer3DFrame);
 						}
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
 						this.drawQueuedStaticProjectiles();
@@ -17925,11 +17930,11 @@ public final class mudclient implements Runnable {
 					if(editorNpc!=null){worldEditorInterface.recordWorldClick(midRegionBaseX+editorNpc.currentX/tileSize,midRegionBaseZ+editorNpc.currentZ/tileSize);worldEditorInterface.selectNpc(editorNpc.npcId,worldEditorInterface.getNpcRadius());}
 					worldEditorInterface.inspectNpc(indexOrX,true);break;
 				}
-				case WORLD_EDITOR_PLACE_SCENERY: { sendCommandString("aobject "+worldEditorInterface.getSceneryId()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
-				case WORLD_EDITOR_ROTATE_SCENERY: { sendCommandString("rotateobject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
-				case WORLD_EDITOR_REMOVE_SCENERY: { sendCommandString("robject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
-				case WORLD_EDITOR_PLACE_NPC: { sendCommandString("cnpc "+worldEditorInterface.getNpcId()+" "+worldEditorInterface.getNpcRadius()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
-				case WORLD_EDITOR_REMOVE_NPC: { sendCommandString("rpc "+indexOrX); break; }
+				case WORLD_EDITOR_PLACE_SCENERY: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("aobject "+worldEditorInterface.getSceneryId()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_ROTATE_SCENERY: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("rotateobject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_REMOVE_SCENERY: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("robject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_PLACE_NPC: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("cnpc "+worldEditorInterface.getNpcId()+" "+worldEditorInterface.getNpcRadius()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
+				case WORLD_EDITOR_REMOVE_NPC: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("rpc "+indexOrX); break; }
 				case MOD_SUMMON_PLAYER: {
 					String playerName = var9;
 					playerName = playerName.replaceAll(" ", "_");
@@ -22597,7 +22602,7 @@ public final class mudclient implements Runnable {
 
 	private void resetLoginScreenVariables(byte var1) {
 		try {
-			setWorldEditorFastMode(false);
+			setWorldEditorBuildMode(false);
 			this.npcCount = 0;
 			this.playerCount = 0;
 			this.loginScreenNumber = 0;
@@ -22662,23 +22667,67 @@ public final class mudclient implements Runnable {
 	public void setWorldEditorNavigateClickTeleport(boolean enabled) {
 		this.devClickTeleportMode = enabled && canUseClickTeleport();
 	}
-	public void setWorldEditorFastMode(boolean enabled){
-		if(worldEditorFastMode==enabled)return;
+
+	private void drawWorldEditorBuildGridLegacy(Renderer3DFrame frame){
+		if(!WorldEditorBuildSettings.isEnabled()||ScaledWindow.isOpenGLPrimaryWindowEnabled()||frame==null)return;
+		int[] segments=worldEditorTerrainGrid.segments(frame.getWorldChunkFrame(),frame.getActivePlane());
+		if(segments.length==0)return;
+		int[] first=new int[2],second=new int[2];
+		for(int offset=0;offset+5<segments.length;offset+=6){
+			if(!projectWorldEditorGridPoint(frame,segments[offset],segments[offset+1]-2,segments[offset+2],first)
+				||!projectWorldEditorGridPoint(frame,segments[offset+3],segments[offset+4]-2,segments[offset+5],second))continue;
+			drawWorldEditorGridLine(first[0],first[1],second[0],second[1],0x4f747c);
+		}
+	}
+
+	private static boolean projectWorldEditorGridPoint(Renderer3DFrame frame,int x,int y,int z,int[] destination){
+		int cameraX=x-frame.getCameraOffsetX(),cameraY=y-frame.getCameraOffsetY(),cameraZ=z-frame.getCameraOffsetZ(),temporary,rotation=frame.getCameraRotationZ();
+		if(rotation!=0){int sin=FastMath.trigTable1024[rotation],cos=FastMath.trigTable1024[rotation+1024];temporary=cameraY*sin+cos*cameraX>>15;cameraY=cameraY*cos-cameraX*sin>>15;cameraX=temporary;}
+		rotation=frame.getCameraRotationY();if(rotation!=0){int sin=FastMath.trigTable1024[rotation],cos=FastMath.trigTable1024[rotation+1024];temporary=cos*cameraX+cameraZ*sin>>15;cameraZ=cos*cameraZ-cameraX*sin>>15;cameraX=temporary;}
+		rotation=frame.getCameraRotationX();if(rotation!=0){int sin=FastMath.trigTable1024[rotation],cos=FastMath.trigTable1024[rotation+1024];temporary=cameraY*cos-sin*cameraZ>>15;cameraZ=sin*cameraY+cos*cameraZ>>15;cameraY=temporary;}
+		if(cameraZ<frame.getNearPlane())return false;destination[0]=frame.getCenterX()+(cameraX<<frame.getPerspectiveShift())/cameraZ;destination[1]=frame.getCenterY()+(cameraY<<frame.getPerspectiveShift())/cameraZ;return true;
+	}
+
+	private void drawWorldEditorGridLine(int x0,int y0,int x1,int y1,int color){
+		int width=this.getSurface().width2,height=this.getSurface().height2;
+		int code0=worldEditorGridClipCode(x0,y0,width,height),code1=worldEditorGridClipCode(x1,y1,width,height);
+		while(true){
+			if((code0|code1)==0)break;if((code0&code1)!=0)return;
+			int code=code0!=0?code0:code1,x=0,y=0;
+			if((code&8)!=0){if(y1==y0)return;x=x0+(x1-x0)*(height-1-y0)/(y1-y0);y=height-1;}
+			else if((code&4)!=0){if(y1==y0)return;x=x0+(x1-x0)*(0-y0)/(y1-y0);y=0;}
+			else if((code&2)!=0){if(x1==x0)return;y=y0+(y1-y0)*(width-1-x0)/(x1-x0);x=width-1;}
+			else{if(x1==x0)return;y=y0+(y1-y0)*(0-x0)/(x1-x0);x=0;}
+			if(code==code0){x0=x;y0=y;code0=worldEditorGridClipCode(x0,y0,width,height);}else{x1=x;y1=y;code1=worldEditorGridClipCode(x1,y1,width,height);}
+		}
+		int dx=Math.abs(x1-x0),sx=x0<x1?1:-1,dy=-Math.abs(y1-y0),sy=y0<y1?1:-1,error=dx+dy;
+		while(true){this.getSurface().pixelData[x0+y0*width]=color;if(x0==x1&&y0==y1)break;int doubled=error*2;if(doubled>=dy){error+=dy;x0+=sx;}if(doubled<=dx){error+=dx;y0+=sy;}}
+	}
+
+	private static int worldEditorGridClipCode(int x,int y,int width,int height){
+		int code=0;if(x<0)code|=1;else if(x>=width)code|=2;if(y<0)code|=4;else if(y>=height)code|=8;return code;
+	}
+
+	public void setWorldEditorBuildMode(boolean enabled){
+		if(worldEditorBuildMode==enabled){WorldEditorBuildSettings.setEnabled(enabled);return;}
 		if(enabled){
-			worldEditorSavedLighting=RendererLightingSettings.getMode();worldEditorSavedTerrainVariation=RendererTerrainVariationSettings.getMode();
+			worldEditorSavedLighting=RendererLightingSettings.getMode();worldEditorSavedGeometry=RendererGeometrySettings.getMode();worldEditorSavedTerrainVariation=RendererTerrainVariationSettings.getMode();
 			worldEditorSavedFog=RendererFogSettings.getMode();worldEditorSavedTone=RendererToneSettings.getMode();
 			worldEditorSavedTerrainRelief=RendererReliefSettings.getTerrainLevel();worldEditorSavedObjectRelief=RendererReliefSettings.getObjectLevel();
-			RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);
+			worldEditorBuildSnapshotValid=true;
+			RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.FACETED);RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);
 			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);
 			RendererReliefSettings.setTerrainLevel(RendererReliefSettings.MIN_LEVEL);RendererReliefSettings.setObjectLevel(RendererReliefSettings.MIN_LEVEL);
-		}else{
+		}else if(worldEditorBuildSnapshotValid){
 			if(worldEditorSavedLighting!=null)RendererLightingSettings.setMode(worldEditorSavedLighting);
+			if(worldEditorSavedGeometry!=null)RendererGeometrySettings.setMode(worldEditorSavedGeometry);
 			if(worldEditorSavedTerrainVariation!=null)RendererTerrainVariationSettings.setMode(worldEditorSavedTerrainVariation);
 			if(worldEditorSavedFog!=null)RendererFogSettings.setMode(worldEditorSavedFog);if(worldEditorSavedTone!=null)RendererToneSettings.setMode(worldEditorSavedTone);
-			if(worldEditorSavedTerrainRelief>0)RendererReliefSettings.setTerrainLevel(worldEditorSavedTerrainRelief);
-			if(worldEditorSavedObjectRelief>0)RendererReliefSettings.setObjectLevel(worldEditorSavedObjectRelief);
+			RendererReliefSettings.setTerrainLevel(worldEditorSavedTerrainRelief);RendererReliefSettings.setObjectLevel(worldEditorSavedObjectRelief);
+			worldEditorBuildSnapshotValid=false;
 		}
-		worldEditorFastMode=enabled;
+		worldEditorBuildMode=enabled;
+		WorldEditorBuildSettings.setEnabled(enabled);
 	}
 	private boolean updateWorldEditorTerrainDrag(){
 		if(worldEditorInterface==null||!worldEditorInterface.isEditorOpen())return false;int worldX=-1,worldY=-1;
@@ -22761,7 +22810,7 @@ public final class mudclient implements Runnable {
 						this.packetHandler.getClientStream().finishPacket();
 						clientPort.setTitle(Config.getServerName());
 						this.logoutTimeout = 1000;
-						setWorldEditorFastMode(false);
+						setWorldEditorBuildMode(false);
 						devClickTeleportMode = false;
 						modMenu = false;
 						developerMenu = false;

@@ -39,6 +39,7 @@
                 <include name="remastered-sprites/**/frames/*.png"/>
                 <include name="remastered-sprites/manifest.json"/>
                 <include name="sprites/**/*.png"/>
+                <include name="ui/world-editor/**"/>
             </fileset>
         </copy>
         <javac srcdir="${src}:${pc_client}" destdir="${build}" debug="on" target="${javac.target}" source="${javac.source}"
