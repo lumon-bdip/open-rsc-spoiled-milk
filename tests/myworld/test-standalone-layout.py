@@ -221,6 +221,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "renderer-v2-plan.md",
             "resource-seed-plan.md",
             "roadmap.md",
+            "standalone-world-builder-plan.md",
             "summoning-plan.md",
             "terrain-expansion-plan.md",
             "tier-11-magic-gear-plan.md",

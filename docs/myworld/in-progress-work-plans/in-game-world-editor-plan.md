@@ -10,6 +10,12 @@ Initial branch: `feat/in-game-world-editor-foundation`
 
 Next branch: `feat/world-editor-compact-toolbar`
 
+Related standalone product plan:
+[`standalone-world-builder-plan.md`](standalone-world-builder-plan.md). The
+integrated editor remains the shared editing implementation; standalone
+workspace isolation, automatic Builder startup, import/rollback, and separate
+release packaging are owned by that plan.
+
 ## Summary
 
 Build an administrator-only in-game world editor that uses the desktop player

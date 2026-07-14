@@ -108,6 +108,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   alpha milestone roadmap and release progression.
 - [summoning-plan.md](in-progress-work-plans/summoning-plan.md):
   current Summoning implementation source of truth and tuning notes.
+- [standalone-world-builder-plan.md](in-progress-work-plans/standalone-world-builder-plan.md):
+  isolated single-player-style World Builder runtime, safe project exports,
+  transactional private-server imports, rollback, and separate releases.
 - [terrain-expansion-plan.md](in-progress-work-plans/terrain-expansion-plan.md):
   staged terrain expansion process and map-editor workflow.
 - [tier-11-magic-gear-plan.md](in-progress-work-plans/tier-11-magic-gear-plan.md):
