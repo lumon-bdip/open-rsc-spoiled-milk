@@ -719,7 +719,8 @@ Initial required icon keys and filenames:
 | `field-wall-north` | `field-wall-north.png` | North wall value |
 | `field-wall-east` | `field-wall-east.png` | East wall value |
 | `field-wall-diagonal` | `field-wall-diagonal.png` | Diagonal wall value |
-| `tool-brush` | `tool-brush.png` | Stamp/brush size and controls |
+| `tool-brush-1x1` | `tool-brush-1x1.png` | Single-tile stamp/brush size |
+| `tool-brush-3x3` | `tool-brush-3x3.png` | Centered three-by-three brush size |
 | `action-rotate` | `action-rotate.png` | Reverse diagonal orientation |
 | `profile-fast` | `profile-fast.png` | Fast editor visual profile |
 | `profile-grid` | `profile-grid.png` | Future minimal/grid profile |
@@ -733,18 +734,18 @@ exist.
 
 ### Compact desktop interaction model
 
-The default editor presentation is a fixed vertical dock on the left edge,
-approximately 40 pixels wide, plus at most one contextual flyout. The dock
+The default editor presentation is a fixed two-column dock on the left edge,
+approximately 70 pixels wide, plus at most one contextual flyout. The dock
 must not cover the chat tabs, minimap, or other permanent desktop controls.
 Supporting right-side docking can follow later; the first implementation
 should prefer a dependable fixed location over a generalized window system.
 
-The dock contains, from top to bottom:
-
-1. collapse/expand;
-2. mutually exclusive Navigate, Inspect, Terrain, Scenery, and NPC modes;
-3. controls relevant to the active mode;
-4. global Fast profile, Save, and Close controls.
+The compact dock keeps collapse, Navigate, Inspect, Brush/Terrain, Fast, Save,
+and Close in its left column. Scenery, NPC, Elevation, Floor Color, Floor
+Texture, Roof, North Wall, East Wall, and Diagonal Wall occupy the right
+column. This makes every terrain field directly reachable without the compact
+Surface/Structure tab switch. The detailed expanded form retains those tabs
+as a learning/reference view.
 
 Selecting a mode activates that mode and opens its flyout. Selecting the
 already active mode toggles its flyout without deactivating the safe, explicit
@@ -766,6 +767,12 @@ Terrain field buttons are multi-select only within Terrain mode:
 - Every button has a tooltip containing its name, current value/definition,
   active state, left-click action, and right-click action. Icons alone are not
   treated as sufficient discoverability.
+
+Brush left-click opens its compact footprint controls. Brush right-click
+toggles directly between 1x1 and 3x3, with a distinct cached PNG for each size.
+Compact terrain flyouts intentionally show only decrement/value/increment,
+the short definition name when one exists, and paint On/Off. The expanded form
+remains available from a visible Compact/Full switch for explanatory detail.
 
 The diagonal-wall flyout exposes wall definition and orientation separately.
 Rotate changes the orientation control; the normal UI must not make users add

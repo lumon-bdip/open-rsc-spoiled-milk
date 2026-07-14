@@ -124,7 +124,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                             WorldEditorIconRegistry registry = new WorldEditorIconRegistry();
                             registry.initialize();
                             require(registry.loadedCount() == 1);
-                            require(registry.missingKeys().size() == 19);
+                            require(registry.missingKeys().size() == 20);
                             require(registry.isLoaded(WorldEditorIconRegistry.Key.MODE_NAVIGATE));
                             require(!registry.isLoaded(WorldEditorIconRegistry.Key.MODE_INSPECT));
                             Sprite first = registry.get(WorldEditorIconRegistry.Key.MODE_NAVIGATE);
@@ -140,7 +140,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                 cwd=working,
             )
         self.assertEqual(1, output.count("[world-editor icons]"))
-        self.assertIn("19 unavailable", output)
+        self.assertIn("20 unavailable", output)
         self.assertIn("mode-inspect.png (expected 24x24, got 12x12)", output)
         self.assertTrue(output.rstrip().endswith("icon-registry-ok"))
 
@@ -152,7 +152,8 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
             "field-elevation.png", "field-floor-color.png",
             "field-floor-texture.png", "field-roof.png",
             "field-wall-north.png", "field-wall-east.png",
-            "field-wall-diagonal.png", "tool-brush.png", "action-rotate.png",
+            "field-wall-diagonal.png", "tool-brush-1x1.png",
+            "tool-brush-3x3.png", "action-rotate.png",
             "profile-fast.png", "profile-grid.png", "action-save.png",
             "action-pin.png", "action-close.png",
         }
@@ -170,19 +171,38 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
         ui = UI.read_text()
         applet = (PC_CLIENT / "orsc/ORSCApplet.java").read_text()
         client = (CLIENT / "orsc/mudclient.java").read_text()
-        self.assertIn("DOCK_WIDTH=40", ui)
-        self.assertIn("FLYOUT_WIDTH=250", ui)
+        self.assertIn("DOCK_WIDTH=70", ui)
+        self.assertIn("FLYOUT_WIDTH=180", ui)
         self.assertIn("if(click!=1&&click!=2)return false", ui)
         self.assertIn("if(click==2)toggleTerrainField(field)", ui)
-        self.assertIn("else{terrainActiveField=field", ui)
+        self.assertIn("else openTerrainTool(field)", ui)
         self.assertIn("if(click==2)return true", ui)
         self.assertIn("closeUnpinnedAfterWorldAction", ui)
-        self.assertIn("Esc: compact", ui)
+        self.assertIn('button(x+278,y,82,"Compact")', ui)
+        self.assertIn("toolbar.setExpandedFallback(false)", ui)
         self.assertIn("toolbar.closeFlyout()", ui)
         self.assertIn("Config.isAndroid()", ui)
         self.assertRegex(applet, r"(?s)BUTTON2\) \{\s*.*?mouseLastProcessedX.*?mouseLastProcessedY.*?return;")
         self.assertIn("controlPressed&&currentMouseButtonDown==1", client)
         self.assertIn("updateTerrainDrag(controlPressed,currentMouseButtonDown==1", client)
+        self.assertIn("toggleBrushSize()", ui)
+        self.assertIn("TOOL_BRUSH_1X1", ui)
+        self.assertIn("TOOL_BRUSH_3X3", ui)
+        self.assertNotIn('return "Raw value "+activeTerrainText()', ui)
+
+    def test_compact_grid_exposes_every_terrain_field_without_tab_gating(self):
+        ui = UI.read_text()
+        paint_mask = re.search(r"private int terrainPaintMask\(\)\{(?P<body>.*?)\}", ui, re.S)
+        self.assertIsNotNone(paint_mask)
+        self.assertNotIn("terrainStructureTab?", paint_mask.group("body"))
+        for mask in (
+            "paintElevation?1:0", "paintFloorColor?2:0", "paintFloorTexture?4:0",
+            "paintRoof?8:0", "paintEastWall?16:0", "paintNorthWall?32:0",
+            "paintDiagonalWall?64:0",
+        ):
+            self.assertIn(mask, paint_mask.group("body"))
+        for field in range(6, 13):
+            self.assertIn(f"return {field}", ui)
 
     def test_dirty_save_and_fast_profile_restoration_guards_are_visible(self):
         ui = UI.read_text()

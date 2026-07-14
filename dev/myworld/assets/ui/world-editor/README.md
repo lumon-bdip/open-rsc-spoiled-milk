@@ -18,3 +18,7 @@ Do not add final artwork until its source and redistribution terms are known.
 Author files live in this directory. The client build packages them at
 `myworld-assets/ui/world-editor/` so a player archive never depends on the
 source checkout.
+
+Brush size uses two state-specific source files, `tool-brush-1x1.png` and
+`tool-brush-3x3.png`. They occupy the same dock position and swap when the
+configured footprint changes.
