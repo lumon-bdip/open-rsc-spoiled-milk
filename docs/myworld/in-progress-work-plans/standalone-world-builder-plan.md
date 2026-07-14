@@ -850,13 +850,26 @@ workflow without Git, Ant, source code, or manual account creation.
 
 ### Phase 6: Visual acceptance and documentation
 
-- [ ] Document first launch, project reset/rebase, save/export, import, and undo.
-- [ ] Explain compatibility refusals and recovery receipts in plain language.
-- [ ] Visually verify terrain, floor, wall, roof, scenery, and NPC edits.
+- [x] Document first launch, project reset/rebase, save/export, import, and undo.
+- [x] Explain compatibility refusals and recovery receipts in plain language.
+- [x] Visually verify terrain, floor, wall, roof, scenery, and NPC edits.
 - [ ] Verify both legacy and OpenGL client presentation where supported.
-- [ ] Verify restart persistence before and after import.
-- [ ] Verify normal integrated-editor behavior remains available.
-- [ ] Record release limitations and supported server versions.
+- [x] Verify restart persistence before and after import.
+- [x] Verify normal integrated-editor behavior remains available.
+- [x] Record release limitations and supported server versions.
+
+Owner acceptance recorded on 2026-07-14:
+
+- The project owner accepted the integrated editor, isolated Builder launch,
+  terrain/scenery/NPC editing and saving, import/restart persistence, exact
+  rollback, and the desktop keyboard shortcut/chat-mode workflow.
+- The latest shortcut acceptance used a fresh isolated OpenGL Builder client
+  on port 43686. Automated legacy and OpenGL input/render guardrails pass, but
+  a final real-archive clean-machine presentation check remains part of the
+  release gate below.
+- The public artifact name is `Spoiled Milk World Builder`. Its release
+  version matches the companion Spoiled Milk release so users can identify
+  the exact compatible server/client package without a separate version map.
 
 Exit gate: the project owner completes the intended workflow and explicitly
 accepts the standalone release behavior.
@@ -997,7 +1010,6 @@ age while they are the only rollback source.
 
 These do not block Phase 0 and should be settled before their owning phase:
 
-- Exact public product name and independent version-number policy.
 - Whether Build renderer mode starts enabled by default or remembers a
   Builder-project preference.
 - First-run behavior when multiple compatible server configurations exist.

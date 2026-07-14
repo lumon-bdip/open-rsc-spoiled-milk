@@ -79,6 +79,37 @@ the installed files were changed after import.
 Backups, transaction receipts, exports, logs, and the editable project remain
 inside workspace/. Preserve that folder if you move or update World Builder.
 
+UPDATING OR STARTING A FRESH PROJECT
+------------------------------------
+
+Each workspace is tied to the exact private-server map and definitions it was
+created from. World Builder intentionally does not rebase an old project onto
+a different Spoiled Milk release.
+
+When updating the target private server:
+
+1. Close World Builder and preserve the entire old World Builder folder.
+2. Finish or undo any import made by that old workspace.
+3. Install the World Builder package shipped beside the new server release.
+4. Start it with no workspace/ folder so it creates a fresh project from the
+   new release.
+
+Do not copy only selected files between workspaces. Keep the old workspace,
+backups, and receipts until the imported result has been fully verified.
+
+WHEN AN ACTION IS REFUSED
+-------------------------
+
+A refusal is a safety result, not a partial import. Read the displayed reason
+and the workspace logs. Common causes include a running target server, a
+different server release, changed destination files, an incomplete workspace,
+or a target layout that is not explicitly supported.
+
+There is no force option. Correct the reported condition and preview again.
+If an apply operation fails after starting, World Builder restores the prior
+files before reporting failure. Import and undo receipts and their associated
+backups remain under workspace/ for recovery review.
+
 REQUIREMENTS AND LIMITS
 -----------------------
 
@@ -89,9 +120,14 @@ REQUIREMENTS AND LIMITS
 - The first release supports the current Spoiled Milk repository/private-server
   layout using server/myworld.conf, Custom_Landscape.orsc, and MyWorld scenery
   and NPC overlays. Similar-looking OpenRSC forks are not assumed compatible.
+- Use a World Builder package alongside the exact Spoiled Milk release it was
+  built for. Cross-version project rebasing and imports are intentionally
+  refused.
 - The default local Builder port is 43615. Before the first launch, advanced
   users may set WORLD_BUILDER_PORT to another free port from 1 through 65534.
 - Boundary-object authoring and automatic project rebasing are not included.
+- Workspace backup and receipt management is filesystem-based; there is no
+  graphical retention manager in the first release.
 - Import and undo require the target private server to be offline.
 
 Release source commit: @SOURCE_COMMIT@
