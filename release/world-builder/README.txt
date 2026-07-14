@@ -20,7 +20,7 @@ Do not place it inside the server/ or Client_Base/ folder.
 STARTING AND SAVING
 -------------------
 
-Linux or macOS: run "Start World Builder.sh".
+Linux: run "Start World Builder.sh".
 Windows: double-click "Start World Builder.cmd".
 
 The first launch validates the parent private server and creates an isolated
@@ -60,8 +60,10 @@ inside workspace/. Preserve that folder if you move or update World Builder.
 REQUIREMENTS AND LIMITS
 -----------------------
 
-- The generic package requires a local Java 17+ runtime. The Windows x64
-  package includes its own runtime.
+- Use the package matching your operating system: Linux x64 or Windows x64.
+  Both packages include their own Java runtime; users do not install Java,
+  Git, Ant, or the project source code.
+- macOS is not included in the first public release.
 - The first release supports the current Spoiled Milk repository/private-server
   layout using server/myworld.conf, Custom_Landscape.orsc, and MyWorld scenery
   and NPC overlays. Similar-looking OpenRSC forks are not assumed compatible.

@@ -72,9 +72,8 @@ diagnostics, but should not be required knowledge for ordinary use.
   editor session opening.
 - Terrain, ordinary scenery, and NPC editing supported by the existing editor.
 - Isolated save, deterministic export, deliberate import, and exact rollback.
-- Linux/macOS Java launch scripts and Windows launch scripts.
-- A Windows package with a bundled Java runtime when release infrastructure
-  and redistribution requirements are satisfied.
+- Self-contained Linux-x64 and Windows-x64 packages with platform launch,
+  import, and rollback scripts plus bundled Java runtimes.
 - Automated filesystem, security, persistence, import, rollback, and
   compatibility tests plus private visual verification.
 
@@ -145,8 +144,7 @@ The current implementation provides strong foundations:
 - The client already receives an authoritative editor-open packet and can
   enter the Build rendering profile.
 - Existing private-server launchers demonstrate local server/client startup,
-  and the player release pipeline demonstrates Java and bundled-Windows-JRE
-  packaging.
+  and the player release pipeline demonstrates bundled-runtime packaging.
 
 The current save paths are unsuitable for the standalone product because they
 write the active server and client archives directly. The first architectural
@@ -484,14 +482,14 @@ the client connection and explain where its logs are located.
 World Builder receives its own packaging entry point and versioned artifacts,
 for example:
 
-- `spoiled-milk-world-builder-vX.Y.Z-java.zip`
+- `spoiled-milk-world-builder-vX.Y.Z-linux-x64.zip`
 - `spoiled-milk-world-builder-vX.Y.Z-windows-x64.zip`
 - `SHA256SUMS.txt`
 
-The release must contain built jars and resources; users should not need Git,
-Ant, source code, or a development checkout. The generic package may require
-Java 17. The Windows package should bundle a redistributable Java 17+ runtime
-using the same legal-file and version checks as the player release.
+The release must contain built jars and resources; users should not need Java,
+Git, Ant, source code, or a development checkout. Both platform packages must
+bundle a redistributable Java 17+ runtime using the same legal-file and version
+checks as the player release. macOS is deferred from the first public release.
 
 Packaging must verify:
 
@@ -520,7 +518,7 @@ useful checkpoint with its test evidence before the next phase begins.
 | 2. Workspace-owned persistence | Complete | Terrain/scenery/NPC saves change only working files; target hashes remain identical |
 | 3. Deterministic export | Complete | Complete five-file bundle, manifest validation, repeatable hashes/content |
 | 4. Transactional import and rollback | Complete | Dry-run, offline guard, failure rollback, successful restart, byte-exact undo |
-| 5. Standalone release packaging | Active | Clean Java/Windows artifacts, fresh-install smoke tests, attribution and checksum gates |
+| 5. Standalone release packaging | Active | Clean Linux/Windows artifacts, fresh-install smoke tests, attribution and checksum gates |
 | 6. Visual acceptance and documentation | Pending | Owner-verified editing/import/revert flow and final user documentation |
 
 ### Phase 0: Contracts and fixtures
@@ -801,19 +799,20 @@ restart, and rollback restores every original byte and original file absence.
 
 - [x] Add a dedicated manager-only packaging script and packaging tests.
 - [x] Package compiled client, server, launcher, definitions, assets, and docs.
-- [x] Provide Java and Windows-x64 launch/import/rollback wrappers.
+- [x] Provide Linux-x64 and Windows-x64 launch/import/rollback wrappers.
 - [x] Exclude all generated project and credential state.
 - [x] Verify bundled Java metadata and legal files.
-- [ ] Verify asset redistribution and attribution.
+- [x] Verify asset redistribution and attribution.
 - [x] Generate checksums and source provenance files.
 - [ ] Test from clean extracted archives outside the repository.
 
 Phase 5 foundation evidence recorded on 2026-07-14:
 
 - `package-world-builder-release.sh` is manager-main-only, requires clean
-  published source, builds the client/server/tools, validates Java 17+ runtime
-  metadata and legal files, checks protocol and required jar entries, stages
-  separate generic-Java and Windows-x64 archives, and generates SHA-256 sums.
+  published source, builds the client/server/tools, validates both bundled
+  Java 17+ runtimes and legal files, checks protocol and required jar entries,
+  stages separate self-contained Linux-x64 and Windows-x64 archives, and
+  generates SHA-256 sums.
 - Both archives contain the launch/import/undo scripts, compiled client,
   server, definitions, isolated seed database, tooling schemas, documentation,
   source provenance, licenses, notices, and asset records. Generated
@@ -827,20 +826,19 @@ Phase 5 foundation evidence recorded on 2026-07-14:
   requires exact `IMPORT` confirmation. `undo-latest-import` prints the
   authoritative rollback preview and requires exact `UNDO`; cancellation of
   either makes no target changes.
-- `python3 tests/myworld/test-world-builder-release.py` (3 tests) creates both
+- `python3 tests/myworld/test-world-builder-release.py` (4 tests) creates both
   archive types from a clean manager-main fixture, verifies archive contents,
-  checksums, exclusions, Windows runtime files, substituted provenance, and
-  runs every generic shell wrapper after extraction from outside the source
-  repository using a captured Java boundary.
+  checksums, exclusions, Linux and Windows runtime files, substituted
+  provenance, and runs every shell wrapper after extraction from outside the
+  source repository using a captured Java boundary.
 - `python3 tests/myworld/test-world-builder-import.py` (13 tests) now includes
   human-workflow preview, cancellation, confirmed import, cancelled undo, and
   byte-exact confirmed undo coverage. Supervisor, export, preparation, and
   working-persistence suites also pass with the packaged workflow changes.
-- The real release remains deliberately blocked because
-  `dev/myworld/assets/ui/world-editor/CREDITS.md` still labels the editor icon
-  source and redistribution terms as pending. The packager refuses that state
-  even when `--assets-cleared` is supplied. After provenance is resolved, a
-  real clean-extraction launch/import/undo smoke test remains required.
+- The editor icons are now attributed to Game-icons.net under CC BY 3.0, as
+  confirmed by the project owner to match the prayer-icon source. A real
+  clean-extraction launch/import/undo smoke test remains required after both
+  redistribution-ready runtime inputs are available on manager main.
 
 Exit gate: a non-development machine or clean VM can perform the complete
 workflow without Git, Ant, source code, or manual account creation.
@@ -995,8 +993,6 @@ age while they are the only rollback source.
 These do not block Phase 0 and should be settled before their owning phase:
 
 - Exact public product name and independent version-number policy.
-- Whether the generic Java release supports macOS with shell launchers in the
-  first public build or is documented as Linux-first.
 - Whether Build renderer mode starts enabled by default or remembers a
   Builder-project preference.
 - First-run behavior when multiple compatible server configurations exist.
@@ -1038,7 +1034,7 @@ This plan can move to completed only when:
 - failed import restores the exact prior state;
 - `Undo Last Map Import` restores exact prior files and behavior;
 - normal client/server/editor behavior remains unchanged outside Builder mode;
-- Java and Windows release artifacts pass clean-extraction smoke tests;
+- Linux and Windows release artifacts pass clean-extraction smoke tests;
 - licenses, notices, and asset attribution are complete;
 - documentation is understandable without development knowledge; and
 - the project owner visually approves the complete edit/export/import/revert

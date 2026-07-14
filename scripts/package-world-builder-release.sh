@@ -5,6 +5,7 @@ SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ROOT_DIR="${ROOT_DIR:-$SCRIPT_ROOT}"
 
 VERSION=""
+LINUX_JRE=""
 WINDOWS_JRE=""
 ASSETS_CLEARED=false
 SKIP_BUILD=false
@@ -20,6 +21,7 @@ usage() {
 Usage:
   ./scripts/package-world-builder-release.sh \
     --version v0.1.0-alpha.1 \
+    --linux-jre /path/to/temurin-17-linux-x64-jre \
     --windows-jre /path/to/temurin-17-windows-x64-jre \
     --assets-cleared
 
@@ -40,6 +42,11 @@ while (($#)); do
 		--windows-jre)
 			[[ $# -ge 2 ]] || fail "--windows-jre requires a value"
 			WINDOWS_JRE="$2"
+			shift 2
+			;;
+		--linux-jre)
+			[[ $# -ge 2 ]] || fail "--linux-jre requires a value"
+			LINUX_JRE="$2"
 			shift 2
 			;;
 		--assets-cleared)
@@ -117,22 +124,37 @@ require_release_git_state() {
 
 require_release_git_state
 
-[[ -d "$WINDOWS_JRE" ]] || fail "Windows JRE directory does not exist: $WINDOWS_JRE"
-[[ -f "$WINDOWS_JRE/bin/java.exe" ]] || fail "Windows JRE must contain bin/java.exe"
-[[ -f "$WINDOWS_JRE/release" ]] || fail "Windows JRE must contain release metadata"
-[[ -f "$WINDOWS_JRE/LICENSE" || -f "$WINDOWS_JRE/NOTICE" || -f "$WINDOWS_JRE/legal/java.base/LICENSE" ]] \
-	|| fail "Windows JRE must contain redistribution legal files"
+validate_runtime() {
+	local platform="$1" runtime="$2" java_path="$3" expected_os="$4"
+	local runtime_version runtime_major runtime_os runtime_arch
 
-runtime_version="$(sed -n 's/^JAVA_VERSION="\([^"]*\)".*/\1/p' "$WINDOWS_JRE/release" | head -n 1)"
-[[ -n "$runtime_version" ]] || fail "Unable to read JAVA_VERSION from the Windows JRE"
-if [[ "$runtime_version" == 1.* ]]; then
-	runtime_major="${runtime_version#1.}"
-	runtime_major="${runtime_major%%.*}"
-else
-	runtime_major="${runtime_version%%.*}"
-fi
-[[ "$runtime_major" =~ ^[0-9]+$ ]] && ((runtime_major >= 17)) \
-	|| fail "Windows World Builder requires Java 17+; found $runtime_version"
+	[[ -d "$runtime" ]] || fail "$platform JRE directory does not exist: $runtime"
+	[[ -f "$runtime/$java_path" ]] || fail "$platform JRE must contain $java_path"
+	[[ -f "$runtime/release" ]] || fail "$platform JRE must contain release metadata"
+	[[ -f "$runtime/LICENSE" || -f "$runtime/NOTICE" || -f "$runtime/legal/java.base/LICENSE" ]] \
+		|| fail "$platform JRE must contain redistribution legal files"
+
+	runtime_version="$(sed -n 's/^JAVA_VERSION="\([^"]*\)".*/\1/p' "$runtime/release" | head -n 1)"
+	[[ -n "$runtime_version" ]] || fail "Unable to read JAVA_VERSION from the $platform JRE"
+	if [[ "$runtime_version" == 1.* ]]; then
+		runtime_major="${runtime_version#1.}"
+		runtime_major="${runtime_major%%.*}"
+	else
+		runtime_major="${runtime_version%%.*}"
+	fi
+	[[ "$runtime_major" =~ ^[0-9]+$ ]] && ((runtime_major >= 17)) \
+		|| fail "$platform World Builder requires Java 17+; found $runtime_version"
+	runtime_os="$(sed -n 's/^OS_NAME="\([^"]*\)".*/\1/p' "$runtime/release" | head -n 1)"
+	runtime_arch="$(sed -n 's/^OS_ARCH="\([^"]*\)".*/\1/p' "$runtime/release" | head -n 1)"
+	[[ "$runtime_os" == "$expected_os" ]] \
+		|| fail "$platform JRE must report OS_NAME=\"$expected_os\"; found ${runtime_os:-missing}"
+	[[ "$runtime_arch" == "x86_64" || "$runtime_arch" == "amd64" ]] \
+		|| fail "$platform JRE must be x64; found ${runtime_arch:-missing}"
+}
+
+validate_runtime "Linux" "$LINUX_JRE" "bin/java" "Linux"
+[[ -x "$LINUX_JRE/bin/java" ]] || fail "Linux JRE bin/java must be executable"
+validate_runtime "Windows" "$WINDOWS_JRE" "bin/java.exe" "Windows"
 
 PACKAGE_ASSETS="$ROOT_DIR/release/world-builder"
 ICON_CREDITS="$ROOT_DIR/dev/myworld/assets/ui/world-editor/CREDITS.md"
@@ -213,13 +235,13 @@ runtime_protocol="$(sed -n 's/^[[:space:]]*client_version:[[:space:]]*\([0-9][0-
 OUTPUT_DIR="$ROOT_DIR/output/releases/world-builder/$VERSION"
 STAGING_DIR="$OUTPUT_DIR/staging"
 PACKAGE_NAME="Spoiled Milk World Builder"
-JAVA_STAGE="$STAGING_DIR/java/$PACKAGE_NAME"
+LINUX_STAGE="$STAGING_DIR/linux/$PACKAGE_NAME"
 WINDOWS_STAGE="$STAGING_DIR/windows/$PACKAGE_NAME"
-JAVA_ARCHIVE="$OUTPUT_DIR/spoiled-milk-world-builder-$VERSION-java.zip"
+LINUX_ARCHIVE="$OUTPUT_DIR/spoiled-milk-world-builder-$VERSION-linux-x64.zip"
 WINDOWS_ARCHIVE="$OUTPUT_DIR/spoiled-milk-world-builder-$VERSION-windows-x64.zip"
 
 rm -rf "$OUTPUT_DIR"
-mkdir -p "$JAVA_STAGE" "$WINDOWS_STAGE" "$OUTPUT_DIR"
+mkdir -p "$LINUX_STAGE" "$WINDOWS_STAGE" "$OUTPUT_DIR"
 
 stage_builder() {
 	local destination="$1"
@@ -262,12 +284,14 @@ stage_builder() {
 	printf '%s\n' "$SOURCE_COMMIT" > "$destination/SOURCE-COMMIT.txt"
 }
 
-stage_builder "$JAVA_STAGE"
+stage_builder "$LINUX_STAGE"
 stage_builder "$WINDOWS_STAGE"
+mkdir -p "$LINUX_STAGE/runtime"
+cp -R "$LINUX_JRE"/. "$LINUX_STAGE/runtime/"
 mkdir -p "$WINDOWS_STAGE/runtime"
 cp -R "$WINDOWS_JRE"/. "$WINDOWS_STAGE/runtime/"
 
-for stage in "$JAVA_STAGE" "$WINDOWS_STAGE"; do
+for stage in "$LINUX_STAGE" "$WINDOWS_STAGE"; do
 	if find "$stage" -type f | grep -E '/(workspace|exports|backups|receipts|logs)/|world_builder\.db$|world-builder\.credential$|credentials\.txt$|uid\.dat$|clientSettings\.conf$|/ip\.txt$|/port\.txt$' >/dev/null; then
 		fail "Staged World Builder package contains generated project, credential, identity, or endpoint state"
 	fi
@@ -276,8 +300,8 @@ done
 require_release_git_state "$SOURCE_COMMIT"
 
 (
-	cd "$STAGING_DIR/java"
-	zip -qr "$JAVA_ARCHIVE" "$PACKAGE_NAME"
+	cd "$STAGING_DIR/linux"
+	zip -qr "$LINUX_ARCHIVE" "$PACKAGE_NAME"
 )
 (
 	cd "$STAGING_DIR/windows"
@@ -285,12 +309,12 @@ require_release_git_state "$SOURCE_COMMIT"
 )
 (
 	cd "$OUTPUT_DIR"
-	sha256sum "$(basename "$JAVA_ARCHIVE")" "$(basename "$WINDOWS_ARCHIVE")" > SHA256SUMS.txt
+	sha256sum "$(basename "$LINUX_ARCHIVE")" "$(basename "$WINDOWS_ARCHIVE")" > SHA256SUMS.txt
 )
 
 rm -rf "$STAGING_DIR"
 
 printf 'Created World Builder release artifacts:\n'
-printf '  %s\n' "$JAVA_ARCHIVE"
+printf '  %s\n' "$LINUX_ARCHIVE"
 printf '  %s\n' "$WINDOWS_ARCHIVE"
 printf '  %s\n' "$OUTPUT_DIR/SHA256SUMS.txt"
