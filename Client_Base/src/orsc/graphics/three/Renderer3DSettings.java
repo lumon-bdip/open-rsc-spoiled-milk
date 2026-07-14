@@ -1,5 +1,7 @@
 package orsc.graphics.three;
 
+import orsc.WorldEditorBuildSettings;
+
 public final class Renderer3DSettings {
 	private static final String GEOMETRY_CAPTURE_PROPERTY = "spoiledmilk.renderer3DGeometryCapture";
 	private static final String GEOMETRY_CAPTURE_ENV = "SPOILED_MILK_RENDERER3D_GEOMETRY_CAPTURE";
@@ -77,7 +79,7 @@ public final class Renderer3DSettings {
 	}
 
 	static boolean isGeometryCaptureEnabled() {
-		return GEOMETRY_CAPTURE_ENABLED;
+		return GEOMETRY_CAPTURE_ENABLED || WorldEditorBuildSettings.isEnabled();
 	}
 
 	static boolean isVisibleWorldEnabled() {

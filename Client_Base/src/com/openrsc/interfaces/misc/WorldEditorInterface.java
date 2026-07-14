@@ -54,7 +54,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private int terrainStrokeElevation=0,terrainStrokeColor=0,terrainStrokeTexture=0;
 	private int terrainStrokeRoof=0,terrainStrokeEastWall=0,terrainStrokeNorthWall=0,terrainStrokeDiagonal=0;
 	private int[][] terrainStrokeTiles=null;
-	private boolean terrainFastMode=false,terrainDragActive=false,terrainDragReleasePending=false;
+	private boolean terrainBuildMode=false,terrainDragActive=false,terrainDragReleasePending=false;
 	private int terrainDragHoverX=-1,terrainDragHoverY=-1,terrainDragAccepted=0;
 	private long terrainDragAckMillis=0L,terrainDragRebuildMillis=0L;
 	private final LinkedHashMap<Long,int[]> terrainDragPending=new LinkedHashMap<Long,int[]>();
@@ -80,9 +80,9 @@ public final class WorldEditorInterface extends NCustomComponent {
 		sessionId=id;nextSequence=sequence;mode=Mode.NAVIGATE;toolbar.reset();icons.initialize();
 		int x=mc.getEditorPlayerWorldX(),y=mc.getEditorPlayerWorldY();brushX=x;brushY=y;teleportX=String.valueOf(x);teleportY=String.valueOf(y);
 		clickTeleportPreferred=false;unsavedChanges=false;saveRequested=false;closeArmed=false;pendingEntityActions=0;
-		setTerrainFastMode(false);mc.setWorldEditorNavigateClickTeleport(false);clearTerrainDrag();updatePresentationBounds();setVisible(true);
+		setTerrainBuildMode(false);mc.setWorldEditorNavigateClickTeleport(false);clearTerrainDrag();updatePresentationBounds();setVisible(true);
 	}
-	public void closeFromServer(){setTerrainFastMode(false);mc.setWorldEditorNavigateClickTeleport(false);setVisible(false);sessionId=0;coordinateFocus=0;clearTerrainDrag();toolbar.reset();}
+	public void closeFromServer(){setTerrainBuildMode(false);mc.setWorldEditorNavigateClickTeleport(false);setVisible(false);sessionId=0;coordinateFocus=0;clearTerrainDrag();toolbar.reset();}
 	public boolean isEditorOpen(){return isVisible()&&sessionId!=0;}
 	public boolean isInspecting(){return isEditorOpen()&&mode==Mode.INSPECT;}
 	public boolean isNavigating(){return isEditorOpen()&&mode==Mode.NAVIGATE;}
@@ -225,7 +225,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		WorldEditorToolbarState.Flyout flyout=flyoutFor(selected);if(same)toolbar.selectMode(flyout);else toolbar.open(flyout);
 		mc.setWorldEditorNavigateClickTeleport(mode==Mode.NAVIGATE&&clickTeleportPreferred);updatePresentationBounds();
 	}
-	private void setTerrainFastMode(boolean enabled){terrainFastMode=enabled;mc.setWorldEditorFastMode(enabled);}
+	private void setTerrainBuildMode(boolean enabled){terrainBuildMode=enabled;mc.setWorldEditorBuildMode(enabled);}
 	private void setSceneryId(int id){sceneryId=Math.max(0,Math.min(id,EntityHandler.objectCount()-1));sceneryIdText=String.valueOf(sceneryId);}
 	private void setNpcId(int id){npcId=Math.max(0,Math.min(id,EntityHandler.npcs.size()-1));npcIdText=String.valueOf(npcId);}
 	private void setNpcRadius(int radius){npcRadius=Math.max(0,Math.min(radius,64));npcRadiusText=String.valueOf(npcRadius);}
@@ -278,7 +278,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void requestWorldEditSave(){if(terrainStrokeTiles!=null||terrainDragActive||terrainDragReleasePending){inspectionStatus="Wait for the active terrain stroke to finish before saving.";return;}mc.sendCommandString("saveworldedits");saveRequested=true;closeArmed=false;inspectionStatus="World edit save requested; see game messages for verification.";}
 	private void requestEditorClose(){
 		if(unsavedChanges&&!closeArmed){closeArmed=true;inspectionStatus="Unsaved edits remain. Select Close again to exit without saving.";return;}
-		setTerrainFastMode(false);mc.setWorldEditorNavigateClickTeleport(false);send(1,0,0,0,0,0,0);setVisible(false);
+		setTerrainBuildMode(false);mc.setWorldEditorNavigateClickTeleport(false);send(1,0,0,0,0,0,0);setVisible(false);
 	}
 	private static WorldEditorToolbarState.Flyout flyoutFor(Mode selected){
 		switch(selected){case INSPECT:return WorldEditorToolbarState.Flyout.INSPECT;case TERRAIN:return WorldEditorToolbarState.Flyout.TERRAIN;
@@ -302,7 +302,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 			Mode selected=dockModeAt(rx,ry);if(selected!=null){if(click==1)selectMode(selected);return true;}
 			int field=terrainFieldAtDock(rx,ry);if(field>=0){if(click==2)toggleTerrainField(field);else openTerrainTool(field);return true;}
 			if(dockHit(rx,ry,0,3)){if(click==2)toggleBrushSize();else openTerrainTool(0);return true;}
-			if(dockHit(rx,ry,0,4)){if(click==1)setTerrainFastMode(!terrainFastMode);return true;}
+			if(dockHit(rx,ry,0,4)){if(click==1)setTerrainBuildMode(!terrainBuildMode);return true;}
 			if(dockHit(rx,ry,0,5)){if(click==1)requestWorldEditSave();return true;}
 			if(dockHit(rx,ry,0,6)){if(click==1)requestEditorClose();return true;}
 			return true;
@@ -374,7 +374,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 			}
 			if(mode==Mode.INSPECT&&ry>=276&&ry<300&&rx>=10&&rx<175&&!inspectionKind.isEmpty()){copyInspected();return true;}
 			if(mode==Mode.TERRAIN){
-				if(ry>=56&&ry<78){if(rx>=10&&rx<110)terrainStructureTab=false;else if(rx>=117&&rx<217)terrainStructureTab=true;else if(rx>=235&&rx<380)setTerrainFastMode(!terrainFastMode);coordinateFocus=0;return true;}
+				if(ry>=56&&ry<78){if(rx>=10&&rx<110)terrainStructureTab=false;else if(rx>=117&&rx<217)terrainStructureTab=true;else if(rx>=235&&rx<380)setTerrainBuildMode(!terrainBuildMode);coordinateFocus=0;return true;}
 				if(!terrainStructureTab){
 					if(ry>=82&&ry<106){if(rx>=10&&rx<30)paintElevation=!paintElevation;else if(rx>=150&&rx<178)setTerrainElevation(terrainElevation-1);else if(rx>=185&&rx<265)focusNumber(6);else if(rx>=272&&rx<300)setTerrainElevation(terrainElevation+1);return true;}
 					if(ry>=122&&ry<146){if(rx>=10&&rx<30)paintFloorColor=!paintFloorColor;else if(rx>=150&&rx<178)setTerrainFloorColor(terrainFloorColor-1);else if(rx>=185&&rx<265)focusNumber(7);else if(rx>=272&&rx<300)setTerrainFloorColor(terrainFloorColor+1);return true;}
@@ -428,7 +428,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		drawTerrainIcon(WorldEditorIconRegistry.Key.FIELD_ELEVATION,x+DOCK_RIGHT,y+dockRowY(2),6,paintElevation);
 		drawIconButton(terrainBrushSize==1?WorldEditorIconRegistry.Key.TOOL_BRUSH_1X1:WorldEditorIconRegistry.Key.TOOL_BRUSH_3X3,x+DOCK_LEFT,y+dockRowY(3),mode==Mode.TERRAIN,terrainActiveField==0&&toolbar.isFlyoutOpen(),false,false);
 		drawTerrainIcon(WorldEditorIconRegistry.Key.FIELD_FLOOR_COLOR,x+DOCK_RIGHT,y+dockRowY(3),7,paintFloorColor);
-		drawIconButton(WorldEditorIconRegistry.Key.PROFILE_FAST,x+DOCK_LEFT,y+dockRowY(4),terrainFastMode,false,false,false);
+		drawIconButton(WorldEditorIconRegistry.Key.PROFILE_BUILD,x+DOCK_LEFT,y+dockRowY(4),terrainBuildMode,false,false,false);
 		drawTerrainIcon(WorldEditorIconRegistry.Key.FIELD_FLOOR_TEXTURE,x+DOCK_RIGHT,y+dockRowY(4),8,paintFloorTexture);
 		drawIconButton(WorldEditorIconRegistry.Key.ACTION_SAVE,x+DOCK_LEFT,y+dockRowY(5),false,false,false,unsavedChanges||saveRequested);
 		drawTerrainIcon(WorldEditorIconRegistry.Key.FIELD_ROOF,x+DOCK_RIGHT,y+dockRowY(5),9,paintRoof);
@@ -504,7 +504,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private String toolbarTooltipAt(int x,int y){
 		if(x<0||x>=DOCK_WIDTH||y<0)return "";if(dockHit(x,y,0,0))return "Collapse/expand dock";Mode selected=dockModeAt(x,y);if(selected!=null)return selected.name()+" mode | Left: select or toggle flyout";
 		int field=terrainFieldAtDock(x,y);if(field>=0)return activeTerrainLabel(field)+": "+terrainText(field)+" | "+(terrainEnabled(field)?"paint ON":"paint OFF")+" | Left: edit | Right: toggle";
-		if(dockHit(x,y,0,3))return "Brush "+terrainBrushSize+"x"+terrainBrushSize+" | Left: edit | Right: toggle size";if(dockHit(x,y,0,4))return "Fast profile: "+(terrainFastMode?"ON":"OFF")+" | restores graphics exactly";
+		if(dockHit(x,y,0,3))return "Brush "+terrainBrushSize+"x"+terrainBrushSize+" | Left: edit | Right: toggle size";if(dockHit(x,y,0,4))return "Build view: "+(terrainBuildMode?"ON":"OFF")+" | faceted terrain grid";
 		if(dockHit(x,y,0,5))return "Save | "+(unsavedChanges?"unsaved changes":"clean")+(saveRequested?" | requested":"");if(dockHit(x,y,0,6))return closeArmed?"Close without saving: confirm":"Close editor";return "";
 	}
 	private boolean activeTerrainEnabled(){return terrainEnabled(terrainActiveField);}
@@ -543,7 +543,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		button(x+10,y+276,165,inspectionKind.isEmpty()?"Copy inspected (empty)":"Copy inspected");
 	}
 	private void renderTerrain(int x,int y){
-		toolButton(x+10,y+56,100,"Surface",!terrainStructureTab);toolButton(x+117,y+56,100,"Structure",terrainStructureTab);checkbox(x+240,y+59,terrainFastMode,"Fast mode");
+		toolButton(x+10,y+56,100,"Surface",!terrainStructureTab);toolButton(x+117,y+56,100,"Structure",terrainStructureTab);checkbox(x+240,y+59,terrainBuildMode,"Build mode");
 		if(terrainStructureTab){renderTerrainStructure(x,y);return;}
 		terrainField(x,y+82,"Elevation",paintElevation,terrainElevationText,coordinateFocus==6);
 		terrainField(x,y+122,"Floor Color",paintFloorColor,terrainFloorColorText,coordinateFocus==7);

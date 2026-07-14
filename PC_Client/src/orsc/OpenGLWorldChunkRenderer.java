@@ -5,6 +5,7 @@ import orsc.graphics.three.Renderer3DMaterialFamily;
 import orsc.graphics.three.Renderer3DModelKind;
 import orsc.graphics.three.Renderer3DTextureData;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
+import orsc.graphics.three.WorldEditorTerrainGrid;
 import orsc.util.FastMath;
 
 import java.nio.ByteBuffer;
@@ -133,6 +134,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private final boolean texturedShaderEnabled;
 	private final boolean remasterLightingShaderEnabled;
 	private final boolean rawMaterialShaderEnabled;
+	private final WorldEditorTerrainGrid worldEditorTerrainGrid = new WorldEditorTerrainGrid();
 	private final LinkedHashMap<WorldChunkBufferKey, WorldChunkBuffer> residentChunks =
 		new LinkedHashMap<WorldChunkBufferKey, WorldChunkBuffer>(MAX_RESIDENT_CHUNKS, 0.75f, true);
 	private FloatBuffer vertexUploadBuffer;
@@ -479,6 +481,52 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			accumulator.textureBinds,
 			accumulator.shadowProofChunks,
 			accumulator.shadowProofIndices);
+	}
+
+	void drawWorldEditorBuildGrid(Renderer3DFrame frame) throws Exception {
+		if (!WorldEditorBuildSettings.isEnabled() || frame == null) {
+			return;
+		}
+		int[] segments = worldEditorTerrainGrid.segments(frame.getWorldChunkFrame(), frame.getActivePlane());
+		if (segments.length == 0) {
+			return;
+		}
+
+		loadWorldProjectionAndView(frame);
+		gl.glUseProgram(0);
+		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
+		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
+		gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+		gl.glDisableClientState(gl.GL_COLOR_ARRAY);
+		gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+		gl.glDisable(gl.GL_TEXTURE_2D);
+		gl.glDisable(gl.GL_ALPHA_TEST);
+		gl.glDisable(gl.GL_FOG);
+		gl.glDisable(gl.GL_CULL_FACE);
+		gl.glEnable(gl.GL_DEPTH_TEST);
+		gl.glEnable(gl.GL_BLEND);
+		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+		gl.glDepthMask(false);
+		gl.glLineWidth(1.25f);
+		gl.glColor4f(0.38f, 0.88f, 0.95f, 0.72f);
+		try {
+			gl.glBegin(gl.GL_LINES);
+			for (int offset = 0; offset + 5 < segments.length; offset += 6) {
+				gl.glVertex3f(segments[offset], segments[offset + 1] - 2.0f, segments[offset + 2]);
+				gl.glVertex3f(segments[offset + 3], segments[offset + 4] - 2.0f, segments[offset + 5]);
+			}
+			gl.glEnd();
+		} finally {
+			gl.glLineWidth(1.0f);
+			gl.glDepthMask(true);
+			gl.glDisable(gl.GL_DEPTH_TEST);
+			gl.glDisable(gl.GL_BLEND);
+			gl.glDisable(gl.GL_ALPHA_TEST);
+			gl.glDisable(gl.GL_FOG);
+			gl.glDisable(gl.GL_CULL_FACE);
+			gl.glEnable(gl.GL_TEXTURE_2D);
+			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		}
 	}
 
 	boolean canApplyRemasterTerrainShadowMaskInChunkShader(boolean textured) {

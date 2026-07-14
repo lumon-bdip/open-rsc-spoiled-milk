@@ -40,8 +40,7 @@ public final class WorldEditorIconRegistry {
 		TOOL_BRUSH_1X1("tool-brush-1x1.png", "1x1"),
 		TOOL_BRUSH_3X3("tool-brush-3x3.png", "3x3"),
 		ACTION_ROTATE("action-rotate.png", "Turn"),
-		PROFILE_FAST("profile-fast.png", "Fast"),
-		PROFILE_GRID("profile-grid.png", "Grid"),
+		PROFILE_BUILD("profile-build.png", "Build"),
 		ACTION_SAVE("action-save.png", "Save"),
 		ACTION_PIN("action-pin.png", "Pin"),
 		ACTION_CLOSE("action-close.png", "Close");

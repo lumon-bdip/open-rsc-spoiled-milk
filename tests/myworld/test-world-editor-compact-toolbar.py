@@ -16,6 +16,8 @@ PC_CLIENT = ROOT / "PC_Client/src"
 UI = CLIENT / "com/openrsc/interfaces/misc/WorldEditorInterface.java"
 TOOLBAR_STATE = CLIENT / "com/openrsc/interfaces/misc/WorldEditorToolbarState.java"
 ICON_REGISTRY = CLIENT / "com/openrsc/interfaces/misc/WorldEditorIconRegistry.java"
+BUILD_SETTINGS = CLIENT / "orsc/WorldEditorBuildSettings.java"
+TERRAIN_GRID = CLIENT / "orsc/graphics/three/WorldEditorTerrainGrid.java"
 
 
 def rgba_png(width, height):
@@ -124,7 +126,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                             WorldEditorIconRegistry registry = new WorldEditorIconRegistry();
                             registry.initialize();
                             require(registry.loadedCount() == 1);
-                            require(registry.missingKeys().size() == 20);
+                            require(registry.missingKeys().size() == 19);
                             require(registry.isLoaded(WorldEditorIconRegistry.Key.MODE_NAVIGATE));
                             require(!registry.isLoaded(WorldEditorIconRegistry.Key.MODE_INSPECT));
                             Sprite first = registry.get(WorldEditorIconRegistry.Key.MODE_NAVIGATE);
@@ -140,7 +142,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                 cwd=working,
             )
         self.assertEqual(1, output.count("[world-editor icons]"))
-        self.assertIn("20 unavailable", output)
+        self.assertIn("19 unavailable", output)
         self.assertIn("mode-inspect.png (expected 24x24, got 12x12)", output)
         self.assertTrue(output.rstrip().endswith("icon-registry-ok"))
 
@@ -154,7 +156,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
             "field-wall-north.png", "field-wall-east.png",
             "field-wall-diagonal.png", "tool-brush-1x1.png",
             "tool-brush-3x3.png", "action-rotate.png",
-            "profile-fast.png", "profile-grid.png", "action-save.png",
+            "profile-build.png", "action-save.png",
             "action-pin.png", "action-close.png",
         }
         self.assertEqual(expected, set(re.findall(r'\("([a-z0-9-]+\.png)"', source)))
@@ -204,22 +206,98 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
         for field in range(6, 13):
             self.assertIn(f"return {field}", ui)
 
-    def test_dirty_save_and_fast_profile_restoration_guards_are_visible(self):
+    def test_dirty_save_and_build_profile_restoration_guards_are_visible(self):
         ui = UI.read_text()
         client = (CLIENT / "orsc/mudclient.java").read_text()
         self.assertIn("unsavedChanges||saveRequested", ui)
         self.assertIn("Wait for the active terrain stroke to finish before saving.", ui)
         self.assertIn("Unsaved edits remain. Select Close again", ui)
         self.assertIn("observeGameMessage", ui)
-        self.assertIn("worldEditorFastSnapshotValid=true", client)
-        self.assertIn("else if(worldEditorFastSnapshotValid)", client)
+        self.assertIn("worldEditorBuildSnapshotValid=true", client)
+        self.assertIn("else if(worldEditorBuildSnapshotValid)", client)
+        self.assertIn("worldEditorSavedGeometry=RendererGeometrySettings.getMode()", client)
+        self.assertIn("RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.FACETED)", client)
+        self.assertIn("setMode(worldEditorSavedGeometry)", client)
+        self.assertIn("WorldEditorBuildSettings.setEnabled(enabled)", client)
         self.assertIn("setTerrainLevel(worldEditorSavedTerrainRelief)", client)
         self.assertIn("setObjectLevel(worldEditorSavedObjectRelief)", client)
         self.assertNotIn("worldEditorSavedTerrainRelief>0", client)
         self.assertNotIn("worldEditorSavedObjectRelief>0", client)
-        self.assertGreaterEqual(client.count("setWorldEditorFastMode(false)"), 2)
-        self.assertIn("closeFromServer(){setTerrainFastMode(false)", ui)
+        self.assertGreaterEqual(client.count("setWorldEditorBuildMode(false)"), 2)
+        self.assertIn("closeFromServer(){setTerrainBuildMode(false)", ui)
         self.assertIn("requestEditorClose()", ui)
+
+    def test_build_mode_state_and_grid_extract_square_boundaries_only(self):
+        output = self.compile_and_run(
+            [
+                CLIENT / "com/openrsc/client/entityhandling/defs/EntityDef.java",
+                CLIENT / "com/openrsc/client/entityhandling/defs/GameObjectDef.java",
+                CLIENT / "orsc/graphics/three/Renderer3DModelKind.java",
+                CLIENT / "orsc/graphics/three/Renderer3DMaterialFamily.java",
+                CLIENT / "orsc/graphics/three/Renderer3DMaterialClassifier.java",
+                CLIENT / "orsc/graphics/three/Renderer3DWorldChunkFrame.java",
+                TERRAIN_GRID,
+                BUILD_SETTINGS,
+            ],
+            "orsc.graphics.three.WorldEditorGridHarness",
+            """
+                package orsc.graphics.three;
+                import java.util.Arrays;
+                import orsc.WorldEditorBuildSettings;
+                public final class WorldEditorGridHarness {
+                    private static void require(boolean value) {
+                        if (!value) throw new AssertionError();
+                    }
+                    private static Renderer3DWorldChunkFrame.ChunkMesh chunk(int plane, boolean object) {
+                        int[] coordinates = {0,0,0, 128,-8,0, 128,-16,128, 0,-4,128};
+                        int[] indices = {0,1,2, 0,2,3};
+                        int[] textures = {0,0};
+                        Renderer3DModelKind[] kinds = {
+                            Renderer3DModelKind.TERRAIN, Renderer3DModelKind.TERRAIN
+                        };
+                        return new Renderer3DWorldChunkFrame.ChunkMesh(
+                            plane, 0, 0, 0, 0, coordinates, null, null, null,
+                            indices, textures, new int[] {0,0}, kinds, 2, 0, 0, object, 91L + plane);
+                    }
+                    public static void main(String[] args) {
+                        require(!WorldEditorBuildSettings.isEnabled());
+                        WorldEditorBuildSettings.setEnabled(true);
+                        require(WorldEditorBuildSettings.isEnabled());
+                        WorldEditorBuildSettings.setEnabled(false);
+                        Renderer3DWorldChunkFrame frame = Renderer3DWorldChunkFrame.fromChunks(
+                            Arrays.asList(chunk(0, false), chunk(0, true), chunk(1, false)));
+                        WorldEditorTerrainGrid grid = new WorldEditorTerrainGrid();
+                        int[] segments = grid.segments(frame, 0);
+                        require(segments.length == 24);
+                        require(segments == grid.segments(frame, 0));
+                        for (int offset = 0; offset < segments.length; offset += 6) {
+                            int dx = Math.abs(segments[offset] - segments[offset + 3]);
+                            int dz = Math.abs(segments[offset + 2] - segments[offset + 5]);
+                            require((dx == 128 && dz == 0) || (dx == 0 && dz == 128));
+                        }
+                        require(grid.segments(frame, 2).length == 0);
+                        System.out.println("world-editor-grid-ok");
+                    }
+                }
+            """,
+        )
+        self.assertEqual("world-editor-grid-ok", output.strip())
+
+    def test_build_grid_is_wired_to_legacy_and_opengl_without_wire_geometry(self):
+        client = (CLIENT / "orsc/mudclient.java").read_text()
+        chunk_renderer = (PC_CLIENT / "orsc/OpenGLWorldChunkRenderer.java").read_text()
+        presenter = (PC_CLIENT / "orsc/OpenGLFramePresenter.java").read_text()
+        grid = TERRAIN_GRID.read_text()
+        settings = (CLIENT / "orsc/graphics/three/Renderer3DSettings.java").read_text()
+        self.assertIn("drawWorldEditorBuildGridLegacy(renderer3DFrame)", client)
+        self.assertIn("ScaledWindow.isOpenGLPrimaryWindowEnabled()", client)
+        self.assertIn("GEOMETRY_CAPTURE_ENABLED || WorldEditorBuildSettings.isEnabled()", settings)
+        self.assertIn("drawWorldEditorBuildGrid(frame.renderer3DFrame)", presenter)
+        self.assertIn("gl.glBegin(gl.GL_LINES)", chunk_renderer)
+        self.assertIn("gl.glEnable(gl.GL_DEPTH_TEST)", chunk_renderer)
+        self.assertIn("chunk.getTriangleModelKind(triangle) != Renderer3DModelKind.TERRAIN", grid)
+        self.assertIn("chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD", grid)
+        self.assertNotIn("RendererGeometrySettings.Mode.WIRE", grid)
 
 
 if __name__ == "__main__":

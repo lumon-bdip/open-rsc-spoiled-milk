@@ -110,10 +110,10 @@ server rejects duplicate, malformed, cross-plane, out-of-world, or oversized
 lists and prevalidates every coordinate and projected draft-size change before
 committing the chunk; the client applies it with one rebuild. The UI reports
 pending/accepted counts plus click-to-ack and rebuild time. An optional
-non-persistent Fast mode temporarily selects classic lighting, disables terrain
-variation and relief, fixes tone to daytime, limits fog distance, and pauses
-scenery animation refresh; closing the editor restores the exact prior runtime
-renderer settings. The
+non-persistent Build mode temporarily selects classic lighting, faceted geometry,
+an editor tile grid, disabled terrain variation and relief, daytime tone, limited
+fog distance, and paused scenery animation refresh; closing the editor restores
+the exact prior runtime renderer settings. The
 client advances a terrain-cache revision
 so older background preload products cannot win. Legacy water-like overlays
 normally extend visual faces onto four cardinal neighbors; transient editor
