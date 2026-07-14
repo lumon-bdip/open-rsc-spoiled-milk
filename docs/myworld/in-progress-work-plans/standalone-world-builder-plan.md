@@ -716,6 +716,32 @@ Phase 4 implementation evidence recorded on 2026-07-14:
 Private import, target restart, visual verification, and undo/restart
 acceptance remain required before this phase's exit gate is closed.
 
+Phase 4 visual safety incident recorded on 2026-07-14:
+
+- A disposable target import completed successfully and published receipt
+  `20260714T143509009Z-43cbe8f7f5e8`. Its dry-run listed the matching server
+  and client terrain replacements plus scenery-location and NPC-location
+  replacements; apply verified the imported hashes and retained backups.
+- Preparing a fresh isolated Builder workspace from that imported target also
+  completed successfully. Launching its graphical client caused the host to
+  become completely unresponsive, requiring a hard restart before visual
+  inspection could begin.
+- The hard restart cleared the `/tmp` workspaces and their local client/server
+  logs. The prior boot journal contains no OOM kill, GPU reset, storage error,
+  thermal fault, Java crash, or coredump near the event. It ends abruptly at
+  `10:35:29` with a libinput/touchegg "system is too slow" warning and no clean
+  shutdown record.
+- Steam was actively rendering shortly before the event, and pre-launch
+  diagnostics had shown several other Java server listeners. The Builder
+  launcher permits up to 1536 MiB for its server and 2 GiB for its OpenGL
+  client. Resource or GPU contention is plausible but unconfirmed; the exact
+  cause cannot be established without persistent bounded diagnostics.
+- No further graphical launch is authorized by this plan state. The next
+  visual attempt must retain logs outside `/tmp`, inventory concurrent Java/GPU
+  load, sample bounded process RSS/CPU, and use an agreed low-risk launch
+  sequence. Phase 4 remains pending until import/restart and undo/restart are
+  visually accepted without host instability.
+
 Exit gate: imported terrain/scenery/NPC edits load after target server/client
 restart, and rollback restores every original byte and original file absence.
 
