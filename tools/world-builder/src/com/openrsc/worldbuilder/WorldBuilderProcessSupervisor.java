@@ -17,13 +17,21 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** Owns the isolated local server/client lifecycle for one prepared workspace. */
 public final class WorldBuilderProcessSupervisor {
 	private static final long DEFAULT_READY_TIMEOUT_MILLIS = 60_000L;
 	private static final long SHUTDOWN_TIMEOUT_MILLIS = 20_000L;
+	private static final Pattern SOURCE_FINGERPRINT = Pattern.compile(
+		"\\\"sourceFingerprintSha256\\\"\\s*:\\s*\\\"([0-9a-f]{64})\\\"");
 
 	public int runPrepared(Path requestedWorkspace, int port)
 		throws IOException, WorldBuilderDiscoveryException, InterruptedException {
@@ -62,7 +70,7 @@ public final class WorldBuilderProcessSupervisor {
 		throws IOException, WorldBuilderDiscoveryException, InterruptedException {
 		Path run = workspace.resolve("run");
 		Path logs = workspace.resolve("logs");
-		Path control = workspace.resolve("server/run/world-builder");
+		Path control = workspace.resolve("working/server/run/world-builder");
 		Path ready = control.resolve("ready");
 		Path shutdown = control.resolve("shutdown.request");
 		Path credential = workspace.resolve(WorldBuilderRuntimePreparer.BUILDER_CREDENTIAL);
@@ -98,11 +106,11 @@ public final class WorldBuilderProcessSupervisor {
 		int serverExit = -1;
 		boolean serverFailedFirst = false;
 		try {
-			active[0] = startProcess(serverCommand, workspace.resolve("server"), serverLog);
+			active[0] = startProcess(serverCommand, workspace.resolve("working/server"), serverLog);
 			writePid(run.resolve("server.pid"), active[0]);
 			waitForReady(active[0], ready, credential, port, readyTimeoutMillis);
 
-			active[1] = startProcess(clientCommand, workspace.resolve("Client_Base"), clientLog);
+			active[1] = startProcess(clientCommand, workspace.resolve("working/Client_Base"), clientLog);
 			writePid(run.resolve("client.pid"), active[1]);
 			while (active[1].isAlive() && active[0].isAlive()) {
 				Thread.sleep(200L);
@@ -161,12 +169,13 @@ public final class WorldBuilderProcessSupervisor {
 		}
 		workspace = workspace.toRealPath();
 		for (String relative : Arrays.asList(
-			"server/core.jar",
-			"server/plugins.jar",
-			"server/world-builder.conf",
-			"server/inc/sqlite/world_builder.db",
-			"Client_Base/Open_RSC_Client.jar",
+			"working/server/core.jar",
+			"working/server/plugins.jar",
+			"working/server/world-builder.conf",
+			"working/server/inc/sqlite/world_builder.db",
+			"working/Client_Base/Open_RSC_Client.jar",
 			"project-source.json",
+			"source-snapshot.sha256",
 			"runtime.json")) {
 			Path file = workspace.resolve(relative).normalize();
 			if (!file.startsWith(workspace)
@@ -175,7 +184,70 @@ public final class WorldBuilderProcessSupervisor {
 				throw new WorldBuilderDiscoveryException("Prepared Builder runtime is incomplete: " + relative);
 			}
 		}
+		verifySourceSnapshot(workspace);
 		return workspace;
+	}
+
+	private static void verifySourceSnapshot(Path workspace)
+		throws IOException, WorldBuilderDiscoveryException {
+		Path inventoryPath = workspace.resolve(WorldBuilderRuntimePreparer.SOURCE_INVENTORY);
+		if (Files.size(inventoryPath) > 65_536L) {
+			throw new WorldBuilderDiscoveryException("World Builder source inventory is unexpectedly large.");
+		}
+		List<String> lines = Files.readAllLines(inventoryPath, StandardCharsets.UTF_8);
+		if (lines.isEmpty() || !"world-builder-source-v1".equals(lines.get(0))) {
+			throw new WorldBuilderDiscoveryException("World Builder source inventory is invalid.");
+		}
+		Path source = workspace.resolve(WorldBuilderRuntimePreparer.SOURCE_DIRECTORY).normalize();
+		if (!Files.isDirectory(source, LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(source)) {
+			throw new WorldBuilderDiscoveryException("World Builder source snapshot is missing or unsafe.");
+		}
+		Map<Path,String> expected = new LinkedHashMap<Path,String>();
+		for (int index = 1; index < lines.size(); index++) {
+			String line = lines.get(index);
+			int tab = line.indexOf('\t');
+			if (tab < 1 || tab + 1 >= line.length()) {
+				throw new WorldBuilderDiscoveryException("World Builder source inventory contains an invalid record.");
+			}
+			String hash = line.substring(0, tab);
+			String relative = line.substring(tab + 1).replace('\\', '/');
+			Path candidate = source.resolve(relative).normalize();
+			if (relative.startsWith("/") || !candidate.startsWith(source) || expected.put(candidate, hash) != null
+				|| !("-".equals(hash) || hash.matches("[0-9a-f]{64}"))) {
+				throw new WorldBuilderDiscoveryException("World Builder source inventory contains an unsafe record.");
+			}
+		}
+		Set<Path> present = new HashSet<Path>();
+		try (java.util.stream.Stream<Path> paths = Files.walk(source)) {
+			java.util.Iterator<Path> iterator = paths.iterator();
+			while (iterator.hasNext()) {
+				Path path = iterator.next();
+				if (path.equals(source)) continue;
+				if (Files.isSymbolicLink(path)) {
+					throw new WorldBuilderDiscoveryException("World Builder source snapshot contains a symbolic link.");
+				}
+				if (Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) present.add(path.normalize());
+				else if (!Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
+					throw new WorldBuilderDiscoveryException("World Builder source snapshot contains an unsupported entry.");
+				}
+			}
+		}
+		for (Map.Entry<Path,String> entry : expected.entrySet()) {
+			Path path = entry.getKey(); String hash = entry.getValue();
+			if ("-".equals(hash)) {
+				if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+					throw new WorldBuilderDiscoveryException("An absent source file was added: " + source.relativize(path));
+				}
+			} else if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)
+				|| Files.isSymbolicLink(path) || !hash.equals(WorldBuilderHashes.sha256(path))) {
+				throw new WorldBuilderDiscoveryException("World Builder source snapshot changed: " + source.relativize(path));
+			}
+		}
+		Set<Path> expectedPresent = new HashSet<Path>();
+		for (Map.Entry<Path,String> entry : expected.entrySet()) if (!"-".equals(entry.getValue())) expectedPresent.add(entry.getKey());
+		if (!present.equals(expectedPresent)) {
+			throw new WorldBuilderDiscoveryException("World Builder source snapshot contains untracked files.");
+		}
 	}
 
 	private static List<String> defaultServerCommand(Path workspace) {
@@ -190,6 +262,7 @@ public final class WorldBuilderProcessSupervisor {
 			"-Xmx1536m",
 			"-Dopenrsc.worldBuilderCredentialFile=" + credential,
 			"-Dopenrsc.worldBuilderControlDirectory=" + control,
+			"-Dopenrsc.worldBuilderWorkspaceRoot=" + workspace,
 			"-cp",
 			classpath,
 			"com.openrsc.server.Server",
@@ -198,6 +271,8 @@ public final class WorldBuilderProcessSupervisor {
 
 	private static List<String> defaultClientCommand(Path workspace, int port) {
 		String credential = workspace.resolve(WorldBuilderRuntimePreparer.BUILDER_CREDENTIAL).toString();
+		String projectName = workspace.getFileName().toString();
+		String sourceRevision = readSourceRevision(workspace);
 		return Arrays.asList(
 			javaExecutable(),
 			"-Xms512m",
@@ -207,8 +282,27 @@ public final class WorldBuilderProcessSupervisor {
 			"-Dopenrsc.worldBuilderHost=127.0.0.1",
 			"-Dopenrsc.worldBuilderPort=" + port,
 			"-Dopenrsc.worldBuilderCredentialFile=" + credential,
+			"-Dopenrsc.worldBuilderProjectName=" + projectName,
+			"-Dopenrsc.worldBuilderSourceRevision=" + sourceRevision,
 			"-jar",
 			"Open_RSC_Client.jar");
+	}
+
+	private static String readSourceRevision(Path workspace) {
+		try {
+			Path metadata = workspace.resolve("runtime.json");
+			if (Files.size(metadata) > 16_384L) {
+				throw new IOException("runtime metadata is unexpectedly large");
+			}
+			Matcher matcher = SOURCE_FINGERPRINT.matcher(
+				new String(Files.readAllBytes(metadata), StandardCharsets.UTF_8));
+			if (!matcher.find()) {
+				throw new IOException("source revision is missing");
+			}
+			return matcher.group(1);
+		} catch (IOException failure) {
+			throw new IllegalStateException("Prepared World Builder source revision is invalid", failure);
+		}
 	}
 
 	private static String javaExecutable() {

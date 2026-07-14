@@ -5,7 +5,6 @@ import com.openrsc.server.io.WorldEditorTerrainArchive;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -16,14 +15,17 @@ import java.util.Map;
 public final class WorldEditorSessionManager {
 	public static final int TERRAIN_DRAFT_LIMIT = 4096;
 	private final SecureRandom random;
+	private final WorldEditStorageContext storage;
 	private Session active;
 	private WorldEditorTerrainArchive terrainArchive;
 	private Path terrainArchivePath;
 	private String terrainBaseSha256;
 	private final Map<String,WorldEditorTerrainArchive.Snapshot> terrainDraft =
 		new LinkedHashMap<String,WorldEditorTerrainArchive.Snapshot>();
-	public WorldEditorSessionManager() { this(new SecureRandom()); }
-	WorldEditorSessionManager(SecureRandom random) { this.random = random; }
+	public WorldEditorSessionManager() { this(null, new SecureRandom()); }
+	public WorldEditorSessionManager(WorldEditStorageContext storage) { this(storage, new SecureRandom()); }
+	WorldEditorSessionManager(SecureRandom random) { this(null, random); }
+	WorldEditorSessionManager(WorldEditStorageContext storage, SecureRandom random) { this.storage = storage; this.random = random; }
 
 	public synchronized OpenResult open(Player player, boolean enabled) {
 		if (!enabled) return OpenResult.denied("The in-game world editor is disabled on this server.");
@@ -111,8 +113,11 @@ public final class WorldEditorSessionManager {
 		if(terrainArchivePath==null||terrainBaseSha256==null)throw new IllegalStateException("Terrain archive base revision is unavailable.");
 		List<WorldEditorTerrainSaveFiles.TileRecord> records=new ArrayList<WorldEditorTerrainSaveFiles.TileRecord>(terrainDraft.size());
 		for(WorldEditorTerrainArchive.Snapshot s:terrainDraft.values())records.add(WorldEditorTerrainSaveFiles.TileRecord.of(s.coordinates.worldX,s.coordinates.worldY,s.coordinates.plane,s.elevation,s.groundTexture,s.groundOverlay,s.roofTexture,s.horizontalWall,s.verticalWall,s.diagonal));
-		Path clientArchive=Paths.get("../Client_Base/Cache/video/Custom_Landscape.orsc").toAbsolutePath().normalize();
-		Path backups=terrainArchivePath.getParent().resolve("world-editor-backups");closeTerrainArchive();
+		WorldEditStorageContext paths=storage(player);
+		Path clientArchive=paths.clientTerrainArchive();
+		paths.validateWorkingAuthoredFile(terrainArchivePath);
+		paths.validateWorkingAuthoredFile(clientArchive);
+		Path backups=paths.terrainBackupDirectory(terrainArchivePath);closeTerrainArchive();
 		try{
 			WorldEditorTerrainSaveFiles.SaveResult saved=WorldEditorTerrainSaveFiles.save(terrainArchivePath,clientArchive,backups,terrainBaseSha256,records);
 			terrainBaseSha256=saved.resultSha256;terrainArchive=new WorldEditorTerrainArchive(terrainArchivePath.toFile());terrainDraft.clear();return saved;
@@ -125,14 +130,15 @@ public final class WorldEditorSessionManager {
 	}
 	private WorldEditorTerrainArchive.Snapshot inspectArchivedTerrain(Player player, int x, int y, int plane) throws IOException {
 		if (terrainArchive == null) {
-			String name = player.getConfig().WANT_CUSTOM_LANDSCAPE ? "Custom_Landscape.orsc"
-				: (player.getConfig().MEMBER_WORLD ? "Authentic_Landscape.orsc" : "F2PLandscape.orsc");
-			terrainArchivePath=Paths.get("./conf/server/data/"+name).toAbsolutePath().normalize();terrainBaseSha256=WorldEditorTerrainSaveFiles.sha256(terrainArchivePath);
+			terrainArchivePath=storage(player).terrainArchive(player.getConfig());terrainBaseSha256=WorldEditorTerrainSaveFiles.sha256(terrainArchivePath);
 			terrainArchive = new WorldEditorTerrainArchive(terrainArchivePath.toFile());
 		}
 		return terrainArchive.inspect(x, y, plane);
 	}
 	private void closeTerrainArchive() throws IOException {if(terrainArchive!=null){terrainArchive.close();terrainArchive=null;}}
+	private WorldEditStorageContext storage(Player player) throws IOException {
+		return storage == null ? WorldEditStorageContext.create(player.getConfig()) : storage;
+	}
 	private static String terrainKey(int x,int y,int plane){return plane+":"+x+":"+y;}
 	private static boolean rawByte(int value){return value>=0&&value<=255;}
 

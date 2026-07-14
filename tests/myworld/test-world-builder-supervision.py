@@ -54,9 +54,9 @@ class WorldBuilderSupervisionTest(unittest.TestCase):
                             Path workspace = Paths.get(args[0]);
                             int port = Integer.parseInt(args[1]);
                             String classes = args[2];
-                            Files.createDirectories(workspace.resolve("server/run/world-builder"));
-                            Files.createDirectories(workspace.resolve("server/inc/sqlite"));
-                            Files.createDirectories(workspace.resolve("Client_Base"));
+                            Files.createDirectories(workspace.resolve("working/server/run/world-builder"));
+                            Files.createDirectories(workspace.resolve("working/server/inc/sqlite"));
+                            Files.createDirectories(workspace.resolve("working/Client_Base"));
                             Files.createDirectories(workspace.resolve("logs"));
                             Files.createDirectories(workspace.resolve("run"));
 
@@ -67,7 +67,7 @@ class WorldBuilderSupervisionTest(unittest.TestCase):
                             require(first == 0, "first run");
                             require(!Files.exists(workspace.resolve("run/server.pid")), "server pid cleanup");
                             require(!Files.exists(workspace.resolve("run/client.pid")), "client pid cleanup");
-                            require(!Files.exists(workspace.resolve("server/run/world-builder/ready")), "ready cleanup");
+                            require(!Files.exists(workspace.resolve("working/server/run/world-builder/ready")), "ready cleanup");
                             String receipt = new String(Files.readAllBytes(workspace.resolve("run/last-run.json")),
                                 StandardCharsets.UTF_8);
                             require(receipt.contains("\\\"serverExit\\\": 0"), "server exit receipt");
@@ -98,8 +98,8 @@ class WorldBuilderSupervisionTest(unittest.TestCase):
                             public static void main(String[] args) throws Exception {
                                 Path workspace = Paths.get(args[0]);
                                 int port = Integer.parseInt(args[1]);
-                                Path control = workspace.resolve("server/run/world-builder");
-                                Path credential = workspace.resolve("server/inc/sqlite/world-builder.credential");
+                                Path control = workspace.resolve("working/server/run/world-builder");
+                                Path credential = workspace.resolve("working/server/inc/sqlite/world-builder.credential");
                                 Files.createDirectories(control);
                                 Files.createDirectories(credential.getParent());
                                 Files.write(credential, "Abcdefghijk23456789Z".getBytes(StandardCharsets.US_ASCII));

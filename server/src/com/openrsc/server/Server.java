@@ -7,6 +7,7 @@ import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.achievement.AchievementSystem;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
+import com.openrsc.server.content.worldedit.WorldEditStorageContext;
 import com.openrsc.server.content.worldedit.WorldBuilderAccountProvisioner;
 import com.openrsc.server.content.worldedit.WorldBuilderMode;
 import com.openrsc.server.content.worldedit.WorldBuilderRuntimeControl;
@@ -108,6 +109,7 @@ public class Server implements Runnable {
 	private final IPlayerService playerService;
 	private final I18NService i18nService;
 	private final MovementStutterDiagnostics movementStutterDiagnostics;
+	private final WorldEditStorageContext worldEditStorage;
 	private final WorldEditorSessionManager worldEditorSessions;
 
 	private final World world;
@@ -436,11 +438,12 @@ public class Server implements Runnable {
 		config = new ServerConfiguration();
 		getConfig().initConfig(configFile);
 		WorldBuilderMode.validate(getConfig());
+		worldEditStorage = WorldEditStorageContext.create(getConfig());
 		LOGGER.info("Server configuration loaded: " + getConfig().configFile);
 
 		name = getConfig().SERVER_NAME;
 		worldDayNightClock = new WorldDayNightClock();
-		worldEditorSessions = new WorldEditorSessionManager();
+		worldEditorSessions = new WorldEditorSessionManager(worldEditStorage);
 		movementStutterDiagnostics = new MovementStutterDiagnostics(
 			getConfig().WANT_MOVEMENT_STUTTER_DIAGNOSTICS,
 			10_000_000L,
@@ -2173,6 +2176,8 @@ public class Server implements Runnable {
 	}
 
 	public final WorldEditorSessionManager getWorldEditorSessions() { return worldEditorSessions; }
+
+	public final WorldEditStorageContext getWorldEditStorage() { return worldEditStorage; }
 
 	public final boolean isRunning() {
 		return running.get();

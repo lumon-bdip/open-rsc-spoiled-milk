@@ -34,11 +34,20 @@ java -jar output/world-builder-tools/world-builder-tools.jar launch \
 `prepare` accepts the same arguments but stops after staging. `run` starts an
 existing prepared workspace with `--workspace` and `--port`.
 
-Preparation never replaces an existing workspace. It copies verified authored
-world data into a new staging directory, installs a clean Builder database,
-removes generated client identity/connection files, writes a loopback-only
-configuration, verifies the copies, then publishes the workspace atomically.
-The target private-server tree is read-only throughout preparation and use.
+Preparation never replaces an existing workspace. It records the target's
+verified authored files under immutable-by-contract `<workspace>/source` and
+creates the complete runnable copy under `<workspace>/working`. The working
+tree receives a clean Builder database, no generated client identity or
+connection files, and a loopback-only configuration before the project is
+published atomically. Launch re-verifies every source-snapshot hash and refuses
+added, changed, missing, or symlinked source files. The target private-server
+tree is read-only throughout preparation and use.
+
+The Builder server receives the canonical workspace root explicitly and
+refuses to start from any directory other than `<workspace>/working/server`.
+Terrain, scenery, NPC overlays, the client terrain mirror, and terrain backups
+all resolve through that validated context. The editor shows the project folder
+name, source revision, and current saved/unsaved state.
 
 The launcher keeps logs under `<workspace>/logs`, active PID files and the
 last-run receipt under `<workspace>/run`, and refuses a second process for the

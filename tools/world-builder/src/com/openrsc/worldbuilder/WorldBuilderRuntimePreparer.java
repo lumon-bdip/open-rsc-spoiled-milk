@@ -16,9 +16,12 @@ import java.util.UUID;
 
 /** Creates a new isolated Builder runtime without writing to the discovered target. */
 public final class WorldBuilderRuntimePreparer {
-	public static final String GENERATED_CONFIG = "server/world-builder.conf";
-	public static final String BUILDER_DATABASE = "server/inc/sqlite/world_builder.db";
-	public static final String BUILDER_CREDENTIAL = "server/inc/sqlite/world-builder.credential";
+	public static final String WORKING_DIRECTORY = "working";
+	public static final String SOURCE_DIRECTORY = "source";
+	public static final String SOURCE_INVENTORY = "source-snapshot.sha256";
+	public static final String GENERATED_CONFIG = "working/server/world-builder.conf";
+	public static final String BUILDER_DATABASE = "working/server/inc/sqlite/world_builder.db";
+	public static final String BUILDER_CREDENTIAL = "working/server/inc/sqlite/world-builder.credential";
 
 	private static final List<String> SERVER_FILES = Arrays.asList(
 		"server/core.jar",
@@ -55,6 +58,7 @@ public final class WorldBuilderRuntimePreparer {
 		Path target = canonicalDirectory(targetRoot, "private-server root");
 		Path release = canonicalDirectory(runtimeRoot, "World Builder runtime root");
 		Path workspace = requestedWorkspace.toAbsolutePath().normalize();
+		validateProjectName(workspace);
 		if (Files.exists(workspace, LinkOption.NOFOLLOW_LINKS)) {
 			throw new WorldBuilderDiscoveryException(
 				"Builder workspace already exists; existing projects are never replaced implicitly: " + workspace);
@@ -68,11 +72,15 @@ public final class WorldBuilderRuntimePreparer {
 
 		try {
 			Files.createDirectory(stage);
+			Path working = stage.resolve(WORKING_DIRECTORY);
+			Path sourceSnapshot = stage.resolve(SOURCE_DIRECTORY);
+			Files.createDirectories(working);
+			Files.createDirectories(sourceSnapshot);
 			for (String relative : SERVER_DIRECTORIES) {
-				copyTree(requiredDirectory(release, relative), stage.resolve(relative));
+				copyTree(requiredDirectory(release, relative), working.resolve(relative));
 			}
 			for (String relative : CLIENT_DIRECTORIES) {
-				copyTree(requiredDirectory(release, relative), stage.resolve(relative));
+				copyTree(requiredDirectory(release, relative), working.resolve(relative));
 			}
 			for (String generatedClientState : Arrays.asList(
 				"Client_Base/Cache/credentials.txt",
@@ -80,15 +88,15 @@ public final class WorldBuilderRuntimePreparer {
 				"Client_Base/Cache/ip.txt",
 				"Client_Base/Cache/port.txt",
 				"Client_Base/Cache/discord_inuse.txt")) {
-				Files.deleteIfExists(stage.resolve(generatedClientState));
+				Files.deleteIfExists(working.resolve(generatedClientState));
 			}
 			for (String relative : SERVER_FILES) {
-				copyFile(requiredFile(release, relative), stage.resolve(relative));
+				copyFile(requiredFile(release, relative), working.resolve(relative));
 			}
 			for (String relative : CLIENT_FILES) {
-				copyFile(requiredFile(release, relative), stage.resolve(relative));
+				copyFile(requiredFile(release, relative), working.resolve(relative));
 			}
-			Files.write(stage.resolve("server/connections.conf"),
+			Files.write(working.resolve("server/connections.conf"),
 				"db_type: sqlite\n".getBytes(StandardCharsets.UTF_8));
 
 			Path seed = requiredFile(release, "server/inc/sqlite/myworld_seed.db");
@@ -96,8 +104,10 @@ public final class WorldBuilderRuntimePreparer {
 			Files.deleteIfExists(stage.resolve(BUILDER_CREDENTIAL));
 
 			for (WorldBuilderDiscoveryResult.SourceFile file : source.files) {
-				Path destination = stage.resolve(file.relativePath).normalize();
-				ensureContained(stage, destination, file.relativePath);
+				Path destination = working.resolve(file.relativePath).normalize();
+				Path snapshot = sourceSnapshot.resolve(file.relativePath).normalize();
+				ensureContained(working, destination, file.relativePath);
+				ensureContained(sourceSnapshot, snapshot, file.relativePath);
 				if (!file.present) {
 					Files.deleteIfExists(destination);
 					continue;
@@ -109,9 +119,14 @@ public final class WorldBuilderRuntimePreparer {
 						"Target world file changed during workspace preparation: " + file.relativePath);
 				}
 				copyFile(sourceFile, destination);
+				copyFile(sourceFile, snapshot);
 				if (!WorldBuilderHashes.sha256(destination).equals(file.sha256)) {
 					throw new WorldBuilderDiscoveryException(
 						"Workspace copy verification failed: " + file.relativePath);
+				}
+				if (!WorldBuilderHashes.sha256(snapshot).equals(file.sha256)) {
+					throw new WorldBuilderDiscoveryException(
+						"Source snapshot verification failed: " + file.relativePath);
 				}
 			}
 
@@ -120,6 +135,7 @@ public final class WorldBuilderRuntimePreparer {
 				throw new WorldBuilderDiscoveryException(
 					"Selected configuration changed during workspace preparation.");
 			}
+			copyFile(selectedConfig, sourceSnapshot.resolve(source.selectedConfig));
 			Path generatedConfig = stage.resolve(GENERATED_CONFIG);
 			Files.createDirectories(generatedConfig.getParent());
 			WorldBuilderConfigWriter.write(selectedConfig, generatedConfig, overrides(port));
@@ -128,6 +144,8 @@ public final class WorldBuilderRuntimePreparer {
 			Files.createDirectories(stage.resolve("run"));
 			Files.write(stage.resolve("project-source.json"),
 				source.toJson().getBytes(StandardCharsets.UTF_8));
+			Files.write(stage.resolve(SOURCE_INVENTORY),
+				sourceInventory(source).getBytes(StandardCharsets.UTF_8));
 			Files.write(stage.resolve("runtime.json"), runtimeJson(port, source).getBytes(StandardCharsets.UTF_8));
 
 			try {
@@ -182,6 +200,21 @@ public final class WorldBuilderRuntimePreparer {
 		return values;
 	}
 
+	private static void validateProjectName(Path workspace) throws WorldBuilderDiscoveryException {
+		Path fileName = workspace.getFileName();
+		String name = fileName == null ? "" : fileName.toString().trim();
+		if (name.isEmpty() || name.length() > 64) {
+			throw new WorldBuilderDiscoveryException(
+				"Builder project folder name must contain 1 to 64 characters.");
+		}
+		for (int index = 0; index < name.length(); index++) {
+			if (Character.isISOControl(name.charAt(index))) {
+				throw new WorldBuilderDiscoveryException(
+					"Builder project folder name cannot contain control characters.");
+			}
+		}
+	}
+
 	private static String runtimeJson(int port, WorldBuilderDiscoveryResult source) {
 		return "{\n"
 			+ "  \"schemaVersion\": 1,\n"
@@ -190,6 +223,18 @@ public final class WorldBuilderRuntimePreparer {
 			+ "  \"port\": " + port + ",\n"
 			+ "  \"sourceFingerprintSha256\": \"" + source.sourceFingerprintSha256 + "\"\n"
 			+ "}\n";
+	}
+
+	private static String sourceInventory(WorldBuilderDiscoveryResult source) {
+		StringBuilder inventory = new StringBuilder(1024);
+		inventory.append("world-builder-source-v1\n");
+		for (WorldBuilderDiscoveryResult.SourceFile file : source.files) {
+			inventory.append(file.present ? file.sha256 : "-").append('\t')
+				.append(file.relativePath).append('\n');
+		}
+		inventory.append(source.selectedConfigSha256).append('\t')
+			.append(source.selectedConfig).append('\n');
+		return inventory.toString();
 	}
 
 	private static Path canonicalDirectory(Path requested, String label)

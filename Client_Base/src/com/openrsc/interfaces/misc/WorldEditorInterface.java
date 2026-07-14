@@ -5,6 +5,7 @@ import com.openrsc.interfaces.NCustomComponent;
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.model.Sprite;
 import orsc.Config;
+import orsc.WorldBuilderClientProfile;
 import orsc.mudclient;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -495,7 +496,8 @@ public final class WorldEditorInterface extends NCustomComponent {
 		graphics().drawLineHoriz(x+8,y+194,FLYOUT_WIDTH-16,0x70512d);graphics().drawString("@yel@"+px+","+py+" p"+Math.floorDiv(py,944)+" @whi@| "+mode+" | "+terrainBrushSize+"x"+terrainBrushSize,x+8,y+211,0xffffff,1);
 		graphics().drawString(compactLine("Queued "+queued+" | ack "+lastAckMillis+" | rebuild "+lastRebuildMillis,28),x+8,y+228,0xbdbdbd,1);
 		graphics().drawString(unsavedChanges?"Unsaved"+(saveRequested?" (save requested)":""):"Saved/clean",x+8,y+245,unsavedChanges?0xff981f:0x80c080,1);
-		graphics().drawString(compactLine(inspectionStatus,28),x+8,y+264,0xbdbdbd,1);
+		String status=WorldBuilderClientProfile.isEnabled()?"Source "+WorldBuilderClientProfile.current().sourceRevisionShort():inspectionStatus;
+		graphics().drawString(compactLine(status,28),x+8,y+264,0xbdbdbd,1);
 	}
 	private void renderCompactTooltip(int x,int y){
 		toolbarTooltip=toolbarTooltipAt(compactMouseX-x,compactMouseY-y);if(toolbarTooltip.isEmpty())return;int width=Math.min(310,Math.max(150,graphics().stringWidth(1,toolbarTooltip)+12));
@@ -519,10 +521,12 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void renderExpanded(){
 		if(!isVisible()||Config.isAndroid())return;int x=getX(),y=getY();
 		graphics().drawBoxAlpha(x,y,390,330,0x24190c,235);graphics().drawBoxBorder(x,390,y,330,0);graphics().drawBoxAlpha(x,y,390,24,0x4a3620,255);
-		graphics().drawString("World Editor",x+8,y+17,0xffff00,2);button(x+278,y,82,"Compact");graphics().drawString("X",x+372,y+17,0xffffff,2);
+		String title=WorldBuilderClientProfile.isEnabled()?"World Builder: "+WorldBuilderClientProfile.current().projectName():"World Editor";
+		graphics().drawString(compactLine(title,38),x+8,y+17,0xffff00,2);button(x+278,y,82,"Compact");graphics().drawString("X",x+372,y+17,0xffffff,2);
 		for(int i=0;i<TABS.length;i++){graphics().drawBoxAlpha(x+i*78,y+30,77,20,mode.ordinal()==i?0x6b8e23:0x333333,220);graphics().drawString(TABS[i],x+i*78+6,y+44,0xffffff,2);}
 		if(mode==Mode.NAVIGATE)renderNavigate(x,y);else if(mode==Mode.INSPECT)renderInspect(x,y);else if(mode==Mode.TERRAIN)renderTerrain(x,y);else if(mode==Mode.SCENERY)renderScenery(x,y);else renderNpc(x,y);
-		graphics().drawString("Mode: "+mode+" | session sequence "+nextSequence,x+10,y+321,0xbdbdbd,1);
+		String revision=WorldBuilderClientProfile.isEnabled()?" | source "+WorldBuilderClientProfile.current().sourceRevisionShort():"";
+		graphics().drawString("Mode: "+mode+" | session sequence "+nextSequence+revision,x+10,y+321,0xbdbdbd,1);
 	}
 	private void renderNavigate(int x,int y){
 		int px=mc.getEditorPlayerWorldX(),py=mc.getEditorPlayerWorldY();

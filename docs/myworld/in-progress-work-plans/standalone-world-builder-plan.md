@@ -1,6 +1,6 @@
 # Standalone World Builder Plan
 
-Status: active; Phases 0-1 complete, Phase 2 workspace-owned persistence pending
+Status: active; Phases 0-1 complete, Phase 2 implemented and awaiting owner visual acceptance
 
 Owner: Spoiled Milk project owner
 
@@ -597,18 +597,46 @@ still shows the normal login screen.
 
 ### Phase 2: Workspace-owned persistence
 
-- [ ] Replace hard-coded terrain save paths with an explicit validated world
+- [x] Replace hard-coded terrain save paths with an explicit validated world
   edit storage context.
-- [ ] Create immutable source and mutable working trees.
-- [ ] Make the Builder runtime load only working terrain and overlays.
-- [ ] Route terrain backups into the Builder workspace.
-- [ ] Confirm scenery/NPC saves resolve through the working `CONFIG_DIR`.
-- [ ] Protect source and target paths against symlink/path traversal.
-- [ ] Display project, source revision, dirty, and saved state.
+- [x] Create immutable source and mutable working trees.
+- [x] Make the Builder runtime load only working terrain and overlays.
+- [x] Route terrain backups into the Builder workspace.
+- [x] Confirm scenery/NPC saves resolve through the working `CONFIG_DIR`.
+- [x] Protect source and target paths against symlink/path traversal.
+- [x] Display project, source revision, dirty, and saved state.
+
+Phase 2 implementation evidence recorded on 2026-07-13:
+
+- `WorldEditStorageContext` preserves the historical process-relative paths in
+  ordinary mode and requires an explicit canonical workspace in Builder mode.
+- Builder startup requires `<workspace>/working/server` as its actual process
+  directory and validates both terrain copies, configuration ownership, path
+  containment, and symbolic-link safety before world loading.
+- Preparation publishes separate `source/` and `working/` trees. A bounded
+  source inventory records present and absent authored inputs plus the selected
+  configuration; every launch refuses source drift or untracked source files.
+- Terrain loading/saving, its client mirror and backups, MyWorld scenery/NPC
+  loading, and scenery/NPC saves now share the storage context.
+- The desktop editor displays the Builder project folder and abbreviated source
+  revision alongside its existing authoritative saved/unsaved status.
+- `test-world-builder-runtime.py` covers opt-in defaults, storage ownership,
+  missing-context refusal, traversal refusal, and symlink refusal.
+- `test-world-builder-runtime-preparation.py` covers source/working separation,
+  immutable target/source hash inventories, absent authored inputs, secret-free
+  working preparation, and launch refusal after source mutation.
+- `test-world-builder-working-persistence.py` performs two terrain, scenery,
+  and NPC save cycles against one working tree and verifies accumulated reload
+  state, synchronized terrain, workspace-owned backups, and unchanged source
+  and target fixtures.
+- A real project prepared from this checkout booted on `127.0.0.1:43655`; its
+  server log named the terrain and MyWorld scenery/NPC inputs under the
+  canonical `working/` tree.
 
 Exit gate: repeated terrain, scenery, and NPC edits survive Builder restart,
 and a before/after hash inventory proves the target private server did not
-change.
+change. Automated coverage passes; owner visual save/restart confirmation is
+still required before Phase 2 is considered accepted.
 
 ### Phase 3: Deterministic export
 

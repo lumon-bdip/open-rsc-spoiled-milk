@@ -1202,8 +1202,11 @@ public final class Development implements CommandTrigger {
 			WorldEditorTerrainSaveFiles.SaveResult terrainResult=terrainEdits==0?null:editor.saveTerrainDraft(player);
 			WorldSceneryEditFiles.SaveResult sceneryResult = null;
 			WorldNpcEditFiles.SaveResult npcResult = null;
-			String configDir = player.getWorld().getServer().getConfig().CONFIG_DIR;
+			com.openrsc.server.content.worldedit.WorldEditStorageContext storage = player.getWorld().getServer().getWorldEditStorage();
+			java.nio.file.Path configDir = storage.configDirectory();
 			if (!edits.isEmpty()) {
+				storage.validateWorkingAuthoredFile(WorldSceneryEditFiles.sceneryLocsPath(configDir));
+				storage.validateWorkingAuthoredFile(WorldSceneryEditFiles.sceneryRemovalsPath(configDir));
 				sceneryResult = WorldSceneryEditFiles.save(configDir, edits);
 				synchronized (PENDING_SCENERY_EDITS) {
 					for (WorldSceneryEditFiles.Edit edit : edits) {
@@ -1212,6 +1215,8 @@ public final class Development implements CommandTrigger {
 				}
 			}
 			if (!npcEdits.isEmpty()) {
+				storage.validateWorkingAuthoredFile(WorldNpcEditFiles.npcLocsPath(configDir));
+				storage.validateWorkingAuthoredFile(WorldNpcEditFiles.npcRemovalsPath(configDir));
 				npcResult = WorldNpcEditFiles.save(configDir, npcEdits);
 				synchronized (PENDING_NPC_EDITS) {
 					for (WorldNpcEditFiles.Edit edit : npcEdits) {

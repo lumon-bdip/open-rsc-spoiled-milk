@@ -173,19 +173,24 @@ class WorldBuilderRuntimePreparationTest(unittest.TestCase):
             self.assertEqual("prepared", summary["status"])
             self.assertEqual(43615, summary["port"])
 
-            self.assertEqual((target / AUTHORED[0]).read_bytes(), (workspace / AUTHORED[0]).read_bytes())
-            self.assertEqual((target / AUTHORED[1]).read_bytes(), (workspace / AUTHORED[1]).read_bytes())
+            working = workspace / "working"
+            source = workspace / "source"
+            self.assertEqual((target / AUTHORED[0]).read_bytes(), (working / AUTHORED[0]).read_bytes())
+            self.assertEqual((target / AUTHORED[1]).read_bytes(), (working / AUTHORED[1]).read_bytes())
+            self.assertEqual((target / AUTHORED[0]).read_bytes(), (source / AUTHORED[0]).read_bytes())
+            self.assertEqual((target / AUTHORED[1]).read_bytes(), (source / AUTHORED[1]).read_bytes())
             for relative in AUTHORED[2:]:
-                self.assertFalse((workspace / relative).exists())
+                self.assertFalse((working / relative).exists())
+                self.assertFalse((source / relative).exists())
             self.assertEqual(
                 b"clean-seed-database",
-                (workspace / "server/inc/sqlite/world_builder.db").read_bytes(),
+                (working / "server/inc/sqlite/world_builder.db").read_bytes(),
             )
-            self.assertFalse((workspace / "server/inc/sqlite/world-builder.credential").exists())
+            self.assertFalse((working / "server/inc/sqlite/world-builder.credential").exists())
             for generated in ("credentials.txt", "uid.dat", "ip.txt", "port.txt", "discord_inuse.txt"):
-                self.assertFalse((workspace / "Client_Base/Cache" / generated).exists())
+                self.assertFalse((working / "Client_Base/Cache" / generated).exists())
 
-            config = (workspace / "server/world-builder.conf").read_text(encoding="utf-8")
+            config = (working / "server/world-builder.conf").read_text(encoding="utf-8")
             for expected in (
                 "world_builder_mode: true",
                 "server_bind_address: 127.0.0.1",
@@ -200,8 +205,52 @@ class WorldBuilderRuntimePreparationTest(unittest.TestCase):
             self.assertIn("server_name: Spoiled Milk World Builder # preserved comment", config)
             self.assertEqual(
                 "db_type: sqlite\n",
-                (workspace / "server/connections.conf").read_text(encoding="utf-8"),
+                (working / "server/connections.conf").read_text(encoding="utf-8"),
             )
+            self.assertEqual(
+                (target / "server/myworld.conf").read_bytes(),
+                (source / "server/myworld.conf").read_bytes(),
+            )
+            inventory = (workspace / "source-snapshot.sha256").read_text(encoding="utf-8")
+            self.assertTrue(inventory.startswith("world-builder-source-v1\n"))
+            self.assertIn("\tserver/myworld.conf\n", inventory)
+
+            source_before = self.snapshot(source)
+            (working / AUTHORED[0]).write_bytes(b"working-only-change")
+            generated_overlay = working / AUTHORED[2]
+            generated_overlay.parent.mkdir(parents=True, exist_ok=True)
+            generated_overlay.write_text('{"sceneries":[]}\n', encoding="utf-8")
+            self.assertEqual(before, self.snapshot(target))
+            self.assertEqual(source_before, self.snapshot(source))
+
+    def test_changed_or_extended_source_snapshot_refuses_launch(self):
+        with tempfile.TemporaryDirectory(prefix="world-builder-source-guard-") as temp:
+            base = Path(temp)
+            target = base / "target"
+            runtime = base / "runtime"
+            workspace = base / "workspace"
+            self.make_layout(target, terrain_seed=11, overlays=True)
+            self.make_runtime(runtime)
+            before = self.snapshot(target)
+            prepared = self.run_prepare(target, runtime, workspace)
+            self.assertEqual(0, prepared.returncode, prepared.stderr)
+
+            source_terrain = workspace / "source" / AUTHORED[0]
+            source_terrain.write_bytes(source_terrain.read_bytes() + b"changed")
+            result = subprocess.run(
+                [
+                    "java", "-cp", str(self.classes), MAIN_CLASS, "run",
+                    "--workspace", str(workspace), "--port", "43615",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                timeout=10,
+            )
+            self.assertEqual(3, result.returncode)
+            self.assertIn("source snapshot changed", result.stderr)
+            self.assertEqual(before, self.snapshot(target))
+            self.assertFalse((workspace / "run/server.pid").exists())
 
     def test_existing_workspace_is_never_replaced(self):
         with tempfile.TemporaryDirectory(prefix="world-builder-existing-") as temp:

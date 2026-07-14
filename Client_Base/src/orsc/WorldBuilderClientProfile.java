@@ -14,20 +14,28 @@ public final class WorldBuilderClientProfile {
 	public static final String HOST_PROPERTY = "openrsc.worldBuilderHost";
 	public static final String PORT_PROPERTY = "openrsc.worldBuilderPort";
 	public static final String CREDENTIAL_FILE_PROPERTY = "openrsc.worldBuilderCredentialFile";
+	public static final String PROJECT_NAME_PROPERTY = "openrsc.worldBuilderProjectName";
+	public static final String SOURCE_REVISION_PROPERTY = "openrsc.worldBuilderSourceRevision";
 	public static final String ACCOUNT_NAME = "Builder";
 	private static final Pattern CREDENTIAL_PATTERN = Pattern.compile("[A-Za-z0-9]{20}");
+	private static final Pattern SOURCE_REVISION_PATTERN = Pattern.compile("[0-9a-f]{64}");
 	private static WorldBuilderClientProfile current = disabled();
 
 	private final boolean enabled;
 	private final String host;
 	private final int port;
 	private final String credential;
+	private final String projectName;
+	private final String sourceRevision;
 
-	private WorldBuilderClientProfile(boolean enabled, String host, int port, String credential) {
+	private WorldBuilderClientProfile(boolean enabled, String host, int port, String credential,
+		String projectName, String sourceRevision) {
 		this.enabled = enabled;
 		this.host = host;
 		this.port = port;
 		this.credential = credential;
+		this.projectName = projectName;
+		this.sourceRevision = sourceRevision;
 	}
 
 	public static synchronized WorldBuilderClientProfile initializeFromSystemProperties() {
@@ -59,7 +67,12 @@ public final class WorldBuilderClientProfile {
 			throw new IllegalArgumentException("World Builder credential file is required");
 		}
 		String credential = readCredential(Paths.get(credentialFile).toAbsolutePath().normalize());
-		current = new WorldBuilderClientProfile(true, host, port, credential);
+		String projectName = validateProjectName(System.getProperty(PROJECT_NAME_PROPERTY, "Builder Project"));
+		String sourceRevision = System.getProperty(SOURCE_REVISION_PROPERTY, "").trim().toLowerCase();
+		if (!SOURCE_REVISION_PATTERN.matcher(sourceRevision).matches()) {
+			throw new IllegalArgumentException("World Builder source revision is invalid");
+		}
+		current = new WorldBuilderClientProfile(true, host, port, credential, projectName, sourceRevision);
 		return current;
 	}
 
@@ -87,8 +100,29 @@ public final class WorldBuilderClientProfile {
 		return credential;
 	}
 
+	public String projectName() {
+		return projectName;
+	}
+
+	public String sourceRevisionShort() {
+		return sourceRevision == null ? "" : sourceRevision.substring(0, 12);
+	}
+
 	private static WorldBuilderClientProfile disabled() {
-		return new WorldBuilderClientProfile(false, null, 0, null);
+		return new WorldBuilderClientProfile(false, null, 0, null, "", "");
+	}
+
+	private static String validateProjectName(String value) {
+		String name = value == null ? "" : value.trim();
+		if (name.isEmpty() || name.length() > 64) {
+			throw new IllegalArgumentException("World Builder project name is invalid");
+		}
+		for (int index = 0; index < name.length(); index++) {
+			if (Character.isISOControl(name.charAt(index))) {
+				throw new IllegalArgumentException("World Builder project name is invalid");
+			}
+		}
+		return name;
 	}
 
 	private static String readCredential(Path path) {

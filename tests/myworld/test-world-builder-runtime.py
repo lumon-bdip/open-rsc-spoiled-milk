@@ -8,12 +8,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SERVER_MODE = ROOT / "server/src/com/openrsc/server/content/worldedit/WorldBuilderMode.java"
+STORAGE_CONTEXT = ROOT / "server/src/com/openrsc/server/content/worldedit/WorldEditStorageContext.java"
 DATABASE_TYPE = ROOT / "server/src/com/openrsc/server/database/DatabaseType.java"
 CLIENT_PROFILE = ROOT / "Client_Base/src/orsc/WorldBuilderClientProfile.java"
 
 
 class WorldBuilderRuntimeTest(unittest.TestCase):
-    def compile_and_run(self, sources, harness_name, harness_source, *args):
+    def compile_and_run(self, sources, harness_name, harness_source, *args, run_cwd=None):
         with tempfile.TemporaryDirectory(prefix="world-builder-runtime-") as temp:
             temp_path = Path(temp)
             harness = temp_path / (harness_name.replace(".", "/") + ".java")
@@ -38,13 +39,15 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
-            return subprocess.run(
+            result = subprocess.run(
                 ["java", "-cp", str(classes), harness_name, *map(str, args)],
-                cwd=ROOT,
-                check=True,
+                cwd=run_cwd or ROOT,
                 capture_output=True,
                 text=True,
-            ).stdout
+            )
+            if result.returncode != 0:
+                raise AssertionError(result.stdout + result.stderr)
+            return result.stdout
 
     def test_server_mode_is_opt_in_and_fail_closed(self):
         with tempfile.TemporaryDirectory(prefix="world-builder-server-stub-") as temp:
@@ -180,12 +183,17 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         System.setProperty(WorldBuilderClientProfile.HOST_PROPERTY, "127.0.0.1");
                         System.setProperty(WorldBuilderClientProfile.PORT_PROPERTY, "43615");
                         System.setProperty(WorldBuilderClientProfile.CREDENTIAL_FILE_PROPERTY, args[0]);
+                        System.setProperty(WorldBuilderClientProfile.PROJECT_NAME_PROPERTY, "Lumbridge Rebuild");
+                        System.setProperty(WorldBuilderClientProfile.SOURCE_REVISION_PROPERTY,
+                            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
                         WorldBuilderClientProfile profile =
                             WorldBuilderClientProfile.initializeFromSystemProperties();
                         profile.applyConnection();
                         require(profile.isEnabled(), "profile enabled");
                         require("Builder".equals(profile.username()), "fixed identity");
                         require("Abcdefghijk23456789Z".equals(profile.credential()), "credential");
+                        require("Lumbridge Rebuild".equals(profile.projectName()), "project name");
+                        require("0123456789ab".equals(profile.sourceRevisionShort()), "source revision");
                         require("127.0.0.1".equals(Config.SERVER_IP) && Config.SERVER_PORT == 43615,
                             "explicit connection");
 
@@ -201,6 +209,102 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
             )
             self.assertEqual("client-profile-ok\n", output)
 
+    def test_storage_context_is_explicit_contained_and_symlink_safe(self):
+        with tempfile.TemporaryDirectory(prefix="world-builder-storage-") as temp:
+            fixture = Path(temp)
+            workspace = fixture / "project"
+            server = workspace / "working/server"
+            client = workspace / "working/Client_Base"
+            source = workspace / "source"
+            server_terrain = server / "conf/server/data/Custom_Landscape.orsc"
+            client_terrain = client / "Cache/video/Custom_Landscape.orsc"
+            server_terrain.parent.mkdir(parents=True)
+            client_terrain.parent.mkdir(parents=True)
+            source.mkdir(parents=True)
+            server_terrain.write_bytes(b"terrain")
+            client_terrain.write_bytes(b"terrain")
+
+            stub = fixture / "stub/com/openrsc/server/ServerConfiguration.java"
+            stub.parent.mkdir(parents=True)
+            stub.write_text(
+                textwrap.dedent(
+                    """
+                    package com.openrsc.server;
+                    public class ServerConfiguration {
+                        public boolean WORLD_BUILDER_MODE;
+                        public boolean WANT_CUSTOM_LANDSCAPE = true;
+                        public boolean MEMBER_WORLD = true;
+                        public String CONFIG_DIR = "conf/server";
+                    }
+                    """
+                ),
+                encoding="utf-8",
+            )
+            output = self.compile_and_run(
+                [stub, STORAGE_CONTEXT],
+                "WorldEditStorageContextHarness",
+                """
+                import com.openrsc.server.ServerConfiguration;
+                import com.openrsc.server.content.worldedit.WorldEditStorageContext;
+                import java.nio.file.Files;
+                import java.nio.file.Path;
+                import java.nio.file.Paths;
+
+                public final class WorldEditStorageContextHarness {
+                    private static void require(boolean value, String message) {
+                        if (!value) throw new AssertionError(message);
+                    }
+
+                    public static void main(String[] args) throws Exception {
+                        Path workspace = Paths.get(args[0]).toRealPath();
+                        ServerConfiguration config = new ServerConfiguration();
+                        config.WORLD_BUILDER_MODE = false;
+                        System.clearProperty(WorldEditStorageContext.WORKSPACE_PROPERTY);
+                        WorldEditStorageContext ordinary = WorldEditStorageContext.create(config);
+                        require(!ordinary.isBuilderMode(), "ordinary default");
+                        require(ordinary.configDirectory().equals(
+                            Paths.get("").toAbsolutePath().normalize().resolve("conf/server")),
+                            "ordinary relative layout changed");
+
+                        config.WORLD_BUILDER_MODE = true;
+                        boolean missingRefused = false;
+                        try { WorldEditStorageContext.create(config); }
+                        catch (java.io.IOException expected) { missingRefused = expected.getMessage().contains("property"); }
+                        require(missingRefused, "missing workspace property");
+
+                        System.setProperty(WorldEditStorageContext.WORKSPACE_PROPERTY, workspace.toString());
+                        WorldEditStorageContext builder = WorldEditStorageContext.create(config);
+                        require(builder.isBuilderMode(), "builder mode");
+                        require(builder.sourceRoot().equals(workspace.resolve("source")), "source owner");
+                        require(builder.workingRoot().equals(workspace.resolve("working")), "working owner");
+                        require(builder.terrainArchive(config).startsWith(builder.workingRoot()), "server terrain owner");
+                        require(builder.clientTerrainArchive().startsWith(builder.workingRoot()), "client terrain owner");
+                        require(builder.terrainBackupDirectory(builder.terrainArchive(config))
+                            .equals(workspace.resolve("backups/terrain")), "backup owner");
+                        boolean escapeRefused = false;
+                        try { builder.validateWorkingAuthoredFile(workspace.getParent().resolve("escape.json")); }
+                        catch (java.io.IOException expected) { escapeRefused = true; }
+                        require(escapeRefused, "working path traversal");
+
+                        Path clientTerrain = workspace.resolve(
+                            "working/Client_Base/Cache/video/Custom_Landscape.orsc");
+                        Path outside = workspace.getParent().resolve("outside.orsc");
+                        Files.write(outside, new byte[] {1});
+                        Files.delete(clientTerrain);
+                        Files.createSymbolicLink(clientTerrain, outside);
+                        boolean symlinkRefused = false;
+                        try { WorldEditStorageContext.create(config); }
+                        catch (java.io.IOException expected) { symlinkRefused = true; }
+                        require(symlinkRefused, "symlinked authored file");
+                        System.out.println("storage-context-ok");
+                    }
+                }
+                """,
+                workspace,
+                run_cwd=server,
+            )
+            self.assertEqual("storage-context-ok\n", output)
+
     def test_runtime_wiring_preserves_authoritative_paths(self):
         config = (ROOT / "server/src/com/openrsc/server/ServerConfiguration.java").read_text()
         server = (ROOT / "server/src/com/openrsc/server/Server.java").read_text()
@@ -213,6 +317,7 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
 
         self.assertIn('tryReadBool("world_builder_mode").orElse(false)', config)
         self.assertLess(server.index("WorldBuilderMode.validate(getConfig())"), server.index("packetFilter ="))
+        self.assertIn("WorldEditStorageContext.create(getConfig())", server)
         self.assertIn("WorldBuilderAccountProvisioner.provision(this)", server)
         self.assertIn("WorldBuilderRuntimeControl.start(this)", server)
         self.assertIn("!WorldBuilderMode.isBuilderAccount(username)", login)
@@ -224,6 +329,11 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
         self.assertIn("isAndroid() || !WorldBuilderClientProfile.isEnabled()", client)
         self.assertIn("profile.applyConnection()", client)
         self.assertIn("this.autoLoginTimeout = 3", client)
+        supervisor = (
+            ROOT / "tools/world-builder/src/com/openrsc/worldbuilder/WorldBuilderProcessSupervisor.java"
+        ).read_text()
+        self.assertIn("-Dopenrsc.worldBuilderWorkspaceRoot=", supervisor)
+        self.assertIn("-Dopenrsc.worldBuilderSourceRevision=", supervisor)
 
 
 if __name__ == "__main__":

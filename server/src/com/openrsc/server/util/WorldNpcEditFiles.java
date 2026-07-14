@@ -79,11 +79,19 @@ public final class WorldNpcEditFiles {
 	}
 
 	public static Path npcLocsPath(String configDir) {
-		return Paths.get(configDir, LOCS_RELATIVE_PATH);
+		return npcLocsPath(Paths.get(configDir));
+	}
+
+	public static Path npcLocsPath(Path configDir) {
+		return configDir.resolve(LOCS_RELATIVE_PATH).normalize();
 	}
 
 	public static Path npcRemovalsPath(String configDir) {
-		return Paths.get(configDir, REMOVALS_RELATIVE_PATH);
+		return npcRemovalsPath(Paths.get(configDir));
+	}
+
+	public static Path npcRemovalsPath(Path configDir) {
+		return configDir.resolve(REMOVALS_RELATIVE_PATH).normalize();
 	}
 
 	public static String npcKey(NPCLoc loc) {
@@ -103,6 +111,10 @@ public final class WorldNpcEditFiles {
 	}
 
 	public static SaveResult save(String configDir, Collection<Edit> edits) throws IOException {
+		return save(Paths.get(configDir), edits);
+	}
+
+	public static SaveResult save(Path configDir, Collection<Edit> edits) throws IOException {
 		Path npcLocsPath = npcLocsPath(configDir);
 		Path removalsPath = npcRemovalsPath(configDir);
 
