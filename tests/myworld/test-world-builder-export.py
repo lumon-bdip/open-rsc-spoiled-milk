@@ -202,6 +202,12 @@ class WorldBuilderExportTest(unittest.TestCase):
                 exported = export_dir / file_record["bundlePath"]
                 self.assertEqual(file_record["size"], exported.stat().st_size)
                 self.assertEqual(file_record["sha256"], hashlib.sha256(exported.read_bytes()).hexdigest())
+                self.assertTrue(file_record["sourcePresent"])
+                self.assertRegex(file_record["sourceSha256"], r"^[0-9a-f]{64}$")
+                self.assertEqual(
+                    file_record["changed"],
+                    file_record["sha256"] != file_record["sourceSha256"],
+                )
             self.assertFalse(any("credential" in path.lower() or path.endswith(".db") for path in actual))
 
             first_snapshot = self.snapshot(export_dir)
@@ -248,6 +254,11 @@ class WorldBuilderExportTest(unittest.TestCase):
                 parsed = json.loads(canonical.read_text(encoding="utf-8"))
                 root_name = next(iter(json.loads(expected)))
                 self.assertEqual({root_name: []}, parsed)
+            manifest = json.loads((export_dir / "manifest.json").read_text(encoding="utf-8"))
+            for file_record in manifest["files"][1:]:
+                self.assertFalse(file_record["sourcePresent"])
+                self.assertEqual("", file_record["sourceSha256"])
+                self.assertFalse(file_record["changed"])
             self.assertFalse(any((workspace / "source" / relative).exists() for relative in AUTHORED[2:]))
             self.assertFalse(any((working / relative).exists() for relative in AUTHORED[2:]))
 

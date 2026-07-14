@@ -46,19 +46,26 @@ final class WorldBuilderExportManifest {
 			throw new WorldBuilderDiscoveryException("Export manifest must contain five files.");
 		List<FileRecord> files=new ArrayList<FileRecord>();Set<String> logicalNames=new HashSet<String>(),paths=new HashSet<String>();
 		for(Object item:(List<?>)rawFiles){if(!(item instanceof Map))throw new WorldBuilderDiscoveryException("Export file record is invalid.");
-			@SuppressWarnings("unchecked")Map<String,Object> record=(Map<String,Object>)item;exactKeys(record,"logicalName","bundlePath","size","sha256");
+			@SuppressWarnings("unchecked")Map<String,Object> record=(Map<String,Object>)item;exactKeys(record,"logicalName","bundlePath","size","sha256","sourcePresent","sourceSha256","changed");
 			String logical=string(record,"logicalName"),bundle=string(record,"bundlePath"),sha=hash(record,"sha256");long size=integer(record,"size");
+			boolean sourcePresent=bool(record,"sourcePresent"),changed=bool(record,"changed");String sourceSha=string(record,"sourceSha256");
+			if(sourcePresent?!sourceSha.matches("[0-9a-f]{64}"):!sourceSha.isEmpty())throw new WorldBuilderDiscoveryException("Export source-file state is invalid.");
 			Path relative=Paths.get(bundle).normalize();if(logical.isEmpty()||size<0||bundle.indexOf('\\')>=0||relative.isAbsolute()||relative.startsWith("..")
 				||!bundle.equals(CANONICAL_FILES.get(logical))||!logicalNames.add(logical)||!paths.add(bundle))throw new WorldBuilderDiscoveryException("Export file record is unsafe, noncanonical, or duplicated.");
-			files.add(new FileRecord(logical,bundle,size,sha));}
+			if(sourcePresent&&changed==sourceSha.equals(sha))throw new WorldBuilderDiscoveryException("Export file change state is inconsistent.");
+			files.add(new FileRecord(logical,bundle,size,sha,sourcePresent,sourceSha,changed));}
 		if(!logicalNames.equals(CANONICAL_FILES.keySet()))throw new WorldBuilderDiscoveryException("Export manifest file inventory is incomplete.");
 		@SuppressWarnings("unchecked") Map<String,Object> changes = root.get("changeSummary") instanceof Map
 			? (Map<String,Object>)root.get("changeSummary") : null;
 		if(changes==null)throw new WorldBuilderDiscoveryException("Export change summary is invalid.");
 		exactKeys(changes,"changedFileCount","terrainChanged","sceneryChanged","npcChanged");int changed=(int)integer(changes,"changedFileCount");
 		if(changed<0||changed>5)throw new WorldBuilderDiscoveryException("Export changed-file count is invalid.");
-		return new WorldBuilderExportManifest(version,commit,layout,source,content,files,changed,
-			bool(changes,"terrainChanged"),bool(changes,"sceneryChanged"),bool(changes,"npcChanged"));
+		int actualChanged=0;boolean terrain=false,scenery=false,npc=false;for(FileRecord file:files){if(!file.changed)continue;actualChanged++;
+			if("terrain".equals(file.logicalName))terrain=true;else if(file.logicalName.startsWith("scenery"))scenery=true;else npc=true;}
+		boolean listedTerrain=bool(changes,"terrainChanged"),listedScenery=bool(changes,"sceneryChanged"),listedNpc=bool(changes,"npcChanged");
+		if(changed!=actualChanged||terrain!=listedTerrain||scenery!=listedScenery||npc!=listedNpc)
+			throw new WorldBuilderDiscoveryException("Export change summary is inconsistent.");
+		return new WorldBuilderExportManifest(version,commit,layout,source,content,files,changed,terrain,scenery,npc);
 	}
 
 	private static void exactKeys(Map<String,Object> object,String... keys)throws WorldBuilderDiscoveryException{
@@ -77,6 +84,7 @@ final class WorldBuilderExportManifest {
 		files.put("sceneryRemovals","authored/MyWorldSceneryRemovals.json");files.put("npcLocs","authored/MyWorldNpcLocs.json");
 		files.put("npcRemovals","authored/MyWorldNpcRemovals.json");return java.util.Collections.unmodifiableMap(files);}
 
-	static final class FileRecord{final String logicalName,bundlePath,sha256;final long size;
-		FileRecord(String logical,String bundle,long size,String sha){logicalName=logical;bundlePath=bundle;this.size=size;sha256=sha;}}
+	static final class FileRecord{final String logicalName,bundlePath,sha256,sourceSha256;final long size;final boolean sourcePresent,changed;
+		FileRecord(String logical,String bundle,long size,String sha,boolean sourcePresent,String sourceSha,boolean changed){
+			logicalName=logical;bundlePath=bundle;this.size=size;sha256=sha;this.sourcePresent=sourcePresent;sourceSha256=sourceSha;this.changed=changed;}}
 }

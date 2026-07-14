@@ -46,12 +46,23 @@
     "exportFile": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["logicalName", "bundlePath", "size", "sha256"],
+      "required": [
+        "logicalName",
+        "bundlePath",
+        "size",
+        "sha256",
+        "sourcePresent",
+        "sourceSha256",
+        "changed"
+      ],
       "properties": {
         "logicalName": {"type": "string", "minLength": 1},
         "bundlePath": {"type": "string", "minLength": 1},
         "size": {"type": "integer", "minimum": 0},
-        "sha256": {"$ref": "#/$defs/sha256"}
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "sourcePresent": {"type": "boolean"},
+        "sourceSha256": {"type": "string", "pattern": "^$|^[0-9a-f]{64}$"},
+        "changed": {"type": "boolean"}
       }
     }
   }

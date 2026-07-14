@@ -17,9 +17,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Validates and atomically publishes a deterministic five-file authored export. */
@@ -62,7 +60,8 @@ public final class WorldBuilderExporter {
 			}
 		}
 		WorldBuilderSourceSnapshot.verify(workspace);
-		ProjectMetadata project = ProjectMetadata.read(workspace.resolve("source/project-source.json"));
+		WorldBuilderProjectSource project =
+			WorldBuilderProjectSource.read(workspace.resolve("source/project-source.json"));
 		Path working = requireDirectory(workspace, workspace.resolve("working"), "working tree");
 		new WorldBuilderDiscovery().discover(working, WORKING_CONFIG, project.contentFingerprint);
 
@@ -135,7 +134,8 @@ public final class WorldBuilderExporter {
 	}
 
 	private static ExportFile overlay(String logicalName, String bundlePath, String relative,
-		String rootName, Path working, SourceState source) throws IOException, WorldBuilderDiscoveryException {
+		String rootName, Path working, WorldBuilderProjectSource.FileState source)
+		throws IOException, WorldBuilderDiscoveryException {
 		Path path = working.resolve(relative).normalize();
 		byte[] generated = null; int entries;
 		if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
@@ -149,7 +149,8 @@ public final class WorldBuilderExporter {
 		String hash = generated == null ? WorldBuilderHashes.sha256(path) : WorldBuilderHashes.sha256(generated);
 		boolean changed = source.present ? !hash.equals(source.sha256) : entries > 0;
 		return new ExportFile(logicalName, bundlePath, generated == null ? path : null, generated,
-			generated == null ? Files.size(path) : generated.length, hash, changed, entries);
+			generated == null ? Files.size(path) : generated.length, hash, source.present,
+			source.sha256, changed, entries);
 	}
 
 	private static int validateOverlay(String logicalName, Path path)
@@ -225,7 +226,7 @@ public final class WorldBuilderExporter {
 		return WorldBuilderHashes.hex(digest.digest());
 	}
 
-	private static String manifest(String version, String commit, ProjectMetadata project,
+	private static String manifest(String version, String commit, WorldBuilderProjectSource project,
 		List<ExportFile> files, int changedCount) {
 		StringBuilder json = new StringBuilder(2048);
 		json.append("{\n  \"schemaVersion\": 1,\n  \"manifestType\": \"world-builder-export\",\n");
@@ -240,7 +241,10 @@ public final class WorldBuilderExporter {
 			json.append("    {\"logicalName\": \"").append(file.logicalName)
 				.append("\", \"bundlePath\": \"").append(file.bundlePath)
 				.append("\", \"size\": ").append(file.size)
-				.append(", \"sha256\": \"").append(file.sha256).append("\"}")
+				.append(", \"sha256\": \"").append(file.sha256)
+				.append("\", \"sourcePresent\": ").append(file.sourcePresent)
+				.append(", \"sourceSha256\": \"").append(file.sourceSha256)
+				.append("\", \"changed\": ").append(file.changed).append("}")
 				.append(index + 1 < files.size() ? "," : "").append('\n');
 		}
 		boolean terrain = files.get(0).changed;
@@ -253,7 +257,8 @@ public final class WorldBuilderExporter {
 		return json.toString();
 	}
 
-	private static String summary(String projectName, ProjectMetadata project, List<ExportFile> files) {
+	private static String summary(String projectName, WorldBuilderProjectSource project,
+		List<ExportFile> files) {
 		StringBuilder text = new StringBuilder();
 		text.append("Spoiled Milk World Builder Export\n\nProject: ").append(projectName)
 			.append("\nSource revision: ").append(project.sourceFingerprint)
@@ -338,59 +343,19 @@ public final class WorldBuilderExporter {
 		}
 	}
 
-	private static final class SourceState {
-		final boolean present; final String sha256;
-		SourceState(boolean present, String sha256) { this.present=present; this.sha256=sha256; }
-	}
-
-	private static final class ProjectMetadata {
-		final String layoutAdapter, sourceFingerprint, contentFingerprint;
-		final Map<String,SourceState> files;
-		ProjectMetadata(String layout, String source, String content, Map<String,SourceState> files) {
-			this.layoutAdapter=layout; this.sourceFingerprint=source; this.contentFingerprint=content; this.files=files;
-		}
-		SourceState required(String name) throws WorldBuilderDiscoveryException {
-			SourceState state=files.get(name);
-			if(state==null)throw new WorldBuilderDiscoveryException("Project source manifest is missing "+name+".");
-			return state;
-		}
-		static ProjectMetadata read(Path path) throws IOException, WorldBuilderDiscoveryException {
-			Map<String,Object> root=WorldBuilderJsonDocuments.readObject(path);
-			String type=string(root,"manifestType"), layout=string(root,"layoutAdapter");
-			String source=hash(root,"sourceFingerprintSha256"), content=hash(root,"contentFingerprintSha256");
-			if(!"world-builder-project-source".equals(type))throw new WorldBuilderDiscoveryException("Project source manifest type is invalid.");
-			Object listed=root.get("files");
-			if(!(listed instanceof List))throw new WorldBuilderDiscoveryException("Project source file inventory is invalid.");
-			Map<String,SourceState> files=new LinkedHashMap<String,SourceState>();
-			for(Object item:(List<?>)listed){
-				if(!(item instanceof Map))throw new WorldBuilderDiscoveryException("Project source file record is invalid.");
-				@SuppressWarnings("unchecked") Map<String,Object> record=(Map<String,Object>)item;
-				String name=string(record,"logicalName"), sha=string(record,"sha256"); Object present=record.get("present");
-				if(!(present instanceof Boolean))throw new WorldBuilderDiscoveryException("Project source presence state is invalid.");
-				boolean isPresent=((Boolean)present).booleanValue();
-				if(isPresent?!sha.matches("[0-9a-f]{64}"):!sha.isEmpty())throw new WorldBuilderDiscoveryException("Project source hash is invalid.");
-				if(files.put(name,new SourceState(isPresent,sha))!=null)throw new WorldBuilderDiscoveryException("Project source contains duplicate logical names.");
-			}
-			if(files.size()!=6)throw new WorldBuilderDiscoveryException("Project source file inventory must contain six records.");
-			return new ProjectMetadata(layout,source,content,files);
-		}
-		private static String string(Map<String,Object> root,String name)throws WorldBuilderDiscoveryException{
-			Object value=root.get(name);if(!(value instanceof String))throw new WorldBuilderDiscoveryException("Project source field is invalid: "+name);return(String)value;
-		}
-		private static String hash(Map<String,Object> root,String name)throws WorldBuilderDiscoveryException{
-			String value=string(root,name);if(!value.matches("[0-9a-f]{64}"))throw new WorldBuilderDiscoveryException("Project source hash is invalid: "+name);return value;
-		}
-	}
-
 	private static final class ExportFile {
 		final String logicalName,bundlePath;final Path workingPath;final byte[] generatedBytes;
-		final long size;final String sha256;final boolean changed;final int entries;
-		ExportFile(String logical,String bundle,Path working,byte[] generated,long size,String hash,boolean changed,int entries){
+		final long size;final String sha256,sourceSha256;final boolean sourcePresent,changed;final int entries;
+		ExportFile(String logical,String bundle,Path working,byte[] generated,long size,String hash,
+			boolean sourcePresent,String sourceSha256,boolean changed,int entries){
 			this.logicalName=logical;this.bundlePath=bundle;this.workingPath=working;this.generatedBytes=generated;
-			this.size=size;this.sha256=hash;this.changed=changed;this.entries=entries;
+			this.size=size;this.sha256=hash;this.sourcePresent=sourcePresent;this.sourceSha256=sourceSha256;
+			this.changed=changed;this.entries=entries;
 		}
-		static ExportFile terrain(String logical,String bundle,Path path,String hash,SourceState source)throws IOException{
-			return new ExportFile(logical,bundle,path,null,Files.size(path),hash,!source.present||!hash.equals(source.sha256),-1);
+		static ExportFile terrain(String logical,String bundle,Path path,String hash,
+			WorldBuilderProjectSource.FileState source)throws IOException{
+			return new ExportFile(logical,bundle,path,null,Files.size(path),hash,source.present,
+				source.sha256,!source.present||!hash.equals(source.sha256),-1);
 		}
 	}
 
