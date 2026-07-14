@@ -23,6 +23,11 @@ STARTING AND SAVING
 Linux: run "Start World Builder.sh".
 Windows: double-click "Start World Builder.cmd".
 
+On Linux, the executable Import and Undo .sh files may also be double-clicked
+directly. They open a terminal window for the required preview and confirmation,
+then keep the result visible until you press Enter. If the file manager asks
+what to do with the script, choose Run rather than Display.
+
 The first launch validates the parent private server and creates an isolated
 workspace. Later launches reopen that same workspace. The local Builder account
 logs in automatically, is invulnerable, and opens the world editor.

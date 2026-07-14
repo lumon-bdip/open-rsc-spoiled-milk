@@ -268,6 +268,13 @@ class WorldBuilderReleaseTest(unittest.TestCase):
                     self.assertIn("export-import", import_cmd)
                     undo_cmd = archive.read(prefix + "Undo Last Map Import.cmd").decode()
                     self.assertIn("undo-latest-import", undo_cmd)
+                    if not windows:
+                        import_sh = archive.read(prefix + "Import Map Changes.sh").decode()
+                        undo_sh = archive.read(prefix + "Undo Last Map Import.sh").decode()
+                        for launcher in (import_sh, undo_sh):
+                            self.assertIn("WORLD_BUILDER_TERMINAL_SESSION", launcher)
+                            self.assertIn("x-terminal-emulator", launcher)
+                            self.assertIn("Press Enter to close this window", launcher)
 
             extracted = Path(temp) / "private-server"
             extracted.mkdir()
@@ -278,6 +285,7 @@ class WorldBuilderReleaseTest(unittest.TestCase):
             calls = Path(temp) / "java-calls.txt"
             env = dict(os.environ)
             env["WORLD_BUILDER_PORT"] = "44600"
+            env["WORLD_BUILDER_NO_TERMINAL"] = "1"
             env["FAKE_JAVA_CALLS"] = str(calls)
 
             started = subprocess.run(
@@ -314,6 +322,33 @@ class WorldBuilderReleaseTest(unittest.TestCase):
             )
             self.assertEqual(0, undone.returncode, undone.stdout + undone.stderr)
             self.assertIn("undo-latest-import\n", calls.read_text(encoding="utf-8"))
+
+            fake_bin = Path(temp) / "fake-bin"
+            terminal_calls = Path(temp) / "terminal-calls.txt"
+            fake_terminal = fake_bin / "x-terminal-emulator"
+            write(
+                fake_terminal,
+                "#!/usr/bin/env bash\n"
+                "printf '%s\\n' CALL \"$@\" >> \"$FAKE_TERMINAL_CALLS\"\n",
+            )
+            fake_terminal.chmod(0o755)
+            desktop_env = dict(env)
+            desktop_env.pop("WORLD_BUILDER_NO_TERMINAL")
+            desktop_env["DISPLAY"] = ":99"
+            desktop_env["PATH"] = f"{fake_bin}:{desktop_env['PATH']}"
+            desktop_env["FAKE_TERMINAL_CALLS"] = str(terminal_calls)
+            for launcher_name in ("Import Map Changes.sh", "Undo Last Map Import.sh"):
+                launched = subprocess.run(
+                    ["bash", str(package / launcher_name)],
+                    cwd=Path(temp), env=desktop_env, text=True, capture_output=True,
+                )
+                self.assertEqual(0, launched.returncode, launched.stdout + launched.stderr)
+            terminal_call = terminal_calls.read_text(encoding="utf-8")
+            self.assertEqual(2, terminal_call.count("CALL\n"))
+            self.assertIn("-e\n", terminal_call)
+            self.assertIn("WORLD_BUILDER_TERMINAL_SESSION=1\n", terminal_call)
+            self.assertIn(str(package / "Import Map Changes.sh"), terminal_call)
+            self.assertIn(str(package / "Undo Last Map Import.sh"), terminal_call)
 
 
 if __name__ == "__main__":
