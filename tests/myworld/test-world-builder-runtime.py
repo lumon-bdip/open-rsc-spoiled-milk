@@ -334,6 +334,7 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
         ).read_text()
         self.assertIn("-Dopenrsc.worldBuilderWorkspaceRoot=", supervisor)
         self.assertIn("-Dopenrsc.worldBuilderSourceRevision=", supervisor)
+        self.assertNotIn('workspace.resolve("server/run/world-builder")', supervisor)
 
 
 if __name__ == "__main__":
