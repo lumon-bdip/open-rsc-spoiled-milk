@@ -25,9 +25,9 @@ public final class WorldEditorIconRegistry {
 
 	public enum Key {
 		TOOLBAR_COLLAPSE("toolbar-collapse.png", "Dock"),
+		TOOLBAR_EXPAND("toolbar-expand.png", "Open"),
 		MODE_NAVIGATE("mode-navigate.png", "Nav"),
 		MODE_INSPECT("mode-inspect.png", "Look"),
-		MODE_TERRAIN("mode-terrain.png", "Land"),
 		MODE_SCENERY("mode-scenery.png", "Obj"),
 		MODE_NPC("mode-npc.png", "NPC"),
 		FIELD_ELEVATION("field-elevation.png", "Elev"),
@@ -39,7 +39,6 @@ public final class WorldEditorIconRegistry {
 		FIELD_WALL_DIAGONAL("field-wall-diagonal.png", "D Wall"),
 		TOOL_BRUSH_1X1("tool-brush-1x1.png", "1x1"),
 		TOOL_BRUSH_3X3("tool-brush-3x3.png", "3x3"),
-		ACTION_ROTATE("action-rotate.png", "Turn"),
 		PROFILE_BUILD("profile-build.png", "Build"),
 		ACTION_SAVE("action-save.png", "Save"),
 		ACTION_PIN("action-pin.png", "Pin"),

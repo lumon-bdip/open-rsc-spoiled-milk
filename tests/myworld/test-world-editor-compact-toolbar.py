@@ -126,7 +126,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                             WorldEditorIconRegistry registry = new WorldEditorIconRegistry();
                             registry.initialize();
                             require(registry.loadedCount() == 1);
-                            require(registry.missingKeys().size() == 19);
+                            require(registry.missingKeys().size() == 18);
                             require(registry.isLoaded(WorldEditorIconRegistry.Key.MODE_NAVIGATE));
                             require(!registry.isLoaded(WorldEditorIconRegistry.Key.MODE_INSPECT));
                             Sprite first = registry.get(WorldEditorIconRegistry.Key.MODE_NAVIGATE);
@@ -142,21 +142,20 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
                 cwd=working,
             )
         self.assertEqual(1, output.count("[world-editor icons]"))
-        self.assertIn("19 unavailable", output)
+        self.assertIn("18 unavailable", output)
         self.assertIn("mode-inspect.png (expected 24x24, got 12x12)", output)
         self.assertTrue(output.rstrip().endswith("icon-registry-ok"))
 
     def test_asset_contract_and_required_semantic_keys_stay_complete(self):
         source = ICON_REGISTRY.read_text()
         expected = {
-            "toolbar-collapse.png", "mode-navigate.png", "mode-inspect.png",
-            "mode-terrain.png", "mode-scenery.png", "mode-npc.png",
+            "toolbar-collapse.png", "toolbar-expand.png", "mode-navigate.png",
+            "mode-inspect.png", "mode-scenery.png", "mode-npc.png",
             "field-elevation.png", "field-floor-color.png",
             "field-floor-texture.png", "field-roof.png",
             "field-wall-north.png", "field-wall-east.png",
             "field-wall-diagonal.png", "tool-brush-1x1.png",
-            "tool-brush-3x3.png", "action-rotate.png",
-            "profile-build.png", "action-save.png",
+            "tool-brush-3x3.png", "profile-build.png", "action-save.png",
             "action-pin.png", "action-close.png",
         }
         self.assertEqual(expected, set(re.findall(r'\("([a-z0-9-]+\.png)"', source)))
@@ -168,6 +167,40 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
             self.assertIn(contract, readme)
         for heading in ("Source", "Author", "License", "Modifications"):
             self.assertIn(heading, credits)
+
+        asset_root = ROOT / "dev/myworld/assets/ui/world-editor"
+        for filename in expected:
+            data = (asset_root / filename).read_bytes()
+            self.assertEqual(b"\x89PNG\r\n\x1a\n", data[:8], filename)
+            width, height = struct.unpack(">II", data[16:24])
+            self.assertEqual((24, 24), (width, height), filename)
+            self.assertEqual(8, data[24], filename)
+            self.assertEqual(6, data[25], filename)
+
+    def test_supplied_icon_set_loads_without_fallbacks(self):
+        output = self.compile_and_run(
+            [
+                CLIENT / "com/openrsc/client/model/Sprite.java",
+                CLIENT / "orsc/graphics/RendererTransparency.java",
+                ICON_REGISTRY,
+            ],
+            "com.openrsc.interfaces.misc.CompleteIconRegistryHarness",
+            """
+                package com.openrsc.interfaces.misc;
+                public final class CompleteIconRegistryHarness {
+                    public static void main(String[] args) {
+                        WorldEditorIconRegistry registry = new WorldEditorIconRegistry();
+                        registry.initialize();
+                        if (registry.loadedCount() != WorldEditorIconRegistry.Key.values().length
+                            || !registry.missingKeys().isEmpty()) {
+                            throw new AssertionError(registry.missingKeys());
+                        }
+                        System.out.println("complete-icon-registry-ok");
+                    }
+                }
+            """,
+        )
+        self.assertEqual("complete-icon-registry-ok", output.strip())
 
     def test_compact_input_contract_and_temporary_fallback_are_explicit(self):
         ui = UI.read_text()
@@ -190,6 +223,7 @@ class WorldEditorCompactToolbarTest(unittest.TestCase):
         self.assertIn("toggleBrushSize()", ui)
         self.assertIn("TOOL_BRUSH_1X1", ui)
         self.assertIn("TOOL_BRUSH_3X3", ui)
+        self.assertIn("toolbar.isCollapsed()?WorldEditorIconRegistry.Key.TOOLBAR_EXPAND", ui)
         self.assertNotIn('return "Raw value "+activeTerrainText()', ui)
 
     def test_compact_grid_exposes_every_terrain_field_without_tab_gating(self):

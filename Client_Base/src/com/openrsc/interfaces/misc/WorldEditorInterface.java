@@ -419,7 +419,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void renderCompact(){
 		int x=getX(),y=getY();
 		int dockWidth=toolbar.isCollapsed()?40:DOCK_WIDTH;graphics().drawBoxAlpha(x,y,dockWidth,toolbar.isCollapsed()?38:DOCK_HEIGHT,0x24190c,235);graphics().drawBoxBorder(x,dockWidth,y,toolbar.isCollapsed()?38:DOCK_HEIGHT,0);
-		drawIconButton(WorldEditorIconRegistry.Key.TOOLBAR_COLLAPSE,x+DOCK_LEFT,y+DOCK_TOP,toolbar.isCollapsed(),false,false,false);
+		drawIconButton(toolbar.isCollapsed()?WorldEditorIconRegistry.Key.TOOLBAR_EXPAND:WorldEditorIconRegistry.Key.TOOLBAR_COLLAPSE,x+DOCK_LEFT,y+DOCK_TOP,toolbar.isCollapsed(),false,false,false);
 		if(toolbar.isCollapsed()){renderCompactTooltip(x,y);return;}
 		drawIconButton(WorldEditorIconRegistry.Key.MODE_SCENERY,x+DOCK_RIGHT,y+dockRowY(0),mode==Mode.SCENERY,false,false,false);
 		drawIconButton(WorldEditorIconRegistry.Key.MODE_NAVIGATE,x+DOCK_LEFT,y+dockRowY(1),mode==Mode.NAVIGATE,false,false,false);

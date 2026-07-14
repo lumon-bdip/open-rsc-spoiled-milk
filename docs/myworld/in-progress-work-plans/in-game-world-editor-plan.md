@@ -707,9 +707,9 @@ Initial required icon keys and filenames:
 | Key | Filename | Meaning |
 | --- | --- | --- |
 | `toolbar-collapse` | `toolbar-collapse.png` | Collapse or expand the dock |
+| `toolbar-expand` | `toolbar-expand.png` | Expand the collapsed dock |
 | `mode-navigate` | `mode-navigate.png` | Safe navigation mode |
 | `mode-inspect` | `mode-inspect.png` | Inspect/copy tile values |
-| `mode-terrain` | `mode-terrain.png` | Terrain editing mode |
 | `mode-scenery` | `mode-scenery.png` | Scenery placement/removal |
 | `mode-npc` | `mode-npc.png` | NPC placement/removal |
 | `field-elevation` | `field-elevation.png` | Elevation field mask/value |
@@ -721,7 +721,6 @@ Initial required icon keys and filenames:
 | `field-wall-diagonal` | `field-wall-diagonal.png` | Diagonal wall value |
 | `tool-brush-1x1` | `tool-brush-1x1.png` | Single-tile stamp/brush size |
 | `tool-brush-3x3` | `tool-brush-3x3.png` | Centered three-by-three brush size |
-| `action-rotate` | `action-rotate.png` | Reverse diagonal orientation |
 | `profile-build` | `profile-build.png` | Faceted, gridded Build view |
 | `action-save` | `action-save.png` | Persist the current draft |
 | `action-pin` | `action-pin.png` | Keep the current flyout open |
