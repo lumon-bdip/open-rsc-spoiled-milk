@@ -54,5 +54,24 @@ last-run receipt under `<workspace>/run`, and refuses a second process for the
 same workspace. Closing the client requests an orderly local server shutdown.
 Generated credentials are never printed or placed in manifests.
 
+After closing the Builder, export the saved working map with explicit release
+provenance:
+
+```bash
+java -jar output/world-builder-tools/world-builder-tools.jar export \
+  --workspace /path/to/world-builder-project \
+  --builder-version v0.2.39 \
+  --source-commit 0123456789abcdef0123456789abcdef01234567
+```
+
+Export revalidates the immutable source snapshot, working layout, matching
+server/client terrain archives, and all four authored JSON overlays. A changed
+project publishes atomically under `<workspace>/exports/export-<fingerprint>`.
+The directory contains only the canonical five authored files, a strict v1
+manifest, and a readable change summary. Identical input and provenance reuse
+the byte-identical verified export; no-op projects report `no-changes` without
+creating an export. Active Builder sessions, source drift, malformed input,
+unsafe paths, incomplete data, and tampered existing exports are refused.
+
 The manifest schemas in `schema/` are release contracts. Add a new schema
 version instead of changing the meaning of an existing version.

@@ -26,6 +26,12 @@ final class WorldBuilderHashes {
 		return hex(digest.digest());
 	}
 
+	static String sha256(byte[] bytes) {
+		MessageDigest digest = newDigest();
+		digest.update(bytes);
+		return hex(digest.digest());
+	}
+
 	static MessageDigest newDigest() {
 		try {
 			return MessageDigest.getInstance("SHA-256");

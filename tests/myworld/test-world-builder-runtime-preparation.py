@@ -214,6 +214,11 @@ class WorldBuilderRuntimePreparationTest(unittest.TestCase):
             inventory = (workspace / "source-snapshot.sha256").read_text(encoding="utf-8")
             self.assertTrue(inventory.startswith("world-builder-source-v1\n"))
             self.assertIn("\tserver/myworld.conf\n", inventory)
+            self.assertIn("\tproject-source.json\n", inventory)
+            self.assertEqual(
+                (workspace / "project-source.json").read_bytes(),
+                (source / "project-source.json").read_bytes(),
+            )
 
             source_before = self.snapshot(source)
             (working / AUTHORED[0]).write_bytes(b"working-only-change")

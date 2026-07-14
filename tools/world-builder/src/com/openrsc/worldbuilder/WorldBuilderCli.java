@@ -30,6 +30,9 @@ public final class WorldBuilderCli {
 		if ("run".equals(args[0])) {
 			return runPrepared(args, false);
 		}
+		if ("export".equals(args[0])) {
+			return export(args);
+		}
 		if (!"discover".equals(args[0])) {
 			System.err.println("ERROR: Unsupported World Builder command: " + args[0]);
 			usage();
@@ -120,6 +123,29 @@ public final class WorldBuilderCli {
 		}
 	}
 
+	private static int export(String[] args) {
+		Path workspace = null; String builderVersion = null; String sourceCommit = null;
+		for (int index = 1; index < args.length; index++) {
+			String argument = args[index];
+			if ("--workspace".equals(argument) && index + 1 < args.length) workspace = Paths.get(args[++index]);
+			else if ("--builder-version".equals(argument) && index + 1 < args.length) builderVersion = args[++index];
+			else if ("--source-commit".equals(argument) && index + 1 < args.length) sourceCommit = args[++index];
+			else { System.err.println("ERROR: Unknown or incomplete argument: " + argument); usage(); return 2; }
+		}
+		if (workspace == null || builderVersion == null || sourceCommit == null) {
+			System.err.println("ERROR: export requires --workspace, --builder-version, and --source-commit.");
+			usage(); return 2;
+		}
+		try {
+			System.out.print(new WorldBuilderExporter().export(workspace, builderVersion, sourceCommit).toJson());
+			return 0;
+		} catch (WorldBuilderDiscoveryException refusal) {
+			System.err.println("ERROR: " + refusal.getMessage()); return 3;
+		} catch (Exception failure) {
+			System.err.println("ERROR: Could not export Builder project: " + failure.getMessage()); return 4;
+		}
+	}
+
 	private static boolean isPreparationOption(String argument) {
 		return "--server-root".equals(argument)
 			|| "--runtime-root".equals(argument)
@@ -193,5 +219,7 @@ public final class WorldBuilderCli {
 			+ " [--config server/myworld.conf] [--runtime-config server/myworld.conf]"
 			+ "\n  WorldBuilderCli launch <same arguments as prepare>"
 			+ "\n  WorldBuilderCli run --workspace <prepared-path> --port <port>");
+		System.err.println("  WorldBuilderCli export --workspace <prepared-path>"
+			+ " --builder-version <version> --source-commit <40-hex>");
 	}
 }

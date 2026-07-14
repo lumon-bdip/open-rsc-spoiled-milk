@@ -1,6 +1,6 @@
 # Standalone World Builder Plan
 
-Status: active; Phases 0-2 complete, Phase 3 deterministic export pending
+Status: active; Phases 0-3 complete, Phase 4 transactional import pending
 
 Owner: Spoiled Milk project owner
 
@@ -517,8 +517,8 @@ useful checkpoint with its test evidence before the next phase begins.
 | --- | --- | --- |
 | 0. Contracts and fixtures | Complete | Approved plan, supported-layout fixtures, deterministic discovery/manifest tests |
 | 1. Isolated Builder runtime | Complete | Loopback local launch, automatic Builder login, invulnerability, editor open, normal-mode regression coverage |
-| 2. Workspace-owned persistence | Pending | Terrain/scenery/NPC saves change only working files; target hashes remain identical |
-| 3. Deterministic export | Pending | Complete five-file bundle, manifest validation, repeatable hashes/content |
+| 2. Workspace-owned persistence | Complete | Terrain/scenery/NPC saves change only working files; target hashes remain identical |
+| 3. Deterministic export | Complete | Complete five-file bundle, manifest validation, repeatable hashes/content |
 | 4. Transactional import and rollback | Pending | Dry-run, offline guard, failure rollback, successful restart, byte-exact undo |
 | 5. Standalone release packaging | Pending | Clean Java/Windows artifacts, fresh-install smoke tests, attribution and checksum gates |
 | 6. Visual acceptance and documentation | Pending | Owner-verified editing/import/revert flow and final user documentation |
@@ -652,12 +652,28 @@ Phase 2 owner acceptance recorded on 2026-07-14:
 
 ### Phase 3: Deterministic export
 
-- [ ] Validate working terrain and all entity overlays.
-- [ ] Produce the canonical five-file bundle.
-- [ ] Record source, compatibility, output, and change metadata.
-- [ ] Provide a readable change summary.
-- [ ] Reject incomplete or no-op exports appropriately.
-- [ ] Make published exports immutable and self-verifying.
+- [x] Validate working terrain and all entity overlays.
+- [x] Produce the canonical five-file bundle.
+- [x] Record source, compatibility, output, and change metadata.
+- [x] Provide a readable change summary.
+- [x] Reject incomplete or no-op exports appropriately.
+- [x] Make published exports immutable and self-verifying.
+
+Phase 3 evidence recorded on 2026-07-14:
+
+- `python3 tests/myworld/test-world-builder-export.py` (5 tests)
+- `python3 tests/myworld/test-world-builder-runtime-preparation.py` (4 tests)
+- `./scripts/build-world-builder-tools.sh`
+- Changed working input produced exactly the five canonical authored files,
+  `manifest.json`, and `CHANGE-SUMMARY.txt`; a second export with identical
+  input and provenance reused the same verified directory byte-for-byte.
+- No-op input created no export. Malformed/duplicate JSON, an active project,
+  source-snapshot drift, mismatched terrain mirrors, and tampered published
+  output were refused without replacement or partial publication.
+- The owner-confirmed working project exported three changed authored files:
+  terrain, scenery locations, and NPC locations. The bundle terrain archive
+  validated and its overlays parsed as 345 scenery locations and 144 NPC
+  locations while the source snapshot and target remained unchanged.
 
 Exit gate: two exports from identical working input have identical authored
 files and semantic manifests, aside from explicitly documented creation or

@@ -250,7 +250,7 @@ public final class WorldBuilderDiscovery {
 		return true;
 	}
 
-	private static int validateTerrainArchive(Path archive)
+	static int validateTerrainArchive(Path archive)
 		throws IOException, WorldBuilderDiscoveryException {
 		int sectors = 0;
 		Set<String> names = new HashSet<String>();

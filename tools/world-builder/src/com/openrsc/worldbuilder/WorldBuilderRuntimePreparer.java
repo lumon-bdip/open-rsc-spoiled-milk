@@ -142,10 +142,11 @@ public final class WorldBuilderRuntimePreparer {
 
 			Files.createDirectories(stage.resolve("logs"));
 			Files.createDirectories(stage.resolve("run"));
-			Files.write(stage.resolve("project-source.json"),
-				source.toJson().getBytes(StandardCharsets.UTF_8));
+			byte[] projectManifest = source.toJson().getBytes(StandardCharsets.UTF_8);
+			Files.write(stage.resolve("project-source.json"), projectManifest);
+			Files.write(sourceSnapshot.resolve("project-source.json"), projectManifest);
 			Files.write(stage.resolve(SOURCE_INVENTORY),
-				sourceInventory(source).getBytes(StandardCharsets.UTF_8));
+				sourceInventory(source, projectManifest).getBytes(StandardCharsets.UTF_8));
 			Files.write(stage.resolve("runtime.json"), runtimeJson(port, source).getBytes(StandardCharsets.UTF_8));
 
 			try {
@@ -225,7 +226,7 @@ public final class WorldBuilderRuntimePreparer {
 			+ "}\n";
 	}
 
-	private static String sourceInventory(WorldBuilderDiscoveryResult source) {
+	private static String sourceInventory(WorldBuilderDiscoveryResult source, byte[] projectManifest) {
 		StringBuilder inventory = new StringBuilder(1024);
 		inventory.append("world-builder-source-v1\n");
 		for (WorldBuilderDiscoveryResult.SourceFile file : source.files) {
@@ -234,6 +235,8 @@ public final class WorldBuilderRuntimePreparer {
 		}
 		inventory.append(source.selectedConfigSha256).append('\t')
 			.append(source.selectedConfig).append('\n');
+		inventory.append(WorldBuilderHashes.sha256(projectManifest)).append('\t')
+			.append("project-source.json\n");
 		return inventory.toString();
 	}
 
