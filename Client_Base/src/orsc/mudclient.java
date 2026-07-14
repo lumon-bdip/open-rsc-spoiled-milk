@@ -26133,8 +26133,25 @@ public final class mudclient implements Runnable {
 			if (C_CUSTOM_UI) {
 				repositionCustomUI();
 			}
+			startWorldBuilderSession();
 		} catch (RuntimeException var9) {
 			throw GenUtil.makeThrowable(var9, "client.KC(" + var1 + ')');
+		}
+	}
+
+	private void startWorldBuilderSession() {
+		if (isAndroid() || !WorldBuilderClientProfile.isEnabled() || this.errorLoadingData) {
+			return;
+		}
+		WorldBuilderClientProfile profile = WorldBuilderClientProfile.current();
+		this.autoLoginTimeout = 3;
+		this.login(-12, profile.credential(), profile.username(), false);
+		if (this.currentViewMode != GameMode.GAME) {
+			this.autoLoginTimeout = 0;
+			this.password = "";
+			this.setUsername(profile.username());
+			this.showLoginScreenStatus("World Builder could not start.",
+				"Close it and check the local runtime logs.");
 		}
 	}
 

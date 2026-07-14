@@ -7,6 +7,8 @@ import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.achievement.AchievementSystem;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
+import com.openrsc.server.content.worldedit.WorldBuilderAccountProvisioner;
+import com.openrsc.server.content.worldedit.WorldBuilderMode;
 import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.JDBCDatabase;
 import com.openrsc.server.database.impl.mysql.MySqlGameDatabase;
@@ -432,6 +434,7 @@ public class Server implements Runnable {
 	public Server(final String configFile) throws IOException {
 		config = new ServerConfiguration();
 		getConfig().initConfig(configFile);
+		WorldBuilderMode.validate(getConfig());
 		LOGGER.info("Server configuration loaded: " + getConfig().configFile);
 
 		name = getConfig().SERVER_NAME;
@@ -721,6 +724,8 @@ public class Server implements Runnable {
 				LOGGER.info("Loading Game Definitions...");
 				getEntityHandler().load();
 				LOGGER.info("Definitions Completed");
+
+				WorldBuilderAccountProvisioner.provision(this);
 
 				LOGGER.info("Loading Game State Updater...");
 				getGameUpdater().load();

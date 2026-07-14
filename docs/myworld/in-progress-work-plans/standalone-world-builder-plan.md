@@ -1,7 +1,6 @@
 # Standalone World Builder Plan
 
-Status: active; Phase 0 contracts and read-only discovery complete, Phase 1
-isolated Builder runtime pending
+Status: active; Phase 0 complete, Phase 1 isolated Builder runtime in progress
 
 Owner: Spoiled Milk project owner
 
@@ -517,7 +516,7 @@ useful checkpoint with its test evidence before the next phase begins.
 | Phase | Status | Required proof before advancing |
 | --- | --- | --- |
 | 0. Contracts and fixtures | Complete | Approved plan, supported-layout fixtures, deterministic discovery/manifest tests |
-| 1. Isolated Builder runtime | Pending | Loopback local launch, automatic Builder login, invulnerability, editor open, normal-mode regression coverage |
+| 1. Isolated Builder runtime | In progress | Loopback local launch, automatic Builder login, invulnerability, editor open, normal-mode regression coverage |
 | 2. Workspace-owned persistence | Pending | Terrain/scenery/NPC saves change only working files; target hashes remain identical |
 | 3. Deterministic export | Pending | Complete five-file bundle, manifest validation, repeatable hashes/content |
 | 4. Transactional import and rollback | Pending | Dry-run, offline guard, failure rollback, successful restart, byte-exact undo |
@@ -549,15 +548,28 @@ Phase 0 evidence recorded on 2026-07-13:
 
 ### Phase 1: Isolated Builder runtime
 
-- [ ] Add an explicit Builder-mode server configuration contract.
-- [ ] Enforce loopback-only binding before listeners start.
+- [x] Add an explicit Builder-mode server configuration contract.
+- [x] Enforce loopback-only binding before listeners start.
 - [ ] Create an isolated Builder SQLite database and provisioning service.
-- [ ] Generate and protect an install-local credential.
-- [ ] Add bounded client auto-login under an explicit Builder launch profile.
-- [ ] Refactor editor opening into a reusable server service.
-- [ ] Set Builder invulnerability and open the editor after authenticated login.
+- [x] Generate and protect an install-local credential.
+- [x] Add bounded client auto-login under an explicit Builder launch profile.
+- [x] Refactor editor opening into a reusable server service.
+- [x] Set Builder invulnerability and open the editor after authenticated login.
 - [ ] Add launcher readiness, PID, lock, shutdown, and log handling.
-- [ ] Preserve the normal login/editor/server behavior when Builder mode is off.
+- [x] Preserve the normal login/editor/server behavior when Builder mode is off.
+
+Phase 1 runtime-contract evidence recorded on 2026-07-13:
+
+- `python3 tests/myworld/test-world-builder-runtime.py` (3 tests)
+- `python3 tests/myworld/test-world-builder-discovery.py` (13 tests)
+- `./scripts/build-server.sh`
+- `./scripts/build-client.sh`
+- Builder mode defaults off; enabled mode validates loopback-only binding,
+  dedicated SQLite identity, one-player capacity, disabled registration, and
+  editor/map requirements before server subsystems or listeners are created.
+- The client profile defaults off, accepts only loopback endpoints and a valid
+  install-local credential file, and leaves ordinary connection settings
+  untouched when disabled.
 
 Exit gate: a private visual test launches from a fixture root and arrives as
 the invulnerable Builder with the editor open, while a normal private client

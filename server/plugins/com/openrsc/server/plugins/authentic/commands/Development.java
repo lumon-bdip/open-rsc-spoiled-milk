@@ -9,6 +9,7 @@ import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
+import com.openrsc.server.content.worldedit.WorldEditorAccessService;
 import com.openrsc.server.io.WorldEditorTerrainSaveFiles;
 import com.openrsc.server.external.ObjectFishDef;
 import com.openrsc.server.external.ObjectFishingDef;
@@ -24,7 +25,6 @@ import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.world.WorldDayNightClock;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
-import com.openrsc.server.net.rsc.struct.outgoing.WorldEditorStruct;
 import com.openrsc.server.plugins.authentic.quests.members.touristtrap.Tourist_Trap_Mechanism;
 import com.openrsc.server.plugins.authentic.skills.fishing.Fishing;
 import com.openrsc.server.plugins.authentic.skills.woodcutting.Woodcutting;
@@ -653,13 +653,7 @@ public final class Development implements CommandTrigger {
 	}
 
 	private void openWorldEditor(Player player) {
-		WorldEditorSessionManager.OpenResult result = player.getWorld().getServer().getWorldEditorSessions()
-			.open(player, player.getConfig().ALLOW_IN_GAME_WORLD_EDITOR && player.getClientVersion() > 10000);
-		if (!result.opened) { player.message(messagePrefix + result.message); return; }
-		WorldEditorStruct out = new WorldEditorStruct();
-		out.type = 1; out.sessionId = result.sessionId; out.sequence = result.nextSequence;
-		ActionSender.sendWorldEditor(player, out);
-		player.message(messagePrefix + "World editor session opened. Terrain painting uses an unsaved server draft.");
+		WorldEditorAccessService.open(player);
 	}
 
 	private void createNpc(Player player, String command, String[] args) {

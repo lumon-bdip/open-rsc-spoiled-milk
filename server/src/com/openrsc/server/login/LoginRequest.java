@@ -8,6 +8,7 @@ import com.openrsc.server.database.struct.PlayerLoginData;
 import com.openrsc.server.database.struct.UsernameChangeType;
 import com.openrsc.server.event.rsc.ImmediateEvent;
 import com.openrsc.server.model.entity.player.Group;
+import com.openrsc.server.content.worldedit.WorldBuilderMode;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -160,6 +161,11 @@ public abstract class LoginRequest extends LoginExecutorProcess{
 		try {
 			if (getServer().isRestarting() || getServer().isShuttingDown() || !getServer().getLoginExecutor().isRunning()) {
 				return new ValidatedLogin(LoginResponse.WORLD_DOES_NOT_ACCEPT_NEW_PLAYERS);
+			}
+
+			if (getServer().getConfig().WORLD_BUILDER_MODE
+				&& !WorldBuilderMode.isBuilderAccount(username)) {
+				return new ValidatedLogin(LoginResponse.INVALID_CREDENTIALS);
 			}
 
 			if(!getServer().getPacketFilter().shouldAllowLogin(getIpAddress(), false)) {
