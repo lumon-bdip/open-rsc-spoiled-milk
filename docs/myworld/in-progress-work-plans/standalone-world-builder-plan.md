@@ -742,6 +742,27 @@ Phase 4 visual safety incident recorded on 2026-07-14:
   sequence. Phase 4 remains pending until import/restart and undo/restart are
   visually accepted without host instability.
 
+Phase 4 launch-safety follow-up recorded on 2026-07-14:
+
+- The surviving prior-boot journal and current hardware checks still show no
+  OOM kill, Java fatal-error log, GPU reset, storage fault, thermal event, or
+  exhausted RAM/VRAM. The abrupt journal end means the precise trigger remains
+  unconfirmed.
+- Earlier successful Builder logs prove the client was starting its primary
+  LWJGL renderer in borderless fullscreen with vsync disabled while the JVM
+  also enabled Java2D's separate OpenGL pipeline. A Steam game was rendering
+  during the failed attempt. This combination is a plausible contention
+  amplifier, but is not claimed as a proven root cause.
+- The standalone Builder launch now uses a Builder-only safety profile:
+  Java2D OpenGL is disabled, the actual LWJGL renderer remains enabled in a
+  bounded window, and GLFW vsync is enabled. The normal game launcher and
+  player graphics preferences are unchanged.
+- The supervisor regression test asserts all three launch constraints. The
+  supervisor, exporter, importer, preparation, and working-persistence tests
+  pass, as do fresh server and client builds. The next visual workspace and
+  its logs must remain on persistent storage and receive bounded external
+  process monitoring during the acceptance run.
+
 Exit gate: imported terrain/scenery/NPC edits load after target server/client
 restart, and rollback restores every original byte and original file absence.
 

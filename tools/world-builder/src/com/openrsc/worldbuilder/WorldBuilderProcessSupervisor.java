@@ -203,7 +203,7 @@ public final class WorldBuilderProcessSupervisor {
 			"world-builder.conf");
 	}
 
-	private static List<String> defaultClientCommand(Path workspace, int port) {
+	static List<String> defaultClientCommand(Path workspace, int port) {
 		String credential = workspace.resolve(WorldBuilderRuntimePreparer.BUILDER_CREDENTIAL).toString();
 		String projectName = workspace.getFileName().toString();
 		String sourceRevision = readSourceRevision(workspace);
@@ -211,7 +211,13 @@ public final class WorldBuilderProcessSupervisor {
 			javaExecutable(),
 			"-Xms512m",
 			"-Xmx2g",
-			"-Dsun.java2d.opengl=true",
+			// The Builder's primary renderer owns its own LWJGL context. Avoid also
+			// enabling Java2D's OpenGL pipeline, and use a bounded windowed/vsynced
+			// presentation profile so a local editing session cannot monopolize the
+			// desktop compositor while other GPU applications are active.
+			"-Dsun.java2d.opengl=false",
+			"-Dspoiledmilk.openglWindowMode=windowed",
+			"-Dspoiledmilk.openglVsync=true",
 			"-Dopenrsc.worldBuilderMode=true",
 			"-Dopenrsc.worldBuilderHost=127.0.0.1",
 			"-Dopenrsc.worldBuilderPort=" + port,

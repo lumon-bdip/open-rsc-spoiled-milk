@@ -59,8 +59,22 @@ class WorldBuilderSupervisionTest(unittest.TestCase):
                             Files.createDirectories(workspace.resolve("working/Client_Base"));
                             Files.createDirectories(workspace.resolve("logs"));
                             Files.createDirectories(workspace.resolve("run"));
+                            Files.write(workspace.resolve("runtime.json"),
+                                ("{\\\"sourceFingerprintSha256\\\":\\\""
+                                    + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                                    + "\\\"}\\n").getBytes(StandardCharsets.UTF_8));
 
                             WorldBuilderProcessSupervisor supervisor = new WorldBuilderProcessSupervisor();
+                            List<String> realClient = WorldBuilderProcessSupervisor.defaultClientCommand(
+                                workspace, port);
+                            require(realClient.contains("-Dsun.java2d.opengl=false"),
+                                "Builder must not start a second Java2D OpenGL pipeline");
+                            require(realClient.contains("-Dspoiledmilk.openglWindowMode=windowed"),
+                                "Builder must start with bounded windowed presentation");
+                            require(realClient.contains("-Dspoiledmilk.openglVsync=true"),
+                                "Builder must start with vsync enabled");
+                            require(!realClient.contains("-Dsun.java2d.opengl=true"),
+                                "unsafe Java2D OpenGL launch flag");
                             List<String> server = command(classes, "FakeServer", workspace, port);
                             List<String> client = command(classes, "FakeClient", workspace, port);
                             int first = supervisor.superviseWithCommands(workspace, port, server, client, 5000L);
