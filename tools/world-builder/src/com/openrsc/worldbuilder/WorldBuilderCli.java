@@ -20,6 +20,16 @@ public final class WorldBuilderCli {
 			usage();
 			return args.length == 0 ? 2 : 0;
 		}
+		if ("prepare".equals(args[0])) {
+			return prepare(args);
+		}
+		if ("launch".equals(args[0])) {
+			int prepared = prepare(args);
+			return prepared == 0 ? runPrepared(args, true) : prepared;
+		}
+		if ("run".equals(args[0])) {
+			return runPrepared(args, false);
+		}
 		if (!"discover".equals(args[0])) {
 			System.err.println("ERROR: Unsupported World Builder command: " + args[0]);
 			usage();
@@ -60,9 +70,128 @@ public final class WorldBuilderCli {
 		}
 	}
 
+	private static int runPrepared(String[] args, boolean launchArguments) {
+		Path workspace = null;
+		int port = 0;
+		for (int index = 1; index < args.length; index++) {
+			String argument = args[index];
+			if ("--workspace".equals(argument) && index + 1 < args.length) {
+				workspace = Paths.get(args[++index]);
+			} else if ("--port".equals(argument) && index + 1 < args.length) {
+				try {
+					port = Integer.parseInt(args[++index]);
+				} catch (NumberFormatException failure) {
+					System.err.println("ERROR: --port must be numeric.");
+					return 2;
+				}
+			} else if (launchArguments && isPreparationOption(argument) && index + 1 < args.length) {
+				index++;
+			} else {
+				System.err.println("ERROR: Unknown or incomplete argument: " + argument);
+				usage();
+				return 2;
+			}
+		}
+		if (workspace == null || port == 0) {
+			System.err.println("ERROR: run requires --workspace and --port.");
+			usage();
+			return 2;
+		}
+		try {
+			System.out.println("Starting isolated World Builder. Logs: "
+				+ workspace.toAbsolutePath().normalize().resolve("logs"));
+			int result = new WorldBuilderProcessSupervisor().runPrepared(workspace, port);
+			if (result == 0) {
+				System.out.println("World Builder closed cleanly.");
+			} else {
+				System.err.println("ERROR: World Builder stopped with exit code " + result + ".");
+			}
+			return result;
+		} catch (WorldBuilderDiscoveryException refusal) {
+			System.err.println("ERROR: " + refusal.getMessage());
+			return 3;
+		} catch (InterruptedException interrupted) {
+			Thread.currentThread().interrupt();
+			System.err.println("ERROR: World Builder launcher was interrupted.");
+			return 130;
+		} catch (Exception failure) {
+			System.err.println("ERROR: World Builder launch failed: " + failure.getMessage());
+			return 4;
+		}
+	}
+
+	private static boolean isPreparationOption(String argument) {
+		return "--server-root".equals(argument)
+			|| "--runtime-root".equals(argument)
+			|| "--config".equals(argument)
+			|| "--runtime-config".equals(argument);
+	}
+
+	private static int prepare(String[] args) {
+		Path targetRoot = null;
+		Path runtimeRoot = null;
+		Path workspace = null;
+		String config = WorldBuilderDiscovery.DEFAULT_CONFIG;
+		String runtimeConfig = WorldBuilderDiscovery.DEFAULT_CONFIG;
+		int port = 0;
+		for (int index = 1; index < args.length; index++) {
+			String argument = args[index];
+			if ("--server-root".equals(argument) && index + 1 < args.length) {
+				targetRoot = Paths.get(args[++index]);
+			} else if ("--runtime-root".equals(argument) && index + 1 < args.length) {
+				runtimeRoot = Paths.get(args[++index]);
+			} else if ("--workspace".equals(argument) && index + 1 < args.length) {
+				workspace = Paths.get(args[++index]);
+			} else if ("--config".equals(argument) && index + 1 < args.length) {
+				config = args[++index];
+			} else if ("--runtime-config".equals(argument) && index + 1 < args.length) {
+				runtimeConfig = args[++index];
+			} else if ("--port".equals(argument) && index + 1 < args.length) {
+				try {
+					port = Integer.parseInt(args[++index]);
+				} catch (NumberFormatException failure) {
+					System.err.println("ERROR: --port must be numeric.");
+					return 2;
+				}
+			} else {
+				System.err.println("ERROR: Unknown or incomplete argument: " + argument);
+				usage();
+				return 2;
+			}
+		}
+		if (targetRoot == null || runtimeRoot == null || workspace == null || port == 0) {
+			System.err.println("ERROR: prepare requires --server-root, --runtime-root, --workspace, and --port.");
+			usage();
+			return 2;
+		}
+
+		try {
+			WorldBuilderDiscovery discovery = new WorldBuilderDiscovery();
+			WorldBuilderDiscoveryResult runtime = discovery.discover(runtimeRoot, runtimeConfig, null);
+			WorldBuilderDiscoveryResult source = discovery.discover(
+				targetRoot, config, runtime.contentFingerprintSha256);
+			WorldBuilderRuntimePreparer.PreparedRuntime prepared =
+				new WorldBuilderRuntimePreparer().prepare(
+					targetRoot, runtimeRoot, workspace, port, source, runtime);
+			System.out.print(prepared.toJson());
+			return 0;
+		} catch (WorldBuilderDiscoveryException refusal) {
+			System.err.println("ERROR: " + refusal.getMessage());
+			return 3;
+		} catch (Exception failure) {
+			System.err.println("ERROR: Could not prepare isolated Builder runtime: " + failure.getMessage());
+			return 4;
+		}
+	}
+
 	private static void usage() {
-		System.err.println("Usage: WorldBuilderCli discover --server-root <path>"
+		System.err.println("Usage:\n  WorldBuilderCli discover --server-root <path>"
 			+ " [--config server/myworld.conf]"
-			+ " [--expected-content-sha256 <sha256>]");
+			+ " [--expected-content-sha256 <sha256>]"
+			+ "\n  WorldBuilderCli prepare --server-root <path> --runtime-root <path>"
+			+ " --workspace <path> --port <port>"
+			+ " [--config server/myworld.conf] [--runtime-config server/myworld.conf]"
+			+ "\n  WorldBuilderCli launch <same arguments as prepare>"
+			+ "\n  WorldBuilderCli run --workspace <prepared-path> --port <port>");
 	}
 }

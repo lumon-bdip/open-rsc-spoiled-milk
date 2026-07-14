@@ -9,6 +9,7 @@ import com.openrsc.server.content.achievement.AchievementSystem;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.content.worldedit.WorldBuilderAccountProvisioner;
 import com.openrsc.server.content.worldedit.WorldBuilderMode;
+import com.openrsc.server.content.worldedit.WorldBuilderRuntimeControl;
 import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.JDBCDatabase;
 import com.openrsc.server.database.impl.mysql.MySqlGameDatabase;
@@ -901,6 +902,7 @@ public class Server implements Runnable {
 
 				lastTickTimestamp = serverStartedTime = System.nanoTime();
 				running.set(true);
+				WorldBuilderRuntimeControl.start(this);
 			} catch (final Throwable t) {
 				LOGGER.error("Exception in server start", t);
 				SystemUtil.exit(1);

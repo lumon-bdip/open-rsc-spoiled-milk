@@ -214,6 +214,7 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
         self.assertIn('tryReadBool("world_builder_mode").orElse(false)', config)
         self.assertLess(server.index("WorldBuilderMode.validate(getConfig())"), server.index("packetFilter ="))
         self.assertIn("WorldBuilderAccountProvisioner.provision(this)", server)
+        self.assertIn("WorldBuilderRuntimeControl.start(this)", server)
         self.assertIn("!WorldBuilderMode.isBuilderAccount(username)", login)
         self.assertIn("WorldBuilderPlayerSession.activate(player)", shared_login)
         self.assertIn("WorldEditorAccessService.open(player)", command)

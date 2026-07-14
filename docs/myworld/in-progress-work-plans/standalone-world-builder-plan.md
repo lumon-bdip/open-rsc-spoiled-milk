@@ -550,12 +550,12 @@ Phase 0 evidence recorded on 2026-07-13:
 
 - [x] Add an explicit Builder-mode server configuration contract.
 - [x] Enforce loopback-only binding before listeners start.
-- [ ] Create an isolated Builder SQLite database and provisioning service.
+- [x] Create an isolated Builder SQLite database and provisioning service.
 - [x] Generate and protect an install-local credential.
 - [x] Add bounded client auto-login under an explicit Builder launch profile.
 - [x] Refactor editor opening into a reusable server service.
 - [x] Set Builder invulnerability and open the editor after authenticated login.
-- [ ] Add launcher readiness, PID, lock, shutdown, and log handling.
+- [x] Add launcher readiness, PID, lock, shutdown, and log handling.
 - [x] Preserve the normal login/editor/server behavior when Builder mode is off.
 
 Phase 1 runtime-contract evidence recorded on 2026-07-13:
@@ -570,6 +570,16 @@ Phase 1 runtime-contract evidence recorded on 2026-07-13:
 - The client profile defaults off, accepts only loopback endpoints and a valid
   install-local credential file, and leaves ordinary connection settings
   untouched when disabled.
+- `python3 tests/myworld/test-world-builder-runtime-preparation.py` (3 tests)
+- `python3 tests/myworld/test-world-builder-supervision.py` (1 process-level
+  lifecycle test with two complete start/stop cycles and lock contention)
+- A real prepared runtime booted on loopback from its copied world and clean
+  SQLite seed, provisioned the Builder administrator, and reached network
+  readiness without reading runtime state from the target tree.
+
+Phase 1 remains in progress until the owner visually confirms automatic login,
+invulnerability, and authoritative editor opening, and an ordinary private
+client is reconfirmed to retain its login screen.
 
 Exit gate: a private visual test launches from a fixture root and arrives as
 the invulnerable Builder with the editor open, while a normal private client
