@@ -478,12 +478,42 @@ That does not change the Java 8 target or the authoritative Java 8 build lane.
 
 Create `chore/static-analysis-baseline` after build-source-of-truth labeling.
 
+Scope reconciliation on 2026-07-15: published `main` now contains the
+standalone World Builder. It is a separate maintained Java product with its
+own bundled-Ant build, executable jar, release scripts, and focused tests. The
+baseline must therefore treat the following as explicit build products rather
+than assuming the client/server inventory is exhaustive:
+
+| Product | Maintained Java roots | Authoritative build wrapper | Analyzed artifact |
+| --- | --- | --- | --- |
+| Desktop client | `Client_Base/src`, `PC_Client/src` | `scripts/build-client.sh` | `Client_Base/Open_RSC_Client.jar` |
+| Server | `server/src`, `server/plugins` | `scripts/build-server.sh` | `server/core.jar`, `server/plugins.jar` |
+| World Builder tools | `tools/world-builder/src` | `scripts/build-world-builder-tools.sh` | `output/world-builder-tools/world-builder-tools.jar` |
+
+The loose `tools/myworld/ExportBasicProjectileSheets.java` developer utility
+is source-analyzed when changed, but is not represented as a compiled product
+until it has a maintained build contract. Active Python scope is repository
+scripts, generator utilities, and `tests/myworld`; bundled Ant Python and
+`legacy/` remain excluded. Active shell scope includes maintained root, `dev`,
+player-release, World Builder release, script, test, and benchmark launchers;
+archived launchers and bundled vendor scripts remain excluded.
+
+World Builder verification is a dedicated lane. `tests/myworld/test-all.sh`
+does not currently enumerate its process, filesystem-transaction, packaging,
+or editor suites, so a general test-suite invocation must not be recorded as
+World Builder coverage. At minimum, baseline verification builds the tools jar
+and runs the static-analysis contract test; future Builder behavior changes
+continue to run the focused suites named in
+`standalone-world-builder-plan.md`.
+
 1. Add `scripts/lint.sh` with pinned tool versions/checksums and explicit
    includes/excludes. Exclude `legacy/`, generated Java catalogs, build output,
    vendored source/tools, and assets by default.
 2. Add an active CI workflow with two lanes:
-   - Java 8 authoritative Ant compile plus existing focused smoke checks;
-   - newer-JDK analysis lane for Checkstyle/PMD/SpotBugs/ShellCheck/Ruff.
+   - Java 8 authoritative Ant compiles for the client, server, and World
+     Builder tools plus existing focused smoke checks;
+   - newer-JDK analysis lane for Checkstyle/PMD/CPD/SpotBugs/ShellCheck/Ruff,
+     consuming the exact Ant-built jars from the Java 8 lane.
 3. Store machine-readable reports as artifacts. Do not fail on the existing
    baseline.
 4. Record tool version, ruleset hash, analyzed commit, source roots, and
@@ -577,10 +607,16 @@ available in an isolated test environment.
 ### B04 — `chore/static-analysis-baseline` (safe foundation, P1)
 
 - Implement Stages 0 and 1 only.
+- Cover the desktop client, server core/plugins, and standalone World Builder
+  as separate Java products. Include changed active Python and shell code,
+  including World Builder release and test surfaces.
+- Do not claim `tests/myworld/test-all.sh` covers the dedicated World Builder
+  suites.
 - Add no formatting rules and perform no baseline cleanup in the setup commit.
 
 **Verify:** clean/pass and intentional-violation/fail CI fixtures, offline/local
-script reproducibility, both Ant builds, and no generated file mutations.
+script reproducibility, all three Ant product builds, the static-analysis
+contract test, and no generated source mutations.
 
 ### B05 — `fix/server-swallowed-failures` (small behavior/observability, P1)
 

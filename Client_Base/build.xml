@@ -7,6 +7,8 @@
     <property name="release.marker.file" location="../output/release-build-marker-disabled"/>
     <property name="javac.source" value="1.8"/>
     <property name="javac.target" value="1.8"/>
+    <property name="javac.lint" value="-Xlint:unchecked"/>
+    <property name="javac.maxwarns" value="100"/>
 
     <path id="client.classpath">
         <pathelement path="${java.class.path}/"/>
@@ -45,7 +47,7 @@
         <javac srcdir="${src}:${pc_client}" destdir="${build}" debug="on" target="${javac.target}" source="${javac.source}"
                includeantruntime="false">
             <classpath refid="client.classpath"/>
-            <compilerarg line="-Xlint:unchecked"/>
+            <compilerarg line="${javac.lint} -Xmaxwarns ${javac.maxwarns}"/>
         </javac>
         <jar basedir="${build}" destfile="${jar}">
             <zipgroupfileset dir="${lib}" includes="**/*.jar"/>

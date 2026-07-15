@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Authored/generated definition catalogs are not useful bytecode targets. -->
+    <Match>
+        <Or>
+            <Class name="com.openrsc.client.entityhandling.MyWorldItemOverrides"/>
+            <Class name="orsc.remastered.RemasteredSpriteCatalogData"/>
+            <Class name="com.openrsc.server.constants.ItemId"/>
+            <Class name="com.openrsc.server.constants.NpcId"/>
+            <Class name="com.openrsc.server.constants.custom.MyWorldItemId"/>
+        </Or>
+    </Match>
+</FindBugsFilter>
