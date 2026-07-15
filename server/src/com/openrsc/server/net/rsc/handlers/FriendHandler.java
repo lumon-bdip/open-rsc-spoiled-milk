@@ -1,5 +1,7 @@
 package com.openrsc.server.net.rsc.handlers;
 
+import com.openrsc.server.database.DatabaseLookupResult;
+import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.struct.PlayerFriend;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.model.GlobalMessage;
@@ -13,8 +15,11 @@ import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.struct.incoming.FriendStruct;
 import com.openrsc.server.util.MessageFilter;
 import com.openrsc.server.util.rsc.DataConversions;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public final class FriendHandler implements PayloadProcessor<FriendStruct, OpcodeIn> {
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	private static final int MAX_FRIENDS = 100;
 	private static final int MEMBERS_MAX_FRIENDS = 200;
@@ -69,25 +74,22 @@ public final class FriendHandler implements PayloadProcessor<FriendStruct, Opcod
 					return;
 				}
 
-				PlayerFriend friendProperUsername = null;
-
-				if (friendHash > 0L) {
-					try {
-						friendProperUsername = player.getWorld().getServer().getDatabase().getProperUsernameCapitalization(friendName);
-
-						if (friendProperUsername == null) {
-							// only able to add those that exist!
-							player.message("Unable to add friend - unknown player.");
-							ActionSender.sendFriendList(player);
-							return;
-						}
-					} catch (Exception e) {
-					}
-				}
-
-				if (friendProperUsername == null) {
+				if (friendHash <= 0L) {
 					return;
 				}
+				final DatabaseLookupResult<PlayerFriend> friendLookup = lookupSocialName(player, friendName);
+				if (friendLookup.isNotFound()) {
+					player.message("Unable to add friend - unknown player.");
+					ActionSender.sendFriendList(player);
+					return;
+				}
+				if (friendLookup.isFailure()) {
+					logLookupFailure(player, "friend-list add", friendLookup);
+					player.message("Unable to add friend right now. Please try again later.");
+					ActionSender.sendFriendList(player);
+					return;
+				}
+				final PlayerFriend friendProperUsername = friendLookup.getValue();
 
 				player.getSocial().addFriend(friendHash, 0, friendProperUsername.playerName, friendProperUsername.formerName);
 				ActionSender.sendFriendUpdate(player, friendHash, friendProperUsername.playerName, friendProperUsername.formerName);
@@ -131,30 +133,27 @@ public final class FriendHandler implements PayloadProcessor<FriendStruct, Opcod
 					return;
 				}
 
-				PlayerFriend enemyProperUsername = null;
-
-				if (friendHash > 0L) {
-					try {
-						enemyProperUsername = player.getWorld().getServer().getDatabase().getProperUsernameCapitalization(friendName);
-
-						if (enemyProperUsername == null) {
-							// only able to add those that exist!
-							player.message("Unable to add name - unknown player.");
-							ActionSender.sendIgnoreList(player);
-							return;
-						}
-
-						int staffGroup = enemyProperUsername.groupId;
-						if (staffGroup >= 0 && staffGroup <= 3) {
-							player.message("Staff may not be added to ignore list");
-							ActionSender.sendIgnoreList(player);
-							return;
-						}
-					} catch (Exception e) {
-					}
+				if (friendHash <= 0L) {
+					return;
 				}
+				final DatabaseLookupResult<PlayerFriend> ignoreLookup = lookupSocialName(player, friendName);
+				if (ignoreLookup.isNotFound()) {
+					player.message("Unable to add name - unknown player.");
+					ActionSender.sendIgnoreList(player);
+					return;
+				}
+				if (ignoreLookup.isFailure()) {
+					logLookupFailure(player, "ignore-list add", ignoreLookup);
+					player.message("Unable to add name right now. Please try again later.");
+					ActionSender.sendIgnoreList(player);
+					return;
+				}
+				final PlayerFriend enemyProperUsername = ignoreLookup.getValue();
 
-				if (enemyProperUsername == null) {
+				final int staffGroup = enemyProperUsername.groupId;
+				if (staffGroup >= 0 && staffGroup <= 3) {
+					player.message("Staff may not be added to ignore list");
+					ActionSender.sendIgnoreList(player);
 					return;
 				}
 
@@ -227,5 +226,25 @@ public final class FriendHandler implements PayloadProcessor<FriendStruct, Opcod
 				break;
 			}
 		}
+	}
+
+	private DatabaseLookupResult<PlayerFriend> lookupSocialName(final Player player, final String name) {
+		final GameDatabase database = player.getWorld().getServer().getDatabase();
+		return DatabaseLookupResult.resolve(
+			() -> database.getProperUsernameCapitalization(name),
+			playerFriend -> playerFriend != null
+		);
+	}
+
+	private void logLookupFailure(final Player player, final String operation,
+			final DatabaseLookupResult<?> result) {
+		final GameDatabase database = player.getWorld().getServer().getDatabase();
+		LOGGER.error(
+			"Database lookup failed during {} (databaseType={}, exceptionType={}, origin={})",
+			operation,
+			database.getClass().getSimpleName(),
+			result.getFailureType(),
+			result.getFailureOrigin()
+		);
 	}
 }

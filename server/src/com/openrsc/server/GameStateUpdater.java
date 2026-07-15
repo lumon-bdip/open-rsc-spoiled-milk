@@ -4,6 +4,8 @@ import com.openrsc.server.constants.AppearanceId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.database.DatabaseLookupResult;
+import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
@@ -2573,18 +2575,7 @@ public final class GameStateUpdater {
 				} else {
 					// player not online
 					if (pm.getFriend() >= 0L) {
-						try {
-							int friendId = player.getWorld().getServer().getDatabase().playerIdFromUsername(DataConversions.hashToUsername(pm.getFriend()));
-
-							if (player.getWorld().getServer().getDatabase().playerExists(friendId)) {
-								// player not online
-								if (player.getClientVersion() <= 204) {
-									player.playerServerMessage(MessageType.PRIVATE_SEND,"@cya@" + DataConversions.hashToUsername(pm.getFriend()) + " is offline or has privacy mode enabled");
-								} else {
-									player.message("Unable to send message - player unavailable.");
-								}
-							}
-						} catch (Exception e) { }
+						processOfflinePrivateMessageLookup(player, pm);
 					}
 				}
 			}
@@ -2594,6 +2585,41 @@ public final class GameStateUpdater {
 				player.setRequiresOfferUpdate(false);
 			}
 		});
+	}
+
+	private void processOfflinePrivateMessageLookup(final Player player, final PrivateMessage privateMessage) {
+		final GameDatabase database = player.getWorld().getServer().getDatabase();
+		final DatabaseLookupResult<Integer> recipientLookup = DatabaseLookupResult.resolve(
+			() -> database.playerIdFromUsername(DataConversions.hashToUsername(privateMessage.getFriend())),
+			playerId -> playerId != null && playerId >= 0
+		);
+
+		if (recipientLookup.isFound()) {
+			if (player.getClientVersion() <= 204) {
+				player.playerServerMessage(
+					MessageType.PRIVATE_SEND,
+					"@cya@" + DataConversions.hashToUsername(privateMessage.getFriend())
+						+ " is offline or has privacy mode enabled"
+				);
+			} else {
+				player.message("Unable to send message - player unavailable.");
+			}
+			return;
+		}
+
+		if (recipientLookup.isNotFound()) {
+			player.message("Unable to send message - unknown player.");
+			return;
+		}
+
+		LOGGER.error(
+			"Database lookup failed during offline private-message recipient check "
+				+ "(databaseType={}, exceptionType={}, origin={})",
+			database.getClass().getSimpleName(),
+			recipientLookup.getFailureType(),
+			recipientLookup.getFailureOrigin()
+		);
+		player.message("Unable to send message right now. Please try again later.");
 	}
 
 	/**
