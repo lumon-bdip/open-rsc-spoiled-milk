@@ -29,8 +29,8 @@ follow-up branches against published `main` commit `4e04d42ca`.
 | B05 — `fix/server-swallowed-failures` | Complete | `e49801b9e` | Added bounded, privacy-safe handling of social and offline-message database failures plus diagnostic, idempotent plugin-loader cleanup. |
 | B06 — `refactor/client-auxiliary-types` | Complete | `22615d00f` | Moved 26 package-private client types to stable owners and reduced auxiliary-class warning occurrences from 310 to zero without API or bytecode changes. |
 | B07 — `refactor/client-renderer-window-viewport` | Complete | `53bce8587` | Extracted viewport presentation and GLFW window lifecycle, added cleanup diagnostics, and restored software ownership when OpenGL is unavailable; private OpenGL/fallback verification passed. |
-| B08 — `refactor/client-packet-diagnostics` | Next | — | Extract movement and scene diagnostic state from `PacketHandler` without changing packet parsing or mutations. |
-| B09 — `refactor/client-definition-registry` | Not started | — | Registry and authored/generated definition ownership remain combined in `EntityHandler`. |
+| B08 — `refactor/client-packet-diagnostics` | Complete | `34d5cbb9b` | Moved movement-snapshot diagnostics and scene-baseline state out of `PacketHandler`; packet decode/mutation order and private movement/region/relog behavior were verified. |
+| B09 — `refactor/client-definition-registry` | Next | — | Separate client registry access from authored definitions, MyWorld overrides, generated families, and fallback diagnostics while preserving every index. |
 | B10 — `refactor/server-equipment-spell-boundaries` | Not started | — | Pure equipment calculations and spell classification have not yet been separated. |
 | B11 — `chore/compatibility-labels-and-prune-proof` | Not started | — | Compatibility labeling and proof-before-prune cleanup remain outstanding. |
 
@@ -45,7 +45,7 @@ failure family per focused branch; Stage 3 rule expansion remains deferred
 until those gates have completed several stable cycles.
 
 The completed work is primarily correctness and tooling foundation. The large
-ownership refactors in B08 through B10 are still the main body of this plan and
+ownership refactors in B09 and B10 are still the main body of this plan and
 must retain their private runtime and visual verification gates.
 
 ## Rating Method
