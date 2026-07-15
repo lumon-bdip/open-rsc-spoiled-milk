@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[2]
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 INPUT_BRIDGE = ROOT / "PC_Client/src/orsc/OpenGLInputBridge.java"
 KEY_BINDINGS = ROOT / "PC_Client/src/orsc/OpenGLKeyBindings.java"
+KEY_BINDING = ROOT / "PC_Client/src/orsc/KeyBinding.java"
 LWJGL_BINDINGS = ROOT / "PC_Client/src/orsc/LwjglBindings.java"
 BANK = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/CustomBankInterface.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
@@ -24,6 +25,7 @@ def main() -> None:
     applet = APPLET.read_text(encoding="utf-8")
     input_bridge = INPUT_BRIDGE.read_text(encoding="utf-8")
     key_bindings = KEY_BINDINGS.read_text(encoding="utf-8")
+    key_bindings += "\n" + KEY_BINDING.read_text(encoding="utf-8")
     lwjgl_bindings = LWJGL_BINDINGS.read_text(encoding="utf-8")
     bank = BANK.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")

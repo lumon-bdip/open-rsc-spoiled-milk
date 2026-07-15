@@ -26,10 +26,21 @@ RUNTIME_DEFAULTS = ROOT / "PC_Client/src/orsc/RendererRuntimeDefaults.java"
 SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 OPENGL_PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
 OPENGL_WORLD_CHUNK_RENDERER = ROOT / "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java"
+RESIDENT_CHUNK_READINESS = ROOT / "PC_Client/src/orsc/ResidentChunkReadiness.java"
 OPENGL_WORLD_SUBSYSTEM = (
     ROOT / "PC_Client/src/orsc/LwjglBindings.java",
     ROOT / "PC_Client/src/orsc/OpenGLCompositeSceneBuilder.java",
     ROOT / "PC_Client/src/orsc/OpenGLCompositeSceneCommand.java",
+    ROOT / "PC_Client/src/orsc/WorldSpriteMatch.java",
+    ROOT / "PC_Client/src/orsc/WorldSpriteCommand.java",
+    ROOT / "PC_Client/src/orsc/CompositeWorldSpriteTexture.java",
+    ROOT / "PC_Client/src/orsc/StaticWorldCommand.java",
+    ROOT / "PC_Client/src/orsc/StaticWorldCommandBuilder.java",
+    ROOT / "PC_Client/src/orsc/StaticWorldMaterialTriangle.java",
+    ROOT / "PC_Client/src/orsc/WorldSpriteAnchorMatch.java",
+    ROOT / "PC_Client/src/orsc/LegacyEntitySpriteDebugStats.java",
+    ROOT / "PC_Client/src/orsc/LegacyEntitySpriteDepthEvaluation.java",
+    ROOT / "PC_Client/src/orsc/EntitySpriteOccluderFaceStats.java",
     ROOT / "PC_Client/src/orsc/OpenGLDynamicTextureAtlas.java",
     ROOT / "PC_Client/src/orsc/OpenGLFrameCapture.java",
     ROOT / "PC_Client/src/orsc/OpenGLShaderProgram.java",
@@ -93,6 +104,7 @@ def main() -> None:
     scaled_window = SCALED_WINDOW.read_text(encoding="utf-8")
     opengl_presenter = OPENGL_PRESENTER.read_text(encoding="utf-8")
     opengl_world_chunk_renderer = OPENGL_WORLD_CHUNK_RENDERER.read_text(encoding="utf-8")
+    opengl_world_chunk_renderer += "\n" + RESIDENT_CHUNK_READINESS.read_text(encoding="utf-8")
     opengl_presenter += "\n" + opengl_world_chunk_renderer
     opengl_presenter += "\n" + "\n".join(
         path.read_text(encoding="utf-8") for path in OPENGL_WORLD_SUBSYSTEM

@@ -1123,9 +1123,6 @@ public final class AuctionHouse {
 
 }
 
-abstract class ButtonHandler {
-	abstract void handle();
-}
 
 class AuctionItem {
 

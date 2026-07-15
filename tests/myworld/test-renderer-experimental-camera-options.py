@@ -7,6 +7,7 @@ CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 OPENRSC = ROOT / "PC_Client/src/orsc/OpenRSC.java"
 KEY_BINDINGS = ROOT / "PC_Client/src/orsc/OpenGLKeyBindings.java"
+KEY_BINDING = ROOT / "PC_Client/src/orsc/KeyBinding.java"
 SETTINGS = ROOT / "Client_Base/src/orsc/RendererExperimentalSettings.java"
 
 
@@ -29,6 +30,7 @@ def main() -> None:
     applet = APPLET.read_text(encoding="utf-8")
     openrsc = OPENRSC.read_text(encoding="utf-8")
     key_bindings = KEY_BINDINGS.read_text(encoding="utf-8")
+    key_bindings += "\n" + KEY_BINDING.read_text(encoding="utf-8")
     settings = SETTINGS.read_text(encoding="utf-8")
 
     require(
