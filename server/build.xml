@@ -5,6 +5,8 @@
     <property name="jar" location="core.jar"/>
     <property name="javac.source" value="1.8"/>
     <property name="javac.target" value="1.8"/>
+    <property name="javac.lint" value="-Xlint:deprecation"/>
+    <property name="javac.maxwarns" value="100"/>
 
     <target name="clean">
         <delete dir="${build}" />
@@ -24,7 +26,7 @@
                 <pathelement location="${lib}/log4j-core-2.17.0.jar"/>
                 <pathelement location="${lib}/commons-lang-2.6.jar"/>
             </classpath>
-            <compilerarg line="-Xlint:deprecation"/>
+            <compilerarg line="${javac.lint} -Xmaxwarns ${javac.maxwarns}"/>
         </javac>
         <jar basedir="buildplugins" destfile="plugins.jar"/>
         <delete dir="buildplugins"/>
@@ -67,7 +69,7 @@
                 <pathelement location="${lib}/disruptor-3.3.11.jar"/>
                 <pathelement location="${lib}/guice-5.0.2-jar-with-dependencies.jar"/>
             </classpath>
-            <compilerarg line="-Xlint:deprecation"/>
+            <compilerarg line="${javac.lint} -Xmaxwarns ${javac.maxwarns}"/>
         </javac>
         <jar basedir="${build}" destfile="${jar}">
             <zipgroupfileset dir="${lib}" includes="*.jar"/>

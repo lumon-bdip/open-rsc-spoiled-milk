@@ -1,0 +1,86 @@
+name: Static analysis
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || 'HEAD^' }}
+
+jobs:
+  java-8-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Guard the baseline contract
+        run: python3 tests/myworld/test-static-analysis-baseline.py
+      - name: Build all Ant products and compare javac findings
+        run: ./scripts/lint.sh compiler --base "$GITHUB_BASE_SHA"
+      - name: Upload exact Ant products
+        uses: actions/upload-artifact@v4
+        with:
+          name: ant-products
+          if-no-files-found: error
+          path: |
+            Client_Base/Open_RSC_Client.jar
+            server/core.jar
+            server/plugins.jar
+            output/world-builder-tools/world-builder-tools.jar
+      - name: Upload compiler reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: javac-reports
+          if-no-files-found: warn
+          path: output/static-analysis/
+
+  changed-code-analysis:
+    needs: java-8-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/spoiled-milk/static-analysis
+          key: static-analysis-${{ runner.os }}-${{ hashFiles('config/static-analysis/tools.json') }}
+      - name: Download exact Ant products
+        uses: actions/download-artifact@v4
+        with:
+          name: ant-products
+          path: .
+      - name: Verify pinned analyzers and intentional violations
+        run: |
+          ./scripts/lint.sh bootstrap
+          ./scripts/lint.sh self-test --offline
+      - name: Enforce changed code and compare SpotBugs findings
+        run: ./scripts/lint.sh analyze --offline --base "$GITHUB_BASE_SHA"
+      - name: Upload analyzer reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-analysis-reports
+          if-no-files-found: warn
+          path: output/static-analysis/

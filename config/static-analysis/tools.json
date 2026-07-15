@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "tools": {
+    "checkstyle": {
+      "version": "13.8.0",
+      "url": "https://github.com/checkstyle/checkstyle/releases/download/checkstyle-13.8.0/checkstyle-13.8.0-all.jar",
+      "sha256": "cb0b1083eb5d3f9f0b7f0edd9a86d8dbe406bf44da73c3df869abace8cb8502c",
+      "archive": "file",
+      "executable": "checkstyle-13.8.0-all.jar"
+    },
+    "pmd": {
+      "version": "7.26.0",
+      "url": "https://github.com/pmd/pmd/releases/download/pmd_releases/7.26.0/pmd-dist-7.26.0-bin.zip",
+      "sha256": "9f55cb7ff0e9f9a66dd2f005eaa370e84c8a4cd971b134aa14a930c4a283ebc9",
+      "archive": "zip",
+      "executable": "pmd-bin-7.26.0/bin/pmd"
+    },
+    "spotbugs": {
+      "version": "4.10.3",
+      "url": "https://github.com/spotbugs/spotbugs/releases/download/4.10.3/spotbugs-4.10.3.zip",
+      "sha256": "e814ee5bf9665412658c4d684e45eae3cf993148a71bc8bc93fb343e92288151",
+      "archive": "zip",
+      "executable": "spotbugs-4.10.3/bin/spotbugs"
+    },
+    "shellcheck": {
+      "version": "0.11.0",
+      "url": "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/shellcheck-v0.11.0.linux.x86_64.tar.xz",
+      "sha256": "8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198",
+      "archive": "tar.xz",
+      "executable": "shellcheck-v0.11.0/shellcheck"
+    },
+    "ruff": {
+      "version": "0.15.12",
+      "url": "https://github.com/astral-sh/ruff/releases/download/0.15.12/ruff-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "5e26a7811f7db364864ace00cced53003556a37b63f3c987e340b18207776f1c",
+      "archive": "tar.gz",
+      "executable": "ruff-x86_64-unknown-linux-gnu/ruff"
+    }
+  }
+}
