@@ -7,6 +7,7 @@ MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 OPENGL_PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
+OPENGL_VIEWPORT = ROOT / "PC_Client/src/orsc/OpenGLViewportPresenter.java"
 OPENRSC = ROOT / "PC_Client/src/orsc/OpenRSC.java"
 RENDER_SURFACE_SETTINGS = ROOT / "Client_Base/src/orsc/RenderSurfaceSettings.java"
 PROFILE_SETTINGS = ROOT / "Client_Base/src/orsc/RendererProfileSettings.java"
@@ -34,6 +35,7 @@ def main() -> None:
     applet = APPLET.read_text(encoding="utf-8")
     scaled_window = SCALED_WINDOW.read_text(encoding="utf-8")
     presenter = OPENGL_PRESENTER.read_text(encoding="utf-8")
+    viewport = OPENGL_VIEWPORT.read_text(encoding="utf-8")
     openrsc = OPENRSC.read_text(encoding="utf-8")
     surface = RENDER_SURFACE_SETTINGS.read_text(encoding="utf-8")
     profile = PROFILE_SETTINGS.read_text(encoding="utf-8")
@@ -165,7 +167,7 @@ def main() -> None:
 
     require(presenter, "private static final int INITIAL_WIDTH = RenderSurfaceSettings.getWidth();", "configured OpenGL width")
     require(presenter, "private static final int INITIAL_HEIGHT = RenderSurfaceSettings.getHeight();", "configured OpenGL height")
-    require(presenter, "? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT", "automatic aspect-fit presentation")
+    require(viewport, "? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT", "automatic aspect-fit presentation")
     require(applet, '"Ctrl+F6 expanded"', "release debug overlay shortcut hint")
     for retired_hotkey in (
         "mudclient.cycleOpenGLWindowMode();",

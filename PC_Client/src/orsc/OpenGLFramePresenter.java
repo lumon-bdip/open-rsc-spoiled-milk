@@ -4,7 +4,6 @@ import com.openrsc.client.model.Sprite;
 import orsc.graphics.Renderer2DFrame;
 import orsc.graphics.Renderer2DSettings;
 import orsc.graphics.RendererSpriteTransform;
-import orsc.graphics.RendererTextureData;
 import orsc.graphics.three.Renderer3DFrame;
 import orsc.graphics.three.Renderer3DDepthFrame;
 import orsc.graphics.three.Renderer3DMeshFrame;
@@ -20,30 +19,23 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import javax.imageio.ImageIO;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 /*
- * RENDERER-V2 OWNER: OpenGL window lifecycle, input forwarding, frame pass
- * orchestration, and remaining composite glue.
+ * RENDERER-V2 OWNER: input forwarding, frame pass orchestration, and remaining
+ * composite glue. GLFW window and viewport presentation state belong to
+ * OpenGLWindowController and OpenGLViewportPresenter.
  *
  * LEGACY BRIDGE: methods in this class that replay software framebuffer pixels,
  * projected mesh order, or legacy sprite commands are compatibility paths.
@@ -242,14 +234,12 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		UNIT_QUAD_FLOATS_PER_VERTEX * 4;
 	private static final int TILE_SIZE = 128;
 	private static final int UNDERGROUND_WORLD_TILE_Z_THRESHOLD = 3000;
-	private static final double INTEGER_SCALE_EPSILON = 0.01d;
-	private static final float MAX_FRACTIONAL_SCALE_SMOOTHING_ALPHA = 0.85f;
-
 	private final Object frameLock = new Object();
 	private final String title;
 	private final boolean inputEnabled;
 	private final boolean primaryWindow;
 	private final FrameBufferPool frameBufferPool = new FrameBufferPool();
+	private final OpenGLViewportPresenter viewportPresenter;
 
 	private volatile boolean started;
 	private volatile boolean closed;
@@ -258,7 +248,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private Thread renderThread;
 
 	private LwjglBindings gl;
-	private long window;
+	private OpenGLWindowController windowController;
 	private int textureId;
 	private int textureWidth;
 	private int textureHeight;
@@ -281,15 +271,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	private int unitQuadIndexBufferId;
 	private int screenQuadVertexBufferId;
 	private FloatBuffer screenQuadUploadBuffer;
-	private int windowWidth;
-	private int windowHeight;
-	private int currentSourceWidth = INITIAL_WIDTH;
-	private int currentSourceHeight = INITIAL_HEIGHT;
-	private int currentTargetWidth = INITIAL_WIDTH;
-	private int currentTargetHeight = INITIAL_HEIGHT;
-	private Viewport currentDrawViewport = new Viewport(0, 0, INITIAL_WIDTH, INITIAL_HEIGHT);
-	private Viewport currentFramebufferViewport = new Viewport(0, 0, INITIAL_WIDTH, INITIAL_HEIGHT);
-	private float currentTextSmoothingAlpha;
 	private int legacySceneSpriteRestoreCommands;
 	private int legacySceneSpriteRestoreFallbacks;
 	private int legacySceneSpriteRestoreFallbackPixels;
@@ -306,14 +287,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		new LinkedHashMap<Integer, LegacyEntitySpriteDebugStats>();
 	final List<LegacyEntitySpriteDepthEvaluation> legacyEntitySpriteDepthEvaluations =
 		new ArrayList<LegacyEntitySpriteDepthEvaluation>();
-	private OpenGLWindowSettings.Mode appliedWindowMode;
-	private int windowedX = OpenGLWindowSettings.getWindowedX();
-	private int windowedY = OpenGLWindowSettings.getWindowedY();
-	private int windowedWidth = OpenGLWindowSettings.getWindowedWidth();
-	private int windowedHeight = OpenGLWindowSettings.getWindowedHeight();
-	private boolean hasWindowedBounds = OpenGLWindowSettings.hasWindowedBounds();
-	private boolean windowedBoundsDirty;
-	private boolean appliedInitialWindowSize;
 	private OpenGLInputBridge inputBridge;
 	private int worldCompositeDebugLogs;
 	private volatile boolean frameCaptureRequested;
@@ -339,6 +312,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		this.title = title;
 		this.inputEnabled = inputEnabled;
 		this.primaryWindow = primaryWindow;
+		viewportPresenter = new OpenGLViewportPresenter(primaryWindow, INITIAL_WIDTH, INITIAL_HEIGHT);
 	}
 
 	void present(BufferedImage image, float scalar, ScaledWindow.ScalingAlgorithm scalingAlgorithm) {
@@ -414,18 +388,53 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void renderLoop() {
-		boolean glfwInitialized = false;
-
+		Renderer3DSettings.setOpenGLPresentationAvailable(false);
 		try {
 			gl = LwjglBindings.load();
-			glfwInitialized = gl.glfwInit();
-			if (!glfwInitialized) {
+			windowController = new OpenGLWindowController(
+				gl,
+				title,
+				primaryWindow,
+				new OpenGLWindowController.Delegate() {
+					@Override
+					public void contextCreated() {
+						logOpenGLDevice();
+					}
+
+					@Override
+					public void releaseInputState() {
+						OpenGLFramePresenter.this.releaseInputState();
+					}
+
+					@Override
+					public void suppressKeysUntilRelease() {
+						OpenGLFramePresenter.this.suppressKeysUntilRelease();
+					}
+
+					@Override
+					public void saveWindowSettings() {
+						mudclient.saveOpenGLWindowSettings();
+					}
+
+					@Override
+					public void closeClient() {
+						closeClientFromOpenGLWindow();
+					}
+
+					@Override
+					public void log(String message) {
+						OpenGLFramePresenter.log(message);
+					}
+				});
+			if (!windowController.initializeGlfw()) {
 				disable("OpenGL presenter disabled: GLFW could not initialize.");
 				return;
 			}
 
-			createWindow(INITIAL_WIDTH, INITIAL_HEIGHT);
+			windowController.createWindow(INITIAL_WIDTH, INITIAL_HEIGHT, OPENGL_VSYNC_ENABLED);
+			initializeOpenGLResources();
 			initializeInputBridge();
+			Renderer3DSettings.setOpenGLPresentationAvailable(true);
 			log("OpenGL presenter active.");
 			if (inputEnabled) {
 				log("OpenGL input bridge active.");
@@ -491,11 +500,13 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			if (WORLD_COMPOSITE_DEBUG) {
 				log("OpenGL world composite debug logging active.");
 			}
-			log("OpenGL scale mode: " + currentScaleMode().id + (primaryWindow ? " automatic" : ""));
+			log("OpenGL scale mode: "
+				+ viewportPresenter.currentScaleMode().id
+				+ (primaryWindow ? " automatic" : ""));
 
 			boolean windowCloseRequested = false;
 			while (!closed) {
-				windowCloseRequested = gl.glfwWindowShouldClose(window);
+				windowCloseRequested = windowController.shouldClose();
 				if (windowCloseRequested) {
 					break;
 				}
@@ -508,7 +519,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 						frame.release();
 					}
 				} else {
-					gl.glfwPollEvents();
+					windowController.pollEvents();
 					processInput();
 				}
 			}
@@ -519,32 +530,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			disable("OpenGL presenter disabled after an unexpected error: " + t.getMessage());
 			t.printStackTrace();
 		} finally {
-			cleanup(glfwInitialized);
+			cleanup();
 		}
 	}
 
-	private void createWindow(int width, int height) throws Exception {
-		gl.glfwDefaultWindowHints();
-		gl.glfwWindowHint(gl.GLFW_VISIBLE, gl.GLFW_FALSE);
-		gl.glfwWindowHint(gl.GLFW_RESIZABLE, gl.GLFW_TRUE);
-		gl.glfwWindowHint(gl.GLFW_DECORATED, gl.GLFW_TRUE);
-
-		window = gl.glfwCreateWindow(width, height, title, 0L, 0L);
-		if (window == 0L) {
-			throw new IllegalStateException("GLFW returned a null window handle");
-		}
-
-		windowWidth = width;
-		windowHeight = height;
-
-		gl.glfwMakeContextCurrent(window);
-		gl.createCapabilities();
-		logOpenGLDevice();
-		gl.glfwSwapInterval(OPENGL_VSYNC_ENABLED ? 1 : 0);
-		log("OpenGL vsync: " + (OPENGL_VSYNC_ENABLED ? "enabled" : "disabled") + ".");
-		syncWindowMode(width, height);
-		gl.glfwShowWindow(window);
-
+	private void initializeOpenGLResources() throws Exception {
 		textureId = gl.glGenTextures();
 		gl.glBindTexture(gl.GL_TEXTURE_2D, textureId);
 		gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE);
@@ -682,112 +672,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 	}
 
-	private void syncWindowMode(int targetWidth, int targetHeight) throws Exception {
-		OpenGLWindowSettings.Mode desiredMode = OpenGLWindowSettings.getMode();
-		if (desiredMode == appliedWindowMode) {
-			return;
-		}
-
-		releaseInputState();
-		suppressKeysUntilRelease();
-
-		if (desiredMode == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN) {
-			enterBorderlessFullscreen();
-		} else {
-			enterWindowedMode(targetWidth, targetHeight);
-		}
-		appliedWindowMode = desiredMode;
-	}
-
-	private void enterBorderlessFullscreen() throws Exception {
-		captureWindowedBounds(true);
-		MonitorMode monitorMode = gl.getPrimaryMonitorMode();
-		gl.glfwSetWindowAttrib(window, gl.GLFW_DECORATED, gl.GLFW_FALSE);
-		gl.glfwSetWindowPos(window, monitorMode.x, monitorMode.y);
-		gl.glfwSetWindowSize(window, monitorMode.width, monitorMode.height);
-		windowWidth = monitorMode.width;
-		windowHeight = monitorMode.height;
-		log("OpenGL window mode: borderless fullscreen " + monitorMode.width + "x" + monitorMode.height + ".");
-	}
-
-	private void enterWindowedMode(int targetWidth, int targetHeight) throws Exception {
-		int restoreWidth = hasWindowedBounds ? windowedWidth : targetWidth;
-		int restoreHeight = hasWindowedBounds ? windowedHeight : targetHeight;
-		int restoreX = windowedX;
-		int restoreY = windowedY;
-		MonitorMode monitorMode = gl.getPrimaryMonitorMode();
-		if (!hasWindowedBounds || isEffectivelyFullscreen(restoreWidth, restoreHeight, monitorMode)) {
-			restoreWidth = Math.max(1, targetWidth);
-			restoreHeight = Math.max(1, targetHeight);
-			restoreX = monitorMode.x + Math.max(0, (monitorMode.width - restoreWidth) / 2);
-			restoreY = monitorMode.y + Math.max(0, (monitorMode.height - restoreHeight) / 2);
-		}
-
-		if (appliedWindowMode == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN) {
-			gl.glfwHideWindow(window);
-		}
-		gl.glfwSetWindowAttrib(window, gl.GLFW_DECORATED, gl.GLFW_TRUE);
-		gl.glfwSetWindowSize(window, Math.max(1, restoreWidth), Math.max(1, restoreHeight));
-		gl.glfwSetWindowPos(window, restoreX, restoreY);
-		if (appliedWindowMode == OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN) {
-			gl.glfwShowWindow(window);
-		}
-		windowWidth = Math.max(1, restoreWidth);
-		windowHeight = Math.max(1, restoreHeight);
-		windowedX = restoreX;
-		windowedY = restoreY;
-		windowedWidth = windowWidth;
-		windowedHeight = windowHeight;
-		hasWindowedBounds = true;
-		recordWindowedBounds(windowedX, windowedY, windowedWidth, windowedHeight);
-		persistWindowedBoundsIfDirty();
-		log("OpenGL window mode: windowed " + windowWidth + "x" + windowHeight + ".");
-	}
-
-	private void captureWindowedBounds(boolean persist) throws Exception {
-		if (gl == null || window == 0L || appliedWindowMode != OpenGLWindowSettings.Mode.WINDOWED) {
-			return;
-		}
-
-		int[] x = new int[1];
-		int[] y = new int[1];
-		int[] width = new int[1];
-		int[] height = new int[1];
-		gl.glfwGetWindowPos(window, x, y);
-		gl.glfwGetWindowSize(window, width, height);
-		MonitorMode monitorMode = gl.getPrimaryMonitorMode();
-		if (isEffectivelyFullscreen(width[0], height[0], monitorMode)) {
-			return;
-		}
-		recordWindowedBounds(x[0], y[0], Math.max(1, width[0]), Math.max(1, height[0]));
-		if (persist) {
-			persistWindowedBoundsIfDirty();
-		}
-	}
-
-	private void recordWindowedBounds(int x, int y, int width, int height) {
-		windowedX = x;
-		windowedY = y;
-		windowedWidth = Math.max(1, width);
-		windowedHeight = Math.max(1, height);
-		hasWindowedBounds = true;
-		if (OpenGLWindowSettings.setWindowedBounds(windowedX, windowedY, windowedWidth, windowedHeight)) {
-			windowedBoundsDirty = true;
-		}
-	}
-
-	private void persistWindowedBoundsIfDirty() {
-		if (!windowedBoundsDirty) {
-			return;
-		}
-		mudclient.saveOpenGLWindowSettings();
-		windowedBoundsDirty = false;
-	}
-
-	private boolean isEffectivelyFullscreen(int width, int height, MonitorMode monitorMode) {
-		return width >= monitorMode.width - 32 && height >= monitorMode.height - 96;
-	}
-
 	private Frame takeLatestFrame() throws InterruptedException {
 		synchronized (frameLock) {
 			if (pendingFrame == null && !closed) {
@@ -800,56 +684,18 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		}
 	}
 
-	private OpenGLPresentationSettings.ScaleMode currentScaleMode() {
-		return primaryWindow
-			? OpenGLPresentationSettings.ScaleMode.ASPECT_FIT
-			: OpenGLPresentationSettings.getScaleMode();
-	}
-
 	private void renderFrame(Frame frame) throws Exception {
-		currentSourceWidth = frame.sourceWidth;
-		currentSourceHeight = frame.sourceHeight;
-		currentTargetWidth = frame.targetWidth;
-		currentTargetHeight = frame.targetHeight;
-
-		syncWindowMode(frame.targetWidth, frame.targetHeight);
-
-		if (appliedWindowMode == OpenGLWindowSettings.Mode.WINDOWED
-			&& !primaryWindow
-			&& (frame.targetWidth != windowWidth || frame.targetHeight != windowHeight)) {
-			gl.glfwSetWindowSize(window, frame.targetWidth, frame.targetHeight);
-			windowWidth = frame.targetWidth;
-			windowHeight = frame.targetHeight;
-			recordWindowedBounds(windowedX, windowedY, windowWidth, windowHeight);
-		}
-		appliedInitialWindowSize = true;
-
-		int[] framebufferWidth = new int[1];
-		int[] framebufferHeight = new int[1];
-		gl.glfwGetFramebufferSize(window, framebufferWidth, framebufferHeight);
-		int framebufferViewportWidth = Math.max(1, framebufferWidth[0]);
-		int framebufferViewportHeight = Math.max(1, framebufferHeight[0]);
-
-		int[] actualWindowWidth = new int[1];
-		int[] actualWindowHeight = new int[1];
-		gl.glfwGetWindowSize(window, actualWindowWidth, actualWindowHeight);
-		int actualWindowViewportWidth = Math.max(1, actualWindowWidth[0]);
-		int actualWindowViewportHeight = Math.max(1, actualWindowHeight[0]);
-		windowWidth = actualWindowViewportWidth;
-		windowHeight = actualWindowViewportHeight;
-		captureWindowedBounds(false);
-
-		OpenGLPresentationSettings.ScaleMode currentScaleMode = currentScaleMode();
-		Viewport framebufferViewport =
-			computeViewport(currentScaleMode, framebufferViewportWidth, framebufferViewportHeight, frame.sourceWidth, frame.sourceHeight);
-		Viewport windowViewport =
-			computeViewport(currentScaleMode, actualWindowViewportWidth, actualWindowViewportHeight, frame.sourceWidth, frame.sourceHeight);
-		currentDrawViewport = windowViewport;
-		currentFramebufferViewport = framebufferViewport;
-		currentTargetWidth = windowViewport.width;
-		currentTargetHeight = windowViewport.height;
-		currentTextSmoothingAlpha =
-			computeTextSmoothingAlpha(framebufferViewport, frame.sourceWidth, frame.sourceHeight);
+		OpenGLWindowController.SurfaceSize surface =
+			windowController.prepareFrame(frame.targetWidth, frame.targetHeight);
+		viewportPresenter.update(
+			surface.framebufferWidth,
+			surface.framebufferHeight,
+			surface.windowWidth,
+			surface.windowHeight,
+			frame.sourceWidth,
+			frame.sourceHeight);
+		OpenGLViewportPresenter.Viewport framebufferViewport =
+			viewportPresenter.framebufferViewport();
 
 		long uploadStart = RenderTelemetry.now();
 		uploadTexture(frame);
@@ -917,9 +763,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		activeFrameCapture = null;
 
 		long swapStart = RenderTelemetry.now();
-		gl.glfwSwapBuffers(window);
+		windowController.swapBuffers();
 		long swapNanos = RenderTelemetry.elapsedSince(swapStart);
-		gl.glfwPollEvents();
+		windowController.pollEvents();
 		processInput();
 
 		RenderTelemetry.recordOpenGLFramePhases(
@@ -1097,7 +943,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private BufferedImage readCurrentViewportImage() throws Exception {
-		Viewport viewport = currentFramebufferViewport;
+		OpenGLViewportPresenter.Viewport viewport = viewportPresenter.framebufferViewport();
 		int width = Math.max(1, viewport.width);
 		int height = Math.max(1, viewport.height);
 		ByteBuffer pixels = ByteBuffer.allocateDirect(width * height * 4);
@@ -1210,7 +1056,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	}
 
-	private void clearFrameBackground(Frame frame, Viewport viewport) throws Exception {
+	private void clearFrameBackground(
+		Frame frame,
+		OpenGLViewportPresenter.Viewport viewport) throws Exception {
 		gl.glDisable(gl.GL_SCISSOR_TEST);
 		gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		gl.glClear(gl.GL_COLOR_BUFFER_BIT);
@@ -1529,6 +1377,10 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		return Math.max(min, Math.min(max, value));
 	}
 
+	private int clamp(int value, int min, int max) {
+		return Math.max(min, Math.min(max, value));
+	}
+
 	private static float clamp01(float value) {
 		if (value <= 0.0f) {
 			return 0.0f;
@@ -1599,7 +1451,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void applyTextTextureFilter() throws Exception {
-		applyTextureFilter(currentTextSmoothingAlpha > 0.0f ? gl.GL_LINEAR : gl.GL_NEAREST);
+		applyTextureFilter(
+			viewportPresenter.textSmoothingAlpha() > 0.0f ? gl.GL_LINEAR : gl.GL_NEAREST);
 	}
 
 	private void applyTextureFilter(int filter) throws Exception {
@@ -2471,8 +2324,8 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		int right = (Math.max(command.getTopX16(), command.getBottomX16()) >> 16) + command.getWidth();
 		int top = command.getY();
 		int bottom = command.getY() + command.getHeight();
-		int limitX = Math.max(96, currentSourceWidth / 3);
-		int limitY = Math.max(96, currentSourceHeight / 3);
+		int limitX = Math.max(96, viewportPresenter.sourceWidth() / 3);
+		int limitY = Math.max(96, viewportPresenter.sourceHeight() / 3);
 		return right > 0 && bottom > 0 && left < limitX && top < limitY;
 	}
 
@@ -2604,9 +2457,9 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void enableSourceClip(int clipLeft, int clipTop, int clipRight, int clipBottom) throws Exception {
-		Viewport viewport = currentFramebufferViewport;
-		int sourceWidth = Math.max(1, currentSourceWidth);
-		int sourceHeight = Math.max(1, currentSourceHeight);
+		OpenGLViewportPresenter.Viewport viewport = viewportPresenter.framebufferViewport();
+		int sourceWidth = viewportPresenter.sourceWidth();
+		int sourceHeight = viewportPresenter.sourceHeight();
 		int left = Math.max(0, Math.min(sourceWidth, clipLeft));
 		int top = Math.max(0, Math.min(sourceHeight, clipTop));
 		int right = Math.max(left, Math.min(sourceWidth, clipRight));
@@ -3948,7 +3801,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		inputBridge = new OpenGLInputBridge(
 			inputEnabled,
 			gl,
-			window,
+			windowController.window(),
 			new OpenGLInputBridge.Delegate() {
 				@Override
 				public int mapMouseX(double cursorX) {
@@ -3977,21 +3830,11 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private int mapMouseX(double cursorX) {
-		Viewport viewport = currentDrawViewport;
-		int sourceWidth = Math.max(1, currentSourceWidth);
-		int x = (int) Math.round((cursorX - viewport.x) * sourceWidth / Math.max(1, viewport.width));
-		return clamp(x, 0, sourceWidth - 1);
+		return viewportPresenter.mapMouseX(cursorX);
 	}
 
 	private int mapMouseY(double cursorY) {
-		Viewport viewport = currentDrawViewport;
-		int sourceHeight = Math.max(1, currentSourceHeight);
-		int y = (int) Math.round((cursorY - viewport.y) * sourceHeight / Math.max(1, viewport.height));
-		return clamp(y, 0, sourceHeight - 1);
-	}
-
-	private int clamp(int value, int min, int max) {
-		return Math.max(min, Math.min(max, value));
+		return viewportPresenter.mapMouseY(cursorY);
 	}
 
 	private void releaseInputState() {
@@ -4029,16 +3872,14 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		RenderTelemetry.recordDiagnosticBoundary("capture-burst-before");
 	}
 
-	private void cleanup(boolean glfwInitialized) {
-		boolean userClosedWindow = glfwInitialized && window != 0L && !closed && primaryWindow;
+	private void cleanup() {
+		Renderer3DSettings.setOpenGLPresentationAvailable(false);
 		releaseInputState();
-		try {
-			captureWindowedBounds(false);
-			persistWindowedBoundsIfDirty();
-		} catch (Throwable ignored) {
+		if (windowController != null) {
+			windowController.prepareForShutdown();
 		}
 		try {
-			if (gl != null && window != 0L) {
+			if (gl != null && windowController != null && windowController.hasWindow()) {
 				if (spriteTextureCache != null) {
 					spriteTextureCache.close();
 					spriteTextureCache = null;
@@ -4091,26 +3932,28 @@ final class OpenGLFramePresenter implements AutoCloseable {
 					inputBridge.close();
 					inputBridge = null;
 				}
-				gl.glfwDestroyWindow(window);
 			}
-		} catch (Throwable ignored) {
+		} catch (Throwable t) {
+			logCleanupFailure("release OpenGL resources", t);
 		} finally {
-			window = 0L;
-		}
-
-		try {
-			if (gl != null && glfwInitialized) {
-				gl.glfwTerminate();
+			if (windowController != null) {
+				windowController.shutdown(closed);
 			}
-		} catch (Throwable ignored) {
-		}
-
-		if (userClosedWindow) {
-			closeClientFromOpenGLWindow();
 		}
 	}
 
+	private static void logCleanupFailure(String operation, Throwable failure) {
+		String message = failure.getMessage();
+		log(
+			"OpenGL presenter cleanup failure during "
+				+ operation
+				+ ": "
+				+ failure.getClass().getName()
+				+ (message == null || message.isEmpty() ? "" : ": " + message));
+	}
+
 	private void disable(String message) {
+		Renderer3DSettings.setOpenGLPresentationAvailable(false);
 		disabled = true;
 		log(message);
 		synchronized (frameLock) {
@@ -4218,82 +4061,6 @@ final class OpenGLFramePresenter implements AutoCloseable {
 		});
 	}
 
-	private static Viewport computeViewport(
-		OpenGLPresentationSettings.ScaleMode scaleMode,
-		int surfaceWidth,
-		int surfaceHeight,
-		int sourceWidth,
-		int sourceHeight) {
-		switch (scaleMode) {
-			case INTEGER_FIT:
-				int scale = Math.min(surfaceWidth / sourceWidth, surfaceHeight / sourceHeight);
-				if (scale >= 1) {
-					return centeredViewport(surfaceWidth, surfaceHeight, sourceWidth * scale, sourceHeight * scale);
-				}
-				return computeViewport(
-					OpenGLPresentationSettings.ScaleMode.ASPECT_FIT,
-					surfaceWidth,
-					surfaceHeight,
-					sourceWidth,
-					sourceHeight);
-			case STRETCH:
-				return new Viewport(0, 0, Math.max(1, surfaceWidth), Math.max(1, surfaceHeight));
-			case ASPECT_FIT:
-			default:
-				return computeAspectViewport(surfaceWidth, surfaceHeight, sourceWidth / (double) sourceHeight);
-		}
-	}
-
-	private static float computeTextSmoothingAlpha(Viewport viewport, int sourceWidth, int sourceHeight) {
-		double scaleX = viewport.width / (double) Math.max(1, sourceWidth);
-		double scaleY = viewport.height / (double) Math.max(1, sourceHeight);
-		double scaleError = Math.max(integerScaleError(scaleX), integerScaleError(scaleY));
-		if (scaleError <= INTEGER_SCALE_EPSILON) {
-			return 0.0f;
-		}
-		double normalizedError = Math.min(1.0d, scaleError / 0.5d);
-		return (float) (normalizedError * MAX_FRACTIONAL_SCALE_SMOOTHING_ALPHA);
-	}
-
-	private static double integerScaleError(double scale) {
-		if (scale <= 0.0d) {
-			return 1.0d;
-		}
-		double nearestIntegerScale = Math.max(1.0d, Math.rint(scale));
-		return Math.min(1.0d, Math.abs(scale - nearestIntegerScale));
-	}
-
-	private static Viewport computeAspectViewport(int surfaceWidth, int surfaceHeight, double aspectRatio) {
-		int width = Math.max(1, surfaceWidth);
-		int height = Math.max(1, (int) Math.round(width / aspectRatio));
-		if (height > surfaceHeight) {
-			height = Math.max(1, surfaceHeight);
-			width = Math.max(1, (int) Math.round(height * aspectRatio));
-		}
-		return centeredViewport(surfaceWidth, surfaceHeight, width, height);
-	}
-
-	private static Viewport centeredViewport(int surfaceWidth, int surfaceHeight, int width, int height) {
-		int clampedWidth = Math.max(1, Math.min(surfaceWidth, width));
-		int clampedHeight = Math.max(1, Math.min(surfaceHeight, height));
-		int x = Math.max(0, (surfaceWidth - clampedWidth) / 2);
-		int y = Math.max(0, (surfaceHeight - clampedHeight) / 2);
-		return new Viewport(x, y, clampedWidth, clampedHeight);
-	}
-
-	private static final class Viewport {
-		private final int x;
-		private final int y;
-		private final int width;
-		private final int height;
-
-		private Viewport(int x, int y, int width, int height) {
-			this.x = x;
-			this.y = y;
-			this.width = width;
-			this.height = height;
-		}
-	}
 	private interface OpenGLPassAction {
 		void run() throws Exception;
 	}

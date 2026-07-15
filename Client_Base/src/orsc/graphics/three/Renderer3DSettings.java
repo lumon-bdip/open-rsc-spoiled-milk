@@ -74,6 +74,7 @@ public final class Renderer3DSettings {
 				OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS_PROPERTY,
 				OPENGL_WORLD_CHUNKS_RESIDENT_OBJECTS_ENV,
 				false);
+	private static volatile boolean openGLPresentationAvailable;
 
 	private Renderer3DSettings() {
 	}
@@ -87,15 +88,19 @@ public final class Renderer3DSettings {
 	}
 
 	public static boolean canSkipLegacyWorldRaster() {
-		return SKIP_LEGACY_WORLD_RASTER_ENABLED;
+		return openGLPresentationAvailable && SKIP_LEGACY_WORLD_RASTER_ENABLED;
 	}
 
 	public static boolean canSkipProjectedWorldCapture() {
-		return RESIDENT_CHUNK_TRUSTED_REPLACEMENT_ENABLED;
+		return openGLPresentationAvailable && RESIDENT_CHUNK_TRUSTED_REPLACEMENT_ENABLED;
 	}
 
 	public static boolean canUseResidentObjectChunks() {
-		return RESIDENT_CHUNK_OBJECTS_ENABLED;
+		return openGLPresentationAvailable && RESIDENT_CHUNK_OBJECTS_ENABLED;
+	}
+
+	public static void setOpenGLPresentationAvailable(boolean available) {
+		openGLPresentationAvailable = available;
 	}
 
 	static boolean canSkipProjectedObjectMeshCapture() {
