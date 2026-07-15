@@ -126,15 +126,15 @@ public class PluginJarLoader {
 
     public void clear() {
         loadedClasses.clear();
-        final URLClassLoader classLoader = urlClassLoader;
-        urlClassLoader = null;
-        if (classLoader == null) {
+        if (urlClassLoader == null) {
             return;
         }
         try {
-            classLoader.close();
+            urlClassLoader.close();
         } catch (final IOException failure) {
             LOGGER.warn("Unable to close plugin class loader during best-effort cleanup", failure);
+        } finally {
+            urlClassLoader = null;
         }
     }
 }

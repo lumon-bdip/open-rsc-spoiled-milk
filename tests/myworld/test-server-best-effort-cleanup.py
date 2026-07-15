@@ -33,7 +33,9 @@ def main() -> None:
         "class-loader close failure lacks a bounded diagnostic",
     )
     require(
-        "if (classLoader == null)" in source and "urlClassLoader = null;" in source,
+        "if (urlClassLoader == null)" in source
+        and "finally" in source
+        and "urlClassLoader = null;" in source,
         "class-loader cleanup is not explicitly idempotent",
     )
 
