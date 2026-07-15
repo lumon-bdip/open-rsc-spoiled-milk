@@ -27,8 +27,8 @@ follow-up branches against published `main` commit `4e04d42ca`.
 | B03 — `chore/server-build-source-of-truth` | Complete | `86d904bb9` | Established Ant as the documented authority, reconciled stale build paths, and added a repeatable build audit. |
 | B04 — `chore/static-analysis-baseline` | Complete | `4e04d42ca` | Added changed-code CI gates and reproducible local Checkstyle, PMD, SpotBugs, ShellCheck, Ruff, and javac analysis for all three Java products. |
 | B05 — `fix/server-swallowed-failures` | Complete | `e49801b9e` | Added bounded, privacy-safe handling of social and offline-message database failures plus diagnostic, idempotent plugin-loader cleanup. |
-| B06 — `refactor/client-auxiliary-types` | Next | — | Some proposed types, including key bindings, were extracted by earlier renderer work; complete the audit branch and reduce only the auxiliary-class warning family. |
-| B07 — `refactor/client-renderer-window-viewport` | Not started | — | The planned viewport presenter and window controller boundaries remain outstanding. |
+| B06 — `refactor/client-auxiliary-types` | Complete | `22615d00f` | Moved 26 package-private client types to stable owners and reduced auxiliary-class warning occurrences from 310 to zero without API or bytecode changes. |
+| B07 — `refactor/client-renderer-window-viewport` | Next | — | Extract viewport presentation and window lifecycle from `OpenGLFramePresenter` with private visual verification. |
 | B08 — `refactor/client-packet-diagnostics` | Not started | — | Movement and scene diagnostic state remain owned by `PacketHandler`. |
 | B09 — `refactor/client-definition-registry` | Not started | — | Registry and authored/generated definition ownership remain combined in `EntityHandler`. |
 | B10 — `refactor/server-equipment-spell-boundaries` | Not started | — | Pure equipment calculations and spell classification have not yet been separated. |
@@ -45,7 +45,7 @@ failure family per focused branch; Stage 3 rule expansion remains deferred
 until those gates have completed several stable cycles.
 
 The completed work is primarily correctness and tooling foundation. The large
-ownership refactors in B06 through B10 are still the main body of this plan and
+ownership refactors in B07 through B10 are still the main body of this plan and
 must retain their private runtime and visual verification gates.
 
 ## Rating Method
