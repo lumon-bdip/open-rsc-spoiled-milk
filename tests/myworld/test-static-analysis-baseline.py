@@ -46,6 +46,7 @@ def main() -> int:
         "changed_lines(base, path)",
         "touches_changed_line",
         "was not rejected on added lines",
+        "with_occurrences",
         "new_findings = gated - read_baseline(JAVAC_BASELINE)",
         "new_findings = findings - read_baseline(SPOTBUGS_BASELINE)",
         '"-onlyAnalyze", SPOTBUGS_APPLICATION_PACKAGES[product]',
@@ -69,6 +70,23 @@ def main() -> int:
         require(required in spotbugs, f"SpotBugs correctness scope is missing: {required}")
     for excluded in ("STYLE", "PERFORMANCE", "MALICIOUS_CODE"):
         require(excluded not in spotbugs, f"Broad SpotBugs category entered the baseline: {excluded}")
+
+    for baseline_name in ("javac.txt", "spotbugs.txt"):
+        fingerprints = [
+            line
+            for line in (CONFIG / "baseline" / baseline_name).read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#")
+        ]
+        require(fingerprints, f"{baseline_name} is unexpectedly empty")
+        require(len(fingerprints) == len(set(fingerprints)), f"{baseline_name} contains duplicate fingerprints")
+        require(
+            all(re.search(r"\|occurrence=[1-9][0-9]*$", line) for line in fingerprints),
+            f"{baseline_name} does not retain occurrence counts",
+        )
+    require(
+        all("|context=" in line for line in (CONFIG / "baseline" / "javac.txt").read_text(encoding="utf-8").splitlines() if line and not line.startswith("#")),
+        "javac baseline does not retain normalized source context",
+    )
 
     for build_file, default_lint in (
         (ROOT / "Client_Base" / "build.xml", "-Xlint:unchecked"),

@@ -118,6 +118,8 @@ file merely to make CI pass.
 Fingerprint paths and members intentionally make moves visible. Renaming a
 file or member with an unresolved finding creates a new fingerprint that
 requires review rather than silently carrying or discarding the exception.
+Javac fingerprints also retain normalized source context, and both baselines
+retain occurrence counts so repeated findings cannot collapse into one entry.
 
 ## CI Lanes
 
