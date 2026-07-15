@@ -1,6 +1,14 @@
 package com.openrsc.client.entityhandling;
 
-import com.openrsc.client.entityhandling.defs.*;
+import com.openrsc.client.entityhandling.defs.DoorDef;
+import com.openrsc.client.entityhandling.defs.ElevationDef;
+import com.openrsc.client.entityhandling.defs.GameObjectDef;
+import com.openrsc.client.entityhandling.defs.ItemDef;
+import com.openrsc.client.entityhandling.defs.NPCDef;
+import com.openrsc.client.entityhandling.defs.PrayerDef;
+import com.openrsc.client.entityhandling.defs.SpellDef;
+import com.openrsc.client.entityhandling.defs.SpriteDef;
+import com.openrsc.client.entityhandling.defs.TileDef;
 import com.openrsc.client.entityhandling.defs.extras.AnimationDef;
 import com.openrsc.client.entityhandling.defs.extras.TextureDef;
 import orsc.Config;
