@@ -15,8 +15,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class PluginJarLoader {
+    private static final Logger LOGGER = LogManager.getLogger();
+
     private final ArrayList<Class<?>> loadedClasses;
     private URLClassLoader urlClassLoader;
 
@@ -122,8 +126,15 @@ public class PluginJarLoader {
 
     public void clear() {
         loadedClasses.clear();
+        if (urlClassLoader == null) {
+            return;
+        }
         try {
             urlClassLoader.close();
-        } catch(Exception ignored) {}
+        } catch (final IOException failure) {
+            LOGGER.warn("Unable to close plugin class loader during best-effort cleanup", failure);
+        } finally {
+            urlClassLoader = null;
+        }
     }
 }
