@@ -30,8 +30,8 @@ follow-up branches against published `main` commit `4e04d42ca`.
 | B06 — `refactor/client-auxiliary-types` | Complete | `22615d00f` | Moved 26 package-private client types to stable owners and reduced auxiliary-class warning occurrences from 310 to zero without API or bytecode changes. |
 | B07 — `refactor/client-renderer-window-viewport` | Complete | `53bce8587` | Extracted viewport presentation and GLFW window lifecycle, added cleanup diagnostics, and restored software ownership when OpenGL is unavailable; private OpenGL/fallback verification passed. |
 | B08 — `refactor/client-packet-diagnostics` | Complete | `34d5cbb9b` | Moved movement-snapshot diagnostics and scene-baseline state out of `PacketHandler`; packet decode/mutation order and private movement/region/relog behavior were verified. |
-| B09 — `refactor/client-definition-registry` | Next | — | Separate client registry access from authored definitions, MyWorld overrides, generated families, and fallback diagnostics while preserving every index. |
-| B10 — `refactor/server-equipment-spell-boundaries` | Not started | — | Pure equipment calculations and spell classification have not yet been separated. |
+| B09 — `refactor/client-definition-registry` | Complete | `762aab1a5` | Separated registry storage/access, prayer-book authorship, and fallback diagnostics while preserving every catalog index and definition fingerprint. |
+| B10 — `refactor/server-equipment-spell-boundaries` | Next | — | Extract pure equipment calculations and spell classification in separately reviewable steps without balance or scheduling changes. |
 | B11 — `chore/compatibility-labels-and-prune-proof` | Not started | — | Compatibility labeling and proof-before-prune cleanup remain outstanding. |
 
 B04 completed lint rollout Stages 0 and 1. B05 began Stage 2 with focused
@@ -45,7 +45,7 @@ failure family per focused branch; Stage 3 rule expansion remains deferred
 until those gates have completed several stable cycles.
 
 The completed work is primarily correctness and tooling foundation. The large
-ownership refactors in B09 and B10 are still the main body of this plan and
+the B10 server ownership refactor is still the main body of this plan and
 must retain their private runtime and visual verification gates.
 
 ## Rating Method
