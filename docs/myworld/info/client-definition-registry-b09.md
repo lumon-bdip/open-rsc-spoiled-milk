@@ -102,7 +102,16 @@ loopback-only development server and branch-built client:
 5. Log out, reconnect, and close the client normally. Inspect the private
    client log for unexpected exceptions or `CLIENT_ITEM_DEF_FALLBACK` lines.
 
-Private runtime status: **pending owner confirmation**.
+Private runtime status: **owner-confirmed**. Using `devduck` on the loopback
+development server, the owner confirmed representative world presentation,
+inventory/bank/shop definitions, worn equipment visuals, and prayer/spell
+entries with no visible issue. The client completed its normal native-window
+close path with `windowCloseRequested=true`; the diagnostic console contained
+no unexpected exception/error and no `CLIENT_ITEM_DEF_FALLBACK` line.
+
+Both private processes were stopped after the test and the cached client port
+was restored to 43605. The separate public listener remained active and was
+not restarted, reconfigured, or otherwise touched.
 
 Malformed-ID fallback behavior is covered by an isolated automated fixture and
 must not be induced through normal gameplay or server data.
