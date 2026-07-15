@@ -7,6 +7,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
+SLOT_RULES = ROOT / "server/src/com/openrsc/server/model/container/EquipmentSlotRules.java"
 COMBAT_SPEC = ROOT / "docs/myworld/info/combat-equipment-spec.md"
 WORK_ITEMS = ROOT / "docs/myworld/in-progress-work-plans/work-items.md"
 
@@ -23,6 +24,7 @@ def require(text: str, snippet: str, label: str) -> None:
 
 def main() -> None:
     equipment = EQUIPMENT.read_text(encoding="utf-8")
+    slot_rules = SLOT_RULES.read_text(encoding="utf-8")
     combat_spec = COMBAT_SPEC.read_text(encoding="utf-8")
     work_items = WORK_ITEMS.read_text(encoding="utf-8")
 
@@ -32,11 +34,11 @@ def main() -> None:
         "return getModifiedOffense(PrayerCatalog.CombatStyle.RANGED);",
         "return getModifiedOffense(PrayerCatalog.CombatStyle.MAGIC);",
         "private int getModifiedOffense(final PrayerCatalog.CombatStyle combatStyle)",
-        "return Math.max(0, getDisplayedModifiedOffense(combatStyle));",
+        "return EquipmentStatCalculator.combatOffense(getDisplayedModifiedOffense(combatStyle));",
         "private int getDisplayedModifiedOffense(final PrayerCatalog.CombatStyle combatStyle)",
-        "return applyOffenseBonus(combatStyle, getRawOffense(combatStyle)) - getArmorPowerPenalty(combatStyle);",
+        "return EquipmentStatCalculator.displayedOffense(",
         "private int getArmorPowerPenalty(final PrayerCatalog.CombatStyle combatStyle)",
-        "return pieces * ARMOR_POWER_PENALTY_PER_MAJOR_SLOT;",
+        "return EquipmentStatCalculator.armorPowerPenalty(pieces, ARMOR_POWER_PENALTY_PER_MAJOR_SLOT);",
         "case MELEE:\n\t\t\t\treturn isClothArmorPenaltyItem(item);",
         "case RANGED:\n\t\t\t\treturn isMetalArmorPenaltyItem(item);",
         "case MAGIC:\n\t\t\t\treturn isLeatherArmorPenaltyItem(item);",
@@ -48,8 +50,8 @@ def main() -> None:
     ):
         require(equipment, snippet, "Equipment armor power penalty")
 
-    major_slot_block = equipment.split("private boolean isMajorArmorPenaltySlot(Item item)", 1)[1].split(
-        "private boolean isLeatherArmorPenaltyItem(Item item)", 1
+    major_slot_block = slot_rules.split("static boolean isMajorArmorPenaltySlot(int wieldPosition)", 1)[1].split(
+        "static boolean isArmorSlot(int wieldPosition)", 1
     )[0]
     for slot in (
         "SLOT_LARGE_HELMET",

@@ -12,6 +12,7 @@ python3 ./tests/myworld/test-static-analysis-baseline.py
 python3 ./tests/myworld/audit_client_item_coverage.py
 python3 ./tests/myworld/test-client-runtime-item-definitions.py
 python3 ./tests/myworld/test-client-definition-registry-extraction.py
+python3 ./tests/myworld/test-server-equipment-calculation-extraction.py
 python3 ./tests/myworld/test-desktop-sound-lifecycle.py
 python3 ./tests/myworld/audit-item-id-integrity.py
 python3 ./tests/myworld/test-definition-override-loading.py
