@@ -259,6 +259,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "object-ids.md",
             "pvm-npc-cluster-audit.md",
             "server-build-source-of-truth.md",
+            "static-analysis.md",
             "testing-quick-reference.md",
         ],
     }
