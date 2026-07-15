@@ -7,33 +7,29 @@ import orsc.Config;
 import orsc.mudclient;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
-import java.util.Set;
 
 public class EntityHandler {
 
-	public static ArrayList<NPCDef> npcs = new ArrayList<>();
-	private static final ArrayList<ItemDef> items = new ArrayList<>();
-	private static final Set<String> loggedItemFallbacks = new HashSet<>();
-	private static final ArrayList<TextureDef> textures = new ArrayList<>();
-	private static final ArrayList<AnimationDef> animations = new ArrayList<>();
-	public static ArrayList<SpriteDef> projectiles = new ArrayList<>();
-	public static ArrayList<SpriteDef> GUIparts = new ArrayList<>();
-	public static ArrayList<SpriteDef> crowns = new ArrayList<>();
-	private static final int FALLBACK_NPC_ID = 825;
-	private static final ArrayList<SpellDef> spells = new ArrayList<>();
-	private static final ArrayList<PrayerDef> prayers = new ArrayList<>();
-	private static String activePrayerBook = "SARADOMIN";
-	private static final ArrayList<TileDef> tiles = new ArrayList<>();
-	private static final ArrayList<DoorDef> doors = new ArrayList<>();
-	private static final ArrayList<ElevationDef> elevation = new ArrayList<>();
-	private static final ArrayList<GameObjectDef> objects = new ArrayList<>();
-	private static final ArrayList<String> models = new ArrayList<>();
+	private static final ClientDefinitionRegistry REGISTRY = new ClientDefinitionRegistry();
+	public static ArrayList<NPCDef> npcs = REGISTRY.mutableNpcs();
+	private static final ArrayList<ItemDef> items = REGISTRY.mutableItems();
+	private static final ArrayList<TextureDef> textures = REGISTRY.mutableTextures();
+	private static final ArrayList<AnimationDef> animations = REGISTRY.mutableAnimations();
+	public static ArrayList<SpriteDef> projectiles = REGISTRY.mutableProjectiles();
+	public static ArrayList<SpriteDef> GUIparts = REGISTRY.mutableGuiParts();
+	public static ArrayList<SpriteDef> crowns = REGISTRY.mutableCrowns();
+	private static final int FALLBACK_NPC_ID = ClientDefinitionRegistry.FALLBACK_NPC_ID;
+	private static final ArrayList<SpellDef> spells = REGISTRY.mutableSpells();
+	private static final ArrayList<PrayerDef> prayers = REGISTRY.mutablePrayers();
+	private static final PrayerBookDefinitions PRAYER_BOOKS = new PrayerBookDefinitions(prayers);
+	private static final ArrayList<TileDef> tiles = REGISTRY.mutableTiles();
+	private static final ArrayList<DoorDef> doors = REGISTRY.mutableDoors();
+	private static final ArrayList<ElevationDef> elevation = REGISTRY.mutableElevations();
+	private static final ArrayList<GameObjectDef> objects = REGISTRY.mutableObjects();
 	public static ItemDef noteDef, certificateDef;
 
-	private static int invPictureCount = 0;
 	private static final int[] MYWORLD_STAFF_BASE_IDS = {
 		100, 2131, 1764, 1769, 2136, 1774, 1779, 2141, 1784, 2146
 	};
@@ -91,269 +87,115 @@ public class EntityHandler {
 	private static final int EXALTED_RUNE_COLOR = 0xD8FFFF;
 
 	public static int getModelCount() {
-		return models.size();
+		return REGISTRY.modelCount();
 	}
 
 	public static String getModelName(int id) {
-		if (id < 0 || id >= models.size()) {
-			return null;
-		}
-		return models.get(id);
+		return REGISTRY.modelName(id);
 	}
 
 	public static int invPictureCount() {
-		return invPictureCount;
+		return REGISTRY.inventoryPictureCount();
 	}
 
 	public static int npcCount() {
-		return npcs.size();
+		return REGISTRY.npcCount();
 	}
 
 	public static NPCDef getNpcDef(int id) {
-		if (id < 0 || id >= npcs.size()) {
-			return npcs.get(FALLBACK_NPC_ID); // Default NPC is Ana (not in a barrel).
-		}
-		return npcs.get(id);
+		return REGISTRY.npc(id);
 	}
 
 	public static int itemCount() {
-		return items.size();
+		return REGISTRY.itemCount();
 	}
 
 	public static ItemDef getItemDef(int id) {
-		int newId = id;
-		boolean noted = false;
-		if (id < 0) {
-			newId = (newId + 1) * -1;
-			noted = true;
-		}
-		if (newId < 0 || newId >= items.size()) {
-			logItemFallback(id, newId, noted, "out-of-range");
-			return items.get(1544); //Default Item is Unobtanium
-		}
-		ItemDef item = findItem(newId, noted);
-		if (item == null) {
-			logItemFallback(id, newId, noted, "missing-definition");
-			return items.get(1544); //Default Item is Unobtanium
-		}
-		if (isUnobtaniumPlaceholder(item) && newId != 1544 && newId != 1545) {
-			logItemFallback(id, newId, noted, "placeholder-definition");
-		}
-		return item;
+		return REGISTRY.item(id);
 	}
 
 	public static ItemDef getItemDef(int id, boolean isNote) {
-		if (id < 0 || id >= items.size()) {
-			logItemFallback(id, id, isNote, "out-of-range");
-			return items.get(1544); //Default Item is Unobtanium
-		}
-		ItemDef item = findItem(id, isNote);
-		if (item == null) {
-			logItemFallback(id, id, isNote, "missing-definition");
-			return items.get(1544); //Default Item is Unobtanium
-		}
-		if (isUnobtaniumPlaceholder(item) && id != 1544 && id != 1545) {
-			logItemFallback(id, id, isNote, "placeholder-definition");
-		}
-		return item;
-	}
-
-	private static void logItemFallback(int requestedId, int resolvedId, boolean noted, String reason) {
-		String key = requestedId + ":" + resolvedId + ":" + noted + ":" + reason;
-		if (loggedItemFallbacks.add(key)) {
-			System.err.println(
-				"CLIENT_ITEM_DEF_FALLBACK requestedId=" + requestedId
-					+ " resolvedId=" + resolvedId
-					+ " noted=" + noted
-					+ " reason=" + reason
-					+ " itemCount=" + items.size()
-			);
-		}
+		return REGISTRY.item(id, isNote);
 	}
 
 	public static ItemDef findItem(int id, boolean isNote) {
-		if (id < 0 || id >= items.size()) {
-			return null;
-		}
-		ItemDef item = items.get(id);
-		if (item == null || item.id != id) {
-			return null;
-		}
-		return isNote ? ItemDef.asNote(item) : item;
+		return REGISTRY.findItem(id, isNote);
 	}
 
 	public static int textureCount() {
-		return textures.size();
+		return REGISTRY.textureCount();
+	}
+
+	public static TextureDef getTextureDef(int id) {
+		return REGISTRY.texture(id);
 	}
 
 	public static int animationCount() {
-		return animations.size();
+		return REGISTRY.animationCount();
 	}
 
 	public static AnimationDef getAnimationDef(int id) {
-		if (id < 0 || id >= animations.size()) {
-			return animations.get(0);
-		}
-		return animations.get(id);
+		return REGISTRY.animation(id);
 	}
 
 	public static int spellCount() {
-		return spells.size();
+		return REGISTRY.spellCount();
 	}
 
 	public static SpellDef getSpellDef(int id) {
-		if (id < 0 || id >= spells.size()) {
-			return null;
-		}
-		return spells.get(id);
+		return REGISTRY.spell(id);
 	}
 
 	public static int prayerCount() {
-		return prayers.size();
+		return REGISTRY.prayerCount();
 	}
 
 	public static PrayerDef getPrayerDef(int id) {
-		if (id < 0 || id >= prayers.size()) {
-			return null;
-		}
-		return prayers.get(id);
+		return REGISTRY.prayer(id);
 	}
 
 	public static String getActivePrayerBook() {
-		return activePrayerBook;
+		return PRAYER_BOOKS.activePrayerBook();
 	}
 
 	public static void setPrayerBook(String prayerBook) {
-		if (prayerBook == null) {
-			return;
-		}
-		String normalizedPrayerBook = prayerBook.toUpperCase();
-		prayers.clear();
-		if (normalizedPrayerBook.equals("ZAMORAK")) {
-			activePrayerBook = "ZAMORAK";
-			loadZamorakPrayerDefinitions();
-		} else if (normalizedPrayerBook.equals("GUTHIX")) {
-			activePrayerBook = "GUTHIX";
-			loadGuthixPrayerDefinitions();
-		} else {
-			activePrayerBook = "SARADOMIN";
-			loadSaradominPrayerDefinitions();
-		}
+		PRAYER_BOOKS.setPrayerBook(prayerBook);
 	}
 
 	public static int tileCount() {
-		return tiles.size();
+		return REGISTRY.tileCount();
 	}
 
 	public static TileDef getTileDef(int id) {
-		if (id < 0 || id >= tiles.size()) {
-			return null;
-		}
-		return tiles.get(id);
+		return REGISTRY.tile(id);
 	}
 
 	public static int doorCount() {
-		return doors.size();
+		return REGISTRY.doorCount();
 	}
 
 	public static DoorDef getDoorDef(int id) {
-		if (id < 0 || id >= doors.size()) {
-			return null;
-		}
-		return doors.get(id);
+		return REGISTRY.door(id);
 	}
 
 	public static int elevationCount() {
-		return elevation.size();
+		return REGISTRY.elevationCount();
 	}
 
 	public static ElevationDef getElevationDef(int id) {
-		if (id < 0 || id >= elevation.size()) {
-			return null;
-		}
-		return elevation.get(id);
+		return REGISTRY.elevation(id);
 	}
 
 	public static int objectCount() {
-		return objects.size();
+		return REGISTRY.objectCount();
 	}
 
 	public static GameObjectDef getObjectDef(int id) {
-		if (id < 0 || id >= objects.size() || (objects.get(id) != null && objects.get(id).id != id)) {
-			//There may be a gap in the object definitions that causes this. Check for that.
-			for (int i = objects.size() - 1; i >= 0; i--) {
-				if (objects.get(i).id == id)
-					return objects.get(i);
-			}
-			return objects.get(4); // Default Object is tree stump
-		}
-		return objects.get(id);
+		return REGISTRY.object(id);
 	}
 
 	private static void loadPrayerDefinitions() {
-		setPrayerBook(activePrayerBook);
-	}
-
-	private static void addPrayerDefinition(int pointCost, String name, String effectText) {
-		prayers.add(new PrayerDef(0, pointCost, name,
-			"Reserve " + pointCost + " prayer points. " + effectText));
-	}
-
-	private static void loadSaradominPrayerDefinitions() {
-		addPrayerDefinition(3, "Weak Magic Power", "Magic damage +5%.");
-		addPrayerDefinition(6, "Lesser Magic Power", "Magic damage +10%.");
-		addPrayerDefinition(15, "Magic Power", "Magic damage +15%.");
-		addPrayerDefinition(29, "Strong Magic Power", "Magic damage +20%.");
-		addPrayerDefinition(49, "Greater Magic Power", "Magic damage +25%.");
-		addPrayerDefinition(3, "Weak Melee Protection", "Melee damage taken -5%.");
-		addPrayerDefinition(6, "Lesser Melee Protection", "Melee damage taken -10%.");
-		addPrayerDefinition(15, "Melee Protection", "Melee damage taken -15%.");
-		addPrayerDefinition(29, "Strong Melee Protection", "Melee damage taken -20%.");
-		addPrayerDefinition(49, "Greater Melee Protection", "Melee damage taken -25%.");
-		addPrayerDefinition(2, "Weak Enchanting Favor", "Enchanting XP +10%.");
-		addPrayerDefinition(7, "Lesser Enchanting Favor", "Enchanting XP +15%.");
-		addPrayerDefinition(22, "Enchanting Favor", "Enchanting XP +20%.");
-		addPrayerDefinition(46, "Strong Enchanting Favor", "Enchanting XP +25%.");
-		addPrayerDefinition(80, "Greater Enchanting Favor", "Enchanting XP +30%.");
-		addPrayerDefinition(60, "Saving Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");
-	}
-
-	private static void loadZamorakPrayerDefinitions() {
-		addPrayerDefinition(3, "Weak Melee Power", "Melee damage +5%.");
-		addPrayerDefinition(6, "Lesser Melee Power", "Melee damage +10%.");
-		addPrayerDefinition(15, "Melee Power", "Melee damage +15%.");
-		addPrayerDefinition(29, "Strong Melee Power", "Melee damage +20%.");
-		addPrayerDefinition(49, "Greater Melee Power", "Melee damage +25%.");
-		addPrayerDefinition(3, "Weak Ranged Protection", "Ranged damage taken -5%.");
-		addPrayerDefinition(6, "Lesser Ranged Protection", "Ranged damage taken -10%.");
-		addPrayerDefinition(15, "Ranged Protection", "Ranged damage taken -15%.");
-		addPrayerDefinition(29, "Strong Ranged Protection", "Ranged damage taken -20%.");
-		addPrayerDefinition(49, "Greater Ranged Protection", "Ranged damage taken -25%.");
-		addPrayerDefinition(2, "Weak Smithing Favor", "Smithing XP +10%.");
-		addPrayerDefinition(7, "Lesser Smithing Favor", "Smithing XP +15%.");
-		addPrayerDefinition(22, "Smithing Favor", "Smithing XP +20%.");
-		addPrayerDefinition(46, "Strong Smithing Favor", "Smithing XP +25%.");
-		addPrayerDefinition(80, "Greater Smithing Favor", "Smithing XP +30%.");
-		addPrayerDefinition(60, "Divine Retribution", "Chance to recoil double damage taken. Higher hits are more likely to trigger.");
-	}
-
-	private static void loadGuthixPrayerDefinitions() {
-		addPrayerDefinition(3, "Weak Ranged Power", "Ranged damage +5%.");
-		addPrayerDefinition(6, "Lesser Ranged Power", "Ranged damage +10%.");
-		addPrayerDefinition(15, "Ranged Power", "Ranged damage +15%.");
-		addPrayerDefinition(29, "Strong Ranged Power", "Ranged damage +20%.");
-		addPrayerDefinition(49, "Greater Ranged Power", "Ranged damage +25%.");
-		addPrayerDefinition(3, "Weak Magic Protection", "Magic damage taken -5%.");
-		addPrayerDefinition(6, "Lesser Magic Protection", "Magic damage taken -10%.");
-		addPrayerDefinition(15, "Magic Protection", "Magic damage taken -15%.");
-		addPrayerDefinition(29, "Strong Magic Protection", "Magic damage taken -20%.");
-		addPrayerDefinition(49, "Greater Magic Protection", "Magic damage taken -25%.");
-		addPrayerDefinition(2, "Weak Crafting Favor", "Crafting XP +10%.");
-		addPrayerDefinition(7, "Lesser Crafting Favor", "Crafting XP +15%.");
-		addPrayerDefinition(22, "Crafting Favor", "Crafting XP +20%.");
-		addPrayerDefinition(46, "Strong Crafting Favor", "Crafting XP +25%.");
-		addPrayerDefinition(80, "Greater Crafting Favor", "Crafting XP +30%.");
-		addPrayerDefinition(60, "Corrosive Aura", "Enemies that damage you receive 10-50 poison stacks. Lower HP applies more stacks.");
+		PRAYER_BOOKS.reloadActiveBook();
 	}
 
 	private static void loadTileDefinitions() {
@@ -519,7 +361,11 @@ public class EntityHandler {
 	}
 
 	public static int projectilesCount() {
-		return projectiles.size();
+		return REGISTRY.projectileCount();
+	}
+
+	public static SpriteDef getProjectileDef(int id) {
+		return REGISTRY.projectile(id);
 	}
 
 	private static void loadProjectiles() {
@@ -713,7 +559,19 @@ public class EntityHandler {
 	}
 
 	public static int crownCount() {
-		return crowns.size();
+		return REGISTRY.crownCount();
+	}
+
+	public static int guiPartCount() {
+		return REGISTRY.guiPartCount();
+	}
+
+	public static SpriteDef getGuiPartDef(int id) {
+		return REGISTRY.guiPart(id);
+	}
+
+	public static SpriteDef getCrownDef(int id) {
+		return REGISTRY.crown(id);
 	}
 
 	private static void loadCrowns() {
@@ -6473,7 +6331,7 @@ public class EntityHandler {
 	}
 
 	private static void addItemDefinition(ItemDef item) {
-		if (item.id < items.size() && !isUnobtaniumPlaceholder(items.get(item.id))) {
+		if (item.id < items.size() && !ClientDefinitionRegistry.isUnobtaniumPlaceholder(items.get(item.id))) {
 			return;
 		}
 		setCustomItemDefinition(item.id, item);
@@ -6567,11 +6425,6 @@ public class EntityHandler {
 		return new ItemDef("Unobtanium", "I should update my client.", "", 17, 70, "items:70",
 			false, false, 0, 0xCC4CFF, false, false, true, id);
 	}
-
-	private static boolean isUnobtaniumPlaceholder(ItemDef item) {
-		return item != null && "Unobtanium".equals(item.getName()) && item.getSpriteID() == 70;
-	}
-
 
 	private static void addCustomWoodStaffDefinitions(String woodName, String woodDescriptor, int baseStaffId, int airStaffId,
 		int waterStaffId, int earthStaffId, int fireStaffId, int basePrice, int elementalPrice, int woodMask) {
@@ -9742,9 +9595,7 @@ public class EntityHandler {
 		loadCrowns();
 		if (!Config.S_WANT_CUSTOM_SPRITES) {
 			for (ItemDef item : items) {
-				if (item.getSpriteID() + 1 > invPictureCount) {
-					invPictureCount = item.getSpriteID() + 1;
-				}
+				REGISTRY.includeInventorySprite(item.getSpriteID());
 				if (item.membersItem && !loadMembers) {
 					item.name = "Members object";
 					item.description = "You need to be a member to use this object";
@@ -9765,14 +9616,6 @@ public class EntityHandler {
 	}
 
 	public static int storeModel(String name) {
-		if (name.equalsIgnoreCase("na")) {
-			return 0;
-		}
-		int index = models.indexOf(name);
-		if (index < 0) {
-			models.add(name);
-			return models.size() - 1;
-		}
-		return index;
+		return REGISTRY.storeModel(name);
 	}
 }

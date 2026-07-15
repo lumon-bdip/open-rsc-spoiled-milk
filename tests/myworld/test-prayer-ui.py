@@ -5,6 +5,7 @@ import struct
 ROOT = Path(__file__).resolve().parents[2]
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+PRAYER_BOOKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/PrayerBookDefinitions.java"
 PRAYER_DEF = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/defs/PrayerDef.java"
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 ACTION_SENDER = ROOT / "server/src/com/openrsc/server/net/rsc/ActionSender.java"
@@ -26,6 +27,7 @@ def png_size(path):
 def main():
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
     entity_handler = ENTITY_HANDLER.read_text(encoding="utf-8")
+    prayer_books = PRAYER_BOOKS.read_text(encoding="utf-8")
     prayer_def = PRAYER_DEF.read_text(encoding="utf-8")
     packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
     action_sender = ACTION_SENDER.read_text(encoding="utf-8")
@@ -93,9 +95,9 @@ def main():
         "Corrosive Aura",
     ]
     for prayer in required_prayers:
-        require(prayer in entity_handler, f"Missing client prayer definition: {prayer}")
+        require(prayer in prayer_books, f"Missing client prayer definition: {prayer}")
 
-    require(entity_handler.count("\t\taddPrayerDefinition(") == 48,
+    require(prayer_books.count("\t\taddPrayerDefinition(") == 48,
             "Client prayer definitions should cover the three god lines plus all special prayers")
     for snippet in (
         'addPrayerDefinition(49, "Greater Magic Power", "Magic damage +25%.");',
@@ -109,7 +111,7 @@ def main():
         'addPrayerDefinition(60, "Corrosive Aura", "Enemies that damage you receive 10-50 poison stacks. Lower HP applies more stacks.");',
         '"Reserve " + pointCost + " prayer points. " + effectText',
     ):
-        require(snippet in entity_handler, f"Client prayer tooltip cost missing: {snippet}")
+        require(snippet in prayer_books, f"Client prayer tooltip cost missing: {snippet}")
     for old_cost in (
         "Reserve 10 prayer points",
         "Reserve 15 prayer points",
@@ -119,10 +121,10 @@ def main():
         "Reserve 35 prayer points",
         "Reserve 55 prayer points",
     ):
-        require(old_cost not in entity_handler, f"Client prayer tooltip still has old cost: {old_cost}")
+        require(old_cost not in prayer_books, f"Client prayer tooltip still has old cost: {old_cost}")
     require("public static void setPrayerBook(String prayerBook)" in entity_handler,
             "Client prayer definitions should support swapping visible prayer books")
-    require('activePrayerBook = "SARADOMIN"' in entity_handler,
+    require('activePrayerBook = SARADOMIN' in prayer_books,
             "Client prayer book should default to Saradomin until altar switching is wired")
     require("public int getPointCost()" in prayer_def,
             "Client PrayerDef should expose allocation point cost terminology")
