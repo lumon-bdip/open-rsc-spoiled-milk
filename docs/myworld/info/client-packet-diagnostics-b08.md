@@ -84,7 +84,7 @@ Verification on the extraction checkpoint:
 - `./scripts/lint.sh compiler --offline --base spoiled-milk/main`: passed with
   no new gated compiler warnings.
 
-## Required Private Runtime Verification
+## Private Runtime Verification
 
 The branch must not be handed off until the owner confirms the following on a
 loopback-only private development server and the branch-built client:
@@ -96,14 +96,25 @@ loopback-only private development server and the branch-built client:
    scenery, walls, ground items, NPCs, and the local player load normally.
 3. Relog or reconnect after movement and a region change; the resident scene is
    rebuilt without stale or duplicated entities.
-4. Exercise the world-editor entry/display path without saving map changes;
-   editor overlays and the loaded region remain intact.
-5. Inspect the movement diagnostic summary where practical and confirm no new
+4. Inspect the movement diagnostic summary where practical and confirm no new
    parity/staging mismatch is reported during the representative actions.
-6. Close the client normally and inspect private client/server logs for packet,
+5. Close the client and inspect private client/server logs for packet,
    scene, movement, or cleanup exceptions.
 
-Private runtime status: **pending owner confirmation**.
+Private runtime status: **owner-confirmed**. Using `devduck` on the loopback
+development server, the owner confirmed walking/running, distant teleport and
+region-load behavior, relog/reconnect behavior, and representative terrain,
+scenery, wall, item, NPC, and local-player presentation. No jumps, missing or
+duplicated entities, or diagnostic mismatch was reported.
+
+The client diagnostic session contained no packet, movement, scene, or cleanup
+failure. Terminating the test harness after confirmation produced one expected
+server-side `Connection reset by peer` trace; player save, logout, and
+unregistration then completed normally. Both private processes were stopped.
+
+The world-editor source/runtime fixtures passed. Its private-server feature
+gate remained disabled, so no edit-capable session was opened and no authored
+world data was changed.
 
 The public server and detached live checkout are outside this branch and must
 remain untouched.
