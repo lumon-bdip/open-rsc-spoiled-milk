@@ -99,16 +99,22 @@ private development server and branch-built client:
 8. Launch once with the OpenGL presenter disabled and confirm the software
    fallback still reaches login and renders the game.
 
-OpenGL visual verification status: **owner-confirmed**. The owner exercised
-4:3/16:9 presentation, windowed/borderless transitions, resizing, input, and
-representative in-game rendering, then closed the native window with `Alt+F4`.
-The diagnostic session ended through `windowCloseRequested=true` with no
-cleanup failure or unexpected exception. Software-fallback verification
-remains pending. Its first private run exposed that renderer replacement flags
-were enabled from configuration even though the OpenGL presenter was disabled,
+Visual verification status: **owner-confirmed for OpenGL and software
+fallback**. The owner exercised 4:3/16:9 presentation,
+windowed/borderless transitions, resizing, input, representative in-game
+rendering, and the modern Graphics rows. The corrected OpenGL run rendered
+active resident chunks and ended through `windowCloseRequested=true` after
+`Alt+F4`, with no cleanup failure or unexpected exception.
+
+The first software-fallback run exposed that renderer replacement flags were
+enabled from configuration even though the OpenGL presenter was disabled,
 leaving software output without terrain and resident-owned world content. The
-fix gates every replacement optimization on actual presenter readiness; the
-corrected fallback still requires owner confirmation.
+fix gates every replacement optimization on actual presenter readiness. In the
+corrected run, the owner confirmed terrain, objects, sprites, the player,
+movement, UI, and interactions. Diagnostics recorded active legacy scene draw
+time and zero OpenGL frames. The legacy scaler rows shown in this mode are the
+documented software-presenter controls; saved OpenGL-primary settings were not
+reset.
 
 Borderless mode has no native title-bar close button; this pre-existing UX gap
 is recorded in the renderer plan as a separate in-client close-affordance
