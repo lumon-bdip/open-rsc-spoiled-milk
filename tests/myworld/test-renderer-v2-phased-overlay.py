@@ -468,7 +468,7 @@ def main() -> None:
     )
     require(
         presenter,
-        "applyTextureFilter(currentTextSmoothingAlpha > 0.0f ? gl.GL_LINEAR : gl.GL_NEAREST);",
+        "viewportPresenter.textSmoothingAlpha() > 0.0f ? gl.GL_LINEAR : gl.GL_NEAREST",
         "fractional scale smoothing is scoped to text filtering",
     )
     require(

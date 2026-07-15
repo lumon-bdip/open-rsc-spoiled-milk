@@ -14,6 +14,7 @@ renderer_tests=(
   test-opengl-geometry-modes.py
   test-opengl-input-modifiers.py
   test-opengl-spirit-summon-alpha.py
+  test-opengl-window-viewport-extraction.py
   test-renderer-2d-overflow-telemetry.py
   test-renderer-diagnostic-session.py
   test-renderer-diagnostic-session-analyzer.py
