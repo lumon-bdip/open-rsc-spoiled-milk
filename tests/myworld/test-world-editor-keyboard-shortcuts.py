@@ -13,6 +13,7 @@ CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 OPENGL_INPUT = ROOT / "PC_Client/src/orsc/OpenGLInputBridge.java"
 OPENGL_KEYS = ROOT / "PC_Client/src/orsc/OpenGLKeyBindings.java"
+OPENGL_KEY = ROOT / "PC_Client/src/orsc/KeyBinding.java"
 
 
 class WorldEditorKeyboardShortcutsTest(unittest.TestCase):
@@ -99,6 +100,7 @@ class WorldEditorKeyboardShortcutsTest(unittest.TestCase):
         applet = APPLET.read_text(encoding="utf-8")
         opengl = OPENGL_INPUT.read_text(encoding="utf-8")
         keys = OPENGL_KEYS.read_text(encoding="utf-8")
+        keys += "\n" + OPENGL_KEY.read_text(encoding="utf-8")
 
         self.assertIn("keyboardShortcutsEnabled=true", ui)
         self.assertIn("isKeyboardCaptureActive()", ui)

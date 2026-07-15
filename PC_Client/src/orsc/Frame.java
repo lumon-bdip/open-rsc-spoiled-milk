@@ -10,7 +10,6 @@ import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.SinglePixelPackedSampleModel;
 import java.nio.ByteBuffer;
-import java.util.ArrayDeque;
 
 /*
  * LEGACY BRIDGE: wraps the software framebuffer pixels that still feed parts
@@ -178,48 +177,5 @@ final class Frame {
 
 	private static void putRgbAsRgba(ByteBuffer target, int pixel) {
 		target.putInt(((pixel & 0x00FFFFFF) << 8) | 0xFF);
-	}
-}
-
-final class FrameBuffer {
-	final ByteBuffer buffer;
-
-	FrameBuffer(int byteCount) {
-		buffer = ByteBuffer.allocateDirect(byteCount);
-	}
-
-	int capacity() {
-		return buffer.capacity();
-	}
-}
-
-final class FrameBufferPool {
-	private static final int MAX_RETAINED_BUFFERS = 3;
-
-	private final ArrayDeque<FrameBuffer> available = new ArrayDeque<>();
-
-	synchronized FrameBuffer acquire(int requiredBytes) {
-		FrameBuffer selected = null;
-		for (FrameBuffer frameBuffer : available) {
-			if (frameBuffer.capacity() >= requiredBytes) {
-				selected = frameBuffer;
-				break;
-			}
-		}
-		if (selected != null) {
-			available.remove(selected);
-			return selected;
-		}
-		return new FrameBuffer(requiredBytes);
-	}
-
-	synchronized void release(FrameBuffer frameBuffer) {
-		if (frameBuffer == null) {
-			return;
-		}
-		frameBuffer.buffer.clear();
-		if (available.size() < MAX_RETAINED_BUFFERS) {
-			available.addFirst(frameBuffer);
-		}
 	}
 }
