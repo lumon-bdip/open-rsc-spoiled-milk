@@ -15,6 +15,37 @@ definitions, and explicitly archived material. It complements the earlier
 with current measurements, band-aid and dead-code analysis, static-analysis
 recommendations, and an ordered implementation plan.
 
+## Implementation Progress — Updated 2026-07-15
+
+This ledger preserves the audit's original evidence while tracking its ordered
+follow-up branches against published `main` commit `4e04d42ca`.
+
+| Branch | Status | Published merge | Result |
+| --- | --- | --- | --- |
+| B01 — `fix/client-spell-display-metadata` | Complete | `c923ed8c9` | Added one stable elemental spell-display metadata source and removed the duplicated name-based classification from `mudclient` and `SkillGuideInterface`. |
+| B02 — `fix/desktop-sound-lifecycle` | Complete | `0232d7337` | Defined the desktop sound lifecycle, removed the throwing disconnect path, and added lifecycle coverage. |
+| B03 — `chore/server-build-source-of-truth` | Complete | `86d904bb9` | Established Ant as the documented authority, reconciled stale build paths, and added a repeatable build audit. |
+| B04 — `chore/static-analysis-baseline` | Complete | `4e04d42ca` | Added changed-code CI gates and reproducible local Checkstyle, PMD, SpotBugs, ShellCheck, Ruff, and javac analysis for all three Java products. |
+| B05 — `fix/server-swallowed-failures` | Next | — | Begin the Stage 2 warning/failure burn-down with bounded, privacy-safe handling of social and offline-message database failures. |
+| B06 — `refactor/client-auxiliary-types` | Not started | — | Some proposed types, including key bindings, were extracted by earlier renderer work, but the audit branch and warning-family reduction remain outstanding. |
+| B07 — `refactor/client-renderer-window-viewport` | Not started | — | The planned viewport presenter and window controller boundaries remain outstanding. |
+| B08 — `refactor/client-packet-diagnostics` | Not started | — | Movement and scene diagnostic state remain owned by `PacketHandler`. |
+| B09 — `refactor/client-definition-registry` | Not started | — | Registry and authored/generated definition ownership remain combined in `EntityHandler`. |
+| B10 — `refactor/server-equipment-spell-boundaries` | Not started | — | Pure equipment calculations and spell classification have not yet been separated. |
+| B11 — `chore/compatibility-labels-and-prune-proof` | Not started | — | Compatibility labeling and proof-before-prune cleanup remain outstanding. |
+
+B04 completes lint rollout Stages 0 and 1. Its checked-in baselines contain 46
+distinct gated javac fingerprints representing 51 warning occurrences and 414
+SpotBugs fingerprints representing 450 occurrences. The local end-to-end
+contract, compiler, analyzer self-test, Python, and shell validation passed, as
+did the GitHub Actions run for `4e04d42ca`. Stage 2 should reduce one warning or
+failure family per focused branch; Stage 3 rule expansion remains deferred
+until those gates have completed several stable cycles.
+
+The completed work is primarily correctness and tooling foundation. The large
+ownership refactors in B06 through B10 are still the main body of this plan and
+must retain their private runtime and visual verification gates.
+
 ## Rating Method
 
 - **Impact** estimates the cost of leaving the issue in place: High, Medium,
