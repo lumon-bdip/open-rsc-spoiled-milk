@@ -12,7 +12,6 @@ import orsc.enumerations.ORSCharacterDirection;
 import orsc.graphics.gui.KillAnnouncer;
 import orsc.graphics.gui.SocialLists;
 import orsc.graphics.three.RSModel;
-import orsc.graphics.three.World;
 import orsc.multiclient.ClientPort;
 import orsc.net.Network_Socket;
 import orsc.util.FastMath;
@@ -41,31 +40,29 @@ public class PacketHandler {
 	private static final int AUTHENTIC_LOCAL_MOB_COUNT_BITS = 8;
 	private static final int CUSTOM_LOCAL_MOB_COUNT_BITS = 16;
 	private static final int INCOMING_PACKET_BUFFER_INITIAL_SIZE = 30000;
-	private static final long SCENE_BASELINE_STALE_MILLIS = 15000L;
 
 	private final RSBuffer_Bits packetsIncoming = new RSBuffer_Bits(INCOMING_PACKET_BUFFER_INITIAL_SIZE);
 	private Network_Socket clientStream;
 	private mudclient mc;
-	private final SceneBaselineDebugState sceneBaselineDebugState = new SceneBaselineDebugState();
-	private final MovementSnapshotDebugState movementSnapshotDebugState = new MovementSnapshotDebugState();
-	private final MovementPacketDebugState movementPacketDebugState = new MovementPacketDebugState();
+	private final SceneBaselineState sceneBaselineState = new SceneBaselineState();
+	private final MovementSnapshotDiagnostics movementSnapshotDiagnostics = new MovementSnapshotDiagnostics();
 	private final MovementSnapshotStage movementSnapshotStage = new MovementSnapshotStage();
 	private int appliedSceneBaselineKey = 0;
 
 	public String getSceneBaselineDebugSummary() {
-		return sceneBaselineDebugState.summary();
+		return sceneBaselineState.summary();
 	}
 
 	public String[] getSceneBaselineDebugSummaryLines() {
-		return sceneBaselineDebugState.summaryLines(mc);
+		return sceneBaselineState.summaryLines(mc);
 	}
 
 	public String getMovementSnapshotDebugSummaryLine() {
-		return movementSnapshotDebugState.summaryLines()[0];
+		return movementSnapshotDiagnostics.summaryLines()[0];
 	}
 
 	public String[] getMovementSnapshotDebugSummaryLines() {
-		return movementSnapshotDebugState.summaryLines();
+		return movementSnapshotDiagnostics.summaryLines();
 	}
 
 	private SpriteDef getProjectileDefForUpdate(int sprite, String targetType, int targetServerIndex, int shooterServerIndex) {
@@ -1620,7 +1617,8 @@ public class PacketHandler {
 		int localX = packetsIncoming.getShort();
 		int localZ = packetsIncoming.getShort();
 		int localDirection = packetsIncoming.getUnsignedByte();
-		MovementPacketFingerprint fingerprint = new MovementPacketFingerprint(localX, localZ, localDirection);
+		MovementSnapshotDiagnostics.Fingerprint fingerprint =
+			movementSnapshotDiagnostics.createFingerprint(localX, localZ, localDirection);
 		mc.applyCustomMovementUpdate(localX, localZ, localDirection);
 
 		int playerCount = packetsIncoming.getShort();
@@ -1642,7 +1640,7 @@ public class PacketHandler {
 			fingerprint.addNpc(serverIndex, x, z, direction);
 			mc.applyCustomNpcMovementUpdate(serverIndex, x, z, direction);
 		}
-		movementPacketDebugState.recordMovementUpdate(fingerprint);
+		movementSnapshotDiagnostics.recordMovementUpdate(fingerprint);
 		MovementTimingDiagnostics.recordMovementPacket(playerCount, npcCount);
 	}
 
@@ -1656,8 +1654,8 @@ public class PacketHandler {
 		int playerCount = 0;
 		int npcCount = 0;
 		int recordsRead = 0;
-		MovementSnapshotParity parity = new MovementSnapshotParity();
-		MovementPacketFingerprint snapshotFingerprint = null;
+		MovementSnapshotDiagnostics.CacheParity parity = movementSnapshotDiagnostics.createCacheParity();
+		MovementSnapshotDiagnostics.Fingerprint snapshotFingerprint = null;
 		MovementSnapshotStage.Frame stageFrame = null;
 		if (packetsIncoming.packetEnd + 16 <= length) {
 			protocolVersion = packetsIncoming.getUnsignedByte();
@@ -1666,7 +1664,7 @@ public class PacketHandler {
 			localX = packetsIncoming.getShort();
 			localZ = packetsIncoming.getShort();
 			localDirection = packetsIncoming.getUnsignedByte();
-			snapshotFingerprint = new MovementPacketFingerprint(localX, localZ, localDirection);
+			snapshotFingerprint = movementSnapshotDiagnostics.createFingerprint(localX, localZ, localDirection);
 			stageFrame = new MovementSnapshotStage.Frame(protocolVersion, serverTick, sequence);
 			stageFrame.setLocal(localX, localZ, localDirection);
 			mc.applyCustomMovementUpdate(localX, localZ, localDirection);
@@ -1699,7 +1697,7 @@ public class PacketHandler {
 			}
 		}
 		MovementSnapshotStage.Result stageResult = movementSnapshotStage.replaceFromSnapshot(stageFrame, mc);
-		movementSnapshotDebugState.recordPacket(
+		movementSnapshotDiagnostics.recordSnapshot(
 			protocolVersion,
 			serverTick,
 			sequence,
@@ -1710,7 +1708,7 @@ public class PacketHandler {
 			npcCount,
 			recordsRead,
 			parity,
-			movementPacketDebugState.compareSnapshot(snapshotFingerprint),
+			snapshotFingerprint,
 			stageResult);
 		MovementTimingDiagnostics.recordMovementSnapshot(
 			serverTick,
@@ -1718,424 +1716,6 @@ public class PacketHandler {
 			playerCount,
 			npcCount);
 		packetsIncoming.packetEnd = length;
-	}
-
-	private static final class MovementPacketFingerprint {
-		private final int localX;
-		private final int localZ;
-		private final int localDirection;
-		private int playerCount = 0;
-		private int npcCount = 0;
-		private long hash = 1469598103934665603L;
-
-		private MovementPacketFingerprint(int localX, int localZ, int localDirection) {
-			this.localX = localX;
-			this.localZ = localZ;
-			this.localDirection = localDirection;
-			this.hash = mixRecord(this.hash, 0, 0, localX, localZ, localDirection);
-		}
-
-		private void addPlayer(int serverIndex, int worldX, int worldZ, int direction) {
-			playerCount++;
-			hash = mixRecord(hash, 1, serverIndex, worldX, worldZ, direction);
-		}
-
-		private void addNpc(int serverIndex, int worldX, int worldZ, int direction) {
-			npcCount++;
-			hash = mixRecord(hash, 2, serverIndex, worldX, worldZ, direction);
-		}
-
-		private boolean matches(MovementPacketFingerprint other) {
-			return other != null
-				&& localX == other.localX
-				&& localZ == other.localZ
-				&& localDirection == other.localDirection
-				&& playerCount == other.playerCount
-				&& npcCount == other.npcCount
-				&& hash == other.hash;
-		}
-
-		private static long mixRecord(long hash, int kind, int serverIndex, int worldX, int worldZ, int direction) {
-			hash = mix(hash, kind);
-			hash = mix(hash, serverIndex);
-			hash = mix(hash, worldX);
-			hash = mix(hash, worldZ);
-			return mix(hash, direction);
-		}
-
-		private static long mix(long hash, int value) {
-			hash ^= value & 0xffffffffL;
-			return hash * 1099511628211L;
-		}
-	}
-
-	private static final class MovementPacketDebugState {
-		private MovementPacketFingerprint lastMovementUpdate;
-		private int movementUpdates = 0;
-
-		private void recordMovementUpdate(MovementPacketFingerprint fingerprint) {
-			lastMovementUpdate = fingerprint;
-			movementUpdates++;
-		}
-
-		private MovementWireParity compareSnapshot(MovementPacketFingerprint snapshotFingerprint) {
-			if (snapshotFingerprint == null || lastMovementUpdate == null) {
-				return MovementWireParity.waiting(movementUpdates);
-			}
-			return MovementWireParity.compared(movementUpdates, lastMovementUpdate.matches(snapshotFingerprint));
-		}
-	}
-
-	private static final class MovementWireParity {
-		private final boolean hasReference;
-		private final boolean matched;
-		private final int movementUpdates;
-
-		private MovementWireParity(boolean hasReference, boolean matched, int movementUpdates) {
-			this.hasReference = hasReference;
-			this.matched = matched;
-			this.movementUpdates = movementUpdates;
-		}
-
-		private static MovementWireParity waiting(int movementUpdates) {
-			return new MovementWireParity(false, false, movementUpdates);
-		}
-
-		private static MovementWireParity compared(int movementUpdates, boolean matched) {
-			return new MovementWireParity(true, matched, movementUpdates);
-		}
-	}
-
-	private static final class MovementSnapshotParity {
-		private int checkedLocal = 0;
-		private int checkedPlayers = 0;
-		private int checkedNpcs = 0;
-		private int missingLocal = 0;
-		private int missingPlayers = 0;
-		private int missingNpcs = 0;
-		private int localPositionMismatches = 0;
-		private int playerPositionMismatches = 0;
-		private int npcPositionMismatches = 0;
-		private int localDirectionMismatches = 0;
-		private int playerDirectionMismatches = 0;
-		private int npcDirectionMismatches = 0;
-		private String firstMismatch = "";
-
-		private void checkLocal(mudclient mc, int worldX, int worldZ, int direction) {
-			if (mc == null || mc.getLocalPlayer() == null) {
-				missingLocal++;
-				return;
-			}
-			checkedLocal++;
-			checkCharacter(mc, mc.getLocalPlayer(), worldX, worldZ, direction, 0, mc.getLocalPlayer().serverIndex);
-		}
-
-		private void checkPlayer(mudclient mc, int serverIndex, int worldX, int worldZ, int direction) {
-			if (mc == null) {
-				missingPlayers++;
-				return;
-			}
-			ORSCharacter player = findVisiblePlayer(mc, serverIndex);
-			if (player == null) {
-				missingPlayers++;
-				return;
-			}
-			checkedPlayers++;
-			checkCharacter(mc, player, worldX, worldZ, direction, 1, serverIndex);
-		}
-
-		private void checkNpc(mudclient mc, int serverIndex, int worldX, int worldZ, int direction) {
-			if (mc == null) {
-				missingNpcs++;
-				return;
-			}
-			ORSCharacter npc = findVisibleNpc(mc, serverIndex);
-			if (npc == null) {
-				missingNpcs++;
-				return;
-			}
-			checkedNpcs++;
-			checkCharacter(mc, npc, worldX, worldZ, direction, 2, serverIndex);
-		}
-
-		private ORSCharacter findVisiblePlayer(mudclient mc, int serverIndex) {
-			for (int i = 0; i < mc.getPlayerCount(); i++) {
-				ORSCharacter player = mc.getPlayer(i);
-				if (player != null && player.serverIndex == serverIndex) {
-					return player;
-				}
-			}
-			return null;
-		}
-
-		private ORSCharacter findVisibleNpc(mudclient mc, int serverIndex) {
-			for (int i = 0; i < mc.getNpcCount(); i++) {
-				ORSCharacter npc = mc.getNpc(i);
-				if (npc != null && npc.serverIndex == serverIndex) {
-					return npc;
-				}
-			}
-			return null;
-		}
-
-		private void checkCharacter(
-			mudclient mc,
-			ORSCharacter character,
-			int worldX,
-			int worldZ,
-			int direction,
-			int category,
-			int serverIndex) {
-			int waypointIndex = character.waypointIndexCurrent;
-			int tileSize = Math.max(1, mc.getTileSize());
-			int targetWorldX = mc.getMidRegionBaseX() + ((character.waypointsX[waypointIndex] - 64) / tileSize);
-			int targetWorldZ = mc.getMidRegionBaseZ() + ((character.waypointsZ[waypointIndex] - 64) / tileSize);
-			boolean positionMismatch = targetWorldX != worldX || targetWorldZ != worldZ;
-			boolean directionMismatch = character.animationNext != direction;
-			if (positionMismatch) {
-				if (category == 0) {
-					localPositionMismatches++;
-				} else if (category == 1) {
-					playerPositionMismatches++;
-				} else {
-					npcPositionMismatches++;
-				}
-			}
-			if (directionMismatch) {
-				if (category == 0) {
-					localDirectionMismatches++;
-				} else if (category == 1) {
-					playerDirectionMismatches++;
-				} else {
-					npcDirectionMismatches++;
-				}
-			}
-			if ((positionMismatch || directionMismatch) && firstMismatch.length() == 0) {
-				String type = category == 0 ? "l" : (category == 1 ? "p" : "n");
-				firstMismatch = type + "#" + serverIndex
-					+ " e " + worldX + "," + worldZ + ":" + direction
-					+ " a " + targetWorldX + "," + targetWorldZ + ":" + character.animationNext;
-				if (category == 2) {
-					firstMismatch += " | " + mc.describeCustomNpcMovementDebug(serverIndex);
-				}
-			}
-		}
-
-		private int checked() {
-			return checkedLocal + checkedPlayers + checkedNpcs;
-		}
-
-		private int missing() {
-			return missingLocal + missingPlayers + missingNpcs;
-		}
-
-		private int positionMismatches() {
-			return localPositionMismatches + playerPositionMismatches + npcPositionMismatches;
-		}
-
-		private int directionMismatches() {
-			return localDirectionMismatches + playerDirectionMismatches + npcDirectionMismatches;
-		}
-
-		private int mismatches() {
-			return missing() + positionMismatches() + directionMismatches();
-		}
-	}
-
-	private static final class MovementSnapshotDebugState {
-		private static final int RECENT_MOVE_CACHE_LOG_LIMIT = 5;
-		private static final String MOVE_CACHE_LOG_PREFIX = "MOVEMENT_CACHE_RECENT";
-
-		private int protocolVersion = 0;
-		private int serverTick = 0;
-		private int sequence = 0;
-		private int localX = 0;
-		private int localZ = 0;
-		private int localDirection = 0;
-		private int playerCount = 0;
-		private int npcCount = 0;
-		private int packets = 0;
-		private int records = 0;
-		private int cacheChecked = 0;
-		private int parityMissingLocal = 0;
-		private int parityMissingPlayers = 0;
-		private int parityMissingNpcs = 0;
-		private int localPositionMismatches = 0;
-		private int playerPositionMismatches = 0;
-		private int npcPositionMismatches = 0;
-		private int localDirectionMismatches = 0;
-		private int playerDirectionMismatches = 0;
-		private int npcDirectionMismatches = 0;
-		private int parityTotalMismatches = 0;
-		private String cacheMismatchSample = "";
-		private boolean wireHasReference = false;
-		private boolean wireMatched = false;
-		private int wireMovementUpdates = 0;
-		private int wireTotalMismatches = 0;
-		private boolean stageReady = false;
-		private int stagePlayers = 0;
-		private int stageNpcs = 0;
-		private int stageChecked = 0;
-		private int stageCurrentMismatches = 0;
-		private int stageTotalMismatches = 0;
-		private String stageMismatchSample = "";
-		private long stageLastPacketMillis = 0L;
-		private long lastPacketMillis = 0L;
-		private final String[] recentMoveCacheLines = new String[RECENT_MOVE_CACHE_LOG_LIMIT];
-		private int recentMoveCacheNext = 0;
-		private int recentMoveCacheCount = 0;
-		private int lastLoggedMismatchSequence = Integer.MIN_VALUE;
-
-		private void recordPacket(
-			int protocolVersion,
-			int serverTick,
-			int sequence,
-			int localX,
-			int localZ,
-			int localDirection,
-			int playerCount,
-			int npcCount,
-			int recordsRead,
-			MovementSnapshotParity parity,
-			MovementWireParity wireParity,
-			MovementSnapshotStage.Result stageResult) {
-			this.protocolVersion = protocolVersion;
-			this.serverTick = serverTick;
-			this.sequence = sequence;
-			this.localX = localX;
-			this.localZ = localZ;
-			this.localDirection = localDirection;
-			this.playerCount = playerCount;
-			this.npcCount = npcCount;
-			this.packets++;
-			this.records += recordsRead;
-			this.cacheChecked = parity.checked();
-			this.parityMissingLocal = parity.missingLocal;
-			this.parityMissingPlayers = parity.missingPlayers;
-			this.parityMissingNpcs = parity.missingNpcs;
-			this.localPositionMismatches = parity.localPositionMismatches;
-			this.playerPositionMismatches = parity.playerPositionMismatches;
-			this.npcPositionMismatches = parity.npcPositionMismatches;
-			this.localDirectionMismatches = parity.localDirectionMismatches;
-			this.playerDirectionMismatches = parity.playerDirectionMismatches;
-			this.npcDirectionMismatches = parity.npcDirectionMismatches;
-			this.parityTotalMismatches += parity.mismatches();
-			this.cacheMismatchSample = parity.firstMismatch;
-			this.wireHasReference = wireParity.hasReference;
-			this.wireMatched = wireParity.matched;
-			this.wireMovementUpdates = wireParity.movementUpdates;
-			if (wireParity.hasReference && !wireParity.matched) {
-				this.wireTotalMismatches++;
-			}
-			this.stageReady = stageResult.ready;
-			this.stagePlayers = stageResult.players;
-			this.stageNpcs = stageResult.npcs;
-			this.stageChecked = stageResult.checked;
-			this.stageCurrentMismatches = stageResult.mismatches;
-			this.stageTotalMismatches += stageResult.mismatches;
-			this.stageMismatchSample = stageResult.firstMismatch;
-			this.stageLastPacketMillis = stageResult.lastPacketMillis;
-			this.lastPacketMillis = System.currentTimeMillis();
-			rememberMoveCacheLine(buildRecentMoveCacheLine(this.lastPacketMillis));
-			if ((parity.mismatches() > 0 || stageResult.mismatches > 0)
-				&& this.lastLoggedMismatchSequence != sequence) {
-				this.lastLoggedMismatchSequence = sequence;
-				logRecentMoveCacheLines();
-			}
-		}
-
-		private String[] summaryLines() {
-			if (packets <= 0) {
-				return new String[] { "move snap waiting", "move cache waiting" };
-			}
-			long now = System.currentTimeMillis();
-			String wireSummary = buildWireSummary();
-			String cacheSummary = buildCacheSummary();
-			String stageSummary = buildStageSummary(now);
-			return new String[] {
-				"move snap v" + protocolVersion
-				+ " tick/seq " + serverTick + "/" + sequence
-				+ " | local " + localX + "," + localZ + ":" + localDirection
-				+ " | p/n " + playerCount + "/" + npcCount
-				+ " | packets/records " + packets + "/" + records
-				+ " | " + wireSummary
-				+ " | age " + (System.currentTimeMillis() - lastPacketMillis) + "ms",
-				"move cache " + cacheSummary + " | " + stageSummary
-			};
-		}
-
-		private int currentCacheIssues() {
-			return parityMissingLocal + parityMissingPlayers + parityMissingNpcs
-				+ localPositionMismatches + playerPositionMismatches + npcPositionMismatches
-				+ localDirectionMismatches + playerDirectionMismatches + npcDirectionMismatches;
-		}
-
-		private String buildWireSummary() {
-			return !wireHasReference
-				? "wire wait u" + wireMovementUpdates
-				: (wireMatched ? "wire ok" : "wire bad total " + wireTotalMismatches);
-		}
-
-		private String buildCacheSummary() {
-			int cacheIssues = currentCacheIssues();
-			if (cacheIssues == 0) {
-				return "cache ok c" + cacheChecked;
-			}
-			return "cache bad c" + cacheChecked
-				+ " miss " + parityMissingLocal + "/" + parityMissingPlayers + "/" + parityMissingNpcs
-				+ " pos " + localPositionMismatches + "/" + playerPositionMismatches + "/" + npcPositionMismatches
-				+ " dir " + localDirectionMismatches + "/" + playerDirectionMismatches + "/" + npcDirectionMismatches
-				+ " total " + parityTotalMismatches
-				+ (cacheMismatchSample.length() == 0 ? "" : " | " + cacheMismatchSample);
-		}
-
-		private String buildStageSummary(long now) {
-			if (!stageReady) {
-				return "stage wait";
-			}
-			return "stage " + (stageCurrentMismatches == 0 ? "ok" : "bad")
-				+ " c" + stageChecked
-				+ " p/n " + stagePlayers + "/" + stageNpcs
-				+ (stageCurrentMismatches == 0 ? "" : " total " + stageCurrentMismatches + "/" + stageTotalMismatches)
-				+ " age " + (now - stageLastPacketMillis) + "ms"
-				+ (stageMismatchSample.length() == 0 ? "" : " | " + stageMismatchSample);
-		}
-
-		private String buildRecentMoveCacheLine(long now) {
-			return "seq " + sequence
-				+ " tick " + serverTick
-				+ " local " + localX + "," + localZ + ":" + localDirection
-				+ " p/n " + playerCount + "/" + npcCount
-				+ " packets/records " + packets + "/" + records
-				+ " | " + buildWireSummary()
-				+ " | " + buildCacheSummary()
-				+ " | " + buildStageSummary(now);
-		}
-
-		private void rememberMoveCacheLine(String line) {
-			recentMoveCacheLines[recentMoveCacheNext] = line;
-			recentMoveCacheNext = (recentMoveCacheNext + 1) % RECENT_MOVE_CACHE_LOG_LIMIT;
-			if (recentMoveCacheCount < RECENT_MOVE_CACHE_LOG_LIMIT) {
-				recentMoveCacheCount++;
-			}
-		}
-
-		private void logRecentMoveCacheLines() {
-			logMoveCacheLine(MOVE_CACHE_LOG_PREFIX
-				+ " latest mismatch; last " + recentMoveCacheCount + " move cache snapshots:");
-			for (int i = 0; i < recentMoveCacheCount; i++) {
-				int index = recentMoveCacheNext - recentMoveCacheCount + i;
-				if (index < 0) {
-					index += RECENT_MOVE_CACHE_LOG_LIMIT;
-				}
-				logMoveCacheLine(MOVE_CACHE_LOG_PREFIX + " " + recentMoveCacheLines[index]);
-			}
-		}
-
-		private void logMoveCacheLine(String line) {
-			System.out.println(line);
-			ClientRuntimeLogger.log(line);
-		}
 	}
 
 	private void updateWorldTime(int length) {
@@ -2161,7 +1741,7 @@ public class PacketHandler {
 		int pageIndex = 0;
 		int pageTotal = 0;
 		int recordsRead = 0;
-		List<SceneBaselineRecord> pageRecords = new ArrayList<SceneBaselineRecord>();
+		List<SceneBaselineState.Record> pageRecords = new ArrayList<SceneBaselineState.Record>();
 		if (length >= 21) {
 			protocolVersion = packetsIncoming.getUnsignedByte();
 			serverTick = packetsIncoming.get32();
@@ -2194,11 +1774,11 @@ public class PacketHandler {
 				int y = packetsIncoming.getShort();
 				int direction = packetsIncoming.getUnsignedByte();
 				int type = packetsIncoming.getUnsignedByte();
-				pageRecords.add(new SceneBaselineRecord(id, x, y, direction, type));
+				pageRecords.add(new SceneBaselineState.Record(id, x, y, direction, type));
 				recordsRead++;
 			}
 		}
-		sceneBaselineDebugState.recordPacket(
+		sceneBaselineState.recordPacket(
 			protocolVersion,
 			serverTick,
 			localX,
@@ -2215,26 +1795,10 @@ public class PacketHandler {
 			pageTotal,
 			recordsRead,
 			pageRecords);
-		sceneBaselineDebugState.pruneLegacyListsOutsideSyncRange(mc);
+		sceneBaselineState.pruneLegacyListsOutsideSyncRange(mc);
 		applyCompleteSceneBaselineToLegacyLists();
-		sceneBaselineDebugState.recordSceneDiagnostics(mc);
+		sceneBaselineState.recordSceneDiagnostics(mc);
 		packetsIncoming.packetEnd = length;
-	}
-
-	private static final class SceneBaselineRecord {
-		private final int id;
-		private final int x;
-		private final int y;
-		private final int direction;
-		private final int type;
-
-		private SceneBaselineRecord(int id, int x, int y, int direction, int type) {
-			this.id = id;
-			this.x = x;
-			this.y = y;
-			this.direction = direction;
-			this.type = type;
-		}
 	}
 
 	private void applyCompleteSceneBaselineToLegacyLists() {
@@ -2250,11 +1814,11 @@ public class PacketHandler {
 
 	private void applyCompleteSceneBaselineToLegacyLists(boolean force) {
 		if (mc == null
-			|| !sceneBaselineDebugState.hasStoredCompleteBaseline()
-			|| !sceneBaselineDebugState.isBaselineOriginLoaded(mc)) {
+			|| !sceneBaselineState.hasStoredCompleteBaseline()
+			|| !sceneBaselineState.isBaselineOriginLoaded(mc)) {
 			return;
 		}
-		int applyKey = sceneBaselineDebugState.legacyApplyKey(mc);
+		int applyKey = sceneBaselineState.legacyApplyKey(mc);
 		if (!force && applyKey == appliedSceneBaselineKey) {
 			return;
 		}
@@ -2268,18 +1832,18 @@ public class PacketHandler {
 		mc.setGameObjectInstanceCount(0);
 		mc.setWallObjectInstanceCount(0);
 
-		for (SceneBaselineRecord record : sceneBaselineDebugState.snapshotStoredSceneryRecords()) {
+		for (SceneBaselineState.Record record : sceneBaselineState.snapshotStoredSceneryRecords()) {
 			addBaselineGameObject(record);
 		}
-		for (SceneBaselineRecord record : sceneBaselineDebugState.snapshotStoredWallRecords()) {
+		for (SceneBaselineState.Record record : sceneBaselineState.snapshotStoredWallRecords()) {
 			addBaselineWallObject(record);
 		}
 
-		appliedSceneBaselineKey = sceneBaselineDebugState.legacyApplyKey(mc);
-		sceneBaselineDebugState.recordLegacyBaselineApplied();
+		appliedSceneBaselineKey = sceneBaselineState.legacyApplyKey(mc);
+		sceneBaselineState.recordLegacyBaselineApplied();
 	}
 
-	private void addBaselineGameObject(SceneBaselineRecord record) {
+	private void addBaselineGameObject(SceneBaselineState.Record record) {
 		com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(record.id);
 		if (def == null || def.modelID < 0) {
 			return;
@@ -2310,7 +1874,7 @@ public class PacketHandler {
 		mc.setGameObjectInstanceCount(instanceIndex + 1);
 	}
 
-	private void addBaselineWallObject(SceneBaselineRecord record) {
+	private void addBaselineWallObject(SceneBaselineState.Record record) {
 		int instanceIndex = mc.getWallObjectInstanceCount();
 		int localX = record.x - mc.getMidRegionBaseX();
 		int localZ = record.y - mc.getMidRegionBaseZ();
@@ -2322,656 +1886,6 @@ public class PacketHandler {
 		mc.setWallObjectInstanceMaterialized(instanceIndex, false);
 		mc.materializeWallObjectInstance(instanceIndex);
 		mc.setWallObjectInstanceCount(instanceIndex + 1);
-	}
-
-	private static final class SceneBaselineDebugState {
-		private static final int PAGE_NONE = 0;
-		private static final int PAGE_SCENERY = 1;
-		private static final int PAGE_WALLS = 2;
-		private static final long PARITY_REFRESH_MILLIS = 500L;
-		private static final int RECENT_SCENE_SYNC_LOG_LIMIT = 5;
-		private static final String SCENE_SYNC_LOG_PREFIX = "SCENE_SYNC_RECENT";
-
-		private final Map<Integer, boolean[]> receivedPageIndexes = new HashMap<Integer, boolean[]>();
-		private final Map<Integer, Integer> expectedPages = new HashMap<Integer, Integer>();
-		private final Map<Integer, Integer> receivedPages = new HashMap<Integer, Integer>();
-		private final Map<Integer, Integer> duplicatePages = new HashMap<Integer, Integer>();
-		private final Map<Integer, Integer> receivedRecords = new HashMap<Integer, Integer>();
-		private final Map<Integer, Map<Integer, List<SceneBaselineRecord>>> receivedPageRecords =
-			new HashMap<Integer, Map<Integer, List<SceneBaselineRecord>>>();
-		private List<SceneBaselineRecord> storedSceneryRecords = new ArrayList<SceneBaselineRecord>();
-		private List<SceneBaselineRecord> storedWallRecords = new ArrayList<SceneBaselineRecord>();
-		private int staticSceneKey = 0;
-		private int storedStaticSceneKey = 0;
-		private int incompleteSceneResets = 0;
-		private int completedBaselines = 0;
-		private long baselineStartedMillis = 0L;
-		private long lastPacketMillis = 0L;
-		private long lastParityCheckMillis = 0L;
-		private int lastParityLegacySignature = 0;
-		private String lastParityLine = "sceneBase parity waiting";
-		private int protocolVersion = 0;
-		private int serverTick = 0;
-		private int localX = 0;
-		private int localY = 0;
-		private int scenery = 0;
-		private int walls = 0;
-		private int groundItems = 0;
-		private int objectViewDistance = 0;
-		private int packets = 0;
-		private int pages = 0;
-		private int records = 0;
-		private int lastPruneKey = 0;
-		private int legacyPrunedScenery = 0;
-		private int legacyPrunedWalls = 0;
-		private int appliedLegacyBaselines = 0;
-		private final String[] recentSceneSyncLines = new String[RECENT_SCENE_SYNC_LOG_LIMIT];
-		private int recentSceneSyncNext = 0;
-		private int recentSceneSyncCount = 0;
-		private int lastLoggedSceneIssueSignature = 0;
-
-		private void recordPacket(
-			int protocolVersion,
-			int serverTick,
-			int localX,
-			int localY,
-			int scenery,
-			int walls,
-			int groundItems,
-			int objectViewDistance,
-			int sceneryHash,
-			int wallsHash,
-			int groundItemsHash,
-			int pageCategory,
-			int pageIndex,
-			int pageTotal,
-			int recordsRead,
-			List<SceneBaselineRecord> pageRecords) {
-			long now = System.currentTimeMillis();
-			int nextStaticSceneKey = staticSceneKey(
-				protocolVersion,
-				scenery,
-				walls,
-				groundItems,
-				objectViewDistance,
-				sceneryHash,
-				wallsHash,
-				groundItemsHash);
-			if (nextStaticSceneKey != staticSceneKey) {
-				if (staticSceneKey != 0 && packets > 0 && !hasCompleteBaseline()) {
-					incompleteSceneResets++;
-				}
-				staticSceneKey = nextStaticSceneKey;
-				resetPageState();
-				baselineStartedMillis = now;
-			}
-			if (baselineStartedMillis == 0L) {
-				baselineStartedMillis = now;
-			}
-			lastPacketMillis = now;
-
-			this.protocolVersion = protocolVersion;
-			this.serverTick = serverTick;
-			this.localX = localX;
-			this.localY = localY;
-			this.scenery = scenery;
-			this.walls = walls;
-			this.groundItems = groundItems;
-			this.objectViewDistance = objectViewDistance;
-			this.packets++;
-			expectedPages.put(PAGE_SCENERY, pageTotal(scenery));
-			expectedPages.put(PAGE_WALLS, pageTotal(walls));
-
-			if (!isStaticCategory(pageCategory) || pageTotal <= 0) {
-				return;
-			}
-
-			this.pages++;
-			this.records += recordsRead;
-			expectedPages.put(pageCategory, pageTotal);
-			receivedRecords.put(pageCategory, receivedRecords.getOrDefault(pageCategory, 0) + recordsRead);
-
-			boolean[] categoryPages = receivedPageIndexes.get(pageCategory);
-			if (categoryPages == null || categoryPages.length != pageTotal) {
-				categoryPages = new boolean[pageTotal];
-				receivedPageIndexes.put(pageCategory, categoryPages);
-				receivedPages.put(pageCategory, 0);
-				duplicatePages.put(pageCategory, 0);
-			}
-
-			if (pageIndex < 0 || pageIndex >= categoryPages.length) {
-				duplicatePages.put(pageCategory, duplicatePages.getOrDefault(pageCategory, 0) + 1);
-				return;
-			}
-
-			if (categoryPages[pageIndex]) {
-				duplicatePages.put(pageCategory, duplicatePages.getOrDefault(pageCategory, 0) + 1);
-				return;
-			}
-
-			categoryPages[pageIndex] = true;
-			receivedPages.put(pageCategory, receivedPages.getOrDefault(pageCategory, 0) + 1);
-			storePageRecords(pageCategory, pageIndex, pageRecords);
-			if (hasCompleteBaseline()) {
-				rebuildStoredBaseline();
-			}
-		}
-
-		private void resetPageState() {
-			receivedPageIndexes.clear();
-			expectedPages.clear();
-			receivedPages.clear();
-			duplicatePages.clear();
-			receivedRecords.clear();
-			receivedPageRecords.clear();
-			storedSceneryRecords = new ArrayList<SceneBaselineRecord>();
-			storedWallRecords = new ArrayList<SceneBaselineRecord>();
-			storedStaticSceneKey = 0;
-			lastPacketMillis = 0L;
-			lastPruneKey = 0;
-			packets = 0;
-			pages = 0;
-			records = 0;
-		}
-
-		private void storePageRecords(
-			int pageCategory,
-			int pageIndex,
-			List<SceneBaselineRecord> pageRecords) {
-			Map<Integer, List<SceneBaselineRecord>> categoryRecords = receivedPageRecords.get(pageCategory);
-			if (categoryRecords == null) {
-				categoryRecords = new HashMap<Integer, List<SceneBaselineRecord>>();
-				receivedPageRecords.put(pageCategory, categoryRecords);
-			}
-			categoryRecords.put(pageIndex, new ArrayList<SceneBaselineRecord>(pageRecords));
-		}
-
-		private boolean hasCompleteBaseline() {
-			return categoryComplete(PAGE_SCENERY) && categoryComplete(PAGE_WALLS);
-		}
-
-		private boolean categoryComplete(int pageCategory) {
-			int expected = expectedPages.getOrDefault(pageCategory, 0);
-			return receivedPages.getOrDefault(pageCategory, 0) >= expected;
-		}
-
-		private void rebuildStoredBaseline() {
-			boolean wasComplete = hasStoredCompleteBaseline();
-			storedSceneryRecords = flattenRecords(PAGE_SCENERY);
-			storedWallRecords = flattenRecords(PAGE_WALLS);
-			storedStaticSceneKey = staticSceneKey;
-			if (!wasComplete && hasStoredCompleteBaseline()) {
-				completedBaselines++;
-			}
-		}
-
-		private List<SceneBaselineRecord> flattenRecords(int pageCategory) {
-			List<SceneBaselineRecord> records = new ArrayList<SceneBaselineRecord>();
-			Map<Integer, List<SceneBaselineRecord>> categoryRecords = receivedPageRecords.get(pageCategory);
-			if (categoryRecords == null) {
-				return records;
-			}
-			int expected = expectedPages.getOrDefault(pageCategory, 0);
-			for (int i = 0; i < expected; i++) {
-				List<SceneBaselineRecord> pageRecords = categoryRecords.get(i);
-				if (pageRecords != null) {
-					records.addAll(pageRecords);
-				}
-			}
-			return records;
-		}
-
-		private List<SceneBaselineRecord> snapshotStoredSceneryRecords() {
-			return new ArrayList<SceneBaselineRecord>(storedSceneryRecords);
-		}
-
-		private List<SceneBaselineRecord> snapshotStoredWallRecords() {
-			return new ArrayList<SceneBaselineRecord>(storedWallRecords);
-		}
-
-		private int legacyApplyKey(mudclient mc) {
-			int hash = staticSceneKey;
-			hash = hash * 31 + mc.getMidRegionBaseX();
-			hash = hash * 31 + mc.getMidRegionBaseZ();
-			hash = hash * 31 + storedSceneryRecords.size();
-			hash = hash * 31 + storedWallRecords.size();
-			return hash;
-		}
-
-		private void recordLegacyBaselineApplied() {
-			appliedLegacyBaselines++;
-			lastParityCheckMillis = 0L;
-			lastParityLegacySignature = 0;
-		}
-
-		private boolean isStaticCategory(int pageCategory) {
-			return pageCategory == PAGE_SCENERY || pageCategory == PAGE_WALLS;
-		}
-
-		private int pageTotal(int recordCount) {
-			return (recordCount + 63) / 64;
-		}
-
-		private int staticSceneKey(
-			int protocolVersion,
-			int scenery,
-			int walls,
-			int groundItems,
-			int objectViewDistance,
-			int sceneryHash,
-			int wallsHash,
-			int groundItemsHash) {
-			int hash = protocolVersion;
-			hash = hash * 31 + scenery;
-			hash = hash * 31 + walls;
-			hash = hash * 31 + groundItems;
-			hash = hash * 31 + objectViewDistance;
-			hash = hash * 31 + sceneryHash;
-			hash = hash * 31 + wallsHash;
-			hash = hash * 31 + groundItemsHash;
-			return hash;
-		}
-
-		private int sceneIdentity(final int a, final int b, final int c, final int d, final int e) {
-			int hash = 0x811C9DC5;
-			hash = mixSceneIdentity(hash, a);
-			hash = mixSceneIdentity(hash, b);
-			hash = mixSceneIdentity(hash, c);
-			hash = mixSceneIdentity(hash, d);
-			hash = mixSceneIdentity(hash, e);
-			return hash;
-		}
-
-		private int mixSceneIdentity(final int hash, final int value) {
-			return (hash ^ value) * 0x01000193;
-		}
-
-		private int addSceneIdentity(final int summary, final int identity) {
-			return summary + identity + Integer.rotateLeft(identity, 16);
-		}
-
-		private String summary() {
-			String[] lines = summaryLines(null);
-			return lines[0] + " | " + lines[1];
-		}
-
-		private String[] summaryLines(mudclient mc) {
-			String baselineState = baselineState();
-			return new String[] {
-				"scene sync " + baselineState
-					+ " | objects/walls/items " + scenery + "/" + walls + "/" + groundItems
-					+ " | range " + objectViewDistance
-					+ " | transfer pages " + pages + "/" + expectedStaticPages()
-					+ " | records " + records,
-				"scene sync stored objects/walls " + storedSceneryRecords.size() + "/" + storedWallRecords.size()
-					+ " | duplicate pages " + duplicatePageTotal()
-					+ " | reset/done " + incompleteSceneResets + "/" + completedBaselines
-					+ " | pruned objects/walls " + legacyPrunedScenery + "/" + legacyPrunedWalls
-					+ " | applied " + appliedLegacyBaselines,
-				parityLine(mc)
-			};
-		}
-
-		private void recordSceneDiagnostics(mudclient mc) {
-			String parity = parityLine(mc);
-			String line = buildRecentSceneSyncLine(parity);
-			rememberSceneSyncLine(line);
-			int issueSignature = sceneIssueSignature(parity);
-			if (issueSignature != 0 && issueSignature != lastLoggedSceneIssueSignature) {
-				lastLoggedSceneIssueSignature = issueSignature;
-				logRecentSceneSyncLines();
-			}
-		}
-
-		private String buildRecentSceneSyncLine(String parity) {
-			return "v" + protocolVersion
-				+ " tick " + serverTick
-				+ " origin " + localX + "," + localY
-				+ " state " + baselineState()
-				+ " static " + scenery + "/" + walls + "/" + groundItems
-				+ " stored " + storedSceneryRecords.size() + "/" + storedWallRecords.size()
-				+ " pages " + pages + "/" + expectedStaticPages()
-				+ " records " + records
-				+ " scenery " + compactPageSummary(PAGE_SCENERY)
-				+ " walls " + compactPageSummary(PAGE_WALLS)
-				+ " reset/done " + incompleteSceneResets + "/" + completedBaselines
-				+ " pruned " + legacyPrunedScenery + "/" + legacyPrunedWalls
-				+ " applied " + appliedLegacyBaselines
-				+ " | " + parity;
-		}
-
-		private int sceneIssueSignature(String parity) {
-			int issueSignature = 0;
-			if ("stale".equals(baselineState())) {
-				issueSignature = issueSignature * 31 + 1;
-			}
-			if (duplicatePageTotal() > 0) {
-				issueSignature = issueSignature * 31 + duplicatePageTotal();
-			}
-			if (parity.indexOf("scene sync match ok") < 0
-				&& parity.indexOf("scene sync match waiting") < 0) {
-				issueSignature = issueSignature * 31 + parity.hashCode();
-			}
-			return issueSignature;
-		}
-
-		private void rememberSceneSyncLine(String line) {
-			recentSceneSyncLines[recentSceneSyncNext] = line;
-			recentSceneSyncNext = (recentSceneSyncNext + 1) % RECENT_SCENE_SYNC_LOG_LIMIT;
-			if (recentSceneSyncCount < RECENT_SCENE_SYNC_LOG_LIMIT) {
-				recentSceneSyncCount++;
-			}
-		}
-
-		private void logRecentSceneSyncLines() {
-			logSceneSyncLine(SCENE_SYNC_LOG_PREFIX
-				+ " latest issue; last " + recentSceneSyncCount + " scene sync snapshots:");
-			for (int i = 0; i < recentSceneSyncCount; i++) {
-				int index = recentSceneSyncNext - recentSceneSyncCount + i;
-				if (index < 0) {
-					index += RECENT_SCENE_SYNC_LOG_LIMIT;
-				}
-				logSceneSyncLine(SCENE_SYNC_LOG_PREFIX + " " + recentSceneSyncLines[index]);
-			}
-		}
-
-		private void logSceneSyncLine(String line) {
-			System.out.println(line);
-			ClientRuntimeLogger.log(line);
-		}
-
-		private void pruneLegacyListsOutsideSyncRange(mudclient mc) {
-			if (mc == null || !hasStoredCompleteBaseline() || objectViewDistance <= 0) {
-				return;
-			}
-			int legacySignature = legacySceneSignature(mc);
-			int pruneKey = staticSceneKey;
-			pruneKey = pruneKey * 31 + localX;
-			pruneKey = pruneKey * 31 + localY;
-			pruneKey = pruneKey * 31 + legacySignature;
-			if (pruneKey == lastPruneKey) {
-				return;
-			}
-
-			legacyPrunedScenery += pruneGameObjectsOutsideSyncRange(mc);
-			legacyPrunedWalls += pruneWallObjectsOutsideSyncRange(mc);
-			lastPruneKey = staticSceneKey;
-			lastPruneKey = lastPruneKey * 31 + localX;
-			lastPruneKey = lastPruneKey * 31 + localY;
-			lastPruneKey = lastPruneKey * 31 + legacySceneSignature(mc);
-			lastParityCheckMillis = 0L;
-			lastParityLegacySignature = 0;
-		}
-
-		private int pruneGameObjectsOutsideSyncRange(mudclient mc) {
-			int writeIndex = 0;
-			int pruned = 0;
-			for (int readIndex = 0; readIndex < mc.getGameObjectInstanceCount(); readIndex++) {
-				int worldX = mc.getGameObjectInstanceX(readIndex) + mc.getMidRegionBaseX();
-				int worldY = mc.getGameObjectInstanceZ(readIndex) + mc.getMidRegionBaseZ();
-				if (!insideObjectSyncRange(worldX, worldY)) {
-					mc.dematerializeGameObjectInstance(readIndex);
-					pruned++;
-					continue;
-				}
-
-				if (writeIndex != readIndex) {
-					mc.setGameObjectInstanceX(writeIndex, mc.getGameObjectInstanceX(readIndex));
-					mc.setGameObjectInstanceZ(writeIndex, mc.getGameObjectInstanceZ(readIndex));
-					mc.setGameObjectInstanceID(writeIndex, mc.getGameObjectInstanceID(readIndex));
-					mc.setGameObjectInstanceDir(writeIndex, mc.getGameObjectInstanceDir(readIndex));
-					mc.setGameObjectInstanceModel(writeIndex, mc.getGameObjectInstanceModel(readIndex));
-					mc.setGameObjectInstanceMaterialized(writeIndex, mc.isGameObjectInstanceMaterialized(readIndex));
-					mc.setGameObjectInstancePendingAreaLoad(writeIndex, mc.isGameObjectInstancePendingAreaLoad(readIndex));
-				}
-				writeIndex++;
-			}
-			mc.setGameObjectInstanceCount(writeIndex);
-			return pruned;
-		}
-
-		private int pruneWallObjectsOutsideSyncRange(mudclient mc) {
-			int writeIndex = 0;
-			int pruned = 0;
-			for (int readIndex = 0; readIndex < mc.getWallObjectInstanceCount(); readIndex++) {
-				int worldX = mc.getWallObjectInstanceX(readIndex) + mc.getMidRegionBaseX();
-				int worldY = mc.getWallObjectInstanceZ(readIndex) + mc.getMidRegionBaseZ();
-				if (!insideObjectSyncRange(worldX, worldY)) {
-					mc.dematerializeWallObjectInstance(readIndex);
-					pruned++;
-					continue;
-				}
-
-				if (writeIndex != readIndex) {
-					mc.setWallObjectInstanceModel(writeIndex, mc.getWallObjectInstanceModel(readIndex));
-					mc.setWallObjectInstanceX(writeIndex, mc.getWallObjectInstanceX(readIndex));
-					mc.setWallObjectInstanceZ(writeIndex, mc.getWallObjectInstanceZ(readIndex));
-					mc.setWallObjectInstanceDir(writeIndex, mc.getWallObjectInstanceDir(readIndex));
-					mc.setWallObjectInstanceID(writeIndex, mc.getWallObjectInstanceID(readIndex));
-					mc.setWallObjectInstanceMaterialized(writeIndex, mc.isWallObjectInstanceMaterialized(readIndex));
-					mc.setWallObjectInstancePendingAreaLoad(writeIndex, mc.isWallObjectInstancePendingAreaLoad(readIndex));
-				}
-				writeIndex++;
-			}
-			mc.setWallObjectInstanceCount(writeIndex);
-			return pruned;
-		}
-
-		private String parityLine(mudclient mc) {
-			if (mc == null || !hasStoredCompleteBaseline()) {
-				return "scene sync match waiting";
-			}
-
-			long now = System.currentTimeMillis();
-			int legacySignature = legacySceneSignature(mc);
-			if (now - lastParityCheckMillis < PARITY_REFRESH_MILLIS
-				&& legacySignature == lastParityLegacySignature) {
-				return lastParityLine;
-			}
-
-			lastParityCheckMillis = now;
-			lastParityLegacySignature = legacySignature;
-			ParityResult sceneryParity = compareStoredToLegacy(
-				storedSceneryRecords,
-				mc,
-				true);
-			ParityResult wallParity = compareStoredToLegacy(
-				storedWallRecords,
-				mc,
-				false);
-			lastParityLine = "scene sync match " + paritySummary(sceneryParity, wallParity)
-				+ " | legacy objects/walls " + mc.getGameObjectInstanceCount() + "/" + mc.getWallObjectInstanceCount();
-			return lastParityLine;
-		}
-
-		private String paritySummary(ParityResult sceneryParity, ParityResult wallParity) {
-			if (sceneryParity.matches() && wallParity.matches()) {
-				return "ok";
-			}
-			return "objects " + sceneryParity.compactSummary() + " walls " + wallParity.compactSummary();
-		}
-
-		private int expectedStaticPages() {
-			return expectedPages.getOrDefault(PAGE_SCENERY, 0) + expectedPages.getOrDefault(PAGE_WALLS, 0);
-		}
-
-		private int duplicatePageTotal() {
-			return duplicatePages.getOrDefault(PAGE_SCENERY, 0) + duplicatePages.getOrDefault(PAGE_WALLS, 0);
-		}
-
-		private int legacySceneSignature(mudclient mc) {
-			int signature = mc.getMidRegionBaseX();
-			signature = signature * 31 + mc.getMidRegionBaseZ();
-			signature = signature * 31 + mc.getGameObjectInstanceCount();
-			for (int i = 0; i < mc.getGameObjectInstanceCount(); i++) {
-				signature = addSceneIdentity(signature, sceneIdentity(
-					mc.getGameObjectInstanceID(i),
-					mc.getGameObjectInstanceX(i) + mc.getMidRegionBaseX(),
-					mc.getGameObjectInstanceZ(i) + mc.getMidRegionBaseZ(),
-					mc.getGameObjectInstanceDir(i),
-					0));
-			}
-			signature = signature * 31 + mc.getWallObjectInstanceCount();
-			for (int i = 0; i < mc.getWallObjectInstanceCount(); i++) {
-				signature = addSceneIdentity(signature, sceneIdentity(
-					mc.getWallObjectInstanceID(i),
-					mc.getWallObjectInstanceX(i) + mc.getMidRegionBaseX(),
-					mc.getWallObjectInstanceZ(i) + mc.getMidRegionBaseZ(),
-					mc.getWallObjectInstanceDir(i),
-					0));
-			}
-			return signature;
-		}
-
-		private ParityResult compareStoredToLegacy(
-			List<SceneBaselineRecord> storedRecords,
-			mudclient mc,
-			boolean scenery) {
-			Map<Long, Integer> expected = new HashMap<Long, Integer>();
-			for (SceneBaselineRecord record : storedRecords) {
-				incrementKey(expected, sceneRecordKey(record.id, record.x, record.y, record.direction));
-			}
-
-			int legacyCount = scenery ? mc.getGameObjectInstanceCount() : mc.getWallObjectInstanceCount();
-			int legacyExtra = 0;
-			int legacyExtraInsideSyncRange = 0;
-			int legacyExtraOutsideSyncRange = 0;
-			for (int i = 0; i < legacyCount; i++) {
-				int id = scenery ? mc.getGameObjectInstanceID(i) : mc.getWallObjectInstanceID(i);
-				int x = (scenery ? mc.getGameObjectInstanceX(i) : mc.getWallObjectInstanceX(i))
-					+ mc.getMidRegionBaseX();
-				int y = (scenery ? mc.getGameObjectInstanceZ(i) : mc.getWallObjectInstanceZ(i))
-					+ mc.getMidRegionBaseZ();
-				int direction = scenery ? mc.getGameObjectInstanceDir(i) : mc.getWallObjectInstanceDir(i);
-				long key = sceneRecordKey(id, x, y, direction);
-				Integer count = expected.get(key);
-				if (count == null || count == 0) {
-					legacyExtra++;
-					if (insideObjectSyncRange(x, y)) {
-						legacyExtraInsideSyncRange++;
-					} else {
-						legacyExtraOutsideSyncRange++;
-					}
-				} else if (count == 1) {
-					expected.remove(key);
-				} else {
-					expected.put(key, count - 1);
-				}
-			}
-
-			int baselineMissingFromLegacy = 0;
-			for (Integer count : expected.values()) {
-				baselineMissingFromLegacy += count;
-			}
-			return new ParityResult(
-				legacyExtra,
-				baselineMissingFromLegacy,
-				legacyExtraInsideSyncRange,
-				legacyExtraOutsideSyncRange);
-		}
-
-		private boolean insideObjectSyncRange(int x, int y) {
-			if (objectViewDistance <= 0) {
-				return true;
-			}
-			int xDiff = (localX >> 3) - (x >> 3);
-			int yDiff = (localY >> 3) - (y >> 3);
-			return xDiff <= objectViewDistance
-				&& xDiff >= -objectViewDistance
-				&& yDiff <= objectViewDistance
-				&& yDiff >= -objectViewDistance;
-		}
-
-		private void incrementKey(Map<Long, Integer> counts, long key) {
-			counts.put(key, counts.getOrDefault(key, 0) + 1);
-		}
-
-		private long sceneRecordKey(int id, int x, int y, int direction) {
-			return ((long)id & 0xFFFFL) << 48
-				| ((long)x & 0xFFFFL) << 32
-				| ((long)y & 0xFFFFL) << 16
-				| ((long)direction & 0xFFL) << 8;
-		}
-
-		private String baselineState() {
-			if (hasStoredCompleteBaseline()) {
-				return "complete";
-			}
-			long started = baselineStartedMillis;
-			if (started > 0L && System.currentTimeMillis() - started > SCENE_BASELINE_STALE_MILLIS) {
-				return "stale";
-			}
-			return "loading";
-		}
-
-		private boolean hasStoredCompleteBaseline() {
-			return storedStaticSceneKey == staticSceneKey
-				&& storedSceneryRecords.size() == scenery
-				&& storedWallRecords.size() == walls;
-		}
-
-		private boolean isBaselineOriginLoaded(mudclient mc) {
-			return World.isLocalTile(
-				localX - mc.getMidRegionBaseX(),
-				localY - mc.getMidRegionBaseZ());
-		}
-
-		private String verboseSummary() {
-			return "sceneBaseline v" + protocolVersion
-				+ " tick=" + serverTick
-				+ " origin=" + localX + "," + localY
-				+ " static=" + scenery + "/" + walls + "/" + groundItems
-				+ " packets=" + packets
-				+ " pages=" + pages
-				+ " records=" + records
-				+ " sceneryPages=" + pageSummary(PAGE_SCENERY)
-				+ " wallPages=" + pageSummary(PAGE_WALLS);
-		}
-
-		private String compactPageSummary(int pageCategory) {
-			return receivedPages.getOrDefault(pageCategory, 0)
-				+ "/" + expectedPages.getOrDefault(pageCategory, 0)
-				+ " dup " + duplicatePages.getOrDefault(pageCategory, 0)
-				+ " rec " + receivedRecords.getOrDefault(pageCategory, 0);
-		}
-
-		private String pageSummary(int pageCategory) {
-			return receivedPages.getOrDefault(pageCategory, 0)
-				+ "/" + expectedPages.getOrDefault(pageCategory, 0)
-				+ " dup=" + duplicatePages.getOrDefault(pageCategory, 0)
-				+ " records=" + receivedRecords.getOrDefault(pageCategory, 0);
-		}
-	}
-
-	private static final class ParityResult {
-		private final int legacyExtra;
-		private final int baselineMissingFromLegacy;
-		private final int legacyExtraInsideSyncRange;
-		private final int legacyExtraOutsideSyncRange;
-
-		private ParityResult(
-			int legacyExtra,
-			int baselineMissingFromLegacy,
-			int legacyExtraInsideSyncRange,
-			int legacyExtraOutsideSyncRange) {
-			this.legacyExtra = legacyExtra;
-			this.baselineMissingFromLegacy = baselineMissingFromLegacy;
-			this.legacyExtraInsideSyncRange = legacyExtraInsideSyncRange;
-			this.legacyExtraOutsideSyncRange = legacyExtraOutsideSyncRange;
-		}
-
-		private boolean matches() {
-			return legacyExtra == 0 && baselineMissingFromLegacy == 0;
-		}
-
-		private String compactSummary() {
-			if (matches()) {
-				return "ok";
-			}
-			return "+" + legacyExtra
-				+ " in/out " + legacyExtraInsideSyncRange + "/" + legacyExtraOutsideSyncRange
-				+ " -" + baselineMissingFromLegacy;
-		}
 	}
 
 	private void showGameObjects(int length) {

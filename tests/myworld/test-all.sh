@@ -89,6 +89,7 @@ python3 ./tests/myworld/test-client-region-load-performance.py
 ./tests/myworld/test-renderer-guardrails.sh
 python3 ./tests/myworld/test-path-queue-regressions.py
 python3 ./tests/myworld/test-packet-shape-guards.py
+python3 ./tests/myworld/test-client-packet-diagnostic-extraction.py
 python3 ./tests/myworld/test-ranged-runtime-tables.py
 python3 ./tests/myworld/test-combat-data.py
 python3 ./tests/myworld/test-weapon-equip-slots.py

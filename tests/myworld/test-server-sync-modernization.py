@@ -85,6 +85,14 @@ def main() -> None:
         ROOT
         / "Client_Base/src/orsc/MovementSnapshotStage.java"
     ).read_text(encoding="utf-8")
+    movement_snapshot_diagnostics = (
+        ROOT
+        / "Client_Base/src/orsc/MovementSnapshotDiagnostics.java"
+    ).read_text(encoding="utf-8")
+    scene_baseline_state = (
+        ROOT
+        / "Client_Base/src/orsc/SceneBaselineState.java"
+    ).read_text(encoding="utf-8")
     client_applet = (
         ROOT
         / "PC_Client/src/orsc/ORSCApplet.java"
@@ -755,9 +763,9 @@ def main() -> None:
         'put(146, "MOVEMENT_SNAPSHOT");',
         "else if (opcode == 146) updateMovementSnapshot(length);",
         "private void updateMovementSnapshot(int length)",
-        "private static final class MovementPacketFingerprint",
-        "movementPacketDebugState.recordMovementUpdate(fingerprint);",
-        "movementPacketDebugState.compareSnapshot(snapshotFingerprint)",
+        "private final MovementSnapshotDiagnostics movementSnapshotDiagnostics",
+        "movementSnapshotDiagnostics.recordMovementUpdate(fingerprint);",
+        "movementSnapshotDiagnostics.recordSnapshot(",
         "private final MovementSnapshotStage movementSnapshotStage = new MovementSnapshotStage();",
         "MovementSnapshotStage.Frame stageFrame = null;",
         "mc.applyCustomMovementUpdate(localX, localZ, localDirection);",
@@ -766,14 +774,20 @@ def main() -> None:
         "mc.applyCustomPlayerMovementUpdate(serverIndex, x, z, direction);",
         "mc.applyCustomNpcMovementUpdate(serverIndex, x, z, direction);",
         "movementSnapshotStage.replaceFromSnapshot(stageFrame, mc)",
-        "private static final class MovementSnapshotParity",
+        "MovementSnapshotDiagnostics.CacheParity parity",
         "parity.checkLocal(mc, localX, localZ, localDirection);",
         "parity.checkPlayer(mc, serverIndex, x, z, direction);",
         "parity.checkNpc(mc, serverIndex, x, z, direction);",
-        "private static final class MovementSnapshotDebugState",
         "public String getMovementSnapshotDebugSummaryLine()",
         "public String[] getMovementSnapshotDebugSummaryLines()",
-        "movementSnapshotDebugState.recordPacket(",
+    ):
+        require(snippet in client_packet_handler, f"client movement snapshot parsing missing: {snippet}")
+    for snippet in (
+        "final class MovementSnapshotDiagnostics",
+        "static final class Fingerprint",
+        "static final class CacheParity",
+        "private static final class SnapshotDebugState",
+        "packetDebugState.compareSnapshot(snapshotFingerprint)",
         "RECENT_MOVE_CACHE_LOG_LIMIT = 5",
         "MOVE_CACHE_LOG_PREFIX = \"MOVEMENT_CACHE_RECENT\"",
         "rememberMoveCacheLine(buildRecentMoveCacheLine",
@@ -782,7 +796,7 @@ def main() -> None:
         "\"cache ok c\" + cacheChecked",
         "\"stage \" + (stageCurrentMismatches == 0 ? \"ok\" : \"bad\")",
     ):
-        require(snippet in client_packet_handler, f"client movement snapshot diagnostic missing: {snippet}")
+        require(snippet in movement_snapshot_diagnostics, f"client movement snapshot diagnostic missing: {snippet}")
     for snippet in (
         "private ORSCharacter findVisibleNpcByServerIndex(int serverIndex)",
         "private ORSCharacter findVisiblePlayerByServerIndex(int serverIndex)",
@@ -852,44 +866,47 @@ def main() -> None:
         "client should parse, record, and discard scene baseline page records safely",
     )
     for snippet in (
-        "private final SceneBaselineDebugState sceneBaselineDebugState = new SceneBaselineDebugState();",
+        "private final SceneBaselineState sceneBaselineState = new SceneBaselineState();",
         "public String getSceneBaselineDebugSummary()",
         "public String[] getSceneBaselineDebugSummaryLines()",
+        "List<SceneBaselineState.Record> pageRecords = new ArrayList<SceneBaselineState.Record>();",
+        "pageRecords.add(new SceneBaselineState.Record(id, x, y, direction, type));",
+        "sceneBaselineState.recordPacket(",
+        "sceneBaselineState.pruneLegacyListsOutsideSyncRange(mc);",
+        "applyCompleteSceneBaselineToLegacyLists();",
+        "private void applyCompleteSceneBaselineToLegacyLists()",
+        "private void addBaselineGameObject(SceneBaselineState.Record record)",
+        "private void addBaselineWallObject(SceneBaselineState.Record record)",
+        "snapshotStoredSceneryRecords()",
+        "snapshotStoredWallRecords()",
+        "recordLegacyBaselineApplied()",
+    ):
+        require(snippet in client_packet_handler, f"client scene baseline parsing/apply path missing: {snippet}")
+    for snippet in (
+        "final class SceneBaselineState",
         "private static final long SCENE_BASELINE_STALE_MILLIS = 15000L;",
-        "List<SceneBaselineRecord> pageRecords = new ArrayList<SceneBaselineRecord>();",
-        "pageRecords.add(new SceneBaselineRecord(id, x, y, direction, type));",
-        "sceneBaselineDebugState.recordPacket(",
-        "private static final class SceneBaselineRecord",
-        "private static final class SceneBaselineDebugState",
+        "static final class Record",
         "private static final long PARITY_REFRESH_MILLIS = 500L;",
-        "private final Map<Integer, Map<Integer, List<SceneBaselineRecord>>> receivedPageRecords",
-        "private List<SceneBaselineRecord> storedSceneryRecords",
-        "private List<SceneBaselineRecord> storedWallRecords",
+        "private final Map<Integer, Map<Integer, List<Record>>> receivedPageRecords",
+        "private List<Record> storedSceneryRecords",
+        "private List<Record> storedWallRecords",
         "private int objectViewDistance = 0;",
         "private int incompleteSceneResets = 0;",
         "private int completedBaselines = 0;",
         "private long baselineStartedMillis = 0L;",
-        "private void recordPacket(",
+        "void recordPacket(",
         "incompleteSceneResets++;",
         "private void resetPageState()",
         "private void storePageRecords(",
         "private boolean hasCompleteBaseline()",
         "private void rebuildStoredBaseline()",
         "completedBaselines++;",
-        "private List<SceneBaselineRecord> flattenRecords(int pageCategory)",
+        "private List<Record> flattenRecords(int pageCategory)",
         "private String parityLine(mudclient mc)",
         "private int legacySceneSignature(mudclient mc)",
         "private ParityResult compareStoredToLegacy(",
         "private boolean insideObjectSyncRange(int x, int y)",
-        "sceneBaselineDebugState.pruneLegacyListsOutsideSyncRange(mc);",
-        "applyCompleteSceneBaselineToLegacyLists();",
-        "private void applyCompleteSceneBaselineToLegacyLists()",
-        "private void addBaselineGameObject(SceneBaselineRecord record)",
-        "private void addBaselineWallObject(SceneBaselineRecord record)",
-        "snapshotStoredSceneryRecords()",
-        "snapshotStoredWallRecords()",
-        "recordLegacyBaselineApplied()",
-        "private void pruneLegacyListsOutsideSyncRange(mudclient mc)",
+        "void pruneLegacyListsOutsideSyncRange(mudclient mc)",
         "private int pruneGameObjectsOutsideSyncRange(mudclient mc)",
         "private int pruneWallObjectsOutsideSyncRange(mudclient mc)",
         "mc.dematerializeGameObjectInstance(readIndex);",
@@ -903,12 +920,12 @@ def main() -> None:
         "private long sceneRecordKey(int id, int x, int y, int direction)",
         "private static final class ParityResult",
         "private String baselineState()",
-        "private boolean hasStoredCompleteBaseline()",
+        "boolean hasStoredCompleteBaseline()",
         "private boolean isStaticCategory(int pageCategory)",
         "private int staticSceneKey(",
         "private String pageSummary(int pageCategory)",
     ):
-        require(snippet in client_packet_handler, f"client scene baseline debug storage missing: {snippet}")
+        require(snippet in scene_baseline_state, f"client scene baseline state missing: {snippet}")
     require(
         "PacketHandler activePacketHandler = mudclient == null ? null : mudclient.packetHandler;" in client_applet
         and "activePacketHandler.getSceneBaselineDebugSummaryLines()" in client_applet
