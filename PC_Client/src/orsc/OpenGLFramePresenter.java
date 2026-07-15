@@ -388,6 +388,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void renderLoop() {
+		Renderer3DSettings.setOpenGLPresentationAvailable(false);
 		try {
 			gl = LwjglBindings.load();
 			windowController = new OpenGLWindowController(
@@ -433,6 +434,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			windowController.createWindow(INITIAL_WIDTH, INITIAL_HEIGHT, OPENGL_VSYNC_ENABLED);
 			initializeOpenGLResources();
 			initializeInputBridge();
+			Renderer3DSettings.setOpenGLPresentationAvailable(true);
 			log("OpenGL presenter active.");
 			if (inputEnabled) {
 				log("OpenGL input bridge active.");
@@ -3871,6 +3873,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void cleanup() {
+		Renderer3DSettings.setOpenGLPresentationAvailable(false);
 		releaseInputState();
 		if (windowController != null) {
 			windowController.prepareForShutdown();
@@ -3950,6 +3953,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void disable(String message) {
+		Renderer3DSettings.setOpenGLPresentationAvailable(false);
 		disabled = true;
 		log(message);
 		synchronized (frameLock) {

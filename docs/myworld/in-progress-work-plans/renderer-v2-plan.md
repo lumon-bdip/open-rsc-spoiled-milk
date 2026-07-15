@@ -425,6 +425,19 @@ Current split completeness:
   renderer ownership, and final deletion of bridge paths after the fallback
   window closes.
 
+Follow-up window UX: borderless OpenGL-primary mode has no native title-bar
+close control, so desktop users currently exit with `Alt+F4`. Add a clear
+in-client close/exit affordance in a separate UI branch, preserving the native
+window-close lifecycle and testing accidental-click protection. This is not a
+window-controller extraction requirement.
+
+Replacement safety contract: legacy world raster, projected world capture,
+and software object ownership may be skipped only while an initialized OpenGL
+presenter is available to replace them. Configuration flags express desired
+features, not runtime readiness. Presenter initialization, failure, and cleanup
+must update the shared readiness gate so disabled or failed OpenGL always
+returns to a complete software presentation.
+
 ### Legacy Bridge Labeling Rules
 
 When touching renderer-v2 code, separate active design from compatibility

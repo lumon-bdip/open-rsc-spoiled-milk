@@ -15,6 +15,7 @@ WINDOW = ROOT / "PC_Client/src/orsc/OpenGLWindowController.java"
 PRESENTATION_SETTINGS = ROOT / "Client_Base/src/orsc/OpenGLPresentationSettings.java"
 WINDOW_SETTINGS = ROOT / "Client_Base/src/orsc/OpenGLWindowSettings.java"
 MONITOR_MODE = ROOT / "PC_Client/src/orsc/MonitorMode.java"
+RENDERER_3D_SETTINGS = ROOT / "Client_Base/src/orsc/graphics/three/Renderer3DSettings.java"
 
 
 def require(condition: bool, message: str) -> None:
@@ -45,6 +46,19 @@ def verify_source_ownership() -> None:
     require("void shutdown(boolean presenterClosed)" in window, "window shutdown boundary missing")
     require("OpenGL window cleanup failure during" in window, "native cleanup diagnostics missing")
     require("OpenGL presenter cleanup failure during" in presenter, "resource cleanup diagnostics missing")
+    readiness_enabled = "Renderer3DSettings.setOpenGLPresentationAvailable(true);"
+    require(readiness_enabled in presenter, "OpenGL replacement readiness enable missing")
+    require(
+        presenter.index("initializeOpenGLResources();")
+        < presenter.index(readiness_enabled)
+        < presenter.index('log("OpenGL presenter active.");'),
+        "OpenGL replacement readiness must follow successful initialization",
+    )
+    cleanup = presenter[presenter.index("private void cleanup()") : presenter.index("private static void logCleanupFailure")]
+    disable = presenter[presenter.index("private void disable(") : presenter.index("@Override\n\tpublic void close()")]
+    readiness_disabled = "Renderer3DSettings.setOpenGLPresentationAvailable(false);"
+    require(readiness_disabled in cleanup, "cleanup must restore software replacement ownership")
+    require(readiness_disabled in disable, "disable must restore software replacement ownership")
     require("static Viewport computeViewport" in viewport, "viewport layout owner missing")
     require("int mapMouseX(double cursorX)" in viewport, "viewport mouse mapping owner missing")
 
@@ -173,6 +187,75 @@ def verify_viewport_behavior() -> None:
         [PRESENTATION_SETTINGS, VIEWPORT],
     )
     require(output == "viewport-ok", "viewport fixture did not complete")
+
+
+def verify_renderer_replacement_readiness() -> None:
+    world_editor_settings = r"""
+        package orsc;
+
+        public final class WorldEditorBuildSettings {
+            private WorldEditorBuildSettings() {}
+            public static boolean isEnabled() { return false; }
+        }
+    """
+    fixture = r"""
+        package orsc;
+
+        import orsc.graphics.three.Renderer3DSettings;
+
+        public final class RendererReadinessFixture {
+            private static void require(boolean condition, String message) {
+                if (!condition) throw new AssertionError(message);
+            }
+
+            private static void configureReplacementFeatures() {
+                System.setProperty("spoiledmilk.openglWorldMesh", "true");
+                System.setProperty("spoiledmilk.openglWorldMeshTexturedVisible", "true");
+                System.setProperty("spoiledmilk.openglWorldMeshTexturedStaticVisible", "true");
+                System.setProperty("spoiledmilk.openglWorldReplacementComposite", "true");
+                System.setProperty("spoiledmilk.skipLegacyWorldRaster", "true");
+                System.setProperty("spoiledmilk.openglWorldChunksTexturedVisible", "true");
+                System.setProperty("spoiledmilk.openglWorldChunksReplacementComposite", "true");
+                System.setProperty("spoiledmilk.openglWorldChunksTrustedReplacement", "true");
+                System.setProperty("spoiledmilk.openglWorldChunksResidentObjects", "true");
+            }
+
+            private static void requireSoftwareOwnership(String phase) {
+                require(!Renderer3DSettings.canSkipLegacyWorldRaster(),
+                    phase + " must preserve legacy world raster");
+                require(!Renderer3DSettings.canSkipProjectedWorldCapture(),
+                    phase + " must preserve projected world capture");
+                require(!Renderer3DSettings.canUseResidentObjectChunks(),
+                    phase + " must preserve software object ownership");
+            }
+
+            public static void main(String[] args) {
+                configureReplacementFeatures();
+                requireSoftwareOwnership("configured but unavailable OpenGL");
+
+                Renderer3DSettings.setOpenGLPresentationAvailable(true);
+                require(Renderer3DSettings.canSkipLegacyWorldRaster(),
+                    "ready OpenGL may replace legacy world raster");
+                require(Renderer3DSettings.canSkipProjectedWorldCapture(),
+                    "ready OpenGL may own trusted projected world capture");
+                require(Renderer3DSettings.canUseResidentObjectChunks(),
+                    "ready OpenGL may own resident objects");
+
+                Renderer3DSettings.setOpenGLPresentationAvailable(false);
+                requireSoftwareOwnership("OpenGL cleanup or failure");
+                System.out.println("readiness-ok");
+            }
+        }
+    """
+    output = run_java_fixture(
+        "RendererReadinessFixture",
+        {
+            "WorldEditorBuildSettings.java": world_editor_settings,
+            "RendererReadinessFixture.java": fixture,
+        },
+        [RENDERER_3D_SETTINGS],
+    )
+    require(output == "readiness-ok", "renderer readiness fixture did not complete")
 
 
 def verify_window_behavior() -> None:
@@ -366,6 +449,7 @@ def verify_window_behavior() -> None:
 def main() -> None:
     verify_source_ownership()
     verify_viewport_behavior()
+    verify_renderer_replacement_readiness()
     verify_window_behavior()
     print("PASS: OpenGL window lifecycle and viewport presentation have focused owners")
 
