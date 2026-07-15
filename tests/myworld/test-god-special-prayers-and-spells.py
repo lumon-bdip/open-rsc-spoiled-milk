@@ -29,7 +29,7 @@ def main() -> None:
     divine_retribution = (ROOT / "server/src/com/openrsc/server/content/DivineRetribution.java").read_text(encoding="utf-8")
     corrosive_aura = (ROOT / "server/src/com/openrsc/server/content/CorrosiveAura.java").read_text(encoding="utf-8")
     spell_handler = (ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java").read_text(encoding="utf-8")
-    client_defs = (ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java").read_text(encoding="utf-8")
+    client_defs = (ROOT / "Client_Base/src/com/openrsc/client/entityhandling/PrayerBookDefinitions.java").read_text(encoding="utf-8")
 
     require('"Saving Grace"' in catalog, "Saradomin special prayer should be renamed to Saving Grace")
     require('addPrayerDefinition(60, "Saving Grace"' in client_defs, "Client prayer definition should use Saving Grace")
