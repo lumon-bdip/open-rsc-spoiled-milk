@@ -328,12 +328,21 @@ This section tracks the active renderer-file refactor that started because
 Current ownership after the first split:
 
 - `OpenGLFramePresenter`
-  - Owns GLFW window lifecycle, frame orchestration, input forwarding,
-    high-level pass sequencing, capture triggering, and remaining UI/world
-    composite glue.
+  - Owns frame orchestration, input-bridge delegation, high-level pass
+    sequencing, capture triggering, and remaining UI/world composite glue.
   - Should continue shrinking. Do not move shader source, atlas internals,
     resident chunk upload, projected mesh upload, or shadow-mask generation
     back into this file.
+- `OpenGLWindowController`
+  - Owns the GLFW window handle, initialization and teardown, primary-monitor
+    borderless/windowed transitions, saved windowed bounds, surface-size
+    queries, event polling, buffer swaps, and native cleanup diagnostics.
+  - Calls narrow presenter delegates for input release, settings persistence,
+    logging, and client-close compatibility behavior.
+- `OpenGLViewportPresenter`
+  - Owns draw/framebuffer viewport computation, automatic primary-window
+    aspect fit, mirror/debug scale modes, fractional-scale text smoothing, and
+    window-to-source mouse coordinate mapping.
 - `LwjglBindings` and `MonitorMode`
   - Own LWJGL reflection, OpenGL/GLFW constants, and monitor-mode queries.
   - The presenter should call this facade instead of growing more reflection
@@ -407,8 +416,8 @@ Current split completeness:
   world-sprite draw orchestration, command-sized sprite texture building,
   camera-space world-sprite quad submission, initial bridge/owner code labels,
   and remaster shadow mask helpers are separated from the presenter.
-- Still in the presenter: window lifecycle, input bridge, pass sequencing,
-  UI replay, projection setup, capture-only depth diagnostics, and some
+- Still in the presenter: input bridge, pass sequencing, UI replay, projection
+  setup, capture-only depth diagnostics, and some
   compatibility decisions. These are
   acceptable short-term, but any new large renderer behavior should get its own
   owner instead of expanding the presenter.
@@ -928,7 +937,7 @@ they are not visual requirements for the baseline.
       button forwarding into the legacy applet handlers.
 - [x] Add an opt-in OpenGL-primary launch mode that hides the Swing client
       window while keeping the legacy frame source internally available.
-- [x] Move fullscreen scaling policy into the OpenGL presenter with
+- [x] Move fullscreen scaling policy into the OpenGL viewport presenter with
       aspect-fit, integer-fit, and debug stretch modes.
 - [x] Lock OpenGL-primary presentation to automatic aspect-fit bars so
       resolution changes alter the source framebuffer instead of exposing
