@@ -13,6 +13,7 @@ PAYLOAD_VALIDATOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "ne
 GAME_STATE_UPDATER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "GameStateUpdater.java"
 PACKET_HANDLER = ROOT / "Client_Base" / "src" / "orsc" / "PacketHandler.java"
 MOVEMENT_SNAPSHOT_STAGE = ROOT / "Client_Base" / "src" / "orsc" / "MovementSnapshotStage.java"
+MOVEMENT_DIAGNOSTICS = ROOT / "Client_Base" / "src" / "orsc" / "MovementSnapshotDiagnostics.java"
 
 
 def fail(message: str) -> None:
@@ -59,25 +60,26 @@ def main() -> None:
     require(PACKET_HANDLER, "int npcCount = packetsIncoming.getShort();", "custom movement NPC count decoding")
     require(PACKET_HANDLER, "put(146, \"MOVEMENT_SNAPSHOT\");", "custom movement snapshot opcode name")
     require(PACKET_HANDLER, "else if (opcode == 146) updateMovementSnapshot(length);", "custom movement snapshot packet handler")
-    require(PACKET_HANDLER, "private static final class MovementPacketFingerprint", "custom movement packet fingerprint")
-    require(PACKET_HANDLER, "movementPacketDebugState.recordMovementUpdate(fingerprint);", "custom movement update fingerprint recording")
-    require(PACKET_HANDLER, "movementPacketDebugState.compareSnapshot(snapshotFingerprint)", "custom movement snapshot wire comparison")
+    require(MOVEMENT_DIAGNOSTICS, "static final class Fingerprint", "custom movement packet fingerprint")
+    require(PACKET_HANDLER, "movementSnapshotDiagnostics.recordMovementUpdate(fingerprint);", "custom movement update fingerprint recording")
+    require(PACKET_HANDLER, "movementSnapshotDiagnostics.recordSnapshot(", "custom movement snapshot wire comparison")
+    require(PACKET_HANDLER, "private final MovementSnapshotDiagnostics movementSnapshotDiagnostics", "custom movement diagnostics owner")
     require(PACKET_HANDLER, "private final MovementSnapshotStage movementSnapshotStage = new MovementSnapshotStage();", "custom movement snapshot staging state")
     require(PACKET_HANDLER, "MovementSnapshotStage.Frame stageFrame = null;", "custom movement snapshot staging frame")
     require(PACKET_HANDLER, "stageFrame.addPlayer(serverIndex, x, z, direction);", "custom movement snapshot staged player target")
     require(PACKET_HANDLER, "stageFrame.addNpc(serverIndex, x, z, direction);", "custom movement snapshot staged NPC target")
     require(PACKET_HANDLER, "movementSnapshotStage.replaceFromSnapshot(stageFrame, mc)", "custom movement snapshot staging compare")
-    require(PACKET_HANDLER, "private static final class MovementSnapshotParity", "custom movement snapshot parity helper")
+    require(MOVEMENT_DIAGNOSTICS, "static final class CacheParity", "custom movement snapshot parity helper")
     require(PACKET_HANDLER, "parity.checkPlayer(mc, serverIndex, x, z, direction);", "custom movement snapshot player parity")
     require(PACKET_HANDLER, "parity.checkNpc(mc, serverIndex, x, z, direction);", "custom movement snapshot NPC parity")
-    require(PACKET_HANDLER, "private static final class MovementSnapshotDebugState", "custom movement snapshot debug state")
+    require(MOVEMENT_DIAGNOSTICS, "private static final class SnapshotDebugState", "custom movement snapshot debug state")
     require(MOVEMENT_SNAPSHOT_STAGE, "final class MovementSnapshotStage", "custom movement snapshot staging helper")
     require(MOVEMENT_SNAPSHOT_STAGE, "Result replaceFromSnapshot(Frame frame, mudclient mc)", "custom movement snapshot staging replacement")
     require(MOVEMENT_SNAPSHOT_STAGE, "private Result compareToVisibleCache(mudclient mc)", "custom movement snapshot staging cache comparison")
     require(MOVEMENT_SNAPSHOT_STAGE, "static final class Frame", "custom movement snapshot staging frame type")
-    require(PACKET_HANDLER, "\"wire ok\"", "custom movement snapshot wire summary")
-    require(PACKET_HANDLER, "\"cache ok c\" + cacheChecked", "custom movement snapshot cache summary")
-    require(PACKET_HANDLER, "\"stage \" + (stageCurrentMismatches == 0 ? \"ok\" : \"bad\")", "custom movement snapshot staging summary")
+    require(MOVEMENT_DIAGNOSTICS, "\"wire ok\"", "custom movement snapshot wire summary")
+    require(MOVEMENT_DIAGNOSTICS, "\"cache ok c\" + cacheChecked", "custom movement snapshot cache summary")
+    require(MOVEMENT_DIAGNOSTICS, "\"stage \" + (stageCurrentMismatches == 0 ? \"ok\" : \"bad\")", "custom movement snapshot staging summary")
 
     require(MOBS_UPDATE_STRUCT, "public static final class BitUpdate implements Map.Entry<Integer, Integer>", "retro bit update entry contract")
     require(MOBS_UPDATE_STRUCT, "throw new UnsupportedOperationException(\"BitUpdate is immutable\")", "retro bit update immutability")
