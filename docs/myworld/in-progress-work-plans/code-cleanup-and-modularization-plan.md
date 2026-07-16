@@ -105,11 +105,11 @@ work in this plan:
    `ClientSceneInstanceStore` for authoritative game-object and wall instance
    state while leaving model preparation and scene/collision side effects in
    `mudclient`. Merged into `main` as `74e4c4212`.
-6. **Reassessment complete on `docs/client-ownership-reassessment`, awaiting
-   manager review:** compare combat effects, movement, external-content
-   coordination, and presenter composite glue. The recommendation is one
-   preloader-only `PredictiveTerrainPreloader` branch; do not treat it as
-   authority for broader movement work.
+6. **Reassessment complete on `docs/client-ownership-reassessment`:** compared
+   combat effects, movement, external-content coordination, and presenter
+   composite glue. The recommendation is one preloader-only
+   `PredictiveTerrainPreloader` branch; do not treat it as authority for broader
+   movement work. Merged into `main` as `965008cb2`.
 7. If the recommendation is accepted, run
    `refactor/client-predictive-terrain-preloader` with the contract below, then
    stop and reassess instead of rolling into interpolation.
