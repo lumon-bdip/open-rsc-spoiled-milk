@@ -1,5 +1,8 @@
 # Project Structure Refactor Plan
 
+Plan status: **active; Phase 0 guardrails and code-health B01-B11 reconciled on
+2026-07-16** against published `main` commit `ecfc3b35d`.
+
 This is the AI-facing plan for rebuilding Spoiled Milk's folder and package
 structure safely. The project is inherited from OpenRSC, which inherited from
 older RuneScape Classic code. The goal is not cosmetic cleanup. The goal is to
@@ -12,22 +15,32 @@ the workspace safety rules and the intended ownership layout.
 
 ## Current Refactor Scope
 
-The active refactor is the project/workflow safety refactor created after branch
-and launch confusion put the live server at risk. Do not confuse this with the
-older renderer-size refactor.
+The project/workflow safety refactor created after branch and launch confusion
+is now established and remains a non-negotiable contract. The completed B01-B11
+code-health sequence then added build/static-analysis foundations and extracted
+the first renderer, packet, definition, equipment, and spell ownership
+boundaries. The active structure work can now continue with narrow
+behavior-preserving `mudclient` ownership extractions; this is not authority for
+a mass package or folder move.
 
 Current priority order:
 
-1. Make the public hosted server launch path mechanically safe.
-2. Make local/dev/refactor server launches impossible to mistake for live.
-3. Separate the manager, neutral AI worker slots, and live deployment by
-   physical worktree.
-4. Restructure folders/packages only after the server workflow is protected.
-5. Return to renderer or gameplay cleanup only when the live-server path is
-   clear, documented, and verified.
+1. Preserve the completed hosted/private launch and physical-worktree
+   guardrails; never weaken them for refactor convenience.
+2. Complete `RendererSettingsPanel`, `RendererProfileApplier`,
+   `LegacySoftwareScalingSettings`, `ClientExternalAssetLoader`, and
+   `ClientSceneInstanceStore` in that order.
+3. Reconcile the resulting dependency/facade map before choosing any further
+   `mudclient`, presenter, world, graphics, or telemetry extraction.
+4. Move packages only after those owners are stable and a package move can be
+   mechanical.
+5. Defer `Client_Base`/`PC_Client` top-level renames until ownership extraction
+   and package boundaries are complete and build/release impact is separately
+   approved.
 
-Renderer cleanup remains a later structure target because the renderer is still
-large and important, but it is not the reason this refactor exists.
+The cleanup plan contains the executable branch contracts, tests, private
+visual checks, and stop conditions for this active sequence. This plan defines
+when those owners may later move.
 
 ## Safety Contract
 
@@ -104,6 +117,36 @@ These roots are active today:
 | `dev/myworld/` | Compatibility wrappers and active visual asset source. Do not add new planning docs here. |
 | `docs/inherited-openrsc/` | Archived inherited OpenRSC/Cabbage reference material. |
 
+## Completed Foundations Through B11
+
+The structure plan must build on these landed owners instead of proposing them
+again:
+
+- B01-B05 established stable client spell-display metadata, non-throwing
+  desktop sound cleanup, Ant server build authority, changed-code static
+  analysis, and bounded/redacted social/offline-message failure handling.
+- B06 put auxiliary client types in correctly named files without prematurely
+  changing their packages.
+- B07 created `OpenGLViewportPresenter` and `OpenGLWindowController` while
+  retaining frame/GL/composite coordination in `OpenGLFramePresenter` and the
+  active software fallback in `ScaledWindow`.
+- B08 created `MovementSnapshotDiagnostics` and `SceneBaselineState` while
+  retaining protocol reads and client mutation order in `PacketHandler`.
+- B09 created `ClientDefinitionRegistry`, `PrayerBookDefinitions`, and
+  `ClientDefinitionFallbackDiagnostics` while retaining `EntityHandler` as the
+  compatibility facade and authored/load-order owner.
+- B10 created pure equipment slot/stat and spell classification/validation
+  owners while retaining mutable container, packet, combat, and scheduling
+  authority in `Equipment` and `SpellHandler`.
+- B11 proved and labeled active client roots and compatibility surfaces. It
+  removed only proved-dead archive writers and stale IDE metadata; protocols,
+  plugins, both databases, the legacy archive, active desktop/mobile interface
+  hooks, software presentation, hidden surface aliases, and uncertain MySQL
+  helpers remain.
+
+These boundaries are evidence for incremental ownership extraction. They are
+not permission to remove compatibility facades or relocate whole package trees.
+
 ## Target Ownership Map
 
 This is the direction to move toward. It does not require a single giant folder
@@ -177,6 +220,8 @@ tests
 
 ### Phase 0: Guardrails Before Moving Code
 
+Status: **complete and continuously enforced**.
+
 - Confirm hosted server launch safety exists and refuses unsafe worktrees.
 - Ensure `run-hosted-server.sh` can only run the public server from the clean
   live-main worktree.
@@ -192,26 +237,52 @@ tests
 - Record the current source roots and compatibility exceptions.
 - Do not restructure while the public server is running from a dirty branch.
 
-No package moves or renderer extractions should happen until these launch
-guardrails are in place.
+These guardrails are in place through the workspace/manager/live scripts and
+documentation. Every later phase must keep them passing; completion does not
+make them optional.
 
 ### Phase 1: Behavior-Preserving Extractions
+
+Status: **in progress**. B06-B10 completed the first focused ownership
+boundaries. B07 completed viewport/window work; the next five branches are the
+ordered `mudclient` sequence below.
 
 Keep Java packages mostly stable. Extract focused classes from oversized files
 without changing runtime behavior.
 
-Priority examples:
+Completed/active examples:
 
 - `OpenGLFramePresenter` into LWJGL bindings, shader program, viewport,
-  window, chunk renderer, shadows, sprite composite, frame capture, and input.
-- `mudclient` into renderer settings, profile application, asset loading,
-  combat effects, movement interpolation, and scene instance storage.
+  window, chunk renderer, shadows, frame capture, and input. Remaining
+  sprite-composite/resource coordination is deferred until after the current
+  `mudclient` sequence.
+- `PacketHandler` diagnostic state, client definition registry/prayer/fallback
+  state, and pure server equipment/spell decisions are extracted as recorded
+  above.
+- `mudclient` now proceeds through renderer settings, profile application,
+  active legacy software scaling, external asset loading, and scene-instance
+  storage. The detailed branch boundaries live in
+  [`code-cleanup-and-modularization-plan.md`](code-cleanup-and-modularization-plan.md#ordered-post-b11-implementation-branches).
 - `World` into sector cache, terrain/wall/roof builders, minimap, collision,
   and renderer chunk export.
 - `RenderTelemetry` into frame, scene, world, sprite, shadow, CPU, and memory
   categories behind a small facade.
 
+Phase 1 exit gate for the immediate sequence:
+
+1. All five new owners have focused automated characterization and changed-code
+   analysis.
+2. Each renderer-facing branch has recorded owner confirmation from private
+   visual testing; screenshots are not required.
+3. OpenGL-primary and software-fallback ownership remain distinct and working.
+4. No branch changes protocol, server authority, asset identity/order, scene
+   mutation order, or player-facing defaults under cover of extraction.
+5. A refreshed dependency map identifies every temporary `mudclient` facade
+   that Phase 2 would need to move or retain.
+
 ### Phase 2: Package Ownership
+
+Status: **deferred until the Phase 1 exit gate above is complete**.
 
 After extracted classes compile and behave correctly, move them into clearer
 packages such as:
@@ -228,16 +299,28 @@ packages such as:
 This phase should be mechanical. If behavior changes are needed, do them in a
 separate follow-up commit.
 
+Do not move one of the five immediate owners into a speculative final package
+on its extraction branch. Keep package `orsc` or the current established
+package first, learn its real dependencies, and then move related stable owners
+together through small mechanical package branches.
+
 ### Phase 3: Legacy Quarantine
+
+Status: **partially labeled, not authorized for deletion**. B11 clarified the
+active compatibility boundaries; branch 3 of the immediate sequence will move
+software-scaler ownership without retiring it.
 
 Move compatibility-only code into clearly named legacy areas and comment why it
 still exists.
 
 Targets:
 
-- software renderer scaling
-- hidden render-surface aliases
-- retired graphics toggles
+- software renderer scaling — active maintained fallback; extract and label,
+  do not delete
+- hidden render-surface aliases — active saved-setting migration; keep out of
+  the player selector
+- retired graphics rows/toggles — prevent reintroduction; do not confuse their
+  absence with dead runtime camera/tone/font compatibility
 - obsolete launch wrappers
 - archived OpenRSC configs and launchers
 - compatibility-only item/content families
@@ -246,6 +329,9 @@ The important rule is that future AI sessions should not see old scaling,
 resolution, or renderer paths and assume they are active remaster systems.
 
 ### Phase 4: Top-Level Folder Renames
+
+Status: **deferred**. Do not begin until the five immediate owners, Phase 2
+package moves, and build/release impact inventory are complete.
 
 Only consider top-level folder renames after extraction and package ownership
 are stable. Renaming `Client_Base` and `PC_Client` too early risks breaking
@@ -260,6 +346,9 @@ Possible final names:
 - `tools`, `scripts`, `tests`, and `docs` stay as they are
 
 ### Phase 5: Prune Or Archive
+
+Status: **proof-only candidates remain**. B11 completed its bounded proof and
+retained everything whose operational or compatibility use was uncertain.
 
 Once the new structure is proven through builds, client launch, packaged launch,
 and hosted-server checks:
@@ -326,6 +415,8 @@ Stop and reassess before continuing if any of these happen:
 - a moved file requires unrelated gameplay changes to compile
 - a compatibility system looks unused but has not been checked against scripts,
   configs, saved settings, and release packaging
+- an ownership extraction starts requiring package moves or a
+  `Client_Base`/`PC_Client` rename before the five-owner Phase 1 gate is complete
 - a visual-risk renderer extraction fails more than twice
 - git status contains unrelated user changes in files that the refactor needs
   to rewrite
