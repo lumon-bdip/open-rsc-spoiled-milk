@@ -123,9 +123,11 @@ python3 ./tests/myworld/test-god-knight-drops-and-pvm-population.py
 python3 ./tests/myworld/test-firemaking-rework.py
 python3 ./tests/myworld/test-fishing-rework.py
 python3 ./tests/myworld/test-ground-item-cleanup.py
+python3 ./tests/myworld/test-authored-ground-item-lifecycle.py
 python3 ./tests/myworld/test-ground-item-stack-amounts.py
 python3 ./tests/myworld/test-ground-item-identity.py
 python3 ./tests/myworld/test-ground-item-rendering.py
+python3 ./tests/myworld/test-ground-item-area-reset.py
 python3 ./tests/myworld/test-scene-entity-lifecycle.py
 python3 ./tests/myworld/test-rowboat-respawn-lifecycle.py
 python3 ./tests/myworld/test-herblaw-cleanup.py

@@ -18702,6 +18702,9 @@ public final class mudclient implements Runnable {
 					&& this.currentRegionMinX < wantX
 					&& this.currentRegionMaxX > wantX && this.currentRegionMinZ < wantZ
 					&& wantZ < this.currentRegionMaxZ) {
+					if (hardAreaLoad) {
+						this.resetGroundItemsForHardAreaLoad();
+					}
 					this.world.playerAlive = true;
 					return false;
 				} else {
@@ -18776,7 +18779,7 @@ public final class mudclient implements Runnable {
 					this.materializeLoadedTerrainScenery();
 
 					if (hardAreaLoad || heightOffsetChanged) {
-						this.groundItemCount = 0;
+						this.resetGroundItemsForHardAreaLoad();
 					} else {
 						int newGroundItemCount = 0;
 						for (int i = 0; this.groundItemCount > i; ++i) {
@@ -18796,7 +18799,6 @@ public final class mudclient implements Runnable {
 						}
 						this.groundItemCount = newGroundItemCount;
 					}
-
 					for (int i = 0; i < this.playerCount; ++i) {
 						ORSCharacter var23 = this.players[i];
 						var23.currentX -= this.tileSize * baseDX;
@@ -18833,6 +18835,10 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var22) {
 			throw GenUtil.makeThrowable(var22, "client.MB(" + wantZ + ',' + wantX + ',' + var3 + ')');
 		}
+	}
+
+	private void resetGroundItemsForHardAreaLoad() {
+		this.groundItemCount = 0;
 	}
 
 	private void loadSounds() {

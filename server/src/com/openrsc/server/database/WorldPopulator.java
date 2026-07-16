@@ -8,7 +8,6 @@ import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
-import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.SystemUtil;
@@ -184,7 +183,7 @@ public final class WorldPopulator {
 					continue;
 				}
 
-				getWorld().registerItem(new GroundItem(getWorld(), i));
+				getWorld().registerAuthoredGroundItem(i);
 				countGI++;
 			}
 			LOGGER.info("Loaded {}", box(countGI) + " grounditems.");

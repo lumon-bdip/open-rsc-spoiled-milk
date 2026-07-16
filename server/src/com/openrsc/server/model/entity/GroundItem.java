@@ -107,10 +107,13 @@ public class GroundItem extends Entity {
 	public void remove() {
 		if (getWorld().getServer().getConfig().RESTRICT_ITEM_ID <= ItemId.NOTHING.id()
 			|| this.getID() <= getWorld().getServer().getConfig().RESTRICT_ITEM_ID) {
-			if (!isRemoved() && loc != null && loc.getRespawnTime() > 0) {
+			final long authoredGeneration = !isRemoved() && loc != null
+				? getWorld().removeAuthoredGroundItem(this)
+				: -1L;
+			if (authoredGeneration >= 0 && loc.getRespawnTime() > 0) {
 				getWorld().getServer().getGameEventHandler().add(new DelayedEvent(getWorld(), null, loc.getRespawnTime() * 1000, "Respawn Ground Item") {
 					public void run() {
-						getWorld().registerItem(new GroundItem(getWorld(), loc));
+						getWorld().registerAuthoredGroundItem(loc, authoredGeneration);
 						stop();
 					}
 				});

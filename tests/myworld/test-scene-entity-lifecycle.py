@@ -45,7 +45,7 @@ def main() -> None:
     )
     require(
         text,
-        "if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.groundItemCount = 0;",
+        "if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.resetGroundItemsForHardAreaLoad();",
         "hard area/plane ground item cache reset",
     )
     require(
