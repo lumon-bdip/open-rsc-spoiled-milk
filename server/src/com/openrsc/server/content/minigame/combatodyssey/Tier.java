@@ -4,6 +4,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 
+/** Positional Combat Odyssey compatibility record; not a Monster Slayer rank model. */
 public class Tier {
 	private final int tierId;
 	private final ArrayList<Task> tasks;

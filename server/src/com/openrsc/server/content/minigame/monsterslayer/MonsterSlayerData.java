@@ -15,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -172,6 +171,7 @@ public final class MonsterSlayerData {
 		}
 		LinkedHashMap<String, Contact> result = new LinkedHashMap<String, Contact>();
 		Set<Integer> contactNpcIds = new HashSet<Integer>();
+		Set<MonsterSlayerChallenge> challenges = new HashSet<MonsterSlayerChallenge>();
 		for (int index = 0; index < array.length(); index++) {
 			JSONObject object = array.getJSONObject(index);
 			requireFields(object, "contact", "key", "npcId", "challenge", "requiredRank",
@@ -187,11 +187,12 @@ public final class MonsterSlayerData {
 			MonsterSlayerChallenge challenge = MonsterSlayerChallenge.fromKey(object.getString("challenge"));
 			MonsterSlayerRank requiredRank = MonsterSlayerRank.fromKey(object.getString("requiredRank"));
 			MonsterSlayerRank awardedRank = MonsterSlayerRank.fromKey(object.getString("awardedRank"));
-			MonsterSlayerChallenge expectedChallenge = MonsterSlayerChallenge.fromCode(index);
-			MonsterSlayerRank expectedRequired = MonsterSlayerRank.fromCode(index + 1);
-			MonsterSlayerRank expectedAwarded = MonsterSlayerRank.fromCode(index + 2);
-			if (challenge != expectedChallenge || requiredRank != expectedRequired
-				|| awardedRank != expectedAwarded) {
+			if (!challenges.add(challenge)) {
+				throw new IllegalArgumentException("Duplicate contact challenge " + challenge);
+			}
+			MonsterSlayerRank expectedRequired = MonsterSlayerRank.fromCode(challenge.getCode() + 1);
+			MonsterSlayerRank expectedAwarded = MonsterSlayerRank.fromCode(challenge.getCode() + 2);
+			if (requiredRank != expectedRequired || awardedRank != expectedAwarded) {
 				throw new IllegalArgumentException("Contact " + key + " breaks the rank/challenge ladder");
 			}
 			List<Task> mandatory = parseTasks(object.getJSONArray("mandatoryTasks"), false,
@@ -398,6 +399,20 @@ public final class MonsterSlayerData {
 
 	public List<Contact> getContacts() {
 		return Collections.unmodifiableList(new ArrayList<Contact>(contacts.values()));
+	}
+
+	public List<Contact> getContactsInChallengeOrder() {
+		List<Contact> ordered = new ArrayList<Contact>();
+		for (int code = 0; code < MonsterSlayerChallenge.values().length; code++) {
+			MonsterSlayerChallenge challenge = MonsterSlayerChallenge.fromCode(code);
+			for (Contact contact : contacts.values()) {
+				if (contact.getChallenge() == challenge) {
+					ordered.add(contact);
+					break;
+				}
+			}
+		}
+		return Collections.unmodifiableList(ordered);
 	}
 
 	public List<Task> getTasks() {

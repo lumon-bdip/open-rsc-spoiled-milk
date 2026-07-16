@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "families": [
+    {"key":"rat","displayName":"Rats","npcIds":[19,29,47,177]},
+    {"key":"goblin","displayName":"Goblins","npcIds":[4,62,153,154,660]},
+    {"key":"cow","displayName":"Cows","npcIds":[6]},
+    {"key":"dwarf","displayName":"Dwarves","npcIds":[94,699]},
+    {"key":"dark_wizard","displayName":"Dark wizards","npcIds":[57,60]},
+    {"key":"pirate","displayName":"Pirates","npcIds":[137,264]},
+    {"key":"mugger","displayName":"Muggers","npcIds":[21]},
+    {"key":"skeleton","displayName":"Skeletons","npcIds":[40,45,46,179,195]},
+    {"key":"zombie","displayName":"Zombies","npcIds":[41,52,68,180,214]},
+    {"key":"hobgoblin","displayName":"Hobgoblins","npcIds":[67,311]},
+    {"key":"jungle_spider","displayName":"Jungle spiders","npcIds":[521]},
+    {"key":"scorpion","displayName":"Scorpions","npcIds":[70]},
+    {"key":"jogre","displayName":"Jogres","npcIds":[523]},
+    {"key":"moss_giant","displayName":"Moss giants","npcIds":[104,594]},
+    {"key":"lesser_demon","displayName":"Lesser demons","npcIds":[22,181]},
+    {"key":"giant","displayName":"Giants","npcIds":[61]},
+    {"key":"dark_warrior","displayName":"Dark warriors","npcIds":[199]},
+    {"key":"black_knight","displayName":"Black knights","npcIds":[66,108,189]},
+    {"key":"ogre","displayName":"Ogres","npcIds":[312,525,706]},
+    {"key":"greater_demon","displayName":"Greater demons","npcIds":[184]},
+    {"key":"baby_blue_dragon","displayName":"Baby blue dragons","npcIds":[203]},
+    {"key":"blue_dragon","displayName":"Blue dragons","npcIds":[202]},
+    {"key":"shadow_warrior","displayName":"Shadow warriors","npcIds":[787]},
+    {"key":"paladin","displayName":"Paladins","npcIds":[323,632,633]},
+    {"key":"otherworldly_being","displayName":"Otherworldly beings","npcIds":[298]},
+    {"key":"hellhound","displayName":"Hellhounds","npcIds":[294]},
+    {"key":"death_wing","displayName":"Death wings","npcIds":[768]},
+    {"key":"fire_giant","displayName":"Fire giants","npcIds":[344]},
+    {"key":"red_dragon","displayName":"Red dragons","npcIds":[201]},
+    {"key":"black_demon","displayName":"Black demons","npcIds":[290]},
+    {"key":"black_dragon","displayName":"Black dragons","npcIds":[291]},
+    {"key":"king_black_dragon","displayName":"King Black Dragon","npcIds":[477]}
+  ],
+  "contacts": [
+    {
+      "key":"falador","npcId":142,"challenge":"FLEDGLING","requiredRank":"FLEDGLING","awardedRank":"INITIATE",
+      "mandatoryTasks":[
+        {"key":"falador.rats","familyKey":"rat","requiredKills":100,"pointReward":5},
+        {"key":"falador.goblins","familyKey":"goblin","requiredKills":100,"pointReward":5},
+        {"key":"falador.cows","familyKey":"cow","requiredKills":100,"pointReward":5},
+        {"key":"falador.dwarves","familyKey":"dwarf","requiredKills":100,"pointReward":5},
+        {"key":"falador.dark_wizards","familyKey":"dark_wizard","requiredKills":100,"pointReward":5}
+      ],
+      "repeatableTasks":[
+        {"key":"falador.rats.repeatable","familyKey":"rat","requiredKills":75,"pointReward":5,"weight":1},
+        {"key":"falador.goblins.repeatable","familyKey":"goblin","requiredKills":75,"pointReward":5,"weight":1},
+        {"key":"falador.cows.repeatable","familyKey":"cow","requiredKills":75,"pointReward":5,"weight":1},
+        {"key":"falador.dwarves.repeatable","familyKey":"dwarf","requiredKills":75,"pointReward":5,"weight":1},
+        {"key":"falador.dark_wizards.repeatable","familyKey":"dark_wizard","requiredKills":75,"pointReward":5,"weight":1}
+      ]
+    },
+    {
+      "key":"port_sarim","npcId":150,"challenge":"INITIATE","requiredRank":"INITIATE","awardedRank":"VETERAN",
+      "mandatoryTasks":[
+        {"key":"port_sarim.pirates","familyKey":"pirate","requiredKills":125,"pointReward":8},
+        {"key":"port_sarim.muggers","familyKey":"mugger","requiredKills":50,"pointReward":8},
+        {"key":"port_sarim.skeletons","familyKey":"skeleton","requiredKills":150,"pointReward":8},
+        {"key":"port_sarim.zombies","familyKey":"zombie","requiredKills":150,"pointReward":8},
+        {"key":"port_sarim.hobgoblins","familyKey":"hobgoblin","requiredKills":125,"pointReward":8}
+      ],
+      "repeatableTasks":[
+        {"key":"port_sarim.pirates.repeatable","familyKey":"pirate","requiredKills":100,"pointReward":8,"weight":1},
+        {"key":"port_sarim.muggers.repeatable","familyKey":"mugger","requiredKills":40,"pointReward":8,"weight":1},
+        {"key":"port_sarim.skeletons.repeatable","familyKey":"skeleton","requiredKills":100,"pointReward":8,"weight":1},
+        {"key":"port_sarim.zombies.repeatable","familyKey":"zombie","requiredKills":100,"pointReward":8,"weight":1},
+        {"key":"port_sarim.hobgoblins.repeatable","familyKey":"hobgoblin","requiredKills":100,"pointReward":8,"weight":1}
+      ]
+    },
+    {
+      "key":"brimhaven","npcId":279,"challenge":"VETERAN","requiredRank":"VETERAN","awardedRank":"ELITE",
+      "mandatoryTasks":[
+        {"key":"brimhaven.jungle_spiders","familyKey":"jungle_spider","requiredKills":200,"pointReward":12},
+        {"key":"brimhaven.scorpions","familyKey":"scorpion","requiredKills":150,"pointReward":12},
+        {"key":"brimhaven.jogres","familyKey":"jogre","requiredKills":150,"pointReward":12},
+        {"key":"brimhaven.moss_giants","familyKey":"moss_giant","requiredKills":200,"pointReward":12},
+        {"key":"brimhaven.lesser_demons","familyKey":"lesser_demon","requiredKills":150,"pointReward":12}
+      ],
+      "repeatableTasks":[
+        {"key":"brimhaven.jungle_spiders.repeatable","familyKey":"jungle_spider","requiredKills":125,"pointReward":12,"weight":1},
+        {"key":"brimhaven.scorpions.repeatable","familyKey":"scorpion","requiredKills":100,"pointReward":12,"weight":1},
+        {"key":"brimhaven.jogres.repeatable","familyKey":"jogre","requiredKills":100,"pointReward":12,"weight":1},
+        {"key":"brimhaven.moss_giants.repeatable","familyKey":"moss_giant","requiredKills":100,"pointReward":12,"weight":1},
+        {"key":"brimhaven.lesser_demons.repeatable","familyKey":"lesser_demon","requiredKills":75,"pointReward":12,"weight":1}
+      ]
+    },
+    {
+      "key":"champions","npcId":111,"challenge":"ELITE","requiredRank":"ELITE","awardedRank":"CHAMPION",
+      "mandatoryTasks":[
+        {"key":"champions.giants","familyKey":"giant","requiredKills":250,"pointReward":18},
+        {"key":"champions.dark_warriors","familyKey":"dark_warrior","requiredKills":200,"pointReward":18},
+        {"key":"champions.black_knights","familyKey":"black_knight","requiredKills":250,"pointReward":18},
+        {"key":"champions.ogres","familyKey":"ogre","requiredKills":250,"pointReward":18},
+        {"key":"champions.greater_demons","familyKey":"greater_demon","requiredKills":150,"pointReward":18}
+      ],
+      "repeatableTasks":[
+        {"key":"champions.giants.repeatable","familyKey":"giant","requiredKills":150,"pointReward":18,"weight":1},
+        {"key":"champions.dark_warriors.repeatable","familyKey":"dark_warrior","requiredKills":125,"pointReward":18,"weight":1},
+        {"key":"champions.black_knights.repeatable","familyKey":"black_knight","requiredKills":150,"pointReward":18,"weight":1},
+        {"key":"champions.ogres.repeatable","familyKey":"ogre","requiredKills":150,"pointReward":18,"weight":1},
+        {"key":"champions.greater_demons.repeatable","familyKey":"greater_demon","requiredKills":75,"pointReward":18,"weight":1}
+      ]
+    },
+    {
+      "key":"heroes","npcId":253,"challenge":"CHAMPION","requiredRank":"CHAMPION","awardedRank":"HERO",
+      "mandatoryTasks":[
+        {"key":"heroes.baby_blue_dragons","familyKey":"baby_blue_dragon","requiredKills":150,"pointReward":25},
+        {"key":"heroes.blue_dragons","familyKey":"blue_dragon","requiredKills":100,"pointReward":25},
+        {"key":"heroes.shadow_warriors","familyKey":"shadow_warrior","requiredKills":150,"pointReward":25},
+        {"key":"heroes.paladins","familyKey":"paladin","requiredKills":150,"pointReward":25},
+        {"key":"heroes.otherworldly_beings","familyKey":"otherworldly_being","requiredKills":150,"pointReward":25},
+        {"key":"heroes.hellhounds","familyKey":"hellhound","requiredKills":150,"pointReward":25}
+      ],
+      "repeatableTasks":[
+        {"key":"heroes.baby_blue_dragons.repeatable","familyKey":"baby_blue_dragon","requiredKills":75,"pointReward":25,"weight":1},
+        {"key":"heroes.blue_dragons.repeatable","familyKey":"blue_dragon","requiredKills":50,"pointReward":25,"weight":1},
+        {"key":"heroes.shadow_warriors.repeatable","familyKey":"shadow_warrior","requiredKills":100,"pointReward":25,"weight":1},
+        {"key":"heroes.paladins.repeatable","familyKey":"paladin","requiredKills":100,"pointReward":25,"weight":1},
+        {"key":"heroes.otherworldly_beings.repeatable","familyKey":"otherworldly_being","requiredKills":100,"pointReward":25,"weight":1},
+        {"key":"heroes.hellhounds.repeatable","familyKey":"hellhound","requiredKills":100,"pointReward":25,"weight":1}
+      ]
+    },
+    {
+      "key":"legends","npcId":785,"challenge":"HERO","requiredRank":"HERO","awardedRank":"LEGEND",
+      "mandatoryTasks":[
+        {"key":"legends.death_wings","familyKey":"death_wing","requiredKills":150,"pointReward":35},
+        {"key":"legends.fire_giants","familyKey":"fire_giant","requiredKills":250,"pointReward":35},
+        {"key":"legends.greater_demons","familyKey":"greater_demon","requiredKills":250,"pointReward":35},
+        {"key":"legends.red_dragons","familyKey":"red_dragon","requiredKills":125,"pointReward":35},
+        {"key":"legends.black_demons","familyKey":"black_demon","requiredKills":250,"pointReward":35},
+        {"key":"legends.black_dragons","familyKey":"black_dragon","requiredKills":100,"pointReward":35},
+        {"key":"legends.king_black_dragon","familyKey":"king_black_dragon","requiredKills":1,"pointReward":50}
+      ],
+      "repeatableTasks":[
+        {"key":"legends.death_wings.repeatable","familyKey":"death_wing","requiredKills":75,"pointReward":35,"weight":1},
+        {"key":"legends.fire_giants.repeatable","familyKey":"fire_giant","requiredKills":125,"pointReward":35,"weight":1},
+        {"key":"legends.greater_demons.repeatable","familyKey":"greater_demon","requiredKills":125,"pointReward":35,"weight":1},
+        {"key":"legends.red_dragons.repeatable","familyKey":"red_dragon","requiredKills":50,"pointReward":35,"weight":1},
+        {"key":"legends.black_demons.repeatable","familyKey":"black_demon","requiredKills":125,"pointReward":35,"weight":1},
+        {"key":"legends.black_dragons.repeatable","familyKey":"black_dragon","requiredKills":40,"pointReward":35,"weight":1}
+      ]
+    }
+  ],
+  "shops": []
+}
