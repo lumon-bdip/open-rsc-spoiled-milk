@@ -1,10 +1,12 @@
 # Code Cleanup And Modularization Plan
 
-Plan status: **active; reconciled through B01-B11, the five immediate
-`mudclient` ownership branches, the post-sequence client responsibility
-reassessment, and the privately verified `PredictiveTerrainPreloader`
-extraction on 2026-07-16**. The published baseline is `main` commit
-`46e8c7540`; focused-branch measurements are labeled separately below.
+Plan status: **paused after B01-B11, the five immediate `mudclient` ownership
+branches, the post-sequence client responsibility reassessment, and the
+privately verified `PredictiveTerrainPreloader` extraction were integrated on
+2026-07-16**. The preloader integration is `main` merge `2785f1a6f`; focused
+branch measurements are labeled separately below. Resume structural work only
+when feature pressure exposes a specific ownership boundary or a fresh review
+justifies one.
 
 This is the AI-facing cleanup roadmap for Spoiled Milk code structure. It is
 not a feature plan. Its job is to keep future work from getting lost inside
@@ -113,19 +115,19 @@ work in this plan:
    composite glue. The recommendation is one preloader-only
    `PredictiveTerrainPreloader` branch; do not treat it as authority for broader
    movement work. Merged into `main` as `965008cb2`.
-7. **Complete on `refactor/client-predictive-terrain-preloader`, awaiting
-   manager review:** extracted predictive cache warming, its three independent
-   throttles, coordinate conversion, waypoint/camera target selection, and
-   reset behind the existing `mudclient` facades. Automated checks and private
-   edge-walk, camera, teleport/blink, logout, reconnect, and window-close
-   verification passed. Stop and reassess instead of rolling into
-   interpolation.
+7. **Complete on `refactor/client-predictive-terrain-preloader`:** extracted
+   predictive cache warming, its three independent throttles, coordinate
+   conversion, waypoint/camera target selection, and reset behind the existing
+   `mudclient` facades. Automated checks and private edge-walk, camera,
+   teleport/blink, logout, reconnect, and window-close verification passed.
+   Merged into `main` as `2785f1a6f`.
 8. Defer presenter sprite-composite glue and broad combat/external-content
    moves for the reasons and stop conditions recorded in the reassessment.
-9. Then split `World`, `GraphicsController`, and telemetry by product/owner.
-10. Return to authored definition families and large server gameplay owners on
-   separate plans; B09 and B10 are foundations, not authority for broader
-   rewrites.
+9. Keep `World`, `GraphicsController`, and telemetry splits as later candidates,
+   not authorized follow-on work while this track is paused.
+10. Revisit authored definition families and large server gameplay owners only
+    through separate plans; B09 and B10 are foundations, not authority for
+    broader rewrites.
 
 Package moves and top-level folder renames are deliberately deferred until
 the first five ownership extractions have landed and their compatibility
@@ -830,7 +832,7 @@ observable invariants, not the candidate with the largest raw line count.
 
 | Candidate | Evidence and current boundary | Impact | Confidence | Behavior risk | Estimated effort | Decision |
 | --- | --- | --- | --- | --- | --- | --- |
-| Predictive movement preloading | The former `mudclient` source IDs, camera tables, nine throttle fields, target/waypoint/camera decisions, conversion, and reset now live in the 259-line `PredictiveTerrainPreloader`. `PacketHandler` still calls the public incoming-position facade before region handling. | Medium | High | Low-medium | Small-medium | **Implemented and privately verified on the focused preloader branch; awaiting manager review.** |
+| Predictive movement preloading | The former `mudclient` source IDs, camera tables, nine throttle fields, target/waypoint/camera decisions, conversion, and reset now live in the 259-line `PredictiveTerrainPreloader`. `PacketHandler` still calls the public incoming-position facade before region handling. | Medium | High | Low-medium | Small-medium | **Implemented, privately verified, and merged as `2785f1a6f`.** |
 | Combat-effect/projectile visuals | IDs and sprite ranges are at `mudclient.java:134-245`; sprite, mirror, queue, and detached-effect state at `:1057-1137`; scene/screen drawing at `:19024-19299`; external loading at `:19600-19747`; lookup/overlay queues at `:20187-20713`; packet-driven timing/projectile policy at `:24207-24481`. | High | High | High | Large if kept as one system | Defer the broad `CombatEffectSpriteSystem`; characterize visual-asset ownership separately from runtime orchestration. |
 | External-content coordination | The 838-line `ClientExternalAssetLoader` owns discovery/decoding, while `mudclient.java:19308-20132` still chooses equipment, altar, combat/projectile, spell, prayer, and summoning catalogs and destinations. | Medium-high | High | Medium-high | Large | Do not replace it with one new coordinator god object. Split only along destination owners. |
 | Presenter sprite composite | `OpenGLFramePresenter` is 4,068 lines. Remaining composite work spans `:1693-3007` and `:3216-3690` despite the existing 420-line `OpenGLCompositeSceneBuilder`, 271-line `OpenGLWorldSpriteRenderer`, and draw controller. | High | High | Very high | Large-extra-large | Defer until deterministic ordering/occlusion fixtures or active renderer work justify the risk. |
@@ -1005,7 +1007,8 @@ acceptable result if feature work is not being blocked.
 ### PredictiveTerrainPreloader Implementation Record
 
 Status: complete on `refactor/client-predictive-terrain-preloader`; private
-verification passed on 2026-07-16 and the branch is ready for manager review.
+verification passed on 2026-07-16 and the branch was merged into `main` as
+`2785f1a6f`.
 
 - Added a 259-line package-private `PredictiveTerrainPreloader` owner. It owns
   only the three source identities, camera lookup data, nine throttle values,
@@ -1030,8 +1033,8 @@ verification passed on 2026-07-16 and the branch is ready for manager review.
   world-streaming, relog resident-world, rowboat lifecycle, landscape parity,
   and server-sync checks; the complete renderer guardrail suite; and
   changed-code javac, Checkstyle, PMD, SpotBugs, and Ruff analysis. No new
-  changed-code warning was introduced. The full MyWorld suite was not required
-  because no shared guard beyond the focused ownership test changed.
+  changed-code warning was introduced. Manager review also ran the complete
+  MyWorld consolidation suite successfully before publication.
 - Private OpenGL testing passed across region-edge walking/running, camera
   changes, teleport/blink movement, normal logout, reconnect, and native
   window close. The branch client exited successfully; the isolated server
@@ -1039,10 +1042,11 @@ verification passed on 2026-07-16 and the branch is ready for manager review.
   premature region swap, missing scenery, movement snap, camera regression, or
   client exception was observed.
 
-Stop after manager review/merge and reassess remaining ownership pressure. Do
-not infer authorization for interpolation, combat visuals, external-content
+The client structural-refactoring track is paused after this merge. Do not
+infer authorization for interpolation, combat visuals, external-content
 coordination, presenter composites, package moves, or top-level folder moves
-from this extraction.
+from this extraction. Resume only for a concrete feature boundary or a fresh,
+reviewed cleanup plan.
 
 ## Stale And Hidden Option Audit
 
@@ -1390,11 +1394,10 @@ Do not opportunistically combine these because they are adjacent in
 and obtain private visual confirmation before handoff. The five owners are now
 stable on `main`. The documentation-only reassessment selected
 `PredictiveTerrainPreloader` as the only currently recommended next client
-boundary. That focused extraction is implemented and privately verified on
-`refactor/client-predictive-terrain-preloader`, awaiting manager review. Stop
-after review/merge for another ownership assessment. Broad combat visuals,
-movement interpolation, external-content coordination, and presenter composite
-work remain deferred.
+boundary. That focused extraction was implemented, privately verified, and
+merged as `2785f1a6f`. The client structural-refactoring track is now paused.
+Broad combat visuals, movement interpolation, external-content coordination,
+and presenter composite work remain deferred.
 
 ## Definition Of Done
 
