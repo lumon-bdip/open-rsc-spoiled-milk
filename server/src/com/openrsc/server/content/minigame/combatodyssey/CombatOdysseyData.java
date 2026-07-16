@@ -12,6 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+/**
+ * Maintained Combat Odyssey compatibility loader.
+ *
+ * Monster Slayer reads the legacy JSON separately for pure migration proposals;
+ * do not extend this positional runtime model with Monster Slayer definitions.
+ */
 public class CombatOdysseyData {
 	/**
 	 * The asynchronous logger.

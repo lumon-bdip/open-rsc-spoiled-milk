@@ -1,5 +1,6 @@
 package com.openrsc.server.content.minigame.combatodyssey;
 
+/** Positional Combat Odyssey compatibility record; not a stable Monster Slayer task. */
 public class Task {
 	private final int taskId;
 	private final String description;

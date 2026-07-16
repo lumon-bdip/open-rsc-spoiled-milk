@@ -9,6 +9,7 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.content.clan.ClanManager;
 import com.openrsc.server.content.market.Market;
 import com.openrsc.server.content.minigame.combatodyssey.CombatOdysseyData;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler.TrawlerBoat;
 import com.openrsc.server.content.party.PartyManager;
@@ -111,6 +112,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	private final Market market;
 	private final WorldLoader worldLoader;
 	private final CombatOdysseyData combatOdysseyData;
+	private MonsterSlayerData monsterSlayerData;
 	private final HashMap<Point, Integer> sceneryLocs;
 	private final ConcurrentMap<TrawlerBoat, FishingTrawler> fishingTrawler;
 	private final AuthoredGroundItemRegistry<GroundItem> authoredGroundItems;
@@ -427,6 +429,9 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 
 			if (getServer().getConfig().WANT_COMBAT_ODYSSEY) {
 				getCombatOdyssey().load();
+			}
+			if (getServer().getConfig().WANT_MYWORLD) {
+				setMonsterSlayerData(MonsterSlayerData.loadForWorld(this));
 			}
 		} catch (final Exception e) {
 			LOGGER.error("Error in World load()", e);
@@ -1087,6 +1092,15 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 
 	public synchronized CombatOdysseyData getCombatOdyssey() {
 		return combatOdysseyData;
+	}
+
+	/** Validated foundation data; null before MyWorld startup loading completes. */
+	public synchronized MonsterSlayerData getMonsterSlayerData() {
+		return monsterSlayerData;
+	}
+
+	private synchronized void setMonsterSlayerData(MonsterSlayerData data) {
+		monsterSlayerData = data;
 	}
 
 	public synchronized Market getMarket() {

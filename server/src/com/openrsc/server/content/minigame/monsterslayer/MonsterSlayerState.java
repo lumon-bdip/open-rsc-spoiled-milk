@@ -1,0 +1,403 @@
+package com.openrsc.server.content.minigame.monsterslayer;
+
+import com.openrsc.server.model.Cache;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact;
+import static com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task;
+
+/** Sole owner of Monster Slayer cache keys and validation of their typed snapshot. */
+public final class MonsterSlayerState {
+	public static final int STATE_VERSION = 1;
+	public static final int MIGRATION_VERSION = 1;
+
+	private static final String STATE_VERSION_KEY = "monster_slayer_state_version";
+	private static final String INTRO_STAGE_KEY = "monster_slayer_intro_stage";
+	private static final String RANK_KEY = "monster_slayer_rank";
+	private static final String BALANCE_PREFIX = "monster_slayer_balance_";
+	private static final String ACTIVE_TASK_KEY = "monster_slayer_active_task";
+	private static final String ACTIVE_KILLS_KEY = "monster_slayer_active_kills";
+	private static final String MANDATORY_PREFIX = "monster_slayer_mandatory_";
+	private static final String TASKS_COMPLETED_KEY = "monster_slayer_tasks_completed";
+	private static final String MIGRATION_VERSION_KEY = "monster_slayer_migration_version";
+	private static final String LEGACY_STATUS_KEY = "monster_slayer_legacy_status";
+	private static final String LEGACY_PRESTIGE_KEY = "monster_slayer_legacy_prestige";
+
+	private MonsterSlayerState() {
+	}
+
+	public static Snapshot read(Cache cache, MonsterSlayerData data) {
+		if (cache == null) {
+			throw new IllegalArgumentException("Player cache is required");
+		}
+		Map<String, Object> values = cache.getCacheMap();
+		Map<MonsterSlayerChallenge, Long> balances =
+			new LinkedHashMap<MonsterSlayerChallenge, Long>();
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
+			balances.put(challenge, readLong(values, balanceKey(challenge), 0L));
+		}
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (Contact contact : data.getContactsInChallengeOrder()) {
+			cursors.put(contact.getKey(), readInteger(values, cursorKey(contact.getKey()), 0));
+		}
+		String activeTask = readString(values, ACTIVE_TASK_KEY, null);
+		Snapshot snapshot = new Snapshot(
+			readInteger(values, STATE_VERSION_KEY, STATE_VERSION),
+			readInteger(values, INTRO_STAGE_KEY, 0),
+			MonsterSlayerRank.fromCode(readInteger(values, RANK_KEY, MonsterSlayerRank.UNSTAMPED.getCode())),
+			MonsterSlayerBalances.of(balances),
+			cursors,
+			activeTask,
+			readInteger(values, ACTIVE_KILLS_KEY, 0),
+			readLong(values, TASKS_COMPLETED_KEY, 0L),
+			readInteger(values, MIGRATION_VERSION_KEY, 0),
+			LegacyStatus.fromCode(readInteger(values, LEGACY_STATUS_KEY, LegacyStatus.NONE.getCode())),
+			readInteger(values, LEGACY_PRESTIGE_KEY, 0)
+		);
+		validate(snapshot, data);
+		return snapshot;
+	}
+
+	/** Validates the full snapshot before changing any cache entry. */
+	public static void write(Cache cache, MonsterSlayerData data, Snapshot snapshot) {
+		if (cache == null) {
+			throw new IllegalArgumentException("Player cache is required");
+		}
+		validate(snapshot, data);
+		cache.set(STATE_VERSION_KEY, snapshot.stateVersion);
+		cache.set(INTRO_STAGE_KEY, snapshot.introStage);
+		cache.set(RANK_KEY, snapshot.rank.getCode());
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
+			cache.store(balanceKey(challenge), snapshot.balances.get(challenge));
+		}
+		if (snapshot.activeTaskKey == null) {
+			cache.remove(ACTIVE_TASK_KEY);
+		} else {
+			cache.store(ACTIVE_TASK_KEY, snapshot.activeTaskKey);
+		}
+		cache.set(ACTIVE_KILLS_KEY, snapshot.activeKills);
+		for (Contact contact : data.getContactsInChallengeOrder()) {
+			cache.set(cursorKey(contact.getKey()), snapshot.mandatoryCursors.get(contact.getKey()));
+		}
+		cache.store(TASKS_COMPLETED_KEY, snapshot.tasksCompleted);
+		cache.set(MIGRATION_VERSION_KEY, snapshot.migrationVersion);
+		cache.set(LEGACY_STATUS_KEY, snapshot.legacyStatus.getCode());
+		cache.set(LEGACY_PRESTIGE_KEY, snapshot.legacyPrestige);
+	}
+
+	public static Snapshot defaults(MonsterSlayerData data) {
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (Contact contact : data.getContactsInChallengeOrder()) {
+			cursors.put(contact.getKey(), 0);
+		}
+		return new Snapshot(STATE_VERSION, 0, MonsterSlayerRank.UNSTAMPED,
+			MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, LegacyStatus.NONE, 0);
+	}
+
+	public static Snapshot create(int introStage, MonsterSlayerRank rank,
+			MonsterSlayerBalances balances, Map<String, Integer> mandatoryCursors,
+			String activeTaskKey, int activeKills, long tasksCompleted, int migrationVersion,
+			LegacyStatus legacyStatus, int legacyPrestige, MonsterSlayerData data) {
+		Snapshot snapshot = new Snapshot(STATE_VERSION, introStage, rank, balances, mandatoryCursors,
+			activeTaskKey, activeKills, tasksCompleted, migrationVersion, legacyStatus, legacyPrestige);
+		validate(snapshot, data);
+		return snapshot;
+	}
+
+	public static void validate(Snapshot snapshot, MonsterSlayerData data) {
+		if (snapshot == null || data == null) {
+			throw new ValidationException("Monster Slayer snapshot and definitions are required");
+		}
+		if (snapshot.stateVersion != STATE_VERSION) {
+			throw new ValidationException("Unsupported Monster Slayer state version");
+		}
+		if (snapshot.introStage < 0 || snapshot.introStage > 2) {
+			throw new ValidationException("Monster Slayer intro stage is outside 0..2");
+		}
+		if (snapshot.rank == null || snapshot.balances == null || snapshot.legacyStatus == null) {
+			throw new ValidationException("Monster Slayer typed state is incomplete");
+		}
+		if (snapshot.rank.isAtLeast(MonsterSlayerRank.FLEDGLING) && snapshot.introStage != 2) {
+			throw new ValidationException("A stamped Monster Slayer rank requires the completed introduction");
+		}
+		if (snapshot.tasksCompleted < 0L) {
+			throw new ValidationException("Monster Slayer lifetime completion count is negative");
+		}
+		if (snapshot.migrationVersion < 0 || snapshot.migrationVersion > MIGRATION_VERSION) {
+			throw new ValidationException("Monster Slayer migration version is unsupported");
+		}
+		if (snapshot.legacyPrestige < 0) {
+			throw new ValidationException("Monster Slayer legacy prestige is negative");
+		}
+		if (snapshot.legacyStatus == LegacyStatus.COMPLETED_CLAIMED && snapshot.legacyPrestige < 1) {
+			throw new ValidationException("Claimed Odyssey completion requires legacy prestige");
+		}
+
+		List<Contact> contacts = data.getContactsInChallengeOrder();
+		if (snapshot.mandatoryCursors.size() != contacts.size()) {
+			throw new ValidationException("Monster Slayer mandatory cursor keys are incomplete");
+		}
+		int completedContacts = Math.max(0, snapshot.rank.getCode() - 1);
+		for (int index = 0; index < contacts.size(); index++) {
+			Contact contact = contacts.get(index);
+			Integer cursorValue = snapshot.mandatoryCursors.get(contact.getKey());
+			if (cursorValue == null) {
+				throw new ValidationException("Missing Monster Slayer cursor for " + contact.getKey());
+			}
+			int cursor = cursorValue;
+			int length = contact.getMandatoryTasks().size();
+			if (cursor < 0 || cursor > length) {
+				throw new ValidationException("Monster Slayer cursor is out of range for " + contact.getKey());
+			}
+			if (index < completedContacts && cursor != length) {
+				throw new ValidationException("Monster Slayer rank is ahead of " + contact.getKey());
+			}
+			if (index == completedContacts && completedContacts < contacts.size() && cursor == length) {
+				throw new ValidationException("Monster Slayer rank did not advance after " + contact.getKey());
+			}
+			if (index > completedContacts && cursor != 0) {
+				throw new ValidationException("Monster Slayer cursor is ahead of rank for " + contact.getKey());
+			}
+			if (snapshot.rank == MonsterSlayerRank.UNSTAMPED && cursor != 0) {
+				throw new ValidationException("Unstamped Monster Slayer state has task progress");
+			}
+		}
+
+		validateActiveTask(snapshot, data, contacts);
+	}
+
+	private static void validateActiveTask(Snapshot snapshot, MonsterSlayerData data, List<Contact> contacts) {
+		if (snapshot.activeTaskKey == null) {
+			if (snapshot.activeKills != 0) {
+				throw new ValidationException("Monster Slayer kills exist without an active task");
+			}
+			return;
+		}
+		Task active = data.getTask(snapshot.activeTaskKey);
+		if (active == null) {
+			throw new ValidationException("Unknown Monster Slayer active task key");
+		}
+		if (snapshot.activeKills < 0 || snapshot.activeKills > active.getRequiredKills()) {
+			throw new ValidationException("Monster Slayer active kills are outside task bounds");
+		}
+		for (Contact contact : contacts) {
+			List<Task> ownedTasks = active.isRepeatable()
+				? contact.getRepeatableTasks() : contact.getMandatoryTasks();
+			for (int index = 0; index < ownedTasks.size(); index++) {
+				if (!ownedTasks.get(index).getKey().equals(active.getKey())) {
+					continue;
+				}
+				int cursor = snapshot.mandatoryCursors.get(contact.getKey());
+				if (active.isRepeatable()) {
+					if (cursor != contact.getMandatoryTasks().size()
+						|| !snapshot.rank.isAtLeast(contact.getAwardedRank())) {
+						throw new ValidationException("Repeatable Monster Slayer task belongs to an incomplete contact");
+					}
+				} else if (cursor != index || snapshot.rank != contact.getRequiredRank()) {
+					throw new ValidationException("Mandatory Monster Slayer task does not match the active cursor");
+				}
+				return;
+			}
+		}
+		throw new ValidationException("Monster Slayer task has no contact owner");
+	}
+
+	public static SpendProposal proposeSpend(Snapshot current, MonsterSlayerData data,
+			MonsterSlayerCost unitCost, long quantity) {
+		validate(current, data);
+		MonsterSlayerBalances.SpendResult result = current.balances.trySpend(unitCost, quantity);
+		if (!result.isSuccessful()) {
+			return SpendProposal.insufficient(current);
+		}
+		Snapshot spent = current.withBalances(result.getBalances());
+		validate(spent, data);
+		return SpendProposal.success(spent, new RefundReceipt(result.getReceipt()));
+	}
+
+	private static int readInteger(Map<String, Object> values, String key, int defaultValue) {
+		Object value = values.get(key);
+		if (value == null) {
+			return defaultValue;
+		}
+		if (!(value instanceof Integer)) {
+			throw new ValidationException("Monster Slayer cache type mismatch for " + key);
+		}
+		return (Integer) value;
+	}
+
+	private static long readLong(Map<String, Object> values, String key, long defaultValue) {
+		Object value = values.get(key);
+		if (value == null) {
+			return defaultValue;
+		}
+		if (!(value instanceof Long)) {
+			throw new ValidationException("Monster Slayer cache type mismatch for " + key);
+		}
+		return (Long) value;
+	}
+
+	private static String readString(Map<String, Object> values, String key, String defaultValue) {
+		Object value = values.get(key);
+		if (value == null) {
+			return defaultValue;
+		}
+		if (!(value instanceof String)) {
+			throw new ValidationException("Monster Slayer cache type mismatch for " + key);
+		}
+		return (String) value;
+	}
+
+	private static String balanceKey(MonsterSlayerChallenge challenge) {
+		return BALANCE_PREFIX + challenge.getCacheSuffix();
+	}
+
+	private static String cursorKey(String contactKey) {
+		return MANDATORY_PREFIX + contactKey;
+	}
+
+	public enum LegacyStatus {
+		NONE(0),
+		PARTIAL(1),
+		COMPLETED_UNCLAIMED(2),
+		COMPLETED_CLAIMED(3);
+
+		private final int code;
+
+		LegacyStatus(int code) {
+			this.code = code;
+		}
+
+		public int getCode() {
+			return code;
+		}
+
+		public static LegacyStatus fromCode(int code) {
+			for (LegacyStatus status : values()) {
+				if (status.code == code) {
+					return status;
+				}
+			}
+			throw new ValidationException("Unknown Monster Slayer legacy status code");
+		}
+	}
+
+	public static final class Snapshot {
+		private final int stateVersion;
+		private final int introStage;
+		private final MonsterSlayerRank rank;
+		private final MonsterSlayerBalances balances;
+		private final Map<String, Integer> mandatoryCursors;
+		private final String activeTaskKey;
+		private final int activeKills;
+		private final long tasksCompleted;
+		private final int migrationVersion;
+		private final LegacyStatus legacyStatus;
+		private final int legacyPrestige;
+
+		private Snapshot(int stateVersion, int introStage, MonsterSlayerRank rank,
+				MonsterSlayerBalances balances, Map<String, Integer> mandatoryCursors,
+				String activeTaskKey, int activeKills, long tasksCompleted, int migrationVersion,
+				LegacyStatus legacyStatus, int legacyPrestige) {
+			this.stateVersion = stateVersion;
+			this.introStage = introStage;
+			this.rank = rank;
+			this.balances = balances;
+			this.mandatoryCursors = mandatoryCursors == null
+				? Collections.<String, Integer>emptyMap()
+				: Collections.unmodifiableMap(new LinkedHashMap<String, Integer>(mandatoryCursors));
+			this.activeTaskKey = activeTaskKey;
+			this.activeKills = activeKills;
+			this.tasksCompleted = tasksCompleted;
+			this.migrationVersion = migrationVersion;
+			this.legacyStatus = legacyStatus;
+			this.legacyPrestige = legacyPrestige;
+		}
+
+		private Snapshot withBalances(MonsterSlayerBalances updated) {
+			return new Snapshot(stateVersion, introStage, rank, updated, mandatoryCursors,
+				activeTaskKey, activeKills, tasksCompleted, migrationVersion, legacyStatus, legacyPrestige);
+		}
+
+		public int getIntroStage() { return introStage; }
+		public MonsterSlayerRank getRank() { return rank; }
+		public MonsterSlayerBalances getBalances() { return balances; }
+		public Map<String, Integer> getMandatoryCursors() { return mandatoryCursors; }
+		public String getActiveTaskKey() { return activeTaskKey; }
+		public int getActiveKills() { return activeKills; }
+		public long getTasksCompleted() { return tasksCompleted; }
+		public int getMigrationVersion() { return migrationVersion; }
+		public LegacyStatus getLegacyStatus() { return legacyStatus; }
+		public int getLegacyPrestige() { return legacyPrestige; }
+
+		public boolean isComplete(MonsterSlayerData data) {
+			if (rank != MonsterSlayerRank.LEGEND) {
+				return false;
+			}
+			for (Contact contact : data.getContactsInChallengeOrder()) {
+				if (mandatoryCursors.get(contact.getKey()) != contact.getMandatoryTasks().size()) {
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+	public static final class SpendProposal {
+		private final boolean successful;
+		private final Snapshot snapshot;
+		private final RefundReceipt receipt;
+
+		private SpendProposal(boolean successful, Snapshot snapshot, RefundReceipt receipt) {
+			this.successful = successful;
+			this.snapshot = snapshot;
+			this.receipt = receipt;
+		}
+
+		private static SpendProposal success(Snapshot snapshot, RefundReceipt receipt) {
+			return new SpendProposal(true, snapshot, receipt);
+		}
+
+		private static SpendProposal insufficient(Snapshot unchanged) {
+			return new SpendProposal(false, unchanged, null);
+		}
+
+		public boolean isSuccessful() { return successful; }
+		public Snapshot getSnapshot() { return snapshot; }
+
+		public RefundReceipt getReceipt() {
+			if (!successful) {
+				throw new IllegalStateException("An unsuccessful spend has no refund receipt");
+			}
+			return receipt;
+		}
+	}
+
+	public static final class RefundReceipt {
+		private final MonsterSlayerBalances.RefundReceipt balanceReceipt;
+
+		private RefundReceipt(MonsterSlayerBalances.RefundReceipt balanceReceipt) {
+			this.balanceReceipt = balanceReceipt;
+		}
+
+		public synchronized Snapshot refund(Snapshot current, MonsterSlayerData data) {
+			validate(current, data);
+			Snapshot refunded = current.withBalances(balanceReceipt.refund(current.balances));
+			validate(refunded, data);
+			return refunded;
+		}
+
+		public boolean isRefunded() {
+			return balanceReceipt.isRefunded();
+		}
+	}
+
+	public static final class ValidationException extends IllegalArgumentException {
+		public ValidationException(String message) {
+			super(message);
+		}
+	}
+}
