@@ -1,7 +1,7 @@
 # Code Cleanup And Modularization Plan
 
 Plan status: **active; reconciled through B01-B11 on 2026-07-16**. The
-measurements and next sequence below use published `main` commit `2533f1c89`,
+measurements and next sequence below use published `main` commit `93b62ed38`,
 plus the explicitly labeled focused-branch result recorded below.
 
 This is the AI-facing cleanup roadmap for Spoiled Milk code structure. It is
@@ -44,7 +44,7 @@ code-health sequence:
 
 | File | Lines | Why It Matters |
 | --- | ---: | --- |
-| `Client_Base/src/orsc/mudclient.java` | 27,246 | Owns gameplay UI/state plus renderer-setting adapters, external asset loading, object/wall instance arrays, movement smoothing, combat effects, projectiles, and renderer integration. `RendererSettingsPanel` and `RendererProfileApplier` have landed; the focused scaling branch below reduces it to 27,194 lines. This remains the immediate ownership target. |
+| `Client_Base/src/orsc/mudclient.java` | 27,194 | Owns gameplay UI/state plus external-asset content coordination, object/wall instance arrays, movement smoothing, combat effects, projectiles, and renderer integration. The focused external-asset branch below reduces it to 26,369 lines by moving discovery and decoding to a tested owner. Scene-instance storage is the next immediate ownership target. |
 | `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,629 | B09 moved registry storage/access, prayer-book authorship, and fallback diagnostics to focused owners. This facade still contains authored definitions, MyWorld overrides, generated families, and load order. |
 | `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,931 | Central server entity state; likely too broad for continued gameplay feature growth. |
 | `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,346 | Legacy 2D drawing plus OpenGL capture/replay instrumentation, sprite scaling, text plotting, and sprite archive loading. |
@@ -96,10 +96,13 @@ work in this plan:
    `LegacySoftwareScalingSettings` while retaining the active software presenter
    and all three persisted compatibility keys. Merged into `main` as
    `20ffd97a8`.
-4. **Next:** extract `ClientExternalAssetLoader` behind lookup, decode, frame-order, and
-   packaged-resource parity tests.
-5. Extract `ClientSceneInstanceStore` for authoritative game-object and wall
-   instance state, leaving scene/collision side effects in `mudclient`.
+4. **Complete on `refactor/client-external-asset-loader`, awaiting manager
+   review:** extracted `ClientExternalAssetLoader` behind lookup, decode,
+   frame-order, and packaged-resource parity tests. Repository and extracted
+   release-layout clients were privately verified.
+5. **Next:** extract `ClientSceneInstanceStore` for authoritative game-object
+   and wall instance state, leaving scene/collision side effects in
+   `mudclient`.
 6. Reassess the remaining `mudclient` responsibilities before authorizing
    combat-effect, movement, or login-scene branches.
 7. Reassess presenter sprite-composite glue only after the five `mudclient`
@@ -646,6 +649,52 @@ fallback mismatch; any packaged asset that loads only beside a source checkout;
 any proposal to reorganize `dev/myworld/assets`; or any need to change combat
 timing, sprite IDs, remastered catalog data, build packaging, or archive format.
 
+Implementation record (2026-07-16): the focused branch moved candidate-path
+construction, development/output/embedded lookup, packaged-JAR inventory,
+image reads, item lookup/cache, equipment decode, pixel/alpha transforms, icon
+decode, and generic directory/strip/grid animation slicing into the 838-line
+`ClientExternalAssetLoader`. The published baseline `mudclient` was 27,194
+lines; it is 26,369 lines on the tested branch. `mudclient` remains the content
+coordinator and still owns asset-name catalogs and typo fallbacks, destination
+sprite indexes, equipment composition, effect/projectile arrays, configured
+animation maps, frame counts/timing, procedural altar fallback, and surface
+installation. Thin configured-animation calls remain private adapters to the
+new generic slicing owner rather than a second implementation.
+
+The branch preserves development, legacy-output, and embedded-resource names
+and precedence, including the brittle `../Core-Framework` candidate. With the
+normal repository launcher, `user.dir` is `Client_Base` and repository assets
+resolve from the parent-worktree candidate. The sibling-name candidate is only
+meaningful for root/IDE-style working directories and is not required by the
+packaged client, which resolves embedded `myworld-assets`; removal therefore
+remains a separately approved compatibility decision. Missing and corrupt
+assets retain their established fallbacks. Packaged inventory failure now emits
+one bounded diagnostic, without changing fallback behavior. The independent
+`RemasteredSpriteResolver`, canonical per-sprite/per-frame fallback, archive
+loading, models, sounds, and texture semantics were not absorbed or changed.
+
+A compiled fixture exercises all candidate classes and precedence, missing and
+corrupt input, item-spec validation and cache identity, exact crop/alpha/black
+normalization, equipment bounds and pixels, world/icon transforms, prayer-sheet
+ordering, directory nesting and numeric order, grid/native-grid/strip slicing,
+and input-stream closure. It also creates and loads a real temporary JAR to
+verify embedded file/directory discovery, inventory caching, decoding,
+diagnostic bounds, resource closing, and post-close JAR movement. Source guards
+protect the ownership boundary and remastered-loader separation.
+
+The client build, full MyWorld suite, renderer guardrails, remastered
+workspace/loader tests, animation/projectile/spell/prayer/summoning migrations,
+item coverage and sprite-reference audits, packaging contracts, and
+changed-code javac, Checkstyle, PMD, SpotBugs, ShellCheck, and Ruff analysis all
+pass. The extraction removes the exact pre-existing unused-import warning it
+made obsolete and introduces no new finding. The release script correctly
+refused to publish from a worker branch; instead, the tested branch JAR was
+placed in the real release layout and extracted entirely outside the source
+repository for the required private package-path smoke test. The owner
+confirmed repository and extracted-package presentation matched for external
+ground/item and worn-equipment sprites, altar assets, prayer/magic/summoning
+icons, combat effects, and Classic/Enhanced canonical fallback.
+
 #### 5. ClientSceneInstanceStore
 
 Current evidence: `mudclient` owns parallel game-object and wall-object arrays
@@ -1038,8 +1087,9 @@ The old presenter-first pass is complete through viewport/window extraction.
 The first post-B11 branch completed `RendererSettingsPanel` and was merged as
 `26145528f`; the second completed `RendererProfileApplier` and was merged as
 `83bf64a9d`. The third completed `LegacySoftwareScalingSettings` and was merged
-as `20ffd97a8`. Continue with `ClientExternalAssetLoader` and
-`ClientSceneInstanceStore` as specified above.
+as `20ffd97a8`. The fourth completed `ClientExternalAssetLoader` on the focused
+branch and awaits manager review. Continue next with `ClientSceneInstanceStore`
+as specified above.
 
 Do not opportunistically combine these because they are adjacent in
 `mudclient`. Each branch must leave a tested owner, keep compatibility visible,
