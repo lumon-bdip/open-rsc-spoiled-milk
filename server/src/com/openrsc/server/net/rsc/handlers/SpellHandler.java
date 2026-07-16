@@ -1,6 +1,13 @@
 package com.openrsc.server.net.rsc.handlers;
 
-import com.openrsc.server.constants.*;
+import com.openrsc.server.constants.Constants;
+import com.openrsc.server.constants.IronmanMode;
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
+import com.openrsc.server.constants.Quests;
+import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.SpellDamages;
+import com.openrsc.server.constants.Spells;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.content.Summoning;
@@ -18,7 +25,6 @@ import com.openrsc.server.external.Gauntlets;
 import com.openrsc.server.external.ItemSmeltingDef;
 import com.openrsc.server.external.ReqOreDef;
 import com.openrsc.server.external.SpellDef;
-import com.openrsc.server.external.NPCDef;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.action.ActionType;
@@ -26,7 +32,11 @@ import com.openrsc.server.model.action.WalkToMobAction;
 import com.openrsc.server.model.action.WalkToPointAction;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
-import com.openrsc.server.model.entity.*;
+import com.openrsc.server.model.entity.EntityType;
+import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GroundItem;
+import com.openrsc.server.model.entity.KillType;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.npc.NpcInteraction;
 import com.openrsc.server.model.entity.player.Player;
@@ -54,10 +64,20 @@ import com.openrsc.server.util.rsc.MessageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 
-import static com.openrsc.server.plugins.Functions.*;
+import static com.openrsc.server.plugins.Functions.delay;
+import static com.openrsc.server.plugins.Functions.getCurrentLevel;
+import static com.openrsc.server.plugins.Functions.inArray;
+import static com.openrsc.server.plugins.Functions.isNormalLevel;
+import static com.openrsc.server.plugins.Functions.mes;
+import static com.openrsc.server.plugins.Functions.npcsay;
 
 public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
@@ -79,10 +99,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 	private static boolean shouldMagicDebug(final Player player) {
 		return false;
-	}
-
-	private static boolean isMobCastOpcode(final OpcodeIn opcode) {
-		return opcode == OpcodeIn.CAST_ON_NPC || opcode == OpcodeIn.PLAYER_CAST_PVP;
 	}
 
 	private static String describeMob(final Mob mob) {
@@ -110,15 +126,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private static int getMagicId(Player player, SpellDef spell) {
-		if (!player.getConfig().DIVIDED_GOOD_EVIL) {
-			return Skill.MAGIC.id();
-		} else {
-			if (spell.isEvil()) {
-				return Skill.EVILMAGIC.id();
-			} else {
-				return Skill.GOODMAGIC.id();
-			}
-		}
+		return SpellValidationRules.magicSkillId(
+			player.getConfig().DIVIDED_GOOD_EVIL, spell.isEvil());
 	}
 
 	private static boolean canCast(Player player) {
@@ -170,32 +179,37 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	public static boolean isAutoCastableSpell(Player player, Spells spellEnum, boolean message) {
-		if (spellEnum == null) {
-			if (message) {
-				player.message("That spell cannot be auto-cast");
+		SpellDef spell = spellEnum == null
+			? null
+			: player.getWorld().getServer().getEntityHandler().getSpellDef(spellEnum);
+		boolean memberWorld = spell == null || player.getConfig().MEMBER_WORLD;
+		SpellValidationRules.AutoCastRejection rejection = SpellValidationRules.validateAutoCast(
+			spellEnum,
+			spell != null,
+			spell == null ? -1 : spell.getSpellType(),
+			spell != null && spell.isMembers(),
+			memberWorld,
+			spell == null ? 0 : player.getSkills().getLevel(getMagicId(player, spell)),
+			spell == null ? 0 : spell.getReqLevel());
+		if (message) {
+			switch (rejection) {
+				case MISSING_SELECTION:
+					player.message("That spell cannot be auto-cast");
+					break;
+				case NON_COMBAT:
+					player.message("Only combat spells can be auto-cast");
+					break;
+				case MEMBERS_ONLY:
+					player.message("You need to login to a members world to use this spell");
+					break;
+				case LEVEL_TOO_LOW:
+					player.message("Your magic ability is not high enough for this spell.");
+					break;
+				default:
+					break;
 			}
-			return false;
 		}
-		SpellDef spell = player.getWorld().getServer().getEntityHandler().getSpellDef(spellEnum);
-		if (spell == null || spell.getSpellType() != 2) {
-			if (message) {
-				player.message("Only combat spells can be auto-cast");
-			}
-			return false;
-		}
-		if (spell.isMembers() && !player.getConfig().MEMBER_WORLD) {
-			if (message) {
-				player.message("You need to login to a members world to use this spell");
-			}
-			return false;
-		}
-		if (player.getSkills().getLevel(getMagicId(player, spell)) < spell.getReqLevel()) {
-			if (message) {
-				player.message("Your magic ability is not high enough for this spell.");
-			}
-			return false;
-		}
-		return true;
+		return rejection == SpellValidationRules.AutoCastRejection.NONE;
 	}
 
 	public static boolean hasRequiredRunesForAutoCast(Player player, SpellDef spell) {
@@ -285,357 +299,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		return baseMax;
 	}
 
-	private static boolean doesRingMatchSpellElement(final int ringId, final Spells spellEnum) {
-		if (spellEnum == null) {
-			return false;
-		}
-		if (ringId >= 1673 && ringId <= 1677) {
-			return isAirSpell(spellEnum);
-		}
-		if (ringId >= 1678 && ringId <= 1682) {
-			return isWaterSpell(spellEnum);
-		}
-		if (ringId >= 1683 && ringId <= 1687) {
-			return isEarthSpell(spellEnum);
-		}
-		if (ringId >= 1688 && ringId <= 1692) {
-			return isFireSpell(spellEnum);
-		}
-		return false;
-	}
-
-	private static boolean isAirSpell(final Spells spellEnum) {
-		return spellEnum == Spells.WIND_STRIKE
-			|| spellEnum == Spells.WIND_BOLT
-			|| spellEnum == Spells.WIND_BOLT_R
-			|| spellEnum == Spells.WIND_BLAST
-			|| spellEnum == Spells.WIND_WAVE;
-	}
-
-	private static boolean isWaterSpell(final Spells spellEnum) {
-		return spellEnum == Spells.WATER_STRIKE
-			|| spellEnum == Spells.WATER_BOLT
-			|| spellEnum == Spells.WATER_BLAST
-			|| spellEnum == Spells.WATER_WAVE;
-	}
-
-	private static boolean isEarthSpell(final Spells spellEnum) {
-		return spellEnum == Spells.EARTH_STRIKE
-			|| spellEnum == Spells.EARTH_BOLT
-			|| spellEnum == Spells.EARTH_BLAST
-			|| spellEnum == Spells.EARTH_WAVE;
-	}
-
-	private static boolean isFireSpell(final Spells spellEnum) {
-		return spellEnum == Spells.FIRE_STRIKE
-			|| spellEnum == Spells.FIRE_BOLT
-			|| spellEnum == Spells.FIRE_BLAST
-			|| spellEnum == Spells.FIRE_WAVE;
-	}
-
-	private static boolean isMindSpell(final Spells spellEnum) {
-		return spellEnum == Spells.WIND_STRIKE
-			|| spellEnum == Spells.WATER_STRIKE
-			|| spellEnum == Spells.EARTH_STRIKE
-			|| spellEnum == Spells.FIRE_STRIKE
-			|| spellEnum == Spells.THUNDER_BALL
-			|| spellEnum == Spells.ICICLE_SHOT
-			|| spellEnum == Spells.ACID_DROP
-			|| spellEnum == Spells.BRANCH_SPORE;
-	}
-
-	private static boolean isThunderSpell(final Spells spellEnum) {
-		return spellEnum == Spells.THUNDER_BALL
-			|| spellEnum == Spells.THUNDER_SPLASH
-			|| spellEnum == Spells.THUNDER_STRIKE;
-	}
-
-	private static boolean isAcidSpell(final Spells spellEnum) {
-		return spellEnum == Spells.ACID_DROP
-			|| spellEnum == Spells.ACID_FROG
-			|| spellEnum == Spells.ACID_GUSH;
-	}
-
-	private static boolean isIceSpell(final Spells spellEnum) {
-		return spellEnum == Spells.ICICLE_SHOT
-			|| spellEnum == Spells.ICE_BURST
-			|| spellEnum == Spells.ICE_CRYSTAL;
-	}
-
-	private static boolean isWoodSpell(final Spells spellEnum) {
-		return spellEnum == Spells.BRANCH_SPORE
-			|| spellEnum == Spells.WOOD_DRILL
-			|| spellEnum == Spells.BATTERING_RAM;
-	}
-
-	private static int getSpellProjectileVisual(final Spells spellEnum) {
-		if (spellEnum == null) {
-			return Projectile.MAGIC;
-		}
-		switch (spellEnum) {
-			case WIND_STRIKE:
-				return Projectile.WIND_ARROW;
-			case EARTH_STRIKE:
-				return Projectile.ROCK_THROW;
-			case WATER_STRIKE:
-				return Projectile.WATER_BALL;
-			case FIRE_STRIKE:
-				return Projectile.FIREBALL;
-			case THUNDER_BALL:
-				return Projectile.THUNDER_BALL;
-			case ICICLE_SHOT:
-				return Projectile.ICICLE_SHOT;
-			case ACID_DROP:
-				return Projectile.ACID_DROP;
-			case BRANCH_SPORE:
-				return Projectile.BRANCH_SPORE;
-			case WIND_BOLT:
-				return Projectile.WIND_STATIC_2;
-			case WATER_BOLT:
-				return Projectile.WATER_STATIC_2;
-			case EARTH_BOLT:
-				return Projectile.EARTH_LEAD_2;
-			case FIRE_BOLT:
-				return Projectile.FIRE_LEAD_2;
-			case THUNDER_SPLASH:
-				return Projectile.THUNDER_BIRD;
-			case ICE_BURST:
-				return Projectile.ICE_LEAD_2;
-			case ACID_FROG:
-				return Projectile.ACID_LEAD_2;
-			case WOOD_DRILL:
-				return Projectile.WOOD_LEAD_2;
-			default:
-				return Projectile.MAGIC;
-		}
-	}
-
-	private static int getSpellImpactEffect(final Spells spellEnum) {
-		if (spellEnum == null) {
-			return 0;
-		}
-		switch (spellEnum) {
-			case EARTH_BOLT:
-				return CombatEffect.EARTH_HAMMER;
-			case FIRE_BOLT:
-				return CombatEffect.FIRE_CLAW;
-			case THUNDER_SPLASH:
-				return CombatEffect.THUNDER_SPLASH;
-			case ICE_BURST:
-				return CombatEffect.ICE_BURST;
-			case ACID_FROG:
-				return CombatEffect.ACID_FROG;
-			case WOOD_DRILL:
-				return CombatEffect.WOOD_DRILL;
-			case WIND_BLAST:
-				return CombatEffect.TORNADO;
-			case EARTH_BLAST:
-				return CombatEffect.EARTH_BURST;
-			case WATER_BLAST:
-				return CombatEffect.WATER_ERUPTION;
-			case FIRE_BLAST:
-				return CombatEffect.EXPLOSION;
-			case THUNDER_STRIKE:
-				return CombatEffect.THUNDER_STRIKE;
-			case ICE_CRYSTAL:
-				return CombatEffect.ICE_CRYSTAL;
-			case ACID_GUSH:
-				return CombatEffect.ACID_GUSH;
-			case BATTERING_RAM:
-				return CombatEffect.BATTERING_RAM;
-			case WIND_WAVE:
-				return CombatEffect.WIND_BEAM;
-			case EARTH_WAVE:
-				return CombatEffect.EARTH_IMPALE;
-			case WATER_WAVE:
-				return CombatEffect.WATER_VORTEX;
-			case FIRE_WAVE:
-				return CombatEffect.FIRE_PILLAR;
-			default:
-				return 0;
-		}
-	}
-
-	private static boolean shouldShowSpellProjectile(final Spells spellEnum, final int impactEffect) {
-		if (impactEffect <= 0) {
-			return true;
-		}
-		return spellEnum == Spells.EARTH_BOLT
-			|| spellEnum == Spells.FIRE_BOLT
-			|| spellEnum == Spells.THUNDER_SPLASH
-			|| spellEnum == Spells.ICE_BURST
-			|| spellEnum == Spells.ACID_FROG
-			|| spellEnum == Spells.WOOD_DRILL;
-	}
-
-	private static int getGodSpellProjectileVisual(final Spells spellEnum) {
-		return Projectile.HOLY_MAGIC;
-	}
-
-	private static int getGodSpellImpactEffect(final Spells spellEnum) {
-		if (spellEnum == Spells.CLAWS_OF_GUTHIX) {
-			return CombatEffect.EYE_OF_GUTHIX;
-		}
-		if (spellEnum == Spells.CLAW_OF_GUTHIX) {
-			return CombatEffect.CLAW_OF_GUTHIX;
-		}
-		if (spellEnum == Spells.SARADOMIN_STRIKE) {
-			return CombatEffect.SARADOMIN_STRIKE;
-		}
-		if (spellEnum == Spells.SARADOMIN_SOUL_SLASH) {
-			return CombatEffect.SARADOMIN_SOUL_SLASH;
-		}
-		if (spellEnum == Spells.FLAMES_OF_ZAMORAK) {
-			return CombatEffect.ZAMORAKS_VOID;
-		}
-		if (spellEnum == Spells.ZAMORAKS_APOCOLYPSE) {
-			return CombatEffect.ZAMORAKS_APOCOLYPSE;
-		}
-		return 0;
-	}
-
-	private static int getHealCombatEffect(final Spells spellEnum) {
-		if (spellEnum == Spells.WEAK_HEAL) {
-			return CombatEffect.LESSER_HEAL;
-		}
-		if (spellEnum == Spells.STRONG_HEAL) {
-			return CombatEffect.GREATER_HEAL;
-		}
-		return 0;
-	}
-
-	private static boolean isGuthixGodSpell(final Spells spellEnum) {
-		return spellEnum == Spells.CLAWS_OF_GUTHIX || spellEnum == Spells.CLAW_OF_GUTHIX;
-	}
-
-	private static boolean isSaradominGodSpell(final Spells spellEnum) {
-		return spellEnum == Spells.SARADOMIN_STRIKE || spellEnum == Spells.SARADOMIN_SOUL_SLASH;
-	}
-
-	private static boolean isZamorakGodSpell(final Spells spellEnum) {
-		return spellEnum == Spells.FLAMES_OF_ZAMORAK || spellEnum == Spells.ZAMORAKS_APOCOLYPSE;
-	}
-
-	private static boolean isAdvancedGodSpell(final Spells spellEnum) {
-		return spellEnum == Spells.ZAMORAKS_APOCOLYPSE
-			|| spellEnum == Spells.SARADOMIN_SOUL_SLASH
-			|| spellEnum == Spells.CLAW_OF_GUTHIX;
-	}
-
-	private static int getElementalSpellTier(final Spells spellEnum) {
-		final double capPercent = getSpellDamageCapPercent(spellEnum);
-		if (capPercent <= 0.40D) {
-			return 1;
-		}
-		if (capPercent <= 0.60D) {
-			return 2;
-		}
-		if (capPercent <= 0.80D) {
-			return 3;
-		}
-		return 4;
-	}
-
-	private static int getWindAccuracyDebuffPercent(final Spells spellEnum) {
-		return getElementalSpellTier(spellEnum) * 5;
-	}
-
-	private static int getWaterMaxHitDebuffPercent(final Spells spellEnum) {
-		return getElementalSpellTier(spellEnum) * 5;
-	}
-
-	private static int getEarthAttackSpeedDebuffPercent(final Spells spellEnum) {
-		return getElementalSpellTier(spellEnum) * 3;
-	}
-
-	private static int getFireDefenseDebuffPercent(final Spells spellEnum) {
-		return getElementalSpellTier(spellEnum) * 3;
-	}
-
-	private static int getDualElementProcChancePercent(final Spells spellEnum) {
-		switch (getElementalSpellTier(spellEnum)) {
-			case 1:
-				return 7;
-			case 2:
-				return 15;
-			case 3:
-				return 25;
-			default:
-				return 0;
-		}
-	}
-
-	private static int getStartleProcChancePercent(final Spells spellEnum) {
-		return isThunderSpell(spellEnum) ? getDualElementProcChancePercent(spellEnum) : 0;
-	}
-
-	private static int getAcidPoisonPower(final Spells spellEnum) {
-		return isAcidSpell(spellEnum) ? 10 + (getElementalSpellTier(spellEnum) * 10) : 0;
-	}
-
-	private static int getFrostbiteProcChancePercent(final Spells spellEnum) {
-		return isIceSpell(spellEnum) ? getDualElementProcChancePercent(spellEnum) : 0;
-	}
-
-	private static int getSplinterProcChancePercent(final Spells spellEnum) {
-		return isWoodSpell(spellEnum) ? getDualElementProcChancePercent(spellEnum) : 0;
-	}
-
-	private static boolean isBloodSpell(final SpellDef spell) {
-		if (spell == null) {
-			return false;
-		}
-		for (Entry<Integer, Integer> rune : spell.getRunesRequired()) {
-			if (rune.getKey() == ItemId.BLOOD_RUNE.id()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static double getSpellDamageCapPercent(final Spells spellEnum) {
-		if (spellEnum == null) {
-			return 1.0D;
-		}
-		switch (spellEnum) {
-			case WIND_STRIKE:
-			case WATER_STRIKE:
-			case EARTH_STRIKE:
-			case FIRE_STRIKE:
-			case THUNDER_BALL:
-			case ICICLE_SHOT:
-			case ACID_DROP:
-			case BRANCH_SPORE:
-				return 0.40D;
-			case WIND_BOLT:
-			case WATER_BOLT:
-			case EARTH_BOLT:
-			case FIRE_BOLT:
-			case THUNDER_SPLASH:
-			case ICE_BURST:
-			case ACID_FROG:
-			case WOOD_DRILL:
-				return 0.60D;
-			case WIND_BLAST:
-			case WATER_BLAST:
-			case EARTH_BLAST:
-			case FIRE_BLAST:
-			case IBAN_BLAST:
-			case THUNDER_STRIKE:
-			case ICE_CRYSTAL:
-			case ACID_GUSH:
-			case BATTERING_RAM:
-				return 0.80D;
-			case WIND_WAVE:
-			case WATER_WAVE:
-			case EARTH_WAVE:
-			case FIRE_WAVE:
-				return 1.0D;
-			default:
-				return 1.0D;
-		}
-	}
-
 	public static boolean checkAndRemoveRunes(Player player, SpellDef spell) {
 		// check also against magic cape activation
 		return checkAndRemoveRunes(player, spell, null);
@@ -683,53 +346,61 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	// Check all prohibiting factors that would prevent spell from being cast
 	// If all good, return correct spell
 	private SpellDef spellSanityChecks(Spells spellEnum, Player player, OpcodeIn opcode) {
-		if (spellEnum == null) {
-			magicDebug(player, "sanity_reject reason=missing_spell opcode=" + opcode + " enum=null");
-			return null;
-		}
-		SpellDef spell = player.getWorld().getServer().getEntityHandler().getSpellDef(spellEnum);
-
-		if (spell == null) {
-			magicDebug(player, "sanity_reject reason=missing_spell opcode=" + opcode + " enum=" + spellEnum);
-			return null;
-		}
-
-		if (spell.isMembers() && !player.getConfig().MEMBER_WORLD) {
-			magicDebug(player, "sanity_reject reason=members spell=" + describeSpell(spellEnum, spell));
-			player.message("You need to login to a members world to use this spell");
-			player.resetPath();
-			return null;
+		SpellDef spell = spellEnum == null
+			? null
+			: player.getWorld().getServer().getEntityHandler().getSpellDef(spellEnum);
+		int currentMagicLevel = spell == null
+			? 0
+			: player.getSkills().getLevel(getMagicId(player, spell));
+		boolean memberWorld = spell == null || player.getConfig().MEMBER_WORLD;
+		SpellValidationRules.CastDefinitionRejection definitionRejection =
+			SpellValidationRules.validateDefinition(
+				spellEnum,
+				spell != null,
+				spell != null && spell.isMembers(),
+				memberWorld,
+				currentMagicLevel,
+				spell == null ? 0 : spell.getReqLevel());
+		switch (definitionRejection) {
+			case MISSING_SELECTION:
+			case MISSING_DEFINITION:
+				magicDebug(player, "sanity_reject reason=missing_spell opcode=" + opcode + " enum=" + spellEnum);
+				return null;
+			case MEMBERS_ONLY:
+				magicDebug(player, "sanity_reject reason=members spell=" + describeSpell(spellEnum, spell));
+				player.message("You need to login to a members world to use this spell");
+				player.resetPath();
+				return null;
+			case LEVEL_TOO_LOW:
+				magicDebug(player, "sanity_reject reason=level spell=" + describeSpell(spellEnum, spell)
+					+ " current=" + currentMagicLevel);
+				player.setSuspiciousPlayer(true, "player magic ability not high enough");
+				player.message("Your magic ability is not high enough for this spell.");
+				player.resetPath();
+				return null;
+			default:
+				break;
 		}
 
 		// Services.lookup(DatabaseManager.class).addQuery(new
 		// GenericLog(player.getUsername() + " tried to cast spell 49 at " +
 		// player.getLocation()));
 
-		// Check player's magic level prior to allowing cast.
-		if (player.getSkills().getLevel(getMagicId(player, spell)) < spell.getReqLevel()) {
-			magicDebug(player, "sanity_reject reason=level spell=" + describeSpell(spellEnum, spell)
-				+ " current=" + player.getSkills().getLevel(getMagicId(player, spell)));
-			player.setSuspiciousPlayer(true, "player magic ability not high enough");
-			player.message("Your magic ability is not high enough for this spell.");
-			player.resetPath();
-			return null;
-		}
-
 		// Ensure player is allowed to teleport.
-		if (opcode == OpcodeIn.CAST_ON_SELF && spell.getSpellType() == 0
-			&& isTeleportSpell(spellEnum) && !canTeleport(player, spell, spellEnum)) {
+		if (SpellValidationRules.requiresTeleportValidation(opcode, spell.getSpellType(), spellEnum)
+			&& !canTeleport(player, spell, spellEnum)) {
 			magicDebug(player, "sanity_reject reason=teleport spell=" + describeSpell(spellEnum, spell));
 			return null;
 		}
 
 		// You can't cast on things other than your opponent, while in a duel.
-		if (opcode != OpcodeIn.PLAYER_CAST_PVP && player.getDuel().isDuelActive()) {
+		if (SpellValidationRules.isDuelActionBlocked(opcode, player.getDuel().isDuelActive())) {
 			magicDebug(player, "sanity_reject reason=duel spell=" + describeSpell(spellEnum, spell));
 			player.message("You can't do that during a duel!");
 			return null;
 		}
 
-		if (isMobCastOpcode(opcode)) {
+		if (SpellClassification.isMobCastOpcode(opcode)) {
 			magicDebug(player, "sanity_ok opcode=" + opcode + " spell=" + describeSpell(spellEnum, spell));
 		}
 		return spell;
@@ -741,21 +412,21 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 	public void process(SpellStruct payload, Player player) throws Exception {
 		OpcodeIn opcode = payload.getOpcode();
-		if (isMobCastOpcode(opcode)) {
+		if (SpellClassification.isMobCastOpcode(opcode)) {
 			magicDebug(player, "packet_recv opcode=" + opcode + " spell=" + payload.spell
 				+ " targetIndex=" + payload.targetIndex + " busy=" + player.isBusy()
 				+ " inCombat=" + player.inCombat() + " ranging=" + player.isRanging()
 				+ " customClient=" + player.isUsingCustomClient());
 		}
 		if ((player.isBusy() && !player.inCombat()) || player.isRanging()) {
-			if (isMobCastOpcode(opcode)) {
+			if (SpellClassification.isMobCastOpcode(opcode)) {
 				magicDebug(player, "packet_reject reason=busy_or_ranging busy=" + player.isBusy()
 					+ " inCombat=" + player.inCombat() + " ranging=" + player.isRanging());
 			}
 			return;
 		}
-		if (!isHealSpell(payload.spell) && !canCast(player)) {
-			if (isMobCastOpcode(opcode)) {
+		if (!SpellClassification.isHealSpell(payload.spell) && !canCast(player)) {
+			if (SpellClassification.isMobCastOpcode(opcode)) {
 				magicDebug(player, "packet_reject reason=cast_timer wait=" + player.getSpellWait());
 			}
 			return;
@@ -797,13 +468,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						return;
 					}
 
-					if (spell.getSpellType() == 0 && isTeleportSpell(payload.spell)) {
+					if (spell.getSpellType() == 0 && SpellClassification.isTeleportSpell(payload.spell)) {
 						handleTeleport(player, spell, payload.spell);
 						return;
-					} else if (isHealSpell(payload.spell)) {
+					} else if (SpellClassification.isHealSpell(payload.spell)) {
 						handleHeal(player, spell, payload.spell, selfHealRetaliationTarget);
 						return;
-					} else if (isBoostSpell(player, payload.spell)) {
+					} else if (SpellClassification.isBoostSpell(payload.spell)) {
 						handleBoost(player, spell, payload.spell);
 						return;
 					}
@@ -992,13 +663,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 			switch (opcode) {
 				case CAST_ON_SELF:
-					if (spell.getSpellType() == 0 && isTeleportSpell(payload.spell)) {
+					if (spell.getSpellType() == 0 && SpellClassification.isTeleportSpell(payload.spell)) {
 						handleTeleport(player, spell, payload.spell);
 						return;
-					} else if (isHealSpell(payload.spell)) {
+					} else if (SpellClassification.isHealSpell(payload.spell)) {
 						handleHeal(player, spell, payload.spell, selfHealRetaliationTarget);
 						return;
-					} else if (isBoostSpell(player, payload.spell)) {
+					} else if (SpellClassification.isBoostSpell(payload.spell)) {
 						handleBoost(player, spell, payload.spell);
 						return;
 					}
@@ -2081,7 +1752,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
 							return;
 						}
-						final double ibanDamageCapPercent = getSpellDamageCapPercent(spellEnum);
+						final double ibanDamageCapPercent = SpellClassification.getSpellDamageCapPercent(spellEnum);
 						final int ibanPrimaryDamage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, 15, ibanDamageCapPercent);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
 							ibanPrimaryDamage, 4, setChasing,
@@ -2101,15 +1772,18 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					case SARADOMIN_SOUL_SLASH:
 					case FLAMES_OF_ZAMORAK:
 					case ZAMORAKS_APOCOLYPSE:
-						if (!getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_GUTHIX.id()) && isGuthixGodSpell(spellEnum)) {
+						if (!getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_GUTHIX.id())
+							&& SpellClassification.isGuthixGodSpell(spellEnum)) {
 							getPlayer().message("You lack the necessary holy artifact");
 							return;
 						}
-						if (!getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_SARADOMIN.id()) && isSaradominGodSpell(spellEnum)) {
+						if (!getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_SARADOMIN.id())
+							&& SpellClassification.isSaradominGodSpell(spellEnum)) {
 							getPlayer().message("You lack the necessary holy artifact");
 							return;
 						}
-						if (!getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_ZAMORAK.id()) && isZamorakGodSpell(spellEnum)) {
+						if (!getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.STAFF_OF_ZAMORAK.id())
+							&& SpellClassification.isZamorakGodSpell(spellEnum)) {
 							getPlayer().message("You lack the necessary holy artifact");
 							return;
 						}
@@ -2137,8 +1811,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 							godSpellObject(getPlayer(), affectedMob, spellEnum);
 						}
-						final int godSpellProjectile = getGodSpellProjectileVisual(spellEnum);
-						final int godSpellImpact = getGodSpellImpactEffect(spellEnum);
+						final int godSpellProjectile = SpellClassification.getGodSpellProjectileVisual(spellEnum);
+						final int godSpellImpact = SpellClassification.getGodSpellImpactEffect(spellEnum);
 						final int primaryDamage = CombatFormula.calculateGodSpellDamage(getPlayer(), affectedMob, spellEnum);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
 							primaryDamage, 1, setChasing,
@@ -2238,32 +1912,38 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						// Chaos gauntlets let mind-rune spells hit at the chaos-rune spell cap.
 						final boolean chaosGauntletBonus = getPlayer().getCarriedItems().getEquipment().hasEquipped(ItemId.GAUNTLETS_OF_CHAOS.id())
 							&& getPlayer().getCache().getInt("famcrest_gauntlets") == Gauntlets.CHAOS.id();
-						double damageCapPercent = chaosGauntletBonus && isMindSpell(spellEnum)
+						double damageCapPercent = chaosGauntletBonus && SpellClassification.isMindSpell(spellEnum)
 							? 0.60D
-							: getSpellDamageCapPercent(spellEnum);
-						if (isMindSpell(spellEnum)) {
+							: SpellClassification.getSpellDamageCapPercent(spellEnum);
+						if (SpellClassification.isMindSpell(spellEnum)) {
 							damageCapPercent += getPlayer().getMindRobeSpellCapBonus();
 						}
 
 						int damage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, max, damageCapPercent);
-						final int windAccuracyDebuffPercent = isAirSpell(spellEnum) ? getWindAccuracyDebuffPercent(spellEnum) : 0;
-						final int waterMaxHitDebuffPercent = isWaterSpell(spellEnum) ? getWaterMaxHitDebuffPercent(spellEnum) : 0;
-						final int earthAttackSpeedDebuffPercent = isEarthSpell(spellEnum) ? getEarthAttackSpeedDebuffPercent(spellEnum) : 0;
-						final int fireDefenseDebuffPercent = isFireSpell(spellEnum) ? getFireDefenseDebuffPercent(spellEnum) : 0;
-						final int startleProcChancePercent = getStartleProcChancePercent(spellEnum);
-						final int acidPoisonPower = getAcidPoisonPower(spellEnum);
-						final int frostbiteProcChancePercent = getFrostbiteProcChancePercent(spellEnum);
-						final int splinterProcChancePercent = getSplinterProcChancePercent(spellEnum);
+						final int windAccuracyDebuffPercent = SpellClassification.isAirSpell(spellEnum)
+							? SpellClassification.getWindAccuracyDebuffPercent(spellEnum) : 0;
+						final int waterMaxHitDebuffPercent = SpellClassification.isWaterSpell(spellEnum)
+							? SpellClassification.getWaterMaxHitDebuffPercent(spellEnum) : 0;
+						final int earthAttackSpeedDebuffPercent = SpellClassification.isEarthSpell(spellEnum)
+							? SpellClassification.getEarthAttackSpeedDebuffPercent(spellEnum) : 0;
+						final int fireDefenseDebuffPercent = SpellClassification.isFireSpell(spellEnum)
+							? SpellClassification.getFireDefenseDebuffPercent(spellEnum) : 0;
+						final int startleProcChancePercent = SpellClassification.getStartleProcChancePercent(spellEnum);
+						final int acidPoisonPower = SpellClassification.getAcidPoisonPower(spellEnum);
+						final int frostbiteProcChancePercent = SpellClassification.getFrostbiteProcChancePercent(spellEnum);
+						final int splinterProcChancePercent = SpellClassification.getSplinterProcChancePercent(spellEnum);
 
-						final int projectileVisual = getSpellProjectileVisual(spellEnum);
-						final int impactEffect = getSpellImpactEffect(spellEnum);
+						final int projectileVisual = SpellClassification.getSpellProjectileVisual(spellEnum);
+						final int impactEffect = SpellClassification.getSpellImpactEffect(spellEnum);
 						magicDebug(getPlayer(), "spell_projectile_enqueue spell=" + describeSpell(spellEnum, spell)
 							+ " target=" + describeMob(affectedMob) + " damage=" + damage
 							+ " max=" + max + " projectile=" + projectileVisual + " impact=" + impactEffect);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, damage, 1, setChasing,
 							windAccuracyDebuffPercent, waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent,
-							projectileVisual, impactEffect, shouldShowSpellProjectile(spellEnum, impactEffect),
-							startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent, isBloodSpell(spell)));
+							projectileVisual, impactEffect,
+							SpellClassification.shouldShowSpellProjectile(spellEnum, impactEffect),
+							startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent,
+							splinterProcChancePercent, SpellClassification.isBloodSpell(spell)));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);
 						break;
@@ -2272,18 +1952,10 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		});
 	}
 
-	private boolean isBoostSpell(Player player, Spells spellEnum) {
-		return spellEnum == Spells.THICK_SKIN || spellEnum == Spells.BURST_OF_STRENGTH
-			|| spellEnum == Spells.CAMOFLAUGE || spellEnum == Spells.ROCK_SKIN;
-	}
-
-	private boolean isHealSpell(Spells spellEnum) {
-		return spellEnum == Spells.WEAK_HEAL
-			|| spellEnum == Spells.STRONG_HEAL;
-	}
-
 	private Mob getSelfHealRetaliationTarget(Player player, SpellStruct payload) {
-		if (payload.getOpcode() != OpcodeIn.CAST_ON_SELF || !isHealSpell(payload.spell) || !player.getAutoRetaliate()) {
+		if (payload.getOpcode() != OpcodeIn.CAST_ON_SELF
+			|| !SpellClassification.isHealSpell(payload.spell)
+			|| !player.getAutoRetaliate()) {
 			return null;
 		}
 
@@ -2365,7 +2037,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private void applyGodSpellAreaEffects(final Player caster, final Mob primaryTarget, final Spells spellEnum, final int primaryDamage) {
-		final boolean advancedSpell = isAdvancedGodSpell(spellEnum);
+		final boolean advancedSpell = SpellClassification.isAdvancedGodSpell(spellEnum);
 		final double secondaryDamagePercent = advancedSpell ? 0.50D : 0.25D;
 		final int secondaryMax = Math.max(1, (int) Math.ceil(CombatFormula.getGodSpellMax(caster, advancedSpell) * secondaryDamagePercent));
 		int totalDamage = Math.max(0, primaryDamage);
@@ -2390,7 +2062,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			if (npc == primaryTarget || !isValidIbanBlastAreaTarget(primaryTarget, npc)) {
 				continue;
 			}
-			final int damage = CombatFormula.calculateMagicDamage(caster, npc, secondaryMax, getSpellDamageCapPercent(Spells.IBAN_BLAST));
+			final int damage = CombatFormula.calculateMagicDamage(
+				caster, npc, secondaryMax, SpellClassification.getSpellDamageCapPercent(Spells.IBAN_BLAST));
 			applyGodSpellSecondaryDamage(caster, npc, damage);
 		}
 	}
@@ -2442,12 +2115,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
-		final boolean advancedSpell = isAdvancedGodSpell(spellEnum);
-		if (isGuthixGodSpell(spellEnum)) {
+		final boolean advancedSpell = SpellClassification.isAdvancedGodSpell(spellEnum);
+		if (SpellClassification.isGuthixGodSpell(spellEnum)) {
 			applyGuthixGodSpellPoison(caster, target, advancedSpell, primaryTarget);
 			return;
 		}
-		if (isZamorakGodSpell(spellEnum)) {
+		if (SpellClassification.isZamorakGodSpell(spellEnum)) {
 			applyZamorakWithering(target, advancedSpell);
 		}
 	}
@@ -2477,7 +2150,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private void applyGodSpellLifesteal(final Player caster, final Spells spellEnum, final int totalDamage) {
-		if (!isSaradominGodSpell(spellEnum) || totalDamage <= 0) {
+		if (!SpellClassification.isSaradominGodSpell(spellEnum) || totalDamage <= 0) {
 			return;
 		}
 		final int currentHits = caster.getSkills().getLevel(Skill.HITS.id());
@@ -2485,7 +2158,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		if (currentHits >= maxHits) {
 			return;
 		}
-		final double lifestealPercent = isAdvancedGodSpell(spellEnum) ? 0.20D : 0.10D;
+		final double lifestealPercent = SpellClassification.isAdvancedGodSpell(spellEnum) ? 0.20D : 0.10D;
 		final int healing = Math.max(1, (int) Math.floor(totalDamage * lifestealPercent));
 		final int nextHits = Math.min(maxHits, currentHits + healing);
 		caster.getSkills().setLevel(Skill.HITS.id(), nextHits, true);
@@ -2494,15 +2167,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			caster.getUpdateFlags().addHitSplat(new HitSplat(caster, HitSplat.TYPE_HEAL, healed));
 			ActionSender.sendStat(caster, Skill.HITS.id());
 		}
-	}
-
-	private boolean isTeleportSpell(Spells spellEnum) {
-		return spellEnum == Spells.VARROCK_TELEPORT
-			|| spellEnum == Spells.LUMBRIDGE_TELEPORT
-			|| spellEnum == Spells.FALADOR_TELEPORT
-			|| spellEnum == Spells.CAMELOT_TELEPORT
-			|| spellEnum == Spells.ARDOUGNE_TELEPORT
-			|| spellEnum == Spells.WATCHTOWER_TELEPORT;
 	}
 
 	private boolean canTeleport(Player player, SpellDef spell, Spells spellEnum) {
@@ -2672,7 +2336,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			}
 
 			final int healPerPulse = getHealSpellPulseAmount(player, spellEnum);
-			final int effectType = getHealCombatEffect(spellEnum);
+			final int effectType = SpellClassification.getHealCombatEffect(spellEnum);
 			if (effectType > 0) {
 				player.getUpdateFlags().setCombatEffect(new CombatEffect(player, effectType));
 			}

@@ -9,6 +9,7 @@ from typing import NoReturn
 ROOT = Path(__file__).resolve().parents[2]
 GUIDE = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "interfaces" / "misc" / "SkillGuideInterface.java"
 SPELL_HANDLER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "SpellHandler.java"
+SPELL_CLASSIFICATION = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "SpellClassification.java"
 SPELL_DEF = ROOT / "server" / "conf" / "server" / "defs" / "SpellDef.xml"
 
 MIND_RUNE_ID = "35"
@@ -60,6 +61,7 @@ def get_regular_mind_combat_spell_names() -> set[str]:
 def main() -> None:
     guide = GUIDE.read_text(encoding="utf-8")
     handler = SPELL_HANDLER.read_text(encoding="utf-8")
+    classification = SPELL_CLASSIFICATION.read_text(encoding="utf-8")
 
     require(guide, "Spells using mind runes will do damage equal to chaos runes", "Magic guide chaos gauntlet line")
     require(guide, "Thunder spells can Startle and negate the next attack", "Magic guide Thunder dual-effect line")
@@ -71,26 +73,27 @@ def main() -> None:
     if mind_combat_spells != set(MIND_COMBAT_SPELLS):
         fail(f"Unexpected mind-rune combat spell set: {sorted(mind_combat_spells)}")
 
-    is_mind_spell = handler[
-        handler.index("private static boolean isMindSpell") :
-        handler.index("private static boolean isThunderSpell")
+    is_mind_spell = classification[
+        classification.index("static boolean isMindSpell") :
+        classification.index("static boolean isThunderSpell")
     ]
     for spell_name, enum_name in MIND_COMBAT_SPELLS.items():
         require(is_mind_spell, f"Spells.{enum_name}", f"Chaos gauntlet mind-rune coverage for {spell_name}")
 
     require_regex(
         handler,
-        r"chaosGauntletBonus && isMindSpell\(spellEnum\)\s*\?\s*0\.60D\s*:\s*getSpellDamageCapPercent\(spellEnum\)",
+        r"chaosGauntletBonus && SpellClassification\.isMindSpell\(spellEnum\)\s*"
+        r"\?\s*0\.60D\s*:\s*SpellClassification\.getSpellDamageCapPercent\(spellEnum\)",
         "Chaos gauntlets should promote mind-rune spells to chaos-rune damage cap",
     )
     require_regex(
-        handler,
+        classification,
         r"case WIND_STRIKE:.*?case WATER_STRIKE:.*?case EARTH_STRIKE:.*?case FIRE_STRIKE:.*?"
         r"case THUNDER_BALL:.*?case ICICLE_SHOT:.*?case ACID_DROP:.*?case BRANCH_SPORE:.*?return 0\.40D;",
         "All mind-rune combat spells should share the tier-1 damage cap before chaos gauntlets",
     )
     require_regex(
-        handler,
+        classification,
         r"case WIND_BOLT:.*?case WATER_BOLT:.*?case EARTH_BOLT:.*?case FIRE_BOLT:.*?"
         r"case THUNDER_SPLASH:.*?case ICE_BURST:.*?case ACID_FROG:.*?case WOOD_DRILL:.*?return 0\.60D;",
         "All chaos-rune combat spells should share the tier-2 damage cap",

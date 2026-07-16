@@ -12,6 +12,7 @@ PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 STAT_RESTORATION = ROOT / "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java"
 COMBAT_FORMULA = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
 SPELL_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
+SPELL_CLASSIFICATION = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java"
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 PROJECTILE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
 PVM_MELEE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
@@ -40,6 +41,7 @@ def main() -> None:
 	stat_restoration = STAT_RESTORATION.read_text(encoding="utf-8")
 	combat_formula = COMBAT_FORMULA.read_text(encoding="utf-8")
 	spell_handler = SPELL_HANDLER.read_text(encoding="utf-8")
+	spell_classification = SPELL_CLASSIFICATION.read_text(encoding="utf-8")
 	summoning = SUMMONING.read_text(encoding="utf-8")
 	projectile_event = PROJECTILE_EVENT.read_text(encoding="utf-8")
 	pvm_melee_event = PVM_MELEE_EVENT.read_text(encoding="utf-8")
@@ -93,9 +95,9 @@ def main() -> None:
 	require(runecraft, "LAW_ROBE_RUNEPRODUCTION_CACHE_PREFIX + runeId", "Law robe fractional carryover should be stored per rune")
 
 	require(spell_handler, "damageCapPercent += getPlayer().getMindRobeSpellCapBonus();", "Mind robe cap should stack after chaos gauntlets")
-	require(spell_handler, "private static boolean isBloodSpell(final SpellDef spell)", "Blood spell detection should use spell definitions")
-	require(spell_handler, "rune.getKey() == ItemId.BLOOD_RUNE.id()", "Blood spells should be detected by blood rune requirement")
-	require(spell_handler, "isBloodSpell(spell)", "Blood spell flag should be passed to projectile events")
+	require(spell_classification, "static boolean isBloodSpell(final SpellDef spell)", "Blood spell detection should use spell definitions")
+	require(spell_classification, "rune.getKey() == ItemId.BLOOD_RUNE.id()", "Blood spells should be detected by blood rune requirement")
+	require(spell_handler, "SpellClassification.isBloodSpell(spell)", "Blood spell flag should be passed to projectile events")
 
 	require(summoning, "getLifeRobeSummonBonusPercent()", "Life robe should affect summon duration/health")
 
