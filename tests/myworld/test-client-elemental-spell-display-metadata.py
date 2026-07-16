@@ -4,7 +4,6 @@ import json
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -14,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SPELL_XML = ROOT / "server/conf/server/defs/SpellDef.xml"
 CONSTANTS = ROOT / "server/src/com/openrsc/server/constants/Constants.java"
 SPELL_DAMAGES = ROOT / "server/src/com/openrsc/server/constants/SpellDamages.java"
-SPELL_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
+SPELL_CLASSIFICATION = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java"
 METADATA = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/defs/ElementalSpellDisplayMetadata.java"
 ENTITY_DEF = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/defs/EntityDef.java"
 SPELL_DEF = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/defs/SpellDef.java"
@@ -74,7 +73,7 @@ def parse_spells() -> list[dict]:
 
 def method_body(source: str, method_name: str) -> str:
     match = re.search(
-        rf"private static [^\n]+ {method_name}\([^)]*\) \{{(.*?)\n\t\}}",
+        rf"(?:private )?static [^\n]+ {method_name}\([^)]*\) \{{(.*?)\n\t\}}",
         source,
         flags=re.S,
     )
@@ -84,7 +83,7 @@ def method_body(source: str, method_name: str) -> str:
 
 def server_metadata() -> dict[int, dict]:
     constants = CONSTANTS.read_text(encoding="utf-8")
-    handler = SPELL_HANDLER.read_text(encoding="utf-8")
+    classification_source = SPELL_CLASSIFICATION.read_text(encoding="utf-8")
     damages = SPELL_DAMAGES.read_text(encoding="utf-8")
 
     indexes = {
@@ -100,7 +99,7 @@ def server_metadata() -> dict[int, dict]:
         damage_by_identity.setdefault(identity, float(damage))
 
     cap_by_identity = {}
-    cap_body = method_body(handler, "getSpellDamageCapPercent")
+    cap_body = method_body(classification_source, "getSpellDamageCapPercent")
     for cases, cap in re.findall(
         r"((?:\s*case [A-Z0-9_]+:)+)\s*return ([0-9.]+)D;", cap_body
     ):
@@ -109,7 +108,7 @@ def server_metadata() -> dict[int, dict]:
 
     result = {}
     for classification, server_method in CLASSIFICATION_METHODS.items():
-        body = method_body(handler, server_method)
+        body = method_body(classification_source, server_method)
         for identity in re.findall(r"Spells\.([A-Z0-9_]+)", body):
             if identity not in indexes:
                 continue

@@ -1,6 +1,10 @@
 package com.openrsc.server.model.container;
 
-import com.openrsc.server.constants.*;
+import com.openrsc.server.constants.AppearanceId;
+import com.openrsc.server.constants.IronmanMode;
+import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.Quests;
+import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.EnchantingItemEffects;
@@ -1711,330 +1715,44 @@ public class Equipment {
 	}
 
 	private int getGodEquipmentNaturalPrayerBonus(final int itemId) {
-		switch (itemId) {
-			case 430: // BLACK_MACE
-			case 2157: // WHITE_MACE
-			case 3119: // GREY_MACE
-			case 433: // BLACK_KITE_SHIELD
-			case 2162: // WHITE_KITE_SHIELD
-			case 3124: // GREY_KITE_SHIELD
-				return 5;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.godEquipmentNaturalPrayerBonus(itemId);
 	}
 
 	private int getGodEquipmentResourceCost(final int itemId) {
-		switch (itemId) {
-			case 423: // BLACK_DAGGER
-			case 424: // BLACK_SHORT_SWORD
-			case 430: // BLACK_MACE
-			case 2151: // WHITE_DAGGER
-			case 2152: // WHITE_SHORT_SWORD
-			case 2157: // WHITE_MACE
-			case 3113: // GREY_DAGGER
-			case 3114: // GREY_SHORT_SWORD
-			case 3119: // GREY_MACE
-			case 3137: // ZAMORAK_WOOL_HAT
-			case 3142: // SARADOMIN_WOOL_HAT
-			case 3147: // GUTHIX_WOOL_HAT
-				return 1;
-			case 425: // BLACK_LONG_SWORD
-			case 427: // BLACK_SCIMITAR
-			case 230: // LARGE_BLACK_HELMET
-			case 3131: // BLACK_GAUNTLETS
-			case 3132: // BLACK_GREAVES
-			case 2153: // WHITE_LONG_SWORD
-			case 2155: // WHITE_SCIMITAR
-			case 2158: // LARGE_WHITE_HELMET
-			case 3133: // WHITE_GAUNTLETS
-			case 3134: // WHITE_GREAVES
-			case 3115: // GREY_LONG_SWORD
-			case 3117: // GREY_SCIMITAR
-			case 3120: // LARGE_GREY_HELMET
-			case 3135: // GREY_GAUNTLETS
-			case 3136: // GREY_GREAVES
-			case 3229: // BLACK_SPEAR
-			case 3230: // WHITE_SPEAR
-			case 3231: // GREY_SPEAR
-			case 3140: // ZAMORAK_WOOL_GLOVES
-			case 3141: // ZAMORAK_WOOL_BOOTS
-			case 3145: // SARADOMIN_WOOL_GLOVES
-			case 3146: // SARADOMIN_WOOL_BOOTS
-			case 3150: // GUTHIX_WOOL_GLOVES
-			case 3151: // GUTHIX_WOOL_BOOTS
-				return 2;
-			case 426: // BLACK_2_HANDED_SWORD
-			case 429: // BLACK_BATTLE_AXE
-			case 432: // BLACK_SQUARE_SHIELD
-			case 433: // BLACK_KITE_SHIELD
-			case 248: // BLACK_PLATE_MAIL_LEGS
-			case 2154: // WHITE_2_HANDED_SWORD
-			case 2156: // WHITE_BATTLE_AXE
-			case 2161: // WHITE_SQUARE_SHIELD
-			case 2162: // WHITE_KITE_SHIELD
-			case 2164: // WHITE_PLATE_MAIL_LEGS
-			case 3116: // GREY_2_HANDED_SWORD
-			case 3118: // GREY_BATTLE_AXE
-			case 3123: // GREY_SQUARE_SHIELD
-			case 3124: // GREY_KITE_SHIELD
-			case 3126: // GREY_PLATE_MAIL_LEGS
-			case 3232: // BLACK_SCYTHE
-			case 3233: // WHITE_SCYTHE
-			case 3234: // GREY_SCYTHE
-			case 3139: // ZAMORAK_WOOL_ROBE_BOTTOM
-			case 3144: // SARADOMIN_WOOL_ROBE_BOTTOM
-			case 3149: // GUTHIX_WOOL_ROBE_BOTTOM
-				return 3;
-			case 196: // BLACK_PLATE_MAIL_BODY
-			case 2163: // WHITE_PLATE_MAIL_BODY
-			case 3125: // GREY_PLATE_MAIL_BODY
-			case 3138: // ZAMORAK_WOOL_ROBE_TOP
-			case 3143: // SARADOMIN_WOOL_ROBE_TOP
-			case 3148: // GUTHIX_WOOL_ROBE_TOP
-				return 4;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.godEquipmentResourceCost(itemId);
 	}
 
 	private int getGodEquipmentTargetWeaponAim(final int itemId) {
-		switch (itemId) {
-			case 423: // BLACK_DAGGER
-			case 2151: // WHITE_DAGGER
-			case 3113: // GREY_DAGGER
-				return 15;
-			case 424: // BLACK_SHORT_SWORD
-			case 2152: // WHITE_SHORT_SWORD
-			case 3114: // GREY_SHORT_SWORD
-				return 25;
-			case 425: // BLACK_LONG_SWORD
-			case 2153: // WHITE_LONG_SWORD
-			case 3115: // GREY_LONG_SWORD
-				return 31;
-			case 426: // BLACK_2_HANDED_SWORD
-			case 2154: // WHITE_2_HANDED_SWORD
-			case 3116: // GREY_2_HANDED_SWORD
-				return 44;
-			case 427: // BLACK_SCIMITAR
-			case 2155: // WHITE_SCIMITAR
-			case 3117: // GREY_SCIMITAR
-				return 28;
-			case 429: // BLACK_BATTLE_AXE
-			case 2156: // WHITE_BATTLE_AXE
-			case 3118: // GREY_BATTLE_AXE
-				return 30;
-			case 430: // BLACK_MACE
-			case 2157: // WHITE_MACE
-			case 3119: // GREY_MACE
-				return 24;
-			case 3229: // BLACK_SPEAR
-			case 3230: // WHITE_SPEAR
-			case 3231: // GREY_SPEAR
-				return 24;
-			case 3232: // BLACK_SCYTHE
-			case 3233: // WHITE_SCYTHE
-			case 3234: // GREY_SCYTHE
-				return 99;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.godEquipmentTargetWeaponAim(itemId);
 	}
 
 	private int getGodEquipmentTargetWeaponPower(final int itemId) {
-		switch (itemId) {
-			case 423: // BLACK_DAGGER
-			case 2151: // WHITE_DAGGER
-			case 3113: // GREY_DAGGER
-				return 15;
-			case 424: // BLACK_SHORT_SWORD
-			case 2152: // WHITE_SHORT_SWORD
-			case 3114: // GREY_SHORT_SWORD
-				return 25;
-			case 425: // BLACK_LONG_SWORD
-			case 2153: // WHITE_LONG_SWORD
-			case 3115: // GREY_LONG_SWORD
-				return 31;
-			case 426: // BLACK_2_HANDED_SWORD
-			case 2154: // WHITE_2_HANDED_SWORD
-			case 3116: // GREY_2_HANDED_SWORD
-				return 44;
-			case 427: // BLACK_SCIMITAR
-			case 2155: // WHITE_SCIMITAR
-			case 3117: // GREY_SCIMITAR
-				return 28;
-			case 429: // BLACK_BATTLE_AXE
-			case 2156: // WHITE_BATTLE_AXE
-			case 3118: // GREY_BATTLE_AXE
-				return 41;
-			case 430: // BLACK_MACE
-			case 2157: // WHITE_MACE
-			case 3119: // GREY_MACE
-				return 18;
-			case 3229: // BLACK_SPEAR
-			case 3230: // WHITE_SPEAR
-			case 3231: // GREY_SPEAR
-				return 14;
-			case 3232: // BLACK_SCYTHE
-			case 3233: // WHITE_SCYTHE
-			case 3234: // GREY_SCYTHE
-				return 99;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.godEquipmentTargetWeaponPower(itemId);
 	}
 
 	private int getGodEquipmentTargetArmour(final int itemId) {
-		switch (itemId) {
-			case 230: // LARGE_BLACK_HELMET
-			case 2158: // LARGE_WHITE_HELMET
-			case 3120: // LARGE_GREY_HELMET
-				return 19;
-			case 196: // BLACK_PLATE_MAIL_BODY
-			case 2163: // WHITE_PLATE_MAIL_BODY
-			case 3125: // GREY_PLATE_MAIL_BODY
-				return 63;
-			case 248: // BLACK_PLATE_MAIL_LEGS
-			case 2164: // WHITE_PLATE_MAIL_LEGS
-			case 3126: // GREY_PLATE_MAIL_LEGS
-				return 31;
-			case 432: // BLACK_SQUARE_SHIELD
-			case 2161: // WHITE_SQUARE_SHIELD
-			case 3123: // GREY_SQUARE_SHIELD
-				return 29;
-			case 433: // BLACK_KITE_SHIELD
-			case 2162: // WHITE_KITE_SHIELD
-			case 3124: // GREY_KITE_SHIELD
-				return 24;
-			case 3131: // BLACK_GAUNTLETS
-			case 3133: // WHITE_GAUNTLETS
-			case 3135: // GREY_GAUNTLETS
-			case 3132: // BLACK_GREAVES
-			case 3134: // WHITE_GREAVES
-			case 3136: // GREY_GREAVES
-				return 12;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.godEquipmentTargetArmour(itemId);
 	}
 
 	private int getGodEquipmentTargetMeleeOffense(final int itemId) {
-		switch (itemId) {
-			case 423: // BLACK_DAGGER
-			case 2151: // WHITE_DAGGER
-			case 3113: // GREY_DAGGER
-				return 15;
-			case 424: // BLACK_SHORT_SWORD
-			case 2152: // WHITE_SHORT_SWORD
-			case 3114: // GREY_SHORT_SWORD
-				return 32;
-			case 425: // BLACK_LONG_SWORD
-			case 2153: // WHITE_LONG_SWORD
-			case 3115: // GREY_LONG_SWORD
-				return 60;
-			case 426: // BLACK_2_HANDED_SWORD
-			case 2154: // WHITE_2_HANDED_SWORD
-			case 3116: // GREY_2_HANDED_SWORD
-				return 130;
-			case 427: // BLACK_SCIMITAR
-			case 2155: // WHITE_SCIMITAR
-			case 3117: // GREY_SCIMITAR
-				return 31;
-			case 429: // BLACK_BATTLE_AXE
-			case 2156: // WHITE_BATTLE_AXE
-			case 3118: // GREY_BATTLE_AXE
-				return 62;
-			case 430: // BLACK_MACE
-			case 2157: // WHITE_MACE
-			case 3119: // GREY_MACE
-				return 40;
-			case 3229: // BLACK_SPEAR
-			case 3230: // WHITE_SPEAR
-			case 3231: // GREY_SPEAR
-				return 38;
-			case 3232: // BLACK_SCYTHE
-			case 3233: // WHITE_SCYTHE
-			case 3234: // GREY_SCYTHE
-				return 99;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.godEquipmentTargetMeleeOffense(itemId);
 	}
 
 	private int getGodEquipmentTargetMeleeDefense(final int itemId) {
-		switch (itemId) {
-			case 230: // LARGE_BLACK_HELMET
-			case 2158: // LARGE_WHITE_HELMET
-			case 3120: // LARGE_GREY_HELMET
-			case 432: // BLACK_SQUARE_SHIELD
-			case 2161: // WHITE_SQUARE_SHIELD
-			case 3123: // GREY_SQUARE_SHIELD
-			case 3131: // BLACK_GAUNTLETS
-			case 3133: // WHITE_GAUNTLETS
-			case 3135: // GREY_GAUNTLETS
-			case 3132: // BLACK_GREAVES
-			case 3134: // WHITE_GREAVES
-			case 3136: // GREY_GREAVES
-				return 12;
-			case 196: // BLACK_PLATE_MAIL_BODY
-			case 2163: // WHITE_PLATE_MAIL_BODY
-			case 3125: // GREY_PLATE_MAIL_BODY
-				return 30;
-			case 248: // BLACK_PLATE_MAIL_LEGS
-			case 2164: // WHITE_PLATE_MAIL_LEGS
-			case 3126: // GREY_PLATE_MAIL_LEGS
-			case 433: // BLACK_KITE_SHIELD
-			case 2162: // WHITE_KITE_SHIELD
-			case 3124: // GREY_KITE_SHIELD
-				return 18;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.godEquipmentTargetMeleeDefense(itemId);
 	}
 
 	private int getGodEquipmentTargetRangedDefense(final int itemId) {
-		switch (itemId) {
-			case 230: // LARGE_BLACK_HELMET
-			case 2158: // LARGE_WHITE_HELMET
-			case 3120: // LARGE_GREY_HELMET
-			case 432: // BLACK_SQUARE_SHIELD
-			case 2161: // WHITE_SQUARE_SHIELD
-			case 3123: // GREY_SQUARE_SHIELD
-			case 3131: // BLACK_GAUNTLETS
-			case 3133: // WHITE_GAUNTLETS
-			case 3135: // GREY_GAUNTLETS
-			case 3132: // BLACK_GREAVES
-			case 3134: // WHITE_GREAVES
-			case 3136: // GREY_GREAVES
-				return 4;
-			case 196: // BLACK_PLATE_MAIL_BODY
-			case 2163: // WHITE_PLATE_MAIL_BODY
-			case 3125: // GREY_PLATE_MAIL_BODY
-				return 10;
-			case 248: // BLACK_PLATE_MAIL_LEGS
-			case 2164: // WHITE_PLATE_MAIL_LEGS
-			case 3126: // GREY_PLATE_MAIL_LEGS
-				return 6;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.godEquipmentTargetRangedDefense(itemId);
 	}
 
 	private int getGodEquipmentTargetMagicDefense(final int itemId) {
-		switch (itemId) {
-			case 433: // BLACK_KITE_SHIELD
-			case 2162: // WHITE_KITE_SHIELD
-			case 3124: // GREY_KITE_SHIELD
-				return 6;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.godEquipmentTargetMagicDefense(itemId);
 	}
 
 	private int getGodEquipmentTargetMagic(final int itemId) {
-		return 0;
+		return EquipmentStatCalculator.godEquipmentTargetMagic(itemId);
 	}
-
 	public double getGoblinTenacityProcChance() {
 		return hasFullGoblinHideSet() ? 0.05D : 0.0D;
 	}
@@ -2198,11 +1916,14 @@ public class Equipment {
 	}
 
 	private int getModifiedOffense(final PrayerCatalog.CombatStyle combatStyle) {
-		return Math.max(0, getDisplayedModifiedOffense(combatStyle));
+		return EquipmentStatCalculator.combatOffense(getDisplayedModifiedOffense(combatStyle));
 	}
 
 	private int getDisplayedModifiedOffense(final PrayerCatalog.CombatStyle combatStyle) {
-		return applyOffenseBonus(combatStyle, getRawOffense(combatStyle)) - getArmorPowerPenalty(combatStyle);
+		return EquipmentStatCalculator.displayedOffense(
+			getRawOffense(combatStyle),
+			getEquippedElementalPowerBonus(combatStyle),
+			getArmorPowerPenalty(combatStyle));
 	}
 
 	private int getRawOffense(final PrayerCatalog.CombatStyle combatStyle) {
@@ -2903,14 +2624,6 @@ public class Equipment {
 		return robeEffects.applyMissingHealthDefenseBonus(total);
 	}
 
-	private int applyOffenseBonus(final PrayerCatalog.CombatStyle combatStyle, final int total) {
-		final int bonus = getEquippedElementalPowerBonus(combatStyle);
-		if (bonus <= 0) {
-			return total;
-		}
-		return total + bonus;
-	}
-
 	private int getArmorPowerPenalty(final PrayerCatalog.CombatStyle combatStyle) {
 		if (combatStyle == PrayerCatalog.CombatStyle.MAGIC && hasFullMagicSpiderCarapaceSet()) {
 			return 0;
@@ -2933,7 +2646,7 @@ public class Equipment {
 				}
 			}
 		}
-		return pieces * ARMOR_POWER_PENALTY_PER_MAJOR_SLOT;
+		return EquipmentStatCalculator.armorPowerPenalty(pieces, ARMOR_POWER_PENALTY_PER_MAJOR_SLOT);
 	}
 
 	private boolean appliesArmorPowerPenalty(final Item item, final PrayerCatalog.CombatStyle combatStyle) {
@@ -3228,34 +2941,11 @@ public class Equipment {
 	}
 
 	private int getBlessedWoolBaseMagicDefense(final int itemId) {
-		switch (itemId) {
-			case 3137: // ZAMORAK_WOOL_HAT
-			case 3142: // SARADOMIN_WOOL_HAT
-			case 3147: // GUTHIX_WOOL_HAT
-				return 1;
-			case 3138: // ZAMORAK_WOOL_ROBE_TOP
-			case 3143: // SARADOMIN_WOOL_ROBE_TOP
-			case 3148: // GUTHIX_WOOL_ROBE_TOP
-				return 4;
-			case 3139: // ZAMORAK_WOOL_ROBE_BOTTOM
-			case 3144: // SARADOMIN_WOOL_ROBE_BOTTOM
-			case 3149: // GUTHIX_WOOL_ROBE_BOTTOM
-				return 3;
-			case 3140: // ZAMORAK_WOOL_GLOVES
-			case 3141: // ZAMORAK_WOOL_BOOTS
-			case 3145: // SARADOMIN_WOOL_GLOVES
-			case 3146: // SARADOMIN_WOOL_BOOTS
-			case 3150: // GUTHIX_WOOL_GLOVES
-			case 3151: // GUTHIX_WOOL_BOOTS
-				return 2;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.blessedWoolBaseMagicDefense(itemId);
 	}
 
 	private int getBlessedWoolTargetMagicDefense(final int itemId) {
-		final int resourceCost = getGodEquipmentResourceCost(itemId);
-		return resourceCost > 0 ? Math.max(getBlessedWoolBaseMagicDefense(itemId), (int) Math.ceil(9 * resourceCost * 0.6D)) : 0;
+		return EquipmentStatCalculator.blessedWoolTargetMagicDefense(itemId);
 	}
 
 	private RobeEffects getEquippedRobeEffects() {
@@ -3472,16 +3162,8 @@ public class Equipment {
 	}
 
 	private boolean isOffenseSlot(Item item, EquipmentSlot... allowedSlots) {
-		EquipmentSlot itemSlot = EquipmentSlot.get(item.getDef(player.getWorld()).getWieldPosition());
-		if (itemSlot == null) {
-			return false;
-		}
-		for (EquipmentSlot allowedSlot : allowedSlots) {
-			if (itemSlot == allowedSlot) {
-				return true;
-			}
-		}
-		return false;
+		return EquipmentSlotRules.isOffenseSlot(
+			item.getDef(player.getWorld()).getWieldPosition(), allowedSlots);
 	}
 
 	private boolean bowConflictsWithOffhand(Item requestedItem, Item equippedItem) {
@@ -3493,10 +3175,11 @@ public class Equipment {
 		if (requestedDef == null || equippedDef == null) {
 			return false;
 		}
-		return (RangeUtils.isBow(requestedItem.getCatalogId())
-				&& equippedDef.getWieldPosition() == EquipmentSlot.SLOT_OFFHAND.getIndex())
-			|| (requestedDef.getWieldPosition() == EquipmentSlot.SLOT_OFFHAND.getIndex()
-				&& RangeUtils.isBow(equippedItem.getCatalogId()));
+		return EquipmentSlotRules.bowConflictsWithOffhand(
+			RangeUtils.isBow(requestedItem.getCatalogId()),
+			requestedDef.getWieldPosition(),
+			RangeUtils.isBow(equippedItem.getCatalogId()),
+			equippedDef.getWieldPosition());
 	}
 
 	private boolean allowsHandFootArmorOverlap(Item requestedItem, Item equippedItem) {
@@ -3505,24 +3188,8 @@ public class Equipment {
 		if (requestedDef == null || equippedDef == null) {
 			return false;
 		}
-		EquipmentSlot requestedSlot = EquipmentSlot.get(requestedDef.getWieldPosition());
-		EquipmentSlot equippedSlot = EquipmentSlot.get(equippedDef.getWieldPosition());
-		if (requestedSlot == null || equippedSlot == null) {
-			return false;
-		}
-		return isHandFootArmorSlot(requestedSlot) && isBodyLegArmorSlot(equippedSlot)
-			|| isHandFootArmorSlot(equippedSlot) && isBodyLegArmorSlot(requestedSlot);
-	}
-
-	private boolean isHandFootArmorSlot(EquipmentSlot slot) {
-		return slot == EquipmentSlot.SLOT_GLOVES || slot == EquipmentSlot.SLOT_BOOTS;
-	}
-
-	private boolean isBodyLegArmorSlot(EquipmentSlot slot) {
-		return slot == EquipmentSlot.SLOT_CHAIN_BODY
-			|| slot == EquipmentSlot.SLOT_PLATE_BODY
-			|| slot == EquipmentSlot.SLOT_PLATE_LEGS
-			|| slot == EquipmentSlot.SLOT_SKIRT;
+		return EquipmentSlotRules.allowsHandFootArmorOverlap(
+			requestedDef.getWieldPosition(), equippedDef.getWieldPosition());
 	}
 
 	private boolean isRangedArmor(Item item) {
@@ -3546,23 +3213,8 @@ public class Equipment {
 	}
 
 	private boolean isMajorArmorPenaltySlot(Item item) {
-		EquipmentSlot itemSlot = EquipmentSlot.get(item.getDef(player.getWorld()).getWieldPosition());
-		if (itemSlot == null) {
-			return false;
-		}
-		switch (itemSlot) {
-			case SLOT_LARGE_HELMET:
-			case SLOT_MEDIUM_HELMET:
-			case SLOT_CHAIN_BODY:
-			case SLOT_PLATE_BODY:
-			case SLOT_PLATE_LEGS:
-			case SLOT_SKIRT:
-			case SLOT_GLOVES:
-			case SLOT_BOOTS:
-				return true;
-			default:
-				return false;
-		}
+		return EquipmentSlotRules.isMajorArmorPenaltySlot(
+			item.getDef(player.getWorld()).getWieldPosition());
 	}
 
 	private boolean isLeatherArmorPenaltyItem(Item item) {
@@ -3594,93 +3246,11 @@ public class Equipment {
 	}
 
 	private boolean isArmorItem(Item item) {
-		EquipmentSlot itemSlot = EquipmentSlot.get(item.getDef(player.getWorld()).getWieldPosition());
-		if (itemSlot == null) {
-			return false;
-		}
-		switch (itemSlot) {
-			case SLOT_LARGE_HELMET:
-			case SLOT_MEDIUM_HELMET:
-			case SLOT_CHAIN_BODY:
-			case SLOT_PLATE_BODY:
-			case SLOT_PLATE_LEGS:
-			case SLOT_SKIRT:
-			case SLOT_GLOVES:
-			case SLOT_BOOTS:
-			case SLOT_OFFHAND:
-				return true;
-			default:
-				return false;
-		}
+		return EquipmentSlotRules.isArmorSlot(item.getDef(player.getWorld()).getWieldPosition());
 	}
 
 	private int getLegacyRangedOffense(Item item) {
-		switch (ItemId.getById(item.getCatalogId())) {
-			case BRONZE_THROWING_DART:
-			case POISONED_BRONZE_THROWING_DART:
-			case BRONZE_ARROWS:
-			case POISON_BRONZE_ARROWS:
-				return 15;
-			case IRON_THROWING_DART:
-			case POISONED_IRON_THROWING_DART:
-				return 17;
-			case IRON_ARROWS:
-			case POISON_IRON_ARROWS:
-			case CROSSBOW_BOLTS:
-			case POISON_CROSSBOW_BOLTS:
-				return 20;
-			case STEEL_THROWING_DART:
-			case POISONED_STEEL_THROWING_DART:
-				return 22;
-			case STEEL_ARROWS:
-			case POISON_STEEL_ARROWS:
-			case MITHRIL_THROWING_DART:
-			case POISONED_MITHRIL_THROWING_DART:
-			case BRONZE_THROWING_KNIFE:
-			case POISONED_BRONZE_THROWING_KNIFE:
-				return 25;
-			case ADAMANTITE_THROWING_DART:
-			case POISONED_ADAMANTITE_THROWING_DART:
-				return 27;
-			case RUNE_THROWING_DART:
-			case POISONED_RUNE_THROWING_DART:
-			case MITHRIL_ARROWS:
-			case POISON_MITHRIL_ARROWS:
-			case IRON_THROWING_KNIFE:
-			case POISONED_IRON_THROWING_KNIFE:
-				return 30;
-			case ADAMANTITE_ARROWS:
-			case POISON_ADAMANTITE_ARROWS:
-			case STEEL_THROWING_KNIFE:
-			case POISONED_STEEL_THROWING_KNIFE:
-			case BLACK_THROWING_KNIFE:
-			case POISONED_BLACK_THROWING_KNIFE:
-				return 35;
-			case RUNE_ARROWS:
-			case POISON_RUNE_ARROWS:
-			case MITHRIL_THROWING_KNIFE:
-			case POISONED_MITHRIL_THROWING_KNIFE:
-				return 40;
-			case ADAMANTITE_THROWING_KNIFE:
-			case POISONED_ADAMANTITE_THROWING_KNIFE:
-				return 45;
-			case RUNE_THROWING_KNIFE:
-			case POISONED_RUNE_THROWING_KNIFE:
-			case DRAGON_ARROWS:
-			case POISON_DRAGON_ARROWS:
-			case DRAGON_BOLTS:
-			case POISON_DRAGON_BOLTS:
-				return 50;
-			case SHORTBOW:
-				return 14;
-			case LONGBOW:
-				return 20;
-			case CROSSBOW:
-			case PHOENIX_CROSSBOW:
-				return 22;
-			default:
-				return 0;
-		}
+		return EquipmentStatCalculator.legacyRangedOffense(item.getCatalogId());
 	}
 
 	// Equipment::equipCount()

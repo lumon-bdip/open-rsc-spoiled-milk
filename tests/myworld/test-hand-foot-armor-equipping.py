@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
+SLOT_RULES = ROOT / "server/src/com/openrsc/server/model/container/EquipmentSlotRules.java"
 BASE_ITEMS = ROOT / "server/conf/server/defs/ItemDefs.json"
 CUSTOM_ITEMS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 MYWORLD_ITEMS = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
@@ -18,6 +19,7 @@ def require(condition: bool, message: str) -> None:
 
 def main() -> None:
     equipment = EQUIPMENT.read_text(encoding="utf-8")
+    slot_rules = SLOT_RULES.read_text(encoding="utf-8")
     by_id = {}
     for item_file in (BASE_ITEMS, CUSTOM_ITEMS, MYWORLD_ITEMS):
         data = json.loads(item_file.read_text(encoding="utf-8"))
@@ -28,7 +30,7 @@ def main() -> None:
 
     require("allowsHandFootArmorOverlap(request.item, item)" in equipment,
             "equipment conflicts should exempt hand/foot armour versus body/leg armour")
-    require("isHandFootArmorSlot" in equipment and "isBodyLegArmorSlot" in equipment,
+    require("isHandFootArmorSlot" in slot_rules and "isBodyLegArmorSlot" in slot_rules,
             "hand/foot overlap exception should be slot-based")
 
     expected_slots = {

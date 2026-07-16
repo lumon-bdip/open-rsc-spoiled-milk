@@ -92,8 +92,10 @@ def main() -> int:
         "return effectType == COMBAT_EFFECT_SARADOMIN_STRIKE",
     ), "mudclient.java")
 
-    spell_handler = read("server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java")
-    require(spell_handler, (
+    spell_classification = read(
+        "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java"
+    )
+    require(spell_classification, (
         "return Projectile.HOLY_MAGIC;",
         "return CombatEffect.EYE_OF_GUTHIX;",
         "return CombatEffect.SARADOMIN_STRIKE;",
@@ -101,7 +103,7 @@ def main() -> int:
         "return CombatEffect.ZAMORAKS_APOCOLYPSE;",
         "return CombatEffect.SARADOMIN_SOUL_SLASH;",
         "return CombatEffect.CLAW_OF_GUTHIX;",
-    ), "SpellHandler.java")
+    ), "SpellClassification.java")
 
     print("PASS: remaining player spell animations use the assigned reusable sheets")
     return 0

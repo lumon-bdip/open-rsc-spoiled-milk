@@ -281,13 +281,15 @@ def main():
         "public static final int DIVINE_RETRIBUTION = 40;",
         "public static final int CORROSIVE_AURA = 41;",
     ], "CombatEffect.java")
-    handler = read("server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java")
-    require(handler, [
+    classification = read(
+        "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java"
+    )
+    require(classification, [
 		"return CombatEffect.WATER_ERUPTION;",
         "return CombatEffect.EXPLOSION;",
         "return CombatEffect.WATER_VORTEX;",
         "return CombatEffect.FIRE_PILLAR;",
-    ], "SpellHandler.java")
+    ], "SpellClassification.java")
 
     print("PASS: legacy magic animations retain their supplied frames and sprite-sheet geometry")
 

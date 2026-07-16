@@ -12,6 +12,7 @@ LEGACY_ANIMATIONS = ROOT / "dev/myworld/assets/legacy animation folder"
 CATALOG_PATH = ROOT / "Client_Base/src/orsc/graphics/two/ProjectileAnimationCatalog.java"
 CLIENT_PATH = ROOT / "Client_Base/src/orsc/mudclient.java"
 SPELL_HANDLER_PATH = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
+SPELL_CLASSIFICATION_PATH = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java"
 NPC_PROFILE_PATH = ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcAttackStyleProfile.java"
 BUILD_PATH = ROOT / "Client_Base/build.xml"
 EXPORTER_PATH = ROOT / "tools/myworld/ExportBasicProjectileSheets.java"
@@ -299,13 +300,16 @@ def main() -> None:
         fail("Spore must use its dedicated projectile scene size")
 
     spell_handler = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
+    spell_classification = SPELL_CLASSIFICATION_PATH.read_text(encoding="utf-8")
     for projectile in ("WIND_ARROW", "ROCK_THROW", "WATER_BALL", "FIREBALL",
                        "THUNDER_BALL", "ICICLE_SHOT", "ACID_DROP", "BRANCH_SPORE"):
-        if f"return Projectile.{projectile};" not in spell_handler:
+        if f"return Projectile.{projectile};" not in spell_classification:
             fail(f"player entry spell fallback missing Projectile.{projectile}")
-    if "private static int getGodSpellProjectileVisual" not in spell_handler \
-            or "return Projectile.HOLY_MAGIC;" not in spell_handler:
+    if "static int getGodSpellProjectileVisual" not in spell_classification \
+            or "return Projectile.HOLY_MAGIC;" not in spell_classification:
         fail("god spell projectiles must use holy-basic through HOLY_MAGIC")
+    if "getGodSpellProjectileVisual(spellEnum)" not in spell_handler:
+        fail("SpellHandler must consume the classified god-spell projectile")
 
     npc_profile = NPC_PROFILE_PATH.read_text(encoding="utf-8")
     for projectile in ("WIND_ARROW", "WATER_BALL", "ROCK_THROW", "FIREBALL",

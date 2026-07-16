@@ -2,7 +2,6 @@
 
 import re
 import struct
-import sys
 from pathlib import Path
 
 
@@ -90,6 +89,9 @@ def main() -> int:
     ), "ProjectileAnimationCatalog.java")
 
     spell_handler = read("server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java")
+    spell_classification = read(
+        "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java"
+    )
     projectile_assignments = {
         "WIND_BOLT": "WIND_STATIC_2",
         "WATER_BOLT": "WATER_STATIC_2",
@@ -102,10 +104,11 @@ def main() -> int:
     }
     for spell, projectile in projectile_assignments.items():
         pattern = rf"case {spell}:\s+return Projectile\.{projectile};"
-        assert re.search(pattern, spell_handler), f"{spell} is not assigned Projectile.{projectile}"
+        assert re.search(pattern, spell_classification), \
+            f"{spell} is not assigned Projectile.{projectile}"
 
     impact_method = re.search(
-        r"private static int getSpellImpactEffect.*?\n\t\}", spell_handler, re.DOTALL
+        r"static int getSpellImpactEffect.*?\n\t\}", spell_classification, re.DOTALL
     )
     assert impact_method is not None
     assert "case WIND_BOLT:" not in impact_method.group(0)
@@ -118,9 +121,11 @@ def main() -> int:
         "case ACID_FROG:", "return CombatEffect.ACID_FROG;",
         "case WOOD_DRILL:", "return CombatEffect.WOOD_DRILL;",
     ), "getSpellImpactEffect")
-    require(spell_handler, (
+    require(spell_classification, (
         "return CombatEffect.LESSER_HEAL;",
         "return CombatEffect.GREATER_HEAL;",
+    ), "SpellClassification.java")
+    require(spell_handler, (
         "new CombatEffect(player, CombatEffect.ALCHEMY)",
         "new CombatEffect(player, CombatEffect.TELEPORT)",
         'TELEPORT_CHARGE_MS, "Teleport spell charge"',
@@ -129,7 +134,7 @@ def main() -> int:
     for composite_spell in (
         "EARTH_BOLT", "FIRE_BOLT", "THUNDER_SPLASH", "ICE_BURST", "ACID_FROG", "WOOD_DRILL"
     ):
-        assert f"spellEnum == Spells.{composite_spell}" in spell_handler, \
+        assert f"spellEnum == Spells.{composite_spell}" in spell_classification, \
             f"{composite_spell} must retain its projectile before the impact effect"
     telegrab_case = re.search(
         r"case TELEKINETIC_GRAB:.*?\n\t\t\t\t\t\tbreak;", spell_handler, re.DOTALL

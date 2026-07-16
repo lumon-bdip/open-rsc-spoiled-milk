@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DEVOTION = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "Devotion.java"
 EQUIPMENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "container" / "Equipment.java"
+STAT_CALCULATOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "container" / "EquipmentStatCalculator.java"
 
 
 def fail(message: str) -> None:
@@ -18,6 +19,8 @@ def require(text: str, needle: str, description: str) -> None:
 def main() -> None:
     devotion = DEVOTION.read_text()
     equipment = EQUIPMENT.read_text()
+    stat_calculator = STAT_CALCULATOR.read_text()
+    equipment_rules = equipment + stat_calculator
 
     require(devotion, "COMBAT_GROWTH_START_LEVEL = 250", "combat growth start")
     require(devotion, "PRAYER_BONUS_GROWTH_MAX = 10", "prayer bonus growth cap")
@@ -69,17 +72,17 @@ def main() -> None:
         "case 3143: // SARADOMIN_WOOL_ROBE_TOP",
         "case 3148: // GUTHIX_WOOL_ROBE_TOP",
     ):
-        require(equipment, item, f"{item} worship matching/scaling coverage")
+        require(equipment_rules, item, f"{item} worship matching/scaling coverage")
 
-    require(equipment, "case 196: // BLACK_PLATE_MAIL_BODY", "black plate body resource cost")
-    require(equipment, "case 2163: // WHITE_PLATE_MAIL_BODY", "white plate body resource cost")
-    require(equipment, "case 3125: // GREY_PLATE_MAIL_BODY", "grey plate body resource cost")
-    require(equipment, "return 4;", "plate body resource cost should produce baseline +4 prayer")
-    require(equipment, "return 63;", "plate body should scale to adamantite plate body armour")
-    require(equipment, "return 30;", "plate body melee defense and battle axe aim should reach tier 8 equivalents")
-    require(equipment, "return 24;", "mace aim, spear aim, and paladin shield armour targets should reach tier 8 equivalents")
-    require(equipment, "return 18;", "mace power and paladin shield melee defense should reach tier 8 equivalents")
-    require(equipment, "return 99;", "blessed scythes should scale to adamantite scythe power")
+    require(stat_calculator, "case 196: // BLACK_PLATE_MAIL_BODY", "black plate body resource cost")
+    require(stat_calculator, "case 2163: // WHITE_PLATE_MAIL_BODY", "white plate body resource cost")
+    require(stat_calculator, "case 3125: // GREY_PLATE_MAIL_BODY", "grey plate body resource cost")
+    require(stat_calculator, "return 4;", "plate body resource cost should produce baseline +4 prayer")
+    require(stat_calculator, "return 63;", "plate body should scale to adamantite plate body armour")
+    require(stat_calculator, "return 30;", "plate body melee defense and battle axe aim should reach tier 8 equivalents")
+    require(stat_calculator, "return 24;", "mace aim, spear aim, and paladin shield armour targets should reach tier 8 equivalents")
+    require(stat_calculator, "return 18;", "mace power and paladin shield melee defense should reach tier 8 equivalents")
+    require(stat_calculator, "return 99;", "blessed scythes should scale to adamantite scythe power")
     require(equipment, "+ resourceCost", "baseline prayer should include resource equivalency")
 
     print("PASS: devotion equipment scaling hooks are wired")
