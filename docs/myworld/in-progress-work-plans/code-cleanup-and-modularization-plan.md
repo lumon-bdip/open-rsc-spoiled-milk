@@ -501,6 +501,9 @@ A compiled isolated-settings fixture covers exact Classic/Remaster/Custom
 fingerprints, cycle order, missing/malformed values, runtime overrides,
 unrelated-key retention, callback counts and dimensions, repeated application,
 manual Custom transitions, transaction counts, and cross-process restart.
+The owner privately confirmed Classic/Remaster/Custom cycling, resize and
+renderer presentation, enhanced-sprite appearance refresh, and Custom/Enhanced
+persistence after a private-client restart.
 
 #### 3. LegacySoftwareScalingSettings
 
