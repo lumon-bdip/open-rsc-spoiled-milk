@@ -9,6 +9,7 @@ ROWBOAT_LOCS = ROOT / "server/conf/server/defs/locs/SceneryLocsOther.json"
 ROWBOAT_PLUGIN = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/misc/RandomObjects.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
+SCENE_BASELINE_STATE = ROOT / "Client_Base/src/orsc/SceneBaselineState.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 
 
@@ -134,16 +135,17 @@ def main() -> None:
     )
 
     packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
+    scene_baseline_state = SCENE_BASELINE_STATE.read_text(encoding="utf-8")
     require(
         "public void reapplyCompleteSceneBaselineAfterRegionLoad()" in packet_handler
         and "applyCompleteSceneBaselineToLegacyLists(true);" in packet_handler,
         "completed scene baselines must be force-replayed after a region load",
     )
     require(
-        "|| !sceneBaselineDebugState.isBaselineOriginLoaded(mc)" in packet_handler
+        "|| !sceneBaselineState.isBaselineOriginLoaded(mc)" in packet_handler
         and re.search(
-            r"private boolean isBaselineOriginLoaded\(mudclient mc\).*?World\.isLocalTile\(",
-            packet_handler,
+            r"boolean isBaselineOriginLoaded\(mudclient mc\).*?World\.isLocalTile\(",
+            scene_baseline_state,
             re.DOTALL,
         ),
         "scene baselines must not apply against a stale region origin during the death screen",
