@@ -5,6 +5,7 @@ reward implementation pending the explicit decisions below**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
 Audit integration: merged into `main` as `8ec90a4d6`
+Foundation design revision baseline: published `main` `368ff655e` on 2026-07-16
 
 Related active plans:
 
@@ -23,11 +24,13 @@ Source policy:
 
 ## Product Contract
 
-Monster Slayer is a distributed guild-standing system built from the useful
-parts of Combat Odyssey. It is not a visible skill and does not award Slayer
-XP. Players advance through seven named ranks, complete deterministic kill-only
-task chains at six contacts, and then use those contacts for repeatable tasks
-and rank-gated point shops.
+Monster Slayer is an independently authored distributed guild-standing system.
+Combat Odyssey supplies inspiration, legacy flavor, and migration evidence;
+its tiers, task order, rewards, and progression are not a Monster Slayer
+blueprint and must not be translated one-to-one. Monster Slayer is not a
+visible skill and does not award Slayer XP. Players advance through seven named
+ranks, complete deterministic kill-only task chains at six contacts, and then
+use those contacts for repeatable tasks and rank-gated challenge shops.
 
 The intended tone and progression remain:
 
@@ -35,22 +38,29 @@ The intended tone and progression remain:
   deliberately silly `Fledgling` hand stamp.
 - Six fixed task chains advance the player through `Initiate`, `Veteran`,
   `Elite`, `Champion`, `Hero`, and `Legend`.
-- Completed contacts offer repeatable random kill tasks for global Monster
-  Slayer points.
+- Completed contacts offer repeatable random kill tasks for that contact's
+  typed challenge currency: Fledgling, Initiate, Veteran, Elite, Champion, or
+  Hero points.
 - Biggum Flodrot's personality and the idea of a legendary capstone survive,
   but the 101-task Odyssey is no longer a required 40,906-kill reward wall.
-- Unique shop rewards, not finished dragon equipment, provide the long-term
-  point grind.
+- Challenge shops primarily turn hunting into useful combat preparation items
+  that can otherwise come from skilling: weapons, armor, potions, food,
+  ammunition, and similar supplies. Optional unique rewards can provide
+  longer-term goals without making every shop item unique.
 
 Core rules:
 
 - One active Monster Slayer task across all contacts.
 - The beer is a one-time introduction, not a repeatable material turn-in.
 - Mandatory chains are fixed and cannot be cancelled or rerolled.
-- Repeatables use rank-appropriate family pools and award points without
-  advancing rank.
-- Points are awarded on task completion, not per kill. This bounds cache writes,
-  avoids partial-task farming, and makes the economy auditable.
+- Repeatables use rank-appropriate family pools and award the currency assigned
+  to their contact/challenge level without advancing rank.
+- Challenge points are awarded on task completion, not per kill. They are six
+  non-interchangeable balances, not one scalar balance. This bounds cache
+  writes, avoids partial-task farming, and makes the economy auditable.
+- Reward costs are vectors. A higher challenge shop may require its native
+  currency plus selected lower currencies, but never a currency above the
+  reward's shop tier.
 - Higher contacts refuse assignment/shop access until the required rank and the
   host guild's normal access requirements are satisfied.
 - Existing Combat Odyssey state is migrated once without deleting its keys.
@@ -64,6 +74,8 @@ Non-goals:
 - No broad rewrite of NPC death, loot, XP, quest kill triggers, or party combat
   in the foundation branch.
 - No automatic conversion of the old JSON's item rewards into shop stock.
+- No one-to-one mapping from Odyssey tiers/tasks/rewards to Monster Slayer
+  ranks, chains, balances, categories, or stock.
 
 ## Evidence-Backed Combat Odyssey Audit
 
@@ -144,6 +156,13 @@ Important implementation facts:
   prestige. That reward path is excluded from Monster Slayer.
 - The old intermediate supplies and equipment are balance evidence only. None
   automatically become Monster Slayer shop stock.
+
+This inventory is an audit and migration decoder, not a conversion table. The
+new 33-task inventory was selected independently from current definitions,
+attackability, spawn availability, travel friction, and the intended contact
+themes. Legacy tier boundaries do not define new ranks; legacy random order
+does not define mandatory order; and legacy rewards do not define shop tiers,
+costs, or stock.
 
 ### Legacy Cache And Completion State
 
@@ -272,7 +291,8 @@ Required top-level shape:
 {
   "schemaVersion": 1,
   "families": [],
-  "contacts": []
+  "contacts": [],
+  "shops": []
 }
 ```
 
@@ -292,6 +312,7 @@ Contact/task shape:
 {
   "key": "falador",
   "npcId": 142,
+  "challenge": "FLEDGLING",
   "requiredRank": "FLEDGLING",
   "awardedRank": "INITIATE",
   "mandatoryTasks": [
@@ -314,6 +335,44 @@ Contact/task shape:
 }
 ```
 
+`challenge` is the currency type awarded by every mandatory and repeatable task
+owned by that contact. The loader must reject a task-level currency override;
+there is only one source of truth for the contact's challenge balance.
+
+Reward/category shape supported by the foundation schema (stock remains empty
+until a later approved reward branch):
+
+```json
+{
+  "key": "legends",
+  "challenge": "HERO",
+  "categories": [
+    {
+      "key": "combat_supplies",
+      "label": "Combat supplies",
+      "iconItemId": 0,
+      "rewards": [
+        {
+          "key": "legends.example_supply",
+          "itemId": 0,
+          "amount": 1,
+          "cost": {
+            "FLEDGLING": 5,
+            "INITIATE": 3,
+            "HERO": 1
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+The example cost means five Fledgling points, three Initiate points, and one
+Hero point per reward unit. It does not mean nine interchangeable points. Cost
+vectors omit zero entries and are multiplied component-by-component for a
+requested quantity using checked `long` arithmetic.
+
 Stable identity rules:
 
 - Persist task/contact/family keys, never JSON array positions or display text.
@@ -321,6 +380,9 @@ Stable identity rules:
   published. Display text may change without migration.
 - A family owns NPC membership. Multiple contacts may reference the same family
   key; do not duplicate its ID list.
+- Challenge codes are `FLEDGLING`, `INITIATE`, `VETERAN`, `ELITE`, `CHAMPION`,
+  and `HERO`. There is no global or `LEGEND` point balance: the Legends contact
+  awards and spends Hero points.
 - Mandatory array order is authored progression order, but an active save stores
   the stable task key. Reordering future display data cannot retarget a player.
 - Dialogue remains in the contact plugin/service, with optional dialogue keys
@@ -337,7 +399,12 @@ Load-time/CI validation must reject:
 - a mandatory chain whose required/awarded ranks do not form the exact ladder;
 - duplicate mandatory/repeatable task keys or empty task pools;
 - any material/certificate turn-in field or any finished dragon-equipment item
-  reward field.
+  reward field;
+- an unknown/duplicate shop, category, or reward key, unknown item ID,
+  nonpositive item amount, empty/negative/overflowing cost vector, or cost in a
+  challenge above the shop's challenge tier;
+- a launch reward with no positive native-currency cost. Higher-tier launch
+  rewards may additionally require any selected lower-tier balances.
 
 ### Validated Launch Family Inventory And Tuning
 
@@ -348,7 +415,7 @@ MyWorld removals. They are validation evidence, not a promise that every spawn
 is equally accessible. All listed IDs resolve, are attackable, and have at least
 one active static spawn.
 
-| Contact | Stable task/family | Valid NPC IDs | Active spawns | Mandatory kills | Repeatable kills | Points |
+| Contact | Stable task/family | Valid NPC IDs | Active spawns | Mandatory kills | Repeatable kills | Native challenge points |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
 | Falador | `falador.rats` / `rat` | `19,29,47,177` | 170 | 100 | 75 | 5 |
 | Falador | `falador.goblins` / `goblin` | `4,62,153,154,660` | 198 | 100 | 75 | 5 |
@@ -386,7 +453,7 @@ one active static spawn.
 
 Launch totals and recommendations:
 
-| Band | Mandatory tasks | Mandatory kills | Mandatory points | Random repeatable pool |
+| Band/challenge currency | Mandatory tasks | Mandatory kills | Native currency awarded | Random repeatable pool |
 | --- | ---: | ---: | ---: | ---: |
 | Fledgling -> Initiate | 5 | 500 | 25 | 5 |
 | Initiate -> Veteran | 5 | 600 | 40 | 5 |
@@ -394,12 +461,12 @@ Launch totals and recommendations:
 | Elite -> Champion | 5 | 1,100 | 90 | 5 |
 | Champion -> Hero | 6 | 850 | 150 | 6 |
 | Hero -> Legend | 7 | 1,126 | 260 | 6; KBD remains a capstone only |
-| **Total** | **33** | **5,026** | **625** | **32** |
+| **Vector total** | **33** | **5,026** | **Fledgling 25; Initiate 40; Veteran 60; Elite 90; Champion 150; Hero 260** | **32** |
 
 This cuts the mandatory wall to about 12 percent of the old 40,906 kills while
-keeping a substantial rank path. Expensive unique rewards can take the full
-lifetime grind toward the old scale through repeatables without delaying shop
-access.
+keeping a substantial rank path. The six values form a balance vector, not a
+625-point pool. Supply redemption and optional expensive rewards can extend the
+lifetime hunt through repeatables without delaying shop access.
 
 Repeatable policy:
 
@@ -407,7 +474,8 @@ Repeatable policy:
   account for density and difficulty.
 - Assignment uses the contact whose mandatory chain is complete. A player may
   use any completed contact, regardless of higher rank.
-- Cancelling an accepted repeatable costs half its point reward rounded up:
+- Cancelling an accepted repeatable costs half its native challenge reward
+  rounded up from that same balance:
   Falador `3`, Port Sarim `4`, Brimhaven `6`, Champions `9`, Heroes `13`,
   Legends `18`. No negative balance and no free replacement if payment fails.
 - Task blocks, free rerolls, streak bonuses, and boss randomization are deferred
@@ -431,7 +499,7 @@ Dialogue and kill handlers must not manipulate raw keys.
 | `monster_slayer_state_version` | Integer | Current state schema; starts at `1`. |
 | `monster_slayer_intro_stage` | Integer | `0` not started, `1` beer requested, `2` beer completed. Stage 2 requires rank at least Fledgling. |
 | `monster_slayer_rank` | Integer | Stable rank code `0..7`; never a display/string ordinal. |
-| `monster_slayer_points` | Long | Global nonnegative balance. Checked additions and deductions; cap at `2,000,000,000`. |
+| `monster_slayer_balance_<challenge>` | Long | Six keys: `fledgling`, `initiate`, `veteran`, `elite`, `champion`, and `hero`. Each is independently nonnegative with checked additions/deductions and a `2,000,000,000` cap. No scalar total is persisted or spendable. |
 | `monster_slayer_active_task` | String | Stable task key; absent means no task. Contact/family/type derive from definitions. |
 | `monster_slayer_active_kills` | Integer | Bounded `0..requiredKills`; absent/zero when no active task. |
 | `monster_slayer_mandatory_<contact>` | Integer | Six keys storing the number of fixed tasks completed for that contact, bounded by that chain's data length. |
@@ -443,6 +511,9 @@ Dialogue and kill handlers must not manipulate raw keys.
 Invariants:
 
 - Rank is monotonic. Point spending cannot lower rank.
+- `MonsterSlayerChallenge` has the explicit stable order Fledgling through Hero;
+  enum ordinal is not persistence or authorization. `MonsterSlayerBalances`
+  exposes typed access and never treats the vector sum as currency.
 - A rank requires every lower contact cursor to equal its chain length.
 - The active mandatory task must be exactly the current contact cursor's stable
   key. A repeatable task requires that contact cursor to be complete.
@@ -450,6 +521,15 @@ Invariants:
   rank/cursor contradictions produce a bounded diagnostic and no mutation.
 - Task completion updates progress, cursor/rank, points, lifetime count, and
   active-task clearing through one state-owner method on the game thread.
+- Task completion credits only the active definition's contact challenge. It
+  cannot credit a caller-selected or higher balance.
+- Multi-cost spending first validates the reward/shop tier, quantity, checked
+  component multiplication, and all six available balances against an
+  immutable snapshot. It computes the complete post-spend vector before
+  writing any balance. Insufficient currency changes nothing.
+- A successful deduction returns the exact typed cost vector as a one-use
+  receipt. A later item-grant failure refunds every receipt component; callers
+  cannot refund a caller-constructed or already-refunded vector.
 - Completion is derived from `rank == LEGEND` and all six mandatory cursors;
   do not add a redundant completion boolean.
 - Do not create `monster_slayer_prestige` in version 1. Old `co_prestige` counts
@@ -484,40 +564,63 @@ migration transaction.
    and validation reason, not a whole cache dump; make no migration award and
    do not set the migration version until repaired.
 
-### Partial Rank Mapping
+### Rank And Chain Recognition
 
-Do not try to map old positional task bits onto different new task keys. Grant
-the highest fully supported rank and convert within-band work to points; start
-the new current-rank mandatory chain at index zero.
+Do not map legacy tier ranges onto new ranks or task cursors. That would make
+the independently authored ladder a disguised Odyssey translation.
 
 | Legacy evidence | New rank | New chains marked complete |
 | --- | --- | --- |
-| Intro stage `1` or `2`; active tier `0..1` | Fledgling | none |
-| Active tier `2..3` | Initiate | Falador |
-| Active tier `4..5` | Veteran | Falador, Port Sarim |
-| Active tier `6..7` | Elite | through Brimhaven |
-| Active tier `8..9` | Champion | through Champions |
-| Active tier `10..13` but final KBD incomplete | Hero | through Heroes |
+| Intro stage `1`/`2` or any valid partial active run | Fledgling | none |
 | Completed-unclaimed or `co_prestige > 0` | Legend | all six |
 
-### Partial Point Formula
+A partial player receives bounded challenge balances for aggregate effort but
+starts the new mandatory path at Falador. A completed player receives full
+rank recognition because completion itself is the legacy accomplishment; the
+old sequence and rewards are not recreated.
 
-Compute legacy credited kills without guessing:
+### Bounded Challenge-Balance Vector
 
-1. Sum every task's required kills in tiers below the active tier.
+Compute aggregate legacy credited kills only as migration evidence:
+
+1. Sum every task's required kills in tiers below the active legacy tier.
 2. In the active tier, sum required kills for valid completed mask bits.
 3. If the current task's bit is not complete, add its active kill count clamped
    to `0..requiredKills`. Do not count a completed current task twice.
-4. `partialPoints = min(800, floor(creditedKills / 50))`.
+4. Clamp the result to the Odyssey total `40,906` and calculate one overall
+   completion ratio. Do not expose tier/task identities to new progression.
 
-For `completed-unclaimed`, award `1,000` points. For claimed completion, award
-`min(10,000, 1,000 + 250 * (co_prestige - 1))`. If a prestiged account also
-has a valid active repeat Odyssey, add its partial-point result before applying
-the same `10,000` cap. This gives a full legacy completion more credit than the
-new 625-point mandatory path while leaving the future shop economy usable.
+The base full-completion migration vector is deliberately bounded at twice the
+new mandatory-path earnings:
+
+| Challenge balance | Mandatory-path earnings | Full legacy base credit |
+| --- | ---: | ---: |
+| Fledgling | 25 | 50 |
+| Initiate | 40 | 80 |
+| Veteran | 60 | 120 |
+| Elite | 90 | 180 |
+| Champion | 150 | 300 |
+| Hero | 260 | 520 |
+
+For a partial, noncompleted Odyssey, each component is:
+
+`floor(creditedKills * fullLegacyBase[challenge] / 40,906)`.
+
+For completed-unclaimed, award the exact full base vector. For claimed
+completion, begin with that vector and add, per component, one quarter of the
+base for each additional `co_prestige` completion. Count at most twelve extra
+completions, so no component can exceed four times its full base. If a claimed
+player also has a valid active repeat Odyssey, add one quarter of that repeat's
+partial vector before applying the same four-times-base component caps.
+
+All multiplication/division uses checked `long` arithmetic and floors only at
+the final component calculation. The proposal is one immutable six-component
+vector; it is not summed, normalized, exchanged, or shifted between challenge
+types.
 
 The conversion records no new active task. It never grants old intermediate
-items, a final dragon item, material credit, or a new prestige count.
+items, a final dragon item, material credit, a recreated Odyssey reward, or a
+new prestige count.
 
 ### Cutover Rules
 
@@ -533,49 +636,100 @@ focused commit:
 - provide a staff inspection command/report before any repair command;
 - back up the player database and test migration on a copy before live use.
 
-## Point Shops And Explicit Owner Decisions
+## Challenge Shops And Rangers Guild Redemption Model
 
-The point scale can be implemented independently, but unique items cannot be
-specified responsibly from the repository. No existing item is a `Giant's Axe`,
-and the old Odyssey rewards do not define the intended new power budget.
+`RangersGuildPointsVendor` is the interaction and failure-handling reference,
+not a reusable scalar-currency implementation. Its maintained flow is:
 
-The owner must decide these before a shop/item implementation branch:
+1. Show authored categories.
+2. Let the player select an item within a category and a quantity.
+3. Multiply cost and output with overflow checks.
+4. Verify the scalar Rangers Guild balance.
+5. Verify inventory capacity before spending.
+6. Deduct points, grant the item, and refund points if the add unexpectedly
+   fails.
+
+Monster Slayer should preserve that order and user experience while replacing
+the scalar assumptions:
+
+- Categories should primarily organize useful combat supplies obtainable by
+  normal skilling: weapons, armor, potions, food, ammunition, and related
+  combat preparation. `Unique/Prestige` and `Task Utility` may be additional
+  categories; shops are not restricted to unique items.
+- Item definitions remain normal item definitions. The challenge-shop data
+  supplies category, output amount, shop tier, and a typed cost vector.
+- Quantity multiplies every cost component and output amount using checked
+  arithmetic. Affordability requires every component, not the vector sum.
+- A reward at tier `T` may require its native `T` balance and any selected
+  lower-tier balances. It must never reference a challenge currency higher
+  than `T`. Launch rewards require a positive native component.
+- Capacity is checked before deduction. Deduction validates and applies the
+  whole vector atomically. If item grant fails, refund the exact one-use receipt
+  vector before reporting failure.
+- No balance exchange, automatic conversion, overpayment from a higher balance,
+  or fallback to a lower balance is allowed.
+
+The current production interface cannot represent this faithfully:
+`ProductionSession` carries one scalar point value and each `ProductionRecipe`
+has one scalar cost/enabled flag. Monster Slayer therefore needs either a
+multi-cost reward display or a confirmation step that lists every required
+balance and the player's corresponding balances. Do not put a summed number in
+the existing scalar field or pretend the challenge currencies are
+interchangeable. Redemption UI and protocol/presentation changes are explicitly
+outside the foundation branch.
+
+The old Odyssey rewards are neither default stock nor price anchors. Existing
+combat supplies may be selected from current item definitions in a later stock
+audit, but their skilling acquisition, market value, tradeability, certificate/
+stack behavior, and output quantity must be reviewed before a cost vector is
+authored.
+
+### Explicit Owner Decisions For Unique Rewards
+
+Useful supply stock does not require every unique decision to be resolved, but
+the following choices are required before adding the affected unique:
 
 | Decision | Recommended default | Why it is required |
 | --- | --- | --- |
-| Launch shop breadth | Give every contact at least one cosmetic/utility reward, but introduce combat uniques in separate balance branches. | Prevents one large item/stat/art branch from blocking rank/task activation. |
-| Giant's Axe | If approved, place a new slow two-handed sidegrade in the Champions shop; owner must choose stats, requirements, special behavior, tradeability, art, and price. | No such current item or authoritative stat line exists. |
-| Legends chase reward | Choose the archetype first: weapon, non-armor accessory, reusable contract utility, or prestige cosmetic. Recommended: a monster-hunting utility/accessory, not armor. | Price and task grind cannot be finalized without its combat value. |
-| Legacy completion recognition | Give claimed and completed-unclaimed Odyssey players the same noncombat commemorative entitlement; decide title versus cosmetic item. | The migration preserves an entitlement class but must not improvise a reward. |
-| Consumables | Approve exact effects and whether each is tradable. Do not bypass Herblaw/Cooking progression; recommended first stock is convenience rather than best-in-slot healing/buffs. | Effects determine repeatable demand and point inflation. |
-| Convenience unlocks | Decide whether paid rerolls/task blocks are shop purchases or only the direct cancellation fee. Recommended launch: cancellation fee only. | Permanent blocks materially change assignment probabilities and state. |
-| Purchase/reclaim model | Decide point-only versus points-plus-coins, stock limits, tradeability, death behavior, and lost-item reclaim for every unique. | These are economy and duplication contracts, not presentation details. |
-| Price bands | After item power is approved, choose exact prices within provisional bands: `25-100` minor utility/cosmetic, `250-750` mid-tier sidegrade, `1,000-2,000` high utility/combat unique, `2,500-4,000` Legends chase. | The 625-point mandatory grant and migration awards were tuned against these provisional bands. |
+| Giant's Axe | If approved, place a new slow two-handed sidegrade in the Champion challenge shop; owner must choose stats, requirements, special behavior, tradeability, art, output amount, and its full cost vector. | No such current item or authoritative stat/cost line exists. |
+| Legends chase reward | Choose the archetype first: weapon, non-armor accessory, reusable contract utility, or prestige cosmetic. Recommended: a monster-hunting utility/accessory, not armor. | Its combat value determines native Hero and lower-tier costs. |
+| Legacy completion recognition | Give claimed and completed-unclaimed Odyssey players the same noncombat commemorative entitlement; decide title versus cosmetic item. | Migration preserves an entitlement class but must not improvise a reward. |
+| Unique reclaim model | Decide tradeability, death behavior, duplicate ownership, and lost-item reclaim separately for each unique. | These are economy and duplication contracts, not UI details. |
+| Convenience unlocks | Decide whether paid rerolls/task blocks become rewards or only the direct cancellation fee remains. Recommended launch: cancellation fee only. | Permanent blocks materially change assignment probability and state. |
+| Unique cost vectors | Approve every required component and quantity. Recommended: positive native currency plus deliberately selected lower currencies, never all six by habit. | A scalar price band cannot express challenge-specific effort. |
 
 Hard exclusions requiring no further decision: dragon armor and dragon skirts
 are not rewards; material/certificate turn-ins are not progression; old item
-rewards are not automatically shop stock.
+rewards are not automatically shop stock; and challenge balances are never
+exchangeable.
 
-## Bounded First Implementation Branch
+## Current Bounded Foundation Branch
 
-Suggested branch: `feat/monster-slayer-data-state-foundation`.
+Branch: `feat/monster-slayer-data-state-foundation`.
 
 Scope:
 
 - Add `MonsterSlayer.json` with schema version 1, the stable rank/contact/
-  family/task keys, exact mandatory/repeatable counts, and point values above.
+  family/task keys, exact mandatory/repeatable counts, challenge ownership, and
+  native point values above. The shop array remains empty in committed launch
+  data until stock is separately approved.
 - Add focused immutable definition types and `MonsterSlayerData` loader/
   validator. Load/validate the data in server startup, but expose no player
-  dialogue, task assignment, kill credit, points, shop, or reward behavior.
+  dialogue, task assignment, kill credit, redemption, or reward behavior.
 - Add `MonsterSlayerRank` with explicit numeric codes and parsing that does not
   depend on enum ordinal.
+- Add `MonsterSlayerChallenge`, immutable six-component balances/costs, reward
+  schema types, tier/cost validation, checked quantity multiplication, atomic
+  affordability/deduction proposals, and exact one-use refund receipts. These
+  are foundation APIs and compiled fixtures, not a redemption UI or live shop.
 - Add `MonsterSlayerState` as the only raw-cache-key owner, including default,
-  validation, bounded arithmetic, active-task invariants, and an in-memory
-  snapshot/write API. Do not wire new state mutation into login or gameplay.
+  six typed balance keys, validation, bounded arithmetic, active-task
+  invariants, and an in-memory snapshot/write API. Do not wire new state
+  mutation into login or gameplay.
 - Add a pure `CombatOdysseyMigration` converter implementing the rules above.
   It accepts a legacy snapshot plus validated Odyssey/Monster Slayer data and
-  returns either a proposed new snapshot or a typed validation failure. It does
-  not write a player cache in this branch.
+  returns either a proposed rank/cursor/challenge-balance snapshot or a typed
+  validation failure. It does not write a player cache in this branch.
 - Document the old data/integration classes as compatibility sources. Do not
   edit their runtime behavior, the eight dialogue integrations, `Npc.killedBy`,
   rewards, items, configs, databases, or the public server.
@@ -583,21 +737,31 @@ Scope:
 Tests:
 
 - JSON/schema fixture: unique stable keys, exact rank ladder, exact 33 mandatory
-  tasks/5,026 kills/625 points, 32 repeatables, positive bounds, resolvable and
-  attackable NPC IDs, active spawn evidence, and no unsafe excluded IDs.
+  tasks/5,026 kills, challenge vector `25/40/60/90/150/260`, 32 repeatables,
+  positive bounds, resolvable and attackable NPC IDs, active spawn evidence,
+  and no unsafe excluded IDs.
 - Exclusion fixture: no material/certificate field, finished dragon-equipment
-  ID, retired skirt, item reward, or positional persisted task identity.
+  ID, retired skirt, committed shop stock, or positional persisted task
+  identity.
 - Compiled data fixture: load the real JSON; resolve keys independent of array
   order; reject duplicates, missing families, bad ranks, nonattackable IDs,
-  zero-spawn families, invalid counts, and broken contact chains.
+  zero-spawn families, invalid counts, broken contact chains, task/contact
+  challenge mismatches, unknown reward components, and costs above shop tier.
+- Compiled vector-cost fixture: the `5 Fledgling / 3 Initiate / 1 Hero`
+  example, quantity multiplication/overflow, all-component affordability,
+  no-partial deduction, exact refund, double-refund rejection, balance caps,
+  no scalar sum spending, and each shop-tier boundary.
 - Compiled state fixture: defaults, every rank code, cursor/rank consistency,
-  active mandatory/repeatable validation, point add/spend bounds, completion
-  derivation, cache round trip, missing keys, wrong types, and corrupt values.
+  active mandatory/repeatable validation, each typed balance, multi-cost
+  add/spend/refund bounds, completion derivation, cache round trip, missing
+  keys, wrong types, and corrupt values. Assert the old scalar cache key is
+  neither read nor written.
 - Compiled migration fixture: no-state, intro stages, every tier boundary,
   partial current task, completed current-task bit without double count,
   malformed masks/strings/types, completed-unclaimed KBD, claimed completion,
-  active prestige repeat, caps, legacy-key preservation, and repeated migration
-  idempotence.
+  active prestige repeat, all six proportional components, per-component caps,
+  no partial rank/cursor translation, legacy-key preservation, and repeated
+  migration idempotence.
 - Run the existing dragon-production/removal guard, NPC location cleanup test,
   full server build, plugin build (even though plugins should be unchanged),
   and changed-code static analysis.
@@ -605,9 +769,11 @@ Tests:
 Stop conditions:
 
 - Stop if the foundation needs player-visible dialogue, login mutation, kill
-  hooks, shop/item definitions, reward balance, database schema changes, or
-  edits to Combat Odyssey compatibility behavior.
+  hooks, actual shop stock/items, redemption UI/protocol changes, reward
+  balance, database schema changes, or edits to Combat Odyssey compatibility
+  behavior.
 - Stop on any need to infer completion from inventory, silently repair malformed
   legacy state, reuse positional IDs, or include material/dragon rewards.
-- Hand off the tested data/state/migration foundation before starting the
-  Falador introduction or contribution-aware kill-credit branch.
+- Hand off the tested data/state/vector-cost/migration foundation before
+  starting the Falador introduction, redemption UI/stock, or
+  contribution-aware kill-credit branch.
