@@ -1,9 +1,9 @@
 # Code Cleanup And Modularization Plan
 
-Plan status: **active; reconciled through B01-B11 and the five immediate
-`mudclient` ownership branches on 2026-07-16**. The measurements and next
-sequence below use published `main` commit `a79fde3bf`, plus the explicitly
-labeled focused-branch result recorded below.
+Plan status: **active; reconciled through B01-B11, the five immediate
+`mudclient` ownership branches, and the post-sequence client responsibility
+reassessment on 2026-07-16**. The measurements and next sequence below use
+published `main` commit `efafde768`.
 
 This is the AI-facing cleanup roadmap for Spoiled Milk code structure. It is
 not a feature plan. Its job is to keep future work from getting lost inside
@@ -41,11 +41,11 @@ Cleanup should favor structural moves that unlock future renderer work:
 ## Current Hotspots
 
 Line counts measured with `wc -l` on 2026-07-16 after the completed B01-B11
-code-health sequence:
+code-health sequence and five merged client ownership branches:
 
 | File | Lines | Why It Matters |
 | --- | ---: | --- |
-| `Client_Base/src/orsc/mudclient.java` | 26,369 | Owns gameplay UI/state plus external-asset content coordination, scene/collision orchestration, movement smoothing, combat effects, projectiles, and renderer integration. The focused scene-instance branch below reduces it to 26,255 lines by moving authoritative game/wall parallel storage and retention to a tested owner while preserving the existing facade. |
+| `Client_Base/src/orsc/mudclient.java` | 26,255 | Owns gameplay UI/state plus external-asset content coordination, scene/collision orchestration, movement smoothing, combat effects, projectiles, and renderer integration. The five-branch sequence removed settings, profile, scaling, asset-infrastructure, and game/wall storage authority while preserving necessary facades. |
 | `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,629 | B09 moved registry storage/access, prayer-book authorship, and fallback diagnostics to focused owners. This facade still contains authored definitions, MyWorld overrides, generated families, and load order. |
 | `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,931 | Central server entity state; likely too broad for continued gameplay feature growth. |
 | `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,346 | Legacy 2D drawing plus OpenGL capture/replay instrumentation, sprite scaling, text plotting, and sprite archive loading. |
@@ -105,18 +105,27 @@ work in this plan:
    `ClientSceneInstanceStore` for authoritative game-object and wall instance
    state while leaving model preparation and scene/collision side effects in
    `mudclient`. Merged into `main` as `74e4c4212`.
-6. Reassess the remaining `mudclient` responsibilities before authorizing
-   combat-effect, movement, or login-scene branches.
-7. Reassess presenter sprite-composite glue only after the five `mudclient`
-   branches are stable; do not mix it into them.
-8. Then split `World`, `GraphicsController`, and telemetry by product/owner.
-9. Return to authored definition families and large server gameplay owners on
+6. **Reassessment complete on `docs/client-ownership-reassessment`, awaiting
+   manager review:** compare combat effects, movement, external-content
+   coordination, and presenter composite glue. The recommendation is one
+   preloader-only `PredictiveTerrainPreloader` branch; do not treat it as
+   authority for broader movement work.
+7. If the recommendation is accepted, run
+   `refactor/client-predictive-terrain-preloader` with the contract below, then
+   stop and reassess instead of rolling into interpolation.
+8. Defer presenter sprite-composite glue and broad combat/external-content
+   moves for the reasons and stop conditions recorded in the reassessment.
+9. Then split `World`, `GraphicsController`, and telemetry by product/owner.
+10. Return to authored definition families and large server gameplay owners on
    separate plans; B09 and B10 are foundations, not authority for broader
    rewrites.
 
 Package moves and top-level folder renames are deliberately deferred until
 the first five ownership extractions have landed and their compatibility
-facades are known. See the structure plan for that gate.
+facades are known. That gate is now met, but this reassessment does not
+authorize a package or top-level move; plan one separately after the recommended
+preloader branch or an explicit client-cleanup stopping decision. See the
+structure plan for that work.
 
 ## OpenGLFramePresenter Split Plan
 
@@ -236,16 +245,17 @@ Completed through B07:
 
 Next sequence:
 
-1. Leave `OpenGLFramePresenter` stable while the five ordered `mudclient`
-   ownership branches land.
-2. Characterize its remaining GL resource ownership, pass orchestration,
-   projection setup, texture upload, input forwarding, capture coordination,
-   and sprite/world composite dependencies.
-3. Decide whether resource lifecycle or remaining sprite composite glue is the
-   next narrow owner. Do not infer the answer from line count.
+1. The five ordered `mudclient` ownership branches have landed.
+2. The post-sequence reassessment found that the remaining sprite composite
+   glue is still coupled to GL atlas/resource state, pass orchestration, depth
+   reconstruction, capture, and telemetry; leave it stable for the next
+   preloader-only client branch.
+3. Re-characterize resource lifecycle and sprite-composite ownership only when
+   deterministic ordering/occlusion fixtures exist or active renderer work
+   requires the boundary. Do not infer readiness from line count.
 4. Extract sprite composite code only with dedicated ordering/occlusion
    fixtures and private visual confirmation; do not combine it with settings,
-   assets, or scene-instance storage.
+   assets, scene-instance storage, or movement streaming.
 
 B07 private verification covered OpenGL-primary and software-fallback
 presentation, 4:3/16:9, resize, borderless/windowed transitions, input, world
@@ -316,6 +326,9 @@ already conceptually independent and have low gameplay risk.
     projectile visual generation, and effect sprite lookup.
   - This will reduce the chance that renderer sprite changes alter gameplay
     combat state by accident.
+  - Reassessment status: defer this broad shape. Asset storage/loading and
+    runtime effect/projectile orchestration are separable boundaries and must
+    not be moved as one class.
 
 - `ClientSceneInstanceStore`
   - Fifth branch. Move authoritative game-object and wall-object arrays,
@@ -332,10 +345,15 @@ already conceptually independent and have low gameplay risk.
 - `PredictiveTerrainPreloader`
   - Move section preload tracking for target, waypoint, and camera direction.
   - This keeps movement smoothing and terrain streaming from becoming scattered.
+  - Reassessment status: recommended as the next focused branch, limited to
+    predictive cache warming and its throttle state.
 
 - `MovementInterpolator`
   - Move per-frame movement amount, reset, and custom waypoint append helpers.
   - Keep server-authoritative path state separate from visual interpolation.
+  - Reassessment status: defer until after the preloader branch is reviewed;
+    do not combine interpolation, custom movement, packet state, or terrain
+    streaming merely because their methods are adjacent.
 
 - `LoginSceneRenderer`
   - Move login camera/model drawing and login-screen scene setup.
@@ -789,6 +807,194 @@ existing accessor instead of requiring the removed backing array. Private
 OpenGL presentation was confirmed unchanged; the practical rowboat/death paths
 remain covered by automated lifecycle tests rather than a new manual run.
 
+## Post-Sequence Client Responsibility Reassessment
+
+Reassessment baseline: published `main` `efafde768` on 2026-07-16, after all
+five ordered ownership branches were merged. This is an inventory and branch
+recommendation only; it does not authorize production changes on the planning
+branch.
+
+The remaining candidates are not equivalent slices of `mudclient`. Combat
+effects and external content overlap at asset installation, movement combines
+visual interpolation with protocol and terrain-streaming concerns, and the
+presenter composite is already distributed across several owners. The useful
+next step is therefore the smallest boundary with authoritative state and
+observable invariants, not the candidate with the largest raw line count.
+
+| Candidate | Evidence and current boundary | Impact | Confidence | Behavior risk | Estimated effort | Decision |
+| --- | --- | --- | --- | --- | --- | --- |
+| Predictive movement preloading | Source IDs/camera tables are at `mudclient.java:120-125`, nine throttle fields at `:852-860`, target/waypoint/camera decisions at `:22212-22355`, and reset at `:22382-22393`. `PacketHandler` calls the public incoming-position facade before region handling. | Medium | High | Low-medium | Small-medium | **Recommend one preloader-only branch.** |
+| Combat-effect/projectile visuals | IDs and sprite ranges are at `mudclient.java:134-245`; sprite, mirror, queue, and detached-effect state at `:1057-1137`; scene/screen drawing at `:19024-19299`; external loading at `:19600-19747`; lookup/overlay queues at `:20187-20713`; packet-driven timing/projectile policy at `:24207-24481`. | High | High | High | Large if kept as one system | Defer the broad `CombatEffectSpriteSystem`; characterize visual-asset ownership separately from runtime orchestration. |
+| External-content coordination | The 838-line `ClientExternalAssetLoader` owns discovery/decoding, while `mudclient.java:19308-20132` still chooses equipment, altar, combat/projectile, spell, prayer, and summoning catalogs and destinations. | Medium-high | High | Medium-high | Large | Do not replace it with one new coordinator god object. Split only along destination owners. |
+| Presenter sprite composite | `OpenGLFramePresenter` is 4,068 lines. Remaining composite work spans `:1693-3007` and `:3216-3690` despite the existing 420-line `OpenGLCompositeSceneBuilder`, 271-line `OpenGLWorldSpriteRenderer`, and draw controller. | High | High | Very high | Large-extra-large | Defer until deterministic ordering/occlusion fixtures or active renderer work justify the risk. |
+
+### Candidate Findings
+
+#### Combat effects and projectiles
+
+This is important but not one safe extraction. The current label combines at
+least four responsibilities:
+
+- stable combat-effect/projectile IDs, ranges, names, geometry, and timing;
+- external sprite loading, fallback catalogs, frame counts, mirroring, and
+  scaled-static-projectile caching;
+- scene and software-overlay queues, detached effects, screen anchoring, and
+  draw order;
+- packet-driven arrival, impact deferral, target/caster geometry, and mutation
+  of `ORSCharacter` combat/projectile state.
+
+`PacketHandler` actively calls `detachNpcCombatEffect`,
+`detachPlayerCombatEffect`, `applyCombatEffectUpdate`, and
+`getProjectileMaxRange`; `ORSCharacter` remains the runtime state owner. The
+area also had concentrated recent behavior changes in the July 10 projectile
+and spell-animation sequence (`b23e1c6b1`, `d993531e0`, `abee38f86`, and
+`389157d6c`, among others). Existing migration and fallback tests are useful,
+but they primarily fingerprint behavior in `mudclient`; they do not yet prove
+an isolated runtime owner.
+
+A later branch should first choose between a `ClientCombatVisualAssets` owner
+for sprites/frame counts/mirror caches and a runtime effect coordinator. It
+must not move both merely to satisfy the older broad class name, and it must
+not move combat authority out of packet/character state.
+
+#### Movement and predictive streaming
+
+Broad movement is also not ready as one class. The player/NPC frame loop at
+`mudclient.java:15617-15840` mutates animation, direction, current position,
+waypoint indices, and diagnostics. Custom movement at `:22216-22585` combines
+region checks, server-index caches, delayed NPC targets, combat-stance
+invalidation, waypoint append behavior, and debug reporting. `PacketHandler`
+owns wire reads and standard/custom snapshot order, while `ORSCharacter` owns
+the waypoint ring and per-character interpolation remainder.
+
+Predictive terrain preloading is different. Its only durable state is three
+independent `(plane, sectionX, sectionZ)` throttles for click/packet targets,
+the active waypoint, and camera look-ahead. It observes movement context but
+does not mutate authoritative movement state. The established behavior is
+already covered by `test-client-predictive-terrain-preload.py`, CPU section
+window/cache tests, custom-movement stability tests, region-load performance,
+and world-streaming tests. Most of the current preloader block dates to the
+June 24 renderer-remaster foundation, with the July 11 movement diagnostics
+remaining a separate owner.
+
+That makes preloading a real ownership extraction rather than an arbitrary
+helper move. It also creates a useful line between best-effort terrain cache
+warming and movement interpolation before either system grows again.
+
+#### External-content coordination
+
+The fourth branch deliberately left content choice and destination authority
+in `mudclient`. The external-loader fixture currently guards that distinction:
+equipment assembly, configured animation-sheet selection, combat and
+projectile arrays, spell/prayer aliases, and procedural altar fallback stay
+outside the infrastructure loader.
+
+Those responsibilities should not now be swept into a single
+`ClientExternalContentCoordinator`. Equipment installation mutates
+`Surface.spriteTree`; altar content targets textures and world-sprite arrays;
+spell/prayer/summoning icons use different stable definition identities; and
+combat/projectile installation targets the same state considered by the
+combat-effect candidate. A whole-block extraction would reduce
+`mudclient.java` line count while preserving or increasing cross-domain
+coupling. Destination-specific owners should absorb their own catalogs when
+there is feature pressure; the combat visual-asset inventory is the likeliest
+first consumer after the preloader branch.
+
+#### Presenter composite glue
+
+The composite path already has meaningful extracted owners, but the remaining
+presenter code is not just delegation. It coordinates replacement-composite
+gates, world and overlay pass order, the dynamic sprite atlas, visible-pixel
+reconstruction, direct-overlay coverage masks, entity depth evaluation,
+occluder statistics, capture layers, telemetry, GL projections, and resource
+lifecycle. Existing renderer tests provide broad source and end-to-end visual
+guardrails, but the large world-geometry guard still asserts many presenter
+implementation snippets rather than a deterministic composite result.
+
+Moving this now would have the highest visual regression burden and would not
+unblock the recommended preloader boundary. Before a composite extraction,
+add or identify fixtures that can prove command classification, ordering,
+anchor matching, mask coverage, depth fallback, and telemetry parity without a
+window. Continue to require private checks for characters/NPCs behind walls,
+ground items, roofs, animated scenery, alpha effects, UI ordering, 4:3/16:9,
+and software fallback.
+
+### Recommended Next Branch: PredictiveTerrainPreloader
+
+Suggested branch: `refactor/client-predictive-terrain-preloader`.
+
+Ownership contract:
+
+- Move the three preload-source identities, camera direction step tables and
+  look-ahead distance, nine section/plane throttle fields, section deduplication,
+  reset, local-pixel conversion used by preloading, and target/waypoint/camera
+  cache-warming decisions to `PredictiveTerrainPreloader`.
+- Retain only throttle state in the new owner. Receive current `World`, plane,
+  offsets, region base, tile size, camera direction, readiness/loading state,
+  and local-player context as explicit inputs; do not retain the client,
+  renderer, scene, packet handler, or platform window.
+- Preserve three independent throttles. The same section requested by target,
+  waypoint, and camera sources may warm once per source; a repeat from the same
+  source/plane must remain suppressed.
+- Preserve exact offset-adjusted coordinates, `World.worldTileToSection`
+  conversion, camera quantization, one-section look-ahead, circular waypoint
+  inactive-slot convention, and the current order that marks a section before
+  calling `World.preloadSections`.
+- Keep the public `mudclient.preloadTerrainForIncomingWorldPosition` facade so
+  `PacketHandler` and existing callers do not change architecture. Keep the
+  blink, click-walk, custom movement, standard movement, and main-loop call
+  sites in their current order.
+
+Explicit exclusions:
+
+- Do not move or alter `movementAmountForFrame`,
+  `resetMovementInterpolation`, the player/NPC update loops, waypoint append,
+  delayed custom-NPC targets, `ORSCharacter` fields, movement diagnostics,
+  packet reads, snapshot staging, region selection, or `loadNextRegion`.
+- Do not change `World` cache size/eviction/loading policy, active-region
+  selection, camera behavior, movement speeds, protocol/configuration, or
+  renderer scene ownership.
+- Do not combine this with `MovementInterpolator`, combat visuals, external
+  content, presenter work, or a package/folder move.
+
+Automated verification:
+
+- Add a compiled owner fixture covering empty and repeated calls, each source
+  throttle independently, same-section cross-source behavior, plane changes,
+  reset, world offsets, negative/floor-divided local pixels, all eight camera
+  directions, active/inactive waypoint ring states, null/not-ready/loading
+  guards, and exact preload target/call counts.
+- Update `test-client-predictive-terrain-preload.py` to follow ownership while
+  retaining call-site/order fingerprints. Specifically preserve standard
+  movement preload before region loading, custom movement preload before
+  `loadNextRegion`, blink and click targets, main-loop waypoint/camera warming,
+  and reset lifecycle.
+- Run client predictive preload, CPU section window/cache, custom movement
+  stability, movement timing diagnostics, packet diagnostics/shape, region-load
+  performance, world streaming/backend, relog resident world, rowboat
+  respawn, landscape parity, renderer guardrails, the full client build, and
+  changed-code static analysis. Run the full MyWorld suite if any shared guard
+  beyond the focused ownership test changes.
+
+Private verification: on an isolated server, click-walk and run toward and
+across a region edge, change camera direction near an edge, use a long/distant
+movement or teleport transition, exercise a blink if practical, and relog.
+Confirm terrain continues to appear without a new hitch, premature region
+swap, stale/missing scenery, movement snap, camera change, or client exception.
+Owner confirmation is the acceptance mechanism; screenshots are not required.
+
+Stop conditions: stop if the extraction requires packet-order changes,
+movement/waypoint mutation, a different region-load decision, new `World`
+cache policy, renderer/scene ownership, or a broad host adapter exposing
+`mudclient`. Stop on any preload target/count difference in the fixture, any
+movement or region regression, or any pressure to include interpolation just
+because the methods are adjacent.
+
+After this branch, stop and reassess. Do not automatically continue into
+`MovementInterpolator`; combat visual assets may become the better next owner
+if animation work resumes, while no further client extraction is also an
+acceptable result if feature work is not being blocked.
+
 ## Stale And Hidden Option Audit
 
 These paths should be explicitly quarantined before deeper cleanup. The main
@@ -1133,10 +1339,12 @@ as `6cfaa6ca7`. The fifth completed `ClientSceneInstanceStore` and was merged as
 Do not opportunistically combine these because they are adjacent in
 `mudclient`. Each branch must leave a tested owner, keep compatibility visible,
 and obtain private visual confirmation before handoff. The five owners are now
-stable on `main`. Next, refresh the responsibility inventory and decide whether
-combat-effect sprites, movement interpolation, external content coordination,
-or presenter composite glue has the clearest next boundary. Do not authorize
-that implementation until the reassessment is reviewed.
+stable on `main`. The documentation-only reassessment selected
+`PredictiveTerrainPreloader` as the only currently recommended next client
+boundary. If manager review accepts it, implement exactly the preloader-only
+contract above, obtain private confirmation, and stop for another ownership
+review. Broad combat visuals, movement interpolation, external-content
+coordination, and presenter composite work remain deferred.
 
 ## Definition Of Done
 
