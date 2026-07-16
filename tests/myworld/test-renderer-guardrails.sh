@@ -24,6 +24,7 @@ renderer_tests=(
   test-renderer-settings-panel-extraction.py
   test-renderer-profile-applier.py
   test-legacy-software-scaling-settings.py
+  test-client-external-asset-loader.py
   test-roof-visibility.py
   test-renderer-relog-resident-world.py
   test-renderer-v2-capture-analyzer.py
