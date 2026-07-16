@@ -18,7 +18,7 @@ recommendations, and an ordered implementation plan.
 ## Implementation Progress — Updated 2026-07-16
 
 This ledger preserves the audit's original evidence while tracking its ordered
-follow-up branches against published `main` commit `4e04d42ca`.
+follow-up branches against published `main` commit `ecfc3b35d`.
 
 | Branch | Status | Published merge | Result |
 | --- | --- | --- | --- |
@@ -48,6 +48,10 @@ until those gates have completed several stable cycles.
 All eleven ordered follow-up branches are complete. Further analyzer-rule
 expansion, warning-family burn-down, or large-class decomposition requires a
 new focused plan rather than extending this completed sequence implicitly.
+The post-B11 ownership sequence is defined in
+[`code-cleanup-and-modularization-plan.md`](code-cleanup-and-modularization-plan.md#ordered-post-b11-implementation-branches);
+package and source-root moves remain gated by
+[`project-structure-refactor-plan.md`](project-structure-refactor-plan.md).
 
 ## Rating Method
 
@@ -117,13 +121,42 @@ repository-wide `-Werror` is not an appropriate first step.
 
 ### Size And Churn Method
 
-Current line counts came from `wc -l`. “30-day touches” counts commits that
+Original audit line counts came from `wc -l`. “30-day touches” counts commits that
 named the file from 2026-06-12 through 2026-07-12. “12-month churn” is added
 plus deleted lines from `git log --numstat` since 2025-07-12. Churn includes a
 file's initial addition and is therefore a prioritization signal, not a defect
 score.
 
+### Post-B11 Size And Ownership Reconciliation
+
+The ranked table below remains the audit's 2026-07-12 evidence. These current
+2026-07-16 measurements record the exact deltas after B01-B11 without
+pretending that line count alone proves a successful boundary:
+
+| File | Audit lines | Post-B11 lines | Delta | Disposition |
+| --- | ---: | ---: | ---: | --- |
+| `Client_Base/src/orsc/mudclient.java` | 27,594 | 27,550 | -44 | Spell-display duplication left in B01; renderer settings, profile application, software scaling, external assets, and scene-instance storage are the ordered next owners. |
+| `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,778 | 9,629 | -149 | B09 moved registry/access, prayer definitions, and fallback diagnostics while retaining authored/load-order ownership and compatibility facade. |
+| `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,931 | 5,931 | 0 | Still a broad high-risk owner; no B01-B11 decomposition was authorized. |
+| `Client_Base/src/orsc/PacketHandler.java` | 4,590 | 3,507 | -1,083 | B08 moved movement diagnostics and scene-baseline state; decode and mutation order remain. |
+| `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,346 | 4,346 | 0 | Still owns legacy raster/capture/archive concerns. |
+| `PC_Client/src/orsc/OpenGLFramePresenter.java` | 4,295 | 4,068 | -227 | B07 moved GLFW window lifecycle and viewport presentation; frame/GL/composite coordination remains. |
+| `Client_Base/src/orsc/graphics/three/World.java` | 4,253 | 4,264 | +11 | Still owns mixed world products and caches; no decomposition in this sequence. |
+| `Client_Base/src/orsc/graphics/three/Scene.java` | 3,789 | 3,789 | 0 | Still owns legacy scene/export concerns. |
+| `server/src/com/openrsc/server/model/container/Equipment.java` | 3,771 | 3,341 | -430 | B10 moved pure slot/stat calculations; mutable behavior and effects remain. |
+| `Client_Base/src/orsc/RenderTelemetry.java` | 3,154 | 3,154 | 0 | Still a broad static facade/sink. |
+| `server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java` | 2,754 | 2,418 | -336 | B10 moved pure classification/validation; packet/combat/scheduling authority remains. |
+
+`OpenGLFramePresenter` again demonstrates why responsibility count, dependency
+shape, and behavior tests are stronger exit criteria than a numeric size target.
+
 ## Ranked Findings
+
+This ranking is the audit's original prioritization, not a current open-task
+list. B01-B04 completed ranks 1-4, B05 addressed the scoped rank-6 failures,
+B11 corrected/proved the bounded rank-8/rank-9 candidates, and B06-B10 made the
+first safe boundaries under rank 5. The remaining rank-5 decomposition and the
+renderer-settings portion of rank 7 continue through the refreshed plans.
 
 | Rank | Finding | Impact | Confidence | Change risk | Effort | Class |
 | ---: | --- | --- | --- | --- | --- | --- |
@@ -595,13 +628,14 @@ dependency rules, broader Checkstyle conventions for new packages, and
 dependency scanning. Apply stricter rules to new MyWorld packages before
 inherited packages. Formatting remains a separate opt-in project.
 
-## Ordered Follow-Up Branches
+## Completed Ordered Follow-Up Branches (B01-B11)
 
-Each branch is intentionally narrow. Manager integration may reorder branches
-to avoid conflicts with active renderer work, but should preserve the safe
-cleanup versus behavior-changing separation.
+This is the completed historical sequence. Its definitions remain here to show
+the authorized boundaries and verification contract; do not treat these
+entries as open work or silently append B12. New work starts from the refreshed
+cleanup and structure plans linked above.
 
-### B01 — `fix/client-spell-display-metadata` (behavior-changing, P0)
+### B01 — `fix/client-spell-display-metadata` — Complete
 
 - Correct the confirmed tier-two dual-spell name drift.
 - Replace string-based tier/effect classification in both `mudclient` and
@@ -613,7 +647,7 @@ cleanup versus behavior-changing separation.
 spellbook text, and skill-guide tests; private-client tooltip checks for every
 single/dual spell tier with representative equipment.
 
-### B02 — `fix/desktop-sound-lifecycle` (behavior-changing, P0)
+### B02 — `fix/desktop-sound-lifecycle` — Complete
 
 - Define desktop `ClientPort` sound lifecycle semantics.
 - Replace the throwing disconnect hook with tracked clip shutdown or an
@@ -625,7 +659,7 @@ single/dual spell tier with representative equipment.
 reconnect, and window close; confirm no lingering clip/thread and no wrapped
 `UnsupportedOperationException`.
 
-### B03 — `chore/server-build-source-of-truth` (safe foundation, P1)
+### B03 — `chore/server-build-source-of-truth` — Complete
 
 - Document Ant as current authority.
 - Remove nonexistent classpath entries after proving they are not supplied by
@@ -638,7 +672,7 @@ packaging, representative Gradle task if retained, and bytecode/classpath
 comparison. Exercise MySQL only if it remains supported and credentials are
 available in an isolated test environment.
 
-### B04 — `chore/static-analysis-baseline` (safe foundation, P1)
+### B04 — `chore/static-analysis-baseline` — Complete
 
 - Implement Stages 0 and 1 only.
 - Cover the desktop client, server core/plugins, and standalone World Builder
@@ -652,7 +686,7 @@ available in an isolated test environment.
 script reproducibility, all three Ant product builds, the static-analysis
 contract test, and no generated source mutations.
 
-### B05 — `fix/server-swallowed-failures` (small behavior/observability, P1)
+### B05 — `fix/server-swallowed-failures` — Complete
 
 - Start with `FriendHandler` and offline private-message lookup.
 - Distinguish not-found from database failure, log unexpected faults with safe
@@ -662,7 +696,7 @@ contract test, and no generated source mutations.
 **Verify:** injected database failures, unknown-user cases, privacy cases,
 offline PM behavior, server build, social-name tests, and log redaction review.
 
-### B06 — `refactor/client-auxiliary-types` (safe cleanup, P1)
+### B06 — `refactor/client-auxiliary-types` — Complete
 
 - Move `ButtonHandler`, frame/pool types, key bindings, and renderer composite
   data types to correctly named files or justified nested types.
@@ -672,7 +706,7 @@ offline PM behavior, server build, social-name tests, and log redaction review.
 **Verify:** client build, `-Xlint:all` delta, interface UI click smoke, renderer
 launch/input/frame capture; baseline decreases exactly by moved warnings.
 
-### B07 — `refactor/client-renderer-window-viewport` (behavior-preserving, P1)
+### B07 — `refactor/client-renderer-window-viewport` — Complete
 
 - Continue the existing renderer plan: extract viewport presentation and window
   mode/lifecycle from `OpenGLFramePresenter`.
@@ -683,7 +717,7 @@ launch/input/frame capture; baseline decreases exactly by moved warnings.
 software fallback, packaged launcher, login graphic, roofs, sprites behind
 walls, items, animations, and day/night visuals.
 
-### B08 — `refactor/client-packet-diagnostics` (safe extraction, P1)
+### B08 — `refactor/client-packet-diagnostics` — Complete
 
 - Move movement snapshot/debug state and scene-baseline parity/storage out of
   `PacketHandler` without changing parsing or mutations.
@@ -692,7 +726,7 @@ walls, items, animations, and day/night visuals.
 **Verify:** packet-shape, movement stability, scene lifecycle, region load,
 world editor, client/server sync, and private movement/teleport/region testing.
 
-### B09 — `refactor/client-definition-registry` (safe extraction, P2)
+### B09 — `refactor/client-definition-registry` — Complete
 
 - Separate the registry/access API from authored base definitions, MyWorld
   overrides, generated families, prayer books, and fallback logging.
@@ -702,7 +736,7 @@ world editor, client/server sync, and private movement/teleport/region testing.
 client build, login/load, banks/shops/equipment, prayers/spells, and fallback
 logs for malformed test IDs.
 
-### B10 — `refactor/server-equipment-spell-boundaries` (behavior-preserving first, P2)
+### B10 — `refactor/server-equipment-spell-boundaries` — Complete
 
 - Extract pure slot/stat calculations from `Equipment`.
 - Extract pure spell classification/validation from `SpellHandler` in a
@@ -713,7 +747,7 @@ logs for malformed test IDs.
 spell costs, all elemental/dual/god spell cases, AoE targeting, teleports,
 charges/durability, and live-like private combat scenarios.
 
-### B11 — `chore/compatibility-labels-and-prune-proof` (safe cleanup, P2)
+### B11 — `chore/compatibility-labels-and-prune-proof` — Complete
 
 - Correct the stale `KnownPlayersHandler` TODO and auto-generated no-op labels.
 - Document active client roots and compatibility flags near their definitions.

@@ -1,5 +1,8 @@
 # Code Cleanup And Modularization Plan
 
+Plan status: **active; reconciled through B01-B11 on 2026-07-16**. The
+measurements and next sequence below use published `main` commit `ecfc3b35d`.
+
 This is the AI-facing cleanup roadmap for Spoiled Milk code structure. It is
 not a feature plan. Its job is to keep future work from getting lost inside
 large inherited files, half-retired options, and renderer bridge code that was
@@ -35,41 +38,82 @@ Cleanup should favor structural moves that unlock future renderer work:
 
 ## Current Hotspots
 
-Approximate line counts from the July 3, 2026 structure-refactor branch:
+Line counts measured with `wc -l` on 2026-07-16 after the completed B01-B11
+code-health sequence:
 
 | File | Lines | Why It Matters |
 | --- | ---: | --- |
-| `Client_Base/src/orsc/mudclient.java` | 25,988 | Owns gameplay UI, renderer settings UI, region loading, scene instance arrays, movement smoothing, combat effects, projectiles, asset import, and many renderer bridge calls. |
-| `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,676 | Mixes definition storage, accessors, MyWorld overrides, generated item/style data, prayers, spells, sprites, and compatibility fallbacks. |
-| `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,908 | Central server entity state; likely too broad for continued gameplay feature growth. |
-| `PC_Client/src/orsc/OpenGLFramePresenter.java` | 4,148 | Still owns OpenGL lifecycle, window mode, frame pass orchestration, viewport presentation, and remaining composite glue. Major shader, shadow, texture, capture, world renderer, and input bridge extractions have already landed. |
-| `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,289 | Legacy 2D drawing plus OpenGL capture/replay instrumentation, sprite scaling, text plotting, and sprite archive loading. |
-| `Client_Base/src/orsc/graphics/three/World.java` | 4,131 | Client terrain, wall, roof, minimap, collision, sector loading, CPU product caching, and renderer chunk export are mixed. |
+| `Client_Base/src/orsc/mudclient.java` | 27,550 | Owns gameplay UI/state plus the current Graphics panel, renderer-profile application, software-scaler bridge state, external asset loading, object/wall instance arrays, movement smoothing, combat effects, projectiles, and renderer integration. This is the immediate ownership target. |
+| `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,629 | B09 moved registry storage/access, prayer-book authorship, and fallback diagnostics to focused owners. This facade still contains authored definitions, MyWorld overrides, generated families, and load order. |
+| `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,931 | Central server entity state; likely too broad for continued gameplay feature growth. |
+| `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,346 | Legacy 2D drawing plus OpenGL capture/replay instrumentation, sprite scaling, text plotting, and sprite archive loading. |
+| `Client_Base/src/orsc/graphics/three/World.java` | 4,264 | Client terrain, wall, roof, minimap, collision, sector loading, CPU product caching, and renderer chunk export are mixed. |
+| `PC_Client/src/orsc/OpenGLFramePresenter.java` | 4,068 | B07 removed direct GLFW/window lifecycle and viewport policy. The presenter still owns GL resources, frame/pass orchestration, projection setup, texture upload, sprite/world composite decisions, capture coordination, and input forwarding. |
 | `Client_Base/src/orsc/graphics/three/Scene.java` | 3,789 | Legacy scene sorting/raster flow and renderer-v2 frame export live together. |
-| `Client_Base/src/orsc/PacketHandler.java` | 3,189 | Packet parsing plus config propagation and client state mutation. |
-| `Client_Base/src/orsc/RenderTelemetry.java` | 2,559 | Many unrelated counters and reports in one static sink. Useful, but hard to extend safely. |
-| `server/src/com/openrsc/server/model/container/Equipment.java` | 3,718 | Equipment behavior and item-effect hooks continue growing. |
-| `server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java` | 2,784 | Spell routing, special effects, and combat interactions are likely separable. |
-| `server/src/com/openrsc/server/net/rsc/ActionSender.java` | 2,707 | Outgoing protocol building and gameplay-specific sender helpers are mixed. |
-| `server/src/com/openrsc/server/content/Summoning.java` | 1,856 | All Summoning profiles, runtime behavior, utility commands, combat, and scaling are in one utility class. |
-| `server/src/com/openrsc/server/content/EnchantingItemEffects.java` | 1,828 | Jewelry, robe, staff, altar, charge, and tier-effect logic are accumulating in one class. |
+| `Client_Base/src/orsc/PacketHandler.java` | 3,507 | B08 moved movement-snapshot diagnostics and scene-baseline state out. Opcode reads, decode order, direct client mutation, configuration, and UI reactions remain. |
+| `server/src/com/openrsc/server/model/container/Equipment.java` | 3,341 | B10 moved pure slot/stat decisions out. Mutable container behavior, packet/stat ordering, appearance, charges/durability, and item-effect hooks remain. |
+| `Client_Base/src/orsc/RenderTelemetry.java` | 3,154 | Many unrelated counters and reports in one static sink. Useful, but hard to extend safely. |
+| `server/src/com/openrsc/server/net/rsc/ActionSender.java` | 2,711 | Outgoing protocol building and gameplay-specific sender helpers are mixed. |
+| `server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java` | 2,418 | B10 moved pure classification and validation. Packet/player mutation, rune and equipment checks, targets, combat, teleports, AoE, scheduling, and finalization remain. |
+| `server/src/com/openrsc/server/content/Summoning.java` | 1,872 | All Summoning profiles, runtime behavior, utility commands, combat, and scaling are in one utility class. |
+| `server/src/com/openrsc/server/content/EnchantingItemEffects.java` | 1,854 | Jewelry, robe, staff, altar, charge, and tier-effect logic are accumulating in one class. |
+
+Line count remains a prioritization clue, not an exit criterion. B07 proved
+that a file below 5,000 lines can still own too many high-risk responsibilities.
+Ownership, dependencies, and testability now decide whether an extraction is
+complete.
+
+## B01-B11 Reconciliation
+
+The code-health sequence is complete and must not be left looking like future
+work in this plan:
+
+| Work | Status | Durable boundary/result |
+| --- | --- | --- |
+| B01 spell display metadata | Complete | One stable client elemental/dual-element metadata source serves `mudclient` and `SkillGuideInterface`; server damage authority is unchanged. |
+| B02 desktop sound lifecycle | Complete | Desktop cleanup is non-throwing, idempotent, and backed by tracked active clips. |
+| B03 server build authority | Complete | Bundled Ant and the operational scripts are the production source of truth; Gradle remains secondary until parity is proved. |
+| B04 static-analysis baseline | Complete | Changed-code gates and reproducible javac, Checkstyle, PMD, SpotBugs, ShellCheck, and Ruff analysis exist for the maintained products. |
+| B05 swallowed server failures | Complete | Social/offline-message database failures and best-effort plugin cleanup have bounded, redacted diagnostics. |
+| B06 auxiliary client types | Complete | Twenty-six package-private auxiliary types moved to correctly named owners; the auxiliary-class warning family is zero. |
+| B07 viewport/window lifecycle | Complete | `OpenGLViewportPresenter` and `OpenGLWindowController` own viewport policy and GLFW lifecycle; OpenGL and software fallback were privately verified. |
+| B08 packet diagnostics | Complete | `MovementSnapshotDiagnostics` and `SceneBaselineState` own their state; packet reads and mutation order remain in `PacketHandler`. |
+| B09 definition registry | Complete | `ClientDefinitionRegistry`, `PrayerBookDefinitions`, and `ClientDefinitionFallbackDiagnostics` own registry/access, prayer authorship, and bounded fallback reporting. |
+| B10 equipment/spell boundaries | Complete | `EquipmentSlotRules`, `EquipmentStatCalculator`, `SpellClassification`, and `SpellValidationRules` own pure decisions; mutable/runtime orchestration remains in the original owners. |
+| B11 compatibility/pruning proof | Complete | Active roots and compatibility paths are labeled; only proved-dead archive writers and stale IDE metadata were removed. Protocols, plugins, databases, legacy archive, and uncertain MySQL helpers were retained. |
 
 ## Priority Order
 
-1. Finish splitting `OpenGLFramePresenter.java`.
-2. Split renderer-facing parts of `mudclient.java`.
-3. Quarantine and remove stale scaling/resolution/player-option paths.
-4. Split `World.java` product builders and client sector caches.
-5. Split `GraphicsController.java` legacy drawing from renderer-v2 capture.
-6. Split telemetry into categories after renderer ownership is clearer.
-7. Split `EntityHandler.java` MyWorld overrides and generated definition logic.
-8. Handle large server gameplay classes after the renderer cleanup has reduced
-   active client churn.
+1. Extract `RendererSettingsPanel` from `mudclient` without changing the
+   Graphics/General/Android row contract or any action ID.
+2. Extract `RendererProfileApplier` and fingerprint the current Classic,
+   Remaster, Custom, resize, refresh, runtime-override, and persistence behavior.
+3. Extract `LegacySoftwareScalingSettings` while retaining the active software
+   presenter and all three persisted compatibility keys.
+4. Extract `ClientExternalAssetLoader` behind lookup, decode, frame-order, and
+   packaged-resource parity tests.
+5. Extract `ClientSceneInstanceStore` for authoritative game-object and wall
+   instance state, leaving scene/collision side effects in `mudclient`.
+6. Reassess the remaining `mudclient` responsibilities before authorizing
+   combat-effect, movement, or login-scene branches.
+7. Reassess presenter sprite-composite glue only after the five `mudclient`
+   branches are stable; do not mix it into them.
+8. Then split `World`, `GraphicsController`, and telemetry by product/owner.
+9. Return to authored definition families and large server gameplay owners on
+   separate plans; B09 and B10 are foundations, not authority for broader
+   rewrites.
+
+Package moves and top-level folder renames are deliberately deferred until
+the first five ownership extractions have landed and their compatibility
+facades are known. See the structure plan for that gate.
 
 ## OpenGLFramePresenter Split Plan
 
-This is the highest-value cleanup. The file should become a coordinator, not
-the place every OpenGL concept lives.
+This remains the long-term presenter direction, but its immediate viewport and
+window milestone is complete. The file should become a coordinator, not the
+place every OpenGL concept lives; further work is paused behind the ordered
+`mudclient` sequence so settings/assets/state extractions do not overlap a
+visually risky composite rewrite.
 
 Keep the first extraction passes in package `orsc` unless there is a clear
 reason to expose APIs across packages. Moving to `orsc.opengl` is desirable
@@ -147,16 +191,23 @@ extraction noisier.
   - Move borderless/windowed creation, monitor mode, viewport resize, close
     handling, and fullscreen-effectiveness checks.
   - Expected risk: medium. Needs testing through both dev and packaged launchers.
+  - Status: done in B07. The controller owns GLFW initialization/context,
+    event polling, buffer swaps, window-mode transitions, saved windowed bounds,
+    native destruction, and GLFW termination. Cleanup is diagnostic,
+    best-effort, and idempotent.
 
 - `OpenGLViewportPresenter.java`
   - Move source framebuffer to destination viewport scaling, aspect-fit bars,
     integer-fit/stretch policy, and framebuffer upload for non-world UI layers.
   - Expected risk: medium. This must stay consistent with current aspect-ratio
     settings.
+  - Status: done in B07. The presenter owns logical-window/HiDPI framebuffer
+    layout, primary-window aspect-fit enforcement, integer/debug policies,
+    text-smoothing selection, mouse remapping, and bar-edge clamping.
 
 ### Extraction Sequence
 
-Completed in the current renderer split:
+Completed through B07:
 
 1. Extracted `LwjglBindings`.
 2. Extracted `OpenGLShaderProgram`.
@@ -168,17 +219,28 @@ Completed in the current renderer split:
 8. Extracted world mesh, world sprite, glow mask, texture cache, and material
    helper classes.
 9. Extracted `OpenGLInputBridge` and `OpenGLKeyBindings`.
+10. Extracted `OpenGLViewportPresenter`.
+11. Extracted `OpenGLWindowController` and removed all direct GLFW calls from
+    `OpenGLFramePresenter`.
 
 Next sequence:
 
-1. Extract `OpenGLViewportPresenter` for viewport fitting, integer-scale text
-   smoothing, framebuffer presentation, and aspect-fit bars.
-2. Extract `OpenGLWindowController` for borderless/windowed creation, monitor
-   placement, resize, and close handling.
-3. Reassess remaining `OpenGLFramePresenter` responsibilities before touching
-   sprite composite glue.
-4. Extract remaining sprite composite code only after input/window/viewport
-   behavior has been validated.
+1. Leave `OpenGLFramePresenter` stable while the five ordered `mudclient`
+   ownership branches land.
+2. Characterize its remaining GL resource ownership, pass orchestration,
+   projection setup, texture upload, input forwarding, capture coordination,
+   and sprite/world composite dependencies.
+3. Decide whether resource lifecycle or remaining sprite composite glue is the
+   next narrow owner. Do not infer the answer from line count.
+4. Extract sprite composite code only with dedicated ordering/occlusion
+   fixtures and private visual confirmation; do not combine it with settings,
+   assets, or scene-instance storage.
+
+B07 private verification covered OpenGL-primary and software-fallback
+presentation, 4:3/16:9, resize, borderless/windowed transitions, input, world
+content, and cleanup. Borderless mode still has no native title-bar close
+button, so `Alt+F4` is the current close path. An in-client close affordance is
+a separate UX follow-up, not an extraction prerequisite.
 
 Each step should compile before moving to the next. For visual-risk steps, run
 the client and validate at least:
@@ -202,30 +264,37 @@ already conceptually independent and have low gameplay risk.
 ### Proposed Extractions
 
 - `RendererSettingsPanel`
-  - Move Graphics/Interface setting row construction and click dispatch for:
-    preset, aspect ratio, borderless, lighting, geometry, fog, brightness, font.
-  - Keep legacy gameplay settings separate.
-  - This prevents old scaling rows from being accidentally mixed into active
-    OpenGL graphics options.
-
-- `LegacySoftwareScalingSettings`
-  - Move `renderingScalar`, `newRenderingScalar`, `scalingType`,
-    `scaleUp`, `scaleDown`, `cycleScalingType`, and `saveScalingSettings`.
-  - Mark as software presenter only.
-  - Long-term target: remove from OpenGL builds entirely, leaving only saved
-    setting migration if needed.
+  - First post-B11 branch. Move the desktop Graphics row construction,
+    slider hit testing, and renderer-action dispatch behind a narrow host
+    adapter. Keep General gameplay actions and Android options in `mudclient`.
+  - Continue showing software scaling only when the OpenGL primary window is
+    inactive; this branch delegates those actions to the existing state owner.
+  - Status: planned; detailed contract below.
 
 - `RendererProfileApplier`
-  - Move Classic/Remaster/Custom preset application.
-  - This should be the one place that decides default aspect, lighting,
-    geometry, fog, brightness, tone, and borderless state.
+  - Second branch. Move Classic/Remaster/Custom bundle application, profile
+    transitions, resize/appearance-refresh callbacks, and persistence of the
+    affected renderer setting bundle.
+  - This becomes the one place that applies a profile, but it does not replace
+    the individual settings classes or move renderer authority into the UI.
+  - Status: planned; detailed contract below.
+
+- `LegacySoftwareScalingSettings`
+  - Third branch. Move `renderingScalar`, `newRenderingScalar`,
+    `scalarChangedSinceLogin`, scalar lists, `scalingType`, scalar changes,
+    type cycling, load validation, and saving.
+  - Mark as active software-presenter compatibility. Removal is not part of
+    this sequence because OpenGL remains optional and `ScaledWindow` is the
+    maintained fallback.
+  - Status: planned; detailed contract below.
 
 - `ClientExternalAssetLoader`
-  - Move `dev/myworld/assets` and embedded `myworld-assets` lookup, image reads,
-    external item sprites, UI icons, prayer/magic/summon icons, equipment
-    sprites, and utility image transforms.
-  - Current asset loading is mixed into `mudclient` and is too easy to break
-    while changing renderer logic.
+  - Fourth branch. Move the non-remastered external asset lookup and image
+    decode/transform infrastructure for `dev/myworld/assets`, legacy `output`
+    fallbacks, and embedded `myworld-assets` resources.
+  - Do not absorb `RemasteredSpriteResolver`; it already owns the manifest-
+    validated, per-frame canonical fallback contract.
+  - Status: planned; detailed contract below.
 
 - `CombatEffectSpriteSystem`
   - Move combat-effect constants, frame counts, scene sizes, detach/draw logic,
@@ -234,9 +303,15 @@ already conceptually independent and have low gameplay risk.
     combat state by accident.
 
 - `ClientSceneInstanceStore`
-  - Move game object and wall object instance arrays, capacity checks,
-    materialized flags, and getter/setter wrappers.
-  - This is useful before further resident-object renderer work.
+  - Fifth branch. Move authoritative game-object and wall-object arrays,
+    counts, capacity checks, materialized/pending flags, frame marks, and
+    accessor storage.
+  - Keep scene/collision materialization, model creation/tinting, resident
+    chunk construction, packet decode order, and baseline decisions outside
+    the store.
+  - Ground items remain a separate follow-up because their storage is coupled
+    to render ordering, stack offsets, filters, nameplates, and menus.
+  - Status: planned; detailed contract below.
 
 - `PredictiveTerrainPreloader`
   - Move section preload tracking for target, waypoint, and camera direction.
@@ -260,12 +335,314 @@ already conceptually independent and have low gameplay risk.
   panel.
 - Keep `mudclient` as the integration point until each extracted class has a
   clear constructor dependency list.
+- Preserve the current public/package-facing `mudclient` facade where B08
+  diagnostics, packet handling, platform code, or renderer code still needs
+  it. Removing facades is a later call-site migration, not proof that an owner
+  extraction failed.
+- Every renderer-facing branch requires owner visual confirmation. Do not use
+  screenshot capture as the acceptance mechanism; provide a short private
+  test checklist and record the owner's confirmation in the handoff.
+
+### Ordered Post-B11 Implementation Branches
+
+These are sequential integration branches because all five touch
+`mudclient.java`. Only the first three have a semantic dependency; the last
+two are serialized mainly to avoid overlapping extractions and brittle merges.
+
+| Order | Suggested branch | Depends on | Primary exit |
+| ---: | --- | --- | --- |
+| 1 | `refactor/client-renderer-settings-panel` | B07 and current Graphics contract | Graphics presentation/action ownership leaves `mudclient`; no row, action, or visibility drift. |
+| 2 | `refactor/client-renderer-profile-applier` | Branch 1 | One tested owner applies/persists current profiles; the panel only requests actions. |
+| 3 | `refactor/client-legacy-software-scaling-settings` | Branches 1-2 | Software-scaler state leaves `mudclient`; `ScaledWindow` fallback and saved keys remain operational. |
+| 4 | `refactor/client-external-asset-loader` | Branches 1-3 for merge order only | External lookup/decode leaves `mudclient`; every path, pixel, frame, and fallback contract matches. |
+| 5 | `refactor/client-scene-instance-store` | B08; branches 1-4 for merge order | Game/wall instance storage leaves `mudclient`; packet, baseline, region, materialization, and renderer behavior match. |
+
+Do not begin a later branch on an unmerged predecessor merely to reduce line
+count faster. At the end of each branch, remeasure `mudclient` and the new
+owner, record dependency changes, and confirm that the new class owns a whole
+responsibility rather than a bag of forwarded methods.
+
+#### 1. RendererSettingsPanel
+
+Current evidence: `mudclient.drawGraphicsSettingsOptions` builds the desktop
+Graphics list; renderer cases are interleaved into
+`handleGeneralSettingsClicks`; slider layout/hit testing is split among
+`rendererTuningSliderBar`, `handleRendererTuningSliderInput`, and the
+`SETTINGS_*` constants. The same handler also sends unrelated gameplay option
+packets. Software fallback changes the displayed rows through
+`ScaledWindow.isOpenGLPrimaryWindowEnabled()`.
+
+Ownership and boundaries:
+
+- Own desktop Graphics sections, row text/order, stable action IDs, scroll-row
+  calculations, tuning-slider rendering/hit testing, and renderer-action
+  dispatch. Return handled/not-handled so `mudclient` retains General gameplay
+  packet actions and logout behavior.
+- Use a narrow adapter for panel/surface drawing, pointer/button state, server-
+  owned roof/flicker actions, profile/settings application, appearance refresh,
+  messages, and persistence. Do not give the panel unrestricted access to the
+  entire client.
+- Preserve the OpenGL-primary row matrix (`Preset`, `Sprites`, `Aspect Ratio`,
+  `Borderless`, `Lighting`, `Geometry`, `Terrain Variation`, `Fog`, six tuning
+  sliders, and visibility rows), including order, colors, labels, scroll
+  behavior, and action numbers.
+- Preserve the software-fallback matrix (`Sprites`, `Scaling`, `Scaling type`,
+  and visibility rows). The panel may display and dispatch scaling, but branch
+  1 must continue delegating its state/mutations to `mudclient` until branch 3.
+- Leave the Android third tab and its compatibility sprite/roof/flicker rows,
+  authentic settings, server option packets, settings file format, settings
+  class parsers, and profile bundles unchanged.
+
+Automated verification:
+
+- Refactor `test-desktop-graphics-options-tab.py` and
+  `test-renderer-v2-options-cleanup.py` to inspect the new owner rather than
+  pinning implementation to `mudclient`.
+- Add a compiled fixture that enumerates row IDs/order/labels and click results
+  for OpenGL primary, software fallback, disabled server visibility flags,
+  scrolled slider rows, click-versus-drag input, and no-action section rows.
+- Run renderer shading, remastered-sprite, window/viewport, experimental-camera,
+  packet-shape, client build, and changed-code static-analysis guards.
+
+Private visual confirmation: ask the owner to open Graphics in OpenGL mode,
+scroll the full list, exercise each profile/sprite/aspect/window/lighting/
+geometry/variation/fog control and each slider, then check roof/flicker rows.
+Repeat the tab in software fallback and confirm scaling rows appear while
+OpenGL-only rows do not. Confirm General and authentic/Android behavior through
+available devices or automated compatibility guards; an Android runtime is not
+a prerequisite when none is maintained locally.
+
+Stop if a row/action moves, a renderer click sends a gameplay settings packet,
+slider drag or scroll coordinates change, fallback exposes an OpenGL-only
+control, Android/general behavior must be rewritten, or the panel requires
+packet/gameplay state beyond its adapter.
+
+#### 2. RendererProfileApplier
+
+Current evidence: `mudclient.applyOpenGLRendererProfileMode` mutates eleven
+settings families, resets relief/color tuning, applies surface resize, refreshes
+appearance sprites for Classic, and performs many separate settings-file
+writes. Manual renderer actions independently call
+`RendererProfileSettings.markCustom()` and save. Classic deliberately disables
+remastered sprites; selecting Remaster currently does not force them on.
+
+Ownership and boundaries:
+
+- Own profile transition/application and persistence of the complete affected
+  bundle: profile, render surface, window, lighting, geometry, terrain
+  variation, fog, brightness/tone state, relief/color tuning, and remastered
+  sprite state.
+- Accept explicit host callbacks only for render-surface resize and appearance
+  preview refresh. The applier must not draw UI, send packets, manipulate world
+  time, or reach into `mudclient` gameplay state.
+- Preserve exact current-main fingerprints for Classic, Remaster, and Custom,
+  including reset ordering, gamma/saturation behavior, runtime-override
+  semantics, the Classic-only sprite disable/refresh behavior, and every saved
+  key/value. Do not “complete” Remaster by automatically enabling enhanced
+  sprites unless separately approved as a behavior change.
+- Let the panel request `cycle/apply` or `markCustom`; do not duplicate bundle
+  values in the panel or create a second profile table.
+- A single read-modify-write persistence transaction is desirable only if a
+  fixture proves it writes the same complete result and retains unrelated
+  properties. This branch is not authorization for a general config rewrite.
+
+Automated verification:
+
+- Add a compiled profile fingerprint fixture using isolated temporary settings
+  files. Cover every mode, cycle order, manual Custom transitions, pre-existing
+  unrelated keys, missing/malformed values, runtime overrides, resize callback
+  count/dimensions, appearance-refresh count, and repeated application.
+- Preserve the renderer options, settings migration, remastered sprite,
+  day/night, shading, font, window/viewport, and client packaging tests.
+- Build the client and run changed-code compiler plus static analysis.
+
+Private visual confirmation: cycle Classic, Remaster, and Custom from Graphics;
+verify current accepted visual bundles, 4:3/16:9 resize, borderless behavior,
+sprite mode/appearance preview, lighting/fog/tone, and all tuning sliders.
+Manually change representative settings and confirm the label becomes Custom.
+Restart and confirm the exact selected values persist.
+
+Stop on any profile value/default/order drift, unexpected enhanced-sprite
+enablement, loss of unrelated config keys, extra/missing resize or appearance
+refresh, runtime override being overwritten, or a need to change shader,
+renderer, server-clock, or asset-loader behavior.
+
+#### 3. LegacySoftwareScalingSettings
+
+Current evidence: `mudclient` owns public static scaler state and mutation,
+`OpenRSC` loads ordinal `scaling_type` and `ui_scale` with
+`scaling_scalar` fallback, `ORSCApplet` applies pending scalar changes, and
+`ScaledWindow` creates allowed scalar lists, clamps values, maps input, sizes
+and paints the software framebuffer, and selects interpolation by
+`ScaledWindow.ScalingAlgorithm`.
+
+Ownership and boundaries:
+
+- Move scaler state, allowed-scalar lists, pending/current transition state,
+  type cycling, bounds validation, and load/save behavior to
+  `LegacySoftwareScalingSettings` in package `orsc`.
+- Preserve the three `ScalingAlgorithm` ordinals exactly. Keeping that enum in
+  `ScaledWindow` during this extraction is acceptable and minimizes binary and
+  persisted-value churn; relocating it is a later mechanical branch.
+- Update `OpenRSC`, `ORSCApplet`, `ScaledWindow`, the panel adapter, frame
+  telemetry, and presenter compatibility calls to query the owner. Retain a
+  temporary `mudclient` facade only where a source/binary compatibility test
+  proves it necessary, and label it.
+- Preserve `scaling_type`, `ui_scale`, and `scaling_scalar`; preserve current
+  clamping, scalar sequences, pending resize timing, login redraw suppression,
+  mouse/key mapping, image types, and interpolation. No key deletion, default
+  change, or new OpenGL control is allowed.
+- This branch does not remove `ScaledWindow`, change OpenGL-primary presentation,
+  fold in `OpenGLPresentationSettings`, or expose old resolutions.
+
+Automated verification:
+
+- Add a compiled compatibility fixture for all enum ordinals, integer and
+  interpolation scalar sequences, bounds/clamping, up/down endpoints,
+  fractional-to-integer transition, malformed/out-of-range saved input,
+  `ui_scale` precedence, `scaling_scalar` migration, and round-trip persistence.
+- Exercise `ScaledWindow` sizing/input math without requiring a visible window,
+  plus the B07 software ownership fallback fixture.
+- Run graphics-options, renderer options, compatibility-label, client build,
+  packaged launcher contract, compiler, and changed-code analysis tests.
+
+Private visual confirmation: launch with OpenGL disabled, log in, cycle
+integer/bilinear/bicubic, change scale at every available bound, resize, and
+verify crisp/expected presentation and accurate mouse/keyboard mapping. Restart
+to confirm persistence, then launch OpenGL-primary and confirm legacy rows stay
+hidden and aspect-fit presentation is unchanged.
+
+Stop if software fallback cannot reach login/world, input coordinates drift,
+the selected scale differs after restart, an ordinal/key would need migration,
+OpenGL-primary starts consuming software state, or removing a facade would
+require a package/top-level move.
+
+#### 4. ClientExternalAssetLoader
+
+Current evidence: roughly the `mudclient` block from
+`getCustomTextureCount` through external world/icon/animation transforms owns
+candidate roots, embedded-JAR inventory, existence/read helpers, caches,
+equipment frames, item sprites, altar textures, UI/prayer/magic/summoning
+icons, and animation sheet slicing. It searches current/parent worktrees,
+legacy `output` paths, and packaged `myworld-assets`. Content-specific frame
+maps and combat/projectile arrays are interleaved with this infrastructure.
+
+Ownership and boundaries:
+
+- First extract discovery and decoding: candidate-base construction, dev/output
+  and embedded-resource lookup, archive inventory, image reads, transparent-
+  pixel normalization, crop/nearest-neighbor transforms, item cache, equipment
+  frame decode, icon decode, and generic directory/strip/grid frame slicing.
+- Keep `mudclient` as the content coordinator for which named assets to request,
+  destination sprite indexes/arrays, effect/projectile definitions, frame
+  counts, procedural altar fallbacks, scene size/animation timing, and surface
+  installation. Those belong to later content-specific owners.
+- Preserve exact lookup precedence, accepted spellings/typo fallbacks, relative
+  path handling, embedded resource names, alpha thresholds, opaque-black
+  replacement, dimensions, offsets, frame order/count, cache keys, and
+  missing/corrupt fallback behavior.
+- Preserve the existing sibling `../Core-Framework` candidate during the
+  extraction even though cross-worktree lookup is brittle. Characterize which
+  launch/package path needs it, then propose removal separately; do not hide a
+  behavior change inside the ownership move.
+- Do not absorb or rewrite `RemasteredSpriteResolver`, its catalog/manifest,
+  setting, cache, or guaranteed canonical per-sprite/per-frame fallback. Do not
+  move packaged `.orsc`/`.mem` archive loading, models, sounds, or texture
+  semantics in this first branch.
+
+Automated verification:
+
+- Add temporary-directory and packaged-JAR fixtures for every candidate-root
+  class and precedence case, embedded directory enumeration, missing/corrupt
+  files, cache reuse, and resource closing/diagnostics.
+- Fingerprint decoded pixels, dimensions, shifts/bounds, equipment offsets and
+  layers, icon crops, alpha thresholds, and strip/grid/nested-directory frame
+  order against published main.
+- Run remastered workspace/loader, animation migration, projectile/spell/prayer/
+  summoning, item asset/reference, client packaging, client build, and
+  changed-code analysis tests.
+
+Private visual confirmation: test a branch-built client from the repository
+and from a packaged release outside it. Inspect representative external item
+and ground sprites, worn equipment in normal/combat directions, altar glyphs/
+orbs, prayer/magic/summoning icons, and moving/impact combat effects. Toggle
+Classic/Enhanced sprites and confirm missing remastered frames still fall back
+to canonical sprites.
+
+Stop on any path-precedence, frame-order, pixel/alpha, offset, cache, or
+fallback mismatch; any packaged asset that loads only beside a source checkout;
+any proposal to reorganize `dev/myworld/assets`; or any need to change combat
+timing, sprite IDs, remastered catalog data, build packaging, or archive format.
+
+#### 5. ClientSceneInstanceStore
+
+Current evidence: `mudclient` owns parallel game-object and wall-object arrays
+for x/z/id/direction/model/materialized/pending state, per-frame marks, dynamic
+capacity, counts, and public accessors. `PacketHandler` mutates/copies them in
+wire order, B08 `SceneBaselineState` reads and prunes through the facade, and
+`mudclient` performs scene/collision materialization, hard-load retention,
+renderer resident-chunk export, animation, picking, and diagnostics.
+
+Ownership and boundaries:
+
+- Move authoritative game-object and wall-object storage, count truncation
+  cleanup, dynamic growth, per-frame marks, and exact indexed accessor semantics
+  to `ClientSceneInstanceStore`.
+- Preserve model kind/key invariants (`index` for game objects and the current
+  wall key base), nulling on truncation, materialized/pending flags, and the
+  current capacity-growth formula. Keep model preparation/tint callbacks
+  explicit rather than giving the store definition, scene, world, or renderer
+  authority.
+- Keep packet reads, record matching, copy/compaction order, baseline decisions,
+  area-load decisions, scene add/remove, collision changes, wall/model creation,
+  animation, resident-chunk building, picking, and world-editor actions in their
+  current owners. Initial wrappers may delegate from `mudclient` so B08 and
+  `PacketHandler` do not have to change architecture simultaneously.
+- Do not include ground-item arrays in this branch. Their authoritative data is
+  entangled with render priority, stack offsets, filters, nameplates, menus,
+  notes, and packet operations; characterize a later `ClientGroundItemStore`.
+- Do not combine this branch with packet-family extraction, scene-baseline
+  redesign, renderer optimization, object-ID cleanup, or fixed-capacity tuning.
+
+Automated verification:
+
+- Add a compiled store fixture for empty/repeated cleanup, growth boundaries,
+  set/get identity, count shrink/null/reset, copy/compaction, model keys/kinds,
+  materialized/pending transitions, frame marks, and overflow-safe growth.
+- Fingerprint packet object/wall mutation order and B08 baseline/pruning/parity
+  results before and after. Update source guards to follow ownership rather than
+  requiring arrays in `mudclient`.
+- Run packet diagnostic/shape, deferred scenery, region-load, relog resident
+  world, scene lifecycle, rowboat death/respawn, world geometry/material,
+  world-editor, client/server landscape parity, client build, and changed-code
+  analysis tests.
+
+Private visual confirmation: log in to a populated private area; walk/run over
+a region boundary; teleport across distant regions; add/remove or observe
+scenery and walls; inspect animated objects, doors, roofs, ground items, NPCs,
+and resident object rendering; then relog/reconnect and test death/respawn or a
+rowboat transition where practical. Confirm no stale, duplicated, missing, or
+mis-keyed objects and no packet/scene/cleanup exceptions.
+
+Stop on any packet/baseline ordering or count change, stale/duplicate/missing
+world instance, collision/picking/model-key difference, OpenGL/software parity
+failure, a need to change world-editor or protocol semantics, or pressure to
+pull ground-item/rendering policy into the store.
 
 ## Stale And Hidden Option Audit
 
 These paths should be explicitly quarantined before deeper cleanup. The main
 risk is future work seeing the old names and assuming they are active
 player-facing graphics systems.
+
+| Surface | Disposition | Extraction rule |
+| --- | --- | --- |
+| `ScaledWindow`, `ScalingAlgorithm`, `scaling_type`, `ui_scale`, `scaling_scalar` | Active software-presenter fallback and saved-setting compatibility. | Move ownership in branch 3; do not remove keys or implementation. |
+| Hidden `RenderSurfaceSettings.Mode` values | Active migration aliases for old saved resolutions. | Keep parseable and out of the player selector. |
+| `OpenGLPresentationSettings` integer/stretch modes | Active secondary/debug presentation policy; OpenGL primary enforces aspect fit. | Keep with `OpenGLViewportPresenter`; do not expose as normal settings. |
+| Camera tilt/extra zoom implementation and runtime overrides | Active baseline behavior/diagnostics. | Do not revive obsolete player toggles. |
+| Hidden body-font mapping and retained server fog byte | Active compatibility parsing/protocol surfaces; not normal renderer controls. | Preserve until their callers/protocols receive separate proof. |
+| Old visible `Resolution`, renderer, font, manual tone, superseded brightness, and OpenGL scaler rows/hotkeys | Obsolete player-facing settings. | Keep absent; do not mistake retained parsers/runtime state for a reason to restore the UI. |
 
 ### Legacy Software Scaling
 
@@ -284,13 +661,15 @@ Current locations:
   - software presenter resize, repaint, mouse mapping, and interpolation scale
     logic
 - `PC_Client/src/orsc/OpenRSC.java`
-  - loads `scaling_type` and `scaling_scalar`
+  - loads `scaling_type` and `ui_scale`, with `scaling_scalar` as fallback
 - `Client_Base/clientSettings.conf`
-  - still contains `scaling_type=0` and `scaling_scalar=1.0`
+  - tracked defaults currently omit the scaler keys, but existing user files
+    can still contain them and the desktop launcher continues to read them
 
 Current intended status:
 
-- Software-presenter compatibility only.
+- Active software-presenter compatibility only. `ScaledWindow` remains the
+  maintained fallback when OpenGL is unavailable or disabled.
 - Not an OpenGL-primary player graphics setting.
 - Not a replacement for true render-surface/aspect or camera zoom.
 
@@ -298,7 +677,9 @@ Cleanup target:
 
 - Move to `LegacySoftwareScalingSettings`.
 - Add a source-level comment that this is not for OpenGL-primary renderer work.
-- Consider deleting saved defaults from packaged configs once confirmed safe.
+- Retain `scaling_type`, `ui_scale`, and `scaling_scalar` until OpenGL is
+  mandatory and a separately approved migration/removal branch proves that no
+  maintained launcher or saved config needs them.
 
 ### OpenGL Presentation Scale Mode
 
@@ -311,10 +692,13 @@ Current locations:
 - `Client_Base/src/orsc/mudclient.java`
   - `cycleOpenGLScaleMode`
 - `PC_Client/src/orsc/OpenGLFramePresenter.java`
+  - passes presentation inputs to the extracted viewport owner
+- `PC_Client/src/orsc/OpenGLViewportPresenter.java`
   - `currentScaleMode`
-  - viewport computation and filtering behavior
+  - viewport computation, filtering, text smoothing, and mouse remapping
 - `Client_Base/clientSettings.conf`
-  - `opengl_scale_mode=aspect-fit`
+  - tracked defaults currently omit `opengl_scale_mode`; existing user files
+    and explicit runtime configuration remain accepted
 
 Current intended status:
 
@@ -324,8 +708,9 @@ Current intended status:
 
 Cleanup target:
 
-- Either keep as a runtime diagnostic only or fold into the new
-  `OpenGLViewportPresenter`.
+- B07 folded policy into `OpenGLViewportPresenter`. Keep non-aspect modes as
+  secondary/debug presentation compatibility while primary-window presentation
+  enforces aspect fit.
 - Do not re-add it to the in-game Graphics menu without a deliberate design
   decision.
 
@@ -340,13 +725,14 @@ Current locations:
 Current intended status:
 
 - Player-facing setting is `Aspect Ratio`, not a full resolution list.
-- Old 720p/1080p saved/runtime values migrate to `960x540`.
-- Old 4:3 values migrate to `800x600`.
+- Old 720p/1080p and other wide saved/runtime values actively migrate to
+  `960x540`.
+- Old 4:3 values actively migrate to `800x600`.
 
 Cleanup target:
 
 - Keep hidden modes only as migration aliases or dev/runtime diagnostics.
-- Make the migration/alias role obvious in code comments.
+- B11 made the migration/alias role explicit in source; preserve that label.
 - Avoid restoring the old visible resolution list.
 
 ### Camera Tilt And Extra Zoom
@@ -369,6 +755,10 @@ Cleanup target:
   permanent.
 - Do not re-add player-facing toggles unless a real accessibility or
   compatibility problem appears.
+
+These are active camera behaviors and runtime diagnostic overrides, not active
+saved player settings. Old player-facing rows are obsolete; the implementation
+is not dead.
 
 ### Server Zoom View Toggle
 
@@ -400,8 +790,12 @@ Cleanup target:
 
 Current locations:
 
+- `PC_Client/src/orsc/OpenGLFrameCapture.java`
+  - frame/capture artifact emission and burst bookkeeping
+- `PC_Client/src/orsc/OpenGLInputBridge.java`
+  - capture hotkey delegation
 - `PC_Client/src/orsc/OpenGLFramePresenter.java`
-  - frame capture, renderer mode flags, composite debug, shadow debug
+  - capture coordination plus remaining renderer/composite debug inputs
 - `Client_Base/src/orsc/RendererDebugSettings.java`
   - F6 overlay state and mode
 
@@ -413,7 +807,9 @@ Current intended status:
 
 Cleanup target:
 
-- Move capture/debug code out of the presenter.
+- Capture file writing is already extracted. Move only the remaining
+  coordination when it has a clearer owner; do not re-merge it into the
+  presenter.
 - Centralize debug property names in one class.
 - Keep release-default debug behavior obvious.
 
@@ -495,17 +891,29 @@ large non-renderer hotspot. It should eventually split into:
 - `ClientDefinitionRegistry`
   - read-only access to items, NPCs, spells, prayers, tiles, doors, textures,
     animations, sprites, and models.
+  - Status: B09 extracted registry storage and indexed access. The public
+    `EntityHandler` facade and active mutable-list aliases remain for
+    compatibility.
 - `MyWorldDefinitionOverrides`
   - MyWorld-specific overrides and generated additions.
+  - Status: generated `MyWorldItemOverrides` was already separate; broader
+    authored/generated-family extraction remains open and must preserve load
+    order and every index.
 - `PrayerBookDefinitions`
   - Saradomin/Guthix/Zamorak prayer definitions and active book state.
+  - Status: done in B09.
 - `GeneratedEquipmentDefinitions`
   - staff, cloth, pickaxe, and other generated visual/stat definitions.
+  - Status: open.
 - `DefinitionFallbackLogger`
   - one-shot fallback logging for missing or placeholder definitions.
+  - Status: done as `ClientDefinitionFallbackDiagnostics` in B09 for malformed
+    item IDs. NPC/animation/object fallback rules remain registry behavior.
 
-Do this after renderer cleanup unless definition churn starts blocking client
-work.
+Do not move thousands of authored definitions just to reduce line count. A
+future family extraction needs generated-source/load-order/index fingerprints
+at least as strict as B09. Keep it behind the five immediate `mudclient`
+branches unless definition churn blocks active work.
 
 ## Server Cleanup Candidates
 
@@ -518,6 +926,9 @@ tracking:
 - `Equipment.java`
   - separate slot rules, stat aggregation, item-effect hooks, durability/charge
     helpers, and visual appearance mapping.
+  - Status: B10 completed pure slot and stat calculation owners. Mutable
+    aggregation order, effects, durability/charges, packets, and appearance are
+    still open and require separate behavior characterization.
 - `EnchantingItemEffects.java`
   - split jewelry line effects, robe effects, staff effects, charge stores, and
     altar/tier requirements.
@@ -527,6 +938,9 @@ tracking:
 - `SpellHandler.java`
   - split spell validation, rune costs, combat spell dispatch, utility spells,
     and special/AOE behavior.
+  - Status: B10 completed pure classification and validation owners. Rune
+    removal, target lookup, combat/teleport side effects, AoE, scheduling, and
+    finalization remain in `SpellHandler` by design.
 - `ActionSender.java`
   - separate packet writer primitives from gameplay-specific response helpers.
 
@@ -548,31 +962,36 @@ tracking:
 
 ## Recommended First Cleanup Pass
 
-Start with `OpenGLFramePresenter.java` because it is the exact file people are
-noticing and because it is blocking shader/shadow work from being approachable.
+The old presenter-first pass is complete through viewport/window extraction.
+Start the post-B11 sequence with `RendererSettingsPanel`, then
+`RendererProfileApplier`, `LegacySoftwareScalingSettings`,
+`ClientExternalAssetLoader`, and `ClientSceneInstanceStore` as specified above.
 
-Suggested first three commits:
-
-1. Move `LwjglBindings` and callback handlers into `LwjglBindings.java`.
-2. Move `OpenGLShaderProgram` and inline shader source into
-   `OpenGLShaderProgram.java`.
-3. Move `Viewport`, `MonitorMode`, and viewport calculation helpers into an
-   `OpenGLViewport` or `OpenGLViewportPresenter` class.
-
-These should reduce the file size without changing visuals. After those, move
-the remaster shadow classifier/mask code so future lighting work has a focused
-home.
+Do not opportunistically combine these because they are adjacent in
+`mudclient`. Each branch must leave a tested owner, keep compatibility visible,
+and obtain private visual confirmation before handoff. After branch 5, refresh
+the measurements and decide whether combat-effect sprites, movement
+interpolation, external content coordination, or presenter composite glue has
+the clearest next boundary.
 
 ## Definition Of Done
 
 This cleanup track is succeeding when:
 
-- The largest renderer file is below 5,000 lines.
+- `OpenGLFramePresenter` is a frame/GL coordinator with viewport and window
+  lifecycle remaining in their B07 owners; success is based on responsibilities
+  and dependencies, not a 5,000-line threshold.
 - `mudclient.java` no longer owns renderer settings UI, external asset loading,
-  combat effect sprite management, and scene instance stores directly.
-- Old scaling/resolution options are visibly compatibility-only or removed.
+  profile application, software-scaling state, or game/wall scene instance
+  storage directly. Combat-effect sprite management remains a later explicit
+  branch.
+- Old scaling/resolution options are either visibly active compatibility
+  (`ScaledWindow`, persisted scaler keys, hidden surface aliases) or proved
+  obsolete and absent from the player UI.
 - Shader source and shader program binding are not embedded in the presenter.
 - Shadow classification and shadow mask generation can be reasoned about
   without reading the full presenter.
+- Package moves and top-level source-root renames begin only after the five
+  planned owners are stable and compatibility facades have been inventoried.
 - Future AI sessions can identify the right file for renderer, shader, UI,
   asset, telemetry, and definition work without searching a 16k-25k line file.
