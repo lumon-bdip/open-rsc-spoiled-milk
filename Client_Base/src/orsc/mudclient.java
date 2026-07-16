@@ -117,13 +117,6 @@ public final class mudclient implements Runnable {
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_PRIME = 0x100000001b3L;
 	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
 	private static final int RESIDENT_ANIMATED_OBJECT_CHUNK_TILE_SIZE = 8;
-	private static final int PREDICTIVE_PRELOAD_SOURCE_TARGET = 0;
-	private static final int PREDICTIVE_PRELOAD_SOURCE_WAYPOINT = 1;
-	private static final int PREDICTIVE_PRELOAD_SOURCE_CAMERA = 2;
-	private static final int PREDICTIVE_CAMERA_PRELOAD_DISTANCE_TILES = World.SECTION_SIZE;
-	private static final int[] PREDICTIVE_CAMERA_STEP_X = {0, 1, 1, 1, 0, -1, -1, -1};
-	private static final int[] PREDICTIVE_CAMERA_STEP_Z = {1, 1, 0, -1, -1, -1, 0, 1};
-
 	public static final int spriteMedia = 2000;
 	public static final int spriteUtil = 2100;
 	public static final int spriteItem = 2150;
@@ -433,6 +426,7 @@ public final class mudclient implements Runnable {
 	//private final int[] duelOpponentItemCount = new int[8];
 	private final Item[] duelOpponentConfirm = new Item[8];
 	private final ClientSceneInstanceStore sceneInstanceStore = new ClientSceneInstanceStore();
+	private final PredictiveTerrainPreloader predictiveTerrainPreloader = new PredictiveTerrainPreloader();
 	private int sceneObjectDebugLastHoverSignature = 0;
 	private long sceneObjectDebugLastHoverMillis = 0L;
 	private static final int OBJECT_ANIMATION_TILE_RADIUS = 14;
@@ -849,15 +843,6 @@ public final class mudclient implements Runnable {
 	private boolean loadingArea = false;
 	private boolean regionLoadNeedsHardPlayerReset = false;
 	private boolean hasCompletedInitialRegionLoad = false;
-	private int predictivePreloadPlane = Integer.MIN_VALUE;
-	private int predictivePreloadSectionX = Integer.MIN_VALUE;
-	private int predictivePreloadSectionZ = Integer.MIN_VALUE;
-	private int predictiveWaypointPreloadPlane = Integer.MIN_VALUE;
-	private int predictiveWaypointPreloadSectionX = Integer.MIN_VALUE;
-	private int predictiveWaypointPreloadSectionZ = Integer.MIN_VALUE;
-	private int predictiveCameraPreloadPlane = Integer.MIN_VALUE;
-	private int predictiveCameraPreloadSectionX = Integer.MIN_VALUE;
-	private int predictiveCameraPreloadSectionZ = Integer.MIN_VALUE;
 	private final Map<Integer, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
 		new HashMap<Integer, ResidentObjectChunkCacheEntry>();
 	private int logoutTimeout = 0;
@@ -22210,7 +22195,15 @@ public final class mudclient implements Runnable {
 	}
 
 	public void preloadTerrainForIncomingWorldPosition(int worldX, int worldZ) {
-		preloadTerrainForWorldTarget(worldX, worldZ);
+		this.predictiveTerrainPreloader.preloadIncomingWorldPosition(
+			this.world,
+			worldX,
+			worldZ,
+			this.worldOffsetX,
+			this.worldOffsetZ,
+			this.requestedPlane,
+			this.hasCompletedInitialRegionLoad,
+			this.loadingArea);
 	}
 
 	public void applyCustomMovementUpdate(int worldX, int worldZ, int direction) {
@@ -22249,101 +22242,32 @@ public final class mudclient implements Runnable {
 	}
 
 	private void preloadTerrainForLocalTarget(int localTileX, int localTileZ) {
-		preloadTerrainForWorldTarget(this.midRegionBaseX + localTileX, this.midRegionBaseZ + localTileZ);
-	}
-
-	private void preloadTerrainForWorldTarget(int worldX, int worldZ) {
-		preloadTerrainForWorldTarget(worldX, worldZ, PREDICTIVE_PRELOAD_SOURCE_TARGET);
-	}
-
-	private void preloadTerrainForWorldTarget(int worldX, int worldZ, int source) {
-		if (this.world == null || !this.hasCompletedInitialRegionLoad || this.loadingArea) {
-			return;
-		}
-		int preloadWorldX = worldX + this.worldOffsetX;
-		int preloadWorldZ = worldZ + this.worldOffsetZ;
-		int sectionX = World.worldTileToSection(preloadWorldX);
-		int sectionZ = World.worldTileToSection(preloadWorldZ);
-		if (isPredictivePreloadSectionCurrent(source, sectionX, sectionZ)) {
-			return;
-		}
-		markPredictivePreloadSection(source, sectionX, sectionZ);
-		this.world.preloadSections(preloadWorldX, preloadWorldZ, this.requestedPlane);
-	}
-
-	private boolean isPredictivePreloadSectionCurrent(int source, int sectionX, int sectionZ) {
-		if (source == PREDICTIVE_PRELOAD_SOURCE_WAYPOINT) {
-			return this.predictiveWaypointPreloadPlane == this.requestedPlane
-				&& this.predictiveWaypointPreloadSectionX == sectionX
-				&& this.predictiveWaypointPreloadSectionZ == sectionZ;
-		}
-		if (source == PREDICTIVE_PRELOAD_SOURCE_CAMERA) {
-			return this.predictiveCameraPreloadPlane == this.requestedPlane
-				&& this.predictiveCameraPreloadSectionX == sectionX
-				&& this.predictiveCameraPreloadSectionZ == sectionZ;
-		}
-		return this.predictivePreloadPlane == this.requestedPlane
-			&& this.predictivePreloadSectionX == sectionX
-			&& this.predictivePreloadSectionZ == sectionZ;
-	}
-
-	private void markPredictivePreloadSection(int source, int sectionX, int sectionZ) {
-		if (source == PREDICTIVE_PRELOAD_SOURCE_WAYPOINT) {
-			this.predictiveWaypointPreloadPlane = this.requestedPlane;
-			this.predictiveWaypointPreloadSectionX = sectionX;
-			this.predictiveWaypointPreloadSectionZ = sectionZ;
-			return;
-		}
-		if (source == PREDICTIVE_PRELOAD_SOURCE_CAMERA) {
-			this.predictiveCameraPreloadPlane = this.requestedPlane;
-			this.predictiveCameraPreloadSectionX = sectionX;
-			this.predictiveCameraPreloadSectionZ = sectionZ;
-			return;
-		}
-		this.predictivePreloadPlane = this.requestedPlane;
-		this.predictivePreloadSectionX = sectionX;
-		this.predictivePreloadSectionZ = sectionZ;
+		this.predictiveTerrainPreloader.preloadLocalTarget(
+			this.world,
+			localTileX,
+			localTileZ,
+			this.midRegionBaseX,
+			this.midRegionBaseZ,
+			this.worldOffsetX,
+			this.worldOffsetZ,
+			this.requestedPlane,
+			this.hasCompletedInitialRegionLoad,
+			this.loadingArea);
 	}
 
 	private void preloadTerrainForActiveMovementContext() {
-		if (this.localPlayer == null || this.world == null || !this.hasCompletedInitialRegionLoad || this.loadingArea) {
-			return;
-		}
-		preloadTerrainForActiveWaypoint();
-		preloadTerrainForCameraDirection();
-	}
-
-	private void preloadTerrainForActiveWaypoint() {
-		int nextWaypoint = this.localPlayer.waypointIndexNext;
-		if (nextWaypoint < 0 || nextWaypoint >= this.localPlayer.waypointsX.length) {
-			return;
-		}
-		int inactiveWaypoint = (this.localPlayer.waypointIndexCurrent + 1) % this.localPlayer.waypointsX.length;
-		if (nextWaypoint == inactiveWaypoint) {
-			return;
-		}
-		int targetTileX = localPixelToTile(this.localPlayer.waypointsX[nextWaypoint]);
-		int targetTileZ = localPixelToTile(this.localPlayer.waypointsZ[nextWaypoint]);
-		preloadTerrainForWorldTarget(
-			this.midRegionBaseX + targetTileX,
-			this.midRegionBaseZ + targetTileZ,
-			PREDICTIVE_PRELOAD_SOURCE_WAYPOINT);
-	}
-
-	private void preloadTerrainForCameraDirection() {
-		int direction = ((this.cameraRotation + 16) / 32) & 7;
-		int playerTileX = localPixelToTile(this.localPlayer.currentX);
-		int playerTileZ = localPixelToTile(this.localPlayer.currentZ);
-		int targetTileX = playerTileX + PREDICTIVE_CAMERA_STEP_X[direction] * PREDICTIVE_CAMERA_PRELOAD_DISTANCE_TILES;
-		int targetTileZ = playerTileZ + PREDICTIVE_CAMERA_STEP_Z[direction] * PREDICTIVE_CAMERA_PRELOAD_DISTANCE_TILES;
-		preloadTerrainForWorldTarget(
-			this.midRegionBaseX + targetTileX,
-			this.midRegionBaseZ + targetTileZ,
-			PREDICTIVE_PRELOAD_SOURCE_CAMERA);
-	}
-
-	private int localPixelToTile(int localPixel) {
-		return Math.floorDiv(localPixel - 64, this.tileSize);
+		this.predictiveTerrainPreloader.preloadActiveMovementContext(
+			this.world,
+			this.localPlayer,
+			this.midRegionBaseX,
+			this.midRegionBaseZ,
+			this.worldOffsetX,
+			this.worldOffsetZ,
+			this.requestedPlane,
+			this.cameraRotation,
+			this.tileSize,
+			this.hasCompletedInitialRegionLoad,
+			this.loadingArea);
 	}
 
 	private boolean canDrawWorldSpriteAtLocalTile(int tileX, int tileZ) {
@@ -22380,15 +22304,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void resetPredictiveTerrainPreload() {
-		this.predictivePreloadPlane = Integer.MIN_VALUE;
-		this.predictivePreloadSectionX = Integer.MIN_VALUE;
-		this.predictivePreloadSectionZ = Integer.MIN_VALUE;
-		this.predictiveWaypointPreloadPlane = Integer.MIN_VALUE;
-		this.predictiveWaypointPreloadSectionX = Integer.MIN_VALUE;
-		this.predictiveWaypointPreloadSectionZ = Integer.MIN_VALUE;
-		this.predictiveCameraPreloadPlane = Integer.MIN_VALUE;
-		this.predictiveCameraPreloadSectionX = Integer.MIN_VALUE;
-		this.predictiveCameraPreloadSectionZ = Integer.MIN_VALUE;
+		this.predictiveTerrainPreloader.reset();
 	}
 
 	public void applyCustomPlayerMovementUpdate(int serverIndex, int worldX, int worldZ, int direction) {
