@@ -87,10 +87,13 @@ work in this plan:
 1. **Complete on `refactor/client-renderer-settings-panel`:** extracted
    `RendererSettingsPanel` without changing the Graphics/General/Android row
    contract or any action ID. Merged into `main` as `26145528f`.
-2. **Next:** extract `RendererProfileApplier` and fingerprint the current Classic,
-   Remaster, Custom, resize, refresh, runtime-override, and persistence behavior.
-3. Extract `LegacySoftwareScalingSettings` while retaining the active software
-   presenter and all three persisted compatibility keys.
+2. **Complete on `refactor/client-renderer-profile-applier`:** extracted
+   `RendererProfileApplier` and fingerprinted Classic, Remaster, Custom, resize,
+   refresh, runtime-override, and persistence behavior. Await manager merge
+   before starting item 3.
+3. **Next after item 2 merges:** extract `LegacySoftwareScalingSettings` while
+   retaining the active software presenter and all three persisted
+   compatibility keys.
 4. Extract `ClientExternalAssetLoader` behind lookup, decode, frame-order, and
    packaged-resource parity tests.
 5. Extract `ClientSceneInstanceStore` for authoritative game-object and wall
@@ -481,6 +484,23 @@ Stop on any profile value/default/order drift, unexpected enhanced-sprite
 enablement, loss of unrelated config keys, extra/missing resize or appearance
 refresh, runtime override being overwritten, or a need to change shader,
 renderer, server-clock, or asset-loader behavior.
+
+Implementation record (2026-07-16): the focused branch moved renderer-profile
+transitions, complete-bundle application, manual Custom marking, and semantic
+settings persistence into a 180-line `RendererProfileApplier`. The merged
+baseline `mudclient` was 27,350 lines; it is 27,246 lines on the tested branch.
+The new owner depends on the existing renderer setting classes plus narrow
+settings-store, resize, and appearance-preview boundaries. Complete profile
+application now retains unrelated properties in one read-modify-write
+transaction while preserving the ten setting families current `main` actually
+writes. Brightness remains intentionally runtime-only because the previous
+path applied `HIGH` in memory but did not persist `opengl_brightness`.
+`mudclient.saveOpenGLWindowSettings()` remains as the active presenter-facing
+compatibility facade and persists only window state without marking Custom.
+A compiled isolated-settings fixture covers exact Classic/Remaster/Custom
+fingerprints, cycle order, missing/malformed values, runtime overrides,
+unrelated-key retention, callback counts and dimensions, repeated application,
+manual Custom transitions, transaction counts, and cross-process restart.
 
 #### 3. LegacySoftwareScalingSettings
 
@@ -977,10 +997,10 @@ tracking:
 
 ## Recommended First Cleanup Pass
 
-The old presenter-first pass is complete through viewport/window extraction,
-and the first post-B11 branch completed `RendererSettingsPanel` and was merged
-as `26145528f`. Continue with `RendererProfileApplier`,
-`LegacySoftwareScalingSettings`,
+The old presenter-first pass is complete through viewport/window extraction.
+The first post-B11 branch completed `RendererSettingsPanel` and was merged as
+`26145528f`; the second completed `RendererProfileApplier` and awaits manager
+merge. After that merge, continue with `LegacySoftwareScalingSettings`,
 `ClientExternalAssetLoader`, and `ClientSceneInstanceStore` as specified above.
 
 Do not opportunistically combine these because they are adjacent in
