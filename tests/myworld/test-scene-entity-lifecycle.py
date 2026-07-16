@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
+INSTANCE_STORE = ROOT / "Client_Base" / "src" / "orsc" / "ClientSceneInstanceStore.java"
 SERVER_UPDATER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "GameStateUpdater.java"
 PLAYER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "player" / "Player.java"
 
@@ -24,6 +25,7 @@ def forbid(text: str, needle: str, description: str) -> None:
 
 def main() -> None:
     text = CLIENT.read_text(encoding="utf-8")
+    instance_store = INSTANCE_STORE.read_text(encoding="utf-8")
     updater = SERVER_UPDATER.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
     require(
@@ -32,13 +34,13 @@ def main() -> None:
         "transition-aware hard area/plane object cache reset",
     )
     require(
-        text,
-        "if (!this.gameObjectInstancePendingAreaLoad[readIndex]) {\n\t\t\t\tcontinue;\n\t\t\t}",
+        instance_store,
+        "if (!gameObjectPendingAreaLoad[readIndex]) {\n\t\t\t\tcontinue;\n\t\t\t}",
         "old-area scenery rejection during hard loads",
     )
     require(
-        text,
-        "if (!this.wallObjectInstancePendingAreaLoad[readIndex]) {\n\t\t\t\tcontinue;\n\t\t\t}",
+        instance_store,
+        "if (!wallObjectPendingAreaLoad[readIndex]) {\n\t\t\t\tcontinue;\n\t\t\t}",
         "old-area wall rejection during hard loads",
     )
     require(

@@ -123,7 +123,8 @@ def main() -> None:
         "Client should tint Dragon sulfur rock model instances through the object model preparation path",
     )
     require(
-        "this.gameObjectInstanceModel[i] = prepareGameObjectInstanceModel(this.gameObjectInstanceID[i], m);" in client_mudclient
+        "RSModel preparedModel = prepareGameObjectInstanceModel(getGameObjectInstanceID(i), m);" in client_mudclient
+        and "this.sceneInstanceStore.setGameObjectModel(i, preparedModel);" in client_mudclient
         and "private RSModel prepareGameObjectInstanceModel(int objectId, RSModel model)" in client_mudclient,
         "Client should prepare Dragon sulfur visuals only when assigning an object model",
     )

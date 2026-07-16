@@ -81,7 +81,8 @@ def ensure_animation():
         '"myworld_cosmic_sparkles" + (this.objectAnimationNumberCosmicSparkles + 1)' in client,
         "Client must animate all four sparkle frames",
     )
-    require("this.gameObjectInstanceID[centerX] == 1325" in client, "Animation must target object 1325")
+    require("this.getGameObjectInstanceID(centerX) == 1325" in client,
+            "Animation must target object 1325")
 
 
 def ensure_placements():
