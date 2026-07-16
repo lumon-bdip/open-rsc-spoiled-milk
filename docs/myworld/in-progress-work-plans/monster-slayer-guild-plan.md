@@ -1,10 +1,10 @@
 # Monster Slayer Guild Plan
 
-Status: **foundation audit complete; implementation-ready design pending the
-explicit reward decisions below**
+Status: **foundation audit complete; non-player foundation implementation-ready;
+reward implementation pending the explicit decisions below**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
-Audit branch: `docs/monster-slayer-foundation-audit`
+Audit integration: merged into `main` as `8ec90a4d6`
 
 Related active plans:
 
