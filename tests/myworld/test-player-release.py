@@ -713,7 +713,9 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         if unexpected_item_sprites:
             fail(f"unexpected item sprite source files are present: {unexpected_item_sprites[:5]}")
 
-    source = (ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java").read_text(encoding="utf-8")
+    source = (ROOT / "Client_Base" / "src" / "orsc" / "ClientExternalAssetLoader.java").read_text(
+        encoding="utf-8"
+    )
     for snippet in ["EMBEDDED_ASSET_ROOT", "readAssetImage", "assetDirectoryExists"]:
         if snippet not in source:
             fail(f"runtime visual asset resource loading is missing {snippet}")

@@ -75,6 +75,7 @@ python3 ./tests/myworld/test-client-auxiliary-types.py
 python3 ./tests/myworld/test-renderer-settings-panel-extraction.py
 python3 ./tests/myworld/test-renderer-profile-applier.py
 python3 ./tests/myworld/test-legacy-software-scaling-settings.py
+python3 ./tests/myworld/test-client-external-asset-loader.py
 python3 ./tests/myworld/test-myworld-plugin-layout.py
 python3 ./tests/myworld/test-myworld-import-boundary.py
 python3 ./tests/myworld/test-standalone-layout.py

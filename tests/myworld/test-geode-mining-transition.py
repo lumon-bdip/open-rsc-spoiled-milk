@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
 CLIENT_ITEMS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+EXTERNAL_ASSET_LOADER = ROOT / "Client_Base/src/orsc/ClientExternalAssetLoader.java"
 SERVER_ITEMS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 MINING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/mining/Mining.java"
 WOODCUTTING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/woodcutting/Woodcutting.java"
@@ -64,11 +65,16 @@ def main() -> None:
 
     client = CLIENT.read_text(encoding="utf-8")
     for snippet in (
-        "assetSpec.indexOf('@')",
-        "loadExternalItemSprite(getExternalPngFile(assetName), targetWidth, targetHeight)",
         'return new String[]{"Select mining focus", "Just the ore", "A few geodes", "Plenty of geodes", "Lots of geodes"};',
     ):
         require(client, snippet, "mudclient geode support")
+
+    external_asset_loader = EXTERNAL_ASSET_LOADER.read_text(encoding="utf-8")
+    for snippet in (
+        "assetSpec.indexOf('@')",
+        "findFirstFile(ITEM_ASSET_PATHS, fileName), targetWidth, targetHeight",
+    ):
+        require(external_asset_loader, snippet, "external asset loader geode support")
 
     server_items = json.loads(SERVER_ITEMS.read_text(encoding="utf-8"))["items"]
     names_by_id = {item["id"]: item["name"] for item in server_items}

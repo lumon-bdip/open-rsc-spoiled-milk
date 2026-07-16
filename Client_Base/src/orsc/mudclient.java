@@ -64,18 +64,12 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.*;
 //import java.lang.management.ManagementFactory; //Commented out for Android
-import javax.imageio.ImageIO;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -87,8 +81,6 @@ public final class mudclient implements Runnable {
 	private static final int[][] NPC_OVERLAP_PATTERN_2 = {{-1, 0}, {1, 0}};
 	private static final int[][] NPC_OVERLAP_PATTERN_3 = {{-1, 1}, {1, 1}, {0, -1}};
 	private static final int[][] NPC_OVERLAP_PATTERN_4 = {{-1, -1}, {1, -1}, {-1, 1}, {1, 1}};
-	private static final String DEVELOPMENT_ASSET_ROOT = "dev/myworld/assets/";
-	private static final String EMBEDDED_ASSET_ROOT = "myworld-assets/";
 	private static final int SCENE_MODEL_CAPACITY = 25000;
 	private static final int SCENE_POLYGON_CAPACITY = 120000;
 	private static final int SCENE_PICK_MODEL_CAPACITY = 1000;
@@ -266,7 +258,6 @@ public final class mudclient implements Runnable {
 	private static final int PRAYER_ICON_VISIBLE_ROWS = MAGIC_ICON_VISIBLE_ROWS;
 	private static final int PRAYER_ICON_SIZE = MAGIC_ICON_SIZE;
 	private static final int PRAYER_ICON_GAP = MAGIC_ICON_GAP;
-	private static final int PRAYER_ICON_ALPHA_THRESHOLD = 128;
 	private static final int SUMMONING_ICON_COLUMNS = MAGIC_ICON_COLUMNS;
 	private static final int SUMMONING_ICON_VISIBLE_ROWS = MAGIC_ICON_VISIBLE_ROWS;
 	private static final int SUMMONING_ICON_SIZE = MAGIC_ICON_SIZE;
@@ -1117,10 +1108,9 @@ public final class mudclient implements Runnable {
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
 	private final Sprite[] summoningIconSprites = new Sprite[SUMMONING_NAMES.length];
-	private final Map<String, Sprite> externalItemSpriteCache = new HashMap<String, Sprite>();
+	private final ClientExternalAssetLoader externalAssetLoader = new ClientExternalAssetLoader();
 	private Sprite autoAttackHudSprite;
 	private boolean autoAttackHudSpriteLoaded;
-	private Set<String> embeddedAssetResources;
 	private static final int MAX_QUEUED_PROJECTILE_EFFECTS = 64;
 	private final int[] queuedProjectileEffectSprite = new int[MAX_QUEUED_PROJECTILE_EFFECTS];
 	private final int[] queuedProjectileEffectX = new int[MAX_QUEUED_PROJECTILE_EFFECTS];
@@ -4424,7 +4414,7 @@ public final class mudclient implements Runnable {
 
 	public Sprite spriteSelect(ItemDef item) {
 		try {
-			Sprite externalSprite = getExternalItemSprite(item);
+			Sprite externalSprite = this.externalAssetLoader.getExternalItemSprite(item);
 			if (externalSprite != null) {
 				return getSurface().resolveRemastered(item, externalSprite);
 			}
@@ -12803,11 +12793,13 @@ public final class mudclient implements Runnable {
 			return autoAttackHudSprite;
 		}
 		autoAttackHudSpriteLoaded = true;
-		File sourceFile = new File(DEVELOPMENT_ASSET_ROOT + "sprites/UI/auto-attack.png");
+		File sourceFile = new File(ClientExternalAssetLoader.DEVELOPMENT_ASSET_ROOT
+			+ "sprites/UI/auto-attack.png");
 		try {
-			BufferedImage source = readAssetImage(sourceFile);
+			BufferedImage source = this.externalAssetLoader.readAssetImage(sourceFile);
 			if (source != null) {
-				autoAttackHudSprite = createExternalIconSprite(source, 56, getSheetBackgroundArgb(source));
+				autoAttackHudSprite = this.externalAssetLoader.createExternalIconSprite(
+					source, 56, this.externalAssetLoader.getSheetBackgroundArgb(source));
 			}
 		} catch (IOException e) {
 			System.out.println("Failed to load auto attack HUD icon: " + e.getMessage());
@@ -19374,91 +19366,52 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getCustomTextureCount() {
-		return assetFileExists(getExternalGlyphTextureFile("air")) ? 1 : 0;
+		return this.externalAssetLoader.assetFileExists(getExternalGlyphTextureFile("air")) ? 1 : 0;
 	}
 
 	private File getExternalGlyphTextureFile(String element) {
-		Path[] candidateBases = getAssetCandidateBases(
-			"dev/myworld/assets/sprites/world/rune-altars/glyphs",
-			"output/pngs"
-		);
 		String[] candidateNames = "air".equals(element)
 			? new String[] {"air-glyph.png", "air-glyph2.png", "air glyph.png"}
 			: "law".equals(element)
 			? new String[] {"law-glyph.png", "law-rune.png"}
 			: new String[] {element + "-glyph.png"};
-		for (Path basePath : candidateBases) {
-			for (String candidateName : candidateNames) {
-				File candidate = basePath.resolve(candidateName).toFile();
-				if (assetFileExists(candidate)) {
-					return candidate;
-				}
-			}
-		}
-		return candidateBases[0].resolve(candidateNames[0]).toFile();
+		return this.externalAssetLoader.findFirstFile(new String[] {
+			"dev/myworld/assets/sprites/world/rune-altars/glyphs",
+			"output/pngs"
+		}, candidateNames);
 	}
 
 	private File getExternalOrbTextureFile(String element) {
-		Path[] candidateBases = getAssetCandidateBases(
-			"dev/myworld/assets/sprites/world/rune-altars/orbs",
-			"output/pngs"
-		);
 		String[] candidateNames = "life".equals(element)
 			? new String[] {"orb-life.png", "orb-of-life.png"}
 			: "blood".equals(element)
 			? new String[] {"orb-of-blood.png", "orb-of-blood-alt.png"}
 			: new String[] {"orb-of-" + element + ".png"};
-		for (Path basePath : candidateBases) {
-			for (String candidateName : candidateNames) {
-				File candidate = basePath.resolve(candidateName).toFile();
-				if (assetFileExists(candidate)) {
-					return candidate;
-				}
-			}
-		}
-		return candidateBases[0].resolve(candidateNames[0]).toFile();
+		return this.externalAssetLoader.findFirstFile(new String[] {
+			"dev/myworld/assets/sprites/world/rune-altars/orbs",
+			"output/pngs"
+		}, candidateNames);
 	}
 
 	private File getLegacyExternalAnimationFolder(String category, String animationName) {
-		Path[] candidateBases = getAssetCandidateBases(
+		return this.externalAssetLoader.findFirstDirectory(new String[] {
 			"dev/myworld/assets/legacy animation folder",
 			"output/legacy animations"
-		);
-		for (Path basePath : candidateBases) {
-			File candidate = basePath.resolve(category).resolve(animationName).toFile();
-			if (assetDirectoryExists(candidate)) {
-				return candidate;
-			}
-		}
-		return candidateBases[0].resolve(category).resolve(animationName).toFile();
+		}, category, animationName);
 	}
 
 	private File getExternalAnimationSheet(String category, String relativePath) {
-		Path[] candidateBases = getAssetCandidateBases(
+		return this.externalAssetLoader.findFirstFile(new String[] {
 			"dev/myworld/assets/animations/" + category,
 			"output/animations/" + category
-		);
-		for (Path basePath : candidateBases) {
-			File candidate = basePath.resolve(relativePath).toFile();
-			if (assetFileExists(candidate)) {
-				return candidate;
-			}
-		}
-		return candidateBases[0].resolve(relativePath).toFile();
+		}, relativePath);
 	}
 
 	private File getExternalEquipmentNumberedFolder(String equipmentName) {
-		Path[] candidateBases = getAssetCandidateBases(
+		return this.externalAssetLoader.findFirstDirectory(new String[] {
 			"dev/myworld/assets/sprites/equipment",
 			"output/equipment"
-		);
-		for (Path basePath : candidateBases) {
-			File candidate = basePath.resolve(equipmentName).resolve("numbered").toFile();
-			if (assetDirectoryExists(candidate)) {
-				return candidate;
-			}
-		}
-		return candidateBases[0].resolve(equipmentName).resolve("numbered").toFile();
+		}, equipmentName, "numbered");
 	}
 
 	private void loadExternalEquipmentSprites() {
@@ -19486,7 +19439,7 @@ public final class mudclient implements Runnable {
 
 	private void loadExternalMainHandEquipmentSprite(String spriteName, File numberedFolder) {
 		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
-		if (equipmentSprites == null || !assetDirectoryExists(numberedFolder)) {
+		if (equipmentSprites == null || !this.externalAssetLoader.assetDirectoryExists(numberedFolder)) {
 			return;
 		}
 		final int frameCount = 15;
@@ -19500,7 +19453,8 @@ public final class mudclient implements Runnable {
 		);
 		for (int i = 0; i < frameCount; i++) {
 			File frameFile = new File(numberedFolder, String.format(Locale.ENGLISH, "%02d.png", i));
-			orsc.graphics.two.SpriteArchive.Frame frame = loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
+			orsc.graphics.two.SpriteArchive.Frame frame =
+				this.externalAssetLoader.loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
 			if (frame == null) {
 				return;
 			}
@@ -19511,7 +19465,7 @@ public final class mudclient implements Runnable {
 
 	private void loadExternalCombatMainHandEquipmentSprite(String spriteName, File numberedFolder) {
 		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
-		if (equipmentSprites == null || !assetDirectoryExists(numberedFolder)) {
+		if (equipmentSprites == null || !this.externalAssetLoader.assetDirectoryExists(numberedFolder)) {
 			return;
 		}
 		final int frameCount = 18;
@@ -19526,7 +19480,8 @@ public final class mudclient implements Runnable {
 		);
 		for (int i = 0; i < frameCount; i++) {
 			File frameFile = new File(numberedFolder, String.format(Locale.ENGLISH, "%02d.png", i));
-			orsc.graphics.two.SpriteArchive.Frame frame = loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
+			orsc.graphics.two.SpriteArchive.Frame frame =
+				this.externalAssetLoader.loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
 			if (frame == null) {
 				return;
 			}
@@ -19537,32 +19492,9 @@ public final class mudclient implements Runnable {
 		equipmentSprites.put(spriteName, spriteEntry);
 	}
 
-	private orsc.graphics.two.SpriteArchive.Frame loadExternalEquipmentFrame(File sourceFile, int offsetX, int offsetY) {
-		try {
-			BufferedImage source = readAssetImage(sourceFile);
-			if (source == null) {
-				return null;
-			}
-			int width = source.getWidth();
-			int height = source.getHeight();
-			orsc.graphics.two.SpriteArchive.Frame frame = new orsc.graphics.two.SpriteArchive.Frame(
-				width, height, true, offsetX, offsetY, 64, 102
-			);
-			int[] pixels = frame.getPixels();
-			source.getRGB(0, 0, width, height, pixels, 0, width);
-			for (int i = 0; i < pixels.length; i++) {
-				pixels[i] = getExternalSpritePixel(pixels[i], 64);
-			}
-			return frame;
-		} catch (IOException e) {
-			System.out.println("Failed to load external equipment frame " + sourceFile.getPath() + ": " + e.getMessage());
-			return null;
-		}
-	}
-
 	private void loadExternalNeckEquipmentSprite(String spriteName, File numberedFolder) {
 		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
-		if (equipmentSprites == null || !assetDirectoryExists(numberedFolder)) {
+		if (equipmentSprites == null || !this.externalAssetLoader.assetDirectoryExists(numberedFolder)) {
 			return;
 		}
 		final int frameCount = 18;
@@ -19577,7 +19509,8 @@ public final class mudclient implements Runnable {
 		);
 		for (int i = 0; i < frameCount; i++) {
 			File frameFile = new File(numberedFolder, String.format(Locale.ENGLISH, "%02d.png", i));
-			orsc.graphics.two.SpriteArchive.Frame frame = loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
+			orsc.graphics.two.SpriteArchive.Frame frame =
+				this.externalAssetLoader.loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
 			if (frame == null) {
 				return;
 			}
@@ -19607,7 +19540,7 @@ public final class mudclient implements Runnable {
 		int[] boundWidth
 	) {
 		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
-		if (equipmentSprites == null || !assetDirectoryExists(numberedFolder)) {
+		if (equipmentSprites == null || !this.externalAssetLoader.assetDirectoryExists(numberedFolder)) {
 			return;
 		}
 		final int frameCount = 18;
@@ -19619,7 +19552,8 @@ public final class mudclient implements Runnable {
 		);
 		for (int i = 0; i < frameCount; i++) {
 			File frameFile = new File(numberedFolder, String.format(Locale.ENGLISH, "%02d.png", i));
-			orsc.graphics.two.SpriteArchive.Frame frame = loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
+			orsc.graphics.two.SpriteArchive.Frame frame =
+				this.externalAssetLoader.loadExternalEquipmentFrame(frameFile, offsetX[i], offsetY[i]);
 			if (frame == null) {
 				return;
 			}
@@ -19631,241 +19565,31 @@ public final class mudclient implements Runnable {
 	}
 
 	private File getExternalIconFile(String iconName) {
-		Path[] candidateBases = getAssetCandidateBases(
+		return this.externalAssetLoader.findFirstFile(new String[] {
 			"dev/myworld/assets/sprites/UI/magic",
 			"dev/myworld/assets/sprites/UI/prayer",
 			"dev/myworld/assets/sprites/ui/magic-icons",
 			"dev/myworld/assets/sprites/ui/prayer-icons",
 			"dev/myworld/assets/sprites/ui/menu-icons",
 			"output/icons"
-		);
-		for (Path basePath : candidateBases) {
-			File candidate = basePath.resolve(iconName + ".png").toFile();
-			if (assetFileExists(candidate)) {
-				return candidate;
-			}
-		}
-		return candidateBases[0].resolve(iconName + ".png").toFile();
+		}, iconName + ".png");
 	}
 
 	private File getExternalSummoningIconFile(String iconName) {
-		Path[] candidateBases = getAssetCandidateBases(
+		return this.externalAssetLoader.findFirstFile(new String[] {
 			"dev/myworld/assets/sprites/UI/summon",
 			"dev/myworld/assets/sprites/ui/summon-icons",
 			"output/icons/summon-icons"
-		);
-		for (Path basePath : candidateBases) {
-			File candidate = basePath.resolve(iconName + ".png").toFile();
-			if (assetFileExists(candidate)) {
-				return candidate;
-			}
-		}
-		return candidateBases[0].resolve(iconName + ".png").toFile();
-	}
-
-	private File getExternalPngFile(String assetName) {
-		Path[] candidateBases = getAssetCandidateBases(
-			"dev/myworld/assets/sprites/items/inventory-ground/agility-pouches",
-			"dev/myworld/assets/sprites/items/inventory-ground/tools",
-			"dev/myworld/assets/sprites/items/inventory-ground/weapons",
-			"dev/myworld/assets/sprites/items/inventory-ground/resources",
-			"dev/myworld/assets/sprites/items/inventory-ground",
-			"output/pngs"
-		);
-		String fileName = assetName.endsWith(".png") ? assetName : assetName + ".png";
-		for (Path basePath : candidateBases) {
-			File candidate = basePath.resolve(fileName).toFile();
-			if (assetFileExists(candidate)) {
-				return candidate;
-			}
-		}
-		return candidateBases[0].resolve(fileName).toFile();
-	}
-
-	private Path[] getAssetCandidateBases(String... relativePaths) {
-		Path userDir = Paths.get(System.getProperty("user.dir")).normalize();
-		ArrayList<Path> candidates = new ArrayList<Path>();
-		for (String relativePath : relativePaths) {
-			candidates.add(userDir.resolve(relativePath).normalize());
-			candidates.add(userDir.resolve("../").resolve(relativePath).normalize());
-			candidates.add(userDir.resolve("../Core-Framework").resolve(relativePath).normalize());
-		}
-		return candidates.toArray(new Path[candidates.size()]);
-	}
-
-	private String getEmbeddedAssetResource(File sourceFile) {
-		String path = sourceFile.getPath().replace('\\', '/');
-		int rootIndex = path.indexOf(DEVELOPMENT_ASSET_ROOT);
-		if (rootIndex < 0) {
-			return null;
-		}
-		return EMBEDDED_ASSET_ROOT + path.substring(rootIndex + DEVELOPMENT_ASSET_ROOT.length());
-	}
-
-	private Set<String> getEmbeddedAssetResources() {
-		if (this.embeddedAssetResources != null) {
-			return this.embeddedAssetResources;
-		}
-		this.embeddedAssetResources = new HashSet<String>();
-		try {
-			URL location = mudclient.class.getProtectionDomain().getCodeSource().getLocation();
-			File archive = new File(location.toURI());
-			if (!archive.isFile()) {
-				return this.embeddedAssetResources;
-			}
-			try (JarFile jar = new JarFile(archive)) {
-				Enumeration<JarEntry> entries = jar.entries();
-				while (entries.hasMoreElements()) {
-					String name = entries.nextElement().getName();
-					if (name.startsWith(EMBEDDED_ASSET_ROOT)
-						&& name.toLowerCase(Locale.ENGLISH).endsWith(".png")) {
-						this.embeddedAssetResources.add(name);
-					}
-				}
-			}
-		} catch (Exception ignored) {
-		}
-		return this.embeddedAssetResources;
-	}
-
-	private boolean assetFileExists(File sourceFile) {
-		if (sourceFile.isFile()) {
-			return true;
-		}
-		String resource = getEmbeddedAssetResource(sourceFile);
-		return resource != null && mudclient.class.getClassLoader().getResource(resource) != null;
-	}
-
-	private boolean assetDirectoryExists(File sourceFolder) {
-		if (sourceFolder.isDirectory()) {
-			return true;
-		}
-		String resource = getEmbeddedAssetResource(sourceFolder);
-		if (resource == null) {
-			return false;
-		}
-		String prefix = resource.endsWith("/") ? resource : resource + "/";
-		for (String embeddedResource : getEmbeddedAssetResources()) {
-			if (embeddedResource.startsWith(prefix)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private BufferedImage readAssetImage(File sourceFile) throws IOException {
-		if (sourceFile.isFile()) {
-			return ImageIO.read(sourceFile);
-		}
-		String resource = getEmbeddedAssetResource(sourceFile);
-		if (resource == null) {
-			return null;
-		}
-		try (InputStream input = mudclient.class.getClassLoader().getResourceAsStream(resource)) {
-			return input == null ? null : ImageIO.read(input);
-		}
-	}
-
-	private Sprite getExternalItemSprite(ItemDef item) {
-		if (item == null || item.getSpriteLocation() == null) {
-			return null;
-		}
-		String prefix = "external-png:";
-		String spriteLocation = item.getSpriteLocation();
-		if (!spriteLocation.startsWith(prefix)) {
-			return null;
-		}
-		String assetSpec = spriteLocation.substring(prefix.length());
-		if (assetSpec.length() == 0 || assetSpec.contains("/") || assetSpec.contains("\\")) {
-			return null;
-		}
-		String assetName = assetSpec;
-		int targetWidth = 46;
-		int targetHeight = 30;
-		int sizeIndex = assetSpec.indexOf('@');
-		if (sizeIndex > 0) {
-			assetName = assetSpec.substring(0, sizeIndex);
-			String[] dimensions = assetSpec.substring(sizeIndex + 1).split("x");
-			if (dimensions.length == 2) {
-				try {
-					targetWidth = Math.max(1, Math.min(46, Integer.parseInt(dimensions[0])));
-					targetHeight = Math.max(1, Math.min(30, Integer.parseInt(dimensions[1])));
-				} catch (NumberFormatException ignored) {
-					targetWidth = 46;
-					targetHeight = 30;
-				}
-			}
-		}
-		if (assetName.length() == 0) {
-			return null;
-		}
-		Sprite cachedSprite = externalItemSpriteCache.get(assetSpec);
-		if (cachedSprite != null) {
-			return cachedSprite;
-		}
-		Sprite loadedSprite = loadExternalItemSprite(getExternalPngFile(assetName), targetWidth, targetHeight);
-		if (loadedSprite != null) {
-			externalItemSpriteCache.put(assetSpec, loadedSprite);
-		}
-		return loadedSprite;
-	}
-
-	private Sprite loadExternalItemSprite(File sourceFile) {
-		return loadExternalItemSprite(sourceFile, 46, 30);
-	}
-
-	private Sprite loadExternalItemSprite(File sourceFile, int maxTargetWidth, int maxTargetHeight) {
-		if (!assetFileExists(sourceFile)) {
-			return null;
-		}
-		try {
-			BufferedImage source = readAssetImage(sourceFile);
-			if (source == null) {
-				return null;
-			}
-			BufferedImage cropped = cropVisibleImage(source);
-			if (cropped == null) {
-				return null;
-			}
-			BufferedImage scaled = new BufferedImage(48, 32, BufferedImage.TYPE_INT_ARGB);
-			Graphics2D graphics = scaled.createGraphics();
-			graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-			graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-			int targetWidth = maxTargetWidth;
-			int targetHeight = Math.max(1, (cropped.getHeight() * targetWidth) / Math.max(1, cropped.getWidth()));
-			if (targetHeight > maxTargetHeight) {
-				targetHeight = maxTargetHeight;
-				targetWidth = Math.max(1, (cropped.getWidth() * targetHeight) / Math.max(1, cropped.getHeight()));
-			}
-			int drawX = (48 - targetWidth) / 2;
-			int drawY = (32 - targetHeight) / 2;
-			graphics.drawImage(cropped, drawX, drawY, targetWidth, targetHeight, null);
-			graphics.dispose();
-
-			int[] pixels = new int[48 * 32];
-			scaled.getRGB(0, 0, 48, 32, pixels, 0, 48);
-			for (int i = 0; i < pixels.length; i++) {
-				pixels[i] = getExternalSpritePixel(pixels[i], 64);
-			}
-			Sprite sprite = new Sprite(pixels, 48, 32);
-			sprite.setShift(0, 0);
-			sprite.setRequiresShift(false);
-			sprite.setSomething(48, 32);
-			return sprite;
-		} catch (IOException e) {
-			System.out.println("Failed to load external item sprite " + sourceFile.getPath() + ": " + e.getMessage());
-			return null;
-		}
+		}, iconName + ".png");
 	}
 
 	private void loadExternalGlyphTexture(int textureIndex) {
 		File glyphFile = getExternalGlyphTextureFile("air");
-		if (!assetFileExists(glyphFile)) {
+		if (!this.externalAssetLoader.assetFileExists(glyphFile)) {
 			return;
 		}
 		try {
-			BufferedImage source = readAssetImage(glyphFile);
+			BufferedImage source = this.externalAssetLoader.readAssetImage(glyphFile);
 			if (source == null) {
 				return;
 			}
@@ -19921,8 +19645,10 @@ public final class mudclient implements Runnable {
 
 	private void loadExternalAltarWorldSprites() {
 		for (int i = 0; i < ALTAR_ELEMENTS.length; i++) {
-			this.worldGlyphSprites[i] = loadExternalWorldSprite(getExternalGlyphTextureFile(ALTAR_ELEMENTS[i]), 52);
-			this.worldOrbSprites[i] = loadExternalWorldSprite(getExternalOrbTextureFile(ALTAR_ELEMENTS[i]), 44);
+			this.worldGlyphSprites[i] = this.externalAssetLoader.loadExternalWorldSprite(
+				getExternalGlyphTextureFile(ALTAR_ELEMENTS[i]), 52);
+			this.worldOrbSprites[i] = this.externalAssetLoader.loadExternalWorldSprite(
+				getExternalOrbTextureFile(ALTAR_ELEMENTS[i]), 44);
 			if (this.worldGlyphSprites[i] == null) {
 				this.worldGlyphSprites[i] = createProceduralAltarWorldSprite(ALTAR_ELEMENT_COLORS[i], true);
 			}
@@ -19940,7 +19666,7 @@ public final class mudclient implements Runnable {
 				int loadedFrames = 0;
 				for (CombatEffectAnimationCatalog.Definition definition : sequence) {
 					File sheet = getExternalAnimationSheet(definition.getCategory(), definition.getSheetPath());
-					loadedFrames = appendExternalAnimationGridSheetFrames(
+					loadedFrames = this.externalAssetLoader.appendExternalAnimationGridSheetFrames(
 						sheet, this.combatEffectSprites[effectType], definition.getMaxTargetSize(),
 						definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
 						definition.getFrameCount(), loadedFrames);
@@ -19953,16 +19679,16 @@ public final class mudclient implements Runnable {
 			String effectName = getCombatEffectName(effectType);
 			String assetName = getCombatEffectAssetName(effectName);
 			File effectFolder = getLegacyExternalAnimationFolder("On Player", effectName);
-			if (!assetDirectoryExists(effectFolder)) {
+			if (!this.externalAssetLoader.assetDirectoryExists(effectFolder)) {
 				effectFolder = getLegacyExternalAnimationFolder("On Enemy", assetName);
 			}
-			if (!assetDirectoryExists(effectFolder)) {
+			if (!this.externalAssetLoader.assetDirectoryExists(effectFolder)) {
 				effectFolder = getLegacyExternalAnimationFolder("On Player", assetName);
 			}
-			if (!assetDirectoryExists(effectFolder)) {
+			if (!this.externalAssetLoader.assetDirectoryExists(effectFolder)) {
 				effectFolder = getLegacyExternalAnimationFolder("on summon", assetName);
 			}
-			if (!assetDirectoryExists(effectFolder)) {
+			if (!this.externalAssetLoader.assetDirectoryExists(effectFolder)) {
 				effectFolder = getLegacyExternalAnimationFolder("On Summon", assetName);
 			}
 			this.combatEffectFrameCounts[effectType] = loadExternalAnimationFrames(
@@ -20033,12 +19759,12 @@ public final class mudclient implements Runnable {
 			ProjectileAnimationCatalog.getStartupSegments(definition.getKey()), targetFrames,
 			definition.getMaxTargetSize(), 0);
 		File sheet = getExternalAnimationSheet(ProjectileAnimationCatalog.CATEGORY, definition.getSheetPath());
-		if (!assetFileExists(sheet)) {
+		if (!this.externalAssetLoader.assetFileExists(sheet)) {
 			System.out.println("Missing projectile animation sheet " + definition.getKey()
 				+ ": " + sheet.getPath());
 			return loadedFrames;
 		}
-		return appendExternalAnimationGridSheetFrames(sheet, targetFrames,
+		return this.externalAssetLoader.appendExternalAnimationGridSheetFrames(sheet, targetFrames,
 			definition.getMaxTargetSize(), definition.getColumns(), definition.getRows(),
 			definition.getFirstFrame(), definition.getFrameCount(), loadedFrames);
 	}
@@ -20055,11 +19781,11 @@ public final class mudclient implements Runnable {
 			Sprite[] targetFrames, int maxTargetSize, int loadedFrames) {
 		for (ProjectileAnimationCatalog.Segment segment : segments) {
 			File sheet = getExternalAnimationSheet(ProjectileAnimationCatalog.CATEGORY, segment.getSheetPath());
-			if (!assetFileExists(sheet)) {
+			if (!this.externalAssetLoader.assetFileExists(sheet)) {
 				System.out.println("Missing projectile animation phase: " + sheet.getPath());
 				continue;
 			}
-			loadedFrames = appendExternalAnimationGridSheetFrames(sheet, targetFrames,
+			loadedFrames = this.externalAssetLoader.appendExternalAnimationGridSheetFrames(sheet, targetFrames,
 				maxTargetSize, segment.getColumns(), segment.getRows(), segment.getFirstFrame(),
 				segment.getFrameCount(), loadedFrames);
 		}
@@ -20071,12 +19797,12 @@ public final class mudclient implements Runnable {
 		Arrays.fill(targetFrames, null);
 		File sheet = getExternalAnimationSheet(ProjectileStaticAnimationCatalog.CATEGORY,
 			definition.getSheetPath());
-		if (!assetFileExists(sheet)) {
+		if (!this.externalAssetLoader.assetFileExists(sheet)) {
 			System.out.println("Missing static projectile animation sheet " + definition.getKey()
 				+ ": " + sheet.getPath());
 			return 0;
 		}
-		return appendExternalAnimationNativeGridSheetFrames(sheet, targetFrames,
+		return this.externalAssetLoader.appendExternalAnimationNativeGridSheetFrames(sheet, targetFrames,
 			definition.getColumns(), definition.getRows(), definition.getFirstFrame(),
 			definition.getFrameCount());
 	}
@@ -20088,10 +19814,10 @@ public final class mudclient implements Runnable {
 		for (int spellIndex = 0; spellIndex < spellCount; spellIndex++) {
 			String iconName = getSpellIconAssetName(EntityHandler.getSpellDef(spellIndex).getName());
 			File iconFile = getExternalIconFile(iconName);
-			if (!assetFileExists(iconFile)) {
+			if (!this.externalAssetLoader.assetFileExists(iconFile)) {
 				continue;
 			}
-			Sprite sprite = loadExternalWorldSprite(iconFile, 56);
+			Sprite sprite = this.externalAssetLoader.loadExternalWorldSprite(iconFile, 56);
 			if (sprite == null) {
 				continue;
 			}
@@ -20105,10 +19831,10 @@ public final class mudclient implements Runnable {
 		for (int summonIndex = 0; summonIndex < SUMMONING_NAMES.length; summonIndex++) {
 			String iconName = getDisplayNameAssetName(SUMMONING_NAMES[summonIndex]);
 			File iconFile = getExternalSummoningIconFile(iconName);
-			if (!assetFileExists(iconFile)) {
+			if (!this.externalAssetLoader.assetFileExists(iconFile)) {
 				continue;
 			}
-			Sprite sprite = loadExternalWorldSprite(iconFile, 56);
+			Sprite sprite = this.externalAssetLoader.loadExternalWorldSprite(iconFile, 56);
 			if (sprite != null) {
 				this.summoningIconSprites[summonIndex] = sprite;
 			}
@@ -20131,8 +19857,8 @@ public final class mudclient implements Runnable {
 				}
 				if (isSinglePrayerIconAsset(assetName)) {
 					File iconFile = getPrayerIconFile(assetName);
-					if (assetFileExists(iconFile)) {
-						Sprite sprite = loadExternalPrayerIconFile(iconFile, assetName);
+					if (this.externalAssetLoader.assetFileExists(iconFile)) {
+						Sprite sprite = this.externalAssetLoader.loadExternalPrayerIconFile(iconFile);
 						if (sprite != null) {
 							this.prayerIconSprites[prayerIndex] = sprite;
 							loadedIcons++;
@@ -20142,8 +19868,8 @@ public final class mudclient implements Runnable {
 				}
 				int tierIndex = prayerIndex % 5;
 				File tierIconFile = getPrayerTierIconFile(assetName, tierIndex + 1);
-				if (assetFileExists(tierIconFile)) {
-					Sprite sprite = loadExternalPrayerIconFile(tierIconFile, assetName + "-" + (tierIndex + 1));
+				if (this.externalAssetLoader.assetFileExists(tierIconFile)) {
+					Sprite sprite = this.externalAssetLoader.loadExternalPrayerIconFile(tierIconFile);
 					if (sprite != null) {
 						this.prayerIconSprites[prayerIndex] = sprite;
 						loadedIcons++;
@@ -20153,8 +19879,8 @@ public final class mudclient implements Runnable {
 				Sprite[] tierIcons = loadedSheets.get(assetName);
 				if (tierIcons == null) {
 					File iconFile = getPrayerIconFile(assetName);
-					tierIcons = assetFileExists(iconFile)
-						? loadExternalPrayerIconSheet(iconFile, assetName)
+					tierIcons = this.externalAssetLoader.assetFileExists(iconFile)
+						? this.externalAssetLoader.loadExternalPrayerIconSheet(iconFile)
 						: new Sprite[0];
 					loadedSheets.put(assetName, tierIcons);
 				}
@@ -20173,12 +19899,12 @@ public final class mudclient implements Runnable {
 
 	private File getPrayerIconFile(String assetName) {
 		File iconFile = getExternalIconFile(assetName);
-		if (assetFileExists(iconFile)) {
+		if (this.externalAssetLoader.assetFileExists(iconFile)) {
 			return iconFile;
 		}
 		if ("ranged-power".equals(assetName)) {
 			File typoFallback = getExternalIconFile("rangned-power");
-			if (assetFileExists(typoFallback)) {
+			if (this.externalAssetLoader.assetFileExists(typoFallback)) {
 				return typoFallback;
 			}
 			}
@@ -20187,20 +19913,20 @@ public final class mudclient implements Runnable {
 
 		private File getPrayerTierIconFile(String assetName, int tier) {
 			File iconFile = getExternalIconFile(assetName + "-" + tier);
-			if (assetFileExists(iconFile)) {
+			if (this.externalAssetLoader.assetFileExists(iconFile)) {
 				return iconFile;
 			}
 			File numberedTierIconFile = getExternalIconFile(assetName + tier);
-			if (assetFileExists(numberedTierIconFile)) {
+			if (this.externalAssetLoader.assetFileExists(numberedTierIconFile)) {
 				return numberedTierIconFile;
 			}
 			File compactTierIconFile = getCompactPrayerTierIconFile(assetName, tier);
-			if (assetFileExists(compactTierIconFile)) {
+			if (this.externalAssetLoader.assetFileExists(compactTierIconFile)) {
 				return compactTierIconFile;
 			}
 			if ("ranged-power".equals(assetName)) {
 				File typoFallback = getExternalIconFile("ranged-powe-" + tier);
-				if (assetFileExists(typoFallback)) {
+				if (this.externalAssetLoader.assetFileExists(typoFallback)) {
 					return typoFallback;
 				}
 			}
@@ -20216,255 +19942,16 @@ public final class mudclient implements Runnable {
 		}
 
 		private boolean hasCompactPrayerTierIconSet(String assetName) {
-			if (!assetFileExists(getExternalIconFile(assetName))) {
+			if (!this.externalAssetLoader.assetFileExists(getExternalIconFile(assetName))) {
 				return false;
 			}
 			for (int tier = 2; tier <= 5; tier++) {
-				if (!assetFileExists(getExternalIconFile(assetName + tier))) {
+				if (!this.externalAssetLoader.assetFileExists(getExternalIconFile(assetName + tier))) {
 					return false;
 				}
 			}
 			return true;
 		}
-
-		private Sprite loadExternalPrayerIconFile(File sourceFile, String assetName) {
-			try {
-				BufferedImage source = readAssetImage(sourceFile);
-				if (source == null) {
-					return null;
-					}
-					Sprite sprite = createExternalIconSprite(source, 64, getSheetBackgroundArgb(source));
-					return sprite;
-			} catch (IOException e) {
-				System.out.println("Failed to load prayer icon " + sourceFile.getPath() + ": " + e.getMessage());
-				return null;
-			}
-		}
-
-	private Sprite[] loadExternalPrayerIconSheet(File sourceFile, String assetName) {
-		try {
-			BufferedImage source = readAssetImage(sourceFile);
-			if (source == null) {
-				return new Sprite[0];
-			}
-			int backgroundArgb = getSheetBackgroundArgb(source);
-			ArrayList<Rectangle> regions = findPrayerIconRegions(source, backgroundArgb);
-			Sprite[] sprites = new Sprite[Math.min(5, regions.size())];
-			int loadedIcons = 0;
-			for (int i = 0; i < sprites.length; i++) {
-				Rectangle region = regions.get(i);
-				Sprite sprite = createExternalIconSprite(source.getSubimage(region.x, region.y, region.width, region.height),
-					64, backgroundArgb);
-				if (sprite == null) {
-					continue;
-				}
-				sprites[i] = sprite;
-				loadedIcons++;
-			}
-				return sprites;
-		} catch (IOException e) {
-			System.out.println("Failed to load prayer icon sheet " + sourceFile.getPath() + ": " + e.getMessage());
-			return new Sprite[0];
-		}
-	}
-
-	private ArrayList<Rectangle> findPrayerIconRegions(BufferedImage source, int backgroundArgb) {
-		int rowGap = Math.max(6, source.getHeight() / 40);
-		int columnGap = Math.max(6, source.getWidth() / 80);
-		ArrayList<int[]> rowRanges = findContentRanges(getContentRows(source, backgroundArgb), rowGap);
-		if (rowRanges.size() != 2) {
-			return getFallbackPrayerIconRegions(source, backgroundArgb);
-		}
-
-		ArrayList<Rectangle> regions = new ArrayList<Rectangle>();
-		for (int rowIndex = 0; rowIndex < rowRanges.size(); rowIndex++) {
-			int[] rowRange = rowRanges.get(rowIndex);
-			ArrayList<int[]> columnRanges = findContentRanges(
-				getContentColumns(source, rowRange[0], rowRange[1], backgroundArgb), columnGap);
-			int expectedColumns = rowIndex == 0 ? 3 : 2;
-			if (columnRanges.size() != expectedColumns) {
-				return getFallbackPrayerIconRegions(source, backgroundArgb);
-			}
-			for (int[] columnRange : columnRanges) {
-				regions.add(expandAndTrimIconRegion(source,
-					new Rectangle(columnRange[0], rowRange[0], columnRange[1] - columnRange[0] + 1,
-						rowRange[1] - rowRange[0] + 1), backgroundArgb));
-			}
-		}
-		return regions;
-	}
-
-	private ArrayList<Rectangle> getFallbackPrayerIconRegions(BufferedImage source, int backgroundArgb) {
-		ArrayList<Rectangle> regions = new ArrayList<Rectangle>();
-		int halfHeight = source.getHeight() / 2;
-		int topCellWidth = Math.max(1, source.getWidth() / 3);
-		for (int column = 0; column < 3; column++) {
-			int x1 = (source.getWidth() * column) / 3;
-			int x2 = (source.getWidth() * (column + 1)) / 3;
-			regions.add(expandAndTrimIconRegion(source, new Rectangle(x1, 0, x2 - x1, halfHeight), backgroundArgb));
-		}
-		for (int column = 0; column < 2; column++) {
-			int x1 = Math.max(0, (source.getWidth() - 2 * topCellWidth) / 2 + column * topCellWidth);
-			int x2 = Math.min(source.getWidth(), x1 + topCellWidth);
-			regions.add(expandAndTrimIconRegion(source,
-				new Rectangle(x1, halfHeight, x2 - x1, source.getHeight() - halfHeight), backgroundArgb));
-		}
-		return regions;
-	}
-
-	private Rectangle expandAndTrimIconRegion(BufferedImage source, Rectangle region, int backgroundArgb) {
-		int padding = 2;
-		int x1 = Math.max(0, region.x - padding);
-		int y1 = Math.max(0, region.y - padding);
-		int x2 = Math.min(source.getWidth() - 1, region.x + region.width - 1 + padding);
-		int y2 = Math.min(source.getHeight() - 1, region.y + region.height - 1 + padding);
-		int minX = x2;
-		int minY = y2;
-		int maxX = x1;
-		int maxY = y1;
-		boolean found = false;
-		for (int y = y1; y <= y2; y++) {
-			for (int x = x1; x <= x2; x++) {
-				if (isIconContentPixel(source.getRGB(x, y), backgroundArgb)) {
-					if (x < minX) minX = x;
-					if (y < minY) minY = y;
-					if (x > maxX) maxX = x;
-					if (y > maxY) maxY = y;
-					found = true;
-				}
-			}
-		}
-		if (!found) {
-			return new Rectangle(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
-		}
-		minX = Math.max(0, minX - padding);
-		minY = Math.max(0, minY - padding);
-		maxX = Math.min(source.getWidth() - 1, maxX + padding);
-		maxY = Math.min(source.getHeight() - 1, maxY + padding);
-		return new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
-	}
-
-	private boolean[] getContentRows(BufferedImage source, int backgroundArgb) {
-		boolean[] rows = new boolean[source.getHeight()];
-		for (int y = 0; y < source.getHeight(); y++) {
-			for (int x = 0; x < source.getWidth(); x++) {
-				if (isIconContentPixel(source.getRGB(x, y), backgroundArgb)) {
-					rows[y] = true;
-					break;
-				}
-			}
-		}
-		return rows;
-	}
-
-	private boolean[] getContentColumns(BufferedImage source, int y1, int y2, int backgroundArgb) {
-		boolean[] columns = new boolean[source.getWidth()];
-		for (int x = 0; x < source.getWidth(); x++) {
-			for (int y = y1; y <= y2; y++) {
-				if (isIconContentPixel(source.getRGB(x, y), backgroundArgb)) {
-					columns[x] = true;
-					break;
-				}
-			}
-		}
-		return columns;
-	}
-
-	private ArrayList<int[]> findContentRanges(boolean[] hasContent, int minGapToSplit) {
-		ArrayList<int[]> ranges = new ArrayList<int[]>();
-		int start = -1;
-		int lastContent = -1;
-		int blankRun = 0;
-		for (int i = 0; i < hasContent.length; i++) {
-			if (hasContent[i]) {
-				if (start == -1) {
-					start = i;
-				}
-				lastContent = i;
-				blankRun = 0;
-			} else if (start != -1) {
-				blankRun++;
-				if (blankRun >= minGapToSplit) {
-					ranges.add(new int[] {start, lastContent});
-					start = -1;
-					lastContent = -1;
-					blankRun = 0;
-				}
-			}
-		}
-		if (start != -1) {
-			ranges.add(new int[] {start, lastContent});
-		}
-		return ranges;
-	}
-
-	private int getSheetBackgroundArgb(BufferedImage source) {
-		return source.getRGB(0, 0);
-	}
-
-	private boolean isIconContentPixel(int argb, int backgroundArgb) {
-		int alpha = argb >>> 24;
-		if (alpha < PRAYER_ICON_ALPHA_THRESHOLD) {
-			return false;
-		}
-		int backgroundAlpha = backgroundArgb >>> 24;
-		if (backgroundAlpha >= 64 && Math.abs(alpha - backgroundAlpha) <= 8) {
-			int red = argb >> 16 & 0xFF;
-			int green = argb >> 8 & 0xFF;
-			int blue = argb & 0xFF;
-			int backgroundRed = backgroundArgb >> 16 & 0xFF;
-			int backgroundGreen = backgroundArgb >> 8 & 0xFF;
-			int backgroundBlue = backgroundArgb & 0xFF;
-			if (Math.abs(red - backgroundRed) <= 8
-				&& Math.abs(green - backgroundGreen) <= 8
-				&& Math.abs(blue - backgroundBlue) <= 8) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private Sprite createExternalIconSprite(BufferedImage source, int maxTargetSize, int backgroundArgb) {
-		BufferedImage prepared = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		for (int y = 0; y < source.getHeight(); y++) {
-			for (int x = 0; x < source.getWidth(); x++) {
-				int argb = source.getRGB(x, y);
-				if (isIconContentPixel(argb, backgroundArgb)) {
-					prepared.setRGB(x, y, argb);
-				}
-			}
-		}
-		BufferedImage cropped = cropVisibleImage(prepared);
-		if (cropped == null) {
-			return null;
-		}
-		BufferedImage scaled = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D graphics = scaled.createGraphics();
-		graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-		graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-		int targetWidth = maxTargetSize;
-		int targetHeight = Math.max(1, (cropped.getHeight() * targetWidth) / Math.max(1, cropped.getWidth()));
-		if (targetHeight > maxTargetSize) {
-			targetHeight = maxTargetSize;
-			targetWidth = Math.max(1, (cropped.getWidth() * targetHeight) / Math.max(1, cropped.getHeight()));
-		}
-		int drawX = (64 - targetWidth) / 2;
-		int drawY = (64 - targetHeight) / 2;
-		graphics.drawImage(cropped, drawX, drawY, targetWidth, targetHeight, null);
-		graphics.dispose();
-
-		int[] pixels = new int[64 * 64];
-		scaled.getRGB(0, 0, 64, 64, pixels, 0, 64);
-		for (int i = 0; i < pixels.length; i++) {
-			pixels[i] = getExternalSpritePixel(pixels[i], PRAYER_ICON_ALPHA_THRESHOLD);
-		}
-		Sprite sprite = new Sprite(pixels, 64, 64);
-		sprite.setShift(0, 0);
-		sprite.setRequiresShift(false);
-		sprite.setSomething(64, 64);
-		return sprite;
-	}
 
 	private String getSpellIconAssetName(String spellName) {
 		if ("Weak Heal".equalsIgnoreCase(spellName) || "Lesser Heal".equalsIgnoreCase(spellName)) {
@@ -20542,7 +20029,7 @@ public final class mudclient implements Runnable {
 
 	private int loadExternalAnimationFrames(File sourceFolder, Sprite[] targetFrames, int maxTargetSize, String logPrefix, String animationName) {
 		Arrays.fill(targetFrames, null);
-		if (!assetDirectoryExists(sourceFolder)) {
+		if (!this.externalAssetLoader.assetDirectoryExists(sourceFolder)) {
 			return 0;
 		}
 		int configuredSheetFrames = loadConfiguredAnimationSheetFrames(
@@ -20550,40 +20037,8 @@ public final class mudclient implements Runnable {
 		if (configuredSheetFrames >= 0) {
 			return configuredSheetFrames;
 		}
-		File[] frameFiles = getAnimationFrameFiles(sourceFolder);
-		if (frameFiles == null || frameFiles.length == 0) {
-			return 0;
-		}
-		int sheetFrameCount = getAnimationSheetFrameCount(animationName);
-		if (sheetFrameCount > 1 && frameFiles.length == 1) {
-			return loadExternalAnimationSheetFrames(frameFiles[0], targetFrames, maxTargetSize, sheetFrameCount);
-		}
-		Arrays.sort(frameFiles, new Comparator<File>() {
-			@Override
-			public int compare(File left, File right) {
-				int leftNumber = getFirstNumber(left.getName());
-				int rightNumber = getFirstNumber(right.getName());
-				if (leftNumber != rightNumber) {
-					return leftNumber - rightNumber;
-				}
-				return left.getName().compareTo(right.getName());
-			}
-		});
-
-		int sourceMaxSize = getLargestAnimationFrameSize(frameFiles);
-		int loadedFrames = 0;
-		for (File frameFile : frameFiles) {
-			if (loadedFrames >= targetFrames.length) {
-				break;
-			}
-			Sprite sprite = loadExternalAnimationFrame(frameFile, maxTargetSize, sourceMaxSize);
-			if (sprite == null) {
-				continue;
-			}
-			targetFrames[loadedFrames] = sprite;
-			loadedFrames++;
-		}
-		return loadedFrames;
+		return this.externalAssetLoader.loadAnimationDirectoryFrames(
+			sourceFolder, targetFrames, maxTargetSize, getAnimationSheetFrameCount(animationName));
 	}
 
 	private int loadConfiguredAnimationSheetFrames(File sourceFolder, Sprite[] targetFrames, int maxTargetSize, String animationName) {
@@ -20719,300 +20174,20 @@ public final class mudclient implements Runnable {
 
 	private int appendExternalAnimationGridSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize,
 			int columns, int rows, int frameCount, int loadedFrames) {
-		return appendExternalAnimationGridSheetFrames(sourceFile, targetFrames, maxTargetSize,
-			columns, rows, 0, frameCount, loadedFrames);
+		return this.externalAssetLoader.appendExternalAnimationGridSheetFrames(
+			sourceFile, targetFrames, maxTargetSize, columns, rows, frameCount, loadedFrames);
 	}
 
 	private int appendExternalAnimationGridSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize,
 			int columns, int rows, int firstFrameIndex, int frameCount, int loadedFrames) {
-		try {
-			BufferedImage source = readAssetImage(sourceFile);
-			if (source == null || columns <= 0 || rows <= 0 || firstFrameIndex < 0 || frameCount <= 0
-				|| firstFrameIndex + frameCount > columns * rows) {
-				return loadedFrames;
-			}
-			int frameWidth = source.getWidth() / columns;
-			int frameHeight = source.getHeight() / rows;
-			if (frameWidth <= 0 || frameHeight <= 0
-				|| frameWidth * columns != source.getWidth()
-				|| frameHeight * rows != source.getHeight()) {
-				return loadedFrames;
-			}
-			int sourceMaxSize = Math.max(frameWidth, frameHeight);
-			for (int frameIndex = 0; frameIndex < frameCount && loadedFrames < targetFrames.length; frameIndex++) {
-				int sheetFrameIndex = firstFrameIndex + frameIndex;
-				int sourceX = (sheetFrameIndex % columns) * frameWidth;
-				int sourceY = (sheetFrameIndex / columns) * frameHeight;
-				BufferedImage frame = source.getSubimage(sourceX, sourceY, frameWidth, frameHeight);
-				Sprite sprite = createExternalAnimationSprite(frame, maxTargetSize, sourceMaxSize);
-				if (sprite != null) {
-					targetFrames[loadedFrames++] = sprite;
-				}
-			}
-			return loadedFrames;
-		} catch (IOException e) {
-			System.out.println("Failed to load external animation sheet " + sourceFile.getPath() + ": " + e.getMessage());
-			return loadedFrames;
-		}
+		return this.externalAssetLoader.appendExternalAnimationGridSheetFrames(
+			sourceFile, targetFrames, maxTargetSize, columns, rows, firstFrameIndex, frameCount, loadedFrames);
 	}
 
 	private int appendExternalAnimationNativeGridSheetFrames(File sourceFile, Sprite[] targetFrames,
 			int columns, int rows, int firstFrameIndex, int frameCount) {
-		try {
-			BufferedImage source = readAssetImage(sourceFile);
-			if (source == null || columns <= 0 || rows <= 0 || firstFrameIndex < 0 || frameCount <= 0
-				|| firstFrameIndex + frameCount > columns * rows) {
-				return 0;
-			}
-			int frameWidth = source.getWidth() / columns;
-			int frameHeight = source.getHeight() / rows;
-			if (frameWidth <= 0 || frameHeight <= 0 || frameWidth * columns != source.getWidth()
-				|| frameHeight * rows != source.getHeight()) {
-				return 0;
-			}
-			int loadedFrames = 0;
-			for (int frameIndex = 0; frameIndex < frameCount && loadedFrames < targetFrames.length; frameIndex++) {
-				int sheetFrameIndex = firstFrameIndex + frameIndex;
-				BufferedImage frame = source.getSubimage((sheetFrameIndex % columns) * frameWidth,
-					(sheetFrameIndex / columns) * frameHeight, frameWidth, frameHeight);
-				int[] pixels = new int[frameWidth * frameHeight];
-				frame.getRGB(0, 0, frameWidth, frameHeight, pixels, 0, frameWidth);
-				for (int i = 0; i < pixels.length; i++) {
-					pixels[i] = getExternalSpritePixel(pixels[i], 64);
-				}
-				Sprite sprite = new Sprite(pixels, frameWidth, frameHeight);
-				sprite.setShift(0, 0);
-				sprite.setRequiresShift(false);
-				sprite.setSomething(frameWidth, frameHeight);
-				targetFrames[loadedFrames++] = sprite;
-			}
-			return loadedFrames;
-		} catch (IOException e) {
-			System.out.println("Failed to load static projectile sheet " + sourceFile.getPath()
-				+ ": " + e.getMessage());
-			return 0;
-		}
-	}
-
-	private int loadExternalAnimationSheetFrames(File sourceFile, Sprite[] targetFrames, int maxTargetSize, int frameCount) {
-		try {
-			BufferedImage source = readAssetImage(sourceFile);
-			if (source == null || frameCount <= 0) {
-				return 0;
-			}
-			int frameWidth = source.getWidth() / frameCount;
-			if (frameWidth <= 0 || frameWidth * frameCount > source.getWidth()) {
-				return 0;
-			}
-			int sourceMaxSize = Math.max(frameWidth, source.getHeight());
-			int loadedFrames = 0;
-			for (int i = 0; i < frameCount && i < targetFrames.length; i++) {
-				BufferedImage frame = source.getSubimage(i * frameWidth, 0, frameWidth, source.getHeight());
-				Sprite sprite = createExternalAnimationSprite(frame, maxTargetSize, sourceMaxSize);
-				if (sprite == null) {
-					continue;
-				}
-				targetFrames[loadedFrames] = sprite;
-				loadedFrames++;
-			}
-			return loadedFrames;
-		} catch (IOException e) {
-			System.out.println("Failed to load external animation sheet " + sourceFile.getPath() + ": " + e.getMessage());
-			return 0;
-		}
-	}
-
-	private File[] getAnimationFrameFiles(File sourceFolder) {
-		ArrayList<File> frameFiles = new ArrayList<File>();
-		collectAnimationFrameFiles(sourceFolder, frameFiles);
-		return frameFiles.toArray(new File[frameFiles.size()]);
-	}
-
-	private void collectAnimationFrameFiles(File sourceFolder, ArrayList<File> frameFiles) {
-		File[] files = sourceFolder.listFiles();
-		if (files == null) {
-			String resource = getEmbeddedAssetResource(sourceFolder);
-			if (resource == null) {
-				return;
-			}
-			String prefix = resource.endsWith("/") ? resource : resource + "/";
-			for (String embeddedResource : getEmbeddedAssetResources()) {
-				if (embeddedResource.startsWith(prefix)
-					&& embeddedResource.toLowerCase(Locale.ENGLISH).endsWith(".png")) {
-					frameFiles.add(new File(sourceFolder, embeddedResource.substring(prefix.length())));
-				}
-			}
-			return;
-		}
-		for (File file : files) {
-			if (file.isDirectory()) {
-				collectAnimationFrameFiles(file, frameFiles);
-			} else if (file.getName().toLowerCase(Locale.ENGLISH).endsWith(".png")) {
-				frameFiles.add(file);
-			}
-		}
-	}
-
-	private int getLargestAnimationFrameSize(File[] frameFiles) {
-		int largest = 1;
-		for (File frameFile : frameFiles) {
-			try {
-				BufferedImage source = readAssetImage(frameFile);
-				if (source != null) {
-					largest = Math.max(largest, Math.max(source.getWidth(), source.getHeight()));
-				}
-			} catch (IOException ignored) {
-			}
-		}
-		return largest;
-	}
-
-	private int getFirstNumber(String value) {
-		Matcher matcher = Pattern.compile("(\\d+)").matcher(value);
-		if (!matcher.find()) {
-			return Integer.MAX_VALUE;
-		}
-		return Integer.parseInt(matcher.group(1));
-	}
-
-	private Sprite loadExternalAnimationFrame(File sourceFile, int maxTargetSize) {
-		return loadExternalAnimationFrame(sourceFile, maxTargetSize, 0);
-	}
-
-	private Sprite loadExternalAnimationFrame(File sourceFile, int maxTargetSize, int sourceMaxSize) {
-		try {
-			BufferedImage source = readAssetImage(sourceFile);
-			if (source == null) {
-				return null;
-			}
-			return createExternalAnimationSprite(source, maxTargetSize, sourceMaxSize);
-		} catch (IOException e) {
-			System.out.println("Failed to load external animation frame " + sourceFile.getPath() + ": " + e.getMessage());
-			return null;
-		}
-	}
-
-	private Sprite createExternalAnimationSprite(BufferedImage source, int maxTargetSize, int sourceMaxSize) {
-		BufferedImage scaled = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D graphics = scaled.createGraphics();
-		graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-		graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-		int scaleBase = sourceMaxSize > 0 ? sourceMaxSize : Math.max(source.getWidth(), source.getHeight());
-		int targetWidth = Math.max(1, (source.getWidth() * maxTargetSize) / Math.max(1, scaleBase));
-		int targetHeight = Math.max(1, (source.getHeight() * maxTargetSize) / Math.max(1, scaleBase));
-		if (targetHeight > maxTargetSize) {
-			targetHeight = maxTargetSize;
-			targetWidth = Math.max(1, (source.getWidth() * targetHeight) / Math.max(1, source.getHeight()));
-		}
-		if (targetWidth > maxTargetSize) {
-			targetWidth = maxTargetSize;
-			targetHeight = Math.max(1, (source.getHeight() * targetWidth) / Math.max(1, source.getWidth()));
-		}
-		int drawX = (64 - targetWidth) / 2;
-		int drawY = (64 - targetHeight) / 2;
-		graphics.drawImage(source, drawX, drawY, targetWidth, targetHeight, null);
-		graphics.dispose();
-
-		int[] pixels = new int[64 * 64];
-		scaled.getRGB(0, 0, 64, 64, pixels, 0, 64);
-		for (int i = 0; i < pixels.length; i++) {
-			pixels[i] = getExternalSpritePixel(pixels[i], 64);
-		}
-		Sprite sprite = new Sprite(pixels, 64, 64);
-		sprite.setShift(0, 0);
-		sprite.setRequiresShift(false);
-		sprite.setSomething(64, 64);
-		return sprite;
-	}
-
-	private int getExternalSpritePixel(int argb, int alphaThreshold) {
-		int alpha = argb >>> 24;
-		if (alpha < alphaThreshold) {
-			return 0;
-		}
-		int rgb = argb & 0xFFFFFF;
-		return rgb == 0 ? 0x010101 : rgb;
-	}
-
-	private BufferedImage cropVisibleImage(BufferedImage source) {
-		int minX = source.getWidth();
-		int minY = source.getHeight();
-		int maxX = -1;
-		int maxY = -1;
-		for (int y = 0; y < source.getHeight(); y++) {
-			for (int x = 0; x < source.getWidth(); x++) {
-				if (((source.getRGB(x, y) >>> 24) & 0xFF) >= 64) {
-					if (x < minX) minX = x;
-					if (y < minY) minY = y;
-					if (x > maxX) maxX = x;
-					if (y > maxY) maxY = y;
-				}
-			}
-		}
-		if (maxX < minX || maxY < minY) {
-			return null;
-		}
-		return source.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
-	}
-
-	private Sprite loadExternalWorldSprite(File sourceFile, int maxTargetSize) {
-		if (!assetFileExists(sourceFile)) {
-			return null;
-		}
-		try {
-			BufferedImage source = readAssetImage(sourceFile);
-			if (source == null) {
-				return null;
-			}
-			int minX = source.getWidth();
-			int minY = source.getHeight();
-			int maxX = -1;
-			int maxY = -1;
-			for (int y = 0; y < source.getHeight(); y++) {
-				for (int x = 0; x < source.getWidth(); x++) {
-					if (((source.getRGB(x, y) >>> 24) & 0xFF) >= 64) {
-						if (x < minX) minX = x;
-						if (y < minY) minY = y;
-						if (x > maxX) maxX = x;
-						if (y > maxY) maxY = y;
-					}
-				}
-			}
-			if (maxX < minX || maxY < minY) {
-				return null;
-			}
-			BufferedImage cropped = source.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
-			BufferedImage scaled = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
-			Graphics2D graphics = scaled.createGraphics();
-			graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-			graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-			int targetWidth = maxTargetSize;
-			int targetHeight = Math.max(1, (cropped.getHeight() * targetWidth) / Math.max(1, cropped.getWidth()));
-			if (targetHeight > maxTargetSize) {
-				targetHeight = maxTargetSize;
-				targetWidth = Math.max(1, (cropped.getWidth() * targetHeight) / Math.max(1, cropped.getHeight()));
-			}
-			int drawX = (64 - targetWidth) / 2;
-			int drawY = (64 - targetHeight) / 2;
-			graphics.drawImage(cropped, drawX, drawY, targetWidth, targetHeight, null);
-			graphics.dispose();
-
-			int[] pixels = new int[64 * 64];
-			scaled.getRGB(0, 0, 64, 64, pixels, 0, 64);
-			for (int i = 0; i < pixels.length; i++) {
-				pixels[i] = getExternalSpritePixel(pixels[i], 128);
-			}
-			Sprite sprite = new Sprite(pixels, 64, 64);
-			sprite.setShift(0, 0);
-			sprite.setRequiresShift(false);
-			sprite.setSomething(64, 64);
-			return sprite;
-		} catch (IOException e) {
-			System.out.println("Failed to load external world sprite: " + e.getMessage());
-			return null;
-		}
+		return this.externalAssetLoader.appendExternalAnimationNativeGridSheetFrames(
+			sourceFile, targetFrames, columns, rows, firstFrameIndex, frameCount);
 	}
 
 	private Sprite createProceduralAltarWorldSprite(int color, boolean glyph) {

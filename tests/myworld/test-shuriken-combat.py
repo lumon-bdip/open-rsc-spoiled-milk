@@ -14,6 +14,7 @@ ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
 FORMULAE = ROOT / "server/src/com/openrsc/server/util/rsc/Formulae.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 CLIENT_MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+PROJECTILE_ANIMATION_CATALOG = ROOT / "Client_Base/src/orsc/graphics/two/ProjectileAnimationCatalog.java"
 PROJECTILE = ROOT / "server/src/com/openrsc/server/model/entity/update/Projectile.java"
 UPDATE_FLAGS = ROOT / "server/src/com/openrsc/server/model/entity/update/UpdateFlags.java"
 GAME_STATE_UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
@@ -121,6 +122,7 @@ def main() -> None:
     formulae = FORMULAE.read_text(encoding="utf-8")
     client = CLIENT_ENTITY_HANDLER.read_text(encoding="utf-8")
     mudclient = CLIENT_MUDCLIENT.read_text(encoding="utf-8")
+    projectile_animation_catalog = PROJECTILE_ANIMATION_CATALOG.read_text(encoding="utf-8")
     projectile = PROJECTILE.read_text(encoding="utf-8")
     update_flags = UPDATE_FLAGS.read_text(encoding="utf-8")
     game_state_updater = GAME_STATE_UPDATER.read_text(encoding="utf-8")
@@ -206,8 +208,16 @@ def main() -> None:
     require(mob, "new RangeEvent(player.getWorld(), player, 1, attacker)", "PvM auto-retaliate can resume bow ranged")
     require(mob, "new ThrowingEvent(player.getWorld(), player, 1, attacker)", "PvM auto-retaliate can resume throwing ranged")
     require(mob, "throwingEvent.shouldAutoRetaliateRetarget(player, attacker)", "PvM auto-retaliate lets shuriken preserve its locked targets")
-    require(mudclient, 'loadExternalItemSprite(getExternalPngFile("shuriken-thrown"), 46, 30)', "Client shuriken thrown sprite loader")
-    require(mudclient, "generateShurikenProjectileFrames();", "Client shuriken spin frame generation")
+    require(projectile_animation_catalog,
+            'define(definitions, "shuriken-basic", "Shuriken", "shuriken-basic/shuriken-basic.png", 8, 1, 0, 8);',
+            "Client shuriken animation sheet")
+    require(projectile_animation_catalog,
+            'fallback(fallbacks, PROJECTILE_TYPES.SHURIKEN, "shuriken-basic");',
+            "Client shuriken projectile fallback")
+    require(mudclient, "ProjectileAnimationCatalog.getProjectileFallback(projectileId)",
+            "Client shuriken animation lookup")
+    require(mudclient, "getProjectileSceneSizeForAnimatedEnemy(projectile, enemyProjectile, SHURIKEN_PROJECTILE_SCENE_SIZE)",
+            "Client shuriken animated scene size")
     require(mudclient, "boolean enemyProjectile = true;", "Client projectile renderer tracks shooter ownership")
     require(mudclient, "int var5 = var16.currentX;", "Client projectile renderer starts at shooter")
     require(mudclient, "int var8 = var3.currentX;", "Client projectile renderer ends at victim")
