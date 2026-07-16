@@ -114,6 +114,50 @@ dynamically discovered plugins, both database implementations, generated
 content, and string-addressed assets were not considered removable merely
 because an IDE or direct-call scan reported them unused.
 
+## Verification Completed
+
+- `scripts/build-client.sh`, `scripts/build-server.sh`, and
+  `scripts/build-world-builder-tools.sh` passed with the authoritative Java 8
+  targets after the metadata and dump-method removals.
+- `tests/myworld/test-all.sh` passed end to end. Its B11 guard verifies the
+  compatibility aliases, active roots, protocol/plugin preservation, retained
+  SQL/archive inventory, IDE cleanup, archive reader API, and exact SpotBugs
+  baseline reduction.
+- Dedicated world archive, terrain/editor, and World Builder discovery,
+  export, import, runtime-preparation, runtime, and persistence suites passed.
+- Plugin layout/discovery, packet-shape, entrypoint, sync-modernization, and
+  Ant artifact/classpath tests passed. A private SQLite smoke start completed
+  definitions, world loading, and plugin discovery on port 43615. The public
+  server on 43605 was not changed or restarted.
+- `javap` against the rebuilt `core.jar` confirms `JContent` and
+  `JContentFile` expose their reader/lifecycle APIs but no `dump` method;
+  `WorldLoader` bytecode continues to call `open`, `unpack`, and read methods.
+- `scripts/lint.sh all --offline --base spoiled-milk/main` passed. Javac found
+  no new gated warning fingerprints, changed-line Checkstyle/PMD/ShellCheck/
+  Ruff gates passed, and SpotBugs matched the reduced 409-entry baseline with
+  no new finding. The only baseline change is removal of the four dump-method
+  fingerprints.
+- A local-link scan resolved all 159 links across 135 active Markdown
+  documents. The explicit completed-work archive still contains 58 inherited
+  absolute links to superseded paths; archive-wide link modernization remains
+  outside this cleanup.
+
+No IntelliJ installation is available in this worker environment (only Rider
+is installed), so an actual GUI import could not be automated. Both clean Ant
+builds succeeded with all tracked IntelliJ metadata absent, and the clean-import
+steps above are ready for an IntelliJ user to confirm. This is the only manual
+tooling verification left for manager review; it does not affect runtime or
+packaging authority.
+
+Two existing guards were refreshed while running the complete suite:
+
+- the standalone-layout documentation allowlist now includes the B05-B11
+  handoff documents already present in `docs/myworld/info`; and
+- the rowboat death/respawn guard now checks `isBaselineOriginLoaded` in its
+  B08 owner, `SceneBaselineState`, while retaining the same runtime assertion.
+
+These are test-ownership updates only; no scene or packaging behavior changed.
+
 ## Verification Contract
 
 `tests/myworld/test-compatibility-labels-and-prune-proof.py` guards the active
