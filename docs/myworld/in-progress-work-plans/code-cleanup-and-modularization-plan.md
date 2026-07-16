@@ -89,11 +89,10 @@ work in this plan:
    contract or any action ID. Merged into `main` as `26145528f`.
 2. **Complete on `refactor/client-renderer-profile-applier`:** extracted
    `RendererProfileApplier` and fingerprinted Classic, Remaster, Custom, resize,
-   refresh, runtime-override, and persistence behavior. Await manager merge
-   before starting item 3.
-3. **Next after item 2 merges:** extract `LegacySoftwareScalingSettings` while
-   retaining the active software presenter and all three persisted
-   compatibility keys.
+   refresh, runtime-override, and persistence behavior. Merged into `main` as
+   `83bf64a9d`.
+3. **Next:** extract `LegacySoftwareScalingSettings` while retaining the active
+   software presenter and all three persisted compatibility keys.
 4. Extract `ClientExternalAssetLoader` behind lookup, decode, frame-order, and
    packaged-resource parity tests.
 5. Extract `ClientSceneInstanceStore` for authoritative game-object and wall
@@ -1002,8 +1001,8 @@ tracking:
 
 The old presenter-first pass is complete through viewport/window extraction.
 The first post-B11 branch completed `RendererSettingsPanel` and was merged as
-`26145528f`; the second completed `RendererProfileApplier` and awaits manager
-merge. After that merge, continue with `LegacySoftwareScalingSettings`,
+`26145528f`; the second completed `RendererProfileApplier` and was merged as
+`83bf64a9d`. Continue with `LegacySoftwareScalingSettings`,
 `ClientExternalAssetLoader`, and `ClientSceneInstanceStore` as specified above.
 
 Do not opportunistically combine these because they are adjacent in
