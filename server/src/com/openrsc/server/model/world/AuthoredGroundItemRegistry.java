@@ -39,8 +39,11 @@ public final class AuthoredGroundItemRegistry<T> {
 
 	/**
 	 * Releases the spawn only when {@code item} is its current active instance.
+	 * Reference identity is the ownership token here, so the PMD object-equality
+	 * warning is intentionally suppressed rather than replacing {@code !=}.
 	 * The returned generation is the token a delayed respawn must present.
 	 */
+	@SuppressWarnings("PMD.CompareObjectsWithEquals")
 	public synchronized long remove(final int x, final int y, final T item) {
 		final long key = tileKey(x, y);
 		if (activeItems.get(key) != item) {
