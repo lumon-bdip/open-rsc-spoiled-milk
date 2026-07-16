@@ -134,9 +134,9 @@ because an IDE or direct-call scan reported them unused.
   `WorldLoader` bytecode continues to call `open`, `unpack`, and read methods.
 - `scripts/lint.sh all --offline --base spoiled-milk/main` passed. Javac found
   no new gated warning fingerprints, changed-line Checkstyle/PMD/ShellCheck/
-  Ruff gates passed, and SpotBugs matched the reduced 409-entry baseline with
-  no new finding. The only baseline change is removal of the four dump-method
-  fingerprints.
+  Ruff gates passed, and SpotBugs reported 409 existing findings against the
+  reduced baseline with no new finding. The only baseline change is removal of
+  the four dump-method fingerprints.
 - A local-link scan resolved all 159 links across 135 active Markdown
   documents. The explicit completed-work archive still contains 58 inherited
   absolute links to superseded paths; archive-wide link modernization remains

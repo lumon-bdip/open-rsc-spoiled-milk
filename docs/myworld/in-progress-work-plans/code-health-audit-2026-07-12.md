@@ -15,7 +15,7 @@ definitions, and explicitly archived material. It complements the earlier
 with current measurements, band-aid and dead-code analysis, static-analysis
 recommendations, and an ordered implementation plan.
 
-## Implementation Progress — Updated 2026-07-15
+## Implementation Progress — Updated 2026-07-16
 
 This ledger preserves the audit's original evidence while tracking its ordered
 follow-up branches against published `main` commit `4e04d42ca`.
@@ -32,21 +32,22 @@ follow-up branches against published `main` commit `4e04d42ca`.
 | B08 — `refactor/client-packet-diagnostics` | Complete | `34d5cbb9b` | Moved movement-snapshot diagnostics and scene-baseline state out of `PacketHandler`; packet decode/mutation order and private movement/region/relog behavior were verified. |
 | B09 — `refactor/client-definition-registry` | Complete | `762aab1a5` | Separated registry storage/access, prayer-book authorship, and fallback diagnostics while preserving every catalog index and definition fingerprint. |
 | B10 — `refactor/server-equipment-spell-boundaries` | Complete | `c4930cb31` | Extracted pure equipment slot/stat calculations and spell classification/validation without balance or scheduling changes; parity tests and private verification passed. |
-| B11 — `chore/compatibility-labels-and-prune-proof` | Next | — | Correct misleading compatibility labels and prune only candidates with complete reference and runtime proof. |
+| B11 — `chore/compatibility-labels-and-prune-proof` | Complete | `bab0cbaae` | Corrected active compatibility labels, removed proved-dead archive writers and stale IDE metadata, and retained uncertain MySQL, archive, plugin, protocol, and platform surfaces. |
 
 B04 completed lint rollout Stages 0 and 1. B05 began Stage 2 with focused
-failure classification and cleanup diagnostics without expanding analyzer
-rules. The checked-in baselines contain 46
-distinct gated javac fingerprints representing 51 warning occurrences and 414
-SpotBugs fingerprints representing 450 occurrences. The local end-to-end
+failure classification and cleanup diagnostics, B06 eliminated the 310-report
+auxiliary-class warning family, and B11 removed four proved-dead SpotBugs
+fingerprints without expanding analyzer rules. The checked-in baselines contain
+46 gated javac entries and 410 SpotBugs entries. The B11 verification run
+observed 409 existing SpotBugs findings and no new finding. The local end-to-end
 contract, compiler, analyzer self-test, Python, and shell validation passed, as
 did the GitHub Actions run for `4e04d42ca`. Stage 2 should reduce one warning or
 failure family per focused branch; Stage 3 rule expansion remains deferred
 until those gates have completed several stable cycles.
 
-The completed work now includes the planned correctness, tooling, and major
-ownership foundations. The B11 compatibility-label and proof-before-prune
-cleanup remains and must retain its reference and runtime proof gates.
+All eleven ordered follow-up branches are complete. Further analyzer-rule
+expansion, warning-family burn-down, or large-class decomposition requires a
+new focused plan rather than extending this completed sequence implicitly.
 
 ## Rating Method
 
