@@ -96,10 +96,10 @@ work in this plan:
    `LegacySoftwareScalingSettings` while retaining the active software presenter
    and all three persisted compatibility keys. Merged into `main` as
    `20ffd97a8`.
-4. **Complete on `refactor/client-external-asset-loader`, awaiting manager
-   review:** extracted `ClientExternalAssetLoader` behind lookup, decode,
-   frame-order, and packaged-resource parity tests. Repository and extracted
-   release-layout clients were privately verified.
+4. **Complete on `refactor/client-external-asset-loader`:** extracted
+   `ClientExternalAssetLoader` behind lookup, decode, frame-order, and
+   packaged-resource parity tests. Repository and extracted release-layout
+   clients were privately verified. Merged into `main` as `6cfaa6ca7`.
 5. **Next:** extract `ClientSceneInstanceStore` for authoritative game-object
    and wall instance state, leaving scene/collision side effects in
    `mudclient`.
@@ -306,7 +306,8 @@ already conceptually independent and have low gameplay risk.
     fallbacks, and embedded `myworld-assets` resources.
   - Do not absorb `RemasteredSpriteResolver`; it already owns the manifest-
     validated, per-frame canonical fallback contract.
-  - Status: planned; detailed contract below.
+  - Status: complete and merged; detailed contract and implementation record
+    below.
 
 - `CombatEffectSpriteSystem`
   - Move combat-effect constants, frame counts, scene sizes, detach/draw logic,
@@ -1087,9 +1088,9 @@ The old presenter-first pass is complete through viewport/window extraction.
 The first post-B11 branch completed `RendererSettingsPanel` and was merged as
 `26145528f`; the second completed `RendererProfileApplier` and was merged as
 `83bf64a9d`. The third completed `LegacySoftwareScalingSettings` and was merged
-as `20ffd97a8`. The fourth completed `ClientExternalAssetLoader` on the focused
-branch and awaits manager review. Continue next with `ClientSceneInstanceStore`
-as specified above.
+as `20ffd97a8`. The fourth completed `ClientExternalAssetLoader` and was merged
+as `6cfaa6ca7`. Continue next with `ClientSceneInstanceStore` as specified
+above.
 
 Do not opportunistically combine these because they are adjacent in
 `mudclient`. Each branch must leave a tested owner, keep compatibility visible,
