@@ -635,6 +635,15 @@ These paths should be explicitly quarantined before deeper cleanup. The main
 risk is future work seeing the old names and assuming they are active
 player-facing graphics systems.
 
+| Surface | Disposition | Extraction rule |
+| --- | --- | --- |
+| `ScaledWindow`, `ScalingAlgorithm`, `scaling_type`, `ui_scale`, `scaling_scalar` | Active software-presenter fallback and saved-setting compatibility. | Move ownership in branch 3; do not remove keys or implementation. |
+| Hidden `RenderSurfaceSettings.Mode` values | Active migration aliases for old saved resolutions. | Keep parseable and out of the player selector. |
+| `OpenGLPresentationSettings` integer/stretch modes | Active secondary/debug presentation policy; OpenGL primary enforces aspect fit. | Keep with `OpenGLViewportPresenter`; do not expose as normal settings. |
+| Camera tilt/extra zoom implementation and runtime overrides | Active baseline behavior/diagnostics. | Do not revive obsolete player toggles. |
+| Hidden body-font mapping and retained server fog byte | Active compatibility parsing/protocol surfaces; not normal renderer controls. | Preserve until their callers/protocols receive separate proof. |
+| Old visible `Resolution`, renderer, font, manual tone, superseded brightness, and OpenGL scaler rows/hotkeys | Obsolete player-facing settings. | Keep absent; do not mistake retained parsers/runtime state for a reason to restore the UI. |
+
 ### Legacy Software Scaling
 
 Current locations:
@@ -652,9 +661,10 @@ Current locations:
   - software presenter resize, repaint, mouse mapping, and interpolation scale
     logic
 - `PC_Client/src/orsc/OpenRSC.java`
-  - loads `scaling_type` and `scaling_scalar`
+  - loads `scaling_type` and `ui_scale`, with `scaling_scalar` as fallback
 - `Client_Base/clientSettings.conf`
-  - still contains `scaling_type=0` and `scaling_scalar=1.0`
+  - tracked defaults currently omit the scaler keys, but existing user files
+    can still contain them and the desktop launcher continues to read them
 
 Current intended status:
 
@@ -687,7 +697,8 @@ Current locations:
   - `currentScaleMode`
   - viewport computation, filtering, text smoothing, and mouse remapping
 - `Client_Base/clientSettings.conf`
-  - `opengl_scale_mode=aspect-fit`
+  - tracked defaults currently omit `opengl_scale_mode`; existing user files
+    and explicit runtime configuration remain accepted
 
 Current intended status:
 

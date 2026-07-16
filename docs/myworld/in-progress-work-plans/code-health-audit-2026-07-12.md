@@ -152,6 +152,12 @@ shape, and behavior tests are stronger exit criteria than a numeric size target.
 
 ## Ranked Findings
 
+This ranking is the audit's original prioritization, not a current open-task
+list. B01-B04 completed ranks 1-4, B05 addressed the scoped rank-6 failures,
+B11 corrected/proved the bounded rank-8/rank-9 candidates, and B06-B10 made the
+first safe boundaries under rank 5. The remaining rank-5 decomposition and the
+renderer-settings portion of rank 7 continue through the refreshed plans.
+
 | Rank | Finding | Impact | Confidence | Change risk | Effort | Class |
 | ---: | --- | --- | --- | --- | --- | --- |
 | 1 | Client combat-display rules have drifted from authoritative spell data | High | High | Medium | M | Behavior-changing |

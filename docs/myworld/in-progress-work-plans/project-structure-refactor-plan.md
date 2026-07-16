@@ -245,7 +245,7 @@ make them optional.
 
 Status: **in progress**. B06-B10 completed the first focused ownership
 boundaries. B07 completed viewport/window work; the next five branches are the
-ordered `mudclient` sequence below.
+ordered `mudclient` sequence linked below.
 
 Keep Java packages mostly stable. Extract focused classes from oversized files
 without changing runtime behavior.
