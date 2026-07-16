@@ -92,9 +92,10 @@ work in this plan:
    `RendererProfileApplier` and fingerprinted Classic, Remaster, Custom, resize,
    refresh, runtime-override, and persistence behavior. Merged into `main` as
    `83bf64a9d`.
-3. **Complete on `refactor/client-legacy-software-scaling-settings`, awaiting
-   manager review:** extracted `LegacySoftwareScalingSettings` while retaining
-   the active software presenter and all three persisted compatibility keys.
+3. **Complete on `refactor/client-legacy-software-scaling-settings`:** extracted
+   `LegacySoftwareScalingSettings` while retaining the active software presenter
+   and all three persisted compatibility keys. Merged into `main` as
+   `20ffd97a8`.
 4. **Next:** extract `ClientExternalAssetLoader` behind lookup, decode, frame-order, and
    packaged-resource parity tests.
 5. Extract `ClientSceneInstanceStore` for authoritative game-object and wall
@@ -293,8 +294,8 @@ already conceptually independent and have low gameplay risk.
   - Mark as active software-presenter compatibility. Removal is not part of
     this sequence because OpenGL remains optional and `ScaledWindow` is the
     maintained fallback.
-  - Status: complete on the focused branch and awaiting manager review;
-    detailed contract and implementation record below.
+  - Status: complete and merged; detailed contract and implementation record
+    below.
 
 - `ClientExternalAssetLoader`
   - Fourth branch. Move the non-remastered external asset lookup and image
@@ -1036,9 +1037,8 @@ tracking:
 The old presenter-first pass is complete through viewport/window extraction.
 The first post-B11 branch completed `RendererSettingsPanel` and was merged as
 `26145528f`; the second completed `RendererProfileApplier` and was merged as
-`83bf64a9d`. The third completed `LegacySoftwareScalingSettings` on
-`refactor/client-legacy-software-scaling-settings` and awaits manager review.
-After it merges, continue with `ClientExternalAssetLoader` and
+`83bf64a9d`. The third completed `LegacySoftwareScalingSettings` and was merged
+as `20ffd97a8`. Continue with `ClientExternalAssetLoader` and
 `ClientSceneInstanceStore` as specified above.
 
 Do not opportunistically combine these because they are adjacent in
