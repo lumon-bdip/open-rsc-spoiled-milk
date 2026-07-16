@@ -256,8 +256,6 @@ server|AT_STALE_THREAD_WRITE_OF_PRIMITIVE|2|com.openrsc.server.plugins.authentic
 server|AT_STALE_THREAD_WRITE_OF_PRIMITIVE|2|com.openrsc.server.plugins.authentic.commands.Development|setAbortFlag()V|occurrence=1
 server|DE_MIGHT_IGNORE|1|com.openrsc.server.net.rsc.handlers.SleepHandler|process(Lcom/openrsc/server/net/rsc/struct/incoming/SleepStruct;Lcom/openrsc/server/model/entity/player/Player;)V|occurrence=1
 server|DE_MIGHT_IGNORE|1|com.openrsc.server.plugins.io.PluginJarLoader|clear()V|occurrence=1
-server|DE_MIGHT_IGNORE|2|com.openrsc.server.io.JContentFile|dump(Ljava/lang/String;)V|occurrence=1
-server|DE_MIGHT_IGNORE|2|com.openrsc.server.io.JContent|dump(Ljava/lang/String;)V|occurrence=1
 server|DE_MIGHT_IGNORE|2|com.openrsc.server.model.entity.player.Player|alertQueuedSleepwordCancelledByLogout()V|occurrence=1
 server|EC_UNRELATED_TYPES|1|com.openrsc.server.plugins.authentic.quests.members.Observatory|lambda$giveOptionalReward$2(Lcom/openrsc/server/plugins/shared/model/XPReward;)Z|occurrence=1
 server|EC_UNRELATED_TYPES|1|com.openrsc.server.plugins.authentic.quests.members.Observatory|lambda$handleReward$0(Lcom/openrsc/server/plugins/shared/model/XPReward;)Z|occurrence=1
@@ -393,8 +391,6 @@ server|REC_CATCH_EXCEPTION|2|com.openrsc.server.external.EntityHandler|loadItems
 server|REC_CATCH_EXCEPTION|2|com.openrsc.server.external.EntityHandler|loadNpcs(Ljava/lang/String;)V|occurrence=1
 server|REC_CATCH_EXCEPTION|2|com.openrsc.server.external.EntityHandler|loadPatchItems(Ljava/lang/String;)V|occurrence=1
 server|REC_CATCH_EXCEPTION|2|com.openrsc.server.external.EntityHandler|loadPatchNpcs(Ljava/lang/String;)V|occurrence=1
-server|REC_CATCH_EXCEPTION|2|com.openrsc.server.io.JContentFile|dump(Ljava/lang/String;)V|occurrence=1
-server|REC_CATCH_EXCEPTION|2|com.openrsc.server.io.JContent|dump(Ljava/lang/String;)V|occurrence=1
 server|REC_CATCH_EXCEPTION|2|com.openrsc.server.net.rsc.Crypto|pemParser(Ljava/lang/String;)[B|occurrence=1
 server|REC_CATCH_EXCEPTION|2|com.openrsc.server.net.rsc.generators.impl.Payload115Generator|make115ChatMessage(Ljava/lang/String;)[B|occurrence=1
 server|REC_CATCH_EXCEPTION|2|com.openrsc.server.net.rsc.parsers.impl.Payload115Parser|hn(Ljava/lang/String;)Ljava/lang/String;|occurrence=1

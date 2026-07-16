@@ -1174,7 +1174,7 @@ public final class GameStateUpdater {
 				mobsUpdate.add((byte) packed2);
 				mobsUpdate.add((byte) newNPC.getID());
 
-				if (!playerToUpdate.getConfig().BREAK_NPC_LOCATION_CACHE) {
+				if (!playerToUpdate.getConfig().DISABLE_NPC_LOCATION_CACHE) {
 					playerToUpdate.getLocalNpcs().add(newNPC);
 				}
 			}
@@ -1291,7 +1291,7 @@ public final class GameStateUpdater {
 				int numBits = forClient115 ? 8 : (forClient140 ? 9 : 10);
 				mobsUpdate.add(bit(newNPC.getID(), numBits));
 
-				if (!playerToUpdate.getConfig().BREAK_NPC_LOCATION_CACHE) {
+				if (!playerToUpdate.getConfig().DISABLE_NPC_LOCATION_CACHE) {
 					playerToUpdate.getLocalNpcs().add(newNPC);
 				}
 			}

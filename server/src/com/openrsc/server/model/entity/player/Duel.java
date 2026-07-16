@@ -94,8 +94,7 @@ public class Duel implements ContainerListener {
 
 	@Override
 	public void fireItemChanged(int slot) {
-		// TODO Auto-generated method stub
-
+		// Intentionally no-op: PlayerDuelHandler sends offer updates explicitly.
 	}
 
 	public void clearDuelOptions() {
@@ -114,14 +113,12 @@ public class Duel implements ContainerListener {
 
 	@Override
 	public void fireItemsChanged() {
-		// TODO Auto-generated method stub
-
+		// Intentionally no-op: PlayerDuelHandler sends offer updates explicitly.
 	}
 
 	@Override
 	public void fireContainerFull() {
-		// TODO Auto-generated method stub
-
+		// Intentionally no-op: duel-offer capacity is validated by the handler.
 	}
 
 	public void resetAll() {

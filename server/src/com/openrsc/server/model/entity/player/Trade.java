@@ -33,12 +33,12 @@ public class Trade implements ContainerListener {
 
 	@Override
 	public void fireItemChanged(int slot) {
-
+		// Intentionally no-op: PlayerTradeHandler sends offer updates explicitly.
 	}
 
 	@Override
 	public void fireItemsChanged() {
-
+		// Intentionally no-op: PlayerTradeHandler sends offer updates explicitly.
 	}
 
 	public boolean isTradeActive() {
@@ -106,7 +106,6 @@ public class Trade implements ContainerListener {
 
 	@Override
 	public void fireContainerFull() {
-		// TODO Auto-generated method stub
-
+		// Intentionally no-op: trade-offer capacity is validated by the handler.
 	}
 }

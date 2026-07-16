@@ -391,9 +391,12 @@ public class Bank {
 		}
 	}
 
-	public void setTab(int int1) {
-		// TODO Auto-generated method stub
-
+	/**
+	 * Retained compatibility hook for callers that model bank tabs. Server-side
+	 * bank storage has no tab state; the active client owns tab presentation.
+	 */
+	public void setTab(int tab) {
+		// Intentionally no-op.
 	}
 
 

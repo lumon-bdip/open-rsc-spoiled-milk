@@ -9,6 +9,7 @@ cd "$ROOT_DIR"
 ./tests/myworld/test-smoke.sh
 python3 ./tests/myworld/test-server-build-source-of-truth.py
 python3 ./tests/myworld/test-static-analysis-baseline.py
+python3 ./tests/myworld/test-compatibility-labels-and-prune-proof.py
 python3 ./tests/myworld/audit_client_item_coverage.py
 python3 ./tests/myworld/test-client-runtime-item-definitions.py
 python3 ./tests/myworld/test-client-definition-registry-extraction.py
