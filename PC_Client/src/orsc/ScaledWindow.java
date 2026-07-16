@@ -11,9 +11,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.VolatileImage;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import javax.swing.*;
 
 import static orsc.OpenRSC.applet;
@@ -66,9 +64,6 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	private int presentationBufferWidth = 0;
 	private int presentationBufferHeight = 0;
 	private int presentationBufferType = BufferedImage.TYPE_INT_RGB;
-
-	private static final float MAX_INTEGER_SCALE = 2.0f;
-	private static final float MAX_INTERPOLATION_SCALE = 2.0f;
 
 	public static boolean isOpenGLPrimaryWindowEnabled() {
 		return OPENGL_PRIMARY_WINDOW_ENABLED;
@@ -171,27 +166,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 			}
 		}
 
-		List<Float> integerScalars = new ArrayList<>();
-		for (float i = 1.0f; i <= maxRenderingScalar && i <= MAX_INTEGER_SCALE; i++) {
-			integerScalars.add(i);
-		}
-
-		mudclient.integerScalars = integerScalars;
-
-		List<Float> interpolationScalars = new ArrayList<>();
-		for (float i = 1.0f; i <= maxRenderingScalar && i <= MAX_INTERPOLATION_SCALE; i += 0.5f) {
-			interpolationScalars.add(i);
-		}
-
-		mudclient.interpolationScalars = interpolationScalars;
-
-		float maxAllowedScalar = Math.max(MAX_INTEGER_SCALE, MAX_INTERPOLATION_SCALE);
-		if (mudclient.newRenderingScalar > maxAllowedScalar) {
-			mudclient.newRenderingScalar = maxAllowedScalar;
-		}
-		if (mudclient.renderingScalar > maxAllowedScalar) {
-			mudclient.renderingScalar = maxAllowedScalar;
-		}
+		LegacySoftwareScalingSettings.configureAllowedScalars(maxRenderingScalar);
 	}
 
 	/**
@@ -373,20 +348,20 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 				useRenderer2DUiBaseImage
 					? renderer2DUiBaseImage
 					: presentationImage,
-				mudclient.renderingScalar,
-				mudclient.scalingType,
+				LegacySoftwareScalingSettings.getRenderingScalar(),
+				LegacySoftwareScalingSettings.getScalingAlgorithm(),
 				renderer2DFrame,
 				renderer3DFrame);
 		}
 
 		scaledViewport.setViewportImage(presentationImage);
 
-		int repaintWidth = mudclient.renderingScalar == 1.0f
+		int repaintWidth = LegacySoftwareScalingSettings.getRenderingScalar() == 1.0f
 			? viewportWidth
-			: Math.round(viewportWidth * mudclient.renderingScalar);
-		int repaintHeight = mudclient.renderingScalar == 1.0f
+			: LegacySoftwareScalingSettings.scaleDimension(viewportWidth);
+		int repaintHeight = LegacySoftwareScalingSettings.getRenderingScalar() == 1.0f
 			? viewportHeight
-			: Math.round(viewportHeight * mudclient.renderingScalar);
+			: LegacySoftwareScalingSettings.scaleDimension(viewportHeight);
 		scaledViewport.repaint(0, 0, repaintWidth, repaintHeight);
 		repaintRequested = true;
 
@@ -504,7 +479,9 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	public Dimension getMinimumViewportSizeForScalar() {
 		int renderWidth = viewportWidth > 0 ? viewportWidth : RenderSurfaceSettings.getWidth();
 		int renderHeight = viewportHeight > 0 ? viewportHeight : RenderSurfaceSettings.getHeight();
-		return new Dimension(Math.round(renderWidth * mudclient.renderingScalar), Math.round(renderHeight * mudclient.renderingScalar));
+		return new Dimension(
+			LegacySoftwareScalingSettings.scaleDimension(renderWidth),
+			LegacySoftwareScalingSettings.scaleDimension(renderHeight));
 	}
 
 	/** Resizes the applet contained within {@link OpenRSC} */
@@ -513,12 +490,12 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 			return;
 		}
 
-		if (mudclient.renderingScalar == 0.0f || !isViewportLoaded()) {
+		if (LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f || !isViewportLoaded()) {
 			return;
 		}
 
-		int newWidth = Math.round(scaledViewport.getWidth() / mudclient.renderingScalar);
-		int newHeight = Math.round(scaledViewport.getHeight() / mudclient.renderingScalar);
+		int newWidth = LegacySoftwareScalingSettings.unscaleCoordinate(scaledViewport.getWidth());
+		int newHeight = LegacySoftwareScalingSettings.unscaleCoordinate(scaledViewport.getHeight());
 
 		if (applet != null) {
 			applet.setSize(newWidth, newHeight);
@@ -539,8 +516,8 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 		if (applet == null) return;
 
-		int newWidth = Math.round(scaledViewport.getWidth() / mudclient.renderingScalar);
-		int newHeight = Math.round(scaledViewport.getHeight() / mudclient.renderingScalar);
+		int newWidth = LegacySoftwareScalingSettings.unscaleCoordinate(scaledViewport.getWidth());
+		int newHeight = LegacySoftwareScalingSettings.unscaleCoordinate(scaledViewport.getHeight());
 
 		if (applet.getWidth() != newWidth || applet.getHeight() != newHeight) {
 			applet.setSize(newWidth, newHeight);
@@ -592,7 +569,8 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	@Override
 	public void focusLost(FocusEvent e) {
-		if (applet.getKeyHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getKeyHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.resetArrowKeys();
 	}
@@ -627,49 +605,56 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		if (applet.getMouseHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getMouseHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getMouseHandler().mouseClicked(mapMouseEvent(e));
 	}
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		if (applet.getMouseHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getMouseHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getMouseHandler().mousePressed(mapMouseEvent(e));
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		if (applet.getMouseHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getMouseHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getMouseHandler().mouseReleased(mapMouseEvent(e));
 	}
 
 	@Override
 	public void mouseEntered(MouseEvent e) {
-		if (applet.getMouseHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getMouseHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getMouseHandler().mouseEntered(mapMouseEvent(e));
 	}
 
 	@Override
 	public void mouseExited(MouseEvent e) {
-		if (applet.getMouseHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getMouseHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getMouseHandler().mouseExited(mapMouseEvent(e));
 	}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		if (applet.getMouseHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getMouseHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getMouseHandler().mouseDragged(mapMouseEvent(e));
 	}
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		if (applet.getMouseHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getMouseHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getMouseHandler().mouseMoved(mapMouseEvent(e));
 	}
@@ -679,8 +664,8 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		int mouseEventId = e.getID();
 		long mouseEventWhen = e.getWhen();
 		int mouseEventModifiers = e.getModifiers();
-		int mappedMouseEventX = Math.round(e.getX() / mudclient.renderingScalar);
-		int mappedMouseEventY = Math.round(e.getY() / mudclient.renderingScalar);
+		int mappedMouseEventX = LegacySoftwareScalingSettings.unscaleCoordinate(e.getX());
+		int mappedMouseEventY = LegacySoftwareScalingSettings.unscaleCoordinate(e.getY());
 		int mouseEventXOnScreen = e.getXOnScreen();
 		int mouseEventYOnScreen = e.getYOnScreen();
 		int mouseEventClickCount = e.getClickCount();
@@ -703,7 +688,8 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
-		if (applet.getMouseHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getMouseHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getMouseHandler().mouseWheelMoved(mapMouseWheelEvent(e));
 	}
@@ -713,8 +699,8 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 		int mouseWheelEventId = e.getID();
 		long mouseWheelEventWhen = e.getWhen();
 		int mouseWheelEventModifiers = e.getModifiers();
-		int mappedMouseWheelEventX = Math.round(e.getX() / mudclient.renderingScalar);
-		int mappedMouseWheelEventY = Math.round(e.getY() / mudclient.renderingScalar);
+		int mappedMouseWheelEventX = LegacySoftwareScalingSettings.unscaleCoordinate(e.getX());
+		int mappedMouseWheelEventY = LegacySoftwareScalingSettings.unscaleCoordinate(e.getY());
 		int mouseWheelEventXOnScreen = e.getXOnScreen();
 		int mouseWheelEventYOnScreen = e.getYOnScreen();
 		int mouseWheelEventClickCount = e.getClickCount();
@@ -747,21 +733,24 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 	@Override
 	public void keyTyped(KeyEvent e) {
-		if (applet.getKeyHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getKeyHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getKeyHandler().keyTyped(e);
 	}
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		if (applet.getMouseHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getMouseHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getKeyHandler().keyPressed(e);
 	}
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		if (applet.getMouseHandler() == null || mudclient.renderingScalar == 0.0f) return;
+		if (applet.getMouseHandler() == null
+			|| LegacySoftwareScalingSettings.getRenderingScalar() == 0.0f) return;
 
 		applet.getKeyHandler().keyReleased(e);
 	}
@@ -779,11 +768,13 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 	 * @return The {@link BufferedImage} type based on the current {@link ScalingAlgorithm}
 	 */
 	public static int getBufferedImageType() {
-		if (mudclient.scalingType == ScalingAlgorithm.INTEGER_SCALING) {
+		if (LegacySoftwareScalingSettings.getScalingAlgorithm() == ScalingAlgorithm.INTEGER_SCALING) {
 			return BufferedImage.TYPE_INT_RGB;
-		} else if (mudclient.scalingType == ScalingAlgorithm.BILINEAR_INTERPOLATION) {
+		} else if (LegacySoftwareScalingSettings.getScalingAlgorithm()
+			== ScalingAlgorithm.BILINEAR_INTERPOLATION) {
 			return BufferedImage.TYPE_3BYTE_BGR;
-		} else if (mudclient.scalingType == ScalingAlgorithm.BICUBIC_INTERPOLATION) {
+		} else if (LegacySoftwareScalingSettings.getScalingAlgorithm()
+			== ScalingAlgorithm.BICUBIC_INTERPOLATION) {
 			return BufferedImage.TYPE_3BYTE_BGR;
 		}
 
@@ -892,7 +883,7 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 
 			try {
 				// Do not perform any scaling operations at a 1.0x scalar
-				if (mudclient.renderingScalar == 1.0f) {
+				if (LegacySoftwareScalingSettings.getRenderingScalar() == 1.0f) {
 					if (GPU_PRESENTER_ENABLED) {
 						long scaleStart = RenderTelemetry.now();
 						drawGpuPresentedImage(g, paintImage, paintImage.getWidth(), paintImage.getHeight());
@@ -904,10 +895,11 @@ public class ScaledWindow extends JFrame implements WindowListener, FocusListene
 					return;
 				}
 
-				newWidth = Math.round(paintImage.getWidth() * mudclient.renderingScalar);
-				newHeight = Math.round(paintImage.getHeight() * mudclient.renderingScalar);
+				newWidth = LegacySoftwareScalingSettings.scaleDimension(paintImage.getWidth());
+				newHeight = LegacySoftwareScalingSettings.scaleDimension(paintImage.getHeight());
 
-				if (mudclient.scalingType == ScalingAlgorithm.INTEGER_SCALING) {
+				if (LegacySoftwareScalingSettings.getScalingAlgorithm()
+					== ScalingAlgorithm.INTEGER_SCALING) {
 					// Workaround for direct drawImage warping which seems to only affect macOS on JDK 19
 					if (isMacOS && javaVersion >= 19) {
 						g.setClip(0, 0, newWidth, newHeight);
