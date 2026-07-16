@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+INSTANCE_STORE = ROOT / "Client_Base/src/orsc/ClientSceneInstanceStore.java"
 RSMODEL = ROOT / "Client_Base/src/orsc/graphics/three/RSModel.java"
 SCENE_OBJECT_DEBUG = ROOT / "Client_Base/src/orsc/SceneObjectDebugSettings.java"
 
@@ -17,6 +18,7 @@ def require(condition: bool, message: str) -> None:
 def main() -> None:
     packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")
+    instance_store = INSTANCE_STORE.read_text(encoding="utf-8")
     rsmodel = RSMODEL.read_text(encoding="utf-8")
     scene_object_debug = SCENE_OBJECT_DEBUG.read_text(encoding="utf-8")
 
@@ -27,8 +29,8 @@ def main() -> None:
     require("private boolean hasLoadedTerrainForWorldPoint(int xWorld, int zWorld)" in client
             and "return World.isLocalFaceTile(xTile, zTile);" in client,
             "Terrain checks should match the elevation interpolation window")
-    require("private boolean[] gameObjectInstanceMaterialized" in client
-            and "private boolean[] wallObjectInstanceMaterialized" in client,
+    require("private boolean[] gameObjectMaterialized" in instance_store
+            and "private boolean[] wallObjectMaterialized" in instance_store,
             "Deferred scenery should track explicit scene materialization state")
     require("public void materializeGameObjectInstance(int index)" in client
             and "if (!hasLoadedTerrainForGameObject(xTile, zTile, objectID, dir)) {\n\t\t\tdebugSceneGameObjectEvent(\"defer-terrain\", index, \"\");\n\t\t\treturn;\n\t\t}" in client,
@@ -46,14 +48,14 @@ def main() -> None:
     require("private void rematerializeLoadedTerrainSceneryAfterWorldReload()" in client
             and "this.rematerializeLoadedTerrainSceneryAfterWorldReload();" in client,
             "Roof-only world reloads should reattach scenery to the rebuilt terrain scene")
-    require("this.wallObjectInstanceModel[i] = null;" in client
-            and "this.getWorld().registerObjectDir(\n\t\t\t\t\tthis.wallObjectInstanceX[i]," in client,
+    require("this.setWallObjectInstanceModel(i, null);" in client
+            and "this.getWorld().registerObjectDir(\n\t\t\t\t\tthis.getWallObjectInstanceX(i)," in client,
             "Roof-only world reloads should rebuild wall object models and object directions")
-    require("for (int i = 0; i < this.gameObjectInstanceCount; i++) {\n\t\t\tthis.dematerializeGameObjectInstance(i);" in client
-            and "this.dematerializeWallObjectInstance(i);\n\t\t\tthis.wallObjectInstanceModel[i] = null;" in client
+    require("for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {\n\t\t\tthis.dematerializeGameObjectInstance(i);" in client
+            and "this.dematerializeWallObjectInstance(i);\n\t\t\tthis.setWallObjectInstanceModel(i, null);" in client
             and "this.clearResidentObjectChunkCache();\n\t\tthis.materializeLoadedTerrainScenery();" in client,
             "Roof-only world reloads should remove old scene models before rebuilding scenery")
-    require("this.dematerializeGameObjectInstance(i);\n\t\t\t\t\t}\n\t\t\t\t\tfor (int i = 0; this.wallObjectInstanceCount > i; ++i) {\n\t\t\t\t\t\tthis.dematerializeWallObjectInstance(i);\n\t\t\t\t\t}\n\t\t\t\t\tthis.clearResidentObjectChunkCache();\n\t\t\t\t\tthis.world.loadSections" in client,
+    require("this.dematerializeGameObjectInstance(i);\n\t\t\t\t\t}\n\t\t\t\t\tfor (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {\n\t\t\t\t\t\tthis.dematerializeWallObjectInstance(i);\n\t\t\t\t\t}\n\t\t\t\t\tthis.clearResidentObjectChunkCache();\n\t\t\t\t\tthis.world.loadSections" in client,
             "Region shifts should detach existing scenery before loading the next terrain window")
     require("this.clearResidentObjectChunkCache();\n\t\t\t\t\tthis.materializeLoadedTerrainScenery();" in client,
             "Region shifts should clear resident object chunks before rebuilding scenery")
@@ -78,16 +80,16 @@ def main() -> None:
     capacity_guard_index = packet_handler.index(capacity_guard)
     store_record_index = packet_handler.index(store_record, capacity_guard_index)
     materialize_record_index = packet_handler.index(materialize_record, store_record_index)
-    require("private static final int WALL_OBJECT_KEY_BASE = 20000;" in client
-            and "private static final int GAME_OBJECT_INSTANCE_INITIAL_CAPACITY = WALL_OBJECT_KEY_BASE;" in client,
+    require("static final int WALL_OBJECT_KEY_BASE = 20000;" in instance_store
+            and "static final int GAME_OBJECT_INITIAL_CAPACITY = WALL_OBJECT_KEY_BASE;" in instance_store,
             "Scenery capacity should grow past the old 5000 limit without colliding with wall pick keys")
-    require("private static final int WALL_OBJECT_INSTANCE_CAPACITY = 5000;" in client,
+    require("static final int WALL_OBJECT_INITIAL_CAPACITY = 5000;" in instance_store,
             "Boundary capacity should grow past the old 500 limit")
-    require("new boolean[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY]" in client
-            and "new RSModel[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY]" in client,
+    require("new boolean[gameObjectCapacity]" in instance_store
+            and "new RSModel[gameObjectCapacity]" in instance_store,
             "Scenery instance arrays should use the expanded named capacity")
-    require("new boolean[WALL_OBJECT_INSTANCE_CAPACITY]" in client
-            and "new RSModel[WALL_OBJECT_INSTANCE_CAPACITY]" in client,
+    require("new boolean[wallObjectCapacity]" in instance_store
+            and "new RSModel[wallObjectCapacity]" in instance_store,
             "Boundary instance arrays should use the expanded named capacity")
     require("public boolean hasGameObjectInstanceCapacity()" in client
             and "public boolean hasWallObjectInstanceCapacity()" in client,
@@ -97,8 +99,8 @@ def main() -> None:
     require("if (!mc.hasWallObjectInstanceCapacity()) {\n\t\t\t\t\t\tcontinue;\n\t\t\t\t\t}" in packet_handler,
             "Boundary append packets should be ignored instead of overflowing local arrays")
     require("var8.getRenderer3DModelKind() == Renderer3DModelKind.WALL_OBJECT" in client
-            and "var8.key - WALL_OBJECT_KEY_BASE" in client
-            and "this.wallObjectInstanceModel[i].key = i + WALL_OBJECT_KEY_BASE;" in client,
+            and "var8.key - ClientSceneInstanceStore.WALL_OBJECT_KEY_BASE" in client
+            and "model.key = index + WALL_OBJECT_KEY_BASE;" in instance_store,
             "Boundary pick-key encoding should move with the expanded scenery capacity")
     require(capacity_guard_index < store_record_index,
             "Scenery capacity should be checked before storing a new instance")

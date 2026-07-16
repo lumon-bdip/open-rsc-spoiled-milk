@@ -206,9 +206,9 @@ def main() -> None:
             "Resident object cache keys should include object direction")
     require(mudclient, "model.getRenderer3DTransformVersion()",
             "Resident object cache keys should include model transform versions")
-    require(mudclient, "this.gameObjectInstanceMaterialized[i] && this.gameObjectInstanceModel[i] != null",
+    require(mudclient, "this.isGameObjectInstanceMaterialized(i) && this.getGameObjectInstanceModel(i) != null",
             "Resident object chunk should only include materialized game-object instances")
-    require(mudclient, "this.wallObjectInstanceMaterialized[i] && this.wallObjectInstanceModel[i] != null",
+    require(mudclient, "this.isWallObjectInstanceMaterialized(i) && this.getWallObjectInstanceModel(i) != null",
             "Resident object chunk should only include materialized wall-object instances")
     require(mudclient, "this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame())",
             "Renderer frames should receive resident world chunks plus dynamic object chunks")

@@ -82,6 +82,7 @@ def require_absent(text: str, needle: str, label: str) -> None:
 
 def main() -> None:
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
+    scene_instance_store = (ROOT / "Client_Base/src/orsc/ClientSceneInstanceStore.java").read_text(encoding="utf-8")
     graphics_controller = GRAPHICS_CONTROLLER.read_text(encoding="utf-8")
     mud_client_graphics = MUD_CLIENT_GRAPHICS.read_text(encoding="utf-8")
     renderer_2d_frame = RENDERER_2D_FRAME.read_text(encoding="utf-8")
@@ -140,7 +141,7 @@ def main() -> None:
     require(world, "new Renderer3DWorldChunkFrame.ShadowCaster(", "world chunk builder creates semantic shadow caster metadata")
     require(world, "caster.getBaseX0()", "world chunk signature includes shadow caster metadata")
     require(mudclient, "model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);", "wall object model tagging")
-    require(mudclient, "this.gameObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);", "game object setter tagging")
+    require(scene_instance_store, "model.setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);", "game object setter tagging")
     require(mudclient, "private void updateSceneryAnimations()", "scenery animation tick helper")
     require(mudclient, "model.addRotation(1, 0, 0);", "fountain scenery rotation")
     require(mudclient, '"portal".equals(def.getObjectModel())', "portal scenery rotation model match")

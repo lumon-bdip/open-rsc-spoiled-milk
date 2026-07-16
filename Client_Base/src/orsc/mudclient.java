@@ -84,7 +84,6 @@ public final class mudclient implements Runnable {
 	private static final int SCENE_MODEL_CAPACITY = 25000;
 	private static final int SCENE_POLYGON_CAPACITY = 120000;
 	private static final int SCENE_PICK_MODEL_CAPACITY = 1000;
-	private static final int WALL_OBJECT_KEY_BASE = 20000;
 	private static final int GROUND_ITEM_PICK_INDEX_BASE = 20000;
 	private static final int GROUND_ITEM_INITIAL_CAPACITY = 5000;
 	private static final int CHARACTER_OVERLAY_INITIAL_CAPACITY = 150;
@@ -108,8 +107,6 @@ public final class mudclient implements Runnable {
 	private static final long FISHING_SPOT_RIPPLE_FRAME_MILLIS = 70L;
 	private static final String MODERN_CLIENT_LOOP_PROPERTY = "spoiledmilk.modernClientLoop";
 	private static final String MODERN_CLIENT_LOOP_ENV = "SPOILED_MILK_MODERN_CLIENT_LOOP";
-	private static final int GAME_OBJECT_INSTANCE_INITIAL_CAPACITY = WALL_OBJECT_KEY_BASE;
-	private static final int WALL_OBJECT_INSTANCE_CAPACITY = 5000;
 	private static final int OPENGL_PRIMARY_TARGET_FPS = 60;
 	private static final int MODERN_LOOP_MAX_CATCH_UP_UPDATES = 5;
 	private static final long NANOS_PER_MILLI = 1_000_000L;
@@ -435,13 +432,7 @@ public final class mudclient implements Runnable {
 	private final Item[] duelOpponent = new Item[8];
 	//private final int[] duelOpponentItemCount = new int[8];
 	private final Item[] duelOpponentConfirm = new Item[8];
-	private boolean[] gameObjectInstance_Arg1 = new boolean[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
-	private int[] gameObjectInstanceDir = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
-	private int[] gameObjectInstanceID = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
-	private boolean[] gameObjectInstanceMaterialized = new boolean[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
-	private boolean[] gameObjectInstancePendingAreaLoad = new boolean[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
-	private RSModel[] gameObjectInstanceModel = new RSModel[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
-	private int[] gameObjectInstanceX = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
+	private final ClientSceneInstanceStore sceneInstanceStore = new ClientSceneInstanceStore();
 	private int sceneObjectDebugLastHoverSignature = 0;
 	private long sceneObjectDebugLastHoverMillis = 0L;
 	private static final int OBJECT_ANIMATION_TILE_RADIUS = 14;
@@ -555,14 +546,6 @@ public final class mudclient implements Runnable {
 	private final Item[] tradeRecipient = new Item[14];
 	//private final int[] tradeRecipientItem = new int[14];
 	//private final int[] tradeRecipientItemCount = new int[14];
-	private boolean[] wallObjectInstance_Arg1 = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
-	private int[] wallObjectInstanceDir = new int[WALL_OBJECT_INSTANCE_CAPACITY];
-	private int[] wallObjectInstanceID = new int[WALL_OBJECT_INSTANCE_CAPACITY];
-	private boolean[] wallObjectInstanceMaterialized = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
-	private boolean[] wallObjectInstancePendingAreaLoad = new boolean[WALL_OBJECT_INSTANCE_CAPACITY];
-	private RSModel[] wallObjectInstanceModel = new RSModel[WALL_OBJECT_INSTANCE_CAPACITY];
-	private int[] wallObjectInstanceX = new int[WALL_OBJECT_INSTANCE_CAPACITY];
-	private int[] wallObjectInstanceZ = new int[WALL_OBJECT_INSTANCE_CAPACITY];
 	//private final int[] inventoryItemEquipped = new int[S_PLAYER_INVENTORY_SLOTS];
 	//private final int[] inventoryItemID = new int[S_PLAYER_INVENTORY_SLOTS];
 	//private final int[] inventoryItemSize = new int[S_PLAYER_INVENTORY_SLOTS];
@@ -842,8 +825,6 @@ public final class mudclient implements Runnable {
 	private int fatigueSleepingAuthentic = 0;
 	private int currentDevotionLevel = 0;
 	private int gameHeight = 334;
-	private int gameObjectInstanceCount = 0;
-	private int[] gameObjectInstanceZ = new int[GAME_OBJECT_INSTANCE_INITIAL_CAPACITY];
 	private int gameWidth = 512;
 	private int groundItemCount = 0;
 	private boolean inputX_Focused = true;
@@ -1180,7 +1161,6 @@ public final class mudclient implements Runnable {
 	private String tradeRecipientName = "";
 	private int uiTabPlayerInfoSubTab = 0;
 	private String username = "";
-	private int wallObjectInstanceCount = 0;
 	private int welcomeLastLoggedInDays = 0;
 	private String welcomeLastLoggedInHost = null;
 	private String welcomeLastLoggedInIp;
@@ -3416,7 +3396,7 @@ public final class mudclient implements Runnable {
 
 	public final RSModel createWallObjectModel(int x, int y, int type, int dir, int index) {
 		// this.createWallObjectModel(true, y, id, x, direction,
-		// this.wallObjectInstanceCount);
+		// this.getWallObjectInstanceCount());
 		int x1 = x;
 		int x2 = x;
 		int y2 = y;
@@ -3455,7 +3435,7 @@ public final class mudclient implements Runnable {
 		model.insertFace(4, indices, texFront, texBack, false);
 		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
 		model.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, -95);
-		model.key = index + WALL_OBJECT_KEY_BASE;
+		model.key = index + ClientSceneInstanceStore.WALL_OBJECT_KEY_BASE;
 		return model;
 	}
 
@@ -3464,17 +3444,17 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		ensureGameObjectInstanceCapacity(index + 1);
-		if (this.gameObjectInstanceMaterialized[index]) {
+		if (this.isGameObjectInstanceMaterialized(index)) {
 			return;
 		}
-		RSModel model = this.gameObjectInstanceModel[index];
+		RSModel model = this.getGameObjectInstanceModel(index);
 		if (model == null) {
 			return;
 		}
-		int xTile = this.gameObjectInstanceX[index];
-		int zTile = this.gameObjectInstanceZ[index];
-		int objectID = this.gameObjectInstanceID[index];
-		int dir = this.gameObjectInstanceDir[index];
+		int xTile = this.getGameObjectInstanceX(index);
+		int zTile = this.getGameObjectInstanceZ(index);
+		int objectID = this.getGameObjectInstanceID(index);
+		int dir = this.getGameObjectInstanceDir(index);
 		if (!hasLoadedTerrainForGameObject(xTile, zTile, objectID, dir)) {
 			debugSceneGameObjectEvent("defer-terrain", index, "");
 			return;
@@ -3504,13 +3484,14 @@ public final class mudclient implements Runnable {
 	}
 
 	public void dematerializeGameObjectInstance(int index) {
-		if (index < 0 || index >= this.gameObjectInstanceMaterialized.length || !this.gameObjectInstanceMaterialized[index]) {
+		if (index < 0 || index >= this.sceneInstanceStore.getGameObjectCapacity()
+			|| !this.isGameObjectInstanceMaterialized(index)) {
 			return;
 		}
 		debugSceneGameObjectEvent("dematerialize", index, "");
-		this.scene.removeModel(this.gameObjectInstanceModel[index]);
-		this.world.removeGameObject_CollisonFlags(this.gameObjectInstanceID[index],
-			this.gameObjectInstanceX[index], this.gameObjectInstanceZ[index]);
+		this.scene.removeModel(this.getGameObjectInstanceModel(index));
+		this.world.removeGameObject_CollisonFlags(this.getGameObjectInstanceID(index),
+			this.getGameObjectInstanceX(index), this.getGameObjectInstanceZ(index));
 		this.setGameObjectInstanceMaterialized(index, false);
 	}
 
@@ -3519,13 +3500,13 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		ensureWallObjectInstanceCapacity(index + 1);
-		if (this.wallObjectInstanceMaterialized[index]) {
+		if (this.isWallObjectInstanceMaterialized(index)) {
 			return;
 		}
-		int x = this.wallObjectInstanceX[index];
-		int z = this.wallObjectInstanceZ[index];
-		int id = this.wallObjectInstanceID[index];
-		int dir = this.wallObjectInstanceDir[index];
+		int x = this.getWallObjectInstanceX(index);
+		int z = this.getWallObjectInstanceZ(index);
+		int id = this.getWallObjectInstanceID(index);
+		int dir = this.getWallObjectInstanceDir(index);
 		if (!hasLoadedTerrainForWallObject(x, z, dir)) {
 			debugSceneWallObjectEvent("defer-terrain", index, "");
 			return;
@@ -3540,90 +3521,54 @@ public final class mudclient implements Runnable {
 	}
 
 	public void dematerializeWallObjectInstance(int index) {
-		if (index < 0 || index >= this.wallObjectInstanceMaterialized.length || !this.wallObjectInstanceMaterialized[index]) {
+		if (index < 0 || index >= this.sceneInstanceStore.getWallObjectCapacity()
+			|| !this.isWallObjectInstanceMaterialized(index)) {
 			return;
 		}
 		debugSceneWallObjectEvent("dematerialize", index, "");
-		this.scene.removeModel(this.wallObjectInstanceModel[index]);
+		this.scene.removeModel(this.getWallObjectInstanceModel(index));
 		this.world.removeWallObject_CollisionFlags(true,
-			this.wallObjectInstanceDir[index],
-			this.wallObjectInstanceZ[index],
-			this.wallObjectInstanceX[index],
-			this.wallObjectInstanceID[index]);
-		this.wallObjectInstanceMaterialized[index] = false;
+			this.getWallObjectInstanceDir(index),
+			this.getWallObjectInstanceZ(index),
+			this.getWallObjectInstanceX(index),
+			this.getWallObjectInstanceID(index));
+		this.setWallObjectInstanceMaterialized(index, false);
 	}
 
 	private void materializeLoadedTerrainScenery() {
-		for (int i = 0; i < this.gameObjectInstanceCount; i++) {
+		for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {
 			materializeGameObjectInstance(i);
 		}
-		for (int i = 0; i < this.wallObjectInstanceCount; i++) {
+		for (int i = 0; i < this.getWallObjectInstanceCount(); i++) {
 			materializeWallObjectInstance(i);
 		}
 	}
 
 	private void retainPendingAreaLoadStaticScene() {
-		int retainedGameObjects = 0;
-		for (int readIndex = 0; readIndex < this.gameObjectInstanceCount; readIndex++) {
-			if (!this.gameObjectInstancePendingAreaLoad[readIndex]) {
-				continue;
-			}
-			if (retainedGameObjects != readIndex) {
-				this.gameObjectInstanceX[retainedGameObjects] = this.gameObjectInstanceX[readIndex];
-				this.gameObjectInstanceZ[retainedGameObjects] = this.gameObjectInstanceZ[readIndex];
-				this.gameObjectInstanceID[retainedGameObjects] = this.gameObjectInstanceID[readIndex];
-				this.gameObjectInstanceDir[retainedGameObjects] = this.gameObjectInstanceDir[readIndex];
-				this.gameObjectInstanceModel[retainedGameObjects] = this.gameObjectInstanceModel[readIndex];
-				if (this.gameObjectInstanceModel[retainedGameObjects] != null) {
-					this.gameObjectInstanceModel[retainedGameObjects].key = retainedGameObjects;
-				}
-				this.gameObjectInstanceMaterialized[retainedGameObjects] = false;
-			}
-			this.gameObjectInstancePendingAreaLoad[retainedGameObjects] = false;
-			retainedGameObjects++;
-		}
-		this.setGameObjectInstanceCount(retainedGameObjects);
-
-		int retainedWalls = 0;
-		for (int readIndex = 0; readIndex < this.wallObjectInstanceCount; readIndex++) {
-			if (!this.wallObjectInstancePendingAreaLoad[readIndex]) {
-				continue;
-			}
-			if (retainedWalls != readIndex) {
-				this.wallObjectInstanceX[retainedWalls] = this.wallObjectInstanceX[readIndex];
-				this.wallObjectInstanceZ[retainedWalls] = this.wallObjectInstanceZ[readIndex];
-				this.wallObjectInstanceID[retainedWalls] = this.wallObjectInstanceID[readIndex];
-				this.wallObjectInstanceDir[retainedWalls] = this.wallObjectInstanceDir[readIndex];
-				this.wallObjectInstanceModel[retainedWalls] = null;
-				this.wallObjectInstanceMaterialized[retainedWalls] = false;
-			}
-			this.wallObjectInstancePendingAreaLoad[retainedWalls] = false;
-			retainedWalls++;
-		}
-		this.setWallObjectInstanceCount(retainedWalls);
+		this.sceneInstanceStore.retainPendingAreaLoadInstances();
 	}
 
 	private void rematerializeLoadedTerrainSceneryAfterWorldReload() {
-		for (int i = 0; i < this.gameObjectInstanceCount; i++) {
+		for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {
 			this.dematerializeGameObjectInstance(i);
 			try {
 				this.getWorld().registerObjectDir(
-					this.gameObjectInstanceX[i],
-					this.gameObjectInstanceZ[i],
-					this.gameObjectInstanceDir[i]);
+					this.getGameObjectInstanceX(i),
+					this.getGameObjectInstanceZ(i),
+					this.getGameObjectInstanceDir(i));
 			} catch (RuntimeException ex) {
 				System.out.println("Loc Error: " + ex.getMessage());
 				ex.printStackTrace();
 			}
 		}
-		for (int i = 0; i < this.wallObjectInstanceCount; i++) {
+		for (int i = 0; i < this.getWallObjectInstanceCount(); i++) {
 			this.dematerializeWallObjectInstance(i);
-			this.wallObjectInstanceModel[i] = null;
+			this.setWallObjectInstanceModel(i, null);
 			try {
 				this.getWorld().registerObjectDir(
-					this.wallObjectInstanceX[i],
-					this.wallObjectInstanceZ[i],
-					this.wallObjectInstanceDir[i]);
+					this.getWallObjectInstanceX(i),
+					this.getWallObjectInstanceZ(i),
+					this.getWallObjectInstanceDir(i));
 			} catch (RuntimeException ex) {
 				System.out.println("Bound Error: " + ex.getMessage());
 				ex.printStackTrace();
@@ -3647,17 +3592,17 @@ public final class mudclient implements Runnable {
 		}
 
 		int fishingSpotRippleFrame = (int) (System.currentTimeMillis() / FISHING_SPOT_RIPPLE_FRAME_MILLIS);
-		for (int index = 0; index < this.gameObjectInstanceCount; index++) {
-			int x = this.gameObjectInstanceX[index];
-			int z = this.gameObjectInstanceZ[index];
-			if (!World.isLocalTile(x, z) || !this.gameObjectInstanceMaterialized[index]) {
+		for (int index = 0; index < this.getGameObjectInstanceCount(); index++) {
+			int x = this.getGameObjectInstanceX(index);
+			int z = this.getGameObjectInstanceZ(index);
+			if (!World.isLocalTile(x, z) || !this.isGameObjectInstanceMaterialized(index)) {
 				continue;
 			}
-			RSModel model = this.gameObjectInstanceModel[index];
+			RSModel model = this.getGameObjectInstanceModel(index);
 			if (model == null) {
 				continue;
 			}
-			int objectId = this.gameObjectInstanceID[index];
+			int objectId = this.getGameObjectInstanceID(index);
 			if (objectId == 74) {
 				model.addRotation(1, 0, 0);
 				continue;
@@ -3719,32 +3664,32 @@ public final class mudclient implements Runnable {
 		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
 		Map<Integer, ResidentObjectChunkInputBuilder> builders =
 			new TreeMap<Integer, ResidentObjectChunkInputBuilder>();
-		for (int i = 0; i < this.gameObjectInstanceCount; i++) {
-			if (this.gameObjectInstanceMaterialized[i] && this.gameObjectInstanceModel[i] != null) {
+		for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {
+			if (this.isGameObjectInstanceMaterialized(i) && this.getGameObjectInstanceModel(i) != null) {
 				addResidentObjectChunkModel(
 					builders,
 					anchor,
-					this.gameObjectInstanceX[i],
-					this.gameObjectInstanceZ[i],
+					this.getGameObjectInstanceX(i),
+					this.getGameObjectInstanceZ(i),
 					Renderer3DModelKind.GAME_OBJECT,
 					i,
-					this.gameObjectInstanceID[i],
-					this.gameObjectInstanceDir[i],
-					this.gameObjectInstanceModel[i]);
+					this.getGameObjectInstanceID(i),
+					this.getGameObjectInstanceDir(i),
+					this.getGameObjectInstanceModel(i));
 			}
 		}
-		for (int i = 0; i < this.wallObjectInstanceCount; i++) {
-			if (this.wallObjectInstanceMaterialized[i] && this.wallObjectInstanceModel[i] != null) {
+		for (int i = 0; i < this.getWallObjectInstanceCount(); i++) {
+			if (this.isWallObjectInstanceMaterialized(i) && this.getWallObjectInstanceModel(i) != null) {
 				addResidentObjectChunkModel(
 					builders,
 					anchor,
-					this.wallObjectInstanceX[i],
-					this.wallObjectInstanceZ[i],
+					this.getWallObjectInstanceX(i),
+					this.getWallObjectInstanceZ(i),
 					Renderer3DModelKind.WALL_OBJECT,
 					i,
-					this.wallObjectInstanceID[i],
-					this.wallObjectInstanceDir[i],
-					this.wallObjectInstanceModel[i]);
+					this.getWallObjectInstanceID(i),
+					this.getWallObjectInstanceDir(i),
+					this.getWallObjectInstanceModel(i));
 			}
 		}
 		List<ResidentObjectChunkInput> inputs = new ArrayList<ResidentObjectChunkInput>(builders.size());
@@ -3935,14 +3880,14 @@ public final class mudclient implements Runnable {
 	private void debugSceneGameObjectEvent(String event, int index, String detail) {
 		if (!SceneObjectDebugSettings.isEnabled()
 			|| index < 0
-			|| index >= this.gameObjectInstanceCount) {
+			|| index >= this.getGameObjectInstanceCount()) {
 			return;
 		}
-		int localX = this.gameObjectInstanceX[index];
-		int localZ = this.gameObjectInstanceZ[index];
+		int localX = this.getGameObjectInstanceX(index);
+		int localZ = this.getGameObjectInstanceZ(index);
 		int worldX = this.midRegionBaseX + localX;
 		int worldZ = this.midRegionBaseZ + localZ;
-		int objectId = this.gameObjectInstanceID[index];
+		int objectId = this.getGameObjectInstanceID(index);
 		if (!shouldDebugSceneGameObject(objectId, worldX, worldZ)) {
 			return;
 		}
@@ -3950,7 +3895,7 @@ public final class mudclient implements Runnable {
 		GameObjectDef def = EntityHandler.getObjectDef(objectId);
 		String name = def == null ? "" : def.getName();
 		String modelName = def == null ? "" : def.getObjectModel();
-		int dir = this.gameObjectInstanceDir[index];
+		int dir = this.getGameObjectInstanceDir(index);
 		int xSize = 0;
 		int zSize = 0;
 		if (def != null) {
@@ -3963,7 +3908,7 @@ public final class mudclient implements Runnable {
 			}
 		}
 		boolean terrainReady = hasLoadedTerrainForGameObject(localX, localZ, objectId, dir);
-		RSModel model = this.gameObjectInstanceModel[index];
+		RSModel model = this.getGameObjectInstanceModel(index);
 		String modelDetail = model == null
 			? "model=null"
 			: "modelKey=" + model.key + " transform=" + model.getRenderer3DTransformVersion();
@@ -3976,35 +3921,35 @@ public final class mudclient implements Runnable {
 			+ " world=" + worldX + "," + worldZ
 			+ " dir=" + dir
 			+ " size=" + xSize + "x" + zSize
-			+ " materialized=" + this.gameObjectInstanceMaterialized[index]
+			+ " materialized=" + this.isGameObjectInstanceMaterialized(index)
 			+ " terrainReady=" + terrainReady
 			+ " " + modelDetail
 			+ " player=" + getDebugPlayerWorldTileX() + "," + getDebugPlayerWorldTileZ()
 			+ " mid=" + this.midRegionBaseX + "," + this.midRegionBaseZ
-			+ " count=" + this.gameObjectInstanceCount
+			+ " count=" + this.getGameObjectInstanceCount()
 			+ (detail == null || detail.isEmpty() ? "" : " " + detail));
 	}
 
 	private void debugSceneWallObjectEvent(String event, int index, String detail) {
 		if (!SceneObjectDebugSettings.isEnabled()
 			|| index < 0
-			|| index >= this.wallObjectInstanceCount) {
+			|| index >= this.getWallObjectInstanceCount()) {
 			return;
 		}
-		int localX = this.wallObjectInstanceX[index];
-		int localZ = this.wallObjectInstanceZ[index];
+		int localX = this.getWallObjectInstanceX(index);
+		int localZ = this.getWallObjectInstanceZ(index);
 		int worldX = this.midRegionBaseX + localX;
 		int worldZ = this.midRegionBaseZ + localZ;
-		int objectId = this.wallObjectInstanceID[index];
+		int objectId = this.getWallObjectInstanceID(index);
 		if (!shouldDebugSceneWallObject(objectId, worldX, worldZ)) {
 			return;
 		}
 
 		DoorDef def = EntityHandler.getDoorDef(objectId);
 		String name = def == null ? "" : def.getName();
-		int dir = this.wallObjectInstanceDir[index];
+		int dir = this.getWallObjectInstanceDir(index);
 		boolean terrainReady = hasLoadedTerrainForWallObject(localX, localZ, dir);
-		RSModel model = this.wallObjectInstanceModel[index];
+		RSModel model = this.getWallObjectInstanceModel(index);
 		String modelDetail = model == null
 			? "model=null"
 			: "modelKey=" + model.key + " transform=" + model.getRenderer3DTransformVersion();
@@ -4015,24 +3960,24 @@ public final class mudclient implements Runnable {
 			+ " local=" + localX + "," + localZ
 			+ " world=" + worldX + "," + worldZ
 			+ " dir=" + dir
-			+ " materialized=" + this.wallObjectInstanceMaterialized[index]
+			+ " materialized=" + this.isWallObjectInstanceMaterialized(index)
 			+ " terrainReady=" + terrainReady
 			+ " " + modelDetail
 			+ " player=" + getDebugPlayerWorldTileX() + "," + getDebugPlayerWorldTileZ()
 			+ " mid=" + this.midRegionBaseX + "," + this.midRegionBaseZ
-			+ " count=" + this.wallObjectInstanceCount
+			+ " count=" + this.getWallObjectInstanceCount()
 			+ (detail == null || detail.isEmpty() ? "" : " " + detail));
 	}
 
 	private void debugSceneGameObjectHover(int index, RSModel model, int faceIndex) {
 		if (!SceneObjectDebugSettings.isEnabled()
 			|| index < 0
-			|| index >= this.gameObjectInstanceCount) {
+			|| index >= this.getGameObjectInstanceCount()) {
 			return;
 		}
-		int objectId = this.gameObjectInstanceID[index];
-		int worldX = this.midRegionBaseX + this.gameObjectInstanceX[index];
-		int worldZ = this.midRegionBaseZ + this.gameObjectInstanceZ[index];
+		int objectId = this.getGameObjectInstanceID(index);
+		int worldX = this.midRegionBaseX + this.getGameObjectInstanceX(index);
+		int worldZ = this.midRegionBaseZ + this.getGameObjectInstanceZ(index);
 		if (!shouldDebugSceneGameObject(objectId, worldX, worldZ)) {
 			return;
 		}
@@ -6700,28 +6645,28 @@ public final class mudclient implements Runnable {
 					if (this.objectAnimationNumberFireLightningSpell != this.lastObjectAnimationNumberFireLightningSpell) {
 						this.lastObjectAnimationNumberFireLightningSpell = this.objectAnimationNumberFireLightningSpell;
 
-						for (centerX = 0; centerX < this.gameObjectInstanceCount; ++centerX) {
-							if (this.gameObjectInstanceID[centerX] == 97) {
+						for (centerX = 0; centerX < this.getGameObjectInstanceCount(); ++centerX) {
+							if (this.getGameObjectInstanceID(centerX) == 97) {
 								this.updateObjectAnimation((byte) 48, centerX,
 									"firea" + (this.objectAnimationNumberFireLightningSpell + 1));
 							}
 
-							if (this.gameObjectInstanceID[centerX] == 274) {
+							if (this.getGameObjectInstanceID(centerX) == 274) {
 								this.updateObjectAnimation((byte) 58, centerX,
 									"fireplacea" + (this.objectAnimationNumberFireLightningSpell + 1));
 							}
 
-							if (this.gameObjectInstanceID[centerX] == 1031) {
+							if (this.getGameObjectInstanceID(centerX) == 1031) {
 								this.updateObjectAnimation((byte) 103, centerX,
 									"lightning" + (1 + this.objectAnimationNumberFireLightningSpell));
 							}
 
-							if (this.gameObjectInstanceID[centerX] == 1036) {
+							if (this.getGameObjectInstanceID(centerX) == 1036) {
 								this.updateObjectAnimation((byte) 89, centerX,
 									"firespell" + (this.objectAnimationNumberFireLightningSpell + 1));
 							}
 
-							if (this.gameObjectInstanceID[centerX] == 1147) {
+							if (this.getGameObjectInstanceID(centerX) == 1147) {
 								this.updateObjectAnimation((byte) 18, centerX,
 									"spellcharge" + (1 + this.objectAnimationNumberFireLightningSpell));
 							}
@@ -6731,13 +6676,13 @@ public final class mudclient implements Runnable {
 					if (this.lastObjectAnimationNumberTorch != this.objectAnimationNumberTorch) {
 						this.lastObjectAnimationNumberTorch = this.objectAnimationNumberTorch;
 
-						for (centerX = 0; this.gameObjectInstanceCount > centerX; ++centerX) {
-							if (this.gameObjectInstanceID[centerX] == 51) {
+						for (centerX = 0; this.getGameObjectInstanceCount() > centerX; ++centerX) {
+							if (this.getGameObjectInstanceID(centerX) == 51) {
 								this.updateObjectAnimation((byte) 23, centerX,
 									"torcha" + (1 + this.objectAnimationNumberTorch));
 							}
 
-							if (this.gameObjectInstanceID[centerX] == 143) {
+							if (this.getGameObjectInstanceID(centerX) == 143) {
 								this.updateObjectAnimation((byte) 100, centerX,
 									"skulltorcha" + (1 + this.objectAnimationNumberTorch));
 							}
@@ -6747,8 +6692,8 @@ public final class mudclient implements Runnable {
 					if (this.lastObjectAnimationNumberCosmicSparkles != this.objectAnimationNumberCosmicSparkles) {
 						this.lastObjectAnimationNumberCosmicSparkles = this.objectAnimationNumberCosmicSparkles;
 
-						for (centerX = 0; centerX < this.gameObjectInstanceCount; ++centerX) {
-							if (this.gameObjectInstanceID[centerX] == 1325) {
+						for (centerX = 0; centerX < this.getGameObjectInstanceCount(); ++centerX) {
+							if (this.getGameObjectInstanceID(centerX) == 1325) {
 								this.updateObjectAnimation((byte) 48, centerX,
 									"myworld_cosmic_sparkles" + (this.objectAnimationNumberCosmicSparkles + 1));
 							}
@@ -6758,8 +6703,8 @@ public final class mudclient implements Runnable {
 					if (this.objectAnimationNumberClaw != this.lastObjectAnimatonNumberClaw) {
 						this.lastObjectAnimatonNumberClaw = this.objectAnimationNumberClaw;
 
-						for (centerX = 0; this.gameObjectInstanceCount > centerX; ++centerX) {
-							if (this.gameObjectInstanceID[centerX] == 1142) {
+						for (centerX = 0; this.getGameObjectInstanceCount() > centerX; ++centerX) {
+							if (this.getGameObjectInstanceID(centerX) == 1142) {
 								this.updateObjectAnimation((byte) 89, centerX,
 									"clawspell" + (1 + this.objectAnimationNumberClaw));
 							}
@@ -10325,13 +10270,7 @@ public final class mudclient implements Runnable {
 
 			this.menuVisible = false;
 
-			for (int var3 = 0; this.gameObjectInstanceCount > var3; ++var3) {
-				this.gameObjectInstance_Arg1[var3] = false;
-			}
-
-			for (int var3 = 0; this.wallObjectInstanceCount > var3; ++var3) {
-				this.wallObjectInstance_Arg1[var3] = false;
-			}
+			this.sceneInstanceStore.clearFrameMarks();
 
 			int var2 = -1;
 			int var3 = this.scene.b(0);
@@ -10352,41 +10291,41 @@ public final class mudclient implements Runnable {
 					if (this.scene.m_T != var8) {
 						// wall object right click menu
 						if (var8 != null && var8.getRenderer3DModelKind() == Renderer3DModelKind.WALL_OBJECT) {
-							var9 = var8.key - WALL_OBJECT_KEY_BASE;
-							if (var9 < 0 || var9 >= this.wallObjectInstanceCount) {
+							var9 = var8.key - ClientSceneInstanceStore.WALL_OBJECT_KEY_BASE;
+							if (var9 < 0 || var9 >= this.getWallObjectInstanceCount()) {
 								continue;
 							}
-							id = this.wallObjectInstanceID[var9];
-							if (!this.wallObjectInstance_Arg1[var9]) {
+							id = this.getWallObjectInstanceID(var9);
+							if (!this.sceneInstanceStore.isWallObjectFrameMarked(var9)) {
 								if (this.selectedSpell >= 0) {
 									if (EntityHandler.getSpellDef(selectedSpell).getSpellType() == 4) {
 										this.menuCommon.addTileItem_WithID(MenuItemAction.WALL_CAST_SPELL,
-											this.wallObjectInstanceZ[var9], this.wallObjectInstanceDir[var9],
-											this.wallObjectInstanceX[var9], this.selectedSpell,
+											this.getWallObjectInstanceZ(var9), this.getWallObjectInstanceDir(var9),
+											this.getWallObjectInstanceX(var9), this.selectedSpell,
 											"@cya@" + EntityHandler.getDoorDef(id).getName(),
 											"Cast " + EntityHandler.getSpellDef(selectedSpell).getName() + " on");
 									}
 								} else if (this.selectedItemInventoryIndex >= 0) {
 									this.menuCommon.addTileItem_WithID(MenuItemAction.WALL_USE_ITEM,
-										this.wallObjectInstanceZ[var9], this.wallObjectInstanceDir[var9],
-										this.wallObjectInstanceX[var9], this.selectedItemInventoryIndex,
+										this.getWallObjectInstanceZ(var9), this.getWallObjectInstanceDir(var9),
+										this.getWallObjectInstanceX(var9), this.selectedItemInventoryIndex,
 										"@cya@" + EntityHandler.getDoorDef(id).getName(),
 										"Use " + this.m_ig + " with");
 								} else {
 									if (!EntityHandler.getDoorDef(id).getCommand1().equalsIgnoreCase("WalkTo")) {
-										this.menuCommon.addTileItem(this.wallObjectInstanceX[var9], (byte) 22,
+										this.menuCommon.addTileItem(this.getWallObjectInstanceX(var9), (byte) 22,
 											MenuItemAction.WALL_COMMAND1,
 											EntityHandler.getDoorDef(id).getCommand1(),
 											"@cya@" + EntityHandler.getDoorDef(id).getName(),
-											this.wallObjectInstanceDir[var9], this.wallObjectInstanceZ[var9]);
+											this.getWallObjectInstanceDir(var9), this.getWallObjectInstanceZ(var9));
 									}
 
 									if (!EntityHandler.getDoorDef(id).getCommand2().equalsIgnoreCase("Examine")) {
-										this.menuCommon.addTileItem(this.wallObjectInstanceX[var9], (byte) 22,
+										this.menuCommon.addTileItem(this.getWallObjectInstanceX(var9), (byte) 22,
 											MenuItemAction.WALL_COMMAND2,
 											EntityHandler.getDoorDef(id).getCommand2(),
 											"@cya@" + EntityHandler.getDoorDef(id).getName(),
-											this.wallObjectInstanceDir[var9], this.wallObjectInstanceZ[var9]);
+											this.getWallObjectInstanceDir(var9), this.getWallObjectInstanceZ(var9));
 									}
 									this.menuCommon
 										.addCharacterItem(id, MenuItemAction.WALL_EXAMINE,
@@ -10394,21 +10333,21 @@ public final class mudclient implements Runnable {
 												+ EntityHandler.getDoorDef(id)
 												.getName()
 												+ (localPlayer.isDev() ? " @or1@(" + id + ":"
-												+ (wallObjectInstanceX[var9] + this.midRegionBaseX)
+												+ (this.getWallObjectInstanceX(var9) + this.midRegionBaseX)
 												+ ","
-												+ (wallObjectInstanceZ[var9] + this.midRegionBaseZ)
+												+ (this.getWallObjectInstanceZ(var9) + this.midRegionBaseZ)
 												+ ","
-												+ wallObjectInstanceDir[var9]
+												+ this.getWallObjectInstanceDir(var9)
 												+ ")" : ""));
 								}
 
-								this.wallObjectInstance_Arg1[var9] = true;
+								this.sceneInstanceStore.markWallObjectForFrame(var9);
 								if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
 									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
-										this.wallObjectInstanceZ[var9], this.wallObjectInstanceDir[var9], this.wallObjectInstanceX[var9], id,
+										this.getWallObjectInstanceZ(var9), this.getWallObjectInstanceDir(var9), this.getWallObjectInstanceX(var9), id,
 										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Inspect editor data");
 									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
-										this.wallObjectInstanceZ[var9], this.wallObjectInstanceDir[var9], this.wallObjectInstanceX[var9], id,
+										this.getWallObjectInstanceZ(var9), this.getWallObjectInstanceDir(var9), this.getWallObjectInstanceX(var9), id,
 										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Copy editor data");
 								}
 							}
@@ -10416,90 +10355,90 @@ public final class mudclient implements Runnable {
 						// Game Object Right Click Menu
 						else if (null != var8 && var8.getRenderer3DModelKind() == Renderer3DModelKind.GAME_OBJECT) {
 							var9 = var8.key;
-							if (var9 >= this.gameObjectInstanceCount) {
+							if (var9 >= this.getGameObjectInstanceCount()) {
 								continue;
 							}
-							id = this.gameObjectInstanceID[var9];
+							id = this.getGameObjectInstanceID(var9);
 							debugSceneGameObjectHover(var9, var8, var7);
-							if (!this.gameObjectInstance_Arg1[var9]) {
+							if (!this.sceneInstanceStore.isGameObjectFrameMarked(var9)) {
 								if (this.selectedSpell < 0) {
 									if (this.selectedItemInventoryIndex >= 0) {
-										this.menuCommon.addUseOnObject(this.gameObjectInstanceZ[var9],
+										this.menuCommon.addUseOnObject(this.getGameObjectInstanceZ(var9),
 											"Use " + this.m_ig + " with", -104, this.selectedItemInventoryIndex,
-											this.gameObjectInstanceID[var9], MenuItemAction.OBJECT_USE_ITEM,
-											this.gameObjectInstanceDir[var9],
+											this.getGameObjectInstanceID(var9), MenuItemAction.OBJECT_USE_ITEM,
+											this.getGameObjectInstanceDir(var9),
 											"@cya@" + EntityHandler.getObjectDef(id).getName(),
-											this.gameObjectInstanceX[var9]);
+											this.getGameObjectInstanceX(var9));
 									} else {
 										if (!EntityHandler.getObjectDef(id).getCommand1().equalsIgnoreCase("WalkTo")) {
 											this.menuCommon.addTileItem_WithID(MenuItemAction.OBJECT_COMMAND1,
-												this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9],
-												this.gameObjectInstanceX[var9], this.gameObjectInstanceID[var9],
+												this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9),
+												this.getGameObjectInstanceX(var9), this.getGameObjectInstanceID(var9),
 												"@cya@" + EntityHandler.getObjectDef(id).getName(),
 												EntityHandler.getObjectDef(id).getCommand1());
 										}
 
 										if (!EntityHandler.getObjectDef(id).getCommand2().equalsIgnoreCase("Examine")) {
 											this.menuCommon.addTileItem_WithID(MenuItemAction.OBJECT_COMMAND2,
-												this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9],
-												this.gameObjectInstanceX[var9], this.gameObjectInstanceID[var9],
+												this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9),
+												this.getGameObjectInstanceX(var9), this.getGameObjectInstanceID(var9),
 												"@cya@" + EntityHandler.getObjectDef(id).getName(),
 												EntityHandler.getObjectDef(id).getCommand2());
 										}
 										if (developerMenu) {
 											this.menuCommon.addTileItem_WithID(MenuItemAction.DEV_ROTATE_OBJECT,
-												this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9],
-												this.gameObjectInstanceX[var9], this.gameObjectInstanceID[var9],
+												this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9),
+												this.getGameObjectInstanceX(var9), this.getGameObjectInstanceID(var9),
 												"@gr2@Rotate Object",
 												"@cya@" + EntityHandler.getObjectDef(id).getName());
 											this.menuCommon.addTileItem_WithID(MenuItemAction.DEV_REMOVE_OBJECT,
-												this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9],
-												this.gameObjectInstanceX[var9], this.gameObjectInstanceID[var9],
+												this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9),
+												this.getGameObjectInstanceX(var9), this.getGameObjectInstanceID(var9),
 												"@gr2@Remove Object",
 												"@cya@" + EntityHandler.getObjectDef(id).getName());
 										}
 										if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
 											this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
-											this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9], this.gameObjectInstanceX[var9],
-											this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Inspect editor data");
+											this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9), this.getGameObjectInstanceX(var9),
+											this.getGameObjectInstanceID(var9), "@cya@"+EntityHandler.getObjectDef(id).getName(), "Inspect editor data");
 										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
-											this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9], this.gameObjectInstanceX[var9],
-										this.gameObjectInstanceID[var9], "@cya@"+EntityHandler.getObjectDef(id).getName(), "Copy editor data");
+											this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9), this.getGameObjectInstanceX(var9),
+										this.getGameObjectInstanceID(var9), "@cya@"+EntityHandler.getObjectDef(id).getName(), "Copy editor data");
 									}
 									if (worldEditorInterface != null && worldEditorInterface.isSceneryRotating())
-										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_ROTATE_SCENERY,this.gameObjectInstanceZ[var9],this.gameObjectInstanceDir[var9],this.gameObjectInstanceX[var9],id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Rotate scenery");
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_ROTATE_SCENERY,this.getGameObjectInstanceZ(var9),this.getGameObjectInstanceDir(var9),this.getGameObjectInstanceX(var9),id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Rotate scenery");
 									if (worldEditorInterface != null && worldEditorInterface.isSceneryRemoving())
-										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_REMOVE_SCENERY,this.gameObjectInstanceZ[var9],this.gameObjectInstanceDir[var9],this.gameObjectInstanceX[var9],id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Remove scenery");
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_REMOVE_SCENERY,this.getGameObjectInstanceZ(var9),this.getGameObjectInstanceDir(var9),this.getGameObjectInstanceX(var9),id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Remove scenery");
 
 										this.menuCommon
 											.addTileItem_WithID(MenuItemAction.OBJECT_EXAMINE,
-												this.gameObjectInstanceZ[var9], this.gameObjectInstanceDir[var9],
-												this.gameObjectInstanceX[var9], id,
+												this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9),
+												this.getGameObjectInstanceX(var9), id,
 												"@cya@" + EntityHandler.getObjectDef(id)
 													.getName()
 													+ (localPlayer.isDev()
 													? " @or1@(" + id + ":"
-													+ (gameObjectInstanceX[var9]
+													+ (this.getGameObjectInstanceX(var9)
 													+ this.midRegionBaseX)
 													+ ","
-													+ (gameObjectInstanceZ[var9]
+													+ (this.getGameObjectInstanceZ(var9)
 													+ this.midRegionBaseZ)
 													+ ","
-													+ gameObjectInstanceDir[var9]
+													+ this.getGameObjectInstanceDir(var9)
 													+ ")"
 													: ""),
 												"Examine");
 									}
 								} else if (EntityHandler.getSpellDef(selectedSpell).getSpellType() == 5) {
-									this.menuCommon.addUseOnObject(this.gameObjectInstanceZ[var9],
+									this.menuCommon.addUseOnObject(this.getGameObjectInstanceZ(var9),
 										"Cast " + EntityHandler.getSpellDef(selectedSpell).getName() + " on",
-										var1 + 65, this.selectedSpell, this.gameObjectInstanceID[var9],
-										MenuItemAction.OBJECT_CAST_SPELL, this.gameObjectInstanceDir[var9],
+										var1 + 65, this.selectedSpell, this.getGameObjectInstanceID(var9),
+										MenuItemAction.OBJECT_CAST_SPELL, this.getGameObjectInstanceDir(var9),
 										"@cya@" + EntityHandler.getObjectDef(id).getName(),
-										this.gameObjectInstanceX[var9]);
+										this.getGameObjectInstanceX(var9));
 								}
 
-								this.gameObjectInstance_Arg1[var9] = true;
+								this.sceneInstanceStore.markGameObjectForFrame(var9);
 							}
 						} else {
 							if (var7 >= 0) {
@@ -12649,10 +12588,10 @@ public final class mudclient implements Runnable {
 				var4 / 2 + posX - var12, 842218000, var6, 255 & 64 + var7);
 
 			int var13;
-			for (var13 = 0; var13 < this.gameObjectInstanceCount; ++var13) {
-				mZ = var6 * (64 + (this.tileSize * this.gameObjectInstanceZ[var13] - this.localPlayer.currentZ)) * 3
+			for (var13 = 0; var13 < this.getGameObjectInstanceCount(); ++var13) {
+				mZ = var6 * (64 + (this.tileSize * this.getGameObjectInstanceZ(var13) - this.localPlayer.currentZ)) * 3
 					/ 2048;
-				mX = (this.tileSize * this.gameObjectInstanceX[var13] - (this.localPlayer.currentX - 64)) * var6 * 3
+				mX = (this.tileSize * this.getGameObjectInstanceX(var13) - (this.localPlayer.currentX - 64)) * var6 * 3
 					/ 2048;
 				var12 = var11 * mX + mZ * var10 >> 18;
 				mZ = var11 * mZ - var10 * mX >> 18;
@@ -18800,10 +18739,10 @@ public final class mudclient implements Runnable {
 					this.currentRegionMinZ = midRegionZ * World.SECTION_SIZE - 32;
 					this.midRegionBaseZ = World.sectionToLocalBaseTile(midRegionZ);
 					this.currentRegionMinX = midRegionX * World.SECTION_SIZE - 32;
-					for (int i = 0; this.gameObjectInstanceCount > i; ++i) {
+					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
 						this.dematerializeGameObjectInstance(i);
 					}
-					for (int i = 0; this.wallObjectInstanceCount > i; ++i) {
+					for (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {
 						this.dematerializeWallObjectInstance(i);
 					}
 					this.clearResidentObjectChunkCache();
@@ -18817,29 +18756,29 @@ public final class mudclient implements Runnable {
 						this.retainPendingAreaLoadStaticScene();
 					}
 
-					for (int i = 0; this.gameObjectInstanceCount > i; ++i) {
-						this.gameObjectInstanceX[i] -= baseDX;
-						this.gameObjectInstanceZ[i] -= baseDZ;
-						int xTile = this.gameObjectInstanceX[i];
-						int zTile = this.gameObjectInstanceZ[i];
+					for (int i = 0; this.getGameObjectInstanceCount() > i; ++i) {
+						this.setGameObjectInstanceX(i, this.getGameObjectInstanceX(i) - baseDX);
+						this.setGameObjectInstanceZ(i, this.getGameObjectInstanceZ(i) - baseDZ);
+						int xTile = this.getGameObjectInstanceX(i);
+						int zTile = this.getGameObjectInstanceZ(i);
 
 						try {
-							int dir = this.gameObjectInstanceDir[i];
+							int dir = this.getGameObjectInstanceDir(i);
 							this.getWorld().registerObjectDir(xTile, zTile, dir);
 						} catch (RuntimeException var21) {
 							System.out.println("Loc Error: " + var21.getMessage());
-							System.out.println("i:" + i + " obj:" + this.gameObjectInstanceModel[i]);
+							System.out.println("i:" + i + " obj:" + this.getGameObjectInstanceModel(i));
 							var21.printStackTrace();
 						}
 					}
 
-					for (int i = 0; this.wallObjectInstanceCount > i; ++i) {
-						this.wallObjectInstanceX[i] -= baseDX;
-						this.wallObjectInstanceZ[i] -= baseDZ;
-						int xTile = this.wallObjectInstanceX[i];
-						int zTile = this.wallObjectInstanceZ[i];
-						int dir = this.wallObjectInstanceDir[i];
-						this.wallObjectInstanceModel[i] = null;
+					for (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {
+						this.setWallObjectInstanceX(i, this.getWallObjectInstanceX(i) - baseDX);
+						this.setWallObjectInstanceZ(i, this.getWallObjectInstanceZ(i) - baseDZ);
+						int xTile = this.getWallObjectInstanceX(i);
+						int zTile = this.getWallObjectInstanceZ(i);
+						int dir = this.getWallObjectInstanceDir(i);
+						this.setWallObjectInstanceModel(i, null);
 
 						try {
 							this.getWorld().registerObjectDir(xTile, zTile, dir);
@@ -21371,11 +21310,11 @@ public final class mudclient implements Runnable {
 			clientPort.draw();
 
 			int i;
-			for (i = 0; i < this.gameObjectInstanceCount; ++i) {
+			for (i = 0; i < this.getGameObjectInstanceCount(); ++i) {
 				this.dematerializeGameObjectInstance(i);
 			}
 
-			for (i = 0; i < this.wallObjectInstanceCount; ++i) {
+			for (i = 0; i < this.getWallObjectInstanceCount(); ++i) {
 				this.dematerializeWallObjectInstance(i);
 			}
 
@@ -22704,31 +22643,11 @@ public final class mudclient implements Runnable {
 	}
 
 	private void ensureGameObjectInstanceCapacity(int requiredCapacity) {
-		if (requiredCapacity > this.gameObjectInstanceModel.length) {
-			int capacity = growEntityCapacity(this.gameObjectInstanceModel.length, requiredCapacity);
-			this.gameObjectInstance_Arg1 = Arrays.copyOf(this.gameObjectInstance_Arg1, capacity);
-			this.gameObjectInstanceDir = Arrays.copyOf(this.gameObjectInstanceDir, capacity);
-			this.gameObjectInstanceID = Arrays.copyOf(this.gameObjectInstanceID, capacity);
-			this.gameObjectInstanceMaterialized = Arrays.copyOf(this.gameObjectInstanceMaterialized, capacity);
-			this.gameObjectInstancePendingAreaLoad = Arrays.copyOf(this.gameObjectInstancePendingAreaLoad, capacity);
-			this.gameObjectInstanceModel = Arrays.copyOf(this.gameObjectInstanceModel, capacity);
-			this.gameObjectInstanceX = Arrays.copyOf(this.gameObjectInstanceX, capacity);
-			this.gameObjectInstanceZ = Arrays.copyOf(this.gameObjectInstanceZ, capacity);
-		}
+		this.sceneInstanceStore.ensureGameObjectCapacity(requiredCapacity);
 	}
 
 	private void ensureWallObjectInstanceCapacity(int requiredCapacity) {
-		if (requiredCapacity > this.wallObjectInstanceModel.length) {
-			int capacity = growEntityCapacity(this.wallObjectInstanceModel.length, requiredCapacity);
-			this.wallObjectInstance_Arg1 = Arrays.copyOf(this.wallObjectInstance_Arg1, capacity);
-			this.wallObjectInstanceDir = Arrays.copyOf(this.wallObjectInstanceDir, capacity);
-			this.wallObjectInstanceID = Arrays.copyOf(this.wallObjectInstanceID, capacity);
-			this.wallObjectInstanceMaterialized = Arrays.copyOf(this.wallObjectInstanceMaterialized, capacity);
-			this.wallObjectInstancePendingAreaLoad = Arrays.copyOf(this.wallObjectInstancePendingAreaLoad, capacity);
-			this.wallObjectInstanceModel = Arrays.copyOf(this.wallObjectInstanceModel, capacity);
-			this.wallObjectInstanceX = Arrays.copyOf(this.wallObjectInstanceX, capacity);
-			this.wallObjectInstanceZ = Arrays.copyOf(this.wallObjectInstanceZ, capacity);
-		}
+		this.sceneInstanceStore.ensureWallObjectCapacity(requiredCapacity);
 	}
 
 	private void ensureGroundItemCapacity(int requiredCapacity) {
@@ -22817,76 +22736,62 @@ public final class mudclient implements Runnable {
 	}
 
 	public int getGameObjectInstanceCount() {
-		return gameObjectInstanceCount;
+		return this.sceneInstanceStore.getGameObjectCount();
 	}
 
 	public void setGameObjectInstanceCount(int i) {
-		ensureGameObjectInstanceCapacity(i);
-		for (int index = Math.max(0, i); index < this.gameObjectInstanceCount; index++) {
-			this.gameObjectInstanceMaterialized[index] = false;
-			this.gameObjectInstancePendingAreaLoad[index] = false;
-			this.gameObjectInstanceModel[index] = null;
-		}
-		this.gameObjectInstanceCount = i;
+		this.sceneInstanceStore.setGameObjectCount(i);
 	}
 
 	public boolean hasGameObjectInstanceCapacity() {
-		ensureGameObjectInstanceCapacity(this.gameObjectInstanceCount + 1);
+		ensureGameObjectInstanceCapacity(getGameObjectInstanceCount() + 1);
 		return true;
 	}
 
 	public void setGameObjectInstanceX(int i, int n) {
-		ensureGameObjectInstanceCapacity(i + 1);
-		this.gameObjectInstanceX[i] = n;
+		this.sceneInstanceStore.setGameObjectX(i, n);
 	}
 
 	public int getGameObjectInstanceX(int i) {
-		return this.gameObjectInstanceX[i];
+		return this.sceneInstanceStore.getGameObjectX(i);
 	}
 
 	public void setGameObjectInstanceZ(int i, int n) {
-		ensureGameObjectInstanceCapacity(i + 1);
-		this.gameObjectInstanceZ[i] = n;
+		this.sceneInstanceStore.setGameObjectZ(i, n);
 	}
 
 	public int getGameObjectInstanceZ(int i) {
-		return this.gameObjectInstanceZ[i];
+		return this.sceneInstanceStore.getGameObjectZ(i);
 	}
 
 	public void setGameObjectInstanceModel(int i, RSModel m) {
 		ensureGameObjectInstanceCapacity(i + 1);
-		this.gameObjectInstanceModel[i] = prepareGameObjectInstanceModel(this.gameObjectInstanceID[i], m);
-		if (this.gameObjectInstanceModel[i] != null) {
-			this.gameObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.GAME_OBJECT);
-			this.gameObjectInstanceModel[i].key = i;
-		}
+		RSModel preparedModel = prepareGameObjectInstanceModel(getGameObjectInstanceID(i), m);
+		this.sceneInstanceStore.setGameObjectModel(i, preparedModel);
 	}
 
 	public RSModel getGameObjectInstanceModel(int i) {
-		return this.gameObjectInstanceModel[i];
+		return this.sceneInstanceStore.getGameObjectModel(i);
 	}
 
 	public boolean isGameObjectInstanceMaterialized(int i) {
-		return this.gameObjectInstanceMaterialized[i];
+		return this.sceneInstanceStore.isGameObjectMaterialized(i);
 	}
 
 	public void setGameObjectInstanceMaterialized(int i, boolean materialized) {
-		ensureGameObjectInstanceCapacity(i + 1);
-		this.gameObjectInstanceMaterialized[i] = materialized;
+		this.sceneInstanceStore.setGameObjectMaterialized(i, materialized);
 	}
 
 	public boolean isGameObjectInstancePendingAreaLoad(int i) {
-		return this.gameObjectInstancePendingAreaLoad[i];
+		return this.sceneInstanceStore.isGameObjectPendingAreaLoad(i);
 	}
 
 	public void setGameObjectInstancePendingAreaLoad(int i, boolean pending) {
-		ensureGameObjectInstanceCapacity(i + 1);
-		this.gameObjectInstancePendingAreaLoad[i] = pending;
+		this.sceneInstanceStore.setGameObjectPendingAreaLoad(i, pending);
 	}
 
 	public void setGameObjectInstanceID(int i, int n) {
-		ensureGameObjectInstanceCapacity(i + 1);
-		this.gameObjectInstanceID[i] = n;
+		this.sceneInstanceStore.setGameObjectId(i, n);
 	}
 
 	private RSModel prepareGameObjectInstanceModel(int objectId, RSModel model) {
@@ -22901,102 +22806,84 @@ public final class mudclient implements Runnable {
 	}
 
 	public int getGameObjectInstanceID(int i) {
-		return this.gameObjectInstanceID[i];
+		return this.sceneInstanceStore.getGameObjectId(i);
 	}
 
 	public void setGameObjectInstanceDir(int i, int n) {
-		ensureGameObjectInstanceCapacity(i + 1);
-		this.gameObjectInstanceDir[i] = n;
+		this.sceneInstanceStore.setGameObjectDirection(i, n);
 	}
 
 	public int getGameObjectInstanceDir(int i) {
-		return this.gameObjectInstanceDir[i];
+		return this.sceneInstanceStore.getGameObjectDirection(i);
 	}
 
 	public int getWallObjectInstanceCount() {
-		return this.wallObjectInstanceCount;
+		return this.sceneInstanceStore.getWallObjectCount();
 	}
 
 	public void setWallObjectInstanceCount(int i) {
-		ensureWallObjectInstanceCapacity(i);
-		for (int index = Math.max(0, i); index < this.wallObjectInstanceCount; index++) {
-			this.wallObjectInstanceMaterialized[index] = false;
-			this.wallObjectInstancePendingAreaLoad[index] = false;
-			this.wallObjectInstanceModel[index] = null;
-		}
-		this.wallObjectInstanceCount = i;
+		this.sceneInstanceStore.setWallObjectCount(i);
 	}
 
 	public boolean hasWallObjectInstanceCapacity() {
-		ensureWallObjectInstanceCapacity(this.wallObjectInstanceCount + 1);
+		ensureWallObjectInstanceCapacity(getWallObjectInstanceCount() + 1);
 		return true;
 	}
 
 	public void setWallObjectInstanceX(int i, int n) {
-		ensureWallObjectInstanceCapacity(i + 1);
-		this.wallObjectInstanceX[i] = n;
+		this.sceneInstanceStore.setWallObjectX(i, n);
 	}
 
 	public int getWallObjectInstanceX(int i) {
-		return this.wallObjectInstanceX[i];
+		return this.sceneInstanceStore.getWallObjectX(i);
 	}
 
 	public void setWallObjectInstanceZ(int i, int n) {
-		ensureWallObjectInstanceCapacity(i + 1);
-		this.wallObjectInstanceZ[i] = n;
+		this.sceneInstanceStore.setWallObjectZ(i, n);
 	}
 
 	public int getWallObjectInstanceZ(int i) {
-		return this.wallObjectInstanceZ[i];
+		return this.sceneInstanceStore.getWallObjectZ(i);
 	}
 
 	public void setWallObjectInstanceModel(int i, RSModel n) {
-		ensureWallObjectInstanceCapacity(i + 1);
-		this.wallObjectInstanceModel[i] = n;
-		if (this.wallObjectInstanceModel[i] != null) {
-			this.wallObjectInstanceModel[i].setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
-			this.wallObjectInstanceModel[i].key = i + WALL_OBJECT_KEY_BASE;
-		}
+		this.sceneInstanceStore.setWallObjectModel(i, n);
 	}
 
 	public RSModel getWallObjectInstanceModel(int i) {
-		return this.wallObjectInstanceModel[i];
+		return this.sceneInstanceStore.getWallObjectModel(i);
 	}
 
 	public boolean isWallObjectInstanceMaterialized(int i) {
-		return this.wallObjectInstanceMaterialized[i];
+		return this.sceneInstanceStore.isWallObjectMaterialized(i);
 	}
 
 	public void setWallObjectInstanceMaterialized(int i, boolean materialized) {
-		ensureWallObjectInstanceCapacity(i + 1);
-		this.wallObjectInstanceMaterialized[i] = materialized;
+		this.sceneInstanceStore.setWallObjectMaterialized(i, materialized);
 	}
 
 	public boolean isWallObjectInstancePendingAreaLoad(int i) {
-		return this.wallObjectInstancePendingAreaLoad[i];
+		return this.sceneInstanceStore.isWallObjectPendingAreaLoad(i);
 	}
 
 	public void setWallObjectInstancePendingAreaLoad(int i, boolean pending) {
-		ensureWallObjectInstanceCapacity(i + 1);
-		this.wallObjectInstancePendingAreaLoad[i] = pending;
+		this.sceneInstanceStore.setWallObjectPendingAreaLoad(i, pending);
 	}
 
 	public void setWallObjectInstanceDir(int i, int n) {
-		ensureWallObjectInstanceCapacity(i + 1);
-		this.wallObjectInstanceDir[i] = n;
+		this.sceneInstanceStore.setWallObjectDirection(i, n);
 	}
 
 	public int getWallObjectInstanceDir(int i) {
-		return this.wallObjectInstanceDir[i];
+		return this.sceneInstanceStore.getWallObjectDirection(i);
 	}
 
 	public void setWallObjectInstanceID(int i, int n) {
-		ensureWallObjectInstanceCapacity(i + 1);
-		this.wallObjectInstanceID[i] = n;
+		this.sceneInstanceStore.setWallObjectId(i, n);
 	}
 
 	public int getWallObjectInstanceID(int i) {
-		return this.wallObjectInstanceID[i];
+		return this.sceneInstanceStore.getWallObjectId(i);
 	}
 
 	public Scene getScene() {
@@ -23118,8 +23005,7 @@ public final class mudclient implements Runnable {
 
 	public void beginAreaLoad() {
 		this.loadingArea = true;
-		Arrays.fill(this.gameObjectInstancePendingAreaLoad, 0, this.gameObjectInstanceCount, false);
-		Arrays.fill(this.wallObjectInstancePendingAreaLoad, 0, this.wallObjectInstanceCount, false);
+		this.sceneInstanceStore.clearPendingAreaLoadMarks();
 	}
 
 	public boolean isAreaLoadPending() {
@@ -25229,20 +25115,20 @@ public final class mudclient implements Runnable {
 	private void updateObjectAnimation(byte var1, int instanceNumber, String modelFileName) {
 		try {
 
-			int tileX = this.gameObjectInstanceX[instanceNumber];
-			int tileZ = this.gameObjectInstanceZ[instanceNumber];
+			int tileX = this.getGameObjectInstanceX(instanceNumber);
+			int tileZ = this.getGameObjectInstanceZ(instanceNumber);
 			int pixX = tileX - this.localPlayer.currentX / 128;
 			int pixZ = tileZ - this.localPlayer.currentZ / 128;
 			if (var1 > 2) {
 				if (World.isLocalTile(tileX, tileZ)
-					&& this.gameObjectInstanceMaterialized[instanceNumber]
+					&& this.isGameObjectInstanceMaterialized(instanceNumber)
 					&& pixX > -OBJECT_ANIMATION_TILE_RADIUS && pixX < OBJECT_ANIMATION_TILE_RADIUS
 					&& pixZ > -OBJECT_ANIMATION_TILE_RADIUS && pixZ < OBJECT_ANIMATION_TILE_RADIUS) {
 					this.dematerializeGameObjectInstance(instanceNumber);
 					int modelFileIndex = EntityHandler.storeModel(modelFileName);
 					RSModel model = this.modelCache[modelFileIndex].clone();
 					model.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, -74);
-					model.copyRot256AndTranslateFrom(this.gameObjectInstanceModel[instanceNumber], 6029);
+					model.copyRot256AndTranslateFrom(this.getGameObjectInstanceModel(instanceNumber), 6029);
 					this.setGameObjectInstanceModel(instanceNumber, model);
 					this.materializeGameObjectInstance(instanceNumber);
 				}
