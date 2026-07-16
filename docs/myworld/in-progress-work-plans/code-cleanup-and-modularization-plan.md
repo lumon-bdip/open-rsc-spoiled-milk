@@ -1,8 +1,9 @@
 # Code Cleanup And Modularization Plan
 
-Plan status: **active; reconciled through B01-B11 on 2026-07-16**. The
-measurements and next sequence below use published `main` commit `93b62ed38`,
-plus the explicitly labeled focused-branch result recorded below.
+Plan status: **active; reconciled through B01-B11 and the five immediate
+`mudclient` ownership branches on 2026-07-16**. The measurements and next
+sequence below use published `main` commit `a79fde3bf`, plus the explicitly
+labeled focused-branch result recorded below.
 
 This is the AI-facing cleanup roadmap for Spoiled Milk code structure. It is
 not a feature plan. Its job is to keep future work from getting lost inside
@@ -44,7 +45,7 @@ code-health sequence:
 
 | File | Lines | Why It Matters |
 | --- | ---: | --- |
-| `Client_Base/src/orsc/mudclient.java` | 27,194 | Owns gameplay UI/state plus external-asset content coordination, object/wall instance arrays, movement smoothing, combat effects, projectiles, and renderer integration. The focused external-asset branch below reduces it to 26,369 lines by moving discovery and decoding to a tested owner. Scene-instance storage is the next immediate ownership target. |
+| `Client_Base/src/orsc/mudclient.java` | 26,369 | Owns gameplay UI/state plus external-asset content coordination, scene/collision orchestration, movement smoothing, combat effects, projectiles, and renderer integration. The focused scene-instance branch below reduces it to 26,255 lines by moving authoritative game/wall parallel storage and retention to a tested owner while preserving the existing facade. |
 | `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,629 | B09 moved registry storage/access, prayer-book authorship, and fallback diagnostics to focused owners. This facade still contains authored definitions, MyWorld overrides, generated families, and load order. |
 | `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,931 | Central server entity state; likely too broad for continued gameplay feature growth. |
 | `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,346 | Legacy 2D drawing plus OpenGL capture/replay instrumentation, sprite scaling, text plotting, and sprite archive loading. |
@@ -100,9 +101,10 @@ work in this plan:
    `ClientExternalAssetLoader` behind lookup, decode, frame-order, and
    packaged-resource parity tests. Repository and extracted release-layout
    clients were privately verified. Merged into `main` as `6cfaa6ca7`.
-5. **Next:** extract `ClientSceneInstanceStore` for authoritative game-object
-   and wall instance state, leaving scene/collision side effects in
-   `mudclient`.
+5. **Complete on `refactor/client-scene-instance-store`, awaiting manager
+   review:** extracted `ClientSceneInstanceStore` for authoritative game-object
+   and wall instance state while leaving model preparation and scene/collision
+   side effects in `mudclient`.
 6. Reassess the remaining `mudclient` responsibilities before authorizing
    combat-effect, movement, or login-scene branches.
 7. Reassess presenter sprite-composite glue only after the five `mudclient`
@@ -751,6 +753,41 @@ world instance, collision/picking/model-key difference, OpenGL/software parity
 failure, a need to change world-editor or protocol semantics, or pressure to
 pull ground-item/rendering policy into the store.
 
+Implementation record (2026-07-16): the focused branch moved the authoritative
+game-object and wall-object x/z/id/direction/model arrays, counts, capacity
+growth, truncation cleanup, materialized/pending flags, frame marks, model
+key/kind assignment, and pending-area-load compaction into the 343-line
+`ClientSceneInstanceStore`. The published baseline `mudclient` was 26,369
+lines; it is 26,255 lines on the tested branch. Existing `mudclient` accessors
+remain as a deliberate compatibility facade for `PacketHandler`, B08
+`SceneBaselineState`, and other established callers. Packet reads and mutation
+order were not changed.
+
+Model preparation, including the sulfur-dragon tint rule, remains explicit in
+`mudclient` before storage. Scene/world materialization, collision flags,
+region rebase and area-load decisions, model construction, animation,
+resident-chunk export, picking, diagnostics, and world-editor actions also
+remain with their existing owners. Ground-item arrays and their rendering/menu
+policy were not moved. The store preserves the existing game/wall model kinds,
+index and wall-key-base rules, exact capacity-growth formula, truncation
+nulling, pending retention behavior, and the distinction between moved and
+same-index wall models.
+
+A compiled fixture covers empty and repeated cleanup, exact growth boundaries,
+overflow handling, every stored field, model identity/kinds/keys, count shrink,
+pending compaction, materialized/pending transitions, and frame marks. Source
+guards verify that storage no longer lives in `mudclient`, model preparation
+remains outside the store, ground items and scene/world authorities were not
+absorbed, packet mutation order is unchanged, and baseline state still uses
+the facade. The focused packet, deferred-scenery, region-load, relog resident
+world, scene-lifecycle, rowboat respawn, world-geometry/material,
+world-editor, landscape-parity, server-sync, mining, renderer-guardrail, client
+build, and changed-code analysis checks pass. The full MyWorld suite also
+passes after updating one stale cosmic-sparkle source guard to follow the
+existing accessor instead of requiring the removed backing array. Private
+OpenGL presentation was confirmed unchanged; the practical rowboat/death paths
+remain covered by automated lifecycle tests rather than a new manual run.
+
 ## Stale And Hidden Option Audit
 
 These paths should be explicitly quarantined before deeper cleanup. The main
@@ -1089,15 +1126,17 @@ The first post-B11 branch completed `RendererSettingsPanel` and was merged as
 `26145528f`; the second completed `RendererProfileApplier` and was merged as
 `83bf64a9d`. The third completed `LegacySoftwareScalingSettings` and was merged
 as `20ffd97a8`. The fourth completed `ClientExternalAssetLoader` and was merged
-as `6cfaa6ca7`. Continue next with `ClientSceneInstanceStore` as specified
-above.
+as `6cfaa6ca7`. The fifth completed `ClientSceneInstanceStore` on
+`refactor/client-scene-instance-store` and is awaiting manager review.
 
 Do not opportunistically combine these because they are adjacent in
 `mudclient`. Each branch must leave a tested owner, keep compatibility visible,
-and obtain private visual confirmation before handoff. After branch 5, refresh
-the measurements and decide whether combat-effect sprites, movement
-interpolation, external content coordination, or presenter composite glue has
-the clearest next boundary.
+and obtain private visual confirmation before handoff. The five owners are now
+stable on their focused branches; after the scene-instance branch is merged,
+refresh the responsibility inventory and decide whether combat-effect sprites,
+movement interpolation, external content coordination, or presenter composite
+glue has the clearest next boundary. Do not authorize that implementation from
+this branch.
 
 ## Definition Of Done
 
