@@ -4254,12 +4254,10 @@ public final class World {
 	}
 
 	public int getWorldMapX() {
-		// TODO Auto-generated method stub
 		return mapPointX;
 	}
 
 	public int getWorldMapZ() {
-		// TODO Auto-generated method stub
 		return mapPointZ;
 	}
 

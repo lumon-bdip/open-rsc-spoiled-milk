@@ -83,7 +83,8 @@ public class BankPinInterface extends NComponent {
 		resetPin.setInputListener(new InputListener() {
 			@Override
 			public boolean onMouseDown(int clickX, int clickY, int mButtonDown, int mButtonClick) {
-				// TODO Auto-generated method stub
+				// Compatibility-only control: no bank-PIN recovery request is defined by
+				// the current client/server protocol, so this remains intentionally passive.
 				return super.onMouseDown(clickX, clickY, mButtonDown, mButtonClick);
 			}
 		});

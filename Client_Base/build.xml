@@ -1,4 +1,9 @@
 <project default="compile" basedir=".">
+    <!--
+      ACTIVE DESKTOP CLIENT ROOTS: the shared game/client code in Client_Base/src
+      and the desktop/LWJGL platform code in PC_Client/src are compiled together
+      into Open_RSC_Client.jar. Neither root is a legacy or standalone fallback.
+    -->
     <property name="src" location="src"/>
     <property name="pc_client" location="../PC_Client/src"/>
     <property name="build" location="build"/>

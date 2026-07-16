@@ -78,6 +78,11 @@ final class RenderSurfaceSettings {
 		return value == null ? "" : value.trim();
 	}
 
+	/**
+	 * CLASSIC, VGA, WIDE_PLUS, HD, and FULL_HD are persisted-setting migration
+	 * aliases. They intentionally remain parseable even though only SVGA and WIDE
+	 * are offered by the current player-facing selector.
+	 */
 	enum Mode {
 		CLASSIC("512x346", "@gre@4:3", 512, 346, false, "@gre@4:3"),
 		VGA("640x480", "@gre@4:3", 640, 480, false, "@gre@4:3"),

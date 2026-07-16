@@ -3,16 +3,10 @@ package com.openrsc.server.io;
 import com.openrsc.server.util.BZLib;
 import com.openrsc.server.util.BZip2;
 import com.openrsc.server.util.FileUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 
 public class JContent {
-	private static final Logger LOGGER = LogManager.getLogger();
-
     private byte[] m_data;
     private boolean m_bzip2;
 
@@ -91,15 +85,5 @@ public class JContent {
 
     public void close() {
         m_data = null;
-    }
-
-    public void dump(String fname) {
-        File f = new File(fname);
-        try {
-            DataOutputStream out = new DataOutputStream(new FileOutputStream(f));
-            out.write(m_data, 0, m_data.length);
-            out.close();
-        } catch (Exception e) {
-        }
     }
 }

@@ -93,6 +93,16 @@ public class ServerConfiguration {
 	public int MOVEMENT_STUTTER_TICK_OUTLIER_MS;
 	public boolean WANT_NPC_IDLE_TICK_THROTTLE;
 	public int NPC_IDLE_TICK_THROTTLE_INTERVAL;
+	/**
+	 * Disables insertion into each player's local-NPC cache for packet diagnostics.
+	 * The legacy configuration key remains {@code break_npc_location_cache}.
+	 */
+	public boolean DISABLE_NPC_LOCATION_CACHE;
+	/**
+	 * Source/binary compatibility alias for external plugins compiled against the
+	 * historical field name. Internal code must use {@link #DISABLE_NPC_LOCATION_CACHE}.
+	 */
+	@Deprecated
 	public boolean BREAK_NPC_LOCATION_CACHE;
 	public boolean IS_LOCALHOST_RESTRICTED;
 
@@ -324,6 +334,7 @@ public class ServerConfiguration {
 	public boolean USES_PK_MODE;
 	public boolean ARRIVE_LUMBRIDGE;
 	public boolean SCALED_WOODCUT_XP;
+	/** Active compatibility mode selected by the {@code old_pray_xp} config key. */
 	public boolean OLD_PRAY_XP;
 	public boolean DIVIDED_GOOD_EVIL;
 	public boolean LACKS_PRAYERS;
@@ -331,6 +342,7 @@ public class ServerConfiguration {
 	public boolean WAIT_TO_REBOOST;
 	public boolean NO_LEVEL_REQUIREMENT_WIELD;
 	public boolean FERMENTED_WINE;
+	/** Active compatibility mode selected by the {@code old_quest_mechanics} config key. */
 	public boolean OLD_QUEST_MECHANICS;
 	public boolean CAN_INFLUENCE_NPCS;
 	public boolean NO_CONFIRM_TRADES;
@@ -342,6 +354,7 @@ public class ServerConfiguration {
 	public boolean SHARED_GATHERING_RESOURCES;
 	public boolean HAS_PLAYER_OWNED_HOUSES;
 	public boolean SPINACH_ROLL_BOOSTS;
+	/** Active compatibility mode selected by the {@code old_skill_defs} config key. */
 	public boolean OLD_SKILL_DEFS;
 	public boolean WANTS_KILL_STEALING;
 	public boolean RANGED_GIVES_XP_HIT;
@@ -518,7 +531,8 @@ public class ServerConfiguration {
 			"OPENRSC_NPC_IDLE_TICK_THROTTLE_INTERVAL",
 			"npc_idle_tick_throttle_interval",
 			4));
-		BREAK_NPC_LOCATION_CACHE = tryReadBool("break_npc_location_cache").orElse(false);
+		DISABLE_NPC_LOCATION_CACHE = tryReadBool("break_npc_location_cache").orElse(false);
+		BREAK_NPC_LOCATION_CACHE = DISABLE_NPC_LOCATION_CACHE;
 		WORLD_NUMBER = tryReadInt("world_number").orElse(1);
 		PLAYER_LEVEL_LIMIT = tryReadInt("player_level_limit").orElse(99);
 		WANT_EXPERIENCE_CAP = tryReadBool("want_experience_cap").orElse(false);
