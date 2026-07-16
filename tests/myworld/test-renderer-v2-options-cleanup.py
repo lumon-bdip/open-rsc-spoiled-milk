@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+RENDERER_SETTINGS_PANEL = ROOT / "Client_Base/src/orsc/RendererSettingsPanel.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 OPENGL_PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
@@ -32,6 +33,7 @@ def forbid(text: str, needle: str, description: str) -> None:
 
 def main() -> None:
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
+    settings_panel = RENDERER_SETTINGS_PANEL.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
     scaled_window = SCALED_WINDOW.read_text(encoding="utf-8")
     presenter = OPENGL_PRESENTER.read_text(encoding="utf-8")
@@ -59,8 +61,8 @@ def main() -> None:
         "OpenGL-primary Swing resize guard",
     )
     require(
-        mudclient,
-        "boolean isScalarOptionOffered = !isAndroid() && !isOpenGLPrimaryWindow;",
+        settings_panel,
+        "if (!state.openGLPrimary)",
         "legacy scaler visibility guard",
     )
     require(
@@ -69,41 +71,53 @@ def main() -> None:
         "OpenGL-primary client frame target",
     )
 
-    require(mudclient, 'index = addSettingsSection(index, "Graphics");', "Graphics section")
+    require(settings_panel, 'addSection(rows, "Graphics");', "Graphics section")
     require(mudclient, 'index = addSettingsSection(index, "Interface");', "Interface section")
     forbid(mudclient, 'index = addSettingsSection(index, "Video");', "Video section")
     require(
-        mudclient,
-        "if (settingIndex == SETTINGS_SECTION_ROW) {\n\t\t\treturn;",
+        settings_panel,
+        "if (selectedAction == SECTION_ROW) {\n\t\t\treturn true;",
         "non-action section rows",
     )
 
     expected_rows = (
-        ("Preset", "RendererProfileSettings.getMode().label", 59),
-        ("Aspect Ratio", "RenderSurfaceSettings.getAspectLabel()", 56),
-        ("Lighting", "RendererLightingSettings.getMode().label", 61),
-        ("Geometry", "RendererGeometrySettings.getMode().label", 62),
-        ("Terrain Variation", "RendererTerrainVariationSettings.getMode().label", 64),
-        ("Fog", "RendererFogSettings.getMode().label", 60),
+        ("Preset", "state.rendererProfileLabel", "ACTION_RENDERER_PROFILE"),
+        ("Aspect Ratio", "state.aspectLabel", "ACTION_RENDER_SURFACE"),
+        ("Lighting", "state.lightingLabel", "ACTION_LIGHTING"),
+        ("Geometry", "state.geometryLabel", "ACTION_GEOMETRY"),
+        ("Terrain Variation", "state.terrainVariationLabel", "ACTION_TERRAIN_VARIATION"),
+        ("Fog", "state.fogLabel", "ACTION_FOG"),
     )
     for label, value, action in expected_rows:
         require(
-            mudclient,
-            f'index = addSettingsRow(index, "@whi@{label} - " + {value}, {action});',
+            settings_panel,
+            f'addRow(rows, "@whi@{label} - " + {value}',
             f"{label} settings row",
         )
-    require(mudclient, 'index = addSettingsRow(index, "@whi@Borderless - " + borderlessLabel, 63);', "Borderless settings row")
+        require(settings_panel, action, f"{label} stable action")
+    require(settings_panel, 'addRow(rows, "@whi@Borderless - "', "Borderless settings row")
+
+    for current_value in (
+        "RendererProfileSettings.getMode().label",
+        "RenderSurfaceSettings.getAspectLabel()",
+        "RendererLightingSettings.getMode().label",
+        "RendererGeometrySettings.getMode().label",
+        "RendererTerrainVariationSettings.getMode().label",
+        "RendererFogSettings.getMode().label",
+    ):
+        require(settings_panel, current_value, f"captured value {current_value}")
 
     for action, handler in (
-        (56, "cycleRenderSurfaceMode();"),
-        (59, "cycleOpenGLRendererProfileMode();"),
-        (60, "cycleOpenGLFogMode();"),
-        (61, "cycleOpenGLLightingMode();"),
-        (62, "cycleOpenGLGeometryMode();"),
-        (63, "cycleOpenGLWindowMode();"),
-        (64, "cycleOpenGLTerrainVariationMode();"),
+        ("RENDER_SURFACE", "cycleRenderSurfaceMode();"),
+        ("RENDERER_PROFILE", "cycleOpenGLRendererProfileMode();"),
+        ("FOG", "cycleOpenGLFogMode();"),
+        ("LIGHTING", "cycleOpenGLLightingMode();"),
+        ("GEOMETRY", "cycleOpenGLGeometryMode();"),
+        ("WINDOW_MODE", "cycleOpenGLWindowMode();"),
+        ("TERRAIN_VARIATION", "cycleOpenGLTerrainVariationMode();"),
     ):
-        require(mudclient, f"settingIndex == {action} && this.mouseButtonClick == 1", f"action {action} click guard")
+        require(settings_panel, f"return Action.{action};", f"action {action} click mapping")
+        require(mudclient, f"case {action}:", f"action {action} adapter case")
         require(mudclient, handler, f"action {action} handler")
 
     for retired in ("@whi@Resolution - ", "@whi@Renderer - ", "@whi@Font - ", "@whi@Tone - "):
@@ -113,11 +127,12 @@ def main() -> None:
     for label in (
         "Terrain shading", "Object shading", "Brightness / dimness", "Contrast", "Gamma", "Saturation"
     ):
-        require(mudclient, f'index = addSettingsRow(index, "@whi@{label}", SETTINGS_SECTION_ROW);',
+        require(settings_panel, f'addTuningRows(rows, "{label}"',
                 f"two-line {label} slider label")
-    require(mudclient, 'new StringBuilder("@whi@- [")', "slider minus and track presentation")
-    require(mudclient, 'bar.append("] + @yel@[")', "slider plus and value presentation")
-    require(mudclient, "handleRendererTuningSliderInput(settingIndex, var6);", "slider click/drag handling")
+    require(settings_panel, 'new StringBuilder("@whi@- [")', "slider minus and track presentation")
+    require(settings_panel, 'bar.append("] + @yel@[")', "slider plus and value presentation")
+    require(settings_panel, "handleRendererTuningSliderInput(view, input, selectedAction, textX, actions);",
+            "slider click/drag handling")
     forbid(mudclient, '"@whi@Fog - @red@Off"', "legacy Interface fog row")
     forbid(mudclient, "if (C_HIDE_FOG)", "legacy fog render ownership")
 

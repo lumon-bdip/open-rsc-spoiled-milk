@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+RENDERER_SETTINGS_PANEL = ROOT / "Client_Base/src/orsc/RendererSettingsPanel.java"
 
 
 def fail(message: str) -> None:
@@ -40,13 +41,16 @@ def method_body(source: str, signature: str) -> str:
 
 def main() -> None:
     source = MUDCLIENT.read_text(encoding="utf-8")
+    panel = RENDERER_SETTINGS_PANEL.read_text(encoding="utf-8")
     desktop_box = method_body(source, "private void drawCustomSettingsBox(")
     android_box = method_body(source, "private void drawAndroidSettingsBox(")
     options = method_body(source, "private void drawUiTabOptions(")
     general = method_body(source, "private void drawGeneralSettingsOptions(")
-    graphics = method_body(source, "private void drawGraphicsSettingsOptions(")
+    graphics = method_body(panel, "static List<Row> rows(")
+    clicks = method_body(panel, "boolean handleSelectedAction(")
+    action_map = method_body(panel, "private static Action actionFor(")
+    adapter = method_body(source, "private void applyRendererSettingsAction(")
     authentic = method_body(source, "private void drawAuthenticSettingsOptions(")
-    clicks = method_body(source, "private void handleGeneralSettingsClicks(")
 
     for label in ('"Social"', '"General"', '"Graphics"'):
         require(desktop_box, label, f"desktop {label} tab label")
@@ -77,24 +81,24 @@ def main() -> None:
             "desktop Graphics renderer")
 
     graphics_rows = (
-        ("Sprites:", "SETTINGS_REMASTERED_SPRITES"),
-        ("Scaling - ", "49"),
-        ("Scaling type - ", "46"),
-        ("Preset - ", "59"),
-        ("Aspect Ratio - ", "56"),
-        ("Borderless - ", "63"),
-        ("Lighting - ", "61"),
-        ("Geometry - ", "62"),
-        ("Terrain Variation - ", "64"),
-        ("Fog - ", "60"),
-        ("Terrain shading", "SETTINGS_TERRAIN_RELIEF_SLIDER"),
-        ("Object shading", "SETTINGS_OBJECT_RELIEF_SLIDER"),
-        ("Brightness / dimness", "SETTINGS_DIMNESS_SLIDER"),
-        ("Contrast", "SETTINGS_CONTRAST_SLIDER"),
-        ("Gamma", "SETTINGS_GAMMA_SLIDER"),
-        ("Saturation", "SETTINGS_SATURATION_SLIDER"),
-        ("Hide Roofs", "26"),
-        ("Hide Underground Flicker", "42"),
+        ("Sprites:", "REMASTERED_SPRITES"),
+        ("Scaling - ", "ACTION_SCALING_ROW"),
+        ("Scaling type - ", "ACTION_SCALING_TYPE"),
+        ("Preset - ", "ACTION_RENDERER_PROFILE"),
+        ("Aspect Ratio - ", "ACTION_RENDER_SURFACE"),
+        ("Borderless - ", "ACTION_WINDOW_MODE"),
+        ("Lighting - ", "ACTION_LIGHTING"),
+        ("Geometry - ", "ACTION_GEOMETRY"),
+        ("Terrain Variation - ", "ACTION_TERRAIN_VARIATION"),
+        ("Fog - ", "ACTION_FOG"),
+        ("Terrain shading", "TERRAIN_RELIEF_SLIDER"),
+        ("Object shading", "OBJECT_RELIEF_SLIDER"),
+        ("Brightness / dimness", "DIMNESS_SLIDER"),
+        ("Contrast", "CONTRAST_SLIDER"),
+        ("Gamma", "GAMMA_SLIDER"),
+        ("Saturation", "SATURATION_SLIDER"),
+        ("Hide Roofs", "ACTION_HIDE_ROOFS"),
+        ("Hide Underground Flicker", "ACTION_HIDE_UNDERGROUND_FLICKER"),
     )
     for label, action in graphics_rows:
         require(graphics, label, f"Graphics placement for {label}")
@@ -123,20 +127,24 @@ def main() -> None:
     ):
         require(general, label, f"General placement for {label}")
 
-    for action, handler in (
-        (56, "cycleRenderSurfaceMode();"),
-        (59, "cycleOpenGLRendererProfileMode();"),
-        (60, "cycleOpenGLFogMode();"),
-        (61, "cycleOpenGLLightingMode();"),
-        (62, "cycleOpenGLGeometryMode();"),
-        (63, "cycleOpenGLWindowMode();"),
-        (64, "cycleOpenGLTerrainVariationMode();"),
-        (26, "reloadCurrentRegionForRoofVisibility();"),
+    for stable_action, semantic_action, handler in (
+        ("ACTION_RENDER_SURFACE", "RENDER_SURFACE", "cycleRenderSurfaceMode();"),
+        ("ACTION_RENDERER_PROFILE", "RENDERER_PROFILE", "cycleOpenGLRendererProfileMode();"),
+        ("ACTION_FOG", "FOG", "cycleOpenGLFogMode();"),
+        ("ACTION_LIGHTING", "LIGHTING", "cycleOpenGLLightingMode();"),
+        ("ACTION_GEOMETRY", "GEOMETRY", "cycleOpenGLGeometryMode();"),
+        ("ACTION_WINDOW_MODE", "WINDOW_MODE", "cycleOpenGLWindowMode();"),
+        ("ACTION_TERRAIN_VARIATION", "TERRAIN_VARIATION", "cycleOpenGLTerrainVariationMode();"),
     ):
-        require(clicks, f"settingIndex == {action}", f"action {action} dispatch")
-        require(clicks, handler, f"action {action} behavior")
-    require(clicks, "bufferBits.putByte(42);", "underground flicker packet key")
-    require(clicks, "this.settingTab == 2", "software scaling limited to Graphics")
+        require(action_map, f"case {stable_action}:", f"{stable_action} dispatch")
+        require(action_map, f"return Action.{semantic_action};", f"{semantic_action} semantic mapping")
+        require(adapter, handler, f"{semantic_action} behavior")
+    require(source, "private void toggleRoofVisibilitySetting()", "roof packet adapter")
+    require(source, "this.reloadCurrentRegionForRoofVisibility();", "roof visibility reload")
+    require(source, "private void toggleUndergroundFlickerSetting()", "underground packet adapter")
+    require(source, "bufferBits.putByte(42);", "underground flicker packet key")
+    require(clicks, "!state.openGLPrimary", "software scaling limited to fallback Graphics")
+    require(source, "!isAndroid() && this.settingTab == 2", "desktop Graphics click route")
     require(options, "if (this.authenticSettings)\n\t\t\t\tthis.drawAuthenticSettingsOptions",
             "authentic settings route")
     require(authentic, 'drawString("Game options - click to toggle"', "unchanged authentic options UI")
