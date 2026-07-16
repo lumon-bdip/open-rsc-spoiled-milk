@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 RELIEF = ROOT / "Client_Base/src/orsc/RendererReliefSettings.java"
 COLOR = ROOT / "Client_Base/src/orsc/RendererColorDiagnosticSettings.java"
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+RENDERER_SETTINGS_PANEL = ROOT / "Client_Base/src/orsc/RendererSettingsPanel.java"
 SHADER = ROOT / "PC_Client/src/orsc/OpenGLShaderProgram.java"
 SHADOW_MASK = ROOT / "PC_Client/src/orsc/RemasterShadowMaskBuilder.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
@@ -150,6 +151,7 @@ def main() -> None:
     relief = RELIEF.read_text(encoding="utf-8")
     color = COLOR.read_text(encoding="utf-8")
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
+    settings_panel = RENDERER_SETTINGS_PANEL.read_text(encoding="utf-8")
     shader = SHADER.read_text(encoding="utf-8")
     shadow_mask = SHADOW_MASK.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
@@ -226,14 +228,14 @@ def main() -> None:
             "saturation diagnostic hotkey")
     require(mudclient, 'RendererDiagnosticSession.newEventRecord("renderer.tuning.change")',
             "AI-readable tuning event")
-    require(mudclient, 'index = addSettingsRow(index, "@whi@Terrain shading", SETTINGS_SECTION_ROW);',
+    require(settings_panel, 'addTuningRows(rows, "Terrain shading"',
             "player-facing terrain shading slider label")
     require(mudclient, '? "terrain shading"',
             "player-facing terrain shading change message")
-    require(mudclient,
-            "RendererColorDiagnosticSettings.getContrastLevel(), RendererColorDiagnosticSettings.MAX_LEVEL",
+    require(settings_panel,
+            "state.contrastLevel,\n\t\t\t\tRendererColorDiagnosticSettings.MAX_LEVEL",
             "two-line contrast slider scale")
-    require(mudclient, "private void handleRendererTuningSliderInput(int settingIndex, int textX)",
+    require(settings_panel, "private static void handleRendererTuningSliderInput(View view, Input input, int settingIndex",
             "direct slider segment selection")
     require(mudclient, "saveRendererTuningSettings();",
             "tuning changes persist")

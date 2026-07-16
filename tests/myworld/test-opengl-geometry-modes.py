@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 WORLD_MESH_RENDERER = ROOT / "PC_Client/src/orsc/OpenGLWorldMeshRenderer.java"
 GEOMETRY_SETTINGS = ROOT / "Client_Base/src/orsc/RendererGeometrySettings.java"
-MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+RENDERER_SETTINGS_PANEL = ROOT / "Client_Base/src/orsc/RendererSettingsPanel.java"
 
 
 def require(text: str, needle: str, description: str) -> None:
@@ -16,7 +16,7 @@ def require(text: str, needle: str, description: str) -> None:
 def main() -> None:
     world_mesh_renderer = WORLD_MESH_RENDERER.read_text(encoding="utf-8")
     geometry_settings = GEOMETRY_SETTINGS.read_text(encoding="utf-8")
-    mudclient = MUDCLIENT.read_text(encoding="utf-8")
+    settings_panel = RENDERER_SETTINGS_PANEL.read_text(encoding="utf-8")
 
     require(
         geometry_settings,
@@ -34,8 +34,8 @@ def main() -> None:
         "wire geometry mode",
     )
     require(
-        mudclient,
-        '"@whi@Geometry - " + RendererGeometrySettings.getMode().label',
+        settings_panel,
+        '"@whi@Geometry - " + state.geometryLabel',
         "player-facing geometry setting row",
     )
     require(
