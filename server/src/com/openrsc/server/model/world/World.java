@@ -18,6 +18,7 @@ import com.openrsc.server.database.impl.mysql.queries.player.login.PlayerOnlineF
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.SingleEvent;
 import com.openrsc.server.external.GameObjectLoc;
+import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.io.WorldLoader;
 import com.openrsc.server.model.GlobalMessage;
@@ -112,6 +113,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	private final CombatOdysseyData combatOdysseyData;
 	private final HashMap<Point, Integer> sceneryLocs;
 	private final ConcurrentMap<TrawlerBoat, FishingTrawler> fishingTrawler;
+	private final AuthoredGroundItemRegistry<GroundItem> authoredGroundItems;
 
 	private final ConcurrentMap<Player, Boolean> playerUnderAttackMap;
 	private final ConcurrentMap<Npc, Boolean> npcUnderAttackMap;
@@ -135,6 +137,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		this.playerUnderAttackMap = new ConcurrentHashMap<>();
 		this.npcUnderAttackMap = new ConcurrentHashMap<>();
 		this.fishingTrawler = new ConcurrentHashMap<>();
+		this.authoredGroundItems = new AuthoredGroundItemRegistry<>();
 		this.snapshots = new LinkedList<>();
 		this.worldLoader = new WorldLoader(this);
 		this.regionManager = new RegionManager(this);
@@ -465,6 +468,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			getMarket().stop();
 		}
 		getRegionManager().unload();
+		authoredGroundItems.reset();
 		getNpcDrops().unload();
 		npcs.clear();
 		sceneryLocs.clear();
@@ -645,6 +649,39 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 
 	public void registerItem(final GroundItem i) {
 		registerItem(i, i.getConfig().GAME_TICK * 200);
+	}
+
+	/**
+	 * Registers one authored ground item for a location definition. Unlike
+	 * ordinary drops, repeated population and respawn callbacks for the same
+	 * authored tile resolve to the existing instance.
+	 */
+	public GroundItem registerAuthoredGroundItem(final ItemLoc loc) {
+		return registerAuthoredGroundItem(loc, null);
+	}
+
+	public GroundItem registerAuthoredGroundItem(final ItemLoc loc, final Long expectedGeneration) {
+		if (getServer().getConfig().RESTRICT_ITEM_ID > ItemId.NOTHING.id()
+			&& loc.getId() > getServer().getConfig().RESTRICT_ITEM_ID) {
+			return null;
+		}
+		if (expectedGeneration == null) {
+			return authoredGroundItems.register(loc.getX(), loc.getY(), () -> new GroundItem(this, loc));
+		}
+		return authoredGroundItems.registerForGeneration(loc.getX(), loc.getY(), expectedGeneration,
+			() -> new GroundItem(this, loc));
+	}
+
+	/**
+	 * Releases the current authored instance and returns the world-generation
+	 * token required by its delayed replacement.
+	 */
+	public long removeAuthoredGroundItem(final GroundItem item) {
+		final ItemLoc loc = item.getLoc();
+		if (loc == null) {
+			return AuthoredGroundItemRegistry.NO_GENERATION;
+		}
+		return authoredGroundItems.remove(loc.getX(), loc.getY(), item);
 	}
 
 	public void registerItem(final GroundItem i, final int delayTime) {

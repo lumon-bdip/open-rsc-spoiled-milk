@@ -736,7 +736,7 @@ public final class Admins implements CommandTrigger {
 			return;
 		}
 
-		player.getWorld().registerItem(new GroundItem(player.getWorld(), item));
+		player.getWorld().registerAuthoredGroundItem(item);
 		player.message(messagePrefix + "Added ground item to database: " + player.getWorld().getServer().getEntityHandler().getItemDef(item.getId()).getName() + " with item ID " + item.getId() + " at " + itemLocation);
 	}
 
