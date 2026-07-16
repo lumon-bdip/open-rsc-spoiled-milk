@@ -84,8 +84,9 @@ work in this plan:
 
 ## Priority Order
 
-1. Extract `RendererSettingsPanel` from `mudclient` without changing the
-   Graphics/General/Android row contract or any action ID.
+1. **Complete on `refactor/client-renderer-settings-panel`:** extracted
+   `RendererSettingsPanel` without changing the Graphics/General/Android row
+   contract or any action ID. Await manager merge before starting item 2.
 2. Extract `RendererProfileApplier` and fingerprint the current Classic,
    Remaster, Custom, resize, refresh, runtime-override, and persistence behavior.
 3. Extract `LegacySoftwareScalingSettings` while retaining the active software
@@ -416,6 +417,20 @@ Stop if a row/action moves, a renderer click sends a gameplay settings packet,
 slider drag or scroll coordinates change, fallback exposes an OpenGL-only
 control, Android/general behavior must be rewritten, or the panel requires
 packet/gameplay state beyond its adapter.
+
+Implementation record (2026-07-16): the focused branch moved desktop Graphics
+row construction, stable IDs, footer presentation, software-scaling control
+layout/hit testing, tuning-slider mutation/hit testing, and stable-ID-to-
+semantic-action mapping into a 566-line `RendererSettingsPanel`. The merged
+baseline `mudclient` was 27,550 lines; it is 27,350 lines on the tested branch.
+The new owner depends on the narrow `View`, `State`, `Input`, and `Actions`
+boundaries plus the existing renderer setting classes. `mudclient` still owns
+profile/settings application and persistence, appearance refresh, software-
+scaler state, logout, and the two existing visibility packets. A compiled
+fixture covers both row matrices, exact labels/action order, disabled
+visibility flags, scrolled software controls, click/drag slider input, and
+non-action section rows. The owner privately confirmed both OpenGL-primary and
+software-fallback presentation and interaction; General remained unchanged.
 
 #### 2. RendererProfileApplier
 
@@ -962,9 +977,10 @@ tracking:
 
 ## Recommended First Cleanup Pass
 
-The old presenter-first pass is complete through viewport/window extraction.
-Start the post-B11 sequence with `RendererSettingsPanel`, then
-`RendererProfileApplier`, `LegacySoftwareScalingSettings`,
+The old presenter-first pass is complete through viewport/window extraction,
+and the first post-B11 branch completed `RendererSettingsPanel`. After that
+branch is merged, continue with `RendererProfileApplier`,
+`LegacySoftwareScalingSettings`,
 `ClientExternalAssetLoader`, and `ClientSceneInstanceStore` as specified above.
 
 Do not opportunistically combine these because they are adjacent in
