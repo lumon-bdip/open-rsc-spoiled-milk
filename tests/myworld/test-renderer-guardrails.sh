@@ -22,6 +22,7 @@ renderer_tests=(
   test-renderer-material-family.py
   test-renderer-shading-diagnostics.py
   test-renderer-settings-panel-extraction.py
+  test-renderer-profile-applier.py
   test-roof-visibility.py
   test-renderer-relog-resident-world.py
   test-renderer-v2-capture-analyzer.py

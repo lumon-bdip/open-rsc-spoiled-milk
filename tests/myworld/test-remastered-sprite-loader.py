@@ -75,10 +75,14 @@ def main():
         "@cya@Enhanced",
         "@gre@Classic",
         "toggleRemasteredSprites();",
-        "RemasteredSpriteSettings.applyClassicProfile();",
         "getSurface().resolveRemastered(item, externalSprite)",
         "refreshAppearancePanelSprites();",
     ], "mudclient.java")
+    profile_applier = (ROOT / "Client_Base/src/orsc/RendererProfileApplier.java").read_text()
+    require(profile_applier, [
+        "RemasteredSpriteSettings.applyClassicProfile();",
+        "host.refreshAppearancePreview();",
+    ], "RendererProfileApplier.java")
 
     build_output = run([str(ROOT / "scripts/build-client.sh")])
     assert "BUILD SUCCESSFUL" in build_output

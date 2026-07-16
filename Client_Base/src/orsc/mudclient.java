@@ -644,6 +644,18 @@ public final class mudclient implements Runnable {
 	public static boolean scalarChangedSinceLogin = false;
 	public static List<Float> integerScalars = null;
 	public static List<Float> interpolationScalars = null;
+	private static final RendererProfileApplier.SettingsStore RENDERER_PROFILE_SETTINGS_STORE =
+		new RendererProfileApplier.SettingsStore() {
+			@Override
+			public Properties load() {
+				return loadClientSettings();
+			}
+
+			@Override
+			public void save(Properties properties) {
+				saveClientSettings(properties);
+			}
+		};
 	private static final int NORMAL_CAMERA_ZOOM_MIN = 0;
 	private static final int NORMAL_CAMERA_ZOOM_MAX = 255;
 	private static final int EXTRA_CAMERA_ZOOM_MIN = -100;
@@ -975,6 +987,19 @@ public final class mudclient implements Runnable {
 	private Panel panelQuestInfo;
 	private Panel panelPlayerTaskInfo;
 	private Panel panelSettings;
+	private final RendererProfileApplier rendererProfileApplier = new RendererProfileApplier(
+		RENDERER_PROFILE_SETTINGS_STORE,
+		new RendererProfileApplier.Host() {
+			@Override
+			public void applyRenderSurfaceResize() {
+				mudclient.this.applyRenderSurfaceResize();
+			}
+
+			@Override
+			public void refreshAppearancePreview() {
+				mudclient.this.refreshAppearancePanelSprites();
+			}
+		});
 	private final RendererSettingsPanel rendererSettingsPanel = new RendererSettingsPanel();
 	private final RendererSettingsPanel.Actions rendererSettingsActions = new RendererSettingsPanel.Actions() {
 		@Override
@@ -1289,79 +1314,13 @@ public final class mudclient implements Runnable {
 	}
 
 	static void saveOpenGLWindowSettings() {
-		Properties props = loadClientSettings();
-		OpenGLWindowSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
+		RendererProfileApplier.persist(
+			RENDERER_PROFILE_SETTINGS_STORE, RendererProfileApplier.Change.WINDOW);
 	}
 
 	private static void saveRendererDebugSettings() {
 		Properties props = loadClientSettings();
 		RendererDebugSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
-	private static void saveRenderSurfaceSettings() {
-		Properties props = loadClientSettings();
-		RenderSurfaceSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
-	private static void saveRendererProfileSettings() {
-		Properties props = loadClientSettings();
-		RendererProfileSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
-	private static void saveRemasteredSpriteSettings() {
-		Properties props = loadClientSettings();
-		RemasteredSpriteSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
-	private static void saveRendererFogSettings() {
-		Properties props = loadClientSettings();
-		RendererFogSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
-	private static void saveRendererLightingSettings() {
-		Properties props = loadClientSettings();
-		RendererLightingSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
-	private static void saveRendererGeometrySettings() {
-		Properties props = loadClientSettings();
-		RendererGeometrySettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
-	private static void saveRendererTerrainVariationSettings() {
-		Properties props = loadClientSettings();
-		RendererTerrainVariationSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
-	private static void saveRendererToneSettings() {
-		Properties props = loadClientSettings();
-		RendererToneSettings.saveToClientSettings(props);
-
-		saveClientSettings(props);
-	}
-
-	private static void saveRendererTuningSettings() {
-		Properties props = loadClientSettings();
-		RendererReliefSettings.saveToClientSettings(props);
-		RendererColorDiagnosticSettings.saveToClientSettings(props);
 
 		saveClientSettings(props);
 	}
@@ -15275,9 +15234,7 @@ public final class mudclient implements Runnable {
 
 	void cycleOpenGLWindowMode() {
 		OpenGLWindowSettings.Mode mode = OpenGLWindowSettings.cycleMode();
-		RendererProfileSettings.markCustom();
-		saveOpenGLWindowSettings();
-		saveRendererProfileSettings();
+		this.rendererProfileApplier.markCustomAndPersist(RendererProfileApplier.Change.WINDOW);
 		System.out.println("[renderer-v2 opengl] OpenGL window mode: " + mode.id);
 	}
 
@@ -15324,9 +15281,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void reportRendererTuningChange(String control, int level, float value) {
-		RendererProfileSettings.markCustom();
-		saveRendererTuningSettings();
-		saveRendererProfileSettings();
+		this.rendererProfileApplier.markCustomAndPersist(RendererProfileApplier.Change.TUNING);
 		String label = "terrain-relief".equals(control)
 			? "terrain shading"
 			: "object-relief".equals(control) ? "object shading" : control.replace('-', ' ');
@@ -15352,18 +15307,12 @@ public final class mudclient implements Runnable {
 	}
 
 	void cycleRenderSurfaceMode() {
-		RenderSurfaceSettings.Mode mode = RenderSurfaceSettings.cycleMode();
-		this.resizeWidth = mode.width;
-		this.resizeHeight = mode.height;
-		scalarChangedSinceLogin = true;
-		RendererProfileSettings.markCustom();
-		saveRenderSurfaceSettings();
-		saveRendererProfileSettings();
+		RenderSurfaceSettings.cycleMode();
+		this.rendererProfileApplier.markCustomAndPersist(RendererProfileApplier.Change.RENDER_SURFACE);
 	}
 
 	void cycleOpenGLRendererProfileMode() {
-		RendererProfileSettings.Mode mode = RendererProfileSettings.cycleMode();
-		applyOpenGLRendererProfileMode(mode);
+		RendererProfileSettings.Mode mode = this.rendererProfileApplier.cycleAndApply();
 		System.out.println("[renderer-v2] OpenGL renderer profile: " + mode.id);
 	}
 
@@ -15371,57 +15320,11 @@ public final class mudclient implements Runnable {
 		boolean previous = RemasteredSpriteSettings.isEnabled();
 		boolean enabled = RemasteredSpriteSettings.toggle();
 		if (enabled != previous) {
-			RendererProfileSettings.markCustom();
-			refreshAppearancePanelSprites();
-			saveRemasteredSpriteSettings();
-			saveRendererProfileSettings();
+			this.rendererProfileApplier.markCustomAndPersist(
+				RendererProfileApplier.Change.REMASTERED_SPRITES);
 		}
 		System.out.println("[remastered-sprites] " + RemasteredSpriteSettings.description()
 			+ " " + this.getSurface().getRemasteredSpriteDiagnostics());
-	}
-
-	private void applyOpenGLRendererProfileMode(RendererProfileSettings.Mode mode) {
-		if (mode != RendererProfileSettings.Mode.CUSTOM) {
-			RendererReliefSettings.resetDefaults();
-			RendererColorDiagnosticSettings.resetDefaults();
-		}
-		if (mode == RendererProfileSettings.Mode.CLASSIC) {
-			RemasteredSpriteSettings.applyClassicProfile();
-			refreshAppearancePanelSprites();
-			RendererReliefSettings.setTerrainLevel(18);
-			RendererReliefSettings.setObjectLevel(18);
-			RendererColorDiagnosticSettings.setDimnessLevel(14);
-			RendererColorDiagnosticSettings.setContrastLevel(7);
-			RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);
-			OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
-			RendererLightingSettings.setMode(RendererLightingSettings.Mode.CLASSIC);
-			RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
-			RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);
-			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
-			RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
-			RendererToneSettings.setMode(RendererToneSettings.Mode.DAY);
-			applyRenderSurfaceResize();
-		} else if (mode == RendererProfileSettings.Mode.REMASTER) {
-			RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.WIDE);
-			OpenGLWindowSettings.setMode(OpenGLWindowSettings.Mode.BORDERLESS_FULLSCREEN);
-			RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);
-			RendererGeometrySettings.setMode(RendererGeometrySettings.Mode.SMOOTH);
-			RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.ON);
-			RendererFogSettings.setMode(RendererFogSettings.Mode.ON);
-			RendererBrightnessSettings.setMode(RendererBrightnessSettings.Mode.HIGH);
-			RendererToneSettings.setMode(RendererToneSettings.Mode.CYCLE);
-			applyRenderSurfaceResize();
-		}
-		saveRenderSurfaceSettings();
-		saveOpenGLWindowSettings();
-		saveRendererFogSettings();
-		saveRendererLightingSettings();
-		saveRendererGeometrySettings();
-		saveRendererTerrainVariationSettings();
-		saveRendererToneSettings();
-		saveRendererTuningSettings();
-		saveRendererProfileSettings();
-		saveRemasteredSpriteSettings();
 	}
 
 	private void applyRenderSurfaceResize() {
@@ -15433,33 +15336,26 @@ public final class mudclient implements Runnable {
 
 	void cycleOpenGLFogMode() {
 		RendererFogSettings.Mode mode = RendererFogSettings.cycleMode();
-		RendererProfileSettings.markCustom();
-		saveRendererFogSettings();
-		saveRendererProfileSettings();
+		this.rendererProfileApplier.markCustomAndPersist(RendererProfileApplier.Change.FOG);
 		System.out.println("[renderer-v2] OpenGL fog: " + mode.id);
 	}
 
 	void cycleOpenGLLightingMode() {
 		RendererLightingSettings.Mode mode = RendererLightingSettings.cycleMode();
-		RendererProfileSettings.markCustom();
-		saveRendererLightingSettings();
-		saveRendererProfileSettings();
+		this.rendererProfileApplier.markCustomAndPersist(RendererProfileApplier.Change.LIGHTING);
 		System.out.println("[renderer-v2] OpenGL lighting: " + mode.id);
 	}
 
 	void cycleOpenGLGeometryMode() {
 		RendererGeometrySettings.Mode mode = RendererGeometrySettings.cycleMode();
-		RendererProfileSettings.markCustom();
-		saveRendererGeometrySettings();
-		saveRendererProfileSettings();
+		this.rendererProfileApplier.markCustomAndPersist(RendererProfileApplier.Change.GEOMETRY);
 		System.out.println("[renderer-v2] OpenGL geometry: " + mode.id);
 	}
 
 	void cycleOpenGLTerrainVariationMode() {
 		RendererTerrainVariationSettings.Mode mode = RendererTerrainVariationSettings.cycleMode();
-		RendererProfileSettings.markCustom();
-		saveRendererTerrainVariationSettings();
-		saveRendererProfileSettings();
+		this.rendererProfileApplier.markCustomAndPersist(
+			RendererProfileApplier.Change.TERRAIN_VARIATION);
 		System.out.println("[renderer-v2] OpenGL terrain variation: " + mode.id);
 	}
 

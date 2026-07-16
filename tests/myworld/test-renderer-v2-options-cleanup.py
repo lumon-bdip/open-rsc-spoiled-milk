@@ -5,6 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 RENDERER_SETTINGS_PANEL = ROOT / "Client_Base/src/orsc/RendererSettingsPanel.java"
+RENDERER_PROFILE_APPLIER = ROOT / "Client_Base/src/orsc/RendererProfileApplier.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
 SCALED_WINDOW = ROOT / "PC_Client/src/orsc/ScaledWindow.java"
 OPENGL_PRESENTER = ROOT / "PC_Client/src/orsc/OpenGLFramePresenter.java"
@@ -34,6 +35,7 @@ def forbid(text: str, needle: str, description: str) -> None:
 def main() -> None:
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
     settings_panel = RENDERER_SETTINGS_PANEL.read_text(encoding="utf-8")
+    profile_applier = RENDERER_PROFILE_APPLIER.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
     scaled_window = SCALED_WINDOW.read_text(encoding="utf-8")
     presenter = OPENGL_PRESENTER.read_text(encoding="utf-8")
@@ -140,21 +142,21 @@ def main() -> None:
     require(profile, 'REMASTER("remaster", "@cya@Remaster")', "Remaster preset")
     require(profile, 'CUSTOM("custom", "@yel@Custom")', "Custom preset")
     require(profile, "return REMASTER;", "Remaster default")
-    require(mudclient, "if (mode == RendererProfileSettings.Mode.CLASSIC) {", "Classic bundle")
+    require(profile_applier, "if (mode == RendererProfileSettings.Mode.CLASSIC) {", "Classic bundle")
     for setting in (
         "RendererReliefSettings.setTerrainLevel(18);",
         "RendererReliefSettings.setObjectLevel(18);",
         "RendererColorDiagnosticSettings.setDimnessLevel(14);",
         "RendererColorDiagnosticSettings.setContrastLevel(7);",
     ):
-        require(mudclient, setting, f"Classic tuning bundle {setting}")
-    require(mudclient, "RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);", "Classic 4:3 surface")
-    require(mudclient, "RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);", "Classic terrain bundle")
-    require(mudclient, "} else if (mode == RendererProfileSettings.Mode.REMASTER) {", "Remaster bundle")
-    require(mudclient, "RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.WIDE);", "Remaster 16:9 surface")
-    require(mudclient, "RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);", "Remaster directional lighting")
-    require(mudclient, "RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.ON);", "Remaster terrain bundle")
-    require(mudclient, "RendererProfileSettings.markCustom();", "manual setting Custom marker")
+        require(profile_applier, setting, f"Classic tuning bundle {setting}")
+    require(profile_applier, "RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.SVGA);", "Classic 4:3 surface")
+    require(profile_applier, "RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.OFF);", "Classic terrain bundle")
+    require(profile_applier, "} else if (mode == RendererProfileSettings.Mode.REMASTER) {", "Remaster bundle")
+    require(profile_applier, "RenderSurfaceSettings.setMode(RenderSurfaceSettings.Mode.WIDE);", "Remaster 16:9 surface")
+    require(profile_applier, "RendererLightingSettings.setMode(RendererLightingSettings.Mode.DIRECTIONAL);", "Remaster directional lighting")
+    require(profile_applier, "RendererTerrainVariationSettings.setMode(RendererTerrainVariationSettings.Mode.ON);", "Remaster terrain bundle")
+    require(profile_applier, "RendererProfileSettings.markCustom();", "manual setting Custom marker")
 
     require(lighting, 'CLASSIC("classic", "@gre@Classic")', "Classic lighting")
     require(lighting, 'DIRECTIONAL("directional", "@yel@Directional")', "Directional lighting")

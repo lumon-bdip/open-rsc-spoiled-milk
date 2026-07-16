@@ -11,6 +11,7 @@ RELIEF = ROOT / "Client_Base/src/orsc/RendererReliefSettings.java"
 COLOR = ROOT / "Client_Base/src/orsc/RendererColorDiagnosticSettings.java"
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 RENDERER_SETTINGS_PANEL = ROOT / "Client_Base/src/orsc/RendererSettingsPanel.java"
+RENDERER_PROFILE_APPLIER = ROOT / "Client_Base/src/orsc/RendererProfileApplier.java"
 SHADER = ROOT / "PC_Client/src/orsc/OpenGLShaderProgram.java"
 SHADOW_MASK = ROOT / "PC_Client/src/orsc/RemasterShadowMaskBuilder.java"
 APPLET = ROOT / "PC_Client/src/orsc/ORSCApplet.java"
@@ -152,6 +153,7 @@ def main() -> None:
     color = COLOR.read_text(encoding="utf-8")
     mudclient = MUDCLIENT.read_text(encoding="utf-8")
     settings_panel = RENDERER_SETTINGS_PANEL.read_text(encoding="utf-8")
+    profile_applier = RENDERER_PROFILE_APPLIER.read_text(encoding="utf-8")
     shader = SHADER.read_text(encoding="utf-8")
     shadow_mask = SHADOW_MASK.read_text(encoding="utf-8")
     applet = APPLET.read_text(encoding="utf-8")
@@ -237,7 +239,7 @@ def main() -> None:
             "two-line contrast slider scale")
     require(settings_panel, "private static void handleRendererTuningSliderInput(View view, Input input, int settingIndex",
             "direct slider segment selection")
-    require(mudclient, "saveRendererTuningSettings();",
+    require(profile_applier, "case TUNING:",
             "tuning changes persist")
     require(shader, '"\\tif (uRawMaterialMode == 0) {\\n"',
             "relief applies outside the Remaster-only lighting branch")
