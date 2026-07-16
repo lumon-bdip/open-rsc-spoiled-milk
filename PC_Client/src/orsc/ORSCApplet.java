@@ -61,7 +61,6 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 	protected static ScaledWindow scaledWindow;
 	private static BufferedImage game_image;
 	private static Graphics2D g2dForGameImage;
-	public static float oldRenderingScalar = 1.0f;
 	private BufferedImage directFramebufferImage;
 	private int[] directFramebufferPixels;
 	private int directFramebufferWidth;
@@ -754,11 +753,11 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 
 		long scalarResizeNanos = 0L;
 		// Re-scale when needed
-		if (orsc.mudclient.newRenderingScalar != oldRenderingScalar) {
+		if (LegacySoftwareScalingSettings.hasPendingScalarChange()) {
 			long resizeStart = RenderTelemetry.now();
-			updateRenderingScalarAndResize(orsc.mudclient.newRenderingScalar, mudclient.getGameWidth(), mudclient.getGameHeight());
+			float scalar = LegacySoftwareScalingSettings.getPendingRenderingScalar();
+			updateRenderingScalarAndResize(scalar, mudclient.getGameWidth(), mudclient.getGameHeight());
 			scalarResizeNanos = RenderTelemetry.elapsedSince(resizeStart);
-			oldRenderingScalar = orsc.mudclient.newRenderingScalar;
 		}
 
 		long backingCopyNanos = 0L;
@@ -806,8 +805,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				presentNanos,
 				frameImage.getWidth(),
 				frameImage.getHeight(),
-				orsc.mudclient.renderingScalar,
-				orsc.mudclient.scalingType,
+				LegacySoftwareScalingSettings.getRenderingScalar(),
+				LegacySoftwareScalingSettings.getScalingAlgorithm(),
 				framePath);
 		}
 	}
@@ -822,9 +821,7 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 			game_image = new BufferedImage(newWidth, newHeight, imageType);
 			RenderTelemetry.recordImageAllocation("game-image-rescale", newWidth, newHeight, imageType);
 		}
-
-		// Handle rendering scalar value changes
-		orsc.mudclient.renderingScalar = scalar;
+		LegacySoftwareScalingSettings.applyPendingScalar(scalar);
 
 		// Resize window only after it has begun rendering the game image,
 		// (ie. not the loading screen)
@@ -1036,7 +1033,8 @@ public class ORSCApplet extends Applet implements ComponentListener, ImageObserv
 				+ " | aspect " + RenderSurfaceSettings.getDebugAspectLabel()
 				+ " | fps " + displayedFps
 				+ " | proc cpu " + cpuUsage
-			: "scale " + mudclient.renderingScalar + " " + mudclient.scalingType
+			: "scale " + LegacySoftwareScalingSettings.getRenderingScalar() + " "
+				+ LegacySoftwareScalingSettings.getScalingAlgorithm()
 				+ " | fps " + displayedFps
 				+ " | proc cpu " + cpuUsage;
 		String openGLLine = telemetry.enabled

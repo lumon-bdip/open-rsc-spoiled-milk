@@ -137,10 +137,14 @@ def main() -> None:
         require(any(field in read(path) for path in paths), f"No active consumer remains for {field}")
 
     open_rsc = read("PC_Client/src/orsc/OpenRSC.java")
+    legacy_scaling = read("Client_Base/src/orsc/LegacySoftwareScalingSettings.java")
     render_surface = read("Client_Base/src/orsc/RenderSurfaceSettings.java")
     for key in ("scaling_type", "ui_scale", "scaling_scalar"):
-        require(f'props.getProperty("{key}")' in open_rsc, f"Software scaling migration key changed: {key}")
-    require("ACTIVE SOFTWARE-PRESENTER COMPATIBILITY BRIDGE" in open_rsc, "Software scaling bridge is mislabeled")
+        require(f'"{key}"' in legacy_scaling, f"Software scaling migration key changed: {key}")
+    require("LegacySoftwareScalingSettings.loadFromClientSettings(props);" in open_rsc,
+            "Desktop launcher no longer loads software scaling compatibility")
+    require("active software-presenter scaling compatibility state" in legacy_scaling,
+            "Software scaling bridge is mislabeled")
     require("persisted-setting migration" in render_surface, "Hidden render modes are not labeled as migration aliases")
     for mode in ("CLASSIC", "VGA", "WIDE_PLUS", "HD", "FULL_HD"):
         require(f"{mode}(" in render_surface, f"Persisted render-surface alias was removed: {mode}")

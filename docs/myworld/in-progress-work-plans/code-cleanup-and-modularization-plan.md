@@ -1,7 +1,8 @@
 # Code Cleanup And Modularization Plan
 
 Plan status: **active; reconciled through B01-B11 on 2026-07-16**. The
-measurements and next sequence below use published `main` commit `ecfc3b35d`.
+measurements and next sequence below use published `main` commit `2533f1c89`,
+plus the explicitly labeled focused-branch result recorded below.
 
 This is the AI-facing cleanup roadmap for Spoiled Milk code structure. It is
 not a feature plan. Its job is to keep future work from getting lost inside
@@ -43,7 +44,7 @@ code-health sequence:
 
 | File | Lines | Why It Matters |
 | --- | ---: | --- |
-| `Client_Base/src/orsc/mudclient.java` | 27,550 | Owns gameplay UI/state plus the current Graphics panel, renderer-profile application, software-scaler bridge state, external asset loading, object/wall instance arrays, movement smoothing, combat effects, projectiles, and renderer integration. This is the immediate ownership target. |
+| `Client_Base/src/orsc/mudclient.java` | 27,246 | Owns gameplay UI/state plus renderer-setting adapters, external asset loading, object/wall instance arrays, movement smoothing, combat effects, projectiles, and renderer integration. `RendererSettingsPanel` and `RendererProfileApplier` have landed; the focused scaling branch below reduces it to 27,194 lines. This remains the immediate ownership target. |
 | `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,629 | B09 moved registry storage/access, prayer-book authorship, and fallback diagnostics to focused owners. This facade still contains authored definitions, MyWorld overrides, generated families, and load order. |
 | `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,931 | Central server entity state; likely too broad for continued gameplay feature growth. |
 | `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,346 | Legacy 2D drawing plus OpenGL capture/replay instrumentation, sprite scaling, text plotting, and sprite archive loading. |
@@ -91,9 +92,10 @@ work in this plan:
    `RendererProfileApplier` and fingerprinted Classic, Remaster, Custom, resize,
    refresh, runtime-override, and persistence behavior. Merged into `main` as
    `83bf64a9d`.
-3. **Next:** extract `LegacySoftwareScalingSettings` while retaining the active
-   software presenter and all three persisted compatibility keys.
-4. Extract `ClientExternalAssetLoader` behind lookup, decode, frame-order, and
+3. **Complete on `refactor/client-legacy-software-scaling-settings`, awaiting
+   manager review:** extracted `LegacySoftwareScalingSettings` while retaining
+   the active software presenter and all three persisted compatibility keys.
+4. **Next:** extract `ClientExternalAssetLoader` behind lookup, decode, frame-order, and
    packaged-resource parity tests.
 5. Extract `ClientSceneInstanceStore` for authoritative game-object and wall
    instance state, leaving scene/collision side effects in `mudclient`.
@@ -272,7 +274,8 @@ already conceptually independent and have low gameplay risk.
     adapter. Keep General gameplay actions and Android options in `mudclient`.
   - Continue showing software scaling only when the OpenGL primary window is
     inactive; this branch delegates those actions to the existing state owner.
-  - Status: planned; detailed contract below.
+  - Status: complete and merged; detailed contract and implementation record
+    below.
 
 - `RendererProfileApplier`
   - Second branch. Move Classic/Remaster/Custom bundle application, profile
@@ -280,7 +283,8 @@ already conceptually independent and have low gameplay risk.
     affected renderer setting bundle.
   - This becomes the one place that applies a profile, but it does not replace
     the individual settings classes or move renderer authority into the UI.
-  - Status: planned; detailed contract below.
+  - Status: complete and merged; detailed contract and implementation record
+    below.
 
 - `LegacySoftwareScalingSettings`
   - Third branch. Move `renderingScalar`, `newRenderingScalar`,
@@ -289,7 +293,8 @@ already conceptually independent and have low gameplay risk.
   - Mark as active software-presenter compatibility. Removal is not part of
     this sequence because OpenGL remains optional and `ScaledWindow` is the
     maintained fallback.
-  - Status: planned; detailed contract below.
+  - Status: complete on the focused branch and awaiting manager review;
+    detailed contract and implementation record below.
 
 - `ClientExternalAssetLoader`
   - Fourth branch. Move the non-remastered external asset lookup and image
@@ -553,6 +558,35 @@ Stop if software fallback cannot reach login/world, input coordinates drift,
 the selected scale differs after restart, an ordinal/key would need migration,
 OpenGL-primary starts consuming software state, or removing a facade would
 require a package/top-level move.
+
+Implementation record (2026-07-16): the focused branch moved the scaling
+algorithm, current/pending scalar transition, login redraw flag, immutable
+allowed-scalar sequences, bounds validation, cycling, and settings
+load/persistence into a 250-line `LegacySoftwareScalingSettings`. The published
+baseline `mudclient` was 27,246 lines; it is 27,194 lines on the tested branch.
+No `mudclient` compatibility facade was retained because repository-wide
+source, reflection, script, and packaging searches found no consumer outside
+the jointly compiled desktop client. `ScaledWindow.ScalingAlgorithm` and its
+ordinals remain unchanged, while `ScaledWindow`, `ORSCApplet`, `OpenRSC`, the
+settings panel adapter, packet login handling, and telemetry now query the
+owner. The active compatibility keys remain `scaling_type`, `ui_scale`, and
+`scaling_scalar`, including `ui_scale` precedence and legacy-key fallback.
+Malformed, non-finite, and unsupported stored scalars are now bounded to the
+documented allowed values rather than reaching invalid framebuffer geometry.
+
+A compiled fixture covers every ordinal, integer/interpolation scalar
+sequence, immutable-list ownership, scale bounds, pending/current transitions,
+login redraw suppression, fractional-to-integer truncation, image types,
+headless sizing/input math, malformed/missing/out-of-range values, small-screen
+clamping, key precedence and legacy migration, unrelated-key retention,
+single-transaction persistence, and cross-process restart. The client build,
+full MyWorld suite, renderer guardrails, B07 fallback fixture, graphics and
+renderer option contracts, packaging checks, and changed-code javac,
+Checkstyle, PMD, SpotBugs, ShellCheck, and Ruff analysis pass without a new
+finding or baseline reduction. The owner privately confirmed software-fallback
+login/world presentation, all three interpolation modes and available bounds,
+resize and input mapping, Integer/1.0x persistence across restart, and normal
+OpenGL-primary aspect-fit presentation with the legacy rows hidden.
 
 #### 4. ClientExternalAssetLoader
 
@@ -1002,8 +1036,10 @@ tracking:
 The old presenter-first pass is complete through viewport/window extraction.
 The first post-B11 branch completed `RendererSettingsPanel` and was merged as
 `26145528f`; the second completed `RendererProfileApplier` and was merged as
-`83bf64a9d`. Continue with `LegacySoftwareScalingSettings`,
-`ClientExternalAssetLoader`, and `ClientSceneInstanceStore` as specified above.
+`83bf64a9d`. The third completed `LegacySoftwareScalingSettings` on
+`refactor/client-legacy-software-scaling-settings` and awaits manager review.
+After it merges, continue with `ClientExternalAssetLoader` and
+`ClientSceneInstanceStore` as specified above.
 
 Do not opportunistically combine these because they are adjacent in
 `mudclient`. Each branch must leave a tested owner, keep compatibility visible,

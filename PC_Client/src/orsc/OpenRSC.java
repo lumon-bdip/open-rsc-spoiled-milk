@@ -70,25 +70,9 @@ public class OpenRSC extends ORSCApplet {
 				RendererTerrainVariationSettings.loadFromClientSettings(props);
 				RendererToneSettings.loadFromClientSettings(props);
 				RendererExperimentalSettings.loadFromClientSettings(props);
-
-				// ACTIVE SOFTWARE-PRESENTER COMPATIBILITY BRIDGE: these persisted keys
-				// remain readable because OpenGL is optional and ScaledWindow is the
-				// maintained fallback. OpenGL-primary uses render-surface settings.
-				String scalingTypeString = props.getProperty("scaling_type");
-				String scalarString = props.getProperty("ui_scale");
-				if (scalarString == null || scalarString.isEmpty()) {
-					scalarString = props.getProperty("scaling_scalar");
-				}
-				if (scalingTypeString != null && !scalingTypeString.isEmpty()) {
-					int scalingTypeOrdinal = Integer.parseInt(scalingTypeString);
-					mudclient.scalingType = ScaledWindow.ScalingAlgorithm.values()[scalingTypeOrdinal];
-				}
-				if (scalarString != null && !scalarString.isEmpty()) {
-					ORSCApplet.oldRenderingScalar = mudclient.renderingScalar;
-					mudclient.newRenderingScalar = Float.parseFloat(scalarString);
-				}
+				LegacySoftwareScalingSettings.loadFromClientSettings(props);
 			} catch (Exception e) {
-				System.out.println("Something went wrong loading scaling settings");
+				System.out.println("Something went wrong loading client settings");
 				e.printStackTrace();
 			}
 		}

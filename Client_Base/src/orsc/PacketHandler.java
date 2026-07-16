@@ -2945,7 +2945,7 @@ public class PacketHandler {
 				// Re-validate the current scaling upon logging in, in case something
 				// went wrong during the initial window creation and resizing.
 				ScaledWindow.getInstance().validateAppletSize();
-				mudclient.scalarChangedSinceLogin = false;
+				LegacySoftwareScalingSettings.clearLoginRedrawPending();
 			}
 		}
 	}

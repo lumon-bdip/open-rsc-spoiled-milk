@@ -81,7 +81,6 @@ import java.util.regex.Pattern;
 
 import static orsc.Config.*;
 import static orsc.multiclient.ClientPort.saveHideIp;
-import static orsc.ScaledWindow.ScalingAlgorithm;
 
 public final class mudclient implements Runnable {
 
@@ -638,12 +637,18 @@ public final class mudclient implements Runnable {
 	public int[] achievementProgress = new int[500];
 	public int showUiTab = 0;
 	public boolean topMouseMenuVisible = false;
-	public static ScalingAlgorithm scalingType = ScalingAlgorithm.INTEGER_SCALING;
-	public static float renderingScalar = 1.0f;
-	public static float newRenderingScalar = 1.0f;
-	public static boolean scalarChangedSinceLogin = false;
-	public static List<Float> integerScalars = null;
-	public static List<Float> interpolationScalars = null;
+	private static final LegacySoftwareScalingSettings.SettingsStore LEGACY_SCALING_SETTINGS_STORE =
+		new LegacySoftwareScalingSettings.SettingsStore() {
+			@Override
+			public Properties load() {
+				return loadClientSettings();
+			}
+
+			@Override
+			public void save(Properties properties) {
+				saveClientSettings(properties);
+			}
+		};
 	private static final RendererProfileApplier.SettingsStore RENDERER_PROFILE_SETTINGS_STORE =
 		new RendererProfileApplier.SettingsStore() {
 			@Override
@@ -1295,17 +1300,6 @@ public final class mudclient implements Runnable {
 		loadMinimapSettings();
 	}
 
-	private static void saveScalingSettings(ScalingAlgorithm type, float scalar) {
-		// LEGACY BRIDGE: software-presenter scaling only. Do not expose this as
-		// the modern OpenGL resolution/aspect path.
-		Properties props = loadClientSettings();
-		props.setProperty("scaling_type", String.valueOf(type.ordinal()));
-		props.setProperty("ui_scale", String.valueOf(scalar));
-		props.setProperty("scaling_scalar", String.valueOf(scalar));
-
-		saveClientSettings(props);
-	}
-
 	private static void saveOpenGLPresentationSettings() {
 		Properties props = loadClientSettings();
 		OpenGLPresentationSettings.saveToClientSettings(props);
@@ -1672,14 +1666,15 @@ public final class mudclient implements Runnable {
 
 					long repositionStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
 					boolean repositioned = reposition();
-					boolean skippedDraw = repositioned || (this.currentViewMode == GameMode.LOGIN && scalarChangedSinceLogin);
+					boolean skippedDraw = repositioned || (this.currentViewMode == GameMode.LOGIN
+						&& LegacySoftwareScalingSettings.isLoginRedrawPending());
 					if (telemetryEnabled) {
 						loopRepositionNanos = RenderTelemetry.elapsedSince(repositionStart);
 					}
 					if (skippedDraw) {
 						if (this.currentViewMode == GameMode.LOGIN) {
 							this.createLoginPanels(3845);
-							scalarChangedSinceLogin = false;
+							LegacySoftwareScalingSettings.clearLoginRedrawPending();
 							//this.renderLoginScreenViewports(-116);
 						}
 						if (telemetryEnabled) {
@@ -1838,14 +1833,15 @@ public final class mudclient implements Runnable {
 					var6 &= 255;
 					long repositionStart = telemetryEnabled ? RenderTelemetry.now() : 0L;
 					boolean repositioned = reposition();
-					boolean skippedDraw = repositioned || (this.currentViewMode == GameMode.LOGIN && scalarChangedSinceLogin);
+					boolean skippedDraw = repositioned || (this.currentViewMode == GameMode.LOGIN
+						&& LegacySoftwareScalingSettings.isLoginRedrawPending());
 					if (telemetryEnabled) {
 						loopRepositionNanos = RenderTelemetry.elapsedSince(repositionStart);
 					}
 					if (skippedDraw) {
 						if (this.currentViewMode == GameMode.LOGIN) {
 							this.createLoginPanels(3845);
-							scalarChangedSinceLogin = false;
+							LegacySoftwareScalingSettings.clearLoginRedrawPending();
 							//this.renderLoginScreenViewports(-116);
 						}
 						if (telemetryEnabled) {
@@ -13582,13 +13578,11 @@ public final class mudclient implements Runnable {
 	}
 
 	private RendererSettingsPanel.State rendererSettingsState() {
-		List<Float> scalingOptions = scalingType == ScalingAlgorithm.INTEGER_SCALING
-			? integerScalars : interpolationScalars;
 		return RendererSettingsPanel.State.capture(
 			ScaledWindow.isOpenGLPrimaryWindowEnabled(),
-			scalingType,
-			renderingScalar,
-			scalingOptions,
+			LegacySoftwareScalingSettings.getScalingAlgorithm(),
+			LegacySoftwareScalingSettings.getRenderingScalar(),
+			LegacySoftwareScalingSettings.getAllowedScalars(),
 			S_SHOW_ROOF_TOGGLE,
 			C_HIDE_ROOFS,
 			S_SHOW_UNDERGROUND_FLICKER_TOGGLE,
@@ -13620,13 +13614,14 @@ public final class mudclient implements Runnable {
 	private void applyRendererSettingsAction(RendererSettingsPanel.Action action) {
 		switch (action) {
 			case SCALE_DOWN:
-				this.scaleDown();
+				LegacySoftwareScalingSettings.scaleDown(LEGACY_SCALING_SETTINGS_STORE);
 				break;
 			case SCALE_UP:
-				this.scaleUp();
+				LegacySoftwareScalingSettings.scaleUp(LEGACY_SCALING_SETTINGS_STORE);
 				break;
 			case SCALING_TYPE:
-				this.cycleScalingType();
+				LegacySoftwareScalingSettings.cycleScalingAlgorithm(
+					LEGACY_SCALING_SETTINGS_STORE);
 				break;
 			case RENDER_SURFACE:
 				this.cycleRenderSurfaceMode();
@@ -15180,53 +15175,6 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	void scaleUp() {
-		changeRenderingScalar(true);
-	}
-
-	void scaleDown() {
-		changeRenderingScalar(false);
-	}
-
-	private void changeRenderingScalar(Boolean scaleUp) {
-		scalarChangedSinceLogin = true;
-
-		final List<Float> scalars = scalingType == ScalingAlgorithm.INTEGER_SCALING ? integerScalars : interpolationScalars;
-
-		int idx = scalars.indexOf(renderingScalar);
-
-		if (scaleUp) {
-			if (idx + 1 < scalars.size()) {
-				idx += 1;
-			}
-		} else {
-			if (idx - 1 >= 0) {
-				idx -= 1;
-			}
-		}
-
-		newRenderingScalar = scalars.get(idx);
-
-		saveScalingSettings(scalingType, newRenderingScalar);
-	}
-
-	void cycleScalingType() {
-		if (scalingType == ScalingAlgorithm.INTEGER_SCALING) {
-			scalingType = ScalingAlgorithm.BILINEAR_INTERPOLATION;
-		} else if (scalingType == ScalingAlgorithm.BILINEAR_INTERPOLATION) {
-			scalingType = ScalingAlgorithm.BICUBIC_INTERPOLATION;
-		} else {
-			scalingType = ScalingAlgorithm.INTEGER_SCALING;
-
-			// When going back to integer scaling, round the scalar if needed
-			if (renderingScalar != (int) renderingScalar) {
-				newRenderingScalar = (int) renderingScalar;
-			}
-		}
-
-		saveScalingSettings(scalingType, newRenderingScalar);
-	}
-
 	void cycleOpenGLScaleMode() {
 		OpenGLPresentationSettings.cycleScaleMode();
 		saveOpenGLPresentationSettings();
@@ -15331,7 +15279,7 @@ public final class mudclient implements Runnable {
 		RenderSurfaceSettings.Mode surfaceMode = RenderSurfaceSettings.getMode();
 		this.resizeWidth = surfaceMode.width;
 		this.resizeHeight = surfaceMode.height;
-		scalarChangedSinceLogin = true;
+		LegacySoftwareScalingSettings.markLoginRedrawPending();
 	}
 
 	void cycleOpenGLFogMode() {
