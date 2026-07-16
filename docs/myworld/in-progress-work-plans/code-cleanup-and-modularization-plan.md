@@ -1,9 +1,10 @@
 # Code Cleanup And Modularization Plan
 
 Plan status: **active; reconciled through B01-B11, the five immediate
-`mudclient` ownership branches, and the post-sequence client responsibility
-reassessment on 2026-07-16**. The measurements and next sequence below use
-published `main` commit `efafde768`.
+`mudclient` ownership branches, the post-sequence client responsibility
+reassessment, and the privately verified `PredictiveTerrainPreloader`
+extraction on 2026-07-16**. The published baseline is `main` commit
+`46e8c7540`; focused-branch measurements are labeled separately below.
 
 This is the AI-facing cleanup roadmap for Spoiled Milk code structure. It is
 not a feature plan. Its job is to keep future work from getting lost inside
@@ -41,11 +42,13 @@ Cleanup should favor structural moves that unlock future renderer work:
 ## Current Hotspots
 
 Line counts measured with `wc -l` on 2026-07-16 after the completed B01-B11
-code-health sequence and five merged client ownership branches:
+code-health sequence, five merged client ownership branches, and the focused
+`PredictiveTerrainPreloader` extraction. The published-main `mudclient`
+baseline before that extraction was 26,255 lines.
 
 | File | Lines | Why It Matters |
 | --- | ---: | --- |
-| `Client_Base/src/orsc/mudclient.java` | 26,255 | Owns gameplay UI/state plus external-asset content coordination, scene/collision orchestration, movement smoothing, combat effects, projectiles, and renderer integration. The five-branch sequence removed settings, profile, scaling, asset-infrastructure, and game/wall storage authority while preserving necessary facades. |
+| `Client_Base/src/orsc/mudclient.java` | 26,171 | Owns gameplay UI/state plus external-asset content coordination, scene/collision orchestration, movement interpolation, combat effects, projectiles, and renderer integration. The completed ownership sequence also moved predictive terrain cache-warming decisions and throttle state while preserving the public and private compatibility facades. |
 | `Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java` | 9,629 | B09 moved registry storage/access, prayer-book authorship, and fallback diagnostics to focused owners. This facade still contains authored definitions, MyWorld overrides, generated families, and load order. |
 | `server/src/com/openrsc/server/model/entity/player/Player.java` | 5,931 | Central server entity state; likely too broad for continued gameplay feature growth. |
 | `Client_Base/src/orsc/graphics/two/GraphicsController.java` | 4,346 | Legacy 2D drawing plus OpenGL capture/replay instrumentation, sprite scaling, text plotting, and sprite archive loading. |
@@ -110,9 +113,13 @@ work in this plan:
    composite glue. The recommendation is one preloader-only
    `PredictiveTerrainPreloader` branch; do not treat it as authority for broader
    movement work. Merged into `main` as `965008cb2`.
-7. If the recommendation is accepted, run
-   `refactor/client-predictive-terrain-preloader` with the contract below, then
-   stop and reassess instead of rolling into interpolation.
+7. **Complete on `refactor/client-predictive-terrain-preloader`, awaiting
+   manager review:** extracted predictive cache warming, its three independent
+   throttles, coordinate conversion, waypoint/camera target selection, and
+   reset behind the existing `mudclient` facades. Automated checks and private
+   edge-walk, camera, teleport/blink, logout, reconnect, and window-close
+   verification passed. Stop and reassess instead of rolling into
+   interpolation.
 8. Defer presenter sprite-composite glue and broad combat/external-content
    moves for the reasons and stop conditions recorded in the reassessment.
 9. Then split `World`, `GraphicsController`, and telemetry by product/owner.
@@ -823,7 +830,7 @@ observable invariants, not the candidate with the largest raw line count.
 
 | Candidate | Evidence and current boundary | Impact | Confidence | Behavior risk | Estimated effort | Decision |
 | --- | --- | --- | --- | --- | --- | --- |
-| Predictive movement preloading | Source IDs/camera tables are at `mudclient.java:120-125`, nine throttle fields at `:852-860`, target/waypoint/camera decisions at `:22212-22355`, and reset at `:22382-22393`. `PacketHandler` calls the public incoming-position facade before region handling. | Medium | High | Low-medium | Small-medium | **Recommend one preloader-only branch.** |
+| Predictive movement preloading | The former `mudclient` source IDs, camera tables, nine throttle fields, target/waypoint/camera decisions, conversion, and reset now live in the 259-line `PredictiveTerrainPreloader`. `PacketHandler` still calls the public incoming-position facade before region handling. | Medium | High | Low-medium | Small-medium | **Implemented and privately verified on the focused preloader branch; awaiting manager review.** |
 | Combat-effect/projectile visuals | IDs and sprite ranges are at `mudclient.java:134-245`; sprite, mirror, queue, and detached-effect state at `:1057-1137`; scene/screen drawing at `:19024-19299`; external loading at `:19600-19747`; lookup/overlay queues at `:20187-20713`; packet-driven timing/projectile policy at `:24207-24481`. | High | High | High | Large if kept as one system | Defer the broad `CombatEffectSpriteSystem`; characterize visual-asset ownership separately from runtime orchestration. |
 | External-content coordination | The 838-line `ClientExternalAssetLoader` owns discovery/decoding, while `mudclient.java:19308-20132` still chooses equipment, altar, combat/projectile, spell, prayer, and summoning catalogs and destinations. | Medium-high | High | Medium-high | Large | Do not replace it with one new coordinator god object. Split only along destination owners. |
 | Presenter sprite composite | `OpenGLFramePresenter` is 4,068 lines. Remaining composite work spans `:1693-3007` and `:3216-3690` despite the existing 420-line `OpenGLCompositeSceneBuilder`, 271-line `OpenGLWorldSpriteRenderer`, and draw controller. | High | High | Very high | Large-extra-large | Defer until deterministic ordering/occlusion fixtures or active renderer work justify the risk. |
@@ -994,6 +1001,48 @@ After this branch, stop and reassess. Do not automatically continue into
 `MovementInterpolator`; combat visual assets may become the better next owner
 if animation work resumes, while no further client extraction is also an
 acceptable result if feature work is not being blocked.
+
+### PredictiveTerrainPreloader Implementation Record
+
+Status: complete on `refactor/client-predictive-terrain-preloader`; private
+verification passed on 2026-07-16 and the branch is ready for manager review.
+
+- Added a 259-line package-private `PredictiveTerrainPreloader` owner. It owns
+  only the three source identities, camera lookup data, nine throttle values,
+  coordinate conversion, request selection/deduplication, dispatch, and reset.
+- Reduced `mudclient.java` from the 26,255-line published baseline to 26,171
+  lines. Its incoming-position, local-target, active-movement-context, and
+  reset methods remain compatibility facades with their original call sites
+  and ordering.
+- Left movement interpolation, packet reads and snapshot staging, waypoint
+  mutation, region selection, `World` caching/loading policy, renderer/scene
+  ownership, and diagnostics in their established owners. `World.java` did
+  not change.
+- Replaced the predictive-preload source-only check with a compiled fixture.
+  It covers readiness/loading/null guards, exact and repeated calls, all three
+  independent sources, same-section cross-source behavior, plane changes,
+  reset/idempotent reset, offsets, negative floor division, waypoint ring
+  states without mutation, all eight camera directions, and exact prepared
+  request counts. Source guards continue to enforce standard/custom preload
+  ordering and blink, click, main-loop, and reset call sites.
+- Passed the full client build; focused predictive, custom movement, movement
+  diagnostics/timing, packet diagnostics/shape, CPU section-cache, region-load,
+  world-streaming, relog resident-world, rowboat lifecycle, landscape parity,
+  and server-sync checks; the complete renderer guardrail suite; and
+  changed-code javac, Checkstyle, PMD, SpotBugs, and Ruff analysis. No new
+  changed-code warning was introduced. The full MyWorld suite was not required
+  because no shared guard beyond the focused ownership test changed.
+- Private OpenGL testing passed across region-edge walking/running, camera
+  changes, teleport/blink movement, normal logout, reconnect, and native
+  window close. The branch client exited successfully; the isolated server
+  cleanly saved/unregistered the player after window close. No terrain hitch,
+  premature region swap, missing scenery, movement snap, camera regression, or
+  client exception was observed.
+
+Stop after manager review/merge and reassess remaining ownership pressure. Do
+not infer authorization for interpolation, combat visuals, external-content
+coordination, presenter composites, package moves, or top-level folder moves
+from this extraction.
 
 ## Stale And Hidden Option Audit
 
@@ -1341,10 +1390,11 @@ Do not opportunistically combine these because they are adjacent in
 and obtain private visual confirmation before handoff. The five owners are now
 stable on `main`. The documentation-only reassessment selected
 `PredictiveTerrainPreloader` as the only currently recommended next client
-boundary. If manager review accepts it, implement exactly the preloader-only
-contract above, obtain private confirmation, and stop for another ownership
-review. Broad combat visuals, movement interpolation, external-content
-coordination, and presenter composite work remain deferred.
+boundary. That focused extraction is implemented and privately verified on
+`refactor/client-predictive-terrain-preloader`, awaiting manager review. Stop
+after review/merge for another ownership assessment. Broad combat visuals,
+movement interpolation, external-content coordination, and presenter composite
+work remain deferred.
 
 ## Definition Of Done
 
@@ -1355,8 +1405,9 @@ This cleanup track is succeeding when:
   and dependencies, not a 5,000-line threshold.
 - `mudclient.java` no longer owns renderer settings UI, external asset loading,
   profile application, software-scaling state, or game/wall scene instance
-  storage directly. Combat-effect sprite management remains a later explicit
-  branch.
+  storage directly. Predictive cache-warming decisions and their throttle state
+  also have a focused owner, while movement interpolation remains explicitly in
+  `mudclient`. Combat-effect sprite management remains a later explicit branch.
 - Old scaling/resolution options are either visibly active compatibility
   (`ScaledWindow`, persisted scaler keys, hidden surface aliases) or proved
   obsolete and absent from the player UI.
