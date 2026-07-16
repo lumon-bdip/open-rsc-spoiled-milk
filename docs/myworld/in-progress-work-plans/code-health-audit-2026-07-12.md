@@ -31,7 +31,7 @@ follow-up branches against published `main` commit `4e04d42ca`.
 | B07 — `refactor/client-renderer-window-viewport` | Complete | `53bce8587` | Extracted viewport presentation and GLFW window lifecycle, added cleanup diagnostics, and restored software ownership when OpenGL is unavailable; private OpenGL/fallback verification passed. |
 | B08 — `refactor/client-packet-diagnostics` | Complete | `34d5cbb9b` | Moved movement-snapshot diagnostics and scene-baseline state out of `PacketHandler`; packet decode/mutation order and private movement/region/relog behavior were verified. |
 | B09 — `refactor/client-definition-registry` | Complete | `762aab1a5` | Separated registry storage/access, prayer-book authorship, and fallback diagnostics while preserving every catalog index and definition fingerprint. |
-| B10 — `refactor/server-equipment-spell-boundaries` | Next | — | Extract pure equipment calculations and spell classification in separately reviewable steps without balance or scheduling changes. |
+| B10 — `refactor/server-equipment-spell-boundaries` | Ready for review | — | Extracted pure equipment slot/stat calculations and spell classification/validation without balance or scheduling changes; parity tests and private verification passed. |
 | B11 — `chore/compatibility-labels-and-prune-proof` | Not started | — | Compatibility labeling and proof-before-prune cleanup remain outstanding. |
 
 B04 completed lint rollout Stages 0 and 1. B05 began Stage 2 with focused

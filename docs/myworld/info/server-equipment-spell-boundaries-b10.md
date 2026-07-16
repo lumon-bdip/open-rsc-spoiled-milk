@@ -127,7 +127,17 @@ loopback-only development server using the branch-built client:
    reconnect, and close the client. Inspect private client/server logs for new
    equipment, spell, event, or cleanup exceptions.
 
-Private runtime status: **pending owner confirmation**.
+Private runtime status: **owner-confirmed**. Using `devduck` on the loopback
+development server, the owner confirmed the requested representative equipment
+and spell checks looked normal, including the equipment/stat and spell-flow
+areas in the matrix above. The client completed its native-window close path
+with `windowCloseRequested=true`.
+
+The private client log contained no new equipment, spell, event, or cleanup
+exception. Closing the native client produced the existing server-side
+`Connection reset by peer` trace; player save, logout, and unregistration then
+completed normally. Both private processes were stopped and the cached client
+port was restored to 43605.
 
 The public server and detached live checkout are outside this branch and must
 remain untouched.
