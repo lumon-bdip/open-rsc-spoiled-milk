@@ -86,8 +86,8 @@ work in this plan:
 
 1. **Complete on `refactor/client-renderer-settings-panel`:** extracted
    `RendererSettingsPanel` without changing the Graphics/General/Android row
-   contract or any action ID. Await manager merge before starting item 2.
-2. Extract `RendererProfileApplier` and fingerprint the current Classic,
+   contract or any action ID. Merged into `main` as `26145528f`.
+2. **Next:** extract `RendererProfileApplier` and fingerprint the current Classic,
    Remaster, Custom, resize, refresh, runtime-override, and persistence behavior.
 3. Extract `LegacySoftwareScalingSettings` while retaining the active software
    presenter and all three persisted compatibility keys.
@@ -978,8 +978,8 @@ tracking:
 ## Recommended First Cleanup Pass
 
 The old presenter-first pass is complete through viewport/window extraction,
-and the first post-B11 branch completed `RendererSettingsPanel`. After that
-branch is merged, continue with `RendererProfileApplier`,
+and the first post-B11 branch completed `RendererSettingsPanel` and was merged
+as `26145528f`. Continue with `RendererProfileApplier`,
 `LegacySoftwareScalingSettings`,
 `ClientExternalAssetLoader`, and `ClientSceneInstanceStore` as specified above.
 
