@@ -101,10 +101,10 @@ work in this plan:
    `ClientExternalAssetLoader` behind lookup, decode, frame-order, and
    packaged-resource parity tests. Repository and extracted release-layout
    clients were privately verified. Merged into `main` as `6cfaa6ca7`.
-5. **Complete on `refactor/client-scene-instance-store`, awaiting manager
-   review:** extracted `ClientSceneInstanceStore` for authoritative game-object
-   and wall instance state while leaving model preparation and scene/collision
-   side effects in `mudclient`.
+5. **Complete on `refactor/client-scene-instance-store`:** extracted
+   `ClientSceneInstanceStore` for authoritative game-object and wall instance
+   state while leaving model preparation and scene/collision side effects in
+   `mudclient`. Merged into `main` as `74e4c4212`.
 6. Reassess the remaining `mudclient` responsibilities before authorizing
    combat-effect, movement, or login-scene branches.
 7. Reassess presenter sprite-composite glue only after the five `mudclient`
@@ -326,7 +326,8 @@ already conceptually independent and have low gameplay risk.
     the store.
   - Ground items remain a separate follow-up because their storage is coupled
     to render ordering, stack offsets, filters, nameplates, and menus.
-  - Status: planned; detailed contract below.
+  - Status: complete and merged as `74e4c4212`; detailed contract and
+    implementation record below.
 
 - `PredictiveTerrainPreloader`
   - Move section preload tracking for target, waypoint, and camera direction.
@@ -1126,17 +1127,16 @@ The first post-B11 branch completed `RendererSettingsPanel` and was merged as
 `26145528f`; the second completed `RendererProfileApplier` and was merged as
 `83bf64a9d`. The third completed `LegacySoftwareScalingSettings` and was merged
 as `20ffd97a8`. The fourth completed `ClientExternalAssetLoader` and was merged
-as `6cfaa6ca7`. The fifth completed `ClientSceneInstanceStore` on
-`refactor/client-scene-instance-store` and is awaiting manager review.
+as `6cfaa6ca7`. The fifth completed `ClientSceneInstanceStore` and was merged as
+`74e4c4212`.
 
 Do not opportunistically combine these because they are adjacent in
 `mudclient`. Each branch must leave a tested owner, keep compatibility visible,
 and obtain private visual confirmation before handoff. The five owners are now
-stable on their focused branches; after the scene-instance branch is merged,
-refresh the responsibility inventory and decide whether combat-effect sprites,
-movement interpolation, external content coordination, or presenter composite
-glue has the clearest next boundary. Do not authorize that implementation from
-this branch.
+stable on `main`. Next, refresh the responsibility inventory and decide whether
+combat-effect sprites, movement interpolation, external content coordination,
+or presenter composite glue has the clearest next boundary. Do not authorize
+that implementation until the reassessment is reviewed.
 
 ## Definition Of Done
 
