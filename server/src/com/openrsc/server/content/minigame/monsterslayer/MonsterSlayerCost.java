@@ -10,6 +10,9 @@ public final class MonsterSlayerCost {
 
 	private MonsterSlayerCost(Map<MonsterSlayerChallenge, Long> source) {
 		this.amounts = new EnumMap<MonsterSlayerChallenge, Long>(MonsterSlayerChallenge.class);
+		if (source.containsKey(null)) {
+			throw new IllegalArgumentException("Monster Slayer cost has a null challenge");
+		}
 		boolean positive = false;
 		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
 			Long value = source.get(challenge);
@@ -35,6 +38,9 @@ public final class MonsterSlayerCost {
 	}
 
 	public static MonsterSlayerCost single(MonsterSlayerChallenge challenge, long amount) {
+		if (challenge == null) {
+			throw new IllegalArgumentException("Monster Slayer challenge is required");
+		}
 		EnumMap<MonsterSlayerChallenge, Long> values =
 			new EnumMap<MonsterSlayerChallenge, Long>(MonsterSlayerChallenge.class);
 		values.put(challenge, amount);
@@ -42,6 +48,9 @@ public final class MonsterSlayerCost {
 	}
 
 	public long get(MonsterSlayerChallenge challenge) {
+		if (challenge == null) {
+			throw new IllegalArgumentException("Monster Slayer challenge is required");
+		}
 		Long amount = amounts.get(challenge);
 		return amount == null ? 0L : amount;
 	}

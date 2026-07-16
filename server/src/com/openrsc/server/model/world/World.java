@@ -431,7 +431,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 				getCombatOdyssey().load();
 			}
 			if (getServer().getConfig().WANT_MYWORLD) {
-				monsterSlayerData = MonsterSlayerData.loadForWorld(this);
+				setMonsterSlayerData(MonsterSlayerData.loadForWorld(this));
 			}
 		} catch (final Exception e) {
 			LOGGER.error("Error in World load()", e);
@@ -1097,6 +1097,10 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	/** Validated foundation data; null before MyWorld startup loading completes. */
 	public synchronized MonsterSlayerData getMonsterSlayerData() {
 		return monsterSlayerData;
+	}
+
+	private synchronized void setMonsterSlayerData(MonsterSlayerData data) {
+		monsterSlayerData = data;
 	}
 
 	public synchronized Market getMarket() {

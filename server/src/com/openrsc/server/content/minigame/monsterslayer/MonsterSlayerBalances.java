@@ -12,6 +12,9 @@ public final class MonsterSlayerBalances {
 
 	private MonsterSlayerBalances(Map<MonsterSlayerChallenge, Long> source) {
 		this.amounts = new EnumMap<MonsterSlayerChallenge, Long>(MonsterSlayerChallenge.class);
+		if (source.containsKey(null)) {
+			throw new IllegalArgumentException("Monster Slayer balances have a null challenge");
+		}
 		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
 			Long value = source.get(challenge);
 			long amount = value == null ? 0L : value;
@@ -32,6 +35,9 @@ public final class MonsterSlayerBalances {
 	}
 
 	public long get(MonsterSlayerChallenge challenge) {
+		if (challenge == null) {
+			throw new IllegalArgumentException("Monster Slayer challenge is required");
+		}
 		return amounts.get(challenge);
 	}
 
@@ -40,6 +46,9 @@ public final class MonsterSlayerBalances {
 	}
 
 	public MonsterSlayerBalances credit(MonsterSlayerChallenge challenge, long amount) {
+		if (challenge == null) {
+			throw new IllegalArgumentException("Monster Slayer challenge is required");
+		}
 		if (amount < 0L) {
 			throw new IllegalArgumentException("Credit must be nonnegative");
 		}
@@ -81,6 +90,9 @@ public final class MonsterSlayerBalances {
 
 	/** Computes all six post-spend values before returning a successful proposal. */
 	public SpendResult trySpend(MonsterSlayerCost unitCost, long quantity) {
+		if (unitCost == null) {
+			throw new IllegalArgumentException("Monster Slayer cost is required");
+		}
 		MonsterSlayerCost cost = unitCost.multiply(quantity);
 		if (!canAfford(cost)) {
 			return SpendResult.insufficient(this);
@@ -164,6 +176,9 @@ public final class MonsterSlayerBalances {
 		}
 
 		public synchronized MonsterSlayerBalances refund(MonsterSlayerBalances current) {
+			if (current == null) {
+				throw new IllegalArgumentException("Current Monster Slayer balances are required");
+			}
 			if (refunded) {
 				throw new IllegalStateException("Monster Slayer spend was already refunded");
 			}

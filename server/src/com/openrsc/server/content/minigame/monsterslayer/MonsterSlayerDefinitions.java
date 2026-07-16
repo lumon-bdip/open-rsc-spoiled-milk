@@ -208,6 +208,21 @@ public final class MonsterSlayerDefinitions {
 		public MonsterSlayerCost getCost() {
 			return cost;
 		}
+
+		public MonsterSlayerCost costFor(long quantity) {
+			return cost.multiply(quantity);
+		}
+
+		public long outputAmountFor(long quantity) {
+			if (quantity <= 0L) {
+				throw new IllegalArgumentException("Reward quantity must be positive");
+			}
+			try {
+				return Math.multiplyExact((long) amount, quantity);
+			} catch (ArithmeticException ex) {
+				throw new IllegalArgumentException("Monster Slayer reward output overflow", ex);
+			}
+		}
 	}
 
 	private static <T> List<T> immutableCopy(List<T> values) {

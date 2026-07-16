@@ -1,7 +1,7 @@
 # Monster Slayer Guild Plan
 
-Status: **foundation audit complete; non-player foundation implementation-ready;
-reward implementation pending the explicit decisions below**
+Status: **non-player data/state/migration foundation implemented and verified;
+player-visible activation and reward decisions remain pending**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
 Audit integration: merged into `main` as `8ec90a4d6`
@@ -706,6 +706,11 @@ exchangeable.
 ## Current Bounded Foundation Branch
 
 Branch: `feat/monster-slayer-data-state-foundation`.
+
+Implementation status: complete within the boundary below. The branch loads
+and validates definitions during MyWorld startup, but no player state is read,
+written, or migrated by runtime gameplay. Its state and migration APIs remain
+pure/uninvoked foundations for later activation branches.
 
 Scope:
 
