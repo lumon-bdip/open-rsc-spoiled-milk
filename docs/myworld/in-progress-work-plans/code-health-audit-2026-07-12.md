@@ -31,8 +31,8 @@ follow-up branches against published `main` commit `4e04d42ca`.
 | B07 — `refactor/client-renderer-window-viewport` | Complete | `53bce8587` | Extracted viewport presentation and GLFW window lifecycle, added cleanup diagnostics, and restored software ownership when OpenGL is unavailable; private OpenGL/fallback verification passed. |
 | B08 — `refactor/client-packet-diagnostics` | Complete | `34d5cbb9b` | Moved movement-snapshot diagnostics and scene-baseline state out of `PacketHandler`; packet decode/mutation order and private movement/region/relog behavior were verified. |
 | B09 — `refactor/client-definition-registry` | Complete | `762aab1a5` | Separated registry storage/access, prayer-book authorship, and fallback diagnostics while preserving every catalog index and definition fingerprint. |
-| B10 — `refactor/server-equipment-spell-boundaries` | Ready for review | — | Extracted pure equipment slot/stat calculations and spell classification/validation without balance or scheduling changes; parity tests and private verification passed. |
-| B11 — `chore/compatibility-labels-and-prune-proof` | Not started | — | Compatibility labeling and proof-before-prune cleanup remain outstanding. |
+| B10 — `refactor/server-equipment-spell-boundaries` | Complete | `c4930cb31` | Extracted pure equipment slot/stat calculations and spell classification/validation without balance or scheduling changes; parity tests and private verification passed. |
+| B11 — `chore/compatibility-labels-and-prune-proof` | Next | — | Correct misleading compatibility labels and prune only candidates with complete reference and runtime proof. |
 
 B04 completed lint rollout Stages 0 and 1. B05 began Stage 2 with focused
 failure classification and cleanup diagnostics without expanding analyzer
@@ -44,9 +44,9 @@ did the GitHub Actions run for `4e04d42ca`. Stage 2 should reduce one warning or
 failure family per focused branch; Stage 3 rule expansion remains deferred
 until those gates have completed several stable cycles.
 
-The completed work is primarily correctness and tooling foundation. The large
-the B10 server ownership refactor is still the main body of this plan and
-must retain their private runtime and visual verification gates.
+The completed work now includes the planned correctness, tooling, and major
+ownership foundations. The B11 compatibility-label and proof-before-prune
+cleanup remains and must retain its reference and runtime proof gates.
 
 ## Rating Method
 
