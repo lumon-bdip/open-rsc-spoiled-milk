@@ -2202,17 +2202,17 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	}
 
 	private void loadWorldProjectionAndView(Renderer3DFrame frame) throws Exception {
+		loadMatrix(gl.GL_PROJECTION, projectionMatrix(frame));
+		loadMatrix(gl.GL_MODELVIEW, worldViewMatrix(frame));
+	}
+
+	private void loadMatrix(int matrixMode, float[] matrix) throws Exception {
 		if (worldToClipMatrixBuffer == null) {
 			worldToClipMatrixBuffer = ByteBuffer
 				.allocateDirect(16 * 4)
 				.order(ByteOrder.nativeOrder())
 				.asFloatBuffer();
 		}
-		loadMatrix(gl.GL_PROJECTION, projectionMatrix(frame));
-		loadMatrix(gl.GL_MODELVIEW, worldViewMatrix(frame));
-	}
-
-	private void loadMatrix(int matrixMode, float[] matrix) throws Exception {
 		worldToClipMatrixBuffer.clear();
 		for (int column = 0; column < 4; column++) {
 			for (int row = 0; row < 4; row++) {

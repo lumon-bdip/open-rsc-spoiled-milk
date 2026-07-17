@@ -80,6 +80,12 @@ def main() -> None:
     require("SKY_DOME_ELEVATION_DEGREES" in chunks, "world sky needs explicit altitude rings")
     require("presentation.fogRed" in chunks, "horizon must stitch to presentation fog")
     require("frame.getFogDistance() * 0.92f" in chunks, "dome must remain inside the far clip")
+    load_matrix_start = chunks.index("private void loadMatrix(int matrixMode, float[] matrix)")
+    load_matrix_end = chunks.index("private FloatBuffer putWorldToClipMatrix", load_matrix_start)
+    require(
+        "if (worldToClipMatrixBuffer == null)" in chunks[load_matrix_start:load_matrix_end],
+        "first-frame sky drawing must initialize the shared matrix buffer",
+    )
     print("OpenGL world-anchored sky checks passed")
 
 
