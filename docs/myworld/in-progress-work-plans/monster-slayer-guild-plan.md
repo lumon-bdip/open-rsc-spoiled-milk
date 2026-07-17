@@ -37,8 +37,9 @@ the first rank.
 
 The intended tone and progression remain:
 
-- An unstamped player brings a beer to the Falador pub contact and receives a
-  deliberately silly `Fledgling` hand stamp.
+- An unstamped player brings a beer from the Rising Sun Barmaid to a dedicated
+  Monster Slayer contact in the pub and receives a deliberately silly
+  `Fledgling` hand stamp.
 - Six fixed task chains advance the player through `Initiate`, `Veteran`,
   `Elite`, `Champion`, `Hero`, and `Legend`.
 - Completed contacts offer repeatable random kill tasks for that contact's
@@ -102,27 +103,55 @@ later decision has not replaced it.
   assignment:
 
   `Your first task is one of the most difficult monsters of all. You must slay
-  my thirt. Quickly, to the bartender and fetch me a beer!`
+  my thirst. Quickly, to the barmaid and fetch me a beer!`
 
-- Fetching the beer is the first mandatory assignment. Completing it awards
-  `Fledgling`, after which the first actual monster assignment can begin.
+- The speaker is a new dedicated Monster Slayer NPC placed in the Rising Sun,
+  not Barmaid `142`. The existing Barmaid remains the person from whom the
+  player obtains the beer.
+- On return, the player may either offer the beer or say they do not have it
+  yet. Saying they do not have it ends the exchange without changing state. If
+  they choose to offer it without actually carrying a beer, the contact tells
+  them they have not got the beer yet and does not advance the quest.
+- Offering a carried beer consumes one beer and completes the introduction with
+  this exchange:
+
+  - Contact: `Excellent, I dub thee an official fledgling Monster Slayer. Hold
+    out your hand for your official stamp`
+  - Player: `Do I get an official badge as well or something?`
+  - Contact: `Nope, just the stamp`
+  - Player: `This feels cheap`
+  - Contact: `It's an honor. Return to me any time you wish to continue hunting
+    monsters!`
+
+- Completing the beer assignment awards `Fledgling`, after which talking to
+  this same contact offers the first actual mandatory monster assignment.
+- During the entire first Fledgling mandatory batch, dialogue presents only
+  the current assignment and the promise that persistent work earns the next
+  rank. It does not yet introduce challenge points, repeatable random
+  assignments, or the challenge shop.
+- Completing that first batch is the teaching/unlock moment for the distinction
+  between fixed mandatory rank assignments and optional randomized point
+  assignments, and for the Fledgling challenge shop.
 - This decision does not yet replace a `MonsterSlayer.json` monster entry: the
   beer introduction is represented by the separate intro state. The later
   player-visible implementation must synchronize the confirmed dialogue and
   single-quest lifecycle; the current foundation intentionally has no dialogue
-  or quest registration.
+  or quest registration. It must also add the dedicated NPC definition and
+  spawn and replace the foundation JSON's current Falador contact ID `142` with
+  that NPC's stable ID.
 
 ### Unresolved Opening Details
 
-- Confirm whether `thirt` is intentional character wording or should be
-  `thirst` in the final dialogue.
-- Confirm the opening task giver. The currently proposed Falador contact is
-  Barmaid `142`, who is herself the Rising Sun bartender; telling the player to
-  go "to the bartender" would be self-referential unless the speaker changes
-  or that line is adjusted.
+- Choose the dedicated contact's name, appearance, exact Rising Sun tile, and
+  whether the NPC needs ambient dialogue before recruitment. Do not repurpose
+  Barmaid `142` or disturb her existing drink, bar-crawl, and holiday behavior.
 - Choose the formal quest name, quest-list presentation, journal text, and any
   quest-point treatment. Calling the mandatory path one quest settles its
   lifecycle, but not those presentation details.
+- Decide whether the first mandatory batch accrues Fledgling points invisibly
+  and reveals them at the unlock, or awards no points before the system is
+  explained. The confirmed teaching order does not by itself settle that
+  economy/state question.
 
 ## Evidence-Backed Combat Odyssey Audit
 
@@ -309,12 +338,12 @@ Stable rank codes are part of the save contract and must never be reordered:
 | 6 | Hero | Heroes chain complete; Legends Guild available |
 | 7 | Legend | Legends chain complete; all rank shops available |
 
-Candidate contacts are existing, actively spawned NPCs; no new placement is
-needed:
+The opening contact is a new dedicated NPC. Later-rank candidates are existing,
+actively spawned NPCs and need no new placement:
 
 | Contact key | Candidate and exact active location | Existing owner | Integration boundary |
 | --- | --- | --- | --- |
-| `falador` | Barmaid `142`, Rising Sun ground floor `321,549` | `npcs/falador/Barmaid.java` | Coordinate-gate this spawn because ID `142` also exists upstairs at `320,1491`; preserve bar crawl and holiday dialogue priority. |
+| `falador` | New Monster Slayer contact, Rising Sun ground floor; exact ID/tile/name pending | New focused dialogue owner required | Add a dedicated definition and spawn. The contact directs the player to Barmaid `142` for beer; do not replace or intercept the Barmaid's existing dialogue. Update the current foundation contact ID after the new stable NPC ID is approved. |
 | `port_sarim` | Bartender `150`, Rusty Anchor `257,626` | `npcs/portsarim/Bartender.java` | Add guild options after quest/bar-crawl priority; do not replace drink service. |
 | `brimhaven` | Bartender `279`, Dead Man's Chest `451,705` | `npcs/brimhaven/BrimHavenBartender.java` | Add guild options after bar-crawl/drink behavior. |
 | `champions` | Guildmaster `111`, Champions Guild `149,557` | `npcs/varrock/Guildmaster.java` | Preserve Dragon Slayer and normal guild-access dialogue before Monster Slayer options. |
@@ -353,7 +382,9 @@ Family shape:
 }
 ```
 
-Contact/task shape:
+Contact/task shape. The `npcId: 142` below records the merged foundation data,
+not the newly confirmed final contact; a later player-visible implementation
+must replace it with the dedicated NPC's approved stable ID:
 
 ```json
 {
