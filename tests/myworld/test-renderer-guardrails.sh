@@ -12,6 +12,7 @@ renderer_tests=(
   test-client-world-streaming-backend.py
   test-desktop-graphics-options-tab.py
   test-opengl-geometry-modes.py
+	test-opengl-below-terrain.py
   test-opengl-input-modifiers.py
   test-opengl-spirit-summon-alpha.py
   test-opengl-window-viewport-extraction.py

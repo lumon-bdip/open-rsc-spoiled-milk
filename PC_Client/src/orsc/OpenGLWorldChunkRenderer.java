@@ -91,6 +91,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private static final String CHUNK_UPLOAD_BUDGET_MS_ENV =
 		"SPOILED_MILK_OPENGL_WORLD_CHUNK_UPLOAD_BUDGET_MS";
 	private static final int WORLD_CHUNK_TILE_AXIS = 144;
+	private static final int TERRAIN_TILE_SIZE = 128;
+	private static final int BELOW_TERRAIN_DEPTH = TERRAIN_TILE_SIZE * 4;
 	private static final int DEFAULT_SPATIAL_BATCH_TILE_SIZE = 12;
 	private static final int MIN_SPATIAL_BATCH_TILE_SIZE = 4;
 	private static final int MAX_SPATIAL_BATCH_TILE_SIZE = 24;
@@ -526,6 +528,141 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			gl.glDisable(gl.GL_CULL_FACE);
 			gl.glEnable(gl.GL_TEXTURE_2D);
 			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+	}
+
+	void drawBelowTerrainDepthFloor(Renderer3DFrame frame) throws Exception {
+		if (OpenGLBelowTerrainSettings.getMode() != OpenGLBelowTerrainSettings.Mode.DEPTH_FLOOR
+			|| frame == null) {
+			return;
+		}
+		BelowTerrainFloor floor = BelowTerrainFloor.from(frame.getWorldChunkFrame(), frame.getActivePlane());
+		if (floor == null) {
+			return;
+		}
+
+		loadWorldProjectionAndView(frame);
+		gl.glUseProgram(0);
+		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
+		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
+		gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+		gl.glDisableClientState(gl.GL_COLOR_ARRAY);
+		gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+		gl.glDisable(gl.GL_TEXTURE_2D);
+		gl.glDisable(gl.GL_ALPHA_TEST);
+		gl.glDisable(gl.GL_BLEND);
+		gl.glDisable(gl.GL_FOG);
+		gl.glDisable(gl.GL_CULL_FACE);
+		gl.glEnable(gl.GL_DEPTH_TEST);
+		gl.glDepthMask(false);
+		gl.glColor4f(0.004f, 0.005f, 0.008f, 1.0f);
+		try {
+			gl.glBegin(gl.GL_QUADS);
+			gl.glVertex3f(floor.minX, floor.y, floor.minZ);
+			gl.glVertex3f(floor.maxX, floor.y, floor.minZ);
+			gl.glVertex3f(floor.maxX, floor.y, floor.maxZ);
+			gl.glVertex3f(floor.minX, floor.y, floor.maxZ);
+			gl.glEnd();
+		} finally {
+			gl.glDepthMask(true);
+			gl.glDisable(gl.GL_DEPTH_TEST);
+			gl.glDisable(gl.GL_BLEND);
+			gl.glDisable(gl.GL_ALPHA_TEST);
+			gl.glDisable(gl.GL_FOG);
+			gl.glDisable(gl.GL_CULL_FACE);
+			gl.glEnable(gl.GL_TEXTURE_2D);
+			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+	}
+
+	private static final class BelowTerrainFloor {
+		private final float minX;
+		private final float maxX;
+		private final float y;
+		private final float minZ;
+		private final float maxZ;
+
+		private BelowTerrainFloor(float minX, float maxX, float y, float minZ, float maxZ) {
+			this.minX = minX;
+			this.maxX = maxX;
+			this.y = y;
+			this.minZ = minZ;
+			this.maxZ = maxZ;
+		}
+
+		private static BelowTerrainFloor from(Renderer3DWorldChunkFrame frame, int activePlane) {
+			if (frame == null) {
+				return null;
+			}
+			for (Renderer3DWorldChunkFrame.ChunkMesh chunk : frame.getChunks()) {
+				if (!isActiveTerrainChunk(chunk, activePlane)) {
+					continue;
+				}
+				BelowTerrainFloor floor = chunk.hasWorldEditorTerrainGrid()
+					? fromTerrainGrid(chunk)
+					: fromTerrainTriangles(chunk);
+				if (floor != null) {
+					return floor;
+				}
+			}
+			return null;
+		}
+
+		private static BelowTerrainFloor fromTerrainGrid(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+			int axis = chunk.getWorldEditorTerrainGridAxis();
+			if (axis < 2) {
+				return null;
+			}
+			int maxY = Integer.MIN_VALUE;
+			for (int index = 0; index < axis * axis; index++) {
+				maxY = Math.max(maxY, chunk.getWorldEditorTerrainGridHeight(index));
+			}
+			float maxCoord = (axis - 1) * TERRAIN_TILE_SIZE;
+			return new BelowTerrainFloor(
+				0.0f,
+				maxCoord,
+				maxY + BELOW_TERRAIN_DEPTH,
+				0.0f,
+				maxCoord);
+		}
+
+		private static BelowTerrainFloor fromTerrainTriangles(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+			int minX = Integer.MAX_VALUE;
+			int maxX = Integer.MIN_VALUE;
+			int maxY = Integer.MIN_VALUE;
+			int minZ = Integer.MAX_VALUE;
+			int maxZ = Integer.MIN_VALUE;
+			int triangleCount = Math.min(chunk.getTriangleCount(), chunk.getIndexCount() / 3);
+			for (int triangle = 0; triangle < triangleCount; triangle++) {
+				if (chunk.getTriangleModelKind(triangle) != Renderer3DModelKind.TERRAIN) {
+					continue;
+				}
+				for (int corner = 0; corner < 3; corner++) {
+					int vertex = chunk.getIndex(triangle * 3 + corner);
+					if (vertex < 0 || vertex >= chunk.getVertexCount()) {
+						continue;
+					}
+					int coord = vertex * POSITION_COMPONENT_COUNT;
+					minX = Math.min(minX, chunk.getVertexCoord(coord));
+					maxX = Math.max(maxX, chunk.getVertexCoord(coord));
+					maxY = Math.max(maxY, chunk.getVertexCoord(coord + 1));
+					minZ = Math.min(minZ, chunk.getVertexCoord(coord + 2));
+					maxZ = Math.max(maxZ, chunk.getVertexCoord(coord + 2));
+				}
+			}
+			if (minX == Integer.MAX_VALUE || minZ == Integer.MAX_VALUE) {
+				return null;
+			}
+			return new BelowTerrainFloor(minX, maxX, maxY + BELOW_TERRAIN_DEPTH, minZ, maxZ);
+		}
+
+		private static boolean isActiveTerrainChunk(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			int activePlane) {
+			return chunk != null
+				&& chunk.getChunkRole() == Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD
+				&& chunk.getPlane() == activePlane
+				&& (chunk.getTerrainTriangles() > 0 || chunk.hasWorldEditorTerrainGrid());
 		}
 	}
 

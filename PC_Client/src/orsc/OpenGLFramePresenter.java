@@ -1634,6 +1634,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 				chunkDrawStats.culledBatches,
 				chunkDrawStats.drawCalls,
 				chunkDrawStats.textureBinds);
+			worldChunkRenderer.drawBelowTerrainDepthFloor(frame.renderer3DFrame);
 			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		}
 		if (canDrawProjectedMesh && drawProjectedObjectMeshVisible) {
