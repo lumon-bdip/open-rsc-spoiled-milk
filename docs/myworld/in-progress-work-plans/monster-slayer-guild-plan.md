@@ -140,6 +140,70 @@ later decision has not replaced it.
   spawn and replace the foundation JSON's current Falador contact ID `142` with
   that NPC's stable ID.
 
+### Confirmed: Fledgling Assignments And Initiate Reveal
+
+The first monster batch deliberately stays with creatures rather than people.
+Goblins are the opening exception to the non-humanoid preference. Exact NPC IDs
+keep the early and late versions of otherwise identically named creatures from
+collapsing into one task.
+
+| Order | Assignment wording | Counted NPC IDs and repository combat levels | Kills |
+| ---: | --- | --- | ---: |
+| 1 | Goblins | Goblin `62` (level 7) | 40 |
+| 2 | Young giant spiders | Giant Spider `23` (level 8) | 40 |
+| 3 | Tougher goblins | Goblins `4,153,154` (level 13) | 50 |
+| 4 | Large rats | Rats `47,177` (level 13) | 50 |
+| 5 | Scorpions | Scorpion `70` (level 21) | 45 |
+| 6 | Bears | Bears `8,188` (levels 24 and 26) | 45 |
+| 7 | Desert wolves | Desert Wolf `721` (level 31) | 15 |
+| 8 | Black unicorns | Black Unicorn `296` (level 31) | 12 |
+| 9 | Giant spiders (level 31) | Giant Spider `74` (level 31) | 10 |
+
+The batch is nine assignments and 307 kills. The level-13-to-21 gap is
+intentional: repository inventory found no broadly accessible, non-humanoid
+middle target. Dungeon Rats `367` are concentrated in Clock Tower and
+Underground Pass spaces and must not become an implicit quest gate. Cows are
+livestock; dwarves and dark wizards conflict with the creature-focused tone;
+Poison Scorpions introduce an inappropriate cure requirement at this rank.
+
+The three final assignments are short environmental trials rather than grind
+counts. Desert Wolves require Shantay Pass and desert-heat preparation. All ten
+active Black Unicorn spawns are in the Wilderness. Five of seven level-31 Giant
+Spider spawns are in the Wilderness and the other two are isolated underground.
+The task giver must warn the player clearly about desert preparation and
+Wilderness exposure before assigning those stages; the danger is intentional,
+not hidden accessibility debt.
+
+After the ninth kill task, the contact:
+
+- congratulates the player for doing a fine job culling the monsters, despite
+  there appearing to be just as many monsters as before;
+- advances the player from `Fledgling` to `Initiate` and presents proof of the
+  new rank as a sticker that can supposedly be displayed wherever the player
+  chooses;
+- explains through comedic banter that hand stamps have been retired because
+  they are far too impermanent, while stickers are obviously much better;
+- reveals that the completed mandatory assignments have already been accruing
+  Fledgling Slayer Points even though the system was not explained yet;
+- opens the first challenge shop and explains that randomized assignments will
+  always be available from this contact for earning more Fledgling Slayer
+  Points; and
+- introduces the first shop as a source of low-level food and potions. Exact
+  stock, quantities, and prices remain a separate economy decision.
+
+This confirms invisible accrual during the first batch: completion dialogue
+must reveal the actual balance, not award a second retroactive grant. The
+currency's player-facing name is `Fledgling Slayer Points`; internally it
+remains the typed `FLEDGLING` challenge balance. Dialogue wording should remain
+light and comedic, but the exact post-batch script is not yet locked.
+
+The merged foundation does not match this decision. A later implementation
+sync must replace its five Falador tasks/500 kills and humanoid/livestock
+families with the nine tasks/307 kills above, define the newly required
+families without overlapping NPC IDs, and update the affected totals and
+fixtures. No player-visible Monster Slayer state currently makes those
+foundation task keys a live compatibility contract.
+
 ### Unresolved Opening Details
 
 - Choose the dedicated contact's name, appearance, exact Rising Sun tile, and
@@ -148,10 +212,17 @@ later decision has not replaced it.
 - Choose the formal quest name, quest-list presentation, journal text, and any
   quest-point treatment. Calling the mandatory path one quest settles its
   lifecycle, but not those presentation details.
-- Decide whether the first mandatory batch accrues Fledgling points invisibly
-  and reveals them at the unlock, or awards no points before the system is
-  explained. The confirmed teaching order does not by itself settle that
-  economy/state question.
+- Decide whether the Initiate sticker is dialogue-only rank flavor, a physical
+  inventory item, or a displayable cosmetic. If it is an item, tradeability,
+  death behavior, duplicate prevention, storage, reclaim, and whether it is
+  consumed when displayed all require explicit contracts.
+- Set the nine mandatory-task point awards and resulting first revealed balance.
+  Retaining the foundation's 25-point Fledgling total is the current
+  recommendation, but has not been approved merely by confirming invisible
+  accrual.
+- Choose the exact low-level food and potion stock, quantities, and Fledgling
+  Slayer Point costs. Evaluate each against normal Cooking and Herblaw effort
+  before approval.
 
 ## Evidence-Backed Combat Odyssey Audit
 
@@ -484,7 +555,12 @@ Load-time/CI validation must reject:
 - a launch reward with no positive native-currency cost. Higher-tier launch
   rewards may additionally require any selected lower-tier balances.
 
-### Validated Launch Family Inventory And Tuning
+### Current Foundation Family Inventory And Tuning
+
+The table in this subsection records the merged foundation baseline. Its five
+Falador rows, five Falador repeatables, and aggregate totals are superseded by
+the confirmed Fledgling design above and require a later implementation sync.
+The remaining rows are still informed starting points, not immutable decisions.
 
 Spawn counts below are active location records for the current MyWorld load set:
 base `NpcLocs.json`, enabled discontinued/mod-room/runecraft/auction/harvesting/
@@ -529,7 +605,7 @@ one active static spawn.
 | Legends | `legends.black_dragons` / `black_dragon` | `291` | 4 | 100 | 40 | 35 |
 | Legends | `legends.king_black_dragon` / `king_black_dragon` | `477` | 1 | 1 | not random | 50 |
 
-Launch totals and recommendations:
+Merged foundation totals, retained as synchronization evidence:
 
 | Band/challenge currency | Mandatory tasks | Mandatory kills | Native currency awarded | Random repeatable pool |
 | --- | ---: | ---: | ---: | ---: |
@@ -545,6 +621,12 @@ This cuts the mandatory wall to about 12 percent of the old 40,906 kills while
 keeping a substantial rank path. The six values form a balance vector, not a
 625-point pool. Supply redemption and optional expensive rewards can extend the
 lifetime hunt through repeatables without delaying shop access.
+
+If every later band remains unchanged, the confirmed Fledgling replacement
+changes the target mandatory inventory from 33 tasks/5,026 kills to 37
+tasks/4,833 kills. The overall point vector and repeatable count cannot be
+restated as settled totals until the nine Fledgling point awards and new
+Fledgling randomized pool are approved.
 
 Repeatable policy:
 
