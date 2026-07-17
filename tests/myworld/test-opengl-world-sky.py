@@ -78,6 +78,16 @@ def main() -> None:
     require("getCameraRotationY()" in sky_view, "sky view must follow camera yaw")
     require("getCameraOffset" not in sky_view, "sky view must ignore camera translation")
     require("SKY_DOME_ELEVATION_DEGREES" in chunks, "world sky needs explicit altitude rings")
+    require(
+        chunks.index("drawWorldSkyDome(radius, presentation);")
+        < chunks.index("drawWorldSkyDiagnosticMarkers(radius);"),
+        "diagnostic sky landmarks must draw over the dome",
+    )
+    require(
+        chunks.count("drawWorldSkyDiagnosticMarker(radius,") == 5,
+        "comparison dome must provide five distributed landmarks",
+    )
+    require("gl.glColor4f(1.0f, 0.08f, 0.62f, 1.0f);" in chunks, "landmarks must be bright pink")
     require("presentation.fogRed" in chunks, "horizon must stitch to presentation fog")
     require("frame.getFogDistance() * 0.92f" in chunks, "dome must remain inside the far clip")
     load_matrix_start = chunks.index("private void loadMatrix(int matrixMode, float[] matrix)")

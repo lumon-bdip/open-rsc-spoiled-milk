@@ -109,9 +109,11 @@ The first dome comparison is enabled with:
 SPOILED_MILK_OPENGL_SKY=world-dome
 ```
 
-It deliberately begins without clouds. This isolates whether camera rotation,
-horizon stability, gradient scale, and fog stitching establish the intended
-physical space before cloud geometry adds another moving reference.
+It deliberately begins without clouds. Bright pink world-space discs at fixed
+azimuths and elevations provide temporary diagnostic landmarks: they should
+move only in response to camera rotation, never player translation. This
+isolates camera/horizon stability before authored cloud geometry adds a less
+precise moving reference.
 
 ## Visual Comparison Checklist
 

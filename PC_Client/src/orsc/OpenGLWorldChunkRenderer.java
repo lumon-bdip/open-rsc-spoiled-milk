@@ -603,6 +603,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		float radius = Math.max(2048.0f, frame.getFogDistance() * 0.92f);
 		try {
 			drawWorldSkyDome(radius, presentation);
+			drawWorldSkyDiagnosticMarkers(radius);
 		} finally {
 			gl.glDisable(gl.GL_DEPTH_TEST);
 			gl.glDisable(gl.GL_BLEND);
@@ -612,6 +613,96 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			gl.glEnable(gl.GL_TEXTURE_2D);
 			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		}
+	}
+
+	private void drawWorldSkyDiagnosticMarkers(float radius) throws Exception {
+		drawWorldSkyDiagnosticMarker(radius, -18.0f, 0.0f, 0.045f);
+		drawWorldSkyDiagnosticMarker(radius, -36.0f, 58.0f, 0.038f);
+		drawWorldSkyDiagnosticMarker(radius, -24.0f, 132.0f, 0.050f);
+		drawWorldSkyDiagnosticMarker(radius, -52.0f, 218.0f, 0.042f);
+		drawWorldSkyDiagnosticMarker(radius, -30.0f, 302.0f, 0.047f);
+	}
+
+	private void drawWorldSkyDiagnosticMarker(
+		float radius,
+		float elevationDegrees,
+		float azimuthDegrees,
+		float sizeFraction) throws Exception {
+		double elevation = Math.toRadians(elevationDegrees);
+		double azimuth = Math.toRadians(azimuthDegrees);
+		float cosElevation = (float) Math.cos(elevation);
+		float sinElevation = (float) Math.sin(elevation);
+		float sinAzimuth = (float) Math.sin(azimuth);
+		float cosAzimuth = (float) Math.cos(azimuth);
+		float directionX = cosElevation * sinAzimuth;
+		float directionY = sinElevation;
+		float directionZ = cosElevation * cosAzimuth;
+		float centerRadius = radius * 0.965f;
+		float centerX = directionX * centerRadius;
+		float centerY = directionY * centerRadius;
+		float centerZ = directionZ * centerRadius;
+		float tangentX = cosAzimuth;
+		float tangentY = 0.0f;
+		float tangentZ = -sinAzimuth;
+		float verticalX = -sinElevation * sinAzimuth;
+		float verticalY = cosElevation;
+		float verticalZ = -sinElevation * cosAzimuth;
+		float markerRadius = radius * sizeFraction;
+
+		gl.glColor4f(1.0f, 0.08f, 0.62f, 1.0f);
+		gl.glBegin(gl.GL_TRIANGLES);
+		for (int segment = 0; segment < 24; segment++) {
+			drawWorldSkyMarkerVertex(centerX, centerY, centerZ);
+			drawWorldSkyMarkerEdge(
+				centerX,
+				centerY,
+				centerZ,
+				tangentX,
+				tangentY,
+				tangentZ,
+				verticalX,
+				verticalY,
+				verticalZ,
+				markerRadius,
+				segment * Math.PI * 2.0 / 24.0);
+			drawWorldSkyMarkerEdge(
+				centerX,
+				centerY,
+				centerZ,
+				tangentX,
+				tangentY,
+				tangentZ,
+				verticalX,
+				verticalY,
+				verticalZ,
+				markerRadius,
+				(segment + 1) * Math.PI * 2.0 / 24.0);
+		}
+		gl.glEnd();
+	}
+
+	private void drawWorldSkyMarkerEdge(
+		float centerX,
+		float centerY,
+		float centerZ,
+		float tangentX,
+		float tangentY,
+		float tangentZ,
+		float verticalX,
+		float verticalY,
+		float verticalZ,
+		float radius,
+		double angle) throws Exception {
+		float tangentAmount = radius * (float) Math.cos(angle);
+		float verticalAmount = radius * (float) Math.sin(angle);
+		drawWorldSkyMarkerVertex(
+			centerX + tangentX * tangentAmount + verticalX * verticalAmount,
+			centerY + tangentY * tangentAmount + verticalY * verticalAmount,
+			centerZ + tangentZ * tangentAmount + verticalZ * verticalAmount);
+	}
+
+	private void drawWorldSkyMarkerVertex(float x, float y, float z) throws Exception {
+		gl.glVertex3f(x, y, z);
 	}
 
 	private void drawWorldSkyDome(
