@@ -1,13 +1,13 @@
 package orsc;
 
-/** Runtime-only switch for reversible below-terrain visual experiments. */
-final class OpenGLBelowTerrainSettings {
-	private static final String MODE_PROPERTY = "spoiledmilk.openglBelowTerrain";
-	private static final String MODE_ENV = "SPOILED_MILK_OPENGL_BELOW_TERRAIN";
+/** Runtime switch used to compare the legacy screen sky with world-anchored prototypes. */
+final class OpenGLSkySettings {
+	private static final String MODE_PROPERTY = "spoiledmilk.openglSky";
+	private static final String MODE_ENV = "SPOILED_MILK_OPENGL_SKY";
 
 	private static volatile Mode mode = Mode.from(readRuntimeSetting());
 
-	private OpenGLBelowTerrainSettings() {
+	private OpenGLSkySettings() {
 	}
 
 	static Mode getMode() {
@@ -15,7 +15,7 @@ final class OpenGLBelowTerrainSettings {
 	}
 
 	static Mode setMode(Mode next) {
-		mode = next == null ? Mode.DEPTH_FLOOR : next;
+		mode = next == null ? Mode.SCREEN : next;
 		return mode;
 	}
 
@@ -28,8 +28,8 @@ final class OpenGLBelowTerrainSettings {
 	}
 
 	enum Mode {
-		OFF("off"),
-		DEPTH_FLOOR("depth-floor");
+		SCREEN("screen"),
+		WORLD_DOME("world-dome");
 
 		final String id;
 
@@ -39,22 +39,22 @@ final class OpenGLBelowTerrainSettings {
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return DEPTH_FLOOR;
+				return SCREEN;
 			}
 			String normalized = value.trim().toLowerCase().replace('_', '-');
-			if ("none".equals(normalized) || "false".equals(normalized) || "disabled".equals(normalized)) {
-				return OFF;
+			if ("legacy".equals(normalized) || "flat".equals(normalized)) {
+				return SCREEN;
 			}
-			if ("floor".equals(normalized) || "depth".equals(normalized) || "true".equals(normalized)) {
-				return DEPTH_FLOOR;
+			if ("dome".equals(normalized) || "sphere".equals(normalized) || "world".equals(normalized)) {
+				return WORLD_DOME;
 			}
 			for (Mode candidate : values()) {
 				if (candidate.id.equals(normalized)) {
 					return candidate;
 				}
 			}
-			System.out.println("[renderer-v2] Unknown below-terrain mode '" + value + "'; using depth-floor.");
-			return DEPTH_FLOOR;
+			System.out.println("[renderer-v2] Unknown OpenGL sky '" + value + "'; using screen.");
+			return SCREEN;
 		}
 	}
 }

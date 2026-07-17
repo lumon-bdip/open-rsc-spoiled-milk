@@ -93,6 +93,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private static final int WORLD_CHUNK_TILE_AXIS = 144;
 	private static final int TERRAIN_TILE_SIZE = 128;
 	private static final int BELOW_TERRAIN_DEPTH = TERRAIN_TILE_SIZE * 4;
+	private static final int SKY_DOME_SEGMENTS = 40;
+	private static final float[] SKY_DOME_ELEVATION_DEGREES = new float[] {
+		-90.0f, -68.0f, -48.0f, -30.0f, -15.0f, 0.0f, 12.0f, 30.0f, 60.0f, 90.0f
+	};
 	private static final int DEFAULT_SPATIAL_BATCH_TILE_SIZE = 12;
 	private static final int MIN_SPATIAL_BATCH_TILE_SIZE = 4;
 	private static final int MAX_SPATIAL_BATCH_TILE_SIZE = 24;
@@ -573,6 +577,108 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			gl.glEnable(gl.GL_TEXTURE_2D);
 			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		}
+	}
+
+	void drawWorldAnchoredSky(
+		Renderer3DFrame frame,
+		RendererDayNightCycle.Presentation presentation) throws Exception {
+		if (frame == null || presentation == null) {
+			return;
+		}
+
+		loadMatrix(gl.GL_PROJECTION, projectionMatrix(frame));
+		loadMatrix(gl.GL_MODELVIEW, skyViewMatrix(frame));
+		gl.glUseProgram(0);
+		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
+		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
+		gl.glDisableClientState(gl.GL_VERTEX_ARRAY);
+		gl.glDisableClientState(gl.GL_COLOR_ARRAY);
+		gl.glDisableClientState(gl.GL_TEXTURE_COORD_ARRAY);
+		gl.glDisable(gl.GL_TEXTURE_2D);
+		gl.glDisable(gl.GL_ALPHA_TEST);
+		gl.glDisable(gl.GL_BLEND);
+		gl.glDisable(gl.GL_FOG);
+		gl.glDisable(gl.GL_CULL_FACE);
+		gl.glDisable(gl.GL_DEPTH_TEST);
+		float radius = Math.max(2048.0f, frame.getFogDistance() * 0.92f);
+		try {
+			drawWorldSkyDome(radius, presentation);
+		} finally {
+			gl.glDisable(gl.GL_DEPTH_TEST);
+			gl.glDisable(gl.GL_BLEND);
+			gl.glDisable(gl.GL_ALPHA_TEST);
+			gl.glDisable(gl.GL_FOG);
+			gl.glDisable(gl.GL_CULL_FACE);
+			gl.glEnable(gl.GL_TEXTURE_2D);
+			gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+	}
+
+	private void drawWorldSkyDome(
+		float radius,
+		RendererDayNightCycle.Presentation presentation) throws Exception {
+		gl.glBegin(gl.GL_QUADS);
+		for (int ring = 0; ring + 1 < SKY_DOME_ELEVATION_DEGREES.length; ring++) {
+			float upperElevation = SKY_DOME_ELEVATION_DEGREES[ring];
+			float lowerElevation = SKY_DOME_ELEVATION_DEGREES[ring + 1];
+			for (int segment = 0; segment < SKY_DOME_SEGMENTS; segment++) {
+				float firstAzimuth = segment * 360.0f / SKY_DOME_SEGMENTS;
+				float secondAzimuth = (segment + 1) * 360.0f / SKY_DOME_SEGMENTS;
+				applyWorldSkyColor(presentation, upperElevation);
+				drawWorldSkyVertex(radius, upperElevation, firstAzimuth);
+				drawWorldSkyVertex(radius, upperElevation, secondAzimuth);
+				applyWorldSkyColor(presentation, lowerElevation);
+				drawWorldSkyVertex(radius, lowerElevation, secondAzimuth);
+				drawWorldSkyVertex(radius, lowerElevation, firstAzimuth);
+			}
+		}
+		gl.glEnd();
+	}
+
+	private void drawWorldSkyVertex(float radius, float elevationDegrees, float azimuthDegrees) throws Exception {
+		double elevation = Math.toRadians(elevationDegrees);
+		double azimuth = Math.toRadians(azimuthDegrees);
+		float horizontalRadius = radius * (float) Math.cos(elevation);
+		gl.glVertex3f(
+			horizontalRadius * (float) Math.sin(azimuth),
+			radius * (float) Math.sin(elevation),
+			horizontalRadius * (float) Math.cos(azimuth));
+	}
+
+	private void applyWorldSkyColor(
+		RendererDayNightCycle.Presentation presentation,
+		float elevationDegrees) throws Exception {
+		float horizonRed = presentation.fogRed;
+		float horizonGreen = presentation.fogGreen;
+		float horizonBlue = presentation.fogBlue;
+		if (elevationDegrees >= 0.0f) {
+			float below = smoothSkyAmount(elevationDegrees / 90.0f);
+			gl.glColor4f(
+				mixSky(horizonRed, horizonRed * 0.34f, below),
+				mixSky(horizonGreen, horizonGreen * 0.36f, below),
+				mixSky(horizonBlue, horizonBlue * 0.44f, below),
+				1.0f);
+			return;
+		}
+
+		float altitude = smoothSkyAmount(-elevationDegrees / 90.0f);
+		float zenithRed = clampStatic(presentation.skyRed * 0.58f, 0.0f, 1.0f);
+		float zenithGreen = clampStatic(presentation.skyGreen * 0.70f, 0.0f, 1.0f);
+		float zenithBlue = clampStatic(presentation.skyBlue * 1.08f, 0.0f, 1.0f);
+		gl.glColor4f(
+			mixSky(horizonRed, zenithRed, altitude),
+			mixSky(horizonGreen, zenithGreen, altitude),
+			mixSky(horizonBlue, zenithBlue, altitude),
+			1.0f);
+	}
+
+	private static float smoothSkyAmount(float value) {
+		float clamped = clampStatic(value, 0.0f, 1.0f);
+		return clamped * clamped * (3.0f - 2.0f * clamped);
+	}
+
+	private static float mixSky(float from, float to, float amount) {
+		return from + (to - from) * clampStatic(amount, 0.0f, 1.0f);
 	}
 
 	private static final class BelowTerrainFloor {
@@ -2154,6 +2260,20 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			-frame.getCameraOffsetX(),
 			-frame.getCameraOffsetY(),
 			-frame.getCameraOffsetZ());
+		if (frame.getCameraRotationZ() != 0) {
+			view = multiply(rotationZMatrix(frame.getCameraRotationZ()), view);
+		}
+		if (frame.getCameraRotationY() != 0) {
+			view = multiply(rotationYMatrix(frame.getCameraRotationY()), view);
+		}
+		if (frame.getCameraRotationX() != 0) {
+			view = multiply(rotationXMatrix(frame.getCameraRotationX()), view);
+		}
+		return view;
+	}
+
+	private float[] skyViewMatrix(Renderer3DFrame frame) {
+		float[] view = translationMatrix(0.0f, 0.0f, 0.0f);
 		if (frame.getCameraRotationZ() != 0) {
 			view = multiply(rotationZMatrix(frame.getCameraRotationZ()), view);
 		}

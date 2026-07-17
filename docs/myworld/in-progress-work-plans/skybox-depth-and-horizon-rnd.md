@@ -1,6 +1,6 @@
 # Skybox, Horizon, And Below-Terrain Visual R&D
 
-Status: active visual comparison; no final direction selected.
+Status: below-terrain depth floor accepted; sky comparison remains active.
 
 ## Reproduction Baseline
 
@@ -49,7 +49,9 @@ Runtime switch:
 SPOILED_MILK_OPENGL_BELOW_TERRAIN=depth-floor
 ```
 
-The default is `off`; classic/software rendering is unchanged.
+The owner visually accepted this result around ladders and surrounding terrain.
+It is now the OpenGL default, with `SPOILED_MILK_OPENGL_BELOW_TERRAIN=off`
+retained as a diagnostic escape hatch. Classic/software rendering is unchanged.
 
 ### B. Hole edges and terrain skirts (likely refinement)
 
@@ -100,6 +102,16 @@ A cube is easier to author but risks visible corners with gradients. A sphere
 or low-poly dome is the best first geometric comparison. The current
 screen-space sky should remain available until visual comparison confirms that
 the new horizon, camera tilt, fog seam, and night behavior are all better.
+
+The first dome comparison is enabled with:
+
+```bash
+SPOILED_MILK_OPENGL_SKY=world-dome
+```
+
+It deliberately begins without clouds. This isolates whether camera rotation,
+horizon stability, gradient scale, and fog stitching establish the intended
+physical space before cloud geometry adds another moving reference.
 
 ## Visual Comparison Checklist
 

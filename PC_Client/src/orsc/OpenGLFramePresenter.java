@@ -1117,6 +1117,13 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private void drawSkyBackdrop(Frame frame, RendererDayNightCycle.Presentation presentation) throws Exception {
+		if (OpenGLSkySettings.getMode() == OpenGLSkySettings.Mode.WORLD_DOME
+			&& worldChunkRenderer != null
+			&& frame != null
+			&& frame.renderer3DFrame != null) {
+			worldChunkRenderer.drawWorldAnchoredSky(frame.renderer3DFrame, presentation);
+			return;
+		}
 		useUnitProjection();
 		gl.glDisable(gl.GL_DEPTH_TEST);
 		gl.glDisable(gl.GL_TEXTURE_2D);

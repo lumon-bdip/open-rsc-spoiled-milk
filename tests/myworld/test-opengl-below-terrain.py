@@ -27,8 +27,9 @@ def settings_fixture() -> None:
 
         public final class BelowTerrainSettingsFixture {
             public static void main(String[] args) {
-                require(OpenGLBelowTerrainSettings.Mode.from(null) == OpenGLBelowTerrainSettings.Mode.OFF,
-                    "missing setting must be off");
+                require(OpenGLBelowTerrainSettings.Mode.from(null)
+                    == OpenGLBelowTerrainSettings.Mode.DEPTH_FLOOR,
+                    "missing setting must use accepted depth floor");
                 require(OpenGLBelowTerrainSettings.Mode.from("off") == OpenGLBelowTerrainSettings.Mode.OFF,
                     "off setting");
                 require(OpenGLBelowTerrainSettings.Mode.from("depth-floor")
@@ -36,13 +37,15 @@ def settings_fixture() -> None:
                 require(OpenGLBelowTerrainSettings.Mode.from("floor")
                     == OpenGLBelowTerrainSettings.Mode.DEPTH_FLOOR, "floor alias");
                 require(OpenGLBelowTerrainSettings.Mode.from("unknown")
-                    == OpenGLBelowTerrainSettings.Mode.OFF, "unknown setting must fail closed");
+                    == OpenGLBelowTerrainSettings.Mode.DEPTH_FLOOR,
+                    "unknown setting must retain accepted default");
                 OpenGLBelowTerrainSettings.setMode(OpenGLBelowTerrainSettings.Mode.DEPTH_FLOOR);
                 require(OpenGLBelowTerrainSettings.getMode()
                     == OpenGLBelowTerrainSettings.Mode.DEPTH_FLOOR, "runtime comparison override");
                 OpenGLBelowTerrainSettings.setMode(null);
-                require(OpenGLBelowTerrainSettings.getMode() == OpenGLBelowTerrainSettings.Mode.OFF,
-                    "null override must disable experiment");
+                require(OpenGLBelowTerrainSettings.getMode()
+                    == OpenGLBelowTerrainSettings.Mode.DEPTH_FLOOR,
+                    "null override must restore accepted default");
             }
 
             private static void require(boolean condition, String message) {
