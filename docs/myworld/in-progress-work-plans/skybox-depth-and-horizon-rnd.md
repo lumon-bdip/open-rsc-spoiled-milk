@@ -1,6 +1,7 @@
 # Skybox, Horizon, And Below-Terrain Visual R&D
 
-Status: below-terrain depth floor accepted; sky comparison remains active.
+Status: below-terrain depth floor and world-anchored sky motion accepted; sky
+art comparison remains active.
 
 ## Reproduction Baseline
 
@@ -103,17 +104,18 @@ or low-poly dome is the best first geometric comparison. The current
 screen-space sky should remain available until visual comparison confirms that
 the new horizon, camera tilt, fog seam, and night behavior are all better.
 
-The first dome comparison is enabled with:
+The accepted dome is now the OpenGL default. The prior screen-space sky remains
+available for comparison with:
 
 ```bash
-SPOILED_MILK_OPENGL_SKY=world-dome
+SPOILED_MILK_OPENGL_SKY=screen
 ```
 
-It deliberately begins without clouds. Bright pink world-space discs at fixed
-azimuths and elevations provide temporary diagnostic landmarks: they should
-move only in response to camera rotation, never player translation. This
-isolates camera/horizon stability before authored cloud geometry adds a less
-precise moving reference.
+The pink diagnostic landmarks established that the dome follows camera
+rotation but not player translation and have been removed. The first art pass
+uses six soft, layered cloud groups during bright presentation states and a
+deterministic 96-star world-space field as the day/night sky darkens. Both use
+fixed dome coordinates; neither can slide independently of terrain.
 
 ## Visual Comparison Checklist
 

@@ -27,20 +27,20 @@ def settings_fixture() -> None:
 
         public final class OpenGLSkySettingsFixture {
             public static void main(String[] args) {
-                require(OpenGLSkySettings.Mode.from(null) == OpenGLSkySettings.Mode.SCREEN,
-                    "screen sky remains default during comparison");
+                require(OpenGLSkySettings.Mode.from(null) == OpenGLSkySettings.Mode.WORLD_DOME,
+                    "accepted world dome must be the default");
                 require(OpenGLSkySettings.Mode.from("world-dome")
                     == OpenGLSkySettings.Mode.WORLD_DOME, "world dome setting");
                 require(OpenGLSkySettings.Mode.from("sphere")
                     == OpenGLSkySettings.Mode.WORLD_DOME, "sphere alias");
-                require(OpenGLSkySettings.Mode.from("unknown") == OpenGLSkySettings.Mode.SCREEN,
-                    "unknown sky setting must retain baseline");
+                require(OpenGLSkySettings.Mode.from("unknown") == OpenGLSkySettings.Mode.WORLD_DOME,
+                    "unknown sky setting must retain accepted default");
                 OpenGLSkySettings.setMode(OpenGLSkySettings.Mode.WORLD_DOME);
                 require(OpenGLSkySettings.getMode() == OpenGLSkySettings.Mode.WORLD_DOME,
                     "runtime comparison override");
                 OpenGLSkySettings.setMode(null);
-                require(OpenGLSkySettings.getMode() == OpenGLSkySettings.Mode.SCREEN,
-                    "null override must restore baseline");
+                require(OpenGLSkySettings.getMode() == OpenGLSkySettings.Mode.WORLD_DOME,
+                    "null override must restore accepted default");
             }
 
             private static void require(boolean condition, String message) {
@@ -78,16 +78,19 @@ def main() -> None:
     require("getCameraRotationY()" in sky_view, "sky view must follow camera yaw")
     require("getCameraOffset" not in sky_view, "sky view must ignore camera translation")
     require("SKY_DOME_ELEVATION_DEGREES" in chunks, "world sky needs explicit altitude rings")
+    require("drawWorldSkyDiagnosticMarker" not in chunks, "pink diagnostic landmarks must be removed")
     require(
-        chunks.index("drawWorldSkyDome(radius, presentation);")
-        < chunks.index("drawWorldSkyDiagnosticMarkers(radius);"),
-        "diagnostic sky landmarks must draw over the dome",
+        chunks.index("drawWorldSkyStars(radius, starVisibility);")
+        < chunks.index("drawWorldSkyClouds(radius, presentation, cloudVisibility);"),
+        "clouds must layer over stars during dawn/dusk transitions",
     )
     require(
-        chunks.count("drawWorldSkyDiagnosticMarker(radius,") == 5,
-        "comparison dome must provide five distributed landmarks",
+        chunks.count("drawWorldSkyCloudCluster(radius,") == 6,
+        "day sky must distribute six cloud groups around the dome",
     )
-    require("gl.glColor4f(1.0f, 0.08f, 0.62f, 1.0f);" in chunks, "landmarks must be bright pink")
+    require("for (int star = 0; star < 96; star++)" in chunks, "night sky must use a fixed 96-star field")
+    require("float starVisibility = smoothSkyAmount" in chunks, "stars must fade with presentation brightness")
+    require("float cloudVisibility = smoothSkyAmount" in chunks, "clouds must fade with presentation brightness")
     require("presentation.fogRed" in chunks, "horizon must stitch to presentation fog")
     require("frame.getFogDistance() * 0.92f" in chunks, "dome must remain inside the far clip")
     load_matrix_start = chunks.index("private void loadMatrix(int matrixMode, float[] matrix)")

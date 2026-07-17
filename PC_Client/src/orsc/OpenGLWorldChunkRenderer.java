@@ -603,7 +603,14 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		float radius = Math.max(2048.0f, frame.getFogDistance() * 0.92f);
 		try {
 			drawWorldSkyDome(radius, presentation);
-			drawWorldSkyDiagnosticMarkers(radius);
+			float skyBrightness = clampStatic(
+				(presentation.skyRed + presentation.skyGreen + presentation.skyBlue) / 3.0f,
+				0.0f,
+				1.0f);
+			float starVisibility = smoothSkyAmount((0.58f - skyBrightness) / 0.40f);
+			float cloudVisibility = smoothSkyAmount((skyBrightness - 0.20f) / 0.42f);
+			drawWorldSkyStars(radius, starVisibility);
+			drawWorldSkyClouds(radius, presentation, cloudVisibility);
 		} finally {
 			gl.glDisable(gl.GL_DEPTH_TEST);
 			gl.glDisable(gl.GL_BLEND);
@@ -615,19 +622,94 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 	}
 
-	private void drawWorldSkyDiagnosticMarkers(float radius) throws Exception {
-		drawWorldSkyDiagnosticMarker(radius, -18.0f, 0.0f, 0.045f);
-		drawWorldSkyDiagnosticMarker(radius, -36.0f, 58.0f, 0.038f);
-		drawWorldSkyDiagnosticMarker(radius, -24.0f, 132.0f, 0.050f);
-		drawWorldSkyDiagnosticMarker(radius, -52.0f, 218.0f, 0.042f);
-		drawWorldSkyDiagnosticMarker(radius, -30.0f, 302.0f, 0.047f);
+	private void drawWorldSkyClouds(
+		float radius,
+		RendererDayNightCycle.Presentation presentation,
+		float visibility) throws Exception {
+		if (visibility <= 0.001f) {
+			return;
+		}
+		float red = mixSky(presentation.fogRed, 1.0f, 0.70f);
+		float green = mixSky(presentation.fogGreen, 1.0f, 0.70f);
+		float blue = mixSky(presentation.fogBlue, 1.0f, 0.74f);
+		float alpha = 0.26f * visibility;
+		gl.glEnable(gl.GL_BLEND);
+		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+		drawWorldSkyCloudCluster(radius, -19.0f, 8.0f, 1.00f, red, green, blue, alpha);
+		drawWorldSkyCloudCluster(radius, -34.0f, 66.0f, 0.78f, red, green, blue, alpha * 0.86f);
+		drawWorldSkyCloudCluster(radius, -23.0f, 126.0f, 1.14f, red, green, blue, alpha * 0.94f);
+		drawWorldSkyCloudCluster(radius, -43.0f, 191.0f, 0.88f, red, green, blue, alpha * 0.78f);
+		drawWorldSkyCloudCluster(radius, -17.0f, 252.0f, 1.08f, red, green, blue, alpha * 0.90f);
+		drawWorldSkyCloudCluster(radius, -31.0f, 318.0f, 0.94f, red, green, blue, alpha * 0.82f);
+		gl.glDisable(gl.GL_BLEND);
 	}
 
-	private void drawWorldSkyDiagnosticMarker(
+	private void drawWorldSkyCloudCluster(
 		float radius,
 		float elevationDegrees,
 		float azimuthDegrees,
-		float sizeFraction) throws Exception {
+		float scale,
+		float red,
+		float green,
+		float blue,
+		float alpha) throws Exception {
+		drawWorldSkySoftDisc(radius, elevationDegrees, azimuthDegrees,
+			0.000f, 0.008f * scale, 0.082f * scale, 0.019f * scale,
+			red, green, blue, alpha * 0.34f, 24);
+		drawWorldSkySoftDisc(radius, elevationDegrees, azimuthDegrees,
+			-0.036f * scale, -0.003f * scale, 0.041f * scale, 0.026f * scale,
+			red, green, blue, alpha * 0.58f, 20);
+		drawWorldSkySoftDisc(radius, elevationDegrees, azimuthDegrees,
+			-0.009f * scale, -0.015f * scale, 0.054f * scale, 0.037f * scale,
+			red, green, blue, alpha * 0.88f, 24);
+		drawWorldSkySoftDisc(radius, elevationDegrees, azimuthDegrees,
+			0.034f * scale, -0.007f * scale, 0.049f * scale, 0.030f * scale,
+			red, green, blue, alpha * 0.72f, 22);
+		drawWorldSkySoftDisc(radius, elevationDegrees, azimuthDegrees,
+			0.012f * scale, -0.031f * scale, 0.036f * scale, 0.026f * scale,
+			red, green, blue, alpha * 0.62f, 20);
+		drawWorldSkySoftDisc(radius, elevationDegrees, azimuthDegrees,
+			0.020f * scale, 0.012f * scale, 0.076f * scale, 0.015f * scale,
+			red, green, blue, alpha * 0.25f, 24);
+	}
+
+	private void drawWorldSkyStars(float radius, float visibility) throws Exception {
+		if (visibility <= 0.001f) {
+			return;
+		}
+		gl.glEnable(gl.GL_BLEND);
+		gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA);
+		for (int star = 0; star < 96; star++) {
+			float azimuth = (star * 137.50777f + (star % 7) * 9.35f) % 360.0f;
+			float elevation = -8.0f - ((star * 53 + 17) % 79);
+			float brightness = 0.42f + ((star * 29 + 11) % 59) / 100.0f;
+			float size = 0.00115f + ((star * 31 + 7) % 13) * 0.000075f;
+			if (star % 17 == 0) {
+				size *= 1.85f;
+				brightness = 1.0f;
+			}
+			float red = star % 9 == 0 ? 1.0f : 0.88f;
+			float green = star % 11 == 0 ? 0.84f : 0.93f;
+			float blue = star % 9 == 0 ? 0.74f : 1.0f;
+			drawWorldSkySoftDisc(radius, elevation, azimuth,
+				0.0f, 0.0f, size, size, red, green, blue, visibility * brightness, 12);
+		}
+		gl.glDisable(gl.GL_BLEND);
+	}
+
+	private void drawWorldSkySoftDisc(
+		float radius,
+		float elevationDegrees,
+		float azimuthDegrees,
+		float tangentOffsetFraction,
+		float verticalOffsetFraction,
+		float tangentRadiusFraction,
+		float verticalRadiusFraction,
+		float red,
+		float green,
+		float blue,
+		float alpha,
+		int segments) throws Exception {
 		double elevation = Math.toRadians(elevationDegrees);
 		double azimuth = Math.toRadians(azimuthDegrees);
 		float cosElevation = (float) Math.cos(elevation);
@@ -638,22 +720,26 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		float directionY = sinElevation;
 		float directionZ = cosElevation * cosAzimuth;
 		float centerRadius = radius * 0.965f;
-		float centerX = directionX * centerRadius;
-		float centerY = directionY * centerRadius;
-		float centerZ = directionZ * centerRadius;
 		float tangentX = cosAzimuth;
 		float tangentY = 0.0f;
 		float tangentZ = -sinAzimuth;
 		float verticalX = -sinElevation * sinAzimuth;
 		float verticalY = cosElevation;
 		float verticalZ = -sinElevation * cosAzimuth;
-		float markerRadius = radius * sizeFraction;
+		float tangentOffset = radius * tangentOffsetFraction;
+		float verticalOffset = radius * verticalOffsetFraction;
+		float centerX = directionX * centerRadius + tangentX * tangentOffset + verticalX * verticalOffset;
+		float centerY = directionY * centerRadius + tangentY * tangentOffset + verticalY * verticalOffset;
+		float centerZ = directionZ * centerRadius + tangentZ * tangentOffset + verticalZ * verticalOffset;
+		float tangentRadius = radius * tangentRadiusFraction;
+		float verticalRadius = radius * verticalRadiusFraction;
 
-		gl.glColor4f(1.0f, 0.08f, 0.62f, 1.0f);
 		gl.glBegin(gl.GL_TRIANGLES);
-		for (int segment = 0; segment < 24; segment++) {
-			drawWorldSkyMarkerVertex(centerX, centerY, centerZ);
-			drawWorldSkyMarkerEdge(
+		for (int segment = 0; segment < segments; segment++) {
+			gl.glColor4f(red, green, blue, clampStatic(alpha, 0.0f, 1.0f));
+			drawWorldSkySoftDiscVertex(centerX, centerY, centerZ);
+			gl.glColor4f(red, green, blue, 0.0f);
+			drawWorldSkySoftDiscEdge(
 				centerX,
 				centerY,
 				centerZ,
@@ -663,9 +749,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				verticalX,
 				verticalY,
 				verticalZ,
-				markerRadius,
-				segment * Math.PI * 2.0 / 24.0);
-			drawWorldSkyMarkerEdge(
+				tangentRadius,
+				verticalRadius,
+				segment * Math.PI * 2.0 / segments);
+			drawWorldSkySoftDiscEdge(
 				centerX,
 				centerY,
 				centerZ,
@@ -675,13 +762,14 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				verticalX,
 				verticalY,
 				verticalZ,
-				markerRadius,
-				(segment + 1) * Math.PI * 2.0 / 24.0);
+				tangentRadius,
+				verticalRadius,
+				(segment + 1) * Math.PI * 2.0 / segments);
 		}
 		gl.glEnd();
 	}
 
-	private void drawWorldSkyMarkerEdge(
+	private void drawWorldSkySoftDiscEdge(
 		float centerX,
 		float centerY,
 		float centerZ,
@@ -691,17 +779,18 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		float verticalX,
 		float verticalY,
 		float verticalZ,
-		float radius,
+		float tangentRadius,
+		float verticalRadius,
 		double angle) throws Exception {
-		float tangentAmount = radius * (float) Math.cos(angle);
-		float verticalAmount = radius * (float) Math.sin(angle);
-		drawWorldSkyMarkerVertex(
+		float tangentAmount = tangentRadius * (float) Math.cos(angle);
+		float verticalAmount = verticalRadius * (float) Math.sin(angle);
+		drawWorldSkySoftDiscVertex(
 			centerX + tangentX * tangentAmount + verticalX * verticalAmount,
 			centerY + tangentY * tangentAmount + verticalY * verticalAmount,
 			centerZ + tangentZ * tangentAmount + verticalZ * verticalAmount);
 	}
 
-	private void drawWorldSkyMarkerVertex(float x, float y, float z) throws Exception {
+	private void drawWorldSkySoftDiscVertex(float x, float y, float z) throws Exception {
 		gl.glVertex3f(x, y, z);
 	}
 

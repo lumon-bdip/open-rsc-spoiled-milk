@@ -15,7 +15,7 @@ final class OpenGLSkySettings {
 	}
 
 	static Mode setMode(Mode next) {
-		mode = next == null ? Mode.SCREEN : next;
+		mode = next == null ? Mode.WORLD_DOME : next;
 		return mode;
 	}
 
@@ -39,7 +39,7 @@ final class OpenGLSkySettings {
 
 		static Mode from(String value) {
 			if (value == null || value.trim().isEmpty()) {
-				return SCREEN;
+				return WORLD_DOME;
 			}
 			String normalized = value.trim().toLowerCase().replace('_', '-');
 			if ("legacy".equals(normalized) || "flat".equals(normalized)) {
@@ -53,8 +53,8 @@ final class OpenGLSkySettings {
 					return candidate;
 				}
 			}
-			System.out.println("[renderer-v2] Unknown OpenGL sky '" + value + "'; using screen.");
-			return SCREEN;
+			System.out.println("[renderer-v2] Unknown OpenGL sky '" + value + "'; using world-dome.");
+			return WORLD_DOME;
 		}
 	}
 }
