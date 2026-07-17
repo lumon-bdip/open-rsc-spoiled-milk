@@ -29,8 +29,11 @@ Combat Odyssey supplies inspiration, legacy flavor, and migration evidence;
 its tiers, task order, rewards, and progression are not a Monster Slayer
 blueprint and must not be translated one-to-one. Monster Slayer is not a
 visible skill and does not award Slayer XP. Players advance through seven named
-ranks, complete deterministic kill-only task chains at six contacts, and then
-use those contacts for repeatable tasks and rank-gated challenge shops.
+ranks through one continuous mandatory guild quest, complete deterministic
+assignment chains at six contacts, and then use those contacts for repeatable
+tasks and rank-gated challenge shops. The opening assignment is deliberately
+not a monster kill: it is the joke beer errand that starts the quest and awards
+the first rank.
 
 The intended tone and progression remain:
 
@@ -76,6 +79,50 @@ Non-goals:
 - No automatic conversion of the old JSON's item rewards into shop stock.
 - No one-to-one mapping from Odyssey tiers/tasks/rewards to Monster Slayer
   ranks, chains, balances, categories, or stock.
+
+## Design Decision Ledger
+
+This ledger distinguishes settled refinements from questions that remain open.
+The implemented foundation data remains an informed starting point wherever a
+later decision has not replaced it.
+
+### Confirmed: One Continuous Mandatory Quest And Beer Opening
+
+- The entire mandatory path from recruitment through the top `Legend` rank is
+  one long Monster Slayer Guild quest, not six unrelated miniquests. Contact
+  changes and rank awards are stages within that quest. Repeatable assignments
+  and challenge-shop purchases are not additional mandatory quest stages.
+- The initial contact opens with: `Are you my new recruit?`
+- The player responses are:
+  - `Yes, of course I am!`
+  - `New recruit? No idea what you're talking about`
+- Choosing the second response ends the dialogue without starting the quest or
+  changing Monster Slayer state.
+- Choosing the first response begins the quest and leads into the opening joke
+  assignment:
+
+  `Your first task is one of the most difficult monsters of all. You must slay
+  my thirt. Quickly, to the bartender and fetch me a beer!`
+
+- Fetching the beer is the first mandatory assignment. Completing it awards
+  `Fledgling`, after which the first actual monster assignment can begin.
+- This decision does not yet replace a `MonsterSlayer.json` monster entry: the
+  beer introduction is represented by the separate intro state. The later
+  player-visible implementation must synchronize the confirmed dialogue and
+  single-quest lifecycle; the current foundation intentionally has no dialogue
+  or quest registration.
+
+### Unresolved Opening Details
+
+- Confirm whether `thirt` is intentional character wording or should be
+  `thirst` in the final dialogue.
+- Confirm the opening task giver. The currently proposed Falador contact is
+  Barmaid `142`, who is herself the Rising Sun bartender; telling the player to
+  go "to the bartender" would be self-referential unless the speaker changes
+  or that line is adjusted.
+- Choose the formal quest name, quest-list presentation, journal text, and any
+  quest-point treatment. Calling the mandatory path one quest settles its
+  lifecycle, but not those presentation details.
 
 ## Evidence-Backed Combat Odyssey Audit
 
@@ -253,8 +300,8 @@ Stable rank codes are part of the save contract and must never be reordered:
 
 | Code | Rank | Advancement contact |
 | ---: | --- | --- |
-| 0 | Unstamped | Falador introduction |
-| 1 | Fledgling | Beer completed; Falador mandatory chain available |
+| 0 | Unstamped | Recruit prompt and beer assignment begin the guild quest |
+| 1 | Fledgling | Beer completed; first monster assignment available |
 | 2 | Initiate | Falador chain complete; Port Sarim available |
 | 3 | Veteran | Port Sarim chain complete; Brimhaven available |
 | 4 | Elite | Brimhaven chain complete; Champions Guild available |
