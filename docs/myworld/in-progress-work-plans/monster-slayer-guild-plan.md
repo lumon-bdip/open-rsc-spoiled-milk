@@ -191,11 +191,24 @@ After the ninth kill task, the contact:
 - introduces the first shop as a source of low-level food and potions. Exact
   stock, quantities, and prices remain a separate economy decision.
 
+The Initiate promotion and sticker exchange is locked as:
+
+- Contact: `Excellent work! You've done a fine job culling those monsters.`
+- Player: `There seem to be just as many as before.`
+- Contact: `Imagine how many there would be if you hadn't helped.`
+- Contact: `For your efforts, I promote you to Initiate. Hold still while I
+  apply your official rank sticker.`
+- Player: `A sticker? What happened to the stamp?`
+- Contact: `Stamps have been retired. Far too impermanent.`
+- Player: `And stickers are better?`
+- Contact: `Infinitely. You may proudly display it wherever you choose.`
+
 This confirms invisible accrual during the first batch: completion dialogue
 must reveal the actual balance, not award a second retroactive grant. The
 currency's player-facing name is `Fledgling Slayer Points`; internally it
-remains the typed `FLEDGLING` challenge balance. Dialogue wording should remain
-light and comedic, but the exact post-batch script is not yet locked.
+remains the typed `FLEDGLING` challenge balance. The subsequent point-balance,
+random-assignment, and shop explanation should remain light and comedic, but
+its exact wording depends on the still-unsettled balance and stock.
 
 The merged foundation does not match this decision. A later implementation
 sync must replace its five Falador tasks/500 kills and humanoid/livestock
