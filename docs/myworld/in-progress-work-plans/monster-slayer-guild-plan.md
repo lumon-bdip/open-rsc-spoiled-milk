@@ -217,7 +217,66 @@ families without overlapping NPC IDs, and update the affected totals and
 fixtures. No player-visible Monster Slayer state currently makes those
 foundation task keys a live compatibility contract.
 
-### Unresolved Opening Details
+### Confirmed: Remaining Mandatory Monster Ladder
+
+The remaining five challenge bands continue the combat curve without moving
+backward. Later chains contain fewer families because individual kills become
+slower, more dangerous, and more preparation-intensive.
+
+| Challenge rank and promotion | Ordered mandatory monster sequence |
+| --- | --- |
+| `Initiate -> Veteran` | Giant Bat `43` (level 32) -> Deadly Red Spider `99` (36) -> King Scorpion `136` (36) -> White Wolf `248` (41) -> Ugthanki `653` (45) -> Animated Axe `295` (46) -> Jungle Spider `521` (47) -> Baby Blue Dragon `203` (50) -> Shadow Spider `343` (53) |
+| `Veteran -> Elite` | Jogre `523` (58) -> Karamja Wolf `775` (61) -> Moss Giants `104,594` (62) -> Poison Spider `292` (63) -> Grey Wolf `243` (64) -> Ice Spider `263` (64) |
+| `Elite -> Champion` | Ice Giant `135` (68) -> Lesser Demons `22,181` (79) -> Greater Demon `184` (87) |
+| `Champion -> Hero` | Blue Dragon `202` (105) -> Fire Giant `344` (109) -> Green Dragon `196` (110) -> Hellhound `294` (114) -> Red Dragon `201` (140) |
+| `Hero -> Legend` | Black Demon `290` (156) -> Black Dragon `291` (200) -> King Black Dragon `477` (245) |
+
+Together with the confirmed nine-task Fledgling chain, this establishes 35
+ordered mandatory kill assignments from level 7 through level 245. Kill counts
+and point awards for the five newly confirmed bands remain to be tuned; roster
+approval does not silently approve the foundation counts or point vector.
+
+`Monster` means a fantasy creature rather than a normal person or civilized
+social NPC. The mandatory ladder excludes pirates, muggers, dwarves, wizards,
+knights, paladins, warriors, and similar people. It may include unmistakable
+fantasy-monster species such as goblins, Jogres, giants, and demons even when
+their sprite is bipedal. The same boundary applies when the randomized family
+pools are redesigned.
+
+Repository density and behavior impose these tuning constraints:
+
+- White Wolves have six active spawns; Animated Axes nine, mostly in the
+  Wilderness; Baby Blue Dragons eleven; Blue Dragons six; Green Dragons five;
+  Red Dragons seven, all in the Wilderness; Black Dragons four; and the King
+  Black Dragon one. Their counts must remain substantially below dense-family
+  counts.
+- Baby Blue Dragons provide the first bounded dragon-fire lesson. Full dragons
+  begin only at `Champion`, where dialogue must explicitly warn about dragon
+  fire and preparation rather than assuming the player knows the mechanic.
+- Shadow Spiders drain Prayer and Poison Spiders introduce poison. These are
+  intentional mechanic steps at Initiate and Veteran, respectively, and their
+  assignment dialogue must warn the player.
+- Wilderness travel is an accepted part of this quest, but every mandatory
+  Wilderness-heavy task requires an explicit risk warning before assignment.
+- The King Black Dragon remains the final mandatory target and the quest's
+  iconic combat capstone. The level-275 Elder Green Dragon is reserved as a
+  possible post-`Legend` boss assignment rather than displacing that finale.
+
+Death Wings remain possible post-`Legend` randomized content because their
+Legends Quest access and level 80 would break the mandatory level curve.
+Blessed Spiders and Dungeon Rats remain excluded from mandatory progression due
+to Underground Pass/Clock Tower access coupling. Otherworldly Beings would add
+an unrelated Lost City gate. The Balrog remains excluded because it is coupled
+to Dwarf Youth Rescue/lava-forge access and its level-217 label hides extreme
+repository stats of 999 Attack and 500 Hits.
+
+The merged `MonsterSlayer.json` does not match this confirmed ladder. A later
+implementation synchronization must replace all six mandatory family sequences,
+rebuild affected family definitions and stable task keys before activation,
+recalculate kill/point totals, and update data/state/migration fixtures. It
+must not change live Combat Odyssey behavior while performing that sync.
+
+### Unresolved Recruitment And First-Shop Details
 
 - Choose the dedicated contact's name, appearance, exact Rising Sun tile, and
   whether the NPC needs ambient dialogue before recruitment. Do not repurpose
@@ -570,10 +629,12 @@ Load-time/CI validation must reject:
 
 ### Current Foundation Family Inventory And Tuning
 
-The table in this subsection records the merged foundation baseline. Its five
-Falador rows, five Falador repeatables, and aggregate totals are superseded by
-the confirmed Fledgling design above and require a later implementation sync.
-The remaining rows are still informed starting points, not immutable decisions.
+The table in this subsection records the merged foundation baseline. Every
+mandatory roster and its aggregate totals is superseded by the confirmed
+35-task ladder above and requires a later implementation sync. Its randomized
+pools also require redesign wherever they conflict with the confirmed monster
+taxonomy; none of the foundation repeatable pools is approved merely by being
+listed here.
 
 Spawn counts below are active location records for the current MyWorld load set:
 base `NpcLocs.json`, enabled discontinued/mod-room/runecraft/auction/harvesting/
@@ -635,11 +696,10 @@ keeping a substantial rank path. The six values form a balance vector, not a
 625-point pool. Supply redemption and optional expensive rewards can extend the
 lifetime hunt through repeatables without delaying shop access.
 
-If every later band remains unchanged, the confirmed Fledgling replacement
-changes the target mandatory inventory from 33 tasks/5,026 kills to 37
-tasks/4,833 kills. The overall point vector and repeatable count cannot be
-restated as settled totals until the nine Fledgling point awards and new
-Fledgling randomized pool are approved.
+The confirmed target now contains 35 mandatory kill assignments. Its kill
+total, six-component point-earnings vector, and repeatable count cannot be
+restated as settled totals until each new task count, point award, and
+randomized pool is approved.
 
 Repeatable policy:
 
