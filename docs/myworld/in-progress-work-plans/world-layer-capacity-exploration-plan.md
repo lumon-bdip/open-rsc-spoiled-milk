@@ -6,6 +6,8 @@ Branch: `docs/world-layer-capacity-exploration`
 
 Started: 2026-07-17
 
+Current discussion: explicit layered coordinates and geographic map alignment
+
 ## Purpose
 
 This is a living planning document for deciding how Spoiled Milk should organize
@@ -102,6 +104,307 @@ The configured server `MAX_HEIGHT` being greater than `3776` does not make the
 remaining coordinate range a fifth plane. The loader, client, editor, and plane
 semantics still stop at four planes, and the remaining range is not a complete
 944-tile band.
+
+## Focused Study: Explicit Layered Coordinates
+
+### Owner Intent
+
+The desired direction is more fundamental than increasing the packed-Y stride
+or appending another band. The coordinate system should represent levels as
+genuinely separate spaces so that:
+
+- the surface, upstairs, underground, and future deep layers may all use the
+  same readable `(x, y)` grid;
+- expanding one layer does not cause its Y coordinates to cross into another
+  layer's band;
+- a surface location and the area physically above or below it can share the
+  same `(x, y)` coordinates;
+- coordinate displays, editor navigation, scripts, and planning documents no
+  longer require mental addition or subtraction of legacy band offsets;
+- the organization of the map reflects geographic relationships rather than
+  inherited teleport destinations.
+
+### Clarification of the Existing Offsets
+
+The level stride in active world coordinates is exactly `944`, rather than
+approximately `1200`. Other historic offsets can make the system appear less
+regular:
+
+- `2304` is added while translating world X to archive sector X;
+- `1776` is added while translating normalized Y to archive sector Y and is
+  also sent as the client plane-height offset;
+- `944` is sent to the client as the distance between floors;
+- plane 3 begins at packed Y `2832`, which is `3 * 944`.
+
+The current formulas combine a logical world coordinate, an archive-sector
+coordinate, and a protocol/client offset. Separating those concepts is an
+important part of making the coordinate system understandable.
+
+### Where Packed Y Is Currently Authoritative
+
+| Domain | Current representation | Layered-system implication |
+| --- | --- | --- |
+| Server entity position | `Point` contains only short `x` and packed `y` | Needs a level-bearing coordinate or an explicit transitional wrapper |
+| Region and tile storage | Region maps are keyed by packed region X/Y | Region identity must include the level |
+| Distance and visibility | Packed-Y distance naturally separates floors | Every proximity operation must explicitly reject different levels |
+| Collision and pathfinding | Tile lookup receives packed X/Y | Tile and path queries must carry level identity |
+| Areas and wilderness | Rectangles and many special checks use packed Y | Area definitions must become layer-aware |
+| Static placements | JSON positions contain only `X` and packed `Y` | New schema needs `level` plus normalized `Y` |
+| NPC roaming bounds | Start/min/max positions use packed Y | Every bound must share an explicit level |
+| Plugin and quest logic | Literal coordinates and `teleport(x,y)` are common | Ambiguous two-argument destinations must be migrated or adapted |
+| Player persistence | Database stores packed `x` and `y` | Needs a preservation-safe versioned read/write strategy |
+| Wire protocol | World info carries a plane, but many positions still use packed Y | Existing clients need a legacy coordinate codec at the boundary |
+| Client terrain loading | Plane is explicit, while world-Z offsets still compensate for packed Y | The client is partly layered already but not consistently normalized |
+| Terrain archive | Entry name contains plane and sector Y is based on normalized Y | Already close to the desired layered representation |
+| World Builder | Terrain plane exists, but placement validation accepts only packed X/Y | Project and overlay schemas need a versioned layered adapter |
+
+The broad dependency scan found 74 server source files using entity Y access,
+124 plugin files containing point construction, teleportation, or location
+assignment, 40 coordinate-bearing location JSON files, and 31 server, plugin,
+or client files directly mentioning the `944` stride or associated legacy plane
+values. These are audit indicators rather than exact migration counts, but they
+show that this is an architecture program rather than a small formula change.
+
+### Terrain Is Already Partly Layered
+
+The terrain archive is the most favorable part of the conversion. An archive
+entry already has an explicit plane in its key:
+
+```text
+h{plane}x{sectorX}y{sectorY}
+```
+
+Its sector Y is calculated from normalized within-plane Y, not directly from
+packed world Y. The runtime editor currently insists that the supplied packed Y
+and plane agree, but that is a validation rule rather than a limitation of the
+sector record itself.
+
+For existing terrain, a layered coordinate can therefore be recovered without
+moving or rewriting tile bytes:
+
+```text
+legacyPlane = floorDiv(packedY, 944)
+layerY      = floorMod(packedY, 944)
+```
+
+The archive plane and normalized sector coordinate can then address the same
+tile. This makes a lossless compatibility adapter realistic for all existing
+four-plane terrain.
+
+### Proposed Canonical Coordinate
+
+A conceptually clean model would be:
+
+```text
+WorldCoordinate(x, y, level)
+```
+
+with signed, geographically meaningful levels:
+
+| Canonical level | Meaning | Existing legacy plane |
+| ---: | --- | ---: |
+| `0` | Surface | 0 |
+| `+1` | First floor above surface | 1 |
+| `+2` | Second floor above surface | 2 |
+| `-1` | Underground | 3 |
+| `-2` | Future deep underground | none |
+
+Named layer identifiers could accompany the signed value, but the sign is
+useful: `above()` and `below()` become obvious operations, while current plane
+3 no longer misleadingly appears to be three floors above the surface.
+
+The canonical X/Y values should be ordinary map coordinates within that layer,
+not values already transformed for archive or protocol use. Archive sector
+offsets and legacy client offsets would belong in dedicated codecs.
+
+### Exact Legacy Conversion
+
+For the existing four layers, conversion can be reversible:
+
+```text
+surface:      packedY = y
+first floor:  packedY = y + 944
+second floor: packedY = y + 1888
+underground:  packedY = y + 2832
+```
+
+Examples:
+
+| Legacy coordinate | Canonical layered coordinate |
+| --- | --- |
+| `(120,648)` | `(120,648,0)` |
+| `(120,1592)` | `(120,648,+1)` |
+| `(120,2536)` | `(120,648,+2)` |
+| `(120,3480)` | `(120,648,-1)` |
+
+This immediately gives administrators, scripts, diagnostics, and World Builder
+a neat coordinate vocabulary without changing where existing content is.
+
+A future level `-2`, or a normalized Y outside `0-943`, has no lossless mapping
+to the current packed four-band convention. Such locations require an extended
+custom-client protocol or another explicit compatibility policy.
+
+The server `Point` currently stores X and Y as signed shorts, and custom
+movement paths also serialize coordinates through short-sized fields. True
+independent layer extents remove the 944-tile band collision, but they do not
+automatically remove those numeric limits. Intended maximum X/Y dimensions
+must be chosen before the value type and custom protocol are finalized.
+
+### Normalizing Coordinates Does Not Align Content
+
+There are two separate operations:
+
+1. **Coordinate normalization:** reinterpret an existing packed point as
+   `(x, normalizedY, level)` without moving it.
+2. **Geographic alignment:** relocate an underground or upstairs area so its
+   canonical X/Y matches the relevant surface footprint.
+
+Normalization is deterministic and can be lossless. Alignment is a content
+design and migration operation.
+
+For example:
+
+- Surface `(499,469)` currently connects to packed underground `(499,3295)`,
+  which normalizes to `(499,463,-1)`. It is already geographically close and
+  could potentially be aligned with a very small offset.
+- Surface `(223,110)` currently connects to packed underground `(446,3368)`,
+  which normalizes to `(446,536,-1)`. A layered coordinate system exposes the
+  mismatch but does not fix it. The dungeon, entrance, or the classification of
+  that edge must change.
+
+This distinction allows the engine migration to preserve behavior exactly
+before any risky map relocation begins.
+
+### Required Separation Invariants
+
+True layering is achieved only if the level participates in every identity and
+proximity decision. At minimum:
+
+- `(x,y,0)` and `(x,y,-1)` must resolve to different regions and tiles;
+- entities on different levels must never see, collide with, target, trade
+  with, follow, attack, or path to one another;
+- objects, walls, NPCs, and ground items must be keyed by level as well as X/Y;
+- visible-region and object-snapshot cache keys must include level;
+- point equality and hashing must include level;
+- area and wilderness checks must state which levels they cover;
+- stairs, ladders, and portals must be the only mechanisms that cross levels;
+- a vertical transition should preserve X/Y by default and change only level;
+- an intentional offset or transport edge must be explicit data;
+- save, login, logout, reconnect, death, and recovery must retain level;
+- archive and protocol conversion must occur only at named compatibility
+  boundaries, never through scattered arithmetic.
+
+The current packed-Y distance acts as an accidental safety barrier between
+floors. Removing it before the region, equality, cache, view, and interaction
+systems are level-aware would cause serious cross-floor leakage.
+
+### Feasibility by Scope
+
+| Scope | Difficulty | What it achieves | What it does not achieve |
+| --- | --- | --- | --- |
+| Normalized display and editor notation | Low | Readable `(x,y,level)` coordinates | Runtime separation or extra capacity |
+| Layered authoring schema with packed runtime adapter | Moderate | Clean future content data and World Builder organization | Removes neither the 944 runtime ceiling nor legacy packing |
+| Layered server core with legacy wire/storage adapters | High but tractable | True runtime separation for existing layers; centralizes packing | New deep layers still cannot be shown by unmodified clients |
+| Fully layered custom client/server and expanded extents | Very high | Independent map sizes and arbitrary additional levels | Automatic compatibility with legacy clients |
+| Relocate existing maps into geographic alignment | High content risk | Actual surface/above/below correspondence | Engine separation by itself |
+
+The terrain conversion is comparatively easy. Region identity, entity
+visibility, two-argument script APIs, persistence, and exhaustive behavior
+parity are the hard parts.
+
+### Recommended Transitional Architecture
+
+If this direction is selected, the safest shape is an explicit canonical model
+surrounded by temporary compatibility adapters:
+
+```text
+layered content / layered server model
+                 |
+        named legacy coordinate codec
+          /                    \
+old database and files      legacy wire/client
+```
+
+The codec for existing content would own all `944` packing and unpacking. New
+core code would not calculate level from Y. This provides three benefits:
+
+- old data can be read without an immediate destructive rewrite;
+- existing clients can continue receiving their expected four-band coordinates
+  while the supported layers remain representable;
+- parity tests can prove that every old coordinate round-trips exactly.
+
+Changing the semantics of the existing `Point.getY()` in place would be
+especially dangerous because current callers silently assume packed Y. A safer
+implementation study should compare introducing a new immutable layered point
+type against evolving `Point` through explicit transitional methods such as
+`getLayerY()` and `toLegacyPackedY()`. Ambiguous two-argument constructors and
+teleports should eventually be confined to a legacy adapter.
+
+### Preservation-Safe Migration Sequence
+
+No phase below is authorized yet. They describe how an eventual implementation
+could avoid combining engine conversion and map relocation.
+
+1. **Define semantics and codecs.** Choose level identifiers, coordinate bounds,
+   and exact reversible mappings for all current locations.
+2. **Add read-only auditing.** Inventory coordinate literals, placements,
+   areas, teleports, persistence fields, archive entries, and packet paths.
+3. **Introduce layered value types.** Add level-aware points, rectangles,
+   region keys, and transition destinations without changing behavior.
+4. **Prove legacy parity.** Exhaustively round-trip all terrain, placements,
+   telepoints, and copied player coordinates through the codec.
+5. **Make the server world layer-aware.** Migrate region storage, tiles,
+   collision, pathing, visibility, entity equality, caches, and interaction
+   checks while legacy boundaries still pack coordinates.
+6. **Version content schemas.** Allow old packed placement files to be read, add
+   explicit-level output, and update World Builder validation and manifests.
+7. **Version persistence.** Use copied databases and additive fields or another
+   reviewed migration strategy; never reinterpret live player rows in place.
+8. **Normalize the custom client.** Remove internal packed-Y assumptions while
+   retaining a legacy protocol path where required.
+9. **Validate unchanged gameplay.** Run current maps with no relocations and
+   compare terrain, collision, routes, quests, visibility, and saved positions.
+10. **Align maps area by area.** Move approved complexes only after the engine
+    model is stable, using explicit old-to-new manifests and recovery redirects.
+11. **Consider expanded extents and deep levels.** Add these only after the
+    custom layered path is proven and the legacy-client policy is decided.
+
+### Geographic Alignment Policy to Develop
+
+Once coordinates are normalized, each area can be evaluated against its
+surface footprint:
+
+- **Exact stack:** matching X/Y footprint on adjacent levels. Preferred for
+  buildings, basements, mines, sewers, and ordinary vertical ladders.
+- **Local offset:** small documented adjustment for terrain shape, wall
+  thickness, or entrance orientation.
+- **Regional stack:** kept inside the corresponding surface-region allocation
+  when exact overlap is impossible.
+- **Non-geographic destination:** explicitly classified as transit, magical,
+  quest-space, or instance-like content.
+
+Alignment should operate on whole area manifests, not just ladder endpoints.
+The manifest must translate terrain bounds, placements, NPC roam areas, all
+entry and exit edges, quest checks, failure paths, and old saved locations.
+
+The surface map should be treated as the reference grid unless a later decision
+establishes a different canonical geographic layer.
+
+### Focused Decisions Still Needed
+
+Before this can become a selected architecture, decide:
+
+1. Whether signed levels (`-2,-1,0,+1,+2`) are preferable to named-only layer
+   IDs.
+2. Whether the first goal is readable normalized coordinates, true server
+   separation, or a fully expanded custom-client map model.
+3. Whether legacy clients must remain able to enter every supported level.
+4. What independent X/Y bounds each layer should ultimately support.
+5. Whether existing content should first be normalized in place and aligned
+   later, or whether selected low-risk areas should be aligned during the
+   migration pilot.
+6. Whether exact surface correspondence should be the default rule for all
+   ordinary vertical entrances.
 
 ## Terrain Archive Organization
 
@@ -456,6 +759,13 @@ The initial audit supports exploring this sequence without yet adopting it:
 The remaining decisions are deliberately divided so they can be handled one at
 a time.
 
+### Current Module: Coordinate Model and Alignment
+
+The focused layered-coordinate study above is the active discussion. Its first
+decision is whether the canonical model should use signed geographic levels,
+and how far the initial migration should go while legacy clients remain
+supported.
+
 ### Module A: Meaning of Deep Underground
 
 Decide whether deep underground is:
@@ -600,6 +910,7 @@ private environment should validate at least:
 | --- | --- | --- |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
+| 2026-07-17 | Explore true `(x,y,level)` separation and geographic alignment instead of relying indefinitely on packed-Y bands. | Under discussion |
 
 ## Next Discussion
 
