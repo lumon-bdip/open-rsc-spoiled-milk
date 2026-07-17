@@ -39,6 +39,8 @@ python3 ./tests/myworld/test-runecraft-data.py
 python3 ./tests/myworld/test-altar-obelisk-symmetry.py
 python3 ./tests/myworld/test-death-altar-placement.py
 python3 ./tests/myworld/test-landscape-client-server-sync.py
+python3 ./tests/myworld/test-crafting-guild-ore-rocks.py
+python3 ./tests/myworld/test-crafting-guild-extension.py
 python3 ./tests/myworld/test-cosmic-altar-path.py
 python3 ./tests/myworld/test-cosmic-sparkle-path.py
 python3 ./tests/myworld/test-enchanting-data.py
