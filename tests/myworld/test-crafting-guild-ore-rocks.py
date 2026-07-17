@@ -6,45 +6,53 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryLocs.json"
+SCENERY_REMOVALS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryRemovals.json"
 BASE_SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/SceneryLocs.json"
 
 GOLD_ROCK = 112
-SILVER_ROCK = 195
-DEPLETED_SILVER_ROCK = 196
+CLAY_ROCK = 114
+SILVER_ROCK = 196
 GEM_ROCK = 588
 
 GOLD_COORDS = {
-    (337, 614),
-    (339, 614),
-    (340, 614),
-    (338, 611),
-    (337, 610),
+    (337, 604),
+    (338, 604),
+    (339, 604),
+    (342, 604),
+    (337, 605),
+    (338, 605),
+    (339, 605),
+    (342, 605),
+    (342, 606),
+    (342, 607),
+}
+
+CLAY_COORDS = {
+    (336, 607),
+    (336, 608),
+    (336, 609),
+    (341, 609),
+    (342, 609),
 }
 
 SILVER_COORDS = {
+    (337, 599),
+    (338, 599),
+    (339, 599),
+    (340, 599),
+    (341, 600),
     (337, 601),
+    (338, 601),
+    (342, 601),
     (337, 602),
-    (338, 604),
-    (339, 604),
+    (338, 602),
+    (339, 602),
 }
 
 GEM_COORDS = {
-    (342, 608),
-    (342, 607),
-    (342, 606),
-    (342, 605),
-    (342, 603),
-    (342, 602),
-    (341, 601),
-}
-
-REMOVED_SILVER_COORDS = {
-    (341, 602),
-}
-
-REMOVED_GEM_COORDS = {
-    (342, 601),
-    (342, 600),
+    (338, 607),
+    (339, 607),
+    (340, 607),
 }
 
 
@@ -54,48 +62,63 @@ def fail(message: str) -> None:
 
 
 def main() -> None:
-    sceneries = json.loads(SCENERY_LOCS.read_text(encoding="utf-8"))["sceneries"]
-    all_sceneries = sceneries + json.loads(BASE_SCENERY_LOCS.read_text(encoding="utf-8"))["sceneries"]
-    by_id_and_pos = {
-        (loc.get("id"), loc.get("pos", {}).get("X"), loc.get("pos", {}).get("Y")): loc
-        for loc in sceneries
-    }
-    all_by_id_and_pos = {
-        (loc.get("id"), loc.get("pos", {}).get("X"), loc.get("pos", {}).get("Y")): loc
-        for loc in all_sceneries
+    custom = json.loads(SCENERY_LOCS.read_text(encoding="utf-8"))["sceneries"]
+    base = json.loads(BASE_SCENERY_LOCS.read_text(encoding="utf-8"))["sceneries"]
+    removals = json.loads(SCENERY_REMOVALS.read_text(encoding="utf-8"))["scenery_removals"]
+    removed_positions = {
+        (loc["pos"]["X"], loc["pos"]["Y"])
+        for loc in removals
     }
 
-    for x, y in GOLD_COORDS:
-        loc = by_id_and_pos.get((GOLD_ROCK, x, y))
-        if loc is None:
-            fail(f"Missing gold rock at {x},{y}")
-        if loc.get("direction") != 0:
-            fail(f"Gold rock at {x},{y} should use direction 0")
+    # Runtime loading removes authored base objects first, then lets MyWorld
+    # scenery replace anything at the same position.
+    effective_by_position = {
+        (loc["pos"]["X"], loc["pos"]["Y"]): loc
+        for loc in base
+        if (loc["pos"]["X"], loc["pos"]["Y"]) not in removed_positions
+    }
+    effective_by_position.update({
+        (loc["pos"]["X"], loc["pos"]["Y"]): loc
+        for loc in custom
+    })
 
-    for x, y in SILVER_COORDS:
-        loc = by_id_and_pos.get((SILVER_ROCK, x, y))
-        if loc is None:
-            fail(f"Missing silver rock at {x},{y}")
-        if loc.get("direction") != 0:
-            fail(f"Silver rock at {x},{y} should use direction 0")
+    expected_by_id = {
+        GOLD_ROCK: GOLD_COORDS,
+        CLAY_ROCK: CLAY_COORDS,
+        SILVER_ROCK: SILVER_COORDS,
+        GEM_ROCK: GEM_COORDS,
+    }
+    for rock_id, expected_positions in expected_by_id.items():
+        for position in expected_positions:
+            loc = effective_by_position.get(position)
+            if loc is None:
+                fail(f"Missing rock id {rock_id} at {position[0]},{position[1]}")
+            if loc.get("id") != rock_id:
+                fail(
+                    f"Rock at {position[0]},{position[1]} should use id {rock_id}, "
+                    f"found {loc.get('id')}"
+                )
+            if loc.get("direction") != 0:
+                fail(f"Rock id {rock_id} at {position[0]},{position[1]} should use direction 0")
 
-    for x, y in GEM_COORDS:
-        loc = by_id_and_pos.get((GEM_ROCK, x, y))
-        if loc is None:
-            fail(f"Missing gem rock at {x},{y}")
-        if loc.get("direction") != 0:
-            fail(f"Gem rock at {x},{y} should use direction 0")
+    actual_resource_positions = {
+        rock_id: {
+            position
+            for position, loc in effective_by_position.items()
+            if loc.get("id") == rock_id
+            and 336 <= position[0] <= 342
+            and 599 <= position[1] <= 609
+        }
+        for rock_id in expected_by_id
+    }
+    for rock_id, expected_positions in expected_by_id.items():
+        if actual_resource_positions[rock_id] != expected_positions:
+            fail(
+                f"Unexpected Crafting Guild rock layout for id {rock_id}: "
+                f"expected={sorted(expected_positions)} actual={sorted(actual_resource_positions[rock_id])}"
+            )
 
-    for x, y in REMOVED_SILVER_COORDS:
-        for rock_id in (SILVER_ROCK, DEPLETED_SILVER_ROCK):
-            if all_by_id_and_pos.get((rock_id, x, y)) is not None:
-                fail(f"Unexpected silver rock id {rock_id} at {x},{y}")
-
-    for x, y in REMOVED_GEM_COORDS:
-        if all_by_id_and_pos.get((GEM_ROCK, x, y)) is not None:
-            fail(f"Unexpected gem rock at {x},{y}")
-
-    print("PASS: crafting guild gold, silver, and gem rock placements look correct")
+    print("PASS: updated Crafting Guild gold, clay, silver, and gem rock placements look correct")
 
 
 if __name__ == "__main__":

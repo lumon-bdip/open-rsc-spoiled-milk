@@ -4,14 +4,19 @@ package com.openrsc.server.plugins.authentic.npcs.rimmington;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
 import static com.openrsc.server.plugins.Functions.*;
 
-public class MasterCrafter implements TalkNpcTrigger {
+public class MasterCrafter implements TalkNpcTrigger, OpLocTrigger {
+	private static final int CRAFTING_GUILD_EXTENSION_STAIRS = 42;
+	private static final Point CRAFTING_GUILD_EXTENSION_STAIRS_LOCATION = Point.location(338, 614);
 
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
@@ -53,5 +58,24 @@ public class MasterCrafter implements TalkNpcTrigger {
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {
 		return n.getID() == NpcId.MASTER_CRAFTER.id();
+	}
+
+	@Override
+	public void onOpLoc(Player player, GameObject obj, String command) {
+		Npc master = player.getWorld().getNpc(NpcId.MASTER_CRAFTER.id(), 341, 349, 599, 612);
+		if (master != null) {
+			npcsay(player, master,
+				"That area is currently off limits",
+				"We're still preparing the guild extension");
+		} else {
+			player.message("The Crafting Guild extension is currently off limits");
+		}
+	}
+
+	@Override
+	public boolean blockOpLoc(Player player, GameObject obj, String command) {
+		return obj.getID() == CRAFTING_GUILD_EXTENSION_STAIRS
+			&& obj.getLocation().equals(CRAFTING_GUILD_EXTENSION_STAIRS_LOCATION)
+			&& command.equals("go down");
 	}
 }
