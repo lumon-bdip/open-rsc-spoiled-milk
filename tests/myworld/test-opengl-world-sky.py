@@ -85,10 +85,15 @@ def main() -> None:
         "clouds must layer over stars during dawn/dusk transitions",
     )
     require(
-        chunks.count("drawWorldSkyCloudCluster(radius,") == 6,
-        "day sky must distribute six cloud groups around the dome",
+        chunks.count("drawWorldSkyCloudCluster(radius,") == 12,
+        "day sky must distribute twelve cloud groups around the dome",
     )
-    require("for (int star = 0; star < 96; star++)" in chunks, "night sky must use a fixed 96-star field")
+    require("drawWorldSkyWispyCloud" in chunks, "cloud field must include wispy silhouettes")
+    require("drawWorldSkyTowerCloud" in chunks, "cloud field must include taller silhouettes")
+    require("for (int star = 0; star < 180; star++)" in chunks, "night sky must use denser fixed fields")
+    require("drawWorldSkyMilkyWay(radius, starVisibility);" in chunks, "night sky must include a Milky Way band")
+    require("float centerElevation = -43.0f" in chunks, "Milky Way stars must follow the tilted band")
+    require("visibility * 0.030f" in chunks, "Milky Way haze must remain subtle")
     require("float starVisibility = smoothSkyAmount" in chunks, "stars must fade with presentation brightness")
     require("float cloudVisibility = smoothSkyAmount" in chunks, "clouds must fade with presentation brightness")
     require("presentation.fogRed" in chunks, "horizon must stitch to presentation fog")

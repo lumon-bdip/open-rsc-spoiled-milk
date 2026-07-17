@@ -112,10 +112,12 @@ SPOILED_MILK_OPENGL_SKY=screen
 ```
 
 The pink diagnostic landmarks established that the dome follows camera
-rotation but not player translation and have been removed. The first art pass
-uses six soft, layered cloud groups during bright presentation states and a
-deterministic 96-star world-space field as the day/night sky darkens. Both use
-fixed dome coordinates; neither can slide independently of terrain.
+rotation but not player translation and have been removed. The current art
+comparison uses twelve soft cloud groups split among cumulus, wispy, and taller
+silhouettes during bright presentation states. Night uses a denser deterministic
+star field plus a tilted great-circle Milky Way made from faint haze and a
+second concentration of small stars. All use fixed dome coordinates; none can
+slide independently of terrain.
 
 ## Visual Comparison Checklist
 
