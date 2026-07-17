@@ -105,8 +105,8 @@ later decision has not replaced it.
   `Your first task is one of the most difficult monsters of all. You must slay
   my thirst. Quickly, to the barmaid and fetch me a beer!`
 
-- The speaker is a new dedicated Monster Slayer NPC placed in the Rising Sun,
-  not Barmaid `142`. The existing Barmaid remains the person from whom the
+- The speaker is a new dedicated male Monster Slayer NPC placed in the Rising
+  Sun, not Barmaid `142`. The existing Barmaid remains the person from whom the
   player obtains the beer.
 - On return, the player may either offer the beer or say they do not have it
   yet. Saying they do not have it ends the exchange without changing state. If
