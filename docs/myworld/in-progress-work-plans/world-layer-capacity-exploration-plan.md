@@ -191,9 +191,9 @@ The archive plane and normalized sector coordinate can then address the same
 tile. This makes a lossless compatibility adapter realistic for all existing
 four-plane terrain.
 
-### Proposed Canonical Coordinate
+### Selected Canonical Coordinate Semantics
 
-A conceptually clean model would be:
+The owner selected the following conceptual model:
 
 ```text
 WorldCoordinate(x, y, level)
@@ -212,6 +212,20 @@ with signed, geographically meaningful levels:
 Named layer identifiers could accompany the signed value, but the sign is
 useful: `above()` and `below()` become obvious operations, while current plane
 3 no longer misleadingly appears to be three floors above the surface.
+
+Level values are sequential rather than limited to the presently existing
+maps. Moving up one physical level adds one; moving down one physical level
+subtracts one:
+
+```text
+up:   (x, y, level) -> (x, y, level + 1)
+down: (x, y, level) -> (x, y, level - 1)
+```
+
+Therefore a ladder at surface `(100,400,0)` should ordinarily lead to
+`(100,400,-1)`, and another descent at that coordinate should lead to
+`(100,400,-2)`. The corresponding upper levels are `(100,400,+1)`,
+`(100,400,+2)`, and so forth.
 
 The canonical X/Y values should be ordinary map coordinates within that layer,
 not values already transformed for archive or protocol use. Archive sector
@@ -274,6 +288,39 @@ For example:
 
 This distinction allows the engine migration to preserve behavior exactly
 before any risky map relocation begins.
+
+### Vertical Anchors and Walkable Arrival Tiles
+
+The existing generic ladder behavior supports the owner's expectation that
+most vertical realignment should be geometrically straightforward:
+
+- one-tile ladders preserve the player's X and normalized Y while applying the
+  legacy floor change;
+- larger staircase or ladder objects keep the same general anchor and apply a
+  small direction- and object-size-based landing offset;
+- the large geographic mismatches come from explicit special-case teleports,
+  not from the generic vertical formula.
+
+The layered design should distinguish an entrance's **geographic anchor** from
+its **walkable arrival tile**. Paired ladder or stair anchors should share exact
+X/Y by default. If the object occupies the anchor tile, the arrival may be an
+adjacent walkable tile derived from its direction and footprint. That local
+collision adjustment should not be treated as a geographic mismatch.
+
+This yields a clean authoring rule:
+
+```text
+source anchor:      (100,400, 0)
+destination anchor: (100,400,-1)
+arrival tile:       destination anchor plus a small local object offset
+```
+
+For self-contained areas, geographic alignment can often be implemented as a
+rigid translation of the entire terrain and placement footprint. Fine tuning
+should usually be limited to boundaries, walkable landing tiles, and conflicts
+with other content already allocated on the destination level. Script,
+placement, quest, and persistence references still require exhaustive
+migration even when the geometry moves cleanly.
 
 ### Required Separation Invariants
 
@@ -394,17 +441,15 @@ establishes a different canonical geographic layer.
 
 Before this can become a selected architecture, decide:
 
-1. Whether signed levels (`-2,-1,0,+1,+2`) are preferable to named-only layer
-   IDs.
-2. Whether the first goal is readable normalized coordinates, true server
+1. Whether the first implementation goal is readable normalized coordinates, true server
    separation, or a fully expanded custom-client map model.
-3. Whether legacy clients must remain able to enter every supported level.
-4. What independent X/Y bounds each layer should ultimately support.
-5. Whether existing content should first be normalized in place and aligned
+2. Whether legacy clients must remain able to enter every supported level.
+3. What independent X/Y bounds each layer should ultimately support.
+4. Whether existing content should first be normalized in place and aligned
    later, or whether selected low-risk areas should be aligned during the
    migration pilot.
-6. Whether exact surface correspondence should be the default rule for all
-   ordinary vertical entrances.
+5. How explicit long-distance ladder destinations should be reclassified or
+   reorganized once ordinary vertical entrances use exact anchors.
 
 ## Terrain Archive Organization
 
@@ -761,9 +806,9 @@ a time.
 
 ### Current Module: Coordinate Model and Alignment
 
-The focused layered-coordinate study above is the active discussion. Its first
-decision is whether the canonical model should use signed geographic levels,
-and how far the initial migration should go while legacy clients remain
+The focused layered-coordinate study above is the active discussion. Signed
+geographic levels and exact default vertical anchors are now selected. The next
+decision is how far the initial migration should go while legacy clients remain
 supported.
 
 ### Module A: Meaning of Deep Underground
@@ -911,9 +956,12 @@ private environment should validate at least:
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
 | 2026-07-17 | Explore true `(x,y,level)` separation and geographic alignment instead of relying indefinitely on packed-Y bands. | Under discussion |
+| 2026-07-17 | Use signed sequential levels: surface `0`, each level up `+1`, and each level down `-1`. | Confirmed |
+| 2026-07-17 | Ordinary vertical entrance anchors should preserve exact X/Y; local walkable arrival offsets may account for object footprint and direction. | Confirmed |
 
 ## Next Discussion
 
-The owner will select the first discussion module. No architecture should be
-marked chosen and no implementation plan should be prepared until the relevant
-modules have been resolved.
+Continue the coordinate-model module by choosing the intended first migration
+scope and legacy-client boundary. No implementation plan should be prepared
+until those compatibility decisions and the relevant remaining modules have
+been resolved.
