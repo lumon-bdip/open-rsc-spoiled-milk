@@ -1018,8 +1018,17 @@ a time.
 
 The focused layered-coordinate study above is the active discussion. Signed
 geographic levels, exact default vertical anchors, and an explicit legacy-format
-divergence are now selected. The next decision is the intended layered package
-boundary and initial migration scope.
+divergence are now selected. The Remaster Suite roadmap selects the package
+boundary: a Layered Maps product module contains a layered-world engine
+capability and separately versioned map packages, while World Builder remains a
+separate tool and non-vanilla Spoiled Milk maps remain optional Content.
+
+The first migration scope is also selected at roadmap level: normalize an exact
+copied legacy world into explicit levels without relocating content, prove
+terrain, placement, transition, script, persistence, and gameplay parity, and
+only then begin geographic alignment or introduce level `-2`. The remaining
+Modules A, C, D, E, F, and G still require owner discussion before a focused
+implementation plan is authorized.
 
 ### Module A: Meaning of Deep Underground
 
@@ -1154,6 +1163,7 @@ private environment should validate at least:
 - `docs/myworld/in-progress-work-plans/terrain-expansion-plan.md`
 - `docs/myworld/in-progress-work-plans/in-game-world-editor-plan.md`
 - `docs/myworld/in-progress-work-plans/standalone-world-builder-plan.md`
+- `docs/myworld/in-progress-work-plans/remaster-suite-roadmap.md`
 - `docs/myworld/in-progress-work-plans/legacy-limits-audit.md`
 - `docs/workspaces/README.md`
 
@@ -1169,9 +1179,12 @@ private environment should validate at least:
 | 2026-07-17 | Treat layered maps as a deliberate format divergence; legacy readers and runtimes need not accept post-layering projects. | Confirmed |
 | 2026-07-17 | Preserve compatibility through explicit versions, capability requirements, and an optional one-way importer rather than permanent packed-Y runtime support. | Confirmed |
 | 2026-07-17 | Record standalone capability packaging as relevant context, but defer the general installer and distribution architecture to a future focused study. | Confirmed |
+| 2026-07-17 | Place the layered-world engine capability and layered map packages inside the Remaster Suite's Layered Maps module; keep World Builder separate and non-vanilla map changes in optional Content. | Confirmed |
+| 2026-07-17 | Normalize and prove unchanged legacy-world behavior before geographic realignment or level `-2` content. | Confirmed |
 
 ## Next Discussion
 
-Continue the coordinate-model module by choosing the intended layered package
-boundary and first migration scope. No implementation plan should be prepared
-until those decisions and the relevant remaining modules have been resolved.
+Continue with the meaning of deep underground, geographic correspondence,
+existing-content eligibility, long-distance travel, static separation versus
+true instancing, allocation policy, and detailed validation. No implementation
+plan should be prepared until those remaining decisions have been resolved.

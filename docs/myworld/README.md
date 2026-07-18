@@ -34,6 +34,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [AI workspaces](../workspaces/README.md): separate worktree setup for
   multiple AI/contributor sessions.
 - [Hosting docs](../hosting/README.md): current private-server hosting notes.
+- [Remaster Suite roadmap](in-progress-work-plans/remaster-suite-roadmap.md):
+  master product roadmap for independently usable Renderer, Server, Layered
+  Maps, World Builder, and optional non-vanilla Content modules.
 - [Renderer and shader roadmap](in-progress-work-plans/renderer-and-shader-roadmap.md):
   current AI-facing source of truth for renderer-v2, remaster lighting, shadows,
   shader work, and major optimization direction.
@@ -93,6 +96,10 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [project-structure-refactor-plan.md](in-progress-work-plans/project-structure-refactor-plan.md):
   safe worktree workflow and target folder/package ownership map for the
   repository restructure.
+- [remaster-suite-roadmap.md](in-progress-work-plans/remaster-suite-roadmap.md):
+  start-to-finish modular product roadmap for the reusable remaster foundation,
+  vanilla-compatible bundles, layered-world transition, tools, and optional
+  Spoiled Milk Content.
 - [remaster-lighting-and-shadow-plan.md](in-progress-work-plans/remaster-lighting-and-shadow-plan.md):
   detailed implementation ledger for clean-slate Remaster lighting and shadows.
 - [remastered-sprite-overrides-plan.md](in-progress-work-plans/remastered-sprite-overrides-plan.md):
@@ -106,6 +113,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   rare resource seed framework and remaining seed-system direction.
 - [roadmap.md](in-progress-work-plans/roadmap.md):
   alpha milestone roadmap and release progression.
+- [skybox-depth-and-horizon-rnd.md](in-progress-work-plans/skybox-depth-and-horizon-rnd.md):
+  accepted world-anchored sky and below-terrain depth work with retained visual
+  comparison switches and future terrain-skirt notes.
 - [summoning-plan.md](in-progress-work-plans/summoning-plan.md):
   current Summoning implementation source of truth and tuning notes.
 - [standalone-world-builder-plan.md](in-progress-work-plans/standalone-world-builder-plan.md):
@@ -117,6 +127,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   tier-11 god staff and combination staff direction.
 - [work-items.md](in-progress-work-plans/work-items.md):
   current implementation queue and completed-state rollup.
+- [world-layer-capacity-exploration-plan.md](in-progress-work-plans/world-layer-capacity-exploration-plan.md):
+  signed layered-coordinate architecture, map-format divergence, geographic
+  alignment questions, capacity audit, and migration constraints.
 
 ## Completed Work Plans
 

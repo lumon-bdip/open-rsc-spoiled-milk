@@ -1,0 +1,908 @@
+# Remaster Suite Roadmap
+
+Status: owner-approved product roadmap; implementation is not yet authorized by
+this document alone
+
+Started: 2026-07-17
+
+## Purpose
+
+Spoiled Milk has produced substantial client, renderer, server, map, editor,
+diagnostic, and workflow improvements that are useful beyond Spoiled Milk's
+custom game. The long-term product should therefore be more than one modified
+server. It should provide a reusable **Remaster Suite** whose technical
+capabilities can be installed together or selected independently.
+
+The Suite must support at least these outcomes:
+
+- a technically remastered game using otherwise vanilla content;
+- a renderer-only installation where that is compatible;
+- a server-foundation installation without Spoiled Milk gameplay content;
+- layered maps authored by the new World Builder and run by a compatible
+  client/server;
+- third-party content that declares and uses selected Remaster capabilities;
+- the complete Spoiled Milk game as one optional content distribution built on
+  the same foundation.
+
+This is a start-to-finish product and architecture roadmap. It defines ordering,
+boundaries, dependencies, and completion gates. Detailed implementation remains
+owned by focused module plans and short-lived topic branches.
+
+## North-Star Product
+
+The final product is a family of versioned capabilities and packages, not a
+second monolithic fork.
+
+```text
+                          Remaster Suite
+                                |
+       +------------------------+------------------------+
+       |             |              |          |         |
+    Renderer       Server       Layered Maps  Builder  Content
+       |             |              |          |         |
+       +-------------+--------------+----------+---------+
+                                |
+                    tested end-user distributions
+                                |
+          vanilla remaster / custom world / Spoiled Milk
+```
+
+The downloadable Suite may present convenient bundles, but its internal
+packages must retain explicit ownership and dependency metadata. A user should
+not have to install Spoiled Milk content to receive technical improvements.
+
+## Terminology
+
+- **Remaster Suite:** the complete product family and its supported bundle
+  combinations.
+- **Primary module:** one of the five owner-selected product areas: Renderer,
+  Server, Layered Maps, World Builder, or Content.
+- **Capability:** a stable, versioned technical contract exposed by a module,
+  such as `renderer.opengl` or `world.layered-coordinates`.
+- **Package:** a distributable artifact with a manifest, hashes, requirements,
+  compatibility claims, and installation contents.
+- **Bundle:** a tested selection of packages presented as one download or
+  installation choice.
+- **Target profile:** an explicit adapter for a known client, server, content,
+  definition, or repository layout. Similar folder names are not compatibility
+  evidence.
+- **Vanilla:** the selected supported baseline without any content that was not
+  part of that baseline.
+- **Content:** all gameplay or world material that was not part of vanilla,
+  including Spoiled Milk quests, skills, balance, items, NPC behavior, shops,
+  custom areas, placements, transitions, and associated definitions or UI.
+- **Legacy map:** the current packed-Y/four-plane map and tooling format.
+- **Layered map:** a map using explicit signed `(x,y,level)` coordinates and the
+  new layered capability contract.
+
+Calling something a module does not promise that it can be safely hot-loaded or
+removed while a game is running. Some modules are source/build capabilities or
+install-time bundles because they alter core runtime identity.
+
+## Non-Negotiable Product Rules
+
+1. **Content neutrality is provable.** The foundation must build and run against
+   a supported vanilla target without silently loading Spoiled Milk content.
+2. **Spoiled Milk is a consumer.** Foundation modules may expose capabilities to
+   Spoiled Milk; they must not depend on Spoiled Milk gameplay behavior.
+3. **Compatibility is explicit.** Every package identifies supported target
+   profiles, capability versions, definition expectations, and known
+   incompatibilities.
+4. **Unknown targets fail safely.** Installers and tools must not patch an
+   arbitrary OpenRSC-derived project because its folders happen to look
+   familiar.
+5. **Dependencies are directional.** Content may require foundation
+   capabilities. Foundation code may not import optional content.
+6. **Modules release independently where truthful.** A renderer package, server
+   package, or Builder release can have its own version without pretending that
+   unrelated modules changed.
+7. **Bundles are tested combinations.** Being individually installable does not
+   mean every version combination is supported.
+8. **Legacy work is preserved.** The last packed-Y map format and compatible
+   World Builder remain documented and available while layered tooling evolves.
+9. **Conversion is non-destructive.** Legacy-to-layered conversion operates on
+   copies, records fingerprints and receipts, and never rewrites the source
+   project in place.
+10. **State migrations are reversible.** Map imports, definition changes,
+    configuration changes, and player-database migrations require backups,
+    receipts, validation, and rollback paths.
+11. **No public-server shortcuts.** Suite development does not weaken the live
+    deployment, warning, backup, worktree, or database safety contracts.
+12. **Distribution rights are verified.** Maps, sprites, textures, models,
+    audio, dependencies, and bundled runtimes require an explicit provenance
+    and redistribution decision before public packaging.
+13. **Repository separation follows architecture.** Code is not moved into a
+    separate repository merely to look modular. Stable ownership and build
+    boundaries come first.
+14. **Current module roadmaps remain active.** Productization does not imply
+    that Renderer, Server, Layered Maps, World Builder, or Content are finished
+    technically or creatively.
+
+## Primary Module Boundaries
+
+### 1. Renderer
+
+The Renderer module owns technical client presentation:
+
+- desktop OpenGL windowing and input integration;
+- renderer-facing frame and world-data contracts;
+- terrain, wall, roof, scenery, object, sprite, UI, and overlay presentation;
+- lighting, tones, sky, fog, shadows, glow, terrain relief, and materials;
+- remastered asset override loading with original fallback;
+- renderer settings, profiles, migrations, and diagnostics;
+- maintained software/classic fallback behavior where included;
+- performance telemetry, capture, and visual-comparison tooling.
+
+It does not own quests, combat balance, item effects, custom areas, server
+authority, or Spoiled Milk-specific gameplay. It may consume definition and
+asset identities through a target profile, but those dependencies must not be
+hard-coded as Spoiled Milk assumptions.
+
+The first reusable Renderer target is the maintained desktop client. Android,
+web, and unmodified legacy clients require separately proven adapters and are
+not implied by the initial module.
+
+### 2. Server
+
+The Server module owns content-neutral runtime foundations:
+
+- bootstrap, configuration, private/hosted launch boundaries, and shutdown;
+- world ticking, entity lifecycle, regions, pathing, collision, and scheduling;
+- networking, synchronization, packets, compatibility negotiation, and limits;
+- persistence APIs, migrations, database safety, and recovery;
+- plugin discovery and stable extension contracts;
+- definitions and generated-data loading contracts;
+- performance, movement, failure, and operational diagnostics;
+- administrator, deployment, backup, and release safety foundations;
+- content-neutral world services needed by maps and plugins.
+
+The Server module does not own Spoiled Milk quests, custom skill rules, custom
+drops, balance, shops, guilds, NPC scripts, or optional map additions. Existing
+code must be classified and extracted until a vanilla-profile build proves that
+separation.
+
+### 3. Layered Maps
+
+The Layered Maps module has two internal artifact types because the feature is
+too fundamental to be only a data plugin:
+
+1. **Layered-world engine capability**
+   - makes level part of point, region, tile, entity, object, item, collision,
+     visibility, pathing, area, persistence, cache, protocol, and client-loading
+     identity;
+   - implements signed `WorldCoordinate(x,y,level)` semantics;
+   - owns named compatibility codecs at legacy boundaries;
+   - exposes map-format and transition APIs to tools and content.
+2. **Layered map packages**
+   - contain or reference terrain and every coordinate-bearing world element
+     the package owns;
+   - declare levels, extents, transitions, definitions, capabilities, and
+     source fingerprints;
+   - distinguish complete worlds, world modules, and focused map patches.
+
+Canonical levels begin with surface `0`, upper floors `+1`, `+2`, and onward,
+underground `-1`, and deep underground `-2`. Ordinary vertical anchors preserve
+X/Y by default. Local walkable arrival offsets are explicit, while long-distance
+transport, magical, quest, and instance-like edges are classified separately.
+
+A map depends on Renderer only when it truly requires renderer-specific assets
+or behavior. Layered coordinates themselves depend on the layered-world engine
+capability, not a particular visual style.
+
+### 4. World Builder
+
+World Builder remains an independently released tool and repository. It owns:
+
+- safe target discovery through named layout adapters;
+- isolated projects and local Builder runtime workspaces;
+- terrain, placement, transition, and metadata editing;
+- deterministic exports, manifests, fingerprints, and change summaries;
+- transactional import, backups, receipts, and rollback;
+- legacy packed-map support and read-only conversion;
+- layered-map validation and authoring;
+- compatibility checks against target capabilities and definitions;
+- end-user launchers, updater behavior, documentation, and diagnostics.
+
+The current Builder generation remains the legacy packed-map editor. The
+layered generation must use a separately named schema/adapter and must never
+guess a project's coordinate model.
+
+World Builder does not own a target server's player accounts, live database,
+public process, arbitrary source patches, or gameplay scripts it cannot fully
+inventory.
+
+### 5. Content
+
+Content means material that was not part of the chosen vanilla baseline. The
+Spoiled Milk Content module includes, where applicable:
+
+- custom quests, skills, systems, guilds, progression, balance, and rewards;
+- custom items, definitions, recipes, shops, drops, NPCs, and behaviors;
+- custom interfaces or guide data whose purpose is the optional gameplay;
+- custom terrain, areas, scenery, NPC placements, ground spawns, transitions,
+  and geographic realignment;
+- scripts, recovery paths, persistence fields, and migrations required by that
+  content;
+- content-owned visual and audio assets;
+- explicit capability dependencies on Renderer, Server, or Layered Maps.
+
+The Suite also needs target profiles for vanilla definitions, IDs, maps,
+protocols, and assets. Those profiles are compatibility infrastructure, not
+Spoiled Milk Content. This distinction prevents a supposedly content-free
+installation from inheriting hidden Spoiled Milk definitions or behavior.
+
+The first Content package may contain all Spoiled Milk content as one tested
+bundle. Finer quest, skill, visual, or world packs may be considered only after
+the primary separation is stable.
+
+## Required Dependency Direction
+
+| Consumer | May depend on | Must not require |
+| --- | --- | --- |
+| Renderer | client API, target definitions/assets, shared contracts | Spoiled Milk gameplay content |
+| Server | shared contracts, target profile, optional installed content APIs | Renderer implementation, Spoiled Milk content |
+| Layered-world engine | client/server world APIs, protocol and persistence contracts | a particular map package or Spoiled Milk content |
+| Layered map package | layered-world capability, declared definitions, optional renderer assets | unrelated content or an undeclared source tree |
+| World Builder | map schemas, adapters, capability metadata, definitions | a running target or hidden Spoiled Milk release coupling |
+| Content | any explicitly declared foundation capability and target profile | undeclared patches or accidental repository layout |
+| Suite bundle | a tested version matrix of selected packages | unsupported arbitrary combinations |
+
+Cross-module communication should use narrow value types, schemas, service
+interfaces, or generated contracts. Direct imports into another module's
+internal implementation are migration debt and should be tracked as such.
+
+## Supported End-State Distributions
+
+The roadmap is complete only when the packaging system can truthfully produce
+and test these shapes:
+
+1. **Renderer-only development package**
+   - Installs or builds the renderer against an explicitly supported client
+     target profile.
+   - Includes required shared client contracts but no server or custom content.
+2. **Server-foundation package**
+   - Runs an explicitly supported vanilla content profile.
+   - Contains no Spoiled Milk quests, balance, custom map additions, or custom
+     definitions unless the user selects them.
+3. **Vanilla Remaster bundle**
+   - Combines compatible Renderer and Server packages with a vanilla target
+     profile and supported vanilla world/content data.
+4. **Layered-world development bundle**
+   - Combines layered client/server capability, a layered map package, and a
+     compatible Builder without requiring Spoiled Milk Content.
+5. **World Builder standalone package**
+   - Runs independently and selects an explicit legacy or layered adapter.
+6. **Third-party content bundle**
+   - Adds a separately authored map or content package whose declared
+     capabilities and definitions are satisfied.
+7. **Spoiled Milk bundle**
+   - Combines the tested foundation versions with the optional Spoiled Milk
+     Content package.
+8. **Complete Remaster Suite bundle**
+   - Provides the supported foundation and tools as a convenience install,
+     while still showing which modules and content selections are present.
+
+"Any server/client" means any explicitly supported target profile or a target
+that implements the published contracts. It does not mean silently modifying an
+unknown fork.
+
+## Current Starting Point
+
+Useful foundations already exist, but they are not yet independently
+distributable modules:
+
+- Renderer-v2 has a playable OpenGL baseline, resident world geometry,
+  lighting, shadows, sky, diagnostics, profiles, and legacy fallback.
+- The server has production launch/build authority, hosted/private separation,
+  external live-state protection, diagnostics, and a plugin boundary.
+- The refactor program has begun extracting renderer, definition, equipment,
+  spell, packet, settings, and scene ownership from oversized legacy classes.
+- World Builder already provides isolated workspaces, deterministic authored
+  bundles, strict fingerprints, transaction receipts, safe imports, rollback,
+  standalone launchers, and its own repository/release channel.
+- The terrain archive already stores an explicit plane in sector entry names,
+  but active world coordinates, entities, regions, scripts, persistence, and
+  other systems still rely on four packed-Y bands.
+- AI-1's layered-world study selected signed levels, geographic anchors,
+  intentional legacy-format divergence, capability-oriented manifests, and a
+  one-way conversion strategy.
+- Spoiled Milk-owned behavior is increasingly placed in custom namespaces, but
+  gameplay content, definitions, base compatibility logic, client UI, maps, and
+  inherited plugins remain interwoven.
+- Build and release artifacts are currently oriented around the combined
+  Spoiled Milk product rather than independently versioned module outputs.
+
+## Delivery Strategy
+
+### One roadmap, many focused plans
+
+Each phase below should produce one or more focused plans with bounded branches,
+tests, and handoffs. Do not create a single long-running "Remaster Suite"
+implementation branch.
+
+### Monorepo before unnecessary repository splits
+
+Renderer, Server, Layered Maps, shared definitions, and Content should initially
+remain in the current repository while ownership is extracted. The build may
+emit independent artifacts before source moves. World Builder may remain in its
+existing dedicated repository because it already has an independent lifecycle.
+
+A new repository is justified only when:
+
+- the module has a stable public contract;
+- its build and tests no longer require private implementation details from the
+  monolith;
+- its version can advance independently without copying synchronized source;
+- source history, contribution workflow, and release automation benefit from
+  the split;
+- cross-repository compatibility fixtures exist.
+
+### Preserve a releasable Spoiled Milk throughout
+
+Every extraction must preserve the current combined game until replacement
+bundles pass parity. Feature work and public releases may continue while this
+roadmap advances. A structural phase may not strand the live product between
+old and new formats.
+
+## Roadmap Phases
+
+### Phase 0: Baseline, inventory, and freeze points
+
+Goal: establish exactly what is being separated before changing ownership.
+
+Work:
+
+- Choose and fingerprint the supported vanilla baseline(s).
+- Inventory source, definitions, maps, assets, scripts, configuration, database
+  fields, generated data, and runtime artifacts.
+- Classify each owned component as foundation, vanilla target profile, Spoiled
+  Milk Content, shared compatibility, development-only, or legacy.
+- Record every known Renderer-to-definition, Server-to-content,
+  Map-to-script, Builder-to-repository, and client/server protocol dependency.
+- Freeze and document the last legacy packed-map schema and adapter.
+- Capture reproducible combined Spoiled Milk client/server builds and critical
+  behavior baselines.
+- Capture an independently identifiable vanilla behavior baseline suitable for
+  later content-neutral testing.
+- Inventory license, attribution, and redistribution status for source,
+  dependencies, runtimes, maps, and assets.
+- Identify secrets, player data, development caches, and generated artifacts
+  that must never enter a package.
+
+Exit gate:
+
+- every active file class has an initial ownership classification;
+- vanilla and Spoiled Milk baselines can be rebuilt or their blockers are
+  explicitly recorded;
+- the final legacy map/Builder generation is named and recoverable;
+- no unknown redistribution dependency is silently assumed shippable.
+
+### Phase 1: Minimal capability and package contracts
+
+Goal: define the vocabulary all primary modules must implement.
+
+Work:
+
+- Select stable capability identifiers and initial versions.
+- Define a minimal package manifest schema covering package type, version,
+  hashes, target profiles, provided capabilities, required capabilities,
+  conflicts, definitions, assets, coordinate model, and migration needs.
+- Define exact package categories: engine capability, target profile, map
+  package, content package, tool, asset pack, and tested bundle.
+- Define compatibility-range and protocol-negotiation rules.
+- Define installation receipts and a minimal rollback contract.
+- Define configuration namespaces so modules do not overwrite one another's
+  settings.
+- Define definition/ID fingerprints and extension ranges needed by optional
+  content.
+- Decide which module interactions require source APIs, binary artifacts,
+  generated schemas, or install-time composition.
+- Publish example manifests for Renderer-only, Server-foundation, layered map,
+  World Builder, vanilla target, and Spoiled Milk Content packages.
+
+This phase creates only the minimum packaging foundation required by the five
+primary modules. A general package manager, signing service, marketplace, and
+advanced updater remain post-roadmap work.
+
+Exit gate:
+
+- package compatibility can be evaluated before filesystem or database
+  mutation;
+- Content can declare dependencies without foundation code importing Content;
+- an unknown target produces an actionable refusal;
+- manifests do not rely on Spoiled Milk branding as a technical capability.
+
+### Phase 2: Source ownership and content-neutral seams
+
+Goal: make the intended boundaries real inside the existing repository.
+
+Work:
+
+- Continue behavior-preserving ownership extraction from oversized client and
+  server classes according to the structure/refactor plans.
+- Establish stable client renderer-facing frame, asset, definition, input, and
+  settings APIs.
+- Separate server bootstrap, world, entity, protocol, persistence, definitions,
+  and extension APIs from gameplay content implementations.
+- Move new Spoiled Milk-owned gameplay toward one explicit content namespace
+  and catalog inherited files that still require mixed ownership.
+- Split vanilla target data from Spoiled Milk additions and overrides.
+- Introduce content-neutral registries or extension points where custom IDs,
+  definitions, scripts, map overlays, or UI entries currently require direct
+  edits.
+- Add dependency checks that prevent foundation packages from importing or
+  packaging Spoiled Milk Content.
+- Retain compatibility facades until callers and parity tests prove they can be
+  removed.
+
+Exit gate:
+
+- the combined Spoiled Milk build remains behaviorally equivalent;
+- a content-neutral build graph can be assembled, even if not yet ready for
+  public release;
+- dependency reports identify and block new foundation-to-content coupling;
+- package and folder moves can proceed mechanically rather than redesigning
+  behavior at the same time.
+
+### Phase 3: Renderer module productization
+
+Goal: produce the first independently versioned Renderer package.
+
+Work:
+
+- Complete the current high-priority ownership extractions and public renderer
+  API.
+- Remove implicit Spoiled Milk content assumptions from material, sprite,
+  model, object, item, NPC, and UI lookup paths.
+- Put target-specific identities behind versioned definition/asset adapters.
+- Define Renderer package contents for source, compiled client, configuration,
+  shaders, diagnostics, optional remastered assets, and software fallback.
+- Keep remastered asset packs separable from renderer code.
+- Add install/build support for at least one vanilla client target profile and
+  the Spoiled Milk client profile.
+- Add visual, input, settings-migration, performance, fallback, and clean-
+  extraction smoke tests for both profiles.
+- Publish an alpha Renderer artifact without claiming Android, web, or unknown
+  legacy-client compatibility.
+
+Exit gate:
+
+- the same Renderer capability runs against supported vanilla and Spoiled Milk
+  profiles without code forks;
+- Renderer-only packaging contains no server or Spoiled Milk gameplay content;
+- classic/software fallback and uninstallation/rollback behavior are known;
+- ongoing renderer feature work can continue on the module contract.
+
+### Phase 4: Server module productization
+
+Goal: produce a content-neutral improved Server package.
+
+Work:
+
+- Complete the server foundation/content ownership audit.
+- Define stable extension APIs for content registration, commands, skills,
+  quests, NPC interactions, item effects, drops, map transitions, and scheduled
+  events.
+- Separate vanilla definitions and content plugins from engine/runtime code.
+- Centralize protocol versions, definition fingerprints, migration levels, and
+  client capability negotiation.
+- Version persistence changes and prove vanilla rows can run without Spoiled
+  Milk-only fields or behavior.
+- Package authoritative server binaries, dependencies, schemas, configuration
+  templates, diagnostics, migrations, and extension documentation.
+- Preserve the production Ant build until an alternative proves artifact and
+  runtime parity; build-system modernization must not be hidden in packaging.
+- Test private launch, clean shutdown, backup/restore, server-only update,
+  plugin discovery, vanilla behavior, and Spoiled Milk compatibility.
+
+Exit gate:
+
+- the Server package runs the selected vanilla target without Spoiled Milk
+  Content;
+- adding Spoiled Milk Content uses declared extension/capability boundaries;
+- server upgrades preserve and validate data with rollback available;
+- the hosted Spoiled Milk product still uses the guarded deployment workflow.
+
+### Phase 5: Layered-world engine capability
+
+Goal: replace packed-Y runtime identity with explicit signed levels while first
+preserving existing gameplay exactly.
+
+Required design work before implementation:
+
+- finish the open discussion modules in the world-layer capacity plan;
+- choose supported per-layer X/Y bounds;
+- decide deep-underground topology, geographic correspondence rules, migration
+  eligibility, transport classifications, allocation policy, and whether true
+  instances are a separate later capability;
+- publish the layered coordinate, transition, region, map-package, protocol,
+  and persistence specifications.
+
+Implementation sequence:
+
+1. Add a named, reversible codec for all existing packed coordinates.
+2. Introduce immutable level-aware points, areas, region keys, transition
+   destinations, and map identities without changing behavior.
+3. Prove exhaustive round trips for terrain, placements, teleports, scripts,
+   and copied player locations.
+4. Make region storage, tiles, objects, NPCs, ground items, collision, pathing,
+   visibility, targeting, interactions, caches, wilderness, and area checks
+   level-aware.
+5. Version placement and definition schemas with explicit levels.
+6. Add preservation-safe player persistence fields and migration receipts on
+   copied databases.
+7. Normalize the maintained client and protocol while confining packed
+   arithmetic to named legacy adapters.
+8. Run all current maps and content without relocation until parity is proven.
+9. Reject cross-level visibility, collision, following, trading, combat,
+   pathing, and cache leakage by invariant tests.
+10. Enable additional signed levels only after the unchanged four-level world
+    is stable.
+
+Exit gate:
+
+- existing content runs unchanged through the explicit layered model;
+- level participates in every world identity and proximity decision;
+- save/login/logout/reconnect/death/recovery retain the correct level;
+- old packed data can be imported losslessly and is never silently
+  reinterpreted;
+- legacy clients and maps receive clear compatibility results;
+- a copied level `-2` test world passes private client/server validation.
+
+### Phase 6: Layered World Builder generation
+
+Goal: retool World Builder around the layered specification without sacrificing
+legacy projects.
+
+Work:
+
+- Keep the final packed-Y release available as the Legacy World Builder.
+- Add a separately named layered project, export, receipt, and adapter schema.
+- Implement read-only legacy discovery and one-way conversion into a new copied
+  project.
+- Show X/Y/level directly throughout navigation, inspect, copy, terrain,
+  placement, transition, and validation interfaces.
+- Add level creation, bounds, naming, role, visibility, and allocation metadata.
+- Author geographic anchors separately from collision-adjusted arrival tiles.
+- Author explicit vertical, regional, transit, magical, quest, and exceptional
+  transition types.
+- Expand the authored bundle or extension interface so a complete world module
+  can declare all terrain, placement, transition, definition, and script
+  ownership it requires.
+- Validate engine capabilities and definition fingerprints before export or
+  import.
+- Preserve isolated workspace, deterministic export, offline-target import,
+  backup, receipt, rollback, and crash-recovery guarantees.
+- Publish layered Builder releases independently from Spoiled Milk releases.
+
+Exit gate:
+
+- a legacy project converts without changing the original;
+- conversion reports every unsupported or ambiguous content owner;
+- a layered project round-trips through save/export/import with deterministic
+  results;
+- level `-2` and expanded extents are editable without packed-Y arithmetic;
+- Builder refuses incompatible engine, map, and definition targets before
+  mutation.
+
+### Phase 7: Layered map packages and world migration
+
+Goal: turn the engine and editor capability into usable, organized worlds.
+
+Work:
+
+- Build a machine-readable inventory of existing areas, terrain bounds,
+  placements, scripts, entrances, exits, dependencies, persistence risks, and
+  growth reservations.
+- Build the directed transition graph and classify every ladder, stair, portal,
+  door, boat, spell, minigame, and recovery edge.
+- Convert an exact copied vanilla baseline into layered notation without
+  relocations and prove byte/behavior parity where applicable.
+- Convert an exact copied Spoiled Milk world separately; do not allow its custom
+  map changes to become part of the vanilla profile.
+- Establish sector/allocation policies for surface, upper floors, shallow
+  underground, deep underground, transport, quest, expansion, and experimental
+  regions.
+- Align ordinary vertical areas geographically after engine parity, moving one
+  low-risk area at a time through explicit old-to-new manifests.
+- Preserve or reclassify established quest dungeons and long-distance travel
+  according to the completed map design discussion.
+- Add login redirects, quest recovery, death recovery, and rollback for every
+  moved area.
+- Introduce connected or separated deep-underground areas only after the
+  shallow-world migration and allocation policy are proven.
+- Package complete worlds, world modules, and map patches as different artifact
+  types.
+- Where redistribution rights prevent bundling base map data, support a
+  fingerprinted local conversion workflow rather than shipping that data.
+
+Exit gate:
+
+- vanilla and Spoiled Milk layered worlds remain distinct packages;
+- every package declares all coordinate-bearing data and runtime capabilities
+  it owns;
+- terrain, collision, placements, transitions, quests, login, logout,
+  reconnect, death, minimap, and renderer baselines pass private testing;
+- rollback restores the exact prior world and copied player state;
+- the legacy map remains available for users who intentionally stay on v1.
+
+### Phase 8: Spoiled Milk Content package
+
+Goal: make all non-vanilla Spoiled Milk material an explicit optional consumer
+of the Remaster foundation.
+
+Work:
+
+- Complete the content inventory and remove hidden Spoiled Milk defaults from
+  foundation builds.
+- Package custom definitions, generated IDs, skills, quests, systems, balance,
+  NPCs, items, drops, shops, guilds, minigames, scripts, interfaces, assets, and
+  map additions under explicit ownership.
+- Declare required Renderer, Server, Layered Maps, target-profile, definition,
+  persistence, and asset capabilities.
+- Separate Spoiled Milk map changes from a vanilla layered-map package.
+- Version content-owned database fields and migrations.
+- Add installation, upgrade, removal, and downgrade policy. Removal may require
+  an explicit migration rather than deleting files when player state refers to
+  custom content.
+- Prove that disabling the Content package restores the supported vanilla
+  profile rather than leaving partial definitions, placements, scripts, or
+  settings behind.
+- Retain the complete Spoiled Milk game as a first-class tested distribution.
+
+Exit gate:
+
+- the Content package can be identified completely by its manifest and
+  installation receipt;
+- no foundation artifact requires it;
+- every custom map, definition, script, asset, and persisted state owner is
+  accounted for;
+- full Spoiled Milk behavior and progression pass their existing tests and
+  private field validation on the modular foundation.
+
+### Phase 9: Suite composition and end-user releases
+
+Goal: make supported combinations easy to install, understand, update, and
+recover.
+
+Work:
+
+- Build deterministic package composition from the minimal manifest system.
+- Publish a tested compatibility matrix across module versions and target
+  profiles.
+- Produce the supported end-state distributions listed above.
+- Provide previews that show exactly which files, configuration, schemas,
+  definitions, maps, assets, and database migrations will change.
+- Create installation receipts, backups, rollback, and repair/verify commands.
+- Keep user projects, saves, Builder workspaces, exports, configuration, and
+  logs outside replaceable application payloads.
+- Provide release channels and update behavior appropriate to each module,
+  without forcing unrelated upgrades.
+- Add fresh-install, upgrade, rollback, unknown-target, interrupted-install,
+  content-neutrality, and cross-module smoke tests on Linux and Windows where
+  supported.
+- Document source installation, binary installation, supported customization,
+  contribution boundaries, and recovery.
+
+Exit gate:
+
+- a new user can intentionally choose Renderer-only, Server-only, Vanilla
+  Remaster, layered development, World Builder, third-party content, complete
+  Suite, or Spoiled Milk where supported;
+- unsupported combinations fail before mutation with an actionable explanation;
+- updates preserve user state and can be rolled back;
+- package contents and provenance are reproducible and published with hashes;
+- independent module versions do not require synchronized branding releases.
+
+### Phase 10: Stabilization and adoption
+
+Goal: prove the modular product over time before declaring the roadmap complete.
+
+Work:
+
+- Run multiple release cycles of Renderer, Server, Layered Maps, World Builder,
+  and Spoiled Milk Content independently.
+- Collect compatibility reports from vanilla and third-party content users.
+- Resolve accidental cross-module coupling revealed by real installations.
+- Freeze stable v1 contracts only after migration and rollback paths have been
+  exercised.
+- Decide whether any mature module now benefits from its own repository.
+- Publish long-term support, deprecation, legacy-map, and security-update policy.
+- Keep ongoing feature roadmaps for every primary module rather than treating
+  suite v1 as technical completion.
+
+Exit gate:
+
+- at least one supported vanilla distribution and the complete Spoiled Milk
+  distribution have survived independent upgrades;
+- Layered Maps and World Builder have completed real project round trips;
+- module boundaries remain enforceable in builds and packages;
+- recovery procedures have been tested rather than merely documented;
+- maintainers can release one module without rebuilding unrelated source unless
+  the compatibility matrix requires it.
+
+## Cross-Cutting Validation Matrix
+
+Every phase should add tests at the narrowest useful layer and retain the
+combined product checks.
+
+| Concern | Required evidence |
+| --- | --- |
+| Content neutrality | Foundation package inventory contains no non-vanilla gameplay, maps, definitions, or scripts |
+| Dependency direction | Automated source/build checks reject foundation imports from optional Content |
+| Renderer | Builds, visual baselines, input, settings migration, fallback, diagnostics, and profile adapters |
+| Server | Build authority, launch safety, protocol, tick/sync, persistence, shutdown, plugin, and vanilla behavior |
+| Layered world | Codec round trips, level isolation, collision/pathing, visibility, caches, persistence, and transitions |
+| Maps | Terrain/placement parity, ownership manifests, entrance graph, recovery, migration, and rollback |
+| Builder | Discovery, isolation, save/export, deterministic hashes, import, rollback, updater, and crash recovery |
+| Content | Capability resolution, definitions, progression, quests, maps, persistence, installation, and removal policy |
+| Packaging | Fresh install, upgrade, verify, rollback, unknown target, interruption, hashes, and provenance |
+| Full products | Vanilla Remaster and Spoiled Milk private field tests plus release smoke tests |
+
+Visual acceptance remains mandatory for renderer and map changes. Automated
+tests can prove ownership, invariants, and determinism but cannot decide whether
+lighting, terrain, transitions, or interfaces look and feel correct.
+
+## Versioning and Compatibility Policy
+
+Each package has its own semantic version and declares stable capability
+versions separately. A package version may change without changing every
+capability it provides.
+
+A conceptual manifest fragment is:
+
+```json
+{
+  "package": "remaster.layered-world-engine",
+  "version": "1.0.0",
+  "providesCapabilities": {
+    "world.layered-coordinates": "1.0",
+    "world.transition-graph": "1.0"
+  },
+  "requiresCapabilities": {
+    "server.world-api": ">=1 <2",
+    "client.world-api": ">=1 <2"
+  },
+  "coordinateModel": "signed-layered-v1"
+}
+```
+
+Rules:
+
+- capability names describe contracts rather than repositories or brands;
+- incompatible schema, protocol, coordinate, or persistence changes require a
+  new major capability version;
+- target profiles name exact supported baselines and fingerprints;
+- bundles record the exact package versions they contain;
+- a map or content package cannot claim compatibility from product version
+  similarity alone;
+- package verification occurs before launch and before import/migration;
+- deprecation includes a converter, recovery path, or explicit unsupported
+  notice rather than silent fallback.
+
+## Decisions That Require Focused Follow-Up Plans
+
+This roadmap establishes direction but intentionally leaves these decisions to
+bounded plans:
+
+- exact supported vanilla baseline and its redistribution model;
+- initial public capability identifiers and manifest schema;
+- module artifact shapes: source kit, patch set, binary, installer, or
+  combinations;
+- per-layer coordinate bounds and expanded world dimensions;
+- deep-underground topology and geographic alignment policy;
+- true instancing versus static isolated regions;
+- protocol and persistence migration mechanics;
+- definition/ID extension and conflict policy;
+- content uninstall/downgrade behavior when player state uses custom systems;
+- module repository splits after stable boundaries;
+- Windows, Linux, Android, web, and legacy-client support matrices;
+- release branding and public repository organization.
+
+These are not holes in the roadmap. They are explicit design gates that should
+not be decided accidentally inside an implementation branch.
+
+## Post-Roadmap Foundation Expansion
+
+The following modules are valuable, but they are deliberately scheduled after
+the five primary modules and supported bundles are complete. The primary work
+must not stall while building a generalized ecosystem prematurely.
+
+### Compatibility SDK
+
+Turn the minimal shared contracts into a documented SDK containing stable
+definition schemas, protocol contracts, IDs, extension interfaces, test
+fixtures, adapter templates, and migration helpers. This would make third-party
+targets and content easier to support without granting access to module
+internals.
+
+### Full package and capability manager
+
+Expand minimal manifest composition into dependency solving, side-by-side
+versions, conflict reporting, install/uninstall orchestration, repair, release
+channels, delta updates, provenance display, and potentially a package catalog.
+
+### Legacy compatibility pack
+
+Collect packed-coordinate codecs, legacy map adapters, software-renderer
+support, older protocol profiles, conversion tools, and clearly labeled
+compatibility-only behavior into one maintained boundary.
+
+### Diagnostics toolkit
+
+Unify renderer captures, server timing, movement and synchronization traces,
+map validation, migration reports, package verification, crash bundles, and
+machine-readable logs into tools usable across all modules.
+
+### Independent asset packs
+
+Distribute remastered sprites, textures, models, audio, shaders, and optional
+visual themes separately from renderer code. Asset packs need stable identities,
+fallback behavior, compatibility metadata, licensing/provenance, and their own
+release lifecycle.
+
+### Automated compatibility laboratory
+
+Maintain clean fixtures and CI lanes for vanilla, Spoiled Milk, legacy maps,
+layered maps, Renderer-only, Server-only, full bundles, and supported third-
+party profiles. Track compatibility over time rather than relying only on the
+current repository checkout.
+
+### Ongoing primary-module roadmaps
+
+Renderer, Server, Layered Maps, World Builder, and Content remain living
+products after suite stabilization. Each keeps its own feature, performance,
+usability, security, and modernization roadmap. Suite completion means they can
+evolve safely and independently; it does not mean their feature work is done.
+
+## Overall Completion Criteria
+
+The Remaster Suite roadmap is complete when:
+
+- the five primary modules have explicit, enforced ownership boundaries;
+- Renderer and Server can be packaged without Spoiled Milk Content;
+- a supported vanilla remaster and complete Spoiled Milk distribution both run
+  on the modular foundation;
+- signed layered coordinates replace packed-Y identity in the maintained custom
+  client/server path;
+- layered map packages and the layered World Builder complete safe real-world
+  round trips;
+- legacy maps and the legacy Builder remain available and clearly labeled;
+- Spoiled Milk Content is a complete optional package rather than a hidden
+  foundation dependency;
+- users can select supported module combinations with compatibility checked
+  before mutation;
+- installs, updates, migrations, and imports are reproducible, backed up,
+  receipted, verifiable, and recoverable;
+- package provenance and redistribution status are known;
+- independent module releases have survived multiple upgrade cycles;
+- the post-roadmap foundation work has a prioritized intake list without being
+  required to call the primary Suite complete.
+
+## Related Plans and References
+
+- [`world-layer-capacity-exploration-plan.md`](world-layer-capacity-exploration-plan.md)
+- [`project-structure-refactor-plan.md`](project-structure-refactor-plan.md)
+- [`code-cleanup-and-modularization-plan.md`](code-cleanup-and-modularization-plan.md)
+- [`renderer-and-shader-roadmap.md`](renderer-and-shader-roadmap.md)
+- [`renderer-v2-plan.md`](renderer-v2-plan.md)
+- [`standalone-world-builder-plan.md`](standalone-world-builder-plan.md)
+- [`terrain-expansion-plan.md`](terrain-expansion-plan.md)
+- [`legacy-limits-audit.md`](legacy-limits-audit.md)
+- [`../info/static-analysis.md`](../info/static-analysis.md)
+- [`../info/server-build-source-of-truth.md`](../info/server-build-source-of-truth.md)
+- [`../../workspaces/README.md`](../../workspaces/README.md)
+
+## Decision Log
+
+| Date | Decision | Status |
+| --- | --- | --- |
+| 2026-07-17 | Build a reusable Remaster Suite rather than treating all technical improvements as inseparable Spoiled Milk changes. | Confirmed |
+| 2026-07-17 | Primary modules are Renderer, Server, Layered Maps, World Builder, and Content. | Confirmed |
+| 2026-07-17 | Content means material that was not part of vanilla. | Confirmed |
+| 2026-07-17 | A vanilla-compatible target profile is foundation compatibility, not optional Spoiled Milk Content. | Confirmed |
+| 2026-07-17 | Layered Maps internally separates the engine capability from map packages. | Confirmed |
+| 2026-07-17 | Use signed `(x,y,level)` coordinates and deliberately diverge from packed-Y legacy maps. | Confirmed in the layered-world plan |
+| 2026-07-17 | Preserve the legacy Builder/map generation and provide a non-destructive one-way layered conversion path. | Confirmed |
+| 2026-07-17 | Establish internal module boundaries and independent artifacts before considering additional repository splits. | Confirmed |
+| 2026-07-17 | Schedule the Compatibility SDK, full package manager, legacy pack, diagnostics toolkit, asset packs, and compatibility laboratory after the primary Suite roadmap. | Confirmed |
