@@ -359,26 +359,30 @@ The terrain conversion is comparatively easy. Region identity, entity
 visibility, two-argument script APIs, persistence, and exhaustive behavior
 parity are the hard parts.
 
-### Recommended Transitional Architecture
+### Recommended Temporary Migration Architecture
 
 If this direction is selected, the safest shape is an explicit canonical model
 surrounded by temporary compatibility adapters:
 
 ```text
-layered content / layered server model
-                 |
-        named legacy coordinate codec
-          /                    \
-old database and files      legacy wire/client
+legacy maps and copied data
+            |
+ named one-way coordinate codec
+            |
+layered project / layered runtime
 ```
 
 The codec for existing content would own all `944` packing and unpacking. New
 core code would not calculate level from Y. This provides three benefits:
 
-- old data can be read without an immediate destructive rewrite;
-- existing clients can continue receiving their expected four-band coordinates
-  while the supported layers remain representable;
+- old data can be imported without an immediate destructive rewrite;
+- conversion can be tested before the layered project becomes authoritative;
 - parity tests can prove that every old coordinate round-trips exactly.
+
+This codec is migration infrastructure, not a promise that the layered runtime
+will permanently emit or accept packed-Y maps. It may also support a temporary
+development bridge while the server and client are converted, but that bridge
+should have an explicit removal gate.
 
 Changing the semantics of the existing `Point.getY()` in place would be
 especially dangerous because current callers silently assume packed Y. A safer
@@ -398,23 +402,24 @@ could avoid combining engine conversion and map relocation.
    areas, teleports, persistence fields, archive entries, and packet paths.
 3. **Introduce layered value types.** Add level-aware points, rectangles,
    region keys, and transition destinations without changing behavior.
-4. **Prove legacy parity.** Exhaustively round-trip all terrain, placements,
+4. **Prove source parity.** Exhaustively round-trip all terrain, placements,
    telepoints, and copied player coordinates through the codec.
 5. **Make the server world layer-aware.** Migrate region storage, tiles,
    collision, pathing, visibility, entity equality, caches, and interaction
-   checks while legacy boundaries still pack coordinates.
+   checks, using temporary adapters only where the conversion sequence requires
+   them.
 6. **Version content schemas.** Allow old packed placement files to be read, add
    explicit-level output, and update World Builder validation and manifests.
 7. **Version persistence.** Use copied databases and additive fields or another
    reviewed migration strategy; never reinterpret live player rows in place.
-8. **Normalize the custom client.** Remove internal packed-Y assumptions while
-   retaining a legacy protocol path where required.
+8. **Normalize the custom client.** Remove internal packed-Y assumptions and
+   establish the layered protocol contract.
 9. **Validate unchanged gameplay.** Run current maps with no relocations and
    compare terrain, collision, routes, quests, visibility, and saved positions.
 10. **Align maps area by area.** Move approved complexes only after the engine
     model is stable, using explicit old-to-new manifests and recovery redirects.
 11. **Consider expanded extents and deep levels.** Add these only after the
-    custom layered path is proven and the legacy-client policy is decided.
+    custom layered path and format incompatibility checks are proven.
 
 ### Geographic Alignment Policy to Develop
 
@@ -441,14 +446,13 @@ establishes a different canonical geographic layer.
 
 Before this can become a selected architecture, decide:
 
-1. Whether the first implementation goal is readable normalized coordinates, true server
-   separation, or a fully expanded custom-client map model.
-2. Whether legacy clients must remain able to enter every supported level.
-3. What independent X/Y bounds each layer should ultimately support.
-4. Whether existing content should first be normalized in place and aligned
+1. Whether the first implementation goal is readable normalized coordinates,
+   true server separation, or a fully expanded custom-client map model.
+2. What independent X/Y bounds each layer should ultimately support.
+3. Whether existing content should first be normalized in place and aligned
    later, or whether selected low-risk areas should be aligned during the
    migration pilot.
-5. How explicit long-distance ladder destinations should be reclassified or
+4. How explicit long-distance ladder destinations should be reclassified or
    reorganized once ordinary vertical entrances use exact anchors.
 
 ## Terrain Archive Organization
@@ -658,6 +662,207 @@ Any later implementation should retain the existing safeguards:
 - import only while the private target is offline;
 - compare unrelated sectors and placement records for unintended changes.
 
+## Distribution and Format Compatibility Direction
+
+### Broader Project Context
+
+The owner expects Spoiled Milk to diverge progressively from legacy OpenRSC
+rather than requiring every future optimization to remain readable by legacy
+tools and clients. Major capabilities may eventually be distributed as easier
+to use standalone packages, including:
+
+- the standalone World Builder;
+- renderer/client distributions;
+- map packages with explicit compatibility requirements; and
+- a layered-map capability that a map may declare as required.
+
+This context is relevant to the coordinate architecture because it removes the
+need to disguise a true layered world as packed-Y data forever. Compatibility
+should be explicit and versioned rather than inferred from a similar-looking
+archive.
+
+### Selected Compatibility Boundary
+
+The intended divergence is:
+
+- pre-layering maps remain identified as legacy packed-Y maps;
+- post-layering maps use a new explicit layered coordinate format;
+- old map readers and old World Builder releases are not expected to read the
+  new format;
+- the new format may be marked incompatible with legacy clients or servers;
+- maintaining a safe one-way legacy importer is desirable, but making layered
+  maps round-trip back into the old format is not a design requirement;
+- a format or map package must fail clearly when its required capability is
+  absent.
+
+This replaces the earlier provisional assumption that all existing layers
+would need permanent packed-wire compatibility. A temporary compatibility
+codec may still be useful during migration and parity testing, but it is not
+the architectural end state.
+
+### Existing World Builder Foundation
+
+The first World Builder release already establishes several useful concepts:
+
+- a named `layoutAdapter`, currently `spoiled-milk-repository-v1`;
+- versioned project, export, and import-receipt schemas;
+- source and content fingerprints;
+- strict rejection of unknown or changed targets;
+- exact authored-file inventories and transaction receipts.
+
+The current adapter is deliberately legacy-specific:
+
+- terrain entries must match `h[0-3]x...y...`;
+- scenery and NPC overlay positions contain only packed `X` and `Y`;
+- the authored bundle contains the terrain archive and four MyWorld overlay
+  states;
+- the release version is currently expected to match its companion Spoiled
+  Milk release.
+
+The layered system should be introduced as a second named adapter and schema,
+not as an ambiguous extension silently accepted by the v1 reader. A conceptual
+name would be `spoiled-milk-layered-v1`; the final name remains undecided.
+
+The legacy World Builder release can remain available for packed-Y projects.
+A layered-capable release could either support both adapters explicitly or
+provide a separate conversion workflow, but it must never guess which
+coordinate model a project uses.
+
+### Recommended Artifact Separation
+
+The phrase "layered maps plugin" is useful from an end-user packaging
+perspective, but the underlying capability affects core point, region, entity,
+collision, persistence, protocol, and client behavior. It is unlikely to be a
+safe hot-loaded plugin in the current server architecture.
+
+A cleaner distribution model separates three artifacts:
+
+1. **Layered-world engine capability**
+   - Provides level-aware server, client, protocol, persistence, and tooling
+     behavior.
+   - Exposes a stable capability identifier and version.
+2. **Layered map package**
+   - Contains terrain and authored world data in a versioned coordinate format.
+   - Declares the layered-world capability version it requires.
+3. **Layered-capable World Builder**
+   - Reads, validates, edits, exports, and imports that map format.
+   - Refuses targets whose engine capability or definitions do not match.
+
+A renderer/client release is a separate compatibility dimension. A map should
+require a renderer capability only when it truly depends on renderer-specific
+assets or behavior; layered coordinates alone should depend on the
+layered-world capability.
+
+The downloadable product may still be presented to users as a plugin or
+expansion. Internally, describing it as a **capability bundle** avoids promising
+that it can be enabled or disabled safely at runtime.
+
+### Proposed Capability-Oriented Manifest
+
+A future map manifest should express requirements directly rather than relying
+only on matching product release numbers. A conceptual subset is:
+
+```json
+{
+  "mapFormat": "spoiled-milk-map",
+  "schemaVersion": 2,
+  "coordinateModel": "signed-layered-v1",
+  "requiresCapabilities": {
+    "world.layered-coordinates": ">=1 <2"
+  },
+  "layers": [
+    {"level": 0, "role": "surface"},
+    {"level": -1, "role": "underground"}
+  ]
+}
+```
+
+The exact version syntax and fields are undecided. The important properties
+are:
+
+- coordinate model is explicit;
+- required engine/tool capabilities are explicit;
+- declared levels and extents are explicit;
+- unknown schema or capability versions are rejected;
+- definition and source fingerprints remain available where exact content
+  coupling is required;
+- incompatibility is reported before a server, client, or map file is changed.
+
+Capability identifiers should be more stable than branding. A map should not
+need to know whether the supporting distribution was installed from a monolith,
+standalone package, or user-facing plugin bundle.
+
+### Map Package Versus Complete Content Package
+
+The current World Builder export is a focused authored-map patch, not a
+portable complete world. It covers terrain plus MyWorld scenery and NPC
+addition/removal overlays. It does not contain every base placement,
+conditional feature file, quest plugin, teleport script, definition, or player
+migration.
+
+Future packaging should distinguish:
+
+- **Map patch:** tied to a specific compatible Spoiled Milk source and content
+  fingerprint.
+- **World content module:** contains or declares every coordinate-bearing
+  placement, transition, definition, and script it owns.
+- **Engine capability:** supplies runtime support such as layered coordinates.
+
+Calling all three a map would make installation failures and compatibility
+requirements difficult to diagnose. Geographic realignment of established
+content will likely need a source-coupled world content module or integrated
+release, even if new self-contained maps can eventually be more portable.
+
+### Legacy-to-Layered Conversion
+
+An optional one-way conversion path would protect existing work without
+restricting the new format:
+
+1. Discover and fingerprint an exact supported packed-Y source.
+2. Decode every current coordinate into `(x,y,level)`.
+3. Preserve existing placement and travel behavior initially.
+4. Emit a layered project with a conversion report and source fingerprint.
+5. Refuse ambiguous coordinates or unsupported content owners.
+6. Validate terrain and placement parity before any geographic relocation.
+7. Keep the original legacy project unchanged.
+
+Conversion does not imply that the new project can be exported back to v1.
+Once it uses level `-2`, expanded extents, layered-only metadata, or aligned
+content, the incompatibility is intentional.
+
+### Proposed Divergence Milestone
+
+The eventual transition should have a named compatibility gate:
+
+1. Freeze and document the last packed-Y map/tool format.
+2. Publish the layered coordinate and package specifications.
+3. Add a layered World Builder adapter and read-only legacy converter.
+4. Complete and validate the layered engine capability.
+5. Convert a copied Spoiled Milk map and prove unchanged behavior.
+6. Begin geographic alignment in layered projects only.
+7. Mark layered maps as incompatible with legacy readers and runtimes.
+8. Retain legacy releases for users who intentionally remain on v1.
+
+No particular release number or implementation milestone has yet been selected
+for this gate.
+
+### Packaging Questions Deferred from This Study
+
+This plan should record, but not fully design, the larger distribution system.
+A future packaging study may need to define:
+
+- installer and uninstaller behavior;
+- dependency resolution and capability discovery;
+- signing, provenance, and integrity verification;
+- compatibility-range syntax;
+- release channels and update policy;
+- ownership boundaries between engine, content, renderer, and tools;
+- whether bundles modify a source checkout or install into a stable extension
+  interface.
+
+Those questions should not block deciding the layered coordinate and map format
+contracts, but the contracts should avoid making them harder later.
+
 ## Architecture Options
 
 ### Option 1: Add a True Fifth Plane
@@ -689,6 +894,11 @@ Costs and risks:
 
 Current assessment: technically possible as a dedicated compatibility project,
 but disproportionate as the first response to present-day crowding.
+
+Discussion update: the owner-preferred direction supersedes this specific
+packed-band design. A deep layer would be canonical level `-2`, not legacy
+plane 4 at another Y offset. Most of the engine and tooling audit remains
+relevant, but the goal is to remove band coupling rather than extend it.
 
 ### Option 2: Allocate Deep Regions Within Plane 3
 
@@ -807,9 +1017,9 @@ a time.
 ### Current Module: Coordinate Model and Alignment
 
 The focused layered-coordinate study above is the active discussion. Signed
-geographic levels and exact default vertical anchors are now selected. The next
-decision is how far the initial migration should go while legacy clients remain
-supported.
+geographic levels, exact default vertical anchors, and an explicit legacy-format
+divergence are now selected. The next decision is the intended layered package
+boundary and initial migration scope.
 
 ### Module A: Meaning of Deep Underground
 
@@ -825,11 +1035,10 @@ global entrance hierarchy is needed.
 
 ### Module B: Client Compatibility Target
 
-Decide whether all future underground content must remain accessible through
-legacy clients, or whether a future Spoiled Milk-only layer is acceptable.
-
-This is the most important constraint on whether a fifth plane is worth deeper
-engineering investigation.
+Resolved for layered maps: future layered content does not need to remain
+readable by legacy clients, servers, or map readers. Legacy packed-Y maps and
+tools may remain available as their own version, while layered projects declare
+their newer capability requirement explicitly.
 
 ### Module C: Geographic Correspondence
 
@@ -883,13 +1092,12 @@ client scene baselines, and rollback.
 
 1. Is deep underground intended to be one connected underworld or an
    organizational category for separate dungeons?
-2. Must all new underground areas remain usable by legacy clients?
-3. Should geographic correspondence be exact, regional, or conditional on
+2. Should geographic correspondence be exact, regional, or conditional on
    entrance type?
-4. Are existing quest dungeons eligible for relocation?
-5. Is true player/party instancing a desired feature, or is static isolation
+3. Are existing quest dungeons eligible for relocation?
+4. Is true player/party instancing a desired feature, or is static isolation
    sufficient?
-6. Should existing long-distance ladder travel be preserved, re-presented as
+5. Should existing long-distance ladder travel be preserved, re-presented as
    transportation, or gradually removed?
 
 ## Living Inventory: Pending Discussion and Audit
@@ -955,13 +1163,15 @@ private environment should validate at least:
 | --- | --- | --- |
 | 2026-07-17 | Begin a discussion-first architecture and capacity study; documentation only. | Confirmed |
 | 2026-07-17 | Divide the remaining design into smaller discussion modules before choosing an architecture. | Confirmed |
-| 2026-07-17 | Explore true `(x,y,level)` separation and geographic alignment instead of relying indefinitely on packed-Y bands. | Under discussion |
+| 2026-07-17 | Pursue true `(x,y,level)` separation and geographic alignment instead of extending packed-Y bands. | Direction confirmed; scope pending |
 | 2026-07-17 | Use signed sequential levels: surface `0`, each level up `+1`, and each level down `-1`. | Confirmed |
 | 2026-07-17 | Ordinary vertical entrance anchors should preserve exact X/Y; local walkable arrival offsets may account for object footprint and direction. | Confirmed |
+| 2026-07-17 | Treat layered maps as a deliberate format divergence; legacy readers and runtimes need not accept post-layering projects. | Confirmed |
+| 2026-07-17 | Preserve compatibility through explicit versions, capability requirements, and an optional one-way importer rather than permanent packed-Y runtime support. | Confirmed |
+| 2026-07-17 | Record standalone capability packaging as relevant context, but defer the general installer and distribution architecture to a future focused study. | Confirmed |
 
 ## Next Discussion
 
-Continue the coordinate-model module by choosing the intended first migration
-scope and legacy-client boundary. No implementation plan should be prepared
-until those compatibility decisions and the relevant remaining modules have
-been resolved.
+Continue the coordinate-model module by choosing the intended layered package
+boundary and first migration scope. No implementation plan should be prepared
+until those decisions and the relevant remaining modules have been resolved.
