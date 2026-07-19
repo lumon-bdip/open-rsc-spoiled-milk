@@ -165,6 +165,7 @@ public class WoodcutJungle implements OpLocTrigger,
 				return 40;
 			case RUNE_AXE:
 				return 48;
+			case DRAGON_AXE:
 			case DRAGON_WOODCUTTING_AXE:
 				return 56;
 			case COPPER_AXE:
