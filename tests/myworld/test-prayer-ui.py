@@ -47,8 +47,8 @@ def main():
             "Prayer icon detail text should use the compact vertical gap below the icon grid")
     require("int prayerTooltipY = magicPanelYStart + 122;" in mudclient,
             "Prayer text detail should share the compact description panel")
-    require("Reserved points: \" + prayerDef.getPointCost()" in mudclient,
-            "Prayer tooltip should show allocation cost instead of drain rate")
+    require("Reserved points: \" + this.getPrayerPointCost(hoveredPrayer)" in mudclient,
+            "Prayer tooltip should show the effective allocation cost instead of drain rate")
     require("int prayerLevel = this.playerStatCurrent.length > 5 ? this.playerStatCurrent[5] : 0;" in mudclient,
             "Prayer UI should base available allocation on current Prayer points")
     require("int prayerLevel = this.playerStatBase.length > 5 ? this.playerStatBase[5] : 0;" not in mudclient,
@@ -97,7 +97,8 @@ def main():
     for prayer in required_prayers:
         require(prayer in prayer_books, f"Missing client prayer definition: {prayer}")
 
-    require(prayer_books.count("\t\taddPrayerDefinition(") == 48,
+    require(prayer_books.count("\t\taddPrayerDefinition(") == 45
+            and prayer_books.count("\t\taddSpecialPrayerDefinition(") == 3,
             "Client prayer definitions should cover the three god lines plus all special prayers")
     for snippet in (
         'addPrayerDefinition(49, "Greater Magic Power", "Magic damage +25%.");',
@@ -106,12 +107,38 @@ def main():
         'addPrayerDefinition(80, "Greater Enchanting Favor", "Enchanting XP +30%.");',
         'addPrayerDefinition(80, "Greater Smithing Favor", "Smithing XP +30%.");',
         'addPrayerDefinition(80, "Greater Crafting Favor", "Crafting XP +30%.");',
-        'addPrayerDefinition(60, "Saving Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");',
-        'addPrayerDefinition(60, "Divine Retribution", "Chance to recoil double damage taken. Higher hits are more likely to trigger.");',
-        'addPrayerDefinition(60, "Corrosive Aura", "Enemies that damage you receive 10-50 poison stacks. Lower HP applies more stacks.");',
+        'addSpecialPrayerDefinition(60, "Saving Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");',
+        'addSpecialPrayerDefinition(60, "Divine Retribution", "Chance to recoil double damage taken. Higher hits are more likely to trigger.");',
+        'addSpecialPrayerDefinition(60, "Corrosive Aura", "Enemies that damage you receive 10-50 poison stacks. Lower HP applies more stacks.");',
         '"Reserve " + pointCost + " prayer points. " + effectText',
     ):
         require(snippet in prayer_books, f"Client prayer tooltip cost missing: {snippet}")
+    require('prayers.add(new PrayerDef(0, pointCost, name, effectText));' in prayer_books,
+            "Special prayer descriptions should remain limited to their effects")
+    require("cape" not in prayer_books.lower(),
+            "Special prayer descriptions should not expose the god-cape discount")
+    for snippet in (
+        "private static final int SPECIAL_PRAYER_INDEX = 15;",
+        "private static final int SPECIAL_PRAYER_NO_CAPE_COST_NUMERATOR = 3;",
+        "private static final int SPECIAL_PRAYER_NO_CAPE_COST_DENOMINATOR = 2;",
+        "private static final int ZAMORAK_CAPE_ID = 1213;",
+        "private static final int SARADOMIN_CAPE_ID = 1214;",
+        "private static final int GUTHIX_CAPE_ID = 1215;",
+        "private int getPrayerPointCost(int prayerIndex)",
+        "prayerIndex != SPECIAL_PRAYER_INDEX || this.hasMatchingGodPrayerCape()",
+        "pointCost * SPECIAL_PRAYER_NO_CAPE_COST_NUMERATOR / SPECIAL_PRAYER_NO_CAPE_COST_DENOMINATOR",
+        '"ZAMORAK".equals(prayerBook)',
+        '"GUTHIX".equals(prayerBook)',
+        "this.hasEquippedItem(ZAMORAK_CAPE_ID)",
+        "this.hasEquippedItem(SARADOMIN_CAPE_ID)",
+        "this.hasEquippedItem(GUTHIX_CAPE_ID)",
+        '"Reserved points: " + this.getPrayerPointCost(hoveredPrayer)',
+        'prayerDef.getName() + " [" + this.getPrayerPointCost(prayerIndex) + "]"',
+        '"You need " + this.getPrayerPointCost(prayerIndex) + " free prayer points to activate this prayer"',
+        "allocatedPoints += this.getPrayerPointCost(i);",
+        "this.getAllocatedPrayerPoints() + this.getPrayerPointCost(prayerIndex)",
+    ):
+        require(snippet in mudclient, f"Effective special-prayer UI cost missing: {snippet}")
     for old_cost in (
         "Reserve 10 prayer points",
         "Reserve 15 prayer points",

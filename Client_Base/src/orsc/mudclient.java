@@ -248,6 +248,12 @@ public final class mudclient implements Runnable {
 	private static final int PRAYER_ICON_VISIBLE_ROWS = MAGIC_ICON_VISIBLE_ROWS;
 	private static final int PRAYER_ICON_SIZE = MAGIC_ICON_SIZE;
 	private static final int PRAYER_ICON_GAP = MAGIC_ICON_GAP;
+	private static final int SPECIAL_PRAYER_INDEX = 15;
+	private static final int SPECIAL_PRAYER_NO_CAPE_COST_NUMERATOR = 3;
+	private static final int SPECIAL_PRAYER_NO_CAPE_COST_DENOMINATOR = 2;
+	private static final int ZAMORAK_CAPE_ID = 1213;
+	private static final int SARADOMIN_CAPE_ID = 1214;
+	private static final int GUTHIX_CAPE_ID = 1215;
 	private static final int SUMMONING_ICON_COLUMNS = MAGIC_ICON_COLUMNS;
 	private static final int SUMMONING_ICON_VISIBLE_ROWS = MAGIC_ICON_VISIBLE_ROWS;
 	private static final int SUMMONING_ICON_SIZE = MAGIC_ICON_SIZE;
@@ -11624,7 +11630,7 @@ public final class mudclient implements Runnable {
 								prayerDef.getName(),
 								0xFFFF00, 0, 1, prayerTooltipY + 13);
 						this.getSurface().drawColoredStringCentered(magicPanelX + magicPanelWidth / 2,
-							"Reserved points: " + prayerDef.getPointCost(),
+							"Reserved points: " + this.getPrayerPointCost(hoveredPrayer),
 							0xFFFFFF, 0, 1, prayerTooltipY + 24);
 						this.getSurface().drawWrappedCenteredString(prayerDef.getDescription(),
 							magicPanelX + magicPanelWidth / 2, prayerTooltipY + 36, magicPanelWidth - 16,
@@ -11891,7 +11897,7 @@ public final class mudclient implements Runnable {
 			this.panelMagic.setListEntry(
 				this.controlMagicPanel,
 				prayerIndex,
-				color + prayerDef.getName() + " [" + prayerDef.getPointCost() + "]",
+				color + prayerDef.getName() + " [" + this.getPrayerPointCost(prayerIndex) + "]",
 				0,
 				null,
 				null);
@@ -11958,9 +11964,8 @@ public final class mudclient implements Runnable {
 		}
 		if (!this.prayerOn[prayerIndex]) {
 			if (!this.canActivatePrayer(prayerIndex)) {
-				PrayerDef prayerDef = EntityHandler.getPrayerDef(prayerIndex);
 				this.showMessage(false, null,
-					"You need " + prayerDef.getPointCost() + " free prayer points to activate this prayer",
+					"You need " + this.getPrayerPointCost(prayerIndex) + " free prayer points to activate this prayer",
 					MessageType.GAME, 0, null);
 				return;
 			}
@@ -22979,7 +22984,7 @@ public final class mudclient implements Runnable {
 		int allocatedPoints = 0;
 		for (int i = 0; i < this.prayerOn.length && i < EntityHandler.prayerCount(); i++) {
 			if (this.prayerOn[i]) {
-				allocatedPoints += EntityHandler.getPrayerDef(i).getPointCost();
+				allocatedPoints += this.getPrayerPointCost(i);
 			}
 		}
 		return allocatedPoints;
@@ -22998,8 +23003,28 @@ public final class mudclient implements Runnable {
 		if (this.prayerOn[prayerIndex]) {
 			return true;
 		}
-		return this.getAllocatedPrayerPoints() + EntityHandler.getPrayerDef(prayerIndex).getPointCost()
+		return this.getAllocatedPrayerPoints() + this.getPrayerPointCost(prayerIndex)
 			<= this.getPrayerAllocationPoints();
+	}
+
+	private int getPrayerPointCost(int prayerIndex) {
+		PrayerDef prayerDef = EntityHandler.getPrayerDef(prayerIndex);
+		int pointCost = prayerDef.getPointCost();
+		if (prayerIndex != SPECIAL_PRAYER_INDEX || this.hasMatchingGodPrayerCape()) {
+			return pointCost;
+		}
+		return pointCost * SPECIAL_PRAYER_NO_CAPE_COST_NUMERATOR / SPECIAL_PRAYER_NO_CAPE_COST_DENOMINATOR;
+	}
+
+	private boolean hasMatchingGodPrayerCape() {
+		String prayerBook = EntityHandler.getActivePrayerBook();
+		if ("ZAMORAK".equals(prayerBook)) {
+			return this.hasEquippedItem(ZAMORAK_CAPE_ID);
+		}
+		if ("GUTHIX".equals(prayerBook)) {
+			return this.hasEquippedItem(GUTHIX_CAPE_ID);
+		}
+		return this.hasEquippedItem(SARADOMIN_CAPE_ID);
 	}
 
 	public void setPlayerExperience(int stat, int experience) {
