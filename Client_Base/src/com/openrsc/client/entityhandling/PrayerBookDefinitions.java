@@ -48,6 +48,10 @@ final class PrayerBookDefinitions {
 			"Reserve " + pointCost + " prayer points. " + effectText));
 	}
 
+	private void addSpecialPrayerDefinition(int pointCost, String name, String effectText) {
+		prayers.add(new PrayerDef(0, pointCost, name, effectText));
+	}
+
 	private void loadSaradominPrayerDefinitions() {
 		addPrayerDefinition(3, "Weak Magic Power", "Magic damage +5%.");
 		addPrayerDefinition(6, "Lesser Magic Power", "Magic damage +10%.");
@@ -64,7 +68,7 @@ final class PrayerBookDefinitions {
 		addPrayerDefinition(22, "Enchanting Favor", "Enchanting XP +20%.");
 		addPrayerDefinition(46, "Strong Enchanting Favor", "Enchanting XP +25%.");
 		addPrayerDefinition(80, "Greater Enchanting Favor", "Enchanting XP +30%.");
-		addPrayerDefinition(60, "Saving Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");
+		addSpecialPrayerDefinition(60, "Saving Grace", "Chance to lifesteal 100% of attack damage. Lower HP is more likely to trigger.");
 	}
 
 	private void loadZamorakPrayerDefinitions() {
@@ -83,7 +87,7 @@ final class PrayerBookDefinitions {
 		addPrayerDefinition(22, "Smithing Favor", "Smithing XP +20%.");
 		addPrayerDefinition(46, "Strong Smithing Favor", "Smithing XP +25%.");
 		addPrayerDefinition(80, "Greater Smithing Favor", "Smithing XP +30%.");
-		addPrayerDefinition(60, "Divine Retribution", "Chance to recoil double damage taken. Higher hits are more likely to trigger.");
+		addSpecialPrayerDefinition(60, "Divine Retribution", "Chance to recoil double damage taken. Higher hits are more likely to trigger.");
 	}
 
 	private void loadGuthixPrayerDefinitions() {
@@ -102,6 +106,6 @@ final class PrayerBookDefinitions {
 		addPrayerDefinition(22, "Crafting Favor", "Crafting XP +20%.");
 		addPrayerDefinition(46, "Strong Crafting Favor", "Crafting XP +25%.");
 		addPrayerDefinition(80, "Greater Crafting Favor", "Crafting XP +30%.");
-		addPrayerDefinition(60, "Corrosive Aura", "Enemies that damage you receive 10-50 poison stacks. Lower HP applies more stacks.");
+		addSpecialPrayerDefinition(60, "Corrosive Aura", "Enemies that damage you receive 10-50 poison stacks. Lower HP applies more stacks.");
 	}
 }

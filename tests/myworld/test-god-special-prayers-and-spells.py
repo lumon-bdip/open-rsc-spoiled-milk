@@ -32,7 +32,8 @@ def main() -> None:
     client_defs = (ROOT / "Client_Base/src/com/openrsc/client/entityhandling/PrayerBookDefinitions.java").read_text(encoding="utf-8")
 
     require('"Saving Grace"' in catalog, "Saradomin special prayer should be renamed to Saving Grace")
-    require('addPrayerDefinition(60, "Saving Grace"' in client_defs, "Client prayer definition should use Saving Grace")
+    require('addSpecialPrayerDefinition(60, "Saving Grace"' in client_defs,
+            "Client prayer definition should use Saving Grace")
 
     for snippet in (
         "getActivationBlockMessage",
