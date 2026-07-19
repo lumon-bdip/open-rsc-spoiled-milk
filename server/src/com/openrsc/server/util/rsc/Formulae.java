@@ -118,12 +118,12 @@ public final class Formulae {
 		{new java.awt.Point(431, 0), new java.awt.Point(1007, 1007)},
 		{new java.awt.Point(335, 734), new java.awt.Point(437, 894)}};
 	// trawler: 297, 720
-	public static final int[] woodcuttingAxeIDs = {MyWorldItemId.EXALTED_RUNE_HATCHET, ItemId.DRAGON_WOODCUTTING_AXE.id(),
-		ItemId.RUNE_AXE.id(), ItemId.ORICHALCUM_AXE.id(), ItemId.ADAMANTITE_AXE.id(),
+	public static final int[] woodcuttingAxeIDs = {MyWorldItemId.EXALTED_RUNE_HATCHET, ItemId.DRAGON_AXE.id(),
+		ItemId.DRAGON_WOODCUTTING_AXE.id(), ItemId.RUNE_AXE.id(), ItemId.ORICHALCUM_AXE.id(), ItemId.ADAMANTITE_AXE.id(),
 		ItemId.TITAN_STEEL_AXE.id(), ItemId.MITHRIL_AXE.id(), ItemId.BLACK_AXE.id(),
 		ItemId.STEEL_AXE.id(), ItemId.IRON_AXE.id(), ItemId.BRONZE_AXE.id(),
 		ItemId.COPPER_AXE.id(), ItemId.TIN_AXE.id()};
-	public static final int[] woodcuttingAxeLvls = {90, 80, 70, 62, 54, 46, 38, 30, 30, 22, 15, 8, 1};
+	public static final int[] woodcuttingAxeLvls = {90, 80, 80, 70, 62, 54, 46, 38, 30, 30, 22, 15, 8, 1};
 
 	public static boolean isGatheringTool(int itemId) {
 		return DataConversions.inArray(miningAxeIDs, itemId)

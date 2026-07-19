@@ -201,7 +201,7 @@ def require_tool_equip_gates() -> None:
 
     if "public static final int[] miningAxeLvls = {90, 70, 62, 54, 46, 38, 30, 22, 15, 8, 1};" not in formulae_text:
         fail("Mining tool runtime levels are not on the 1-90 ladder")
-    if "public static final int[] woodcuttingAxeLvls = {90, 80, 70, 62, 54, 46, 38, 30, 30, 22, 15, 8, 1};" not in formulae_text:
+    if "public static final int[] woodcuttingAxeLvls = {90, 80, 80, 70, 62, 54, 46, 38, 30, 30, 22, 15, 8, 1};" not in formulae_text:
         fail("Woodcutting tool runtime levels are not on the 1-90 ladder")
     for snippet in (
         "case RUNE_PICKAXE:\n\t\t\t\treturn 70;",

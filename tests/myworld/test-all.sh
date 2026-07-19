@@ -57,6 +57,7 @@ python3 ./tests/myworld/test-world-start.py
 python3 ./tests/myworld/test-world-npc-edit-persistence.py
 python3 ./tests/myworld/test-fatigue-sleep-removal.py
 python3 ./tests/myworld/test-gathering-rework-plan.py
+python3 ./tests/myworld/test-dragon-hatchet-woodcutting.py
 python3 ./tests/myworld/test-resource-seed-placement.py
 python3 ./tests/myworld/test-quest-system.py
 python3 ./tests/myworld/test-quest-shortcuts.py

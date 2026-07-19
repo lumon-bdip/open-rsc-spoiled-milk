@@ -47,6 +47,7 @@ public final class EntranaRestrictions {
 		ItemId.MITHRIL_AXE.id(),
 		ItemId.ADAMANTITE_AXE.id(),
 		ItemId.RUNE_AXE.id(),
+		ItemId.DRAGON_AXE.id(),
 
 		// Battle Axes
 		ItemId.BRONZE_BATTLE_AXE.id(),
@@ -56,7 +57,6 @@ public final class EntranaRestrictions {
 		ItemId.MITHRIL_BATTLE_AXE.id(),
 		ItemId.ADAMANTITE_BATTLE_AXE.id(),
 		ItemId.RUNE_BATTLE_AXE.id(),
-		ItemId.DRAGON_AXE.id(),
 
 		// Battle Staves
 		ItemId.BATTLESTAFF.id(),
