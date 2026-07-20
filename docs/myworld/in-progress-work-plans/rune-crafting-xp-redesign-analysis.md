@@ -1,41 +1,43 @@
 # Enchanting Rune-Crafting XP Redesign Analysis
 
-Status: analysis only; no rune XP values or runtime behavior changed.
+Status: implemented on this feature branch; pending review and merge.
 
 ## Decision Summary
 
-Accept the proposed table and full base-output multiplication for an
-implementation review. The supplied fastest-route estimates establish that the
-table is route-normalized: it is designed to correct Nature's present
+The accepted table and full base-output multiplication are now implemented for
+review. The supplied fastest-route estimates establish that the table is
+route-normalized: it is designed to correct Nature's pre-implementation
 `134,600 XP/hour` route, which substantially exceeds Blood at `75,300` and Soul
 at `68,500`, rather than merely to order XP per Stone.
 
-With those route estimates, the proposal produces 26 optimal level ranges and
-therefore the claimed 25 method changes. Nature remains competitive when its
-nine-tile Stone source earns that advantage, but Death, Soul, and Blood become
-the appropriate late-game methods. Their final optimal rates are tightly
+With those route estimates, the implemented model produces 26 optimal level
+ranges and therefore the claimed 25 method changes. Nature remains competitive
+when its nine-tile Stone source earns that advantage, but Death, Soul, and Blood
+become the appropriate late-game methods. Their final optimal rates are tightly
 grouped:
 
 - Blood: `964,151 XP/hour` at levels `90-91`
 - Soul: `1,019,695 XP/hour` at levels `92-93`
 - Death: `1,035,616 XP/hour` at levels `94-99`
 
-That is a much healthier relative progression than the current route table.
-The absolute rate increase remains a deliberate balance decision: the proposed
-peak is about `7.7x` the current global maximum and the level-99 Death action is
-`18,900` displayed XP per 30 Stone before equipment or other XP bonuses. The
-table should be implemented only if an approximately one-million-XP/hour
-late-game ceiling matches the intended faster Enchanting grind.
+That is a much healthier relative progression than the pre-implementation route
+table. The absolute rate increase remains a deliberate balance decision: the
+implemented peak is about `7.7x` the pre-implementation global maximum and the
+level-99 Death action is `18,900` displayed XP per 30 Stone before equipment or
+other XP bonuses. The implementation should be merged only if an approximately
+one-million-XP/hour late-game ceiling matches the intended faster Enchanting
+grind.
 
-Implementation must award XP only for base multiplier output. Law-robe and
-Chaos-amulet bonus runes must remain excluded. The route estimates should also
-receive a short reproducible in-game timing pass, especially for the Nature,
-Death, Soul, and Blood routes; that is validation of the accepted model, not a
-reason to replace it with the earlier `0.25` marginal-output alternative.
+Runtime XP is awarded only for base multiplier output.
+Law-robe and Chaos-amulet bonus runes remain excluded. The route estimates
+should also receive a short reproducible in-game timing pass, especially for
+the Nature, Death, Soul, and Blood routes; that is validation of the accepted
+model, not a reason to replace it with the earlier `0.25` marginal-output
+alternative.
 
-## Confirmed Current Implementation
+## Implemented Runtime Behavior
 
-The preliminary findings are confirmed in
+The implementation in
 `server/plugins/com/openrsc/server/plugins/custom/myworld/skills/runecraft/Runecraft.java`:
 
 - Base output is `1 + floor((current level - unlock level) / 10)`, with one
@@ -46,14 +48,15 @@ The preliminary findings are confirmed in
 - One altar interaction counts all unnoted Stone in inventory and processes it
   in one loop. Stone is non-stackable, so a full My World equipment-tab
   inventory normally means 30 Stone.
-- Current action XP is `def.getExp() * successCount`: XP is awarded once per
-  processed Stone, not once per produced rune.
-- `runeCount` contains base multiplier output. Law-robe and Chaos-amulet bonuses
-  are added afterward and do not affect the current XP award.
-
-The proposal would change the action XP basis to
-`proposed internal XP per rune x runeCount`, where `runeCount` is still the
-base output before equipment. It must not count the equipment-generated runes.
+- A Stone counts as processed only after its exact inventory removal succeeds.
+  Missing or stale Stone stops the loop without producing runes or XP for that
+  failed iteration.
+- `baseRuneCount` accumulates the multiplier output from successfully processed
+  Stone. Action XP is `def.getExp() * baseRuneCount`.
+- XP is awarded once after the inventory loop, so a full inventory remains one
+  altar action and one XP grant.
+- Law-robe and Chaos-amulet bonuses are calculated afterward from
+  `baseRuneCount`. Their extra output never enters the XP calculation.
 
 ## XP Units And Runtime Modifiers
 
@@ -63,10 +66,10 @@ other bonuses:
 - `1x` displayed XP is `internal XP / 4`
 - normal `3x` My World displayed XP is `internal XP x 3 / 4`
 
-The proposed internal values supplied in the request exactly reproduce the
+The implemented internal values supplied in the request exactly reproduce the
 suggested normal-`3x` displayed values.
 
-| Rune | Unlock | Current internal | Current displayed at 3x | Proposed internal | Proposed displayed per rune at 3x |
+| Rune | Unlock | Pre-implementation internal | Pre-implementation displayed at 3x | Implemented internal | Implemented displayed per rune at 3x |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Air | 1 | 12 | 9 | 20 | 15 |
 | Water | 1 | 14 | 10.5 | 20 | 15 |
@@ -97,23 +100,24 @@ Consequently, all tables below are unboosted normal-`3x` displayed XP. Divide
 by three for ordinary `1x`, double for double-XP, and do not assume equipment
 XP bonuses are already included.
 
-The proposed values multiply to exact integer internal XP before percentage
+The implemented values multiply to exact integer internal XP before percentage
 bonuses. Non-integral configured rates truncate when assigned back to the
-integer XP accumulator. The largest ordinary proposed 30-Stone action at level
-99 is Death: `168 x 5 x 30 = 25,200` internal XP before the `3x` rate. This is
-far below integer-overflow limits. Normal temporary boosts also remain safe,
-although the uncapped output formula continues above level 99 if a boost raises
-the current level.
+integer XP accumulator. The largest ordinary implemented 30-Stone action at
+level 99 is Death: `168 x 5 x 30 = 25,200` internal XP before the `3x` rate.
+This is far below integer-overflow limits. Normal temporary boosts also remain
+safe, although the uncapped output formula continues above level 99 if a boost
+raises the current level.
 
 ## Every Unlock And Multiplier Breakpoint
 
-Current XP per Stone is the constant third column. Each proposed breakpoint is
-shown as `level: base output / proposed displayed XP per Stone` at normal `3x`.
+Pre-implementation XP per Stone is the constant third column. Each implemented
+breakpoint is shown as `level: base output / implemented displayed XP per Stone`
+at normal `3x`.
 Levels between listed breakpoints retain the preceding row's output and XP.
 Multiply any XP-per-Stone value by the number of Stone carried (normally 30)
 for the full altar action.
 
-| Rune | Unlock | Current XP/Stone | Proposed breakpoints through 99 |
+| Rune | Unlock | Pre-implementation XP/Stone | Implemented breakpoints through 99 |
 | --- | ---: | ---: | --- |
 | Air | 1 | 9 | 1: 1x/15; 11: 2x/30; 21: 3x/45; 31: 4x/60; 41: 5x/75; 51: 6x/90; 61: 7x/105; 71: 8x/120; 81: 9x/135; 91: 10x/150 |
 | Water | 1 | 10.5 | 1: 1x/15; 11: 2x/30; 21: 3x/45; 31: 4x/60; 41: 5x/75; 51: 6x/90; 61: 7x/105; 71: 8x/120; 81: 9x/135; 91: 10x/150 |
@@ -131,15 +135,15 @@ for the full altar action.
 | Blood | 70 | 45 | 70: 1x/192; 80: 2x/384; 90: 3x/576 |
 
 This breakpoint table is an exhaustive level-1-to-99 comparison: neither the
-current nor proposed result changes at an unlisted level.
+pre-implementation nor implemented result changes at an unlisted level.
 
 ## Thirty-Stone Trip Comparison
 
-The current trip column is unchanged by later output multipliers. Proposed
-unlock and level-99 columns include base output, but exclude equipment bonus
-runes and XP-boosting equipment/prayers/brews.
+The pre-implementation trip column is unchanged by later output multipliers.
+Implemented unlock and level-99 columns include base output, but exclude
+equipment bonus runes and XP-boosting equipment/prayers/brews.
 
-| Rune | Current 30-Stone XP | Proposed at unlock | Proposed at level 99 | Level-99 ratio to current |
+| Rune | Pre-implementation 30-Stone XP | Implemented at unlock | Implemented at level 99 | Level-99 ratio to previous |
 | --- | ---: | ---: | ---: | ---: |
 | Air | 270 | 450 | 4,500 | 16.67x |
 | Water | 315 | 450 | 4,500 | 14.29x |
@@ -156,7 +160,7 @@ runes and XP-boosting equipment/prayers/brews.
 | Soul | 1,125 | 4,185 | 16,740 | 14.88x |
 | Blood | 1,350 | 5,760 | 17,280 | 12.80x |
 
-Nature is the only proposed unlock value below its current XP. Chaos is
+Nature is the only implemented unlock value below its pre-implementation XP. Chaos is
 unchanged at unlock. Law through Blood are already `2.61x` to `4.27x` their
 current XP before any later output breakpoint; the multiplier then compounds
 those increases.
@@ -177,7 +181,7 @@ regimes (seven changes after the starting choice):
 | 62 | Soul | 37.5 |
 | 70 | Blood | 45 |
 
-The full proposal produces 22 optimal regimes, or 21 actual changes after the
+The full implemented model produces 22 optimal regimes, or 21 actual changes after the
 initial level-1 choice:
 
 | Level | Proposed best method(s) | XP/Stone |
@@ -237,8 +241,8 @@ throughput.
 Nature currently earns `1.79x` Blood's rate and `1.96x` Soul's despite being a
 lower-tier rune. That is the concrete grind-rate defect the proposal addresses.
 
-For a consistency check, divide each current hourly rate by its current XP per
-Stone to estimate that route's Stone throughput, then multiply by proposed XP
+For a consistency check, divide each pre-implementation hourly rate by its
+pre-implementation XP per Stone to estimate that route's Stone throughput, then multiply by implemented XP
 per rune and the level's base-output multiplier. The rounded current table
 reproduces the same winning runes and level boundaries as the supplied
 suggested-rate table; small rate differences come from the source calculation
@@ -297,20 +301,20 @@ Equipment output must remain outside the XP count:
   the documented full tier-10 set. Fractional progress is carried per rune.
 - Chaos amulets add `20%` to `100%` output when crafting Chaos runes and roll
   the bonus across Mind, Chaos, Death, and Blood runes.
-- Both systems calculate from the same base `runeCount`. With maximum applicable
+- Both systems calculate from the same `baseRuneCount`. With maximum applicable
   bonuses, a Chaos action can produce base output plus up to `100%` Law-robe
   output and `100%` Chaos-amulet output.
 
 Awarding XP on those bonus runes would turn equipment yield into another XP
 multiplier, make randomized Chaos output affect training XP, and amplify the
-already large late-level rates. A future implementation should name the base
-count explicitly and test that equipment methods run after the XP-eligible
-count is fixed.
+already large late-level rates. The implementation names the base count
+explicitly and awards XP before either equipment method runs. Regression tests
+lock that ordering and the XP-eligible count.
 
-## Recommendation And Review Gate
+## Implementation And Review Gate
 
-Recommendation: accept the proposed table and base-output multiplication for
-implementation review.
+Implementation status: the accepted table and base-output multiplication are
+implemented for review.
 
 The route-normalized evidence resolves the concern raised by the XP-per-Stone
 cross-check. The pure-XP optimizer has 21 changes, but it ignores the different
@@ -319,21 +323,20 @@ route throughput produces the claimed 25 changes and replaces Nature's large
 current lead with a late-game Death/Soul/Blood cluster whose rates are within
 about `7.4%` of one another.
 
-In a future implementation, calculate XP from the base rune output before
-adding equipment-generated runes. In conceptual internal units for one altar
-action:
+The runtime calculates XP from the base rune output before adding
+equipment-generated runes. In conceptual internal units for one altar action:
 
 ```text
 baseRunesCrafted = stonesProcessed * baseRuneMultiplier
-actionXP = proposedXmlXP * baseRunesCrafted
+actionXP = configuredXmlXP * baseRunesCrafted
 ```
 
-The proposed XML values are already integral quarter-XP units, so this needs no
+The configured XML values are integral quarter-XP units, so this needs no
 special per-Stone rounding. Keep the existing current-level boost behavior,
 apply normal shared XP modifiers afterward, and exclude Law-robe and
 Chaos-amulet output from `baseRunesCrafted`.
 
-Before merging a balance implementation, time representative Nature, Death,
+Before merging the balance implementation, time representative Nature, Death,
 Soul, and Blood loops in-game and confirm the target ceiling. The proposal's
 relative progression is supported, but its approximately `1.0 million
 XP/hour` endgame rate is still an explicit product decision. If that absolute
