@@ -252,7 +252,7 @@ def main() -> None:
     ensure_route_progression()
 
     for snippet in (
-        "Status: implemented on this feature branch; pending review and merge.",
+        "Status: implemented and merged into `main`; awaiting release and live validation.",
         "26 route-normalized optimal regimes",
         "25 actual method",
         "`1,035,616 XP/hour`",

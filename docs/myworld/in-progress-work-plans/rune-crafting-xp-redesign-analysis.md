@@ -1,6 +1,6 @@
 # Enchanting Rune-Crafting XP Redesign Analysis
 
-Status: implemented on this feature branch; pending review and merge.
+Status: implemented and merged into `main`; awaiting release and live validation.
 
 ## Decision Summary
 
