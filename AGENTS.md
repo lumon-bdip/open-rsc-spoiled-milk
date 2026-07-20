@@ -21,6 +21,19 @@ git status --short --branch
 - `/tmp/spoiled-milk-live-main` is the detached live deployment. Never edit,
   commit, build experimental work, or switch branches there.
 
+## External AI Contributors
+
+External contributors do not join the maintainer's `ai-N` worktrees and must
+not run `ai-workspace.sh`, `ai-manager.sh`, release scripts, or live-server
+scripts. They use one descriptive, username-namespaced topic branch per task,
+push checkpoints, and submit an exact-commit pull-request handoff with
+`scripts/contributor-workspace.py`.
+
+They never push `main`, access live credentials or databases, decide merges,
+build releases, or deploy. If work is dirty or confusing, preserve it with the
+contributor rescue command before cleanup. The beginner-safe workflow is in
+[`docs/workspaces/external-contributor.md`](docs/workspaces/external-contributor.md).
+
 ## Public Server Shutdown Gate
 
 - Building, tagging, uploading, publishing, or being asked to "release" or

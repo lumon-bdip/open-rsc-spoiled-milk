@@ -11,12 +11,15 @@ usage() {
 Usage:
   ./scripts/ai-manager.sh status
   ./scripts/ai-manager.sh rescue <ai-N> [-m message] [--local-only] [--allow-sensitive] [--allow-large]
+  ./scripts/ai-manager.sh collect-contributor <ai-N> <remote-topic-branch> <exact-commit>
   ./scripts/ai-manager.sh merge <topic-branch>
   ./scripts/ai-manager.sh release-check
   ./scripts/ai-manager.sh release <package-player-release options>
 
 Rescue is an explicit preservation action for an abandoned slot. Merge accepts
-only a clean, pushed READY handoff. Neither command deletes a worktree.
+only a clean, pushed READY handoff. Contributor collection verifies an exact
+remote commit and imports it into an idle slot for review; it does not merge.
+None of these commands deletes a worktree.
 USAGE
 }
 
@@ -81,6 +84,65 @@ manager_rescue() {
   fi
   head="$(ai_head "$path")"
   printf 'Rescued %s on %s at %s. Review this branch before merging.\n' "$slot" "$branch" "$head"
+}
+
+manager_collect_contributor() {
+  local slot branch expected_head path published_ref remote_ref remote_head merge_base detached_head
+
+  [[ $# -eq 3 ]] \
+    || ai_fail "collect-contributor requires an idle slot, remote topic branch, and exact 40-character commit."
+  slot="$(ai_normalize_slot "$1")"
+  branch="$2"
+  expected_head="${3,,}"
+
+  [[ "$branch" != "$AI_MAIN_BRANCH" ]] || ai_fail "Refusing to collect the protected $AI_MAIN_BRANCH branch."
+  git -C "$ROOT_DIR" check-ref-format --branch "$branch" >/dev/null 2>&1 \
+    || ai_fail "Invalid contributor topic branch: $branch"
+  [[ "$expected_head" =~ ^[0-9a-f]{40}$ ]] \
+    || ai_fail "Contributor handoff must provide the full 40-character commit hash."
+
+  ai_require_manager
+  published_ref="$(ai_published_ref)"
+  remote_ref="$AI_REMOTE/$branch"
+  git -C "$ROOT_DIR" rev-parse --verify --quiet "refs/remotes/$remote_ref^{commit}" >/dev/null \
+    || ai_fail "Remote contributor branch does not exist: $remote_ref"
+  remote_head="$(git -C "$ROOT_DIR" rev-parse "refs/remotes/$remote_ref^{commit}")"
+  [[ "$remote_head" == "$expected_head" ]] \
+    || ai_fail "Contributor branch moved: handoff named $expected_head but $remote_ref is $remote_head. Request a new exact handoff."
+  if git -C "$ROOT_DIR" merge-base --is-ancestor "$remote_head" "$published_ref"; then
+    ai_fail "Contributor commit $remote_head is already contained in published main."
+  fi
+  merge_base="$(git -C "$ROOT_DIR" merge-base "$published_ref" "$remote_head" 2>/dev/null || true)"
+  [[ -n "$merge_base" ]] || ai_fail "Contributor branch has no shared history with published main."
+
+  path="$(ai_require_slot "$slot")"
+  ai_require_no_git_operation "$path"
+  ai_require_clean "$path" "Workspace $slot"
+  [[ "$(ai_current_branch "$path")" == DETACHED ]] \
+    || ai_fail "Workspace $slot is occupied. Choose an idle detached slot."
+  detached_head="$(ai_head "$path")"
+  git -C "$path" merge-base --is-ancestor "$detached_head" "$published_ref" \
+    || ai_fail "Workspace $slot has detached work outside published main. Rescue it before contributor collection."
+  ai_require_idle_slot_state "$slot" "$path" "$published_ref"
+
+  git -C "$ROOT_DIR" show-ref --verify --quiet "refs/heads/$branch" \
+    && ai_fail "Local branch '$branch' already exists. Inspect it before collecting the remote handoff."
+  [[ -z "$(ai_branch_worktree "$branch" || true)" ]] \
+    || ai_fail "Branch '$branch' is already checked out in another worktree."
+
+  git -C "$path" switch -c "$branch" "$remote_ref"
+  [[ "$(ai_head "$path")" == "$remote_head" ]] \
+    || ai_fail "Collected branch does not match the verified contributor commit."
+  ai_write_state "$slot" READY "$path" "$branch" "$remote_head"
+  ai_generate_workspace_guide "$slot" "$path" READY "$branch" "$remote_head"
+
+  printf 'Collected contributor handoff into %s for read-only review and tests.\n' "$slot"
+  printf '  Branch: %s\n' "$branch"
+  printf '  Commit: %s\n' "$remote_head"
+  printf '  Merge base: %s\n' "$merge_base"
+  git -C "$path" log --oneline --decorate "$published_ref..$branch"
+  git -C "$path" diff --stat "$published_ref...$branch"
+  printf 'No merge was performed. Inspect and test in %s, then deliberately run ai-manager.sh merge %s from the manager checkout.\n' "$path" "$branch"
 }
 
 manager_merge() {
@@ -272,6 +334,9 @@ case "$command" in
     ;;
   rescue)
     manager_rescue "$@"
+    ;;
+  collect-contributor)
+    manager_collect_contributor "$@"
     ;;
   merge)
     manager_merge "$@"

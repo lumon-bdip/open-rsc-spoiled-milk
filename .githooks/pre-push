@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+# Installed only in contributor clones by scripts/contributor-workspace.py.
+# Maintainer worktrees keep their existing hook configuration.
+protected_branch="$(git config --local --get spoiledMilkContributor.mainBranch 2>/dev/null || printf 'main')"
+
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  if [ "$remote_ref" = "refs/heads/$protected_branch" ]; then
+    printf 'BLOCKED: contributor clones must never push directly to %s.\n' "$protected_branch" >&2
+    printf 'Create a topic branch and open a pull request for Justin instead.\n' >&2
+    exit 1
+  fi
+done
+
+exit 0

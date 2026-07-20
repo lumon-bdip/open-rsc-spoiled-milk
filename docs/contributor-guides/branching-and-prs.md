@@ -32,10 +32,11 @@ A branch should usually answer one question:
 
 Avoid mixing unrelated gameplay, artwork, formatting, and cleanup changes.
 
-When multiple AI sessions or contributors need to work at once, use the neutral
-`ai-1`, `ai-2`, and `ai-3` worktrees instead of category-named permanent
-branches. The standard slot and manager workflow is documented in
-[`../workspaces/README.md`](../workspaces/README.md).
+Maintainer-owned concurrent AI sessions use the neutral `ai-1`, `ai-2`, and
+`ai-3` worktrees instead of category-named permanent branches. External
+contributors do not enter those worktrees. They use their own clone and a
+username-namespaced branch such as `goutan/fix/collision-definitions`; see the
+[external contributor workflow](../workspaces/external-contributor.md).
 
 ## Small Fixes
 

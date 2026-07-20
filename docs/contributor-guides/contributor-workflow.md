@@ -15,7 +15,11 @@ system work.
 
 ## Basic Flow
 
-Create a branch from `main`:
+External contributors using AI should follow the guarded, beginner-oriented
+[external contributor workflow](../workspaces/external-contributor.md) instead
+of running these Git commands manually.
+
+An experienced manual contributor can create a branch from `main`:
 
 ```bash
 git switch main
