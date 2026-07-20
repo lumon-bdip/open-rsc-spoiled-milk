@@ -4,34 +4,34 @@ Status: analysis only; no rune XP values or runtime behavior changed.
 
 ## Decision Summary
 
-Do not adopt the proposed table and full per-base-rune XP multiplication as
-written. The output multiplier already exists, so multiplying XP by that output
-again causes the best level-99 method to rise from `45` to `630` displayed XP
-per Stone at the normal `3x` My World rate. A 30-Stone action rises from `1,350`
-to `18,900` XP before equipment or other XP bonuses.
+Accept the proposed table and full base-output multiplication for an
+implementation review. The supplied fastest-route estimates establish that the
+table is route-normalized: it is designed to correct Nature's present
+`134,600 XP/hour` route, which substantially exceeds Blood at `75,300` and Soul
+at `68,500`, rather than merely to order XP per Stone.
 
-A uniform scale cannot preserve the early game and control the late game:
+With those route estimates, the proposal produces 26 optimal level ranges and
+therefore the claimed 25 method changes. Nature remains competitive when its
+nine-tile Stone source earns that advantage, but Death, Soul, and Blood become
+the appropriate late-game methods. Their final optimal rates are tightly
+grouped:
 
-- retaining the current best level-1 rate requires at least a `0.90` scale on
-  the proposed table (`15 x 0.90 = 13.5`)
-- limiting the proposed level-99 optimum to twice the current optimum requires
-  at most a `0.142857` scale (`630 x 0.142857 = 90`)
+- Blood: `964,151 XP/hour` at levels `90-91`
+- Soul: `1,019,695 XP/hour` at levels `92-93`
+- Death: `1,035,616 XP/hour` at levels `94-99`
 
-The recommended review candidate is therefore a redesigned progression, not a
-uniformly scaled version of the proposal:
+That is a much healthier relative progression than the current route table.
+The absolute rate increase remains a deliberate balance decision: the proposed
+peak is about `7.7x` the current global maximum and the level-99 Death action is
+`18,900` displayed XP per 30 Stone before equipment or other XP bonuses. The
+table should be implemented only if an approximately one-million-XP/hour
+late-game ceiling matches the intended faster Enchanting grind.
 
-1. Keep the current XML XP table as the base XP per Stone.
-2. Credit each additional base-output rune at `25%` of the base Stone XP:
-   `effective XP multiplier = 1 + 0.25 x (base rune multiplier - 1)`.
-3. Continue excluding Law-robe and Chaos-amulet bonus runes from XP.
-4. Round once on the total altar action in internal quarter-XP units.
-
-This candidate preserves every unlock's current XP, makes later output
-breakpoints meaningful, and places the level-99 optimum at `67.5` XP per Stone
-and `2,025` XP per 30 Stones. That is a `1.5x` increase over the current optimal
-trip, instead of the proposal's `14x` increase. The `0.25` marginal scalar is a
-conservative starting point for route testing, not an authorized balance
-change.
+Implementation must award XP only for base multiplier output. Law-robe and
+Chaos-amulet bonus runes must remain excluded. The route estimates should also
+receive a short reproducible in-game timing pass, especially for the Nature,
+Death, Soul, and Blood routes; that is validation of the accepted model, not a
+reason to replace it with the earlier `0.25` marginal-output alternative.
 
 ## Confirmed Current Implementation
 
@@ -47,11 +47,11 @@ The preliminary findings are confirmed in
   in one loop. Stone is non-stackable, so a full My World equipment-tab
   inventory normally means 30 Stone.
 - Current action XP is `def.getExp() * successCount`: XP is awarded once per
-  successfully removed Stone, not once per produced rune.
+  processed Stone, not once per produced rune.
 - `runeCount` contains base multiplier output. Law-robe and Chaos-amulet bonuses
   are added afterward and do not affect the current XP award.
 
-The conservative version of the proposal would change the action XP basis to
+The proposal would change the action XP basis to
 `proposed internal XP per rune x runeCount`, where `runeCount` is still the
 base output before equipment. It must not count the equipment-generated runes.
 
@@ -161,7 +161,7 @@ unchanged at unlock. Law through Blood are already `2.61x` to `4.27x` their
 current XP before any later output breakpoint; the multiplier then compounds
 those increases.
 
-## Optimal-Method Changes
+## XP-Per-Stone Cross-Check
 
 Ignoring route time and rune value, current XP-per-Stone optimization has eight
 regimes (seven changes after the starting choice):
@@ -205,48 +205,89 @@ initial level-1 choice:
 | 90 | Blood | 576 |
 | 94 | Death | 630 |
 
-The claimed 25 optimal-method changes are therefore not supported by the
-XP-per-Stone model. Counting all five tied level-1 elemental/life choices as
-separate methods can inflate a count, but they are alternatives within the same
-regime, not level-triggered method changes. Real travel time can change or
-remove transitions because altars have different routes; it cannot establish a
-fixed count of 25 without measured route times.
+This 22-regime result is correct for XP per Stone, but it is not the metric used
+by the claimed 25 changes. The proposal intentionally optimizes XP per hour
+after applying each altar's fastest Stone-supply route. That extra variable
+breaks the level-1 tie in Water's favor and lets Nature's exceptional route
+compete at several later breakpoints.
 
-The proposal also creates unintuitive oscillation: low-tier runes repeatedly
-become optimal at their ten-level breakpoints, and Death, Soul, and Blood trade
-places several times after all are unlocked. That may be desirable variety,
-but it is not a simple unlock ladder.
+## Route-Normalized Evidence
 
-## Travel, Mining, And Banking Sensitivity
+The user-supplied current-rate estimate gives the following fastest loops. The
+rates use normal `3x` displayed XP and already include the loop-specific Stone
+throughput.
 
-No route-duration telemetry is stored in the rune plugin, so these are explicit
-scenarios rather than measured rates:
+| Rune | Current maximum XP/hour | Fastest estimated loop |
+| --- | ---: | --- |
+| Nature | 134,600 | Direct; rock is 9 tiles from the altar |
+| Blood | 75,300 | Mage Arena bank to altar; webs take about 2 seconds each |
+| Soul | 68,500 | Yanille bank to altar; requires Magic 66 route access |
+| Death | 51,800 | Direct; dungeon rock is 63 tiles away |
+| Body | 44,400 | Direct; rock is 29 tiles away |
+| Water | 30,400 | Direct; rock is 30 tiles away |
+| Fire | 30,100 | Direct; rock is 43 tiles away |
+| Mind | 27,300 | Direct; rock is 28 tiles away |
+| Chaos | 25,700 | Edgeville bank to altar |
+| Air | 21,200 | Direct; rock is 40 tiles away and barely beats the bank loop |
+| Law | 20,800 | Bank, ferry, altar, then free return ship |
+| Cosmic | 19,500 | Zanaris bank to altar |
+| Life | 17,000 | Direct underground rock with ladder travel both ways |
+| Earth | 15,900 | Varrock East bank to altar |
 
-- `90 seconds`: aggressive pre-mined Stone and short bank/altar route
-- `180 seconds`: moderate banking, travel, and contention
-- `360 seconds`: self-supplied mining plus a longer altar loop
+Nature currently earns `1.79x` Blood's rate and `1.96x` Soul's despite being a
+lower-tier rune. That is the concrete grind-rate defect the proposal addresses.
 
-The table uses the best pure-XP method at each sample level, a full 30-Stone
-action, and normal `3x` displayed XP. Each rate cell is `current / proposed`.
+For a consistency check, divide each current hourly rate by its current XP per
+Stone to estimate that route's Stone throughput, then multiply by proposed XP
+per rune and the level's base-output multiplier. The rounded current table
+reproduces the same winning runes and level boundaries as the supplied
+suggested-rate table; small rate differences come from the source calculation
+retaining more timing precision.
 
-| Level | Current best trip | Proposed best trip | 90-sec XP/hour | 180-sec XP/hour | 360-sec XP/hour |
-| ---: | --- | --- | ---: | ---: | ---: |
-| 1 | Fire: 405 | tied: 450 | 16,200 / 18,000 | 8,100 / 9,000 | 4,050 / 4,500 |
-| 22 | Chaos: 630 | basic: 1,350 | 25,200 / 54,000 | 12,600 / 27,000 | 6,300 / 13,500 |
-| 46 | Law: 810 | Body: 2,430 | 32,400 / 97,200 | 16,200 / 48,600 | 8,100 / 24,300 |
-| 54 | Death: 945 | Death: 3,780 | 37,800 / 151,200 | 18,900 / 75,600 | 9,450 / 37,800 |
-| 70 | Blood: 1,350 | Death: 7,560 | 54,000 / 302,400 | 27,000 / 151,200 | 13,500 / 75,600 |
-| 99 | Blood: 1,350 | Death: 18,900 | 54,000 / 756,000 | 27,000 / 378,000 | 13,500 / 189,000 |
+The supplied suggested results are:
 
-Inventory sizes below 30 scale every trip and hourly number linearly. Faster
-Stone mining from higher Mining level, pickaxe tier, gathering bonuses, a Law
-ring, or stored certificates can move a player toward the shorter scenarios.
-The single altar action itself processes the whole inventory immediately, so
-travel and Stone acquisition dominate sustained rates.
+| # | Levels | Optimal rune | Base output | Maximum XP/hour |
+| ---: | --- | --- | ---: | ---: |
+| 1 | 1-7 | Water | 1x | 43,408 |
+| 2 | 8-10 | Mind | 1x | 47,780 |
+| 3 | 11-17 | Water | 2x | 86,817 |
+| 4 | 18-20 | Mind | 2x | 95,559 |
+| 5 | 21-27 | Water | 3x | 130,225 |
+| 6 | 28-30 | Mind | 3x | 143,339 |
+| 7 | 31-34 | Water | 4x | 173,633 |
+| 8 | 35-37 | Body | 3x | 179,956 |
+| 9 | 38-40 | Mind | 4x | 191,118 |
+| 10 | 41-44 | Water | 5x | 217,042 |
+| 11 | 45-47 | Body | 4x | 239,941 |
+| 12 | 48-50 | Nature | 2x | 252,336 |
+| 13 | 51-54 | Water | 6x | 260,450 |
+| 14 | 55-57 | Body | 5x | 299,926 |
+| 15 | 58-63 | Nature | 3x | 378,505 |
+| 16 | 64-67 | Death | 2x | 414,247 |
+| 17 | 68-71 | Nature | 4x | 504,673 |
+| 18 | 72-73 | Soul | 2x | 509,848 |
+| 19 | 74-77 | Death | 3x | 621,370 |
+| 20 | 78-79 | Nature | 5x | 630,841 |
+| 21 | 80-81 | Blood | 2x | 642,767 |
+| 22 | 82-83 | Soul | 3x | 764,772 |
+| 23 | 84-89 | Death | 4x | 828,493 |
+| 24 | 90-91 | Blood | 3x | 964,151 |
+| 25 | 92-93 | Soul | 4x | 1,019,695 |
+| 26 | 94-99 | Death | 5x | 1,035,616 |
 
-Before any large XP increase, measure representative round trips for at least
-the elemental, Law, Death, Soul, and Blood altars and decide a target XP/hour
-band. Without that target, the proposal can only be judged by relative growth.
+This is 26 route-normalized optimal regimes, producing 25 actual method
+changes. The claim is supported. The alternation is also purposeful rather than
+an XP-per-Stone anomaly: Water, Mind, Body, and Nature capitalize on accessible
+Stone sources early and mid-game, while Death, Soul, and Blood converge as the
+late-game choices.
+
+The table is still based on estimated fastest-possible execution. Before a
+balance implementation is finalized, reproduce a sample of the route timings
+with consistent assumptions for movement cadence, Mining yield, rock respawn,
+bank interaction time, web delays, and required teleports. Inventory sizes
+below 30 and ordinary player execution will reduce all rates, while gathering
+bonuses or banked Stone can raise supply throughput. These factors affect
+absolute rates but do not invalidate the route-normalized design goal.
 
 ## Equipment-Generated Runes
 
@@ -268,28 +309,35 @@ count is fixed.
 
 ## Recommendation And Review Gate
 
-Recommendation: redesign before implementation.
+Recommendation: accept the proposed table and base-output multiplication for
+implementation review.
 
-The proposed internal table is valid in terms of units, and the base-output
-formula matches current behavior. The balance problem is their combination:
-large high-tier per-rune values are multiplied again at every output
-breakpoint. Uniform scaling cannot fix both ends of the curve, and the pure-XP
-optimizer yields 21 changes rather than the claimed 25.
+The route-normalized evidence resolves the concern raised by the XP-per-Stone
+cross-check. The pure-XP optimizer has 21 changes, but it ignores the different
+Stone throughput that the redesign intentionally balances. Applying measured
+route throughput produces the claimed 25 changes and replaces Nature's large
+current lead with a late-game Death/Soul/Blood cluster whose rates are within
+about `7.4%` of one another.
 
-For the first controlled implementation review, use the existing XML table and
-the `0.25` marginal-output scalar described in the decision summary. In
-conceptual internal units for an altar action:
+In a future implementation, calculate XP from the base rune output before
+adding equipment-generated runes. In conceptual internal units for one altar
+action:
 
 ```text
-extraOutput = baseRuneMultiplier - 1
-actionXP = floor(currentXmlXP * stonesProcessed * (4 + extraOutput) / 4)
+baseRunesCrafted = stonesProcessed * baseRuneMultiplier
+actionXP = proposedXmlXP * baseRunesCrafted
 ```
 
-Round once per full action, not once per Stone, to minimize loss from quarter
-increments. Keep the existing current-level boost behavior, apply normal shared
-XP modifiers afterward, and exclude all equipment-generated output.
+The proposed XML values are already integral quarter-XP units, so this needs no
+special per-Stone rounding. Keep the existing current-level boost behavior,
+apply normal shared XP modifiers afterward, and exclude Law-robe and
+Chaos-amulet output from `baseRunesCrafted`.
 
-Do not implement even this candidate until representative route times and a
-target XP/hour band are reviewed. If testing shows the candidate too flat, move
-the marginal scalar from `0.25` toward `0.50`; do not jump directly to the
-proposal's implicit `1.00` marginal credit plus its much higher table.
+Before merging a balance implementation, time representative Nature, Death,
+Soul, and Blood loops in-game and confirm the target ceiling. The proposal's
+relative progression is supported, but its approximately `1.0 million
+XP/hour` endgame rate is still an explicit product decision. If that absolute
+ceiling is too high, uniformly scale the proposed per-rune table and rerun the
+integer-quarter-XP and route-transition checks. Do not substitute the earlier
+`0.25` marginal-output model unless the design goal changes; it was based on an
+incomplete comparison that omitted route throughput.

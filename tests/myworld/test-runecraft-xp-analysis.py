@@ -43,6 +43,69 @@ PROPOSED = {
     "Blood": (70, 192.0),
 }
 
+CURRENT_DISPLAYED_XP = {
+    "Air": 9.0,
+    "Water": 10.5,
+    "Earth": 12.0,
+    "Fire": 13.5,
+    "Life": 9.0,
+    "Mind": 9.0,
+    "Body": 15.0,
+    "Chaos": 21.0,
+    "Cosmic": 18.0,
+    "Nature": 24.0,
+    "Law": 27.0,
+    "Death": 31.5,
+    "Soul": 37.5,
+    "Blood": 45.0,
+}
+
+CURRENT_ROUTE_XP_HOUR = {
+    "Nature": 134_600,
+    "Blood": 75_300,
+    "Soul": 68_500,
+    "Death": 51_800,
+    "Body": 44_400,
+    "Water": 30_400,
+    "Fire": 30_100,
+    "Mind": 27_300,
+    "Chaos": 25_700,
+    "Air": 21_200,
+    "Law": 20_800,
+    "Cosmic": 19_500,
+    "Life": 17_000,
+    "Earth": 15_900,
+}
+
+EXPECTED_ROUTE_REGIMES = (
+    (1, "Water"),
+    (8, "Mind"),
+    (11, "Water"),
+    (18, "Mind"),
+    (21, "Water"),
+    (28, "Mind"),
+    (31, "Water"),
+    (35, "Body"),
+    (38, "Mind"),
+    (41, "Water"),
+    (45, "Body"),
+    (48, "Nature"),
+    (51, "Water"),
+    (55, "Body"),
+    (58, "Nature"),
+    (64, "Death"),
+    (68, "Nature"),
+    (72, "Soul"),
+    (74, "Death"),
+    (78, "Nature"),
+    (80, "Blood"),
+    (82, "Soul"),
+    (84, "Death"),
+    (90, "Blood"),
+    (92, "Soul"),
+    (94, "Death"),
+)
+
 
 def fail(message: str) -> None:
     print(f"FAIL: {message}")
@@ -91,17 +154,38 @@ def main() -> None:
     if proposed_regimes != 22:
         fail(f"Expected 22 proposed optimal regimes, found {proposed_regimes}")
 
+    route_regimes = []
+    previous_winner = None
+    for level in range(1, 100):
+        route_rates = []
+        for name, (unlock, per_rune_xp) in PROPOSED.items():
+            if level < unlock:
+                continue
+            multiplier = 1 + ((level - unlock) // 10)
+            stone_throughput = CURRENT_ROUTE_XP_HOUR[name] / CURRENT_DISPLAYED_XP[name]
+            route_rates.append((stone_throughput * per_rune_xp * multiplier, name))
+        winner = max(route_rates)[1]
+        if winner != previous_winner:
+            route_regimes.append((level, winner))
+            previous_winner = winner
+
+    if tuple(route_regimes) != EXPECTED_ROUTE_REGIMES:
+        fail(f"Route-normalized method changes no longer match the supplied model: {route_regimes}")
+
     for snippet in (
         "Status: analysis only; no rune XP values or runtime behavior changed.",
         "22 optimal regimes, or 21 actual changes",
-        "`18,900` XP before equipment",
-        "effective XP multiplier = 1 + 0.25 x (base rune multiplier - 1)",
-        "Recommendation: redesign before implementation.",
+        "26 route-normalized optimal regimes",
+        "25 actual method",
+        "`134,600 XP/hour`",
+        "`1,035,616 XP/hour`",
+        "`18,900` displayed XP per 30 Stone before equipment",
+        "Recommendation: accept the proposed table and base-output multiplication",
     ):
         if snippet not in analysis:
             fail(f"Rune XP decision document is missing: {snippet}")
 
-    print("PASS: rune XP analysis matches unchanged runtime data and level-1-to-99 model")
+    print("PASS: rune XP analysis matches unchanged runtime data and route-normalized level-1-to-99 model")
 
 
 if __name__ == "__main__":
