@@ -66,7 +66,9 @@ The examples below use PowerShell's Python launcher, `py -3`. If that command
 is unavailable but `python` works, replace `py -3` with `python`.
 
 Before the first contribution, Git also needs a name and a GitHub-compatible
-email. GitHub's private no-reply email is appropriate if desired:
+email. The following commands may be run from any directory. GitHub's private
+no-reply email is appropriate if desired; replace the placeholder with the
+actual address shown in the contributor's GitHub email settings:
 
 ```powershell
 git config --global user.name "Goutan"
@@ -104,9 +106,10 @@ py -3 scripts/contributor-workspace.py status
 ```
 
 Setup stores only local Git configuration. It also enables the repository's
-contributor `pre-push` guard. That guard rejects every push to `main`, whether
-the push comes from this helper, an AI tool, GitHub Desktop, or a manual Git
-command. It does not grant or alter GitHub access.
+contributor `pre-push` guard. That guard rejects pushes to `main` made through
+Git clients that honor repository hooks, including the helper and ordinary Git
+commands. It does not grant or alter GitHub access. GitHub branch protection is
+still the repository-level backstop.
 
 If setup reports an existing custom hooks path, stop and ask Justin. The helper
 will not overwrite another Git hook configuration.

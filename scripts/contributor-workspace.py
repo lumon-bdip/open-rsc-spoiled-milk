@@ -474,7 +474,7 @@ def command_status(root: Path, _arguments: argparse.Namespace) -> None:
     remote_state = "UNKNOWN"
     if username and remote and main_branch:
         phase = "ACTIVE"
-        if state.get("branch") == branch and state.get("head") == head:
+        if clean and state.get("branch") == branch and state.get("head") == head:
             phase = state.get("phase", "ACTIVE")
         try:
             remote_state = "EXACT" if remote_branch_head(root, remote, branch) == head else "NOT BACKED UP"

@@ -119,6 +119,7 @@ Before merging:
 ## Adding Contributors Later
 
 Start contributors with pull requests only. Give them the contributor guide,
-the AI-assisted guide if they use AI tools, and the relevant plan doc.
+the [external AI contributor workflow](../workspaces/external-contributor.md)
+if they use AI tools, and the relevant plan doc.
 
 Do not give direct `main` access. Protect `main` first, then add collaborators.

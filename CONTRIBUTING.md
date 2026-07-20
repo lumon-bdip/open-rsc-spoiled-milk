@@ -12,7 +12,7 @@ Read these guides before submitting work:
 - [Plan document workflow](docs/contributor-guides/plan-doc-workflow.md)
 - [AI-assisted contribution rules](docs/contributor-guides/ai-assisted-workflow.md)
 - [External AI contributor workflow](docs/workspaces/external-contributor.md)
-- [AI workspaces](docs/workspaces/README.md)
+- [Maintainer AI workspaces](docs/workspaces/README.md)
 
 ## Core Rules
 

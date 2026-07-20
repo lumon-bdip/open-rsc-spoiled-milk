@@ -14,6 +14,9 @@ from pathlib import Path
 SOURCE_ROOT = Path(__file__).resolve().parents[2]
 TOOL = SOURCE_ROOT / "scripts" / "contributor-workspace.py"
 HOOK = SOURCE_ROOT / ".githooks" / "pre-push"
+GUIDE = SOURCE_ROOT / "docs" / "workspaces" / "external-contributor.md"
+AGENTS = SOURCE_ROOT / "AGENTS.md"
+PULL_REQUEST_TEMPLATE = SOURCE_ROOT / ".github" / "pull_request_template.md"
 
 
 class ContributorFixture:
@@ -120,6 +123,12 @@ class ContributorWorkflowTest(unittest.TestCase):
         self.assertIn("Handoff phase: READY", status)
         self.assertIn("Public server/release access: NOT PART", status)
 
+        (f.clone / "collision.txt").write_text("post-handoff edit\n", encoding="utf-8")
+        dirty_status = f.tool("status").stdout
+        self.assertIn("Working folder: HAS UNSAVED CHANGES", dirty_status)
+        self.assertIn("Handoff phase: ACTIVE", dirty_status)
+        (f.clone / "collision.txt").write_text("ready\n", encoding="utf-8")
+
         f.git(f.seed, "fetch", "origin", branch)
         f.git(f.seed, "merge", "--no-ff", f"origin/{branch}", "-m", "Merge contributor fixture")
         f.git(f.seed, "push", "origin", "main")
@@ -172,6 +181,32 @@ class ContributorWorkflowTest(unittest.TestCase):
         self.assertIn("not marked READY", rescued.stdout)
         status = f.tool("status").stdout
         self.assertIn("Handoff phase: ACTIVE", status)
+
+    def test_beginner_guide_and_pull_request_contract_remain_connected(self) -> None:
+        guide = GUIDE.read_text(encoding="utf-8")
+        agents = AGENTS.read_text(encoding="utf-8")
+        pull_request = PULL_REQUEST_TEMPLATE.read_text(encoding="utf-8")
+        script = TOOL.read_text(encoding="utf-8")
+
+        for snippet in (
+            "GitHub contributor: `Goutan`",
+            "Operating system: Windows",
+            "Expected AI sessions: one",
+            "py -3 scripts/contributor-workspace.py setup --username Goutan --remote origin",
+            "py -3 scripts/contributor-workspace.py checkpoint",
+            "py -3 scripts/contributor-workspace.py handoff",
+            "py -3 scripts/contributor-workspace.py rescue",
+            "collect-contributor ai-N goutan/TYPE/task EXACT_COMMIT",
+            "Do not use a stash, `git clean`, `git reset --hard`",
+            "does not alter GitHub settings",
+        ):
+            self.assertIn(snippet, guide)
+        self.assertIn("docs/workspaces/external-contributor.md", agents)
+        self.assertIn("Exact 40-character commit", pull_request)
+        self.assertNotIn("/home/justin", script)
+        self.assertNotIn("/tmp/spoiled-milk-live-main", script)
+        self.assertNotIn(b"\r\n", HOOK.read_bytes())
+        self.assertIn(".githooks/* text eol=lf", (SOURCE_ROOT / ".gitattributes").read_text())
 
 
 if __name__ == "__main__":
