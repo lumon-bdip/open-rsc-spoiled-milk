@@ -11,7 +11,7 @@ runtime.
 
 - Maintain a real summoning system instead of one-off scripted companions.
 - Keep `Wolf` and `Hellhound` leather set bonuses on the summon runtime.
-- Support combat, support, and resolving utility summons.
+- Support combat, support, and charge-limited utility summons.
 - Keep the first 12-summon catalog spaced from level `1` through level `70`.
 
 ## Core Rules
@@ -107,12 +107,14 @@ from the summon display name in lowercase with spaces converted to dashes:
 
 - Does not attack.
 - Does not take damage.
-- Appears to perform a non-combat action, then despawns.
+- Appears to perform a limited number of successful non-combat services.
 - Intended utility actions include:
   - selecting an inventory item and converting all matching inventory items to
     notes
   - depositing a limited number of selected inventory items into the bank
-- If the utility cannot resolve, it should despawn after `1 minute`.
+- Failed or cancelled selections do not consume a service.
+- Persists until its final successful service, explicit dismissal, replacement,
+  owner death, or owner logout.
 
 ## Summon Lifetime Rules
 
@@ -129,10 +131,12 @@ from the summon display name in lowercase with spaces converted to dashes:
 
 ### Utility Summons
 
-- Utility summons remain until their utility resolves.
-- If they cannot complete their utility, they should despawn after `1 minute`
-  to avoid lingering.
-- They should also despawn on logout or replacement.
+- Utility summons remain through unsuccessful selections and disappear after
+  their final successful service.
+- They also disappear on explicit dismissal, replacement, owner death, or
+  owner logout.
+- Pending item selections are cleared when the summon is dismissed or replaced,
+  so a stale menu cannot spend a replacement summon's service.
 
 ## First Summon Catalog
 
@@ -196,7 +200,12 @@ from the summon display name in lowercase with spaces converted to dashes:
 - level: `33`
 - role: utility
 - cost: `1 Life rune`, `2 Law runes`, `1 Body rune`, `1 Nature rune`
-- effect: converts all matching selected inventory items into certs
+- services: `4`
+- effect: each successful service converts all matching selected unnoted
+  inventory items into certs
+- service XP: `75 + 5` per converted item, capped at `150` displayed XP
+- maximum: `600` displayed service XP, or `745` including the `145` cast XP
+  (`1,800` and `2,235` respectively at the normal `3x` My World rate)
 
 ### Bound Battleaxe
 
@@ -233,7 +242,12 @@ from the summon display name in lowercase with spaces converted to dashes:
 - level: `58`
 - role: utility
 - cost: `1 Life rune`, `2 Body runes`, `2 Law runes`, `2 Nature runes`
-- effect: deposits one selected inventory item or stack into the owner's bank
+- services: `2`
+- effect: each successful service deposits one selected inventory slot or stack
+  into the owner's bank
+- service XP: `225` displayed XP
+- maximum: `450` displayed service XP, or `785` including the `335` cast XP
+  (`1,350` and `2,355` respectively at the normal `3x` My World rate)
 
 ### Astral Wraith
 
@@ -278,15 +292,16 @@ The first proof implementation has already established the core summon runtime.
 - `Rat`
   - cost:
     - `1 Life rune`
-    - `2 Body runes`
-    - `1 bones`
+    - `2 Law runes`
+    - `1 Body rune`
+    - `1 Nature rune`
   - behavior:
     - summons a rat companion
     - interacting with the rat asks the player to select an inventory item
     - the rat converts all matching unnoted inventory items into notes
-    - the rat then despawns
-  - fallback:
-    - if the rat cannot complete its utility, it despawns after `1 minute`
+    - the rat reports its remaining services and despawns after its fourth
+      successful conversion
+    - cancellation and failed conversion attempts do not consume a service
 
 ## Current Implementation Status
 
@@ -309,7 +324,8 @@ The first proof implementation has already established the core summon runtime.
 - Support summons last `1 minute` and begin at `1 Life rune` per minute to
   stay active. Their upkeep rises by `1 Life rune` every `3 minutes` active,
   then recovers by `1 Life rune` for each `1 minute` without a support summon.
-- Utility summons time out after `1 minute`.
+- Pack Rat and Delivery Camel persist for `4` and `2` successful services
+  respectively; failed actions do not consume services.
 - `Summoning` is a persisted MyWorld skill with database columns, stat packet
   fields, and client stat array support.
 - The first 12 summons are level-gated by Summoning level.
@@ -406,8 +422,10 @@ Required pieces:
   - item exists in inventory
   - item can be noted
   - inventory items are removed before notes are created
-- success despawn
-- failure timeout despawn after `1 minute`
+- consume one service only after a successful conversion
+- report remaining services after each success
+- despawn after the final successful service
+- clear stale selections on dismissal, replacement, death, and logout
 
 ## Phase 4: Content Entry Path
 
@@ -471,9 +489,16 @@ the set is broken.
 - Do not allow multiple active manual summons per player.
 - Armor-bound spirit companions may coexist with one manual summon because
   their source is equipment rather than a cast.
-- Do not leave summoned NPCs stranded on logout or failed utility resolution.
+- Do not leave summoned NPCs or pending selections stranded on logout, death,
+  replacement, or explicit dismissal.
 - Keep new summon additions narrow and testable; avoid adding broad summon
   content before the first catalog has enough field-test data.
+
+The charged utility model deliberately preserves the existing XP paid per
+successful service. This raises the maximum service XP per cast to four times
+the old Pack Rat maximum and twice the old Delivery Camel maximum. That is a
+balance concern to field-test; this change does not silently introduce a new XP
+formula or reduce the established reward.
 
 ## Open Design Decisions
 

@@ -50,6 +50,7 @@ public final class Summoning {
 	private static final String SUMMON_INVULNERABLE_KEY = "myworld_summon_invulnerable";
 	private static final String SUMMON_NEXT_ATTACK_TICK_KEY = "myworld_summon_next_attack_tick";
 	private static final String SUMMON_PRAYER_BONUS_KEY = "myworld_summon_prayer_bonus";
+	private static final String SUMMON_UTILITY_USES_REMAINING_KEY = "myworld_summon_utility_uses_remaining";
 	private static final String RAT_AWAITING_ITEM_KEY = "myworld_rat_awaiting_item";
 	private static final String RAT_NPC_KEY = "myworld_rat_note_npc";
 	private static final String CAMEL_AWAITING_ITEM_KEY = "myworld_camel_awaiting_item";
@@ -107,6 +108,8 @@ public final class Summoning {
 	private static final int PACK_RAT_UTILITY_PER_ITEM_DISPLAYED_XP = 5;
 	private static final int PACK_RAT_UTILITY_MAX_DISPLAYED_XP = 150;
 	private static final int DELIVERY_CAMEL_UTILITY_DISPLAYED_XP = 225;
+	private static final int PACK_RAT_UTILITY_USES = 4;
+	private static final int DELIVERY_CAMEL_UTILITY_USES = 2;
 	private static final int MIN_COMBAT_SUMMON_DISPLAYED_XP = 5;
 	private static final int COMBAT_SUMMON_CREDIT_TIMEOUT_MS = 120000;
 	private static final SummonProfile GIANT_SPIDER_PROFILE = combatProfile(
@@ -149,7 +152,7 @@ public final class Summoning {
 		cost(ItemId.BAT_BONES.id(), 1)
 	);
 	private static final SummonProfile RAT_PROFILE = utilityProfile(
-		"Pack Rat", 33, 145, UTILITY_RAT_NPC_ID, KIND_RAT,
+		"Pack Rat", 33, 145, UTILITY_RAT_NPC_ID, KIND_RAT, PACK_RAT_UTILITY_USES,
 		cost(ItemId.LIFE_RUNE.id(), 1),
 		cost(ItemId.LAW_RUNE.id(), 2),
 		cost(ItemId.BODY_RUNE.id(), 1),
@@ -176,7 +179,7 @@ public final class Summoning {
 		cost(ItemId.ASHES.id(), 1)
 	);
 	private static final SummonProfile CAMEL_PROFILE = utilityProfile(
-		"Delivery Camel", 58, 335, NpcId.CAMEL.id(), KIND_CAMEL,
+		"Delivery Camel", 58, 335, NpcId.CAMEL.id(), KIND_CAMEL, DELIVERY_CAMEL_UTILITY_USES,
 		cost(ItemId.LIFE_RUNE.id(), 1),
 		cost(ItemId.BODY_RUNE.id(), 2),
 		cost(ItemId.LAW_RUNE.id(), 2),
@@ -227,7 +230,7 @@ public final class Summoning {
 											   final int baseMaxHit, final int maxHitGrowthInterval,
 											   final int absorbPercent, final String trait,
 											   final Cost... costs) {
-		return new SummonProfile(name, level, displayedExperience, npcId, kind, SummonRole.COMBAT, true, NO_DURATION_LIMIT,
+		return new SummonProfile(name, level, displayedExperience, npcId, kind, SummonRole.COMBAT, true, NO_DURATION_LIMIT, 0,
 			20, 20, 20, 20, baseHits, baseHits, hitsGrowthInterval, baseMaxHit, maxHitGrowthInterval,
 			absorbPercent, 0, true, trait, costs);
 	}
@@ -235,19 +238,19 @@ public final class Summoning {
 	private static SummonProfile supportProfile(final String name, final int level, final int displayedExperience, final int npcId,
 												final String kind, final int prayerBonus,
 												final Cost... costs) {
-		return new SummonProfile(name, level, displayedExperience, npcId, kind, SummonRole.SUPPORT, false, SUPPORT_DURATION_SECONDS,
+		return new SummonProfile(name, level, displayedExperience, npcId, kind, SummonRole.SUPPORT, false, SUPPORT_DURATION_SECONDS, 0,
 			1, 1, 1, 1, 1, 1, 0, 0, 0, 0, prayerBonus, false, TRAIT_NONE, costs);
 	}
 
 	private static SummonProfile utilityProfile(final String name, final int level, final int displayedExperience, final int npcId,
-												final String kind, final Cost... costs) {
-		return new SummonProfile(name, level, displayedExperience, npcId, kind, SummonRole.UTILITY, false, 60,
+												final String kind, final int utilityUses, final Cost... costs) {
+		return new SummonProfile(name, level, displayedExperience, npcId, kind, SummonRole.UTILITY, false, NO_DURATION_LIMIT, utilityUses,
 			1, 1, 1, 1, 3, 3, 0, 0, 0, 0, 0, false, TRAIT_NONE, costs);
 	}
 
 	private static SummonProfile armorCombatProfile(final String name, final int npcId, final String kind,
 													final int maxHit, final String trait) {
-		return new SummonProfile(name, 1, 0, npcId, kind, SummonRole.COMBAT, true, NO_DURATION_LIMIT,
+		return new SummonProfile(name, 1, 0, npcId, kind, SummonRole.COMBAT, true, NO_DURATION_LIMIT, 0,
 			20, 20, 20, 20, 1, 1, 0, maxHit, 0, 0, 0, false, trait);
 	}
 
@@ -263,7 +266,7 @@ public final class Summoning {
 
 	public static void summonTestCamel(final Player owner) {
 		spawnManualSummon(owner, CAMEL_PROFILE);
-		owner.message("@gre@A summoned camel waits to carry one item to your bank.");
+		owner.message("@gre@A summoned camel waits to carry items to your bank.");
 	}
 
 	public static void summonTestUnicorn(final Player owner) {
@@ -937,8 +940,10 @@ public final class Summoning {
 		}
 		final ItemChoice choice = choices.get(option);
 		final int convertedAmount = convertInventoryItemToNotes(player, choice.catalogId);
-		awardPackRatUtilityExperience(player, convertedAmount);
-		dismissManualSummon(player);
+		if (convertedAmount > 0) {
+			awardPackRatUtilityExperience(player, convertedAmount);
+			completeUtilityService(player, rat);
+		}
 		return true;
 	}
 
@@ -962,8 +967,10 @@ public final class Summoning {
 			return true;
 		}
 		final int convertedAmount = convertInventoryItemToNotes(player, item.getCatalogId());
-		awardPackRatUtilityExperience(player, convertedAmount);
-		dismissManualSummon(player);
+		if (convertedAmount > 0) {
+			awardPackRatUtilityExperience(player, convertedAmount);
+			completeUtilityService(player, rat);
+		}
 		return true;
 	}
 
@@ -980,8 +987,8 @@ public final class Summoning {
 		}
 		if (depositInventorySlotToBank(player, item)) {
 			awardDisplayedSummoningExperience(player, DELIVERY_CAMEL_UTILITY_DISPLAYED_XP);
+			completeUtilityService(player, camel);
 		}
-		dismissManualSummon(player);
 		return true;
 	}
 
@@ -1009,6 +1016,9 @@ public final class Summoning {
 		summon.setAttribute(SUMMON_MAX_HIT_KEY, getScaledMaxHit(owner, profile));
 		summon.setAttribute(SUMMON_TRAIT_KEY, profile.trait);
 		summon.setAttribute(SUMMON_PRAYER_BONUS_KEY, profile.prayerBonus);
+		if (profile.role == SummonRole.UTILITY) {
+			summon.setAttribute(SUMMON_UTILITY_USES_REMAINING_KEY, profile.utilityUses);
+		}
 		applySummonProfile(owner, summon, profile);
 		summon.getUpdateFlags().setCombatEffect(new CombatEffect(summon, getSummonArrivalEffect(profile)));
 		owner.getWorld().registerNpc(summon);
@@ -1607,8 +1617,26 @@ public final class Summoning {
 		}
 		inventory.add(new Item(catalogId, amount, true), false);
 		ActionSender.sendInventory(player);
-		player.message("The rat turns your " + def.getName() + " into certs and disappears.");
+		player.message("The rat turns your " + def.getName() + " into certs.");
 		return amount;
+	}
+
+	private static void completeUtilityService(final Player owner, final Npc summon) {
+		if (!isOwnedUtilitySummon(owner, summon)) {
+			return;
+		}
+		final int currentUses = summon.getAttribute(SUMMON_UTILITY_USES_REMAINING_KEY, 0);
+		if (currentUses <= 0) {
+			return;
+		}
+		final int remainingUses = currentUses - 1;
+		summon.setAttribute(SUMMON_UTILITY_USES_REMAINING_KEY, remainingUses);
+		owner.message("@gre@Your " + getSummonDisplayName(summon) + " has " + remainingUses
+			+ (remainingUses == 1 ? " use" : " uses") + " remaining"
+			+ (remainingUses == 0 ? " and disappears." : "."));
+		if (remainingUses == 0) {
+			finishManualSummon(owner, summon, true);
+		}
 	}
 
 	private static void awardPackRatUtilityExperience(final Player player, final int convertedAmount) {
@@ -1655,7 +1683,7 @@ public final class Summoning {
 			return false;
 		}
 		ActionSender.sendInventory(player);
-		player.message("The camel deposits your " + def.getName() + " and disappears.");
+		player.message("The camel deposits your " + def.getName() + ".");
 		return true;
 	}
 
@@ -1820,6 +1848,7 @@ public final class Summoning {
 		private final SummonRole role;
 		private final boolean combatAssist;
 		private final int durationTicks;
+		private final int utilityUses;
 		private final int attack;
 		private final int defense;
 		private final int ranged;
@@ -1837,7 +1866,7 @@ public final class Summoning {
 
 		private SummonProfile(final String name, final int level, final int displayedExperience, final int npcId,
 							  final String kind, final SummonRole role, final boolean combatAssist,
-							  final int durationTicks, final int attack, final int defense,
+							  final int durationTicks, final int utilityUses, final int attack, final int defense,
 							  final int ranged, final int strength, final int hits,
 							  final int baseHits, final int hitsGrowthInterval, final int baseMaxHit,
 							  final int maxHitGrowthInterval, final int absorbPercent,
@@ -1850,6 +1879,7 @@ public final class Summoning {
 			this.role = role;
 			this.combatAssist = combatAssist;
 			this.durationTicks = durationTicks;
+			this.utilityUses = utilityUses;
 			this.attack = attack;
 			this.defense = defense;
 			this.ranged = ranged;
