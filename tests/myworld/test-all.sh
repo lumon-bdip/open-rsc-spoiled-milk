@@ -36,6 +36,7 @@ python3 ./tests/myworld/test-enemy-animation-migration.py
 python3 ./tests/myworld/test-equipment-proc-animation-migration.py
 python3 ./tests/myworld/test-altar-enchantment-conversion.py
 python3 ./tests/myworld/test-runecraft-data.py
+python3 ./tests/myworld/test-runecraft-xp-analysis.py
 python3 ./tests/myworld/test-altar-obelisk-symmetry.py
 python3 ./tests/myworld/test-death-altar-placement.py
 python3 ./tests/myworld/test-landscape-client-server-sync.py
@@ -171,6 +172,7 @@ python3 ./tests/myworld/test-summoning-animation-effect.py
 python3 ./tests/myworld/test-summoning-costs.py
 python3 ./tests/myworld/test-summoning-display-names.py
 python3 ./tests/myworld/test-summoning-experience.py
+python3 ./tests/myworld/test-utility-summon-charges.py
 python3 ./tests/myworld/test-summon-health-restoration.py
 python3 ./tests/myworld/test-summoning-spawn-placement.py
 python3 ./tests/myworld/test-summon-friendly-fire.py
