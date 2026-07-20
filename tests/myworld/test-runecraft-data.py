@@ -34,20 +34,20 @@ SCENERY_OTHER_LOCS_PATH = (
 )
 
 EXPECTED_ALTARS = {
-    1191: ("air", 33, 1),
-    1321: ("life", 37, 1),
-    1193: ("mind", 35, 8),
-    1195: ("water", 32, 1),
-    1197: ("earth", 34, 1),
-    1199: ("fire", 31, 1),
-    1201: ("body", 36, 15),
-    1203: ("cosmic", 46, 30),
-    1205: ("chaos", 41, 22),
-    1207: ("nature", 40, 38),
-    1209: ("law", 42, 46),
-    1211: ("death", 38, 54),
-    1296: ("soul", 825, 62),
-    1213: ("blood", 619, 70),
+    1191: ("air", 33, 1, 20),
+    1321: ("life", 37, 1, 20),
+    1193: ("mind", 35, 8, 21),
+    1195: ("water", 32, 1, 20),
+    1197: ("earth", 34, 1, 20),
+    1199: ("fire", 31, 1, 20),
+    1201: ("body", 36, 15, 27),
+    1203: ("cosmic", 46, 30, 29),
+    1205: ("chaos", 41, 22, 28),
+    1207: ("nature", 40, 38, 30),
+    1209: ("law", 42, 46, 94),
+    1211: ("death", 38, 54, 168),
+    1296: ("soul", 825, 62, 186),
+    1213: ("blood", 619, 70, 256),
 }
 
 EXPECTED_MULTIPLIER_REQUIREMENTS = {
@@ -97,19 +97,13 @@ def load_altars() -> dict[int, tuple[str, int, int, int]]:
 def ensure_expected_altars(altars: dict[int, tuple[str, int, int, int]]) -> None:
     if set(altars.keys()) != set(EXPECTED_ALTARS.keys()):
         fail(f"Unexpected altar ids: {sorted(altars.keys())}")
-    previous_xp = -1
-    for altar_id, (name, rune_id, req) in EXPECTED_ALTARS.items():
+    for altar_id, (name, rune_id, req, xp) in EXPECTED_ALTARS.items():
         actual_name, actual_rune_id, actual_req, actual_xp = altars[altar_id]
-        if (actual_name, actual_rune_id, actual_req) != (name, rune_id, req):
+        if (actual_name, actual_rune_id, actual_req, actual_xp) != (name, rune_id, req, xp):
             fail(
-                f"Altar {altar_id} expected {(name, rune_id, req)} "
-                f"but found {(actual_name, actual_rune_id, actual_req)}"
+                f"Altar {altar_id} expected {(name, rune_id, req, xp)} "
+                f"but found {(actual_name, actual_rune_id, actual_req, actual_xp)}"
             )
-        if actual_xp < previous_xp:
-            fail(
-                f"Altar XP must be non-decreasing by progression order, found {actual_xp} after {previous_xp}"
-            )
-        previous_xp = actual_xp
 
 
 def ensure_runecraft_supports_all_runes() -> None:
@@ -148,7 +142,7 @@ def ensure_law_robe_bonus_uses_fractional_carryover() -> None:
     for snippet in (
         "LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE = 10000",
         'LAW_ROBE_RUNEPRODUCTION_CACHE_PREFIX = "law_robe_runecraft_bonus_"',
-        "final int earnedPoints = runeCount * bonusPercent * LAW_ROBE_RUNEPRODUCTION_POINTS_PER_PERCENT;",
+        "final int earnedPoints = baseRuneCount * bonusPercent * LAW_ROBE_RUNEPRODUCTION_POINTS_PER_PERCENT;",
         "final int bonusRunes = totalPoints / LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE;",
         "final int remainingPoints = totalPoints % LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE;",
         "player.getCache().set(cacheKey, remainingPoints);",
@@ -166,11 +160,11 @@ def ensure_chaos_amulet_bonus_uses_fractional_carryover() -> None:
         "CHAOS_AMULET_YIELD_POINTS_PER_RUNE = 10000",
         "CHAOS_AMULET_YIELD_POINTS_PER_PERCENT = 100",
         'CHAOS_AMULET_YIELD_CACHE_KEY = "chaos_amulet_weighted_rune_bonus"',
-        "addChaosAmuletBonusRunes(player, def.getRuneId(), runeCount);",
+        "addChaosAmuletBonusRunes(player, def.getRuneId(), baseRuneCount);",
         "runeId != ItemId.CHAOS_RUNE.id()",
         "getChaosAmuletYieldBonusPercent()",
         "getChaosAmuletBonusRuneWeights()",
-        "final int earnedPoints = runeCount * bonusPercent * CHAOS_AMULET_YIELD_POINTS_PER_PERCENT;",
+        "final int earnedPoints = baseRuneCount * bonusPercent * CHAOS_AMULET_YIELD_POINTS_PER_PERCENT;",
         "final int bonusRunes = totalPoints / CHAOS_AMULET_YIELD_POINTS_PER_RUNE;",
         "final int remainingPoints = totalPoints % CHAOS_AMULET_YIELD_POINTS_PER_RUNE;",
         "ItemId.MIND_RUNE.id()",

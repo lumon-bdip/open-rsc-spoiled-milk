@@ -86,8 +86,8 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 		}
 
 		player.message("You channel the altar's power through the stone.");
-		int successCount = 0;
-		int runeCount = 0;
+		int processedStoneCount = 0;
+		int baseRuneCount = 0;
 		for (int loop = 0; loop < repeatTimes; ++loop) {
 			Item stone = player.getCarriedItems().getInventory().get(
 				player.getCarriedItems().getInventory().getLastIndexById(ItemId.RUNE_STONE.id(), Optional.of(false)));
@@ -95,29 +95,31 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 				break;
 			}
 
-			player.getCarriedItems().remove(stone);
+			if (player.getCarriedItems().remove(stone) == -1) {
+				break;
+			}
 			final int craftedRunes = getRuneMultiplier(player, def.getRuneId());
 			player.getCarriedItems().getInventory().add(new Item(def.getRuneId(), craftedRunes));
-			runeCount += craftedRunes;
-			++successCount;
+			baseRuneCount += craftedRunes;
+			++processedStoneCount;
 		}
 
-		if (successCount > 0) {
-			addLawRobeBonusRunes(player, def.getRuneId(), runeCount);
-			addChaosAmuletBonusRunes(player, def.getRuneId(), runeCount);
-			player.incExp(Skill.RUNECRAFT.id(), def.getExp() * successCount, true);
+		if (processedStoneCount > 0) {
+			player.incExp(Skill.RUNECRAFT.id(), def.getExp() * baseRuneCount, true);
+			addLawRobeBonusRunes(player, def.getRuneId(), baseRuneCount);
+			addChaosAmuletBonusRunes(player, def.getRuneId(), baseRuneCount);
 		}
 	}
 
-	private void addLawRobeBonusRunes(final Player player, final int runeId, final int runeCount) {
+	private void addLawRobeBonusRunes(final Player player, final int runeId, final int baseRuneCount) {
 		final int bonusPercent = getLawRobeRunecraftBonusPercent(player);
-		if (bonusPercent <= 0 || runeCount <= 0) {
+		if (bonusPercent <= 0 || baseRuneCount <= 0) {
 			return;
 		}
 
 		final String cacheKey = LAW_ROBE_RUNEPRODUCTION_CACHE_PREFIX + runeId;
 		final int storedPoints = player.getCache().hasKey(cacheKey) ? Math.max(0, player.getCache().getInt(cacheKey)) : 0;
-		final int earnedPoints = runeCount * bonusPercent * LAW_ROBE_RUNEPRODUCTION_POINTS_PER_PERCENT;
+		final int earnedPoints = baseRuneCount * bonusPercent * LAW_ROBE_RUNEPRODUCTION_POINTS_PER_PERCENT;
 		final int totalPoints = storedPoints + earnedPoints;
 		final int bonusRunes = totalPoints / LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE;
 		final int remainingPoints = totalPoints % LAW_ROBE_RUNEPRODUCTION_POINTS_PER_RUNE;
@@ -138,8 +140,8 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 		return Math.max(0, player.getCarriedItems().getEquipment().getLawRobeTierTotal() * 2);
 	}
 
-	private void addChaosAmuletBonusRunes(final Player player, final int runeId, final int runeCount) {
-		if (runeId != ItemId.CHAOS_RUNE.id() || runeCount <= 0) {
+	private void addChaosAmuletBonusRunes(final Player player, final int runeId, final int baseRuneCount) {
+		if (runeId != ItemId.CHAOS_RUNE.id() || baseRuneCount <= 0) {
 			return;
 		}
 		final int bonusPercent = player.getCarriedItems().getEquipment().getChaosAmuletYieldBonusPercent();
@@ -151,7 +153,7 @@ public class Runecraft implements OpLocTrigger, UseLocTrigger {
 		final int storedPoints = player.getCache().hasKey(CHAOS_AMULET_YIELD_CACHE_KEY)
 			? Math.max(0, player.getCache().getInt(CHAOS_AMULET_YIELD_CACHE_KEY))
 			: 0;
-		final int earnedPoints = runeCount * bonusPercent * CHAOS_AMULET_YIELD_POINTS_PER_PERCENT;
+		final int earnedPoints = baseRuneCount * bonusPercent * CHAOS_AMULET_YIELD_POINTS_PER_PERCENT;
 		final int totalPoints = storedPoints + earnedPoints;
 		final int bonusRunes = totalPoints / CHAOS_AMULET_YIELD_POINTS_PER_RUNE;
 		final int remainingPoints = totalPoints % CHAOS_AMULET_YIELD_POINTS_PER_RUNE;

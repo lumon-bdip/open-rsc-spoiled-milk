@@ -71,8 +71,8 @@ def main() -> None:
     )
     require(
         runecraft_text,
-        "player.incExp(Skill.RUNECRAFT.id(), def.getExp() * successCount, true);",
-        "Runecrafting altar XP should still be granted for the full processed stack",
+        "player.incExp(Skill.RUNECRAFT.id(), def.getExp() * baseRuneCount, true);",
+        "Runecrafting altar XP should cover all base runes from the full processed inventory",
     )
     require(
         runecraft_text,
