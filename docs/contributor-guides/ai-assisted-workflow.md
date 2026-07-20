@@ -18,8 +18,11 @@ For code changes, also ask the AI to inspect existing patterns before editing.
 
 ## Rules For AI-Assisted Work
 
-- Use a neutral AI slot with a focused topic branch. Do not let a worker AI
-  work directly on `main`.
+- External contributors use their own username-namespaced topic branch and the
+  portable workflow in
+  [`../workspaces/external-contributor.md`](../workspaces/external-contributor.md).
+  Maintainer-owned AI sessions use neutral `ai-N` slots. Neither works directly
+  on `main`.
 - Checkpoint and push work before ending or abandoning a session; do not use a
   stash as the handoff mechanism.
 - Keep the task focused.
@@ -31,6 +34,8 @@ For code changes, also ask the AI to inspect existing patterns before editing.
 
 For owner-directed concurrent sessions, use the checkpoint, handoff, rescue,
 and merge workflow in [`../workspaces/README.md`](../workspaces/README.md).
+External contributors must not run those maintainer commands or receive
+release/live-server responsibilities.
 
 ## Good AI Prompt Shape
 

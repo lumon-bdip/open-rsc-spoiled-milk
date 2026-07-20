@@ -93,3 +93,7 @@ normal reviewable branch instead of hidden local state.
 
 See [ai-slot.md](ai-slot.md), [manager.md](manager.md), and
 [live-deployment.md](live-deployment.md) for role-specific instructions.
+
+External contributors do not use these maintainer slots or commands. Their
+portable topic-branch, checkpoint, pull-request, and exact-commit handoff flow
+is documented in [external-contributor.md](external-contributor.md).

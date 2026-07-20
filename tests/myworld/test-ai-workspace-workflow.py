@@ -355,6 +355,44 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
         self.assertIn("cannot use --skip-build", blocked.stderr)
         self.assertFalse(capture.exists())
 
+    def test_manager_collects_exact_external_handoff_without_merging(self) -> None:
+        f = self.fixture
+        f.run("ai-workspace.sh", "create", "ai-1")
+        contributor = f.base / "external-contributor"
+        subprocess.run(
+            ["git", "clone", "--branch", "main", str(f.remote), str(contributor)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        f.git("config", "user.name", "Goutan", cwd=contributor)
+        f.git("config", "user.email", "goutan@example.test", cwd=contributor)
+        branch = "goutan/fix/external-fixture"
+        f.git("switch", "-c", branch, cwd=contributor)
+        (contributor / "external.txt").write_text("review me\n", encoding="utf-8")
+        f.git("add", "external.txt", cwd=contributor)
+        f.git("commit", "-m", "External fixture", cwd=contributor)
+        expected_head = f.git("rev-parse", "HEAD", cwd=contributor).stdout.strip()
+        f.git("push", "origin", branch, cwd=contributor)
+
+        f.run("ai-manager.sh", "collect-contributor", "ai-1", branch, expected_head)
+        self.assertEqual(f.state(1)["phase"], "READY")
+        self.assertEqual(f.state(1)["head"], expected_head)
+        self.assertEqual(f.git("branch", "--show-current", cwd=f.slot(1)).stdout.strip(), branch)
+        self.assertEqual(f.git("rev-parse", "main").stdout.strip(), f.git("rev-parse", "spoiled-milk/main").stdout.strip())
+
+        moved = expected_head[:-1] + ("0" if expected_head[-1] != "0" else "1")
+        refused = f.run(
+            "ai-manager.sh",
+            "collect-contributor",
+            "ai-2",
+            branch,
+            moved,
+            check=False,
+        )
+        self.assertNotEqual(refused.returncode, 0)
+        self.assertIn("moved", refused.stderr)
+
     def test_start_rejects_non_idle_state_and_status_survives_missing_slot(self) -> None:
         f = self.fixture
         f.run("ai-workspace.sh", "create", "ai-1")

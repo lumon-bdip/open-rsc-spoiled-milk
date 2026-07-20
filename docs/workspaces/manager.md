@@ -31,6 +31,26 @@ git push spoiled-milk main
 ./scripts/ai-workspace.sh recycle ai-1
 ```
 
+## External Contributor Collection
+
+An external contributor hands off a remote topic branch and exact full commit
+through a pull request. Verify those values, then import—not merge—the commit
+into an idle neutral slot:
+
+```bash
+./scripts/ai-manager.sh collect-contributor ai-1 goutan/fix/example EXACT_COMMIT
+```
+
+The command fetches the maintainer remote, refuses `main`, verifies that the
+remote branch still equals the supplied 40-character commit, and marks that
+exact checkout READY in the selected slot. Review the pull request and diff and
+run relevant tests in the slot. If it passes, use the ordinary manager merge,
+final-test, publish, and recycle sequence above. If it fails, leave the remote
+branch unchanged and ask the contributor for a new handoff.
+
+See [external-contributor.md](external-contributor.md) for the contributor and
+maintainer checklists. Collection never grants release or live-server access.
+
 ## Rescue Loop
 
 If a worker is dirty, detached with files, or abandoned mid-task, preserve it
