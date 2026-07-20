@@ -1065,11 +1065,11 @@ public final class SkillGuideInterface {
 			addSummonGuide(8, "14", "Tank - absorbs 60% of incoming damage");
 			addSummonGuide(0, "20", "Divine - grants +10 prayer points");
 			addSummonGuide(43, "26", "Vampirism - heals owner for damage dealt");
-			addSummonGuide(241, "33", "Hoarder - certs all matching selected items");
+			addSummonGuide(241, "33", "Hoarder - 4 uses; certs matching selected items");
 			addSummonGuide(295, "39", "Relentless - 15% chance for bonus damage");
 			addSummonGuide(296, "45", "Reverent - auto-buries bones for double XP");
 			addSummonGuide(53, "51", "Fear - 20% chance to stop enemy attacks");
-			addSummonGuide(13, "58", "Beast of Burden - banks one item or stack");
+			addSummonGuide(13, "58", "Beast of Burden - 2 uses; banks one stack");
 			addSummonGuide(298, "64", "Spell Echo - 15% chance for magic bonus damage");
 			addSummonGuide(184, "70", "Hellfire - 10% chance for Hell's Fire damage");
 		} else if (curTab == 3) {
@@ -1078,8 +1078,8 @@ public final class SkillGuideInterface {
 			addSummonGuide(0, "", "Support summons last 1 minute by default");
 			addSummonGuide(0, "", "Support upkeep rises every 3 minutes active");
 			addSummonGuide(0, "", "Upkeep recovers 1 step per minute inactive");
-			addSummonGuide(241, "", "Utility summons complete one task, then leave");
-			addSummonGuide(13, "", "Utility summons time out after 1 minute");
+			addSummonGuide(241, "", "Utility uses are spent only on successful tasks");
+			addSummonGuide(13, "", "Pack Rat has 4 uses; Delivery Camel has 2");
 			addSummonGuide(114, "", "Only one manual summon can be active");
 			addSummonGuide(53, "", "Summoning has a 5 second interruptible charge");
 		}

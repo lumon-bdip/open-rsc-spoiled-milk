@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 PLAN = ROOT / "docs/myworld/in-progress-work-plans/summoning-plan.md"
+GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 
 
 def fail(message: str) -> None:
@@ -29,6 +30,7 @@ def between(text: str, start: str, end: str) -> str:
 def main() -> None:
     summoning = SUMMONING.read_text(encoding="utf-8")
     plan = PLAN.read_text(encoding="utf-8")
+    guide = GUIDE.read_text(encoding="utf-8")
 
     require(summoning, "PACK_RAT_UTILITY_USES = 4", "Pack Rat service count")
     require(summoning, "DELIVERY_CAMEL_UTILITY_USES = 2", "Delivery Camel service count")
@@ -96,6 +98,12 @@ def main() -> None:
     require(plan, "maximum: `450` displayed service XP", "Delivery Camel maximum service XP")
     require(plan, "or `785` including the `335` cast XP", "Delivery Camel total summon XP")
     require(plan, "balance concern to field-test", "utility XP balance warning")
+    require(guide, "Hoarder - 4 uses; certs matching selected items", "Pack Rat guide service count")
+    require(guide, "Beast of Burden - 2 uses; banks one stack", "Delivery Camel guide service count")
+    require(guide, "Utility uses are spent only on successful tasks", "utility success-only guide rule")
+    require(guide, "Pack Rat has 4 uses; Delivery Camel has 2", "utility guide service totals")
+    if "Utility summons time out after 1 minute" in guide:
+        fail("Utility guide must not advertise the retired timeout")
 
     print("PASS: utility summon charges consume only successful services and dismiss on the final use")
 
