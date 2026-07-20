@@ -24,15 +24,15 @@ EXPECTED: dict[str, tuple[int, str]] = {
     "guiParts": (54, "8f5529457a095c16de11c5097e8038fedce3b93dac5f853fd55796c21f960de0"),
     "crowns": (5, "cdfe0e9ccf0037bfbb4183f36795e2a2ca2603e8eeee2bcedcb97f8b8d11e774"),
     "spells": (46, "89b6173c83cced0c332c75566ea24e09adfe9ccef3f1ebcb3416d17cdc418fcb"),
-    "prayers-saradomin": (16, "7c107ad9630c448342416e73e4c9c0b3a0aa140bb080c11abdf38f546d9a4fa6"),
+    "prayers-saradomin": (16, "4c360a83e3f8e19ed83516852c7127c98d3dfd28f774f67ef90b701946491520"),
     "tiles": (26, "a8b4c871d4dee459ac027405533983ef4baa25d8cbc6744aeaed4a046d312204"),
     "doors": (214, "399ac9b9dbd5f68f89deca97b3e75c1b3c60ffbd6a6107dadf5397f5d3c2886a"),
     "elevations": (6, "bb07d92231318705f2b9b9838b676b2cb78fe11ad01d40dd678f644b459bb265"),
-    "objects": (1329, "a5baa61bc32187ef1c6910fdb1e83e1140bce943342ccfb2fdb7b97c5f5c60b4"),
+    "objects": (1329, "47ffbd48e4c29f4fede777f9132a53c5407e74e74d59ae023a4e7717f1640ffb"),
     "models": (459, "727dba404ab78527b20c62c4bd058610b087346166566acb24db0430011a52b0"),
     "bankTemplates": (2, "3bca944c9b7466fb6cba8a6542a214a4d7cd69af59a1c4296c58ddaa4304b1fc"),
-    "prayers-zamorak": (16, "f2032afc446c21b1dceb38b766604201f5f3558d5938269eb3945deed95c15d7"),
-    "prayers-guthix": (16, "d9a8c965d4cf45c7ac5a950a014eabdc1608ea41125fb194699630e3d73329e6"),
+    "prayers-zamorak": (16, "948045525d172f41e7b6464f3cb7a072dd96b829c63a015facd277aeb9d3210e"),
+    "prayers-guthix": (16, "4477899b4368612f6068a0d9a0eeabdbafd78a638a240b2ca2e0f8456bfbcd75"),
 }
 
 FIXTURE = r"""
@@ -326,8 +326,12 @@ def require_source_boundaries() -> None:
             raise AssertionError(f"ClientDefinitionRegistry missing {catalog} catalog")
     if "ClientDefinitionFallbackDiagnostics" not in registry:
         raise AssertionError("Registry does not delegate fallback diagnostics")
-    if prayer_books.count("\t\taddPrayerDefinition(") != 48:
-        raise AssertionError("Prayer book owner must retain all 48 definitions")
+    ordinary_prayers = prayer_books.count("\t\taddPrayerDefinition(")
+    special_prayers = prayer_books.count("\t\taddSpecialPrayerDefinition(")
+    if (ordinary_prayers, special_prayers) != (45, 3):
+        raise AssertionError(
+            "Prayer book owner must retain 45 ordinary and 3 specialty definitions"
+        )
     if "CLIENT_ITEM_DEF_FALLBACK" not in fallbacks or "loggedItemFallbacks" not in fallbacks:
         raise AssertionError("Fallback diagnostics do not own bounded item logging")
 
@@ -376,8 +380,10 @@ def main() -> None:
         missing = sorted(set(EXPECTED) - set(observed))
         extra = sorted(set(observed) - set(EXPECTED))
         changed = sorted(name for name in set(observed) & set(EXPECTED) if observed[name] != EXPECTED[name])
+        changed_values = {name: observed[name] for name in changed}
         raise AssertionError(
-            f"Client definition fingerprint drift: missing={missing} extra={extra} changed={changed}"
+            "Client definition fingerprint drift: "
+            f"missing={missing} extra={extra} changed={changed} observed={changed_values}"
         )
     print("PASS: client registry extraction preserves all definition indexes and fingerprints")
 
