@@ -8227,7 +8227,7 @@ public class EntityHandler {
 		int i = 0;
 		objects.add(new GameObjectDef("Pine Tree", "A tall pine tree", "Chop", "Examine", 1, 1, 1, 0, "tree2", i++));
 		objects.add(new GameObjectDef("Tree", "A leafy tree", "Chop", "Examine", 1, 1, 1, 0, "tree", i++));
-		objects.add(new GameObjectDef("Well", "The bucket is missing", "WalkTo", "Examine", 1, 2, 2, 0, "well", i++));
+		objects.add(new GameObjectDef("Well", "The bucket is missing", "WalkTo", "Examine", 1, 1, 1, 0, "well", i++));
 		objects.add(new GameObjectDef("Table", "A mighty fine table", "WalkTo", "Examine", 1, 1, 1, 96, "table", i++));
 		objects.add(new GameObjectDef("Treestump", "Someone has chopped this tree down!", "WalkTo", "Examine", 1, 1, 1, 0, "treestump", i++));
 		objects.add(new GameObjectDef("Ladder", "it's a ladder leading upwards", "Climb-Up", "Examine", 1, 1, 1, 0, "ladder", i++));
@@ -8246,7 +8246,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Chest", "I wonder what is inside...", "Open", "Examine", 1, 1, 1, 0, "ChestClosed", i++));
 		objects.add(new GameObjectDef("Altar of Saradomin", "An altar dedicated to Saradomin", "Worship", "Examine", 1, 2, 1, 0, "altar", i++));
 		objects.add(new GameObjectDef("Post", "What am I examining posts for", "WalkTo", "Examine", 1, 1, 1, 0, "wallpost", i++));//20
-		objects.add(new GameObjectDef("Support", "A wooden pole", "WalkTo", "Examine", 0, 1, 1, 0, "supportnw", i++));
+		objects.add(new GameObjectDef("Support", "A wooden pole", "WalkTo", "Examine", 1, 1, 1, 0, "supportnw", i++));
 		objects.add(new GameObjectDef("barrel", "Its empty", "WalkTo", "Examine", 1, 1, 1, 0, "barrel", i++));
 		objects.add(new GameObjectDef("Bench", "It doesn't look very comfy", "WalkTo", "Examine", 1, 2, 1, 0, "bench", i++));
 		objects.add(new GameObjectDef("Portrait", "A painting of our beloved king", "WalkTo", "Examine", 0, 1, 1, 0, "portrait", i++));
