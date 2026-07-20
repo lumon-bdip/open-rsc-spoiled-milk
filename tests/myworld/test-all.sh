@@ -36,6 +36,7 @@ python3 ./tests/myworld/test-enemy-animation-migration.py
 python3 ./tests/myworld/test-equipment-proc-animation-migration.py
 python3 ./tests/myworld/test-altar-enchantment-conversion.py
 python3 ./tests/myworld/test-runecraft-data.py
+python3 ./tests/myworld/test-runecraft-xp-analysis.py
 python3 ./tests/myworld/test-altar-obelisk-symmetry.py
 python3 ./tests/myworld/test-death-altar-placement.py
 python3 ./tests/myworld/test-landscape-client-server-sync.py
