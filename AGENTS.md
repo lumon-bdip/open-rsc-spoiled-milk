@@ -3,12 +3,23 @@
 This repository is designed for one manager AI and up to three worker AI
 sessions. The directory identifies the role; the branch identifies the task.
 
-Before changing anything, run:
+Before changing anything, identify the session role and run its matching
+preflight. The manager and maintainer-owned workers run:
 
 ```bash
 git status --short --branch
 ./scripts/ai-workspace.sh status
 ```
+
+External AI contributors must not run the maintainer workspace script. From
+their own clone on Windows they run:
+
+```powershell
+git status --short --branch
+py -3 scripts/contributor-workspace.py status
+```
+
+On other systems, use `python3` instead of `py -3`.
 
 ## Roles
 

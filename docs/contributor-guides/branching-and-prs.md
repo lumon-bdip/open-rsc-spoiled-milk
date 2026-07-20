@@ -73,10 +73,11 @@ Use the pull request template and include:
 A merged pull request means the owner accepted the work into the official
 project state.
 
-Use squash merge for most work. It keeps the project history readable while
-still preserving the pull request discussion.
+Use squash merge for ordinary manual pull requests that are reviewed directly
+on GitHub. It keeps the project history readable while preserving the pull
+request discussion.
 
-Manager-collected AI handoffs are the local exception: `ai-manager.sh merge`
-creates an explicit no-fast-forward merge after verifying the exact READY
-commit and its remote backup. This preserves which parallel session supplied
-the handoff. External pull requests still use squash merge by default.
+Exact AI handoffs are the exception, whether they came from a maintainer worker
+or were collected from an external contributor. After the manager verifies the
+READY commit and its remote backup, `ai-manager.sh merge` creates an explicit
+no-fast-forward merge. Do not also squash-merge the same pull request.

@@ -202,6 +202,9 @@ class ContributorWorkflowTest(unittest.TestCase):
         ):
             self.assertIn(snippet, guide)
         self.assertIn("docs/workspaces/external-contributor.md", agents)
+        self.assertIn("identify the session role and run its matching", agents)
+        self.assertIn("py -3 scripts/contributor-workspace.py status", agents)
+        self.assertIn("External AI contributors must not run", agents)
         self.assertIn("Exact 40-character commit", pull_request)
         self.assertNotIn("/home/justin", script)
         self.assertNotIn("/tmp/spoiled-milk-live-main", script)
