@@ -222,6 +222,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "renderer-v2-plan.md",
             "resource-seed-plan.md",
             "roadmap.md",
+            "rune-crafting-xp-redesign-analysis.md",
             "skybox-depth-and-horizon-rnd.md",
             "standalone-world-builder-plan.md",
             "summoning-plan.md",
@@ -242,6 +243,7 @@ def test_myworld_docs_are_consolidated() -> None:
         ],
         "rough-drafts": [
             "bank-tag-filter-plan.md",
+            "carapace-expansion-notes.md",
             "enchanted-robe-effects-plan.md",
             "herblaw-potion-rework-plan.md",
             "slayer-guild-rough-draft-plan.md",
