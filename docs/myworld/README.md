@@ -154,6 +154,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 - [bank-tag-filter-plan.md](rough-drafts/bank-tag-filter-plan.md):
   deferred bank tag/filter quality-of-life idea.
+- [carapace-expansion-notes.md](rough-drafts/carapace-expansion-notes.md):
+  early poison offense, poison mitigation, and bug-enemy expansion direction
+  for the carapace armor family.
 - [enchanted-robe-effects-plan.md](rough-drafts/enchanted-robe-effects-plan.md):
   exploratory altar-bound robe effect notes and tier scaling ideas.
 - [herblaw-potion-rework-plan.md](rough-drafts/herblaw-potion-rework-plan.md):
