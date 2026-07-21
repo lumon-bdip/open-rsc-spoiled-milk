@@ -29,13 +29,17 @@ Combat Odyssey supplies inspiration, legacy flavor, and migration evidence;
 its tiers, task order, rewards, and progression are not a Monster Slayer
 blueprint and must not be translated one-to-one. Monster Slayer is not a
 visible skill and does not award Slayer XP. Players advance through seven named
-ranks, complete deterministic kill-only task chains at six contacts, and then
-use those contacts for repeatable tasks and rank-gated challenge shops.
+ranks through one continuous mandatory guild quest, complete deterministic
+assignment chains at six contacts, and then use those contacts for repeatable
+tasks and rank-gated challenge shops. The opening assignment is deliberately
+not a monster kill: it is the joke beer errand that starts the quest and awards
+the first rank.
 
 The intended tone and progression remain:
 
-- An unstamped player brings a beer to the Falador pub contact and receives a
-  deliberately silly `Fledgling` hand stamp.
+- An unstamped player brings a beer from the Rising Sun Barmaid to a dedicated
+  Monster Slayer contact in the pub and receives a deliberately silly
+  `Fledgling` hand stamp.
 - Six fixed task chains advance the player through `Initiate`, `Veteran`,
   `Elite`, `Champion`, `Hero`, and `Legend`.
 - Completed contacts offer repeatable random kill tasks for that contact's
@@ -76,6 +80,221 @@ Non-goals:
 - No automatic conversion of the old JSON's item rewards into shop stock.
 - No one-to-one mapping from Odyssey tiers/tasks/rewards to Monster Slayer
   ranks, chains, balances, categories, or stock.
+
+## Design Decision Ledger
+
+This ledger distinguishes settled refinements from questions that remain open.
+The implemented foundation data remains an informed starting point wherever a
+later decision has not replaced it.
+
+### Confirmed: One Continuous Mandatory Quest And Beer Opening
+
+- The entire mandatory path from recruitment through the top `Legend` rank is
+  one long Monster Slayer Guild quest, not six unrelated miniquests. Contact
+  changes and rank awards are stages within that quest. Repeatable assignments
+  and challenge-shop purchases are not additional mandatory quest stages.
+- The initial contact opens with: `Are you my new recruit?`
+- The player responses are:
+  - `Yes, of course I am!`
+  - `New recruit? No idea what you're talking about`
+- Choosing the second response ends the dialogue without starting the quest or
+  changing Monster Slayer state.
+- Choosing the first response begins the quest and leads into the opening joke
+  assignment:
+
+  `Your first task is one of the most difficult monsters of all. You must slay
+  my thirst. Quickly, to the barmaid and fetch me a beer!`
+
+- The speaker is a new dedicated male Monster Slayer NPC placed in the Rising
+  Sun, not Barmaid `142`. The existing Barmaid remains the person from whom the
+  player obtains the beer.
+- On return, the player may either offer the beer or say they do not have it
+  yet. Saying they do not have it ends the exchange without changing state. If
+  they choose to offer it without actually carrying a beer, the contact tells
+  them they have not got the beer yet and does not advance the quest.
+- Offering a carried beer consumes one beer and completes the introduction with
+  this exchange:
+
+  - Contact: `Excellent, I dub thee an official fledgling Monster Slayer. Hold
+    out your hand for your official stamp`
+  - Player: `Do I get an official badge as well or something?`
+  - Contact: `Nope, just the stamp`
+  - Player: `This feels cheap`
+  - Contact: `It's an honor. Return to me any time you wish to continue hunting
+    monsters!`
+
+- Completing the beer assignment awards `Fledgling`, after which talking to
+  this same contact offers the first actual mandatory monster assignment.
+- During the entire first Fledgling mandatory batch, dialogue presents only
+  the current assignment and the promise that persistent work earns the next
+  rank. It does not yet introduce challenge points, repeatable random
+  assignments, or the challenge shop.
+- Completing that first batch is the teaching/unlock moment for the distinction
+  between fixed mandatory rank assignments and optional randomized point
+  assignments, and for the Fledgling challenge shop.
+- This decision does not yet replace a `MonsterSlayer.json` monster entry: the
+  beer introduction is represented by the separate intro state. The later
+  player-visible implementation must synchronize the confirmed dialogue and
+  single-quest lifecycle; the current foundation intentionally has no dialogue
+  or quest registration. It must also add the dedicated NPC definition and
+  spawn and replace the foundation JSON's current Falador contact ID `142` with
+  that NPC's stable ID.
+
+### Confirmed: Fledgling Assignments And Initiate Reveal
+
+The first monster batch deliberately stays with creatures rather than people.
+Goblins are the opening exception to the non-humanoid preference. Exact NPC IDs
+keep the early and late versions of otherwise identically named creatures from
+collapsing into one task.
+
+| Order | Assignment wording | Counted NPC IDs and repository combat levels | Kills |
+| ---: | --- | --- | ---: |
+| 1 | Goblins | Goblin `62` (level 7) | 40 |
+| 2 | Young giant spiders | Giant Spider `23` (level 8) | 40 |
+| 3 | Tougher goblins | Goblins `4,153,154` (level 13) | 50 |
+| 4 | Large rats | Rats `47,177` (level 13) | 50 |
+| 5 | Scorpions | Scorpion `70` (level 21) | 45 |
+| 6 | Bears | Bears `8,188` (levels 24 and 26) | 45 |
+| 7 | Desert wolves | Desert Wolf `721` (level 31) | 15 |
+| 8 | Black unicorns | Black Unicorn `296` (level 31) | 12 |
+| 9 | Giant spiders (level 31) | Giant Spider `74` (level 31) | 10 |
+
+The batch is nine assignments and 307 kills. The level-13-to-21 gap is
+intentional: repository inventory found no broadly accessible, non-humanoid
+middle target. Dungeon Rats `367` are concentrated in Clock Tower and
+Underground Pass spaces and must not become an implicit quest gate. Cows are
+livestock; dwarves and dark wizards conflict with the creature-focused tone;
+Poison Scorpions introduce an inappropriate cure requirement at this rank.
+
+The three final assignments are short environmental trials rather than grind
+counts. Desert Wolves require Shantay Pass and desert-heat preparation. All ten
+active Black Unicorn spawns are in the Wilderness. Five of seven level-31 Giant
+Spider spawns are in the Wilderness and the other two are isolated underground.
+The task giver must warn the player clearly about desert preparation and
+Wilderness exposure before assigning those stages; the danger is intentional,
+not hidden accessibility debt.
+
+After the ninth kill task, the contact:
+
+- congratulates the player for doing a fine job culling the monsters, despite
+  there appearing to be just as many monsters as before;
+- advances the player from `Fledgling` to `Initiate` and presents proof of the
+  new rank as a sticker that can supposedly be displayed wherever the player
+  chooses;
+- explains through comedic banter that hand stamps have been retired because
+  they are far too impermanent, while stickers are obviously much better;
+- reveals that the completed mandatory assignments have already been accruing
+  Fledgling Slayer Points even though the system was not explained yet;
+- opens the first challenge shop and explains that randomized assignments will
+  always be available from this contact for earning more Fledgling Slayer
+  Points; and
+- introduces the first shop as a source of low-level food and potions. Exact
+  stock, quantities, and prices remain a separate economy decision.
+
+The Initiate promotion and sticker exchange is locked as:
+
+- Contact: `Excellent work! You've done a fine job culling those monsters.`
+- Player: `There seem to be just as many as before.`
+- Contact: `Imagine how many there would be if you hadn't helped.`
+- Contact: `For your efforts, I promote you to Initiate. Hold still while I
+  apply your official rank sticker.`
+- Player: `A sticker? What happened to the stamp?`
+- Contact: `Stamps have been retired. Far too impermanent.`
+- Player: `And stickers are better?`
+- Contact: `Infinitely. You may proudly display it wherever you choose.`
+
+This confirms invisible accrual during the first batch: completion dialogue
+must reveal the actual balance, not award a second retroactive grant. The
+currency's player-facing name is `Fledgling Slayer Points`; internally it
+remains the typed `FLEDGLING` challenge balance. The subsequent point-balance,
+random-assignment, and shop explanation should remain light and comedic, but
+its exact wording depends on the still-unsettled balance and stock.
+
+The merged foundation does not match this decision. A later implementation
+sync must replace its five Falador tasks/500 kills and humanoid/livestock
+families with the nine tasks/307 kills above, define the newly required
+families without overlapping NPC IDs, and update the affected totals and
+fixtures. No player-visible Monster Slayer state currently makes those
+foundation task keys a live compatibility contract.
+
+### Confirmed: Remaining Mandatory Monster Ladder
+
+The remaining five challenge bands continue the combat curve without moving
+backward. Later chains contain fewer families because individual kills become
+slower, more dangerous, and more preparation-intensive.
+
+| Challenge rank and promotion | Ordered mandatory monster sequence |
+| --- | --- |
+| `Initiate -> Veteran` | Giant Bat `43` (level 32) -> Deadly Red Spider `99` (36) -> King Scorpion `136` (36) -> White Wolf `248` (41) -> Ugthanki `653` (45) -> Animated Axe `295` (46) -> Jungle Spider `521` (47) -> Baby Blue Dragon `203` (50) -> Shadow Spider `343` (53) |
+| `Veteran -> Elite` | Jogre `523` (58) -> Karamja Wolf `775` (61) -> Moss Giants `104,594` (62) -> Poison Spider `292` (63) -> Grey Wolf `243` (64) -> Ice Spider `263` (64) |
+| `Elite -> Champion` | Ice Giant `135` (68) -> Lesser Demons `22,181` (79) -> Greater Demon `184` (87) |
+| `Champion -> Hero` | Blue Dragon `202` (105) -> Fire Giant `344` (109) -> Green Dragon `196` (110) -> Hellhound `294` (114) -> Red Dragon `201` (140) |
+| `Hero -> Legend` | Black Demon `290` (156) -> Black Dragon `291` (200) -> King Black Dragon `477` (245) |
+
+Together with the confirmed nine-task Fledgling chain, this establishes 35
+ordered mandatory kill assignments from level 7 through level 245. Kill counts
+and point awards for the five newly confirmed bands remain to be tuned; roster
+approval does not silently approve the foundation counts or point vector.
+
+`Monster` means a fantasy creature rather than a normal person or civilized
+social NPC. The mandatory ladder excludes pirates, muggers, dwarves, wizards,
+knights, paladins, warriors, and similar people. It may include unmistakable
+fantasy-monster species such as goblins, Jogres, giants, and demons even when
+their sprite is bipedal. The same boundary applies when the randomized family
+pools are redesigned.
+
+Repository density and behavior impose these tuning constraints:
+
+- White Wolves have six active spawns; Animated Axes nine, mostly in the
+  Wilderness; Baby Blue Dragons eleven; Blue Dragons six; Green Dragons five;
+  Red Dragons seven, all in the Wilderness; Black Dragons four; and the King
+  Black Dragon one. Their counts must remain substantially below dense-family
+  counts.
+- Baby Blue Dragons provide the first bounded dragon-fire lesson. Full dragons
+  begin only at `Champion`, where dialogue must explicitly warn about dragon
+  fire and preparation rather than assuming the player knows the mechanic.
+- Shadow Spiders drain Prayer and Poison Spiders introduce poison. These are
+  intentional mechanic steps at Initiate and Veteran, respectively, and their
+  assignment dialogue must warn the player.
+- Wilderness travel is an accepted part of this quest, but every mandatory
+  Wilderness-heavy task requires an explicit risk warning before assignment.
+- The King Black Dragon remains the final mandatory target and the quest's
+  iconic combat capstone. The level-275 Elder Green Dragon is reserved as a
+  possible post-`Legend` boss assignment rather than displacing that finale.
+
+Death Wings remain possible post-`Legend` randomized content because their
+Legends Quest access and level 80 would break the mandatory level curve.
+Blessed Spiders and Dungeon Rats remain excluded from mandatory progression due
+to Underground Pass/Clock Tower access coupling. Otherworldly Beings would add
+an unrelated Lost City gate. The Balrog remains excluded because it is coupled
+to Dwarf Youth Rescue/lava-forge access and its level-217 label hides extreme
+repository stats of 999 Attack and 500 Hits.
+
+The merged `MonsterSlayer.json` does not match this confirmed ladder. A later
+implementation synchronization must replace all six mandatory family sequences,
+rebuild affected family definitions and stable task keys before activation,
+recalculate kill/point totals, and update data/state/migration fixtures. It
+must not change live Combat Odyssey behavior while performing that sync.
+
+### Unresolved Recruitment And First-Shop Details
+
+- Choose the dedicated contact's name, appearance, exact Rising Sun tile, and
+  whether the NPC needs ambient dialogue before recruitment. Do not repurpose
+  Barmaid `142` or disturb her existing drink, bar-crawl, and holiday behavior.
+- Choose the formal quest name, quest-list presentation, journal text, and any
+  quest-point treatment. Calling the mandatory path one quest settles its
+  lifecycle, but not those presentation details.
+- Decide whether the Initiate sticker is dialogue-only rank flavor, a physical
+  inventory item, or a displayable cosmetic. If it is an item, tradeability,
+  death behavior, duplicate prevention, storage, reclaim, and whether it is
+  consumed when displayed all require explicit contracts.
+- Set the nine mandatory-task point awards and resulting first revealed balance.
+  Retaining the foundation's 25-point Fledgling total is the current
+  recommendation, but has not been approved merely by confirming invisible
+  accrual.
+- Choose the exact low-level food and potion stock, quantities, and Fledgling
+  Slayer Point costs. Evaluate each against normal Cooking and Herblaw effort
+  before approval.
 
 ## Evidence-Backed Combat Odyssey Audit
 
@@ -253,8 +472,8 @@ Stable rank codes are part of the save contract and must never be reordered:
 
 | Code | Rank | Advancement contact |
 | ---: | --- | --- |
-| 0 | Unstamped | Falador introduction |
-| 1 | Fledgling | Beer completed; Falador mandatory chain available |
+| 0 | Unstamped | Recruit prompt and beer assignment begin the guild quest |
+| 1 | Fledgling | Beer completed; first monster assignment available |
 | 2 | Initiate | Falador chain complete; Port Sarim available |
 | 3 | Veteran | Port Sarim chain complete; Brimhaven available |
 | 4 | Elite | Brimhaven chain complete; Champions Guild available |
@@ -262,12 +481,12 @@ Stable rank codes are part of the save contract and must never be reordered:
 | 6 | Hero | Heroes chain complete; Legends Guild available |
 | 7 | Legend | Legends chain complete; all rank shops available |
 
-Candidate contacts are existing, actively spawned NPCs; no new placement is
-needed:
+The opening contact is a new dedicated NPC. Later-rank candidates are existing,
+actively spawned NPCs and need no new placement:
 
 | Contact key | Candidate and exact active location | Existing owner | Integration boundary |
 | --- | --- | --- | --- |
-| `falador` | Barmaid `142`, Rising Sun ground floor `321,549` | `npcs/falador/Barmaid.java` | Coordinate-gate this spawn because ID `142` also exists upstairs at `320,1491`; preserve bar crawl and holiday dialogue priority. |
+| `falador` | New Monster Slayer contact, Rising Sun ground floor; exact ID/tile/name pending | New focused dialogue owner required | Add a dedicated definition and spawn. The contact directs the player to Barmaid `142` for beer; do not replace or intercept the Barmaid's existing dialogue. Update the current foundation contact ID after the new stable NPC ID is approved. |
 | `port_sarim` | Bartender `150`, Rusty Anchor `257,626` | `npcs/portsarim/Bartender.java` | Add guild options after quest/bar-crawl priority; do not replace drink service. |
 | `brimhaven` | Bartender `279`, Dead Man's Chest `451,705` | `npcs/brimhaven/BrimHavenBartender.java` | Add guild options after bar-crawl/drink behavior. |
 | `champions` | Guildmaster `111`, Champions Guild `149,557` | `npcs/varrock/Guildmaster.java` | Preserve Dragon Slayer and normal guild-access dialogue before Monster Slayer options. |
@@ -306,7 +525,9 @@ Family shape:
 }
 ```
 
-Contact/task shape:
+Contact/task shape. The `npcId: 142` below records the merged foundation data,
+not the newly confirmed final contact; a later player-visible implementation
+must replace it with the dedicated NPC's approved stable ID:
 
 ```json
 {
@@ -406,7 +627,14 @@ Load-time/CI validation must reject:
 - a launch reward with no positive native-currency cost. Higher-tier launch
   rewards may additionally require any selected lower-tier balances.
 
-### Validated Launch Family Inventory And Tuning
+### Current Foundation Family Inventory And Tuning
+
+The table in this subsection records the merged foundation baseline. Every
+mandatory roster and its aggregate totals is superseded by the confirmed
+35-task ladder above and requires a later implementation sync. Its randomized
+pools also require redesign wherever they conflict with the confirmed monster
+taxonomy; none of the foundation repeatable pools is approved merely by being
+listed here.
 
 Spawn counts below are active location records for the current MyWorld load set:
 base `NpcLocs.json`, enabled discontinued/mod-room/runecraft/auction/harvesting/
@@ -451,7 +679,7 @@ one active static spawn.
 | Legends | `legends.black_dragons` / `black_dragon` | `291` | 4 | 100 | 40 | 35 |
 | Legends | `legends.king_black_dragon` / `king_black_dragon` | `477` | 1 | 1 | not random | 50 |
 
-Launch totals and recommendations:
+Merged foundation totals, retained as synchronization evidence:
 
 | Band/challenge currency | Mandatory tasks | Mandatory kills | Native currency awarded | Random repeatable pool |
 | --- | ---: | ---: | ---: | ---: |
@@ -467,6 +695,11 @@ This cuts the mandatory wall to about 12 percent of the old 40,906 kills while
 keeping a substantial rank path. The six values form a balance vector, not a
 625-point pool. Supply redemption and optional expensive rewards can extend the
 lifetime hunt through repeatables without delaying shop access.
+
+The confirmed target now contains 35 mandatory kill assignments. Its kill
+total, six-component point-earnings vector, and repeatable count cannot be
+restated as settled totals until each new task count, point award, and
+randomized pool is approved.
 
 Repeatable policy:
 
