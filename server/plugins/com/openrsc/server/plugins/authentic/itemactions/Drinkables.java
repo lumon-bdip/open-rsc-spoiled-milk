@@ -348,7 +348,8 @@ public class Drinkables implements OpInvTrigger {
 	private void useHerblawPotion(Player player, final Item item, final HerblawPotionEffect effect) {
 		if (player.getCarriedItems().remove(item) == -1) return;
 		player.message("You drink some of your " + item.getDef(player.getWorld()).getName().toLowerCase());
-		applyHerblawPotionEffect(player, effect);
+		applyHerblawPotionEffect(player, effect, item.getCatalogId());
+		com.openrsc.server.net.rsc.ActionSender.sendActivePotionEffects(player);
 		player.getCarriedItems().getInventory().add(new Item(effect.nextItem));
 		delay(2);
 		if (effect.dosesLeft <= 0) {
@@ -358,24 +359,24 @@ public class Drinkables implements OpInvTrigger {
 		}
 	}
 
-	private void applyHerblawPotionEffect(final Player player, final HerblawPotionEffect effect) {
+	private void applyHerblawPotionEffect(final Player player, final HerblawPotionEffect effect, final int itemId) {
 		final long duration = TimeUnit.MINUTES.toMillis(effect.minutes);
 		if ("brawn".equals(effect.family)) {
-			player.activatePotionOfBrawn(effect.percent, duration);
+			player.activatePotionOfBrawn(effect.percent, duration, itemId);
 		} else if ("deftness".equals(effect.family)) {
-			player.activatePotionOfDeftness(effect.percent, duration);
+			player.activatePotionOfDeftness(effect.percent, duration, itemId);
 		} else if ("insight".equals(effect.family)) {
-			player.activatePotionOfInsightSkills(effect.percent, duration);
+			player.activatePotionOfInsightSkills(effect.percent, duration, itemId);
 		} else if ("skiller_xp".equals(effect.family)) {
-			player.activateSkillerBrew(effect.percent, duration);
+			player.activateSkillerBrew(effect.percent, duration, itemId);
 		} else if ("warrior_xp".equals(effect.family)) {
-			player.activateWarriorBrew(effect.percent, duration);
+			player.activateWarriorBrew(effect.percent, duration, itemId);
 		} else if ("restore".equals(effect.family)) {
 			restoreReducedStats(player);
-			player.setStatReductionProtection(TimeUnit.MINUTES.toMillis(10));
+			player.setStatReductionProtection(TimeUnit.MINUTES.toMillis(10), itemId);
 		} else if ("antidote".equals(effect.family)) {
 			player.curePoison();
-			player.setPoisonProtection(TimeUnit.MINUTES.toMillis(5));
+			player.setPoisonProtection(TimeUnit.MINUTES.toMillis(5), itemId);
 		}
 	}
 
@@ -412,6 +413,7 @@ public class Drinkables implements OpInvTrigger {
 		if (player.getCarriedItems().remove(item) == -1) return;
 		player.message("You drink some of your " + item.getDef(player.getWorld()).getName().toLowerCase());
 		effect.run();
+		com.openrsc.server.net.rsc.ActionSender.sendActivePotionEffects(player);
 		player.getCarriedItems().getInventory().add(new Item(newItem));
 		delay(2);
 		if (dosesLeft <= 0) {
@@ -423,39 +425,42 @@ public class Drinkables implements OpInvTrigger {
 
 	private void useInsightPotion(Player player, final Item item, final int newItem, final int dosesLeft, final boolean superPotion) {
 		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activatePotionOfInsight(superPotion ? 20 : 10,
-			TimeUnit.MINUTES.toMillis(superPotion ? 60 : 30)));
+			TimeUnit.MINUTES.toMillis(superPotion ? 60 : 30), item.getCatalogId()));
 	}
 
 	private void useRegenerationPotion(Player player, final Item item, final int newItem, final int dosesLeft, final boolean superPotion) {
 		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activatePotionOfRegeneration(superPotion ? 4 : 2,
-			TimeUnit.MINUTES.toMillis(superPotion ? 60 : 30)));
+			TimeUnit.MINUTES.toMillis(superPotion ? 60 : 30), item.getCatalogId()));
 	}
 
 	private void useSpeedPotion(Player player, final Item item, final int newItem, final int dosesLeft) {
-		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activatePotionOfSpeed(10, TimeUnit.MINUTES.toMillis(30)));
+		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activatePotionOfSpeed(10,
+			TimeUnit.MINUTES.toMillis(30), item.getCatalogId()));
 	}
 
 	private void useLuckPotion(Player player, final Item item, final int newItem, final int dosesLeft) {
-		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activatePotionOfLuck(100, TimeUnit.MINUTES.toMillis(30)));
+		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activatePotionOfLuck(100,
+			TimeUnit.MINUTES.toMillis(30), item.getCatalogId()));
 	}
 
 	private void useNotationPotion(Player player, final Item item, final int newItem, final int dosesLeft) {
-		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activatePotionOfNotation(TimeUnit.MINUTES.toMillis(10)));
+		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activatePotionOfNotation(
+			TimeUnit.MINUTES.toMillis(10), item.getCatalogId()));
 	}
 
 	private void useMagicResistancePotion(Player player, final Item item, final int newItem, final int dosesLeft, final boolean superPotion) {
 		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activateMagicResistancePotion(superPotion ? 20 : 10,
-			TimeUnit.MINUTES.toMillis(superPotion ? 60 : 30)));
+			TimeUnit.MINUTES.toMillis(superPotion ? 60 : 30), item.getCatalogId()));
 	}
 
 	private void useMeleeResistancePotion(Player player, final Item item, final int newItem, final int dosesLeft, final boolean superPotion) {
 		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activateMeleeResistancePotion(superPotion ? 20 : 10,
-			TimeUnit.MINUTES.toMillis(superPotion ? 60 : 30)));
+			TimeUnit.MINUTES.toMillis(superPotion ? 60 : 30), item.getCatalogId()));
 	}
 
 	private void useRangedResistancePotion(Player player, final Item item, final int newItem, final int dosesLeft, final boolean superPotion) {
 		useTimedPotion(player, item, newItem, dosesLeft, () -> player.activateRangedResistancePotion(superPotion ? 20 : 10,
-			TimeUnit.MINUTES.toMillis(superPotion ? 60 : 30)));
+			TimeUnit.MINUTES.toMillis(superPotion ? 60 : 30), item.getCatalogId()));
 	}
 
 	private void useFishingPotion(Player player, final Item item, final int newItem, final int left) {
