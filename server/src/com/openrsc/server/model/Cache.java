@@ -43,6 +43,19 @@ public class Cache {
 	}
 
 	/**
+	 * Store an Integer in the cache.
+	 *
+	 * Keep this overload alongside {@link #set(String, int)} so integer values
+	 * passed to store are not widened to the long overload.
+	 *
+	 * @param key
+	 * @param i
+	 */
+	public void store(String key, int i) {
+		storage.put(key, i);
+	}
+
+	/**
 	 * Store a String in the cache
 	 *
 	 * @param key
@@ -93,6 +106,13 @@ public class Cache {
 		// in case cache is set with ::setcache
 		if (value instanceof String) {
 			value = Integer.parseInt((String)value);
+		} else if (value instanceof Long) {
+			long longValue = (Long) value;
+			if (longValue < Integer.MIN_VALUE || longValue > Integer.MAX_VALUE) {
+				throw new IllegalArgumentException(
+					"Long value out of Integer range: " + key);
+			}
+			value = (int) longValue;
 		}
 
 		if (!(value instanceof Integer)) {
@@ -151,6 +171,12 @@ public class Cache {
 			throw new NoSuchElementException("No object found for that key: " + key);
 
 		Object value = storage.get(key);
+		// Keep numeric cache reads compatible with ::setcache and older entries.
+		if (value instanceof String) {
+			value = Long.parseLong((String) value);
+		} else if (value instanceof Integer) {
+			value = ((Integer) value).longValue();
+		}
 		if (!(value instanceof Long)) {
 			throw new IllegalArgumentException("Object found, but not a Long: " + key);
 		}
