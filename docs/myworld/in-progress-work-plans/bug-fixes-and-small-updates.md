@@ -81,6 +81,26 @@ The first implementation should remain intentionally small: icon, countdown,
 and hover name. Do not turn this into a general status-effect framework unless
 the shared foundation is needed to avoid duplicating state.
 
+#### Potion-HUD implementation (`feat/potion-timers-and-shilo-travel-qol`)
+
+- Custom clients receive a full snapshot on login and after each successful
+  timed-potion drink through bounded outgoing opcode `152`. A snapshot contains
+  at most 16 exact consumed item IDs and server-derived remaining seconds.
+- The HUD covers the active brawn, deftness, and insight skill families;
+  skiller and warrior XP brews; stat-reduction protection; and poison
+  protection. The dormant legacy insight, regeneration, speed, luck, notation,
+  and three combat-resistance timer APIs also expose status if a future caller
+  activates them with an item identity; the current dispatcher routes their
+  historical item IDs into the newer families instead.
+- XP brews retain their existing offline-paused, player-cache duration model;
+  their consumed item identity is now cached beside it so reconnect can restore
+  the correct icon. Other current effects remain intentionally session-local,
+  matching their gameplay state, and reconnect therefore receives an empty
+  status for effects the server no longer has.
+- The client derives a local display expiry from each authoritative snapshot,
+  removes expired entries by wall-clock time, and clears the snapshot on logout
+  or reconnect. Non-custom clients receive no new opcode.
+
 ### 2. Direct Traversal Interactions
 
 Use the existing direct `Board` behavior around Port Sarim as the interaction
@@ -156,6 +176,22 @@ Remove the barrier from the authoritative world data and keep client/server
 landscape or collision data synchronized. Preserve Yohnus as the character who
 explains and collects the one-time payment even though he no longer controls a
 door.
+
+#### Furnace-unlock implementation (`feat/potion-timers-and-shilo-travel-qol`)
+
+- The shared gate is the furnace object at `399,840`; both Smithing direct/use-
+  item flows and Crafting's use-item flow call it before opening or starting
+  production.
+- The durable key is `myworld_shilo_furnace_unlocked`. No previous transient
+  coin-payment state is treated as ownership, so there is no grandfathering.
+- Acceptance removes one unnoted cut Red Topaz before storing the key. Missing,
+  declined, interrupted, stale, or failed-removal attempts leave it locked.
+- Yohnus now explains and can collect the same one-time payment. The 20-coin
+  boundary handler, logout-scoped fast-pay state, configuration switch, and QoL
+  opt-out entry were retired.
+- Boundary object 165 at `400,845` and its matching vertical-wall value 166 were
+  removed. Server and client `Custom_Landscape.orsc` archives remain byte-
+  identical after the terrain/collision edit.
 
 ### Verification And Handoff
 
