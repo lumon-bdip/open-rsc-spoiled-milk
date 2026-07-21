@@ -32,6 +32,7 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_TELEPORT_DESTINATION = 7;
 	private static final int PRODUCTION_RANGERS_REDEMPTION_CATEGORY = 8;
 	private static final int PRODUCTION_RANGERS_REDEMPTION = 9;
+	private static final int PRODUCTION_ALL_QUANTITY = 1000000;
 
 	public DoSkillInterface(mudclient mc) {
 		this.mc = mc;
@@ -341,7 +342,7 @@ public final class DoSkillInterface {
 		ProductionRecipeView selected = getSelectedRecipe();
 		int footerY = y + height - 84;
 		int quantityY = y + height - 40;
-		int quantityX = x + width - 284;
+		int quantityX = x + width - 328;
 		boolean showQuantityControls = !isPickerInterface();
 		int materialDetailX = quantityX;
 		int selectedDetailRightX = x + width - 16;
@@ -414,6 +415,18 @@ public final class DoSkillInterface {
 				drawString(quantityText, quantityX + 88 - (mc.getSurface().stringWidth(2, quantityText) / 2), quantityY + 15, 2, textColour);
 				drawQuantityButton(quantityX + 120, quantityY, 26, 20, ">", 1);
 				drawQuantityButton(quantityX + 150, quantityY, 26, 20, ">>", 5);
+				final boolean canCraftAll = selected != null && selected.isCraftable();
+				this.drawButton(quantityX + 180, quantityY, 44, 20, "All", 2, false, new ButtonHandler() {
+					@Override
+					void handle() {
+						if (canCraftAll) {
+							sendProductionStart(PRODUCTION_ALL_QUANTITY);
+						}
+					}
+				});
+				if (!canCraftAll) {
+					mc.getSurface().drawBoxAlpha(quantityX + 180, quantityY, 44, 20, 0, 128);
+				}
 			}
 		}
 
@@ -430,7 +443,7 @@ public final class DoSkillInterface {
 			@Override
 			void handle() {
 				if (canStart) {
-					sendProductionStart();
+					sendProductionStart(productionQuantity);
 				}
 			}
 		});
@@ -648,15 +661,15 @@ public final class DoSkillInterface {
 		});
 	}
 
-		private void sendProductionStart() {
-			ProductionRecipeView selected = getSelectedRecipe();
-			if (selected == null) {
-				return;
-			}
-			mc.packetHandler.getClientStream().newPacket(199);
+	private void sendProductionStart(int quantity) {
+		ProductionRecipeView selected = getSelectedRecipe();
+		if (selected == null) {
+			return;
+		}
+		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(19);
 		mc.packetHandler.getClientStream().bufferBits.putInt(selected.getItemId());
-		mc.packetHandler.getClientStream().bufferBits.putInt(productionQuantity);
+		mc.packetHandler.getClientStream().bufferBits.putInt(quantity);
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
