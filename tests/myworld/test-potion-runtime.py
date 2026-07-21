@@ -6,6 +6,7 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 PLAYER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "player" / "Player.java"
+CACHE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "Cache.java"
 DRINKABLES = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "itemactions" / "Drinkables.java"
 FUNCTIONS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "plugins" / "Functions.java"
 
@@ -22,6 +23,7 @@ def require(text: str, snippet: str, message: str) -> None:
 
 def main() -> None:
     player_text = PLAYER.read_text(encoding="utf-8")
+    cache_text = CACHE.read_text(encoding="utf-8")
     drinkables_text = DRINKABLES.read_text(encoding="utf-8")
     functions_text = FUNCTIONS.read_text(encoding="utf-8")
 
@@ -79,6 +81,17 @@ def main() -> None:
         functions_text,
         "player.hasStatReductionProtection()",
         "Shared stat reduction helper should respect stat restore immunity",
+    )
+
+    require(
+        cache_text,
+        "public void store(String key, int i)",
+        "Integer potion bonuses should not widen into Long cache values",
+    )
+    require(
+        cache_text,
+        "longValue < Integer.MIN_VALUE || longValue > Integer.MAX_VALUE",
+        "Persisted Long potion bonuses should be safely range-checked",
     )
 
     print("PASS: potion runtime wiring validated")
