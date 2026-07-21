@@ -59,6 +59,10 @@ def main() -> None:
     require(player, "(remainingMs + 999L) / 1000L", "server countdown does not round positive time safely")
     require(player, 'getCache().store("potion_" + key + "_xp_item_id", itemId)',
             "persistent XP brew timer does not retain its display identity")
+    require(player, "private volatile long poisonProtectionExpiresAt = 0L;",
+            "poison-protection expiry is not atomic across game and packet threads")
+    if "lastAntidote" in player or "poisonProtectionTime" in player:
+        fail("poison protection still splits one timer across non-atomic fields")
 
     require(drinkables, "applyHerblawPotionEffect(player, effect, item.getCatalogId())",
             "tiered potion identity is not passed to the active effect")

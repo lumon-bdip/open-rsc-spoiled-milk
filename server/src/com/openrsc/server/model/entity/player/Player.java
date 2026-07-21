@@ -240,7 +240,8 @@ public final class Player extends Mob {
 	/**
 	 * Amount of fatigue - 0 to 150000
 	 */
-	private int fatigue = 0, sleepStateFatigue = 0;
+	private int fatigue = 0;
+	private volatile int sleepStateFatigue = 0;
 	/**
 	 * The main accounts group is
 	 */
@@ -254,13 +255,10 @@ public final class Player extends Mob {
 	 */
 	private Channel channel;
 	/**
-	 * Time of antidote protection from poison
+	 * Absolute expiry of poison protection. Player state is read by both game
+	 * and packet threads, so keep the complete timer in one atomic value.
 	 */
-	private long lastAntidote = 0;
-	/**
-	 * How long the poison protection should last
-	 */
-	private int poisonProtectionTime = 0;
+	private volatile long poisonProtectionExpiresAt = 0L;
 	/**
 	 * Stores the last IP address used
 	 */
@@ -2033,7 +2031,7 @@ public final class Player extends Mob {
 
 	private void addPoisonProtectionStatus(final List<ActivePotionEffectStatus> statuses, final long now) {
 		final String itemKey = POTION_STATUS_ITEM_PREFIX + "poison_protection";
-		final long remaining = lastAntidote + poisonProtectionTime - now;
+		final long remaining = poisonProtectionExpiresAt - now;
 		if (remaining <= 0L) {
 			removeAttribute(itemKey);
 			return;
@@ -3321,7 +3319,7 @@ public final class Player extends Mob {
 	}
 
 	public boolean isAntidoteProtected() {
-		return System.currentTimeMillis() - lastAntidote < poisonProtectionTime;
+		return System.currentTimeMillis() < poisonProtectionExpiresAt;
 	}
 
 	public boolean isInBank() {
@@ -4117,12 +4115,13 @@ public final class Player extends Mob {
 	}
 
 	public void setPoisonProtection(final long durationMs, final int itemId) {
-		long remainingProtection = (lastAntidote + poisonProtectionTime) - System.currentTimeMillis();
-		if (remainingProtection > durationMs) {
+		final long now = System.currentTimeMillis();
+		final long boundedDuration = Math.max(0L, durationMs);
+		final long remainingProtection = poisonProtectionExpiresAt - now;
+		if (remainingProtection > boundedDuration) {
 			return;
 		}
-		lastAntidote = System.currentTimeMillis();
-		poisonProtectionTime = (int) Math.max(0L, durationMs);
+		poisonProtectionExpiresAt = now + boundedDuration;
 		setPotionStatusItem("poison_protection", itemId);
 	}
 
