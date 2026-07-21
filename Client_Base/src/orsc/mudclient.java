@@ -325,6 +325,15 @@ public final class mudclient implements Runnable {
 	private static final int HEALTH_HUD_COORDINATE_GAP = 16;
 	private static final int AUTO_ATTACK_HUD_SIZE = 16;
 	private static final int AUTO_ATTACK_HUD_GAP = 4;
+	private static final int MAX_ACTIVE_POTION_EFFECTS = 16;
+	private static final int POTION_HUD_X = 7;
+	private static final int POTION_HUD_Y = 36;
+	private static final int POTION_HUD_WIDTH = 76;
+	private static final int POTION_HUD_ROW_HEIGHT = 24;
+	private static final int POTION_HUD_ROWS_PER_COLUMN = 8;
+	private static final int POTION_HUD_COLUMN_GAP = 4;
+	private static final int POTION_HUD_ICON_WIDTH = 22;
+	private static final int POTION_HUD_ICON_HEIGHT = 16;
 	private static final int TOP_MENU_BAR_WIDTH = 199;
 	private static final String[] MINIMAP_POSITION_LABELS = new String[] {
 		"Top right", "Bottom right", "Top left", "Bottom left"
@@ -1137,6 +1146,9 @@ public final class mudclient implements Runnable {
 	private MudClientGraphics surface;
 	private int systemUpdate = 0;
 	private int elixirTimer = 0;
+	private int activePotionEffectCount = 0;
+	private final int[] activePotionEffectItemIds = new int[MAX_ACTIVE_POTION_EFFECTS];
+	private final long[] activePotionEffectExpiresAt = new long[MAX_ACTIVE_POTION_EFFECTS];
 	private boolean inWild = false;
 	private int teleportBubbleCount = 0;
 	private int[] teleportBubbleType = new int[50];
@@ -7232,6 +7244,7 @@ public final class mudclient implements Runnable {
 					int i2 = 75;
 					int index;
 					int var12;
+					this.drawActivePotionEffectsHud();
 					if (S_SIDE_MENU_TOGGLE && C_SIDE_MENU_OVERLAY) {
 						this.drawPlayerStatusHud();
 						int i = 130;
@@ -12691,6 +12704,85 @@ public final class mudclient implements Runnable {
 			this.getSurface().drawString("Tile: @gre@(@whi@" + (this.playerLocalX + this.midRegionBaseX)
 				+ "@gre@,@whi@" + (this.playerLocalZ + this.midRegionBaseZ) + "@gre@)", x, y, 0xFFFFFF, 1);
 		}
+	}
+
+	private void drawActivePotionEffectsHud() {
+		compactActivePotionEffects(System.currentTimeMillis());
+		int columns = Math.max(1, (activePotionEffectCount + POTION_HUD_ROWS_PER_COLUMN - 1)
+			/ POTION_HUD_ROWS_PER_COLUMN);
+		for (int i = 0; i < activePotionEffectCount; i++) {
+			int column = i / POTION_HUD_ROWS_PER_COLUMN;
+			int row = i % POTION_HUD_ROWS_PER_COLUMN;
+			int x = POTION_HUD_X + column * (POTION_HUD_WIDTH + POTION_HUD_COLUMN_GAP);
+			int y = POTION_HUD_Y + row * POTION_HUD_ROW_HEIGHT;
+			boolean hovered = mouseX >= x && mouseX < x + POTION_HUD_WIDTH
+				&& mouseY >= y && mouseY < y + POTION_HUD_ROW_HEIGHT - 2;
+			getSurface().drawBoxAlpha(x, y, POTION_HUD_WIDTH, POTION_HUD_ROW_HEIGHT - 2, 0x111111, 190);
+			getSurface().drawBoxBorder(x, POTION_HUD_WIDTH, y, POTION_HUD_ROW_HEIGHT - 2,
+				hovered ? 0xFFFF00 : 0xB7B7B7);
+
+			ItemDef itemDef = EntityHandler.getItemDef(activePotionEffectItemIds[i]);
+			if (itemDef != null) {
+				Sprite sprite = spriteSelect(itemDef);
+				getSurface().drawSpriteClipping(sprite, x + 2, y + 3, POTION_HUD_ICON_WIDTH, POTION_HUD_ICON_HEIGHT,
+					itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
+			}
+			long remainingSeconds = Math.max(0L,
+				(activePotionEffectExpiresAt[i] - System.currentTimeMillis() + 999L) / 1000L);
+			getSurface().drawColoredStringCentered(x + POTION_HUD_ICON_WIDTH + 2
+				+ (POTION_HUD_WIDTH - POTION_HUD_ICON_WIDTH - 4) / 2,
+				formatPotionCountdown(remainingSeconds), 0xFFFFFF, 0, 1, y + 15);
+			if (hovered && itemDef != null) {
+				int tooltipX = POTION_HUD_X + columns * (POTION_HUD_WIDTH + POTION_HUD_COLUMN_GAP) + 1;
+				getSurface().drawString(itemDef.getName(), tooltipX, y + 15, 0xFFFFFF, 1);
+			}
+		}
+	}
+
+	private String formatPotionCountdown(long seconds) {
+		long hours = seconds / 3600L;
+		long minutes = (seconds % 3600L) / 60L;
+		long remainder = seconds % 60L;
+		if (hours > 0L) {
+			return hours + ":" + (minutes < 10L ? "0" : "") + minutes
+				+ ":" + (remainder < 10L ? "0" : "") + remainder;
+		}
+		return minutes + ":" + (remainder < 10L ? "0" : "") + remainder;
+	}
+
+	private void compactActivePotionEffects(long now) {
+		int next = 0;
+		for (int i = 0; i < activePotionEffectCount; i++) {
+			if (activePotionEffectExpiresAt[i] <= now) {
+				continue;
+			}
+			if (next != i) {
+				activePotionEffectItemIds[next] = activePotionEffectItemIds[i];
+				activePotionEffectExpiresAt[next] = activePotionEffectExpiresAt[i];
+			}
+			next++;
+		}
+		activePotionEffectCount = next;
+	}
+
+	public void setActivePotionEffects(int[] itemIds, int[] remainingSeconds) {
+		clearActivePotionEffects();
+		int count = Math.min(MAX_ACTIVE_POTION_EFFECTS, Math.min(itemIds.length, remainingSeconds.length));
+		long now = System.currentTimeMillis();
+		for (int i = 0; i < count; i++) {
+			if (itemIds[i] < 0 || remainingSeconds[i] <= 0) {
+				continue;
+			}
+			activePotionEffectItemIds[activePotionEffectCount] = itemIds[i];
+			activePotionEffectExpiresAt[activePotionEffectCount] = now + remainingSeconds[i] * 1000L;
+			activePotionEffectCount++;
+		}
+	}
+
+	public void clearActivePotionEffects() {
+		activePotionEffectCount = 0;
+		Arrays.fill(activePotionEffectItemIds, 0);
+		Arrays.fill(activePotionEffectExpiresAt, 0L);
 	}
 
 	private void drawAutoAttackHudButton(int x, int y) {
@@ -18409,6 +18501,7 @@ public final class mudclient implements Runnable {
 
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
+			this.clearActivePotionEffects();
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "client.FC(" + "dummy" + ')');
 		}
@@ -21059,6 +21152,7 @@ public final class mudclient implements Runnable {
 
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
+			this.clearActivePotionEffects();
 			this.stopSoundPlayback();
 			if (var1 <= 59) {
 				this.drawDialogOptionsMenu(-85);
@@ -21280,6 +21374,7 @@ public final class mudclient implements Runnable {
 		try {
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
+			this.clearActivePotionEffects();
 			this.loginScreenNumber = 0;
 			this.logoutTimeout = 0;
 			this.hasCompletedInitialRegionLoad = false;

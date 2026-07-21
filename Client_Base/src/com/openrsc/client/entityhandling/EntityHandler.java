@@ -8842,7 +8842,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Root", "To the grand tree", "search", "Examine", 1, 1, 1, 0, "treeroot2", i++));
 		objects.add(new GameObjectDef("Metal Gate", "The gate is closed", "Open", "Examine", 2, 1, 2, 0, "metalgateclosed", i++));
 		objects.add(new GameObjectDef("Metal Gate", "The gate is open", "WalkTo", "close", 2, 1, 2, 0, "metalgateopen", i++));
-		objects.add(new GameObjectDef("A farm cart", "It is blocking the entrance to the village", "Examine", "Search", 1, 2, 3, 0, "cart", i++));
+		objects.add(new GameObjectDef("A farm cart", "It is blocking the entrance to the village", "Climb", "Search", 1, 2, 3, 0, "cart", i++));
 		objects.add(new GameObjectDef("Ledge", "It looks rather thin", "balance on", "Examine", 0, 1, 1, 0, "straight_ledge", i++));
 		objects.add(new GameObjectDef("Ledge", "It looks rather thin", "balance on", "Examine", 0, 1, 1, 0, "straight_ledge", i++));
 		objects.add(new GameObjectDef("Ladder", "it's a ladder leading upwards", "Climb-Up", "Examine", 1, 1, 1, 0, "ladder", i++));

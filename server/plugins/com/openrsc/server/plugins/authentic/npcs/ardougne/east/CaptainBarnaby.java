@@ -15,6 +15,7 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public final class CaptainBarnaby implements OpLocTrigger,
 	TalkNpcTrigger {
+	private static final String TRAVEL_REQUIREMENT_MESSAGE = "You do not meet the requirements to travel";
 
 	@Override
 	public void onTalkNpc(final Player player, final Npc n) {
@@ -66,20 +67,23 @@ public final class CaptainBarnaby implements OpLocTrigger,
 
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
-		if (obj.getID() == 157) {
-			if (command.equals("board")) {
-				if (player.getY() != 616) {
-					return;
-				}
-
-				Npc captain = ifnearvisnpc(player, NpcId.CAPTAIN_BARNABY.id(), 5);
-				if (captain != null) {
-					captain.initializeTalkScript(player);
-				} else {
-					player.message("I need to speak to the captain before boarding the ship.");
-				}
+		if (obj.getID() == 155 || obj.getID() == 157) {
+			if (command.equalsIgnoreCase("board")) {
+				shortcutTravelToBrimhaven(player);
 			}
 		}
+	}
+
+	private void shortcutTravelToBrimhaven(Player player) {
+		if (player.getY() != 616
+			|| player.getCarriedItems().remove(new Item(ItemId.COINS.id(), 30)) < 0) {
+			player.message(TRAVEL_REQUIREMENT_MESSAGE);
+			return;
+		}
+		player.message("You pay 30 gold");
+		player.message("You board the ship");
+		player.teleport(467, 651, false);
+		player.message("The ship arrives at Brimhaven");
 	}
 
 	@Override

@@ -98,6 +98,8 @@ public final class Player extends Mob {
 	private static final int[] POTION_INSIGHT_SKILLS = {
 		Skill.MAGIC.id(), Skill.RUNECRAFT.id(), Skill.SUMMONING.id(), Skill.COOKING.id(), Skill.PRAYER.id()
 	};
+	private static final int MAX_ACTIVE_POTION_EFFECTS = 16;
+	private static final String POTION_STATUS_ITEM_PREFIX = "potion_status_item_";
 
 	// activity indicator for kitten to cat growth
 	// 100 trigger up a Kitten to cat event
@@ -238,7 +240,8 @@ public final class Player extends Mob {
 	/**
 	 * Amount of fatigue - 0 to 150000
 	 */
-	private int fatigue = 0, sleepStateFatigue = 0;
+	private int fatigue = 0;
+	private volatile int sleepStateFatigue = 0;
 	/**
 	 * The main accounts group is
 	 */
@@ -252,13 +255,10 @@ public final class Player extends Mob {
 	 */
 	private Channel channel;
 	/**
-	 * Time of antidote protection from poison
+	 * Absolute expiry of poison protection. Player state is read by both game
+	 * and packet threads, so keep the complete timer in one atomic value.
 	 */
-	private long lastAntidote = 0;
-	/**
-	 * How long the poison protection should last
-	 */
-	private int poisonProtectionTime = 0;
+	private volatile long poisonProtectionExpiresAt = 0L;
 	/**
 	 * Stores the last IP address used
 	 */
@@ -1712,6 +1712,12 @@ public final class Player extends Mob {
 		setAttribute(expiresKey, System.currentTimeMillis() + Math.max(0L, durationMs));
 	}
 
+	private void setPotionStatusItem(final String family, final int itemId) {
+		if (itemId >= 0) {
+			setAttribute(POTION_STATUS_ITEM_PREFIX + family, itemId);
+		}
+	}
+
 	private long applyPotionDurationBonus(final long durationMs) {
 		final double bonus = getCarriedItems().getEquipment().getMindAmuletPotionDurationBonus()
 			+ (getNatureRobePotionBonusPercent() / 100.0D);
@@ -1735,7 +1741,12 @@ public final class Player extends Mob {
 	}
 
 	public void activatePotionOfInsight(final int bonusPercent, final long durationMs) {
+		activatePotionOfInsight(bonusPercent, durationMs, -1);
+	}
+
+	public void activatePotionOfInsight(final int bonusPercent, final long durationMs, final int itemId) {
 		setTimedEffectValue("potion_insight_bonus", "potion_insight_expires_at", bonusPercent, applyPotionDurationBonus(durationMs));
+		setPotionStatusItem("insight", itemId);
 	}
 
 	public int getPotionOfInsightBonusPercent() {
@@ -1743,7 +1754,12 @@ public final class Player extends Mob {
 	}
 
 	public void activatePotionOfRegeneration(final int multiplier, final long durationMs) {
+		activatePotionOfRegeneration(multiplier, durationMs, -1);
+	}
+
+	public void activatePotionOfRegeneration(final int multiplier, final long durationMs, final int itemId) {
 		setTimedEffectValue("potion_regeneration_multiplier", "potion_regeneration_expires_at", multiplier, applyPotionDurationBonus(durationMs));
+		setPotionStatusItem("regeneration", itemId);
 	}
 
 	public int getPotionOfRegenerationMultiplier() {
@@ -1751,7 +1767,12 @@ public final class Player extends Mob {
 	}
 
 	public void activatePotionOfSpeed(final int bonusPercent, final long durationMs) {
+		activatePotionOfSpeed(bonusPercent, durationMs, -1);
+	}
+
+	public void activatePotionOfSpeed(final int bonusPercent, final long durationMs, final int itemId) {
 		setTimedEffectValue("potion_speed_bonus", "potion_speed_expires_at", bonusPercent, applyPotionDurationBonus(durationMs));
+		setPotionStatusItem("speed", itemId);
 	}
 
 	public double getPotionAttackSpeedMultiplier() {
@@ -1759,7 +1780,12 @@ public final class Player extends Mob {
 	}
 
 	public void activatePotionOfLuck(final int bonusPercent, final long durationMs) {
+		activatePotionOfLuck(bonusPercent, durationMs, -1);
+	}
+
+	public void activatePotionOfLuck(final int bonusPercent, final long durationMs, final int itemId) {
 		setTimedEffectValue("potion_luck_bonus", "potion_luck_expires_at", bonusPercent, applyPotionDurationBonus(durationMs));
+		setPotionStatusItem("luck", itemId);
 	}
 
 	public double getRareTableWeightMultiplier() {
@@ -1767,7 +1793,12 @@ public final class Player extends Mob {
 	}
 
 	public void activatePotionOfNotation(final long durationMs) {
+		activatePotionOfNotation(durationMs, -1);
+	}
+
+	public void activatePotionOfNotation(final long durationMs, final int itemId) {
 		setAttribute("potion_notation_expires_at", System.currentTimeMillis() + Math.max(0L, applyPotionDurationBonus(durationMs)));
+		setPotionStatusItem("notation", itemId);
 	}
 
 	public boolean isPotionOfNotationActive() {
@@ -1775,7 +1806,12 @@ public final class Player extends Mob {
 	}
 
 	public void activateMagicResistancePotion(final int reductionPercent, final long durationMs) {
+		activateMagicResistancePotion(reductionPercent, durationMs, -1);
+	}
+
+	public void activateMagicResistancePotion(final int reductionPercent, final long durationMs, final int itemId) {
 		setTimedEffectValue("potion_magic_resist_percent", "potion_magic_resist_expires_at", reductionPercent, applyPotionDurationBonus(durationMs));
+		setPotionStatusItem("magic_resistance", itemId);
 	}
 
 	public int getPotionMagicResistancePercent() {
@@ -1783,7 +1819,12 @@ public final class Player extends Mob {
 	}
 
 	public void activateMeleeResistancePotion(final int reductionPercent, final long durationMs) {
+		activateMeleeResistancePotion(reductionPercent, durationMs, -1);
+	}
+
+	public void activateMeleeResistancePotion(final int reductionPercent, final long durationMs, final int itemId) {
 		setTimedEffectValue("potion_melee_resist_percent", "potion_melee_resist_expires_at", reductionPercent, applyPotionDurationBonus(durationMs));
+		setPotionStatusItem("melee_resistance", itemId);
 	}
 
 	public int getPotionMeleeResistancePercent() {
@@ -1791,7 +1832,12 @@ public final class Player extends Mob {
 	}
 
 	public void activateRangedResistancePotion(final int reductionPercent, final long durationMs) {
+		activateRangedResistancePotion(reductionPercent, durationMs, -1);
+	}
+
+	public void activateRangedResistancePotion(final int reductionPercent, final long durationMs, final int itemId) {
 		setTimedEffectValue("potion_ranged_resist_percent", "potion_ranged_resist_expires_at", reductionPercent, applyPotionDurationBonus(durationMs));
+		setPotionStatusItem("ranged_resistance", itemId);
 	}
 
 	public int getPotionRangedResistancePercent() {
@@ -1799,23 +1845,43 @@ public final class Player extends Mob {
 	}
 
 	public void activatePotionOfBrawn(final int bonusPercent, final long durationMs) {
-		activateHerblawSkillPotion("brawn", POTION_BRAWN_SKILLS, bonusPercent, durationMs);
+		activatePotionOfBrawn(bonusPercent, durationMs, -1);
+	}
+
+	public void activatePotionOfBrawn(final int bonusPercent, final long durationMs, final int itemId) {
+		activateHerblawSkillPotion("brawn", POTION_BRAWN_SKILLS, bonusPercent, durationMs, itemId);
 	}
 
 	public void activatePotionOfDeftness(final int bonusPercent, final long durationMs) {
-		activateHerblawSkillPotion("deftness", POTION_DEFTNESS_SKILLS, bonusPercent, durationMs);
+		activatePotionOfDeftness(bonusPercent, durationMs, -1);
+	}
+
+	public void activatePotionOfDeftness(final int bonusPercent, final long durationMs, final int itemId) {
+		activateHerblawSkillPotion("deftness", POTION_DEFTNESS_SKILLS, bonusPercent, durationMs, itemId);
 	}
 
 	public void activatePotionOfInsightSkills(final int bonusPercent, final long durationMs) {
-		activateHerblawSkillPotion("insight_skills", POTION_INSIGHT_SKILLS, bonusPercent, durationMs);
+		activatePotionOfInsightSkills(bonusPercent, durationMs, -1);
+	}
+
+	public void activatePotionOfInsightSkills(final int bonusPercent, final long durationMs, final int itemId) {
+		activateHerblawSkillPotion("insight_skills", POTION_INSIGHT_SKILLS, bonusPercent, durationMs, itemId);
 	}
 
 	public void activateSkillerBrew(final int bonusPercent, final long durationMs) {
-		activateXpBrew("skiller", bonusPercent, durationMs);
+		activateSkillerBrew(bonusPercent, durationMs, -1);
+	}
+
+	public void activateSkillerBrew(final int bonusPercent, final long durationMs, final int itemId) {
+		activateXpBrew("skiller", bonusPercent, durationMs, itemId);
 	}
 
 	public void activateWarriorBrew(final int bonusPercent, final long durationMs) {
-		activateXpBrew("warrior", bonusPercent, durationMs);
+		activateWarriorBrew(bonusPercent, durationMs, -1);
+	}
+
+	public void activateWarriorBrew(final int bonusPercent, final long durationMs, final int itemId) {
+		activateXpBrew("warrior", bonusPercent, durationMs, itemId);
 	}
 
 	public int getPotionXpBonusPercent(final int skill) {
@@ -1825,7 +1891,12 @@ public final class Player extends Mob {
 	}
 
 	public void setStatReductionProtection(final long durationMs) {
+		setStatReductionProtection(durationMs, -1);
+	}
+
+	public void setStatReductionProtection(final long durationMs, final int itemId) {
 		setAttribute("stat_reduction_protection_expires_at", System.currentTimeMillis() + Math.max(0L, applyPotionDurationBonus(durationMs)));
+		setPotionStatusItem("stat_reduction_protection", itemId);
 	}
 
 	public boolean hasStatReductionProtection() {
@@ -1838,8 +1909,10 @@ public final class Player extends Mob {
 		syncHerblawSkillPotionFamily("insight_skills", POTION_INSIGHT_SKILLS);
 	}
 
-	private void activateHerblawSkillPotion(final String key, final int[] skills, final int bonusPercent, final long durationMs) {
+	private void activateHerblawSkillPotion(final String key, final int[] skills, final int bonusPercent, final long durationMs,
+										 final int itemId) {
 		setTimedEffectValue("potion_" + key + "_percent", "potion_" + key + "_expires_at", bonusPercent, applyPotionDurationBonus(durationMs));
+		setPotionStatusItem(key, itemId);
 		syncHerblawSkillPotionFamily(key, skills);
 	}
 
@@ -1871,17 +1944,20 @@ public final class Player extends Mob {
 		return bonus;
 	}
 
-	private void activateXpBrew(final String key, final int bonusPercent, final long durationMs) {
+	private void activateXpBrew(final String key, final int bonusPercent, final long durationMs, final int itemId) {
 		getCache().store("potion_" + key + "_xp_bonus", applyPotionPowerBonus(bonusPercent));
 		getCache().store("potion_" + key + "_xp_remaining_ms", Math.max(0L, applyPotionDurationBonus(durationMs)));
+		if (itemId >= 0) {
+			getCache().store("potion_" + key + "_xp_item_id", itemId);
+		}
 		setAttribute("potion_" + key + "_xp_last_tick", System.currentTimeMillis());
 	}
 
-	private int getXpBrewBonusPercent(final String key) {
+	private long getXpBrewRemainingMillis(final String key) {
 		final String bonusKey = "potion_" + key + "_xp_bonus";
 		final String remainingKey = "potion_" + key + "_xp_remaining_ms";
 		if (!getCache().hasKey(bonusKey) || !getCache().hasKey(remainingKey)) {
-			return 0;
+			return 0L;
 		}
 		final long now = System.currentTimeMillis();
 		final long lastTick = getAttribute("potion_" + key + "_xp_last_tick", now);
@@ -1892,10 +1968,93 @@ public final class Player extends Mob {
 		if (remaining <= 0L) {
 			getCache().remove(bonusKey);
 			getCache().remove(remainingKey);
+			getCache().remove("potion_" + key + "_xp_item_id");
 			removeAttribute("potion_" + key + "_xp_last_tick");
+			return 0L;
+		}
+		return remaining;
+	}
+
+	private int getXpBrewBonusPercent(final String key) {
+		if (getXpBrewRemainingMillis(key) <= 0L) {
 			return 0;
 		}
+		final String bonusKey = "potion_" + key + "_xp_bonus";
 		return Math.max(0, getCache().getInt(bonusKey));
+	}
+
+	public List<ActivePotionEffectStatus> getActivePotionEffectStatuses() {
+		final ArrayList<ActivePotionEffectStatus> statuses = new ArrayList<>();
+		final long now = System.currentTimeMillis();
+		syncHerblawSkillPotionBonuses();
+		addTimedPotionStatus(statuses, "brawn", "potion_brawn_expires_at", now);
+		addTimedPotionStatus(statuses, "deftness", "potion_deftness_expires_at", now);
+		addTimedPotionStatus(statuses, "insight_skills", "potion_insight_skills_expires_at", now);
+		addXpBrewStatus(statuses, "skiller");
+		addXpBrewStatus(statuses, "warrior");
+		addTimedPotionStatus(statuses, "stat_reduction_protection", "stat_reduction_protection_expires_at", now);
+		addPoisonProtectionStatus(statuses, now);
+
+		// Retain display support for legacy timed potion APIs even though the
+		// current My World dispatcher routes those item IDs through the families
+		// above. This keeps future callers honest without duplicating gameplay state.
+		addTimedPotionStatus(statuses, "insight", "potion_insight_expires_at", now);
+		addTimedPotionStatus(statuses, "regeneration", "potion_regeneration_expires_at", now);
+		addTimedPotionStatus(statuses, "speed", "potion_speed_expires_at", now);
+		addTimedPotionStatus(statuses, "luck", "potion_luck_expires_at", now);
+		addTimedPotionStatus(statuses, "notation", "potion_notation_expires_at", now);
+		addTimedPotionStatus(statuses, "magic_resistance", "potion_magic_resist_expires_at", now);
+		addTimedPotionStatus(statuses, "melee_resistance", "potion_melee_resist_expires_at", now);
+		addTimedPotionStatus(statuses, "ranged_resistance", "potion_ranged_resist_expires_at", now);
+		return statuses;
+	}
+
+	private void addTimedPotionStatus(final List<ActivePotionEffectStatus> statuses, final String family,
+									 final String expiresKey, final long now) {
+		final String itemKey = POTION_STATUS_ITEM_PREFIX + family;
+		final long expiresAt = getAttribute(expiresKey, 0L);
+		if (expiresAt <= now) {
+			removeAttribute(itemKey);
+			return;
+		}
+		addPotionStatus(statuses, getAttribute(itemKey, -1), expiresAt - now);
+	}
+
+	private void addXpBrewStatus(final List<ActivePotionEffectStatus> statuses, final String key) {
+		final long remaining = getXpBrewRemainingMillis(key);
+		final String itemKey = "potion_" + key + "_xp_item_id";
+		if (remaining <= 0L || !getCache().hasKey(itemKey)) {
+			return;
+		}
+		addPotionStatus(statuses, getCache().getInt(itemKey), remaining);
+	}
+
+	private void addPoisonProtectionStatus(final List<ActivePotionEffectStatus> statuses, final long now) {
+		final String itemKey = POTION_STATUS_ITEM_PREFIX + "poison_protection";
+		final long remaining = poisonProtectionExpiresAt - now;
+		if (remaining <= 0L) {
+			removeAttribute(itemKey);
+			return;
+		}
+		addPotionStatus(statuses, getAttribute(itemKey, -1), remaining);
+	}
+
+	private void addPotionStatus(final List<ActivePotionEffectStatus> statuses, final int itemId, final long remainingMs) {
+		if (itemId < 0 || remainingMs <= 0L || statuses.size() >= MAX_ACTIVE_POTION_EFFECTS) {
+			return;
+		}
+		final long seconds = Math.max(1L, (remainingMs + 999L) / 1000L);
+		statuses.add(new ActivePotionEffectStatus(itemId, (int) Math.min(Integer.MAX_VALUE, seconds)));
+	}
+
+	public static final class ActivePotionEffectStatus {
+		public final int itemId;
+		public final int remainingSeconds;
+
+		private ActivePotionEffectStatus(final int itemId, final int remainingSeconds) {
+			this.itemId = itemId;
+			this.remainingSeconds = remainingSeconds;
+		}
 	}
 
 	private boolean isCombatXpSkill(final int skill) {
@@ -3160,7 +3319,7 @@ public final class Player extends Mob {
 	}
 
 	public boolean isAntidoteProtected() {
-		return System.currentTimeMillis() - lastAntidote < poisonProtectionTime;
+		return System.currentTimeMillis() < poisonProtectionExpiresAt;
 	}
 
 	public boolean isInBank() {
@@ -3952,12 +4111,18 @@ public final class Player extends Mob {
 	}
 
 	public void setPoisonProtection(final long durationMs) {
-		long remainingProtection = (lastAntidote + poisonProtectionTime) - System.currentTimeMillis();
-		if (remainingProtection > durationMs) {
+		setPoisonProtection(durationMs, -1);
+	}
+
+	public void setPoisonProtection(final long durationMs, final int itemId) {
+		final long now = System.currentTimeMillis();
+		final long boundedDuration = Math.max(0L, durationMs);
+		final long remainingProtection = poisonProtectionExpiresAt - now;
+		if (remainingProtection > boundedDuration) {
 			return;
 		}
-		lastAntidote = System.currentTimeMillis();
-		poisonProtectionTime = (int) Math.max(0L, durationMs);
+		poisonProtectionExpiresAt = now + boundedDuration;
+		setPotionStatusItem("poison_protection", itemId);
 	}
 
 	public void setLastReport() {

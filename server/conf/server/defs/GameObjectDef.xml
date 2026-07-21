@@ -6745,7 +6745,7 @@
   <GameObjectDef>
     <name>A farm cart</name>
     <description>It is blocking the entrance to the village</description>
-    <command1>Examine</command1>
+    <command1>Climb</command1>
     <command2>Search</command2>
     <type>1</type>
     <width>2</width>

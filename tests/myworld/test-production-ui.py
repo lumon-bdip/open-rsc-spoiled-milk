@@ -230,13 +230,33 @@ def main() -> None:
     )
     require(
         do_skill_interface_text,
-        "int quantityX = x + width - 284;",
-        "Production quantity controls should be right-aligned beside the Start button",
+        "int quantityX = x + width - 328;",
+        "Production quantity controls should leave room for the one-click All button",
     )
     require(
         do_skill_interface_text,
         "int materialDetailX = quantityX;",
         "Production material cost details should align with right-side quantity controls",
+    )
+    require(
+        do_skill_interface_text,
+        "PRODUCTION_ALL_QUANTITY = 1000000",
+        "Production All should use the existing bounded maximum request",
+    )
+    require(
+        do_skill_interface_text,
+        'this.drawButton(quantityX + 180, quantityY, 44, 20, "All", 2, false',
+        "Regular production interfaces should expose a compact All button",
+    )
+    require(
+        do_skill_interface_text,
+        "sendProductionStart(PRODUCTION_ALL_QUANTITY);",
+        "Production All should immediately submit the bounded maximum request",
+    )
+    require(
+        do_skill_interface_text,
+        "sendProductionStart(productionQuantity);",
+        "The normal Start button should preserve the selected numeric quantity",
     )
     require(
         do_skill_interface_text,

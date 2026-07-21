@@ -39,6 +39,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_SYSTEM_UPDATE, 52);
 		put(OpcodeOut.SEND_INVENTORY, 53);
 		put(OpcodeOut.SEND_ELIXIR, 54); // custom
+		put(OpcodeOut.SEND_ACTIVE_POTION_EFFECTS, 152); // custom
 		put(OpcodeOut.SEND_APPEARANCE_SCREEN, 59);
 		put(OpcodeOut.SEND_NPC_COORDS, 79);
 		put(OpcodeOut.SEND_DEATH, 83);
@@ -248,6 +249,16 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 				case SEND_ELIXIR:
 					ElixirUpdateStruct eu = (ElixirUpdateStruct) payload;
 					builder.writeShort((int) (((double) eu.timeSeconds / 32D) * 50));
+					break;
+
+				case SEND_ACTIVE_POTION_EFFECTS:
+					ActivePotionEffectsStruct potionEffects = (ActivePotionEffectsStruct) payload;
+					int potionEffectCount = Math.max(0, Math.min(16, potionEffects.count));
+					builder.writeByte((byte) potionEffectCount);
+					for (int i = 0; i < potionEffectCount; i++) {
+						builder.writeShort(potionEffects.itemIds[i]);
+						builder.writeInt(potionEffects.remainingSeconds[i]);
+					}
 					break;
 
 				case SEND_STATS:

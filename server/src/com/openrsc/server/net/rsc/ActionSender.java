@@ -2099,6 +2099,29 @@ public class ActionSender {
 	}
 
 	/**
+	 * Replaces the custom client's bounded active-potion snapshot. The server
+	 * remains authoritative for identity and expiry; the client only counts the
+	 * supplied remaining seconds down for presentation.
+	 */
+	public static void sendActivePotionEffects(Player player) {
+		if (!player.isUsingCustomClient()) {
+			return;
+		}
+
+		List<Player.ActivePotionEffectStatus> statuses = player.getActivePotionEffectStatuses();
+		ActivePotionEffectsStruct struct = new ActivePotionEffectsStruct();
+		struct.count = statuses.size();
+		struct.itemIds = new int[struct.count];
+		struct.remainingSeconds = new int[struct.count];
+		for (int i = 0; i < struct.count; i++) {
+			Player.ActivePotionEffectStatus status = statuses.get(i);
+			struct.itemIds[i] = status.itemId;
+			struct.remainingSeconds[i] = status.remainingSeconds;
+		}
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_ACTIVE_POTION_EFFECTS, struct, player);
+	}
+
+	/**
 	 * Updates the id and amount of an item in the bank
 	 */
 	public static void updateBankItem(Player player, int slot, Item newId, int amount) {
@@ -2339,6 +2362,7 @@ public class ActionSender {
 				int elixir = player.getElixir();
 				if (elixir > -1)
 					sendElixirTimer(player, player.getElixir());
+				sendActivePotionEffects(player);
 
 				sendWakeUp(player, false, true);
 

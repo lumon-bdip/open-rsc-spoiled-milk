@@ -345,6 +345,8 @@ public class PacketHandler {
 
 			else if (opcode == 151) updateWorldEditor();
 
+			else if (opcode == 152) updateActivePotionEffects();
+
 				// Set Server Configs
 			else if (opcode == 19) setServerConfiguration();
 
@@ -380,6 +382,21 @@ public class PacketHandler {
 			else mc.worldEditorInterface.showTerrain(sequence,x,y,plane,sx,sy,lx,ly,elev,texture,overlay,roof,hw,vw,diag,collision,projectile,copied,definitions);return;}
 		String message=packetsIncoming.readString();if(sequence>0)mc.worldEditorInterface.setSequence(sequence);
 		if(type==6)mc.worldEditorInterface.showError(message);else mc.worldEditorInterface.showInfo(type,message);
+	}
+
+	private void updateActivePotionEffects() {
+		int count = packetsIncoming.getByte() & 0xff;
+		if (count > 16) {
+			mc.clearActivePotionEffects();
+			return;
+		}
+		int[] itemIds = new int[count];
+		int[] remainingSeconds = new int[count];
+		for (int i = 0; i < count; i++) {
+			itemIds[i] = packetsIncoming.getShort();
+			remainingSeconds[i] = Math.max(0, packetsIncoming.get32());
+		}
+		mc.setActivePotionEffects(itemIds, remainingSeconds);
 	}
 
 	public final void handlePacket2(int opcode, int length) {
