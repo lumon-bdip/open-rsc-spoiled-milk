@@ -9,6 +9,9 @@ LADY_OF_THE_WAVES = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" /
 PORT_SARIM = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "portsarim" / "PortSarimSailor.java"
 KARAMJA = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "karamja" / "BoatFromKaramja.java"
 ENTRANA = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "portsarim" / "MonkOfEntrana.java"
+CART = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "shilo" / "CartDriver.java"
+CAPTAIN_BARNABY = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "ardougne" / "east" / "CaptainBarnaby.java"
+BRIMHAVEN = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "brimhaven" / "BoatFromBrimhaven.java"
 
 
 def fail(message: str) -> None:
@@ -75,6 +78,30 @@ def main() -> None:
     require(entrana, "shortcutTravelToEntrana(player)", "Entrana shortcut handler")
     require(entrana, "playerNotAllowedOnEntrana(player)", "Entrana shortcut weapon and armour restriction")
     require(entrana, "player.teleport(418, 570, false)", "Entrana destination")
+
+    cart = CART.read_text(encoding="utf-8")
+    require(cart, "directCartRide(player, false)", "Shilo-to-Brimhaven direct cart route")
+    require(cart, "directCartRide(player, true)", "Brimhaven-to-Shilo direct cart route")
+    require(cart, "ifnearvisnpc(player, NpcId.CART_DRIVER_SHILO.id(), 10)", "Shilo cart driver availability check")
+    require(cart, "ifnearvisnpc(player, NpcId.CART_DRIVER_BRIMHAVEN.id(), 10)", "Brimhaven cart driver availability check")
+    require(cart, "player.getQuestStage(Quests.SHILO_VILLAGE) != -1", "Shilo quest requirement")
+    require(cart, "new Item(ItemId.COINS.id(), CART_FARE)", "cart fare removal")
+    require(cart, "player.teleport(417, 855)", "Shilo cart destination")
+    require(cart, "player.teleport(468, 662)", "Brimhaven cart destination")
+    if cart.count("new Item(ItemId.COINS.id(), CART_FARE)") != 1:
+        fail("direct cart helper must contain exactly one fare removal")
+
+    captain = CAPTAIN_BARNABY.read_text(encoding="utf-8")
+    require(captain, "shortcutTravelToBrimhaven(player)", "Ardougne direct ship route")
+    require(captain, "player.getY() != 616", "Ardougne dock position requirement")
+    require(captain, "new Item(ItemId.COINS.id(), 30)", "Ardougne ship fare")
+    require(captain, "player.teleport(467, 651, false)", "Brimhaven ship destination")
+
+    brimhaven = BRIMHAVEN.read_text(encoding="utf-8")
+    require(brimhaven, "shortcutTravelToArdougne(player)", "Brimhaven direct ship route")
+    require(brimhaven, "ItemId.KARAMJA_RUM.id()", "Brimhaven customs rum restriction")
+    require(brimhaven, "new Item(ItemId.COINS.id(), 30)", "Brimhaven ship fare")
+    require(brimhaven, "teleport(player, 538, 617)", "Ardougne ship destination")
 
     lady = LADY_OF_THE_WAVES.read_text(encoding="utf-8")
     require(lady, "You need a ship ticket to travel on the Lady of the Waves.", "Lady of the Waves ticket failure message")

@@ -16,6 +16,8 @@ public class CartDriver implements TalkNpcTrigger, OpLocTrigger {
 
 	public static final int TRAVEL_CART_SHILO = 768;
 	public static final int TRAVEL_CART_BRIMHAVEN = 769;
+	private static final int CART_FARE = 500;
+	private static final String TRAVEL_REQUIREMENT_MESSAGE = "You do not meet the requirements to travel";
 
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {
@@ -114,14 +116,9 @@ public class CartDriver implements TalkNpcTrigger, OpLocTrigger {
 	public void onOpLoc(Player player, GameObject obj, String command) {
 		if (obj.getID() == TRAVEL_CART_SHILO) {
 			if (command.equalsIgnoreCase("Board")) {
-				player.message("This looks like a sturdy travelling cart.");
 				Npc driver = ifnearvisnpc(player, NpcId.CART_DRIVER_SHILO.id(), 10);
 				if (driver != null) {
-					driver.teleport(player.getX(), player.getY());
-					delay(); // 1 tick.
-					npcWalkFromPlayer(player, driver);
-					player.message("A nearby man walks over to you.");
-					cartRideShilo(player, driver);
+					directCartRide(player, false);
 				} else {
 					player.message("The cart driver is currently busy.");
 				}
@@ -130,20 +127,35 @@ public class CartDriver implements TalkNpcTrigger, OpLocTrigger {
 			}
 		} else if (obj.getID() == TRAVEL_CART_BRIMHAVEN) {
 			if (command.equalsIgnoreCase("Board")) {
-				player.message("This looks like a sturdy travelling cart.");
 				Npc driver = ifnearvisnpc(player, NpcId.CART_DRIVER_BRIMHAVEN.id(), 10);
 				if (driver != null) {
-					driver.teleport(player.getX(), player.getY());
-					delay(); // 1 tick.
-					npcWalkFromPlayer(player, driver);
-					player.message("A nearby man walks over to you.");
-					cartRideBrimhaven(player, driver);
+					directCartRide(player, true);
 				} else {
 					player.message("The cart driver is currently busy.");
 				}
 			} else if (command.equalsIgnoreCase("Look")) {
 				player.message("A sturdy travelling cart built for long trips through jungle areas.");
 			}
+		}
+	}
+
+	private void directCartRide(Player player, boolean travelToShilo) {
+		if (travelToShilo && player.getQuestStage(Quests.SHILO_VILLAGE) != -1) {
+			player.message(TRAVEL_REQUIREMENT_MESSAGE);
+			return;
+		}
+		if (player.getCarriedItems().remove(new Item(ItemId.COINS.id(), CART_FARE)) < 0) {
+			player.message("You need 500 Gold for the cart ride.");
+			return;
+		}
+
+		player.message("You pay 500 Gold and board the cart.");
+		if (travelToShilo) {
+			player.teleport(417, 855);
+			player.message("The cart arrives at Shilo Village.");
+		} else {
+			player.teleport(468, 662);
+			player.message("The cart arrives at Brimhaven.");
 		}
 	}
 }

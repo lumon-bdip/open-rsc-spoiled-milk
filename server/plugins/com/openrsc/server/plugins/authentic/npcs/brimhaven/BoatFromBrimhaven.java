@@ -15,6 +15,7 @@ import java.util.Optional;
 import static com.openrsc.server.plugins.Functions.*;
 
 public class BoatFromBrimhaven implements TalkNpcTrigger, OpLocTrigger {
+	private static final String TRAVEL_REQUIREMENT_MESSAGE = "You do not meet the requirements to travel";
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
 		int option = multi(player, n, "Can I board this ship?",
@@ -71,18 +72,23 @@ public class BoatFromBrimhaven implements TalkNpcTrigger, OpLocTrigger {
 	@Override
 	public void onOpLoc(Player player, GameObject obj, String command) {
 		if (obj.getID() == 320 || (obj.getID() == 321)) {
-			if (command.equals("board")) {
-				if (player.getX() < 467 || player.getX() > 468) {
-					return;
-				}
-				Npc official = ifnearvisnpc(player, NpcId.CUSTOMS_OFFICIAL.id(), 5);
-				if (official != null) {
-					talkToCustoms(player, official);
-				} else {
-					player.message("I need to speak to the customs official before boarding the ship.");
-				}
+			if (command.equalsIgnoreCase("board")) {
+				shortcutTravelToArdougne(player);
 			}
 		}
+	}
+
+	private void shortcutTravelToArdougne(Player player) {
+		if (player.getX() < 467 || player.getX() > 468
+			|| player.getCarriedItems().hasCatalogID(ItemId.KARAMJA_RUM.id(), Optional.of(false))
+			|| player.getCarriedItems().remove(new Item(ItemId.COINS.id(), 30)) < 0) {
+			player.message(TRAVEL_REQUIREMENT_MESSAGE);
+			return;
+		}
+		player.message("You pay 30 gold");
+		player.message("You board the ship");
+		teleport(player, 538, 617);
+		player.message("The ship arrives at Ardougne");
 	}
 
 	@Override

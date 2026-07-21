@@ -108,6 +108,25 @@ Record the audited routes, which ones received a shortcut, and why any were
 excluded. Quest-specific vehicles whose dialogue is itself progression should
 remain unchanged.
 
+#### Direct-traversal audit (`feat/potion-timers-and-shilo-travel-qol`)
+
+- Added direct `Board` travel in both directions for the Brimhaven/Shilo
+  carts. Both retain the nearby-driver requirement and 500-coin fare; entry to
+  Shilo additionally retains Shilo Village completion.
+- Added direct `Board` travel in both directions for the ordinary
+  Ardougne/Brimhaven ships. Both retain the 30-coin fare, and the Ardougne-bound
+  customs route rejects Karamja rum before attempting payment.
+- Port Sarim/Karamja and Port Sarim/Entrana already had direct object
+  shortcuts with their fare, rum, membership, and Entrana equipment checks,
+  so they were audited but left unchanged.
+- The Lady of the Waves already opens a direct destination picker and consumes
+  its ticket only after a destination is selected, so it was left unchanged.
+- Dragon Slayer ships, quest rafts, the Fishing Trawler, and other
+  quest-specific vehicles were excluded because boarding dialogue or object
+  state is quest/minigame progression. Decorative/unimplemented ship objects
+  without an authoritative route/payment handler were also excluded rather
+  than inventing destinations or access rules.
+
 ### 3. Shilo Furnace One-Time Unlock
 
 Replace Yohnus's repeatable 20-coin interruption with a permanent furnace
