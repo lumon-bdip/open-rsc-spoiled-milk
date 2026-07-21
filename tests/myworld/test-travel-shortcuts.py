@@ -4,7 +4,9 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base" / "src" / "orsc" / "mudclient.java"
+CLIENT_OBJECT_DEFS = ROOT / "Client_Base" / "src" / "com" / "openrsc" / "client" / "entityhandling" / "EntityHandler.java"
 OBJECT_DEFS = ROOT / "server" / "conf" / "server" / "defs" / "GameObjectDef.xml"
+RANDOM_OBJECTS = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "misc" / "RandomObjects.java"
 LADY_OF_THE_WAVES = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "misc" / "LadyOfTheWaves.java"
 PORT_SARIM = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "portsarim" / "PortSarimSailor.java"
 KARAMJA = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "npcs" / "karamja" / "BoatFromKaramja.java"
@@ -40,6 +42,7 @@ def element_text(defn: ET.Element, name: str) -> str:
 
 def main() -> None:
     client = CLIENT.read_text(encoding="utf-8")
+    client_object_defs = CLIENT_OBJECT_DEFS.read_text(encoding="utf-8")
     require(client, "item = selectCtrlClickObjectTravelAction(item);", "Ctrl-click object travel dispatch hook")
     require(client, "private int selectCtrlClickObjectTravelAction(int item)", "Ctrl-click object travel selector")
     require(client, "MenuItemAction.OBJECT_COMMAND1", "object command 1 guard")
@@ -52,6 +55,23 @@ def main() -> None:
             fail(f"object {object_id} primary action should remain board")
         if element_text(defn, "command2") != "Travel":
             fail(f"object {object_id} secondary action should be Travel")
+
+    shilo_cart_def = object_def(613)
+    if element_text(shilo_cart_def, "command1").lower() != "climb":
+        fail("Shilo entrance cart primary action should be Climb")
+    if element_text(shilo_cart_def, "command2").lower() != "search":
+        fail("Shilo entrance cart should retain Search as its secondary action")
+    require(client_object_defs,
+            'new GameObjectDef("A farm cart", "It is blocking the entrance to the village", "Climb", "Search"',
+            "client Shilo entrance cart actions")
+
+    random_objects = RANDOM_OBJECTS.read_text(encoding="utf-8")
+    require(random_objects, 'command.equalsIgnoreCase("climb")', "direct Shilo entrance cart action")
+    require(random_objects, "climbAcrossShiloCart(player);", "shared Shilo entrance cart crossing")
+    require(random_objects, "player.getFatigue() >= player.MAX_FATIGUE", "Shilo entrance cart fatigue restriction")
+    require(random_objects, "int menu = multi(player,", "retained Shilo entrance cart Search confirmation")
+    require(random_objects, "player.teleport(383, 852)", "Shilo entrance cart west destination")
+    require(random_objects, "player.teleport(386, 852)", "Shilo entrance cart east destination")
 
     port_sarim = PORT_SARIM.read_text(encoding="utf-8")
     require(port_sarim, '"You do not meet the requirements to travel"', "Port Sarim shortcut failure message")

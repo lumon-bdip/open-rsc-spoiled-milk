@@ -192,6 +192,9 @@ door.
 - Boundary object 165 at `400,845` and its matching vertical-wall value 166 were
   removed. Server and client `Custom_Landscape.orsc` archives remain byte-
   identical after the terrain/collision edit.
+- The separate entrance-blocking farm cart at `384,851` now exposes `Climb` as
+  its primary action. It reuses the existing crossing sequence directly while
+  retaining `Search` and its confirmation dialogue as the secondary route.
 
 ### Verification And Handoff
 

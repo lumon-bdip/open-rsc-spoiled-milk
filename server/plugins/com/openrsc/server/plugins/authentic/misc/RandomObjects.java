@@ -48,16 +48,15 @@ public class RandomObjects implements OpLocTrigger {
 				if (object.getX() != 384 || object.getY() != 851) {
 					return;
 				}
-				if (player.getX() >= 386) {
-					mes("You climb up onto the cart.");
-					delay(3);
-					mes("You nimbly jump from one side of the cart...");
-					delay(3);
-					player.teleport(383, 852);
-					player.playerServerMessage(MessageType.QUEST, "...to the other and climb down again.");
+				if (command.equalsIgnoreCase("climb")) {
+					climbAcrossShiloCart(player);
 					return;
 				}
-				if (command.toLowerCase().equals("search") || player.getQuestStage(Quests.SHILO_VILLAGE) == -1) {
+				if (player.getX() >= 386) {
+					climbAcrossShiloCart(player);
+					return;
+				}
+				if (command.equalsIgnoreCase("search") || player.getQuestStage(Quests.SHILO_VILLAGE) == -1) {
 					mes("It looks as if you can climb across.");
 					delay(3);
 					mes("You search the cart.");
@@ -74,12 +73,7 @@ public class RandomObjects implements OpLocTrigger {
 							"Yes, I am am very nimble and agile!",
 							"No, I am happy where I am thanks!");
 						if (menu == 0) {
-							mes("You climb up onto the cart");
-							delay(3);
-							mes("You nimbly jump from one side of the cart to the other.");
-							delay(3);
-							player.teleport(386, 852);
-							player.playerServerMessage(MessageType.QUEST, "And climb down again");
+							climbAcrossShiloCart(player);
 						} else if (menu == 1) {
 							mes("You think better of clambering over the cart, you might get dirty.");
 							delay(3);
@@ -172,6 +166,28 @@ public class RandomObjects implements OpLocTrigger {
 			player.playerServerMessage(MessageType.QUEST, "The plant takes a bite at you!");
 			player.damage(getCurrentLevel(player, Skill.HITS.id()) / 10 + 2);
 		}
+	}
+
+	private void climbAcrossShiloCart(final Player player) {
+		if (player.getX() < 386 && player.getFatigue() >= player.MAX_FATIGUE) {
+			player.message("You are too fatigued to attempt climb across");
+			return;
+		}
+		if (player.getX() >= 386) {
+			mes("You climb up onto the cart.");
+			delay(3);
+			mes("You nimbly jump from one side of the cart...");
+			delay(3);
+			player.teleport(383, 852);
+			player.playerServerMessage(MessageType.QUEST, "...to the other and climb down again.");
+			return;
+		}
+		mes("You climb up onto the cart");
+		delay(3);
+		mes("You nimbly jump from one side of the cart to the other.");
+		delay(3);
+		player.teleport(386, 852);
+		player.playerServerMessage(MessageType.QUEST, "And climb down again");
 	}
 
 	@Override
